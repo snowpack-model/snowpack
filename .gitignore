@@ -1,1 +1,9 @@
+CMakeFiles/
+*.cmake
+MakeFile
+lib/
+bin/
+install_manifest.txt
+CMakeCache.txt
 .DS_Store
+Source/meteoio/meteoio/IOHandler.cc
