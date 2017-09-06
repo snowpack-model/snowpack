@@ -1,0 +1,101 @@
+Setting up basic outomated Nightly cDash client which makes memory testing
+##########################################################################
+
+
+	
+3.	add to cronjop [crontap -e] following line (addapt the time your needs):
+	01 04 * * *  cd ${HOME}/cdash_clients/meteoio/ && /usr/bin/ctest -D NightlyMemoryCheck -V > ${HOME}/cdash_clients/meteoio/NightyMemoryCheck.log 2>&1
+	
+	
+Anotation: If you want to set more detailed valgrind option, this is possible, but need to use cTest scripting (or in a other way set the cache):
+http://vtk.org/Wiki/CMake/Testing_With_CTest#Dynamic_Analysis
+
+
+
+
+Setting up basic outomated Coverage cDash client
+###############################################
+
+This manual shows how to do the simplest way to do memory testing. It is based
+on the add_basic_cDashClient_Nightly.txt.
+
+1. Needs
+--------
+1. 	Set up a Nighty Client, descripted on add_basic_cDashClient_Nightly.txt
+	
+2.	Make sure following things are also installed
+	- valgrind
+	
+3.	You need also that on your cDash server you want to use your project where 
+	you show the test results is allready set up and given correct svn 
+	connection information. (In this example, the free cDash host server from
+	Kitware, http://my.cdash.org/ )
+	
+	
+2. Make CTest Script which is run daily
+---------------------------------------
+1.	Make a new file "startScriptValgrind.cmake" in the root of the source files 
+	(here ${HOME}/cdash_clients/meteoio/)
+	
+2. But following content in te startScriptValgrind.cmake file:
+
+	# simple Script that makes Nigthly build with cTest and publie it on CDash with valgrind informations. 
+	# This script need to be started be cron. The command for the cron is [see next section]:
+	# "ctest -S startScriptValgrind.cmake"
+	
+	# Set Information for build
+	SET(CTEST_SITE "olmenhorn")
+	SET(CTEST_BUILD_NAME "Linux_Standart_Valgrind")
+	
+	# set for the thest source and binary directories
+	SET(CTEST_SOURCE_DIRECTORY .)
+	SET(CTEST_BINARY_DIRECTORY .)
+	
+	# set SVN command
+	SET(CTEST_SVN_COMMAND /usr/bin/svn)
+
+	# set Generator
+	set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+	
+	#Configure valgrind
+	SET(CTEST_MEMORYCHECK_COMMAND valgrind)
+	#SET(CTEST_MEMORYCHECK_COMMAND_OPTIONS <options>) # activate this if would specivie other then default valgrind options
+	#SET(CTEST_MEMORYCHECK_SUPPRESSIONS_FILE) # to say, what valgrind should not "test" ;-), filter out the false positive errors of valgrind
+	
+	#set cMake command to be used
+	SET(CTEST_CMAKE_COMMAND "\"${CMAKE_EXECUTABLE_NAME}\"")
+	
+	#also possible to set initial cache values for config to set that the test are build
+	# BUILD NAME SET HERE DROUG CACHE.. OLD WAY TO OD BUT ONLY WORKING WAY
+	SET(CTEST_INITIAL_CACHE "
+		BUILD_TESTING:BOOL=ON
+		BUILD_TESTING_WITH_COVERAGE:BOOL=OFF	
+	")
+	
+	ctest_start(NightlyMemoryCheck)
+	ctest_update(SOURCE "${CTEST_SoURCE_DIRECORTY}")
+	ctest_configure(BUILD "${CTEST_BINARY_DIRECTORY}" )
+	ctest_build(BUILD "${CTEST_BINARY_DIRECTORY}" )
+	ctest_memcheck(BUILD "${CTEST_BINARY_DIRECTORY}" )
+	ctest_submit()
+	
+3.	Test script with command "ctest -S startScriptValgrind.cmake -V"
+	
+3. set up Cron jop to run test every night at 01:05
+---------------------------------------------------
+1.	crontab -e
+2.	chose your editor ( me 8. bim.basic)
+3.	Add follwoing line :
+	1 1 * * * cd ${HOME}/cdash_clients/meteoio/ && make clean
+	5 1 * * * cd ${HOME}/cdash_clients/meteoio/ && /usr/bin/ctest -S ${HOME}/cdash_clients/meteoio/startScriptValgrind.cmake -V > ${HOME}/cdash_clients/meteoio/startScriptValgrind.log 2>&1
+4.	IMPORTANT: make sure that the standart Nightly build is run before !!!!
+5.	write and quit ( vim command ":wq")
+	
+If error on test, you have the log in file startScriptValgrind.log
+
+
+4. Annexes: 
+-----------
+For more information about CTest scripting: http://www.cmake.org/Wiki/CMake_Scripting_Of_CTest
+For more information about CTest coverage : http://cmake.org/Wiki/CTest/Coverage
+

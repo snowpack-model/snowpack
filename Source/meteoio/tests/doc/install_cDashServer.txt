@@ -1,0 +1,144 @@
+Setting up basic cDash Server
+#############################
+
+Manual how to install cDash server on a Ubuntu 10.4 and MySQL.
+
+ATTANTION: CHECK OUT ON cDash SITE IF NEVER VERSION OF CDASH DOESNT HAVE AN OTHER
+NEEDS AND INSTALLATION ROUTINE !!! ( http://public.kitware.com/Wiki/CDash:Installation )
+
+
+1. Needs
+--------
+- Apache (https://help.ubuntu.com/10.04/serverguide/httpd.html)
+- MySQL database (5.x and higher) (sudo apt-get install mysql-server-5.1 , write down root passwort !!!)
+- PHP (5.3 and higher) [apt-get install php5]
+- XSL module for PHP [apt-get install php5-xsl]
+- cURL module for PHP (for site statistics) [apt-get install php5-curl]
+- GD module for PHP (for regression tests) [apt-get install php5-gd]
+- mySQL modul for PHP [apt-get install php5-mysql php5-cgi]
+- ubuntu simple SMPT [sudo apt-get install ssmtp]
+- ubuntu SMPT server [sudo apt-get install sendmail]
+
+After installation of all modules, restart Apache and mySQL ! :
+sudo /etc/init.d/apache2 restart
+sudo /etc/init.d/mysql restart 
+
+	
+2. Prepare files Apache Site (for only one site on the machine !!!)
+-------------------------------------------------------------
+1. Edit the parameters: vim /etc/apache2/sites-available/default
+	- change to "ServerAdmin XXXXX"
+2. Downlaod CDash-2.0.2.zip
+3. Unzip CDash-2.0.2.zip [unzip CDash-2.0.2.zip] 
+4. mkdir /var/www/htdocs
+5. move files to folder /var/www/CDash [sudo mv CDash-2-0-2 /var/www/htdocs/CDash]
+6. set read/write permission for apache user for whole project
+	1 cd /var/www/htdocs/
+	2 sudo chown -R www-data CDash/
+
+3. Config SMPT
+--------------
+1.	edit file /etc/ssmpt/ssmpt.config [sudo vim ssmtp.conf]:
+	- change line to : "mailhub=10.32.128.60"
+	
+4. Add user to MySQL for cDash
+--------------------------------
+There are many ways to do that, my prefered way is to use workbench from mysql (http://www.mysql.com/products/workbench/)
+
+1.	Open Workbench
+2.	Add New Server Instance
+	1. localhost
+	2. Connection settings:
+		- Connection Name: cDash
+		- Connetcion Methode: Standart TCP/IP over SSH
+		- SSH Hostname: nesthorn.slf.ch
+		- SSH Username: itadmin
+		- (For SSH Passwort click on Store in Keychain and enter itadmin passwort)
+		- SSH keyfile: <empty>
+		- MySQL Hostanem: localhost
+		- Username: root
+		- (For Passwort click on Store in Keychain and enter mysql root user passwort)
+		- Default Schema: <empty>
+	3. Testing Conection: <nothing to do if no error>
+	4. SSH login based managment
+		- Operatiny System : < your os >
+		- MySQL Installation Type: Ubuntu Linux Upstart (MySQL Package)
+	5. Remote SHH param:
+		- Host Name: nesthorn.slf.ch
+		- User Name: itadmin
+	6. Testing Machine Settings: <nothing to do if no error>
+	7. Review settings and kontroll them !
+	8. Server Instance name: cdash_mysql@nesthorn.slf.ch
+3. Double clique on new server instance -> (Left site) Security -> User and Privileges -> (on bottom) Add Account (under Server Access Management
+	1. Login
+		- Login Name: cdash_usr
+		- Limit Connectivity to Hosts Matching: localhost
+		- Set Passwort
+	2. Administrative Roles
+		- set DBDesigner
+		- Apply
+	3. Account Limits
+		- nothing to change
+4. Under Schema Privileges
+	1. select cdash_usr
+	2. Add Entry
+		- Selected host: localhost
+		- Schema matching patter or name: cdash
+	3. Select "ALL"
+	4. Save Changes
+	
+
+
+5. Configure cDash for installation
+------------------------------------
+1.	cd /var/www/htdocs/CDash/cdash/
+2.	sudo cp config.php config.local.php
+3.	sudo vim config.local.php 
+	- set keys for mysql : 
+		$CDASH_DB_LOGIN = 'cdash_usr';
+		$CDASH_DB_PORT = '3306';
+	- set cdash_usr passowrt in key : "$CDASH_DB_PASS = '<YOUR_cdash_usr_PASSWORT>';"
+	- For the email, set the following keys:
+		$CDASH_EMAILADMIN = 'admin@nesthorn.slf.ch';
+		$CDASH_EMAIL_FROM = 'admin@nesthorn.slf.ch';
+		$CDASH_EMAIL_REPLY = 'noreply@nesthorn.slf.ch';
+	- remove all file with and after line:
+		"/** DO NOT EDIT AFTER THIS LINE */"
+4.	Security: remove globel read from config files:
+	1 cd /var/www/htdocs/CDash/cdash
+	2 sudo chown www-data config.php config.local.php
+	3 sudo chmod go-rwx config.php
+	4 sudo chmod go-rwx config.local.php
+
+6. Switch Apache default site to cDash
+---------------------------------------
+1.	cd /etc/apache2/sites-available/
+2.	sudo cp default cdash
+3.	Edit cdash file : [sudo vim cdash]
+	1.	ServerAdmin bavay@slf.ch
+	2.	DocumentRoot /var/www/htdocs/CDash/
+	3.	replace "<Directory /var/www/>" with "<Directory /var/www/htdocs/CDash/>"
+4.	Desable default site : sudo a2dissite default
+5.	Enable new site : sudo a2ensite cdash
+6.	Restart Apache : sudo /etc/init.d/apache2 restart
+7.	reload configuration: sudo /etc/init.d/apache2 reload
+
+
+7. Install CDash
+-----------------
+1. open in your browser http://nesthorn.slf.ch
+2. should open site (http://nesthorn.slf.ch/install.php) and controll shown information there !
+3. Enter Admin e-mail adresse and passwort -> install
+4. click on "create a new project"
+5. First controll of installation: log in with the bevore defined admin login and passwort -> if login works, all should be good
+6. set cDash in production mode:
+	- sudo vim /var/www/htdocs/CDash/cdash/config.local.php
+		- change following key to the values shown: "$CDASH_PRODUCTION_MODE = true;" 
+
+8. Annexes: For more information about CTest scripting
+------------------------------------------------------
+http://public.kitware.com/Wiki/CDash:Installation
+https://help.ubuntu.com/community/ApacheMySQLPHP
+http://cga.ece.uprm.edu/wiki/HowTo:CDashInstallation
+https://help.ubuntu.com/10.04/serverguide/httpd.html
+https://help.ubuntu.com/community/ApacheMySQLPHP#Virtual_Hosts // switch default site

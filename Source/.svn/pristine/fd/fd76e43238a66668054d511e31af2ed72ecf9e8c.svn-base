@@ -1,0 +1,24 @@
+SMET 1.1 ASCII
+[HEADER]
+station_id       = MST96
+station_name     = Weissfluhjoch:StudyPlot_MST
+latitude         = 46.831000
+longitude        = 9.810000
+altitude         = 2540.0
+nodata           = -999
+ProfileDate = 1996-06-17T00:00
+HS_Last = 0.000000
+SlopeAngle = 0.00
+SlopeAzi = 0.00
+nSoilLayerData = 0
+nSnowLayerData = 0
+SoilAlbedo = 0.09
+BareSoil_z0 = 0.200
+CanopyHeight = 0.00
+CanopyLeafAreaIndex = 0.000000
+CanopyDirectThroughfall = 1.00
+WindScalingFactor = 1.00
+ErosionLevel = 0
+TimeCountDeltaHS = 0.000000
+fields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo
+[DATA]
