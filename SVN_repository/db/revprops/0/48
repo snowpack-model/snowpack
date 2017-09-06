@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 15
+christiansteger
+K 8
+svn:date
+V 27
+2016-07-23T00:18:58.367330Z
+K 7
+svn:log
+V 91
+Set enhanced_wind_slab = false for POLAR version, change Q_fac = 0.24 and criticalExp = 0.3
+END

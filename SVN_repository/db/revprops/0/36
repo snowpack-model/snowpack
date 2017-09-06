@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 15
+christiansteger
+K 8
+svn:date
+V 27
+2016-07-11T12:33:11.850207Z
+K 7
+svn:log
+V 72
+Add solid precipitation with condition if (cumu_precip > Constants::eps)
+END

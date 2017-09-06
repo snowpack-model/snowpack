@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 6
+steger
+K 8
+svn:date
+V 27
+2016-07-09T18:30:12.004964Z
+K 7
+svn:log
+V 167
+Set threshold for temp. above melting point in PhaseChange::finalize to 0.5, remove POLAR settings for HOAR_DENSITY_BURIED and NEW_SNOW_GRAIN_SIZE in SnowpackConfig.cc
+END

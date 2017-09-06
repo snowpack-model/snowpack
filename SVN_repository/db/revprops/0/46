@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 15
+christiansteger
+K 8
+svn:date
+V 27
+2016-07-21T13:29:45.820092Z
+K 7
+svn:log
+V 68
+Minor modification in erosion conditions in SnowDrift::compSnowDrift
+END

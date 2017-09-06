@@ -1,0 +1,157 @@
+\documentclass[a4paper,10pt]{article}
+
+%%TODO: GSN has trouble with space delimited formats, it needs comma delimited...
+%opening
+\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 1.1}
+\author{Mathias Bavay}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The goal of this data format is to ease the exchange of meteorological point measurements by providing both the data and the metadata in an easy to interpret and to manipulate format. Data manipulations should be possible manually using a standard text editor or using some tools (shell scripting, awk, perl, as well as spreadsheets, R, as well as stadard programing languages). The format is versioned, which means that format updates could break backward compatibility if necessary.
+
+Compared to specification 1.0, when using a unit offset/multiplier, the multiplier is now applied \emph{before} the offset so that it is possible to easily force a whole column to nodata.
+\end{abstract}
+
+\section{Requirements}
+\begin{itemize}
+	\item it should contain both data and metadata
+	\item it should be "self documented" (not regarding the format, but
+	regarding the data, ie we are not talking about schema!)
+	\item it should contain an arbitrary number of meteo parameters, for an
+	arbitrary number of time steps
+	\item it should support any kind of timsteps (ie: no fixed sampling rate)
+	\item it should be easy to parse with common languages and tools (ie:
+	fortran, c, c++, java, awk, perl, bash)
+	\item it should be easy to preview with common tools (ie: no
+	preprocessing needed even if losing a few timesteps/capability). Common
+	tools include R, gnuplot, Excel, Matlab
+	\item it should be possible to format it in a user friendly,
+	eyes-friendly way (read: columns alignment)
+	\item it should be extensible
+	\item it should be useful for a wide range of applications
+\end{itemize}
+
+\section{File structure}
+The file is structured in three sections: a signature line as the very first line, followed by a header, followed by the data. Lines are [CR] or [CR][LF] or [LF] terminated. Comments are supported, starting with a "\verb # " or a ";" character and extending to the end of the line. A comment can follow values on a line. Empty lines can be found anywhere in the file (in the header as well as in the data).
+
+\subsection{Signature}
+The signature line is used to identify the file type, the file format specification version and the format type (ascii or binary). This signature has a fixed format in order to be easy to parse and the parser can reject any file that does not follow this signature or whose specification version does not match. However, the parsers are strongly encouraged to suppport past specifications and to try parsing more recent versions. The signature is formated as follow:
+\begin{quote} \begin{verbatim}
+{file identifier} {specification version} {file type}
+\end{verbatim}\end{quote}
+with:
+\begin{itemize}
+	\item file identifier: fixed string "SMET"
+	\item specification version: decimal number
+	\item file type: string, either "ASCII" or "BINARY"
+	\item all fields separated by one and only one space
+\end{itemize}
+Example:
+\begin{quote} \begin{verbatim}
+SMET 0.95 ASCII
+\end{verbatim}\end{quote}
+
+\subsection{Header section}
+The header section contains all the metadata. It starts by a section marker, that is the following fixed string, alone on a line, capitalized:
+\begin{quote} \begin{verbatim}
+[HEADER]
+\end{verbatim}\end{quote}
+Then, the header section purely consists of key-value pairs. Some keys are mandatory while other keys are optional. The general format for a key-value pair is the following:
+\begin{quote} \begin{verbatim}
+{key} = {value}
+\end{verbatim}\end{quote}
+with:
+\begin{itemize}
+	\item key: any string of alphanumeric characters as well as "-\_:.", US-ASCII encoded
+	\item value: any string of character, UTF-8 encoded
+	\item the delimiter\footnote{ie: in the given example, the spaces between the key and the ``='' sign as well as between the ``='' sign and the value} can be any mixture and any number of spaces and tabs (at least one)
+\end{itemize}
+The following keys are mandatory:
+\begin{itemize}
+	\item station\_id: identifier for the station, any string
+	\item location information (see below)
+	\item nodata: nodata value that is used in the data section, decimal number
+	\item fields: string of spaces/tabs delimited field types.
+\end{itemize}
+The location information must be at least one of the following keys:
+\begin{itemize}
+	\item latitude: decimal latitude, decimal number
+	\item longitude: decimal longitude, decimal number
+	\item altitude: altitude above sea level, in meters, decimal number
+\end{itemize}
+and/or
+\begin{itemize}
+	\item easting: easting coordinate in a cartesian grid, decimal number
+	\item northing: northing coordinate in a cartesian grid, decimal number
+	\item altitude: altitude above sea level, in meters, decimal number
+	\item epsg: epgs coordinate system code, integer number
+\end{itemize}
+If both are specified, they must match to within +/-5m the same location. Whenever possible, it is recommended to provide both, since depending on the application one or the other one is the most convenient. The location information can be written in each data line (adding the necessary columns) in case of a mobile station. In any case, the whole location data set must be either in the header or in the data section, with the exception of the epsg code always being in the header. Conversions between latitude/longitude and cartesian coordinate systems can be made using the Proj4 (or libproj4) software available at http://trac.osgeo.org/proj/\footnote{The conversion string is built similarly as what follow: cs2cs +init=epsg:\{epsg\_code\} +to +proj=latlong +datum=wgs84 +ellps=wgs84}.
+
+The following are optional:
+\begin{itemize}
+	\item station\_name: human readable name for the station, any string
+	\item tz: timezone of the measurements, decimal number positive going east. If not provided, utc is assumed
+	\item creation: timestamp of the file's creation date (ISO 8601 Combined date and time formatted)
+	\item source: string describing the origin of the file
+	\item units\_offset: a vector of decimal numbers to add to each value of the matching column in order to get back to MKSA
+	\item units\_multiplier: a vector of decimal numbers to mutiply each value of the matching column (\emph{before} potential offset addition) in order to get back to MKSA
+	\item comment: a free string to write any comment
+\end{itemize}
+
+The field tyes are measurement parameter identifier chosen from the following list: %%TODO: find standard naming scheme!
+%%TODO: replace TSG by TSoil + depth specification
+\begin{description}
+	\item[TA] Temperature Air, in Kelvin
+	\item[TSS] Temperature Snow Surface, in Kelvin
+	\item[TSG] Temperature Surface Ground, in Kelvin
+	\item[RH] Relative Humidity, between 0 and 1
+	\item[VW\_MAX] Maximum wind velocity, in m/s
+	\item[VW] Velocity Wind, in m/s
+	\item[DW] Direction Wind, in degrees, clockwise and north being zero degrees
+	\item[ISWR] Incoming Short Wave Radiation, in W/m$^2$
+	\item[OSWR] Reflected Short Wave Radiation, in W/m$^2$
+	\item[ILWR] Incoming Long Wave Radiation, in W/m$^2$
+	\item[OLWR] Outgoing Long Wave Radiation, in W/m$^2$
+	\item[PINT] Precipitation Intensity, in mm/h, as an average over the timestep
+	\item[PSUM] Precipitation accumulation, in mm/h, calculated over the last hour
+	\item[HS] Height Snow, in m
+	\item[timestamp] ISO 8601 Combined date and time formatted
+	\item[julian] as the decimal number of days and fractions of a day since January 1, 4713 BC Greenwich noon, Julian proleptic calendar\footnote{Please keep in mind that year zero does not exist and that by starting at noon, it makes a half-day shift compared to usual meteorological time bases}. If both timestamps and julian are present, they must be within less than 1 second of each other.
+\end{description}
+Unrecognized/unsupported fields for any given application should be silently skipped.
+
+\subsection{Data section}
+The data section contains the data and starts with a section marker, that is the following fixed string, alone on a line, capitalized:
+\begin{quote} \begin{verbatim}
+[DATA]
+\end{verbatim}\end{quote}
+Each data point occupies one line and the fields are delimited by any mixture and number of spaces and tabs (at least one). All units must be as specified above, that is MKSA with a few case using multipliers (precipitation in mm/h). It is also possible to use of the above mentionned multipliers/offsets, but in such a case they must be specified. The data is sorted by ascendant temporal order (the use of a timestamp as the first field makes an alphabetic ascending order equivalent to ascending temporal order).
+
+\section{Format variations}
+The file can be gzipped (as a whole). In such a case, only the gzip signature will be visible and the file will either need to be manually gunzipped before reading or read using libgzip (then giving access to the specific WSMDF signature). A binary version of the format is also available, the only difference with the ASCII version being that the data section (excluding the section marker) is coded as 32 bits IEEE754 single precision binary floating-point format. In such a case, no timestamp can be used, instead a julian date can be used (and must be coded as 64 bits IEEE754 double precision). Each data "line" must be terminated by a carriage return (\verb '\n' character).
+
+\section{Example file}
+\begin{quote} \begin{verbatim}
+SMET 0.9 ASCII
+[HEADER]
+station_id = test_station
+latitude   = 46.5
+longitude  = 9.8
+altitude   = 1500
+nodata = -999
+tz     = +01
+fields = timestamp TA RH VW ISWR
+units_offset = 0 273.15 0 0 0
+units_multiplier  = 1 1 0.01 1 1
+[DATA]
+2010-06-22T12:00:00   2.0  52  1.2  320.
+2010-06-22T13:00:00   3.0  60  2.4  340.
+2010-06-22T14:00:00   2.8  56  2.0  330.
+\end{verbatim}\end{quote}
+
+
+\end{document}

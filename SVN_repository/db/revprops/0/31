@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 15
+christiansteger
+K 8
+svn:date
+V 27
+2016-07-10T17:00:36.563082Z
+K 7
+svn:log
+V 78
+Fallback to revision 19 (for consistency; used for last SNOWPACK run on ECMWF)
+END

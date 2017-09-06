@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 6
+steger
+K 8
+svn:date
+V 27
+2016-07-20T16:43:41.437793Z
+K 7
+svn:log
+V 79
+More aggressive element merging from 40 m depth on (for mk, sp, theta[ICE], rg)
+END

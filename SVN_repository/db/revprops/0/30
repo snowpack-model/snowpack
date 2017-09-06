@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 15
+christiansteger
+K 8
+svn:date
+V 27
+2016-07-10T00:30:07.081547Z
+K 7
+svn:log
+V 154
+Set new values for new_snow_dd, new_snow_sp, new_snow_dd_wind and new_snow_sp_wind for POLAR variant, increase upper_limit_length to 2.5 in DataClasses.cc
+END

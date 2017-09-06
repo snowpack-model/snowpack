@@ -1,0 +1,13 @@
+K 10
+svn:author
+V 15
+christiansteger
+K 8
+svn:date
+V 27
+2016-07-20T02:19:08.000489Z
+K 7
+svn:log
+V 94
+Modifications in Snowpack::compSnowCreep: Always allow snow settling, squeeze out liquid water
+END

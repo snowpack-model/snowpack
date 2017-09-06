@@ -1,0 +1,132 @@
+[General]
+BUFF_CHUNK_SIZE = 370
+BUFF_BEFORE = 1.5
+
+[Input]
+COORDSYS = CH1903
+TIME_ZONE = 1
+
+METEOPATH = ./input
+
+; use SMETIO to read meteo data
+; METEO = SMET
+; STATION1 = MST96
+; SNOWFILE1 = MST96
+
+; use SNIO to read meteo data
+METEO = SNOWPACK
+STATION1 = MST96
+METAFILE = MST96.meta
+SNOW = SNOOLD
+SNOWFILE1 = MST96
+NUMBER_MEAS_TEMPERATURES = 3
+
+[Output]
+COORDSYS = CH1903
+TIME_ZONE = 1
+
+METEOPATH = ./output
+; SNOW = SMET
+
+EXPERIMENT = oper.497.1220.EtSDt ;rel3.1_D1HSZoper ;oper-snio
+
+; output every
+; 0.25 h,    0.5 h,     1.0 h,      3.0 h
+; 0.0104167, 0.0208333, 0.04166667, 0.125
+TS_WRITE = true
+TS_START = 0.0
+TS_DAYS_BETWEEN = 0.125
+PROFILE = ASCII
+PROF_WRITE = true
+PROF_START = 0.0
+PROF_DAYS_BETWEEN = 0.125
+
+[Snowpack]
+MEAS_TSS = true
+ENFORCE_MEASURED_SNOW_HEIGHTS = true
+SW_MODE = REFLECTED
+HEIGHT_OF_WIND_VALUE = 7.5
+HEIGHT_OF_METEO_VALUES = 7.5
+ATMOSPHERIC_STABILITY = NEUTRAL_MO
+ROUGHNESS_LENGTH = 0.002
+CALCULATION_STEP_LENGTH = 15.0	;cf interactions with PSUM::accumulate
+CHANGE_BC = true
+THRESH_CHANGE_BC = -1.0
+SNP_SOIL = false
+SOIL_FLUX = false
+GEO_HEAT = 0.06
+CANOPY = false
+
+[SnowpackAdvanced]
+NUMBER_SLOPES = 5
+SNOW_EROSION = true
+SNOW_REDISTRIBUTION = true
+HN_DENSITY_MODEL = ZWART
+FIXED_POSITIONS = 0.25 0.5 1.0 -0.25 -0.10
+MEAS_INCOMING_LONGWAVE = false
+ALBEDO_PARAMETERIZATION = LEHNING_2
+DETECT_GRASS = true
+FORCE_SW_MODE = true	;this parameter should be deleted from the Main and replaced by an intelligent function
+
+[Filters]
+PSUM::filter1 = min
+PSUM::arg1 = soft 0.0
+
+TA::filter1 = min_max
+TA::arg1 = 240 320
+
+RH::filter1 = min_max
+RH::arg1 = 0.01 1.2
+RH::filter2 = min_max
+RH::arg2 = soft 0.05 1.0
+
+ISWR::filter1 = min_max
+ISWR::arg1 = -10 1500
+ISWR::filter2 = min_max
+ISWR::arg2 = soft 0 1500
+
+RSWR::filter1 = min_max
+RSWR::arg1 = -10 1500
+RSWR::filter2 = min_max
+RSWR::arg2 = soft 0 1500
+
+ILWR::filter1 = min_max
+ILWR::arg1 = 188 600
+ILWR::filter2 = min_max
+ILWR::arg2 = soft 200 400
+
+TSS::filter1 = min_max
+TSS::arg1 = 200 320
+
+TSG::filter1 = min_max
+TSG::arg1 = 200 320
+
+HS::filter1 = min
+HS::arg1 = soft 0.0
+HS::filter2 = rate
+HS::arg2 = 5.55e-5 ;0.20 m/h
+HS::filter3 = mad
+HS::arg3 = soft left 10 21600 ;24 86400
+
+VW::filter1 = min_max
+VW::arg1 = -2 70
+VW::filter2 = min_max
+VW::arg2 = soft 0.0 50.0
+
+[Interpolations1D]
+; window size in seconds should be twice largest input gap:
+;                 1 d,    3 d,  3.5 d,    4 d,    5 d
+; WINDOW_SIZE = 86400, 260000, 302400, 345600, 432000
+WINDOW_SIZE = 86400
+
+PSUM::resample = accumulate ;cf interractions with CALCULATION_STEP_LENGTH
+PSUM::accumulate = 900
+
+HS::resample = linear
+HS::linear = 43200
+
+VW::resample = nearest
+VW::nearest = extrapolate
+
+DW::resample = nearest
+DW::nearest = extrapolate

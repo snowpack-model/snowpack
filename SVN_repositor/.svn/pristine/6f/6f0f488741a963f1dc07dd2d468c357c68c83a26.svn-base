@@ -1,0 +1,727 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%Title: structure.fig
+%%Creator: fig2dev Version 3.2 Patchlevel 5a
+%%CreationDate: Mon Mar 25 17:23:16 2013
+%%BoundingBox: 0 0 991 429
+%Magnification: 0.5900
+%%EndComments
+%%BeginProlog
+/$F2psDict 200 dict def
+$F2psDict begin
+$F2psDict /mtrx matrix put
+/col-1 {0 setgray} bind def
+/col0 {0.000 0.000 0.000 srgb} bind def
+/col1 {0.000 0.000 1.000 srgb} bind def
+/col2 {0.000 1.000 0.000 srgb} bind def
+/col3 {0.000 1.000 1.000 srgb} bind def
+/col4 {1.000 0.000 0.000 srgb} bind def
+/col5 {1.000 0.000 1.000 srgb} bind def
+/col6 {1.000 1.000 0.000 srgb} bind def
+/col7 {1.000 1.000 1.000 srgb} bind def
+/col8 {0.000 0.000 0.560 srgb} bind def
+/col9 {0.000 0.000 0.690 srgb} bind def
+/col10 {0.000 0.000 0.820 srgb} bind def
+/col11 {0.530 0.810 1.000 srgb} bind def
+/col12 {0.000 0.560 0.000 srgb} bind def
+/col13 {0.000 0.690 0.000 srgb} bind def
+/col14 {0.000 0.820 0.000 srgb} bind def
+/col15 {0.000 0.560 0.560 srgb} bind def
+/col16 {0.000 0.690 0.690 srgb} bind def
+/col17 {0.000 0.820 0.820 srgb} bind def
+/col18 {0.560 0.000 0.000 srgb} bind def
+/col19 {0.690 0.000 0.000 srgb} bind def
+/col20 {0.820 0.000 0.000 srgb} bind def
+/col21 {0.560 0.000 0.560 srgb} bind def
+/col22 {0.690 0.000 0.690 srgb} bind def
+/col23 {0.820 0.000 0.820 srgb} bind def
+/col24 {0.500 0.190 0.000 srgb} bind def
+/col25 {0.630 0.250 0.000 srgb} bind def
+/col26 {0.750 0.380 0.000 srgb} bind def
+/col27 {1.000 0.500 0.500 srgb} bind def
+/col28 {1.000 0.630 0.630 srgb} bind def
+/col29 {1.000 0.750 0.750 srgb} bind def
+/col30 {1.000 0.880 0.880 srgb} bind def
+/col31 {1.000 0.840 0.000 srgb} bind def
+/col32 {0.690 0.690 0.690 srgb} bind def
+
+end
+
+/cp {closepath} bind def
+/ef {eofill} bind def
+/gr {grestore} bind def
+/gs {gsave} bind def
+/sa {save} bind def
+/rs {restore} bind def
+/l {lineto} bind def
+/m {moveto} bind def
+/rm {rmoveto} bind def
+/n {newpath} bind def
+/s {stroke} bind def
+/sh {show} bind def
+/slc {setlinecap} bind def
+/slj {setlinejoin} bind def
+/slw {setlinewidth} bind def
+/srgb {setrgbcolor} bind def
+/rot {rotate} bind def
+/sc {scale} bind def
+/sd {setdash} bind def
+/ff {findfont} bind def
+/sf {setfont} bind def
+/scf {scalefont} bind def
+/sw {stringwidth} bind def
+/tr {translate} bind def
+/tnt {dup dup currentrgbcolor
+  4 -2 roll dup 1 exch sub 3 -1 roll mul add
+  4 -2 roll dup 1 exch sub 3 -1 roll mul add
+  4 -2 roll dup 1 exch sub 3 -1 roll mul add srgb}
+  bind def
+/shd {dup dup currentrgbcolor 4 -2 roll mul 4 -2 roll mul
+  4 -2 roll mul srgb} bind def
+/$F2psBegin {$F2psDict begin /$F2psEnteredState save def} def
+/$F2psEnd {$F2psEnteredState restore end} def
+
+/pageheader {
+save
+newpath 0 429 moveto 0 0 lineto 991 0 lineto 991 429 lineto closepath clip newpath
+184.8 348.7 translate
+1 -1 scale
+$F2psBegin
+10 setmiterlimit
+0 slj 0 slc
+ 0.03717 0.03717 sc
+} bind def
+/pagefooter {
+$F2psEnd
+restore
+} bind def
+%%EndProlog
+pageheader
+%
+% Fig objects follow
+%
+% 
+% here starts figure with depth 55
+% Polyline
+0 slj
+0 slc
+15.000 slw
+ [90] 0 sd
+n 11550 -630 m 11385 -630 11385 9195 165 arcto 4 {pop} repeat
+  11385 9360 21480 9360 165 arcto 4 {pop} repeat
+  21645 9360 21645 -465 165 arcto 4 {pop} repeat
+  21645 -630 11550 -630 165 arcto 4 {pop} repeat
+ cp gs col32 s gr  [] 0 sd
+% Polyline
+ [90] 0 sd
+n -2310 -630 m -2475 -630 -2475 9195 165 arcto 4 {pop} repeat
+  -2475 9360 11220 9360 165 arcto 4 {pop} repeat
+  11385 9360 11385 -465 165 arcto 4 {pop} repeat
+  11385 -630 -2310 -630 165 arcto 4 {pop} repeat
+ cp gs col32 s gr  [] 0 sd
+% Polyline
+ [90] 0 sd
+n -2310 -2115 m -2475 -2115 -2475 -795 165 arcto 4 {pop} repeat
+  -2475 -630 21480 -630 165 arcto 4 {pop} repeat
+  21645 -630 21645 -1950 165 arcto 4 {pop} repeat
+  21645 -2115 -2310 -2115 165 arcto 4 {pop} repeat
+ cp gs col32 s gr  [] 0 sd
+/Times-Italic ff 254.00 scf sf
+11025 -270 m
+gs 1 -1 sc (Data manipulation classes) dup sw pop neg 0 rm  col32 sh gr
+/Times-Italic ff 254.00 scf sf
+11700 -225 m
+gs 1 -1 sc (Data structures classes) col32 sh gr
+/Times-Italic ff 254.00 scf sf
+11160 -1800 m
+gs 1 -1 sc (Helper classes) dup sw pop 2 div neg 0 rm  col32 sh gr
+% here ends figure;
+% 
+% here starts figure with depth 50
+% Polyline
+0 slj
+0 slc
+15.000 slw
+n 1575 2025 m 2115 2025 l 2115 225 l 1575 225 l
+ cp gs col0 s gr 
+% Polyline
+n 2475 2025 m 3015 2025 l 3015 225 l 2475 225 l
+ cp gs col0 s gr 
+% Polyline
+n 3375 2025 m 3915 2025 l 3915 225 l 3375 225 l
+ cp gs col0 s gr 
+% Polyline
+n 4275 2025 m 4815 2025 l 4815 225 l 4275 225 l
+ cp gs col0 s gr 
+% Polyline
+n 5175 2025 m 5715 2025 l 5715 225 l 5175 225 l
+ cp gs col0 s gr 
+% Polyline
+n 6075 2025 m 6615 2025 l 6615 225 l 6075 225 l
+ cp gs col0 s gr 
+% Polyline
+n 6975 2025 m 7515 2025 l 7515 225 l 6975 225 l
+ cp gs col0 s gr 
+% Polyline
+n 7875 2025 m 8415 2025 l 8415 225 l 7875 225 l
+ cp gs col0 s gr 
+% Polyline
+n 8775 2025 m 9315 2025 l 9315 225 l 8775 225 l
+ cp gs col0 s gr 
+% Polyline
+n 9675 2025 m 10215 2025 l 10215 225 l 9675 225 l
+ cp gs col0 s gr 
+% Polyline
+n 10530 2025 m 11070 2025 l 11070 225 l 10530 225 l
+ cp gs col0 s gr 
+% Polyline
+n 675 2025 m 1215 2025 l 1215 225 l 675 225 l
+ cp gs col0 s gr 
+% Polyline
+n -210 2025 m 330 2025 l 330 225 l -210 225 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+-30 2262 m -30 2490 l 60 2490 l 60 2262 l 60 2262 l 15 2442 l -30 2262 l cp
+eoclip
+n 15 2025 m
+ 15 2475 l gs col0 s gr gr
+
+% arrowhead
+n -30 2262 m 15 2442 l 60 2262 l  col0 s
+% Polyline
+gs  clippath
+2655 2262 m 2655 2490 l 2745 2490 l 2745 2262 l 2745 2262 l 2700 2442 l 2655 2262 l cp
+eoclip
+n 2700 2025 m
+ 2700 2475 l gs col0 s gr gr
+
+% arrowhead
+n 2655 2262 m 2700 2442 l 2745 2262 l  col0 s
+% Polyline
+gs  clippath
+3555 2262 m 3555 2490 l 3645 2490 l 3645 2262 l 3645 2262 l 3600 2442 l 3555 2262 l cp
+eoclip
+n 3600 2025 m
+ 3600 2475 l gs col0 s gr gr
+
+% arrowhead
+n 3555 2262 m 3600 2442 l 3645 2262 l  col0 s
+% Polyline
+gs  clippath
+4455 2262 m 4455 2490 l 4545 2490 l 4545 2262 l 4545 2262 l 4500 2442 l 4455 2262 l cp
+eoclip
+n 4500 2025 m
+ 4500 2475 l gs col0 s gr gr
+
+% arrowhead
+n 4455 2262 m 4500 2442 l 4545 2262 l  col0 s
+% Polyline
+gs  clippath
+5355 2262 m 5355 2490 l 5445 2490 l 5445 2262 l 5445 2262 l 5400 2442 l 5355 2262 l cp
+eoclip
+n 5400 2025 m
+ 5400 2475 l gs col0 s gr gr
+
+% arrowhead
+n 5355 2262 m 5400 2442 l 5445 2262 l  col0 s
+% Polyline
+gs  clippath
+6255 2262 m 6255 2490 l 6345 2490 l 6345 2262 l 6345 2262 l 6300 2442 l 6255 2262 l cp
+eoclip
+n 6300 2025 m
+ 6300 2475 l gs col0 s gr gr
+
+% arrowhead
+n 6255 2262 m 6300 2442 l 6345 2262 l  col0 s
+% Polyline
+gs  clippath
+7155 2262 m 7155 2490 l 7245 2490 l 7245 2262 l 7245 2262 l 7200 2442 l 7155 2262 l cp
+eoclip
+n 7200 2025 m
+ 7200 2475 l gs col0 s gr gr
+
+% arrowhead
+n 7155 2262 m 7200 2442 l 7245 2262 l  col0 s
+% Polyline
+gs  clippath
+8055 2262 m 8055 2490 l 8145 2490 l 8145 2262 l 8145 2262 l 8100 2442 l 8055 2262 l cp
+eoclip
+n 8100 2025 m
+ 8100 2475 l gs col0 s gr gr
+
+% arrowhead
+n 8055 2262 m 8100 2442 l 8145 2262 l  col0 s
+% Polyline
+gs  clippath
+8955 2262 m 8955 2490 l 9045 2490 l 9045 2262 l 9045 2262 l 9000 2442 l 8955 2262 l cp
+eoclip
+n 9000 2025 m
+ 9000 2475 l gs col0 s gr gr
+
+% arrowhead
+n 8955 2262 m 9000 2442 l 9045 2262 l  col0 s
+% Polyline
+gs  clippath
+9855 2262 m 9855 2490 l 9945 2490 l 9945 2262 l 9945 2262 l 9900 2442 l 9855 2262 l cp
+eoclip
+n 9900 2025 m
+ 9900 2475 l gs col0 s gr gr
+
+% arrowhead
+n 9855 2262 m 9900 2442 l 9945 2262 l  col0 s
+% Polyline
+gs  clippath
+10755 2262 m 10755 2490 l 10845 2490 l 10845 2262 l 10845 2262 l 10800 2442 l 10755 2262 l cp
+eoclip
+n 10800 2025 m
+ 10800 2475 l gs col0 s gr gr
+
+% arrowhead
+n 10755 2262 m 10800 2442 l 10845 2262 l  col0 s
+% Polyline
+gs  clippath
+1755 2262 m 1755 2490 l 1845 2490 l 1845 2262 l 1845 2262 l 1800 2442 l 1755 2262 l cp
+eoclip
+n 1800 2025 m
+ 1800 2475 l gs col0 s gr gr
+
+% arrowhead
+n 1755 2262 m 1800 2442 l 1845 2262 l  col0 s
+% Polyline
+gs  clippath
+855 2262 m 855 2490 l 945 2490 l 945 2262 l 945 2262 l 900 2442 l 855 2262 l cp
+eoclip
+n 900 2025 m
+ 900 2475 l gs col0 s gr gr
+
+% arrowhead
+n 855 2262 m 900 2442 l 945 2262 l  col0 s
+% Polyline
+ [90] 0 sd
+n -217 2520 m 11062 2520 l 11062 3195 l -217 3195 l
+ cp gs col0 s gr  [] 0 sd
+% Polyline
+n 11520 225 m 13995 225 l 13995 900 l 11520 900 l
+ cp gs col0 s gr 
+% Polyline
+n 14940 225 m 17415 225 l 17415 900 l 14940 900 l
+ cp gs col0 s gr 
+% Polyline
+n 13140 1350 m 15615 1350 l 15615 2025 l 13140 2025 l
+ cp gs col0 s gr 
+% Polyline
+n 13140 2520 m 15615 2520 l 15615 3195 l 13140 3195 l
+ cp gs col0 s gr 
+% Polyline
+n 6840 6075 m 11070 6075 l 11070 6750 l 6840 6750 l
+ cp gs col0 s gr 
+% Polyline
+n 6840 7200 m 11070 7200 l 11070 7875 l 6840 7875 l
+ cp gs col0 s gr 
+% Polyline
+n 13140 4950 m 15615 4950 l 15615 5625 l 13140 5625 l
+ cp gs col0 s gr 
+% Polyline
+n 15525 -1665 m 18000 -1665 l 18000 -990 l 15525 -990 l
+ cp gs col0 s gr 
+% Polyline
+n 7380 -1665 m 9855 -1665 l 9855 -990 l 7380 -990 l
+ cp gs col0 s gr 
+% Polyline
+n 2205 6075 m 4680 6075 l 4680 6750 l 2205 6750 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+3465 6963 m 3465 6735 l 3375 6735 l 3375 6963 l 3375 6963 l 3420 6783 l 3465 6963 l cp
+eoclip
+n 4995 7245 m 4995 7110 l 3420 7110 l
+ 3420 6750 l gs col0 s gr gr
+
+% arrowhead
+n 3465 6963 m 3420 6783 l 3375 6963 l  col0 s
+% Polyline
+gs  clippath
+3465 6963 m 3465 6735 l 3375 6735 l 3375 6963 l 3375 6963 l 3420 6783 l 3465 6963 l cp
+eoclip
+n 2115 7200 m 2115 7110 l 3420 7110 l
+ 3420 6750 l gs col0 s gr gr
+
+% arrowhead
+n 3465 6963 m 3420 6783 l 3375 6963 l  col0 s
+% Polyline
+n 1035 8325 m 3195 8325 l 3195 9000 l 1035 9000 l
+ cp gs col0 s gr 
+% Polyline
+n 1035 7200 m 3195 7200 l 3195 7875 l 1035 7875 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+2160 8088 m 2160 7860 l 2070 7860 l 2070 8088 l 2070 8088 l 2115 7908 l 2160 8088 l cp
+eoclip
+n 2115 8325 m
+ 2115 7875 l gs col0 s gr gr
+
+% arrowhead
+n 2160 8088 m 2115 7908 l 2070 8088 l  col0 s
+% Polyline
+n 3645 7245 m 6390 7245 l 6390 7920 l 3645 7920 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+5040 8133 m 5040 7905 l 4950 7905 l 4950 8133 l 4950 8133 l 4995 7953 l 5040 8133 l cp
+eoclip
+n 4995 8370 m
+ 4995 7920 l gs col0 s gr gr
+
+% arrowhead
+n 5040 8133 m 4995 7953 l 4950 8133 l  col0 s
+% Polyline
+n 3645 8370 m 6390 8370 l 6390 9045 l 3645 9045 l
+ cp gs col0 s gr 
+% Polyline
+n -1980 7200 m 630 7200 l 630 7875 l -1980 7875 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+-629 6963 m -630 6735 l -720 6735 l -719 6963 l -719 6963 l -674 6783 l -629 6963 l cp
+eoclip
+n -675 7200 m
+ -675 6750 l gs col0 s gr gr
+
+% arrowhead
+n -629 6963 m -674 6783 l -719 6963 l  col0 s
+% Polyline
+n -1980 6075 m 630 6075 l 630 6750 l -1980 6750 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+-629 5838 m -630 5610 l -720 5610 l -719 5838 l -719 5838 l -674 5658 l -629 5838 l cp
+eoclip
+n -675 6075 m
+ -675 5625 l gs col0 s gr gr
+
+% arrowhead
+n -629 5838 m -674 5658 l -719 5838 l  col0 s
+% Polyline
+n -4950 4950 m -3150 4950 l -3150 5625 l -4950 5625 l
+ cp gs col18 s gr 
+% Polyline
+n -1755 -1575 m 45 -1575 l 45 -900 l -1755 -900 l
+ cp gs col0 s gr 
+% Polyline
+n 1575 3690 m 5850 3690 l 5850 4365 l 1575 4365 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+8710 4540 m 8933 4496 l 8915 4407 l 8692 4452 l 8692 4452 l 8878 4461 l 8710 4540 l cp
+eoclip
+n 6435 4950 m
+ 8910 4455 l gs col0 s gr gr
+
+% arrowhead
+n 8710 4540 m 8878 4461 l 8692 4452 l  col0 s
+% Polyline
+gs  clippath
+3908 4450 m 3683 4407 l 3666 4496 l 3891 4539 l 3891 4539 l 3723 4461 l 3908 4450 l cp
+eoclip
+n 6255 4950 m
+ 3690 4455 l gs col0 s gr gr
+
+% arrowhead
+n 3908 4450 m 3723 4461 l 3891 4539 l  col0 s
+% Polyline
+gs  clippath
+11283 2835 m 11055 2835 l 11055 2925 l 11283 2925 l 11283 2925 l 11103 2880 l 11283 2835 l cp
+eoclip
+n 13140 2880 m
+ 11070 2880 l gs col0 s gr gr
+
+% arrowhead
+n 11283 2835 m 11103 2880 l 11283 2925 l  col0 s
+% Polyline
+gs  clippath
+14310 1137 m 14310 1365 l 14400 1365 l 14400 1137 l 14400 1137 l 14355 1317 l 14310 1137 l cp
+eoclip
+n 12600 900 m 12600 990 l 14355 990 l
+ 14355 1350 l gs col0 s gr gr
+
+% arrowhead
+n 14310 1137 m 14355 1317 l 14400 1137 l  col0 s
+% Polyline
+gs  clippath
+14310 1137 m 14310 1365 l 14400 1365 l 14400 1137 l 14400 1137 l 14355 1317 l 14310 1137 l cp
+eoclip
+n 16155 900 m 16155 990 l 14355 990 l
+ 14355 1350 l gs col0 s gr gr
+
+% arrowhead
+n 14310 1137 m 14355 1317 l 14400 1137 l  col0 s
+% Polyline
+gs  clippath
+14310 2307 m 14310 2535 l 14400 2535 l 14400 2307 l 14400 2307 l 14355 2487 l 14310 2307 l cp
+eoclip
+n 14355 2070 m
+ 14355 2520 l gs col0 s gr gr
+
+% arrowhead
+n 14310 2307 m 14355 2487 l 14400 2307 l  col0 s
+% Polyline
+gs  clippath
+8955 5838 m 8955 5610 l 8865 5610 l 8865 5838 l 8865 5838 l 8910 5658 l 8955 5838 l cp
+eoclip
+n 8910 6075 m
+ 8910 5625 l gs col0 s gr gr
+
+% arrowhead
+n 8955 5838 m 8910 5658 l 8865 5838 l  col0 s
+% Polyline
+gs  clippath
+3645 3477 m 3645 3705 l 3735 3705 l 3735 3477 l 3735 3477 l 3690 3657 l 3645 3477 l cp
+eoclip
+n 3690 3240 m
+ 3690 3690 l gs col0 s gr gr
+
+% arrowhead
+n 3645 3477 m 3690 3657 l 3735 3477 l  col0 s
+% Polyline
+gs  clippath
+6063 4005 m 5835 4005 l 5835 4095 l 6063 4095 l 6063 4095 l 5883 4050 l 6063 4005 l cp
+eoclip
+n 6705 4050 m
+ 5850 4050 l gs col0 s gr gr
+
+% arrowhead
+n 6063 4005 m 5883 4050 l 6063 4095 l  col0 s
+% Polyline
+gs  clippath
+8955 6963 m 8955 6735 l 8865 6735 l 8865 6963 l 8865 6963 l 8910 6783 l 8955 6963 l cp
+eoclip
+n 8910 7200 m
+ 8910 6750 l gs col0 s gr gr
+
+% arrowhead
+n 8955 6963 m 8910 6783 l 8865 6963 l  col0 s
+% Polyline
+gs  clippath
+11283 6390 m 11055 6390 l 11055 6480 l 11283 6480 l 11283 6480 l 11103 6435 l 11283 6390 l cp
+eoclip
+n 13140 6435 m
+ 11070 6435 l gs col0 s gr gr
+
+% arrowhead
+n 11283 6390 m 11103 6435 l 11283 6480 l  col0 s
+% Polyline
+n 6750 3690 m 11070 3690 l 11070 4365 l 6750 4365 l
+ cp gs col0 s gr 
+% Polyline
+n 13140 6075 m 15615 6075 l 15615 6750 l 13140 6750 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+14400 6963 m 14400 6735 l 14310 6735 l 14310 6963 l 14310 6963 l 14355 6783 l 14400 6963 l cp
+eoclip
+n 14355 7200 m
+ 14355 6750 l gs col0 s gr gr
+
+% arrowhead
+n 14400 6963 m 14355 6783 l 14310 6963 l  col0 s
+% Polyline
+n 13140 7200 m 15615 7200 l 15615 7875 l 13140 7875 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+14400 8088 m 14400 7860 l 14310 7860 l 14310 8088 l 14310 8088 l 14355 7908 l 14400 8088 l cp
+eoclip
+n 14355 8325 m
+ 14355 7875 l gs col0 s gr gr
+
+% arrowhead
+n 14400 8088 m 14355 7908 l 14310 8088 l  col0 s
+% Polyline
+n 13140 8325 m 15615 8325 l 15615 9000 l 13140 9000 l
+ cp gs col0 s gr 
+% Polyline
+n 15975 7200 m 18450 7200 l 18450 7875 l 15975 7875 l
+ cp gs col0 s gr 
+% Polyline
+n 15975 8325 m 18450 8325 l 18450 9000 l 15975 9000 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+17235 8088 m 17235 7860 l 17145 7860 l 17145 8088 l 17145 8088 l 17190 7908 l 17235 8088 l cp
+eoclip
+n 17190 8325 m
+ 17190 7875 l gs col0 s gr gr
+
+% arrowhead
+n 17235 8088 m 17190 7908 l 17145 8088 l  col0 s
+% Polyline
+n 18810 8325 m 21285 8325 l 21285 9000 l 18810 9000 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+11283 5265 m 11055 5265 l 11055 5355 l 11283 5355 l 11283 5355 l 11103 5310 l 11283 5265 l cp
+eoclip
+n 13140 5310 m
+ 11070 5310 l gs col0 s gr gr
+
+% arrowhead
+n 11283 5265 m 11103 5310 l 11283 5355 l  col0 s
+% Polyline
+gs  clippath
+1362 4095 m 1590 4095 l 1590 4005 l 1362 4005 l 1362 4005 l 1542 4050 l 1362 4095 l cp
+eoclip
+n -900 -900 m -900 4050 l
+ 1575 4050 l gs col0 s gr gr
+
+% arrowhead
+n 1362 4095 m 1542 4050 l 1362 4005 l  col0 s
+% Polyline
+gs  clippath
+3465 5838 m 3465 5610 l 3375 5610 l 3375 5838 l 3375 5838 l 3420 5658 l 3465 5838 l cp
+eoclip
+n 3420 6075 m
+ 3420 5625 l gs col0 s gr gr
+
+% arrowhead
+n 3465 5838 m 3420 5658 l 3375 5838 l  col0 s
+% Polyline
+n -1350 4950 m 11070 4950 l 11070 5625 l -1350 5625 l
+ cp gs col0 s gr 
+% Polyline
+gs  clippath
+-1607 5355 m -1380 5355 l -1380 5265 l -1607 5265 l -1607 5265 l -1427 5310 l -1607 5355 l cp
+eoclip
+n -3150 5310 m
+ -1395 5310 l gs col18 s gr gr
+
+% arrowhead
+n -1607 5355 m -1427 5310 l -1607 5265 l  col18 s
+/Times-Bold ff 254.00 scf sf
+1935 1890 m
+gs 1 -1 sc  90.0 rot (GSN) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+2835 1935 m
+gs 1 -1 sc  90.0 rot (SNOWPACK) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+3735 1890 m
+gs 1 -1 sc  90.0 rot (Alpine3D) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+4635 1890 m
+gs 1 -1 sc  90.0 rot (GEOTop) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+5580 1935 m
+gs 1 -1 sc  90.0 rot (SMET) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+6435 1890 m
+gs 1 -1 sc  90.0 rot (ARC) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+7380 1935 m
+gs 1 -1 sc  90.0 rot (GRASS) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+8235 1935 m
+gs 1 -1 sc  90.0 rot (ARPS) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+9135 1935 m
+gs 1 -1 sc  90.0 rot (PGM) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+10035 1935 m
+gs 1 -1 sc  90.0 rot (BormaXML) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+10935 1935 m
+gs 1 -1 sc  90.0 rot (IMIS) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+1035 1890 m
+gs 1 -1 sc  90.0 rot (GRIB) col0 sh gr
+/Times-Bold ff 254.00 scf sf
+150 1890 m
+gs 1 -1 sc  90.0 rot (PNG) col0 sh gr
+/Times-BoldItalic ff 317.50 scf sf
+5450 2970 m
+gs 1 -1 sc (IOInterface) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+12735 675 m
+gs 1 -1 sc (Coords) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+16245 675 m
+gs 1 -1 sc (Date) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+14310 1800 m
+gs 1 -1 sc (StationData) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+14355 2970 m
+gs 1 -1 sc (MeteoData) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+8910 6480 m
+gs 1 -1 sc (Meteo2DInterpolator) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+8910 7605 m
+gs 1 -1 sc (InterpolationAlgorithms) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+14310 5400 m
+gs 1 -1 sc (Config) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+16740 -1215 m
+gs 1 -1 sc (IOExceptions) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+8550 -1260 m
+gs 1 -1 sc (IOUtils) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+3420 6525 m
+gs 1 -1 sc (MeteoProcessor) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+2115 8775 m
+gs 1 -1 sc (ProcessingBlock) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+2115 7605 m
+gs 1 -1 sc (ProcessingStack) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+5040 7695 m
+gs 1 -1 sc (Meteo1DInterpolator) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+5040 8775 m
+gs 1 -1 sc (ResamplingAlgorithms) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+-630 6480 m
+gs 1 -1 sc (DataGenerator) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+-675 7605 m
+gs 1 -1 sc (GeneratorAlgorithms) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+-4050 5355 m
+gs 1 -1 sc (User API) dup sw pop 2 div neg 0 rm  col18 sh gr
+/Times-Bold ff 254.00 scf sf
+-810 -1125 m
+gs 1 -1 sc (IOPlugin) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+8820 4140 m
+gs 1 -1 sc (BufferedIOHandler) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+3690 4140 m
+gs 1 -1 sc (IOHandler) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+14355 6480 m
+gs 1 -1 sc (DEMObject) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+14355 7605 m
+gs 1 -1 sc (Grid2DObject) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+14355 8730 m
+gs 1 -1 sc (Array2D) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+17190 7650 m
+gs 1 -1 sc (Grid3DObject) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+17190 8730 m
+gs 1 -1 sc (Array3D) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+20115 8730 m
+gs 1 -1 sc (Array) dup sw pop 2 div neg 0 rm  col0 sh gr
+/Times-Bold ff 254.00 scf sf
+4770 5400 m
+gs 1 -1 sc (IOManager) dup sw pop 2 div neg 0 rm  col0 sh gr
+% here ends figure;
+pagefooter
+showpage
+%%Trailer
+%EOF

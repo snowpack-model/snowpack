@@ -1,0 +1,44 @@
+Adding a new Test to Testenvirenment
+####################################
+This manual shows how to add a test to the testing environment of MeteoIO 
+(http://slfsmm.indefero.net/p/meteoio/). This example will create from a test
+source the test excecutabel and add the test.
+
+
+1. Needs
+--------
+Need an executable or source code which berforms the test (Example: test.cc)
+	
+2. Including needed files to source files
+-----------------------------------------
+1.	All test in MeteoIO can be found in the folder "./tests". Create there a new
+	folder for the new test. (Example : "./tests/test_dir/")
+
+2.	Copy in your test files in the the new direcotry (example: "./tests/test_dir/test.cc")
+
+3.	Create in the same folder a the file "CMakeLists.txt" with following content:
+
+		## The Test:  test
+		# generate executable
+		ADD_EXECUTABLE(test_exe test.cc)
+		TARGET_LINK_LIBRARIES(test_exe ${LIBRARIES}) # ${LIBRARIES} set flags to link with LD and MeteoIO librarys
+
+		# add the tests
+		ADD_TEST(test.name test_exe)
+		SET_TESTS_PROPERTIES(test.name 
+					PROPERTIES LABELS label_to_group_tests)
+
+3. Addapting cmake system
+-------------------------
+1.	At the end of file "./tests/CMakeLists.txt" add following line:
+		ADD_SUBDIRECTORY(test_dir)
+		
+2.	In the "CMakeLists.txt" on the base of the source folder search following cmake command:
+		ADD_CUSTOM_TARGET(distclean make clean 
+	
+	Add to this command following line before the ')':
+		ADD_CUSTOM_TARGET(distclean make clean 
+				...
+				COMMAND cmake -E remove_directory tests/test_dir/CMakeFiles
+				COMMAND cmake -E remove_directory tests/test_dir/Testing
+		)
