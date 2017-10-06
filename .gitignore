@@ -1,5 +1,5 @@
 CMakeFiles/
-*.cmake
+#*.cmake
 MakeFile
 lib/
 bin/
