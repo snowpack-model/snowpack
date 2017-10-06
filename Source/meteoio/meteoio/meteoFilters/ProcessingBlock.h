@@ -19,6 +19,7 @@
 #define PROCESSINGBLOCK_H
 
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/Config.h>
 #include <vector>
 #include <string>
 #include <set>
@@ -42,6 +43,9 @@ class ProcessingProperties {
 		                         points_before(0), points_after(0),
 		                         stage(first) {}
 
+		ProcessingProperties(const Duration& t_before, const Duration& t_after, const size_t& pt_before, const size_t& pt_after, const proc_stage& i_stage)
+		: time_before(t_before), time_after(t_after), points_before(pt_before), points_after(pt_after), stage(i_stage) {}
+
 		const std::string toString() const;
 
 		Duration time_before;
@@ -61,32 +65,31 @@ class ProcessingProperties {
  */
 class ProcessingBlock {
 	public:
-		virtual ~ProcessingBlock();
+		virtual ~ProcessingBlock() {}
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
-		std::string getName() const;
-		const ProcessingProperties& getProperties() const;
+		std::string getName() const {return block_name;}
+		const ProcessingProperties& getProperties() const {return properties;}
 		const std::string toString() const;
+		bool skipStation(const std::string& station_id) const;
 
 	protected:
-		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children
+		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+		static void readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init, std::vector<double> &corrections);
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
-		void convert_args(const size_t& min_nargs, const size_t& max_nargs,
-		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const;
-
-		static bool is_soft(std::vector<std::string>& vec_args);
-
-		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections);
-
+		const std::set<std::string> excluded_stations, kept_stations;
 		ProcessingProperties properties;
 		const std::string block_name;
+
+		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
 };
 
 class BlockFactory {
 	public:
-		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path);
+		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 };
 
 } //end namespace

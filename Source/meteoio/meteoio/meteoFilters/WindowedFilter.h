@@ -39,22 +39,22 @@ class WindowedFilter : public FilterBlock {
 			right   ///< right centered window
 		};
 
-		WindowedFilter(const std::string& name);
-
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
-		static unsigned int get_centering(std::vector<std::string>& vec_args);
+		WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+
+		void setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::vector<const MeteoData*>& get_window(const size_t& index,
 		                                                const std::vector<MeteoData>& ivec);
 		bool get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec,
 		                      size_t& start, size_t& end) const;
 
-		Duration min_time_span;
-		Centering centering;
+		Duration min_time_span; ///< This is filled in the constructor by calling setWindowFParams
+		Centering centering; ///< This is filled in the constructor by calling setWindowFParams
+		size_t min_data_points; ///< This is filled in the constructor by calling setWindowFParams
 		size_t last_start, last_end;
-		size_t min_data_points;
 
 	private:
 		std::vector<const MeteoData*> vec_window;

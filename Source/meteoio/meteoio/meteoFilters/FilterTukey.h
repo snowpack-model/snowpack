@@ -19,41 +19,43 @@
 #define FILTERTUKEY_H
 
 #include <meteoio/meteoFilters/WindowedFilter.h>
-#include <meteoio/meteoStats/libinterpol1D.h>
 #include <vector>
 #include <string>
-#include <algorithm>
 
 namespace mio {
 
 /**
  * @class  FilterTukey
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2011-02-07
  * @brief Tukey 53H method
+ * @details
  * A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation.
  * see <i>"Despiking Acoustic Doppler Velocimeter Data"</i>, Derek G. Goring and Vladimir L. Nikora, Journal of Hydraulic Engineering, <b>128</b>, 1, 2002
- * The deviation factor coeffecient is currently hard-coded as k=1.5
+ * The deviation factor coeffecient is currently hard-coded as k=1.5. It takes as arguments all the window parameters as defined in WindowedFilter::setWindowFParams().
+ *
  * @code
- * Valid examples for the io.ini file:
- *          TA::filter1 = Tukey
- *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
- *          RH::filter1 = Tukey
- *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
+ * TA::filter1         = Tukey
+ * TA::arg1::soft      = TRUE
+ * TA::arg1::centering = left
+ * TA::arg1::MIN_PTS   = 1
+ * TA::arg1::MIN_SPAN  = 1800 ;ie 1800 seconds time span for the left leaning window
+ *
+ * RH::filter1        = Tukey
+ * RH::arg1::MIN_PTS  = 10
+ * RH::arg1::MIN_SPAN = 600 ;strictly centered window spanning 600 seconds and at least 10 points
  * @endcode
  */
 class FilterTukey : public WindowedFilter {
 	public:
-		FilterTukey(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterTukey(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
-		double getStdDev(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
-		double getU3(const std::vector<MeteoData>& ivec, const size_t& i, const unsigned int& param);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static double getStdDev(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+		static double getU3(const std::vector<MeteoData>& ivec, const size_t& i, const unsigned int& param);
 		static const double k; ///<How many times the stddev allowed as deviation to the smooth signal for valid points
 };
 

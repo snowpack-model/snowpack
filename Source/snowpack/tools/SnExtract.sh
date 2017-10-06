@@ -2,22 +2,44 @@
 #This script extracts a given column out of a met or pro file
 
 if [ $# -lt 1 ]; then
-	echo "$0 <filename> \t to get the list of available parameters with their number"
-	echo "$0 <filename> <param_number>\t to extract a given parameter"
+	printf "Extract parameters out of .pro or .met files (even if they are compressed with bzip2).\n"
+	printf "  $0 <filename> \t\t to get the list of available parameters with their number\n"
+	printf "  $0 <filename> <param_number>\t to extract a given parameter\n"
 	exit
 fi
 
 #determine if we are dealing with a pro or met file
 ext=`echo ${1##*.}`
+if [  "${ext}" = "bz2"  ]; then
+	is_bz_compressed=1
+	base=`basename $1 .${ext}`
+	ext=`echo ${base##*.}`
+fi
 
+cat_head() {
+	if [ "${is_bz_compressed}" ]; then
+		bzcat $1 | head -50
+	else
+		head -50 $1
+	fi
+}
+ 
 list_met() {
 	char_width=`tput cols`
-	head -15 $1 | grep -E "^ID," | tr "," "\n" | nl | pr --columns=2 --omit-pagination --width=${char_width}
+	cat_head $1 | grep -E "^ID," | tr "," "\n" | nl | pr -2 -t -w ${char_width}
+}
+
+cat_all() {
+	if [ "${is_bz_compressed}" ]; then
+		bzcat $1
+	else
+		cat $1
+	fi
 }
 
 extract_met() {
 	station=`basename $1 .met`
-	awk -F, '
+	cat_all $1 | awk -F, '
 		BEGIN {
 			param="'"$2"'"
 		}
@@ -39,11 +61,11 @@ extract_met() {
 		END {
 			printf("\n")
 		}
-	' $1
+	'
 }
 
 list_pro() {
-	head -50 $1 | awk -F, '
+	cat_head $1 | awk -F, '
 		BEGIN {
 			OFS=" "
 		}
@@ -69,7 +91,7 @@ list_pro() {
 
 extract_pro() {
 	station=`basename $1 .pro`
-	awk -F, '
+	cat_all $1 | awk -F, '
 		BEGIN {
 			param="'"$2"'"
 		}
@@ -108,7 +130,7 @@ extract_pro() {
 		END {
 			printf("\n")
 		}
-	' $1
+	'
 }
 
 ################################################

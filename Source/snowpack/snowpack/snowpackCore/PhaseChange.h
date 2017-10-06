@@ -20,10 +20,7 @@
 #ifndef PHASE_CHANGE_H
 #define PHASE_CHANGE_H
 
-#include <snowpack/Constants.h>
 #include <snowpack/DataClasses.h>
-#include <snowpack/Hazard.h>
-#include <snowpack/Laws_sn.h>
 #include <meteoio/MeteoIO.h>
 
 /**
@@ -66,8 +63,9 @@ class PhaseChange {
 
 		bool alpine3d;			///< flag for alpine3d simulations
 		double t_crazy_min, t_crazy_max;///< reasonable temperature bounds
+		double max_theta_ice;		///< maximum ice content of a layer, above which the presence of liquid water is allowed with sub-freezing temperatures
 
-		static const double theta_s; ///< Saturated Water Content, for now we say  1.0
+		static const double theta_s;	///< Saturated Water Content, for now we say  1.0
 };
 
 #endif

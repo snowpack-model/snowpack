@@ -17,22 +17,21 @@ IF(WIN32)
 		FIND_LIBRARY(Blas_LIBRARY
 			NAMES libblas.lib
 			PATHS ${SEARCH_PATH}
-			DOC "Location of the liblapack, like c:/Program Files/LAPACK-3.0.0/lib/liblapack.dll.a"
+			DOC "Location of the liblapack, like c:/Program Files/LAPACK-3.0.0/lib/libblas.lib"
 			)
 	ELSE(MSVC)
 		FIND_LIBRARY(Lapack_LIBRARY
-			NAMES liblapack.dll.a
+			NAMES liblapack.dll
 			PATHS ${SEARCH_PATH}
-			DOC "Location of the libblas, like c:/Program Files/LAPACK-3.0.0/lib/libblas.lib"
+			DOC "Location of the libblas, like c:/Program Files/LAPACK-3.0.0/lib/libblas.dll"
 			)
 		FIND_LIBRARY(Blas_LIBRARY
-			NAMES libblas.dll.a
+			NAMES libblas.dll
 			PATHS ${SEARCH_PATH}
-			DOC "Location of the libblas, like c:/Program Files/LAPACK-3.0.0/lib/libblas.dll.a"
+			DOC "Location of the libblas, like c:/Program Files/LAPACK-3.0.0/lib/libblas.dll"
 			)
 	ENDIF(MSVC)
 ELSE(WIN32)
-	SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 	IF(APPLE)
 		FIND_LIBRARY(Lapack_LIBRARY
 		NAMES lapack
@@ -45,7 +44,7 @@ ELSE(WIN32)
 			"/usr/lib"
 			"/opt/lib"
 			${SRC_DIR}/lib
-		DOC "Location of the liblapack, like /usr/lib/liblapack.a"
+		DOC "Location of the liblapack, like /usr/lib/liblapack.dylib"
 		)
 		FIND_LIBRARY(Blas_LIBRARY
 		NAMES blas
@@ -58,7 +57,7 @@ ELSE(WIN32)
 			"/usr/lib"
 			"/opt/lib"
 			${SRC_DIR}/lib
-		DOC "Location of the libblas, like /usr/lib/libblas.a"
+		DOC "Location of the libblas, like /usr/lib/libblas.dylib"
 		)
 	ELSE(APPLE)
 		FIND_LIBRARY(Lapack_LIBRARY
@@ -67,13 +66,13 @@ ELSE(WIN32)
 			ENV LD_LIBRARY_PATH
 			"~/usr/lib"
 			"/usr/local/lib"
-			"/usr/lib"
-			"/usr/lib/atlas"
 			"/usr/lib64"
 			"/usr/lib64/atlas"
+			"/usr/lib"
+			"/usr/lib/atlas"
 			"/opt/lib"
 			${SRC_DIR}/lib
-		DOC "Location of the liblapack, like /usr/lib/liblapack.a"
+		DOC "Location of the liblapack, like /usr/lib/liblapack.so"
 		)
 		FIND_LIBRARY(Blas_LIBRARY
 		NAMES blas
@@ -81,13 +80,13 @@ ELSE(WIN32)
 			ENV LD_LIBRARY_PATH
 			"~/usr/lib"
 			"/usr/local/lib"
-			"/usr/lib"
-			"/usr/lib/atlas"
 			"/usr/lib64"
 			"/usr/lib64/atlas"
+			"/usr/lib"
+			"/usr/lib/atlas"
 			"/opt/lib"
 			${SRC_DIR}/lib
-		DOC "Location of the libblas, like /usr/lib/libblas.a"
+		DOC "Location of the libblas, like /usr/lib/libblas.so"
 		)
 	ENDIF(APPLE)
 ENDIF(WIN32)

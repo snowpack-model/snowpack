@@ -23,10 +23,10 @@ using namespace std;
 
 namespace mio {
 
-ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector<std::string>& vec_args, const std::string& name)
-                     : ProcessingBlock(name), type(sh)
+ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                     : ProcessingBlock(vecArgs, name), type(sh)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -70,24 +70,28 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 	}
 }
 
-void ProcUndercatch_Hamon::parse_args(std::vector<std::string> filter_args)
+void ProcUndercatch_Hamon::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	if (filter_args.size()!=1)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + ", please provide the rain gauge type!", AT);
+	const std::string where( "Filters::"+block_name );
+	bool has_type=false;
 
-	for (size_t ii=0; ii<filter_args.size(); ii++) {
-		IOUtils::toLower(filter_args[ii]);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (type_str=="SH") {
+				type=sh;
+			} else if (type_str=="UNSH") {
+				type=unsh;
+			} else if (type_str=="HELLMANNSH") {
+				type=hellmannsh;
+			} else {
+				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for "+where, AT);
+			}
+			has_type = true;
+		}
 	}
 
-	if (filter_args[0]=="sh") {
-		type=sh;
-	} else if (filter_args[0]=="unsh") {
-		type=unsh;
-	} else if (filter_args[0]=="hellmannsh") {
-		type=hellmannsh;
-	} else {
-		throw InvalidArgumentException("Rain gauge type \""+ filter_args[0] +"\" unknown for filter "+getName(), AT);
-	}
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 } //end namespace

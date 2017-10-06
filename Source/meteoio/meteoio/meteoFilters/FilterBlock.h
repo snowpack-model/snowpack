@@ -34,13 +34,13 @@ namespace mio {
  */
 class FilterBlock : public ProcessingBlock {
 	public:
-		virtual ~FilterBlock();
+		virtual ~FilterBlock() {}
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
-		FilterBlock(const std::string& filter_name); ///< protected constructor only to be called by children
+		FilterBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& filter_name)  : ProcessingBlock(vecArgs, filter_name) {}
 
 		static void extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                               std::vector<double>& ovec);

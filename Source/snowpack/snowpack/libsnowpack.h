@@ -39,6 +39,8 @@
 
 #include <snowpack/plugins/SnowpackIO.h>
 #include <snowpack/plugins/SnowpackIOInterface.h>
+#include <snowpack/plugins/AsciiIO.h> //for direct calls to AsciiIO
+#include <snowpack/plugins/SmetIO.h> //for direct calls to SmetIO
 
 #include <snowpack/snowpackCore/Aggregate.h>
 #include <snowpack/snowpackCore/Canopy.h>

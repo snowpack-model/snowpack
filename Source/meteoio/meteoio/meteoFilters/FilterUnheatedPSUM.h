@@ -25,35 +25,36 @@
 namespace mio {
 
 /**
- * @class  FilterUnheatedPSUM
+ * @class FilterUnheatedPSUM
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2011-11-11
  * @brief Filters out snow melting in an unheated rain gauge.
+ * @details
  * This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place
  * when the relative humidity is greater than 0.5 and (TA-TSS) < 3, otherwise they get reset to 0.
- * It can take two optional arguments overwriting these thresholds. If none of these conditions could be tested
+ * It can take two optional arguments overwriting these thresholds (THRESH_RH and THRESH_DT). If none of these conditions could be tested
  * (for lack of data), then the precipitation is reset to nodata. On the contrary, if the "soft" option is given,
  * the lack of validation data keeps the precipitation as it is.
  *
  * @code
- * PSUM::filter2	= unheated_raingauge
- * PSUM::arg2	= soft 0.5 3.
+ * PSUM::filter2 = unheated_raingauge
+ * PSUM::arg2::soft = TRUE
+ * PSUM::arg2::thresh_rh = 0.5
+ * PSUM::arg2::thresh_dt = 3.
  * @endcode
  */
 
 class FilterUnheatedPSUM : public FilterBlock {
 	public:
-		FilterUnheatedPSUM(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double thresh_rh, thresh_Dt;
-		bool soft;
+		bool is_soft;
 };
 
 } //end namespace

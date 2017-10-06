@@ -18,14 +18,10 @@
 #ifndef COORDS_H
 #define COORDS_H
 
-#include <meteoio/IOUtils.h>
-#include <meteoio/IOExceptions.h>
-
 #include <string>
 #include <iostream>
 
 namespace mio {
-	
 /**
  * @page dev_coords Coordinate systems support developement guide
  * Geographic coordinates are transparently supported (ie converted to/from lat/lon as well as between cartesian coordinate systems) through
@@ -117,21 +113,21 @@ public:
 	void merge(const Coords& coord2);
 
 	//Getter methods
-	double getEasting() const;
-	double getNorthing() const;
-	double getLat() const;
-	double getLon() const;
-	double getAltitude() const;
-	int getGridI() const;
-	int getGridJ() const;
-	int getGridK() const;
-	bool indexIsValid() const;
+	double getEasting() const {return easting;}
+	double getNorthing() const {return northing;}
+	double getLat() const {return latitude;}
+	double getLon() const {return longitude;}
+	double getAltitude() const {return altitude;}
+	int getGridI() const {return grid_i;}
+	int getGridJ() const {return grid_j;}
+	int getGridK() const {return grid_k;}
+	bool indexIsValid() const {return validIndex;} ///< Returns true if the (i,j,k) index are valid
 	void getProj(std::string& proj_type, std::string& proj_args) const;
 	short int getEPSG() const;
 
 	const std::string toString(const FORMATS& type = DEBUG) const;
-	friend std::iostream& operator<<(std::iostream& os, const Coords& coord);
-	friend std::iostream& operator>>(std::iostream& is, Coords& coord);
+	friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
+	friend std::istream& operator>>(std::istream& is, Coords& coord);
 
 	//Setter methods
 	void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);

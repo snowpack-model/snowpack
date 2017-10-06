@@ -47,9 +47,9 @@
 #include <meteoio/DataGenerator.h>
 #include <meteoio/exports.h>
 #include <meteoio/FileUtils.h>
-#include <meteoio/GeneratorAlgorithms.h>
+#include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/Graphics.h>
-#include <meteoio/InterpolationAlgorithms.h>
+#include <meteoio/spatialInterpolations/InterpolationAlgorithms.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/IOInterface.h>
@@ -87,7 +87,7 @@
 #include <meteoio/plugins/libsmet.h>
 
 #include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>
 
 #endif

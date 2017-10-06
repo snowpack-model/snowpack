@@ -1,20 +1,26 @@
 INCLUDE(LibFindMacros)
 
-# Finally the library itself
-GET_FILENAME_COMPONENT(SRC_DIR ${CMAKE_SOURCE_DIR} PATH) #ie goes up one level
-STRING(REPLACE " " "\\ " SRC_DIR ${SRC_DIR})
+# Where can we find something that looks like a Snowpack source tree?
+FILE(GLOB sn_local_src LIST_DIRECTORIES TRUE  ../../../[sS]nowpack ../[sS]nowpack ../../../[sS]nowpack-[0-9]* ../[sS]nowpack-[0-9]*)
+LIST(LENGTH sn_local_src n)
+IF("${n}" EQUAL "0")
+	SET(SRC_DIR ".")
+ELSE("${n}" EQUAL "0")
+	LIST(GET sn_local_src 0 SRC_DIR) #only keep the first match
+ENDIF("${n}" EQUAL "0")
 
 IF(WIN32)
 	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT1 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Snowpack;UninstallString]" PATH CACHE INTERNAL)
 	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT2 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Snowpack;UninstallString]" PATH CACHE INTERNAL)
 	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT3 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\WSL Institute for Snow and Avalanche Research\\Snowpack]" ABSOLUTE CACHE INTERNAL)
+	GET_FILENAME_COMPONENT(METEOIO_ROOT4 "C:/Progra~1/Snowpack*" ABSOLUTE CACHE INTERNAL)
 	SET(SEARCH_PATH
 		ENV LIB
-		${LIBSNOWPACK_ROOT1}/bin
-		${LIBSNOWPACK_ROOT2}/bin
-		${LIBSNOWPACK_ROOT3}/bin
-		${SRC_DIR}/snowpack/bin
-		"C:/Program Files/Snowpack/bin" )
+		${SRC_DIR}/bin ${SRC_DIR}/lib
+		${LIBSNOWPACK_ROOT1}/bin ${LIBSNOWPACK_ROOT1}/lib
+		${LIBSNOWPACK_ROOT2}/bin ${LIBSNOWPACK_ROOT2}/lib
+		${LIBSNOWPACK_ROOT3}/bin ${LIBSNOWPACK_ROOT3}/lib
+		${LIBSNOWPACK_ROOT4}/bin ${LIBSNOWPACK_ROOT4}/lib )
 
 	IF(MSVC)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
@@ -24,7 +30,7 @@ IF(WIN32)
 			)
 	ELSE(MSVC)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
-			NAMES libsnowpack.dll.a
+			NAMES libsnowpack.dll.a libsnowpack.a
 			PATHS ${SEARCH_PATH}
 			DOC "Location of the libsnowpack, like c:/Program Files/Snowpack-2.0.0/lib/libsnowpack.dll.a"
 			)
@@ -34,14 +40,14 @@ ELSE(WIN32)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
 		NAMES snowpack
 		PATHS
-			"/Applications/Snowpack/lib"
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
+			${SRC_DIR}/lib
 			"~/usr/lib"
+			"/Applications/Snowpack/lib"
 			"/usr/local/lib"
 			"/usr/lib"
 			"/opt/lib"
-			${SRC_DIR}/snowpack/lib
 		DOC "Location of the libsnowpack, like /usr/lib/libsnowpack.dylib"
 		)
 	ELSE(APPLE)
@@ -49,11 +55,11 @@ ELSE(WIN32)
 		NAMES snowpack
 		PATHS
 			ENV LD_LIBRARY_PATH
+			${SRC_DIR}/lib
 			"~/usr/lib"
 			"/usr/local/lib"
 			"/usr/lib"
 			"/opt/lib"
-			${SRC_DIR}/snowpack/lib
 		DOC "Location of the libsnowpack, like /usr/lib"
 		)
 	ENDIF(APPLE)

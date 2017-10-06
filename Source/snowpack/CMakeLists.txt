@@ -1,15 +1,86 @@
-cmake_minimum_required(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.4)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
+PROJECT(snowpack)
 # Version of library
 SET(VERSION_MAJOR 3 CACHE INTERNAL "")
-SET(VERSION_MINOR 3 CACHE INTERNAL "")
-SET(VERSION_PATCH 0 CACHE INTERNAL "")
+SET(VERSION_MINOR 4 CACHE INTERNAL "")
+SET(VERSION_PATCH 1 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
-PROJECT(snowpack)
+###########################################################
+#platform specific. First, compiler specific flags, then system specific flags
+OPTION(BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON)
+IF(WIN32)
+	SET(BUILD_STATIC_LIBS ON) #otherwise the lib files are not generated
+ELSE(WIN32)
+	OPTION(BUILD_STATIC_LIBS "Set to ON to build static libraries" OFF)
+ENDIF(WIN32)
+
+###########################################################
+#set compiler flags according to the detected compiler and user options
+INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
+SET_COMPILER_OPTIONS()
+
+#The following pre-processor variables are automatically defined:
+# __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
+IF(UNIX)
+	#set a full rpath for both build & install tree
+	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	# add the automatically determined parts of the RPATH
+	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+	# the RPATH to be used when installing, but only if it's not a system directory
+	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+	IF("${isSystemDir}" STREQUAL "-1")
+		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+	ENDIF("${isSystemDir}" STREQUAL "-1")
+
+	IF(APPLE)
+		SET(DLL_EXT "dylib")
+		SET(STAT_EXT "a")
+		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
+		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
+	ELSE(APPLE)
+		SET(DLL_EXT "so*")
+		SET(STAT_EXT "a")
+	ENDIF(APPLE)
+ELSE(UNIX)
+	IF(WIN32)
+		#SET(PLATFORM "-D_WIN32 -U__STRICT_ANSI__")
+		ADD_DEFINITIONS(-U__STRICT_ANSI__)
+		SET(DLL_EXT "dll")
+		SET(STAT_EXT "a")
+	ENDIF(WIN32)
+ENDIF(UNIX)
+
+IF(NOT CMAKE_BUILD_TYPE)
+	SET(CMAKE_BUILD_TYPE "release" CACHE STRING "Choose the type of build, options are: debug release coverage cxxflags" FORCE)
+	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
+FIND_PACKAGE(MeteoIO)
+
+###########################################################
+#plugins and applications
+SET(SNOWPACK_STANDALONE ON CACHE BOOL "Compilation SNOWPACK standalone ON or OFF")
+SET(PROFEVAL OFF CACHE BOOL "Compilation PROFEVAL ON or OFF")
+
+SET(ENABLE_LAPACK OFF CACHE BOOL "Compile with the CLAPACK library?")
+SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISDBIO ON or OFF - only relevant for SLF")
+SET(PLUGIN_CAAMLIO OFF CACHE BOOL "Compilation CAAMLIO ON or OFF to read CAAML profiles")
+
+###########################################################
+#finally, SET compile flags
+SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
+MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
+
+#Add subdirectory, so they can inherit all variables defined above
 ADD_SUBDIRECTORY(snowpack)
 
 IF(SNOWPACK_STANDALONE)
@@ -33,178 +104,6 @@ IF(PROFEVAL)
 ENDIF(PROFEVAL)
 
 ###########################################################
-#plugins and applications
-SET(SNOWPACK_STANDALONE ON CACHE BOOL "Compilation SNOWPACK standalone ON or OFF")
-SET(PROFEVAL OFF CACHE BOOL "Compilation PROFEVAL ON or OFF")
-SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
-
-SET(ENABLE_LAPACK OFF CACHE BOOL "Compile with the CLAPACK library?")
-SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISDBIO ON or OFF - only relevant for SLF")
-SET(PLUGIN_CAAMLIO OFF CACHE BOOL "Compilation CAAMLIO ON or OFF to read CAAML profiles")
-
-###########################################################
-#platform specific. First, compiler specific flags, then system specific flags
-SET(BUILD_SHARED_LIBS ON CACHE BOOL "Set to ON to build dynamic libraries")
-IF(WIN32)
-	SET(BUILD_STATIC_LIBS ON) #otherwise the lib files are not generated
-ELSE(WIN32)
-	SET(BUILD_STATIC_LIBS OFF CACHE BOOL "Set to ON to build static libraries")
-ENDIF(WIN32)
-
-INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
-BuildVersion()
-
-IF(MSVC)
-	IF(PLUGIN_IMISIO)
-		SET(EXTRA "${EXTRA} /DIMISDBIO")
-	ENDIF(PLUGIN_IMISIO)
-	IF(PLUGIN_CAAMLIO)
-		SET(EXTRA "${EXTRA} /DCAAMLIO")
-	ENDIF(PLUGIN_CAAMLIO)
-	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-	SET(WARNINGS "/W4")
-	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
-	SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
-	SET(ARCH_OPTIM "/arch:SSE2")
-	SET(ARCH_SAFE "")
-	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
-	IF(DEBUG_ARITHM)
-		SET(EXTRA "${EXTRA} /EHa")
-	ENDIF(DEBUG_ARITHM)
-	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /D_USE_MATH_DEFINES /EHsc") #Za: strict ansi
-	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
-ELSE(MSVC)
-	#we consider that all other compilers support "-" options and silently ignore what they don't know
-	IF(PLUGIN_IMISIO)
-		SET(EXTRA "${EXTRA} -DIMISDBIO")
-	ENDIF(PLUGIN_IMISIO)
-	IF(PLUGIN_CAAMLIO)
-		SET(EXTRA "${EXTRA} -DCAAMLIO")
-	ENDIF(PLUGIN_CAAMLIO)
-	IF(ENABLE_LAPACK)
-		SET(EXTRA "${EXTRA} -DCLAPACK")
-	ENDIF(ENABLE_LAPACK)
-	SET(WARNINGS "-Wall")
-	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
-	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
-	IF(WIN32)
-		LIST(APPEND CFLAGS " -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
-	ENDIF(WIN32)
-	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
-	IF("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
-		SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
-	ENDIF()
-	SET(DEBUG "-g3 -O0 -D__DEBUG")
-	IF(DEBUG_ARITHM)
-		SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
-	ENDIF(DEBUG_ARITHM)
-	SET(_VERSION "-D_VERSION=\\\"${_versionString}\\\"")
-	
-	IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wvector-operation-performance")
-		IF(NOT ANDROID)
-			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
-			IF(WIN32) #for gcc on windows
-				SET(CMAKE_SHARED_LINKER_FLAGS "--enable-auto-import")
-				SET(CMAKE_EXE_LINKER_FLAGS "--enable-auto-import")
-			ENDIF(WIN32)
-		ENDIF(NOT ANDROID)
-		EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-		IF(GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
-			SET(ARCH_OPTIM  "-march=native -mtune=native")
-		ENDIF()
-		IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
-			SET(OPTIM "${OPTIM} -flto") #for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
-			# if set to ON, all binaries depending on the library have to be compiled the same way.
-			#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"
-			SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
-			IF (LEAKS_CHECK)
-				SET(EXTRA "${EXTRA} -fsanitize=address -fno-omit-frame-pointer")
-			ENDIF(LEAKS_CHECK)
-		ENDIF()
-	ENDIF()
-	IF("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-		SET(PROFILING "-pg") #add ${PROFILING} to the CFLAGS when necessary
-		SET(EXTRA "${EXTRA} -fcolor-diagnostics") #-fapple-pragma-pack does not seems necessary; -ftrapv should be replaced by sanitize=integer
-		SET(OPTIM "${OPTIM} -flto")
-		SET(WARNINGS "${WARNINGS} -Weverything -Wno-date-time -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-global-constructors -Wno-exit-time-destructors -Wno-sign-conversion -Wno-covered-switch-default") #obviously, we should try to fix the warnings!
-		SET(DEEP_WARNINGS "${DEEP_WARNINGS} -Rpass=.*")
-		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
-			IF (LEAKS_CHECK)
-				SET(EXTRA "${EXTRA} -ftrapv -fno-omit-frame-pointer") #-fsanitize=address,undefined,integer,undefined-trap but this is currently not supported by Apple
-			ENDIF(LEAKS_CHECK)
-		SET(ARCH_OPTIM  "-march=native")
-	ENDIF()
-
-ENDIF(MSVC)
-
-
-#The following pre-processor variables are automatically defined:
-# __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
-IF(UNIX)
-	IF(APPLE)
-		SET(DLL_EXT "dylib")
-		SET(STAT_EXT "a")
-		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
-		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
-
-		#set a full rpath for both build & install tree
-		SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-		# add the automatically determined parts of the RPATH
-		# which point to directories outside the build tree to the install RPATH
-		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-		# the RPATH to be used when installing, but only if it's not a system directory
-		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-		IF("${isSystemDir}" STREQUAL "-1")
-			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-		ENDIF("${isSystemDir}" STREQUAL "-1")
-	ELSE(APPLE)
-		SET(DLL_EXT "so*")
-		SET(STAT_EXT "a")
-	ENDIF(APPLE)
-ELSE(UNIX)
-	IF(WIN32)
-		#SET(PLATFORM "-D_WIN32 -U__STRICT_ANSI__")
-		ADD_DEFINITIONS(-U__STRICT_ANSI__)
-		SET(DLL_EXT "dll")
-		SET(STAT_EXT "a")
-	ENDIF(WIN32)
-ENDIF(UNIX)
-
-IF(NOT CMAKE_BUILD_TYPE)
-	SET(CMAKE_BUILD_TYPE "release" CACHE STRING "Choose the type of build, options are: debug release " FORCE)
-	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
-ENDIF(NOT CMAKE_BUILD_TYPE)
-
-###########################################################
-#targets providing sets of compiler options
-if(NOT DEST)
-  set(DEST "safe" CACHE STRING "Choose safe or optimized" FORCE)
-endif(NOT DEST)
-
-IF (DEST STREQUAL "safe")
-	SET(ARCH  "${ARCH_SAFE}")
-ENDIF(DEST STREQUAL "safe")
-
-IF(DEST STREQUAL "optimized")
-	SET(ARCH  "${ARCH_OPTIM}")
-ENDIF(DEST STREQUAL "optimized")
-
-###########################################################
-#finally, SET compile flags
-SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${CFLAGS} ${EXTRA}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
-
-MESSAGE(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
-MESSAGE(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
-
-###########################################################
 #for the install target
 FILE(GLOB hfiles "snowpack/*.h")
 FILE(GLOB hpluginfiles "snowpack/plugins/*.h")
@@ -214,8 +113,9 @@ INSTALL(FILES ${hpluginfiles} DESTINATION include/snowpack/plugins COMPONENT hea
 INSTALL(FILES ${hcorefiles} DESTINATION include/snowpack/snowpackCore COMPONENT headers)
 
 ADD_CUSTOM_TARGET(distclean make clean
-	COMMAND cmake -E remove *~ snowpack/*~ applications/snowpack/*~
-	COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake snowpack/cmake_install.cmake applications/snowpack/cmake_install.cmake tests/cmake_install.cmake tests/CTestTestfile.cmake
+	COMMAND cmake -E remove snowpack/*~ snowpack/cmake_install.cmake
+	COMMAND cmake -E remove applications/snowpack/*~ applications/snowpack/cmake_install.cmake applications/snowpack/Makefile  applications/snowpack/cmake_*.cmake
+	COMMAND cmake -E remove tests/*~ tests/res1exp/*~ tests/res5exp/*~ tests/cmake_install.cmake tests/CTestTestfile.cmake
 	COMMAND cmake -E remove_directory CMakeFiles
 	COMMAND cmake -E remove_directory snowpack/CMakeFiles
 	COMMAND cmake -E remove_directory applications/snowpack/CMakeFiles
@@ -223,6 +123,7 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove tests/res1exp/*.cmake tests/res1exp/output/*
 	COMMAND cmake -E remove_directory tests/res1exp/CMakeFiles
 	COMMAND cmake -E remove_directory tests/res1exp/Testing
+	COMMAND cmake -E remove *~ CMakeCache.txt cmake_install.cmake CPack*.cmake cmake_*.cmake Makefile
 	)
 
 ###########################################################
@@ -241,6 +142,7 @@ IF (DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(doc "doxygen" ${PROJECT_SOURCE_DIR}/snowpack/config.dox)
 ENDIF (DOXYGEN_FOUND)
 #Install the documentation if the user desires it
+SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
 IF(INSTALL_DOC)
 	IF(WIN32)
 		SET(DOC_PATH "doc")
@@ -296,9 +198,21 @@ IF(CPACK_BUNDLE_ALL)
 		MESSAGE("Inishell not found! Please copy inishell.jar into the tools directory")
 	ENDIF("${inishell}" STREQUAL "")
 	INSTALL(FILES ${inishell} DESTINATION bin COMPONENT exe)
+	
+	#bundle SnopViz
+	SET(CPACK_BUNDLE_SNOPVIZ ON CACHE BOOL "Should SnopViz also be bundled?")
+	IF(CPACK_BUNDLE_SNOPVIZ)
+		SET(SNOPVIZ_DIST_PATH "../snopviz" CACHE PATH "Path to SNOPVIZ 'dist' subdirectory")
+		FILE(GLOB snopviz_html "${SNOPVIZ_DIST_PATH}/*.html")
+		IF("${snopviz_html}" STREQUAL "")
+			MESSAGE("SnopViz not found! Please provide a proper path to SnopViz 'dist' and don't forget to run 'make dist'")
+		ENDIF("${snopviz_html}" STREQUAL "")
+		INSTALL(DIRECTORY "${SNOPVIZ_DIST_PATH}/assets" DESTINATION bin/snopviz COMPONENT exe)
+		INSTALL(FILES ${snopviz_html} DESTINATION bin/snopviz COMPONENT exe)
+	ENDIF(CPACK_BUNDLE_SNOPVIZ)
 ENDIF(CPACK_BUNDLE_ALL)
 
-SET(CPACK_PACKAGE_DESCRIPTION "Snowpack Library")
+SET(CPACK_PACKAGE_DESCRIPTION "Snowpack Model")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is the SNOWPACK model ([Bartelt 2002], [Lehning 2002a], [Lehning 2002b]) for physical modeling of snow pack. This consists of a library and a program calling it so it can easily be integrated into other models.")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
 SET(CPACK_PACKAGE_NAME "Snowpack")
@@ -319,6 +233,7 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${VERSION}-${
 
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
+SET(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 SET(CPACK_COMPONENTS_ALL documentation examples exe)
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Snowpack static library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The SNOWPACK static library")
@@ -361,6 +276,7 @@ IF(UNIX)
 		SET_SOURCE_FILES_PROPERTIES(${CPACK_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 		INSTALL(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink bin/snowpack /usr/bin/snowpack)")
 	ELSE(APPLE)
+		SET(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
 		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "snowpack")
@@ -390,39 +306,35 @@ ELSE(UNIX)
 		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
-		#SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "${EnvVarUpdate} $0 \"LIB\"  \"A\" \"HKLM\" \"C:\MyLib\"")
 		SET(CPACK_NSIS_MODIFY_PATH ON)
+		
+		#Main links (they can get overwritten later)
+		SET(MENU_LINKS_SNOPVIZ "http://snopviz.org" "SNOPVIZ online visualization" )
+		SET(MENU_LINKS_SNOWPACK "https://models.slf.ch/p/snowpack/" "SNOWPACK Home page")
 		IF(INSTALL_DOC)
-			IF(CPACK_BUNDLE_ALL)
-				SET(CPACK_NSIS_MENU_LINKS
-				"https://models.slf.ch/snopviz/" "SNOPVIZ visualization"
-				"bin/inishell.jar" "SNOWPACK inishell"
-				"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
-				"${DOC_PATH}/examples" "SNOWPACK examples"
-				"https://models.slf.ch/p/snowpack/" "SNOWPACK Home page"
-				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
-				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
-			ELSE(CPACK_BUNDLE_ALL)
-				SET(CPACK_NSIS_MENU_LINKS
-				"https://models.slf.ch/snopviz/" "SNOPVIZ visualization"
-				"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
-				"${DOC_PATH}/examples" "SNOWPACK examples"
-				"https://models.slf.ch/p/snowpack/" "SNOWPACK Home page")
-			ENDIF(CPACK_BUNDLE_ALL)
-		ELSEIF(INSTALL_DOC)
-			IF(CPACK_BUNDLE_ALL)
-				SET(CPACK_NSIS_MENU_LINKS
-				"https://models.slf.ch/snopviz/" "SNOPVIZ visualization"
-				"bin/inishell.jar" "SNOWPACK inishell"
-				"https://models.slf.ch/p/snowpack/" "SNOWPACK Home page"
-				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
-			ELSE(CPACK_BUNDLE_ALL)
-				SET(CPACK_NSIS_MENU_LINKS 
-				"https://models.slf.ch/snopviz/" "SNOPVIZ visualization"
-				"https://models.slf.ch/p/snowpack/" "SNOWPACK Home page")
-			ENDIF(CPACK_BUNDLE_ALL)
+			LIST(APPEND MENU_LINKS_SNOWPACK
+			"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
+			"${DOC_PATH}/examples" "SNOWPACK examples"
+			)
 		ENDIF(INSTALL_DOC)
-
+		
+		#all other links: inishell, local snopviz, meteoio
+		IF(CPACK_BUNDLE_ALL)
+			SET(MENU_LINKS_INISHELL "bin/inishell.jar" "SNOWPACK inishell")
+			IF(CPACK_BUNDLE_SNOPVIZ)
+				SET(MENU_LINKS_SNOPVIZ "bin/snopviz/index.html" "SNOPVIZ visualization")
+			ENDIF(CPACK_BUNDLE_SNOPVIZ)
+			SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
+			IF(INSTALL_DOC)
+				SET(MENU_LINKS_METEOIO
+				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
+				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page"
+				)
+			ENDIF(INSTALL_DOC)
+		ENDIF(CPACK_BUNDLE_ALL)
+		
+		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_SNOWPACK} ${MENU_LINKS_INISHELL} ${MENU_LINKS_SNOPVIZ} ${MENU_LINKS_METEOIO})
+		
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
@@ -457,19 +369,17 @@ INCLUDE(CPack)
 ###########################################################
 ## CTest section
 ###########################################################
-## Special build type configuration for Coverage Testing.
-# Note: Coverage testing only works with g++ (or some commercial tools)
-OPTION(BUILD_TESTING "Build the QA tests" OFF)
+OPTION(BUILD_TESTING "Build the tests" OFF)
 IF(BUILD_TESTING)
-	# Coverage statistic rign now only supportet with GCC (GNUGXX)
+	# Special build type configuration for Coverage Testing.
+	#Coverage testing only supported by GCC and a few commercial tools
 	IF(CMAKE_COMPILER_IS_GNUCXX)
-		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make covarage tests" OFF)
+		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make coverage tests" OFF)
 		IF(BUILD_TESTING_WITH_COVERAGE)
 			# force the correct flags to make coverage trought a build type
 			SET(CMAKE_BUILD_TYPE coverage)
-			SET(CMAKE_CXX_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
-			SET(CMAKE_C_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
-			MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_COVERAGE CMAKE_C_FLAGS_COVERAGE)
+			SET(CMAKE_CXX_FLAGS_COVERAGE "${OPTIM} -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
+			MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_COVERAGE)
 			# Force debug mode, so that no optimisation is made to get "Correct" results of coverage testing
 			SET(CMAKE_BUILD_TYPE "coverage" CACHE STRING "Choose the type of build, options are: debug release coverage " FORCE)
 			SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})

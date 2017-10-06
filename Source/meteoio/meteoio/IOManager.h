@@ -20,9 +20,7 @@
 
 #include <meteoio/DataGenerator.h>
 #include <meteoio/Meteo2DInterpolator.h>
-#include <meteoio/MeteoProcessor.h>
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/TimeSeriesManager.h>
 #include <meteoio/GridsManager.h>
 
@@ -41,12 +39,16 @@ class IOManager {
 		//Legacy support to support functionality of the IOInterface superclass:
 		void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
+		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void readDEM(DEMObject& dem_out);
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		void readLanduse(Grid2DObject& landuse_out);
 		void readPOI(std::vector<Coords>& pts);
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		void write3DGrid(const Grid3DObject& grid_out, const std::string& options="");
+		void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		//end legacy support
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
@@ -75,7 +77,7 @@ class IOManager {
 		* @return            Number of stations for which data has been found in the interval
 		*/
 		size_t getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                    std::vector< METEO_SET >& vecVecMeteo);
+		                    std::vector< METEO_SET >& vecVecMeteo) {return tsmanager.getMeteoData(dateStart, dateEnd, vecVecMeteo);}
 
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
@@ -112,7 +114,7 @@ class IOManager {
 		 * @param vecMeteo The actual data being pushed into the IOManager object
 		 */
 		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
-		                     const std::vector< METEO_SET >& vecMeteo);
+		                     const std::vector< METEO_SET >& vecMeteo) {tsmanager.push_meteo_data(level, date_start, date_end, vecMeteo);}
 
 		/**
 		 * @brief Fill Grid2DObject with spatial data.
@@ -172,7 +174,7 @@ class IOManager {
 		 * @param buffer_size buffer size in days
 		 * @param buff_before buffer centering in days
 		 */
-		void setMinBufferRequirements(const double& buffer_size, const double& buff_before);
+		void setMinBufferRequirements(const double& buffer_size, const double& buff_before) {tsmanager.setMinBufferRequirements(buffer_size, buff_before);}
 
 		/**
 		 * @brief Returns the average sampling rate in the data.
@@ -183,16 +185,16 @@ class IOManager {
 		 * it would return 2 measurements per hour.
 		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
-		double getAvgSamplingRate() const;
+		double getAvgSamplingRate() const {return tsmanager.getAvgSamplingRate();}
 
-		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="");
+		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="") {tsmanager.writeMeteoData(vecMeteo, name);}
 
 		/**
 		 * @brief Returns a copy of the internal Config object.
 		 * This is convenient to clone an iomanager
 		 * @return new Config object as a copy of the internal Config
 		 */
-		const Config getConfig() const;
+		const Config getConfig() const {return cfg;}
 
 		const std::string toString() const;
 
@@ -204,7 +206,7 @@ class IOManager {
 		 * @param i_date Representing a point in time
 		 * @param vecMeteo A vector of MeteoData objects to be copied into the point cache
 		 */
-		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
+		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo) {tsmanager.add_to_points_cache(i_date, vecMeteo);}
 
 		/**
 		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.
@@ -213,12 +215,14 @@ class IOManager {
 
 	private:
 		void initIOManager();
+		void load_virtual_meteo(const Date& i_date, METEO_SET& vecMeteo);
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler iohandler;
 		TimeSeriesManager tsmanager;
 		GridsManager gridsmanager;
 		Meteo2DInterpolator interpolator;
+		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
 		bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?
 		bool virtual_stations; ///< compute the meteo values at virtual stations
 };

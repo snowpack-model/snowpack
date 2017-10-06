@@ -16,7 +16,9 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/StationData.h>
+#include <meteoio/IOUtils.h>
 #include <cmath>
+#include <sstream>
 
 using namespace std;
 
@@ -78,32 +80,6 @@ void StationData::merge(const StationData& sd2) {
 	position.merge(sd2.position);
 }
 
-
-//Specific Getter Functions for stationName, stationID and position
-Coords StationData::getPosition() const {
-	return position;
-}
-
-std::string StationData::getStationID() const {
-	return stationID;
-}
-
-std::string StationData::getStationName() const {
-	return stationName;
-}
-
-std::string StationData::getHash() const {
-	return stationID+"::"+stationName;
-}
-
-double StationData::getSlopeAngle() const {
-	return slope;
-}
-
-double StationData::getAzimuth() const {
-	return azi;
-}
-
 const std::string StationData::toString() const {
 	std::ostringstream os;
 	os << "<station>" << "\n"
@@ -115,7 +91,7 @@ const std::string StationData::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const StationData& station) {
+std::ostream& operator<<(std::ostream& os, const StationData& station) {
 	os << station.position;
 
 	const size_t s_ID = station.stationID.size();
@@ -130,7 +106,7 @@ std::iostream& operator<<(std::iostream& os, const StationData& station) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, StationData& station) {
+std::istream& operator>>(std::istream& is, StationData& station) {
 	is >> station.position;
 
 	size_t s_ID, s_name;

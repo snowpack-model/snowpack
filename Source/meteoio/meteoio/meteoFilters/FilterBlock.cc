@@ -19,12 +19,6 @@
 
 namespace mio {
 
-FilterBlock::FilterBlock(const std::string& filter_name) : ProcessingBlock(filter_name) {
-
-}
-
-FilterBlock::~FilterBlock() {}
-
 void FilterBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
                                      std::vector<double>& ovec)
 {

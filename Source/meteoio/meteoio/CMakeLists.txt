@@ -5,6 +5,9 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoStats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoFilters/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoResampling/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/spatialInterpolations/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataGenerators/CMakeLists.txt")
 
 IF(PROJ4)
 	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
@@ -38,19 +41,23 @@ SET(meteoio_sources
 	IOManager.cc
 	IOHandler.cc
 	MeteoProcessor.cc
-	ResamplingAlgorithms.cc
 	ResamplingAlgorithms2D.cc
-	InterpolationAlgorithms.cc
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
+	DataCreator.cc
 	DataGenerator.cc
-	GeneratorAlgorithms.cc
 	plugins/libsmet.cc
+	IOInterface.cc
+	${meteoResampling_sources}
+	${spatialInterpolations_sources}
 	${plugins_sources}
 	${meteoLaws_sources}
 	${meteoStats_sources}
 	${meteoFilters_sources}
+	${dataGenerators_sources}
 )
+
+set_source_files_properties(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
 
 IF(GUI_EXCEPTIONS)
 	IF(MSVC)
@@ -76,7 +83,7 @@ IF(BUILD_SHARED_LIBS)
 	ADD_LIBRARY(${SHAREDNAME} ${meteoio_sources})
 	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${LIBPROJ} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
 	SET_TARGET_PROPERTIES(${SHAREDNAME} PROPERTIES
-		MACOSX_RPATH "${CMAKE_INSTALL_RPATH}"
+		MACOSX_RPATH TRUE
 		PREFIX "${LIBPREFIX}"
 		LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
 		ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
@@ -99,7 +106,7 @@ IF(BUILD_STATIC_LIBS)
 	ADD_LIBRARY(${STATICNAME} STATIC ${meteoio_sources})
 	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${LIBPROJ} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
 	SET_TARGET_PROPERTIES(${STATICNAME} PROPERTIES
-		MACOSX_RPATH "${CMAKE_INSTALL_RPATH}"
+		MACOSX_RPATH TRUE
 		PREFIX "${LIBPREFIX}"
 		LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
 		ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"

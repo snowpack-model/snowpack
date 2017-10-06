@@ -27,8 +27,6 @@ namespace mio {
 /**
  * @class  ProcUndercatch_WMO
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2012-02-06
  * @brief Correct precipitation for undercatch in winter conditions.
  * @details
  * This implements the standard methods for precipitation correction as described in
@@ -46,27 +44,35 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * They also depend on the usage of a shield around the gauge as well as the type of rain gauge that does the measurements,
  * therefore this type must be specified as an argument. The coefficients are not always available both for shielded and
  * unshielded gauges, so most of the time only one variation will be available and is specified below.
- * The following methods can be specified as argument (only one can be specified):
- * - cst {factor for snow} {factor for mixed precipitation} - this applies a constant factor to the precipitation. Optionally, the snow and rain threshold temperatures can be given instead of relying on the above values (by adding them at the end of the line).
- * - Nipher - National standard rain gauge in Canada, shielded
- * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded
- * - US8sh - US national 8\" rain gauge, shielded (Alter shield)
- * - US8unsh - US national 8\" rain gauge, unshielded
- * - RT3_Jp - Japanese network RT-3 rain gauge. This uses an ad-hoc rain/snow splitting method.
- * - Cspg - China Standard Precipitation Gauge, unshielded
- * - Geonorsh - Geonor rain gauge with Alter shield. The mixed precipitation is computed according to the same principles as in (Ye, 2004).
- * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
- * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
+ *
+ * The following arguments are supported:
+ * - TYPE: this gives the rain gauge and shield type. It must be one of:
+ *     - cst - this applies a constant factor to the precipitation (the solid and mixed precipitation factor must be provided, see below);
+ *     - Nipher - National standard rain gauge in Canada, shielded;
+ *     - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded;
+ *     - US8sh - US national 8\" rain gauge, shielded (Alter shield);
+ *     - US8unsh - US national 8\" rain gauge, unshielded;
+ *     - RT3_Jp - Japanese network RT-3 rain gauge. This uses an ad-hoc rain/snow splitting method;
+ *     - Cspg - China Standard Precipitation Gauge, unshielded;
+ *     - Geonorsh - Geonor rain gauge with Alter shield. The mixed precipitation is computed according to the same principles as in (Ye, 2004);
+ *     - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded;
+ *     - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data;
+ * - SNOW: constant factor for solid precipitation for the CST type (mandatory);
+ * - MIXED: constant factor for mixed precipitation for the CST type (mandatory);
+ * - T_SNOW: solid precipitation temperature threshold for the CST type (in K, optional);
+ * - T_RAIN: liquid precipitation temperature threshold for the CST type (in K, optional);
  *
  * @code
- * PSUM::filter1	= undercatch_wmo
- * PSUM::arg1	= cst 1.3 1.1
+ * PSUM::filter1     = undercatch_wmo
+ * PSUM::arg1::type  = cst
+ * PSUM::arg1::snow  = 1.3
+ * PSUM::arg1::mixed = 1.1
  * @endcode
  */
 
 class ProcUndercatch_WMO : public ProcessingBlock {
 	public:
-		ProcUndercatch_WMO(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -91,7 +97,7 @@ class ProcUndercatch_WMO : public ProcessingBlock {
 			snow
 		} precip_type;
 
-		void parse_args(std::vector<std::string> filter_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		sensor_type type;
 		double factor_snow, factor_mixed;

@@ -90,6 +90,12 @@ class MeteoBuffer {
 		bool empty() const;
 
 		/**
+		* @brief Returns the number of stations present in the buffer
+		* @return number of stations in buffer
+		*/
+		size_t size() const { return ts_buffer.size();}
+
+		/**
 		* @brief Clear the buffer; the data is deleted and the start and end dates reset to <i>undef</i>
 		*/
 		void clear();
@@ -101,7 +107,15 @@ class MeteoBuffer {
 		 * @param vecMeteo        A vector of vector<MeteoData> objects providing the data
 		 */
 		void push(const Date& date_start, const Date& date_end, const std::vector< METEO_SET >& vecMeteo);
-		//void push(const Date& date, const METEO_SET& vecMeteo);
+
+
+		/**
+		 * @brief Add a data point for several stations. The data is considered valid within the provided two dates
+		 * @param date_start      A Date object representing the beginning of an interval (inclusive)
+		 * @param date_end        A Date object representing the end of an interval (inclusive)
+		 * @param vecMeteo        A vector of MeteoData objects providing the data
+		 */
+		void push(const Date& date_start, const Date& date_end, const std::vector<MeteoData>& vecMeteo);
 
 		const std::string toString() const;
 
@@ -124,6 +138,7 @@ class MeteoBuffer {
  * @author Mathias Bavay
  * @date   2015-02-06
 */
+//TODO: make it a template so it can buffer dems, 2D, 3D grids
 class GridBuffer {
 	public:
 		GridBuffer(const size_t& in_max_grids);

@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <time.h>
+#include <algorithm>
 #include <meteoio/MeteoIO.h>
 
 using namespace std;
@@ -241,8 +242,7 @@ bool check_regressions(const vector<double>& x, const vector<double>& y) {
 	bool status = true;
 
 	Fit1D fit(Fit1D::SIMPLE_LINEAR, x, y);
-	std::vector<double> coeff;
-	fit.getParams(coeff);
+	std::vector<double> coeff = fit.getParams();
 	if (!IOUtils::checkEpsilonEquality(coeff[0], -0.500941, 1e-6) ||
 	    !IOUtils::checkEpsilonEquality(coeff[1], 12.810614, 1e-6)) {
 		std::cout << "wrong results for simple_linear regression: returned ";
@@ -251,7 +251,7 @@ bool check_regressions(const vector<double>& x, const vector<double>& y) {
 	}
 
 	fit.setModel(Fit1D::LINEARLS, x, y); //this should return the same values
-	fit.getParams(coeff);
+	coeff = fit.getParams();
 	if (!IOUtils::checkEpsilonEquality(coeff[0], -0.500941, 1e-6) ||
 	    !IOUtils::checkEpsilonEquality(coeff[1], 12.810614, 1e-6)) {
 		std::cout << "wrong results for linear_ls regression: returned ";
@@ -281,7 +281,7 @@ bool check_regressions(const vector<double>& x, const vector<double>& y) {
 	}
 
 	fit.setModel(Fit1D::QUADRATIC, x, y);
-	fit.getParams(coeff);
+	coeff = fit.getParams();
 	if (!IOUtils::checkEpsilonEquality(coeff[0], 0.0016668, 1e-6) ||
 	    !IOUtils::checkEpsilonEquality(coeff[1], -0.3605318, 1e-6) ||
 	    !IOUtils::checkEpsilonEquality(coeff[2], -98.3815970, 1e-6)) {

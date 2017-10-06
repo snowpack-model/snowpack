@@ -24,8 +24,6 @@
 #include <meteoio/MathOptim.h> //math optimizations
 #include <meteoio/ResamplingAlgorithms2D.h> //for Winstral
 
-#include <meteoio/IOManager.h> //HACK HACK HACK
-
 using namespace std;
 
 namespace mio {
@@ -162,15 +160,12 @@ inline double Interpol2D::weightInvDistN(const double& d2)
 void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
 {
 	grid.set(dem, IOUtils::nodata);
-
+ 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
-	for (size_t j=0; j<grid.getNy(); j++) {
-		for (size_t i=0; i<grid.getNx(); i++) {
-			const double& cell_altitude=dem(i,j);
-			if (cell_altitude!=IOUtils::nodata) {
-				grid(i,j) = Atmosphere::stdAirPressure(cell_altitude);
-			}
-		}
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		const double& cell_altitude=dem(ii);
+		if (cell_altitude!=IOUtils::nodata)
+			grid(ii) = Atmosphere::stdAirPressure(cell_altitude);
 	}
 }
 
@@ -186,23 +181,19 @@ void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObjec
 	grid.set(dem, IOUtils::nodata);
 
 	//fills a data table with constant values
-	for (size_t j=0; j<grid.getNy(); j++) {
-		for (size_t i=0; i<grid.getNx(); i++) {
-			if (dem(i,j)!=IOUtils::nodata) {
-				grid(i,j) = value;
-			}
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		if (dem(ii)!=IOUtils::nodata) {
+			grid(ii) = value;
 		}
 	}
 }
 
 double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<double>& vecData_in,
-                           const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings)
+                           const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings, const double& scale, const double& alpha)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
 	const size_t n_stations = vecEastings.size();
 	double parameter = 0., norm = 0.;
-	const double scale = 1.e3;
-	const double alpha = 1.;
 
 	for (size_t ii=0; ii<n_stations; ii++) {
 		const double DX = x-vecEastings[ii];
@@ -215,13 +206,11 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	return (parameter/norm); //normalization
 }
 
-double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vector<double>& vecDistance_sq)
+double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vector<double>& vecDistance_sq, const double& scale, const double& alpha)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
 	const size_t n_stations = vecDistance_sq.size();
 	double parameter = 0., norm = 0.;
-	const double scale = 1.e3;
-	const double alpha = 1.;
 
 	for (size_t ii=0; ii<n_stations; ii++) {
 		const double dist = Optim::invSqrt( vecDistance_sq[ii] + scale*scale ); //use the optimized 1/sqrt approximation
@@ -239,10 +228,12 @@ double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vec
 * @param dem array of elevations (dem)
 * @param nrOfNeighbors number of neighboring stations to use for each pixel
 * @param grid 2D array to fill
+* @param scale The scale factor is used to smooth the grid. It is added to the distance before applying the weights in order to come into the tail of "1/d".
+* @param alpha The weights are computed as 1/dist^alpha, so give alpha=1 for standards 1/dist weights.
 */
 void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                const DEMObject& dem, const size_t& nrOfNeighbors,
-                               Grid2DObject& grid)
+                               Grid2DObject& grid, const double& scale, const double& alpha)
 {
 	grid.set(dem, IOUtils::nodata);
 
@@ -250,7 +241,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 	for (size_t j=0; j<grid.getNy(); j++) {
 		for (size_t i=0; i<grid.getNx(); i++) {
 			//LL_IDW_pixel returns nodata when appropriate
-			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors);
+			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors, scale, alpha);
 		}
 	}
 }
@@ -258,7 +249,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const size_t& nrOfNeighbors)
+                               const DEMObject& dem, const size_t& nrOfNeighbors, const double& scale, const double& alpha)
 {
 	const double cell_altitude = dem(i,j);
 	if (cell_altitude==IOUtils::nodata)
@@ -271,7 +262,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	getNeighbors(x, y, vecStations_in, sorted_neighbors);
 
 	//build the vectors of valid data, with max nrOfNeighbors
-	std::vector<double> altitudes, values, distances;
+	std::vector<double> altitudes, values, distances_sq;
 	for (size_t st=0; st<sorted_neighbors.size(); st++) {
 		const size_t st_index = sorted_neighbors[st].second;
 		const double value = vecData_in[st_index];
@@ -279,7 +270,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 		if ((value != IOUtils::nodata) && (altitude != IOUtils::nodata)) {
 			altitudes.push_back( altitude );
 			values.push_back( value );
-			distances.push_back( sorted_neighbors[st].first );
+			distances_sq.push_back( sorted_neighbors[st].first );
 			if (altitudes.size()>=nrOfNeighbors) break;
 		}
 
@@ -293,7 +284,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	}
 
 	//compute the local pixel value, retrend
-	const double pixel_value = IDWCore(values, distances);
+	const double pixel_value = IDWCore(values, distances_sq, scale, alpha);
 	if (pixel_value!=IOUtils::nodata)
 		return pixel_value + trend(cell_altitude);
 	else
@@ -309,9 +300,11 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 * @param vecStations_in position of the "values" (altitude and coordinates)
 * @param dem array of elevations (dem). This is needed in order to know if a point is "nodata"
 * @param grid 2D array to fill
+* @param scale The scale factor is used to smooth the grid. It is added to the distance before applying the weights in order to come into the tail of "1/d".
+* @param alpha The weights are computed as 1/dist^alpha, so give alpha=1 for standards 1/dist weights.
 */
 void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                     const DEMObject& dem, Grid2DObject& grid)
+                     const DEMObject& dem, Grid2DObject& grid, const double& scale, const double& alpha)
 {
 	if (allZeroes(vecData_in)) { //if all data points are zero, simply fill the grid with zeroes
 		constant(0., dem, grid);
@@ -334,7 +327,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 		for (size_t ii=0; ii<grid.getNx(); ii++) {
 			if (dem(ii,jj)!=IOUtils::nodata) {
 				grid(ii,jj) = IDWCore((xllcorner+double(ii)*cellsize), (yllcorner+double(jj)*cellsize),
-				                           vecData_in, vecEastings, vecNorthings);
+				                           vecData_in, vecEastings, vecNorthings, scale, alpha);
 			}
 		}
 	}
@@ -385,9 +378,9 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 	const double omega_c_range=(dem->max_curvature-omega_c_min);
 
 	//compute modified VW and DW
-	const double gamma_s = 0.58; //speed weighting factor
-	const double gamma_c = 0.42; //direction weighting factor
-	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
+	static const double gamma_s = 0.58; //speed weighting factor
+	static const double gamma_c = 0.42; //direction weighting factor
+	for (size_t ii=0; ii<VW.size(); ii++) {
 		const double vw = VW(ii);
 		if (vw==0. || vw==IOUtils::nodata) continue; //we can not apply any correction factor!
 		const double dw = DW(ii);
@@ -430,18 +423,16 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 
 	const double orig_mean = grid.grid2D.getMean();
 
-	for (size_t j=0;j<grid.getNy();j++) {
-		for (size_t i=0;i<grid.getNx();i++) {
-			if (ta(i,j)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		if (ta(ii)>Cst::t_water_freezing_pt) continue; //modify the grid of precipitations only if air temperature is below or at freezing
 
-			const double slope = dem.slope(i, j);
-			const double curvature = dem.curvature(i, j);
-			if (slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
+		const double slope = dem.slope(ii);
+		const double curvature = dem.curvature(ii);
+		if (slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
 
-			double& val = grid(i, j);
-			if (val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
-				val *= 0.5-(curvature-dem_max_curvature) / dem_range_curvature;
-			}
+		double& val = grid(ii);
+		if (val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
+			val *= 0.5-(curvature-dem_max_curvature) / dem_range_curvature;
 		}
 	}
 
@@ -455,7 +446,8 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest)
 {
 	double max_slope = 0.;
-	d_i_dest = 0, d_j_dest = 0;
+	d_i_dest = 0;
+	d_j_dest = 0;
 
 	//loop around all adjacent cells to find the cell with the steepest downhill slope
 	for (short d_i=-1; d_i<=1; d_i++) {
@@ -557,8 +549,13 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 
 /**
 * @brief Distribute precipitation in a way that reflects snow redistribution on the ground, according to (Huss, 2008)
-* This method modifies the solid precipitation distribution according to the local slope and curvature. See
-* <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review.
+* This method modifies the solid precipitation distribution according to the local slope and curvature: all pixels whose slope
+* is greater than 60° will not receive any snow at all. All pixels whose slope is less than 40° will receive full snow
+* and any pixel between 40° and 60° sees a linear correction between 100% and 0% snow. After this step, a curvature
+* correction is applied: pixels having the minimu curvature see 50% snow more, pixels having the maximum curvature see
+* 50% snow less and pixels ate the middle of the curvature range are unaffected.
+*
+* For more, see <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review.
 * and
 * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
 * @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
@@ -573,33 +570,24 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 	}
 	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
 
-	const size_t nrows = grid.getNy();
-	const size_t ncols = grid.getNx();
-	
-	for (size_t j=0;j<nrows;j++) {
-		for (size_t i=0;i<ncols;i++) {
-			// Get input data
-			const double slope = dem.slope(i, j);
-			const double curvature = dem.curvature(i, j);
-			double val = grid.grid2D(i, j);
+	for (size_t ii=0; ii<grid.size(); ii++) {
+		//we only modify the grid of precipitations if air temperature
+		//at this point is below or at freezing
+		if (ta.grid2D(ii)<=Cst::t_water_freezing_pt) {
+			const double slope = dem.slope(ii);
+			const double curvature = dem.curvature(ii);
+			double val = grid.grid2D(ii);
 
-			if (ta.grid2D(i, j)<=Cst::t_water_freezing_pt) {
-				//we only modify the grid of precipitations if air temperature
-				//at this point is below or at freezing
-				if (slope==IOUtils::nodata || curvature==IOUtils::nodata) {
-					val = IOUtils::nodata;
-				} else if (slope>60.) {
-					//No snow precipitation happens for these slopes
-					val = 0.;
-				} else if (slope>40.) {
-					//Linear transition from no snow to 100% snow
-					val *= (60.-slope)/20.;
-				} //else: unchanged
+			if (slope==IOUtils::nodata || curvature==IOUtils::nodata) {
+				val = IOUtils::nodata;
+			} else if (slope>60.) { //No snow precipitation happens for these slopes
+				val = 0.;
+			} else if (slope>40.) { //Linear transition from no snow to 100% snow
+				val *= (60.-slope)/20.;
+			} //else: unchanged
 
-				if (val!=IOUtils::nodata && dem_range_curvature!=0.) {
-					//cf Huss
-					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
-				}
+			if (val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
+				grid.grid2D(ii) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
 			}
 		}
 	}
@@ -622,7 +610,7 @@ void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& 
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
 	}
 
-	const double shade_factor = 5.;
+	static const double shade_factor = 5.;
 	const double cellsize = dem.cellsize;
 	const double max_alt = dem.grid2D.getMax();
 
@@ -677,7 +665,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 	const double inv_dmax = 1./dmax;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
-	const double altitude_thresh = 1.;
+	static const double altitude_thresh = 1.;
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
 	const int ncols = static_cast<int>(dem.getNx()), nrows = static_cast<int>(dem.getNy());
@@ -726,9 +714,9 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 {
 	grid.set(dem, IOUtils::nodata);
 
-	const double dmin = 0.;
-	const double bearing_inc = 5.;
-	const double bearing_width = 30.;
+	static const double dmin = 0.;
+	static const double bearing_inc = 5.;
+	static const double bearing_width = 30.;
 	double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
 	double bearing2 = fmod( in_bearing + bearing_width/2., 360. );
 	if (bearing1>bearing2) std::swap(bearing1, bearing2);
@@ -737,6 +725,38 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 	for (size_t jj = 0; jj<nrows; jj++) {
 		for (size_t ii = 0; ii<ncols; ii++) {
 			if (dem(ii,jj)==IOUtils::nodata) continue;
+			double sum = 0.;
+			unsigned short count=0;
+			for (double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
+				sum += atan( getTanMaxSlope(dem, dmin, dmax, bearing, ii, jj) );
+				count++;
+			}
+
+			grid(ii,jj) = (count>0)? sum/(double)count : IOUtils::nodata;
+		}
+	}
+}
+
+void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const Grid2DObject& DW, Grid2DObject& grid)
+{
+	if (!DW.isSameGeolocalization(dem)){
+		throw IOException("Requested grid DW doesn't match the geolocalization of the DEM", AT);
+	}
+	
+	grid.set(dem, IOUtils::nodata);
+
+	static const double dmin = 0.;
+	static const double bearing_inc = 5.;
+	static const double bearing_width = 30.;
+
+	const size_t ncols = dem.getNx(), nrows = dem.getNy();
+	for (size_t jj = 0; jj<nrows; jj++) {
+		for (size_t ii = 0; ii<ncols; ii++) {
+			if (dem(ii,jj)==IOUtils::nodata) continue;
+			const double in_bearing = DW(ii,jj);
+			double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
+			double bearing2 = fmod( in_bearing + bearing_width/2., 360. );
+			if (bearing1>bearing2) std::swap(bearing1, bearing2);
 			double sum = 0.;
 			unsigned short count=0;
 			for (double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
@@ -772,15 +792,19 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	//compute wind exposure factor
 	Grid2DObject Sx;
 	WinstralSX(dem, dmax, in_bearing, Sx);
-
+	
+	//don't change liquid precipitation
+	for (size_t ii=0; ii<Sx.size(); ii++) {
+		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
+	}
+	
 	//get the scaling parameters
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
 	double sum_erosion=0., sum_deposition=0.;
 
 	//erosion: fully eroded at min_sx
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
-		if (TA(ii)>Cst::t_water_freezing_pt) continue; //don't change liquid precipitation
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
@@ -801,8 +825,57 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	//deposition: garantee mass balance conservation
 	//-> we now have the proper scaling factor so we can deposit in individual cells
 	const double ratio = sum_erosion/sum_deposition;
-	for (size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
-		if (TA(ii)>Cst::t_water_freezing_pt) continue; //don't change liquid precipitation
+	for (size_t ii=0; ii<Sx.size(); ii++) {
+		const double sx = Sx(ii);
+		if (sx==IOUtils::nodata) continue;
+		double &val = grid(ii);
+		if (sx>0.) {
+			const double deposited = ratio * sx/max_sx;
+			val += deposited;
+		}
+	}
+}
+
+void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
+{
+	static const double vw_thresh = 5.; //m/s
+	//compute wind exposure factor
+	Grid2DObject Sx;
+	WinstralSX(dem, dmax, DW, Sx);
+	
+	//don't change liquid precipitation
+	for (size_t ii=0; ii<Sx.size(); ii++) {
+		if (TA(ii)>Cst::t_water_freezing_pt) Sx(ii)=IOUtils::nodata;
+	}
+	
+	//get the scaling parameters
+	const double min_sx = Sx.grid2D.getMin(); //negative
+	const double max_sx = Sx.grid2D.getMax(); //positive
+	double sum_erosion=0., sum_deposition=0.;
+
+	//erosion: fully eroded at min_sx
+	for (size_t ii=0; ii<Sx.size(); ii++) {
+		const double sx = Sx(ii);
+		if (sx==IOUtils::nodata || (sx<0 && VW(ii)<vw_thresh)) continue; //low wind speed pixels don't contribute to erosion
+		double &val = grid(ii);
+		if (sx<0.) {
+			const double eroded = val * sx/min_sx;
+			sum_erosion += eroded;
+			val -= eroded;
+		}
+		else { //at this point, we can only compute the sum of deposition
+			const double deposited = sx/max_sx;
+			sum_deposition += deposited;
+		}
+	}
+	
+	//no cells can take the eroded mass or no cells even got freezing temperatures
+	if (sum_deposition==0 || sum_erosion==0) return;
+	
+	//deposition: garantee mass balance conservation
+	//-> we now have the proper scaling factor so we can deposit in individual cells
+	const double ratio = sum_erosion/sum_deposition;
+	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);

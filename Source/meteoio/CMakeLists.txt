@@ -1,10 +1,10 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.4)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(meteoio)
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
-SET(VERSION_MINOR 5 CACHE INTERNAL "")
+SET(VERSION_MINOR 7 CACHE INTERNAL "")
 SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
@@ -18,83 +18,26 @@ IF(WIN32)
 ELSE(WIN32)
 	OPTION(BUILD_STATIC_LIBS "Set to ON to build static libraries" OFF)
 ENDIF(WIN32)
-INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
-BuildVersion()
 
-IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-	SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
-	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
-	SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
-	SET(ARCH_OPTIM "/arch:SSE2")
-	SET(ARCH_SAFE "")
-	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
-	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
-	IF(BUILD_SHARED_LIBS)
-		ADD_DEFINITIONS(/DMIO_DLL)
-	ENDIF(BUILD_SHARED_LIBS)
-	IF(GUI_EXCEPTIONS)
-		SET(MSG_BOX "/DMESG_BOX")
-	ENDIF(GUI_EXCEPTIONS)
-ELSE()
-	#we consider that all other compilers support "-" options and silently ignore what they don't know
-	SET(WARNINGS "-Wall -Wno-long-long")
-	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Wfloat-equal -Wpadded
-	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
-	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
-	IF("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
-		SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
-	ENDIF()
-	SET(DEBUG "-g3 -O0 -D__DEBUG")
-	SET(_VERSION "-D_VERSION=\\\"${_versionString}\\\"")
-	#IF(BUILD_SHARED_LIBS)
-	#	ADD_DEFINITIONS(-DMIO_DLL)
-	#ENDIF(BUILD_SHARED_LIBS)
-
-	IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wvector-operation-performance")
-		IF(NOT ANDROID)
-			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
-			IF(WIN32) #for gcc on windows
-				SET(CMAKE_SHARED_LINKER_FLAGS "--enable-auto-import")
-				SET(CMAKE_EXE_LINKER_FLAGS "--enable-auto-import")
-			ENDIF(WIN32)
-		ENDIF(NOT ANDROID)
-		EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-		IF(GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
-			SET(ARCH_OPTIM  "-march=native -mtune=native")
-		ENDIF()
-		IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
-			IF(NOT WIN32)
-				SET(OPTIM "${OPTIM} -flto") #for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
-			ENDIF(NOT WIN32)
-			# if set to ON, all binaries depending on the library have to be compiled the same way.
-			#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"
-			SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
-			IF (LEAKS_CHECK)
-				SET(EXTRA "${EXTRA} -fsanitize=address -fno-omit-frame-pointer")
-			ENDIF(LEAKS_CHECK)
-		ENDIF()
-	ENDIF()
-	IF("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-		SET(PROFILING "-pg") #add ${PROFILING} to the CFLAGS when necessary
-		SET(EXTRA "${EXTRA} -fcolor-diagnostics") #-fapple-pragma-pack does not seems necessary; -ftrapv should be replaced by sanitize=integer
-		SET(OPTIM "${OPTIM} -flto")
-		SET(WARNINGS "${WARNINGS} -Weverything -Wno-date-time -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables") #obviously, we should try to fix the warnings!
-		SET(DEEP_WARNINGS "${DEEP_WARNINGS} -Rpass=.*")
-		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
-			IF (LEAKS_CHECK)
-				SET(EXTRA "${EXTRA} -ftrapv -fno-omit-frame-pointer") #-fsanitize=address,undefined,integer,undefined-trap but this is currently not supported by Apple
-			ENDIF(LEAKS_CHECK)
-		SET(ARCH_OPTIM  "-march=native")
-	ENDIF()
-
-ENDIF()
+###########################################################
+#set compiler flags according to the detected compiler and user options
+INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
+SET_COMPILER_OPTIONS()
 
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
+	#set a full rpath for both build & install tree
+	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	# add the automatically determined parts of the RPATH
+	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+	# the RPATH to be used when installing, but only if it's not a system directory
+	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+	IF("${isSystemDir}" STREQUAL "-1")
+		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+	ENDIF("${isSystemDir}" STREQUAL "-1")
+
 	IF(APPLE)
 		SET(DLL_EXT "dylib*")
 		SET(STAT_EXT "a")
@@ -102,21 +45,6 @@ IF(UNIX)
 		SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation")
 		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
 		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
-
-		#set a full rpath for both build & install tree
-		SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-		# add the automatically determined parts of the RPATH
-		# which point to directories outside the build tree to the install RPATH
-		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-		# the RPATH to be used when installing, but only if it's not a system directory
-		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-		IF("${isSystemDir}" STREQUAL "-1")
-			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-		ENDIF("${isSystemDir}" STREQUAL "-1")
 	ELSE(APPLE)
 		SET(DLL_EXT "so*")
 		SET(STAT_EXT "a")
@@ -134,38 +62,6 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ###########################################################
-#targets providing SETs of compiler options
-IF(NOT DEST)
-	SET(DEST "safe" CACHE STRING "Choose safe or optimized" FORCE)
-ENDIF(NOT DEST)
-
-IF (DEST STREQUAL "safe")
-	SET(ARCH  "${ARCH_SAFE}")
-ENDIF(DEST STREQUAL "safe")
-
-IF(DEST STREQUAL "optimized")
-	SET(ARCH  "${ARCH_OPTIM}")
-ENDIF(DEST STREQUAL "optimized")
-
-#show exception messages in a graphical message box
-SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
-
-###########################################################
-#finally, SET compile flags
-
-SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
-MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
-
-#Add subdirectory, so they can inherit all variables defined above
-ADD_SUBDIRECTORY(meteoio/dataClasses)
-ADD_SUBDIRECTORY(meteoio/plugins)
-ADD_SUBDIRECTORY(meteoio/meteoLaws)
-ADD_SUBDIRECTORY(meteoio/meteoFilters)
-ADD_SUBDIRECTORY(meteoio)
-###########################################################
 #plugins
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")
 SET(PLUGIN_ALPUG ON CACHE BOOL "Compilation ALPUG ON or OFF")
@@ -174,12 +70,14 @@ SET(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
 SET(PLUGIN_BORMAIO OFF CACHE BOOL "Compilation BORMAIO ON or OFF")
 SET(PLUGIN_CNRMIO OFF CACHE BOOL "Compilation CNRMIO ON or OFF")
 SET(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
+SET(PLUGIN_DBO OFF CACHE BOOL "Compilation DBO ON or OFF")
 SET(PLUGIN_GEOTOPIO ON CACHE BOOL "Compilation GEOTOPIO ON or OFF")
 SET(PLUGIN_GRASSIO ON CACHE BOOL "Compilation GRASSIO ON or OFF")
 SET(PLUGIN_GRIBIO OFF CACHE BOOL "Compilation GRIBIO ON or OFF")
 SET(PLUGIN_GSNIO OFF CACHE BOOL "Compilation GSNIO ON or OFF")
 SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
 SET(PLUGIN_NETCDFIO OFF CACHE BOOL "Compilation NETCDFIO ON or OFF")
+SET(PLUGIN_OSHDIO OFF CACHE BOOL "Compilation OshdIO ON or OFF")
 SET(PLUGIN_PGMIO ON CACHE BOOL "Compilation PGMIO ON or OFF")
 SET(PLUGIN_PNGIO OFF CACHE BOOL "Compilation PNGIO ON or OFF")
 SET(PLUGIN_PSQLIO OFF CACHE BOOL "Compilation PSQLIO ON or OFF")
@@ -190,9 +88,30 @@ SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 SET(DATA_QA OFF CACHE BOOL "Data Quality Assurance outputs ON or OFF")
 
 ###########################################################
+#finally, SET compile flags
+SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
+MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
+
+#Add subdirectory, so they can inherit all variables defined above
+ADD_SUBDIRECTORY(meteoio/dataClasses)
+ADD_SUBDIRECTORY(meteoio/dataGenerators)
+ADD_SUBDIRECTORY(meteoio/plugins)
+ADD_SUBDIRECTORY(meteoio/meteoLaws)
+ADD_SUBDIRECTORY(meteoio/meteoFilters)
+ADD_SUBDIRECTORY(meteoio/meteoResampling)
+ADD_SUBDIRECTORY(meteoio/spatialInterpolations)
+ADD_SUBDIRECTORY(meteoio)
+
+###########################################################
 #for the install target
 FILE(GLOB hfiles "meteoio/*.h")
 FILE(GLOB hdatafiles "meteoio/dataClasses/*.h")
+FILE(GLOB hgeneratorsfiles "meteoio/dataGenerators/*.h")
+FILE(GLOB hresamplingfiles "meteoio/meteoResampling/*.h")
+FILE(GLOB hspatialfiles "meteoio/spatialInterpolations/*.h")
 FILE(GLOB hpluginfiles "meteoio/plugins/*.h")
 FILE(GLOB hlawsfiles "meteoio/meteoLaws/*.h")
 FILE(GLOB hfilterfiles "meteoio/meteoFilters/*.h")
@@ -200,6 +119,9 @@ FILE(GLOB hstatsfiles "meteoio/meteoStats/*.h")
 
 INSTALL(FILES ${hfiles} DESTINATION include/meteoio COMPONENT headers)
 INSTALL(FILES ${hdatafiles} DESTINATION include/meteoio/dataClasses COMPONENT headers)
+INSTALL(FILES ${hgeneratorsfiles} DESTINATION include/meteoio/dataGenerators COMPONENT headers)
+INSTALL(FILES ${hresamplingfiles} DESTINATION include/meteoio/meteoResampling COMPONENT headers)
+INSTALL(FILES ${hspatialfiles} DESTINATION include/meteoio/spatialInterpolations COMPONENT headers)
 INSTALL(FILES ${hpluginfiles} DESTINATION include/meteoio/plugins COMPONENT headers)
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteoLaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteoFilters COMPONENT headers)
@@ -214,9 +136,11 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove_directory Testing
 	COMMAND cmake -E remove_directory meteoio/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/dataClasses/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/dataGenerators/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/meteoFilters/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/meteoLaws/CMakeFiles
-	COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/meteoResampling/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/spatialInterpolations/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles
 	COMMAND cmake -E remove_directory tests/CMakeFiles
 	COMMAND cmake -E remove_directory tests/Testing
@@ -277,7 +201,7 @@ SET(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
 SET(CPACK_PACKAGE_NAME "MeteoIO")
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "MeteoIO")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 SET(CPACK_PACKAGE_CONTACT "Mathias Bavay <Mathias.Bavay@wsl.ch>")
 SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
 SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\icon.ico")
@@ -320,7 +244,7 @@ SET(CPACK_COMPONENT_DEVELOPMENT_GROUP "Development")
 SET(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "What you need to develop an application based on MeteoIO")
 
 IF(UNIX)
-	IF(APPLE)
+	IF(APPLE)	#OsX packages: IMG
 		SET(CPACK_GENERATOR "DragNDrop")
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/${CPACK_PACKAGE_NAME}")
 		SET(CPACK_DMG_FORMAT "UDBZ")
@@ -339,7 +263,7 @@ IF(UNIX)
 		#SET(CPACK_PACKAGING_INSTALL_PREFIX "/Applications/${CPACK_PACKAGE_NAME}")
 		SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/icon.icns")
 		SET_SOURCE_FILES_PROPERTIES(${CPACK_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-	ELSE(APPLE)
+	ELSE(APPLE)	#Linux packages: rmp, deb and tgz
 		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
@@ -358,11 +282,10 @@ IF(UNIX)
 		SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 	ENDIF(APPLE)
 ELSE(UNIX)
-	IF(WIN32)
+	IF(WIN32)	#Windows packages
 		SET(CPACK_GENERATOR "NSIS")
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
-		SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
 		IF(INSTALL_DOC)
 			SET(CPACK_NSIS_MENU_LINKS
@@ -383,7 +306,7 @@ ELSE(UNIX)
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
-
+#Source packages
 SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}" CACHE INTERNAL "tarball basename")
 SET(CPACK_SOURCE_GENERATOR TGZ)
 # The following components are regex's to match anywhere (unless anchored)
@@ -407,27 +330,20 @@ INCLUDE(CPack)
 ###########################################################
 ## CTest section
 ###########################################################
-
-## Special build type configuration for Covarage Testing.
-# Attantion: Coverage testing right now only works with g++ (or comercial tools)
-## Add the tests itselfs
 OPTION(BUILD_TESTING "Build the tests" OFF)
 IF(BUILD_TESTING)
-
-	# Coverage statistic rign now only supportet with GCC (GNUGXX)
+	# Special build type configuration for Coverage Testing.
+	#Coverage testing only supported by GCC and a few commercial tools
 	IF(CMAKE_COMPILER_IS_GNUCXX)
 		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make coverage tests" OFF)
-
 		IF(BUILD_TESTING_WITH_COVERAGE)
 			# force the correct flags to make coverage trought a build type
 			SET(CMAKE_BUILD_TYPE coverage)
-			SET(CMAKE_CXX_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
+			SET(CMAKE_CXX_FLAGS_COVERAGE "${OPTIM} -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
 			MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_COVERAGE)
-
 			# Force debug mode, so that no optimisation is made to get "Correct" results of coverage testing
 			SET(CMAKE_BUILD_TYPE "coverage" CACHE STRING "Choose the type of build, options are: debug release coverage " FORCE)
 			SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
-
 		ENDIF(BUILD_TESTING_WITH_COVERAGE)
 	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 

@@ -23,10 +23,8 @@ using namespace std;
 
 namespace mio {
 
-ProcWMASmoothing::ProcWMASmoothing(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
+ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
 {
-	parse_args(vec_args);
-
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
 	properties.time_after  = min_time_span;
@@ -48,8 +46,9 @@ void ProcWMASmoothing::process(const unsigned int& param, const std::vector<Mete
 	}
 }
 
+//such as WMA = 1*X1 + 2*X2 + ... + n*Xn and then normalized by the sum of weights = (1+2+3+...+n)
 double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
-{ //such as WMA = 1*X1 + 2*X2 + ... + n*Xn and then normalized by the sum of weights = (1+2+3+...+n)
+{
 	const size_t max_len = max(pos-start, end-pos);
 	double wma = 0.;
 	size_t norm = 0;
@@ -82,27 +81,6 @@ double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, co
 		return wma / static_cast<double>(norm);
 	else
 		return IOUtils::nodata;
-}
-
-void ProcWMASmoothing::parse_args(std::vector<std::string> vec_args)
-{
-	vector<double> filter_args;
-
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
-	}
-
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(2, 2, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 
 } //namespace

@@ -25,18 +25,18 @@
 namespace mio {
 
 /**
+ * @class ProcExpSmoothing
+ * @ingroup processing
  * @brief Exponential smoothing.
+ * @details
  * This implements an exponential moving average smoothing of parameter alpha (https://en.wikipedia.org/wiki/Exponential_smoothing)
  * such as (s being the filtered values and x the raw data):
  * - s_0 = x_0
  * - s_n = alpha*x_(t-1) + (1-alpha)*s_(t-1)
  *
- * Nodata values are excluded from the moving average calculation. It takes the following options:
- * - an optional "soft" keyword to allow (or not) the window centering to be adjusted to the available data
- * - the keywords "left", "center" or "right", indicating the window centering strategy
- * - the minimal number of points in window
- * - the minimal time interval spanning the window (in seconds)
- * - the alpha parameter, such as 0 < alpha < 1
+ * Nodata values are excluded from the moving average calculation. It takes the following arguments:
+ *  - all the window parameters as defined in WindowedFilter::setWindowFParams();
+ *  - ALPHA: the alpha parameter defined above (it must be between 0 and 1, mandatory).
  *
  * The standard behavior for this filter is obtained by using a left window. If using a right window, it behaves as if time was reversed
  * (ie. predictions from the future). A centered window applies the standard algorithms on the <b>distance</b> between the center point and each points,
@@ -46,23 +46,30 @@ namespace mio {
  * @note This would probably lead to slightly unexpected results if used on irregularly sampled data
  *
  * @code
- *          TA::filter1 = exp_smoothing
- *          TA::arg1    = right 1 1800 0.8 ;(1800 seconds time span for the strictly right leaning window), alpha=0.8
- *          RH::filter1 = mean_avg
- *          RH::arg1    = 10 600 0.6 ;(strictly left window spanning 600 seconds and at least 10 points), alpha=0.6
+ * TA::filter1         = exp_smoothing
+ * TA::arg1::soft      = FALSE
+ * TA::arg1::centering = right
+ * TA::arg1::min_pts   = 1
+ * TA::arg1::min_span  = 1800 ;ie 1800 seconds time span for the left leaning window
+ * TA::arg1::alpha     = 0.8
+ *
+ * RH::filter1        = mean_avg
+ * RH::arg1::min_pts  = 10
+ * RH::arg1::min_span = 600 ;strictly centered window spanning 600 seconds and at least 10 points
+ * RH::arg1::alpha    = 0.6
  * @endcode
  */
 
 class ProcExpSmoothing : public WindowedFilter {
 	public:
-		ProcExpSmoothing(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcExpSmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
-		double calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static double calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& alpha);
 
 		double alpha;
 };

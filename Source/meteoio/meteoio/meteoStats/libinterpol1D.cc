@@ -16,10 +16,13 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <iomanip>
 
@@ -29,7 +32,7 @@ namespace mio {
 
 double Interpol1D::min_element(const std::vector<double>& X)
 {
-	double Xmin=Cst::dbl_max;
+	double Xmin = Cst::dbl_max;
 	for (size_t ii=0; ii<X.size(); ii++) {
 		if (X[ii]==IOUtils::nodata) continue;
 		if (X[ii]<Xmin) Xmin=X[ii];
@@ -41,7 +44,7 @@ double Interpol1D::min_element(const std::vector<double>& X)
 
 double Interpol1D::max_element(const std::vector<double>& X)
 {
-	double Xmax=-Cst::dbl_max;
+	double Xmax = -Cst::dbl_max;
 	for (size_t ii=0; ii<X.size(); ii++) {
 		if (X[ii]==IOUtils::nodata) continue;
 		if (X[ii]>Xmax) Xmax=X[ii];
@@ -65,25 +68,22 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	const size_t Xsize = X.size();
 	const size_t Qsize = quartiles.size();
 	if (Xsize == 0)
-		throw NoAvailableDataException("Trying to calculate quantiles with no data points", AT);
+		throw NoDataException("Trying to calculate quantiles with no data points", AT);
 	if (Qsize == 0)
-		throw NoAvailableDataException("No quantiles specified", AT);
+		throw NoDataException("No quantiles specified", AT);
 
 	//in order to properly escape nodata points, we need to copy in a temporary vector
 	vector<double> vecTemp;
 	for (size_t i=0; i<Xsize; i++) {
-		const double& value=X[i];
-		if (value!=IOUtils::nodata)
-			vecTemp.push_back(value);
+		const double value=X[i];
+		if (value!=IOUtils::nodata) vecTemp.push_back(value);
 	}
 
 	//we will store results in a new vector
 	std::vector<double> vecResults(Qsize, IOUtils::nodata);
 
 	const size_t vecSize = vecTemp.size();
-	if (vecSize == 0) {
-		return vecResults; //ie: nodata values
-	}
+	if (vecSize == 0) return vecResults; //ie: nodata values
 	if (vecSize == 1) {
 		std::fill(vecResults.begin(), vecResults.end(), vecTemp[0]);
 		return vecResults;
@@ -199,7 +199,7 @@ void Interpol1D::equalBin(const unsigned int k, std::vector<double> &X, std::vec
 	for (size_t ii=0; ii<Xsize; ii++) {
 		if (X[ii]==IOUtils::nodata || Y[ii]==IOUtils::nodata) continue;
 
-		const size_t index = (X[ii]!=Xmax)? Optim::floor( (X[ii]-Xmin) / width ) : k-1;
+		const size_t index = (X[ii]!=Xmax)? static_cast<size_t>(Optim::floor( (X[ii]-Xmin) / width )) : static_cast<size_t>(k-1);
 		bins[index] += Y[ii];
 		counts[index]++;
 	}
@@ -234,7 +234,7 @@ void Interpol1D::equalCountBin(const unsigned int k, std::vector<double> &X, std
 
 	sort(X, Y, false); //also remove nodata points
 	const size_t Xsize = X.size();
-	if (k>=Xsize) return;
+	if (k>=Xsize || Xsize==0) return;
 
 	const size_t count_per_class = Xsize/k;
 	const size_t remainder = Xsize % k;
@@ -287,11 +287,11 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
 		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
+	if (Xsize==0) return;
 
 	std::vector< std::pair<double,double> > new_vec;
 	for (size_t i=0; i<Xsize; i++) {
-		if ( !keep_nodata && (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) )
-			continue;
+		if ( !keep_nodata && (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) ) continue;
 		const std::pair<double,double> tmp(X[i],Y[i]);
 		new_vec.push_back( tmp );
 	}
@@ -411,7 +411,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData, const bool& kee
 
 		vector<double> vecTemp;
 		for (size_t i=0; i<vecData.size(); i++) {
-			const double& value=vecData[i];
+			const double value = vecData[i];
 			if (value!=IOUtils::nodata)
 				vecTemp.push_back(value);
 		}
@@ -443,10 +443,16 @@ double Interpol1D::getMedianAverageDeviation(std::vector<double> vecData, const 
 	return mad;
 }
 
+/**
+ * @brief Compute the variance of a vector of data
+ * It is computed using a compensated variance algorithm,
+ * (see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
+ * in order to be more robust to small variations around the mean.
+ * @param X vector of data
+ * @return variance or IOUtils::nodata
+ */
 double Interpol1D::variance(const std::vector<double>& X)
-{//The variance is computed using a compensated variance algorithm,
-//(see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
-//in order to be more robust to small variations around the mean.
+{
 	const size_t n = X.size();
 	size_t count=0;
 	double sum=0.;
@@ -476,7 +482,9 @@ double Interpol1D::variance(const std::vector<double>& X)
 }
 
 double Interpol1D::std_dev(const std::vector<double>& X) {
-	return sqrt(variance(X));
+	const double var = variance(X);
+	if (var==IOUtils::nodata) return IOUtils::nodata;
+	return sqrt(var);
 }
 
 double Interpol1D::covariance(const std::vector<double>& X, const std::vector<double>& Y)
@@ -488,8 +496,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 
 	const double X_mean = Interpol1D::arithmeticMean(X);
 	const double Y_mean = Interpol1D::arithmeticMean(Y);
-	if (X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata)
-		return IOUtils::nodata;
+	if (X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata) return IOUtils::nodata;
 
 	size_t count=0;
 	double sum=0.;
@@ -504,6 +511,101 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 }
 
 /**
+* @brief Computes the Pearson product-moment correlation coefficient
+* This should be equivalent to the default R "corr" method.
+* @param X first vector of data
+* @param Y second vector of data
+* @return correlation coefficient
+*/
+double Interpol1D::corr(const std::vector<double>& X, const std::vector<double>& Y)
+{
+	const double sigma_x = std_dev(X);
+	const double sigma_y = std_dev(Y);
+	
+	if (sigma_x==IOUtils::nodata || sigma_y==IOUtils::nodata) return IOUtils::nodata;
+	if (sigma_x==0. || sigma_y==0.) return IOUtils::nodata;
+	
+	const double cov = covariance(X, Y);
+	if (cov==IOUtils::nodata) return IOUtils::nodata;
+	
+	return ( cov / (sigma_x*sigma_y));
+}
+
+/**
+* @brief Computes the R2 coefficient of determination
+* See https://en.wikipedia.org/wiki/Coefficient_of_determination and https://en.wikipedia.org/wiki/Fraction_of_variance_unexplained
+* @param obs vector of observed data
+* @param sim vector of simulated data
+* @return coefficient of determination
+*/
+double Interpol1D::R2(const std::vector<double>& obs, const std::vector<double>& sim)
+{
+	const size_t n = obs.size();
+	if (n!=sim.size())
+		throw IOException("Vectors should have the same size for the R2 coefficient of determination!", AT);
+	if (n==0) return IOUtils::nodata;
+
+	//no special processing for the nodata values
+	const double ObsMean = arithmeticMean( obs );
+	if (ObsMean==IOUtils::nodata) return IOUtils::nodata;
+
+	double ss_err = 0., ss_tot = 0.;
+	for (size_t ii=0; ii<n; ii++) {
+		if (obs[ii]==IOUtils::nodata) continue;
+		ss_err += Optim::pow2( obs[ii] - sim[ii] );
+		ss_tot += Optim::pow2( obs[ii] - ObsMean );
+	}
+
+	if (ss_tot==0. && ss_err==0) return 1.;
+	if (ss_tot==0.) return IOUtils::nodata; //this can happen if the vector is filled with constant values
+	return 1. - ss_err / ss_tot;
+}
+
+/**
+* @brief Computes the Nash-Suttcliffe correlation coefficient for two vectors
+* It is assumed that the same indices contain the same timesteps. A value of 1
+* means a perfect match, a value of zero that no variance is reproduced (see https://en.wikipedia.org/wiki/Nash%E2%80%93Sutcliffe_model_efficiency_coefficient)
+* @param obs vector of observed data
+* @param sim vector of simulated data
+* @return Nash-Suttcliffe correlation coefficient, between ]-∞, 1]
+*/
+double Interpol1D::NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim)
+{
+	const size_t n = obs.size();
+	if (n!=sim.size())
+		throw IOException("Vectors should have the same size for Nash-Suttcliffe!", AT);
+	if (n==0) return IOUtils::nodata;
+
+	//no special processing is performed on nodata values
+	const double mean =  std::accumulate(obs.begin(), obs.end(), 0.0) / static_cast<double>(n);
+
+	//now compute the numerator and denominator
+	double denominator = 0., numerator = 0.;
+	for (size_t ii=0; ii<n; ii++) {
+		numerator += Optim::pow2(obs[ii] - sim[ii]);
+		denominator += Optim::pow2(obs[ii] - mean);
+	}
+
+	if (denominator==0.) return IOUtils::nodata; //this can happen if the vector is filled with constant values
+	return 1. - numerator / denominator;
+}
+
+/**
+* @brief Box–Muller method for normally distributed random numbers.
+* @details This generate a normally distributed signal of mean=0 and std_dev=1.
+* For numerical reasons, the extremes will always be less than 7 * std_dev from the mean.
+* See https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+* @note Do not forget to initialize the (pseudo) random number generator! Something like "srand( static_cast<unsigned int>(time(NULL)) );"
+* @return normally distributed number
+*/
+double Interpol1D::getBoxMuller()
+{
+	const double U = static_cast<double>(rand())/(RAND_MAX);
+	const double V = static_cast<double>(rand())/(RAND_MAX);
+	return  Optim::fastSqrt_Q3(-2.*log(U)) * cos(2.*Cst::PI*V);
+}
+
+/**
 * @brief Computes the distance between a point (x,y) and a line y=ax+b
 * @param x x coordinates of the point
 * @param y y coordinates of the point
@@ -515,7 +617,7 @@ double Interpol1D::pt_line_distance(const double& x, const double& y, const doub
 	if (a==0.) return abs(y-c); //horizontal line
 
 	//for ax+by+c=0; for us, b=-1
-	const double b = -1.;
+	static const double b = -1.;
 	const double d = abs(a*x +b*y + c) * Optim::invSqrt( a*a + b*b );
 	return d;
 }
@@ -541,7 +643,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	//check arguments
 	const size_t n = X.size();
 	if (n<2)
-		throw NoAvailableDataException("Trying to calculate linear regression with too few data points", AT);
+		throw NoDataException("Trying to calculate linear regression with too few data points", AT);
 	if (n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
@@ -556,7 +658,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		}
 	}
 	if (count<2)
-		throw NoAvailableDataException("Trying to calculate linear regression with too few valid data points", AT);
+		throw NoDataException("Trying to calculate linear regression with too few valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
 
@@ -571,7 +673,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	}
 
 	//computing the regression line
-	const double epsilon = 1e-6;
+	static const double epsilon = 1e-6;
 	if (sx <= abs(x_avg)*epsilon) { //sx and sy are always positive
 		//all points have same X -> we return a constant value that is the average
 		a = 0.;
@@ -605,7 +707,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 {	//check arguments
 	const size_t n = X.size();
 	if (n==0)
-		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
+		throw NoDataException("Trying to calculate linear regression with no data points", AT);
 	if (n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
@@ -620,7 +722,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 		}
 	}
 	if (count==0)
-		throw NoAvailableDataException("Trying to calculate linear regression with no valid data points", AT);
+		throw NoDataException("Trying to calculate linear regression with no valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
 
@@ -656,7 +758,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::string& mesg, const bool& fixed_rate)
 {
 	//finds the linear regression for points (x,y,z,Value)
-	const double r_thres = 0.7;
+	static const double r_thres = 0.7;
 	const size_t nb_pts = in_X.size();
 	//we want at least 4 points AND 75% of the initial data set kept in the regression
 	const size_t min_dataset = (size_t)Optim::floor( 0.75*(double)nb_pts );
@@ -692,7 +794,7 @@ void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::
 
 	//check if r is reasonnable
 	if (R<r_thres) {
-		ss << "\n[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
+		ss << "\n[W] Poor regression coefficient: " << std::setprecision(2) << R << "\n";
 	}
 	mesg = ss.str();
 }

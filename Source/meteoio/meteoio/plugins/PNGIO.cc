@@ -15,11 +15,13 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "PNGIO.h"
+#include <meteoio/plugins/PNGIO.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/Graphics.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
+#include <fstream>
 #include <cstring>
 #include <algorithm>
 #include <errno.h>
@@ -73,7 +75,8 @@ namespace mio {
  *
  * @section pngio_example Example use
  * @code
- * GRID2D = PNG
+ * [ouput]
+ * GRID2D     = PNG
  * png_legend = false
  * png_min_size = 400x400
  * png_max_size = 1366*768
@@ -82,10 +85,15 @@ namespace mio {
  * @section pngio_compilation
  * In order to compile this plugin, you need libpng and zlib. For Linux, please select both the libraries and their development files in your package manager.
  *
- * For Mac, you can either install using <A href="http://www.finkproject.org/">Fink</A> or directly from <a href="http://www.libpng.org">source</a>. 
- * In this case, please install <a href="http://zlib.net/">zlib</a> at the prefix of your choice (for example with the <i>"--prefix=/usr/local"</i> options 
- * to its configure script, build with <i>"make"</i> and install with <i>"sudo make install"</i>). Then provide the libpng configure script with the 
- * <i>"--enable-shared --prefix=/usr/local"</i> options (and build with <i>"make"</i> followed by <i>"sudo make install"</i>).
+ * For Mac, starting with Sierra, you can use the system png library: from a terminal window, run
+ * <i>/Library/Frameworks/UnixImageIO.framework/Programs/libpng-config --libdir</i> and provide this path with <i>libpng.dylib</i> appended
+ * to cmake as <i>PNG_LIBRARY_RELEASE</i> (you might have to press <i>t</i> in cmake in order to show the advanced options.).
+ * Otherwise (ie if you are not using Sierra or do not want to use the system version), you can either install
+ * using <A href="http://www.finkproject.org/">Fink</A> or directly from <a href="http://www.libpng.org">source</a>.
+ * In this case, please install first <a href="http://zlib.net/">zlib</a> at the prefix of your choice (with the <i>prefix</i> option of its configure script, for
+ * example <i>"./configure --prefix=/usr/local"</i>, then build with <i>"make"</i> and install with <i>"sudo make install"</i>). Then run the
+ * libpng configure script with the <i>--enable-shared</i> and <i>prefix</i> options, for example <i>"./configure --enable-shared --prefix=/usr/local"</i>
+ * (and then build with <i>"make"</i> followed by <i>"sudo make install"</i>).
  * 
  * For Windows, you can find zlib at http://switch.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3.exe
  * and libpng at http://switch.dl.sourceforge.net/project/gnuwin32/libpng/1.2.37/libpng-1.2.37-setup.exe . Once this has been installed, if you plan on using
@@ -149,6 +157,12 @@ PNGIO& PNGIO::operator=(const PNGIO& source) {
 	return *this;
 }
 
+PNGIO::~PNGIO() throw() 
+{
+	if (fp!=NULL) fclose(fp); 
+	fp=NULL;
+}
+
 void PNGIO::setOptions()
 {
 	//default values have been set by the constructors
@@ -170,8 +184,8 @@ void PNGIO::setOptions()
 	cfg.getValue("PNG_WORLD_FILE", "Output", has_world_file, IOUtils::nothrow);
 
 	if (has_legend) { //we need to save room for the legend
-		if (min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
-		if (max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
+		if (min_w!=IOUtils::unodata) min_w -= Legend::getLegendWidth();
+		if (max_w!=IOUtils::unodata) max_w -= Legend::getLegendWidth();
 	}
 
 	cfg.getValue("PNG_INDEXED", "Output", indexed_png, IOUtils::nothrow);
@@ -196,19 +210,17 @@ void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& heig
 		throw InvalidFormatException(ss.str(), AT);
 	}
 
-	width = static_cast<size_t>(w);
-	height = static_cast<size_t>(h);
+	width = static_cast<size_t>( w );
+	height = static_cast<size_t>( h );
 
 	std::string tmp(rest);
 	IOUtils::trim(tmp);
 	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
-		std::ostringstream ss;
-		ss << "Invalid PNGIO size specification \"" << size_spec << "\"";
-		throw InvalidFormatException(ss.str(), AT);
+		throw InvalidFormatException("Invalid PNGIO size specification \"" + size_spec + "\"", AT);
 	}
 }
 
-double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
+double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h) const
 {
 	if (grid_w==0 || grid_h==0) {
 		return 1.;
@@ -240,68 +252,7 @@ double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
 		return max_factor;
 }
 
-PNGIO::~PNGIO() throw() {
-	if (fp!=NULL) fclose(fp); fp=NULL;
-}
-
-void PNGIO::read2DGrid(Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters& , const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                             const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void PNGIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
+Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in) const
 { //scale input image
 	const double factor = getScaleFactor(grid_in.getNx(), grid_in.getNy());
 	if (scaling=="nearest")
@@ -318,14 +269,11 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height)
 {
 	// Open file for writing (binary mode)
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
-	if (fp == NULL) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw FileAccessException(ss.str(), AT);
-	}
+	if (fp == NULL)
+		throw AccessException("Error opening file \""+filename+"\", possible reason: "+std::string(strerror(errno)), AT);
 
 	// Initialize write structure
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -362,14 +310,14 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	if (indexed_png) {
-		png_set_IHDR(png_ptr, info_ptr, width, height,
+		png_set_IHDR(png_ptr, info_ptr, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height),
 			channel_depth, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 		//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
 		png_byte trans = 0; //by convention, the gradient define it as color 0
 		png_set_tRNS(png_ptr, info_ptr, &trans, 1, 0);
 	} else {
-		png_set_IHDR(png_ptr, info_ptr, width, height,
+		png_set_IHDR(png_ptr, info_ptr, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height),
 			channel_depth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 		//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
@@ -382,16 +330,31 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	png_set_background(png_ptr, &background, PNG_BACKGROUND_GAMMA_SCREEN, true, 1.0);
 }
 
-size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
+size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array) const
 {
 	if (has_legend) {
-		const legend leg(static_cast<unsigned int>(nrows), min, max);
-		legend_array = leg.getLegend();
+		const Legend legend(static_cast<unsigned int>(nrows), min, max);
+		legend_array = legend.getLegend();
 		const size_t nx = legend_array.getNx();
 		return (ncols+nx);
 	} else {
 		return ncols;
 	}
+}
+
+void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
+{
+	std::vector<unsigned char> pal;
+	size_t nr_colors;
+	gradient.getPalette(pal, nr_colors);
+	palette = (png_color*)calloc(nr_colors, sizeof (png_color)); //ie: three png_bytes, each being an unsigned char
+	for (size_t ii=0; ii<nr_colors; ii++) {
+		const size_t interlace = ii*3; //colors from Gradient interlaced
+		palette[ii].red = static_cast<png_byte>(pal[interlace]);
+		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
+		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
+	}
+	png_set_PLTE(png_ptr, info_ptr, palette, static_cast<int>(nr_colors));
 }
 
 void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& legend_array, const Gradient& gradient, const size_t& full_width, const png_structp& png_ptr, png_infop& info_ptr)
@@ -401,7 +364,7 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	const unsigned char channels = (indexed_png)? 1 : 3; //4 for rgba
-	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
+	png_bytep row = (png_bytep)calloc(full_width, channels*sizeof(png_byte));
 	if (row==NULL) {
 		fclose(fp); fp=NULL;
 		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
@@ -460,21 +423,6 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 	png_free(png_ptr, row);
 }
 
-void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
-{
-	std::vector<unsigned char> pal;
-	size_t nr_colors;
-	gradient.getPalette(pal, nr_colors);
-	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
-	for (size_t ii=0; ii<nr_colors; ii++) {
-		const size_t interlace = ii*3; //colors from Gradient interlaced
-		palette[ii].red = static_cast<png_byte>(pal[interlace]);
-		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
-		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
-	}
-	png_set_PLTE(png_ptr, info_ptr, palette, static_cast<int>(nr_colors));
-}
-
 void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
 {
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
@@ -487,14 +435,14 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
-	const string full_name = grid2dpath+"/"+filename;
+	const std::string full_name( grid2dpath+"/"+filename );
 	fp=NULL;
 	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
 	//scale input image
-	const Grid2DObject grid = scaleGrid(grid_in);
+	const Grid2DObject grid( scaleGrid(grid_in) );
 	const size_t ncols = grid.getNx(), nrows = grid.getNy();
 	if (ncols==0 || nrows==0) return;
 
@@ -524,14 +472,10 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::string filename;
-	if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
-		filename = grid2dpath + "/" + MeteoGrids::getParameterName(parameter) + ".png";
-	else {
-		std::string date_str = date.toString(Date::ISO);
-		std::replace( date_str.begin(), date_str.end(), ':', '.');
-		filename = grid2dpath + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + ".png";
-	}
+	const bool isNormalParam = (parameter!=MeteoGrids::DEM && parameter!=MeteoGrids::SLOPE && parameter!=MeteoGrids::AZI);
+	std::string date_str = (isNormalParam)? date.toString(Date::ISO)+"_" : "";
+	std::replace( date_str.begin(), date_str.end(), ':', '.');
+	const std::string filename( grid2dpath + "/" + date_str + MeteoGrids::getParameterName(parameter) + ".png" );
 
 	fp=NULL;
 	png_color *palette=NULL;
@@ -539,7 +483,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	png_infop info_ptr=NULL;
 
 	//scale input image
-	Grid2DObject grid = scaleGrid(grid_in);
+	Grid2DObject grid( scaleGrid(grid_in) );
 	const size_t ncols = grid.getNx(), nrows = grid.getNy();
 	if (ncols==0 || nrows==0) return;
 
@@ -596,6 +540,15 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			max -= Cst::t_water_freezing_pt;
 		}
 		gradient.set(Gradient::freeze, min, max, autoscale);
+	} else if (parameter==MeteoGrids::TSOIL) {
+		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
+		if (!autoscale) {
+			min = -5.; max = 5.;
+		} else {
+			min -= Cst::t_water_freezing_pt;
+			max -= Cst::t_water_freezing_pt;
+		}
+		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if (parameter==MeteoGrids::RH) {
 		if (!autoscale) {
 			min = 0.; max = 1.;
@@ -603,7 +556,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
 	} else if (parameter==MeteoGrids::P) {
 		if (!autoscale) {
-			//lowest and highest pressures ever recorded on Earth: 87000 and 108570
+			//lowest and highest sea level pressures ever recorded on Earth: 87000 and 108570
 			min = 87000.; max = 115650.; //centered around 1 atm
 			gradient.set(Gradient::bluewhitered, min, max, autoscale);
 		} else {
@@ -629,7 +582,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if (parameter==MeteoGrids::ILWR) {
 		if (!autoscale) {
-			min = 200.; max = 500.;
+			min = 150.; max = 400.;
 		}
 		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if (parameter==MeteoGrids::SWE) {
@@ -637,6 +590,9 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 0.; max = 250.;
 		}
 		gradient.set(Gradient::blue_pink, min, max, autoscale);
+	} else if (parameter==MeteoGrids::PSUM_PH) {
+		min = 0.; max = 1.;
+		gradient.set(Gradient::bluewhitered, min, max, autoscale);
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
@@ -664,19 +620,17 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	closePNG(png_ptr, info_ptr, palette);
 }
 
-void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
+void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename) const
 {
-	const string world_file = IOUtils::removeExtension(filename)+".pnw";
+	const std::string world_file( FileUtils::removeExtension(filename)+".pnw" );
+	if (!FileUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
+	std::ofstream fout(world_file.c_str(), ios::out);
+	if (fout.fail()) throw AccessException(world_file, AT);
+
 	const double cellsize = grid_in.cellsize;
-	Coords world_ref = grid_in.llcorner;
+	Coords world_ref( grid_in.llcorner );
 	world_ref.setProj(coordout, coordoutparam);
 	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
-
-	if (!IOUtils::validFileAndPath(world_file)) throw InvalidFileNameException(world_file, AT);
-	std::ofstream fout(world_file.c_str(), ios::out);
-	if (fout.fail()) {
-		throw FileAccessException(world_file, AT);
-	}
 
 	try {
 		fout << std::setprecision(12) << cellsize << "\n";
@@ -687,7 +641,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 		fout << std::setprecision(12) << world_ref.getNorthing() << "\n";
 	} catch(...) {
 		fout.close();
-		throw FileAccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
+		throw AccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
 	}
 
 	fout.close();
@@ -759,17 +713,19 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 {
 	const size_t max_len = 79; //according to the official specs' recommendation
 	const size_t nr = metadata_key.size();
-	png_text *info_text = (png_text *)calloc(sizeof(png_text), nr);
-	char **key = (char**)calloc(sizeof(char)*max_len, nr);
-	char **text = (char**)calloc(sizeof(char)*max_len, nr);
+	png_text *info_text = (png_text *)calloc(nr, sizeof(png_text));
+	char **key = (char**)calloc(nr, sizeof(char)*max_len);
+	char **text = (char**)calloc(nr, sizeof(char)*max_len);
 
 	for (size_t ii=0; ii<nr; ii++) {
-		key[ii] = (char *)calloc(sizeof(char), max_len);
-		text[ii] = (char *)calloc(sizeof(char), max_len);
+		key[ii] = (char *)calloc(max_len, sizeof(char));
+		text[ii] = (char *)calloc(max_len, sizeof(char));
 		strncpy(key[ii], metadata_key[ii].c_str(), max_len-1); //in case the '\0' was not counted by maxlen
+		key[ii][max_len-1] = '\0'; //make sure it is null terminated
 		strncpy(text[ii], metadata_text[ii].c_str(), max_len-1);
-		info_text[ii].key = key[ii]+'\0'; //strncpy does not always '\0' terminate
-		info_text[ii].text = text[ii]+'\0';
+		text[ii][max_len-1] = '\0'; //make sure it is null terminated
+		info_text[ii].key = key[ii];
+		info_text[ii].text = text[ii];
 		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
 	}
 
@@ -791,7 +747,7 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 	const double s = 3600.*(decimal - (double)d) - 60.*m;
 
 	std::ostringstream dms;
-	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
+	dms << d << "/1 " << static_cast<int>(m*100.) << "/100 " << fixed << setprecision(6) << s << "/1";
 	return dms.str();
 }
 

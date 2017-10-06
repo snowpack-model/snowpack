@@ -38,21 +38,23 @@
 #include <meteoio/IOUtils.h>
 
 namespace mio {
-namespace IOUtils {
+namespace FileUtils {
+//we don't want to expose this function to the user, so we keep it local
+void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern="", const bool& isRecursive=false);
 
 void copy_file(const std::string& src, const std::string& dest)
 {
 	if (src == dest) return; //copying to the same file doesn't make sense, but is no crime either
 
-	if (!IOUtils::fileExists(src)) throw FileNotFoundException(src, AT);
+	if (!fileExists(src)) throw NotFoundException(src, AT);
 	std::ifstream fin(src.c_str(), std::ios::binary);
-	if (fin.fail()) throw FileAccessException(src, AT);
+	if (fin.fail()) throw AccessException(src, AT);
 
-	if (!IOUtils::validFileAndPath(dest)) throw InvalidFileNameException(dest, AT);
+	if (!validFileAndPath(dest)) throw InvalidNameException(dest, AT);
 	std::ofstream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
-		throw FileAccessException(dest, AT);
+		throw AccessException(dest, AT);
 	}
 
 	fout << fin.rdbuf();
@@ -83,7 +85,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 		errno = 0;
 		char *real_path = realpath(in_path.c_str(), NULL); //POSIX 2008
 		if (real_path!=NULL) {
-			const std::string tmp(real_path);
+			const std::string tmp( real_path );
 			free(real_path);
 			return tmp;
 		} else {
@@ -101,7 +103,7 @@ std::string getExtension(const std::string& filename)
 	if ( startpos==std::string::npos ) return std::string();
 	if ( start_basename!=std::string::npos && startpos<start_basename ) return std::string();
 
-	const std::string whitespaces(" \t\f\v\n\r");
+	static const std::string whitespaces(" \t\f\v\n\r");
 	const size_t endpos = filename.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	return filename.substr(startpos+1, endpos-startpos);
@@ -119,7 +121,7 @@ std::string removeExtension(const std::string& filename)
 
 std::string getPath(const std::string& filename, const bool& resolve)
 {
-	const std::string clean_filename = cleanPath(filename, resolve);
+	const std::string clean_filename( cleanPath(filename, resolve) );
 	const size_t end_path = clean_filename.find_last_of("/");
 	if (end_path!=std::string::npos) {
 		return clean_filename.substr(0, end_path);
@@ -162,10 +164,17 @@ bool isAbsolutePath(const std::string& in_path)
 #endif
 }
 
-std::list<std::string> readDirectory(const std::string& path, const std::string& pattern)
+void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
+{
+	static const std::string sub_path( "." );
+	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
+}
+
+std::list<std::string> readDirectory(const std::string& path, const std::string& pattern, const bool& isRecursive)
 {
 	std::list<std::string> dirlist;
-	readDirectory(path, dirlist, pattern);
+	static const std::string sub_path( "." );
+	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
 	return dirlist;
 }
 
@@ -191,38 +200,48 @@ bool fileExists(const std::string& filename)
 	return true;
 }
 
-void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
 	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 1)) {
 		std::cerr << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
-		throw FileAccessException("Error opening directory " + path, AT);
+		throw AccessException("Error opening directory " + path, AT);
 	}
 
-	const std::string inpath = path+"\\\\*";
+	const std::string inpath( path+"\\\\*" );
 	WIN32_FIND_DATA ffd;
-	const HANDLE hFind = FindFirstFileA(inpath.c_str(), &ffd);
-	if (INVALID_HANDLE_VALUE == hFind) {
-		throw FileAccessException("Error opening directory " + path, AT);
-	}
+	const HANDLE hFind( FindFirstFileA(inpath.c_str(), &ffd) );
+	if (INVALID_HANDLE_VALUE == hFind)
+		throw AccessException("Error opening directory " + path, AT);
 
 	do {
-		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			//this is a directory -> do nothing
+		const std::string filename( ffd.cFileName );
+		const std::string full_path( path+"/"+filename );
+		
+		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
+			continue; //skip "." and ".."
+		
+		if (!isRecursive) {
+			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				//this is a directory -> do nothing
+			} else {
+				const size_t pos = filename.find(pattern);
+				if (pos!=std::string::npos) dirlist.push_back( filename );
+			}
 		} else {
-			const std::string filename(ffd.cFileName);
-			const size_t pos = filename.find(pattern);
-				if (pos!=std::string::npos) {
-					dirlist.push_back(filename);
-				}
+			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
+			} else {
+				const size_t pos = filename.find(pattern);
+				if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+filename );
+			}
 		}
 	}
 	while (FindNextFile(hFind, &ffd) != 0);
 
-	const DWORD dwError = GetLastError();
-	if (dwError != ERROR_NO_MORE_FILES) {
-		throw FileAccessException("Error listing files in directory " + path, AT);
-	}
+	const DWORD dwError( GetLastError() );
+	if (dwError != ERROR_NO_MORE_FILES)
+		throw AccessException("Error listing files in directory " + path, AT);
 
 	FindClose(hFind);
 }
@@ -250,23 +269,41 @@ bool fileExists(const std::string& filename)
 		return false; //exclude char device, block device, sockets, etc
 }
 
-void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+//sub_path contains the relative path that should prefix the found file names (this is only useful for recursive search)
+void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
 	DIR *dp = opendir(path.c_str());
-	if (dp == NULL) {
-		throw FileAccessException("Error opening directory " + path, AT);
-	}
+	if (dp == NULL) 
+		throw AccessException("Error opening directory " + path, AT);
 
 	struct dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
-		const std::string tmp(dirp->d_name);
-		if ( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
+		const std::string filename( dirp->d_name );
+		const std::string full_path( path+"/"+filename );
+		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
+			continue; //skip "." and ".."
+		
+		if (!isRecursive) {
 			if (pattern.empty()) {
-				dirlist.push_back(tmp);
+				dirlist.push_back( filename );
 			} else {
-				const size_t pos = tmp.find(pattern);
-				if (pos!=std::string::npos) {
-					dirlist.push_back(tmp);
+				const size_t pos = filename.find( pattern );
+				if (pos!=std::string::npos) dirlist.push_back( filename );
+			}
+		} else {
+			struct stat statbuf;
+			if (stat(full_path.c_str(), &statbuf) == -1) 
+				throw AccessException("Can not stat '"+full_path+"', please check permissions", AT); //this should 
+			
+			if (S_ISDIR(statbuf.st_mode)) { //recurse on sub-directory
+				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
+			} else {
+				if (!S_ISREG(statbuf.st_mode)) continue; //skip non-regular files
+				if (pattern.empty()) {
+					dirlist.push_back( sub_path+"/"+filename );
+				} else {
+					const size_t pos = filename.find(pattern);
+					if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+filename );
 				}
 			}
 		}
@@ -318,6 +355,37 @@ void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln)
 	}
 }
 
+std::map<std::string,std::string> readKeyValueHeader(std::istream& fin, const size_t& linecount,
+                        const std::string& delimiter, const bool& keep_case)
+{
+	std::map<std::string,std::string> headermap;
+
+	//make a test for end of line encoding:
+	const char eol = FileUtils::getEoln(fin);
+
+	size_t linenr = 0;
+	std::string line;
+	for (size_t ii=0; ii< linecount; ii++){
+		if (std::getline(fin, line, eol)) {
+			std::string key, value;
+			linenr++;
+			const bool result = IOUtils::readKeyValuePair(line, delimiter, key, value);
+			if (result) {
+				if (!keep_case) IOUtils::toLower( key );
+				headermap[key] = value;
+			} else { //  means if ((key == "") || (value==""))
+				std::ostringstream out;
+				out << "Invalid key value pair in line: " << linenr << " of header";
+				throw IOException(out.str(), AT);
+			}
+		} else {
+			throw InvalidFormatException("Premature EOF while reading Header", AT);
+		}
+	}
+
+	return headermap;
+}
+
 
 //below, the file indexer implementation
 void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
@@ -341,7 +409,7 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos)
 {
 	Date tmpdate;
-	convertString(tmpdate, i_date, 0.);
+	IOUtils::convertString(tmpdate, i_date, 0.);
 	setIndex(tmpdate, i_pos);
 }
 
@@ -361,7 +429,7 @@ std::streampos FileIndexer::getIndex(const Date& i_date) const
 std::streampos FileIndexer::getIndex(const std::string& i_date) const
 {
 	Date tmpdate;
-	convertString(tmpdate, i_date, 0.);
+	IOUtils::convertString(tmpdate, i_date, 0.);
 	return getIndex(tmpdate);
 }
 
@@ -394,5 +462,5 @@ const std::string FileIndexer::toString() const
 	return os.str();
 }
 
-} //end namespace IOUtils
+} //end namespace FileUtils
 } //end namespace mio

@@ -17,6 +17,7 @@
 */
 
 #include <meteoio/GridsManager.h>
+#include <meteoio/dataClasses/Coords.h>
 
 using namespace std;
 
@@ -55,18 +56,12 @@ void GridsManager::setProcessingLevel(const unsigned int& i_level)
 	processing_level = i_level;
 }
 
-void GridsManager::clear_cache()
-{
-	buffer.clear();
-}
-
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
 {
 	if (processing_level == IOUtils::raw){
 		iohandler.read2DGrid(grid2D, filename);
 	} else {
-		if (buffer.get(grid2D, filename))
-			return;
+		if (buffer.get(grid2D, filename)) return;
 
 		iohandler.read2DGrid(grid2D, filename);
 		buffer.push(grid2D, filename);
@@ -78,12 +73,22 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 	if (processing_level == IOUtils::raw){
 		iohandler.read2DGrid(grid2D, parameter, date);
 	} else {
-		if (buffer.get(grid2D, parameter, date))
-			return;
+		if (buffer.get(grid2D, parameter, date)) return;
 
 		iohandler.read2DGrid(grid2D, parameter, date);
 		buffer.push(grid2D, parameter, date);
 	}
+}
+
+//HACK buffer 3D grids!
+void GridsManager::read3DGrid(Grid3DObject& grid_out, const std::string& i_filename)
+{
+	iohandler.read3DGrid(grid_out, i_filename);
+}
+
+void GridsManager::read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	iohandler.read3DGrid(grid_out, parameter, date);
 }
 
 void GridsManager::readDEM(DEMObject& grid2D)
@@ -134,6 +139,16 @@ void GridsManager::write2DGrid(const Grid2DObject& grid2D, const std::string& na
 void GridsManager::write2DGrid(const Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	iohandler.write2DGrid(grid2D, parameter, date);
+}
+
+void GridsManager::write3DGrid(const Grid3DObject& grid_out, const std::string& options)
+{
+	iohandler.write3DGrid(grid_out, options);
+}
+
+void GridsManager::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	iohandler.write3DGrid(grid_out, parameter, date);
 }
 
 const std::string GridsManager::toString() const {

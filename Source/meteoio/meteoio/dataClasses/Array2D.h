@@ -24,6 +24,8 @@
 #include <vector>
 #include <limits>
 #include <iostream>
+#include <numeric>
+#include <algorithm>
 
 //forward declaration
 namespace mio { template <class T> class Array2D; }
@@ -144,6 +146,7 @@ template<class T> class Array2D {
 		void resize(const size_t& nx, const size_t& ny);
 		void resize(const size_t& nx, const size_t& ny, const T& init);
 		void size(size_t& nx, size_t& ny) const;
+		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
 
@@ -180,8 +183,8 @@ template<class T> class Array2D {
 		void abs();
 
 		const std::string toString() const;
-		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array2D<P>& array);
-		template<class P> friend std::iostream& operator>>(std::iostream& is, Array2D<P>& array);
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
+		template<class P> friend std::istream& operator>>(std::istream& is, Array2D<P>& array);
 
 		bool checkEpsilonEquality(const Array2D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array2D<double>& rhs1, const Array2D<double>& rhs2, const double& epsilon);
@@ -249,7 +252,7 @@ template<class T> inline T& Array2D<T>::operator()(const size_t& x, const size_t
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
-	//COLUMN-MAJOR alignment of the vector: fully C-compatible memory layout
+	//ROW-MAJOR alignment of the vector: fully C-compatible memory layout
 	return vecData[x + y*nx];
 }
 
@@ -337,25 +340,19 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const size_
 		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
 
 	for (size_t jj=i_ny; jj<(i_ny+i_nrows); jj++) {
+		const size_t iy = jj-i_ny;
 		for (size_t ii=i_nx; ii<(i_nx+i_ncols); ii++) {
 			const size_t ix = ii-i_nx;
-			const size_t iy = jj-i_ny;
 			operator()(ii,jj) = i_array2D(ix, iy);
 		}
 	}
 }
 
 template<class T> Array2D<T>::Array2D(const size_t& anx, const size_t& any, const T& init) :
-                  vecData(anx*any, init), nx(anx), ny(any), keep_nodata(true)
-{
-	//resize(anx,any,init);
-}
+                  vecData(anx*any, init), nx(anx), ny(any), keep_nodata(true) {}
 
 template<class T> Array2D<T>::Array2D(const size_t& anx, const size_t& any) :
-                  vecData(anx*any), nx(anx), ny(any), keep_nodata(true)
-{
-	//resize(anx,any);
-}
+                  vecData(anx*any), nx(anx), ny(any), keep_nodata(true) {}
 
 template<class T> void Array2D<T>::setKeepNodata(const bool i_keep_nodata) {
 	keep_nodata = i_keep_nodata;
@@ -382,6 +379,10 @@ template<class T> void Array2D<T>::resize(const size_t& anx, const size_t& any, 
 template<class T> void Array2D<T>::size(size_t& anx, size_t& any) const {
 	anx=nx;
 	any=ny;
+}
+
+template<class T> size_t Array2D<T>::size() const {
+	return nx*ny;
 }
 
 template<class T> size_t Array2D<T>::getNx() const {
@@ -415,7 +416,7 @@ template<class T> const std::string Array2D<T>::toString() const {
 	return os.str();
 }
 
-template<class P> std::iostream& operator<<(std::iostream& os, const Array2D<P>& array) {
+template<class P> std::ostream& operator<<(std::ostream& os, const Array2D<P>& array) {
 	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
 	os.write(reinterpret_cast<const char*>(&array.ny), sizeof(array.ny));
@@ -423,7 +424,7 @@ template<class P> std::iostream& operator<<(std::iostream& os, const Array2D<P>&
 	return os;
 }
 
-template<class P> std::iostream& operator>>(std::iostream& is, Array2D<P>& array) {
+template<class P> std::istream& operator>>(std::istream& is, Array2D<P>& array) {
 	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
@@ -438,11 +439,9 @@ template<class T> T Array2D<T>::getMin() const {
 
 	const size_t nxy = ny*nx;
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxy; jj++) {
-			const T val = vecData[jj];
-			if (val<min) min=val;
-		}
-		return min;
+		min = *min_element(vecData.begin(), vecData.end());
+		if (min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nxy; jj++) {
 			const T val = vecData[jj];
@@ -459,11 +458,9 @@ template<class T> T Array2D<T>::getMax() const {
 
 	const size_t nxy = ny*nx;
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxy; jj++) {
-			const T val = vecData[jj];
-			if (val>max) max=val;
-		}
-		return max;
+		max = *max_element(vecData.begin(), vecData.end());
+		if (max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t jj=0; jj<nxy; jj++) {
 			const T val = vecData[jj];
@@ -480,12 +477,8 @@ template<class T> T Array2D<T>::getMean() const {
 	const size_t nxy = nx*ny;
 
 	if (keep_nodata==false) {
-		for (size_t jj=0; jj<nxy; jj++) {
-			const T val = vecData[jj];
-			mean += val;
-		}
-		if (nxy>0) return mean/(T)(nxy);
-		else return (T)0;
+		if (nxy>0) return std::accumulate(vecData.begin(), vecData.end(), 0.) / (T)(nxy);
+		else return (T)IOUtils::nodata;
 	} else {
 		size_t count = 0;
 		for (size_t jj=0; jj<nxy; jj++) {
@@ -607,6 +600,8 @@ template<class T> const Array2D<T> Array2D<T>::operator+(const Array2D<T>& rhs) 
 
 template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
 {
+	if (rhs==0.) return *this;
+	
 	//Add to every single member of the Array2D<T>
 	const size_t nxy = nx*ny;
 
@@ -717,6 +712,8 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs) 
 
 template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 {
+	if (rhs==1.) return *this;
+	
 	//Multiply to every single member of the Array2D<T>
 	const size_t nxy = nx*ny;
 

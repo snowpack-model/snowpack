@@ -27,26 +27,24 @@ namespace mio {
 /**
  * @class  ProcUndercatch_Hamon
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2012-02-06
  * @brief Correct precipitation for undercatch in winter conditions.
  * @details
  * This implements the method for precipitation correction as described in
  * <i>"Computing actual precipitation"</i>, W. R. Hamon, in <i>Distribution of precipitation in mountaineous areas, Geilo symposium 1</i>, pp 159-174, World Meteorological Organization, Geneva, 1972. This correction depends on the usage of a shield around the gauge,
- * therefore the type of rain gauge must be specified as an argument:
+ * therefore the type of rain gauge must be specified with the TYPE argument as one of:
  * - sh - original rain gauge as used in the reference, shielded
  * - unsh - original rain gauge as used in the reference, unshielded
  * - Hellmannsh - shielded and fitted on Weissflujoch (Switzerland) data
  *
  * @code
- * PSUM::filter1	= undercatch_hamon
- * PSUM::arg1	= sh
+ * PSUM::filter1    = undercatch_hamon
+ * PSUM::arg1::type = sh
  * @endcode
  */
 
 class ProcUndercatch_Hamon : public ProcessingBlock {
 	public:
-		ProcUndercatch_Hamon(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcUndercatch_Hamon(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -58,10 +56,9 @@ class ProcUndercatch_Hamon : public ProcessingBlock {
 			hellmannsh
 		} sensor_type;
 
-		void parse_args(std::vector<std::string> filter_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		sensor_type type;
-		//std::vector<double> vec_vw, vec_ta;
 };
 
 } //end namespace

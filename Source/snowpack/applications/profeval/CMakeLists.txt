@@ -3,15 +3,10 @@ IF(COMMAND cmake_policy)
 	CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND cmake_policy)
 
-IF(MSVC)
-	SET(getopt_src getopt.c getopt_long.c)
-ENDIF(MSVC)
-
 SET(profeval_sources
-# 	ProfEval.cc
-	readCaaML.cc
+ 	ProfEval.cc
+#	readCaaML.cc
 # 	writeCaaML.cc
-	${getopt_src}
 )
 
 SET(SN_LINKS "snowpack")
@@ -19,37 +14,11 @@ LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
 
 FIND_PACKAGE(MeteoIO REQUIRED)
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${METEOIO_INCLUDE_DIR})
-LINK_DIRECTORIES(${METEOIO_LIBRARIES}) #this, so that if the users types in paths, it works
-LIST(APPEND SN_LINKS ${METEOIO_LIBRARIES})
 
 IF(APPLE)
 	#this is necessary for GUI exceptions
 	LIST(APPEND SN_LINKS "-framework CoreServices")
 ENDIF(APPLE)
-
-#special features # currently set in the main CMakeLists.txt
-#SET(DEBUG_ARITHM ON CACHE BOOL "Force-crash the application when doing an arithmetic exception")
-
-IF(PLUGIN_IMISIO)
-	FIND_PACKAGE(OCCI REQUIRED)
-	INCLUDE_DIRECTORIES(SYSTEM ${OCCI_INCLUDE_DIR})
-	LINK_DIRECTORIES(${OCCI_LIBRARIES})
-	LIST(APPEND SN_LINKS ${OCCI_LIBRARIES})
-ENDIF(PLUGIN_IMISIO)
-
-IF(ENABLE_LAPACK)
-	FIND_PACKAGE(Lapack REQUIRED)
-	LINK_DIRECTORIES(${Lapack_LIBRARIES})
-	LINK_DIRECTORIES(${Blas_LIBRARIES})
-	LIST(APPEND SN_LINKS "lapack;blas")
-ENDIF(ENABLE_LAPACK)
-
-IF(PLUGIN_CAAMLIO)
-	FIND_PACKAGE(LibXml2 REQUIRED)
-	INCLUDE_DIRECTORIES(SYSTEM ${LIBXML2_INCLUDE_DIR})
-	LINK_DIRECTORIES(${LIBXML2_LIBRARIES})
-	LIST(APPEND SN_LINKS ${LIBXML2_LIBRARIES})
-ENDIF(PLUGIN_CAAMLIO)
 
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersion()
@@ -74,14 +43,3 @@ INSTALL(TARGETS ${BINARY}
 	RUNTIME DESTINATION bin
 	COMPONENT exe
 )
-
-###########################################################
-## Bundle MeteoIO
-###########################################################
-IF(WIN32)
-	IF(CPACK_BUNDLE_ALL AND NOT BUILD_STATIC_LIBS) #we consider that if !bundle, the user knows how to handle is library path
-		FILE(GLOB METEOIO_DLL "${METEOIO_ROOT}/lib/libmeteo*.dll")
-		FILE(GLOB SNOWPACK_DLL "${PROJECT_SOURCE_DIR}/lib/libsnow*.dll")
-		INSTALL(FILES ${METEOIO_DLL} ${SNOWPACK_DLL} DESTINATION bin COMPONENT exe)
-	ENDIF(CPACK_BUNDLE_ALL AND NOT BUILD_STATIC_LIBS)
-ENDIF(WIN32)

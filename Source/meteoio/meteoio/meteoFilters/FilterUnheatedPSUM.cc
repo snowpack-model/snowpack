@@ -21,10 +21,10 @@ using namespace std;
 
 namespace mio {
 
-FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector<std::string>& vec_args, const std::string& name)
-                  : FilterBlock(name), thresh_rh(0.), thresh_Dt(0.), soft(true)
+FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                  : FilterBlock(vecArgs, name), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -51,32 +51,25 @@ void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<Me
 				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
 				tmp = 0.;
-                        if (!soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
+                        if (!is_soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
                                 tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
 		}
 	}
 }
 
 
-void FilterUnheatedPSUM::parse_args(std::vector<std::string> vec_args) {
-	vector<double> filter_args;
-
-	soft = false;
-	if (!vec_args.empty()){
-		soft = is_soft(vec_args);
+void FilterUnheatedPSUM::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	const std::string where( "Filters::"+block_name );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
+		} else if (vecArgs[ii].first=="THRESH_RH") {
+			IOUtils::parseArg(vecArgs[ii], where, thresh_rh);
+		} else if (vecArgs[ii].first=="THRESH_DT") {
+			IOUtils::parseArg(vecArgs[ii], where, thresh_Dt);
+		}
 	}
-
-	convert_args(0, 2, vec_args, filter_args);
-
-	const size_t nb_args = filter_args.size();
-	if (nb_args == 0) {
-		thresh_rh = 0.5;
-		thresh_Dt = 3.0;
-	} else if (nb_args == 2) {
-		thresh_rh = filter_args[0];
-		thresh_Dt = filter_args[1];
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 0 or 2 arguments!", AT);
 }
 
 } //end namespace

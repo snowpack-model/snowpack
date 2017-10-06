@@ -22,6 +22,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <set>
 #include <cstdlib>
 #include <limits>
 #include <cmath>
@@ -80,6 +81,15 @@ namespace IOUtils {
 	*/
 	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (fabs(val1-val2) < epsilon);}
 
+	/**
+	* @brief Search for an element at a given date in a vector of MeteoData.
+	* The position of the matching date is returned or IOUtils::npos if not found. If \em exactmatch=false,
+	* the position of the first element \em after \em soughtdate is returned (or IOUtils::npos if this is
+	* not possible / relevant).
+	* @param[in] soughtdate date that should be found
+	* @param[in] vecM vector that should contain the data
+	* @param[in] exactmatch if the exact requested date is not found, return npos
+	*/
 	size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 
 	/**
@@ -146,6 +156,7 @@ namespace IOUtils {
 	std::string strToLower(std::string str);
 	bool isNumeric(std::string input, const unsigned int& nBase=10);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data);
+	size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 
@@ -158,14 +169,13 @@ namespace IOUtils {
 	* @param f   [in] The radix for reading numbers, such as std::dec or std::oct; default is std::dec.
 	* @return true if everything went fine, false otherwise
 	*/
-	template <class T> bool convertString(T& t, const std::string& str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
-		std::string s(str);
-		trim(s); //delete trailing and leading whitespaces and tabs
-		if (s.empty()) {
+	template <class T> bool convertString(T& t, std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
+		trim(str); //delete trailing and leading whitespaces and tabs
+		if (str.empty()) {
 			t = static_cast<T> (nodata);
 			return true;
 		} else {
-			std::istringstream iss(s);
+			std::istringstream iss(str);
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 			iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
@@ -184,13 +194,13 @@ namespace IOUtils {
 		}
 	}
 	// fully specialized template functions (implementation must not be in header)
-	template<> bool convertString<double>(double& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<double>(double& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<bool>(bool& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<unsigned int>(unsigned int& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<Coords>(Coords& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 
-	bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&) = std::dec);
+	bool convertString(Date& t, std::string str, const double& time_zone, std::ios_base& (*f)(std::ios_base&) = std::dec);
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
@@ -201,12 +211,11 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-	                                       const std::string& key, T& t, const ThrowOptions& options=IOUtils::dothrow){
+	                                       const std::string& key, T& t, const ThrowOptions& options=IOUtils::dothrow) {
 		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);
 
-		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
-
+		const std::map<std::string, std::string>::const_iterator it( properties.find(key) );
 		if (it == properties.end()){
 			if (options == IOUtils::nothrow)
 				return;
@@ -235,7 +244,7 @@ namespace IOUtils {
 		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);
 
-		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
+		const std::map<std::string, std::string>::const_iterator it( properties.find(key) );
 		if (it == properties.end()) {
 			if (options == IOUtils::nothrow) {
 				return;
@@ -269,6 +278,18 @@ namespace IOUtils {
 		if (value==plugin_nodata) return static_cast<T> (nodata);
 		else return value;
 	}
+
+	/**
+	* @brief Parse a given named argument
+	* @tparam T[in] The type wanted for the return value (template type parameter).
+	* @param[in] arg  key/value pair to be parsed
+	* @param[in] algo  the name of the filter or algorithm (for error messages)
+	* @param[out] val the parsed value
+	*/
+	template <class T> static void parseArg(const std::pair< std::string, std::string>& arg, const std::string& algo, T& val) {
+			if (!IOUtils::convertString(val, arg.second))
+				throw InvalidArgumentException("Can not parse argument '"+arg.first+"::"+arg.second+"' for " + algo, AT);
+		}
 
 	/**
 	* @brief A function that parses a Config object for COORSYS, COORDPARAM keywords in [Input] and [Output]

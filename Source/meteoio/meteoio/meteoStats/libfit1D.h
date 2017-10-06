@@ -18,8 +18,8 @@
 #ifndef LIBFIT1D_H
 #define LIBFIT1D_H
 
-#include <meteoio/IOExceptions.h>
 #include <meteoio/meteoStats/libfit1DCore.h>
+#include <meteoio/IOUtils.h>
 
 #include <vector>
 
@@ -27,68 +27,68 @@ namespace mio {
 
 class Zero : public FitModel {
 	public:
-		Zero() {fit_ready = true; nParam = 0; min_nb_pts = 0; regname = "Zero";}
-		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { }
+		Zero() : FitModel("Zero", 0, 0) {fit_ready=true;}
+		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) {}
 		bool fit() { return true;}
 		double f(const double& /*x*/) const {return 0.;}
 };
 
 class SimpleLinear : public FitModel {
 	public:
-		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "SimpleLinear";}
+		SimpleLinear() : FitModel("SimpleLinear", 2, 2), fixed_lapse_rate(IOUtils::nodata) {fit_ready=false;}
+		SimpleLinear(const std::string& i_regname) : FitModel(i_regname, 2, 2), fixed_lapse_rate(IOUtils::nodata) {fit_ready=false;}
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
-		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;}
+		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts--;}
 	protected:
-		bool checkInputs();
 		double fixed_lapse_rate;
 };
 
 class NoisyLinear : public SimpleLinear {
 	public:
-		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "NoisyLinear";}
+		NoisyLinear() : SimpleLinear("NoisyLinear") {fit_ready=false;}
 		bool fit();
 };
 
 class SphericVario : public FitLeastSquare {
 	public:
-		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";}
+		SphericVario() : FitLeastSquare("SphericVario", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class LinVario : public FitLeastSquare {
 	public:
-		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";}
+		LinVario() : FitLeastSquare("LinVario", 2, 3) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class ExpVario : public FitLeastSquare {
 	public:
-		ExpVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "ExpVario";}
+		ExpVario() : FitLeastSquare("ExpVario", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class RatQuadVario : public FitLeastSquare {
 	public:
-		RatQuadVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "RatQuadVario";}
+		RatQuadVario() : FitLeastSquare("RatQuadVario", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class LinearLS : public FitLeastSquare {
 	public:
-		LinearLS() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinearLS";}
+		LinearLS() : FitLeastSquare("LinearLS", 2, 3) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
 
 class Quadratic : public FitLeastSquare {
 	public:
-		Quadratic() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "Quadratic";}
+		Quadratic() : FitLeastSquare("Quadratic", 3, 4) {fit_ready = false;}
 		void setDefaultGuess();
 		double f(const double& x) const;
 };
@@ -96,6 +96,7 @@ class Quadratic : public FitLeastSquare {
 /**
  * @class Fit1D
  * @brief A class to perform 1D regressions
+ * @details
  * It works on a time serie and uses either ad-hoc methods or matrix arithmetic to perform an arbitrary fit.
  * Currently, the following models are supported:
  * - Specific fits:
@@ -216,9 +217,9 @@ class Fit1D {
 		/**
 		* @brief Calculate the parameters of the fit.
 		* The fit has to be computed before.
-		* @param coefficients vector containing the coefficients
+		* @return vector containing the coefficients
 		*/
-		void getParams(std::vector<double>& coefficients) const {model->getParams(coefficients);}
+		std::vector<double> getParams() const { return model->getParams();}
 
 		/**
 		* @brief Return the name of the fit model.
@@ -255,6 +256,98 @@ class Fit1D {
 
 	private:
 		FitModel *model;
+};
+
+/**
+ * @class FitMult
+ * @brief A class to perform multiple linear regressions.
+ * @details This class performs linear regressions with multiple predictors. For example,
+ * to compute air temperature trends based on elevation, easting, northing (ie predictors).
+ * See www.public.iastate.edu/~maitra/stat501/lectures/MultivariateRegression.pdf
+ *
+ * It solves the multiple linear regression as
+ * \f[
+ * \bm{Y = Z\beta + \epsilon}
+ * \f]
+ * where \f$ \bm{Y} \f$ is the matrix of the observations, \f$ \bm{Z} \f$ the matrix of the predictors, \f$ \bm{\beta} \f$ the matrix of the regression
+ * coefficients and \f$ \bm{\epsilon} \f$ the matrix of errors. The \f$ \bm{Y} \f$ and \f$ \bm{Z} \f$ matrices are filled with the \f$ \bm{n} \f$ observations
+ * and \f$ \bm{r} \f$ predictors (for example with 3 predictors, altitude, easting and northing) so the previous equation becomes:
+ * \f[
+ * \underbrace{
+ * \left(
+ * \begin{array}{c}
+ * obs_1 \\
+ * obs_2 \\
+ * \vdots \\
+ * obs_n
+ * \end{array}
+ * \right)
+ * }_{Y}
+ * \qquad
+ * =
+ * \qquad
+ * \underbrace{
+ * \left(
+ * \begin{array}{cccc}
+ * 1 & alt_1 & east_1 & north_1 \\
+ * 1 & alt_2 & east_2 & north_2 \\
+ * \vdots & \vdots & \vdots & \vdots \\
+ * 1 & alt_n & east_n & north_n
+ * \end{array}
+ * \right)
+ * }_{Z}
+ * \cdot
+ * \underbrace{
+ * \left(
+ * \begin{array}{c}
+ * \beta_0 \\
+ * \beta_1  \\
+ * \vdots \\
+ * \beta_r
+ * \end{array}
+ * \right)
+ * }_{\beta}
+ * +
+ * \underbrace{
+ * \left(
+ * \begin{array}{c}
+ * \epsilon_1 \\
+ * \epsilon_2 \\
+ * \vdots \\
+ * \epsilon_n
+ * \end{array}
+ * \right)
+ * }_{\epsilon}
+ * \f]
+ *
+ * If we write \f$ \bm{\hat{\beta}} \f$ the least square estimate of \f$ \bm{\beta} \f$, then \f$ \bm{ \hat{\beta} = (Z^\top Z)^{-1}Z^\top Y} \f$
+ * and the predicted values are computed as \f$ \bm{ \hat{Y} = Z\hat{\beta} } \f$.
+ *
+ * @ingroup stats
+ */
+class FitMult {
+	public:
+		FitMult() : predictors(), observations(), Beta(), regname("MultiLinear"), infoString(), nPreds(0), fit_ready(false) {}
+
+		void addData(const std::vector<double>& vecPreds, const double& obs);
+		bool fit();
+		double f(const std::vector<double>& x) const;
+		double operator ()(const std::vector<double>& x) const { return f(x);}
+		std::vector<double> getParams() const;
+		std::string getName() const {return regname;}
+		std::string getInfo() const {return infoString;}
+		void setInfo(const std::string& info) {infoString=info;}
+		FitMult& operator =(const FitMult& source);
+		bool isReady() const {return fit_ready;}
+		std::string toString() const;
+	private:
+		std::vector< std::vector<double> > predictors;
+		std::vector<double> observations;
+		Matrix Beta;
+		const std::string regname; //model name
+		std::string infoString;
+		size_t nPreds; ///< number of predictors
+		bool fit_ready;
 };
 
 } //end namespace

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <fstream>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/MeteoIO.h>
 

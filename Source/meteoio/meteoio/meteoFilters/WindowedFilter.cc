@@ -23,27 +23,54 @@ using namespace std;
 
 namespace mio {
 
-WindowedFilter::WindowedFilter(const std::string& name)
-               : FilterBlock(name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
-                 last_start(0), last_end(0), min_data_points(1), vec_window(), is_soft(false)
-{}
-
-unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
+WindowedFilter::WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+               : FilterBlock(vecArgs, name), min_time_span(0.0, 0.), centering(WindowedFilter::center), min_data_points(1),
+                 last_start(0), last_end(0), vec_window(), is_soft(false)
 {
-	if (!vec_args.empty()){
-		if (vec_args.front() == "left"){
-			vec_args.erase(vec_args.begin());
-			return WindowedFilter::left;
-		} else if (vec_args.front() == "right"){
-			vec_args.erase(vec_args.begin());
-			return WindowedFilter::right;
-		} else if (vec_args.front() == "center"){
-			vec_args.erase(vec_args.begin());
-			return WindowedFilter::center;
+	setWindowFParams( vecArgs );
+}
+
+/**
+ * @brief Parse the arguments in order to retrieve the user parameters for the data window.
+ * The following parameters are recognized:
+ *  - CENTERING: the time-centering of the data window  can be either left, right or center;
+ *  - MIN_PTS: minimum number of points that the window must contain;
+ *  - MIN_SPAN: minimum time width of the data window (in seconds).
+ *
+ * @param[in] vecArgs Vector containing all the filter's arguments
+ * NOTE: the "soft" argument is also processed.
+ */
+void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	const std::string where( "Filters::"+block_name );
+	bool has_min_span = false, has_min_pts = false;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="CENTERING") {
+			const std::string cntr_spec( IOUtils::strToUpper(vecArgs[ii].second) );
+			if (cntr_spec=="LEFT")
+				centering = WindowedFilter::left;
+			else if (cntr_spec=="CENTER")
+				centering = WindowedFilter::center;
+			else if (cntr_spec=="RIGHT")
+				centering = WindowedFilter::right;
+			else
+				throw InvalidArgumentException("Invalid window specification for "+where, AT);
+		} else if (vecArgs[ii].first=="MIN_PTS") {
+			IOUtils::parseArg(vecArgs[ii], where, min_data_points);
+			has_min_pts = true;
+		} else if (vecArgs[ii].first=="MIN_SPAN") {
+			double min_span;
+			IOUtils::parseArg(vecArgs[ii], where, min_span);
+			min_time_span = Duration(min_span / 86400.0, 0.);
+			has_min_span = true;
+		} else if (vecArgs[ii].first=="SOFT") {
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		}
 	}
 
-	return WindowedFilter::center; //the default
+	if (!has_min_span && !has_min_pts)
+		throw InvalidArgumentException("Please provide a window width specification (either MIN_PTS or MIN_SPAN) for "+where, AT);
 }
 
 /**

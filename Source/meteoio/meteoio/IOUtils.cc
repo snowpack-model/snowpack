@@ -15,6 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <cstdio>
 #include <cmath>
 #include <cstring>
 #include <ctype.h>
@@ -22,7 +23,7 @@
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 	#include <winsock.h>
 #else
-    #include <unistd.h>
+	#include <unistd.h>
 #endif
 
 #include <meteoio/IOUtils.h>
@@ -52,7 +53,7 @@ double round(const double& x) {
 
 std::string getLibVersion() {
 	std::ostringstream ss;
-	ss << _VERSION << " compiled on " << __DATE__ << " " << __TIME__;
+	ss << MIO_VERSION << " compiled on " << __DATE__ << " " << __TIME__;
 	return ss.str();
 }
 
@@ -193,12 +194,8 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, 
 		trim(key);
 		trim(value);
 
-		if (key.empty() || value.empty()) {
-			return false;
-		}
-
-		if (setToUpperCase)
-			toUpper(key);
+		if (key.empty() || value.empty()) return false;
+		if (setToUpperCase) toUpper(key);
 	} else {
 		key="";
 		value="";
@@ -208,7 +205,8 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, 
 	return true;
 }
 
-std::string getLogName() {
+std::string getLogName()
+{
 	char *tmp;
 
 	if ((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
@@ -222,7 +220,7 @@ std::string getLogName() {
 }
 
 std::string getHostName() {
-	const size_t len = 4096;
+	static const size_t len = 4096;
 
 	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 		TCHAR infoBuf[len];
@@ -240,35 +238,6 @@ std::string getHostName() {
 		if (name[0] == '\0') return std::string("N/A");
 		return std::string(name);
 	#endif
-}
-
-void readKeyValueHeader(std::map<std::string,std::string>& headermap,
-                        std::istream& fin, const size_t& linecount,
-                        const std::string& delimiter, const bool& keep_case)
-{
-	size_t linenr = 0;
-	std::string line;
-
-	//make a test for end of line encoding:
-	const char eol = getEoln(fin);
-
-	for (size_t ii=0; ii< linecount; ii++){
-		if (std::getline(fin, line, eol)) {
-			std::string key, value;
-			linenr++;
-			const bool result = readKeyValuePair(line, delimiter, key, value);
-			if (result) {
-				if (!keep_case) headermap[ strToLower(key) ] = value;
-				else headermap[key] = value;
-			} else { //  means if ((key == "") || (value==""))
-				std::ostringstream out;
-				out << "Invalid key value pair in line: " << linenr << " of header";
-				throw IOException(out.str(), AT);
-			}
-		} else {
-			throw InvalidFormatException("Premature EOF while reading Header", AT);
-		}
-	}
 }
 
 size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
@@ -293,19 +262,27 @@ size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
 	return vec_data.size();
 }
 
+size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString)
+{
+	setString.clear();
+	std::istringstream iss(line_in); //construct inputstream with the string line as input
+
+	std::string word;
+	while (iss >> word){
+		setString.insert(word);
+	}
+
+	return setString.size();
+}
+
 size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
 {
 	vecString.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
 
-	std::string tmp_string;
-	while (!iss.eof()) {
-		iss >> std::skipws >> tmp_string;
-
-		if (!tmp_string.empty()) {
-			vecString.push_back(tmp_string);
-			tmp_string.clear();
-		}
+	std::string word;
+	while (iss >> word){
+		vecString.push_back(word);
 	}
 
 	return vecString.size();
@@ -314,11 +291,11 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
-	std::string tmp_string;
+	std::string word;
 	std::istringstream iss(line_in);
 
-	while (getline(iss, tmp_string, delim)){
-		vecString.push_back(tmp_string);
+	while (getline(iss, word, delim)){
+		vecString.push_back(word);
 	}
 
 	return vecString.size();
@@ -329,36 +306,34 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const char NUM[] = "0123456789";
 
-template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
-	t = str;
+	t =str;
 	trim(t); //delete trailing and leading whitespaces and tabs
 	return true;
 }
 
-template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<bool>(bool& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s(str);
-	trim(s); //delete trailing and leading whitespaces and tabs
+	trim(str); //delete trailing and leading whitespaces and tabs
 
-	if (toupper(s[0])=='T' || toupper(s[0])=='Y') {
+	if (toupper(str[0])=='T' || toupper(str[0])=='Y') {
 		t = true;
-	} else if (toupper(s[0])=='F' || toupper(s[0])=='N') {
+	} else if (toupper(str[0])=='F' || toupper(str[0])=='N') {
 		t = false;
 	} else {
-		std::istringstream iss(s);
+		std::istringstream iss(str);
 		int i;
 		iss >> f >> i; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-		if (iss.fail()) {//Conversion failed
-			return false;
-		}
+		//Conversion failed
+		if (iss.fail()) return false;
 		t = (i != 0);
 	}
 
-	const std::string::size_type pos = s.find_first_not_of(ALPHANUM);
+	const std::string::size_type pos = str.find_first_not_of(ALPHANUM);
 	if (pos != std::string::npos) {
-		std::string tmp = s.substr(pos);
+		std::string tmp( str.substr(pos) );
 		trim(tmp);
 		if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
 			return false;
@@ -368,7 +343,7 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 	return true;
 }
 
-template<> bool convertString<double>(double& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<double>(double& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
 	if (f == std::dec) {
 		//First check if string is empty
@@ -396,22 +371,19 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 		}
 	}
 
-	std::string s(str);
-	trim(s); //delete trailing and leading whitespaces and tabs
-	if (s.empty()) {
+	trim(str); //delete trailing and leading whitespaces and tabs
+	if (str.empty()) {
 		t = static_cast<double> (nodata);
 		return true;
 	}
 
-	std::istringstream iss(s);
+	std::istringstream iss(str);
 	iss.setf(std::ios::fixed);
 	iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 	iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
 
-	if (iss.fail()) {
-		//Conversion failed
-		return false;
-	}
+	//Conversion failed
+	if (iss.fail()) return false;
 	std::string tmp;
 	getline(iss,  tmp); //get rest of line, if any
 	trim(tmp);
@@ -422,22 +394,19 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 	return true;
 }
 
-template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<unsigned int>(unsigned int& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s(str);
-	trim(s); //delete trailing and leading whitespaces and tabs
-	if (s.empty()) {
+	trim(str); //delete trailing and leading whitespaces and tabs
+	if (str.empty()) {
 		t = unodata;
 		return true;
 	} else {
-		std::istringstream iss(s);
+		std::istringstream iss(str);
 		iss.setf(std::ios::fixed);
 		iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-		if (iss.fail()) {
-			//Conversion failed
-			return false;
-		}
+		//Conversion failed
+		if (iss.fail()) return false;
 		std::string tmp;
 		getline(iss,  tmp); //get rest of line, if any
 		trim(tmp);
@@ -449,10 +418,10 @@ template<> bool convertString<unsigned int>(unsigned int& t, const std::string& 
 	}
 }
 
-bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
+bool convertString(Date& t, std::string str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s(str);
-	trim(s); //delete trailing and leading whitespaces and tabs
+	trim(str); //delete trailing and leading whitespaces and tabs
+	stripComments(str);
 
 	(void)f;
 	int year;
@@ -460,66 +429,89 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 	double second;
 	char rest[32] = "";
 
-	const char *c_str = s.c_str();
+	const char *c_str = str.c_str();
+	//special case: NOW or NOW±xxx (offset in seconds or hh:mm)
+	if (str.substr(0, 3)=="NOW") {
+		t.setFromSys();
+		t.setTimeZone(time_zone);
+		if (str.size()>3) {
+			unsigned int secs;
+			bool status = true;
+			if (sscanf(c_str, "NOW+%u:%u%31s", &hour, &minute, rest) >= 2) {
+				t += (hour*60.+minute)/(60.*24.);
+			} else if (sscanf(c_str, "NOW-%u:%u%31s", &hour, &minute, rest) >= 2) {
+				t -= (hour*60.+minute)/(60.*24.);
+			} else if (sscanf(c_str, "NOW+%u%31s", &secs, rest) >= 1) {
+				t += (secs)/(3600.*24.);
+			} else if (sscanf(c_str, "NOW-%u%31s", &secs, rest) >= 1) {
+				t -= (secs)/(3600.*24.);
+			} else
+				status = false;
+
+			if (status==false || strlen(rest)>0)
+				throw InvalidFormatException("Invalid date specification '"+str+"'", AT);
+		}
+		return true;
+	}
+
 	if (sscanf(c_str, "%d-%u-%u %u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		std::string timezone_iso(rest);
-		stripComments(timezone_iso);
+		const std::string timezone_iso(rest);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, second, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%uT%u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) { //ISO
-		std::string timezone_iso(rest);
-		stripComments(timezone_iso);
+		const std::string timezone_iso(rest);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, second, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		std::string timezone_iso(rest);
-		stripComments(timezone_iso);
+		const std::string timezone_iso(rest);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, static_cast<unsigned>(0), tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		std::string timezone_iso(rest);
-		stripComments(timezone_iso);
+		const std::string timezone_iso(rest);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, hour, minute, static_cast<unsigned>(0), tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-		std::string timezone_iso(rest);
-		stripComments(timezone_iso);
+		const std::string timezone_iso(rest);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate(year, month, day, static_cast<unsigned>(0), static_cast<unsigned>(0), static_cast<unsigned>(0), tz);
 		return true;
 
 	} else if (sscanf(c_str, "%u:%u%31s", &hour, &minute, rest) >= 2) {
-		std::string timezone_iso(rest);
-		stripComments(timezone_iso);
+		const std::string timezone_iso(rest);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if (tz==nodata) return false;
 		t.setDate( (static_cast<double>(hour))/24. + (static_cast<double>(minute))/24./60. , tz);
 		return true;
 
-	} else {
+	} else { //purely numeric date: YYYYMMDDHHmmss where ss and mm can be skipped
+		const size_t wrong_dash1 = str.find("–");
+		const size_t wrong_dash2 = str.find("Ð");
+		if (wrong_dash1!=std::string::npos || wrong_dash2!=std::string::npos)
+			throw InvalidFormatException("Invalid date '"+str+"', please use the '-' character as date delimiter", AT);
+		
 		//try to read purely numerical date, potentially surrounded by other chars
 		//and potentially containing an ISO time zone string
-		const size_t in_len = s.length();
+		const size_t in_len = str.length();
 
 		//extract date/time
-		const size_t date_beg = s.find_first_of(NUM);
+		const size_t date_beg = str.find_first_of(NUM);
 		if (date_beg==npos || date_beg==in_len) return false;
-		size_t date_end = s.find_first_not_of(NUM, date_beg+1);
+		size_t date_end = str.find_first_not_of(NUM, date_beg+1);
 		if (date_end==npos) date_end = in_len;
-		const std::string date = s.substr(date_beg, date_end-date_beg);
+		const std::string date( str.substr(date_beg, date_end-date_beg) );
 
 		//parse date/time
 		const size_t date_len = date.length();
@@ -547,11 +539,11 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 
 		//extract potential ISO time zone string
 		double tz = time_zone;
-		const size_t tz_beg = s.find_first_of("+-", date_end);
+		const size_t tz_beg = str.find_first_of("+-", date_end);
 		if (tz_beg!=npos && tz_beg!=in_len) {
-			size_t tz_end = s.find_first_not_of("0123456789:", date_end+1);
+			size_t tz_end = str.find_first_not_of("0123456789:", date_end+1);
 			if (tz_end==npos) tz_end = in_len;
-			const std::string timezone_iso = s.substr(tz_beg, tz_end-tz_beg);
+			const std::string timezone_iso( str.substr(tz_beg, tz_end-tz_beg) );
 			if (!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
 		}
 
@@ -561,15 +553,14 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 	return true;
 }
 
-template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<Coords>(Coords& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s(str);
-	trim(s); //delete trailing and leading whitespaces and tabs
+	trim(str); //delete trailing and leading whitespaces and tabs
 
 	(void)f;
 	double lat, lon;
 	try {
-		CoordsAlgorithms::parseLatLon(s, lat, lon);
+		CoordsAlgorithms::parseLatLon(str, lat, lon);
 	} catch(const IOException&) {
 		return false;
 	}
@@ -592,11 +583,9 @@ void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
 	cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
 }
 
-//returns index of element, if element does not exist it returns closest index after soughtdate
-//the element needs to be an exact hit or embedded between two measurments
 size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch)
 {
-	if (vecM.empty() || soughtdate > vecM.back().date || soughtdate < vecM.front().date) {
+	if (vecM.empty() || soughtdate < vecM.front().date || soughtdate > vecM.back().date) {
 		//the sought date is not contained in the vector, return npos
 		return npos;
 	}
@@ -607,6 +596,8 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	//should be and provide a much smaller search interval around it
 	const double start_date = vecM.front().date.getJulian(true);
 	const double end_date = vecM.back().date.getJulian(true);
+	if (start_date==end_date) return 0; //there is onyl one element
+
 	const double curr_date = soughtdate.getJulian(true);
 	const double raw_pos = (curr_date-start_date) / (end_date-start_date) * static_cast<double>(max_idx); //always >=0
 	const size_t start_idx = static_cast<size_t>( floor(raw_pos*.9) );
@@ -672,36 +663,25 @@ void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size
 
 double unitsPrefix(const char& prefix)
 {
-	if (prefix == 'f') {
-		return 1e-15;
-	} else if (prefix == 'p') {
-		return 1e-12;
-	} else if (prefix == 'n') {
-		return 1e-9;
-	} else if (prefix == 'u') {
-		return 1e-6;
-	} else if (prefix == 'm') {
-		return 1e-3;
-	} else if (prefix == 'c') {
-		return 1e-2;
-	} else if (prefix == 'd') {
-		return 1e-1;
-	} else if (prefix == 'h') {
-		return 1e2;
-	} else if (prefix == 'k') {
-		return 1e3;
-	} else if (prefix == 'M') {
-		return 1e6;
-	} else if (prefix == 'G') {
-		return 1e9;
-	} else if (prefix == 'T') {
-		return 1e12;
-	} else if (prefix == 'P') {
-		return 1e15;
+	switch(prefix) {
+		case 'f' : return 1e-15;
+		case 'p' : return 1e-12;
+		case 'n' : return 1e-9;
+		case 'u' : return 1e-6;
+		case 'm' : return 1e-3;
+		case 'c' : return 1e-2;
+		case 'd' : return 1e-1;
+		case 'h' : return 1e2;
+		case 'k' : return 1e3;
+		case 'M' : return 1e6;
+		case 'G' : return 1e9;
+		case 'T' : return 1e12;
+		case 'P' : return 1e15;
+		default: {
+			const std::string prefix_str( 1, prefix );
+			throw InvalidArgumentException("Invalid unit prefix '"+prefix_str+"'", AT);
+		}
 	}
-
-	const std::string prefix_str( 1, prefix );
-	throw IOException("Invalid unit prefix '"+prefix_str+"'", AT);
 }
 
 //currently, only the most simple ase of units are handled. Composite units

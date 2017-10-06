@@ -19,11 +19,8 @@
 #define CONFIGREADER_H
 
 #include <meteoio/IOUtils.h>
-#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
-#include <cstdio>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <map>
@@ -42,8 +39,9 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
+ * 
  * @anchor config_import
- * - it is possible to import another ini file, by specifying as many of the keys listed below as necessary.
+ * It is possible to import another ini file, by specifying as many of the keys listed below as necessary.
  *   Please not that in order to prevent circular dependencies, it is not possible to import the same file several times.
  *      - IMPORT_BEFORE = {file and path to import}. This must take place before any non-import
  *        key or section header. This imports the specified file before processing the current file, allowing
@@ -85,26 +83,20 @@ class Config {
 		void addFile(const std::string& filename_in);
 
 		/**
-		 * @brief Add the content of the given command line to the internal key/value map object
-		 * @param[in] cmd_line string representing the command line to be parsed for key/value pairs or switches
-		 */
-		void addCmdLine(const std::string& cmd_line);
-
-		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object.
 		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[in] value string representing the matching value to be added
 		 */
-		void addKey(const std::string& key, const std::string& section, const std::string& value);
+		void addKey(const std::string& key, std::string section, const std::string& value);
 
 		/**
 		 * @brief Delete a specific key/value pair from the internal map object, key/section are case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		*/
-		void deleteKey(const std::string& key, const std::string& section);
+		void deleteKey(const std::string& key, std::string section);
 
 		/**
 		 * @brief Delete keys matching a specific pattern from the internal map object, key/section are case insensitive
@@ -116,19 +108,19 @@ class Config {
 		 *  cfg.deleteKeys("STATION", "Input");
 		 * @endcode
 		*/
-		void deleteKeys(const std::string& keymatch, const std::string& section, const bool& anywhere=false);
+		void deleteKeys(const std::string& keymatch, std::string section, const bool& anywhere=false);
 
 		/**
 		 * @brief Returns the filename that the Config object was constructed with.
 		 * @return The absolute filename of the key/value file.
 		 */
-		std::string getSourceName() const;
+		std::string getSourceName() const {return sourcename;}
 
 		/**
 		 * @brief Returns the directory where the root configuration file is (needed to resolv relative paths).
 		 * @return The absolute path to the root config file (resolved for symlinks, relative paths, etc).
 		 */
-		std::string getConfigRootDir() const;
+		std::string getConfigRootDir() const {return configRootDir;}
 
 		/**
 		 * @brief Return if a given key exists in a given section
@@ -136,7 +128,7 @@ class Config {
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @return true if the key exists
 		 */
-		bool keyExists(const std::string& key, const std::string& section) const;
+		bool keyExists(const std::string& key, std::string section) const;
 
 		/**
 		 * @brief Print the content of the Config object (usefull for debugging)
@@ -144,10 +136,10 @@ class Config {
 		 */
 		const std::string toString() const;
 
-		friend std::iostream& operator<<(std::iostream& os, const Config& cfg);
-		friend std::iostream& operator>>(std::iostream& is, Config& cfg);
+		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
+		friend std::istream& operator>>(std::istream& is, Config& cfg);
 
-		template <typename T> std::vector<T> getValue(const std::string& key, const std::string& section,
+		template <typename T> std::vector<T> getValue(const std::string& key, std::string section,
 		                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			std::vector<T> tmp;
@@ -183,17 +175,17 @@ class Config {
 		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <typename T> void getValue(const std::string& key, const std::string& section,
+		template <typename T> void getValue(const std::string& key, std::string section,
 		                                    std::vector<T>& vecT, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			vecT.clear();
 			const std::string new_key( IOUtils::strToUpper(key) );
-			const std::string new_section( IOUtils::strToUpper(section) );
+			IOUtils::toUpper(section);
 
 			try {
-				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT, opt);
+				IOUtils::getValueForKey<T>(properties, section + "::" + new_key, vecT, opt);
 			} catch(const std::exception&){
-				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+new_section+"::"+new_key, AT);
+				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+section+"::"+new_key, AT);
 			}
 		}
 
@@ -219,7 +211,7 @@ class Config {
 		 * string mystr = cfg.get("PATH", "OUTPUT");
 		 * @endcode
 		 */
-		ConfigProxy get(const std::string& key, const std::string& section, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const;
+		ConfigProxy get(const std::string& key, std::string section, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const;
 
 		/**
 		 * @brief Template function to retrieve a value of class T for a certain key
@@ -239,16 +231,16 @@ class Config {
 		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <typename T> void getValue(const std::string& key, const std::string& section, T& t,
+		template <typename T> void getValue(const std::string& key, std::string section, T& t,
                                               const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			const std::string new_key( IOUtils::strToUpper(key) );
-			const std::string new_section( IOUtils::strToUpper(section) );
+			IOUtils::toUpper(section);
 
 			try {
-				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, t, opt);
+				IOUtils::getValueForKey<T>(properties, section + "::" + new_key, t, opt);
 			} catch(const std::exception&){
-				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+new_section+"::"+new_key, AT);
+				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+section+"::"+new_key, AT);
 			}
 		}
 
@@ -258,46 +250,61 @@ class Config {
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
 		 */
-		template <typename T> void getValues(const std::string& keystart, const std::string& section, std::vector<T>& vecT) const
+		template <typename T> void getValues(const std::string& keystart, std::string section, std::vector<T>& vecT) const
 		{
 			vecT.clear();
-			std::vector< std::string > vecKeys;
-			const std::string new_section( IOUtils::strToUpper(section) );
-			const size_t nr_keys = findKeys(vecKeys, keystart, new_section);
+			IOUtils::toUpper(section);
+			const std::vector< std::string > vecKeys( getKeys(keystart, section) );
 
-			for (size_t ii=0; ii<nr_keys; ++ii) {
-				const std::string full_key = new_section + "::" + vecKeys[ii];
+			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
+				const std::string full_key = section + "::" + vecKeys[ii];
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
 				} catch(const std::exception&){
 					throw UnknownValueException("[E] Error in "+sourcename+" reading key "+full_key, AT);
 				}
-				vecT.push_back(tmp);
+				vecT.push_back( tmp );
 			}
 		}
 
+		template <typename T> void getValues(const std::string& keystart, std::string section, std::vector<T>& vecT, std::vector<std::string>& vecKeys) const
+		{
+			vecT.clear();
+			IOUtils::toUpper(section);
+			vecKeys = getKeys(keystart, section);
+
+			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
+				const std::string full_key = section + "::" + vecKeys[ii];
+				T tmp;
+				try {
+					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
+				} catch(const std::exception&){
+					throw UnknownValueException("[E] Error in "+sourcename+" reading key "+full_key, AT);
+				}
+				vecT.push_back( tmp );
+			}
+		}
+
+		std::vector< std::pair<std::string, std::string> > getValues(const std::string& keystart, std::string section, const bool& anywhere=false) const;
+
 		/**
-		 * @brief Function that searches for a given string within the keys of section (default: GENERAL)
-		 *         it returns the number of matches (partial matches are considered) and writes all the keys
-		 *         into a vector\<string\> that is handed to the function as reference
-		 * @param[out] vecResult A vector that will hold all keys that partially match keystart
+		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
+		 *         it returns all the keys that match (partial matches are considered) into a vector\<string\>.
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @return a vector that holds all keys that partially match keystart
 		 * @code
-		 *  vector<string> myVec;
-		 *  size_t nrOfMatches = cfg.findKeys(myVec, "TA::", "Filters");
+		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
 		 * @endcode
 		 */
-		size_t findKeys(std::vector<std::string>& vecResult,
-		               const std::string& keymatch, std::string section, const bool& anywhere=false) const;
+		std::vector<std::string> getKeys(const std::string& keymatch, std::string section, const bool& anywhere=false) const;
 
 	private:
-		void parseCmdLine(const std::string& cmd_line);
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
-		std::string extract_section(std::string key) const;
+		static std::string extract_section(std::string key);
 		std::string clean_import_path(const std::string& in_path) const;
 
 		std::map<std::string, std::string> properties; //Save key value pairs
@@ -318,7 +325,7 @@ class ConfigProxy {
 		            const std::string& i_section, const IOUtils::ThrowOptions& i_opt)
 		            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
 
-		template<typename T> operator T() {
+		template<typename T> operator T() const {
 			T tmp;
 			proxycfg.getValue(key, section, tmp, opt);
 			return tmp;

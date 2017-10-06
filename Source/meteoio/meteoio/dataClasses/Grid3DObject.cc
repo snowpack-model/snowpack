@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/Grid3DObject.h>
+#include <meteoio/IOExceptions.h>
 #include <cmath>
 
 using namespace std;
@@ -360,6 +361,10 @@ void Grid3DObject::size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) con
 	o_ndepths = grid3D.getNz();
 }
 
+size_t Grid3DObject::size() const {
+	return grid3D.size();
+}
+
 size_t Grid3DObject::getNx() const {
 	return grid3D.getNx();
 }
@@ -437,7 +442,7 @@ const std::string Grid3DObject::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
+std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid) {
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
 	os.write(reinterpret_cast<const char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
 
@@ -450,7 +455,7 @@ std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Grid3DObject& grid) {
+std::istream& operator>>(std::istream& is, Grid3DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is.read(reinterpret_cast<char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
 

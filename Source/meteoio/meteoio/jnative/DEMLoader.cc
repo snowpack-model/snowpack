@@ -38,7 +38,7 @@ IOInterface* DEMLoader::generateIOInterface(
 
 	IOInterface *io = NULL;
 	try {
-		cfg.addKey("DEMFILE", "Input", IOUtils::cleanPath(cDemFile));
+		cfg.addKey("DEMFILE", "Input", FileUtils::cleanPath(cDemFile));
 		cfg.addKey("COORDSYS", "Input", cDemCoordSystem);
 		cfg.addKey("COORDPARAM", "Input", "");
 

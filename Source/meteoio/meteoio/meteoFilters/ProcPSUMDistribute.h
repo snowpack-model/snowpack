@@ -27,27 +27,27 @@ namespace mio {
 /**
  * @class  ProcPSUMDistribute
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2011-01-24
  * @brief Distributes precipitation on the <b>preceeding timesteps</b> in a physically plausible way
+ * @details
  * This assumes that the precipitation has been measured on intervals greater than the sampling interval
  * of the data file (for example, 24 hours accumulations written once per day in an hourly file, the
- * other timesteps receiving nodata).
- * The accumulation has to be written on the last timestep of the accumulation period.
- * \n\n
- * The measured accumulation period is provided as argument (in seconds).
- * If using the "soft" argument, missing accumulated values would be replaced by "0".
+ * other timesteps receiving nodata). And the accumulation has to be written on the last timestep of the accumulation period.
+ *
+ * It supports the following arguments:
+ *  - SOFT: if set to TRUE, missing accumulated values would be replaced by "0";
+ *  - MEAS_PERIOD: measured accumulation period in seconds (mandatory).
+ *
  * The precipitation is distributed on the preceeding timesteps by using criterias on relative humidity
  * and the difference between the air temperature and the surface temperature.
  * @code
- * PSUM::filter1	= PSUM_DISTRIBUTE
- * PSUM::arg1	= 86400
+ * PSUM::filter1           = PSUM_DISTRIBUTE
+ * PSUM::arg1::meas_period = 86400
  * @endcode
  */
 
 class ProcPSUMDistribute : public ProcessingBlock {
 	public:
-		ProcPSUMDistribute(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -55,7 +55,7 @@ class ProcPSUMDistribute : public ProcessingBlock {
 		static void SmartDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 		static void CstDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		static size_t findNextAccumulation(const unsigned int& param, const std::vector<MeteoData>& ivec, const Date& endDate, size_t ii);
 		static void fillInterval(const unsigned int& param, std::vector<MeteoData>& ivec, const size_t& start, const size_t& end, const double value);
 

@@ -17,191 +17,13 @@
     You should have received a copy of the GNU General Public License
     along with Snowpack.  If not, see <http://www.gnu.org/licenses/>.
 */
-/**
- * @file Canopy.cc
- * @version 10.02
- * @author David Gustafsson (davidg@kth.se), Michael Lehning
- * @bug     -
- * @brief Computes interception of precipitation and radiation, and reduction of windspeed
- * in a canopy layer above thesnow or soil surface.
-
- * - 2014-09-29 2layer canopy model by I. Gouttevin et al, plus few additional features listed below.
-                (0) CRUCIAL NOTE:
-			- an additionnal parameter is now required in the input/station.snoold file : CanopyBasalArea (m2/m2),
-                          to be placed after CanopyLeafAreaIndex.
-			- the 2layer model with heat mass and corresponding canopy outputs is activated with the key:
-			  variant = 2L_CANOPY in [SnowpackAdvanced]. If you wish to have only one of these features you can
-			  play with the keys TWO_LAYER_CANOPY and CANOPY_HEAT_MASS in [Snowpack], which will erase the "true"
-			  default values of 2L_CANOPY.
-
-		(i) 2layer canopy model:
-			- key: TWO_LAYER_CANOPY = true [Snowpack]
-			- logical in the code: Twolayercanopy
-			- content: canopy is divided into a trunk layer (interception radiations with factor sigftrunk) and
-				a leaf-layer (intercepting radiations with factor sigf). SW radiations reaching the ground are modified
-				accordingly. An energy balance is computed for each layer, producing leaf-layer and trunk layer
-				temperatures (TC and Ttrunk) that affect LW radiations to the ground.
-				Optionally, trunks can get direct solar insolation (important for sparse canopies), look for
-				CanClosDirTrunks in the code
-			- further details: Gouttevin et al. (2014): A two-layer canopy with thermal inertia for an improved modelling
-				of the sub-canopy snowpack energy-balance (in prep).
-
-		(ii) canopy heat mass:
-			- key: CANOPY_HEAT_MASS = true [Snowpack]
-			- logical in the code: CanopyHeatMass
-			- content: the canopy gets an heat mass (whole, or separate between trunks and leaves if Twolayercanopy) that
-				adds a biomass heat flux term in the canopy energy balance.
-			- NOTE: an additionnal parameter is now required in the input/station.snoold file : CanopyBasalArea (m2/m2),
-				to be placed after CanopyLeafAreaIndex. Example value for closed canopies like Alptal : 0.004.
-                        - further details: Gouttevin et al. (2014): A two-layer canopy with thermal inertia for an improved modelling
-                                of the sub-canopy snowpack energy-balance (in prep).
-
-		(iii) outputs of the Canopy model:
-			Some cleaning was done to suppressed outputs that can be easily derived from other outputs.
-			There is now space for outputs specific to the 2layer model, which are written if variant = 2L_CANOPY in
-			[SnowpackAdvanced] (Canopy:: writeTimeSeriesAdd2LCanopy).
-
-		(iv) forest-floor albedo:
-			- key: FORESTFLOOR_ALB = true [Snowpack]
-			- logical in the code: forestfloor_alb
-			- content: Litter falling on the forest floor can reduce albedo. This effect is currently parameterized
-				through an exponential decay of the albedo to a value of 0.3 with a time-constant of 7 days,
-				based on parameterizations commonly used in Land-Surface models.
-				There is room for improvement !
-
-		(v) SnowMIP version (M. Bavay):
-			For the SnowMIP exepriment (Rutter et al., 2009) snowpack was modified (by T. Jonas ?) to take liquid
-			and solid precipitation inputs. This is now possible by relying on the psum_ph variable that contains
-			the precipitation phase.
-
- * - 2013-10-23 bis (I. Gouttevin, M. Bavay): simplification of the canopy energy Balance (EB) calculation, based on
-		(i) suppression of the limitation of TC change by temp_maxchange_per_hour;
-		    if temp_maxchange_per_hour is exceeded, turbulent coefficients
-		    are re-calculated
-		(ii) increased EB iterations (from 3 to 7)
-		(iii) no radiation and latent fluxes updates within each EB iteration (pb of EB closure with the output variables if convergence is not reached)
-		(iv) printing out the real (instead of the potential) canopy evaporation.
-
- * - 2013-10-23 (I. Gouttevin, M. Lehning, M. Bavay, D. Gustafsson): bug correction in r0change, psi, RAV and RAG calculations; re-calculation of the turbulent exchange coefficient in the EB-loop; a scaling factor is suggested for turbulent fluxes within the canopy EB but kept to 1. for the moment.
-
- * - 2007-12-20 The changes 071122 and 071022 included in rev 260 and commited to SVN.
-
- * - 2007-11-22 Changes in the Canopy following on the movement of SOLdata
-                   members diff and elev to Mdata. Final commit of Note 2007-10-22
-                   to SVN.
-
- * - 2007-11-22 Reversed order of notes so the latest is in the top
-
- * - 2007-10-22 Updated SVN version of Canopy model with the updates at
-                   2007-05-14 that were never committed to svn.
-                   Also note that the updates to canopy turbulence earlier this
-                   summer were refined when David visited Michi in July. Important
-                   now is that the Canopy model returns Cdata.zdispl = -0.7 if
-                   canopy height is smaller than snow depth,which means that no
-                   canopy computations were made.
-
- * - 2007-06-28 Made some additional checks in the canopy turbulence scheme to avoid
-                   negative ustar, which happens if the roughness of the canopy is
-                   smaller than the roughness of the snow surface (may happen when canopy
-                   with small height is about to be covered by snow)
-
- * - 2007-05-14 Developments of the Canopy submodel for the Snowmip2 project have now been
-                   included in the official svn version (also in ALpine3D). However,
-                   the hack to consider liquid and frozen precipitation is not included,
-                   thus, it is mainly the new radiation transfer scheme that differ from earlier
-                   SVN revisions. The new canopy radiation scheme includes seperate transmission
-                   coefficients for diffuse and direct radiation, where diffuse shortwave and
-                   longwave has the same value depending on LAI and extinction coefficent only,
-                   and direct shortwave is also dependent on solar elevation. The new scheme can
-                   be switched on/off with the parameter CANOPYTRANSMISSION in Constants.c
-
- * - 2006-11-20 Introducing a variable canopy transmissivity for shortwave radiation
-                   as a function of solar elevation (Gryning et al, 1999), which becomes
-                   important at higher latitudes with low solar elevation angle. \n
-                   Also making a hack for Snowmip2, to consider liquid and frozen
-                   precipitation, as well as throughfall, separately.
-
- * - 2006-10-11 Changed default value of INTERCEPTION_TIMECOEF from 1 to 0.7 to obtain full
-                   similarity with (Pomeroy et al., 1998: Hydr Proc)
-                   Changed default values of most parameters in accordance with latest
-                   findings from Alptal data (Gustafsson et al, 2007: Eur J For Res)
-
- * - 2006-10-09 Implemented (again) simplified linear scaling of canopy height
-                   as model for roughness length and displacement height (taking the old
-                   already existing parameters in use again, and DELETING parameter CAN_Z0M_COEF).
-
- * - 2006-06-02 Additional parameter to increase of canopy roughness length (we should
-                   replace the Shaw Perreria function by a simple fraction of canopy height again,
-                   thus only one parameter instead of ....) \n
-                   Further more, some modifications to allow Canopy model to run without soil
-
- * - 2006-03-01  Introduced new definition of reference height above canopy
-                   for Alpine3D applications. The reference height is now equal
-                   to the Canopy height + HEIGHT_OF_WIND_VALUE if the model is
-                   runned in ALPINE3D mode, and only HEIGHT_OF_WIND_VALUE in
-                   SNOWPACK stand-alone mode. In both cases, the reference height
-                   is minimized with Canopy height + 2.0m. \n
-                   Furthermore, the final computation of the friction velocity
-                   below the canopy was previously computed using the reference
-                   height determined for the canopy - which was correct whenever the
-                   HEIGHT_OF_WIND_VALUE > Canopy height + 2.0. However, in other cases
-                   and especially with the new definition for ALPINE3D-mode,
-                   this computation has to be done with the reference height
-                   that actually is used in Meteo.c. This is now corrected.
-
- * - 2006-02-14  Actually, the rs_mult is still needed, however, it has a
-                    new meaning... \n
-                    The definition is now Cdata->rs = Cdata->rs * (1 + f(LAI))
-                    , where f(LAI) = rs_mult * (1-exp(-LAI)).
-                    In other words, the aerodynamic resistance below the canopy is
-                    increased due to the LAI of the canopy, with a maximum factor
-                    of 1+rs_mult. This is much better than before, when the
-                    rs_mult was a constant (and hidden in the source code).
-                    Now however, the increase of the resistance is also scaled by
-                    the input LAI, so hopefully, there is less need for the users
-                    to chose their own rs_mult. Anyway, rs_mult is added to the
-                    CANOPY block in Constants.c \n
-                    Furthermore, all those little special parameters related to
-                    turbulent exchange from and below the canopy have been
-                    calibrated using the ALPTAL data (see Gustafsson et al....),
-                    and the new values are added to Constants.c
-
- * - 2006-01-09  Introduced a stability correction below the canopy (after
-                    having realized that the global switch NEUTRAL doesnt have
-                    there is effect when the CANOPY is switched on).
-                    Now the rs_mult can be removed again...
-
- * - 2005-09-29: Introduce a multiplicative factor to increase the aerodynamic
-                    resistance from the snow surface to the canopy level.
-                    This factor seems to be around 2 for the Alptal data.
-                    It can be a sign for the need of a stabililty correction
-                    below the canopy (cf Koivusalo or Storck).
-                    However, new stabililty functions for the snow surface
-                    (switch NEUTRAL), didnt have there is effect on the exaggerated
-                    contribution of turbulanet heat fluxes to snowmelt below
-                    the canopy. Exaggerated longwave radiation below the canopy
-                    can also be an explanaition.
-
- * - 2005-05-25: Cleaning up the main module Canopy to enable average
-                    (cumulated) flux output
-
- * - 2005-03-31: New simplified canopy turbulence scheme following
-                    dual-source model presented by (Blyth et al)
-
- * - 2004-08-20: Field capacity is defined as the plant available water
-                    in Alpine3D, therefore the wilting point is set to 0,
-                    in order to get a reasonable soil water control on
-                    transpiration.
-
-                    Root distribution changed so that a root depth can be
-                    specified: see functions SoilWaterUptake
-
- */
 
 #include <snowpack/snowpackCore/Canopy.h>
-#include <snowpack/snowpackCore/Snowpack.h>
-#include <meteoio/MeteoIO.h>
+#include <snowpack/Constants.h>
+#include <snowpack/Utils.h>
+#include <snowpack/Laws_sn.h>
 
+#include <meteoio/MeteoIO.h>
 #include <assert.h>
 
 using namespace std;
@@ -243,13 +65,13 @@ const double Canopy::can_diameter = 1.0;  // average canopy (tree) diameter [m],
 
 /// @brief ENERGY BALANCE
 /// parameters for HeatMass and 2layercanopy
-const double Canopy:: biomass_heat_capacity = 2800. ;	// from Linroth et al., 2013 (J Kg-1 K-1)
-const double Canopy:: biomass_density = 900. ;		// from Linroth et al., 2013 (Kg m-3)
-const double Canopy:: lai_frac_top_default = 0.5 ;	// fraction of total LAI that is attributed to the uppermost layer. Here calibrated for Alptal.
-const double Canopy:: trunk_frac_height = 0.2 ;  	// (optional) fraction of total tree height occupied by trunks,
+const double Canopy::biomass_heat_capacity = 2800.;	// from Linroth et al., 2013 (J Kg-1 K-1)
+const double Canopy::biomass_density = 900.;		// from Linroth et al., 2013 (Kg m-3)
+const double Canopy::lai_frac_top_default = 0.5;	// fraction of total LAI that is attributed to the uppermost layer. Here calibrated for Alptal.
+const double Canopy::trunk_frac_height = 0.2;		// (optional) fraction of total tree height occupied by trunks,
 							// used to calculate direct solar insolation of trunks.
-const double Canopy:: trunkalb = 0.09 ; 		// trunk albedo
-const double Canopy:: et = 1. ; 			// trunk emissivity
+const double Canopy::trunkalb = 0.09;			// trunk albedo
+const double Canopy::et = 1.;				// trunk emissivity
 
 /// @brief TURBULENT HEAT EXCHANGE
 /// @brief Stab. corr. aerodyn. resist. above and below canopy: 0=off and 1=on (Monin-Obukhov formulation)
@@ -288,8 +110,88 @@ const double Canopy::f3_gd = 0.0003;
 const double Canopy::rootdepth = 1.0;
 /// @brief Wilting point, defined as a fraction of water content at field capacity (-)
 const double Canopy::wp_fraction = 0.17;
+/// @brief Wilting point pressure head, when using Richards equation for soil.
+const double Canopy::h_wilt = -1.55E6;
 //@}
 
+/**
+ * @brief Write header for 28 canopy parameters to Outfile, columns 65-92
+ * @param fout Dump file stream
+ */
+void Canopy::DumpCanopyHeader(std::ofstream &fout)
+{
+	// 28 canopy fields (27 assigned, 1 empty at the end)
+
+	// PRIMARY "STATE" VARIABLES
+	fout << ",Interception storage";
+	fout << ",Canopy surface temperature";
+
+	// SECONDARY "STATE" VARIABLES
+	fout << ",Canopy albedo";
+	fout << ",Wet fraction";
+	fout << ",Interception capacity";
+
+	// RADIATIVE FLUXES (W m-2)
+	fout << ",Net shortwave radiation absorbed by canopy";
+	fout << ",Net longwave radiation absorbed by canopy";
+	fout << ",Net radiation to canopy";
+
+	// HEAT FLUXES CANOPY (W m-2)
+	fout << ",Sensible heat flux to canopy";
+	fout << ",Latent heat flux to canopy";
+	fout << ",Biomass heat storage flux towards Canopy";
+
+	// WATER FLUXES CANOPY (kg m-2)
+	fout << ",Transpiration of the canopy";
+	fout << ",Evaporation and sublimation of interception (liquid and frozen)";
+	fout << ",Interception rate";
+	fout << ",Throughfall";
+	fout << ",Snow unload";
+
+	// TOTAL SURFACE FLUXES,EVAPORATION; ETC
+	fout << ",Longwave radiation up above canopy";
+	fout << ",Longwave radiation down above canopy";
+	fout << ",Shortwave radiation up above canopy";
+	fout << ",Shortwave radiation down above canopy";
+	fout << ",Total land surface albedo";
+	fout << ",Total net radiation to the surface (ground + canopy)";
+	fout << ",Surface radiative temperature (ground + canopy)";
+	fout << ",Forest floor albedo";
+	fout << ",Snowfall rate Above Canopy";
+	fout << ",Rainfall rate Above Canopy";
+	fout << ",Evapotranspiration of the total surface (ground + canopy)";
+	fout << ",";	//Note: 1 empty field here!
+	return;
+}
+
+/**
+ * @brief Write units for 28 canopy parameters to Outfile, columns 65-92
+ * @param fout Dump file stream
+ */
+void Canopy::DumpCanopyUnits(std::ofstream &fout)
+{
+	// 28 canopy fields (27 assigned, 1 empty at the end)
+
+	// PRIMARY "STATE" VARIABLES
+	fout << ",kg m-2,degC";
+
+	// SECONDARY "STATE" VARIABLES
+	fout << ",-,-,kg m-2";
+
+	// RADIATIVE FLUXES (W m-2)
+	fout << ",W m-2,W m-2,W m-2";
+
+	// HEAT FLUXES CANOPY (W m-2)
+	fout << ",W m-2,W m-2,W m-2";
+
+	// WATER FLUXES CANOPY (kg m-2)
+	fout << ",kg m-2 per timestep,kg m-2 per timestep,kg m-2 per timestep,kg m-2 per timestep,kg m-2 per timestep";
+
+	// TOTAL SURFACE FLUXES,EVAPORATION; ETC
+	fout << ",W m-2,W m-2,W m-2,W m-2,-,W m-2,degC,-,kg m-2 per timestep,kg m-2 per timestep,kg m-2 per timestep";
+	fout << ",";	//Note: 1 empty field here!
+	return;
+}
 
 /**
  * @brief Dump 28 canopy parameters to Outfile, columns 65-92
@@ -301,52 +203,53 @@ const double Canopy::wp_fraction = 0.17;
 void Canopy::DumpCanopyData(std::ofstream &fout, const CanopyData *Cdata, const SurfaceFluxes *Sdata, const double cos_sl)
 {
 	// PRIMARY "STATE" VARIABLES
-	fout << "," << Cdata->storage/cos_sl;      // intercepted water (mm or kg m-2)
-	fout << "," << IOUtils::K_TO_C(Cdata->temp);        // temperature (degC)
+	fout << "," << Cdata->storage/cos_sl;        // intercepted water (mm or kg m-2)
+	fout << "," << IOUtils::K_TO_C(Cdata->temp); // temperature (degC)
 
 	// SECONDARY "STATE" VARIABLES
-	fout << "," << Cdata->canopyalb;           // albedo (1)
-	fout << "," << Cdata->wetfraction;         // wet fraction
-	fout << "," << Cdata->intcapacity/cos_sl;  // interception capacity (kg m-2)
+	fout << "," << Cdata->canopyalb;             // albedo (1)
+	fout << "," << Cdata->wetfraction;           // wet fraction
+	fout << "," << Cdata->intcapacity/cos_sl;    // interception capacity (kg m-2)
 
 	// RADIATIVE FLUXES (W m-2)
-	fout << "," << Cdata->rsnet;               // net shortwave radiation to canopy
-	fout << "," << Cdata->rlnet;               // net longwave radiation to canopy
-	fout << "," << Cdata->rsnet+Cdata->rlnet;  // net radiation to canopy
+	fout << "," << Cdata->rsnet;                 // net shortwave radiation to canopy
+	fout << "," << Cdata->rlnet;                 // net longwave radiation to canopy
+	fout << "," << Cdata->rsnet+Cdata->rlnet;    // net radiation to canopy
 
 	// HEAT FLUXES CANOPY (W m-2)
-	fout << "," << -Cdata->sensible;           // sensible heat flux to canopy (>0 towards canopy)
-	fout << "," << -Cdata->latentcorr;         // latent heat flux to canopy (>0 towards canopy)
-        fout << "," << Cdata->CondFluxCanop,
+	fout << "," << -Cdata->sensible;             // sensible heat flux to canopy (>0 towards canopy)
+	fout << "," << -Cdata->latentcorr;           // latent heat flux to canopy (>0 towards canopy)
+        fout << "," << Cdata->CondFluxCanop,         // biomass heat storage flux towards Canopy
 
 	// WATER FLUXES CANOPY (kg m-2)
-	fout << "," << Cdata->transp/cos_sl;       // transpiration
-	fout << "," << Cdata->intevap/cos_sl;      // interception evaporation
-	fout << "," << Cdata->interception/cos_sl; // interception
-	fout << "," << Cdata->throughfall/cos_sl;  // throughfall
-	fout << "," << Cdata->snowunload/cos_sl;   // unload of snow
+	fout << "," << Cdata->transp/cos_sl;         // transpiration
+	fout << "," << Cdata->intevap/cos_sl;        // interception evaporation
+	fout << "," << Cdata->interception/cos_sl;   // interception
+	fout << "," << Cdata->throughfall/cos_sl;    // throughfall
+	fout << "," << Cdata->snowunload/cos_sl;     // unload of snow
 
 	// TOTAL SURFACE FLUXES,EVAPORATION; ETC
-	fout << "," << Cdata->rlwrac;              // upward longwave radiation ABOVE canopy
-	fout << "," << Cdata->ilwrac;              // downward longwave radiation ABOVE canopy
-	fout << "," << Cdata->rswrac;              // upward shortwave above canopy
-	fout << "," << Cdata->iswrac;              // downward shortwave radiation above canopy
-	fout << "," << Cdata->totalalb;            // total albedo [-]
+	fout << "," << Cdata->rlwrac;                // upward longwave radiation ABOVE canopy
+	fout << "," << Cdata->ilwrac;                // downward longwave radiation ABOVE canopy
+	fout << "," << Cdata->rswrac;                // upward shortwave above canopy
+	fout << "," << Cdata->iswrac;                // downward shortwave radiation above canopy
+	fout << "," << Cdata->totalalb;              // total albedo [-]
 	fout << "," << Cdata->rlnet+Sdata->lw_net+Cdata->rsnet+Sdata->qw; // net radiation to the total surface
 	fout << "," << IOUtils::K_TO_C(pow(Cdata->rlwrac/Constants::stefan_boltzmann, 0.25)); // surface (ground + canopy) temperature
-	fout << "," << Cdata->forestfloor_alb;     // albedo of the forest floor [-]
-	fout << "," << Cdata->snowfac/cos_sl;      // snowfall rate above canopy (mm per output timestep)
-	fout << "," << Cdata->rainfac/cos_sl;      // rainfall rate above canopy (mm per output timestep)
+	fout << "," << Cdata->forestfloor_alb;       // albedo of the forest floor [-]
+	fout << "," << Cdata->snowfac/cos_sl;        // snowfall rate above canopy (mm per output timestep)
+	fout << "," << Cdata->rainfac/cos_sl;        // rainfall rate above canopy (mm per output timestep)
 	fout << "," << (Cdata->transp+Cdata->intevap-(Sdata->mass[SurfaceFluxes::MS_SUBLIMATION]+Sdata->mass[SurfaceFluxes::MS_EVAPORATION]))/cos_sl;//       evapotranspiration of total surface (mm h-1)
-	fout << ",";                            // 1 empty field here
+	fout << ",";                                 // 1 empty field here
 }
+//TODO: this function is not yet integrated into AsciiIO, and now this function is actually never called by any routine.
 void Canopy::writeTimeSeriesAdd2LCanopy(std::ofstream &fout, const CanopyData *Cdata)
 {
-	fout << "," << IOUtils::K_TO_C(Cdata->Ttrunk);      // Trunk temperature (degC)
-	fout << "," << Cdata->CondFluxTrunks;      // Trunk biomass heat storage flux (W m-2)
-	fout << "," << Cdata->LWnet_Trunks;        // net LW radiations to Trunk layer (W m-2)
-	fout << "," << Cdata->SWnet_Trunks;        // net SW radiations to Trunk layer (W m-2)
-	fout << "," << -Cdata->QStrunks;           // sensible heat flux to trunk layer  (W m-2), (>0 towards trunks)
+	fout << "," << IOUtils::K_TO_C(Cdata->Ttrunk); // Trunk temperature (degC)
+	fout << "," << Cdata->CondFluxTrunks;          // Trunk biomass heat storage flux (W m-2)
+	fout << "," << Cdata->LWnet_Trunks;            // net LW radiations to Trunk layer (W m-2)
+	fout << "," << Cdata->SWnet_Trunks;            // net SW radiations to Trunk layer (W m-2)
+	fout << "," << -Cdata->QStrunks;               // sensible heat flux to trunk layer  (W m-2), (>0 towards trunks)
 	fout << ",,,";
 }
 /****i*******************************************************
@@ -379,9 +282,9 @@ Canopy::Canopy(const SnowpackConfig& cfg)
  */
 double Canopy::get_f1(const double& ris)
 {
-	const double a = 0.81;
-	const double b = 0.004;
-	const double c = 0.05;
+	static const double a = 0.81;
+	static const double b = 0.004;
+	static const double c = 0.05;
 	const double f1 = ( a * ( 1.0 + b * ris ) ) / ( b * ris + c );
 	if (f1 < 1.0) {
 		return 1.0;
@@ -404,15 +307,15 @@ double Canopy::RootFraction(const double& zupper, const double& zlower)
 
 	// Constants.h: Canopy::rootdepth, default 0.5
 	if ( zupper < Canopy::rootdepth ) {
-		const double ar = 6.706; // evergreen needleleaf trees
-		const double br = 2.175; // evergreen needleleaf trees
+		static const double ar = 6.706; // evergreen needleleaf trees
+		static const double br = 2.175; // evergreen needleleaf trees
 		// fraction of roots below root depth (according to exponential distribution)
 		const double tail = 0.5 * (exp(-ar * Canopy::rootdepth)+ exp(-br * Canopy::rootdepth));
 		// multiplicative factor to distribute tail on layers above root depth
 		rf = ( ( 1. + tail / ( 1. - tail ) ) * 0.5 *
 			(exp(-ar * zupper) + exp(-br * zupper)
-			-exp(-ar * MIN(zlower, Canopy::rootdepth))
-			-exp(-br * MIN(zlower, Canopy::rootdepth))));
+			-exp(-ar * std::min(zlower, Canopy::rootdepth))
+			-exp(-br * std::min(zlower, Canopy::rootdepth))));
 	}
 
 	return (rf);
@@ -445,18 +348,26 @@ void Canopy::SoilWaterUptake(const size_t& SoilNode, const double& transpiration
 	// Loop over soil layers above rootdepth
 	double zupper = 0.;
 	size_t RootLayer = SoilNode;
-	for( size_t e = SoilNode; e --> 0; ) {//e gets decremented right away -> start at SoilNode
+	for (size_t e = SoilNode; e --> 0; ) {//e gets decremented right away -> start at SoilNode
 		// fraction of roots in layer
 		const double rootfr = RootFraction(zupper, zupper + EMS[e].L);
 		const double water = transpiration;
-		if( rootfr > 0.0 ){
+		if (rootfr > 0.0 ){
 			// Index of last layer with roots
 			RootLayer = e;
 
 			// Change in volumetric water content in layer
-			const double d_theta_l = MIN ( MAX (0., ( EMS[e].theta[WATER] -
-			                         Canopy::wp_fraction * EMS[e].soilFieldCapacity() )),
-			                         rootfr*water / ( Constants::density_water * EMS[e].L ) );
+			double d_theta_l = 0.;
+			if (watertransportmodel_soil == "RICHARDSEQUATION" && EMS[e].VG.defined == true) {
+				const double theta_wilt = EMS[e].VG.fromHtoTHETAforICE(h_wilt, EMS[e].theta[ICE]);
+				d_theta_l = std::min( std::max(0., ( EMS[e].theta[WATER] -
+				    theta_wilt )),
+				    rootfr*water / ( Constants::density_water * EMS[e].L ) );
+			} else {
+				d_theta_l = std::min( std::max(0., ( EMS[e].theta[WATER] -
+				    Canopy::wp_fraction * EMS[e].soilFieldCapacity() )),
+				    rootfr*water / ( Constants::density_water * EMS[e].L ) );
+			}
 
 			// residual water to be extracted in layers below
 			waterresidual -= rootfr * water;
@@ -482,20 +393,25 @@ void Canopy::SoilWaterUptake(const size_t& SoilNode, const double& transpiration
 		// modify by Moustapha if there is a problem .
 		RootLayer -= 1;
 	}
-	const double d_theta = MIN ( MAX (0., ( EMS[RootLayer].theta[WATER] -
-	                       Canopy::wp_fraction * EMS[RootLayer].soilFieldCapacity() ) ),
-	                       waterresidual / ( Constants::density_water * EMS[RootLayer].L ) );
 
-	if (watertransportmodel_soil == "RICHARDSEQUATION") {
+	if (watertransportmodel_soil == "RICHARDSEQUATION" && EMS[RootLayer].VG.defined == true) {
 		// Transpiration is considered a source/sink term for Richards equation
+		const double theta_wilt = EMS[RootLayer].VG.fromHtoTHETAforICE(h_wilt, EMS[RootLayer].theta[ICE]);
+		const double d_theta = std::min( std::max(0., ( EMS[RootLayer].theta[WATER] -
+	                       theta_wilt ) ),
+	                       waterresidual_real / ( Constants::density_water * EMS[RootLayer].L ) );
 		EMS[RootLayer].lwc_source -= d_theta;
+		waterresidual_real -= d_theta * Constants::density_water * EMS[RootLayer].L;
 	} else {
+		const double d_theta = std::min( std::max(0., ( EMS[RootLayer].theta[WATER] -
+	                       Canopy::wp_fraction * EMS[RootLayer].soilFieldCapacity() ) ),
+	                       waterresidual_real / ( Constants::density_water * EMS[RootLayer].L ) );
 		EMS[RootLayer].theta[WATER] -= d_theta;
 		assert(EMS[RootLayer].theta[WATER] >= -Constants::eps);
 		EMS[RootLayer].theta[AIR] += d_theta;
 		assert(EMS[RootLayer].theta[AIR] >= -Constants::eps);
+		waterresidual_real -= d_theta * Constants::density_water * EMS[RootLayer].L;
 	}
-	waterresidual_real -= d_theta * Constants::density_water * EMS[RootLayer].L;
 
 	// Check if water content is below wilting point in last layer
 	if ( waterresidual_real > 0.5 ) {
@@ -518,11 +434,11 @@ void Canopy::SoilWaterUptake(const size_t& SoilNode, const double& transpiration
  */
 double Canopy::get_f4(const double& tempC)
 {
-	const double F4_A = 1.75;
-	const double F4_B = 0.5;
+	static const double F4_A = 1.75;
+	static const double F4_B = 0.5;
 
 	// OBS tempC in C
-	const double f4 = 1.0 / ( 1.0 - exp( -F4_A * pow( MAX( 0.00001, tempC ), F4_B ) ) );
+	const double f4 = 1.0 / ( 1.0 - exp( -F4_A * pow( std::max( 0.00001, tempC ), F4_B ) ) );
 	return (f4);
 }
 
@@ -546,17 +462,17 @@ double Canopy::get_f2f4(const size_t& SoilNode, ElementData* EMS)
 
 	// loop over layers:
 	double zupper = 0.;
-	for( size_t e = SoilNode; e --> 0; ) { //e gets decremented right away -> start at SoilNode
+	for (size_t e = SoilNode; e --> 0; ) { //e gets decremented right away -> start at SoilNode
 		// 1) root fraction in layer
 		const double rootfr = RootFraction(zupper, zupper + EMS[e].L);
-		if( rootfr > 0.0 ){
+		if (rootfr > 0.0 ){
 			RootLayer = e;
 			// 2) Field Capacity in layer
 			f2_wcap = EMS[e].soilFieldCapacity();
 			// 3) Wilting point in layer
 			f2_wpwp = f2_wcap * Canopy::wp_fraction;
 			// 4) Soil water content in layer (from a root's point of view)
-			thet_act = MAX(f2_wpwp, EMS[e].theta[WATER]);
+			thet_act = std::max(f2_wpwp, EMS[e].theta[WATER]);
 			// 4) Inversed soilwater stress weighted by root fractin in layer
 			f2 += rootfr * (thet_act-f2_wpwp) / (f2_wcap - f2_wpwp);
 			// 5) Soil temperature stress weighted by root fraction in layer
@@ -572,16 +488,16 @@ double Canopy::get_f2f4(const size_t& SoilNode, ElementData* EMS)
 	}
 	f2_wcap = EMS[RootLayer].soilFieldCapacity();
 	f2_wpwp = f2_wcap * Canopy::wp_fraction;
-	thet_act = MAX(f2_wpwp, EMS[RootLayer].theta[WATER]);
+	thet_act = std::max(f2_wpwp, EMS[RootLayer].theta[WATER]);
 	f2 += rootresidual * (thet_act - f2_wpwp) / (f2_wcap - f2_wpwp);
 	f4 += get_f4(IOUtils::K_TO_C(EMS[RootLayer].Te)) * rootresidual;
 
 	// Limit inverse of the f2 function between 0 and 1
-	f2 = MAX( 0.00001, MIN( 1., f2 ) );
+	f2 = std::max( 0.00001, std::min( 1., f2 ) );
 	// invert f2
 	f2 = 1.0 / f2;
 	// return maximum of f2 and f4
-	return ( MAX(f2, f4) );
+	return ( std::max(f2, f4) );
 }
 
 
@@ -642,7 +558,7 @@ double Canopy::IntUnload(const double& capacity, const double& storage)
  */
 double Canopy::IntRate(const double& capacity, const double& storage, const double& prec, const double& direct)
 {
-	const double interception = MIN ( ( 1.0 - direct ) * prec,
+	const double interception = std::min( ( 1.0 - direct ) * prec,
                                 Canopy::interception_timecoef * ( capacity - storage)*
                                 ( 1.0 - exp( -(1.0 - direct) * prec / capacity ) ) );
 	if ( interception < 0.0)
@@ -655,7 +571,7 @@ double Canopy::IntRate(const double& capacity, const double& storage, const doub
 double Canopy::CanopyAlbedo(const double& tair, const double& wetfrac)
 {
 	// Albedo of partly "wet" canopy = weighted average of dry and wet parts
-	if( tair > Constants::melting_tk ) {
+	if (tair > Constants::melting_tk ) {
 		return (wetfrac * Canopy::can_alb_wet + (1. - wetfrac) * Canopy::can_alb_dry);
 	} else {
 		return (wetfrac * Canopy::can_alb_snow + (1. - wetfrac) * Canopy::can_alb_dry);
@@ -700,7 +616,7 @@ double Canopy::TotalAlbedo(double CanAlb, double sigf, double SurfAlb, double Di
 double Canopy::CanopyShadeSoilCover(const double& height, const double& cover, const double& elev)
 {
 	if ( elev > 0.0 ) {
-		return MIN(1.0, cover * (1.0 + 4.0 * height / (Constants::pi * Canopy::can_diameter * tan(elev))));
+		return std::min(1.0, cover * (1.0 + 4.0 * height / (Constants::pi * Canopy::can_diameter * tan(elev))));
 	} else {
 		return 1.0;
 	}
@@ -715,7 +631,7 @@ double Canopy::CanopyWetFraction(const double& capacity, const double& storage)
 {
 	if ( storage > 0. ) {
 		// limit the wet fraction to minimum 0.01 otherwise it will never completely dry
-		return MAX(0.01, MIN(1.0, pow(storage / capacity, 2./3.)) );
+		return std::max(0.01, std::min(1.0, pow(storage / capacity, 2./3.)) );
 	} else {
 		return 0.;
 	}
@@ -731,7 +647,7 @@ double Canopy::CanopyWetFraction(const double& capacity, const double& storage)
 double Canopy::CanopyTransmissivity(const double& lai, const double& elev)
 {
 	const double pai = 0.; // pai [additional plant area index] could be a function of interception storage
-	return (1. - exp(-Canopy::krnt_lai * (lai + pai) / MAX(sin(elev), 0.0001))); // Beer-Lambert type of law
+	return (1. - exp(-Canopy::krnt_lai * (lai + pai) / std::max(sin(elev), 0.0001))); // Beer-Lambert type of law
 }
 
 /**
@@ -770,7 +686,7 @@ void Canopy::LineariseNetRadiation(const CurrentMeteo& Mdata, const CanopyData& 
 	//  modifs for forestfloor_alb : ag -> ag1
 	const double ag1 = (snow)? Xdata.Albedo : Xdata.SoilAlb;
 	const size_t nE = Xdata.getNumberOfElements();
-	const double age = (snow && forestfloor_alb) ? MAX(0., Mdata.date.getJulian() - Xdata.Edata[nE-1].depositionDate.getJulian()) : 0.; // day
+	const double age = (snow && forestfloor_alb) ? std::max(0., Mdata.date.getJulian() - Xdata.Edata[nE-1].depositionDate.getJulian()) : 0.; // day
 	const double ag = (ag1 -.3)* exp(-age/7.) + 0.3;
 
 	//Canopy Closure = Canopy Soil Cover Fraction, is made a function of solar elevation for direct shortwave
@@ -872,7 +788,7 @@ void Canopy::LineariseNetRadiation2L(const CurrentMeteo& Mdata, const CanopyData
 
 	// modifs for forestfloor_alb
 	const size_t nE = Xdata.getNumberOfElements();
-	const double age = (snow && forestfloor_alb) ? MAX(0., Mdata.date.getJulian() - Xdata.Edata[nE-1].depositionDate.getJulian()) : 0.; // days
+	const double age = (snow && forestfloor_alb) ? std::max(0., Mdata.date.getJulian() - Xdata.Edata[nE-1].depositionDate.getJulian()) : 0.; // days
 	const double ag = (ag1 -.3)* exp(-age/7.) + 0.3;
 
 	// Canopy Closure = Canopy Soil Cover Fraction, is made a function of solar elevation for direct shortwave
@@ -984,7 +900,7 @@ void Canopy::LineariseNetRadiation2L(const CurrentMeteo& Mdata, const CanopyData
 	rt2 *= CanopyClosure;
 
 	// 2.3. SW direct & NetRad to Trunks
-	const double rsnettrunkdir = CanClosDirLeaves * RadFracDirect * iswrac * (1. -sigf) * (1. - attfactor_SWdir)*(1.-trunkalb)
+	const double rsnettrunkdir = CanClosDirLeaves * RadFracDirect * iswrac * (1. -sigfdirect) * (1. - attfactor_SWdir)*(1.-trunkalb)
 				+ CanClosDirTrunks *  RadFracDirect * iswrac * (1. - attfactor_SWdir) *(1.-trunkalb);
 	rsnettrunk += rsnettrunkdir;
 	rt0 += rsnettrunkdir;
@@ -1024,7 +940,7 @@ double Canopy::DSaturationPressureDT(const double& L, const double& T)
 		c3 = 272.440 ;
 	}
 
-	const double dpdt =  Atmosphere::waterSaturationPressure(T) * c2 * c3 / ((c3 + IOUtils::K_TO_C(T)) * (c3 + IOUtils::K_TO_C(T)));
+	const double dpdt =  Atmosphere::vaporSaturationPressure(T) * c2 * c3 / ((c3 + IOUtils::K_TO_C(T)) * (c3 + IOUtils::K_TO_C(T)));
 
 	return(dpdt);
 }
@@ -1043,10 +959,10 @@ void Canopy::LineariseLatentHeatFlux(const double& ce_canopy, const double& tc_o
 {
 	if (tc_old > 273.15) {
 		le1 = scalingfactor*ce_canopy * DSaturationPressureDT(Constants::lh_vaporization, tc_old);
-		le0 = scalingfactor*ce_canopy * (Atmosphere::waterSaturationPressure(tc_old) - vpair) - (le1) * tc_old;
+		le0 = scalingfactor*ce_canopy * (Atmosphere::vaporSaturationPressure(tc_old) - vpair) - (le1) * tc_old;
 	} else {
 		le1 = scalingfactor*ce_canopy * DSaturationPressureDT(Constants::lh_sublimation, tc_old);
-		le0 = scalingfactor*ce_canopy * (Atmosphere::waterSaturationPressure(tc_old) - vpair) - (le1) * tc_old;
+		le0 = scalingfactor*ce_canopy * (Atmosphere::vaporSaturationPressure(tc_old) - vpair) - (le1) * tc_old;
 	}
 }
 
@@ -1158,7 +1074,7 @@ void Canopy::CanopyEnergyBalance2L(double& h0, double& h1,  double& le0,
 	LECANOPY = le0 + le1 * TCANOPY;
 
 	// 3b. re-compute in case of condensation/sublimation on canopy
-	if( LECANOPY < 0.0 ) {
+	if (LECANOPY < 0.0 ) {
 		TCANOPY -= TC_CHANGE;
 		TC_CHANGE = (h0 + le0 * ce_condensation / ce_canopy - r0 + HM0 -TT0) /
 				(r1 - h1 - le1 * ce_condensation / ce_canopy - HM1 + TT1) - TCANOPY;
@@ -1326,10 +1242,10 @@ double Canopy::get_psim(const double& xi)
 		return log((1. + x) * (1. + x) * (1. + x * x) / 8.) - 2 * atan(x) + mio::Cst::PI / 2.;
 	} else {
 		// stable case from Holstlag and Bruin, following Beljaars & Holtslag 1991
-		const double a = 1.;
-		const double b = 2./3.;
-		const double c = 5.;
-		const double d = 0.35;
+		static const double a = 1.;
+		static const double b = 2./3.;
+		static const double c = 5.;
+		static const double d = 0.35;
 		return -(a * xi + b * (xi - c/d) * exp(-d * xi) + b * c/d);
 	}
 }
@@ -1347,10 +1263,10 @@ double Canopy::get_psih(const double& xi)
 		return (2. * log((1. + x*x) / 2.) );
 	} else {
 		// Stable case, func=1, equation from Holtslag and De Bruin following Beljaars & Holstlag, 1991
-		const double a = 1.;
-		const double b = 2. / 3.;
-		const double c = 5.;
-		const double d = 0.35;
+		static const double a = 1.;
+		static const double b = 2. / 3.;
+		static const double c = 5.;
+		static const double d = 0.35;
 		return -(pow((1. + 2. / 3. * a * xi), 3. / 2.) + b * (xi - c/d) * exp(-d * xi) + b * c/d - 1.);
 	}
 }
@@ -1379,7 +1295,7 @@ double Canopy::RichardsonToAeta(double za, double TempAir, double DiffTemp,
 	// STEP 2: Compute error in terms of Ri using etaOld and Ri2eta(etaOld)
 	double Error = Eta / Ri2eta - Ri;
 	// STEP 3: solve iteratively
-	const double acc = 0.0001;
+	static const double acc = 0.0001;
 	int itt=1;
 	while ( fabs(Error) > acc && itt <= maxitt ) {
 		// 3.1 new Eta
@@ -1401,10 +1317,10 @@ double Canopy::RichardsonToAeta(double za, double TempAir, double DiffTemp,
 	Eta = Ri2eta * Ri;
 	// check minimum Monin-Obukhov length (there isthing between 2 to some 100 meters in literature)
 	if ( Eta > 0.0 ) {
-		const double L = MAX (za, za / Eta);
+		const double L = std::max(za, za / Eta);
 		Eta = za / L;
 	} else if ( Eta < 0.0 ) {
-		const double L = MAX (-1000.0, za / Eta);
+		const double L = std::max(-1000.0, za / Eta);
 		Eta = za / L;
 	}
 	return (Eta);
@@ -1454,27 +1370,27 @@ void Canopy::CanopyTurbulentExchange(const CurrentMeteo& Mdata, const double& re
 	 * 1. displacement and roughness (mom) according to Shaw and Perreira (1981)
 	 * zdisplcan = 0.803 + 0.108 * CanDensMax - (0.462 - 0.086 * CanDensMax) *->
 	 *-> exp(-(0.163 + 0.283 * CanDensMax) * Cdata->lai);
-	 * zdisplcan = MAX (0., MIN (refheight - 0.5, zdisplcan * zcan));
+	 * zdisplcan = std::max(0., std::min(refheight - 0.5, zdisplcan * zcan));
 
 	 * 1.3 roughness length
 	 * const double EQ1 = (0.175 - 0.098 * CanDensMax) + (-0.098 + 0.045 * CanDensMax) * log10(Cdata->lai);
 	 * const double EQ2 = (0.150 - 0.025 * CanDensMax) + (0.122 - 0.0135 * CanDensMax) * log10(Cdata->lai);
-	 * zomc = MIN(RoughLmax, MAX(zcan * MIN(EQ1, EQ2), RoughLmin)) * CAN_Z0M_COEF;
+	 * zomc = std::min(RoughLmax, std::max(zcan * std::min(EQ1, EQ2), RoughLmin)) * CAN_Z0M_COEF;
 
 	 * 1. displacement and roughness as simple scaling of canopy height.
 	 * Please note:
 	 * 1) Canopy roughness is not allowed to be smaller than roughness of
 	 * snow surface as defined by zomg, otherwise ustar may be negative!
-         * This is now guaranteed by the computation of RoughLmin = MAX(0.01,zomg)
+         * This is now guaranteed by the computation of RoughLmin = std::max(0.01,zomg)
 	 * 2) refheight is already given as height relative the snow surface
 	 */
 
 	// Shaw Perreira parameters
 	// double CanDensMax = 0.7;
-	const double RoughLmin = 0.01;
-	const double RoughLmax = 100.;
-	const double zdisplcan = MAX (0., MIN (refheight - 0.5, Canopy::displ_to_canopyheight_ratio * zcan));
-	const double zomc = MAX (MAX (RoughLmin, zomg), MIN (RoughLmax, Canopy::roughmom_to_canopyheight_ratio * zcan));
+	static const double RoughLmin = 0.01;
+	static const double RoughLmax = 100.;
+	const double zdisplcan = std::max(0., std::min(refheight - 0.5, Canopy::displ_to_canopyheight_ratio * zcan));
+	const double zomc = std::max(std::max(RoughLmin, zomg), std::min(RoughLmax, Canopy::roughmom_to_canopyheight_ratio * zcan));
 
 	//2. aerodynamic resistances simple approach (Blyth, 1999)
 	//2.1 roughness length for scalars (heat and vapour)
@@ -1560,11 +1476,11 @@ void Canopy::CanopyTurbulentExchange(const CurrentMeteo& Mdata, const double& re
 	  */
 	if ( useSoilLayers ) {
 		Cdata->rstransp = Canopy::rsmin * get_f1(Cdata->iswrac)*get_f2f4(Xdata.SoilNode, &Xdata.Edata[0]) *
-		                  get_f3((1. - Mdata.rh) * Atmosphere::waterSaturationPressure(Mdata.ta)) / Cdata->lai;
+		                  get_f3((1. - Mdata.rh) * Atmosphere::vaporSaturationPressure(Mdata.ta)) / Cdata->lai;
 	} else {
 		const double Temp = (nE>0)? 0. : IOUtils::K_TO_C(Mdata.ta);
 		Cdata->rstransp = Canopy::rsmin * get_f1(Cdata->iswrac) * get_f4(Temp) * get_f3((1. - Mdata.rh) *
-		                  Atmosphere::waterSaturationPressure(Mdata.ta)) / Cdata->lai;
+		                  Atmosphere::vaporSaturationPressure(Mdata.ta)) / Cdata->lai;
 	}
 	// Exchange coefficients sensible heat
 	ch_canopy = Constants::density_air * Constants::specific_heat_air / (Cdata->ra + Cdata->rc);
@@ -1572,20 +1488,20 @@ void Canopy::CanopyTurbulentExchange(const CurrentMeteo& Mdata, const double& re
 	// latent heat interception
 	if ( Mdata.ta < 273.15 ) {
 		ce_condensation  = 0.622 * Constants::lh_sublimation / (Constants::gas_constant_air * Mdata.ta
-		                   * Canopy::raincrease_snow * (ra_e + Cdata->rc));// * MAX(0.1,wetfraction);
+		                   * Canopy::raincrease_snow * (ra_e + Cdata->rc));// * std::max(0.1,wetfraction);
 		ce_interception  = 0.622 * Constants::lh_sublimation / (Constants::gas_constant_air * Mdata.ta
 		                   * Canopy::raincrease_snow * (ra_e + Cdata->rc));// * wetfraction;
 		ce_transpiration = 0.0;
 	} else {
 		ce_condensation  = 0.622 * Constants::lh_vaporization / (Constants::gas_constant_air * Mdata.ta
-		                   * (ra_e + Cdata->rc));// * MAX(0.1,wetfraction);
+		                   * (ra_e + Cdata->rc));// * std::max(0.1,wetfraction);
 		ce_interception  = 0.622 * Constants::lh_vaporization / (Constants::gas_constant_air * Mdata.ta
 		                   * (ra_e + Cdata->rc));// * wetfraction;
 		ce_transpiration = 0.622 * Constants::lh_vaporization / (Constants::gas_constant_air * Mdata.ta
 		                   * (ra_e + Cdata->rstransp + Cdata->rc));// * (1.0-wetfraction);
 	}
 
-	ce_canopy = ce_interception * MAX(0.001, wetfraction) + ce_transpiration * (1.0 - wetfraction);
+	ce_canopy = ce_interception * std::max(0.001, wetfraction) + ce_transpiration * (1.0 - wetfraction);
 }
 
 /**
@@ -1606,7 +1522,7 @@ void Canopy::CanopyTurbulentExchange(const CurrentMeteo& Mdata, const double& re
  * @param sigfdirect
  * @param sigftrunkdirect
  */
-void Canopy::CanopyRadiationOutput(SnowStation& Xdata, CurrentMeteo& Mdata, double ac, double *iswrac, double *rswrac, double *iswrbc, double *rswrbc, double *ilwrac, double *rlwrac, double *ilwrbc, double *rlwrbc, double CanopyClosureDirect, double RadFracDirect, double sigfdirect, double sigftrunkdirect)
+void Canopy::CanopyRadiationOutput(SnowStation& Xdata, const CurrentMeteo& Mdata, double ac, double &iswrac, double &rswrac, double &iswrbc, double &rswrbc, double &ilwrac, double &rlwrac, double &ilwrbc, double &rlwrbc, double CanopyClosureDirect, double RadFracDirect, double sigfdirect, double sigftrunkdirect)
 {
 	const bool snow = (Xdata.getNumberOfElements() > Xdata.SoilNode);
 	const double Tsfc4 = (snow)? Optim::pow4(Xdata.Ndata[Xdata.getNumberOfElements()].T) : Optim::pow4(Mdata.ta);
@@ -1615,7 +1531,7 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, CurrentMeteo& Mdata, doub
 
 	// modifs for forestfloor_alb
         const size_t nE = Xdata.getNumberOfElements();
-        const double age = (snow && forestfloor_alb) ? MAX(0., Mdata.date.getJulian() - Xdata.Edata[nE-1].depositionDate.getJulian()) : 0.; // days
+        const double age = (snow && forestfloor_alb) ? std::max(0., Mdata.date.getJulian() - Xdata.Edata[nE-1].depositionDate.getJulian()) : 0.; // days
         const double ag = (ag1 -.3)* exp(-age/7.) + 0.3;
 	Xdata.Cdata.forestfloor_alb += ag ;
 
@@ -1639,31 +1555,31 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, CurrentMeteo& Mdata, doub
 	}
 
 	// Diffuse Shortwave radiation fluxes above and below canopy
-	const double  rswrac_loc = *iswrac * (sigf * ac + (1-sigf) * (1-sigf) * sigftrunk * trunkalb +  ag * (1.0 - sigf) * (1.0 - sigf) / (1.0 - sigf * ac * ag)*attfactor_SW);
-	const double  iswrbc_loc = *iswrac * (1. - sigf) / (1.0 - sigf * ac * ag)*attfactor_SW ;
+	const double  rswrac_loc = iswrac * (sigf * ac + (1-sigf) * (1-sigf) * sigftrunk * trunkalb +  ag * (1.0 - sigf) * (1.0 - sigf) / (1.0 - sigf * ac * ag)*attfactor_SW);
+	const double  iswrbc_loc = iswrac * (1. - sigf) / (1.0 - sigf * ac * ag)*attfactor_SW ;
 	const double  rswrbc_loc = iswrbc_loc * ag;
 
 	// Direct Shortwave radiation fluxes above and below canopy
-	const double  rswrac_loc2 = *iswrac * (sigfdirect * ac + (1-sigfdirect) * (1-sigfdirect) * sigftrunkdirect * trunkalb + ag * (1.0 - sigfdirect) * (1.0 - sigfdirect) / (1.0 - sigfdirect * ac * ag)*attfactor_SWdir);
-        const double  iswrbc_loc2 = *iswrac * (1. - sigfdirect) / (1.0 - sigfdirect * ac * ag) *attfactor_SWdir ;
+	const double  rswrac_loc2 = iswrac * (sigfdirect * ac + (1-sigfdirect) * (1-sigfdirect) * sigftrunkdirect * trunkalb + ag * (1.0 - sigfdirect) * (1.0 - sigfdirect) / (1.0 - sigfdirect * ac * ag)*attfactor_SWdir);
+        const double  iswrbc_loc2 = iswrac * (1. - sigfdirect) / (1.0 - sigfdirect * ac * ag) *attfactor_SWdir ;
         const double  rswrbc_loc2 = iswrbc_loc2 * ag;
 
 	// Additional Direct Shortwave radiation term due to trunks direct insolation (optional, default = not used)
 	// >> to be weighed by CanClosDirTrunks in the final EB equation
-	const double  rswrac_loc3 = *iswrac * (sigftrunkdirect * trunkalb +  ag * (1.0 - sigfdirect) / (1.0 - sigfdirect * ac * ag) *attfactor_SWdir) ;
-	const double  iswrbc_loc3 = *iswrac * attfactor_SWdir / (1.0 - sigfdirect * ac * ag) ;
+	const double  rswrac_loc3 = iswrac * (sigftrunkdirect * trunkalb +  ag * (1.0 - sigfdirect) / (1.0 - sigfdirect * ac * ag) *attfactor_SWdir) ;
+	const double  iswrbc_loc3 = iswrac * attfactor_SWdir / (1.0 - sigfdirect * ac * ag) ;
 	const double  rswrbc_loc3 = iswrbc_loc3 * ag;
 
 	// Longwave radiation fluxes above and below canopy:
-	const double  RAG = eg *(-Constants::stefan_boltzmann*Tsfc4 +((1.-sigf)*(*ilwrac)*attfactor_LW + sigf*ec*Constants::stefan_boltzmann*TC4*attfactor_LW + eg*sigf*(1.-ec)*attfactor_LW*Constants::stefan_boltzmann*Tsfc4)/(1. - sigf * (1. - ec) * (1. - eg))) + eg * et * (1.-attfactor_LW)* Constants::stefan_boltzmann * Tt4 * (1. + sigf * (1. - ec));
+	const double  RAG = eg *(-Constants::stefan_boltzmann*Tsfc4 +((1.-sigf)*ilwrac*attfactor_LW + sigf*ec*Constants::stefan_boltzmann*TC4*attfactor_LW + eg*sigf*(1.-ec)*attfactor_LW*Constants::stefan_boltzmann*Tsfc4)/(1. - sigf * (1. - ec) * (1. - eg))) + eg * et * (1.-attfactor_LW)* Constants::stefan_boltzmann * Tt4 * (1. + sigf * (1. - ec));
 
-	const double  RAV = sigf * ec*( (*ilwrac) - 2. * Constants::stefan_boltzmann * TC4 + attfactor_LW *(Constants::stefan_boltzmann *( eg * Tsfc4 + ec * sigf * TC4 * (1.-eg) ) + (1.0 - sigf) * (1.0 - eg) * (*ilwrac)) / (1.0 - sigf * (1.0 - ec)* ( 1.0 - eg)) + et * (1.-attfactor_LW)* Constants::stefan_boltzmann * Tt4 *(1. + (1. - eg)) );
+	const double  RAV = sigf * ec*( ilwrac - 2. * Constants::stefan_boltzmann * TC4 + attfactor_LW *(Constants::stefan_boltzmann *( eg * Tsfc4 + ec * sigf * TC4 * (1.-eg) ) + (1.0 - sigf) * (1.0 - eg) * ilwrac) / (1.0 - sigf * (1.0 - ec)* ( 1.0 - eg)) + et * (1.-attfactor_LW)* Constants::stefan_boltzmann * Tt4 *(1. + (1. - eg)) );
 
-	const double  RAT =  -2 * et *(1.-attfactor_LW)* Constants::stefan_boltzmann * Tt4 + et *(1.-attfactor_LW) * ( ec * sigf * Constants::stefan_boltzmann * TC4 + eg * Constants::stefan_boltzmann * Tsfc4 + (*ilwrac)*(1. - sigf));
+	const double  RAT =  -2 * et *(1.-attfactor_LW)* Constants::stefan_boltzmann * Tt4 + et *(1.-attfactor_LW) * ( ec * sigf * Constants::stefan_boltzmann * TC4 + eg * Constants::stefan_boltzmann * Tsfc4 + ilwrac*(1. - sigf));
 
-	*ilwrbc = RAG / eg + Constants::stefan_boltzmann * Tsfc4;
-	*rlwrbc = (1 - eg)* (*ilwrbc) + eg * Constants::stefan_boltzmann * Tsfc4;
-	*rlwrac = *ilwrac - RAG - RAV -RAT;
+	ilwrbc = RAG / eg + Constants::stefan_boltzmann * Tsfc4;
+	rlwrbc = (1 - eg)* ilwrbc + eg * Constants::stefan_boltzmann * Tsfc4;
+	rlwrac = ilwrac - RAG - RAV -RAT;
 
 	// Scaling of results with CanopyClosureDiffuse and CanopyClosureDirect
 	const double  CanopyClosureDiffuse = 1. - Xdata.Cdata.direct_throughfall;
@@ -1677,41 +1593,41 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, CurrentMeteo& Mdata, doub
 		}*/
 		 
 		 // Shortwave fluxes (diffuse)
-		*rswrac = (rswrac_loc * CanopyClosureDiffuse + (*iswrac) * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
-		*iswrbc = (iswrbc_loc * CanopyClosureDiffuse + (*iswrac) * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
-		*rswrbc = (rswrbc_loc * CanopyClosureDiffuse + *iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
+		rswrac = (rswrac_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
+		iswrbc = (iswrbc_loc * CanopyClosureDiffuse + iswrac * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
+		rswrbc = (rswrbc_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
 		
 		// Shortwave fluxes (direct)
-		*rswrac += (rswrac_loc2 * CanClosDirLeaves + rswrac_loc3 * CanClosDirTrunks + (*iswrac) * ag * (1.0 - CanClosDirTrunks - CanClosDirLeaves)) * RadFracDirect;
-		*iswrbc += (iswrbc_loc2 * CanClosDirLeaves + iswrbc_loc3 * CanClosDirTrunks + (*iswrac) * (1.0 - CanClosDirTrunks - CanClosDirLeaves)) * RadFracDirect;
-		*rswrbc += (rswrbc_loc2 * CanClosDirLeaves + rswrbc_loc3 * CanClosDirTrunks + (*iswrac) * ag * (1.0 - CanClosDirTrunks - CanClosDirLeaves)) *RadFracDirect;
+		rswrac += (rswrac_loc2 * CanClosDirLeaves + rswrac_loc3 * CanClosDirTrunks + iswrac * ag * (1.0 - CanClosDirTrunks - CanClosDirLeaves)) * RadFracDirect;
+		iswrbc += (iswrbc_loc2 * CanClosDirLeaves + iswrbc_loc3 * CanClosDirTrunks + iswrac * (1.0 - CanClosDirTrunks - CanClosDirLeaves)) * RadFracDirect;
+		rswrbc += (rswrbc_loc2 * CanClosDirLeaves + rswrbc_loc3 * CanClosDirTrunks + iswrac * ag * (1.0 - CanClosDirTrunks - CanClosDirLeaves)) *RadFracDirect;
 		
 		// Longwave fluxes (treat as diffuse)
-		*rlwrac = *rlwrac * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
-		*ilwrbc = *ilwrbc * CanopyClosureDiffuse + *ilwrac * (1.0 - CanopyClosureDiffuse);
-		*rlwrbc = *rlwrbc * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
+		rlwrac = rlwrac * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
+		ilwrbc = ilwrbc * CanopyClosureDiffuse + ilwrac * (1.0 - CanopyClosureDiffuse);
+		rlwrbc = rlwrbc * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
 		
 		// radiations to trunks
-		Xdata.Cdata.SWnet_Trunks = (1.0 - RadFracDirect) * (*iswrac) * (1. -sigf) * (1.-trunkalb)*(1-attfactor_SW) * CanopyClosureDiffuse
-				+ CanClosDirLeaves * RadFracDirect *(*iswrac) * (1. -sigf) * (1.-trunkalb)*(1. - attfactor_SWdir)
-                                + CanClosDirTrunks *  RadFracDirect *(*iswrac) * (1.-trunkalb)*(1. - attfactor_SWdir) ;
+		Xdata.Cdata.SWnet_Trunks = (1.0 - RadFracDirect) * iswrac * (1. -sigf) * (1.-trunkalb)*(1-attfactor_SW) * CanopyClosureDiffuse
+				+ CanClosDirLeaves * RadFracDirect *iswrac * (1. -sigfdirect) * (1.-trunkalb)*(1. - attfactor_SWdir)
+                                + CanClosDirTrunks *  RadFracDirect *iswrac * (1.-trunkalb)*(1. - attfactor_SWdir) ;
 		Xdata.Cdata.LWnet_Trunks = RAT  * CanopyClosureDiffuse ;
 		 
 	 } else {
 		 // Shortwave fluxes (diffuse)
-		*rswrac = (rswrac_loc * CanopyClosureDiffuse + (*iswrac) * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
-		*iswrbc = (iswrbc_loc * CanopyClosureDiffuse + (*iswrac) * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
-		*rswrbc = (rswrbc_loc * CanopyClosureDiffuse + *iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
+		rswrac = (rswrac_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
+		iswrbc = (iswrbc_loc * CanopyClosureDiffuse + iswrac * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
+		rswrbc = (rswrbc_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
 		
 		// Shortwave fluxes (direct)
-		*rswrac += (rswrac_loc2 * CanopyClosureDirect + (*iswrac) * ag * (1.0 - CanopyClosureDirect)) * RadFracDirect;
-		*iswrbc += (iswrbc_loc2 * CanopyClosureDirect + (*iswrac) * (1.0 - CanopyClosureDirect)) * RadFracDirect;
-		*rswrbc += (rswrbc_loc2 * CanopyClosureDirect + (*iswrac) * ag * (1.0 - CanopyClosureDirect)) *RadFracDirect;
+		rswrac += (rswrac_loc2 * CanopyClosureDirect + iswrac * ag * (1.0 - CanopyClosureDirect)) * RadFracDirect;
+		iswrbc += (iswrbc_loc2 * CanopyClosureDirect + iswrac * (1.0 - CanopyClosureDirect)) * RadFracDirect;
+		rswrbc += (rswrbc_loc2 * CanopyClosureDirect + iswrac * ag * (1.0 - CanopyClosureDirect)) *RadFracDirect;
 		
 		// Longwave fluxes (treat as diffuse)
-		*rlwrac = *rlwrac * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
-		*ilwrbc = *ilwrbc * CanopyClosureDiffuse + *ilwrac * (1.0 - CanopyClosureDiffuse);
-		*rlwrbc = *rlwrbc * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
+		rlwrac = rlwrac * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
+		ilwrbc = ilwrbc * CanopyClosureDiffuse + ilwrac * (1.0 - CanopyClosureDiffuse);
+		rlwrbc = rlwrbc * CanopyClosureDiffuse + Constants::stefan_boltzmann * eg * Tsfc4 * (1.0-CanopyClosureDiffuse);
 	 }
 }
 
@@ -1729,33 +1645,31 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, CurrentMeteo& Mdata, doub
  * @param Xdata Profile
  * @param roughness_length
  * @param height_of_wind_val
- * @param alpine3d changes the computation of zref. No idea what is the reason //HACK
+ * @param adjust_VW_height if set to false, assumes a constant measurement height for wind values (default: true, ie.
+ * take into account the snow height decreasing the sensor height above the surface)
+ * @return true if the canopy module could be used, false if not (canopy under the snow, etc)
  */
- //HACK: put an explicit name instead of "alpine3d"
-void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roughness_length, double height_of_wind_val, const bool& alpine3d)
+bool Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roughness_length, double height_of_wind_val, const bool& adjust_VW_height)
 {
 	const double hs = Xdata.cH - Xdata.Ground;
 	const size_t nE = Xdata.getNumberOfElements();
-	// First check, whether there is Canopy above the snow, i.e. whether s.th. needs to be done here
-	if ( (Xdata.Cdata.height - 0.01) < hs ) {
+	//no canopy or no canopy above the snow
+	if ( (Xdata.Cdata.lai <= 0.0) || (Xdata.Cdata.height <= 0.0) || ((Xdata.Cdata.height - 0.01) < hs)) {
 		Xdata.Cdata.zdispl = -0.7;
-		return;
+		return false;
 	}
+	
+	if (Xdata.Cdata.direct_throughfall==1.)
+		throw InvalidArgumentException("Can not use Canopy with CanopyDirectThroughfall == 1", AT);
 
 	// Check that some important initial values are within reasonable bounds
-	if ( Xdata.Cdata.temp < 203.15 ){
+	if ( Xdata.Cdata.temp < 203.15 ) {
 		Xdata.Cdata.temp = 273.15;
 	}
 	if ( Xdata.Cdata.storage < 0.0 ) {
 		Xdata.Cdata.storage = 0.0;
 	}
-	if ( Xdata.Cdata.lai <= 0.0 ) {
-		Xdata.Cdata.lai = 0.0;
-		return; //abort function execution, there is no canopy at this point
-	}
-	if ( Xdata.Cdata.height <= 0.0 ) {
-		Xdata.Cdata.height = 0.0;
-	}
+	
 	Xdata.Cdata.snowfac += Mdata.psum * (1. - Mdata.psum_ph);
 	Xdata.Cdata.rainfac += Mdata.psum * Mdata.psum_ph;
 	
@@ -1770,12 +1684,12 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
         double icemm_unload=0.0;
 	const double intcaprain = IntCapacity(Mdata, Xdata, true);
 	// determine liquid and frozen water unload
-	liqmm_unload = MAX(0.0,MIN(unload * Xdata.Cdata.liquidfraction,
+	liqmm_unload = std::max(0.0,std::min(unload * Xdata.Cdata.liquidfraction,
 			oldstorage * Xdata.Cdata.liquidfraction-intcaprain));
-	icemm_unload = MAX(unload - liqmm_unload,0.0);
+	icemm_unload = std::max(unload - liqmm_unload,0.0);
 	// Update liquid fraction
 	if (Xdata.Cdata.storage>0.) {
-		Xdata.Cdata.liquidfraction = MAX( 0.0, (oldstorage*Xdata.Cdata.liquidfraction-liqmm_unload)/Xdata.Cdata.storage );
+		Xdata.Cdata.liquidfraction = std::max( 0.0, (oldstorage*Xdata.Cdata.liquidfraction-liqmm_unload)/Xdata.Cdata.storage );
 	} else {
 		Xdata.Cdata.liquidfraction = 0.0;
 	}
@@ -1798,7 +1712,7 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	Mdata.psum_ph = (Mdata.psum>0)? ground_liquid_precip / Mdata.psum : 1.;
 	
 	if (Xdata.Cdata.storage>0.) {
-		Xdata.Cdata.liquidfraction = MAX(0.0,MIN(1.0,(oldstorage*Xdata.Cdata.liquidfraction+liqmm_interception)/Xdata.Cdata.storage));
+		Xdata.Cdata.liquidfraction = std::max(0.0,std::min(1.0,(oldstorage*Xdata.Cdata.liquidfraction+liqmm_interception)/Xdata.Cdata.storage));
 	}
 	
 	// 2.1 prepare for canopy energy balance
@@ -1826,8 +1740,8 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	 * 2006-03-01: introduced new definition of reference height above canopy for Alpine3D applications
 	 * 2006-06-02: this should work also without soil data, since Xdata->Ground is initialized to 0.0
 	*/
-	const double ref_height = (alpine3d)? Xdata.Cdata.height+height_of_wind_val : height_of_wind_val;
-	double zref = MAX( 2.0 + (Xdata.Cdata.height - hs), ref_height - hs );
+	const double ref_height = (!adjust_VW_height)? Xdata.Cdata.height+height_of_wind_val : height_of_wind_val;
+	double zref = std::max( 2.0 + (Xdata.Cdata.height - hs), ref_height - hs );
 	const double z0m_ground = (hs>0.03)? roughness_length : Xdata.BareSoil_z0;
 	Mdata.z0 = (hs>0.03)? roughness_length : Xdata.BareSoil_z0;
 
@@ -1896,12 +1810,12 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	// calculate Canopy Heat Mass based on canopy basal area and LAI
 	CalculateHeatMass(Xdata.Cdata.height, Xdata.Cdata.BasalArea, Xdata.Cdata.lai, Xdata.Cdata.HMLeaves, Xdata.Cdata.HMTrunks);
 
-	for ( int ebalitt = 0; ebalitt < 7; ebalitt++ ) {
+	for (int ebalitt = 0; ebalitt < 7; ebalitt++ ) {
 		const double TC_OLD = Xdata.Cdata.temp; // Cdata.temp is updated in the iteration...
 
 		// update ce_canopy as function of wetfraction
-		ce_canopy = MAX (0.001 * ce_interception, ce_interception * wetfrac + ce_transpiration * (1.0 - wetfrac));
-		ce_condensation = ce_interception * MAX (0.1, wetfrac);
+		ce_canopy = std::max(0.001 * ce_interception, ce_interception * wetfrac + ce_transpiration * (1.0 - wetfrac));
+		ce_condensation = ce_interception * std::max(0.1, wetfrac);
 
 		// canopy albedo
 		canopyalb = CanopyAlbedo(Mdata.ta, wetfrac);
@@ -1926,7 +1840,7 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 		}
 
 		// compute properties le0 and le1 in eq (4)
-		LineariseLatentHeatFlux(ce_canopy, Xdata.Cdata.temp, Mdata.rh*Atmosphere::waterSaturationPressure(Mdata.ta), le0, le1, Xdata.Cdata.sigf*(1. - Xdata.Cdata.direct_throughfall));
+		LineariseLatentHeatFlux(ce_canopy, Xdata.Cdata.temp, Mdata.rh*Atmosphere::vaporSaturationPressure(Mdata.ta), le0, le1, Xdata.Cdata.sigf*(1. - Xdata.Cdata.direct_throughfall));
 		// NOTE: for the moment trunks do not exchange latent heat (no interception, no transpiration)
 		let1= 0. ; let0 = 0. ;
 
@@ -2001,8 +1915,8 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	 * (remember to reset these variables to 0 in Main.c before next integration step)
 	*/
 	// radiation above and below canopy
-	CanopyRadiationOutput(Xdata, Mdata, canopyalb, &iswrac, &rswrac, &iswrbc,&rswrbc,&ilwrac,
-	                         &rlwrac,&ilwrbc,&rlwrbc,canopyclosuredirect,radfracdirect,sigfdirect,sigftrunkdirect);
+	CanopyRadiationOutput(Xdata, Mdata, canopyalb, iswrac, rswrac, iswrbc, rswrbc, ilwrac,
+	                         rlwrac, ilwrbc, rlwrbc,canopyclosuredirect,radfracdirect,sigfdirect,sigftrunkdirect);
 
 	// longwave and shortwave radiation components
 	Xdata.Cdata.iswrac += iswrac;
@@ -2012,7 +1926,7 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	Xdata.Cdata.ilwrac += ilwrac;
 	Xdata.Cdata.rlwrac += rlwrac;
 	Xdata.Cdata.ilwrbc += ilwrbc;
-	Xdata.Cdata.rlwrbc += rlwrbc ;
+	Xdata.Cdata.rlwrbc += rlwrbc;
 
 	// Net longwave and shortwave radiation of canopy [W m-2]
 	Xdata.Cdata.rlnet += RNCANOPY-rsnet;
@@ -2026,7 +1940,7 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	Mdata.iswr = iswrbc;
 
 	// Adjust friction velocity below canopy using the same reference height as in Meteo.c
-	zref = MAX(0.5, height_of_wind_val - hs);
+	zref = std::max(0.5, height_of_wind_val - hs);
 	Mdata.ustar = 0.74 * log(zref / z0m_ground) / 0.4 / (Xdata.Cdata.ra + Xdata.Cdata.rs);
 
 	// Canopy turbulent heat fluxes [W m-2]
@@ -2051,12 +1965,15 @@ void Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, double roug
 	Xdata.Cdata.intcapacity += intcapacity;
 	Xdata.Cdata.canopyalb += canopyalb;
 	const double albedo = (nE>Xdata.SoilNode)? Xdata.Albedo : Xdata.SoilAlb;
-	Xdata.Cdata.totalalb +=  TotalAlbedo(canopyalb, Xdata.Cdata.sigf, albedo,
-	                          Xdata.Cdata.direct_throughfall, canopyclosuredirect, radfracdirect, sigfdirect);
+	Xdata.Cdata.totalalb += TotalAlbedo(canopyalb, Xdata.Cdata.sigf, albedo,
+	                                    Xdata.Cdata.direct_throughfall, canopyclosuredirect, radfracdirect, sigfdirect);
 	// modifs for HeatMass and 2layercanopy: new fluxes, to be updated here for EB closure reasons
         Xdata.Cdata.CondFluxCanop += HM0 + HM1 * Xdata.Cdata.temp;
 	if (Twolayercanopy) {
         	Xdata.Cdata.CondFluxTrunks += HMt0 + HMt1 * Xdata.Cdata.Ttrunk;
         	Xdata.Cdata.QStrunks += ht0 + ht1 * Xdata.Cdata.Ttrunk;
 	}
+	
+	return true;
 }
+

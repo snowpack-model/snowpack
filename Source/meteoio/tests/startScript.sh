@@ -23,9 +23,12 @@ make distclean
 /usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptCoverage.cmake -V > ${MIO_ROOT}/tests/startScriptCoverage.log 2>&1
 
 make distclean
-/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptNightly.cmake -V > ${MIO_ROOT}/tests/startScriptNightly.log 2>&1
+/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptValgrind.cmake -V > ${MIO_ROOT}/tests/startScriptValgrind.log 2>&1
 
 make distclean
-/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptValgrind.cmake -V > ${MIO_ROOT}/tests/startScriptValgrind.log 2>&1
+/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptNightly.cmake -V > ${MIO_ROOT}/tests/startScriptNightly.log 2>&1
+
+#so the up-to-date documentation can be available on the server
+make doc
 
 log_echo "MeteoIO testing done!"

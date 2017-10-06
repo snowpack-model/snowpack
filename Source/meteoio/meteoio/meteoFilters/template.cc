@@ -21,10 +21,10 @@ using namespace std;
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(const std::vector<std::string>& vec_args, const std::string& name)
-          : FilterBlock(name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
+TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+          : FilterBlock(vecArgs, name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)
 	//or after the temporal resampling (second stage, ProcessingProperties::second) or both (ProcessingProperties::both)
 	//filters that do not depend on past data can safely use "both" (such as min/max filters) while
@@ -50,26 +50,32 @@ void TEMPLATE::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
-void TEMPLATE::parse_args(std::vector<std::string> vec_args)
+void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	const std::string where( "Filters::"+block_name );
 	//for a filter that does not take any arguments
-	if ( !vec_args.empty() ) //ie if there are arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
+	if ( !vecArgs.empty() ) //ie if there are arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments for "+where, AT);
 
 	/*
-	//for a filter taking one or two arguments
-	vector<double> filter_args;
-	 //parse the vector of strings and extract a vector of double
-	//at least (1) argument is expected, maximum (2)
-	convert_args(1, 2, vec_args, filter_args);
+	//for a filter taking one or more arguments
+	//if the filter is based on WindowedFilter, its constructor will automatically read the window parameters as well as the "soft" argument
 
-	arg1 = filter_args[0];
+	//to perform syntax checks (see after the "for" loop)
+	bool has_max=false;
 
-	if (filter_args.size() == 2){
-		arg2 = filter_args[1];
-	} else {
-		arg2 = arg2_default_value;
+	//parse the arguments (the keys are all upper case)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			IOUtils::parseArg(vecArgs[ii], where, type);
+		} else if (vecArgs[ii].first=="MAX") {
+			IOUtils::parseArg(vecArgs[ii], where, max_val);
+			has_max = true;
+		}
 	}
+
+	//second part of the syntax check
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
 	*/
 }
 

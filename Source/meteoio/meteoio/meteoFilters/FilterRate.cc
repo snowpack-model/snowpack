@@ -17,15 +17,16 @@
 */
 #include <meteoio/meteoFilters/FilterRate.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
 namespace mio {
 
-FilterRate::FilterRate(const std::vector<std::string>& vec_args, const std::string& name)
-           : FilterBlock(name), min_rate_of_change(0.), max_rate_of_change(0.)
+FilterRate::FilterRate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+           : FilterBlock(vecArgs, name), min_rate_of_change(0.), max_rate_of_change(0.)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -65,20 +66,23 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 	}
 }
 
-void FilterRate::parse_args(const std::vector<std::string>& vec_args) {
-	vector<double> filter_args;
-	convert_args(1, 2, vec_args, filter_args);
+void FilterRate::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	const std::string where( "Filters::"+block_name );
+	bool has_max=false, has_min=false;
 
-	const size_t nb_args = filter_args.size();
-	if (nb_args == 2) {
-		min_rate_of_change = filter_args[0];
-		max_rate_of_change = filter_args[1];
-	} else if (nb_args == 1) {
-		min_rate_of_change = -filter_args[0];
-		max_rate_of_change = filter_args[0];
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 1 or 2 arguments!", AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="MIN") {
+			IOUtils::parseArg(vecArgs[ii], where, min_rate_of_change);
+			has_min = true;
+		} else if (vecArgs[ii].first=="MAX") {
+			IOUtils::parseArg(vecArgs[ii], where, max_rate_of_change);
+			has_max = true;
+		}
+	}
 
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
+	if (has_max && !has_min) min_rate_of_change = -max_rate_of_change;
 }
 
 }

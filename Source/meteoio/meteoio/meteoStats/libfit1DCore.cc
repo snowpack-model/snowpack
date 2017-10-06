@@ -17,25 +17,24 @@
 */
 #include <meteoio/meteoStats/libfit1DCore.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/IOUtils.h>
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 
 using namespace std;
 
 namespace mio {
 
-void FitModel::getParams(std::vector<double>& o_coefficients) const {
-	if (fit_ready!=true) {
-		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	}
-	o_coefficients = Lambda;
+std::vector<double> FitModel::getParams() const
+{
+	if (fit_ready!=true)
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
+	return Lambda;
 }
 
-std::string FitModel::getInfo() const {
-	return infoString;
-}
-
-void FitModel::setGuess(const std::vector<double>& lambda_in) {
+void FitModel::setGuess(const std::vector<double>& lambda_in)
+{
 	const size_t nGuess = lambda_in.size();
 	if (nGuess!=nParam) {
 		ostringstream ss;
@@ -48,12 +47,9 @@ void FitModel::setGuess(const std::vector<double>& lambda_in) {
 	fit_ready = true;
 }
 
-FitModel& FitModel::operator =(const FitModel& source) {
+FitModel& FitModel::operator =(const FitModel& source)
+{
 	if (this != &source) {
-		nPts = source.nPts;
-		regname = source.regname;
-		nParam = source.nParam;
-		min_nb_pts = source.min_nb_pts;
 		fit_ready = source.fit_ready;
 		infoString = source.infoString;
 		Lambda = source.Lambda;
@@ -63,58 +59,7 @@ FitModel& FitModel::operator =(const FitModel& source) {
 	return *this;
 }
 
-std::string FitModel::toString() const {
-	std::ostringstream os;
-	os << "<FitModel>\n";
-	os << regname << " model with " << nParam << " (npts >= " << min_nb_pts << ")\n";
-	const double Xmin = *std::min_element(X.begin(),X.end());
-	const double Xmax = *std::max_element(X.begin(),X.end());
-	const double Ymin = *std::min_element(Y.begin(),Y.end());
-	const double Ymax = *std::max_element(Y.begin(),Y.end());
-	os << nPts << " calibration point(s) in\t";
-	os << "X[" << Xmin << "-" << Xmax << "]\tY[" << Ymin << "-" << Ymax << "]\n";
-
-	if (!Lambda.empty()) {
-		os << "Model parameters:       \t";
-		for (size_t ii=0; ii<Lambda.size(); ii++) os << Lambda[ii] << " ";
-		os << "\n";
-	}
-	os << "</FitModel>\n";
-
-	return os.str();
-}
-
-////////////////////////////////////////////////////////////
-//// Least square fit class
-const double FitLeastSquare::lambda_init = 1.; //initial default guess
-const double FitLeastSquare::delta_init_abs = 1.; //initial delta, absolute
-const double FitLeastSquare::delta_init_rel = 0.2; //initial delta, relative
-const double FitLeastSquare::eps_conv = 1e-6; //convergence criteria
-const unsigned int FitLeastSquare::max_iter = 50; //maximum number of iterations
-
-void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) {
-	X = in_X;
-	Y = in_Y;
-	Interpol1D::sort(X, Y); //sort the data by increasing X
-	setDefaultGuess();
-	fit_ready = false;
-}
-
-void FitLeastSquare::setDefaultGuess() {
-	for (size_t i=0; i<nParam; i++) {
-		Lambda.push_back( lambda_init );
-	}
-}
-
-bool FitLeastSquare::fit() {
-	checkInputs();
-	return computeFit();
-}
-
-////////////////////////////////////////////////////////////
-//// End of public methods
-
-bool FitLeastSquare::checkInputs()
+bool FitModel::checkInputs()
 {
 	nPts=X.size();
 
@@ -135,8 +80,69 @@ bool FitLeastSquare::checkInputs()
 	return true;
 }
 
+
+std::string FitModel::toString() const
+{
+	std::ostringstream os;
+	os << "<FitModel>\n";
+	os << regname << " model with " << nParam << " parameters (nr_data_points >= " << min_nb_pts << ")\n";
+	if (!X.empty() && !Y.empty()) {
+		const double Xmin = *std::min_element(X.begin(),X.end());
+		const double Xmax = *std::max_element(X.begin(),X.end());
+		const double Ymin = *std::min_element(Y.begin(),Y.end());
+		const double Ymax = *std::max_element(Y.begin(),Y.end());
+		os << nPts << " calibration point(s) in\t";
+		os << "X[" << Xmin << "-" << Xmax << "]\tY[" << Ymin << "-" << Ymax << "]\n";
+	} else {
+		os << "0 calibration points provided\n";
+	}
+
+	if (!Lambda.empty()) {
+		os << "Model parameters:       \t";
+		for (size_t ii=0; ii<Lambda.size(); ii++) os << Lambda[ii] << " ";
+		os << "\n";
+	}
+	os << "</FitModel>\n";
+
+	return os.str();
+}
+
+////////////////////////////////////////////////////////////
+//// Least square fit class
+const double FitLeastSquare::lambda_init = 1.; //initial default guess
+const double FitLeastSquare::delta_init_abs = 1.; //initial delta, absolute
+const double FitLeastSquare::delta_init_rel = 0.2; //initial delta, relative
+const double FitLeastSquare::eps_conv = 1e-6; //convergence criteria
+const unsigned int FitLeastSquare::max_iter = 50; //maximum number of iterations
+
+void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y)
+{
+	X = in_X;
+	Y = in_Y;
+	Interpol1D::sort(X, Y); //sort the data by increasing X
+	setDefaultGuess();
+	fit_ready = false;
+}
+
+void FitLeastSquare::setDefaultGuess()
+{
+	for (size_t i=0; i<nParam; i++) {
+		Lambda.push_back( lambda_init );
+	}
+}
+
+bool FitLeastSquare::fit()
+{
+	if (!checkInputs()) return false;
+	return computeFit();
+}
+
+////////////////////////////////////////////////////////////
+//// End of public methods
+
 //see http://mathworld.wolfram.com/NonlinearLeastSquaresFitting.html
-bool FitLeastSquare::computeFit() {
+bool FitLeastSquare::computeFit()
+{
 	double max_delta;
 	initLambda();
 	Matrix dLambda; //parameters variations
@@ -162,8 +168,8 @@ bool FitLeastSquare::computeFit() {
 		}
 
 		//calculate parameters deltas
-		const Matrix a = A.getT() * A;
-		const Matrix b = A.getT() * dBeta;
+		const Matrix a( A.getT() * A );
+		const Matrix b( A.getT() * dBeta );
 		if (!Matrix::solve(a, b, dLambda)) return false;
 
 		//apply the deltas to the parameters, record maximum delta
@@ -181,7 +187,7 @@ bool FitLeastSquare::computeFit() {
 	//building infoString
 	ostringstream ss;
 	ss << "Computed regression with " << regname << " model ";
-	ss << "- Sum of square residuals = " << R2 << " , max_delta = " << max_delta << " ";
+	ss << "- Sum of square residuals = " << std::setprecision(2) << R2 << " , max_delta = " << max_delta << " ";
 	ss << "- " << iter << " iterations";
 	infoString = ss.str();
 
@@ -194,12 +200,14 @@ bool FitLeastSquare::computeFit() {
 	}
 }
 
-void FitLeastSquare::initLambda() {
+void FitLeastSquare::initLambda()
+{
 	if (Lambda.empty()) //else, setGuess has been called
 		Lambda.resize(nParam, lambda_init);
 }
 
-void FitLeastSquare::initDLambda(Matrix& dLambda) const {
+void FitLeastSquare::initDLambda(Matrix& dLambda) const
+{
 	dLambda.resize(nParam,1);
 	for (size_t m=1; m<=nParam; m++) {
 		const double var = Lambda[m-1]; //Lambda is a vector
@@ -211,7 +219,8 @@ void FitLeastSquare::initDLambda(Matrix& dLambda) const {
 	}
 }
 
-double FitLeastSquare::getDelta(const double& var) const {
+double FitLeastSquare::getDelta(const double& var) const
+{
 //calculate a sensible delta for the partial derivative
 	if (var==0) {
 		return (delta_init_abs * 0.5);
@@ -220,7 +229,8 @@ double FitLeastSquare::getDelta(const double& var) const {
 	}
 }
 
-double FitLeastSquare::DDer(const double& x, const size_t& index) {
+double FitLeastSquare::DDer(const double& x, const size_t& index)
+{
 	const double var = Lambda[index-1]; //Lambda is a vector
 	const double delta = getDelta(var);
 	const double v1 = var - delta;

@@ -27,34 +27,41 @@
 namespace mio {
 
 /**
- * @class  FilterMinMax
+ * @class FilterMinMax
  * @ingroup processing
  * @brief Min/Max range filter.
- * @author Thomas Egger
- * @date   2011-01-02
- * Reject all values greater than the max or smaller than the min. Remarks:
- * - two arguments have to be provided, min and max (in SI)
- * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
- * the maximum permissible value and all data smaller than the min would be assigned the minimum permissible value
- * or an optional extra set of two user provided values (see example below)
+ * @details
+ * Reject all values greater than the max or smaller than the min. Arguments:
+ * - MIN: the minimum permissible value (in SI, mandatory);
+ * - MAX: the maximum permissible value (in SI, mandatory);
+ * - SOFT: if set to TRUE, all data smaller than the min / larger than the max, would be assigned
+ * either the minimum / maximum permissible value or another value given as an extra argument (optional);
+ * - MIN_RESET: if SOFT has been set to TRUE, this is the new value for otherwise rejected points (optional).
+ * - MAX_RESET: if SOFT has been set to TRUE, this is the new value for otherwise rejected points (optional).
  * @code
- * TA::filter1	= min_max
- * TA::arg1	= 230 330
- * ISWR::filter1	= min_max
- * ISWR::arg1	= soft 8 1500 0 1498
+ * TA::filter1   = min_max
+ * TA::arg1::MIN = 230
+ * TA::arg1::MAX = 330
+ *
+ * ISWR::filter1         = min_max
+ * ISWR::arg1::SOFT      = TRUE
+ * ISWR::arg1::MIN       = 8
+ * ISWR::arg1::MIN_RESET = 0
+ * ISWR::arg1::MAX       = 1400
+ * ISWR::arg1::MAX_RESET = 1398
  * @endcode
  *
  */
 
 class FilterMinMax : public FilterBlock {
 	public:
-		FilterMinMax(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_val, max_val;
 		double min_soft, max_soft;

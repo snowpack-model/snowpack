@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "GRIBIO.h"
+#include <meteoio/plugins/GRIBIO.h>
 
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
@@ -23,10 +23,12 @@
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/FileUtils.h>
 
 #include <cmath>
 #include <iostream>
 #include <errno.h>
+#include <algorithm>
 #include <grib_api.h>
 
 using namespace std;
@@ -90,6 +92,23 @@ namespace mio {
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
  *
+ * @code
+ * [Input]
+ * METEO           = GRIB
+ * METEOPATH       = ./input
+ * METEOEXT        = none
+ * STATION1        = 779932 188182 21781 ;WFJ
+ * STATION2        = 788889 192513 21781 ;Kloster
+ * STATION3        = 793274 183770 21781 ;Weisshorn
+ *
+ * GRID2D          = GRIB
+ * GRID2DPATH      = ./input
+ * GRID2DPREFIX    = lfff
+ * GRID2DEXT       = none
+ *
+ * DEM             = GRIB
+ * DEMFILE         = ./input/laf2012031001
+ * @endcode
  */
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
@@ -412,6 +431,12 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 		getDate(h, base_date, P1, P2);
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
+		// 0 -> at base_date + P1
+		// 1 -> at base_date
+		// 2 -> valid between base_date+P1 and base_date+P2
+		// 3 -> average within [base_date+P1 , base_date+P2]
+		// 4 -> accumulation from base_date+P1 to base_date+P2
+		// 5 -> difference (base_date+P2) - (base_date+P1)
 		long timeRange;
 		GRIB_CHECK(grib_get_long(h,"timeRangeIndicator", &timeRange),0);
 
@@ -424,6 +449,8 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 			    ((timeRange==2 || timeRange==3) && i_date>=base_date+P1 && i_date<=base_date+P2) ||
 			    ((timeRange==4 || timeRange==5) && i_date==base_date+P2) ) {
 				read2Dlevel(h, grid_out);
+				if (timeRange==3) grid_out *= ((P2-P1)*24.*3600.); //convert avg to sum
+				grib_handle_delete(h);
 				return true;
 			}
 		}
@@ -435,13 +462,13 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
 	const std::string filename = grid2dpath_in+"/"+i_name;
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw FileAccessException(ss.str(), AT);
+		throw AccessException(ss.str(), AT);
 	}
 
 	grib_handle* h=NULL;
@@ -464,13 +491,13 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 
 void GRIBIO::indexFile(const std::string& filename)
 {
-	if (!IOUtils::fileExists(filename)) throw FileAccessException(filename, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
 		ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
-		throw FileAccessException(ss.str(), AT);
+		throw AccessException(ss.str(), AT);
 	}
 
 	int err=0;
@@ -516,7 +543,7 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 
 	if (read2DGrid_indexed(32.2, 105, 10, date, VW)) { //FF_10M
 		if (!read2DGrid_indexed(31.2, 105, 10, date, DW)) //DD_10M
-			throw NoAvailableDataException("Can not read wind direction in file \""+filename+"\"", AT);
+			throw NoDataException("Can not read wind direction in file \""+filename+"\"", AT);
 	} else {
 		Grid2DObject U,V;
 		read2DGrid_indexed(33.2, 105, 10, date, U); //U_10M, also in 110, 10 as U
@@ -647,7 +674,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";
-		throw NoAvailableDataException(ss.str(), AT);
+		throw NoDataException(ss.str(), AT);
 	}
 
 	//correcting wind speeds
@@ -698,28 +725,10 @@ void GRIBIO::readDEM(DEMObject& dem_out)
 	}
 }
 
-void GRIBIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void GRIBIO::scanMeteoPath()
 {
 	std::list<std::string> dirlist;
-	IOUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
+	FileUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
 	dirlist.sort();
 
 	//Check date in every filename and cache it
@@ -737,8 +746,7 @@ void GRIBIO::scanMeteoPath()
 }
 
 void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                             std::vector< std::vector<MeteoData> >& vecMeteo,
-                             const size_t&)
+                             std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	if (!meteo_initialized) {
 		readStations(vecPts);
@@ -1039,31 +1047,6 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	}
 
 	free(values); free(values2);
-}
-
-void GRIBIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void GRIBIO::cleanup() throw()

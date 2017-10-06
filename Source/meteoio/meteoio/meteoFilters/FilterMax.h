@@ -25,30 +25,33 @@
 namespace mio {
 
 /**
- * @class  FilterMax
+ * @class FilterMax
  * @ingroup processing
- * @author Thomas Egger - Mathias Bavay
- * @date   2011-01-02
  * @brief Max range filter.
+ * @details
  * Reject all values greater than the max. Remarks:
- * - the maximum permissible value has to be provided has an argument (in SI)
- * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
- * either the maximum permissible value or another value given as an extra argument (350 in the example below)
+ * - MAX: the maximum permissible value (in SI, mandatory);
+ * - SOFT: if set to TRUE, all data larger than the max would be assigned
+ * either the maximum permissible value or another value given as an extra argument (optional);
+ * - MAX_RESET: if SOFT has been set to TRUE, this is the new value for otherwise rejected points (optional).
+ *
  * @code
- * TA::filter1	= max
- * TA::arg1	= soft 330 350
+ * TA::filter1         = MAX
+ * TA::arg1::MAX       = 330
+ * TA::arg1::SOFT      = TRUE
+ * TA::arg1::MAX_RESET = 350
  * @endcode
  */
 
 class FilterMax : public FilterBlock {
 	public:
-		FilterMax(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double max_val;
 		double max_soft;

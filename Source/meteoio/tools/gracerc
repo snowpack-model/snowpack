@@ -1,0 +1,5 @@
+DEFINE IFILTER "gzip -dc %s" PATTERN "*.gz"
+DEFINE OFILTER "gzip -9 - > %s" PATTERN "*.gz"
+DEFINE IFILTER "bzip2 -dc %s" PATTERN "*.bz2"
+DEFINE OFILTER "bzip2 -9 - > %s" PATTERN "*.bz2"
+DEFINE IFILTER "smet2agr.sh %s" PATTERN "*.smet"

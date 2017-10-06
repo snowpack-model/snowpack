@@ -27,30 +27,31 @@
 namespace mio {
 
 /**
- * @class  FilterMin
+ * @class FilterMin
  * @ingroup processing
- * @author Thomas Egger - Mathias Bavay
- * @date   2011-01-02
  * @brief Min range filter.
- * Reject all values smaller than the min. Remarks:
- * - the minimum permissible value has to be provided has an argument (in SI)
- * - the keyword "soft" maybe added, in such a case all data smaller than the min would be assigned
- * either the minimum permissible value or another value given as an extra argument
+ * @details
+ * Reject all values smaller than the min. Arguments:
+ * - MIN: the minimum permissible value (in SI, mandatory);
+ * - SOFT: if set to TRUE, all data smaller than the min would be assigned
+ * either the minimum permissible value or another value given as an extra argument (optional);
+ * - MIN_RESET: if SOFT has been set to TRUE, this is the new value for otherwise rejected points (optional).
+ *
  * @code
- * TA::filter1	= min
- * TA::arg1	= 230
+ * TA::filter1   = min
+ * TA::arg1::MIN = 230
  * @endcode
  */
 
 class FilterMin : public FilterBlock {
 	public:
-		FilterMin(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterMin(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_val;
 		double min_soft;

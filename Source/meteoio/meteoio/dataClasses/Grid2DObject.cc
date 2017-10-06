@@ -16,6 +16,10 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/MathOptim.h>
+#include <meteoio/ResamplingAlgorithms2D.h>
 #include <cmath>
 
 using namespace std;
@@ -186,11 +190,11 @@ Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, 
 bool Grid2DObject::gridify(std::vector<Coords>& vec_points, const bool& keep_invalid) const 
 {
 	bool status=true;
-
 	std::vector<Coords>::iterator v_Itr = vec_points.begin();
 	while ( v_Itr != vec_points.end() ) {
 		if ( gridify(*v_Itr)==false ) {
 			if (!keep_invalid) v_Itr = vec_points.erase(v_Itr);
+			else ++v_Itr;
 			status=false;
 		} else {
 			++v_Itr;
@@ -217,9 +221,9 @@ bool Grid2DObject::gridify(Coords& point) const {
 	}
 }
 
-bool Grid2DObject::grid_to_WGS84(Coords& point) const {
+bool Grid2DObject::grid_to_WGS84(Coords& point) const
+{
 	int i = point.getGridI(), j = point.getGridJ();
-
 	if (i==IOUtils::inodata || j==IOUtils::inodata) {
 		//the point is invalid (outside the grid or contains nodata)
 		point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid
@@ -228,6 +232,7 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 
 	const int ncols = (signed)getNx();
 	const int nrows = (signed)getNy();
+
 	if (i>ncols || i<0 || j>nrows || j<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
@@ -242,7 +247,7 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 	//easting and northing in the grid's projection
 	const double easting = ((double)i) * cellsize + llcorner.getEasting();
 	const double northing = ((double)j) * cellsize + llcorner.getNorthing();
-
+	
 	if (point.isSameProj(llcorner)==true) {
 		//same projection between the grid and the point -> precise, simple and efficient arithmetics
 		point.setXY(easting, northing, IOUtils::nodata);
@@ -259,7 +264,8 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 	return true;
 }
 
-bool Grid2DObject::WGS84_to_grid(Coords& point) const {
+bool Grid2DObject::WGS84_to_grid(Coords& point) const
+{
 	if (point.getLat()==IOUtils::nodata || point.getLon()==IOUtils::nodata) {
 			//if the point is invalid, there is nothing we can do
 			point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid
@@ -330,9 +336,24 @@ void Grid2DObject::set(const Grid2DObject& i_grid, const double& init)
 	grid2D.resize(i_grid.grid2D.getNx(), i_grid.grid2D.getNy(), init);
 }
 
+void Grid2DObject::rescale(const double& i_cellsize)
+{
+	if (grid2D.getNx()==0 || grid2D.getNy()==0)
+		throw InvalidArgumentException("Can not rescale an empty grid!", AT);
+	
+	const double factor_x = cellsize / i_cellsize;
+	const double factor_y = cellsize / i_cellsize;
+	grid2D = ResamplingAlgorithms2D::BilinearResampling(grid2D, factor_x, factor_y);
+	cellsize = i_cellsize;
+}
+
 void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
 	o_ncols = getNx();
 	o_nrows = getNy();
+}
+
+size_t Grid2DObject::size() const {
+	return grid2D.size();
 }
 
 size_t Grid2DObject::getNx() const {
@@ -378,9 +399,8 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	if ((thresholds.size()+1) != ids.size()) {
 		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
 	}
-	const size_t count = grid2D.getNx()*grid2D.getNy();
 	const size_t nscl = thresholds.size();
-	for (size_t jj = 0; jj< count; jj++){
+	for (size_t jj = 0; jj< grid2D.size(); jj++){
 		const double& val = grid2D(jj);
 		if (val!=IOUtils::nodata){
 			size_t i = 0;
@@ -419,14 +439,14 @@ const std::string Grid2DObject::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid) {
+std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid) {
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
 	os << grid.llcorner;
 	os << grid.grid2D;
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Grid2DObject& grid) {
+std::istream& operator>>(std::istream& is, Grid2DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is >> grid.llcorner;
 	is >> grid.grid2D;

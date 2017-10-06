@@ -35,7 +35,7 @@ namespace mio {
 * Initialize internal variables. It does NOT start timing.
 */
 Timer::Timer()
-     : start_point(0.), elapsed(0.), isRunning(false) {}
+     : start_point(0.L), elapsed(0.), isRunning(false) {}
 
 /**
 * @brief Start the timer.
@@ -86,8 +86,12 @@ double Timer::getElapsed() const {
 	return elapsed;
 }
 
+/**
+* @brief Get the current time
+* @return the current time as seconds since Unix Epoch
+*/
 #if defined _WIN32 || defined __MINGW32__
-long double Timer::getCurrentTime() const {
+long double Timer::getCurrentTime() {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );
 
@@ -103,10 +107,10 @@ long double Timer::getCurrentTime() const {
 	return static_cast<long double>(uli.QuadPart - offset_to_epoch*units_convert) / units_convert;
 }
 #else
-long double Timer::getCurrentTime() const {
+long double Timer::getCurrentTime() {
 	timeval tp;
 	gettimeofday(&tp,NULL);
-	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6;
+	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6L;
 	return t;
 }
 
@@ -177,12 +181,12 @@ void UsageTimer::getElapsedTimes()
 	getrusage(UsageTimer::who, &current_usage);
 
 	//calculate start point
-	const long double start_user_time = static_cast<long double>(start_usage.ru_utime.tv_sec) + static_cast<long double>(start_usage.ru_utime.tv_usec)*1e-6;
-	const long double start_sys_time  = static_cast<long double>(start_usage.ru_stime.tv_sec) + static_cast<long double>(start_usage.ru_stime.tv_usec)*1e-6;
+	const long double start_user_time = static_cast<long double>(start_usage.ru_utime.tv_sec) + static_cast<long double>(start_usage.ru_utime.tv_usec)*1e-6L;
+	const long double start_sys_time  = static_cast<long double>(start_usage.ru_stime.tv_sec) + static_cast<long double>(start_usage.ru_stime.tv_usec)*1e-6L;
 
 	//calculate end point
-	const long double end_user_time = static_cast<long double>(current_usage.ru_utime.tv_sec) + static_cast<long double>(current_usage.ru_utime.tv_usec)*1e-6;
-	const long double end_sys_time  = static_cast<long double>(current_usage.ru_stime.tv_sec) + static_cast<long double>(current_usage.ru_stime.tv_usec)*1e-6;
+	const long double end_user_time = static_cast<long double>(current_usage.ru_utime.tv_sec) + static_cast<long double>(current_usage.ru_utime.tv_usec)*1e-6L;
+	const long double end_sys_time  = static_cast<long double>(current_usage.ru_stime.tv_sec) + static_cast<long double>(current_usage.ru_stime.tv_usec)*1e-6L;
 
 	//calculate different elapsed times
 	user_time = static_cast<double>( end_user_time - start_user_time );

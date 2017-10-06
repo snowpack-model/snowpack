@@ -13,8 +13,8 @@ int main(int /*argc*/, char** argv) {
 	Config cfg("io.ini");
 	IOManager io(cfg);
 
-	//we assume that the time given on the command line is in TZ=+1
-	IOUtils::convertString(d1,argv[1], 1.);
+	const double TZ = cfg.get("TIME_ZONE", "Input");
+	IOUtils::convertString(d1,argv[1], TZ);
 	//io.setProcessingLevel(IOManager::raw); //set the processing level: raw, filtered or resampled
 	io.getMeteoData(d1, vecMeteo);
 
@@ -24,6 +24,6 @@ int main(int /*argc*/, char** argv) {
 		std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
 		std::cout << vecMeteo[ii].toString() << std::endl;
 	}
-
+	
 	return 0;
 }

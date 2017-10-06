@@ -24,27 +24,24 @@
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 #include <meteoio/IOExceptions.h>
 #include <meteoio/dataClasses/Date.h> //for printFractionalDay
+#include <meteoio/MathOptim.h>
+#include <meteoio/IOUtils.h>
 
 namespace mio {
 
-SunTrajectory::SunTrajectory() : julian_gmt(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
+SunTrajectory::SunTrajectory() : julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                                  SolarAzimuthAngle(IOUtils::nodata), SolarElevation(IOUtils::nodata),
                                  eccentricityEarth(IOUtils::nodata), SunRise(IOUtils::nodata), SunSet(IOUtils::nodata),
                                  SunlightDuration(IOUtils::nodata), SolarNoon(IOUtils::nodata),
                                  SunRightAscension(IOUtils::nodata), SunDeclination(IOUtils::nodata),
-                                 HourAngle(IOUtils::nodata)
-{
-}
+                                 HourAngle(IOUtils::nodata) {}
 
-SunTrajectory::SunTrajectory(const double& i_latitude, const double& i_longitude) : julian_gmt(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude),
+SunTrajectory::SunTrajectory(const double& i_latitude, const double& i_longitude) : julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude),
                                  SolarAzimuthAngle(IOUtils::nodata), SolarElevation(IOUtils::nodata),
                                  eccentricityEarth(IOUtils::nodata), SunRise(IOUtils::nodata), SunSet(IOUtils::nodata),
                                  SunlightDuration(IOUtils::nodata), SolarNoon(IOUtils::nodata),
                                  SunRightAscension(IOUtils::nodata), SunDeclination(IOUtils::nodata),
-                                 HourAngle(IOUtils::nodata)
-{
-}
-
+                                 HourAngle(IOUtils::nodata) {}
 
 /**
  * @brief Compute the solar incidence (rad), i.e. the angle between the incident sun beam
@@ -86,7 +83,7 @@ double SunTrajectory::getRadiationOnHorizontal(const double& radiation) const
 double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double& slope_elev, const double& radiation) const
 { // Project a beam radiation (ie: perpendicular to the sun beam) to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
-	if (radiation==IOUtils::nodata) return IOUtils::nodata;
+	if (radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
 
 	const double Z = (90.-SolarElevation)*Cst::to_rad;
 	const double beta = slope_elev*Cst::to_rad;
@@ -110,6 +107,8 @@ double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double&
 double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold) const
 {// Project a given horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (H_radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (SolarElevation>=elev_threshold)? (90.-SolarElevation)*Cst::to_rad : (90.-elev_threshold)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
@@ -124,6 +123,8 @@ double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double
 double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold)
 {// Project a horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (H_radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (sun_elev>elev_threshold)? (90.-sun_elev)*Cst::to_rad : (90.-elev_threshold)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
@@ -141,6 +142,8 @@ double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const doub
 double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& S_radiation)
 {// Project a slope radiation to horizontal
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (S_radiation==IOUtils::nodata || slope_azi==IOUtils::nodata || slope_elev==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double beta = slope_elev*Cst::to_rad;
 	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*Cst::to_rad);
@@ -156,6 +159,8 @@ double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const doub
 double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const double& H_radiation)
 { // Project a beam radiation (ie: perpendicular to the sun beam) to the horizontal
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	if (H_radiation==IOUtils::nodata) return IOUtils::nodata;
+	
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
@@ -172,14 +177,33 @@ double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const doub
  * Since the Sun reaches its zenith at a time different than the local noon, the solar noon
  * does not happen at 12:00 local time. This defines a solar time that has a negative or positive offset
  * with the local time, depending on the seasons (see http://www.jaloxa.eu/resources/daylighting/sunpath.shtml).
- * @param TZ time zone of the output
  * @return actual solar time
  */
-double SunTrajectory::getSolarTime(const double& TZ) const
+double SunTrajectory::getSolarTime() const
 {
-	if (julian_gmt!=IOUtils::nodata && SolarNoon!=IOUtils::nodata)
-		return julian_gmt + (SolarNoon - .5) + TZ/24.;
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && SolarNoon!=IOUtils::nodata)
+		return julian_gmt + (SolarNoon - .5) + TZ*1./24.;
 	else
+		return IOUtils::nodata;
+}
+
+/**
+ * @brief Return the current solar time of day.
+ * Since the Sun reaches its zenith at a time different than the local noon, the solar noon
+ * does not happen at 12:00 local time. This defines a solar time that has a negative or positive offset
+ * with the local time, depending on the seasons (see http://www.jaloxa.eu/resources/daylighting/sunpath.shtml).
+ * @return actual solar time of day, ie between 0 and 24
+ */
+double SunTrajectory::getSolarTimeOfDay() const
+{
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && SolarNoon!=IOUtils::nodata) {
+		const double timeOfDay = Optim::fracPart(julian_gmt + .5 + TZ*1./24.); //between 0 and 1
+		const double SolarOffset = SolarNoon - .5;
+		const double SolarTimeOfDay = timeOfDay + SolarOffset;
+		if (SolarTimeOfDay>1) return SolarTimeOfDay - 1.;
+		if (SolarTimeOfDay<0) return 1. + SolarTimeOfDay;
+		return SolarTimeOfDay;
+	} else
 		return IOUtils::nodata;
 }
 
@@ -188,16 +212,17 @@ const std::string SunTrajectory::toString() const
 	std::ostringstream os;
 	os << "<SunTrajectory>\n";
 	os << std::fixed << std::setprecision(4);
-	os << "Julian (gmt)\t" << julian_gmt << "\n";
+	os << "Julian\t" << julian_gmt + TZ*1./24. << " TZ=" << TZ << "\n";
+	os << "SolarTimeOfDay\t" << getSolarTimeOfDay() << "\n";
 	os << "Lat/Long\t" << std::setw(7) << latitude << "° " << std::setw(7) << longitude << "°\n";
 	os << "Ecc. corr.\t" << std::setprecision(4) << std::setw(7) << eccentricityEarth << "°\n";
 	os << "Hour Angle\t" << std::setprecision(4) << std::setw(7) << HourAngle << "°\n";
 	os << std::setprecision(2);
 	os << "Azi./Elev.\t" << std::setw(7)<< SolarAzimuthAngle << "° " << std::setw(7) << SolarElevation << "°\n";
 	os << "RA/decl.\t" << std::setw(7) << SunRightAscension << "° " << std::setw(7) << SunDeclination << "°\n";
-	os << "Sunrise (gmt)\t" << Date::printFractionalDay(SunRise - longitude*1./15.*1./24.) << "\n";
-	os << "SolarNoon (gmt)\t" << Date::printFractionalDay(SolarNoon - longitude*1./15.*1./24.) << "\n";
-	os << "Sunset (gmt)\t" << Date::printFractionalDay(SunSet - longitude*1./15.*1./24.) << "\n";
+	os << "Sunrise\t\t" << Date::printFractionalDay(SunRise - longitude*1./15.*1./24. + TZ*1./24.) << "\n";
+	os << "SolarNoon\t" << Date::printFractionalDay(SolarNoon - longitude*1./15.*1./24. + TZ*1./24.) << "\n";
+	os << "Sunset\t\t" << Date::printFractionalDay(SunSet - longitude*1./15.*1./24. + TZ*1./24.) << "\n";
 	os << "Daylight\t" << Date::printFractionalDay(SunlightDuration/(60.*24.)) << "\n";
 	os << "</SunTrajectory>\n";
 	os << std::setfill(' ');
@@ -209,17 +234,13 @@ const std::string SunTrajectory::toString() const
 namespace mio {
 
 //Class SunMeeus
-SunMeeus::SunMeeus() : SunTrajectory(), SolarElevationAtm(IOUtils::nodata)
-{
-}
+SunMeeus::SunMeeus() : SunTrajectory(), SolarElevationAtm(IOUtils::nodata) {}
 
-SunMeeus::SunMeeus(const double& i_latitude, const double& i_longitude) : SunTrajectory(i_latitude, i_longitude), SolarElevationAtm(IOUtils::nodata)
-{
-}
+SunMeeus::SunMeeus(const double& i_latitude, const double& i_longitude) : SunTrajectory(i_latitude, i_longitude), SolarElevationAtm(IOUtils::nodata) {}
 
-SunMeeus::SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ) : SunTrajectory(i_latitude, i_longitude), SolarElevationAtm(IOUtils::nodata)
+SunMeeus::SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ) : SunTrajectory(i_latitude, i_longitude), SolarElevationAtm(IOUtils::nodata)
 {
-	setAll(i_latitude, i_longitude, i_julian, TZ);
+	setAll(i_latitude, i_longitude, i_julian, i_TZ);
 }
 
 void SunMeeus::private_init()
@@ -234,9 +255,10 @@ void SunMeeus::private_init()
 }
 
 
-void SunMeeus::setDate(const double& i_julian, const double& TZ)
+void SunMeeus::setDate(const double& i_julian, const double& i_TZ)
 {
-	julian_gmt = i_julian - TZ/24.;
+	TZ = i_TZ;
+	julian_gmt = i_julian - TZ*1./24.;
 	private_init();
 	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		update();
@@ -248,21 +270,22 @@ void SunMeeus::setLatLon(const double& i_latitude, const double& i_longitude)
 	latitude = i_latitude;
 	longitude = i_longitude;
 	private_init();
-	if (julian_gmt!=IOUtils::nodata) {
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata) {
 		update();
 	}
 }
 
-void SunMeeus::setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ)
+void SunMeeus::setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ)
 {
+	TZ = i_TZ;
 	latitude = i_latitude;
 	longitude = i_longitude;
-	julian_gmt = i_julian - TZ/24.;
+	julian_gmt = i_julian - TZ*1./24.;
 	update();
 }
 
 void SunMeeus::reset() {;
-	julian_gmt = IOUtils::nodata;
+	julian_gmt = TZ = IOUtils::nodata;
 	latitude = longitude = IOUtils::nodata;
 	private_init();
 }
@@ -273,7 +296,7 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation) cons
 }
 
 void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const {
-	if (julian_gmt!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		azimuth = SolarAzimuthAngle;
 		elevation = SolarElevation; //this is the TRUE elevation, not the apparent!
 		eccentricity = eccentricityEarth;
@@ -282,10 +305,10 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 	}
 }
 
-void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight, const double& TZ) {
-	if (julian_gmt!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
-		sunrise = SunRise - longitude*1./15.*1./24. + TZ*1./24.; //back to TZ, in days
-		sunset = SunSet - longitude*1./15.*1./24. + TZ*1./24.; //back to TZ, in days
+void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight) {
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+		sunrise = SunRise - (longitude*1./15. + TZ)*1./24.; //back to TZ, in days
+		sunset = SunSet - (longitude*1./15. + TZ)*1./24.; //back to TZ, in days
 		daylight = SunlightDuration;
 	} else {
 		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
@@ -293,7 +316,7 @@ void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight, co
 }
 
 void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declination) {
-	if (julian_gmt!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		right_ascension = SunRightAscension;
 		declination = SunDeclination;
 	} else {

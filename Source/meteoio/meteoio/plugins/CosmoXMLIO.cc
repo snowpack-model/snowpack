@@ -15,7 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "CosmoXMLIO.h"
+#include <meteoio/plugins/CosmoXMLIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 
 #include <sstream>
@@ -112,12 +115,12 @@ const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const xmlChar* CosmoXMLIO::xml_attribute = (const xmlChar *)"id";
 const xmlChar* CosmoXMLIO::xml_namespace = (const xmlChar *)"http://www.meteoswiss.ch/xmlns/modeltemplate/2";
 const xmlChar* CosmoXMLIO::xml_namespace_abrev = (const xmlChar*)"ns";
-const std::string CosmoXMLIO::StationData_xpath = "//ns:datainformation/ns:data-tables/ns:data/ns:row/ns:col";
-const std::string CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col";
+const char* CosmoXMLIO::StationData_xpath = "//ns:datainformation/ns:data-tables/ns:data/ns:row/ns:col";
+const char* CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col";
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_ctxt(NULL), in_xpathCtx(NULL),
              in_encoding(XML_CHAR_ENCODING_NONE), coordin(), coordinparam()
 {
 	Config cfg(configfile);
@@ -126,7 +129,7 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_ctxt(NULL), in_xpathCtx(NULL),
              in_encoding(XML_CHAR_ENCODING_NONE), coordin(), coordinparam()
 {
 	init(cfg);
@@ -195,6 +198,7 @@ CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
 		input_id = source.input_id;
 		plugin_nodata = source.plugin_nodata;
 		in_doc = NULL;
+		in_ctxt = NULL;
 		in_xpathCtx = NULL;
 		coordin = source.coordin;
 		coordinparam = source.coordinparam;
@@ -211,8 +215,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 {
 	meteo_files.clear();
 
-	std::list<std::string> dirlist;
-	IOUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
+	std::list<std::string> dirlist = 	FileUtils::readDirectory(meteopath_in, meteo_ext);
 	dirlist.sort();
 
 	//Check date in every filename and cache it
@@ -243,19 +246,19 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	xmlInitParser();
 	xmlKeepBlanksDefault(0);
 
-	if (!IOUtils::fileExists(in_meteofile)) throw FileAccessException(in_meteofile, AT); //prevent invalid filenames
+	if (!FileUtils::fileExists(in_meteofile)) throw AccessException(in_meteofile, AT); //prevent invalid filenames
 	
 	if (in_encoding==XML_CHAR_ENCODING_NONE) {
 		in_doc = xmlParseFile(in_meteofile.c_str());
 	} else {
-		xmlParserCtxtPtr ctxt = xmlCreateFileParserCtxt( in_meteofile.c_str() );
-		xmlSwitchEncoding( ctxt, in_encoding);
-		xmlParseDocument( ctxt);
-		in_doc = ctxt->myDoc;
+		in_ctxt = xmlCreateFileParserCtxt( in_meteofile.c_str() );
+		xmlSwitchEncoding( in_ctxt, in_encoding);
+		xmlParseDocument( in_ctxt);
+		in_doc = in_ctxt->myDoc;
 	}
 
 	if (in_doc == NULL) {
-		throw FileNotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
+		throw NotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
 	}
 
 	if (in_xpathCtx != NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
@@ -280,37 +283,11 @@ void CosmoXMLIO::closeIn_XML() throw()
 		xmlFreeDoc(in_doc);
 		in_doc = NULL;
 	}
+	if (in_ctxt!=NULL) {
+		xmlFreeParserCtxt(in_ctxt);
+		in_ctxt = NULL;
+	}
 	xmlCleanupParser();
-}
-
-void CosmoXMLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readLanduse(Grid2DObject& /*landuse_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd)
@@ -318,7 +295,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	//match something like "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col[@id='station_abbreviation' and text()='ATT']/.."
 	//the namespace "ns" has been previously defined
 	const std::string xpath_id = (imis_stations)? station_id.substr(0, station_id.find_first_of("0123456789")) : station_id;
-	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
+	const std::string xpath = std::string(StationData_xpath)+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if (xpathObj == NULL) return false;
@@ -327,7 +304,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	const xmlNodeSetPtr &metadata = xpathObj->nodesetval;
 	const int nr_metadata = (metadata) ? metadata->nodeNr : 0;
 	if (nr_metadata==0)
-		throw NoAvailableDataException("No metadata found for station \""+station_id+"\"", AT);
+		throw NoDataException("No metadata found for station \""+station_id+"\"", AT);
 	if (nr_metadata>1)
 		throw InvalidFormatException("Multiple definition of metadata for station \""+station_id+"\"", AT);
 
@@ -365,12 +342,11 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	sd.stationID = station_id;
 
 	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata || altitude==IOUtils::nodata)
-		throw NoAvailableDataException("Some station location information is missing for station \""+station_id+"\"", AT);
+		throw NoDataException("Some station location information is missing for station \""+station_id+"\"", AT);
 	sd.position.setProj(coordin, coordinparam);
 	sd.position.setLatLon(latitude, longitude, altitude);
 
-	if (xml_id.empty())
-		throw NoAvailableDataException("XML station id missing for station \""+station_id+"\"", AT);
+	if (xml_id.empty()) throw NoDataException("XML station id missing for station \""+station_id+"\"", AT);
 	xml_stations_id[station_id] = xml_id;
 
 	xmlXPathFreeObject(xpathObj);
@@ -438,7 +414,7 @@ size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
 	} else {
 		for (size_t idx=1; idx<cache_meteo_files.size(); idx++) {
 			if (start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
-				return idx--;
+				return --idx;
 			}
 		}
 
@@ -453,7 +429,7 @@ size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
 void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
-
+	
 	const std::string meteofile( cache_meteo_files[ getFileIdx(station_date) ].second );
 	openIn_XML(meteofile);
 
@@ -472,7 +448,7 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 
 bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id, const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const
 {
-	const std::string xpath = MeteoData_xpath+"[@id='identifier' and text()='"+station_id+"']";
+	const std::string xpath = std::string(MeteoData_xpath)+"[@id='identifier' and text()='"+station_id+"']";
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if (xpathObj == NULL) return false;
@@ -481,7 +457,7 @@ bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, cons
 	const xmlNodeSetPtr &data = xpathObj->nodesetval;
 	const int nr_data = (data) ? data->nodeNr : 0;
 	if (nr_data==0)
-		throw NoAvailableDataException("No data found for station \""+station_id+"\"", AT);
+		throw NoDataException("No data found for station \""+station_id+"\"", AT);
 
 	//loop over all data for this station_id
 	for (int ii=0; ii<nr_data; ii++) {
@@ -497,14 +473,13 @@ bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, cons
 }
 
 void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                               std::vector< std::vector<MeteoData> >& vecMeteo,
-                               const size_t&)
+                               std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
 	const size_t nr_files = cache_meteo_files.size();
 	size_t file_idx = getFileIdx(dateStart);
 	Date nextDate;
-
+	
 	do {
 		//since files contain overlapping data, we will only read the non-overlapping part
 		//ie from start to the start date of the next file
@@ -556,31 +531,6 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		file_idx++;
 	} while (file_idx<nr_files && nextDate<=dateEnd);
-}
-
-void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                                const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void CosmoXMLIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 } //namespace

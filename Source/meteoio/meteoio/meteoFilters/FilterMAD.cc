@@ -23,11 +23,18 @@ using namespace std;
 
 namespace mio {
 
-FilterMAD::FilterMAD(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
+FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                  : WindowedFilter(vecArgs, name), min_sigma(0.)
 {
-	parse_args(vec_args);
+	const std::string where( "Filters::"+block_name );
+	//parse the arguments that have not been already parsed by WindowedFilter
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="MIN_SIGMA") {
+			IOUtils::parseArg(vecArgs[ii], where, min_sigma);
+		}
+	}
 
-	//This is safe, but maybe too imprecise: //HACK: does not account for centering!
+	//This is safe, but maybe too imprecise
 	properties.time_before = min_time_span;
 	properties.time_after  = min_time_span;
 	properties.points_before = min_data_points;
@@ -49,9 +56,9 @@ void FilterMAD::process(const unsigned int& param, const std::vector<MeteoData>&
 	}
 }
 
-void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value)
+void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value) const
 {
-	const double K = 1. / 0.6745;
+	static const double K = 1. / 0.6745;
 
 	std::vector<double> data( end-start+1 );
 	for (size_t ii=start; ii<=end; ii++) data[ii-start] = ivec[ii](param);
@@ -62,34 +69,13 @@ void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsig
 
 	if ( median==IOUtils::nodata || mad==IOUtils::nodata ) return;
 
-	const double sigma = mad * K;
+	const double sigma = std::max( mad * K , min_sigma);
 	const double upper_lim = median + 3.*sigma;
 	const double lower_lim = median - 3.*sigma;
 
 	if ( (value>upper_lim) || (value<lower_lim) ) {
 		value = IOUtils::nodata;
 	}
-}
-
-void FilterMAD::parse_args(std::vector<std::string> vec_args)
-{
-	vector<double> filter_args;
-
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
-	}
-
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(2, 2, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 
 }

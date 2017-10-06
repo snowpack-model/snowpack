@@ -21,11 +21,9 @@
 #ifndef SNOWPACKCONFIG_H
 #define SNOWPACKCONFIG_H
 
-#include <snowpack/Constants.h>
-
 #include <meteoio/MeteoIO.h>
-#include <vector>
 #include <map>
+#include <string>
 
 class SnowpackConfig : public mio::Config {
 

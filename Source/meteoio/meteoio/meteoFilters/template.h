@@ -29,6 +29,7 @@ namespace mio {
 /**
  * @class TEMPLATE
  * @brief This (empty) class is to be used as a template for developing new filters
+ * @details
  * Here, write a description of how the filter operates, references to papers, etc
  * @ingroup processing
  * @author Mathias Bavay
@@ -42,13 +43,13 @@ class TEMPLATE : public FilterBlock { //use this one for simple filter that only
 //class TEMPLATE : public ProcessingBlock { //use this one for data corrections
 //class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
-		TEMPLATE(const std::vector<std::string>& vec_args, const std::string& name);
+		TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 };
 
 } //end namespace

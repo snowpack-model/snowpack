@@ -21,11 +21,11 @@ using namespace std;
 
 namespace mio {
 
-FilterMinMax::FilterMinMax(const std::vector<std::string>& vec_args, const std::string& name)
-             : FilterBlock(name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(true)
+FilterMinMax::FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+             : FilterBlock(vecArgs, name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(false)
 
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
@@ -53,35 +53,34 @@ void FilterMinMax::process(const unsigned int& param, const std::vector<MeteoDat
 	}
 }
 
-void FilterMinMax::parse_args(std::vector<std::string> vec_args)
+void FilterMinMax::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	vector<double> filter_args;
-	is_soft = false;
+	const std::string where( "Filters::"+block_name );
+	bool has_min=false, has_min_reset=false;
+	bool has_max=false, has_max_reset=false;
 
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="SOFT") {
+			IOUtils::parseArg(vecArgs[ii], where, is_soft);
+		} else if (vecArgs[ii].first=="MAX") {
+			IOUtils::parseArg(vecArgs[ii], where, max_val);
+			has_max = true;
+		} else if (vecArgs[ii].first=="MAX_RESET") {
+			IOUtils::parseArg(vecArgs[ii], where, max_soft);
+			has_max_reset = true;
+		} else if (vecArgs[ii].first=="MIN") {
+			IOUtils::parseArg(vecArgs[ii], where, min_val);
+			has_min = true;
+		} else if (vecArgs[ii].first=="MIN_RESET") {
+			IOUtils::parseArg(vecArgs[ii], where, min_soft);
+			has_min_reset = true;
+		}
 	}
 
-	convert_args(2, 4, vec_args, filter_args);
-
-	if (filter_args.size() == 3)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
-
-	if (filter_args.size() >= 2){
-		if (filter_args[0] > filter_args[1])
-			throw InvalidArgumentException("Minimum should be smaller than maximum for filter " + getName(), AT);
-
-		min_val = filter_args[0];
-		max_val = filter_args[1];
-	}
-
-	if (filter_args.size() == 4){
-		min_soft = filter_args[2];
-		max_soft = filter_args[3];
-	} else {
-		min_soft = min_val;
-		max_soft = max_val;
-	}
+	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
+	if (!has_min) throw InvalidArgumentException("Please provide a MIN value for "+where, AT);
+	if (is_soft && !has_max_reset) max_soft = max_val;
+	if (is_soft && !has_min_reset) min_soft = min_val;
 }
 
 } //end namespace

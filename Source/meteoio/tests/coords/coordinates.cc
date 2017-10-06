@@ -88,7 +88,7 @@ int main() {
 	cout << "Pretty printing of negative latitudes\n";
 	stringstream ss2;
 	ss2 << point1.toString(Coords::LATLON);
-	if(ss2.str() != string("(-83°38'14.343220\" , 135°0'0.000000\")")) {
+	if(ss2.str() != string("(-83.637318 , 135.000000)")) {
 		cerr << "Pretty printing failed: " << ss2.str() << "\n";
 		exit(1);
 	}

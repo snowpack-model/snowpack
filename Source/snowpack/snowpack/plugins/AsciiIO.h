@@ -22,14 +22,13 @@
 #define ASCIIIO_H
 
 #include <meteoio/MeteoIO.h>
-#include <snowpack/Constants.h>
 #include <snowpack/plugins/SnowpackIOInterface.h>
-#include <snowpack/Hazard.h>
 
 class AsciiIO : public SnowpackIOInterface {
 
 	public:
 		AsciiIO(const SnowpackConfig& i_cfg, const RunInfo& run_info);
+		AsciiIO& operator=(const AsciiIO&); ///<Assignement operator, required because of const "info" member
 
 		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
 
@@ -57,14 +56,16 @@ class AsciiIO : public SnowpackIOInterface {
 		bool appendFile(const std::string& filename, const mio::Date& startdate, const std::string& ftype);
 		bool parseMetFile(const char& eoln, const mio::Date& start_date, std::istream& fin, std::ostream& ftmp);
 		bool parseProFile(const char& eoln, const mio::Date& start_date, std::istream& fin, std::ostream& ftmp);
+		bool parsePrfFile(const char& eoln, const mio::Date& start_date, std::istream& fin, std::ostream& ftmp);
 
 		std::string getFilenamePrefix(const std::string& fnam, const std::string& path, const bool addexp=true) const;
 
 		void writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) const;
-		void writePROHeader(const SnowStation& Xdata, std::ofstream &fout) const;
+		void writeProHeader(const SnowStation& Xdata, std::ofstream &fout) const;
+		void writePrfHeader(const SnowStation& Xdata, std::ofstream &fout) const;
 		bool checkHeader(const SnowStation& Xdata, const std::string& filename, const std::string& ext, const std::string& signature) const;
 
-		void writeProfilePro(const mio::Date& date, const SnowStation& Xdata);
+		void writeProfilePro(const mio::Date& date, const SnowStation& Xdata, const bool& aggregate);
 		void writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream &fout);
 		void writeProfileProAddCalibration(const SnowStation& Xdata, std::ofstream &fout);
 
@@ -98,7 +99,7 @@ class AsciiIO : public SnowpackIOInterface {
 		void readTags(const std::string& filename, const CurrentMeteo&  Mdata, TaggingData& TAGdata);
 
 		std::set<std::string> setAppendableFiles;
-		std::string variant, experiment, sw_mode;
+		std::string metamorphism_model, variant, experiment, sw_mode;
 		std::string inpath, snowfile, i_snowpath, outpath, o_snowpath;
 		const RunInfo info;
 
@@ -113,6 +114,7 @@ class AsciiIO : public SnowpackIOInterface {
 		double time_zone; // time zone of input
 		double calculation_step_length, hazard_steps_between, ts_days_between;
 		double min_depth_subsurf, hoar_density_surf, hoar_min_size_surf;
+		bool enable_pref_flow;
 		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope;
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool r_in_n;

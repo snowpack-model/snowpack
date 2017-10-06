@@ -21,6 +21,7 @@
 
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 
 /**
@@ -42,7 +43,7 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -63,7 +64,7 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -84,7 +85,7 @@ DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const A
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -107,7 +108,7 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -137,7 +138,7 @@ DEMObject::DEMObject(const DEMObject& i_dem, const size_t& i_nx, const size_t& i
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	if ((i_ncols==0) || (i_nrows==0)) {
@@ -305,6 +306,10 @@ void DEMObject::updateAllMinMax() {
 
 	min_altitude = grid2D.getMin();
 	max_altitude = grid2D.getMax();
+	
+	const double sun_elev_thresh = 5.;
+	if (min_altitude!=IOUtils::nodata && max_altitude!=IOUtils::nodata) 
+		max_shade_distance = (max_altitude - min_altitude) / tan(sun_elev_thresh*Cst::to_rad);
 }
 
 /**
@@ -420,257 +425,63 @@ Grid2DObject DEMObject::getHillshade(const double& elev, const double& azimuth) 
 }
 
 /**
-* @brief Computes the horizontal distance between two points in a metric grid
-* @param xcoord1 east coordinate of the first point
-* @param ycoord1 north coordinate of the first point
-* @param xcoord2 east coordinate of the second point
-* @param ycoord2 north coordinate of the second point
-* @return horizontal distance in meters
-*
+* @brief Returns the tangente of the horizon from a given point looking toward a given bearing
+* @param ix1 x index of the origin point
+* @param iy1 y index of the origin point
+* @param bearing direction given by a compass bearing
+* @return tangente of angle above the horizontal (in deg)
 */
-double DEMObject::horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2)
+double DEMObject::getHorizon(const size_t& ix1, const size_t& iy1, const double& bearing) const
 {
-	return sqrt( Optim::pow2(xcoord2-xcoord1) + Optim::pow2(ycoord2-ycoord1) );
+	if (max_shade_distance==IOUtils::nodata) 
+		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
+	
+	const int dimx = (signed)grid2D.getNx();
+	const int dimy = (signed)grid2D.getNy();
+	if (ix1==0 || (signed)ix1==dimx-1 || iy1==0 || (signed)iy1==dimy-1) return 0.; //a border cell is not shadded
+	
+	const double cell_alt = grid2D(ix1, iy1);
+	double horizon_tan_angle = 0.;
+	const double sin_alpha = sin(bearing*Cst::to_rad);
+	const double cos_alpha = cos(bearing*Cst::to_rad);
+	
+	size_t nb_cells = 1;
+	bool horizon_found = false;
+	while (!horizon_found) {
+		nb_cells++;
+		const int ix2 = (int)ix1 + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
+		const int iy2 = (int)iy1 + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
+
+		if (ix2<=0 || ix2>=dimx-1 || iy2<=0 || iy2>=dimy-1) break; //we are out of the dem
+
+		const double new_altitude = grid2D(ix2, iy2);
+		if (new_altitude==mio::IOUtils::nodata) break; //we stop at nodata cells
+
+		const double DeltaH = new_altitude - cell_alt;
+		const double distance = sqrt( (double)( Optim::pow2(ix2-(signed)ix1) + Optim::pow2(iy2-(signed)iy1)) ) * cellsize;
+		const double tan_angle = DeltaH/distance;
+		if (tan_angle>horizon_tan_angle) horizon_tan_angle = tan_angle;
+
+		if (distance>max_shade_distance) horizon_found=true; //maximum lookup distance reached
+	}
+
+	return horizon_tan_angle;
 }
 
 /**
-* @brief Computes the horizontal distance between two points in a metric grid
-* @param point1 first point (ie: origin)
-* @param point2 second point (ie: destination)
-* @return horizontal distance in meters
-*
-*/
-double DEMObject::horizontalDistance(Coords point1, const Coords& point2)
-{
-	if (point1.isSameProj(point2)==false) {
-		point1.copyProj(point2);
-	}
-	return horizontalDistance(point1.getEasting(), point1.getNorthing(),
-	                          point2.getEasting(), point2.getNorthing() );
-}
-
-
-/**
-* @brief Returns the distance *following the terrain* between two coordinates
-* @param point1 first point (ie: origin)
-* @param point2 second point (ie: destination)
-* @return distance following the terrain in meters
-*
-*/
-double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
-	std::vector<GRID_POINT_2D> vec_points;
-	double distance=0.;
-	size_t last_point=0; //point 0 is always the starting point
-
-	//Checking that both points use the same projection is done in getPointsBetween()
-	getPointsBetween(point1, point2, vec_points);
-	if (vec_points.size()<=1) {
-		return 0.;
-	}
-
-	for (size_t ii=1; ii<vec_points.size(); ii++) {
-		const size_t ix1=vec_points[last_point].ix;
-		const size_t iy1=vec_points[last_point].iy;
-		const size_t ix2=vec_points[ii].ix;
-		const size_t iy2=vec_points[ii].iy;
-
-		if (grid2D(ix2,iy2)!=IOUtils::nodata) {
-			if (grid2D(ix1,iy1)!=IOUtils::nodata) {
-				//distance += sqrt( pow2((ix2-ix1)*cellsize) + pow2((iy2-iy1)*cellsize) + pow2(grid2D(ix2,iy2)-grid2D(ix1,iy1)) );
-				const double z1=grid2D(ix1,iy1);
-				const double z2=grid2D(ix2,iy2);
-				const double tmpx=Optim::pow2((double)(ix2-ix1)*cellsize);
-				const double tmpy=Optim::pow2((double)(iy2-iy1)*cellsize);
-				const double tmpz=Optim::pow2(z2-z1);
-				distance += sqrt( tmpx + tmpy + tmpz );
-			}
-			last_point = ii;
-		}
-	}
-
-	return distance;
-}
-
-/**
-* @brief Returns a list of grid points that are on the straight line between two coordinates.
-* This implements Bresenham's algorithm (see https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)
-* @param ix1 origin's abscissa
-* @param iy1 origin's ordinate
-* @param ix2 destination's abscissa
-* @param iy2 destination's ordinate
-* @param vec_points vector of points that are in between
-*
-*/
-void DEMObject::getPointsBetween(const int& ix1, const int& iy1, const int& ix2, const int& iy2, std::vector<GRID_POINT_2D>& vec_points)
-{
-	vec_points.clear();
-	if (ix1==ix2) {
-		//special case of vertical alignement
-		for (int iy=min(iy1,iy2); iy<=max(iy1,iy2); iy++) {
-			GRID_POINT_2D pts;
-			pts.ix = ix1;
-			pts.iy = iy;
-			vec_points.push_back(pts);
-		}
-	} else {
-		//normal case
-		//equation of the line between the two points
-		const double a = ((double)(iy2-iy1)) / ((double)(ix2-ix1));
-		const double b = (double)iy1 - a * (double)ix1;
-
-		for (int ix=ix1; ix<=ix2; ix++) {
-			//extension of the line segment (ix, ix+1) along the Y axis
-			int y1 = (int)floor( a*(double)ix+b );
-			//const int y2 = min( (int)floor( a*((double)ix+1)+b ) , iy2);
-			int y2 = (int)floor( a*((double)ix+1)+b );
-			if (ix==ix2 && y1==iy2) {
-				//we don't want to overshoot when reaching the target cell
-				y2 = y1;
-			}
-
-			if (y1>y2) {
-				//we want y1<y2, so we swap the two coordinates
-				const int ytemp=y1;
-				y1=y2; y2=ytemp;
-			}
-
-			for (int iy=y1; iy<=y2; iy++) {
-				GRID_POINT_2D pts;
-				pts.ix = ix;
-				pts.iy = iy;
-				//make sure we only return points within the dem
-				if (ix>0 && ix<(signed)getNx() && iy>0 && iy<(signed)getNy()) {
-					vec_points.push_back(pts);
-				}
-			}
-		}
-	}
-}
-
-/**
-* @brief Returns a list of grid points that are on the straight line between two coordinates
-* @param point1 first point (ie: origin)
-* @param point2 second point (ie: destination)
-* @param vec_points vector of points that are in between
-*
-*/
-void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT_2D>& vec_points) {
-
-	if (point1.isSameProj(point2)==false) {
-		point1.copyProj(point2);
-	}
-
-	if (point1.getEasting() > point2.getEasting()) {
-		//we want xcoord1<xcoord2, so we swap the two points
-		const Coords tmp = point1;
-		point1 = point2;
-		point2 = tmp;
-	}
-
-	//extension of the line segment (pts1, pts2) along the X axis
-	const int ix1 = (int)floor( (point1.getEasting() - llcorner.getEasting())/cellsize );
-	const int iy1 = (int)floor( (point1.getNorthing() - llcorner.getNorthing())/cellsize );
-	const int ix2 = (int)floor( (point2.getEasting() - llcorner.getEasting())/cellsize );
-	const int iy2 = (int)floor( (point2.getNorthing() - llcorner.getNorthing())/cellsize );
-
-	getPointsBetween(ix1, iy1, ix2, iy2, vec_points);
-}
-
-/**
-* @brief Returns a list of grid points that are on the straight line between two coordinates
+* @brief Returns the tangente of the horizon from a given point looking toward a given bearing
 * @param point the origin point
 * @param bearing direction given by a compass bearing
-* @param vec_points vector of points that are between point and the edge of the dem following direction given by bearing
-*
+* @return tangente of angle above the horizontal (in deg)
 */
-void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std::vector<GRID_POINT_2D>& vec_points) {
-	//equation of the line between for a point (x0,y0) and a bearing
-	const double x0 = (point.getEasting() - llcorner.getEasting())/cellsize;
-	const double y0 = (point.getNorthing() - llcorner.getNorthing())/cellsize;
-	const double bear=fmod(bearing+360., 360.); //this should not be needed, but as safety...
-	const double a = tan( IOUtils::bearing_to_angle(bear) ); //to get trigonometric angle
-	const double b = y0 - a * x0;
-
-	//looking which point is on the limit of the grid and not outside
-	Coords pointlim;
-	pointlim.copyProj(llcorner); //we use the same projection parameters as the DEM
-
-	//define the boundaries according to the quadrant we are in
-	double xlim, ylim;
-	if (bear>=0. && bear<90.) {
-		xlim = (double)(getNx()-1);
-		ylim = (double)(getNy()-1);
-	} else if (bear>=90. && bear<180.) {
-		xlim = (double)(getNx()-1);
-		ylim = 0.;
-	} else if (bear>=180. && bear<270.) {
-		xlim = 0.;
-		ylim = 0.;
-	} else {
-		xlim = 0.;
-		ylim = (double)(getNy()-1);
-	}
-
-	//calculate the two possible intersections between the bearing line and the boundaries
-	const double y2 = a * xlim + b;
-	const double x2 = (ylim - b) / (a + 1e-12);
-
-	//Find out which point is the first intersect and take it as our destination point
-	if (bear>=90. && bear<270.) {
-		if (y2 >= ylim)
-        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-		else
-        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-	} else {
-		if (y2 <= ylim)
-        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-		else
-        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-	}
-
-	if (gridify(pointlim)==false) {
-		std::ostringstream tmp;
-		tmp << "[E] Wrong destination point calculated for bearing " << bearing;
-		throw InvalidArgumentException(tmp.str(), AT);
-	}
-
-	getPointsBetween(point, pointlim, vec_points);
-	//HACK BUG : for bearing=160 -> both start and end points are missing from the list!!
-}
-
-/**
-* @brief Returns the horizon from a given point looking toward a given bearing
-* @param point the origin point
-* @param bearing direction given by a compass bearing
-* @return angle above the horizontal (in deg)
-*
-*/
-double DEMObject::getHorizon(const Coords& point, const double& bearing) {
-
-	std::vector<Grid2DObject::GRID_POINT_2D> vec_points;
-	getPointsBetween(point, bearing, vec_points);
-
-	//Starting point
-	const int ix0 = (int)point.getGridI();
-	const int iy0 = (int)point.getGridJ();
-	const double height0 = grid2D(ix0,iy0);
-
-	//going through every point and looking for the highest tangent (which is also the highest angle)
-	double max_tangent = 0.;
-	for (size_t ii=0; ii < vec_points.size(); ii++) {
-		const int ix = (int)vec_points[ii].ix;
-		const int iy = (int)vec_points[ii].iy;
-		const double delta_height = grid2D(ix, iy) - height0;
-		const double x_distance = (double)(ix - ix0) * cellsize;
-		const double y_distance = (double)(iy - iy0) * cellsize;
-		const double distance = sqrt(x_distance * x_distance + y_distance * y_distance);
-		const double tangent = (delta_height / distance);
-
-		if (tangent > max_tangent) max_tangent = tangent;
-	}
-
-	//returning the angle matching the highest tangent
-	return ( atan(max_tangent)*Cst::to_deg );
+double DEMObject::getHorizon(const Coords& point, const double& bearing) const
+{
+	if (max_shade_distance==IOUtils::nodata) 
+		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
+	
+	const int ix1 = (int)point.getGridI();
+	const int iy1 = (int)point.getGridJ();
+	return getHorizon(ix1, iy1, bearing);
 }
 
 /**
@@ -680,12 +491,75 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 * @param horizon vector of heights above a given angle
 *
 */
-void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon)
+void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const
 {
 	for (double bearing=0.0; bearing <360.; bearing += increment) {
-		const double alpha = getHorizon(point, bearing * Cst::PI/180.);
-		horizon.push_back(alpha);
+		const double tan_alpha = getHorizon(point, bearing);
+		horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
 	}
+}
+
+/**
+ * @brief Compute the sky view factors for the terrain radiation based on the DEM.
+ * This is based on Manners, J., S. B. Vosper, and N. Roberts, <i>"Radiative transfer over resolved
+ * topographic features for high‐resolution weather prediction"</i>, Quarterly journal of the
+ * royal meteorological society, <b>138.664</b>, pp720-733, 2012.
+ *
+ * @param ii x coordinate of the cell whose view factor should be computed
+ * @param jj y coordinate of the cell whose view factor should be computed
+ * @return sky view factor
+ */
+double DEMObject::getCellSkyViewFactor(const size_t& ii, const size_t& jj) const
+{
+	const double tan_slope = tan( slope(ii,jj)*Cst::to_rad );
+	const unsigned int nSectors = 32;
+
+	double sum=0.;
+	for (unsigned int sector=0; sector<nSectors; sector++) {
+		const double bearing = 360. * (double)sector / (double)nSectors;
+		const double cos_azi_diff = cos( IOUtils::bearing_to_angle(bearing - azi(ii,jj)) );
+		const double T_phi = (tan_slope*cos_azi_diff==0)? mio::Cst::PI2 : atan( 1. / (-tan_slope * cos_azi_diff) );
+		const double elev = atan( getTanMaxSlope(tan_slope, max_shade_distance, bearing, ii, jj) );
+		const double H_phi = ((mio::Cst::PI2 - elev)<=T_phi)? (mio::Cst::PI2 - elev) : T_phi; //self shadowing
+		const double sector_vf = Optim::pow2( sin( H_phi + mio::Cst::PI2 - T_phi ) );
+		sum += sector_vf;
+	}
+
+	return sum / nSectors;
+}
+
+double DEMObject::getTanMaxSlope(const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j) const
+{
+	const double inv_dmax = 1./dmax;
+	const double sin_alpha = sin(bearing*Cst::to_rad);
+	const double cos_alpha = cos(bearing*Cst::to_rad);
+	const double ref_altitude = grid2D(i, j);
+	const double cellsize_sq = mio::Optim::pow2(cellsize);
+	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
+	const int ncols = static_cast<int>(getNx()), nrows = static_cast<int>(getNy());
+
+	int ll=ii, mm=jj;
+
+	double max_tan_slope = tan_local_slope;
+	size_t nb_cells = 0;
+	while ( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
+		const double altitude = grid2D(ll, mm);
+		if ( (altitude!=mio::IOUtils::nodata) && !(ll==ii && mm==jj) ) {
+			const double delta_elev = altitude - ref_altitude;
+			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+			if (inv_distance<inv_dmax) break; //stop if distance>dmax
+
+			const double tan_slope = delta_elev*inv_distance;
+			if ( tan_slope>max_tan_slope ) max_tan_slope = tan_slope;
+		}
+
+		//move to next cell
+		nb_cells++;
+		ll = ii + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
+		mm = jj + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
+	}
+
+	return max_tan_slope;
 }
 
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
@@ -905,7 +779,7 @@ double DEMObject::getCurvature(double A[4][4]) {
 			count++;
 		}
 
-		if (count != 0.) return 1./(double)count * sum;
+		if (count != 0) return 1./(double)count * sum;
 	}
 	curvature_failures++;
 	return IOUtils::nodata;
@@ -1042,7 +916,39 @@ double DEMObject::safeGet(const int i, const int j)
 	return grid2D((unsigned)i, (unsigned)j);
 }
 
-std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
+const std::string DEMObject::toString(const FORMATS& type) const
+{
+	std::ostringstream os;
+
+	switch(type) {
+		case(FULL):
+		{
+			os << "<DEMObject>\n";
+			os << llcorner.toString();
+			os << grid2D.getNx() << " x " << grid2D.getNy() << " @ " << cellsize << "m\t[ " << min_altitude << " - " << max_altitude << " ]\n";
+			//os << grid2D.toString();
+			os << "Slope: " << slope.getNx() << " x " << slope.getNy() << "\t[ " << min_slope << " - " << max_slope << " ]\n";
+			os << "Azi: " << azi.getNx() << " x " << azi.getNy() << "\n";
+			os << "Curvature: " << curvature.getNx() << " x " << curvature.getNy()<< "\t[ " << min_curvature << " - " << max_curvature << " ]\n";
+			os << "Nx: " << Nx.getNx() << " x " << Nx.getNy() << " , Ny: " << Ny.getNx() << " x " << Ny.getNy() << " , Nz: " << Nz.getNx() << " x " << Nz.getNy() << "\n";
+			os << "</DEMObject>\n";
+			break;
+		}
+		case(SHORT):
+		{
+			Coords urcorner(llcorner);
+			urcorner.moveByXY(static_cast<double>(grid2D.getNx())*cellsize, static_cast<double>(grid2D.getNy())*cellsize);
+			os << llcorner.toString(Coords::LATLON) << " / " << urcorner.toString(Coords::LATLON);
+			break;
+		}
+		default:
+			throw InvalidFormatException("Unsupported DEM information format", AT);
+	}
+
+	return os.str();
+}
+
+std::ostream& operator<<(std::ostream& os, const DEMObject& dem) {
 	operator<<(os, *((Grid2DObject*)&dem));
 
 	os << dem.slope;
@@ -1057,6 +963,7 @@ std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
 	os.write(reinterpret_cast<const char*>(&dem.max_slope), sizeof(dem.max_slope));
 	os.write(reinterpret_cast<const char*>(&dem.max_curvature), sizeof(dem.max_curvature));
 
+	os.write(reinterpret_cast<const char*>(&dem.max_shade_distance), sizeof(dem.max_shade_distance));
 	os.write(reinterpret_cast<const char*>(&dem.update_flag), sizeof(dem.update_flag));
 	os.write(reinterpret_cast<const char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	os.write(reinterpret_cast<const char*>(&dem.slope_failures), sizeof(dem.slope_failures));
@@ -1064,7 +971,7 @@ std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
+std::istream& operator>>(std::istream& is, DEMObject& dem) {
 	operator>>(is, *((Grid2DObject*)&dem));
 
 	is >> dem.slope;
@@ -1079,6 +986,7 @@ std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
 	is.read(reinterpret_cast<char*>(&dem.max_slope), sizeof(dem.max_slope));
 	is.read(reinterpret_cast<char*>(&dem.max_curvature), sizeof(dem.max_curvature));
 
+	is.read(reinterpret_cast<char*>(&dem.max_shade_distance), sizeof(dem.max_shade_distance));
 	is.read(reinterpret_cast<char*>(&dem.update_flag), sizeof(dem.update_flag));
 	is.read(reinterpret_cast<char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	is.read(reinterpret_cast<char*>(&dem.slope_failures), sizeof(dem.slope_failures));

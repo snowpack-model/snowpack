@@ -44,10 +44,9 @@ public:
 	void stop();
 	void reset();
 	double getElapsed() const;
+	static long double getCurrentTime();
 
 protected:
-	long double getCurrentTime() const;
-
 	long double start_point;
 	double elapsed;
 	bool isRunning;

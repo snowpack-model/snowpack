@@ -5,28 +5,29 @@ SET(meteoFilters_sources
 	meteoFilters/FilterMin.cc
 	meteoFilters/FilterMax.cc
 	meteoFilters/FilterMinMax.cc
-	meteoFilters/FilterMedianAvg.cc
-	meteoFilters/FilterMeanAvg.cc
 	meteoFilters/FilterMAD.cc
-	meteoFilters/FilterWindAvg.cc
 	meteoFilters/FilterStdDev.cc
 	meteoFilters/FilterTukey.cc
+	meteoFilters/FilterPotentialSW.cc
 	meteoFilters/FilterRate.cc
 	meteoFilters/FilterUnheatedPSUM.cc
-	meteoFilters/ProcButterworth.cc
+	meteoFilters/ProcAggregate.cc
+	meteoFilters/ProcIIR.cc
 	meteoFilters/ProcUnventilatedT.cc
-	meteoFilters/ProcUnshade.cc
+	meteoFilters/ProcShade.cc
 	meteoFilters/ProcPSUMDistribute.cc
 	meteoFilters/ProcUndercatch_WMO.cc
 	meteoFilters/ProcUndercatch_Hamon.cc
 	meteoFilters/ProcUndercatch_Forland.cc
 	meteoFilters/ProcAdd.cc
 	meteoFilters/ProcMult.cc
-	meteoFilters/ProcNoise.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
 	meteoFilters/FilterBlock.cc
 	meteoFilters/WindowedFilter.cc
 	meteoFilters/ProcessingBlock.cc
 	meteoFilters/ProcessingStack.cc
+	meteoFilters/FilterNoChange.cc
+	meteoFilters/FilterTimeconsistency.cc
+	meteoFilters/FilterDeGrass.cc
 )

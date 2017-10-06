@@ -34,6 +34,22 @@ namespace mio {
 
 class CoordsAlgorithms {
 public:
+	///Keywords for selecting an ellipsoid to use
+	enum ELLIPSOIDS_NAMES {
+		E_WGS84, ///< Globally usable WGS84 ellipsoid
+		E_WGS72, ///< USA/DoD
+		E_GRS80, ///< GRS80 ellispoid, equivalent to WGS84 but used by America and Australia (NAD83)
+		E_AIRY, ///< Airy ellispoid, UK
+		E_INTL1924, ///< International 1924 ellispoid, good for most of Europe
+		E_CLARKE1880, ///< Clarke 1880, Africa and France
+		E_CLARKE1866, ///< Clarke 1866, used for NAD27 (North America)
+		E_GRS67, ///< GRS67 ellispoid, good for South America
+		E_EVEREST1830, ///< Everest1830 ellipsoid, used for India
+		E_IERS2003, ///< IERS2003 ellipsoid
+		E_KRASSOVSKY, ///< Krassovsky 1940 ellipsoid, USSR, Russia, Romania
+		NONE ///< spherical earth
+	};
+
 	//Handling of lat/lon
 	static double dms_to_decimal(const std::string& dms);
 	static std::string decimal_to_dms(const double& decimal);
@@ -46,9 +62,12 @@ public:
 	static short int str_to_EPSG(const std::string& coordsystem, const std::string& coordparam);
 	static void EPSG_to_str(const int& epsg, std::string& coordsystem, std::string& coordparam);
 
-	//handling of rotated coordinates
+	//handling of rotated coordinates and datum conversions
 	static void rotatedToTrueLatLon(const double& lat_N, const double& lon_N, const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true);
 	static void trueLatLonToRotated(const double& lat_N, const double& lon_N, const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot);
+	static void Molodensky(const double& lat_in, const double& lon_in, const double& alt_in, const ELLIPSOIDS_NAMES& ellipsoid_in,
+	                                       double &lat_out, double &lon_out, double &alt_out, const ELLIPSOIDS_NAMES& ellipsoid_out,
+	                                       const double& delta_x=0., const double& delta_y=0., const double& delta_z=0.);
 
 	//handling of distances on a sphere
 	static double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
@@ -71,20 +90,11 @@ public:
 	static void parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber);
 
  private:
-	///Keywords for selecting an ellipsoid to use
-	enum ELLIPSOIDS_NAMES {
-		E_WGS84, ///<Globally useable WGS84 ellipsoid
-		E_GRS80, ///<GRS80 ellispoid, equivalent to WGS84 but used by America and Australia
-		E_AIRY, ///<Airy ellispoid, good fit for the UK
-		E_INTL1924, ///<International 1924 ellispoid, good for most of Europe
-		E_CLARKE1880, ///<Clarke 1880, good for Africa
-		E_GRS67 ///<GRS67 ellispoid, good for South America
-	};
 	struct ELLIPSOID {
 		double a;
 		double b;
 	};
-	static const struct ELLIPSOID ellipsoids[6];
+	static const struct ELLIPSOID ellipsoids[12];
 };
 } //end namespace
 

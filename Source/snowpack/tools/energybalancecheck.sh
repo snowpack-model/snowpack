@@ -74,6 +74,7 @@ colSHF=`echo ${header} | sed 's/,/\n/g' | grep -nx "Sensible heat" | awk -F: '{p
 colLHF=`echo ${header} | sed 's/,/\n/g' | grep -nx "Latent heat" | awk -F: '{print $1}'`
 colOLWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Outgoing longwave radiation" | awk -F: '{print $1}'`
 colILWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Incoming longwave radiation" | awk -F: '{print $1}'`
+colNetLWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Net absorbed longwave radiation" | awk -F: '{print $1}'`
 colRSWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Reflected shortwave radiation" | awk -F: '{print $1}'`
 colISWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Incoming shortwave radiation" | awk -F: '{print $1}'`
 colsoilheat=`echo ${header} | sed 's/,/\n/g' | grep -nx "Heat flux at ground surface" | awk -F: '{print $1}'`
@@ -108,6 +109,10 @@ if [ -z "${colOLWR}" ]; then
 fi
 if [ -z "${colILWR}" ]; then
 	echo "energybalancecheck.sh: ERROR: ILWR not found in one of the columns." > /dev/stderr
+	error=1
+fi
+if [ -z "${colNetLWR}" ]; then
+	echo "energybalancecheck.sh: ERROR: Net_LWR not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colRSWR}" ]; then
@@ -147,7 +152,7 @@ fi
 
 
 # Create header
-echo "#Date time measured_HS modelled_HS SHF     LHF    OLWR   ILWR   RSWR   ISWR   SoilHeatFlux RainEnergy PhaseChangeEnergy deltaIntEnergy EnergyBalance energy_in energy_out"
+echo "#Date time measured_HS modelled_HS SHF     LHF    OLWR   ILWR_absorb   RSWR   ISWR   SoilHeatFlux RainEnergy PhaseChangeEnergy deltaIntEnergy EnergyBalance energy_in energy_out"
 echo "#--   --   --          --          E+      E+     E+     E+     E+     E+     E+           E+         --                E-             error         totals    totals"
 echo "#-    -    cm          cm          W_m-2   W_m-2  W_m-2  W_m-2  W_m-2  W_m-2  W_m-2        W_m-2      W_m-2             W_m-2          W_m-2         W_m-2     W_m-2"
 
@@ -159,7 +164,7 @@ sed '1,/\[DATA\]/d' ${met_file} | \
 #     Note: some terms need a change of sign, others need to be converted from kJ/m^2 to W/m^2 and one needs an extra term to be added.
 #     Note we store the previous modeled HS, to know whether e.g. SHF was actually from soil or from snow. For the first time step it doesn't matter what we do here, as we will cut out this first line later.
 #         (We cannot cut out this first line here, as the previous time step modeled HS is also needed for the energy balance calculations).
-awk -F, '{n++; if(n==1) {prevHS=1}; print $'${coldatetime}', $'${colhsmeasured}', $'${colhsmodel}', ($'${colhsmodel}'>0.0)?($'${colSHF}'):0, ($'${colhsmodel}'>0.0)?($'${colLHF}'):0, ($'${colhsmodel}'>0.0)?-1.0*($'${colOLWR}'):0, ($'${colhsmodel}'>0.0)?($'${colILWR}'):0, ($'${colhsmodel}'>0.0)?-1.0*($'${colRSWR}'):0, ($'${colhsmodel}'>0.0)?($'${colISWR}'):0, ($'${colhsmodel}'>0.0)?($'${colsoilheat}'):0, ($'${colhsmodel}'>0.0)?($'${colRainNRG}'):0, ($'${colhsmodel}'>0.0)?($'${colPhchEnergy}'*(1000.0/((24.0/'${nsamplesperday}')*3600))):0, ($'${colhsmodel}'>0.0 && $'${colIntNRG}'!=-999.0)?(1000.0*$'${colIntNRG}'/((24.0/'${nsamplesperday}')*3600)+$'${colsoilheat}'):0; prevHS=$'${colhsmodel}'}' | \
+awk -F, '{n++; if(n==1) {prevHS=1}; ILWR=($'${colhsmodel}'>0.0)?($'${colOLWR}')+($'${colNetLWR}'):0; print $'${coldatetime}', $'${colhsmeasured}', $'${colhsmodel}', ($'${colhsmodel}'>0.0)?($'${colSHF}'):0, ($'${colhsmodel}'>0.0)?($'${colLHF}'):0, ($'${colhsmodel}'>0.0)?-1.0*($'${colOLWR}'):0, ($'${colhsmodel}'>0.0)?(ILWR):0, ($'${colhsmodel}'>0.0)?-1.0*($'${colRSWR}'):0, ($'${colhsmodel}'>0.0)?($'${colISWR}'):0, ($'${colhsmodel}'>0.0)?($'${colsoilheat}'):0, ($'${colhsmodel}'>0.0)?($'${colRainNRG}'):0, ($'${colhsmodel}'>0.0)?($'${colPhchEnergy}'*(1000.0/((24.0/'${nsamplesperday}')*3600))):0, ($'${colhsmodel}'>0.0 && $'${colIntNRG}'!=-999.0)?(1000.0*$'${colIntNRG}'/((24.0/'${nsamplesperday}')*3600)+$'${colsoilheat}'):0; prevHS=$'${colhsmodel}'}' | \
 #  -- Reformat time
 sed 's/\./ /'  | sed 's/\./ /' | sed 's/:/ /' | awk '{printf "%04d%02d%02d %02d%02d", $3, $2, $1, $4, $5; for(i=6; i<=NF; i++) {printf " %s", $i}; printf "\n"}' | \
 # Now select period

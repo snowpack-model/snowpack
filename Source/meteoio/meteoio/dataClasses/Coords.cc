@@ -15,18 +15,16 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <cmath>
-#include <cstdio>
-#include <iomanip>
-
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 
-#ifdef PROJ4
-	#include <proj_api.h>
-#endif
+#include <cmath>
+#include <cstdio>
+#include <iomanip>
 
 using namespace std;
 
@@ -38,12 +36,13 @@ namespace mio {
  * geolocalized data, the desired coordinate system must also be specified for the outputs (in the output section).
  * This is done through the use of the COORDIN and COORDPARAM keys (see the documentation for each plugin).
  *
+ * \anchor Coordinate_types
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
  * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
- * - CH1903 or CH1903+ for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
- * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
- * - UPS for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2]
+ * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf] (epsg codes, respectively 21781 and 2056)
+ * - <a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system">UTM</a> for UTM coordinates, the zone must be specified in the parameters, for example 31T [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf] (epsg codes as 32600+zoneNumber in the northern hemisphere or as 32700+zoneNumber in the southern hemisphere)
+ * - <a href="https://en.wikipedia.org/wiki/Universal_polar_stereographic_coordinate_system">UPS</a> for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2] (epsg codes as 32661 for the north pole and 32761 for the south pole)
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
  *
  * Such an example of use is the following:
@@ -52,7 +51,7 @@ namespace mio {
  * COORDPARAM	= 31T
  * @endcode
  *
- * On the other hand, when using the Proj4 library for handling the coordinate conversion, the EPSG codes of
+ * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj4</a> library for handling the coordinate conversion, the EPSG codes of
  * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
  * @code
@@ -156,6 +155,8 @@ void Coords::moveByBearing(const double& i_bearing, const double& i_distance) {
 		case GEO_VINCENTY:
 			CoordsAlgorithms::VincentyInverse(latitude, longitude, i_distance, i_bearing, new_lat, new_lon);
 			break;
+		default:
+			throw InvalidArgumentException("Unsupported distance algorithm", AT);
 	}
 
 	setLatLon(new_lat, new_lon, altitude, true);
@@ -220,12 +221,12 @@ void Coords::merge(const Coords& coord2) {
 const std::string Coords::toString(const FORMATS& type) const 
 {
 	std::ostringstream os;
+	std::streamsize p = os.precision();
 	if (type==DEBUG) {
 		os << "<Coords>\n";
 		os << "Altitude\t" << altitude << "\n";
 		os << "Lat/Long\t" << CoordsAlgorithms::printLatLon(latitude, longitude) << "\n";
-		std::streamsize p = os.precision();
-		os << "Lat/Long\t" <<std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")" << "\n";
+		os << "Lat/Long\t" <<std::fixed << std::setprecision(10) << "(" << getLat() << " , " << getLon() << ")" << "\n";
 		os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
 		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
 		os.precision(p);
@@ -247,7 +248,9 @@ const std::string Coords::toString(const FORMATS& type) const
 		if (validIndex) 
 			os << "grid: (" << getGridI() << "," << getGridJ() << ")";
 	} else if (type==LATLON) {
-		os << CoordsAlgorithms::printLatLon(latitude, longitude);
+		os << std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")";
+		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
+		os.precision(p);
 	} else if (type==CARTESIAN) {
 		os << "[ (" << getEasting() << "," << getNorthing() << ");(" << getGridI() << "," << getGridJ() << ");@" << altitude << " ]";
 	} else
@@ -255,7 +258,7 @@ const std::string Coords::toString(const FORMATS& type) const
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Coords& coord) {
+std::ostream& operator<<(std::ostream& os, const Coords& coord) {
 	os.write(reinterpret_cast<const char*>(&coord.ref_latitude), sizeof(coord.ref_latitude));
 	os.write(reinterpret_cast<const char*>(&coord.ref_longitude), sizeof(coord.ref_longitude));
 	os.write(reinterpret_cast<const char*>(&coord.altitude), sizeof(coord.altitude));
@@ -279,7 +282,7 @@ std::iostream& operator<<(std::iostream& os, const Coords& coord) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Coords& coord) {
+std::istream& operator>>(std::istream& is, Coords& coord) {
 	is.read(reinterpret_cast<char*>(&coord.ref_latitude), sizeof(coord.ref_latitude));
 	is.read(reinterpret_cast<char*>(&coord.ref_longitude), sizeof(coord.ref_longitude));
 	is.read(reinterpret_cast<char*>(&coord.altitude), sizeof(coord.altitude));
@@ -364,7 +367,7 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
 * @param[in] in_parameters string giving some additional parameters for the projection (empty string if not applicable)
 * @param[in] coord_spec coordinate specification
 *
-* The coordinate specification is given as either: "easting northing epsg" or "lat lon".
+* The coordinate specification is given as either: "easting northing epsg" or "lat lon" or "(lat, lon)"
 */
 Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, const std::string& coord_spec)
        : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
@@ -373,93 +376,22 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
          grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false), 
          coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
-	std::istringstream iss(coord_spec);
-	double coord1=IOUtils::nodata, coord2=IOUtils::nodata;
-	int epsg=IOUtils::inodata;
-
-	iss >> std::skipws >> coord1;
-	iss >> std::skipws >> coord2;
-	iss >> std::skipws >> epsg;
-
-	if (coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
-		setEPSG(epsg);
-		setXY(coord1, coord2, IOUtils::nodata);
-		setProj(in_coordinatesystem, in_parameters);
-	} else if (coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
-		setLatLon(coord1, coord2, IOUtils::nodata);
+	char rest[32] = "";
+	double x, y;
+	if ((sscanf(coord_spec.c_str(), "%lg %lg%31s", &x, &y, rest) < 2) &&
+	     (sscanf(coord_spec.c_str(), "(%lg,%lg)%31s", &x, &y, rest) < 2) &&
+	     (sscanf(coord_spec.c_str(), "(%lg, %lg)%31s", &x, &y, rest) < 2)) {
+		return;
 	}
-}
 
-/**
-* @brief Returns the East coordinate in the configured projection system
-* @return easting
-*/
-double Coords::getEasting() const {
-	return easting;
-}
-
-/**
-* @brief Returns the North coordinate in the configured projection system
-* @return northing
-*/
-double Coords::getNorthing() const {
-	return northing;
-}
-
-/**
-* @brief Returns the Latitude in the configured projection system
-* @return latitude
-*/
-double Coords::getLat() const {
-	return latitude;
-}
-
-/**
-* @brief Returns the Latitude in the configured projection system
-* @return longitude
-*/
-double Coords::getLon() const {
-	return longitude;
-}
-
-/**
-* @brief Returns the Altitude. This is currently independent of the configured projection system
-* @return altitude
-*/
-double Coords::getAltitude() const {
-	return altitude;
-}
-
-/**
-* @brief Returns the grid index along the X axis
-* @return grid index i
-*/
-int Coords::getGridI() const {
-	return grid_i;
-}
-
-/**
-* @brief Returns the grid index along the Y axis
-* @return grid index j
-*/
-int Coords::getGridJ() const {
-	return grid_j;
-}
-
-/**
-* @brief Returns the grid index along the Z axis
-* @return grid index k
-*/
-int Coords::getGridK() const {
-	return grid_k;
-}
-
-/**
-* @brief Returns true if the (i,j,k) index are valid
-* @return index can be used (ie they match the other components of the coordinate)
-*/
-bool Coords::indexIsValid() const {
-	return validIndex;
+	int epsg=IOUtils::inodata;
+	if (sscanf(rest, "%d", &epsg)==1) {
+		setEPSG(epsg);
+		setXY(x, y, IOUtils::nodata);
+		setProj(in_coordinatesystem, in_parameters);
+	} else {
+		setLatLon(x, y, IOUtils::nodata);
+	}
 }
 
 /**
@@ -503,7 +435,14 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 * @param[in] in_altitude altitude to set
 * @param[in] in_update should the easting/northing be updated? (default=true)
 */
-void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) {
+void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) 
+{
+	if (fabs(in_latitude)>90. || fabs(in_longitude)>360.) {
+		std::ostringstream ss;
+		ss << "(" << in_latitude << "," << in_longitude << ")";
+		throw InvalidArgumentException("Invalid latitude/longitude: "+ss.str(), AT);
+	}
+	
 	latitude = in_latitude;
 	longitude = in_longitude;
 	if (in_altitude!=IOUtils::nodata) {
@@ -585,16 +524,9 @@ void Coords::setAltitude(const double in_altitude, const bool in_update) {
 
 /**
 * @brief Set projection to use
-* This projection will be used for converting between lat/lon and East/North
+* This projection will be used for converting between lat/lon and East/North (see the \ref Coordinate_types "supported projections")
 * @param[in] in_coordinatesystem string identifying the coordinate system to use
 * @param[in] in_parameters string giving some additional parameters for the projection (optional)
-*
-*  \anchor Coordinate_types
-* The coordinate system can be any of the following:
-* - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
-* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
-* - PROJ4 for coordinate conversion relying on the Proj4 library [ref: http://trac.osgeo.org/proj/]
-* - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
 */
 void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) 
 {
@@ -847,6 +779,8 @@ void Coords::distance(const Coords& destination, double& o_distance, double& o_b
 			case GEO_VINCENTY:
 				o_distance = CoordsAlgorithms::VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), o_bearing);
 				break;
+			default:
+				throw InvalidArgumentException("Unsupported distance algorithm", AT);
 		}
 	}
 }
@@ -875,6 +809,8 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 			case GEO_VINCENTY:
 				dist = CoordsAlgorithms::VincentyDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
 				break;
+			default:
+				throw InvalidArgumentException("Unsupported distance algorithm", AT);
 		}
 
 		east_out = dist*sin(alpha*Cst::to_rad);
@@ -906,6 +842,8 @@ void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, do
 			case GEO_VINCENTY:
 				CoordsAlgorithms::VincentyInverse(ref_latitude, ref_longitude, dist, bearing, lat_out, long_out);
 				break;
+			default:
+				throw InvalidArgumentException("Unsupported distance algorithm", AT);
 		}
 	}
 }

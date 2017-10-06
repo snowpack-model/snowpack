@@ -16,7 +16,9 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoFilters/FilterStdDev.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -24,10 +26,8 @@ namespace mio {
 
 const double FilterStdDev::sigma = 2.; ///<How many times the stddev allowed for valid points
 
-FilterStdDev::FilterStdDev(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
+FilterStdDev::FilterStdDev(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
 {
-	parse_args(vec_args);
-
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
 	properties.time_after  = min_time_span;
@@ -98,27 +98,6 @@ void FilterStdDev::getStat(const std::vector<MeteoData>& ivec, const unsigned in
 		const double variance = (sum2 - sum3*sum3/static_cast<double>(count)) / static_cast<double>(count - 1);
 		stddev = sqrt(variance);
 	}
-}
-
-void FilterStdDev::parse_args(std::vector<std::string> vec_args)
-{
-	vector<double> filter_args;
-
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
-	}
-
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(2, 2, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 
 }

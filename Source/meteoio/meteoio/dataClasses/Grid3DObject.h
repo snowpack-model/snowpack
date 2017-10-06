@@ -20,7 +20,6 @@
 
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Array3D.h>
-#include <meteoio/IOExceptions.h>
 #include <meteoio/dataClasses/Grid2DObject.h>
 
 #include <iostream>
@@ -50,8 +49,8 @@ class Grid3DObject{
 		double operator ()(const size_t& i) const;
 
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid);
-		friend std::iostream& operator>>(std::iostream& is, Grid3DObject& grid);
+		friend std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid);
+		friend std::istream& operator>>(std::istream& is, Grid3DObject& grid);
 
 		/**
 		* Default constructor.
@@ -104,6 +103,7 @@ class Grid3DObject{
 		void set(const Grid3DObject& i_grid, const double& init);
 
 		void size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) const;
+		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
 		size_t getNz() const;

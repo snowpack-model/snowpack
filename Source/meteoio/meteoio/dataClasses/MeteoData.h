@@ -20,13 +20,9 @@
 
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/StationData.h>
-#include <meteoio/IOUtils.h>
 
 #include <string>
-#include <sstream>
-#include <iomanip>
 #include <vector>
-#include <map>
 
 namespace mio {
 
@@ -66,12 +62,14 @@ class MeteoGrids {
 				PSUM_S, ///< Water equivalent of solid precipitation
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
+				TSOIL, ///< Temperature within the soil, at a given depth
 				P, ///< Air pressure
 				P_SEA, ///< Sea level air pressure
 				U, ///< East component of wind
 				V, ///< North component of wind
 				W, ///< Vertical component of wind
 				SWE, ///< Snow Water Equivalent
+				RSNO, ///< Snow mean density
 				ROT, ///< Total generated runoff
 				ALB, ///< Albedo
 				DEM, ///< Digital Elevation Model
@@ -88,7 +86,7 @@ class MeteoGrids {
 		//static methods
 		static std::vector<std::string> paramname;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname
+		static bool initStaticData();///<initialize the static vector paramname
 };
 
 /**
@@ -102,6 +100,21 @@ class MeteoGrids {
 
 class MeteoData {
 	public:
+		/** @brief Available %MeteoData merging strategies.
+		* When the two stations both have data at a given time step, only the parameters that are *not* present 
+		* in station1 will be taken from station2 (ie. station1 has priority).
+		*
+		* \image html merging_strategies.png "Merging strategies for two stations with different sampling rates"
+		* \image latex merging_strategies.eps "Merging strategies for two stations with different sampling rates" width=0.9\textwidth
+		* @note Keep in mind that if a station is moving (ie. if its location might change in time) merge strategies other than STRICT_MERGE 
+		* will introduce potentially invalid metadata (since the new position can not be reconstructed).
+		*/
+		typedef enum MERGE_TYPE {
+				STRICT_MERGE=0, ///< Station1 receives data from station2 only for common timestamps
+				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
+				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+		} Merge_Type;
+				 
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
 		                 P=firstparam, ///< Air pressure
@@ -118,7 +131,7 @@ class MeteoData {
 		                 ILWR, ///< Incoming long wave radiation (downwelling)
 		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 PSUM, ///< Water equivalent of precipitations, either solid or liquid
-				 PSUM_PH, ///< Precipitation phase: between 0 (fully solid) and 1(fully liquid)
+		                 PSUM_PH, ///< Precipitation phase: between 0 (fully solid) and 1(fully liquid)
 		                 lastparam=PSUM_PH};
 
 		static const std::string& getParameterName(const size_t& parindex);
@@ -145,7 +158,7 @@ class MeteoData {
 		* @brief A setter function for the measurement date
 		* @param in_date A Date object representing the time of the measurement
 		*/
-		void setDate(const Date& in_date);
+		void setDate(const Date& in_date) {date = in_date;}
 
 		/**
 		* @brief Add another variable to the MeteoData object,
@@ -168,8 +181,8 @@ class MeteoData {
 		 */
 		void reset();
 
-		bool isResampled() const;
-		void setResampled(const bool&);
+		bool isResampled() const {return resampled;}
+		void setResampled(const bool& in_resampled) {resampled = in_resampled;}
 
 		void standardizeNodata(const double& plugin_nodata);
 
@@ -180,7 +193,19 @@ class MeteoData {
 
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
-		size_t getNrOfParameters() const;
+		size_t getNrOfParameters() const {return nrOfAllParameters;}
+		
+		/**
+		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.
+		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
+		 * filled by the matching field from the MeteoData objects given in the second vector (if the
+		 * same timestamp exist).
+		 * @note Only timestamps common to both data sets will be merged!
+		 * @param vec1 reference vector, highest priority
+		 * @param[in] vec2 extra vector to merge, lowest priority
+		 * @param[in] strategy how should the merge be done? (default: STRICT_MERGE)
+		 */
+		static void mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
@@ -242,14 +267,23 @@ class MeteoData {
 		 * @param meteo2 extra MeteoData to merge, lowest priority
 		 */
 		void merge(const MeteoData& meteo2);
+		
+		/**
+		 * @brief Parse a string containing a merge type and return the proper enum member for it.
+		 * @param[in] merge_type
+		 * @return Merge_Type
+		 */
+		static MeteoData::Merge_Type getMergeType(std::string merge_type);
 
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const MeteoData& data);
-		friend std::iostream& operator>>(std::iostream& is, MeteoData& data);
+		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
+		friend std::istream& operator>>(std::istream& is, MeteoData& data);
 
 		//Comparison operators
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
-		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
+		inline bool operator!=(const MeteoData& in) const {return !(*this==in);} ///<Operator that tests for inequality
+		inline bool operator<(const MeteoData& in) const {return (this->date < in.date);} ///<so vectors can be sorted by timestamps
+		inline bool operator>(const MeteoData& in) const {return (this->date > in.date);} ///<so vectors can be sorted by timestamps
 
 		//direct access allowed
 		Date date; ///<Timestamp of the measurement
@@ -262,7 +296,7 @@ class MeteoData {
 		static std::vector<std::string> s_default_paramname; ///<Associate a name with meteo parameters in Parameters
 		static const double epsilon; ///<for comparing fields
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname
+		static bool initStaticData();///<initialize the static vector s_default_paramname
 
 		//private data members, please keep the order consistent with declaration lists and logic!
 		std::vector<std::string> extra_param_name;

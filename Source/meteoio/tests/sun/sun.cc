@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <fstream>
 #include <meteoio/MeteoIO.h>
 
 using namespace mio; //The MeteoIO namespace is called mio
@@ -63,7 +64,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_r
 		double solar_azi, solar_elev, eccentricity;
 		double sunrise, sunset, tmp_daylight;
 		Sun.position.getHorizontalCoordinates(solar_azi, solar_elev, eccentricity);
-		Sun.position.getDaylight(sunrise, sunset, tmp_daylight, date.getTimeZone());
+		Sun.position.getDaylight(sunrise, sunset, tmp_daylight);
 
 		os << Sun.getElevationThresh() << "\t";
 		os << Sun.position.getAngleOfIncidence(slope_azi,slope_elev) << "\t";

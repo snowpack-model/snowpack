@@ -15,7 +15,12 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "BormaIO.h"
+#include <meteoio/plugins/BormaIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
+
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -66,67 +71,16 @@ BormaIO::BormaIO(const Config& cfgreader)
 	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
 }
 
-void BormaIO::read2DGrid(Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readDEM(DEMObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readLanduse(Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                             const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readStationData(const Date&, std::vector<StationData>&)
-{
-	//HACK: this method MUST be implemented for BufferedIOHandler to properly work
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                            std::vector< std::vector<MeteoData> >& vecMeteo,
-                            const size_t& stationindex)
+                            std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
 
-	size_t indexStart=0, indexEnd=vecStationName.size();
+	vecMeteo.clear();
+	vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>());
 
-	//The following part decides whether all the stations are rebuffered or just one station
-	if (stationindex == IOUtils::npos){
-		vecMeteo.clear();
-		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>());
-	} else {
-		if (stationindex < vecMeteo.size()){
-			indexStart = stationindex;
-			indexEnd   = stationindex+1;
-		} else {
-			throw IndexOutOfBoundsException(std::string(), AT);
-		}
-	}
-
-	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+	for (size_t ii=0; ii<vecStationName.size(); ii++){ //loop through stations
 		bufferData(dateStart, dateEnd, vecMeteo, ii);
 	}
 }
@@ -146,7 +100,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 
 	cfg.getValue("METEOPATH", "Input", xmlpath);
 	vecFiles.clear();
-	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + dflt_extension);
+	FileUtils::readDirectory(xmlpath, dirlist, "_" + stationname + dflt_extension);
 	dirlist.sort();
 
 	//Check date in every filename
@@ -190,7 +144,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 
 bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
                          std::vector< std::vector<MeteoData> >& vecMeteo,
-                         const unsigned int& stationnr)
+                         const size_t& stationnr)
 {
 	std::vector<std::string> vecFiles;
 	std::vector<Date> vecDate;
@@ -223,7 +177,7 @@ void BormaIO::checkForMeteoFiles(const std::string& xmlpath, const std::string& 
                                  std::string& filename_out, Date& date_out)
 {
 	std::list<std::string> dirlist = std::list<std::string>();
-	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
+	FileUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
 	dirlist.sort();
 
 	//Check date in every filename
@@ -399,30 +353,6 @@ bool BormaIO::validFilename(const std::string& tmp) const
 	}
 
 	return true;
-}
-
-void BormaIO::readAssimilationData(const Date&, Grid2DObject&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::write2DGrid(const Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void BormaIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 void BormaIO::convertUnits(MeteoData& meteo)

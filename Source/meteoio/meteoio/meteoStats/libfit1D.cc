@@ -17,27 +17,36 @@
 */
 #include <meteoio/meteoStats/libfit1D.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/MathOptim.h>
+
 #include <cmath>
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
-	setModel(regType, in_X, in_Y, updatefit);
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) 
+{
+	const bool status = setModel(regType, in_X, in_Y, updatefit);
+	if (updatefit && status==false) 
+		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
-	setModel(regType, in_X, in_Y, updatefit);
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) 
+{
+	const bool status = setModel(regType, in_X, in_Y, updatefit);
+	if (updatefit && status==false) 
+		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) { //HACK: the pointer could not be valid anymore
+Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) {
 	*this = i_fit;
 }
 
-Fit1D& Fit1D::operator=(const Fit1D& source) { //HACK: the pointer could not be valid anymore
+Fit1D& Fit1D::operator=(const Fit1D& source) {
 	if (this != &source) {
 		model = new SimpleLinear; //this is only for memory allocation
 		*model = *(source.model); //copy what is pointed to
@@ -65,7 +74,7 @@ bool Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 }
 
 bool Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
-{
+{//HACK: if model is already the right type, do not delete but reset
 	if (model!=NULL) delete model;
 
 	if (regType==ZERO) model=new Zero;
@@ -103,28 +112,6 @@ void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<do
 	fit_ready = false;
 }
 
-bool SimpleLinear::checkInputs()
-{
-	//check input data consistency
-	nPts=X.size();
-
-	if ( nPts!=Y.size() ) {
-		ostringstream ss;
-		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	if (nPts<min_nb_pts) {
-		ostringstream ss;
-		ss << "Only " << nPts << " data points for " << regname << " regression model.";
-		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
-		infoString = ss.str();
-		return false;
-	}
-
-	return true;
-}
-
 double SimpleLinear::f(const double& x) const {
 	return Lambda.at(0)*x + Lambda.at(1);
 }
@@ -141,13 +128,13 @@ bool SimpleLinear::fit()
 
 	if (fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::LinRegression(X, Y, a, b, r, mesg);
-		ss << mesg << "Computed regression with " << regname << " model - r=" << r;
+		ss << mesg << "Computed regression with " << regname << " model - r=" << std::setprecision(2) << r;
 	} else {
 		a = fixed_lapse_rate;
 		if (a!=0.) {
 			Interpol1D::LinRegression(X, Y, a, b, r, mesg, true);
 			ss << mesg << "Computed regression with " << regname << " model ";
-			ss << "(fixed lapse rate=" << a << ") - r=" << r;
+			ss << "(fixed lapse rate=" << a << ") - r=" << std::setprecision(2) << r;
 		} else {
 			a=0.;
 			b=0.;
@@ -163,8 +150,7 @@ bool SimpleLinear::fit()
 
 bool NoisyLinear::fit()
 {
-	if (!checkInputs())
-		return false;
+	if (!checkInputs()) return false;
 
 	Lambda.clear();
 	double a,b,r;
@@ -173,13 +159,13 @@ bool NoisyLinear::fit()
 
 	if (fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
-		ss << mesg  << "Computed regression with " << regname << " model - r=" << r;
+		ss << mesg  << "Computed regression with " << regname << " model - r=" << std::setprecision(2) << r;
 	} else {
 		a = fixed_lapse_rate;
 		if (a!=0.) {
 			Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
 			ss << mesg  << "Computed regression with " << regname << " model ";
-			ss << "(fixed lapse rate=" << a << ") - r=" << r;
+			ss << "(fixed lapse rate=" << a << ") - r=" << std::setprecision(2) << r;
 		} else {
 			a=0.;
 			b=0.;
@@ -195,12 +181,11 @@ bool NoisyLinear::fit()
 
 //regression models using the standard least square algorithm
 double SphericVario::f(const double& x) const {
+	if (x==0) return 0;
 	//c0>=0, cs>=0, as>=0
 	const double c0 = Lambda.at(0);
 	const double cs = Lambda.at(1);
 	const double as = Lambda.at(2);
-
-	if (x==0) return 0;
 
 	const double abs_x = fabs(x);
 	if (abs_x>0 && abs_x<=as) {
@@ -219,13 +204,12 @@ void SphericVario::setDefaultGuess() {
 }
 
 double LinVario::f(const double& x) const {
-	//c0>=0, b1>=0
-	const double c0 = Lambda.at(0);
-	const double bl = Lambda.at(1);
-
 	if (x==0) {
 		return 0;
 	} else {
+		//c0>=0, b1>=0
+		const double c0 = Lambda.at(0);
+		const double bl = Lambda.at(1);
 		const double y = c0 + bl * abs(x);
 		return y;
 	}
@@ -243,14 +227,13 @@ void LinVario::setDefaultGuess() {
 }
 
 double ExpVario::f(const double& x) const {
-	//c0>=0, ce>=0, ae>=0
-	const double c0 = Lambda.at(0);
-	const double ce = Lambda.at(1);
-	const double ae = Lambda.at(2);
-
 	if (x==0) {
 		return 0;
 	} else {
+		//c0>=0, ce>=0, ae>=0
+		const double c0 = Lambda.at(0);
+		const double ce = Lambda.at(1);
+		const double ae = Lambda.at(2);
 		const double y = c0 + ce * (1. - exp(-abs(x)/ae) );
 		return y;
 	}
@@ -268,14 +251,13 @@ void ExpVario::setDefaultGuess() {
 }
 
 double RatQuadVario::f(const double& x) const {
-	//c0>=0, cr>=0, ar>=0
-	const double c0 = Lambda.at(0);
-	const double cr = Lambda.at(1);
-	const double ar = Lambda.at(2);
-
 	if (x==0) {
 		return 0;
 	} else {
+		//c0>=0, cr>=0, ar>=0
+		const double c0 = Lambda.at(0);
+		const double cr = Lambda.at(1);
+		const double ar = Lambda.at(2);
 		const double y = c0 + cr*x*x / (1. + x*x/ar);
 		return y;
 	}
@@ -315,7 +297,7 @@ double Quadratic::f(const double& x) const {
 }
 
 void Quadratic::setDefaultGuess() {
-	std::vector<double> der( Interpol1D::derivative(X, Y) );
+	const std::vector<double> der( Interpol1D::derivative(X, Y) );
 	const double acc = 0.5 * Interpol1D::arithmeticMean( Interpol1D::derivative(X, der) );
 	double xzero=der[0];
 	size_t xzero_idx=0;
@@ -329,6 +311,142 @@ void Quadratic::setDefaultGuess() {
 		Lambda.push_back( *( std::min_element( Y.begin(), Y.end() ) ) );
 	else
 		Lambda.push_back( *( std::max_element( Y.begin(), Y.end() ) ) );
+}
+
+
+/**
+* @brief Add one data point to the model
+* @details Before running the fit, it needs to be provided the data it will be fitted against. This is done by calling
+* multiple times this method, each time for a new data point.
+*
+* @param[in] vecPreds predictors (for example, altitude, easting, northing)
+* @param[out] obs observed value
+*/
+void FitMult::addData(const std::vector<double>& vecPreds, const double& obs)
+{
+	const size_t nrInputPreds = vecPreds.size();
+	if (nPreds!=0 && nPreds!=nrInputPreds)
+		throw InvalidArgumentException("Each observation MUST provide the same number of predictors!", AT);
+
+	//check for nodata in obs and vecPreds
+	if (obs==IOUtils::nodata) return;
+	for (size_t ii=0; ii<nrInputPreds; ii++)
+		if (vecPreds[ii]==IOUtils::nodata) return;
+
+	if (nPreds==0) nPreds=nrInputPreds;
+
+	//append to the predictors and observations vectors
+	predictors.push_back( vecPreds );
+	observations.push_back( obs );
+}
+
+bool FitMult::fit()
+{
+	//The Beta0 is handled by considering that it is B0*Z_j where Z_j=1 for all j
+	const size_t nObs = predictors.size();
+	if (nPreds==0)
+		throw NoDataException("No predictors have been provided for computing the multiple linear regression!", AT);
+	if (nObs<=nPreds) { // <= since there is also Beta0 that is added afterwards
+		ostringstream ss;
+		ss << "Only " << nObs << " data points for " << regname << " regression model.";
+		ss << " Expecting at least " << nPreds+1 << " for this model!\n";
+		infoString = ss.str();
+		return false;
+	}
+
+	//build the Y and Z matrix
+	//we know that observations and predictors do not contain nodata values
+	Matrix Z(nObs, nPreds+1);
+	Matrix Y(nObs, static_cast<size_t>(1));
+	for (size_t jj=0; jj<nObs; jj++) {
+		Y(jj+1, 1) = observations[jj];
+
+		Z(jj+1, 1) = 1.;
+		for (size_t ii=0; ii<nPreds; ii++)
+			Z(jj+1, ii+2) = predictors[jj][ii];
+	}
+
+	//compute the Betas
+	const Matrix Z_T( Z.getT() );
+	Beta.resize(nPreds+1, 1);
+	Beta = (Z_T * Z).getInv() * Z_T * Y;
+	fit_ready = true;
+
+	//compute R2
+	const double ObsMean = Interpol1D::arithmeticMean( observations );
+	double ss_err = 0., ss_tot = 0.;
+	for (size_t ii=0; ii<nObs; ii++) {
+		const double y_sim = f( predictors[ii] );
+		ss_err += Optim::pow2( observations[ii] - y_sim );
+		ss_tot += Optim::pow2( observations[ii] - ObsMean );
+	}
+
+	double R2 = IOUtils::nodata;
+	if (ss_tot==0. && ss_err==0) R2 = 1.;
+	if (ss_tot!=0.) R2 = 1. - ss_err / ss_tot;
+
+	std::ostringstream ss;
+	ss << "Computed regression with " << regname << " model - r2=" << std::setprecision(2) << R2;
+	infoString = ss.str();
+	return true;
+}
+
+double FitMult::f(const std::vector<double>& x) const
+{
+	if (!fit_ready)
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
+	if (x.size() != nPreds)
+		throw InvalidArgumentException("Wrong number of predictors provided", AT);
+
+	double sum = Beta(1,1); //this is Beta0
+	for (size_t ii=0; ii<nPreds; ii++) {
+		const double pred = x[ii];
+		if (pred==IOUtils::nodata) return IOUtils::nodata;
+		sum += Beta(ii+2, 1) * x[ii]; //Beta starts at 1 and we only need to apply from Beta1 = (2,1)
+	}
+	return sum;
+}
+
+std::vector<double> FitMult::getParams() const
+{
+	if (!fit_ready)
+		throw InvalidArgumentException("The regression has not yet been computed!", AT);
+
+	std::vector<double> coefficients;
+	for (size_t ii=1; ii<=Beta.getNy(); ii++) //for consistency with the other models, we give them in reverse order
+		coefficients.push_back( Beta(ii, 1) );
+
+	return coefficients;
+}
+
+std::string FitMult::toString() const
+{
+	std::ostringstream os;
+	os << "<FitMult>\n";
+	if (!fit_ready) {
+		os << regname << " model, not initialized\n";
+	} else {
+		os << infoString << " - " << Beta.getNy() << " predictors\n";
+		os << "Model parameters:       \t";
+		for (size_t ii=Beta.getNy(); ii>=1; ii--) os << Beta(ii, 1) << " ";
+		os << "\n";
+	}
+	os << "</FitMult>\n";
+
+	return os.str();
+}
+
+FitMult& FitMult::operator =(const FitMult& source)
+{
+	if (this != &source) {
+		predictors = source.predictors;
+		observations = source.observations;
+		Beta = source.Beta;
+		infoString = source.infoString;
+		nPreds = source.nPreds;
+		fit_ready = source.fit_ready;
+	}
+	return *this;
 }
 
 } //namespace

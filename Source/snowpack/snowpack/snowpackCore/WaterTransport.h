@@ -25,9 +25,7 @@
 #ifndef WATERTRANSPORT_H
 #define WATERTRANSPORT_H
 
-#include <snowpack/Constants.h>
 #include <snowpack/DataClasses.h>
-#include <snowpack/Laws_sn.h>
 #include <snowpack/snowpackCore/ReSolver1d.h>
 
 #include <meteoio/MeteoIO.h>
@@ -42,7 +40,16 @@ class WaterTransport {
 
 	public:
 		WaterTransport(const SnowpackConfig& cfg);
-		void compTransportMass(const CurrentMeteo& Mdata, const double& ql, SnowStation& Xdata, SurfaceFluxes& Sdata);
+		virtual ~WaterTransport() {};
+		void compTransportMass(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql);
+
+	protected:
+		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata);
+		void adjustDensity(SnowStation& Xdata);
+		void compVolIceLow(SnowStation& Xdata);
+
+		//To prevent string comparisons, we define an enumerated list:
+		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};
 
 	private:
 		//The following 3 functions are used in WaterTransport model "NIED"
@@ -50,29 +57,26 @@ class WaterTransport {
 		double Bisection(const double minval, const double maxval, double P[]);
 		void KHCalcNaga(const double RG, const double Dens, double ThR, const double WatCnt, const double SatuK, double &Rh, double &Rk);
 
-		void compSurfaceSublimation(const CurrentMeteo& Mdata, double ql, SnowStation& Xdata, SurfaceFluxes& Sdata);
+		void compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& Sdata);
+		void transportWater(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql);
 
-		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata);
-
-		void adjustDensity(SnowStation& Xdata);
-
-		void transportWater(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata);
-
-		ReSolver1d RichardsEquationSolver1d;
+		ReSolver1d RichardsEquationSolver1d_matrix;
+		ReSolver1d RichardsEquationSolver1d_pref;
 
 		std::string variant;
 
-		//To prevent string comparisons, we define an enumerated list:
-		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};
 		watertransportmodels iwatertransportmodel_snow, iwatertransportmodel_soil;
 
 		std::string watertransportmodel_snow;
 		std::string watertransportmodel_soil;
 		std::string forcing;
+		bool enable_pref_flow;
+		std::string pref_flow_rain_input_domain;
+
 		double sn_dt;
 		double hoar_thresh_rh, hoar_thresh_vw, hoar_thresh_ta;
 		double hoar_density_buried, hoar_density_surf, hoar_min_size_buried;
-		double minimum_l_element;
+		double minimum_l_element, comb_thresh_l;
 		bool useSoilLayers, water_layer, jam;
 };
 #endif //End of WaterTransport.h

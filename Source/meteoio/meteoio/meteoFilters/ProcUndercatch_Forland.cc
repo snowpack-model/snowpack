@@ -27,10 +27,10 @@ namespace mio {
 //WMO values from Yan et al (2001)
 const double ProcUndercatch_Forland::Tsnow_WMO=-2.+Cst::t_water_freezing_pt, ProcUndercatch_Forland::Train_WMO=2.+Cst::t_water_freezing_pt;
 
-ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector<std::string>& vec_args, const std::string& name)
-                       : ProcessingBlock(name), type(wfj)
+ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                       : ProcessingBlock(vecArgs, name), type(wfj)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -72,7 +72,7 @@ void ProcUndercatch_Forland::process(const unsigned int& param, const std::vecto
 }
 
 //TA in celsius
-double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW)
+double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW) const
 {
 	TA = IOUtils::K_TO_C(TA); //convert to celsius
 	if (type!=wfj)
@@ -119,7 +119,7 @@ double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW)
 }
 
 //TA in celsius, Pint in mm/h
-double ProcUndercatch_Forland::liquidPrecipitation(const double& Pint, double VW)
+double ProcUndercatch_Forland::liquidPrecipitation(const double& Pint, double VW) const
 {
 	if (type!=wfj)
 		VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
@@ -136,34 +136,37 @@ double ProcUndercatch_Forland::liquidPrecipitation(const double& Pint, double VW
 	return exp( -0.00101*lnI - 0.012177*VW*lnI + 0.034331*VW + 0.007697 + c );
 }
 
-void ProcUndercatch_Forland::parse_args(std::vector<std::string> filter_args)
+void ProcUndercatch_Forland::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	if (filter_args.size()!=1)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + ", please provide the rain gauge type!", AT);
+	const std::string where( "Filters::"+block_name );
+	bool has_type=false;
 
-	for (size_t ii=0; ii<filter_args.size(); ii++) {
-		IOUtils::toLower(filter_args[ii]);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (type_str=="WFJ") {
+				type=wfj;
+			} else if (type_str=="HELLMANN") {
+				type=hellmann;
+			} else if (type_str=="SWEDISH") {
+				type=swedish;
+			} else if (type_str=="NORVEGIAN") {
+				type=norvegian;
+			} else if (type_str=="FINNISH") {
+				type=finnish;
+			} else if (type_str=="TRETYAKOV") {
+				type=tretyakov;
+			} else if (type_str=="BELFORT") {
+				type=belfort;
+			} else if (type_str=="GEONOR") {
+				type=geonor;
+			} else
+				throw InvalidArgumentException("Rain gauge type \""+ type_str +"\" unknown for "+where, AT);
+			has_type = true;
+		}
 	}
 
-	if (filter_args[0]=="wfj") {
-		type=wfj;
-	} else if (filter_args[0]=="hellmann") {
-		type=hellmann;
-	} else if (filter_args[0]=="swedish") {
-		type=swedish;
-	} else if (filter_args[0]=="norvegian") {
-		type=norvegian;
-	} else if (filter_args[0]=="finnish") {
-		type=finnish;
-	} else if (filter_args[0]=="tretyakov") {
-		type=tretyakov;
-	} else if (filter_args[0]=="belfort") {
-		type=belfort;
-	} else if (filter_args[0]=="geonor") {
-		type=geonor;
-	} else {
-		throw InvalidArgumentException("Rain gauge type \""+ filter_args[0] +"\" unknown for filter "+getName(), AT);
-	}
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
 } //end namespace

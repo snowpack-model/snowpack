@@ -29,9 +29,7 @@
 #include <meteoio/MeteoIO.h>
 
 #include <snowpack/DataClasses.h>
-#include <snowpack/Constants.h>
-#include <snowpack/snowpackCore/Snowpack.h> //some constants are necessary
-#include <snowpack/snowpackCore/Metamorphism.h>
+
 
 class SnLaws {
 
@@ -77,14 +75,20 @@ class SnLaws {
 		                             const double& height_of_meteo_values);
 
 		static double compSoilThermalConductivity(const ElementData& Edata, const double& dvdz);
+		
+		static double soilVaporDiffusivity(const ElementData& Edata);
+		static double compEnhanceWaterVaporTransportSoil(const ElementData& Edata,const double& clay_fraction);
+		static double compSoilThermalVaporConductivity(const ElementData& Edata_bot, const ElementData& Edata_top, const double& Te_bot, const double& Te_top,const double& clay_fraction);
+		static double compSoilIsothermalVaporConductivity(const ElementData& Edata_bot, const ElementData& Edata_top, const double& Te_bot, const double& Te_top, const double& T_node);
+		
 		static double compSnowThermalConductivity(const ElementData& Edata, const double& dvdz, const bool& show_warnings=true);
 
 		static double compEnhanceWaterVaporTransportSnow(const SnowStation& Xdata, const size_t& i_e);
 
 		static double compLWRadCoefficient(const double& t_snow, const double& t_atm, const double& e_atm);
 
-		static double parameterizedSnowAlbedo(const std::string& i_albedo, const std::string& i_albedo_parameterization, const std::string& i_albAverageSchmucki,
-		                                      const double& i_hn_albedo_fixedValue, const ElementData& Edata, const double& Tss, const CurrentMeteo& Mdata, const SnowStation& Xdata);
+		static double parameterizedSnowAlbedo(const std::string& i_albedo, const std::string& i_albedo_parameterization, const std::string& i_albAverageSchmucki, const double& i_albNIED_av,
+		                                      const double& i_hn_albedo_fixedValue, const ElementData& Edata, const double& Tss, const CurrentMeteo& Mdata, const SnowStation& Xdata, const bool& ageAlbedo=true);
 		static void compShortWaveAbsorption(const std::string& i_sw_absorption_scheme, SnowStation& Xdata, const double& I0);
 		static void compAdvectiveHeat(SnowStation& Xdata, const double& advective_heat,
 		                                                  const double& depth_begin, const double& depth_end);
@@ -103,7 +107,7 @@ class SnLaws {
 		static double loadingRateStressCALIBRATION(ElementData& Edata, const mio::Date& date);
 		static double snowViscosityFudgeDEFAULT(const ElementData& Edata);
 		static double snowViscosityFudgeCALIBRATION(const ElementData& Edata, const mio::Date& date);
-		static double compSnowViscosity(const std::string& variant, const std::string& i_viscosity_model,
+		static double compSnowViscosity(const std::string& variant, const std::string& i_viscosity_model, const std::string& i_watertransport_model, 
 		                                ElementData& Edata, const mio::Date& date);
 		static double snowViscosityDEFAULT(ElementData& Edata);
 		static double snowViscosityKOJIMA(const ElementData& Edata);
@@ -118,7 +122,13 @@ class SnLaws {
 		static const bool jordy_new_snow, wind_pump, wind_pump_soil;
 
 	private:
-		static bool setStaticData(const std::string& variant);
+		typedef enum SOIL_EVAP_MODEL {
+			EVAP_RESISTANCE,
+			EVAP_RELATIVE_HUMIDITY,
+			EVAP_NONE
+		} soil_evap_model;
+		
+		static bool setStaticData(const std::string& variant, const std::string& watertransportmodel);
 
 		static double newSnowDensityPara(const std::string& i_hn_model,
 		                                 double TA, double TSS, double RH, double VW, double HH);
@@ -135,10 +145,9 @@ class SnLaws {
 		static ViscosityVersion visc;
 		static double visc_ice_fudge, visc_sp_fudge, visc_water_fudge;
 		static bool setfix;
-		static bool ageAlbedo;
 		static size_t swa_nBands;
 		static std::vector<double> swa_k, swa_pc, swa_fb;
-		static const bool soil_evaporation;
+		static const soil_evap_model soil_evaporation;
 		static const double rsoilmin, relsatmin, alpha_por_tor_soil, pore_length_soil;
 		static const double montana_c_fudge, montana_vapor_fudge, montana_v_water_fudge;
 		static const double wind_ext_coef, displacement_coef, alpha_por_tor;

@@ -20,8 +20,6 @@
 
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Array2D.h>
-#include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
 
 #include <iostream>
 
@@ -50,8 +48,8 @@ class Grid2DObject {
 		double operator ()(const size_t& i) const;
 
 		const std::string toString() const;
-		friend std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid);
-		friend std::iostream& operator>>(std::iostream& is, Grid2DObject& grid);
+		friend std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid);
+		friend std::istream& operator>>(std::istream& is, Grid2DObject& grid);
 
 		/**
 		* @brief Default constructor.
@@ -126,8 +124,15 @@ class Grid2DObject {
 		         const double& cellsize, const Coords& i_llcorner, const double& init);
 
 		void set(const Grid2DObject& i_grid, const double& init);
+		
+		/**
+		* @brief Rescale (bilinear resampling) the grid to match the given cell size.
+		* @param i_cellsize new value for cellsize
+		*/
+		void rescale(const double& i_cellsize);
 
 		void size(size_t& o_ncols, size_t& o_nrows) const;
+		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
 
@@ -155,7 +160,6 @@ class Grid2DObject {
 		* @brief Partitional algorithm to classify each point of the grid.
 		* The classification is given by a list of growing thresholds, the 'clusters' are then a simple
 		* range of values. Each cluster comes with an 'id' that replaces the values of the points.
-		*
 		*
 		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a cluster
 		* @param ids (const std::vector<double>&) clusters Ids to be used. clustersId.size()=thresholds.size()+1

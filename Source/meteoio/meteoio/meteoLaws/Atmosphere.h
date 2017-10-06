@@ -35,7 +35,7 @@ class Atmosphere {
 		static double gravity(const double& altitude, const double& latitude);
 		static double stdAirPressure(const double& altitude);
 		static double stdDryAirDensity(const double& altitude, const double& temperature);
-		static double waterSaturationPressure(const double& T);
+		static double vaporSaturationPressure(const double& T);
 		static double virtualTemperatureFactor(const double& e, const double& p);
 		static double waterVaporDensity(const double& Temperature, const double& VaporPressure);
 		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);
@@ -73,6 +73,7 @@ class Atmosphere {
 		static double Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
 		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
+		static double Kasten_clearness(const double& cloudiness);
 		static double Kasten_cloudiness(const double& solarIndex);
 		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
 		                                const double& julian, const double& TZ,

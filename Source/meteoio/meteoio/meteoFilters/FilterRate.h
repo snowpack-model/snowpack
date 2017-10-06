@@ -25,31 +25,33 @@
 namespace mio {
 
 /**
- * @class  FilterRate
+ * @class FilterRate
  * @ingroup processing
- * @author Thomas Egger - Mathias Bavay
- * @date   2011-04-19
  * @brief Rate of change filter.
- * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point.
- *  - If one argument is provided, it is interpreted as the absolute value of the maximum permissible rate of change (per seconds). This means that
- *    every point where <em>|local_rate_of_change| \> argument</em> is rejected
- *  - If two arguments are provided, they are interpreted as the minimum and the maximum (respectively) permissible rate of change (per seconds). This means that
- *    every point where <em>local_rate_of_change \< argument1 AND local_rate_of_change \> argument2</em> is rejected
+ * @details
+ * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point. It takes the following arguments:
+ *  - MIN: minimum permissible rate of change (per seconds, optional);
+ *  - MAX: either the absolute value of the maximum permissible rate of change (per seconds) if no other argument is provided, or maximum
+ * permissible rate of change (per seconds) if a MIN was provided.
+ *
+ * So depending if MIN and MAX were provided or only MAX, every point where the local rate of change is outside <em>[ MIN , MAX]</em> or
+ * every point outside  <em>[ -MAX , MAX]</em> is rejected.
  *
  * @code
- * TA::filter1	= rate
- * TA::arg1	= -0.01 0.015
+ * TA::filter1   = rate
+ * TA::arg1::MIN = -0.01
+ * TA::arg1::MAX = 0.015
  * @endcode
  */
 class FilterRate : public FilterBlock {
 	public:
-		FilterRate(const std::vector<std::string>& vec_args, const std::string& name);
+		FilterRate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector<std::string>& vec_args);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double min_rate_of_change, max_rate_of_change;
 };
 

@@ -18,10 +18,8 @@
 #ifndef LIBINTERPOL1D_H
 #define LIBINTERPOL1D_H
 
-#include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
-
 #include <vector>
+#include <string>
 
 namespace mio {
 
@@ -51,6 +49,10 @@ class Interpol1D {
 		static double variance(const std::vector<double>& X);
 		static double std_dev(const std::vector<double>& X);
 		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
+		static double corr(const std::vector<double>& z1, const std::vector<double>& z2);
+		static double R2(const std::vector<double>& obs, const std::vector<double>& sim);
+		static double NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim);
+		static double getBoxMuller();
 
 		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg, const bool& fixed_rate=false);
 		static void NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::string& mesg, const bool& fixed_rate=false);

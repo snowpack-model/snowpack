@@ -46,4 +46,4 @@ class SnowpackIOInterface {
                                      const std::vector<ProcessInd>& Hdata_ind, const size_t& num) = 0;
 };
 
-#endif //End of SnowpackIOInterface.h
+#endif

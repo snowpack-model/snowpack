@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #This script converts a given smet file into an XmGrace format
 #to automatically, on-the-fly convert smet to agr directly in xmgrace, add the following line to your gracerc:
 # DEFINE IFILTER "smet2agr.sh %s" PATTERN "*.smet"
@@ -12,12 +12,48 @@ printf "@page size 792, 612\n"
 datum=$(date --rfc-3339=seconds)
 printf "@timestamp def \"${datum}\"\n"
 
+#print the color table and generate the table of indices
+plot_colors=`head -100 ${INPUT} | grep "plot_color" | tr -s '\t' ' ' | cut -d'=' -f2 | tr ' ' '\n'`
+if [ "x$plot_colors" != "x" ]; then
+	sorted_plot_colors=`echo "${plot_colors}" | sort -u | tr '\n' ' ' `
+	color_table=`echo "${plot_colors}" | awk '
+		BEGIN {
+			split("'"${sorted_plot_colors}"'", sorted, " ")
+		}
+		!/^$/{
+			for (color_idx in sorted) {
+				if ($1==sorted[color_idx]) {
+					printf("%d ", color_idx)
+					next
+				}
+			}
+		} '
+	`
+
+	echo "${sorted_plot_colors}" | tr ' ' '\n' | awk --non-decimal-data '
+		BEGIN {
+			printf("@map color 0 to (255, 255, 255), \"white\"\n")
+		}
+		!/^$/{
+			col_count++
+			r=int( sprintf("%f", "0x" substr($1,3,2)) )
+			g=int( sprintf("%f", "0x" substr($1,5,2)) )
+			b=int( sprintf("%f", "0x" substr($1,7,2)) )
+			color_name=$1
+			if (r==0 && g==0 && b==0)
+				color_name="black"
+
+			printf("@map color %d to (%d, %d, %d), \"%s\"\n", col_count, r,g,b, color_name)
+		}
+	'
+fi
+
 #create g0 graph
-stat_id=$(head -20 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-)
-stat_name=$(head -20 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-)
-lat=$(head -20 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-)
-lon=$(head -20 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-)
-alt=$(head -20 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-)
+stat_id=`head -100 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_name=`head -100 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lat=`head -100 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lon=`head -100 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+alt=`head -100 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 printf "@g0 on\n"
 printf "@g0 hidden false\n"
 printf "@g0 type XY\n"
@@ -42,8 +78,11 @@ printf "@    xaxis  ticklabel on\n"
 printf "@    xaxis  ticklabel format yymmdd\n"
 
 #create data sets metadata
-columns=$(head -20 ${INPUT} | grep "fields")
+columns=$(head -100 ${INPUT} | grep "fields")
 echo "${columns}" | awk '
+	BEGIN {
+		n=split("'"${color_table}"'", color_table, " ")
+	}
 	/fields/ {
 		for(i=4; i<=NF; i++) {
 			f=i-4
@@ -51,14 +90,14 @@ echo "${columns}" | awk '
 			printf("@    s%d type xy\n", f)
 			printf("@    s%d comment \"%s\"\n", f, $(i))
 			printf("@    s%d legend  \"%s\"\n", f, $(i))
+			if (n>0) printf("@    s%d line color %d\n", f, color_table[f+2])
 		}
 	}
 '
 
 #create data sets data
 nb_sets=$(echo "${columns}" | wc -w)
-#for i in {4..${nb_sets}}; do
-for (( i=4 ; i<=${nb_sets} ; i++ )); do
+for i in $(seq 4 ${nb_sets}); do
 	f=$(( i-4 ))
 	printf "@target G0.S${f}\n@type xy\n"
 	awk '

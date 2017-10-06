@@ -29,49 +29,49 @@ namespace mio {
 // Legend class
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-const double legend::bg_color = IOUtils::nodata-1;
-const double legend::text_color = IOUtils::nodata-2;
+const double Legend::bg_color = IOUtils::nodata-1;
+const double Legend::text_color = IOUtils::nodata-2;
 
-const unsigned int legend::char_width = 6;
-const unsigned int legend::char_height = 10;
+const unsigned int Legend::char_width = 6;
+const unsigned int Legend::char_height = 10;
 
-const unsigned int legend::text_chars_nb = 9; //each label will contain 9 chars
-const unsigned int legend::char_space = 1; //horizontal space between two chars
-const unsigned int legend::text_width = legend::text_chars_nb*(legend::char_width+legend::char_space); //whole text line
-const unsigned int legend::sample_width = legend::char_width*1; //color sample 2 chars wide
-const unsigned int legend::sample_text_space = 6; //width of the color sample
-const unsigned int legend::legend_plot_space = legend::char_width*1;
-const unsigned int legend::total_width = legend::legend_plot_space+legend::sample_width+legend::sample_text_space+legend::text_width;
+const unsigned int Legend::text_chars_nb = 9; //each label will contain 9 chars
+const unsigned int Legend::char_space = 1; //horizontal space between two chars
+const unsigned int Legend::text_width = Legend::text_chars_nb*(Legend::char_width+Legend::char_space); //whole text line
+const unsigned int Legend::sample_width = Legend::char_width*1; //color sample 2 chars wide
+const unsigned int Legend::sample_text_space = 6; //width of the color sample
+const unsigned int Legend::legend_plot_space = Legend::char_width*1;
+const unsigned int Legend::total_width = Legend::legend_plot_space+Legend::sample_width+Legend::sample_text_space+Legend::text_width;
 
-const unsigned int legend::interline = 5;
-const unsigned int legend::label_height = legend::char_height+legend::interline; //1 char + interline
-const unsigned int legend::nb_labels = 12+1; //every decile + 0 level
-const unsigned int legend::total_height = legend::nb_labels*legend::label_height+legend::interline;
+const unsigned int Legend::interline = 5;
+const unsigned int Legend::label_height = Legend::char_height+Legend::interline; //1 char + interline
+const unsigned int Legend::nb_labels = 12+1; //every decile + 0 level
+const unsigned int Legend::total_height = Legend::nb_labels*Legend::label_height+Legend::interline;
 
-const unsigned int legend::font_0[char_height][char_width] = {{0,0,1,1,0,0}, {0,1,0,0,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
-const unsigned int legend::font_1[char_height][char_width] = {{0,0,0,1,0,0}, {0,0,1,1,0,0}, {0,1,1,1,0,0}, {1,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}};
-const unsigned int legend::font_2[char_height][char_width] = {{0,1,1,1,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,1,1,0}, {0,0,1,1,0,0}, {0,1,1,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,1,1}};
-const unsigned int legend::font_3[char_height][char_width] = {{0,1,1,1,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,1,1,1,0}, {0,0,0,0,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,1,1,1,1,0}};
-const unsigned int legend::font_4[char_height][char_width] = {{0,0,0,1,1,0}, {0,0,1,1,1,0}, {0,1,1,1,1,0}, {1,1,0,1,1,0}, {1,0,0,1,1,0}, {1,1,1,1,1,1}, {0,0,0,1,1,0}, {0,0,0,1,1,0}, {0,0,0,1,1,0}, {0,0,1,1,1,1}};
-const unsigned int legend::font_5[char_height][char_width] = {{1,1,1,1,1,1}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,0,0}, {0,0,0,0,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {1,0,0,0,1,0}, {0,1,1,1,0,0}};
-const unsigned int legend::font_6[char_height][char_width] = {{0,1,1,1,1,0}, {1,1,0,0,1,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}};
-const unsigned int legend::font_7[char_height][char_width] = {{1,1,1,1,1,1}, {0,0,0,0,1,1}, {0,0,0,1,1,0}, {0,0,0,1,0,0}, {0,0,1,1,0,0}, {0,0,1,0,0,0}, {0,1,1,0,0,0}, {0,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}};
-const unsigned int legend::font_8[char_height][char_width] = {{0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}};
-const unsigned int legend::font_9[char_height][char_width] = {{0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,1,0,0,1,1}, {0,1,1,1,1,0}};
-const unsigned int legend::font_plus[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {1,1,1,1,1,1}, {1,1,1,1,1,1}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}};
-const unsigned int legend::font_minus[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {1,1,1,1,1,1}, {1,1,1,1,1,1}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}};
-const unsigned int legend::font_dot[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}};
-const unsigned int legend::font_E[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,1,1,1,0,0}, {1,1,0,0,1,0}, {1,1,1,1,1,0}, {1,1,0,0,0,0}, {1,1,0,0,1,0}, {0,1,1,1,0,0}};
+const unsigned int Legend::font_0[char_height][char_width] = {{0,0,1,1,0,0}, {0,1,0,0,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
+const unsigned int Legend::font_1[char_height][char_width] = {{0,0,0,1,0,0}, {0,0,1,1,0,0}, {0,1,1,1,0,0}, {1,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}};
+const unsigned int Legend::font_2[char_height][char_width] = {{0,1,1,1,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,1,1,0}, {0,0,1,1,0,0}, {0,1,1,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,1,1}};
+const unsigned int Legend::font_3[char_height][char_width] = {{0,1,1,1,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,1,1,1,0}, {0,0,0,0,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,1,1,1,1,0}};
+const unsigned int Legend::font_4[char_height][char_width] = {{0,0,0,1,1,0}, {0,0,1,1,1,0}, {0,1,1,1,1,0}, {1,1,0,1,1,0}, {1,0,0,1,1,0}, {1,1,1,1,1,1}, {0,0,0,1,1,0}, {0,0,0,1,1,0}, {0,0,0,1,1,0}, {0,0,1,1,1,1}};
+const unsigned int Legend::font_5[char_height][char_width] = {{1,1,1,1,1,1}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,0,0}, {0,0,0,0,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {1,0,0,0,1,0}, {0,1,1,1,0,0}};
+const unsigned int Legend::font_6[char_height][char_width] = {{0,1,1,1,1,0}, {1,1,0,0,1,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}};
+const unsigned int Legend::font_7[char_height][char_width] = {{1,1,1,1,1,1}, {0,0,0,0,1,1}, {0,0,0,1,1,0}, {0,0,0,1,0,0}, {0,0,1,1,0,0}, {0,0,1,0,0,0}, {0,1,1,0,0,0}, {0,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}};
+const unsigned int Legend::font_8[char_height][char_width] = {{0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}};
+const unsigned int Legend::font_9[char_height][char_width] = {{0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,1,0,0,1,1}, {0,1,1,1,1,0}};
+const unsigned int Legend::font_plus[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {1,1,1,1,1,1}, {1,1,1,1,1,1}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}};
+const unsigned int Legend::font_minus[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {1,1,1,1,1,1}, {1,1,1,1,1,1}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}};
+const unsigned int Legend::font_dot[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}};
+const unsigned int Legend::font_E[char_height][char_width] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,1,1,1,0,0}, {1,1,0,0,1,0}, {1,1,1,1,1,0}, {1,1,0,0,0,0}, {1,1,0,0,1,0}, {0,1,1,1,0,0}};
 
 //create a legend of given height
 //if height is insufficient, we don't generate any content, only transparent pixels
-legend::legend(const unsigned int &height, const double &minimum, const double &maximum) : grid(total_width, height, IOUtils::nodata)
+Legend::Legend(const unsigned int &height, const double &minimum, const double &maximum) : grid(total_width, height, IOUtils::nodata)
 {
 	drawLegend(height, minimum, maximum);
 }
 
 //uniform division of the given range
-void legend::simpleLegend(const unsigned int &height, const double &minimum, const double &maximum)
+void Legend::simpleLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
 	grid.resize(total_width, height, IOUtils::nodata);
 	const double level_inc = (maximum-minimum)/(double)(nb_labels-1); //the infamous interval thing...
@@ -96,7 +96,7 @@ void legend::simpleLegend(const unsigned int &height, const double &minimum, con
 }
 
 //this tries to properly round to legend min, max and steps so that it gets easier to follow
-void legend::smartLegend(const unsigned int &height, const double &minimum, const double &maximum)
+void Legend::smartLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
 	grid.resize(total_width, height, IOUtils::nodata);
 
@@ -106,8 +106,9 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 
 	if (range>0.) {
 		const double decade = floor(log10(range));
-		decade_mult = pow(10.,decade);
-		min_norm = floor(minimum/decade_mult*10.)/10., max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
+		decade_mult = pow(10., decade);
+		min_norm = floor(minimum/decade_mult*10.)/10.; //between 0 & 10
+		max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
 		const double range_norm = max_norm-min_norm; //between 0 & 10
 		const double step = range_norm/nb_labels; //between 0 & 10 / number of labels -> between 0 & 1
 
@@ -127,7 +128,7 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 	}
 
 	//vertically center legend in free space
-	const unsigned int smart_height = nb_labels_norm*legend::label_height+legend::interline;
+	const unsigned int smart_height = nb_labels_norm*Legend::label_height+Legend::interline;
 	if (height>=smart_height) {
 		const unsigned int free_space = height-smart_height;
 		const unsigned int start_legend = free_space/2; //we will start from the bottom
@@ -147,27 +148,27 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 	}
 }
 
-void legend::drawLegend(const unsigned int &height, const double &minimum, const double &maximum){
+void Legend::drawLegend(const unsigned int &height, const double &minimum, const double &maximum){
 	smartLegend(height, minimum, maximum);
 	//simpleLegend(height, minimum, maximum);
 }
 
-unsigned int legend::getLegendWidth() {
+unsigned int Legend::getLegendWidth() {
 	return total_width;
 }
 
-void legend::writeLine(const double& val, const unsigned int& px_row)
+void Legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::ostringstream ss;
 	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val;
 	if (ss.str().size()>text_chars_nb) {
 		//the generated text is too long, so putting another constraint (ie setw is brain dead)
 		ss.str(std::string());
-		const unsigned int precision = text_chars_nb-6;
+		static const unsigned int precision = text_chars_nb-6;
 		ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val;
 	}
 
-	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
+	static const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 
 	//write legend colored square
 	for (unsigned int j=(px_row+interline); j<(px_row+label_height); j++) {
@@ -176,9 +177,9 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 		}
 	}
 
-	for (size_t i=0; i<ss.str().size(); i++) {
-		const char c=ss.str()[i];
-		const unsigned int px_col = (unsigned int)i*(char_width+char_space)+x_offset;
+	for (size_t ii=0; ii<ss.str().size(); ii++) {
+		const char c = ss.str()[ii];
+		const unsigned int px_col = (unsigned int)ii * (char_width+char_space) + x_offset;
 		if (c=='0') writeChar(font_0, px_col, px_row);
 		if (c=='1') writeChar(font_1, px_col, px_row);
 		if (c=='2') writeChar(font_2, px_col, px_row);
@@ -197,7 +198,7 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 	}
 }
 
-void legend::writeChar(const unsigned int i_char[char_height][char_width], const unsigned int& px_col, const unsigned int& px_row)
+void Legend::writeChar(const unsigned int i_char[char_height][char_width], const unsigned int& px_col, const unsigned int& px_row)
 {
 	for (unsigned int jj=0; jj<char_height; jj++) {
 		for (unsigned int ii=0; ii<char_width; ii++) {
@@ -210,7 +211,7 @@ void legend::writeChar(const unsigned int i_char[char_height][char_width], const
 	}
 }
 
-const Array2D<double> legend::getLegend() const {
+const Array2D<double> Legend::getLegend() const {
 	return grid;
 }
 
@@ -245,8 +246,7 @@ void Color::RGBtoHSV(const double& r, const double& g, const double& b,
 		h = 4 + ( r - g ) / delta;	// between magenta & cyan
 
 	h *= 60;				// degrees
-	if ( h < 0 )
-		h += 360;
+	if ( h < 0 ) h += 360;
 }
 
 void Color::HSVtoRGB(const double& h, const double& s, const double& v, double &r, double &g, double &b)
@@ -369,11 +369,11 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 		r=0; g=0; b=0; a=true;
 		return;
 	}
-	if (val==legend::bg_color) {
+	if (val==Legend::bg_color) {
 		r=channel_max_color-1; g=channel_max_color-1; b=channel_max_color-1; a=false;
 		return;
 	}
-	if (val==legend::text_color) {
+	if (val==Legend::text_color) {
 		r=0; g=0; b=0; a=false;
 		return;
 	}
@@ -405,11 +405,11 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 		index = 0;
 		return;
 	}
-	if (val==legend::bg_color) {
+	if (val==Legend::bg_color) {
 		index = 1;
 		return;
 	}
-	if (val==legend::text_color) {
+	if (val==Legend::text_color) {
 		index = 2;
 		return;
 	}

@@ -17,6 +17,9 @@
 */
 
 #include <meteoio/dataClasses/Matrix.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
+
 #include <time.h> //needed for random()
 #include <cmath> //needed for fabs()
 #include <iostream>
@@ -27,7 +30,8 @@ namespace mio {
 const double Matrix::epsilon = 1e-9; //for considering a determinant to be zero, etc
 const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrix
 
-Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0) {
+Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
+{
 	if (rows<0 || cols<0) {
 		std::ostringstream tmp;
 		tmp << "Trying construct a matrix with negative dimensions: ";
@@ -37,47 +41,55 @@ Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
 	resize((unsigned)rows,(unsigned)cols);
 }
 
-Matrix::Matrix(const size_t& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n) {
+Matrix::Matrix(const size_t& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n)
+{
 	for (size_t ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
 
-void Matrix::identity(const size_t& n, const double& init) {
+void Matrix::identity(const size_t& n, const double& init)
+{
 	resize(n,n,0.);
 	for (size_t ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
 
-void Matrix::resize(const size_t& rows, const size_t& cols) {
+void Matrix::resize(const size_t& rows, const size_t& cols)
+{
 	clear();
 	vecData.resize(rows*cols);
 	nrows = rows;
 	ncols = cols;
 }
 
-void Matrix::resize(const size_t& rows, const size_t& cols, const double& init) {
+void Matrix::resize(const size_t& rows, const size_t& cols, const double& init)
+{
 	clear();
 	vecData.resize(rows*cols, init);
 	ncols = cols;
 	nrows = rows;
 }
 
-void Matrix::size(size_t& rows, size_t& cols) const{
+void Matrix::size(size_t& rows, size_t& cols) const
+{
 	rows=nrows;
 	cols=ncols;
 }
 
-void Matrix::clear() {
+void Matrix::clear()
+{
 	vecData.clear();
 	nrows=ncols=0;
 }
 
-void Matrix::random(const double& range) {
-	srand(static_cast<unsigned>(time(0)));
+void Matrix::random(const double& range)
+{
+	srand( static_cast<unsigned>(time(0)) );
 
 	for (size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] = (double)rand()/(double)RAND_MAX*range;
 }
 
-double& Matrix::operator ()(const size_t& i, const size_t& j) {
+double& Matrix::operator ()(const size_t& i, const size_t& j)
+{
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		std::ostringstream ss;
@@ -88,7 +100,8 @@ double& Matrix::operator ()(const size_t& i, const size_t& j) {
 	return vecData[(j-1) + (i-1)*ncols];
 }
 
-double Matrix::operator ()(const size_t& i, const size_t& j) const {
+double Matrix::operator ()(const size_t& i, const size_t& j) const
+{
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		std::ostringstream ss;
@@ -99,7 +112,8 @@ double Matrix::operator ()(const size_t& i, const size_t& j) const {
 	return vecData[(j-1) + (i-1)*ncols];
 }
 
-const std::string Matrix::toString() const {
+const std::string Matrix::toString() const
+{
 	std::ostringstream os;
 	const size_t wd=6;
 	os << "\n┌ ";
@@ -120,7 +134,8 @@ const std::string Matrix::toString() const {
 	return os.str();
 }
 
-bool Matrix::operator==(const Matrix& in) const {
+bool Matrix::operator==(const Matrix& in) const
+{
 	size_t in_nrows, in_ncols;
 	in.size(in_nrows, in_ncols);
 
@@ -133,11 +148,13 @@ bool Matrix::operator==(const Matrix& in) const {
 	return true;
 }
 
-bool Matrix::operator!=(const Matrix& in) const {
+bool Matrix::operator!=(const Matrix& in) const
+{
 	return !(*this==in);
 }
 
-Matrix& Matrix::operator+=(const Matrix& rhs) {
+Matrix& Matrix::operator+=(const Matrix& rhs)
+{
 	//check dimensions compatibility
 	if (nrows!=rhs.nrows || ncols!=rhs.ncols) {
 		std::ostringstream tmp;
@@ -154,14 +171,16 @@ Matrix& Matrix::operator+=(const Matrix& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator+(const Matrix& rhs) const {
+const Matrix Matrix::operator+(const Matrix& rhs) const
+{
 	Matrix result = *this;
 	result += rhs; //already implemented
 
 	return result;
 }
 
-Matrix& Matrix::operator+=(const double& rhs) {
+Matrix& Matrix::operator+=(const double& rhs)
+{
 	//fill sum matrix
 	for (size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] += rhs;
@@ -169,14 +188,16 @@ Matrix& Matrix::operator+=(const double& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator+(const double& rhs) const {
+const Matrix Matrix::operator+(const double& rhs) const
+{
 	Matrix result = *this;
 	result += rhs; //already implemented
 
 	return result;
 }
 
-Matrix& Matrix::operator-=(const Matrix& rhs) {
+Matrix& Matrix::operator-=(const Matrix& rhs)
+{
 	//check dimensions compatibility
 	if (nrows!=rhs.nrows || ncols!=rhs.ncols) {
 		std::ostringstream tmp;
@@ -193,27 +214,31 @@ Matrix& Matrix::operator-=(const Matrix& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator-(const Matrix& rhs) const {
+const Matrix Matrix::operator-(const Matrix& rhs) const
+{
 	Matrix result = *this;
 	result -= rhs; //already implemented
 
 	return result;
 }
 
-Matrix& Matrix::operator-=(const double& rhs) {
+Matrix& Matrix::operator-=(const double& rhs)
+{
 	*this += -rhs;
 
 	return *this;
 }
 
-const Matrix Matrix::operator-(const double& rhs) const {
+const Matrix Matrix::operator-(const double& rhs) const
+{
 	Matrix result = *this;
 	result += -rhs; //already implemented
 
 	return result;
 }
 
-Matrix& Matrix::operator*=(const Matrix& rhs) {
+Matrix& Matrix::operator*=(const Matrix& rhs)
+{
 	//check dimensions compatibility
 	if (ncols!=rhs.nrows) {
 		std::ostringstream tmp;
@@ -224,7 +249,7 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 	}
 
 	//create new matrix
-	Matrix result(nrows,rhs.ncols);
+	Matrix result(nrows, rhs.ncols);
 
 	//fill product matrix
 	for (size_t i=1; i<=result.nrows; i++) {
@@ -241,44 +266,51 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator*(const Matrix& rhs) const {
+const Matrix Matrix::operator*(const Matrix& rhs) const
+{
 	Matrix result = *this;
 	result *= rhs; //already implemented
 
 	return result;
 }
 
-Matrix& Matrix::operator*=(const double& rhs) {
+Matrix& Matrix::operator*=(const double& rhs)
+{
 	for (size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] *= rhs;
 
 	return *this;
 }
 
-const Matrix Matrix::operator*(const double& rhs) const {
+const Matrix Matrix::operator*(const double& rhs) const
+{
 	Matrix result = *this;
 	result *= rhs; //already implemented
 
 	return result;
 }
 
-Matrix& Matrix::operator/=(const double& rhs) {
+Matrix& Matrix::operator/=(const double& rhs)
+{
 	*this *= (1./rhs);
 	return *this;
 }
 
-const Matrix Matrix::operator/(const double& rhs) const {
+const Matrix Matrix::operator/(const double& rhs) const
+{
 	Matrix result = *this;
 	result *= 1./rhs; //already implemented
 
 	return result;
 }
 
-double Matrix::scalar(const Matrix& m) {
+double Matrix::scalar(const Matrix& m)
+{
 	return m.scalar();
 }
 
-double Matrix::scalar() const {
+double Matrix::scalar() const
+{
 	if (ncols!=1 || nrows!=1) {
 		std::ostringstream tmp;
 		tmp << "Trying to get scalar value of a non (1x1) matrix ";
@@ -288,7 +320,8 @@ double Matrix::scalar() const {
 	return operator()(1,1);
 }
 
-double Matrix::dot(const Matrix& A, const Matrix& B) {
+double Matrix::dot(const Matrix& A, const Matrix& B)
+{
 	size_t Acols, Arows, Bcols, Brows;
 	A.size(Arows, Acols);
 	B.size(Brows, Bcols);
@@ -316,11 +349,13 @@ double Matrix::dot(const Matrix& A, const Matrix& B) {
 	return sum;
 }
 
-Matrix Matrix::T(const Matrix& m) {
+Matrix Matrix::T(const Matrix& m)
+{
 	return m.getT();
 }
 
-Matrix Matrix::getT() const {
+Matrix Matrix::getT() const
+{
 	Matrix result(ncols, nrows);
 	for (size_t i=1; i<=result.nrows; i++) {
 		for (size_t j=1; j<=result.ncols; j++) {
@@ -330,12 +365,14 @@ Matrix Matrix::getT() const {
 	return result;
 }
 
-void Matrix::T() {
+void Matrix::T()
+{
 	Matrix tmp(*this);
 	*this = tmp.getT();
 }
 
-double Matrix::det() const {
+double Matrix::det() const
+{
 	if (nrows!=ncols) {
 		std::ostringstream tmp;
 		tmp << "Trying to calculate the determinant of a non-square matrix ";
@@ -351,7 +388,8 @@ double Matrix::det() const {
 	return product;
 }
 
-bool Matrix::LU(Matrix& L, Matrix& U) const {
+bool Matrix::LU(Matrix& L, Matrix& U) const
+{
 //Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 	if (nrows!=ncols) {
@@ -389,7 +427,8 @@ bool Matrix::LU(Matrix& L, Matrix& U) const {
 	return true;
 }
 
-Matrix Matrix::getInv() const {
+Matrix Matrix::getInv() const
+{
 //This uses an LU decomposition followed by backward and forward solving for the inverse
 //See for example Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
 	if (nrows!=ncols) {
@@ -444,7 +483,8 @@ Matrix Matrix::getInv() const {
 	return X;
 }
 
-bool Matrix::inv() {
+bool Matrix::inv()
+{
 //same as getInv() const but we write the final result on top of the input matrix
 	if (nrows!=ncols) {
 		std::ostringstream tmp;
@@ -498,7 +538,8 @@ bool Matrix::inv() {
 	return true;
 }
 
-bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
+bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X)
+{
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
 	size_t Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
@@ -560,8 +601,8 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	return true;
 }
 
-Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
-//This uses an LU decomposition followed by backward and forward solving for A·X=B
+Matrix Matrix::solve(const Matrix& A, const Matrix& B)
+{//This uses an LU decomposition followed by backward and forward solving for A·X=B
 	Matrix X;
 	if (!solve(A, B, X))
 		throw IOException("Matrix inversion failed!", AT);
@@ -618,7 +659,8 @@ bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 	return true;
 }
 
-Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B) {
+Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B)
+{
 //This uses the Thomas algorithm for tridiagonal matrix solving of A·X=B
 	Matrix X;
 	if (TDMA_solve(A, B, X))
@@ -627,7 +669,8 @@ Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B) {
 		throw IOException("Matrix inversion failed!", AT);
 }
 
-bool Matrix::isIdentity() const {
+bool Matrix::isIdentity() const
+{
 	if (nrows!=ncols) {
 		std::ostringstream tmp;
 		tmp << "A non-square matrix ";
@@ -656,11 +699,13 @@ bool Matrix::isIdentity() const {
 	return is_identity;
 }
 
-bool Matrix::isIdentity(const Matrix& A) {
+bool Matrix::isIdentity(const Matrix& A)
+{
 	return A.isIdentity();
 }
 
-void Matrix::partialPivoting(std::vector<size_t>& pivot_idx) {
+void Matrix::partialPivoting(std::vector<size_t>& pivot_idx)
+{
 	pivot_idx.clear();
 
 	//bad luck: if a row has several elements that are max of their columns,
@@ -677,12 +722,14 @@ void Matrix::partialPivoting(std::vector<size_t>& pivot_idx) {
 	}
 }
 
-void Matrix::partialPivoting() {
+void Matrix::partialPivoting()
+{
 	std::vector<size_t> pivot_idx;
 	partialPivoting(pivot_idx);
 }
 
-void Matrix::maximalPivoting() {
+void Matrix::maximalPivoting()
+{
 	std::vector<size_t> pivot_idx;
 	Matrix tmp( *this );
 
@@ -710,7 +757,8 @@ void Matrix::maximalPivoting() {
 }*/
 
 //return the index of the line containing the highest absolute value at column col
-size_t Matrix::findMaxInCol(const size_t &col) {
+size_t Matrix::findMaxInCol(const size_t &col)
+{
 	size_t row_idx = 0;
 	double max_val=0.;
 
@@ -725,7 +773,8 @@ size_t Matrix::findMaxInCol(const size_t &col) {
 }
 
 //return the index of the line containing the highest absolute value at column col
-size_t Matrix::findMaxInRow(const size_t &row) {
+size_t Matrix::findMaxInRow(const size_t &row)
+{
 	size_t col_idx = 0;
 	double max_val=0.;
 
@@ -740,7 +789,8 @@ size_t Matrix::findMaxInRow(const size_t &row) {
 }
 
 
-void Matrix::swapRows(const size_t &i1, const size_t &i2) {
+void Matrix::swapRows(const size_t &i1, const size_t &i2)
+{
 	for (size_t j=1; j<=ncols; j++) {
 		const double tmp = operator()(i2,j);
 		operator()(i2,j) = operator()(i1,j);

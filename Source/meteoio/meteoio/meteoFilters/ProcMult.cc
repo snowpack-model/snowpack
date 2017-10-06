@@ -17,15 +17,19 @@
 */
 #include <meteoio/meteoFilters/ProcMult.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
+
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
 namespace mio {
 
-ProcMult::ProcMult(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path)
-         : ProcessingBlock(name), vecFactors(), root_path(i_root_path), factor(0.), type('c')
+ProcMult::ProcMult(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
+         : ProcAdd(vecArgs, name, i_root_path)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
@@ -34,65 +38,69 @@ void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& 
 {
 	ovec = ivec;
 
-	if (type=='c') {
+	if (type=='c') { //constant offset
 		for (size_t ii=0; ii<ovec.size(); ii++){
 			double& tmp = ovec[ii](param);
 			if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			tmp *= factor;
+			tmp *= correction;
 		}
-	} else if (type=='m') {
-		int year, month, day;
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& tmp = ovec[ii](param);
-			if (tmp == IOUtils::nodata) continue; //preserve nodata values
+	} else if (type=='f') { //corrections from file
+		if (period=='m') {
+			int year, month, day;
+			for (size_t ii=0; ii<ovec.size(); ii++){
+				double& tmp = ovec[ii](param);
+				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-			ovec[ii].date.getDate(year, month, day);
-			tmp *= vecFactors[ month-1 ]; //indices start at 0
+				ovec[ii].date.getDate(year, month, day);
+				tmp *= vecCorrections[ month-1 ]; //indices start at 0
+			}
+		} else if (period=='d') {
+			for (size_t ii=0; ii<ovec.size(); ii++){
+				double& tmp = ovec[ii](param);
+				if (tmp == IOUtils::nodata) continue; //preserve nodata values
+
+				tmp *= vecCorrections[ ovec[ii].date.getJulianDayNumber()-1 ]; //indices start at 0 while day numbers start at 1
+			}
+		} else if (period=='h') {
+			int year, month, day, hour;
+			for (size_t ii=0; ii<ovec.size(); ii++){
+				double& tmp = ovec[ii](param);
+				if (tmp == IOUtils::nodata) continue; //preserve nodata values
+
+				ovec[ii].date.getDate(year, month, day, hour);
+				tmp *= vecCorrections[ hour ];
+			}
 		}
-	} else if (type=='d') {
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& tmp = ovec[ii](param);
-			if (tmp == IOUtils::nodata) continue; //preserve nodata values
-
-			tmp *= vecFactors[ ovec[ii].date.getJulianDayNumber() ];
-		}
-	} else if (type=='h') {
-		int year, month, day, hour;
-		for (size_t ii=0; ii<ovec.size(); ii++){
-			double& tmp = ovec[ii](param);
-			if (tmp == IOUtils::nodata) continue; //preserve nodata values
-
-			ovec[ii].date.getDate(year, month, day, hour);
-			tmp *= vecFactors[ hour ];
+	} else if (type=='n') { //noise
+		srand( static_cast<unsigned int>(time(NULL)) );
+		if (distribution=='u') {
+			uniform_noise(param, ovec);
+		} else if (distribution=='n') {
+			normal_noise(param, ovec);
 		}
 	}
 }
 
-
-void ProcMult::parse_args(const std::vector<std::string>& vec_args)
+void ProcMult::uniform_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const
 {
-	const size_t nrArgs = vec_args.size();
-	if (nrArgs==1) {
-		type='c'; //constant
-		if (!IOUtils::convertString(factor, vec_args[0]))
-			throw InvalidArgumentException("Invalid factor \""+vec_args[0]+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
-	} else if (nrArgs==2) {
-		const string type_str=IOUtils::strToUpper( vec_args[0] );
-		if (type_str=="MONTHLY") type='m';
-		else if (type_str=="DAILY") type='d';
-		else if (type_str=="HOURLY") type='h';
-		else
-			throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for the "+getName()+" filter", AT);
+	for (size_t ii=0; ii<ovec.size(); ii++){
+		double& tmp = ovec[ii](param);
+		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-		//if this is a relative path, prefix the path with the current path
-		const std::string in_filename = vec_args[1];
-		const std::string prefix = ( IOUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path = IOUtils::getPath(prefix+in_filename, true);  //clean & resolve path
-		const std::string filename = path + "/" + IOUtils::getFilename(in_filename);
-		ProcessingBlock::readCorrections(getName(), filename, type, 1., vecFactors);
-	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
+		tmp *= (1. + (2.*static_cast<double>(rand())/(RAND_MAX)-1.) * range);
+	}
 }
+
+void ProcMult::normal_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const
+{
+	for (size_t ii=0; ii<ovec.size(); ii++){
+		double& tmp = ovec[ii](param);
+		if (tmp == IOUtils::nodata) continue; //preserve nodata values
+
+		tmp += (1. + Interpol1D::getBoxMuller() * range);
+	}
+}
+
 
 } //end namespace

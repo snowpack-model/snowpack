@@ -23,10 +23,10 @@ using namespace std;
 
 namespace mio {
 
-ProcExpSmoothing::ProcExpSmoothing(const std::vector<std::string>& vec_args, const std::string& name)
-                 : WindowedFilter(name), alpha(.5)
+ProcExpSmoothing::ProcExpSmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+                 : WindowedFilter(vecArgs, name), alpha(.5)
 {
-	parse_args(vec_args);
+	parse_args(vecArgs);
 
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
@@ -44,13 +44,13 @@ void ProcExpSmoothing::process(const unsigned int& param, const std::vector<Mete
 
 		size_t start, end;
 		if ( get_window_specs(ii, ivec, start, end) ) {
-			value = calcExpSmoothing(ivec, param, start, end, ii);
+			value = calcExpSmoothing(ivec, param, start, end, ii, alpha);
 		} else if (!is_soft) value = IOUtils::nodata;
 	}
 
 }
 
-double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
+double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& alpha)
 {
 	const size_t max_len = max(pos-start, end-pos);
 	bool initCompleted = false;
@@ -86,28 +86,21 @@ double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, co
 	return expavg;
 }
 
-void ProcExpSmoothing::parse_args(std::vector<std::string> vec_args)
+void ProcExpSmoothing::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	vector<double> filter_args;
+	const std::string where( "Filters::"+block_name );
+	bool has_alpha=false;
 
-	if (vec_args.size() > 2){
-		is_soft = ProcessingBlock::is_soft(vec_args);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="ALPHA") {
+			IOUtils::parseArg(vecArgs[ii], where, alpha);
+			has_alpha = true;
+		}
 	}
 
-	if (vec_args.size() > 2)
-		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-
-	convert_args(3, 3, vec_args, filter_args);
-
-	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
-	}
-
-	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-	alpha = filter_args[2];
+	if (!has_alpha) throw InvalidArgumentException("Please provide an alpha value for "+where, AT);
 	if (alpha<0. || alpha>1.) {
-		throw InvalidArgumentException("The alpha parameter for filter " + getName() + " must be between 0 and 1!", AT);
+		throw InvalidArgumentException("The alpha parameter for " + where + " must be between 0 and 1!", AT);
 	}
 }
 

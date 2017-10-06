@@ -43,7 +43,7 @@ class ProcessingStack {
 		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
-		void getWindowSize(ProcessingProperties& o_properties);
+		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
 

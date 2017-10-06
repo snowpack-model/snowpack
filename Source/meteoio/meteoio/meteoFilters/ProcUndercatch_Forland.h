@@ -27,12 +27,11 @@ namespace mio {
 /**
  * @class  ProcUndercatch_Forland
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2012-02-06
  * @brief Correct precipitation for undercatch in winter conditions.
  * @details
  * This implements the method for precipitation correction as described in <i>"Manual for operational correction of Nordic precipitation data"</i>, E. Førland, P. Allerup, B. Dahlström, E. Elomaa, T. Jónsson, H. Madsen, P. Perälä Rissanen, H. Vedin, and F. Vejen, 1996, Tech. Rep. <b>24/96</b>, Norske Meteorologiske Institutt.
- * Specific coefficients have been calculated by N. Wever for the Davos Weisflujoch experimental field. The type of gauge must be provided as argumemt:
+ * Specific coefficients have been calculated by N. Wever for the Davos Weisflujoch experimental field. The type of gauge must be
+ * provided with the TYPE argument as one of:
  * - wfj - shielded Hellmann gauge as used at Weissflujoch (Switzerland)
  * - Hellmann - unshielded
  * - Swedish - Nipher shield
@@ -43,14 +42,14 @@ namespace mio {
  * - Geonor - Alter shield
  *
  * @code
- * PSUM::filter1	= undercatch_forland
- * PSUM::arg1	= wfj
+ * PSUM::filter1    = undercatch_forland
+ * PSUM::arg1::type = wfj
  * @endcode
  */
 
 class ProcUndercatch_Forland : public ProcessingBlock {
 	public:
-		ProcUndercatch_Forland(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcUndercatch_Forland(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -67,9 +66,9 @@ class ProcUndercatch_Forland : public ProcessingBlock {
 			geonor
 		} sensor_type;
 
-		double solidPrecipitation(double TA, double VW);
-		double liquidPrecipitation(const double& Pint, double VW);
-		void parse_args(std::vector<std::string> filter_args);
+		double solidPrecipitation(double TA, double VW) const;
+		double liquidPrecipitation(const double& Pint, double VW) const;
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		sensor_type type;
 		static const double Tsnow_WMO, Train_WMO;

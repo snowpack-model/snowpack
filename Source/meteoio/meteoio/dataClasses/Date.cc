@@ -47,11 +47,11 @@ namespace mio {
 const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
 const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const double Date::DST_shift = 1.0; //in hours
-const float Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
-const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
-const float Date::RFC868_offset = 2415020.5; ///< offset between julian date and RFC868 time (ref is 1900-01-01T00:00 GMT)
-const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
-const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
+const double Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
+const double Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
+const double Date::RFC868_offset = 2415020.5; ///< offset between julian date and RFC868 time (ref is 1900-01-01T00:00 GMT)
+const double Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
+const double Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
 const double Date::epsilon=1./(24.*3600.025); ///< minimum difference between two dates. 1 second in units of days. 3600.025 is intentional
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
@@ -121,9 +121,9 @@ void Date::setUndef(const bool& flag) {
 * @brief Set internal gmt time from system time as well as system time zone.
 */
 void Date::setFromSys() {
-	const time_t curr = time(NULL);// current time in UTC
+	const time_t curr( time(NULL) );// current time in UTC
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
-	const time_t utc = mktime(&local);// convert GMT tm to GMT time_t
+	const time_t utc( mktime(&local) );// convert GMT tm to GMT time_t
 #ifndef __MINGW32__
 	double tz = - difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
 #else //workaround for Mingw bug 2152
@@ -246,7 +246,8 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
+void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst)
+{
 	setTimeZone(in_timezone, in_dst);
 	gmt_julian = rnd( localToGMT(julian_in), (unsigned)1); //round to internal precision of 1 second
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second);
@@ -290,7 +291,7 @@ void Date::setRFC868Date(const double& julian_in, const double& i_timezone, cons
 * @param in_dst is it DST? (default: no)
 */
 void Date::setUnixDate(const time_t& in_time, const bool& in_dst) {
-	const double in_julian = (double)(in_time)/(24.*60.*60.) + Unix_offset;
+	const double in_julian = (double)(in_time)/(24.*3600.) + Unix_offset;
 	setDate(in_julian, 0., in_dst);
 }
 
@@ -762,6 +763,32 @@ bool Date::isLeapYear() const {
 }
 
 /**
+ * @brief Modulus of a julian date by a given number of seconds.
+ * This returns the modulus (in seconds) of a given date by the given number of seconds.
+ * @param[in] julian input date
+ * @param[in] seconds period (in seconds)
+ * @return modulus in seconds
+ */
+unsigned int Date::mod(const double& julian, const unsigned int& seconds)
+{
+	const unsigned int julian_mod = static_cast<unsigned int>( round( fmod(julian*24.*3600., seconds) ) ); //this reduces the rounding errors and allows second precision
+	if (julian_mod==seconds) return 0; //since after "round" it is possible that julian_mod==seconds
+	else return julian_mod;
+}
+
+/**
+ * @brief Modulus of a date by a given number of seconds.
+ * This returns the modulus (in seconds) of a given date by the given number of seconds.
+ * @param[in] indate input date
+ * @param[in] seconds period (in seconds)
+ * @return modulus in seconds
+ */
+unsigned int Date::mod(const Date& indate, const unsigned int& seconds)
+{
+	return mod(indate.getJulian(), seconds);
+}
+
+/**
  * @brief Round a julian date to a given precision.
  * If you want to round a local date, do NOT provide it as gmt julian but as local julian,
  * otherwise things like rounding to the next day would be shifted by TimeZone.
@@ -776,7 +803,7 @@ double Date::rnd(const double& julian, const unsigned int& precision, const RND&
 
 	double integral;
 	const double fractional = modf(julian-.5, &integral);
-	const double rnd_factor = (3600*24)/(double)precision;
+	const double rnd_factor = (3600.*24.)/(double)precision;
 
 	if (type==CLOSEST)
 		return integral + (double)Optim::round( fractional*rnd_factor ) / rnd_factor + .5;
@@ -1036,8 +1063,10 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 				else
 					return IOUtils::nodata;
 			}
+			default: {
+				return IOUtils::nodata;
+			}
 		}
-		return IOUtils::nodata;
 	} else {
 		return IOUtils::nodata;
 	}
@@ -1049,9 +1078,9 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 * @return string containing a human readable time
 */
 std::string Date::printFractionalDay(const double& fractional) {
-	const double hours=floor(fractional*24.);
-	const double minutes=floor((fractional*24.-hours)*60.);
-	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
+	const double hours = floor(fractional*24.);
+	const double minutes = floor((fractional*24.-hours)*60.);
+	const double seconds = fractional*24.*3600.-hours*3600.-minutes*60.;
 
 	std::ostringstream tmp;
 	tmp << std::fixed << std::setfill('0') << std::setprecision(0);
@@ -1089,7 +1118,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 		calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out, second_out);
 	}
 
-	ostringstream tmpstr;
+	std::ostringstream tmpstr;
 	switch(type) {
 		case(ISO_TZ):
 		case(ISO):
@@ -1114,6 +1143,15 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 				tmpstr << setw(2) << setfill('0') << tz_h << ":"
 				<< setw(2) << setfill('0') << tz_min;
 			}
+			break;
+		case(ISO_Z):
+			tmpstr
+			<< setw(4) << setfill('0') << gmt_year << "-"
+			<< setw(2) << setfill('0') << gmt_month << "-"
+			<< setw(2) << setfill('0') << gmt_day << "T"
+			<< setw(2) << setfill('0') << gmt_hour << ":"
+			<< setw(2) << setfill('0') << gmt_minute << ":"
+			<< setw(2) << setfill('0') << gmt_second << "Z";
 			break;
 		case(ISO_DATE):
 			tmpstr
@@ -1159,6 +1197,8 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
 			break;
 		}
+		default:
+			throw InvalidFormatException("Unsupported time format", AT);
 	}
 
 	return tmpstr.str();
@@ -1187,7 +1227,7 @@ const std::string Date::toString() const {
 	return os.str();
 }
 
-std::iostream& operator<<(std::iostream& os, const Date& date) {
+std::ostream& operator<<(std::ostream& os, const Date& date) {
 	os.write(reinterpret_cast<const char*>(&date.timezone), sizeof(date.timezone));
 	os.write(reinterpret_cast<const char*>(&date.gmt_julian), sizeof(date.gmt_julian));
 
@@ -1203,7 +1243,7 @@ std::iostream& operator<<(std::iostream& os, const Date& date) {
 	return os;
 }
 
-std::iostream& operator>>(std::iostream& is, Date& date) {
+std::istream& operator>>(std::istream& is, Date& date) {
 	is.read(reinterpret_cast<char*>(&date.timezone), sizeof(date.timezone));
 	is.read(reinterpret_cast<char*>(&date.gmt_julian), sizeof(date.gmt_julian));
 
@@ -1220,7 +1260,7 @@ std::iostream& operator>>(std::iostream& is, Date& date) {
 }
 
 // PRIVATE METHODS
-double Date::calculateJulianDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second) const
+double Date::calculateJulianDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second)
 {
 	const long julday = getJulianDayNumber(i_year, i_month, i_day);
 	const double frac = (i_hour-12.)/24. + i_minute/(24.*60.) + i_second/(24.*3600.); //the julian date reference is at 12:00
@@ -1228,7 +1268,7 @@ double Date::calculateJulianDate(const int& i_year, const int& i_month, const in
 	return (((double)julday) + frac);
 }
 
-void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, int& o_day, int& o_hour, int& o_minute, int& o_second) const
+void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, int& o_day, int& o_hour, int& o_minute, int& o_second)
 { //given a julian day, calculate the year, month, day, hours and minutes
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	//we round the given julian date to the closest second since this is our current resolution
@@ -1259,14 +1299,14 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 	o_second = sec - 3600*o_hour - 60*o_minute;
 }
 
-bool Date::isLeapYear(const int& i_year) const {
+bool Date::isLeapYear(const int& i_year) {
 	//Using the leap year rule: years that can be divided by 4 if they are not centuries
 	//For centuries, they are leap years only if they can be divided by 400
 	const bool is_leapYear = (i_year%4 == 0 && (i_year %100 != 0 || i_year%400 == 0));
 	return is_leapYear;
 }
 
-long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day) const
+long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day)
 { //given year, month, day, calculate the matching julian day
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	const long lmonth = (long) i_month, lday = (long) i_day;
@@ -1283,7 +1323,7 @@ long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& 
 	return jdn;
 }
 
-void Date::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second) const {
+void Date::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second) {
 	if ((in_year < -4713) || (in_year >3000)
 	    || (in_month < 1) || (in_month > 12)
 	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year))

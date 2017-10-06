@@ -207,7 +207,8 @@ void ResamplingAlgorithms2D::Bilinear(Array2D<double> &o_grid, const Array2D<dou
 	}
 }
 
-double ResamplingAlgorithms2D::BSpline_weight(const double &x) {
+double ResamplingAlgorithms2D::BSpline_weight(const double &x)
+{
 	double R = 0.;
 	if ((x+2.)>0.) R += Optim::pow3(x+2.);
 	if ((x+1.)>0.) R += -4.*Optim::pow3(x+1.);
@@ -250,16 +251,14 @@ void ResamplingAlgorithms2D::cubicBSpline(Array2D<double> &o_grid, const Array2D
 			}
 
 			if (avg_count==16) { //normal bicubic
-				o_grid(ii,jj) = F*(16/avg_count);
+				o_grid(ii,jj) = F;
 				if (o_grid(ii,jj)>max) o_grid(ii,jj)=max; //try to limit overshoot
 				else if (o_grid(ii,jj)<min) o_grid(ii,jj)=min; //try to limit overshoot
 			} else if (avg_count==0) o_grid(ii,jj) = IOUtils::nodata; //nodata-> nodata
 			else //not enought data points -> bilinear for this pixel
 				o_grid(ii,jj) = bilinear_pixel(i_grid, org_ii, org_jj, org_nx, org_ny, dx, dy);
-
 		}
 	}
-
 }
 
 } //namespace

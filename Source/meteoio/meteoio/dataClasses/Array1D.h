@@ -21,7 +21,8 @@
 #include <vector>
 #include <limits>
 #include <iostream>
-#include <iterator>
+#include <numeric>
+#include <algorithm>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/IOExceptions.h>
@@ -63,6 +64,7 @@ template<class T> class Array1D {
 		bool getKeepNodata();
 
 		void size(size_t& nx) const;
+		size_t size() const;
 		size_t getNx() const;
 
 		void resize(const size_t& asize);
@@ -104,8 +106,8 @@ template<class T> class Array1D {
 
 
 		const std::string toString() const;
-		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array1D<P>& array);
-		template<class P> friend std::iostream& operator>>(std::iostream& is, Array1D<P>& array);
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array1D<P>& array);
+		template<class P> friend std::istream& operator>>(std::istream& is, Array1D<P>& array);
 
 		bool checkEpsilonEquality(const Array1D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array1D<double>& rhs1, const Array1D<double>& rhs2, const double& epsilon);
@@ -169,6 +171,10 @@ template<class T> bool Array1D<T>::getKeepNodata() {
 
 template<class T> void Array1D<T>::size(size_t& o_nx) const {
 	o_nx = nx;
+}
+
+template<class T> size_t Array1D<T>::size() const {
+	return nx;
 }
 
 template<class T> size_t Array1D<T>::getNx() const {
@@ -246,14 +252,14 @@ template<class T> const std::string Array1D<T>::toString() const {
 	return os.str();
 }
 
-template<class P> std::iostream& operator<<(std::iostream& os, const Array1D<P>& array) {
+template<class P> std::ostream& operator<<(std::ostream& os, const Array1D<P>& array) {
 	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
 	os.write(reinterpret_cast<const char*>(&array.vecData[0]), static_cast<std::streamsize>(array.nx*sizeof(P)));
 	return os;
 }
 
-template<class P> std::iostream& operator>>(std::iostream& is, Array1D<P>& array) {
+template<class P> std::istream& operator>>(std::istream& is, Array1D<P>& array) {
 	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	array.vecData.resize(array.nx);
@@ -287,11 +293,9 @@ template<class T> T Array1D<T>::getMin() const {
 	T min = std::numeric_limits<T>::max();
 
 	if (keep_nodata==false) {
-		for (size_t ii=0; ii<nx; ii++) {
-			const T val = vecData[ii];
-			if (val<min) min=val;
-		}
-		return min;
+		min = *min_element(vecData.begin(), vecData.end());
+		if (min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
@@ -307,11 +311,9 @@ template<class T> T Array1D<T>::getMax() const {
 	T max = -std::numeric_limits<T>::max();
 
 	if (keep_nodata==false) {
-		for (size_t ii=0; ii<nx; ii++) {
-			const T val = vecData[ii];
-			if (val>max) max=val;
-		}
-		return max;
+		max = *max_element(vecData.begin(), vecData.end());
+		if (max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
 	} else {
 		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
@@ -327,13 +329,8 @@ template<class T> T Array1D<T>::getMean() const {
 	T mean = 0;
 
 	if (keep_nodata==false) {
-		for (size_t ii=0; ii<nx; ii++) {
-			const T val = vecData[ii];
-			mean += val;
-		}
-		const size_t count = nx;
-		if (count>0) return mean/(T)(count);
-		else return (T)0;
+		if (nx>0) return std::accumulate(vecData.begin(), vecData.end(), 0.) / (T)(nx);
+		else return (T)IOUtils::nodata;
 	} else {
 		size_t count = 0;
 		for (size_t ii=0; ii<nx; ii++) {
@@ -450,6 +447,8 @@ template<class T> const Array1D<T> Array1D<T>::operator+(const Array1D<T>& rhs) 
 
 template<class T> Array1D<T>& Array1D<T>::operator+=(const T& rhs)
 {
+	if (rhs==0.) return *this;
+	
 	//Add to every single member of the Array1D<T>
 	if (keep_nodata==false) {
 		for (size_t ii=0; ii<nx; ii++) {
@@ -558,6 +557,8 @@ template<class T> const Array1D<T> Array1D<T>::operator*(const Array1D<T>& rhs) 
 
 template<class T> Array1D<T>& Array1D<T>::operator*=(const T& rhs)
 {
+	if (rhs==1.) return *this;
+	
 	//Multiply every single member of the Array1D<T>
 	if (keep_nodata==false) {
 		for (size_t ii=0; ii<nx; ii++) {

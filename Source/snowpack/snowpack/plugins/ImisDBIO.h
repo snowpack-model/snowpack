@@ -59,7 +59,7 @@ class ImisDBIO : public SnowpackIOInterface{
 
 		void openDB();
 		void closeDB();
-		void deleteProfile(const std::string& stationName, const size_t& stationNumber,
+		void deleteProfile(const std::string& stationName, const unsigned char& stationNumber,
 		                 const mio::Date& dateStart, const mio::Date& dateEnd);
 		void deleteHdata(const std::string& stationName, const std::string& stationNumber,
 		                 const mio::Date& dateStart, const mio::Date& dateEnd);

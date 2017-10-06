@@ -18,9 +18,6 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-#include <meteoio/IOUtils.h>
-#include <meteoio/IOExceptions.h>
-
 #include <vector>
 #include <iostream>
 
@@ -90,6 +87,9 @@ class Matrix {
 		* @param cols number of columns of the matrix
 		*/
 		void size(size_t& rows, size_t& cols) const;
+
+		size_t getNx() const {return ncols;}
+		size_t getNy() const {return nrows;}
 
 		/**
 		* @brief free the memory and set the matrix dimensions to (0,0)
@@ -192,7 +192,6 @@ class Matrix {
 		* @brief matrix LU decomposition.
 		* Perform LU decomposition by the Dolittle algorithm,
 		* (cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html)
-		* HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 		* @param L lower diagonal matrix
 		* @param U upper diagonal matrix
 		* @return false if the decomposition can not be performed (division by zero)

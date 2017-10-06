@@ -16,7 +16,7 @@ const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	
 const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
 const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
-const double res_Met_1 []	= {264.4174967,		266.6831484,		266.7168446,		269.8202793,		266.2149658,		267.307867,		266.1509854}; // TA
+const double res_Met_1 []	= {263.3351476,		264.4570077,		265.6127785,		265.5006154,		265.0483363,		265.9048493,		262.8538273}; // TA
 const double res_Met_2 []	= {1.,			0.957,			1.,			0.967,			0.963,			0.862,			0.95}; // RH
 const double res_Met_3[]	= {273.6963,		274.3309,		273.9969,		274.6983,		274.0971,		274.9154,		274.0971}; // TSG
 const double res_Met_4[]	= {263.8,		266.12,			265.6,			268.74,			265.64,			267.24,			262.5}; // TSS

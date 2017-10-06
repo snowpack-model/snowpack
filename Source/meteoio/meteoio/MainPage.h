@@ -36,6 +36,15 @@ namespace mio {
    Documentation for available data processing components. These can be used on incoming meteorological data. See \ref processing "Available data processing elements".
 */
 
+/*! \defgroup parametrizations Parametrizations
+   Documentation for available parametrizations components that compute given parameters from other parameters. These used for DataCreator and DataGenerator.
+*/
+
+/*! \defgroup spatialization Spatial interpolations
+   Documentation for available spatial interpolations algorithms components that compute the spatial distribution of a given parameter. These are mostly wrappers
+   around \ref interpol2d "2D interpolations".
+*/
+
 /*! \defgroup data_str Data classes
    Documentation for available data classes.
 */
@@ -54,11 +63,10 @@ namespace mio {
  * -# End User documentation
  *    -# \subpage general "General concepts"
  *    -# \subpage configuration "Configuration file"
- *    -# \subpage plugins "Available plugins" and usage
- *    -# \subpage coords "Available coordinate systems" and usage
+ *    -# \subpage data_sources "Data input and sources"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
- *    -# \subpage generators "Available data generators" and usage
+ *    -# \subpage generators "Available data creators and generators" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  *    -# \subpage build_io "How to build your io.ini configuration file"
  * -# Programing using MeteoIO
@@ -85,13 +93,38 @@ namespace mio {
 
  /**
  * @page general General concepts
- * A large number of the problems encountered by users of numerical models working on large meteorological data sets can be traced back to the Input/Output functionality.
- * This comes from the focus of the model developers on the core modeling issues at the expanse of the I/O routines that are costly to properly implement. Therefore
- * the I/O routines often lack flexibility and robustness. When using numerical models in operational applications, this becomes a major drawback and a regular
- * source of problems.
+ * A large number of the problems encountered by users of numerical models working on large meteorological data sets can be
+ * traced back to the Input/Output functionality. This comes from the focus of the model developers on the core modeling issues at the expanse
+ * of the I/O routines that are costly to properly implement. Therefore the I/O routines often lack flexibility and robustness. When using
+ * numerical models in operational applications, this becomes a major drawback and a regular source of problems.
  *
- * The MeteoIO library has been designed to address this issue. It is an additional layer between the data and the numerical model, handling the retrieval of data
- * from various data sources as well as the data pre-processing.
+ * The MeteoIO library has been designed to address this issue. It is an additional layer between the data and the numerical model,
+ * handling the retrieval of data from various data sources as well as the data pre-processing.
+ *
+ * It is built as a library, which means that it can be transparently integrated within other softwares along other libraries. This would be similar to
+ * the way a car is made of several components: there is a frame (for example, for us it could be the MeteoIO library), there is an engine (for a model
+ * such as Snowpack, it could be its "libSnowpack" library that does all the heavy work) and on top there is the whole bodywork (all the "glue" that
+ * is needed to make the libSnowpack usable by an end user as a standalone application, here called "snowpack-app"). Therefore the same components
+ * can be used in other models (the same engine might be used in several cars while the same bodywork might contain different engines).
+ *
+ * \image html library_analogy.png "Software library analogy: a software is made of several components (libraries)"
+ * \image latex library_analogy.eps "Software library analogy: a software is made of several components (libraries)" width=0.4\textwidth
+ *
+ * @section MeteoIO_structure General MeteoIO structure
+ * @anchor general_structure
+ * \image html meteoio_workflow.png "MeteoIO workflow"
+ * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
+ * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
+ * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
+ * - a set of \ref data_manipulations "raw data editing" methods to select/merge/convert the raw data
+ * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
+ * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
+ * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
+ * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
+ *
+ * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user. Moreover, a few
+ * assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort
+ * of coordinates) and very often you will also need to provide a Digital Elevation Model.
  *
  * @section typical_setup Typical setup
  * \image html typical_setup.png "typical setup of MeteoIO for operational applications"
@@ -105,24 +138,6 @@ namespace mio {
  *
  * In this setup, MeteoIO is the "glue" between the numerical model at the core of the application and the data sources on one hand and the
  * publication system on the other hand.
- *
- * @section MeteoIO_structure General MeteoIO structure
- * @anchor general_structure
- * \image html meteoio_workflow.png "MeteoIO workflow"
- * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
- * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
- * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
- * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
- * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
- * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
- * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
- *
- * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user.
- *
- * Moreover, a few assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort of coordinates) and very often you will also need to provide a Digital Elevation Model. Therefore, you will also notice a few extra modules that come to play on the visible side:
- * - a module to deal with \ref DEMObject "Digital Elevation Models". Such module will for example interpret a grid of data as a grid of elevations and compute a grid of slopes.
- * - a module to deal with \ref coords "coordinate systems". Such module will require you to define which coordinate system are your data in and transparently handle potential coordinate conversions in the program that you are using.
- * - a module to deal with \ref mio::Config "configuration files". The program that you are using might be using this module for other configuration files.
  *
  */
 
@@ -178,14 +193,15 @@ namespace mio {
  *
  * [Filters]
  * TA::filter1	= min_max	#first filter to use on the parameter TA
- * TA::arg1	= 230 330	#arguments for this first filter
+ * TA::arg1::min	= 230	#arguments for this first filter
+ * TA::arg1::max	= 330	#arguments for this first filter
  * TA::filter2	= rate		#second filter to use (in chronological order)
- * TA::arg2	= 0.01		#arguments for this second filter
+ * TA::arg2::max	= 0.01	#arguments for this second filter
  * #add any extra filter that you want to use. They will be applied serially
  *
  * [Interpolations2D]
  * TA::algorithms = IDW_LAPSE CST_LAPSE	#list of algorithms to consider for use for spatially interpolating parameter TA
- * TA::cst_lapse = -0.008 		#parameter for a specific interpolation algorithm for parameter TA
+ * TA::cst_lapse::rate = -0.008 		#parameter for a specific interpolation algorithm for parameter TA
  *
  * @endcode
  *
@@ -216,7 +232,7 @@ namespace mio {
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
  *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
- *             possible to copy one parameter into a new one, as shown in \ref data_generators.
+ *             possible to perform some editing on the raw data, see \ref data_manipulations.
  *
  *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *
@@ -280,7 +296,8 @@ namespace mio {
  *
  *
  * @section proj_sec Geographic projections
- * The class Coords is dedicated to geographic projections. It can use both internal algorithms and projections provided by <a href="http://trac.osgeo.org/proj/">libproj4</a>.
+ * The class Coords is dedicated to geographic projections. It can use projections provided by <a href="http://trac.osgeo.org/proj/">libproj4</a> or
+ * internal implementations provided by the CoordsAlgorithms static class alongside a set of helper algorithms (such as grid rotation, datum conversion, etc).
  * @subsection coord_conv Coordinate conversion
  * The class Coords takes one or two arguments describing the coordinate system of the input data and then converts back and forth with lat/long WGS84. It can be used to construct a local coordinate system, that is to say a metric grid whose origin is chosen by the user (through the lat/long parameters provided to the constructor). This is useful when working with multiple gridded coordinate system in order to get a common system that would still allow easy distances calculations. See the supported \ref Coordinate_types "projections".
  * @subsection dist_sec Distances
@@ -328,15 +345,27 @@ namespace mio {
  *
  * To implement a new processing element, the following steps are necessary:
  *
- * -# Implementing the element, as a derived class of ProcessingBlock or FilterBlock or WindowedFilter, by creating
- *    two files: the header file and its implementation file, in the meteoFilters subdirectory of the source code.
- *    The class will contain two public methods: a constructor and a "process" method and at least one private method,
+ * -# Create a derived class of ProcessingBlock or FilterBlock or WindowedFilter in the meteoFilters subdirectory of the source code.
+ *      You can copy and rename the template files "template.cc" and "template.h" that are in the  "meteoFilters" subdirectory. 
+ *      Please do not forget to rename all occurences of "TEMPLATE" in these files! Keep the <b>process</b> method as it is for now.
+ * -# Add the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other filters
+ * -# Add the filter in the processing loop, in meteoFilters/ProcessingBlock.cc in the BlockFactory::getBlock()
+ * method by adding three lines similar to:
+ *    @code
+ *     else if (blockname == "MIN_MAX"){
+ *     		return new FilterMinMax(vecArgs, blockname);
+ * 	}
+ *    @endcode
+ *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
+ * -# Include the filter's header file in meteoFilters/ProcessingBlocks.cc
+ * -# Try to compile and run your filter on a test data set (for example with the "meteo_reading" example)
+ * -# Then really implement your filter. Its class contains two public methods: a constructor and a "process" method and at least one private method,
  *    "parse_args" to read the arguments from a provided vector of strings.
  *    -# The <b>constructor</b> takes a vector of strings containing the element's arguments and a constant string (that contains
  *    the block name, for example for printing in an error message from which filter/block it comes). The constructor
  *    would therefore have a declaration similar to:
  *    @code
- *    FilterMax::FilterMax(const std::vector<std::string>& vec_args, const std::string& name)
+ *    FilterMax::FilterMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
  *    @endcode
  *    -# The <b>process</b> method applies the element to the provided vector of values, for a meteo parameter pointed to by index.
  *    This index is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
@@ -346,21 +375,10 @@ namespace mio {
  *    @code
  *    process(const unsigned int& index, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
  *    @endcode
- *    -# The private <b>parse_args</b> method reads the arguments from a vector of strings, with the following declaration:
+ *    -# The private <b>parse_args</b> method reads the arguments from a vector of pairs of strings, with the following declaration:
  *    @code
- *    parse_args(std::vector<std::string> vec_args)
+ *    parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
  *    @endcode
- * -# Adding the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other
- *    filters
- * -# Adding the filter in the processing loop, in meteoFilters/ProcessingBlock.cc in the BlockFactory::getBlock()
- * method by adding three lines similar to:
- *    @code
- *     else if (blockname == "MIN_MAX"){
- *     		return new FilterMinMax(vec_args, blockname);
- * 	}
- *    @endcode
- *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
- * -# Including the filter's header file in meteoFilters/ProcessingBlocks.cc
  *
  * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteoFilters subdirectory),
  * the class FilterMax can be used as an example of implementation of a basic filter that will check whether a
@@ -370,16 +388,19 @@ namespace mio {
  * to the Config could look like this:
  * @code
  * [Filters]
- * TA::filter1 = max
- * TA::arg1    = soft 280
+ * TA::filter1    = max
+ * TA::arg1::soft = true
+ * TA::arg1::max  = 280
  * @endcode
  * Which has the following interpretation: Apply filter max (max-value-filter) to the parameter TA (air temperature)
  * in case that a value is greater than 280 degrees Kelvin change that value to 280.
  * A more customized operation could be:
  * @code
  * [Filters]
- * TA::filter1 = max
- * TA::arg1    = soft 280 260
+ * TA::filter1         = max
+ * TA::arg1::soft      = true
+ * TA::arg1::max       = 280
+ * TA::arg1::max_reset = 260
  * @endcode
  * Which will replace any value greater than 280 Kelvin by 260 Kelvin.
  *

@@ -15,7 +15,15 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "GrassIO.h"
+#include <meteoio/plugins/GrassIO.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
+#include <meteoio/IOExceptions.h>
+
+#include <sstream>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -42,30 +50,15 @@ namespace mio {
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 GrassIO::GrassIO(const std::string& configfile)
-        : cfg(configfile), fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam()
+        : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 GrassIO::GrassIO(const Config& cfgreader)
-        : cfg(cfgreader), fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam()
+        : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-}
-
-GrassIO::~GrassIO() throw()
-{
-	cleanup();
-}
-
-void GrassIO::cleanup() throw()
-{
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
-	if (fout.is_open()) {//close fout if open
-		fout.close();
-	}
 }
 
 void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
@@ -77,22 +70,20 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	double tmp_val, xllcorner, yllcorner, cellsize;
 	vector<string> tmpvec;
 	std::string line;
-	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
-	if (!IOUtils::validFileAndPath(filename)) throw InvalidFileNameException(filename, AT);
-	if (!IOUtils::fileExists(filename)) throw FileNotFoundException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
-	fin.clear();
-	fin.open (filename.c_str(), ifstream::in);
+	std::ifstream fin(filename.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(filename, AT);
+		throw AccessException(filename, AT);
 	}
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {
-		IOUtils::readKeyValueHeader(header, fin, 6, ":");
+		const std::map<std::string, std::string> header( FileUtils::readKeyValueHeader(fin, 6, ":") ); //Read in 6 lines as header into a key/value map
 		IOUtils::getValueForKey(header, "cols",  _nx);
 		IOUtils::getValueForKey(header, "rows",  _ny);
 		IOUtils::getValueForKey(header, "north", north);
@@ -152,18 +143,11 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			}
 		}
 	} catch(const std::exception&) {
-		cleanup();
+		fin.close();
 		throw;
 	}
-	cleanup();
+	fin.close();
 }
-
-void GrassIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 
 void GrassIO::readDEM(DEMObject& dem_out)
 {
@@ -194,38 +178,13 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	read2DGrid(da_out, ss.str());
 }
 
-void GrassIO::readStationData(const Date&, std::vector<StationData>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GrassIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&,
-                            const size_t&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GrassIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                             const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
-void GrassIO::readPOI(std::vector<Coords>&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	if (!IOUtils::validFileAndPath(name)) throw InvalidFileNameException(name, AT);
+	if (!FileUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
+	std::ofstream fout;
 	fout.open(name.c_str(), ios::out);
 	if (fout.fail()) {
-		throw FileAccessException(name, AT);
+		throw AccessException(name, AT);
 	}
 
 	Coords llcorner=grid_in.llcorner;
@@ -265,17 +224,11 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		}
 	} catch(const std::exception& e) {
 		cerr << "[E] " << AT << ": " << e.what() << std::endl;
-		cleanup();
+		fout.close();
 		throw;
 	}
 
-	cleanup();
-}
-
-void GrassIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	fout.close();
 }
 
 } //namespace

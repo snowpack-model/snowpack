@@ -44,15 +44,15 @@ namespace mio {
 #if defined(MSG_BOX)
 void inline messageBox(const std::string& msg) {
 	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
-		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
 		MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
 	#endif
 	#if defined _WIN32 || defined __MINGW32__
-		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
 		MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 	#endif
 	#if defined(__APPLE__)
-		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
 		const void* keys[] = { kCFUserNotificationAlertHeaderKey,
 				kCFUserNotificationAlertMessageKey };
 		const void* values[] = { CFSTR("Oops, something went wrong!"),
@@ -82,7 +82,7 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 	if (mangled_name && offset_begin && offset_end && mangled_name < offset_begin) {
 		//the line could be processed, attempt to demangle the symbol
 		*mangled_name++ = '\0'; *offset_begin++ = '\0'; *offset_end++ = '\0';
-		if (string(mangled_name)=="main") found_main=true;
+		if (std::string(mangled_name)=="main") found_main=true;
 
 		int status;
 		char *real_name = abi::__cxa_demangle(mangled_name, 0, 0, &status);
@@ -90,8 +90,8 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 		if (status == 0) {
 			const std::string tmp(real_name);
 			const size_t pos = tmp.find_first_of("(");
-			const std::string func_name = tmp.substr(0, pos);
-			const std::string func_args = tmp.substr(pos);
+			const std::string func_name( tmp.substr(0, pos) );
+			const std::string func_args( tmp.substr(pos) );
 			ss << "\t(" << ii << ") in \033[4m" << func_name << "\033[0m\033[01;30m" << func_args << " from \033[3m" << symbols << "\033[23m";
 		} else { // otherwise, output the mangled function name
 			ss << "\t(" << ii << ") in " << mangled_name << " from \033[3m" << symbols << "\033[23m";
@@ -103,14 +103,14 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 
 	return ss.str();
 #else
-	return "\tat " + string(symbols);
+	return "\tat " + std::string(symbols);
 #endif
 }
 #endif
 
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 {
-#if defined _WIN32 || defined __MINGW32__ ||  defined __CYGWIN__
+#if defined _WIN32 && !defined __MINGW32__ && !defined __CYGWIN__
 	const char *delim = strrchr(position.c_str(), '\\');
 #else
 	const char *delim = strrchr(position.c_str(), '/');
@@ -122,10 +122,10 @@ IOException::IOException(const std::string& message, const std::string& position
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
-	std::string backtrace_info = "\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
+	std::string backtrace_info( "\n\033[01;30m**** backtrace ****\n" ); //we use ASCII color codes to make the backtrace less visible/aggressive
 	for (unsigned int ii=1; ii<(unsigned)tracesize; ii++) {
 		bool found_main;
-		const string line = resolveSymbols( symbols[ii], ii, found_main );
+		const std::string line( resolveSymbols( symbols[ii], ii, found_main ) );
 		if (found_main) break; //we hit "main" so we stop here
 		backtrace_info += line+"\n";
 	}
