@@ -247,12 +247,6 @@ void SnowpackConfig::setDefaults()
 		addKey("T_CRAZY_MIN", "SnowpackAdvanced", "165.");
 		addKey("T_CRAZY_MAX", "SnowpackAdvanced", "300.");
 		addKey("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", "0.2");
-		
-		
-	} else if (variant == "POLAR") {
-
-		addKey("T_CRAZY_MIN", "SnowpackAdvanced", "165.");
-		addKey("T_CRAZY_MAX", "SnowpackAdvanced", "300.");
 
 	} else if (variant == "CALIBRATION") {
 		if (hn_density_parameterization.empty()) addKey("HN_DENSITY_PARAMETERIZATION", "SnowpackAdvanced", "ZWART");
