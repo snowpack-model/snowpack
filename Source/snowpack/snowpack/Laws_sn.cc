@@ -598,8 +598,10 @@ void SnLaws::compShortWaveAbsorption(const std::string& i_sw_absorption_scheme, 
 			I0_band -= dI;
 		}
 		EMS[bottom_element].sw_abs += I0_band;
-	} else { // absorb all shortwave energy in topmost element
+	} else if (i_sw_absorption_scheme == "SURFACE") { // absorb all shortwave energy in topmost element
 		EMS[nE-1].sw_abs += I0;
+	} else {
+		throw InvalidArgumentException("Unknown shortwave absorption model: " + i_sw_absorption_scheme, AT);
 	}
 
 	for (size_t e = bottom_element; e < nE; e++) {
