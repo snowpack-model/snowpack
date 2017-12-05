@@ -2069,15 +2069,16 @@ void AsciiIO::writeTimeSeriesAddDefault(const SnowStation& Xdata, const SurfaceF
 	// 98: crust height (S-slope) (cm)
 	fout << "," << crust;
 	// 99-100:
-	if (!research_mode)
+	if (!research_mode) {
 		// snow depth (cm) and mass correction (kg m-2)
 		fout << "," << M_TO_CM(dhs_corr) << "," << mass_corr;
-	else
+	} else {
 		// for example, measured turbulent fluxes (W m-2); see also 1-2
 		fout << ",," << (Sdata.meltFreezeEnergy * static_cast<double>(nCalcSteps)) / 1000.;
 		// output melt and refreeze mass (kg m-2)
 		fout << "," << Sdata.melt_m;
 		fout << "," << Sdata.refreeze_m;
+	}
 }
 
 /**

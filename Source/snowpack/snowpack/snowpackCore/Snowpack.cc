@@ -97,8 +97,8 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
-            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), soot_ppmv(0.)
+            enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), forestfloor_alb(false), adjust_height_of_meteo_values(true),
+            advective_heat(false), heat_begin(0.), heat_end(0.), temp_index_degree_day(0.), temp_index_swr_factor(0.)
 {
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);

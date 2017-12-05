@@ -130,8 +130,9 @@ class Snowpack {
 		bool vw_dendricity;
 		bool enhanced_wind_slab; ///< to use an even stronger wind slab densification than implemented by default
 		bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)
-		double soot_ppmv; ///< Impurity content in ppmv for albedo calculatoins
 		bool ageAlbedo; ///< use the age of snow in the albedo parametrizations? default: true
+		double soot_ppmv; ///< Impurity content in ppmv for albedo calculatoins
+		bool forestfloor_alb;
 
 		const static bool hydrometeor;
 		const static double snowfall_warning;
@@ -140,7 +141,6 @@ class Snowpack {
 		bool advective_heat;
 		double heat_begin, heat_end;
 		double temp_index_degree_day, temp_index_swr_factor;
-		bool forestfloor_alb;
 }; //end class Snowpack
 
 #endif
