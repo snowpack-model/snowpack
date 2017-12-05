@@ -440,14 +440,13 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		std::vector<double> z_i;
 		
 		// Get layer information
-		const size_t nN = Xdata.getNumberOfNodes();
 		const size_t nE = Xdata.getNumberOfElements();
 		
 		// Loop over layers to calculate layer characteristics
-		int nlayers = 50;
+		const size_t nlayers = std::min(50, nE);
 		double zmwe_tot = 0.;
-		double z_tot = 0.;
-		for (size_t i = 1; i < 1+nlayers; i++) {
+		//double z_tot = 0.;
+		for (size_t i = 1; i < 1 + nlayers; i++) {
 			// Albedo parametrization clean snow
 			double S = 3. / Xdata.Edata[nE-i].ogs * 2000. / 91.7;
 			double as = 1.48 - pow(S, -.07);
