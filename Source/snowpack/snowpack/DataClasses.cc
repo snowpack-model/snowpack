@@ -1724,11 +1724,11 @@ bool SnowStation::hasSoilLayers() const
  * as defined in combineCondition(), simply average the microstructure properties \n
  * NOTE that the condense element check is placed at the end of a time step, allowing elements do develop on their own.
  * @param i_number_top_elements The number of surface elements to be left untouched
- * @param reduce_n_elements Enable more "aggressive" combining for layers deeper in the snowpack
+ * @param reduce_n_elements When >0: enable more "aggressive" combining for layers deeper in the snowpack, to reduce the number of elements and thus the computational load. Values >=1 denote levels of aggressivity.
  * @param cond Condition to use to determine whether or not to combine: 1 = combineCondition, 2 = Aggregate::joinSimilarLayers, 3 = Aggregate::mergeThinLayer
  * @param comb_thresh_l Only used for cond == 1: both elements must be smaller than this value for an action to be taken.
  */
-void SnowStation::combineElements(const size_t& i_number_top_elements, const bool& reduce_n_elements, const size_t& cond, const double& comb_thresh_l)
+void SnowStation::combineElements(const size_t& i_number_top_elements, const int& reduce_n_elements, const size_t& cond, const double& comb_thresh_l)
 {
 	if (nElems - SoilNode < i_number_top_elements+1) {
 		return;
@@ -2055,36 +2055,38 @@ double SnowStation::flexibleMaxElemLength(const double& depth, const double& com
  * @param Edata0 Lower element
  * @param Edata1 Upper element
  * @param depth Distance of the element from the snow surface
- * @param reduce_n_elements Enable more "aggressive" combining for layers deeper in the snowpack, to reduce the number of elements and thus the computational load.
+ * @param reduce_n_elements When >0: enable more "aggressive" combining for layers deeper in the snowpack, to reduce the number of elements and thus the computational load. Values >=1 denote levels of aggressivity.
  * @return true if the two elements should be combined, false otherwise
  */
-bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData& Edata1, const double& depth, const bool& reduce_n_elements, const double& comb_thresh_l)
+bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData& Edata1, const double& depth, const int& reduce_n_elements, const double& comb_thresh_l)
 {
 	// Default max_elem_l
 	double max_elem_l = comb_thresh_l;
 
 	// When aggressive combining is activated, override max_elem_l when necessary
-	if (reduce_n_elements == true) {
+	if (reduce_n_elements > 0) {
 		max_elem_l = flexibleMaxElemLength(depth, comb_thresh_l);
 	}
 
 	if ( (Edata0.L > max_elem_l) || (Edata1.L > max_elem_l) )
 		return false;
 
-//	if ( Edata0.mk%100 != Edata1.mk%100 )
-	if ( (Edata0.mk%100 != Edata1.mk%100) && (depth < 10.) )
+	if ( (Edata0.mk%100 != Edata1.mk%100) && (depth < 10. || reduce_n_elements == 1) )
 		return false;
 
 	double comb_thresh_sp_flex;
-	if (depth <= 10.) {
+	if (reduce_n_elements <= 1) {
 		comb_thresh_sp_flex = comb_thresh_sp;
-	} else if (depth >= 20.) {
-		comb_thresh_sp_flex = 1.01;
 	} else {
-		comb_thresh_sp_flex = (((1.01 - comb_thresh_sp) / 10.) * depth) + (2. * comb_thresh_sp - 1.01);
+		if (depth <= 10.) {
+			comb_thresh_sp_flex = comb_thresh_sp;
+		} else if (depth >= 20.) {
+			comb_thresh_sp_flex = 1.01;
+		} else {
+			comb_thresh_sp_flex = (((1.01 - comb_thresh_sp) / 10.) * depth) + (2. * comb_thresh_sp - 1.01);
+		}
 	}
 
-//	if ( fabs(Edata0.sp - Edata1.sp) > comb_thresh_sp )
 	if ( fabs(Edata0.sp - Edata1.sp) > comb_thresh_sp_flex )
 		return false;
 
@@ -2105,15 +2107,18 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	}
 
 	double comb_thresh_ice_flex;
-	if (depth <= 50.) {
-		comb_thresh_ice_flex = comb_thresh_ice;
-	} else if (depth >= 150.) {
-		comb_thresh_ice_flex = comb_thresh_ice * 5.;
+	if (reduce_n_elements <= 1) {
+		comb_thresh_ice_flex = comb_thresh_ice<
 	} else {
-		comb_thresh_ice_flex = (((4. * comb_thresh_ice) / 100.) * depth) - comb_thresh_ice;
+		if (depth <= 50.) {
+			comb_thresh_ice_flex = comb_thresh_ice;
+		} else if (depth >= 150.) {
+			comb_thresh_ice_flex = comb_thresh_ice * 5.;
+		} else {
+			comb_thresh_ice_flex = (((4. * comb_thresh_ice) / 100.) * depth) - comb_thresh_ice;
+		}
 	}
 
-//	if ( fabs(Edata0.theta[ICE] - Edata1.theta[ICE]) > comb_thresh_ice )
 	if ( fabs(Edata0.theta[ICE] - Edata1.theta[ICE]) > comb_thresh_ice_flex )
 		return false;
 
@@ -2121,17 +2126,20 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 		return false;
 
 	double comb_thresh_rg_flex;
-    if (depth <= 10.) {
-    	comb_thresh_rg_flex = comb_thresh_rg;
-    } else if  ((depth > 10.) && (depth <= 50.)) {
-        comb_thresh_rg_flex = ((4. * comb_thresh_rg / 40.) * depth);
-    } else if ((depth > 50.) && (depth <= 150.)) {
-        comb_thresh_rg_flex = ((45. * comb_thresh_rg / 100.) * depth) - (17.5 * comb_thresh_rg);
-    } else {
-        comb_thresh_rg_flex = comb_thresh_rg * 50.;
-    }
+	if (reduce_n_elements <= 1) {
+		comb_thresh_rg_flex = comb_thresh_rg;
+	} else {
+		if (depth <= 10.) {
+			comb_thresh_rg_flex = comb_thresh_rg;
+		} else if ((depth > 10.) && (depth <= 50.)) {
+			comb_thresh_rg_flex = ((4. * comb_thresh_rg / 40.) * depth);
+		} else if ((depth > 50.) && (depth <= 150.)) {
+			comb_thresh_rg_flex = ((45. * comb_thresh_rg / 100.) * depth) - (17.5 * comb_thresh_rg);
+		} else {
+			comb_thresh_rg_flex = comb_thresh_rg * 50.;
+		}
+	}
 
-//	if ( fabs(Edata0.rg - Edata1.rg) > comb_thresh_rg )
 	if ( fabs(Edata0.rg - Edata1.rg) > comb_thresh_rg_flex )
 		return false;
 
@@ -2521,7 +2529,7 @@ const std::string SnowStation::toString() const
 	os << "" << meta.toString();
 	os << setprecision(4);
 	//os << fixed;
-	os <<  "" << nElems << " element(s) and " << nNodes << " node(s).";
+	os << "" << nElems << " element(s) and " << nNodes << " node(s).";
 	if(useSoilLayers)
 		os << " Soil=true";
 	else
@@ -2580,11 +2588,9 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
-	// HACK TODO: this doesn't seem to compile with gcc > 6.0 Wait for official fix
-	/*maxNumberMeasTemperatures = cfg.get("MAX_NUMBER_MEAS_TEMPERATURES", "SnowpackAdvanced", IOUtils::nothrow);
 	fixedPositions = cfg.get("FIXED_POSITIONS", "SnowpackAdvanced", IOUtils::nothrow);
 	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", IOUtils::nothrow);
-	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced", IOUtils::nothrow);*/
+	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced", IOUtils::nothrow);
 }
 
 void CurrentMeteo::reset(const SnowpackConfig& i_cfg)

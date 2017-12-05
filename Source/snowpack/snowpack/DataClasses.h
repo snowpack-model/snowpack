@@ -132,8 +132,8 @@ class CurrentMeteo {
  		double surf_melt;///< Surface melt (kg m-2) per CALCULATION_STEP_LENGTH
  		double snowdrift;///< Snow drift (erosion or deposition) (kg m-2) per CALCULATION_STEP_LENGTH
  		double sublim;   ///< Surface sublimation and evaporation (kg m-2) per CALCULATION_STEP_LENGTH
-		double odc;      ///< Optical depth of the cloud
-        double p; ///< Atmospheric pressure
+		double odc;      ///< Optical depth of the cloud (HACK: units??)
+		double p;        ///< Atmospheric pressure (HACK: units??)
 
 		std::vector<double> ts;    ///< Measured snow or/and soil temperatures (K)
 		std::vector<double> zv_ts; ///< Positions of all measured snow or/and soil temperatures (m)
@@ -341,7 +341,7 @@ class ElementData {
 		double hard;               ///< Parameterized hand hardness (1)
 		double S_dr;               ///< Stability Index based on deformation rate (Direct Action Avalanching)
 		double crit_cut_length;    ///< Critical cut length (m)
-		double soot_ppmv;          ///< Impurity content in ppmv used for albedo calculation of Gardner
+		double soot_ppmv;          ///< Impurity content (ppmv) used for albedo calculation of Gardner
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
 		double lwc_source;         ///< Source/sink term for Richards equation
 		double PrefFlowArea;       ///< Preferential flow path relative area (-)
@@ -350,10 +350,10 @@ class ElementData {
 		double dsm;                ///< Dry snow metamorphism factor
 		double theta_ice_0;        ///< Original theta[ICE]
 		bool reset_theta_ice;      ///< Flag for restoring theta[ICE]
-		double melt_m;		   ///< Melted mass (kg m-2)
+		double melt_m;             ///< Melted mass (kg m-2)
 		double refreeze_m;         ///< Refrozen mass (kg m-2)
-		double excess_water;	   ///< Excess water due to snow settling (kg m-2)
-		double vol_ice_low;	   ///< Mean volumetric ice content below the element (averaged over 20 m) (1)
+		double excess_water;       ///< Excess water due to snow settling (kg m-2)
+		double vol_ice_low;        ///< Mean volumetric ice content below the element (averaged over 20 m) (1)
 };
 
 /// @brief NODAL DATA used as a pointer in the SnowStation structure
@@ -497,8 +497,8 @@ class SnowStation {
 		void resize(const size_t& number_of_elements);
 
 		void reduceNumberOfElements(const size_t& rnE);
-		void combineElements(const size_t& number_top_elements, const bool& reduce_n_elements, const size_t& cond, const double& comb_thresh_l);
-		static bool combineCondition(const ElementData& Edata0, const ElementData& Edata1, const double& depth, const bool& reduce_n_elements, const double& comb_thresh_l);
+		void combineElements(const size_t& number_top_elements, const int& reduce_n_elements, const size_t& cond, const double& comb_thresh_l);
+		static bool combineCondition(const ElementData& Edata0, const ElementData& Edata1, const double& depth, const int& reduce_n_elements, const double& comb_thresh_l);
 		static void mergeElements(ElementData& Edata0, const ElementData& Edata1, const bool& merge, const bool& topElement);
 		void splitElement(const size_t& e);							//Split an element
 		void splitElements(const double& max_element_length, const double& comb_thresh_l);	//Check for splitting, calls splitElement(...) for actual splitting
@@ -569,8 +569,8 @@ class SnowStation {
 		bool windward;              ///< True for windward (luv) slope
 		double WindScalingFactor;   ///< Local scaling factor for wind at drift station
 		double TimeCountDeltaHS;    ///< Time counter tracking erroneous settlement in operational mode
-		double Tot_melt;			///< Vertically summed melt per model time step (kg m-2)
-		double Tot_refreeze;		///< Vertically summed refreeze per model time step (kg m-2)
+		double Tot_melt;            ///< Vertically summed melt per model time step (kg m-2)
+		double Tot_refreeze;        ///< Vertically summed refreeze per model time step (kg m-2)
 
 		static const double comb_thresh_l_ratio, comb_thresh_ice, comb_thresh_water;
 		static const double comb_thresh_dd, comb_thresh_sp, comb_thresh_rg;
@@ -665,8 +665,8 @@ class SurfaceFluxes {
 		double dIntEnergySoil;       ///< Internal energy change in J m-2 in soil (used for OUTPUT only)
 		double meltFreezeEnergy;     ///< Melt freeze part of internal energy change in J m-2 in snowpack (used for OUTPUT only)
 		double meltFreezeEnergySoil; ///< Melt freeze part of internal energy change in J m-2 in soil (used for OUTPUT only)
-		double melt_m;				 ///< Melt mass (kg m-2) (used for OUTPUT only)
-		double refreeze_m;			 ///< Refreeze mass (kg m-2) (used for OUTPUT only)
+		double melt_m;               ///< Melt mass (kg m-2) (used for OUTPUT only)
+		double refreeze_m;           ///< Refreeze mass (kg m-2) (used for OUTPUT only)
 
 		/// @brief Other surface data:
 		double drift;      ///< the surface flux of drifting snow in kg m-1 s-1
