@@ -438,10 +438,10 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		std::vector<double> albs_i;
 		std::vector<double> zmwe_i;
 		std::vector<double> z_i;
-		
+
 		// Get layer information
 		const size_t nE = Xdata.getNumberOfElements();
-		
+
 		// Loop over layers to calculate layer characteristics
 		const size_t nlayers = std::min(size_t(50), nE);
 		double zmwe_tot = 0.;
@@ -458,7 +458,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 			}
 			double dac = - pow(ppm, 0.55) / (.16 + .6 * pow(S, .5) + 1.8 * pow(ppm, .6) * pow(S, -.25));
 			double ac = as + dac;
-			
+
 //			// Albedo parametrization for solar zenith
 // 			double elv;
 // 			if (Mdata.elev > 0.)
@@ -475,11 +475,11 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 // 			double dh = 0.;
 // 			if (Mdata.p != 0. && Mdata.p != mio::IOUtils::nodata)
 // 				dh = std::min(0.03247 * log(Mdata.p / 153880.), 0.);
-			
+
 			// Total albedo
 			albc_i.push_back(ac);
 			albs_i.push_back(as);
-			
+
 			// Length
 			zmwe_tot += Xdata.Edata[nE-i].M / 1000.;
 			zmwe_i.push_back(zmwe_tot);
@@ -489,8 +489,8 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 			// Print to screen
 			//prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "Alb=%lf with as=%lf, dac=%lf, daz=%lf and dtau=%lf", at, as, dac, daz, dtau);
 		}
-		
-		// Loop over layers to integrate albedo 
+
+		// Loop over layers to integrate albedo
 		double albc_sub = 0.;
 		double albs_sub = 0.;
 		for (size_t i = 0; i < nlayers - 1; i++) {
@@ -500,7 +500,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		// Calculate clean and dirty snow albedo
 		double ac = albc_i[0] + albc_sub;
 		double as = albs_i[0] + albs_sub;
- 
+
 		// Two layer model of Gardner
 		//double ac_top = albc_i[0];
 		//double ac_bot = albc_i[1];
@@ -511,7 +511,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		//double dac = (ac_bot - as_top) + AA * (ac_top - ac_bot);
 		//double as = albs_i[0];
 		//double ac = as + dac;
-		
+
 		// Albedo parametrization for solar zenith
 		double elv;
 		double u;
@@ -535,7 +535,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		double dh = 0.;
 		//if (Mdata.p != 0 && Mdata.p != mio::IOUtils::nodata)
 		//	dh = std::min(0.03247 * log(Mdata.p / 153880.), 0.);
-		
+
 		//prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "Alb=%lf with as=%lf, ac=%lf, daz=%lf, elv=%lf", ac + daz, as, ac, daz, elv);
 		Alb = ac + daz + dtau + dh;
 	}
