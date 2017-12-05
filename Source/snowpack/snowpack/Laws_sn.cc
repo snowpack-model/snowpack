@@ -351,9 +351,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 	else if (i_albedo_parameterization == "LEHNING_2") {
 		//TODO: this perfoms very badly (if not completly wrong) for (very?) wet snowpack
 		//for example, February 2007 in Davos with very warm weather resulting in (measured?) albedos of 0.3 ...
-		//double av = 0.8042; // Value of original regression
-		// HACK Stef based on offset
-		double av = 0.7042; 
+		double av = 0.8042; // Value of original regression
 		if (!ageAlbedo) { // NOTE clean antarctic snow
 			av = 0.7542; // estimated from comparison with measurements at Dome C
 		} else {
@@ -378,9 +376,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 	else if (i_albedo_parameterization == "SCHMUCKI_GSZ") { //from SCHMUCKI_ALLX35 regression with classical grain size
 		double Alb1, av;
 		if (i_albAverageSchmucki == "ALL_DATA")
-			//av = 0.7832462; // Mean value for all data @ WFJ, DAV, NAP, and PAY
-			// Hack Stef based on offset
-			av = 0.7432462;
+			av = 0.7832462; // Mean value for all data @ WFJ, DAV, NAP, and PAY
 		else if (i_albAverageSchmucki == "CUSTOM")
 			av = 0.74824; // mean of single averages @ WFJ, DAV, and PAY
 		else
@@ -401,9 +397,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 	else if (i_albedo_parameterization == "SCHMUCKI_OGS") { //from SCHMUCKI_ALLX32 regression with optical grain size
 		double Alb1, av;
 		if (i_albAverageSchmucki == "ALL_DATA")
-			//av = 0.7832462; // Mean value of regression @ WFJ  only
-			// Hack Stef based on offset
-            av = 0.7432462;
+			av = 0.7832462; // Mean value of regression @ WFJ  only
 		else if (i_albAverageSchmucki == "CUSTOM")
 			av = 0.74824; // Mean of single regressions @ WFJ, DAV, PAY, and NAP
 		else
@@ -422,9 +416,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		}
 	}
 	else if (i_albedo_parameterization == "NIED") { // by H. Hirashima (NIED, Nagaoka, Japan)
-		//const double av = i_albNIED_av;
-		// HACK Stef based on offset
-		const double av = i_albNIED_av + .09;
+		const double av = i_albNIED_av;
 		const double inter = 1.005;
 		const double Cage = -0.00016*10.0, Cta = -0.000249*2.0, Cv = 0.00578, Clwc = -2.15;
 		const double Crho = -0.000047, Crh = 0.129, Crb = -0.306, Crg = 0.107;
@@ -453,45 +445,44 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		
 		// Loop over layers to calculate layer characteristics
 		int nlayers = 50;
-		double zmwe_tot = 0;
-		double z_tot = 0;
+		double zmwe_tot = 0.;
+		double z_tot = 0.;
 		for (size_t i = 1; i < 1+nlayers; i++) {
 			// Albedo parametrization clean snow
-			//double S = 3./Xdata.Edata[nE-i].ogs*2000./91.7;
-			double S = 3./Xdata.Edata[nE-i].ogs*2000./91.7;
-			double as = 1.48 - pow(S,-.07);
-			//double as = 1.48 - 1.27048*pow(Xdata.Edata[nE-i].ogs/2./1000.,0.07) ;
+			double S = 3. / Xdata.Edata[nE-i].ogs * 2000. / 91.7;
+			double as = 1.48 - pow(S, -.07);
+			//double as = 1.48 - 1.27048 * pow(Xdata.Edata[nE-i].ogs / 2. / 1000., 0.07);
 			// Albedo parametrization for dirty snow
-		        double ppm = Xdata.Edata[nE-i].soot_ppmv;
+			double ppm = Xdata.Edata[nE-i].soot_ppmv;
 			if (ppm < 0.2) {
 				ppm = 0.2;
 			}
-			double dac = - pow(ppm,0.55) / (.16 + .6 * pow(S,.5) + 1.8 * pow(ppm,.6) * pow(S,-.25));
-			double ac = as+dac;
+			double dac = - pow(ppm, 0.55) / (.16 + .6 * pow(S, .5) + 1.8 * pow(ppm, .6) * pow(S, -.25));
+			double ac = as + dac;
 			
 //			// Albedo parametrization for solar zenith
 // 			double elv;
-// 			if (Mdata.elev>0)
+// 			if (Mdata.elev > 0.)
 // 				elv = Mdata.elev;
 // 			else
 // 				elv = 1.;
-// 			double u = cos((90-elv)*mio::Cst::to_rad);
-// 			double x = std::min(pow(Mdata.odc/3./u,.5), 1.);
-// 			double uacc = 0.64*x+(1-x)*u;
-// 			double daz = 0.53*as*(1-ac)*pow((1-uacc),1.2);
+// 			double u = cos((90.-elv) * mio::Cst::to_rad);
+// 			double x = std::min(pow(Mdata.odc / 3. / u, .5), 1.);
+// 			double uacc = 0.64 * x + (1. - x) * u;
+// 			double daz = 0.53 * as * (1. - ac) * pow((1. - uacc), 1.2);
 // 			// Albedo parameterization for cloudiness
-// 			double dtau = 0.1*Mdata.odc*pow(ac,1.3)/pow((1+1.5*Mdata.odc),as);
+// 			double dtau = 0.1 * Mdata.odc * pow(ac, 1.3) / pow((1. + 1.5 * Mdata.odc), as);
 // 			// Albedo parameterization for pressure
-// 			double dh = 0;
-// 			if (Mdata.p!=0)
-// 				dh = std::min(0.03247*log(Mdata.p/153880.0),0.0);
+// 			double dh = 0.;
+// 			if (Mdata.p != 0. && Mdata.p != mio::IOUtils::nodata)
+// 				dh = std::min(0.03247 * log(Mdata.p / 153880.), 0.);
 			
 			// Total albedo
 			albc_i.push_back(ac);
 			albs_i.push_back(as);
 			
 			// Length
-			zmwe_tot += Xdata.Edata[nE-i].M/1000.;
+			zmwe_tot += Xdata.Edata[nE-i].M / 1000.;
 			zmwe_i.push_back(zmwe_tot);
 			//z_tot += Xdata.Edata[nE-i].L;
 			//z_i.push_back(zmwe_tot);
@@ -501,50 +492,50 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		}
 		
 		// Loop over layers to integrate albedo 
- 		double albc_sub = 0;
-  		double albs_sub = 0;
-  		for (size_t i = 0; i < nlayers-1; i++) {
-  			albc_sub += (albc_i[i+1]-albc_i[i])*exp(-zmwe_i[i]/0.01);
-  			albs_sub += (albs_i[i+1]-albs_i[i])*exp(-zmwe_i[i]/0.01);
-  		}
-	        // Calculate clean and dirty snow albedo
-  		double ac = albc_i[0]+albc_sub;
-  		double as = albs_i[0]+albs_sub;
+		double albc_sub = 0.;
+		double albs_sub = 0.;
+		for (size_t i = 0; i < nlayers - 1; i++) {
+			albc_sub += (albc_i[i+1] - albc_i[i]) * exp(-zmwe_i[i] / 0.01);
+			albs_sub += (albs_i[i+1] - albs_i[i]) * exp(-zmwe_i[i] / 0.01);
+		}
+		// Calculate clean and dirty snow albedo
+		double ac = albc_i[0] + albc_sub;
+		double as = albs_i[0] + albs_sub;
  
-	        // Two layer model of Gardner
+		// Two layer model of Gardner
 		//double ac_top = albc_i[0];
 		//double ac_bot = albc_i[1];
 		//double as_top = albs_i[0];
 		//double as_bot = albs_i[1];
 		//double ppm = 0.1;
-		//double AA = std::min(1,2.1*pow(zmwe_i[0],1.35*(1-as_top)-0.1*ppm-0.13));
+		//double AA = std::min(1., 2.1 * pow(zmwe_i[0], 1.35*(1. - as_top) - 0.1 * ppm - 0.13));
 		//double dac = (ac_bot - as_top) + AA * (ac_top - ac_bot);
 		//double as = albs_i[0];
-		//double ac = as+dac;
+		//double ac = as + dac;
 		
 		// Albedo parametrization for solar zenith
 		double elv;
 		double u;
 		double x;
-		if (Mdata.elev>0.01) {
+		if (Mdata.elev > 0.01) {
 			elv = Mdata.elev;
-			u = cos((90*mio::Cst::to_rad)-elv);
-			x = std::min(pow(Mdata.odc/3./u,.5), 1.);
+			u = cos((90. * mio::Cst::to_rad) - elv);
+			x = std::min(pow(Mdata.odc / 3. / u, .5), 1.);
 		} else {
 			elv = 0.01;
-			u = cos((90*mio::Cst::to_rad)-elv);
-			x = 0;
+			u = cos((90. * mio::Cst::to_rad) - elv);
+			x = 0.;
 		}
-		double uacc = 0.64*x+(1-x)*u;
+		double uacc = 0.64 * x + (1. - x) * u;
 		//uacc = u;
 		//prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "OD=%lf, u=%lf, x=%lf, uacc=%lf", Mdata.odc, u, x, uacc);
-		double daz = 0.53*as*(1-ac)*pow((1-uacc),1.2);
+		double daz = 0.53 * as * (1. - ac) * pow((1. - uacc), 1.2);
 		// Albedo parameterization for cloudiness
-		double dtau = 0.1*Mdata.odc*pow(ac,1.3)/pow((1+1.5*Mdata.odc),as);
+		double dtau = 0.1 * Mdata.odc * pow(ac, 1.3) / pow((1. + 1.5 * Mdata.odc), as);
 		// Albedo parameterization for pressure
-		double dh = 0;
-		//if (Mdata.p!=0)
-		//	dh = std::min(0.03247*log(Mdata.p/153880.0),0.0);
+		double dh = 0.;
+		//if (Mdata.p != 0 && Mdata.p != mio::IOUtils::nodata)
+		//	dh = std::min(0.03247 * log(Mdata.p / 153880.), 0.);
 		
 		//prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "Alb=%lf with as=%lf, ac=%lf, daz=%lf, elv=%lf", ac + daz, as, ac, daz, elv);
 		Alb = ac + daz + dtau + dh;
@@ -1714,7 +1705,7 @@ double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
  */
 double SnLaws::AirEmissivity(const double& ilwr, const double& ta, const std::string& variant)
 {
-	const double min_emissivity = (variant != "ANTARCTICA" && variant != "POLAR")? 0.55 : 0.31;
+	const double min_emissivity = (variant != "ANTARCTICA" && variant != "POLAR") ? 0.55 : 0.31;
 
 	if(ilwr==IOUtils::nodata || ta==IOUtils::nodata) return min_emissivity;
 
