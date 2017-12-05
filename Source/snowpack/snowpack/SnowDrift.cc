@@ -152,9 +152,9 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	// At main station, measured snow depth controls whether erosion is possible or not
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
 	const bool erosion = snow_erosion && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH);
-	if (windward || alpine3d || erosion || (forcing=="MASSBAL")) {
+	if (windward || alpine3d || erosion || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
-		if (fabs(forced_massErode) > Constants::eps2 || (forcing=="MASSBAL")) {
+		if (fabs(forced_massErode) > Constants::eps2 || (forcing == "MASSBAL")) {
 			massErode = std::max(0., -forced_massErode); //negative mass is erosion
 		} else {
 			const double ustar_max = (Mdata.vw>0.1) ? Mdata.ustar * Mdata.vw_drift / Mdata.vw : 0.; // Scale Mdata.ustar
