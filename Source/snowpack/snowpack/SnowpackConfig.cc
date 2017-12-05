@@ -61,7 +61,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["HOAR_THRESH_VW"] = "3.5";
 	advancedConfig["JAM"] = "false";
 	advancedConfig["COMBINE_ELEMENTS"] = "true";
-	advancedConfig["REDUCE_N_ELEMENTS"] = "false";
+	advancedConfig["REDUCE_N_ELEMENTS"] = "0";
 	advancedConfig["MASS_BALANCE"] = "false";
 	advancedConfig["MAX_NUMBER_MEAS_TEMPERATURES"] = "5";
 	advancedConfig["MEAS_INCOMING_LONGWAVE"] = "false";
