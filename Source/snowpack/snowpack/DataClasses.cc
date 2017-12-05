@@ -2108,7 +2108,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 
 	double comb_thresh_ice_flex;
 	if (reduce_n_elements <= 1) {
-		comb_thresh_ice_flex = comb_thresh_ice<
+		comb_thresh_ice_flex = comb_thresh_ice;
 	} else {
 		if (depth <= 50.) {
 			comb_thresh_ice_flex = comb_thresh_ice;
@@ -2588,7 +2588,7 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
-	fixedPositions = cfg.get("FIXED_POSITIONS", "SnowpackAdvanced", IOUtils::nothrow);
+	cfg.getValue("FIXED_POSITIONS", "SnowpackAdvanced", fixedPositions, IOUtils::nothrow);
 	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", IOUtils::nothrow);
 	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced", IOUtils::nothrow);
 }
