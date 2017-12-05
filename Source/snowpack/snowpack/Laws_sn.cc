@@ -443,7 +443,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		const size_t nE = Xdata.getNumberOfElements();
 		
 		// Loop over layers to calculate layer characteristics
-		const size_t nlayers = std::min(50, nE);
+		const size_t nlayers = std::min(size_t(50), nE);
 		double zmwe_tot = 0.;
 		//double z_tot = 0.;
 		for (size_t i = 1; i < 1 + nlayers; i++) {
