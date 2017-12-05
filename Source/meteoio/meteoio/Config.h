@@ -243,7 +243,7 @@ class Config {
 				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+section+"::"+new_key, AT);
 			}
 		}
-
+		
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
 		 * @param[in] keystart std::string representing a pattern for the key in the key/value file
@@ -257,7 +257,7 @@ class Config {
 			const std::vector< std::string > vecKeys( getKeys(keystart, section) );
 
 			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key = section + "::" + vecKeys[ii];
+				const std::string full_key( section + "::" + vecKeys[ii] );
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);

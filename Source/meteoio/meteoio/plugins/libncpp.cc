@@ -374,6 +374,37 @@ void read_wrf_latlon(const int& ncid, const int& latid, const int& lonid, const 
 	status = nc_get_vara_double(ncid, lonid, start, count_lon, lon);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve latitudes: " + std::string(nc_strerror(status)), AT);
+
+	/*std::cout << "easy way: min_lat=" << lat[0] << " max_lat=" << lat[latlen-1] << "\n";
+	std::cout << "easy way: min_lon=" << lon[0] << " max_lon=" << lon[lonlen-1] << "\n";
+
+	{
+		double *tmp = new double[latlen*lonlen];
+		const size_t count_tmp[] = {1, latlen, lonlen};
+		status = nc_get_vara_double(ncid, latid, start, count_tmp, tmp);
+		if (status != NC_NOERR)
+			throw IOException("Could not retrieve latitudes: " + std::string(nc_strerror(status)), AT);
+		double max = 0.;
+		for (size_t ii=0; ii<=(latlen-1)*(lonlen-1); ii++)
+			if (tmp[ii]>max) max=tmp[ii];
+		std::cout << "hard way: min_lat=" << tmp[0] << " max_lat=" << max << "\n";
+		lat[latlen-1] = max;
+		free(tmp);
+	}
+
+	{
+		double *tmp = new double[latlen*lonlen];
+		const size_t count_tmp[] = {1, latlen, lonlen};
+		status = nc_get_vara_double(ncid, lonid, start, count_tmp, tmp);
+		if (status != NC_NOERR)
+			throw IOException("Could not retrieve latitudes: " + std::string(nc_strerror(status)), AT);
+		double max = 0.;
+		for (size_t ii=0; ii<=(latlen-1)*(lonlen-1); ii++)
+			if (tmp[ii]>max) max=tmp[ii];
+		std::cout << "hard way: min_lon=" << tmp[0] << " max_lon=" << max << "\n";
+		lon[lonlen-1] = max;
+		free(tmp);
+	}*/
 }
 
 void write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data)
@@ -717,7 +748,7 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
                          const double * const grid, const double& nodata, mio::Grid2DObject& grid_out)
 {
 	mio::Coords llcorner(coordin, coordinparam);
-	llcorner.setLatLon(lat[0], lon[0], IOUtils::nodata);
+	llcorner.setLatLon( std::min(lat[0], lat[latlen-1]), std::min(lon[0], lon[lonlen-1]), IOUtils::nodata);
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
 	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
 	grid_out.set(lonlen, latlen, cellsize, llcorner);
@@ -746,6 +777,23 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 			}
 		}
 	}
+
+	static const bool debug = false;
+	if (debug) {
+		double max = -1.e20;
+		size_t ii_max, jj_max;
+		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
+				if (grid_out(ii,jj)>max) {
+					max = grid_out(ii,jj);
+					ii_max = ii;
+					jj_max = jj;
+				}
+			}
+		}
+		std::cout << "Max = " << max << " found at (" << ii_max << " , " << jj_max << ") " << "lat/lon: " << lat[jj_max] << " " << lon[ii_max] << "\n";
+		std::cout << "urcorner: " << lat[0] << " " << lon[0] << "\tllcorner: " << lat[latlen-1] << " " << lon[lonlen-1] << "\n";
+	}
 	
 	if (resampling_factor_x != mio::IOUtils::nodata || resampling_factor_y != mio::IOUtils::nodata) {
 		grid_out.grid2D = mio::ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
@@ -762,19 +810,22 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat_array, const double * const lon_array,
                                     double& factor_x, double& factor_y)
 {
+	//in order to handle swapped llcorner/urcorner, we use "fabs" everywhere
 	double alpha;
-	const double cntr_lat = .5*(lat_array[0]+lat_array[latlen-1]);
-	const double cntr_lon = .5*(lon_array[0]+lon_array[lonlen-1]);
-	const double lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
+	const double cntr_lat = .5*fabs(lat_array[0]+lat_array[latlen-1]);
+	const double cntr_lon = .5*fabs(lon_array[0]+lon_array[lonlen-1]);
+	/*const double lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
 	const double lon_length = CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon-.5, cntr_lat, cntr_lon+.5, alpha);
-
-	const double distanceX = (lon_array[lonlen-1] - lon_array[0]) * lon_length;
-	const double distanceY = (lat_array[latlen-1] - lat_array[0]) * lat_length;
+	//std::cout << "lat_length=" << lat_length << " lon_length=" << lon_length << "\n";
+	const double distanceX = fabs(lon_array[lonlen-1] - lon_array[0]) * lon_length;
+	const double distanceY = fabs(lat_array[latlen-1] - lat_array[0]) * lat_length;*/
+	const double distanceX = CoordsAlgorithms::VincentyDistance(cntr_lat, lon_array[0], cntr_lat, lon_array[lonlen-1], alpha);
+	const double distanceY = CoordsAlgorithms::VincentyDistance(lat_array[0], cntr_lon, lat_array[latlen-1], cntr_lon, alpha);
 
 	//round to 1cm precision for numerical stability
 	const double cellsize_x = static_cast<double>(Optim::round( distanceX / static_cast<double>(lonlen)*100. )) / 100.;
 	const double cellsize_y = static_cast<double>(Optim::round( distanceY / static_cast<double>(latlen)*100. )) / 100.;
-
+//std::cout << "cellsize_x=" << cellsize_x << " cellsize_y=" << cellsize_y << "\n";
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
 	} else {

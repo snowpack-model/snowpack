@@ -307,7 +307,7 @@ void DEMObject::updateAllMinMax() {
 	min_altitude = grid2D.getMin();
 	max_altitude = grid2D.getMax();
 	
-	const double sun_elev_thresh = 5.;
+	static const double sun_elev_thresh = 5.;
 	if (min_altitude!=IOUtils::nodata && max_altitude!=IOUtils::nodata) 
 		max_shade_distance = (max_altitude - min_altitude) / tan(sun_elev_thresh*Cst::to_rad);
 }
@@ -586,8 +586,10 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	//Now, calculate the parameters using the previously defined function pointer
-	for ( size_t j = 0; j < getNy(); j++ ) {
-		for ( size_t i = 0; i < getNx(); i++ ) {
+	const size_t ncols = getNx();
+	const size_t nrows = getNy();
+	for ( size_t j = 0; j < nrows; j++ ) {
+		for ( size_t i = 0; i < ncols; i++ ) {
 			if ( grid2D(i,j) == IOUtils::nodata ) {
 				if (update_flag&SLOPE) {
 					slope(i,j) = azi(i,j) = IOUtils::nodata;
@@ -621,8 +623,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	if ((update_flag&SLOPE) && (algorithm==D8)) { //extra processing required: discretization
-		for ( size_t j = 0; j < getNy(); j++ ) {
-			for ( size_t i = 0; i < getNx(); i++ ) {
+		for ( size_t j = 0; j < nrows; j++ ) {
+			for ( size_t i = 0; i < ncols; i++ ) {
 					//TODO: process flats by an extra algorithm
 					if (azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
@@ -670,7 +672,7 @@ void DEMObject::CalculateHick(double A[4][4], double& o_slope, double& o_Nx, dou
 //This calculates the surface normal vector using the steepest slope method (Dunn and Hickey, 1998):
 //the steepest slope found in the eight cells surrounding (i,j) is given to be the slope in (i,j)
 //Beware, sudden steps could happen
-	const double smax = steepestGradient(A); //steepest local gradient
+	const double smax = steepestGradient(cellsize, A); //steepest local gradient
 
 	if (smax==IOUtils::nodata) {
 		o_slope = IOUtils::nodata;
@@ -750,15 +752,15 @@ void DEMObject::CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx,
 	}
 }
 
-double DEMObject::getCurvature(double A[4][4]) {
-//This methode computes the curvature of a specific cell
+double DEMObject::getCurvature(double A[4][4]) 
+{ //This methode computes the curvature of a specific cell
 	if (A[2][2]!=IOUtils::nodata) {
 		const double Zwe   = avgHeight(A[2][1], A[2][2], A[2][3]);
 		const double Zsn   = avgHeight(A[1][2], A[2][2], A[3][2]);
 		const double Zswne = avgHeight(A[3][1], A[2][2], A[1][3]);
 		const double Znwse = avgHeight(A[1][1], A[2][2], A[3][3]);
 
-		const double sqrt2 = sqrt(2.);
+		static const double sqrt2 = sqrt(2.);
 		double sum=0.;
 		size_t count=0;
 
@@ -785,10 +787,10 @@ double DEMObject::getCurvature(double A[4][4]) {
 	return IOUtils::nodata;
 }
 
-double DEMObject::steepestGradient(double A[4][4]) {
-//best effort to calculate the local steepest gradient
+double DEMObject::steepestGradient(const double& cellsize, double A[4][4]) 
+{ //best effort to calculate the local steepest gradient
 	double smax=-1.;		//maximum slope of all neighboring slopes
-	const double sqrt2=sqrt(2.);	//the weight of the 4 corner cells is increased by sqrt(2)
+	static const double sqrt2 = sqrt(2.);	//the weight of the 4 corner cells is increased by sqrt(2)
 
 	if (A[2][2]!=IOUtils::nodata) {
 		if (A[1][1]!=IOUtils::nodata)
@@ -814,8 +816,8 @@ double DEMObject::steepestGradient(double A[4][4]) {
 	return smax;
 }
 
-double DEMObject::lineGradient(const double& A1, const double& A2, const double& A3) {
-//best effort to calculate the local gradient
+double DEMObject::lineGradient(const double& A1, const double& A2, const double& A3) 
+{ //best effort to calculate the local gradient
 	if (A3!=IOUtils::nodata && A1!=IOUtils::nodata) {
 		return A3 - A1;
 	} else {
@@ -888,8 +890,20 @@ double DEMObject::avgHeight(const double& z1, const double &z2, const double& z3
 	return IOUtils::nodata;
 }
 
-void DEMObject::getNeighbours(const size_t i, const size_t j, double A[4][4]) {
-//this fills a 3x3 table containing the neighboring values
+void DEMObject::getNeighbours(const size_t& i, const size_t& j, double A[4][4]) const 
+{ //this fills a 3x3 table containing the neighboring values
+	if ((i>0 && i<(getNx()-1)) && (j>0 && j<(getNy()-1))) {
+		//this is the normal case
+		A[1][1] = grid2D(i-1, j+1);
+		A[1][2] = grid2D(i, j+1);
+		A[1][3] = grid2D(i+1, j+1);
+		A[2][1] = grid2D(i-1, j);
+		A[2][2] = grid2D(i, j);
+		A[2][3] = grid2D(i+1, j);
+		A[3][1] = grid2D(i-1, j-1);
+		A[3][2] = grid2D(i, j-1);
+		A[3][3] = grid2D(i+1, j-1);
+	} else { //somewhere on the border
 		A[1][1] = safeGet((signed)i-1, (signed)j+1);
 		A[1][2] = safeGet((signed)i, (signed)j+1);
 		A[1][3] = safeGet((signed)i+1, (signed)j+1);
@@ -899,9 +913,10 @@ void DEMObject::getNeighbours(const size_t i, const size_t j, double A[4][4]) {
 		A[3][1] = safeGet((signed)i-1, (signed)j-1);
 		A[3][2] = safeGet((signed)i, (signed)j-1);
 		A[3][3] = safeGet((signed)i+1, (signed)j-1);
+	}
 }
 
-double DEMObject::safeGet(const int i, const int j)
+double DEMObject::safeGet(const int& i, const int& j) const
 {//this function would allow reading the value of *any* point,
 //that is, even for coordinates outside of the grid (where it would return nodata)
 //this is to make implementing the slope/curvature computation easier for edges, holes, etc

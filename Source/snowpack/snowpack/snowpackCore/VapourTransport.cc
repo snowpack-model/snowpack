@@ -331,7 +331,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 
 	if (enable_vapour_transport) {
 		// Solve vapour transport in snow
-		while (e-- > 0.) {
+		while (e-- > 0) {
 			const double topFlux = botFlux;										//top layer flux (kg m-2 s-1)
 			
 			const double gradTbot = (e == 0) ? (0.) : .5 * (EMS[e-1].gradT + EMS[e].gradT);				//Temperature gradient at the upper node (K m-1)

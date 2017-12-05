@@ -1,4 +1,4 @@
-# Install script for directory: /home/nander/snowpack_greenland_new/snowpack
+# Install script for directory: /media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/snowpack/snowpack
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -42,13 +42,13 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "exe" OR NOT CMAKE_INSTALL_COMPONENT)
        NOT IS_SYMLINK "${file}")
       file(RPATH_CHECK
            FILE "${file}"
-           RPATH "/home/nander/usr/lib:/usr/lib/liblapack.so:/usr/lib/libblas.so:/home/nander/meteoio/lib")
+           RPATH "/home/nander/usr/lib:/usr/lib/x86_64-linux-gnu/liblapack.so:/usr/lib/x86_64-linux-gnu/libblas.so")
     endif()
   endforeach()
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES
-    "/home/nander/snowpack_greenland_new/lib/libsnowpack.so.3.4.1"
-    "/home/nander/snowpack_greenland_new/lib/libsnowpack.so.3"
-    "/home/nander/snowpack_greenland_new/lib/libsnowpack.so"
+    "/media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/snowpack/lib/libsnowpack.so.3.4.1"
+    "/media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/snowpack/lib/libsnowpack.so.3"
+    "/media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/snowpack/lib/libsnowpack.so"
     )
   foreach(file
       "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libsnowpack.so.3.4.1"
@@ -59,8 +59,8 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "exe" OR NOT CMAKE_INSTALL_COMPONENT)
        NOT IS_SYMLINK "${file}")
       file(RPATH_CHANGE
            FILE "${file}"
-           OLD_RPATH "/usr/lib/liblapack.so:/usr/lib/libblas.so:/home/nander/meteoio/lib:::::::::::::::::::::"
-           NEW_RPATH "/home/nander/usr/lib:/usr/lib/liblapack.so:/usr/lib/libblas.so:/home/nander/meteoio/lib")
+           OLD_RPATH "/usr/lib/x86_64-linux-gnu/liblapack.so:/usr/lib/x86_64-linux-gnu/libblas.so:/home/nander/usr/lib:"
+           NEW_RPATH "/home/nander/usr/lib:/usr/lib/x86_64-linux-gnu/liblapack.so:/usr/lib/x86_64-linux-gnu/libblas.so")
       if(CMAKE_INSTALL_DO_STRIP)
         execute_process(COMMAND "/usr/bin/strip" "${file}")
       endif()

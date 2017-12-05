@@ -1,4 +1,4 @@
-# Install script for directory: /home/nander/meteoio/meteoio/meteoLaws
+# Install script for directory: /media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/meteoio/meteoio/meteoLaws
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

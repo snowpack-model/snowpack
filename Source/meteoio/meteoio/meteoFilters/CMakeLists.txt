@@ -30,4 +30,5 @@ SET(meteoFilters_sources
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
 	meteoFilters/FilterDeGrass.cc
+	meteoFilters/TimeFilters.cc
 )

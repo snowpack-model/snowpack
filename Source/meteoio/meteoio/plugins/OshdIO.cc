@@ -479,7 +479,7 @@ void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
 			}
 		}
 		if (!found) 
-			throw NotFoundException("station ID '"+vecIDs[ii]+"' could not be found in the provided data", AT);
+			throw NotFoundException("station ID '"+vecIDs[ii]+"' could not be found in the provided metadata", AT);
 	}
 }
 

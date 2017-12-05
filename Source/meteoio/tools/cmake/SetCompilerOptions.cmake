@@ -92,9 +92,6 @@ MACRO (SET_COMPILER_OPTIONS)
 		ENDIF()
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
-		#IF(BUILD_SHARED_LIBS)
-		#	ADD_DEFINITIONS(-DMIO_DLL)
-		#ENDIF(BUILD_SHARED_LIBS)
 		
 		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wwrite-strings")

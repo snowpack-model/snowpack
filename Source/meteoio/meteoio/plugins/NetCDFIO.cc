@@ -70,7 +70,7 @@ namespace mio {
  * - NETCDF::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  * - DEM_FROM_PRESSURE: if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
  *
- * When providing multiple files in one directory, in case of overlapping files, the file containing the newest data has priority. This is
+ * When providing multiple files in one directory, in case of overlapping files (because each file can provide multiple timestamps), the file containing the newest data has priority. This is
  * convenient when using forecats data to automatically use the most short-term forecast.
  * 
  * @section netcdf_example Example use
@@ -324,7 +324,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 		}
 		//the date was not found
 		const std::string in_grid2d_path = cfg.get("GRID2DPATH", "Input");
-		throw InvalidArgumentException("No Gridded data found for "+date.toString(Date::ISO)+"in '"+in_grid2d_path+"'", AT);
+		throw InvalidArgumentException("No Gridded data found for "+date.toString(Date::ISO)+" in '"+in_grid2d_path+"'", AT);
 	} else {
 		const std::string filename = cfg.get("GRID2DFILE", "Input");
 		read2DGrid(grid_out, parameter, date, filename);
@@ -673,7 +673,12 @@ bool NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 		ncpp::get_attribute(ncid, varname, varid, "units", units);
 		if (units=="m**2 s**-2") grid_out /= Cst::gravity;
 		if (units=="%") grid_out /= 100.;
-		if (units=="J m**-2") grid_out /= (3600.*3.);
+		if (units=="J m**-2") {
+			grid_out /= (3600.*3.); //HACK: this is the ECMWF sampling rate
+			//reset very low radiation to zero
+			for (size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)
+				if (grid_out(ii)<1e-3 && grid_out(ii)!=mio::IOUtils::nodata) grid_out(ii)=0.;
+		}
 		if (isPrecip && units=="m") grid_out *= 100.;
 		if (isPrecip) {//reset very low precip to zero
 			for (size_t ii=0; ii<(grid_out.getNx()*grid_out.getNy()); ii++)

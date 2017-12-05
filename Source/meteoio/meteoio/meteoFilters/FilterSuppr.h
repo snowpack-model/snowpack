@@ -20,6 +20,7 @@
 
 #include <meteoio/meteoFilters/FilterBlock.h>
 #include <vector>
+#include <map>
 #include <string>
 
 namespace mio {
@@ -67,21 +68,10 @@ class FilterSuppr : public FilterBlock {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void fillSuppr_dates(const std::string& filename, const double& TZ);
 		void supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const;
-
-		typedef struct SUPPR_SPEC {
-			SUPPR_SPEC() : start(), end() {}
-			SUPPR_SPEC(const Date& d1, const Date& d2) : start(d1), end(d2) {}
-			bool operator<(const SUPPR_SPEC& a) const { //needed for "sort"
-				return start < a.start;
-			}
-
-			Date start, end;
-		} suppr_spec;
 		
-		std::map< std::string, std::vector<suppr_spec> > suppr_dates;
+		std::map< std::string, std::vector<dates_range> > suppr_dates;
 		double range;
 };
 

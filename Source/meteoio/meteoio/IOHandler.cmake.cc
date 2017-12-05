@@ -358,14 +358,14 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
-           : IOInterface(), cfg(aio.cfg), dataCreator(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params),
+           : IOInterface(), cfg(aio.cfg), dataCreator(aio.cfg), timeproc(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params),
              merge_commands(aio.merge_commands), copy_commands(aio.copy_commands), move_commands(aio.move_commands),
              merged_stations(aio.merged_stations), merge_strategy(aio.merge_strategy), 
              copy_ready(aio.copy_ready), move_ready(aio.move_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
-           : IOInterface(), cfg(cfgreader), dataCreator(cfgreader), mapPlugins(), excluded_params(), kept_params(),
+           : IOInterface(), cfg(cfgreader), dataCreator(cfgreader), timeproc(cfgreader), mapPlugins(), excluded_params(), kept_params(),
              merge_commands(), copy_commands(), move_commands(), 
              merged_stations(), merge_strategy(MeteoData::STRICT_MERGE), 
              copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
@@ -387,6 +387,7 @@ IOHandler::~IOHandler() throw()
 IOHandler& IOHandler::operator=(const IOHandler& source) {
 	if (this != &source) {
 		dataCreator = source.dataCreator;
+		timeproc = source.timeproc;
 		mapPlugins = source.mapPlugins;
 		excluded_params = source.excluded_params;
 		kept_params = source.kept_params;
@@ -455,8 +456,6 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
-
-	checkTimestamps(vecMeteo);
 	
 	if (!move_ready) create_move_map();
 	move_params(vecMeteo);
@@ -472,6 +471,9 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	
 	if (!copy_ready) create_copy_map();
 	copy_params(vecMeteo);
+	
+	timeproc.process(vecMeteo, false);
+	TimeProcStack::checkUniqueTimestamps(vecMeteo);
 
 	dataCreator.createParameters(vecMeteo);
 }
@@ -516,31 +518,6 @@ void IOHandler::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Para
 {
 	IOInterface *plugin = getPlugin("GRID3D", "Output");
 	plugin->write3DGrid(grid_out, parameter, date);
-}
-
-/** 
- * @brief check that timestamps are unique and in increasing order
- * @param[in] vecVecMeteo all the data for all the stations
-*/
-void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo)
-{
-	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
-		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
-		if (nr_timestamps==0) continue;
-
-		Date previous_date( vecVecMeteo[stat_idx].front().date );
-		for (size_t ii=1; ii<nr_timestamps; ++ii) {
-			const Date current_date( vecVecMeteo[stat_idx][ii].date );
-			if (current_date<=previous_date) {
-				const StationData& station( vecVecMeteo[stat_idx][ii].meta );
-				if (current_date==previous_date)
-					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique!", AT);
-				else
-					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO), AT);
-			}
-			previous_date = current_date;
-		}
-	}
 }
 
 void IOHandler::create_merge_map()

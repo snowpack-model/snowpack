@@ -50,7 +50,9 @@ namespace mio {
  *
  * This means that close to the center of the grid, coordinates and distances will work as expected, but the distortion will increase when moving away from the center and can become significant. As examples for domain size, cone can look at the MeteoSwiss domain definition at http://www.cosmo-model.org/content/tasks/operational/meteoSwiss/default.htm .
  *
- * As a side note, when calling read2DGrid(grid, filename), it will returns the first grid that is found.
+ * As a side note, when calling read2DGrid(grid, filename), it will returns the first grid that is found. When using the standard call, it will look for the the file 
+ * within the provided directory that contains the requested timestamp and read the requested field from it. Each file should contain all the fields but 
+ * only one timestamp per file.
  *
  * @section gribio_cosmo_partners COSMO Group
  * This plugin has been developed primarily for reading GRIB files produced by COSMO (http://www.cosmo-model.org/) at MeteoSwiss.
@@ -210,7 +212,7 @@ void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 
 void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 {
-	const unsigned int MAX_VAL_LEN = 1024; //max value string length in GRIB
+	static const unsigned int MAX_VAL_LEN = 1024; //max value string length in GRIB
 	unsigned long key_iterator_filter_flags = GRIB_KEYS_ITERATOR_ALL_KEYS;
 	char* name_space = NULL;
 	grib_keys_iterator* kiter = grib_keys_iterator_new(*h,key_iterator_filter_flags,name_space);
@@ -461,7 +463,7 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
-	const std::string filename = grid2dpath_in+"/"+i_name;
+	const std::string filename( grid2dpath_in+"/"+i_name );
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
@@ -501,7 +503,7 @@ void GRIBIO::indexFile(const std::string& filename)
 	}
 
 	int err=0;
-	const std::string keys("marsParam:d,indicatorOfTypeOfLevel:l"); //indexing keys
+	static const std::string keys("marsParam:d,indicatorOfTypeOfLevel:l"); //indexing keys
 	char *c_filename = (char *)filename.c_str();
 	idx = grib_index_new_from_file(0, c_filename, keys.c_str(), &err);
 	if (err!=0) {
@@ -532,7 +534,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	Date UTC_date = date;
 	UTC_date.setTimeZone(tz_in);
 
-	const std::string filename = grid2dpath_in+"/"+grid2d_prefix+UTC_date.toString(Date::NUM).substr(0,10)+grid2d_ext;
+	const std::string filename( grid2dpath_in+"/"+grid2d_prefix+UTC_date.toString(Date::NUM).substr(0,10)+grid2d_ext );
 
 	read2DGrid(filename, grid_out, parameter, UTC_date);
 }
@@ -782,7 +784,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		for (size_t ii=idx_start; ii<cache_meteo_files.size(); ii++) {
 			const Date& date = cache_meteo_files[ii].first;
 			if (date>dateEnd) break;
-			const std::string filename = meteopath_in+"/"+cache_meteo_files[ii].second;
+			const std::string filename( meteopath_in+"/"+cache_meteo_files[ii].second );
 
 			if (!indexed || idx_filename!=filename) {
 				cleanup();
@@ -894,9 +896,8 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		double true_lat, true_lon;
 		CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
 		sd.position.setLatLon(true_lat, true_lon, values[ii]);
-		ostringstream ss;
-		ss << "Point_" << indexes[ii];
-		sd.stationID=ss.str();
+		const std::string idx_str( static_cast<ostringstream*>( &(ostringstream() << indexes[ii]) )->str() );
+		sd.stationID = "Point_" + idx_str;
 		ostringstream ss2;
 		ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
 		sd.stationName=ss2.str();

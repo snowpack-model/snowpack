@@ -541,11 +541,15 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 */
 void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const CurrentMeteo& Mdata)
 {
-	double actual_height_of_meteo_values;
-	if(!adjust_height_of_meteo_values)
-		actual_height_of_meteo_values=height_of_meteo_values + Xdata.cH - Xdata.Ground;
-	else
-		actual_height_of_meteo_values=height_of_meteo_values;
+	// Determine actual height of meteo values above Xdata.SoilNode:
+	double actual_height_of_meteo_values;	// Height with reference Xdata.SoilNode
+	if(!adjust_height_of_meteo_values) {
+		// Case of fixed height above snow surface (e.g., weather model)
+		actual_height_of_meteo_values = height_of_meteo_values + Xdata.cH - Xdata.Ground;
+	} else {
+		// Case of fixed height above ground surface (e.g., weather station)
+		actual_height_of_meteo_values = height_of_meteo_values;
+	}
 
 	const double alpha = SnLaws::compSensibleHeatCoefficient(Mdata, Xdata, actual_height_of_meteo_values) * Constants::density_air * Constants::specific_heat_air;
 	const double Tair = Mdata.ta;
@@ -619,11 +623,15 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
                                          double Se[ N_OF_INCIDENCES ][ N_OF_INCIDENCES ],
                                          double Fe[ N_OF_INCIDENCES ])
 {
-	double actual_height_of_meteo_values;
-	if(!adjust_height_of_meteo_values)
-		actual_height_of_meteo_values=height_of_meteo_values + Xdata.cH - Xdata.Ground;
-	else
-		actual_height_of_meteo_values=height_of_meteo_values;
+	// Determine actual height of meteo values above Xdata.SoilNode:
+	double actual_height_of_meteo_values;	// Height with reference Xdata.SoilNode
+	if(!adjust_height_of_meteo_values) {
+		// Case of fixed height above snow surface (e.g., weather model)
+		actual_height_of_meteo_values = height_of_meteo_values + Xdata.cH - Xdata.Ground;
+	} else {
+		// Case of fixed height above ground surface (e.g., weather station)
+		actual_height_of_meteo_values = height_of_meteo_values;
+	}
 
 	const double T_air = Mdata.ta;
 	const size_t nE = Xdata.getNumberOfElements();

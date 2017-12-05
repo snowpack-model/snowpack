@@ -49,8 +49,9 @@ namespace mio {
  * - Unix date, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
  *
+ * \anchor date_formats
  * When parsing a string to extract a date (using IOUtils::convertString), various string representations are supported (the timezone term {TZ} is optional \em if a
- * fallback timezone is available, most probably as Input::TIME_ZONE in the configuration file):
+ * fallback timezone is available, most probably as Input::TIME_ZONE in the configuration file) with their <em>reduced accuracy</em> variations (see below):
  * - <A HREF="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</A> variations:
  *     - YYYY-MM-DDThh:mm:ss{TZ}, for example 2017-02-02T12:35:00 in the fallback time zone
  *     - YYYY-MM-DDThh:mm{TZ}, for example 2017-02-02T12:35+01:00
@@ -69,7 +70,8 @@ namespace mio {
  *     - NOW±{offset} (the offset is in seconds), for example NOW+3600
  *     - NOW±hh:mm (the offset is in hours and minutes), for example NOW-01:30
  *
- * The timezone information {TZ} is as laid out in Date::parseTimeZone.
+ * The timezone information {TZ} is as laid out in Date::parseTimeZone. <em>Reduced accuracy</em> means that any number of values may be dropped from the last
+ * to the most significant from the date and time representation.
  *
  * @ingroup data_str
  * @author Mathias Bavay

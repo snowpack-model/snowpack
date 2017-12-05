@@ -47,10 +47,11 @@ void SnowPSUMInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo_user, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gdm, param));
+	InterpolationAlgorithm* algorithm( AlgorithmFactory::getAlgorithm(base_algo_user, mi, vecArgs, tsmanager, gdm, param) );
 	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
+	delete algorithm;
 
 	//get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;

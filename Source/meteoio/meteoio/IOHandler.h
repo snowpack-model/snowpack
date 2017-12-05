@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/DataCreator.h>
+#include <meteoio/meteoFilters/TimeFilters.h>
 
 #include <map>
 #include <set>
@@ -76,7 +77,6 @@ class IOHandler : public IOInterface {
 		void create_keep_map();
 		void create_merge_map();
 		
-		static void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo);
 		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
 		void move_params(std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -86,6 +86,7 @@ class IOHandler : public IOInterface {
 
 		const Config& cfg;
 		DataCreator dataCreator;
+		TimeProcStack timeproc;
 		std::map<std::string, IOInterface*> mapPlugins;
 		std::map< std::string, std::set<std::string> > excluded_params; //station_id, set of params
 		std::map< std::string, std::set<std::string> > kept_params; //station_id, set of params

@@ -1,4 +1,4 @@
-# Install script for directory: /home/nander/meteoio/meteoio
+# Install script for directory: /media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/meteoio/meteoio
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -46,9 +46,9 @@ if("${CMAKE_INSTALL_COMPONENT}" STREQUAL "libraries" OR NOT CMAKE_INSTALL_COMPON
     endif()
   endforeach()
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES
-    "/home/nander/meteoio/lib/libmeteoio.so.2.7.0"
-    "/home/nander/meteoio/lib/libmeteoio.so.2"
-    "/home/nander/meteoio/lib/libmeteoio.so"
+    "/media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/meteoio/lib/libmeteoio.so.2.7.0"
+    "/media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/meteoio/lib/libmeteoio.so.2"
+    "/media/nander/46d45ce3-2115-47b4-90e0-f01b0b010844/src/polarsnowpack/snowpack/Source/meteoio/lib/libmeteoio.so"
     )
   foreach(file
       "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmeteoio.so.2.7.0"

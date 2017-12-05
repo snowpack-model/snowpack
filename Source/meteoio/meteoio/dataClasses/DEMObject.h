@@ -134,21 +134,21 @@ class DEMObject : public Grid2DObject {
 	private:
 		double getTanMaxSlope(const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j) const;
 		void CalculateAziSlopeCurve(slope_type algorithm);
-		double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);
+		static double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);
+		double getCurvature(double A[4][4]);
 		void CalculateHick(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void CalculateFleming(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void (DEMObject::*CalculateSlope)(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
-		double getCurvature(double A[4][4]);
-
-		double steepestGradient(double A[4][4]);
-		double lineGradient(const double& A1, const double& A2, const double& A3);
-		double fillMissingGradient(const double& delta1, const double& delta2);
-		void surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]);
-		double avgHeight(const double& z1, const double &z2, const double& z3);
-		void getNeighbours(const size_t i, const size_t j, double A[4][4]);
-		double safeGet(const int i, const int j);
+		
+		static double steepestGradient(const double& cellsize, double A[4][4]);
+		static double lineGradient(const double& A1, const double& A2, const double& A3);
+		static double fillMissingGradient(const double& delta1, const double& delta2);
+		static void surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]);
+		static double avgHeight(const double& z1, const double &z2, const double& z3);
+		void getNeighbours(const size_t& i, const size_t& j, double A[4][4]) const;
+		double safeGet(const int& i, const int& j) const;
 
 		double max_shade_distance; ///< maximum distance to look for when computing a horizon
 		int update_flag;

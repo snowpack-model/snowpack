@@ -18,6 +18,7 @@
 
 #include <meteoio/dataClasses/Buffer.h>
 
+#include <limits.h>
 #include <algorithm>
 
 using namespace std;
@@ -345,9 +346,11 @@ bool GridBuffer::get(DEMObject& grid, const std::string& grid_hash) const
 		//properties of the passed dem
 		const DEMObject::update_type in_ppt = (DEMObject::update_type)grid.getUpdatePpt();
 		const DEMObject::slope_type in_slope_alg = (DEMObject::slope_type)grid.getDefaultAlgorithm();
-
+		
 		//get cached dem and its properties
 		grid = (*it).second;
+		if (in_ppt==INT_MAX) return true; //nothing to do, no specific properties have been requested
+		
 		const DEMObject::update_type buff_ppt = (DEMObject::update_type)grid.getUpdatePpt();
 		const DEMObject::slope_type buff_slope_alg = (DEMObject::slope_type)grid.getDefaultAlgorithm();
 

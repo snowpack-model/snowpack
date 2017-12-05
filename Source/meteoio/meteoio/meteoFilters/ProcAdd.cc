@@ -163,7 +163,7 @@ void ProcAdd::parse_args(const std::vector< std::pair<std::string, std::string> 
 	if (type=='f') {
 		if (!has_period) throw InvalidArgumentException("Please provide a period for "+where, AT);
 		if (filename.empty()) throw InvalidArgumentException("Please provide a correction file for "+where, AT);
-		ProcessingBlock::readCorrections(getName(), filename, column, period, 0., vecCorrections);
+		vecCorrections = ProcessingBlock::readCorrections(getName(), filename, column, period, 0.);
 	}
 	if (type=='n') {
 		if (!has_distribution) throw InvalidArgumentException("Please provide a noise distribution for "+where, AT);

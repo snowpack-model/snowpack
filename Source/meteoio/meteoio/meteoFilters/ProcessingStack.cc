@@ -22,50 +22,47 @@
 using namespace std;
 
 namespace mio {
+const char ProcessingStack::NUM[] = "0123456789";
+const std::string ProcessingStack::filter_key( "::FILTER" );
+const std::string ProcessingStack::arg_key( "::ARG" );
+
+std::vector< std::pair<std::string, std::string> > ProcessingStack::parseArgs(const Config& cfg, const std::string& key, const std::string& parname)
+{
+	//extract the filter number and perform basic checks on the syntax
+	const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
+	const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
+	const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
+	if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
+
+	unsigned int filter_nr;
+	const std::string filter_nr_str( key.substr(start_filter_nr) );
+	if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
+
+	//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
+	std::ostringstream arg_str;
+	arg_str << parname << arg_key << filter_nr;
+	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "FILTERS") );
+	for (size_t jj=0; jj<vecArgs.size(); jj++) {
+		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
+		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+	}
+	
+	return vecArgs;
+}
 
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
-	static const  char NUM[] = "0123456789";
-	static const std::string filter_key( "::FILTER" );
-	static const std::string arg_key( "::ARG" );
-
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
-
-		//extract the filter number and perform basic checks on the syntax
-		const std::string key( vecFilters[ii].first );
-		const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
-		const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
-		const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
-		if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
-
-		unsigned int filter_nr;
-		const std::string filter_nr_str( key.substr(start_filter_nr) );
-		if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
-
-		//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
-		std::ostringstream arg_str;
-		arg_str << param_name << arg_key << filter_nr;
-		std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "FILTERS") );
-		for (size_t jj=0; jj<vecArgs.size(); jj++) {
-			const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
-			if (beg_arg_name==std::string::npos)
-				throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-			vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
-		}
-
-		//construct the filter with its name and arguments
+		
+		const std::vector< std::pair<std::string, std::string> > vecArgs( parseArgs(cfg, vecFilters[ii].first, parname) );
 		filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
 	}
-}
-
-ProcessingStack::~ProcessingStack()
-{
-	for (size_t ii=0; ii<filter_stack.size(); ii++)
-		delete filter_stack[ii];
 }
 
 void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
@@ -89,70 +86,76 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 	}
 }
 
+//ivec is passed by value, so it makes an efficient copy
+bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
+                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx)
+{
+	bool appliedFilter = false;
+	
+	//pick one element and check whether the param_name parameter exists
+	const size_t param = ivec.front().getParameterIndex(param_name);
+	if (param == IOUtils::npos) return appliedFilter;
+	
+	const size_t nr_of_filters = filter_stack.size();
+	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
+
+	//Now call the filters one after another for the current station and parameter
+	for (size_t jj=0; jj<nr_of_filters; jj++) {
+		if ((*filter_stack[jj]).skipStation( statID ))
+			continue;
+
+		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
+		if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+			continue;
+		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
+			continue;
+
+		appliedFilter = true;
+		(*filter_stack[jj]).process(static_cast<unsigned int>(param), ivec, ovec[stat_idx]);
+
+		if (ivec.size() != ovec[stat_idx].size()) {
+			ostringstream ss;
+			ss << "The filter \"" << (*filter_stack[jj]).getName() << "\" received " << ivec.size();
+			ss << " timestamps and returned " << ovec[stat_idx].size() << " timestamps!";
+			throw IndexOutOfBoundsException(ss.str(), AT);
+		}
+
+		#ifdef DATA_QA
+		for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
+			const double orig = ivec[kk](param);
+			const double filtered = ovec[stat_idx][kk](param);
+			if (orig!=filtered) {
+				const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
+				const std::string stat = (!statID.empty())? statID : statName;
+				const std::string filtername( (*filter_stack[jj]).getName() );
+				cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+			}
+		}
+		#endif
+		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
+			for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
+				ivec[kk](param) = ovec[stat_idx][kk](param);
+			}
+		}
+	}
+
+	return appliedFilter;
+}
+
 //this method applies the whole processing stack for all the stations, all the data points for one meteo param
 //(as defined in the constructor)
 void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
-	const size_t nr_of_filters = filter_stack.size();
 	const size_t nr_stations = ivec.size();
 	ovec.resize( nr_stations );
 
 	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
 		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
-
-		//pick one element and check whether the param_name parameter exists
-		const size_t param = ivec[ii].front().getParameterIndex(param_name);
-		if (param != IOUtils::npos) {
-			const std::string statID( ivec[ii][0].meta.getStationID() ); //we know there is at least 1 element (see above)
-			std::vector<MeteoData> tmp( ivec[ii] );
-
-			//Now call the filters one after another for the current station and parameter
-			bool appliedFilter = false;
-			for (size_t jj=0; jj<nr_of_filters; jj++) {
-				if ((*filter_stack[jj]).skipStation( statID ))
-					continue;
-
-				const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
-				if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
-					continue;
-				if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
-					continue;
-
-				appliedFilter = true;
-				(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
-
-				if (tmp.size() != ovec[ii].size()) {
-					ostringstream ss;
-					ss << "The filter \"" << (*filter_stack[jj]).getName() << "\" received " << tmp.size();
-					ss << " timestamps and returned " << ovec[ii].size() << " timestamps!";
-					throw IndexOutOfBoundsException(ss.str(), AT);
-				}
-
-				#ifdef DATA_QA
-				for (size_t kk=0; kk<ovec[ii].size(); kk++) {
-					const double orig = tmp[kk](param);
-					const double filtered = ovec[ii][kk](param);
-					if (orig!=filtered) {
-						const std::string statName( ovec[ii][kk].meta.getStationName() );
-						const std::string stat = (!statID.empty())? statID : statName;
-						const std::string filtername( (*filter_stack[jj]).getName() );
-						cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << " [" << tmp[kk].date.toString(Date::ISO_WEEK) << "]\n";
-					}
-				}
-				#endif
-				if ((jj+1) != nr_of_filters) {//not necessary after the last filter
-					for (size_t kk=0; kk<ovec[ii].size(); kk++) {
-						tmp[kk](param) = ovec[ii][kk](param);
-					}
-				}
-			}
-
-			if (!appliedFilter) //if not a single filter was applied
-				ovec[ii] = ivec[ii]; //just copy input to output
-		} else {
-			ovec[ii] = ivec[ii]; //just copy input to output
-		}
+		
+		const bool appliedFilter = filterStation(ivec[ii], ovec, second_pass, ii);
+		//if not even a single filter was applied, just copy input to output
+		if (!appliedFilter) ovec[ii] = ivec[ii];
 	}
 }
 

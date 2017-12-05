@@ -193,8 +193,8 @@ namespace Optim {
 	template <int n> inline float nth_rootf(float x) {
 		const bool sgn = (x<0.f)? true : false;
 		if (sgn) x = -x;
-		const int ebits = 8;
-		const int fbits = 23;
+		static const int ebits = 8;
+		static const int fbits = 23;
 
 		const int bias = (1 << (ebits-1))-1;
 		int& i = reinterpret_cast<int&>(x);
@@ -207,8 +207,8 @@ namespace Optim {
 	template <int n> inline double nth_rootd(double x) {
 		const bool sgn = (x<0.)? true : false;
 		if (sgn) x = -x;
-		const int ebits = 11;
-		const int fbits = 52;
+		static const int ebits = 11;
+		static const int fbits = 52;
 
 		const int64_t bias = (1 << (ebits-1))-1;
 		int64_t& i = reinterpret_cast<int64_t&>(x);
@@ -251,10 +251,10 @@ namespace Optim {
 	* @return 10^x with x in [0;1]
 	*/
 	inline double pow10(double x) {
-		const double a1 = 1.1499196;
-		const double a2 = 0.6774323;
-		const double a3 = 0.2080030;
-		const double a4 = 0.1268089;
+		static const double a1 = 1.1499196;
+		static const double a2 = 0.6774323;
+		static const double a3 = 0.2080030;
+		static const double a4 = 0.1268089;
 
 		const double x2 = x*x;
 		const double tmp = 1. + a1*x + a2*x*x + a3*x*x2 + a4*x2*x2;
@@ -287,10 +287,10 @@ namespace Optim {
 	* @return ln(1+x) with x in [0;1]
 	*/
 	inline double ln_1plusX(double x) {
-		const double a1 = 0.9974442;
-		const double a2 = -.4712839;
-		const double a3 = 0.2256685;
-		const double a4 = -.0587527;
+		static const double a1 = 0.9974442;
+		static const double a2 = -.4712839;
+		static const double a3 = 0.2256685;
+		static const double a4 = -.0587527;
 
 		const double x2 = x*x;
 		return a1*x + a2*x2 + a3*x*x2 + a4*x2*x2;

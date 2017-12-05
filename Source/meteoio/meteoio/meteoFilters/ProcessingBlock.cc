@@ -47,6 +47,7 @@
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
+#include <meteoio/meteoFilters/TimeFilters.h>
 
 namespace mio {
 /**
@@ -121,7 +122,10 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
- *
+ * 
+ * A few filters can be applied to the timestamps themselves:
+ * - SUPPR: delete whole timesteps, see TimeSuppr
+ * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
  */
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
@@ -188,7 +192,17 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}
+}
 
+ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
+{
+	if (blockname == "SUPPR"){
+		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else if (blockname == "UNDST"){
+		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else {
+		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
+	}
 }
 
 const double ProcessingBlock::soil_albedo = .23; //grass
@@ -222,7 +236,7 @@ bool ProcessingBlock::skipStation(const std::string& station_id) const
 	return (kept_stations.count(station_id)==0);
 }
 
-void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init, std::vector<double> &corrections)
+std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init)
 {
 	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
@@ -231,12 +245,13 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
-
-	if (c_type=='m') corrections.resize(12, init);
-	else if (c_type=='d') corrections.resize(366, init);
-	else if (c_type=='h') corrections.resize(24, init);
-	const size_t maxIndex = corrections.size();
+	
+	size_t maxIndex = 0;
 	const size_t minIndex = (c_type=='h')? 0 : 1;
+	if (c_type=='m') maxIndex = 12;
+	else if (c_type=='d') maxIndex = 366;
+	else if (c_type=='h') maxIndex = 24;
+	std::vector<double> corrections(maxIndex, init);
 
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
@@ -283,6 +298,146 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 		}
 		throw;
 	}
+	
+	return corrections;
+}
+
+std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx)
+{
+	if (col_idx<2)
+		throw InvalidArgumentException("Filter "+filter+": the column index must be greater than 1!", AT);
+	
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+
+	std::vector<offset_spec> corrections;
+
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+
+	try {
+		size_t lcount=0;
+		double value;
+		Date date;
+		std::string tmp;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss( line );
+			iss >> std::skipws >> tmp;
+			const bool status = IOUtils::convertString(date, tmp, TZ);
+			if ( !iss || !status) {
+				std::ostringstream ss;
+				ss << "Invalid date in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			size_t ii=2;
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			do {
+				iss >> std::skipws >> value;
+				if ( iss.fail() ){
+					std::ostringstream ss;
+					ss << "In file " << filename << " at line " << lcount;
+					if (!iss.eof())
+						ss << ": invalid value";
+					else
+						ss << ": trying to read column " << col_idx << " of " << ii-1 << " columns";
+					throw InvalidArgumentException(ss.str(), AT);
+				}
+			} while ((ii++) < col_idx);
+			corrections.push_back( offset_spec(date, value) );
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+	
+	std::sort(corrections.begin(), corrections.end());
+	return corrections;
+}
+
+std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlock::readDates(const std::string& filter, const std::string& filename, const double& TZ)
+{
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+	
+	std::ifstream fin(filename.c_str());
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	std::map< std::string, std::vector<dates_range> > dates_specs;
+	
+	Date d1, d2;
+	try {
+		size_t lcount=0;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+			
+			std::vector<std::string> vecString;
+			const size_t nrElems = IOUtils::readLineToVec(line, vecString);
+			if (nrElems<2)
+				throw InvalidFormatException("Invalid syntax for filter " + filter + " in file \"" + filename + "\": expecting at least 2 arguments", AT);
+
+			const std::string station_ID( vecString[0] );
+			if (nrElems==2) {
+				if (!IOUtils::convertString(d1, vecString[1], TZ))
+					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
+				const dates_range range(d1, d1);
+				dates_specs[ station_ID ].push_back( range );
+			} else if (nrElems==3) {
+				if (!IOUtils::convertString(d1, vecString[1], TZ))
+					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
+				if (!IOUtils::convertString(d2, vecString[2], TZ))
+					throw InvalidFormatException("Could not process date "+vecString[2]+" in file \""+filename+"\"", AT);
+				const dates_range range(d1, d2);
+				dates_specs[ station_ID ].push_back( range );
+			} else if (nrElems==4 && vecString[2]=="-") {
+				if (!IOUtils::convertString(d1, vecString[1], TZ))
+					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
+				if (!IOUtils::convertString(d2, vecString[3], TZ))
+					throw InvalidFormatException("Could not process date "+vecString[3]+" in file \""+filename+"\"", AT);
+				const dates_range range(d1, d2);
+				dates_specs[ station_ID ].push_back( range );
+			} else
+				throw InvalidFormatException("Unrecognized syntax in file \""+filename+"\": '"+line+"'\n", AT);
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+
+	//sort all the suppr_specs
+	std::map< std::string, std::vector<dates_range> >::iterator station_it( dates_specs.begin() );
+	for (; station_it!=dates_specs.end(); ++station_it) {
+		std::sort(station_it->second.begin(), station_it->second.end());
+	}
+	return dates_specs;
 }
 
 const std::string ProcessingBlock::toString() const {

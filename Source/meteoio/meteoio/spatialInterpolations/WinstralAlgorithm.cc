@@ -72,10 +72,11 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	const std::string base_algo = (nrOfMeasurments==1)? "AVG" : base_algo_user; //if there is only one station, revert to a safe default
 
 	const std::vector< std::pair<std::string, std::string> > vecArgs( mi.getArgumentsForAlgorithm(param, base_algo, "Interpolations2D") );
-	std::auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gdm, param));
+	InterpolationAlgorithm* algorithm( AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs, tsmanager, gdm, param) );
 	algorithm->getQualityRating(date);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
+	delete algorithm;
 }
 
 bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station)

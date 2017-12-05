@@ -107,7 +107,8 @@ class Meteo2DInterpolator {
 		///Keywords for virtual stations strategy
 		typedef enum VSTATIONS_POLICY {
 			VSTATIONS, ///< extract virtual stations as specified in the ini file
-			DOWNSCALING, ///< extract all grid points from a provided grid
+			GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+			GRID_ALL, ///< extract all grid points from a provided grid
 			SMART_DOWNSCALING ///< extract all relevant grid points from a provided grid
 		} vstations_policy;
 
@@ -177,11 +178,13 @@ class Meteo2DInterpolator {
 		size_t getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo);
 		void setAlgorithms();
 		void initVirtualStations(const bool& adjust_coordinates);
+		void initVirtualStationsAtAllGridPoints();
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		TimeSeriesManager *tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
 		GridsManager *gridsmanager; ///< Reference to GridsManager object, used for callbacks, initialized during construction
 		GridBuffer grid_buffer;
+		DEMObject internal_dem; ///< With virtual stations & resampling, we must have a DEM, so we keep an internal copy
 
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 

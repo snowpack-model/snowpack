@@ -83,7 +83,7 @@ void IOManager::load_virtual_meteo(const Date& i_date, METEO_SET& vecMeteo)
 	if (virtual_stations)
 		interpolator.getVirtualMeteoData(Meteo2DInterpolator::VSTATIONS, i_date, vecMeteo);
 	if (downscaling)
-		interpolator.getVirtualMeteoData(Meteo2DInterpolator::SMART_DOWNSCALING, i_date, vecMeteo);
+		interpolator.getVirtualMeteoData(Meteo2DInterpolator::GRID_EXTRACT, i_date, vecMeteo);
 
 	tsmanager.push_meteo_data(IOUtils::raw, range_start, range_end, vecMeteo);
 }
@@ -105,7 +105,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end)
 			load_virtual_meteo(i_date_down, vecMeteo);
 
-		if (buff_start.isUndef() || i_date_up<buff_start || i_date_up>buff_end)
+		if (i_date_down!=i_date_up && (buff_start.isUndef() || i_date_up<buff_start || i_date_up>buff_end)) //sometimes, up and down are rounded up to the same value...
 			load_virtual_meteo(i_date_up, vecMeteo);
 
 		tsmanager.getMeteoData(i_date, vecMeteo);

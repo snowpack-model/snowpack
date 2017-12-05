@@ -418,6 +418,16 @@ template<> bool convertString<unsigned int>(unsigned int& t, std::string str, st
 	}
 }
 
+/**
+* @brief Convert a string to a date (template specialization of convertString)
+* @details The date formats that are recognized are described in the \ref date_formats "Date class".
+* @param[out] t   The value converted to a Date object.
+* @param[in] str    The input string to convert; trailling whitespaces are ignored,
+*              comment after non-string values are allowed, but multiple values are not allowed.
+* @param[in] time_zone The timezone the provided date is into
+* @param[in] f  The radix for reading numbers, such as std::dec or std::oct; default is std::dec.
+* @return true if everything went fine, false otherwise
+*/
 bool convertString(Date& t, std::string str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
 {
 	trim(str); //delete trailing and leading whitespaces and tabs
