@@ -437,21 +437,31 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	// Add advective heat (for permafrost) if available
 	if (md.param_exists("ADV_HEAT"))
 		Mdata.adv_heat = md("ADV_HEAT");
-		
+
 	// Add massbal parameters (surface snow melt, snow drift, sublimation) 
 	if(md.param_exists("SMELT"))
 		Mdata.surf_melt = md("SMELT");
+	else
+		Mdata.surf_melt = mio::IOUtils::nodata;
 	if(md.param_exists("SNOWD"))
 		Mdata.snowdrift = md("SNOWD");
+	else
+		Mdata.snowdrift = mio::IOUtils::nodata;
 	if(md.param_exists("SUBLI"))
 		Mdata.sublim = md("SUBLI");
+	else
+		Mdata.sublim = mio::IOUtils::nodata;
 	
 	//Add atmospheric optical depth and atmospheric pressure parameters
 	if(md.param_exists("ODC"))
 		Mdata.odc = md("ODC");
+	else
+		Mdata.odc = mio::IOUtils::nodata;
 	if(md.param_exists("P"))
 		Mdata.p = md("P");
-		
+	else
+		Mdata.p = mio::IOUtils::nodata;
+
 }
 
 inline double getHS_last3hours(mio::IOManager &io, const mio::Date& current_date)
@@ -1123,9 +1133,9 @@ inline void real_main (int argc, char *argv[])
                                        tot_mass_in, variant);
 
 				// Convert units of massbal parameters
-				Mdata.surf_melt *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-				Mdata.snowdrift	*= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-				Mdata.sublim *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
+				if (Mdata.surf_melt != mio::IOUtils::nodata) Mdata.surf_melt *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
+				if (Mdata.snowdrift != mio::IOUtils::nodata) Mdata.snowdrift *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
+				if (Mdata.sublim != mio::IOUtils::nodata) Mdata.sublim *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
 
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;
