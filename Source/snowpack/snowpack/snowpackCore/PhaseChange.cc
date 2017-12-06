@@ -84,8 +84,8 @@ PhaseChange::PhaseChange(const SnowpackConfig& cfg)
 
 	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
+
 	cfg.getValue("FORCING", "SnowpackAdvanced", forcing);
-	
 }
 
 /**
@@ -119,7 +119,7 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 	 * Now see if any melting is going on -- this implies that (1) the temperature of the element
 	 * is above the melting temperature (2) there is something to melt and (3) there is enough
 	 * room to place the meltwater ...
-	*/	
+	 */
 	if (((Edata.Te < T_melt) && (ql_Rest < Constants::eps2) && (forcing=="ATMOS"))
 	        || (Edata.theta[ICE] <= 0.0) || (Edata.theta[WATER] >= PhaseChange::theta_s)) {
 	    return; // no melt with atmos forcing

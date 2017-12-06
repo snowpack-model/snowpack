@@ -289,7 +289,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("HEAT_END", "SnowpackAdvanced", heat_end, IOUtils::nothrow);
 	
 	// Soot/impurity in ppmv for albedo caclulations
-	cfg.getValue("SOOT_PPMV", "SnowpackAdvanced", soot_ppmv);	
+	cfg.getValue("SOOT_PPMV", "SnowpackAdvanced", soot_ppmv);
 }
 
 void Snowpack::setUseSoilLayers(const bool& value) { //NOTE is this really needed?
@@ -341,8 +341,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
 		double eta = SnLaws::smallest_viscosity; // snow viscosity
-//		if (EMS[e].Rho > 910. ||  EMS[e].theta[SOIL] > 0. || EMS[e].theta[ICE] < Constants::eps) {
-		if (EMS[e].theta[SOIL] > 0. || EMS[e].theta[ICE] < Constants::eps) {
+		if (EMS[e].Rho > 910. ||  EMS[e].theta[SOIL] > 0. || EMS[e].theta[ICE] < Constants::eps) {
 			EMS[e].k[SETTLEMENT] = eta = 1.0e99;
 		} else {
 			EMS[e].k[SETTLEMENT] = eta = SnLaws::compSnowViscosity(variant, viscosity_model, watertransportmodel_snow, EMS[e], Mdata.date);
@@ -388,7 +387,6 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 			double MaxSettlingFactor=1.;	// An additional maximum settling factor, between 0 and 1. 1: allow maximize possible settling, 0: no settling allowed.
 			if (watertransportmodel_snow=="RICHARDSEQUATION") MaxSettlingFactor=0.9;	//For stability in the numerical solver.
 			dL = std::max(dL, std::min(0., -1.*MaxSettlingFactor*L0*(EMS[e].theta[AIR]-((Constants::density_water/Constants::density_ice)-1.)*(EMS[e].theta[WATER]+EMS[e].theta[WATER_PREF]))));
-			dL = std::max(dL, std::min(0., L0 * (EMS[e].theta[ICE] - 1.))); // squeeze liquid water out (MaxSettlingFactor not considered!)
 
 			// Limit dL when the element length drops below minimum_l_element. This element will be merged in WaterTransport::mergingElements later on.
 			if ((L0 + dL) < (1.-Constants::eps)*minimum_l_element)
@@ -418,12 +416,6 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 		EMS[e].theta[WATER_PREF] *= L0 / (L0 + dL);
 		EMS[e].theta[ICE]   *= L0 / (L0 + dL);
 		EMS[e].L0 = EMS[e].L = (L0 + dL);
-		double theta_water_max; // squeeze liquid water out
-		if ((EMS[e].theta[ICE] + EMS[e].theta[WATER] * (Constants::density_water/Constants::density_ice)) > 1.) {
-			theta_water_max = (1. - EMS[e].theta[ICE]) * (Constants::density_ice/Constants::density_water);
-			EMS[e].excess_water += (EMS[e].theta[WATER] - theta_water_max) * EMS[e].L0 * Constants::density_water; // [kg m-2]
-			EMS[e].theta[WATER] = theta_water_max;
-		}
 		NDS[e+1].z = NDS[e].z + EMS[e].L;
 		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
 		EMS[e].Rho = (EMS[e].theta[ICE] * Constants::density_ice) + ((EMS[e].theta[WATER]+EMS[e].theta[WATER_PREF])
@@ -1440,7 +1432,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 		Sdata.cRho_hn = -rho_hn;
 
 	if (!enforce_measured_snow_heights) { // PSUM driven
-		if ((Mdata.psum>0. && Mdata.psum_ph<1.) || (cumu_precip >0.)) { //there is some snow
+		if (Mdata.psum>0. && Mdata.psum_ph<1.) { //there is some snow
 			const double precip_snow = Mdata.psum * (1. -  Mdata.psum_ph);
 			const double precip_rain = Mdata.psum * Mdata.psum_ph;
 			if ((cumu_precip > 0.) && (rho_hn != Constants::undefined)) {
@@ -1450,8 +1442,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				if ((hn_density == "MEASURED") || ((hn_density == "FIXED") && (rho_hn > SnLaws::max_hn_density))) {
 					// Make sure that a new element is timely added in the above cases
 					// TODO check whether needed in both cases
-//					if (((meteo_step_length / sn_dt) * (precip_snow)) <= cumu_precip) {
-					if (cumu_precip > Constants::eps) { // add precipitation instantaneously (-> height_new_elem obsolete)
+					if (((meteo_step_length / sn_dt) * (precip_snow)) <= cumu_precip || forcing == "MASSBAL") {
 						delta_cH = (cumu_precip / rho_hn);
 						add_element = true;
 					}
