@@ -100,9 +100,10 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), forestfloor_alb(false), adjust_height_of_meteo_values(true),
             advective_heat(false), heat_begin(0.), heat_end(0.), temp_index_degree_day(0.), temp_index_swr_factor(0.)
 {
+	cfg.getValue("FORCING", "Snowpack", forcing);
+
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
-	cfg.getValue("FORCING", "SnowpackAdvanced", forcing);
 
 	//Define keys for new snow density computation
 	cfg.getValue("HN_DENSITY", "SnowpackAdvanced", hn_density);

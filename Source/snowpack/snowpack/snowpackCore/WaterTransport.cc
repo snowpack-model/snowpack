@@ -130,7 +130,7 @@ WaterTransport::WaterTransport(const SnowpackConfig& cfg)
 		iwatertransportmodel_soil=RICHARDSEQUATION;
 	}
 	
-	cfg.getValue("FORCING", "SnowpackAdvanced", forcing);
+	cfg.getValue("FORCING", "Snowpack", forcing);
 }
 
 

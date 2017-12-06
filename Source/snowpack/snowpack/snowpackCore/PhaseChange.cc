@@ -85,7 +85,7 @@ PhaseChange::PhaseChange(const SnowpackConfig& cfg)
 	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 
-	cfg.getValue("FORCING", "SnowpackAdvanced", forcing);
+	cfg.getValue("FORCING", "Snowpack", forcing);
 }
 
 /**

@@ -71,7 +71,7 @@ SnowDrift::SnowDrift(const SnowpackConfig& cfg) : saltation(cfg),
 	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
 	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
 	sn_dt = M_TO_S(calculation_step_length);
-	cfg.getValue("FORCING", "SnowpackAdvanced", forcing);
+	cfg.getValue("FORCING", "Snowpack", forcing);
 }
 
 /**

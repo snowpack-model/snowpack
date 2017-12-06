@@ -90,7 +90,6 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["T_CRAZY_MAX"] = "340.";
 	advancedConfig["T_CRAZY_MIN"] = "210.";
 	advancedConfig["VARIANT"] = "DEFAULT";
-	advancedConfig["FORCING"] = "ATMOS";
 	advancedConfig["VISCOSITY_MODEL"] = "DEFAULT";
 	advancedConfig["WATER_LAYER"] = "false";
 	advancedConfig["WATERTRANSPORTMODEL_SNOW"]="BUCKET";
