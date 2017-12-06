@@ -579,7 +579,7 @@ void SnLaws::compShortWaveAbsorption(const std::string& i_sw_absorption_scheme, 
 			if (I0_band > 5.e-4)
 				EMS[bottom_element].sw_abs += I0_band;
 		}
-	} else if (i_sw_absorption_scheme == "1_BAND") { // ad hoc "1-Band" model
+	} else if (i_sw_absorption_scheme == "SINGLE_BAND") { // ad hoc "1-Band" model
 		double I0_band = I0;
 		for (size_t e = nE-1; e > bottom_element; e--) {
 			// Radiation absorbed by element e, transparent (=0.) for water
