@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<!--
+*
+*	This file is part of INIshell.
+*
+*   INIshell is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+*
+*   INIshell is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*
+* -->
+<xsd:schema version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:element name="inishell_config" type="general" />
+
+	<xsd:complexType name="general">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="parameter" type="parametertype" />
+			<xsd:element name="parametergroup" type="pargroup" />
+			<xsd:element name="include" type="pathonly" />
+			<xsd:element name="frame" type="framegroup" />
+		</xsd:choice>
+		<xsd:attribute name="application" />
+	</xsd:complexType>
+
+	<xsd:complexType name="framegroup">
+		<xsd:choice minOccurs="1" maxOccurs="unbounded">
+			<xsd:element name="parameter" type="parametertype" />
+			<xsd:element name="reference" type="nameonly" />
+			<xsd:element name="section" type="nameonly"/>
+		</xsd:choice>
+		<xsd:attribute name="key" />
+		<xsd:attribute name="label" />
+	</xsd:complexType>
+
+	<xsd:complexType name="parametertype">
+		<xsd:complexContent>
+			<xsd:extension base="parbasetype">
+				<xsd:attribute name="key" type="xsd:string" use="required"/>
+				<xsd:attribute name="default" type="xsd:string" />
+				<xsd:attribute name="counter" type="xsd:integer" />
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="nameonly">
+		<xsd:attribute name="name" />
+	</xsd:complexType>
+
+	<xsd:complexType name="optionvalue">
+		<xsd:attribute name="value" />
+	</xsd:complexType>
+
+	<xsd:complexType name="pathonly">
+		<xsd:attribute name="path" />
+	</xsd:complexType>
+
+	<xsd:complexType name="pargroup">
+		<xsd:choice minOccurs="1" maxOccurs="unbounded">
+			<xsd:element name="parameter" type="parametertype" />
+			<xsd:element name="reference" type="nameonly" />
+			<xsd:element name="option" type="optionvalue" />
+			<xsd:element name="frame" type="framegroup" />
+		</xsd:choice>
+		<xsd:attribute name="name" />
+	</xsd:complexType>
+
+	<xsd:complexType name="parbasetype">
+		<xsd:sequence>
+			<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="section" type="nameonly"/>
+			</xsd:sequence>
+			<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="replace" type="nameonly"/>
+			</xsd:sequence>
+			<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="parameter" type="parametertype" />
+			</xsd:sequence>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="option" minOccurs="0">
+					<xsd:complexType>
+						<xsd:complexContent>
+							<xsd:extension base="parbasetype">
+								<xsd:attribute name="value" type="xsd:string" use="required" />
+								<xsd:attribute name="label" type="xsd:string" use="optional" />
+								<xsd:attribute name="default" type="xsd:boolean" use="optional"/>
+							</xsd:extension>
+						</xsd:complexContent>
+					</xsd:complexType>
+				</xsd:element>
+			</xsd:choice>
+			<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="reference" type="nameonly" />
+			</xsd:sequence>
+			<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="help" type="helptype"/>
+			</xsd:sequence>
+		</xsd:sequence>
+
+		<xsd:attribute name="type" use="required">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="integer" />
+					<xsd:enumeration value="integer+" />
+					<xsd:enumeration value="decimal" />
+					<xsd:enumeration value="path" />
+					<xsd:enumeration value="file" />
+					<xsd:enumeration value="choice" />
+					<xsd:enumeration value="alternative" />
+					<xsd:enumeration value="dropdown" />
+					<xsd:enumeration value="string" />
+					<xsd:enumeration value="combination" />
+					<xsd:enumeration value="selector" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+
+		<xsd:attribute name="maximum" type="xsd:decimal"/>
+		<xsd:attribute name="minimum" type="xsd:decimal"/>
+		<xsd:attribute name="template" type="xsd:boolean" default="false" use="optional" />
+		<xsd:attribute name="optional" type="xsd:boolean" default="true" />
+	</xsd:complexType>
+
+	<xsd:complexType name="needstype">
+		<xsd:attribute name="type" type="xsd:string" use="required" />
+		<xsd:attribute name="name" type="xsd:string" use="required" />
+
+		<xsd:attribute name="value" />
+		<xsd:attribute name="optional" type="xsd:boolean" />
+		<xsd:attribute name="minoccur" type="xsd:integer" />
+		<xsd:attribute name="maxoccur" type="xsd:string" />
+	</xsd:complexType>
+
+	<xsd:complexType name="baseType">
+		<xsd:sequence minOccurs="0" maxOccurs="1">
+			<xsd:element name="help" type="helptype" />
+		</xsd:sequence>
+		<xsd:attribute name="key" type="xsd:string" use="required" />
+	</xsd:complexType>
+
+	<xsd:complexType name="helptype" mixed="true">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="section" type="nameonly" />
+			<xsd:element name="replace" type="nameonly" />
+		</xsd:choice>
+	</xsd:complexType>
+</xsd:schema>

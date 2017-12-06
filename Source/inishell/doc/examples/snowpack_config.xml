@@ -1,0 +1,2215 @@
+<inishell_config application="SNOWPACK">
+	<!-- <include path="doc/examples/meteoio_config.xml" /> -->
+	<!-- General Parameters -->
+	<frame key="import_frame" label="Import Config">
+		<section name="general"/>
+		<parameter key="IMPORT_BEFORE" type="path" optional="true">
+			<section name="general" />
+			<help>It is possible to import another ini file and overwrite its settings with the current one. In order to do it, provide the file path and name.</help>
+		</parameter>
+		<parameter key="IMPORT_AFTER" type="path" optional="true">
+			<section name="general" />
+			<help>It is possible to import another ini file and overwrite the current settings with the imported ones. In order to do it, provide the file path and name.</help>
+		</parameter>
+	</frame>
+
+	<frame key="buffering_frame" label="Buffering">
+		<section name="general" />
+		<parameter key="BUFF_CHUNK_SIZE" type="integer" default="370" optional="false">
+			<section name="general" />
+			<help>Size in days of a chunk of data to read at once.</help>
+		</parameter>
+		<parameter key="BUFF_BEFORE" type="decimal" default="1.5" optional="false">
+			<section name="general" />
+			<help>Alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
+			beginning of the buffer (therefore, it takes a value in days).</help>
+		</parameter>
+	</frame>
+
+	<!-- Coordinate systems, time zones -->
+	<parameter key="COORDSYS" type="alternative" optional="false">
+		<section name="input" />
+		<section name="output" />
+		<option value="CH1903" type="string">
+			<help>coordinates in the Swiss Grid &lt;a href="http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf"&gt;http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf&lt;/a&gt;</help>
+		</option>
+		<option value="CH1903+" type="string">
+			<help>coordinates in the Swiss Grid &lt;a href="http://www.swisstopo.admin.ch/internet/swisstopo/en/home/topics/survey/sys/refsys/switzerland.html"&gt;http://www.swisstopo.admin.ch/internet/swisstopo/en/home/topics/survey/sys/refsys/switzerland.html&lt;/a&gt;</help>
+		</option>
+		<option value="UTM" type="string">
+			<parameter key="COORDPARAM" type="string" optional="false">
+				<help>specify the zone with the zone letter (for example, 32T)</help>
+			</parameter>
+			<help>UTM coordinates, see &lt;a href="http://www.oc.nps.edu/oc2902w/maps/utmups.pdf"&gt;http://www.oc.nps.edu/oc2902w/maps/utmups.pdf&lt;/a&gt;</help>
+		</option>
+		<option value="UPS" type="string">
+			<parameter key="COORDPARAM" type="string" optional="false">
+				<help>specify the hemisphere (either N or S)</help>
+			</parameter>
+			<help>Universal Polar Stereographic coordinates, see &lt;a href="https://en.wikipedia.org/wiki/Universal_Polar_Stereographic_coordinate_system"&gt;https://en.wikipedia.org/wiki/Universal_Polar_Stereographic_coordinate_system&lt;/a&gt;</help>
+		</option>
+		<option value="PROJ4" type="string">
+			<parameter key="COORDPARAM" type="string" optional="false" />
+			<help>external library: see &lt;a href="http://trac.osgeo.org/proj/"&gt;http://trac.osgeo.org/proj/&lt;/a&gt;</help>
+		</option>
+		<option value="LOCAL"  type="string">
+			<help>uses the horizontal and vertical distance from a reference point</help>
+		</option>
+		<help>coordinate system</help>
+	</parameter>
+
+	<parameter key="TIME_ZONE" type="decimal" default="1" optional="false">
+		<section name="input" />
+		<section name="output" />
+	</parameter>
+
+	<!-- Datatypes: Meteo Data -->
+	<frame key="meteo_frame" label="Meteorological Data">
+		<section name="input"/>
+		<parameter key="METEO" type="alternative" optional="false">
+			<section name="input" />
+
+			<option value="ALPUG" type="string">
+				<section name="input" />
+				<reference name="ALPUG" />
+			</option>
+			<option value="A3D" type="string">
+				<parameter key="METEOPATH" type="path" optional="false">
+					<help>Path to the meteorological files; this path MUST exist, it won't be created</help>
+				</parameter>
+			</option>
+			<option value="BORMA" type="string">
+				<section name="input" />
+				<reference name="BORMA" />
+			</option>
+			<option value="CNRM" type="string">
+				<section name="input" />
+				<reference name="CNRM_IN" />
+			</option>
+			<option value="COSMO" type="string">
+				<section name="input" />
+				<reference name="COSMO_IN" />
+			</option>
+			<option value="GEOTOP" type="string">
+				<section name="input" />
+				<reference name="GEOTOP_IN" />
+			</option>
+			<option value="GRIB" type="string">
+				<section name="input" />
+				<reference name="GRIB_METEO" />
+			</option>
+			<option value="GSN" type="string">
+				<section name="input" />
+				<reference name="GSN" />
+			</option>
+			<option value="IMIS" type="string">
+				<section name="input" />
+				<reference name="IMIS" />
+			</option>
+			<option value="OSHD" type="string">
+				<section name="input" />
+				<reference name="OSHD" />
+			</option>
+			<option value="PSQL" type="string">
+				<section name="input" />
+				<reference name="PSQL_IN" />
+			</option>
+			<option value="SASE" type="string">
+				<section name="input" />
+				<reference name="SASE" />
+			</option>
+			<option value="SMET" type="string">
+				<section name="input" />
+				<reference name="SMET_IN" />
+			</option>
+			<option value="SNOWPACK" type="string">
+				<section name="input" />
+				<reference name="SNIO_IN" />
+			</option>
+
+			<help>plugin for METEO data </help>
+		</parameter>
+		<!--<parameter key="Exclude specific Meteo parameters" type="selector" optional="true">
+			<section name="input"/>
+			<parameter key="%::EXCLUDE" type="string" optional="false" template="true">
+				<help>Station ID to exclude sensors from (e.g. SLF2, FLU2, etc)</help>
+			</parameter>
+			<help>List of parameters to exclude from a specific station</help>
+		</parameter>-->
+		<!--<parameter key="Merge stations together" type="selector" optional="true">
+			<section name="input"/>
+			<parameter key="%::MERGE" type="string" optional="false" template="true">
+				<help>Station ID to merge from (e.g. SLF2, FLU2, etc)</help>
+			</parameter>
+			<help>The station ID on the left hand side has the priority and fills its missing fields from the station ID(s) on the right hand side.</help>
+		</parameter>-->
+		<parameter key="EXCLUDE_FILE" type="file" optional="true">
+			<section name="input" />
+			<help>File containing the list of parameters to exclude from specific station IDs. Another syntax is also possible, such as "SLF2::EXCLUDE = TA RH", see in the documentation</help>
+		</parameter>
+		<parameter key="Add Meteo parameter copy" type="selector" optional="true">
+			<section name="input"/>
+			<parameter key="%::COPY" type="string" optional="false" template="true">
+				<help>The name of the parameter to copy (e.g. TA, RH, VW, ISWR, etc)</help>
+			</parameter>
+			<help>Copy a meteo parameter into a new one (you should not need this)</help>
+		</parameter>
+		<parameter key="ISWR_IS_NET" type="alternative" default="FALSE" optional="true">
+			<section name="input" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Is the provided ISWR in fact Net Short Wave Radiation?</help>
+		</parameter>
+	</frame>
+
+	<!-- Extra Input Parameters -->
+	<frame key="snow_frame" label="Initial Snow Profiles">
+		<section name="input"/>
+		<parameter key="SNOWPATH" type="path" optional="true">
+			<section name="input" />
+			<help>Path to the land surface and snow input parameters; defaults to METEOPATH if not given.</help>
+		</parameter>
+		<parameter key="SNOW" type="alternative" default="SMET" optional="false">
+			<section name="input" />
+			<option value="SMET" type="string" >
+				<help>Plugin for reading SNO data (default, *.sno)</help>
+			</option>
+			<option value="CAAML" type="string">
+				<!--section name="output" />
+				<reference name="CAAML" /-->
+				<help>Plugin for reading SNO data. CAAML must have been enabled at compile time (*.caaml)</help>
+			</option>
+			<option value="SNOOLD" type="string" />
+			<help>Plugin for reading SNO data (deprecated, *.snoold)</help>
+		</parameter>
+		<parameter key="SNOWFILE#" type="file" counter="1" optional="false">
+			<section name="input" />
+			<help>file name for the initial profile for station number #</help>
+		</parameter>
+		<!-- <parameter key="NUMBER_OF_SOLUTES" type="integer" default="0" minimum="0" maximum="0">
+			<section name="input" />
+			<help>SNOWPACK can transport an arbitrary number of trace components in its snow and water phases [special use]</help>
+		</parameter> -->
+	</frame>
+
+	<parameter key="Add/Remove data creator" type="selector">
+		<section name="input" />
+		<parameter key="%::create" type="choice" template="true">
+			<section name="input" />
+			<option value="STD_PRESS" type="choice">
+				<help>Generate a standard atmosphere pressure as a function of the station's elevation</help>
+			</option>
+
+			<option value="RELHUM" type="choice">
+				<help>Generate a relative humidity from other humidity measurements (dew point temperature "TD" and/or specific humidity "SH")</help>
+			</option>
+
+			<option value="TS_OLWR" type="choice">
+				<help>Generate a surface temperature from Outgoing Long Wave Radiation</help>
+			</option>
+
+			<option value="ISWR_ALBEDO" type="choice">
+				<help>Generate ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on the snow height</help>
+			</option>
+
+			<option value="CST" type="choice">
+				<parameter key="%::cst::value" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<help>Generate a constant value, as provided</help>
+			</option>
+
+			<option value="SIN" type="choice">
+				<parameter key="%::sin::type" type="combination">
+					<option value="Period: " type="dropdown">
+						<option value="yearly" type="string" />
+						<option value="daily" type="string" />
+					</option>
+				</parameter>
+				<parameter key="%::sin::min" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<parameter key="%::sin::max" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<parameter key="%::sin::phase" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<help>Generate a sinusoidal variation. The min and max values are provided as well as the phase expressed in the same units as the period and representing the time offset from the begining of the period to the first minimum value.</help>
+			</option>
+
+			<option value="CLEARSKY_LW" type="choice">
+				<parameter key="%::clearsky_lw::type" type="combination">
+					<option value="Model: " type="dropdown">
+						<option value="Brutsaert" type="string" />
+						<option value="Dilley" type="string" />
+						<option value="Prata" type="string" />
+						<option value="Clark" type="string" />
+						<option value="Tang" type="string" />
+						<option value="Idso" type="string" />
+					</option>
+				</parameter>
+				<help>Generate ILWR using a clear sky emissivity</help>
+			</option>
+
+			<option value="ALLSKY_LW" type="choice">
+				<parameter key="%::allsky_lw::type" type="combination">
+					<option value="Model: " type="dropdown">
+						<option value="Omstedt" type="string" />
+						<option value="Konzelmann" type="string" />
+						<option value="Unsworth" type="string" />
+						<option value="Crawford" type="string" />
+					</option>
+				</parameter>
+				<help>Generate ILWR using an all sky model. If no cloudiness is available, it is parametrized based on solar index (ratio of potential short wave radiation and measured short wave radiation)</help>
+			</option>
+
+			<option value="CLEARSKY_SW" type="choice">
+				<help>Generate the potential incoming short wave radiation (ie clear sky!)</help>
+			</option>
+
+			<option value="ALLSKY_SW" type="choice">
+				<help>Generate the potential incoming short wave radiation (ie clear sky!). If ILWR is available, it computes the cloudiness from Unsworth.</help>
+			</option>
+
+			<option value="TAU_CLD" type="choice">
+				<help>Generate the atmospheric transmissivity based on cloud cover fraction.</help>
+			</option>
+
+			<option value="ESOLIP" type="choice">
+				<help>Generate precipitation from changes in snow height (see Mair et al., &lt;i&gt;"ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height and rain gauge measurements"&lt;/i&gt;, Hydrology and Earth System Sciences Discussions, 10(7), 8683-8714, 2013).</help>
+			</option>
+
+			<option label="PSUM phase" value="PPHASE" type="choice">
+				<parameter key="%::pphase::type" type="alternative" optional="false">
+					<option value="THRESH" type="string">
+						<parameter key="%::pphase::snow" type="combination">
+							<option label="" type="decimal" optional="false" value="273.35"/>
+						</parameter>
+					</option>
+					<option value="RANGE" type="string">
+						<parameter key="%::pphase::snow" type="combination">
+							<option label="" type="decimal" optional="false" value="273.35"/>
+						</parameter>
+						<parameter key="%::pphase::rain" type="combination">
+							<option label="" type="decimal" optional="false" value="275.35"/>
+						</parameter>
+					</option>
+				</parameter>
+
+				<help>Generate the precipitation phase with a fixed temperature threshold or with a linear evolution from snow to rain within a given air temperature range</help>
+			</option>
+
+			<option value="PRECUNSPLIT" type="choice">
+				<help>Generate split precipitation (as provided by the "RAINF" and "SNOWF" parameters) into amount/phase. It is suitable for PSUM or PSUM_PH.</help>
+			</option>
+
+		</parameter>
+		<reference name="METEOIOPARAMETERS" />
+		<help>&lt;font color="FF0000"&gt;&lt;strong&gt;The order of declaration of the data creators defines the priority!&lt;/strong&gt;&lt;/font&gt; Ie. only if the first one can not provide data, would the second one get called...</help>
+	</parameter>
+
+	<!-- Output Parameters -->
+	<parameter key="METEOPATH" type="path" default="./output" optional="false">
+		<section name="output" />
+		<help>Path to the outputs; this path MUST exist, it won't be created</help>
+	</parameter>
+	<parameter key="WRITE_PROCESSED_METEO" type="alternative" default="FALSE" optional="true">
+		<section name="output" />
+		<option value="TRUE" type="string" />
+		<option value="FALSE" type="string" />
+		<help>If set to true, before the simulation is computed, the pre-processed meteorological inputs will be written out in METEOPATH.</help>
+	</parameter>
+	<parameter key="EXPERIMENT" type="string" default="NO_EXP" optional="true">
+		<section name="output" />
+		<help>Option to give an additional simulation specific output name to the run in addition to "STATION_NAME")</help>
+	</parameter>
+
+	<frame key="sno_frame" label="Status Files">
+		<section name="output"/>
+		SNOW_WRITE
+		<parameter key="SNOW" type="alternative" default="SMET" optional="true">
+			<section name="output" />
+			<option value="SMET" type="string" >
+				<help>Plugin for writing SNO data (default, *.sno)</help>
+			</option>
+			<option value="CAAML" type="string">
+				<!--section name="output" />
+				<reference name="CAAML" /-->
+				<help>Plugin for writing out SNO data. CAAML must have been enabled at compile time (*.caaml)</help>
+			</option>
+			<option value="SNOOLD" type="string" >
+				<help>Plugin for writing out SNO data (deprecated, *.snoold)</help>
+			</option>
+		</parameter>
+		<parameter key="SNOWPATH" type="path" optional="true">
+			<section name="output" />
+			<help>Output path for the land surface and snow status files; defaults to METEOPATH if not given.</help>
+		</parameter>
+		<parameter key="BACKUP_DAYS_BETWEEN" type="decimal" default="365" minimum="0" optional="true">
+			<section name="output" />
+			<help>Dump snow files every BACKUP_DAYS_BETWEEN days</help>
+		</parameter>
+		<parameter key="FIRST_BACKUP" type="decimal" default="400" minimum="0" optional="true">
+			<section name="output" />
+			<help>First dump of sno files happens at end of run or after FIRST_BACKUP days, whichever happens first</help>
+		</parameter>
+		<!--<parameter key="HAZARD_STEPS_BETWEEN" type="decimal" default="365" minimum="0" optional="false">
+			<section name="output" />
+			<help>Dump hazard data every HAZARD_STEPS_BETWEEN days</help>
+		</parameter>-->
+	</frame>
+
+	<frame key="profiles_frame" label="Snow Profiles">
+		<section name="output"/>
+		<parameter key="PROF_WRITE" type="alternative" optional="false">
+			<section name="output" />
+			<option value="TRUE" type="string">
+				<parameter key="PROF_FORMAT" type="choice" optional="false">
+					<section name="output" />
+					<option value="PRO" type="string">
+						<help>SN_GUI format, multi-profile asccii file (*.pro)</help>
+					</option>
+					<option value="PRF" type="string" >
+						<help>tabular format; multi-profile ascii file (*.prf)</help>
+					</option>
+					<option value="IMIS" type="string">
+						<help>aggregated data; to be directly loaded in SLF database</help>
+					</option>
+				</parameter>
+				<parameter key="AGGREGATE_PRO" type="alternative" default="FALSE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>If set to true, the profile in PRO-format will be aggregated, that is, containing less layers (.apro).</help>
+				</parameter>
+				<parameter key="AGGREGATE_PRF" type="alternative" default="FALSE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>If set to true, the profile in PRF-format will be aggregated, that is, containing less layers (*.aprf).</help>
+				</parameter>
+				<parameter key="PROF_START" type="decimal" default="0" minimum="0" maximum="360" optional="false">
+					<section name="output" />
+					<help>When to start writing profile data out (offset, in days)</help>
+				</parameter>
+				<parameter key="PROF_DAYS_BETWEEN" type="decimal" default="4.1666e-2" minimum="0" maximum="360" optional="false">
+					<section name="output" />
+					<help>How often to write profile data out (in days: 3 hours=.125, 1 hour=4.1666e-2, 0.5 hour=2.08333e-2, 0.25 hour=1.04167e-2))</help>
+				</parameter>
+				<parameter key="HARDNESS_IN_NEWTON" type="alternative" default="FALSE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>Output the hand hardness index in newtons (default=false)</help>
+				</parameter>
+				<parameter key="CLASSIFY_PROFILE" type="alternative" default="FALSE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>Classify the profile (default=false)? This is according to Schweizer, J. and M. Luetschg, &lt;i&gt;Characteristics of human-triggered avalanches&lt;/i&gt;, 2001, Cold Reg. Sci. Technol. &lt;b&gt;33&lt;/b&gt;(2-3)</help>
+				</parameter>
+			</option>
+			<option value="FALSE" type="string" />
+			<help>Write profile data?</help>
+		</parameter>
+	</frame>
+
+	<frame key="TS_frame" label="Time Series">
+		<section name="output"/>
+		<parameter key="TS_WRITE" type="alternative" optional="false">
+			<section name="output" />
+			<option value="TRUE" type="string">
+				<parameter key="TS_FORMAT" type="alternative" optional="false">
+					<section name="output" />
+					<option value="SMET" type="string">
+						<help>SnopViz format; flexible multi-column ascii file (*.smet)</help>
+					</option>
+					<option value="MET" type="string" >
+						<help>SN_GUI format; 100-column ascii file (*.met)</help>
+					</option>
+				</parameter>
+				<parameter key="TS_START" type="decimal" default="0" minimum="0" maximum="360" optional="false">
+					<section name="output" />
+					<help>When to start writing meteo data out (offset, in days)</help>
+				</parameter>
+				<parameter key="TS_DAYS_BETWEEN" type="decimal" default="4.1666e-2" minimum="0" maximum="360" optional="false">
+					<section name="output" />
+					<help>How often to write meteo data out (in days: 3 hours=.125, 1 hour=4.1666e-2, 0.5 hour=2.08333e-2, 0.25 hour=1.04167e-2)</help>
+				</parameter>
+				<parameter key="AVGSUM_TIME_SERIES" type="alternative" default="TRUE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>If AVGSUM_TIME_SERIES is set, mean fluxes and cumulated masses since last dump are written, else current energy fluxes, cumulated masses over last COMPUTATION_STEP_LENGTH (recommended setting in operational mode). &lt;i&gt;This is forced to false when using virtual slopes!&lt;i&gt;
+					</help>
+				</parameter>
+				<parameter key="CUMSUM_MASS" type="alternative" default="FALSE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>If CUMSUM_MASS is set, current value of cumulated masses since begin of run are dumped. See PRECIP_RATES for precipitation. &lt;i&gt;This is forced to false when using virtual slopes!&lt;i&gt;
+					</help>
+				</parameter>
+				<parameter key="PRECIP_RATES" type="alternative" default="TRUE" optional="true">
+					<section name="output" />
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>Write precipitation as rates (kg m-2 h-1, default) or as sums over the output time step. Please note that the units label in the output file and in SN_GUI &lt;b&gt;will remain kg m-2 h-1&lt;/b&gt; and will therefore not match sums.</help>
+				</parameter>
+				<reference name="TS_outputs" />
+			</option>
+			<option value="FALSE" type="string" />
+			<help>Write time series of single parameters?</help>
+		</parameter>
+	</frame>
+
+       <parametergroup name="TS_outputs">
+	<frame key="switch_frame" label="Time Series Outputs Selection">
+		<section name="output"/>
+		<parameter key="OUT_CANOPY" type="alternative" default="FALSE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write canopy data out? To be set to TRUE only if CANOPY=TRUE</help>
+		</parameter>
+		<parameter key="OUT_HAZ" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write hazard data out? This must be FALSE for Alpine3D</help>
+		</parameter>
+		<parameter key="OUT_SOILEB" type="alternative" default="FALSE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write soil energy balance data out? This can &lt;b&gt;NOT&lt;/b&gt; be enabled together with OUT_HAZ</help>
+		</parameter>
+		<parameter key="OUT_HEAT" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write turbulent fluxes out?</help>
+		</parameter>
+		<parameter key="OUT_T" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write snow/soil temperatures out?</help>
+		</parameter>
+		<!-- <parameter key="OUT_LOAD" type="alternative" default="FALSE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write solutes load data out?</help>
+		</parameter> -->
+		<parameter key="OUT_LW" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write long wave radiation out?</help>
+		</parameter>
+		<parameter key="OUT_SW" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write short wave radiation out?</help>
+		</parameter>
+		<parameter key="OUT_MASS" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write mass balance terms out?</help>
+		</parameter>
+		<parameter key="OUT_METEO" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write meteo parameters out?</help>
+		</parameter>
+		<parameter key="OUT_STAB" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Write stability parameters out?</help>
+		</parameter>
+	</frame>
+	</parametergroup>
+
+
+	<!-- Snowpack Parameters -->
+	<frame key="sn_parameters_frame" label="Model Parameters">
+		<section name="Snowpack"/>
+		<parameter key="CALCULATION_STEP_LENGTH" type="decimal" default="15" minimum="0.015" maximum="180" optional="false">
+			<section name="Snowpack" />
+			<help>Internal time step (in minutes) used for model simulation. Please note that this MUST be the same as PSUM::accumulate (the latter being in seconds) if re-acumulating precipitation, otherwise it would lead to wrong results.</help>
+		</parameter>
+		<parameter key="ROUGHNESS_LENGTH" type="decimal" default="0.002" optional="false">
+			<section name="Snowpack" />
+			<help>Aerodynamic roughness length as a parameter for the Monin-Obukhov bulk formulation; A typical value for complex terrain is 0.01 m and for snow covered flat sites 0.001 m.</help>
+		</parameter>
+		<parameter key="HEIGHT_OF_METEO_VALUES" type="decimal" default="5.0" minimum="0" optional="false">
+			<section name="Snowpack" />
+			<help>The instrument height (or model layer height) for meteorological input data except for wind, which may be at a different height; note that height is above ground for a standard SNOWPACK application but above surface (snow or ground) for Alpine3D applications.</help>
+		</parameter>
+		<parameter key="HEIGHT_OF_WIND_VALUE" type="decimal" default="5.0" minimum="0" optional="false">
+			<section name="Snowpack" />
+			<help>The instrument height (or model layer height) for wind input data; note that height is above ground for a standard SNOWPACK application but above surface (snow or ground) for Alpine3D applications</help>
+		</parameter>
+	</frame>
+
+	<frame key="sn_switch_frame" label="Models Selection">
+		<section name="Snowpack"/>
+		<parameter key="ENFORCE_MEASURED_SNOW_HEIGHTS" type="alternative" optional="false">
+			<section name="Snowpack" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>The measured snow depth is used as a proxy to precipitation inputs to force the mass balance (IMIS standard)</help>
+		</parameter>
+		<parameter key="SW_MODE" type="alternative" optional="false">
+			<section name="Snowpack" />
+			<option value="INCOMING" type="string" />
+			<option value="REFLECTED" type="string" />
+			<option value="BOTH" type="string" />
+			<help>Define the shortwave radiation input:
+				&lt;dl&gt;
+				&lt;dt&gt;INCOMING&lt;/dt&gt; &lt;dd&gt;The incoming shortwave radiation is measured and the albedo is estimated by the model;&lt;/dd&gt;
+				&lt;dt&gt;REFLECTED&lt;/dt&gt; &lt;dd&gt;The reflected shortwave radiation is measured and the albedo is estimated by the model (IMIS standard);&lt;/dd&gt; &lt;dt&gt;
+				BOTH&lt;/dt&gt; &lt;dd&gt;Both incoming and reflected shortwave radiation are measured and the albedo is estimated from both measurements subject to plausibility checks.&lt;/dd&gt;
+				&lt;/dl&gt;
+			</help>
+		</parameter>
+		<parameter key="ATMOSPHERIC_STABILITY" type="alternative" optional="false">
+			<section name="Snowpack" />
+			<option value="RICHARDSON" type="string" />
+			<option value="NEUTRAL" type="string" />
+			<option value="MO_LOG_LINEAR" type="string" />
+			<option value="MO_HOLTSLAG" type="string" />
+			<option value="MO_STEARNS" type="string" />
+			<option value="MO_MICHLMAYR" type="string" />
+			<!--<option value="MO_SCHLOEGL_UNI" type="string" />-->
+			<help>Select the atmospheric stability correction model:
+				&lt;dl&gt;
+				&lt;dt&gt;RICHARDSON&lt;/dt&gt; &lt;dd&gt;use a simplified Richardson number stability correction;&lt;/dd&gt;
+				&lt;dt&gt;NEUTRAL&lt;/dt&gt; &lt;dd&gt;Assume neutral stratification;&lt;/dd&gt;
+				&lt;dt&gt;MO_LOG_LINEAR&lt;/dt&gt; &lt;dd&gt;Simple log-linear model;&lt;/dd&gt;
+				&lt;dt&gt;MO_HOLTSLAG&lt;/dt&gt; &lt;dd&gt;Holtslag and DeBruin (1988);&lt;/dd&gt;
+				&lt;dt&gt;MO_STEARNS&lt;/dt&gt; &lt;dd&gt;Stearns C. and Weidner G. (1993);&lt;/dd&gt;
+				&lt;dt&gt;MO_MICHLMAYR&lt;/dt&gt; &lt;dd&gt;Stearns and Weidner (1993) modified by Michlmayr (2008). This was named "MONIN_OBUKHOV" in the previous versions of Snowpack;&lt;/dd&gt;
+				<!--&lt;dt&gt;MO_SCHLOEGL_UNI&lt;/dt&gt; &lt;dd&gt;Schloegl (2016);&lt;/dd&gt;-->
+				&lt;/dl&gt;
+			</help>
+		</parameter>
+		<parameter key="CANOPY" type="alternative" default="FALSE" optional="false">
+			<section name="Snowpack" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Switch to tell the model that canopy is present (note that Canopy parameters should then be provided in the *.sno file)</help>
+		</parameter>
+	</frame>
+
+	<frame key="bc_frame" label="Boundary Conditions">
+		<parameter key="MEAS_TSS" type="alternative" default="FALSE" optional="false">
+			<section name="Snowpack" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>A measured surface temperature is available and can be reliably used for various consistency tests (it needs to be set to true if enabling CHANGE_BC).</help>
+		</parameter>
+		<parameter key="CHANGE_BC" type="alternative" default="FALSE" optional="false">
+			<section name="Snowpack" />
+			<option value="TRUE" type="string">
+				<parameter key="THRESH_CHANGE_BC" type="decimal" default="-1.0" optional="false">
+					<section name="Snowpack" />
+					<help>Threshold value (small number below freezing), above which SNOWPACK switches from Dirichlet to Neumann BCs if CHANGE_BC is selected</help>
+				</parameter>
+			</option>
+			<option value="FALSE" type="string" />
+			<help>Use measured surface temperature as Dirichlet temperature BC for sub-freezing snowpacks and switch to Neumann only for melting snowpacks. If set to false, assumes Neumann boundary conditions.</help>
+		</parameter>
+		<section name="Snowpack"/>
+		<parameter key="SNP_SOIL" type="alternative" default="FALSE" optional="false">
+			<section name="Snowpack" />
+			<option value="TRUE" type="string">
+				<parameter key="SOIL_FLUX" type="alternative" default="FALSE" optional="false">
+					<section name="Snowpack" />
+					<option value="TRUE" type="string">
+						<parameter key="GEO_HEAT" type="decimal" default="0.06" optional="false">
+							<section name="Snowpack" />
+							<help>Constant geothermal heat flux at great) depth W m-2): Lower flux boundary condition for temperature equation if BC is Neumann</help>
+						</parameter>
+					</option>
+					<option value="FALSE" type="string" />
+					<help>Assume that the lower temperature boundary condition is given by GEO_HEAT (Neumann) and not by a measured temperature</help>
+				</parameter>
+			</option>
+			<option value="FALSE" type="string" />
+			<help>Soil layers as defined by the *.sno files are included in the simulation</help>
+		</parameter>
+	</frame>
+
+	<!-- SnowpackAdvanced Parameters -->
+	<parameter key="ASSUME_RESPONSIBILITY" type="alternative" default="AGREE" optional="false">
+		<section name="SnowpackAdvanced" />
+		<option value="AGREE" type="string"/>
+		<help>&lt;font color="FF0000"&gt;&lt;strong&gt;The keys in this section deeply affect the operation of the SNOWPACK model. This could lead to unexpected behavior or surprising results. If you are not an experienced Snowpack user, please do NOT change any keys below!&lt;/strong&gt;&lt;/font&gt;</help>
+	</parameter>
+	<parameter key="VARIANT" type="alternative" default="DEFAULT" optional="true">
+		<section name="SnowpackAdvanced" />
+		<option value="DEFAULT" type="string" />
+		<option value="JAPAN" type="string" />
+		<option value="ANTARCTICA" type="string" />
+		<option value="POLAR" type="string" />
+		<!-- <option value="CALIBRATION" type="string" /> -->
+		<help>Variant selection. A choice of specific SNOWPACK variants that will set some switches and values to non-default ones. Users can override these by setting them below. When using POLAR variant, please cite: Steger CR, Reijmer CH, van den Broeke MR, Wever N, Forster RR, Koenig LS, Kuipers Munneke P, Lehning M, Lhermitte S, Ligtenberg SRM, Miège C and Noël BPY (2017) Firn Meltwater Retention on the Greenland Ice Sheet: A Model Comparison. Front. Earth Sci. 5:3. doi: 10.3389/feart.2017.00003</help>
+	</parameter>
+	<!-- <parameter key="RESEARCH" type="alternative" default="TRUE" optional="true">
+		<section name="SnowpackAdvanced" />
+		<option value="TRUE" type="string" />
+		<option value="FALSE" type="string" />
+		<help>research_mode</help>
+	</parameter> -->
+	<!-- <parameter key="NUMBER_FIXED_RATES" type="integer" default="0">
+		<section name="SnowpackAdvanced" />
+		<help>number_fixed_rates</help>
+	</parameter> -->
+	<frame key="station_frame" label="Station Handling">
+		<section name="SnowpackAdvanced" />
+		<parameter key="ADJUST_HEIGHT_OF_METEO_VALUES" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>If set to true, an adjustment of the height of the meteo values to the presence of a snow cover is applied (e.g., for measurements from a fixed mast that gets snowed in). If false, measured meteo values are assumed to maintain a constant height above the snow surface (e.g., when using measurements from Col de Porte or weather models as input).</help>
+		</parameter>
+		<parameter key="ADJUST_HEIGHT_OF_WIND_VALUE" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>If set to true, an adjustment of the height of the wind value to the presence of a snow cover is applied (e.g., for measurements from a fixed mast that gets snowed in). If false, measured wind value are assumed to maintain a constant height above the snow surface (e.g., when using weather models as input).</help>
+		</parameter>
+		<parameter key="SNOW_EROSION" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Specifies if snow erosion is enabled for the main station. Works only if measured heigths of snow are available at the main station. Unless NUMBER_SLOPES is set to 1, this erosion will not contribute to the drifting snow index (compare with SNOW_REDISTRIBUTION).</help>
+		</parameter>
+		<parameter key="WIND_SCALING_FACTOR" type="decimal" default="1.0" minimum="0" maximum="2">
+			<section name="SnowpackAdvanced" />
+			<help>Scaling factor to apply to wind values causing drifting snow</help>
+		</parameter>
+		<parameter key="NUMBER_SLOPES" type="alternative" default="1" optional="false">
+			<section name="SnowpackAdvanced" />
+			<option value="1" type="string" />
+			<option value="3" type="string" >
+				<section name="SnowpackAdvanced" />
+				<reference name="virtual_slopes_options" />
+			</option>
+			<option value="4" type="string" />
+			<option value="5" type="string" >
+				<section name="SnowpackAdvanced" />
+				<reference name="virtual_slopes_options" />
+			</option>
+			<option value="7" type="string" >
+				<section name="SnowpackAdvanced" />
+				<reference name="virtual_slopes_options" />
+			</option>
+			<option value="9" type="string" >
+				<section name="SnowpackAdvanced" />
+				<reference name="virtual_slopes_options" />
+			</option>
+			<help>Based on meteorological input from a (flat field) automatic station or numerical weather model, up to 8 expositions can be calculated in addition to the flat field if the corresponding *.sno files are provided. For example, if you provide a flat field *.snow file (mandatory), which is named KLO3.sno and you want 4 slopes to be calculated the corresponding slope files should be named KLO21.sno, . . ., KLO24.sno. SNOW_REDISTRIBUTION is only available if each virtual slope has a matching luv/lee slope.</help>
+		</parameter>
+		<parameter key="PERP_TO_SLOPE" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Set this option if the main station is on a slope and the input parameters are taken perpendicular to the slope. Works only for "NUMBER_SLOPES = 1"</help>
+		</parameter>
+		<parameter key="ALLOW_ADAPTIVE_TIMESTEPPING" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string"/>
+			<option value="FALSE" type="string"/>
+			<help>Set whether adaptive time stepping is allowed for solving the heat advection equation/phase changes when unstable atmospheric stratification is encountered (only for non-neutral atmospheric stability schemes). It then temporarily reduces the time step, in order to reduce oscillations in surface temperature.</help>
+		</parameter>
+	</frame>
+
+	<!--Parameter group for virtual slopes -->
+	<parametergroup name="virtual_slopes_options">
+		<parameter key="SNOW_REDISTRIBUTION" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Specifies if redistribution of snow is allowed from windward (luv) to lee slopes. The snow erosion on virtual slopes will contribute to the drifting snow index.</help>
+		</parameter>
+		<parameter key="PREVAILING_WIND_DIR" type="decimal" default="0" optional="true">
+			<section name="SnowpackAdvanced" />
+			<help>Shifts the origin of the wind rose for snow redistribution and slope simulations: e.g. choose 45° to have NE/SE/SW/NW</help>
+		</parameter>
+		<parameter key="MEAS_INCOMING_LONGWAVE" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Use the provided incoming long wave on virtual slopes too?</help>
+		</parameter>
+	</parametergroup>
+
+	<frame key="hnw_frame" label="Precipitation Handling">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="THRESH_RAIN" type="decimal" default="1.2">
+			<section name="SnowpackAdvanced" />
+			<help>Fallback temperature threshold for rain/snow transition if no other spliting method is provided (as data generator)</help>
+		</parameter>
+		<parameter key="FORCE_RH_WATER" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Tell the model that relative humidity values are with respect to water regardless of the temperature</help>
+		</parameter>
+		<parameter key="THRESH_RH" type="decimal" default="0.5">
+			<section name="SnowpackAdvanced" />
+			<help>If ENFORCE_MEASURED_SNOW_HEIGHTS, relative humidity threshold for precipitation to occur</help>
+		</parameter>
+		<parameter key="THRESH_DTEMP_AIR_SNOW" type="decimal" default="3.0">
+			<section name="SnowpackAdvanced" />
+			<help>If ENFORCE_MEASURED_SNOW_HEIGHTS, (TA-TSS)' threshold for precipitation to occur</help>
+		</parameter>
+	</frame>
+
+	<frame key="hoar_frame" label="Hoar Handling">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="HOAR_THRESH_TA" type="decimal" default="1.2">
+			<section name="SnowpackAdvanced" />
+			<help>Air temperature threshold above which no surface hoar is allowed to form</help>
+		</parameter>
+		<parameter key="HOAR_THRESH_RH" type="decimal" default="0.97">
+			<section name="SnowpackAdvanced" />
+			<help>Relative humidity threshold above which no surface hoar is allowed to form (because at very high humidity, typically no hoar crystals can form)</help>
+		</parameter>
+		<parameter key="HOAR_THRESH_VW" type="decimal" default="3.5">
+			<section name="SnowpackAdvanced" />
+			<help>Wind speed threshold above which no surface hoar is allowed to form (because it will drift away)</help>
+		</parameter>
+		<parameter key="HOAR_DENSITY_BURIED" type="decimal" default="125.0">
+			<section name="SnowpackAdvanced" />
+			<help>Define the initial density for surface hoar at the time it gets buried by new snow</help>
+		</parameter>
+		<parameter key="HOAR_MIN_SIZE_BURIED" type="decimal" default="2.0">
+			<section name="SnowpackAdvanced" />
+			<help>Define a threshold below which any traces of surface hoar will not be given a separate hoar layer when buried.</help>
+		</parameter>
+		<parameter key="HOAR_DENSITY_SURF" type="decimal" default="100.0">
+			<section name="SnowpackAdvanced" />
+			<help>Assumed density of surface hoar while exposed at the surface and not buried</help>
+		</parameter>
+	</frame>
+
+	<frame key="temps_frame" label="Temperatures Handling">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="FIXED_POSITIONS" type="string" default="">
+			<section name="SnowpackAdvanced" />
+			<help>positions of temperatur sensors in snow or soil: positive values refer to heigths measured from the ground surface (snow only), negative values refer to depths measured from either the ground surface or the snow surface in case no soil layers are present. A sensor must at least be covered by MIN_DEPTH_SUBSURF (m) snow for its temperature to be output.</help>
+		</parameter>
+		<!-- <parameter key="MAX_NUMBER_MEAS_TEMPERATURES" type="integer" default="5">
+			<section name="SnowpackAdvanced" />
+			<help></help>
+		</parameter> -->
+		<parameter key="MIN_DEPTH_SUBSURF" type="decimal" default="0.07">
+			<section name="SnowpackAdvanced" />
+			<help>Minimum snow depth above a temperature sensor to accept the measurement</help>
+		</parameter>
+		<parameter key="T_CRAZY_MIN" type="decimal" default="210.">
+			<section name="SnowpackAdvanced" />
+			<help>If you go to Antarctica or the tropics you may expect different reasonable temperatures</help>
+		</parameter>
+		<parameter key="T_CRAZY_MAX" type="decimal" default="340.">
+			<section name="SnowpackAdvanced" />
+			<help>If you go to Antarctica or the tropics you may expect different reasonable temperatures</help>
+		</parameter>
+	</frame>
+
+	<frame key="sn_submodels_frame" label="Submodel Handling">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="METAMORPHISM_MODEL" type="alternative" default="DEFAULT" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="DEFAULT" type="string" >
+			</option>
+			<option value="NIED" type="string" >
+			</option>
+			<help>metamorphism_model</help>
+		</parameter>
+		<parameter key="NEW_SNOW_GRAIN_SIZE" type="decimal" default="0.3" optional="true">
+			<section name="SnowpackAdvanced" />
+			<help>Grain size of new snow crystals (mm)</help>
+		</parameter>
+		<parameter key="STRENGTH_MODEL" type="alternative" default="DEFAULT" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="DEFAULT" type="string" />
+			<option value="NIED" type="string" />
+			<help>strength_model</help>
+		</parameter>
+		<parameter key="VISCOSITY_MODEL" type="alternative" default="DEFAULT" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="DEFAULT" type="string" />
+			<help>viscosity_model</help>
+		</parameter>
+		<parameter key="SALTATION_MODEL" type="alternative" default="SORENSEN" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="SORENSEN" type="string" />
+			<option value="DOORSCHOT" type="string" />
+			<help>The simple Sorenson parameterization is computationally more efficient than the full Doorschot model</help>
+		</parameter>
+		<!-- <parameter key="SURFACECODE" type="alternative" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="NEUMANN_BC" type="string" />
+			<option value="DIRICHLET_BC" type="string" />
+			<help>Select the boundary conditions to use</help>
+		</parameter> -->
+		<parameter key="ENABLE_VAPOUR_TRANSPORT" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Enable mass transport by vapour flow.</help>
+		</parameter>
+		<parameter key="WATERTRANSPORTMODEL_SNOW" type="alternative" default="BUCKET" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="BUCKET" type="string" />
+			<option value="NIED" type="string" />
+			<option value="RICHARDSEQUATION" type="string" >
+				<parameter key="AVG_METHOD_HYDRAULIC_CONDUCTIVITY" type="alternative" default="ARITHMETICMEAN" optional="true">
+					<section name="SnowpackAdvanced" />
+					<option value="ARITHMETICMEAN" type="string" />
+					<option value="GEOMETRICMEAN" type="string" />
+					<option value="HARMONICMEAN" type="string" />
+					<option value="MINIMUMVALUE" type="string" />
+					<option value="UPSTREAM" type="string" />
+					<help>Averaging method for hydraulic conductivity at the layer nodes. Recommended setting either ARITHMETICMEAN (default) or GEOMETRICMEAN.</help>
+				</parameter>
+				<parameter key="PREF_FLOW" type="alternative" default="FALSE" optional="true">
+					<section name="SnowpackAdvanced" />
+					<option value="TRUE" type="string" >
+						<parameter key="AVG_METHOD_HYDRAULIC_CONDUCTIVITY_PREF_FLOW" type="alternative" default="ARITHMETICMEAN" optional="true">
+							<section name="SnowpackAdvanced" />
+							<option value="ARITHMETICMEAN" type="string" />
+							<option value="GEOMETRICMEAN" type="string" />
+							<option value="HARMONICMEAN" type="string" />
+							<option value="MINIMUMVALUE" type="string" />
+							<option value="UPSTREAM" type="string" />
+							<help>Averaging method for hydraulic conductivity at the layer nodes. Recommended setting either ARITHMETICMEAN (default) or GEOMETRICMEAN.</help>
+						</parameter>
+						<parameter key="PREF_FLOW_PARAM_TH" type="decimal" default="0.1" optional="true">
+						<section name="SnowpackAdvanced" />
+						<help>Tuning parameter: saturation threshold in preferential flow</help>
+						</parameter>
+						<parameter key="PREF_FLOW_PARAM_N" type="decimal" default="0.0" optional="true">
+						<section name="SnowpackAdvanced" />
+						<help>Tuning parameter: number of preferential flow paths for heat exchange</help>
+						</parameter>
+						<parameter key="PREF_FLOW_PARAM_HETEROGENEITY_FACTOR" type="decimal" default="1.0" optional="true">
+						<section name="SnowpackAdvanced" />
+						<help>Tuning parameter: heterogeneity factor for grain size</help>
+						</parameter>
+						<parameter key="PREF_FLOW_RAIN_INPUT_DOMAIN" type="alternative" default="MATRIX" optional="true">
+						<section name="SnowpackAdvanced" />
+						<option value="MATRIX" type="string" />
+						<option value="PREF_FLOW" type="string" />
+						<help>Direct incoming rain water to either matrix or preferential flow domain.</help>
+						</parameter>
+					</option>
+					<option value="FALSE" type="string" />
+					<help>Dual domain approach to simulate preferential flow. When set to TRUE, it requires to specify the volumetric water content in preferential flow (Vol_Frac_WP) in the *.sno file, directly following the column Vol_Frac_W.</help>
+				</parameter>
+			</option>
+			<help>Water transport model to use in snow: simple bucket model, Nied model or Richards equation solver</help>
+		</parameter>
+		<parameter key="WATERTRANSPORTMODEL_SOIL" type="alternative" default="BUCKET" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="BUCKET" type="string" />
+			<option value="RICHARDSEQUATION" type="string">
+				<parameter key="LB_COND_WATERFLUX" type="alternative" default="FREEDRAINAGE" optional="false">
+					<section name="SnowpackAdvanced" />
+					<option value="FREEDRAINAGE" type="string" />
+					<option value="WATERTABLE" type="string" />
+					<option value="DIRICHLET" type="string" />
+					<option value="GRAVIATIONALDRAINAGE" type="string" />
+					<option value="SEEPAGE" type="string" />
+					<help>Lower boundary condition for Richards equation solver:
+					&lt;dl&gt;
+					&lt;dt&gt;FREEDRAINAGE&lt;/dt&gt;  &lt;dd&gt;(default, recommended for shallow soil) prescribes a free drainage boundary;&lt;/dd&gt;
+					&lt;dt&gt;WATERTABLE&lt;/dt&gt;  &lt;dd&gt;(recommended for deep soil) prescribes a saturated lower boundary;&lt;/dd&gt;
+					&lt;dt&gt;DIRICHLET&lt;/dt&gt;  &lt;dd&gt;keeps the saturation in the lowest layer constant;&lt;/dd&gt;
+					&lt;dt&gt;GRAVITATIONALDRAINAGE&lt;/dt&gt;  &lt;dd&gt;prescribes the gravity compenent of the liquid water flow;&lt;/dd&gt;
+					&lt;dt&gt;SEEPAGE&lt;/dt&gt;  &lt;dd&gt;provides a seepage boundary condition which typically describes the setup of laboratory experiments;&lt;/dd&gt;
+					&lt;/dl&gt;
+					</help>
+				</parameter>
+			</option>
+			<help>Water transport model to use in soil: simple bucket model or Richards equation solver. Note that Richards equation solver uses the grain size of the layer to determine the soil type, as listed at: http://models.slf.ch/p/snowpack/page/Soil-with-Richards-equation/.</help>
+		</parameter>
+	</frame>
+
+	<frame key="sn_parameterization_frame" label="Parameterization Handling">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="HN_DENSITY" type="alternative" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="EVENT" type="string" />
+			<option value="PARAMETERIZED" type="string" >
+				<parameter key="HN_DENSITY_PARAMETERIZATION" type="alternative" default="LEHNING_NEW" optional="true">
+					<section name="SnowpackAdvanced" />
+					<option value="LEHNING_NEW" type="string" />
+					<option value="ZWART" type="string" />
+					<option value="BELLAIRE" type="string" />
+					<option value="LEHNING_OLD" type="string" />
+					<option value="PAHAUT" type="string" />
+					<option value="NIED" type="string" />
+					<help>Choice of parameterizations for new snow density (statistical models)</help>
+				</parameter>
+			</option>
+			<option value="MEASURED" type="string" >
+				<parameter key="HN_DENSITY_FIXEDVALUE" type="decimal" default="100" minimum="1" optional="true">
+					<section name="SnowpackAdvanced" />
+					<help>Set to 1 kg m-3 to use surface snow density in case of missing measurement values</help>
+				</parameter>
+			</option>
+			<option value="FIXED" type="string" >
+				<parameter key="HN_DENSITY_FIXEDVALUE" type="decimal" default="100" minimum="30" optional="true">
+					<section name="SnowpackAdvanced" />
+					<help>Usual range used in SNOWPACK : 30 to 250 kg m-3. 30 kg m-3 will be enforced as minimum</help>
+				</parameter>
+			</option>
+			<help>New snow density scheme. By default, Snowpack uses "PARAMETERIZED". If selecting "MEASURED", the new snow density must be provided under the parameter name "RHO_HN".</help>
+		</parameter>
+		<parameter key="SNOW_ALBEDO" type="alternative" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="PARAMETERIZED" type="string" >
+				<parameter key="ALBEDO_PARAMETERIZATION" type="alternative" default="LEHNING_2" optional="true">
+					<section name="SnowpackAdvanced" />
+					<option value="LEHNING_0" type="string" />
+					<option value="LEHNING_1" type="string" />
+					<option value="LEHNING_2" type="string" />
+					<option value="SCHMUCKI_GSZ" type="string" >
+						<parameter key="ALBEDO_AVERAGE_SCHMUCKI" type="alternative" default="ALL_DATA" optional="true">
+							<section name="SnowpackAdvanced" />
+							<option value="ALL_DATA" type="string" />
+							<option value="CUSTOM" type="string" />
+							<help>Average value of regression models. ALL_DATA is the average of all albedo values obtained from four SwissMetNet stations: Weissfluhjoch (WFJ, 2540 m asl), Davos (DAV, 1594 m asl), Napf (NAP, 1404 m asl), and Payerne (PAY, 490 m asl). CUSTOM is the mean of the albedo averages for each single station WFJ, DAV, and PAY; it better fits stations lying below 1500 m asl in Switzerland</help>
+						</parameter>
+					</option>
+					<option value="SCHMUCKI_OGS" type="string" >
+						<parameter key="ALBEDO_AVERAGE_SCHMUCKI" type="alternative" default="ALL_DATA" optional="true">
+							<section name="SnowpackAdvanced" />
+							<option value="ALL_DATA" type="string" />
+							<option value="CUSTOM" type="string" />
+							<help>Average value of regression models. ALL_DATA is the average of all albedo values obtained from four SwissMetNet stations: Weissfluhjoch (WFJ, 2540 m asl), Davos (DAV, 1594 m asl), Napf (NAP, 1404 m asl), and Payerne (PAY, 490 m asl). CUSTOM is the mean of the albedo averages for each single station WFJ, DAV, and PAY; it better fits stations lying below 1600 m asl in Switzerland</help>
+						</parameter>
+					</option>
+					<option value="NIED" type="string" >
+						<parameter key="ALBEDO_NIED_AV" type="decimal" default="0.75" optional="true">
+							<section name="SnowpackAdvanced" />
+							<help>Parameter av in the NIED albedo scheme.</help>
+						</parameter>
+					</option>
+					<help>Choice of parameterizations for snow albedo (statistical models)</help>
+				</parameter>
+			</option>
+			<option value="FIXED" type="string" >
+				<!--<parameter key="ALBEDO_FIXEDVALUE" type="decimal" default="0.95" minimum="0.30" maximum="0.95" optional="true">-->
+				<parameter key="ALBEDO_FIXEDVALUE" type="decimal" optional="true">
+					<section name="SnowpackAdvanced" />
+					<help>Enter a value between 0.30 (default albedo for glaciers) and 0.95 (enforced range)</help>
+				</parameter>
+			</option>
+			<help>What scheme should be used for snow albedo? By default, Snowpack uses "PARAMETERIZED".</help>
+		</parameter>
+		<parameter key="ALBEDO_AGING" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Should the age of the snow be taken into account in the snow albedo parametrizations? (not all such parametrizations use it, though). Turning it off should only be necessary for arctic/antarctic regions.</help>
+		</parameter>
+
+		<parameter key="SW_ABSORPTION_SCHEME" type="alternative" default="MULTI_BAND" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="MULTI_BAND" type="string" />
+			<option value="SINGLE_BAND" type="string" />
+			<help>Select either a multi or a single band scheme for shortwave radiation absorption by the snow cover</help>
+		</parameter>
+		<parameter key="HARDNESS_PARAMETERIZATION" type="alternative" default="MONTI" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="MONTI" type="string" />
+			<option value="BELLAIRE" type="string" />
+			<option value="ASARC" type="string" />
+			<help>Select the appropriate hand hardness parameterization</help>
+		</parameter>
+	</frame>
+
+	<frame key="sn_extra_frame" label="Extras">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="DETECT_GRASS" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Identify grass growing under the snow height sensor. This usually works well but might sometimes lead to problems</help>
+		</parameter>
+		<parameter key="PLASTIC" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Switch to tell the model that a impermeable layer should be simulated on top of some snow or ice: this requires that the *.sno file contains this layer, which is characterized via the soil parameters; the option has successfully been used to simulate snow and ice protection using geo-textiles and saw dust.</help>
+		</parameter>
+		<parameter key="JAM" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>If switched on, you can also simulate ponding on impermeable ice surfaces below the snow cover</help>
+		</parameter>
+		<parameter key="WATER_LAYER" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>This flag behaves differently depending on the chosen water transport scheme. For the BUCKET scheme: Assuming an impermeable surface such as on a road or on geo-textiles (e.g. for snow farming), a liquid water layer is allowed to form on this surface. For RICHARDSEQUATION: in case high infiltration fluxes cannot be fully absorbed by the matrix, form a ponding layer on the top of the domain.</help>
+		</parameter>
+	</frame>
+
+	<frame key="elements_frame" label="Elements Handling">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="HEIGHT_NEW_ELEM" type="decimal" default="0.02">
+			<section name="SnowpackAdvanced" />
+			<help>Standard size of a new element added to the stack of elements (layers) during snowfall events</help>
+		</parameter>
+		<parameter key="MINIMUM_L_ELEMENT" type="decimal" default="0.0025">
+			<section name="SnowpackAdvanced" />
+			<help>Threshold value for enforcing the layer to be merged with the layer above or below</help>
+		</parameter>
+		<section name="SnowpackAdvanced" />
+		<parameter key="COMBINE_ELEMENTS" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string">
+				<!--<parameter key="COMB_THRESH_L" type="decimal" default="0.015">
+					<section name="SnowpackAdvanced" />
+					<help>Threshold value: both elements must be smaller than COMB_THRESH_L for an action to be taken.</help>
+				</parameter>-->
+				<!--<parameter key="REDUCE_N_ELEMENTS" type="alternative" default="FALSE" optional="true">
+					<section name="SnowpackAdvanced" />
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string" />
+					<help>Increase the combining of elements deeper in the snowpack and split elements when they approach the surface again. This reduces the number of elements and thereby the computational load in case of deep snowpacks, like glaciers or firn packs.</help>
+				</parameter>-->
+			</option>
+			<option value="FALSE" type="string" />
+			<help>Combine neighboring elements based on a set of similarity conditions which are hard-coded</help>
+		</parameter>
+	</frame>
+
+	<frame key="canopy_frame" label="Canopy">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="TWO_LAYER_CANOPY" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>The canopy is divided into a trunk layer and a leaf-layer. An energy balance is computed for each layer, producing leaf-layer and trunk layer temperatures that affect LW radiations to the ground.</help>
+		</parameter>
+		<parameter key="CANOPY_HEAT_MASS" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Add a biomass heat flux term in the canopy energy balance</help>
+		</parameter>
+		<parameter key="CANOPY_TRANSMISSION" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Computes the canopy shade soil cover fraction, as function of canopy height, crown diameter, vertical canopy soil cover, and solar elevation angle</help>
+		</parameter>
+		<parameter key="FORESTFLOOR_ALB" type="alternative" default="TRUE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Litter falling on the forest floor can reduce albedo</help>
+		</parameter>
+	</frame>
+
+	<frame key="permafrost_frame" label="Permafrost">
+		<section name="SnowpackAdvanced"/>
+		<parameter key="ADVECTIVE_HEAT" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string">
+				<parameter key="HEAT_BEGIN" type="decimal" optional="false">
+					<section name="SnowpackAdvanced" />
+					<help>depth in meters where to start injecting the thermal flux (from the surface)</help>
+				</parameter>
+				<parameter key="HEAT_END" type="decimal" optional="false">
+					<section name="SnowpackAdvanced" />
+					<help>depth in meters where to stop injecting the thermal flux (from the surface)</help>
+				</parameter>
+			</option>
+			<option value="FALSE" type="string" />
+			<help>Inject a thermal flux at a given depth (this must be provided under the parameter name ADV_HEAT in the meteo file, currently only SMET provides this possibility). The flux is in W/m^3</help>
+		</parameter>
+	</frame>
+
+	<!--Parameter groups for list of stations -->
+	<parametergroup name="stationgroup_files">
+		<parameter key="STATION#" type="file" counter="1" optional="false">
+			<help>filename for station number # </help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="stationgroup_names">
+		<parameter key="STATION#" type="string" counter="1" optional="false">
+			<help>station id for the given station number # </help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="stationgroup_pos">
+		<parameter key="STATION#" type="string" counter="1">
+			<help>Coordinates are given as "lat lon" or "xcoord ycoord epsg_code"</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- Plugins for Meteo Data-->
+	<parametergroup name="ALPUG">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="false">
+			<help>absolute filename of the metadata file</help>
+		</parameter>
+		<parameter key="WRAP_MONTH" type="integer" minimum="1" maximum="12" default="10" optional="false">
+			<help>month when a new file is started</help>
+		</parameter>
+		<parameter key="ALPUG_FIELDS" type="string" optional="false" default="%,%,ID,timestamp,VW,VW_MAX,DW,TA,RH, RSWR,HS,%,%,%,%,%,TSG,%,%,%,TSS,ISWR,P">
+			<help>description of the fields (using % to mark the fields to skip)</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="BORMA">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the xml files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="CAAML">
+		<parameter key="SNOW_PREFIX" type="string" optional="true">
+			<help>file name prefix appearing before the date</help>
+		</parameter>
+		<parameter key="SNOW_EXT" type="string" optional="true" default=".xml">
+			<help>file extension (give "none" to get an empty string)</help>
+		</parameter>
+		<parameter key="IMIS_STATIONS" type="alternative" default="FALSE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>if set to true, all station IDs provided above will be stripped of their number (to match MeteoCH naming scheme)</help>
+		</parameter>
+		<parameter key="USE_MODEL_LOC" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>if set to false, the true station location (lat, lon, altitude) is used. Otherwise, it uses the model location (default)</help>
+		</parameter>
+		<parameter key="XML_ENCODING" type="alternative" optional="true">
+			<option value="UTF-8" type="string" />
+			<option value="UTF-16-LE" type="string" />
+			<option value="UTF-16-BE" type="string" />
+			<option value="UCS-4-LE" type="string" />
+			<option value="UCS-4-BE" type="string" />
+			<option value="UCS-4-2143" type="string" />
+			<option value="UCS-4-3412" type="string" />
+			<option value="UCS-2" type="string" />
+			<option value="EBCDIC" type="string" />
+			<option value="ISO-8859-1" type="string" />
+			<option value="ISO-8859-2" type="string" />
+			<option value="ISO-8859-3" type="string" />
+			<option value="ISO-8859-4" type="string" />
+			<option value="ISO-8859-5" type="string" />
+			<option value="ISO-8859-6" type="string" />
+			<option value="ISO-8859-7" type="string" />
+			<option value="ISO-8859-8" type="string" />
+			<option value="ISO-8859-9" type="string" />
+			<option value="ISO-2022-JP" type="string" />
+			<option value="SHIFT-JIS" type="string" />
+			<option value="EUC-JP" type="string" />
+			<option value="ASCII" type="string" />
+			<help>force the input file encoding, overriding the file's own encoding declaration</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="IMIS">
+		<parameter key="DBNAME" type="string" optional="false">
+			<help>database name, as provided by your database administrator</help>
+		</parameter>
+		<parameter key="DBUSER" type="string" optional="false">
+			<help>database user name</help>
+		</parameter>
+		<parameter key="DBPASS" type="string" optional="false">
+			<help>database password associated with the user name</help>
+		</parameter>
+		<parameter key="USEANETZ" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>OPTIONAL: use ANETZ stations to provide precipitations for normal IMIS stations.
+			Each IMIS station is associated with one or two ANETZ stations and does a weighted
+			average to get what should be its local precipitations</help>
+		</parameter>
+		<parameter key="USE_IMIS_PSUM" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>OPTIONAL: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, it is strongly advised to use a UNHEATED_RAINGAUGE filter to detect snow melting in the rain gauge and perform winter conditions detection in the application.</help>
+		</parameter>
+		<parameter key="USE_SNOWPACK_PSUM" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="OSHD">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="false">
+			<help>absolute filename of the metadata file</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+       <parametergroup name="SASE">
+	       <parameter key="SASE_HOST" type="string" optional="false">
+		       <help>database host name, as provided by your database administrator</help>
+	       </parameter>
+	       <parameter key="SASE_DB" type="string" optional="false">
+		       <help>database name, as provided by your database administrator</help>
+	       </parameter>
+	       <parameter key="SASE_USER" type="string" optional="false">
+		       <help>database user name</help>
+	       </parameter>
+	       <parameter key="SASE_PASS" type="string" optional="false">
+		       <help>database password associated with the user name</help>
+	       </parameter>
+	       <reference name="stationgroup_names" />
+       </parametergroup>
+
+	<parametergroup name="GRIB_METEO">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the grib files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METEOEXT" type="string" default="" optional="true">
+			<help>grib file extension, or none for no file extension (default: .grb)</help>
+		</parameter>
+		<reference name="stationgroup_pos" />
+	</parametergroup>
+
+	<parametergroup name="GEOTOP_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METEOPREFIX" type="string" optional="true">
+			<help>prefix to append when generating a file name for reading</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="false">
+			<help>absolute filename of the geotop.inpts file</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="PSQL_IN">
+		<parameter key="PSQL_URL" type="string" optional="false">
+			<help>database URL</help>
+		</parameter>
+		<parameter key="PSQL_PORT" type="string" optional="true">
+			<help>database port to use for connection</help>
+		</parameter>
+		<parameter key="PSQL_DB" type="string" optional="false">
+			<help>database name</help>
+		</parameter>
+		<parameter key="PSQL_USER" type="string" optional="false" />
+		<parameter key="PSQL_PASS" type="string" optional="false" />
+		<parameter key="SQL_META" type="string" optional="false">
+			<help>Query to retrieve the metadata. For example, &lt;i&gt;SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN&lt;/i&gt;
+			</help>
+		</parameter>
+		<parameter key="SQL_DATA" type="string" optional="false">
+			<help>Query to retrieve the data. For example, &lt;i&gt;SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date&gt;=''DATE_START'' AND date&lt;=''DATE_END'' ORDER BY date&lt;/i&gt;
+			</help>
+		</parameter>
+		<parameter key="STATIONS" type="string" optional="false">
+			<help>comma separated list of station ids to use</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="CNRM_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METEOFILE" type="string" optional="true">
+			<help>Specify the NetCDF file that contains the data (in METEOPATH)</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+       </parametergroup>
+
+       <parametergroup name="COSMO_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METEOFILE" type="string" optional="true">
+			<help>Specify the XML file that contains the data (in METEOPATH)</help>
+		</parameter>
+		<parameter key="METEO_PREFIX" type="string" optional="true">
+			<help>Specify the prefix that stands ahead of the numerical date in the filenames. This is used for
+			filtering which files to read when reading a whole directory but also in any case to help extract the date
+			of the first timestep from the filename.</help>
+		</parameter>
+		<parameter key="METEO_EXT" type="string" default=".xml" optional="true">
+			<help>Specify the extension of the input files (default ".xml", specify "none" to get an empty string</help>
+		</parameter>
+		<parameter key="IMIS_STATIONS" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Strip the provided station names of their number to fit the IMIS naming scheme with the COSMO-CH naming scheme</help>
+		</parameter>
+		<parameter key="USE_MODEL_LOC" type="alternative" default="TRUE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>if set to false, the true station location (lat, lon, altitude) is used. Otherwise, it uses the model location (default)</help>
+		</parameter>
+		<parameter key="XML_ENCODING" type="alternative" optional="true">
+			<option value="UTF-8" type="string" />
+			<option value="UTF-16-LE" type="string" />
+			<option value="UTF-16-BE" type="string" />
+			<option value="UCS-4-LE" type="string" />
+			<option value="UCS-4-BE" type="string" />
+			<option value="UCS-4-2143" type="string" />
+			<option value="UCS-4-3412" type="string" />
+			<option value="UCS-2" type="string" />
+			<option value="EBCDIC" type="string" />
+			<option value="ISO-8859-1" type="string" />
+			<option value="ISO-8859-2" type="string" />
+			<option value="ISO-8859-3" type="string" />
+			<option value="ISO-8859-4" type="string" />
+			<option value="ISO-8859-5" type="string" />
+			<option value="ISO-8859-6" type="string" />
+			<option value="ISO-8859-7" type="string" />
+			<option value="ISO-8859-8" type="string" />
+			<option value="ISO-8859-9" type="string" />
+			<option value="ISO-2022-JP" type="string" />
+			<option value="SHIFT-JIS" type="string" />
+			<option value="EUC-JP" type="string" />
+			<option value="ASCII" type="string" />
+			<help>force the input file encoding, overriding the file's own encoding declaration</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+       </parametergroup>
+
+	<parametergroup name="GSN">
+		<parameter key="GSN_URL" type="string" optional="false">
+			<help>webserver running GSN with its port number and full path. For example:
+			http://montblanc.slf.ch:22001/rest</help>
+		</parameter>
+		<parameter key="GSN_USER" type="string" optional="true" />
+		<parameter key="GSN_PASS" type="string" optional="true" />
+		<parameter key="GSN_TIMEOUT" type="decimal" default="60">
+			<help>Time out in seconds to abort a connection and return an error</help>
+		</parameter>
+		<parameter key="GSN_DEBUG" type="alternative" optional="true" default="FALSE">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Print extra information in case of errors?</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="SMET_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the smet files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<reference name="stationgroup_files" />
+	</parametergroup>
+
+	<parametergroup name="SNIO_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the SNOWPACK files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="true">
+			<help>filename of the meta data file (in METEOPATH)</help>
+		</parameter>
+		<parameter key="NUMBER_MEAS_TEMPERATURES" type="integer" minimum="0" default="0" optional="false">
+			<help>the number of measured snow temperatures that are provided</help>
+		</parameter>
+		<parameter key="NUMBER_OF_SOLUTES" type="integer" minimum="0" default="0" optional="false">
+			<help>the number of solutes for which input data are provided</help>
+		</parameter>
+
+		<parameter key="RSWR_INP" type="alternative" optional="false">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+		</parameter>
+		<parameter key="ISWR_INP" type="alternative" optional="false">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+		</parameter>
+		<parameter key="VW_DRIFT" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>OPTIONAL: wind velocity to use for blowing and drifting snow is provided</help>
+		</parameter>
+		<parameter key="RHO_HN" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>OPTIONAL: measured new snow density is provided</help>
+		</parameter>
+		<reference name="stationgroup_files" />
+	</parametergroup>
+
+	<!-- Meteo Parameters for Filters, resampling, spatial interpolations-->
+	<parametergroup name="METEOIOPARAMETERS">
+		<option value="TA"/>
+		<option value="RH"/>
+		<option value="VW"/>
+		<option value="DW"/>
+		<option value="VW_MAX"/>
+		<option value="ISWR"/>
+		<option value="RSWR"/>
+		<option value="ILWR"/>
+		<option value="HS"/>
+		<option value="PSUM"/>
+		<option value="PSUM_PH"/>
+		<option value="TSG"/>
+		<option value="TSS"/>
+		<option value="P"/>
+		<option value="TAU_CLD"/>
+	</parametergroup>
+
+	<!-- Filters -->
+	<parameter key="Add/Remove Filter" type="selector">
+		<section name="filters" />
+
+		<parameter key="%::filter#" type="alternative" counter="1" template="true">
+			<section name="filters" />
+
+			<!-- normal filters -->
+			<option label="Min Range Filter" value="min" type="string">
+				<parameter key="%::arg#::min" type="combination" optional="false">
+					<option label="" value="" type="decimal"/>
+				</parameter>
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string">
+						<parameter key="%::arg#::min_reset" type="combination">
+							<option label="" value="" type="decimal" />
+							<help>Leave this field blank to default to MIN.</help>
+						</parameter>
+					</option>
+					<help>If "soft", all rejected data will be replaced by either the minimum permissible value or a user-defined MIN_RESET value.</help>
+				</parameter>
+				<help>Min range filter. Reject all values smaller than the min.</help>
+			</option>
+
+			<option label="Max Range Filter" value="max" type="string">
+				<parameter key="%::arg#::max" type="combination" optional="false">
+					<option label="" value="" type="decimal"/>
+				</parameter>
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string">
+						<parameter key="%::arg#::max_reset" type="combination">
+							<option label="" value="" type="decimal" />
+							<help>Leave this field blank to default to MAX.</help>
+						</parameter>
+					</option>
+					<help>If "soft", all rejected data will be replaced by either the maximum permissible or a user-defined MAX_RESET value.</help>
+				</parameter>
+				<help>Max range filter. Reject all values greater than the max.</help>
+			</option>
+
+			<option label="MinMax Filter" value="min_max" type="string">
+				<parameter key="%::arg#::min" type="combination" optional="false">
+					<option label="" value="" type="decimal"/>
+				</parameter>
+				<parameter key="%::arg#::max" type="combination" optional="false">
+					<option label="" value="" type="decimal"/>
+				</parameter>
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string">
+						<parameter key="%::arg#::min_reset" type="combination">
+							<option label="" value="" type="decimal" />
+							<help>Leave this field blank to default to MIN.</help>
+						</parameter>
+						<parameter key="%::arg#::max_reset" type="combination">
+							<option label="" value="" type="decimal" />
+							<help>Leave this field blank to default to MAX.</help>
+						</parameter>
+					</option>
+					<help>If "soft", all rejected data will be replaced by either minimum / maximum permissible or a user-defined MIN_RESET / MAX_RESET value.</help>
+				</parameter>
+				<help>Reject all values greater than the max or smaller than the min. &lt;br&gt;</help>
+			</option>
+
+			<option label="Rate Filter " value="rate" type="string">
+				<parameter key="%::arg#::max" type="combination" optional="false">
+					<option label="" value="" type="string"/>
+					<help>the absolute value of the maximum permissible rate of change (per seconds)</help>
+				</parameter>
+				<parameter key="%::arg#::min" type="combination" optional="true">
+					<option label="" value="" type="string"/>
+					<help>If provided, the value of the minimum permissible rate of change (per seconds) (ie rate of decrease)</help>
+				</parameter>
+				<help>Rate of change filter. Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point.</help>
+			</option>
+
+			<option label="Std Deviation Filter" value="std_dev" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>Standard deviation filter. Values outside of mean ± 2 std_dev are rejected.</help>
+			</option>
+
+			<option label="MAD" value="mad" type="string">
+				<parameter key="%::arg#::min_sigma" type="combination" optional="true">
+						<option label="" value="" type="decimal" />
+						<help>prevents sigma_mad to get too small by forcing a minimum value</help>
+				</parameter>
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>Median Absolute Deviation. Values outside of median ± 3 σ_MAD are rejected. &lt;br&gt;
+				See http://en.wikipedia.org/wiki/Median_absolute_deviation for more information.</help>
+			</option>
+
+			<option label="Tukey 53H Filter" value="Tukey" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>Tukey 53H method A smooth time sequence is generated from the median, substracted from the original signal and
+				compared with the standard deviation. See "Despiking Acoustic Doppler Velocimeter Data", Derek G. Goring and Vladimir
+				L. Nikora, Journal of Hydraulic Engineering, 128, 1, 2002 The deviation factor coeffecient is currently hard-coded as k=1.5. </help>
+			</option>
+
+			<option label="Unheated Rain Gauge Filter" value="Unheated_RainGauge" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::thresh_rh" type="combination">
+					<option label="" value="0.5" type="decimal" minimum="0" maximum="1" optional="false"/>
+				</parameter>
+				<parameter key="%::arg#::thresh_ta" type="combination">
+					<option label="" value="3.0" type="decimal" minimum="0" maximum="1" optional="false"/>
+				</parameter>
+				<help>Filters out snow melting in an unheated rain gauge. This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place when the relative humidity is greater than RH_threshold and (TA-TSS) smaller than Delta_T_threshold, otherwise they get reset to 0. If none of these conditions could be tested (for lack of data), then the precipitation is reset to nodata (or left unchanged if "soft" has been selected).</help>
+			</option>
+
+			<option label="Remove periods with low variance" value="No_Change" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>This filter removes periods showing insufficient changes. It searches for time periods in which the value of the certain variable doesn't change by looking at the variance.</help>
+			</option>
+
+			<option label="Remove points with high variance" value="Time_Consistency" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>This is compares the change between two points with 4 times the standard deviation to keep or remove each points. It is based on Zahumensky, Igor, &lt;i&gt;"Guidelines on Quality Control Procedures for Data from Automatic Weather Stations, World Meteorological Organisation"&lt;/i&gt;, 2004.</help>
+			</option>
+
+			<option label="Detect grass under the sensor" value="HsGrass" type="string">
+				<help>Because the snow height sensor might not be able to distinguish between snow or vegetation/grass on the ground, this removes the data points that don't match snow on the ground (see Tilg, A.-M., Marty C. and G. Klein, &lt;i&gt;"An automatic algorithm for validating snow depth measurements of IMIS stations"&lt;/i&gt;, Swiss Geoscience Meeting, 2015).</help>
+			</option>
+
+			<option label="Potential Short Wave" value="PotentialSW" type="string">
+				<parameter key="%::arg#::min_coeff" type="combination" optional="false">
+					<option label="" value="0.03" type="decimal" minimum="0" />
+				</parameter>
+				<parameter key="%::arg#::max_coeff" type="combination" optional="false">
+					<option label="" value="1.1" type="decimal" minimum="0" />
+				</parameter>
+				<help>This checks that for each point, the measured radiation is greater than the horizontal top of atmosphere potential radiation multiplied by the min_coeff coefficient and less than the global horizontal potential radiation multiplied by the max_coeff coefficient. See Moradi, I., &lt;i&gt;"Quality control of global solar radiation using sunshine duration hours"&lt;/i&gt;, 2009, Energy 34, no. 1, 1-6. </help>
+			</option>
+
+			<!-- general data transformations -->
+			<option label="Suppress (at random)" value="suppr" type="string">
+				<parameter key="%::arg#::frac" type="combination" optional="false">
+						<option label="" value="0.5" type="decimal" minimum="0" maximum="1" optional="false" />
+				</parameter>
+				<help>This suppress a given fraction of the data for the given meteorological parameter.</help>
+			</option>
+			<option label="Suppress (from file)" value="suppr" type="string">
+				<parameter key="%::arg#::suppr" type="file" optional="false" />
+				<help>This suppresses values for the selected parameter at the timesteps and station IDs as given in the provided file.</help>
+			</option>
+
+			<option label="Add" value="add" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="Cst" type="string">
+						<parameter key="%::arg#::cst" type="combination" optional="false">
+							<option label="" value="0." type="decimal" />
+						</parameter>
+						<help>This adds a given offset to the data.</help>
+					</option>
+					<option value="File" type="string">
+						<parameter key="%::arg#::period" type="alternative" optional="false">
+							<option value="Hourly" type="string" />
+							<option value="Daily" type="string" />
+							<option value="Monthly" type="string" />
+						</parameter>
+						<parameter key="%::arg#::corrections" type="file" optional="false"/>
+						<parameter key="%::arg#::column" type="combination">
+								<option label="" value="2" type="integer" minimum="2" />
+						</parameter>
+						<help>This adds to the data an hourly/daily/monthly offset as read from a specified file (with absolute or relative path).</help>
+					</option>
+					<option value="Noise" type="string">
+						<parameter key="%::arg#::distribution" type="alternative" optional="false">
+							<option value="uniform" type="string" />
+							<option value="normal" type="string" />
+						</parameter>
+						<parameter key="%::arg#::range" type="combination" optional="false">
+							<option label="" value="5." type="decimal" optional="false"/>
+						</parameter>
+						<help>Add a noise signal to the input. The range is the scaling factor to apply: how many time the standard deviation for a normaly distributed noise or the amplitude (in %) around the original signal for an uniformly distributed noise.</help>
+					</option>
+				</parameter>
+			</option>
+
+			<option label="Multiply" value="mult" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="Cst" type="string">
+						<parameter key="%::arg#::cst" type="combination" optional="false">
+							<option label="" value="0." type="decimal" />
+						</parameter>
+						<help>This multiplies the data by a given factor.</help>
+					</option>
+					<option value="File" type="string">
+						<parameter key="%::arg#::period" type="alternative" optional="false">
+							<option value="Hourly" type="string" />
+							<option value="Daily" type="string" />
+							<option value="Monthly" type="string" />
+						</parameter>
+						<parameter key="%::arg#::corrections" type="file" optional="false"/>
+						<parameter key="%::arg#::column" type="combination">
+								<option label="" value="2" type="integer" minimum="2" />
+						</parameter>
+						<help>This multiplies the data by an hourly/daily/monthly factor as read from a specified file (with absolute or relative path).</help>
+					</option>
+					<option value="Noise" type="string">
+						<parameter key="%::arg#::distribution" type="alternative" optional="false">
+							<option value="uniform" type="string" />
+							<option value="normal" type="string" />
+						</parameter>
+						<parameter key="%::arg#::range" type="combination" optional="false">
+							<option label="" value=".1" type="decimal" optional="false"/>
+						</parameter>
+						<help>Multiply the input by a noise signal. The range (interpreted as a fraction) is the scaling factor to apply: how many time the standard deviation for a normaly distributed noise or the amplitude (in %) around the original signal for an uniformly distributed noise.</help>
+					</option>
+				</parameter>
+			</option>
+
+			<!-- specific data transformations -->
+			<option label="Exponential Smoothing" value="exp_smoothing" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>
+					Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+					Please note that the standard filter works with a left window!
+					</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<parameter key="%::arg#::alpha" type="combination">
+					<option label="" value="0.8" type="decimal" minimum="0" maximum="1"/>
+				</parameter>
+				<help>Exponential smooting processing, exponential moving average s&lt;sub&gt;0&lt;/sub&gt; = x&lt;sub&gt;0&lt;/sub&gt; ; s&lt;sub&gt;n&lt;/sub&gt; = alpha*x&lt;sub&gt;t-1&lt;/sub&gt; + (1-alpha)*s&lt;sub&gt;t-1&lt;/sub&gt;</help>
+			</option>
+
+			<option label="Weighted Moving Average Smoothing" value="wma_smoothing" type="string">
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>
+					Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+					Please note that the standard filter works with a left window!
+					</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>Weighted moving average smoothing such as: WMA = (1*X&lt;sub&gt;1&lt;/sub&gt; + 2*X&lt;sub&gt;2&lt;/sub&gt; + ... + n*X&lt;sub&gt;n&lt;/sub&gt;) / sum_of_weights</help>
+			</option>
+
+			<option label="IIR HP or LP filter" value="IIR" type="string">
+				<parameter key="%::arg#::freq_response" type="alternative" optional="false">
+						<option value="LP" type="string" />
+						<option value="HP" type="string" />
+						<help>Either choose Low Pass (LP) or High Pass (HP).</help>
+				</parameter>
+				<parameter key="%::arg#::type" type="alternative" optional="true">
+						<option value="CRITICALLY_DAMPED" type="string" />
+						<option value="BUTTERWORTH" type="string" />
+						<option value="BESSEL" type="string" />
+						<help>Choose the type of filter (see documentation for more).</help>
+				</parameter>
+				<parameter key="%::arg#::cutoff" type="combination" optional="false">
+					<option label="" value="10800" type="decimal" minimum="0" />
+					<help>The cutoff period is defined as the period (in seconds) at which there is a -3dB gain.</help>
+				</parameter>
+				<parameter key="%::arg#::single_pass" type="alternative" default="FALSE">
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>Normally, the phase is removed by bidirectional filtering, ie. running the filter twice, first backward and then forward (this also squares the amplitude response).</help>
+				</parameter>
+				<help>This Infinite Impulse Response (IIR), two poles filter either acts as a Low Pass or High Pass filter. &lt;a href="http://www.dspguide.com/ch19/4.htm"&gt;More information&lt;/a&gt;.</help>
+			</option>
+
+			<option label="Aggregate" value="Aggregate" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="MIN" type="string" />
+					<option value="MAX" type="string" />
+					<option value="MEAN" type="string" />
+					<option value="MEDIAN" type="string" />
+					<option value="WIND_AVG" type="string" />
+					<help>Aggregation type.</help>
+				</parameter>
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string"/>
+					<help>Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.</help>
+				</parameter>
+				<parameter key="%::arg#::centering" type="alternative">
+						<option value="left" type="string" />
+						<option value="center" type="string"/>
+						<option value="right" type="string"/>
+				</parameter>
+				<parameter key="%::arg#::min_pts" type="combination">
+						<option label="" value="1" type="integer" minimum="1" />
+						<help>Minimum number of points required in the data window</help>
+				</parameter>
+				<parameter key="%::arg#::min_span" type="combination">
+						<option label="" value="1800" type="integer" minimum="1" />
+						<help>Minimum time span (in seconds) of the data window</help>
+				</parameter>
+				<help>Aggregate the data from a given time window.</help>
+			</option>
+
+			<option label="WMO Undercatch Filter" value="undercatch_wmo" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="Cst" type="string">
+						<parameter key="%::arg#::snow" type="combination" optional="false">
+							<option label="" value="" type="decimal" />
+						</parameter>
+						<parameter key="%::arg#::mixed" type="combination" optional="false">
+							<option label="" value="" type="decimal" />
+						</parameter>
+						<parameter key="%::arg#::T_snow" type="combination" optional="true">
+							<option label="" value="" type="decimal" />
+							<help>snow temperature threshold (in K, optional)</help>
+						</parameter>
+						<parameter key="%::arg#::T_rain" type="combination" optional="true">
+							<option label="" value="" type="decimal" />
+							<help>rain temperature threshold (in K, optional)</help>
+						</parameter>
+						<help>this applies a constant factor to the precipitation (the solid and mixed precipitation factor must be provided). The snow and rain temperature thresholds can optionally be provided</help>
+					</option>
+					<option value="Nipher" type="string" />
+					<option value="Tretyakov" type="string" />
+					<option value="US8sh" type="string" />
+					<option value="US8unsh" type="string" />
+					<option value="RT3_Jp" type="string" />
+					<option value="Cspg" type="string" />
+					<option value="Geonorsh" type="string" />
+					<option value="Hellmann" type="string" />
+					<option value="Hellmannsh" type="string" />
+				</parameter>
+				<help>This implements the standard methods for precipitation correction as described in "WMO Solid Precipitation Measurement Intercomparison", B. Goodison, P. Louie and D. Yang, 872, 1998 as well as the overview given by "Literature Study on the Correction of Precipitation Measurements", Annette Wagner, 2009. The correction parameters for the shielded Hellmann gauge (German version) are from "Wind-induced Precipitation Undercatch of the Hellmann Gauges", Daqing Yang et al, Nordic Hydrology, 30, 1999, pp 57-80.</help>
+			</option>
+
+			<option label="Forland Undercatch Filter" value="undercatch_forland" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="Hellmann" type="string" />
+					<option value="Swedish" type="string" />
+					<option value="Norvegian" type="string" />
+					<option value="Finnish" type="string" />
+					<option value="Treyakov" type="string" />
+					<option value="Belfort" type="string" />
+					<option value="Geonor" type="string" />
+					<option value="wfj" type="string" />
+				</parameter>
+				<help>This implements the standard methods for precipitation correction as described in "Manual for operational correction of Nordic precipitation data", E. Førland, P. Allerup, B. Dahlström, E. Elomaa, T. Jónsson, H. Madsen, P. Perälä Rissanen, H. Vedin, and F. Vejen, 1996, Tech. Rep. 24/96, Norske Meteorologiske Institutt. Some specific coefficients have been calculated by N. Wever for the Davos Weisflujoch experimental field ("wfj" gage choice).</help>
+			</option>
+
+			<option label="Hamon Undercatch Filter" value="undercatch_hamon" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="Sh" type="string" />
+					<option value="UnSh" type="string" />
+					<option value="Hellmannsh" type="string" />
+				</parameter>
+				<help>This implements the standard methods for precipitation correction as described in "Computing actual precipitation", W. R. Hamon, in Distribution of precipitation in mountaineous areas, Geilo symposium 1, pp 159-174, World Meteorological Organization, Geneva, 1972.</help>
+			</option>
+
+			<option label="Unventillated temperature" value="Unventilated_T" type="string">
+				<parameter key="%::arg#::type" type="alternative" optional="false">
+					<option value="Suppr" type="string" optional="false">
+						<parameter key="%::arg#::thresh_vw" type="combination" optional="false">
+							<option label="" value="" type="decimal" />
+							<help>Wind velocity threshold in m/s.</help>
+						</parameter>
+						<help>Delete all data below a given wind velocity threshold.</help>
+					</option>
+					<option value="Huwald" type="string" optional="false">
+						<parameter key="%::arg#::soil_alb" type="combination" optional="false">
+							<option label="" value="" type="decimal" minimum="0" maximum="1" />
+							<help>Soil albedo to use when there is no snow on the ground.</help>
+						</parameter>
+						<help>This implements the correction described in (Reina Nakamura, 2005) with an albedo dependency as introduced in (Huwald, 2009)</help>
+					</option>
+					<option value="Nakamura" type="string" optional="false">
+						<parameter key="%::arg#::soil_alb" type="combination" optional="false">
+							<option label="" value="" type="decimal" minimum="0" maximum="1" />
+							<help>Soil albedo to use when there is no snow on the ground.</help>
+						</parameter>
+						<help>This implements the correction described in (Reina Nakamura, 2005)</help>
+					</option>
+				</parameter>
+				<help>This filter deals with unventillated temperature sensors. The data below a given wind velocity can be deleted or some corrections
+					for the lack of ventillation can be applied.</help>
+			</option>
+
+			<option label="Distribute precipitation" value="PSUM_Distribute" type="string">
+				<parameter key="%::arg#::meas_period" type="combination" optional="false">
+					<option label="" value="86400" type="decimal" minimum="0" />
+					<help>Measured accumulation period in seconds.</help>
+				</parameter>
+				<parameter key="%::arg#::soft" type="alternative" default="FALSE">
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>If set to TRUE, all missing data will be replaced by zeroes, otherwise nodata will propagate.</help>
+				</parameter>
+				<help>This distributes accumulated precipitation by assuming that the precipitation has been measured on intervals greater than the sampling interval of the data file (for example, 24 hours accumulations written once per day in an hourly file, the other timesteps receiving nodata). Please be aware that the accumulation has to be written on the last timestep of the accumulation period.</help>
+			</option>
+
+			<option label="Apply shading" value="shade" type="string">
+				<parameter key="%::arg#::file" type="file" optional="true"/>
+				<parameter key="%::arg#::dump_mask" type="alternative" optional="true" >
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>If set to TRUE, the shading mask as computed from the DEM will be printed on the screen (most of the users don't need this!).</help>
+				</parameter>
+				<help>The shading from the surrounding is either computed from the DEM (provided with the DEM plugin) or from a provided horizon file.</help>
+			</option>
+		</parameter>
+
+		<reference name="METEOIOPARAMETERS" />
+	</parameter>
+
+	<!-- 1D Interpolation -->
+	<parameter key="ENABLE_RESAMPLING" type="alternative" default="TRUE" optional="true">
+			<section name="Interpolations1D" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Should the data be resampled to the timesteps requested by Snowpack? (it is very strongly suggested to keep it set to TRUE)</help>
+		</parameter>
+	<parameter key="WINDOW_SIZE" type="integer" minimum="1" default="43200" optional="true">
+		<section name="Interpolations1D" />
+		<help>Default width of the biggest data gap that can be filled by temporal interpolation (in seconds: 1/2 day= 43200, 1 day=86400, 1 week=604800)</help>
+	</parameter>
+
+	<parameter key="Add/Remove 1D Interpolation" type="selector">
+		<section name="Interpolations1D" />
+
+		<parameter key="%::resample" type="alternative" template="true">
+			<section name="Interpolations1D" />
+			<option label="No Interpolation" value="none" type="string" />
+
+			<option label="Nearest Neighbour" value="nearest" type="string" >
+				<parameter key="%::nearest::window_size" type="combination" optional="true">
+					<option label="" value="" type="integer" minimum="1"/>
+				</parameter>
+				<parameter key="%::nearest::extrapolate" type="alternative" optional="true">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string" />
+					<help>
+					If "extrapolate" is added, then data *outside* of the original date range can be interpolated.
+					Otherwise, a data point will only be calculated between the original date range.
+					</help>
+				</parameter>
+				<help>Nearest neighbor interpolation between missing points</help>
+			</option>
+
+			<option label="Linear" value="linear" type="string">
+				<parameter key="%::linear::window_size" type="combination" optional="true">
+					<option label="" value="" type="integer" minimum="1"/>
+				</parameter>
+				<parameter key="%::linear::extrapolate" type="alternative" optional="true">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string" />
+					<help>
+					If "extrapolate" is added, then data *outside* of the original date range can be interpolated.
+					Otherwise, a data point will only be calculated between the original date range.
+					</help>
+				</parameter>
+				<help>Linear interpolation between missing points</help>
+			</option>
+
+			<option label="Accumulate" value="accumulate" type="string">
+				<parameter key="%::accumulate::period" type="combination" optional="false">
+					<option label="" value="900" type="integer" minimum="1"/>
+					<help>Accumulation period (in seconds). This must usually match the model time step. It is assumed that the measured accumulation period is equal to the data timesteps.</help>
+				</parameter>
+				<parameter key="%::accumulate::strict" type="alternative" optional="true">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string" />
+					<help>if enabling "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). Otherwise, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.</help>
+				</parameter>
+				<help>Accumulation over a user given period (filter argument, in seconds - should coincide with your calculation step!).</help>
+			</option>
+
+			<option label="Solar" value="Solar" type="string">
+				<help>Resample solar radiation by interpolating an atmospheric loss factor.</help>
+			</option>
+
+			<option label="Solar daily sum" value="daily_solar" type="string">
+				<help>Distribute a daily sum of solar radiation over the whole day.</help>
+			</option>
+
+			<option label="Sinusoidal daily average" value="daily_avg" type="string">
+				<parameter key="%::daily_avg::range" type="combination" optional="false">
+					<option label="" value="10" type="decimal" minimum="0"/>
+					<help>How much should the value change around the average?</help>
+				</parameter>
+				<parameter key="%::daily_avg::phase" type="combination" optional="false">
+					<option label="" value="0.25" type="decimal" minimum="0"/>
+					<help>Where should the minimum value be, from the begining of the day (in days)?</help>
+				</parameter>
+				<help>This considers that the single daily value is the daily average of a sinusoidal variation.</help>
+			</option>
+		</parameter>
+
+		<reference name="METEOIOPARAMETERS" />
+	</parameter>
+
+	<!-- Data Generators -->
+	<parameter key="Add/Remove data generator" type="selector">
+		<section name="Generators" />
+		<parameter key="%::generators" type="choice" template="true">
+			<section name="Generators" />
+			<option value="STD_PRESS" type="choice">
+				<help>Generate a standard atmosphere pressure as a function of the station's elevation</help>
+			</option>
+
+			<option value="RELHUM" type="choice">
+				<help>Generate a relative humidity from other humidity measurements (dew point temperature "TD" and/or specific humidity "SH")</help>
+			</option>
+
+			<option value="TS_OLWR" type="choice">
+				<help>Generate a surface temperature from Outgoing Long Wave Radiation</help>
+			</option>
+
+			<option value="ISWR_ALBEDO" type="choice">
+				<help>Generate ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on the snow height</help>
+			</option>
+
+			<option value="CST" type="choice">
+				<parameter key="%::cst::value" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<help>Generate a constant value, as provided</help>
+			</option>
+
+			<option value="SIN" type="choice">
+				<parameter key="%::sin::type" type="combination">
+					<option value="Period: " type="dropdown">
+						<option value="yearly" type="string" />
+						<option value="daily" type="string" />
+					</option>
+				</parameter>
+				<parameter key="%::sin::min" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<parameter key="%::sin::max" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<parameter key="%::sin::phase" type="combination">
+					<option label="" value="0" type="decimal" optional="false" />
+				</parameter>
+				<help>Generate a sinusoidal variation. The min and max values are provided as well as the phase expressed in the same units as the period and representing the time offset from the begining of the period to the first minimum value.</help>
+			</option>
+
+			<option value="CLEARSKY_LW" type="choice">
+				<parameter key="%::clearsky_lw::type" type="combination">
+					<option value="Model: " type="dropdown">
+						<option value="Brutsaert" type="string" />
+						<option value="Dilley" type="string" />
+						<option value="Prata" type="string" />
+						<option value="Clark" type="string" />
+						<option value="Tang" type="string" />
+						<option value="Idso" type="string" />
+					</option>
+				</parameter>
+				<help>Generate ILWR using a clear sky emissivity</help>
+			</option>
+
+			<option value="ALLSKY_LW" type="choice">
+				<parameter key="%::allsky_lw::type" type="combination">
+					<option value="Model: " type="dropdown">
+						<option value="Omstedt" type="string" />
+						<option value="Konzelmann" type="string" />
+						<option value="Unsworth" type="string" />
+						<option value="Crawford" type="string" />
+					</option>
+				</parameter>
+				<parameter key="%::allsky_lw::use_rswr" type="alternative" optional="true">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string" />
+					<help>if enabling "use_rswr", when no ISWR is available it will be computed from RSWR and a ground albedo (if HS is greater than a threshold, it will be a snow albedo, otherwise a soil albedo). Keep in mind that this is not very precise!</help>
+				</parameter>
+				<help>Generate ILWR using an all sky model. If no cloudiness is available, it is parametrized based on solar index (ratio of potential short wave radiation and measured short wave radiation)</help>
+			</option>
+
+			<option value="CLEARSKY_SW" type="choice">
+				<help>Generate the potential incoming short wave radiation (ie clear sky!)</help>
+			</option>
+
+			<option value="ALLSKY_SW" type="choice">
+				<help>Generate the potential incoming short wave radiation (ie clear sky!). If ILWR is available, it computes the cloudiness from Unsworth.</help>
+			</option>
+
+			<option value="TAU_CLD" type="choice">
+				<parameter key="%::tau_cld::use_rswr" type="alternative" optional="true">
+					<option value="FALSE" type="string" />
+					<option value="TRUE" type="string" />
+					<help>if enabling "use_rswr", when no ISWR is available it will be computed from RSWR and a ground albedo (if HS is greater than a threshold, it will be a snow albedo, otherwise a soil albedo). Keep in mind that this is not very precise!</help>
+				</parameter>
+				<help>Generate the atmospheric transmissivity based on cloud cover fraction.</help>
+			</option>
+
+			<option value="ESOLIP" type="choice">
+				<help>Generate precipitation from changes in snow height (see Mair et al., &lt;i&gt;"ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height and rain gauge measurements"&lt;/i&gt;, Hydrology and Earth System Sciences Discussions, 10(7), 8683-8714, 2013).</help>
+			</option>
+
+			<option label="PSUM phase" value="PPHASE" type="choice">
+				<parameter key="%::pphase::type" type="alternative" optional="false">
+					<option value="THRESH" type="string">
+						<parameter key="%::pphase::snow" type="combination">
+							<option label="" type="decimal" optional="false" value="273.35"/>
+						</parameter>
+					</option>
+					<option value="RANGE" type="string">
+						<parameter key="%::pphase::snow" type="combination">
+							<option label="" type="decimal" optional="false" value="273.35"/>
+						</parameter>
+						<parameter key="%::pphase::rain" type="combination">
+							<option label="" type="decimal" optional="false" value="275.35"/>
+						</parameter>
+					</option>
+				</parameter>
+
+				<help>Generate the precipitation phase with a fixed temperature threshold or with a linear evolution from snow to rain within a given air temperature range</help>
+			</option>
+
+			<option value="PRECUNSPLIT" type="choice">
+				<help>Generate split precipitation (as provided by the "RAINF" and "SNOWF" parameters) into amount/phase. It is suitable for PSUM or PSUM_PH.</help>
+			</option>
+
+		</parameter>
+		<reference name="METEOIOPARAMETERS" />
+		<help>&lt;font color="FF0000"&gt;&lt;strong&gt;The order of declaration of the data generator defines the priority!&lt;/strong&gt;&lt;/font&gt; Ie. only if the first one can not provide data, would the second one get called...</help>
+	</parameter>
+
+</inishell_config>

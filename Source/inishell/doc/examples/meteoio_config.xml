@@ -1,0 +1,982 @@
+<inishell_config application="MeteoIO">
+       <parameter key="IMPORT_BEFORE" type="string" optional="true">
+	       <section name="general" />
+	       <help>It is possible to import another ini file and overwrite its settings with the current one. In order to do it, provide the file path and name.</help>
+       </parameter>
+       <parameter key="IMPORT_AFTER" type="string" optional="true">
+	       <section name="general" />
+	       <help>It is possible to import another ini file and overwrite the current settings with the imported ones. In order to do it, provide the file path and name.</help>
+       </parameter>
+
+	<!-- General Parameters -->
+	<parameter key="BUFF_CHUNK_SIZE" type="integer" default="370">
+		<section name="general" />
+		<help>Size in days of a chunk of data to read at once.</help>
+	</parameter>
+
+	<parameter key="BUFF_BEFORE" type="decimal" default="1.5">
+		<section name="general" />
+		<help>Alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
+		beginning of the buffer (therefore, it takes a value in days).</help>
+	</parameter>
+
+	<!-- Coordinate systems, time zones -->
+	<parameter key="COORDSYS" type="alternative" optional="false">
+		<section name="input" />
+		<section name="output" />
+		<option value="CH1903" type="string" default="true">
+			<help>coordinates in the Swiss Grid &lt;a href="http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf"&gt;http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf&lt;/a&gt;</help>
+		</option>
+		<option value="UTM" type="string">
+			<parameter key="COORDPARAM" type="string">
+				<help>specify the zone with the zone letter (for example, 32T)</help>
+			</parameter>
+			<help>UTM coordinates, see &lt;a href="http://www.oc.nps.edu/oc2902w/maps/utmups.pdf"&gt;http://www.oc.nps.edu/oc2902w/maps/utmups.pdf&lt;/a&gt;</help>
+		</option>
+		<option value="UPS" type="string">
+			<parameter key="COORDPARAM" type="string">
+				<help>specify the hemisphere (either N or S)</help>
+			</parameter>
+			<help>Universal Polar Stereographic coordinates, see &lt;a href="https://en.wikipedia.org/wiki/Universal_Polar_Stereographic_coordinate_system"&gt;https://en.wikipedia.org/wiki/Universal_Polar_Stereographic_coordinate_system&lt;/a&gt;</help>
+		</option>
+		<option value="PROJ4" type="string">
+			<parameter key="COORDPARAM" type="string" optional="false" />
+			<help>external library: see &lt;a href="http://trac.osgeo.org/proj/"&gt;http://trac.osgeo.org/proj/&lt;/a&gt;</help>
+		</option>
+		<option value="LOCAL"  type="string">
+			<help>uses the horizontal and vertical distance from a reference point</help>
+		</option>
+		<help>coordinate system</help>
+	</parameter>
+
+	<parameter key="TIME_ZONE" type="integer+" default="+1" maximum="14" minimum="-12" optional="false">
+		<section name="input" />
+		<section name="output" />
+	</parameter>
+
+	<!-- Datatypes: special pts -->
+	<parameter key="SPECIALPTS" type="alternative">
+		<section name="input" />
+		<option value="A3D" type="string">
+			<parameter key="SPECIALPTSFILE" type="file" optional="false">
+				<help>a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)</help>
+			</parameter>
+		</option>
+		<option value="SMET" type="string">
+			<parameter key="SPECIALPTSFILE" type="file" optional="false">
+				<help>a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)</help>
+			</parameter>
+		</option>
+	</parameter>
+
+	<!-- Datatypes: Meteo Data -->
+	<parameter key="METEO" type="alternative">
+		<section name="input" />
+		<section name="output" />
+
+		<option value="A3D" type="string">
+			<parameter key="METEOPATH" type="path" optional="false">
+				<help>string containing the path to the meteorological files</help>
+			</parameter>
+		</option>
+		<option value="BORMA" type="string">
+			<section name="input" />
+			<reference name="BORMA" />
+		</option>
+		<option value="COSMO" type="string">
+			<parameter key="METEOPATH" type="path" optional="false">
+				<help>string containing the path to the meteorological files</help>
+			</parameter>
+		</option>
+		<option value="GEOTOP" type="string">
+			<section name="input" />
+			<reference name="GEOTOP_IN" />
+		</option>
+		<option value="GEOTOP" type="string">
+			<section name="output" />
+			<reference name="GEOTOP_OUT" />
+		</option>
+		<option value="GRIB" type="string">
+			<section name="input" />
+			<reference name="GRIB_METEO" />
+		</option>
+		<option value="GSN" type="string">
+			<section name="input" />
+			<reference name="GSN" />
+		</option>
+		<option value="IMIS" type="string">
+			<section name="input" />
+			<reference name="IMIS" />
+		</option>
+		<option value="SMET" type="string">
+			<section name="input" />
+			<reference name="SMET_IN" />
+		</option>
+		<option value="SMET" type="string">
+			<section name="output" />
+			<reference name="SMET_OUT" />
+		</option>
+		<option value="SNOWPACK" type="string">
+			<section name="input" />
+			<reference name="SNIO_IN" />
+		</option>
+		<option value="SNOWPACK" type="string">
+			<section name="output" />
+			<parameter key="METEOPATH" type="path" optional="false">
+				<help>string representing path where SNOWPACK files should be saved</help>
+			</parameter>
+		</option>
+
+		<help>plugin for METEO data </help>
+	</parameter>
+
+	<parameter key="Add Meteo parameter copy" type="selector">
+		<section name="input"/>
+		<parameter key="COPY::%" type="string" optional="false" template="true">
+		  <help>The name of the parameter to copy (e.g. TA, RH, VW, ISWR, etc)</help>
+		</parameter>
+	</parameter>
+
+	<!-- Datatypes: DEM -->
+	<frame key="dem_frame" label="Digital Elevation Model">
+	<section name="input"/>
+		<parameter key="DEM" type="alternative">
+			<section name="input" />
+			<option value="ARC" type="string">
+				<parameter key="DEMFILE" type="file" optional="false">
+					<help>For reading the data as a DEMObject</help>
+				</parameter>
+			</option>
+			<option value="ARPS" type="string">
+				<parameter key="DEMFILE" type="file" optional="false">
+					<help>For reading the data as a DEMObject</help>
+				</parameter>
+				<parameter key="ARPS_XCOORD" type="decimal" optional="false">
+					<help>x coordinate of the lower left corner of the grids</help>
+				</parameter>
+				<parameter key="ARPS_YCOORD" type="decimal" optional="false">
+					<help>y coordinate of the lower left corner of the grids</help>
+				</parameter>
+			</option>
+			<option value="GRASS" type="string">
+				<parameter key="DEMFILE" type="file" optional="false">
+					<help>For reading the data as a DEMObject</help>
+				</parameter>
+			</option>
+			<option value="GRIB" type="string">
+				<parameter key="DEMFILE" type="file" optional="false">
+					<help>For reading the data as a DEMObject</help>
+				</parameter>
+				<parameter key="GRIB_DEM_UPDATE" type="alternative" optional="true">
+					<option value="TRUE" type="string" />
+					<option value="FALSE" type="string" />
+					<help>recompute slope/azimuth from the elevations when reading a DEM (default=false, that is we use the slope and azimuth included in the GRIB file)</help>
+				</parameter>
+			</option>
+			<option value="PGM" type="string">
+				<parameter key="DEMFILE" type="file" optional="false">
+					<help>For reading the data as a DEMObject</help>
+				</parameter>
+				<reference name="PGM_IN" />
+			</option>
+
+			<help>plugin for Digital Elevation Model data </help>
+		</parameter>
+	</frame>
+
+	<!-- Datatypes: Landuse -->
+	<parameter key="LANDUSE" type="alternative">
+		<section name="input" />
+		<option value="ARC" type="string">
+			<parameter key="LANDUSEFILE" type="file" optional="false">
+				<help>File containing a grid of landuse codes</help>
+			</parameter>
+		</option>
+
+		<help>plugin for land cover data </help>
+	</parameter>
+
+	<!-- Datatypes: Grids -->
+	<parameter key="GRID2D" type="alternative">
+		<section name="input" />
+		<section name="output" />
+		<option value="ARC" type="string">
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+			<parameter key="A3D_VIEW" type="alternative" optional="true" default="false">
+				<option value="TRUE" type="string" />
+				<option value="FALSE" type="string" />
+				<help>use Alpine3D's grid viewer naming convention?</help>
+			</parameter>
+			<reference name="ARC" />
+		</option>
+		<option value="ARPS" type="string">
+			<section name="input" />
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+			<reference name="ARPS" />
+		</option>
+		<option value="GRASS" type="string">
+			<section name="input" />
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+		</option>
+		<option value="GRIB" type="string">
+			<section name="input" />
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+			<reference name="GRIB_GRIDS" />
+		</option>
+		<option value="PGM" type="string">
+			<section name="input" />
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+			<reference name="PGM_IN" />
+		</option>
+		<option value="PGM" type="string">
+			<section name="output" />
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+		</option>
+		<option value="PNG" type="string">
+			<section name="output" />
+			<parameter key="GRID2DPATH" type="path" optional="false">
+				<help>string representing path where grid files should be read from</help>
+			</parameter>
+			<reference name="PNG" />
+		</option>
+		<help>plugin for 2D gridded data </help>
+	</parameter>
+
+	<!--Parameter group for list of stations -->
+	<parametergroup name="stationgroup_files">
+		<parameter key="STATION#" type="file" counter="1" optional="false">
+			<help>filename for station number # </help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="stationgroup_names">
+		<parameter key="STATION#" type="string" counter="1" optional="false">
+			<help>station id for the given station number # </help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="stationgroup_pos">
+		<parameter key="STATION#" type="string" counter="1">
+			<help>Coordinates are given as "lat lon" or "xcoord ycoord epsg_code"</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- Plugins for Meteo Data-->
+	<parametergroup name="BORMA">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string containing the path to the xml files</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="IMIS">
+		<parameter key="DBNAME" type="string" optional="false">
+			<help>database name, as provided by your database administrator</help>
+		</parameter>
+		<parameter key="DBUSER" type="string" optional="false">
+			<help>database user name</help>
+		</parameter>
+		<parameter key="DBPASS" type="string" optional="false">
+			<help>database password associated with the user name</help>
+		</parameter>
+		<parameter key="USEANETZ" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		  <help>OPTIONAL: use ANETZ stations to provide precipitations for normal IMIS stations.
+		  Each IMIS station is associated with one or two ANETZ stations and does a weighted
+		  average to get what should be its local precipitations</help>
+		</parameter>
+		<parameter key="USE_IMIS_HNW" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		  <help>OPTIONAL: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, it is strongly advised to use a FilterHNWMelt filter to detect snow melting in the rain gauge and perform winter conditions detection in the application.</help>
+		</parameter>
+		<parameter key="USE_SNOWPACK_HNW" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		  <help>if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute HNW. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)</help>
+		</parameter>
+
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="GRIB_METEO">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string containing the path to the grib files</help>
+		</parameter>
+		<parameter key="METEOEXT" type="string" optional="true">
+			<help>grib file extension, or none for no file extension (default: .grb)</help>
+		</parameter>
+
+		<reference name="stationgroup_pos" />
+	</parametergroup>
+
+	<parametergroup name="GEOTOP_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string containing the path to the data files</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="false">
+			<help>absolute filename of the geotop.inpts file</help>
+		</parameter>
+		<parameter key="METEOPREFIX" type="string" optional="true">
+			<help>prefix to append when generating a file name for reading</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="GEOTOP_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string containing the path to the data files</help>
+		</parameter>
+		<parameter key="METEOSEQ" type="string" optional="false">
+			<help>specifiy in which order the columns should be printed out</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="GSN">
+		<parameter key="ENDPOINT" type="string" optional="false">
+			<help>webserver running GSN with its port number and full path. For example:
+			http://montblanc.slf.ch:22001/services/A3DWebService</help>
+		</parameter>
+		<parameter key="PROXY" type="string" optional="true">
+			<help>Should the connection go through a proxy? This is useful for servers
+			filtering on domains but usually not necessary.</help>
+		</parameter>
+		<parameter key="PROXYPORT" type="string" optional="true" />
+		<parameter key="PROXYUSER" type="string" optional="true" />
+		<parameter key="PROXYPASS" type="string" optional="true" />
+
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="SMET_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string containing the path to the smet files</help>
+		</parameter>
+		<reference name="stationgroup_files" />
+	</parametergroup>
+
+	<parametergroup name="SMET_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string representing path where SMET files should be saved</help>
+		</parameter>
+		<parameter key="METEOPARAM" type="alternative">
+		  <option value="ASCII" type="string" default="true">
+		    <help>Write ASCII SMET files</help>
+		  </option>
+		  <option value="BINARY" type="string">
+		    <help>Write BINARY SMET files</help>
+		  </option>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="SNIO_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>string containing the path to the SNOWPACK files</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="true">
+			<help>filename of the meta data file (in METEOPATH)</help>
+		</parameter>
+
+		<parameter key="NUMBER_MEAS_TEMPERATURES" type="integer+" minimum="0" default="0">
+		  <help>the number of measured snow temperatures provided</help>
+		</parameter>
+
+		<parameter key="NUMBER_OF_SOLUTES" type="integer+" minimum="0" default="0">
+		  <help>the number of solutes for which input data are provided</help>
+		</parameter>
+
+		<parameter key="RSWR_INP" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		</parameter>
+		<parameter key="ISWR_INP" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		</parameter>
+		<parameter key="VW_DRIFT" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		  <help>OPTIONAL: wind velocity to use for blowing and drifting snow is provided</help>
+		</parameter>
+		<parameter key="RHO_HN" type="alternative" optional="true">
+		  <option value="TRUE" type="string" />
+		  <option value="FALSE" type="string" />
+		  <help>OPTIONAL: measured new snow density is provided</help>
+		</parameter>
+
+		<reference name="stationgroup_files" />
+	</parametergroup>
+
+	<!-- Plugins for Gridded Data-->
+	<parametergroup name="ARC">
+		<parameter key="A3D_VIEW" type="alternative" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>generate names compatible with Alpine3D's grid viewer?</help>
+		</parameter>
+		<parameter key="GRID2DEXT" type="string" optional="true">
+			<help>grid file extension, or none for no file extension (default: .asc)</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="ARPS">
+		<parameter key="ARPS_XCOORD" type="decimal" optional="false">
+			<help>x coordinate of the lower left corner of the grids</help>
+		</parameter>
+		<parameter key="ARPS_YCOORD" type="decimal" optional="false">
+			<help>y coordinate of the lower left corner of the grids</help>
+		</parameter>
+		<parameter key="GRID2DEXT" type="string" optional="true">
+			<help>grid file extension, or none for no file extension (default: .asc)</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="GRIB_GRIDS">
+		<parameter key="GRID2DPREFIX" type="string" optional="true">
+			<help>prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain)</help>
+		</parameter>
+		<parameter key="GRID2DEXT" type="string" optional="true">
+			<help>grib file extension, or none for no file extension (default: .grb)</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="PNG">
+		<parameter key="PNG_WORLD_FILE" type="alternative" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>generate a world file for each output file? This file contains the geolocalization information</help>
+		</parameter>
+		<parameter key="PNG_LEGEND" type="alternative" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>generate a legend?</help>
+		</parameter>
+		<parameter key="PNG_AUTOSCALE" type="alternative" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>autoscale color scale?</help>
+		</parameter>
+		<parameter key="PNG_SCALING" type="alternative" optional="true">
+			<option value="nearest" type="string" />
+			<option value="bilinear" type="string" />
+			<help>scaling algorithm (default=bilinear)</help>
+		</parameter>
+		<parameter key="PNG_MIN_SIZE" type="string" optional="false">
+			<help>minimum dimensions of the PNG, like 640x480</help>
+		</parameter>
+		<parameter key="PNG_MAX_SIZE" type="string" optional="false">
+			<help>maximum dimensions of the PNG, like 1024x768</help>
+		</parameter>
+		<parameter key="PNG_INDEXED" type="alternative" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>generate a color indexed file (default=true)</help>
+		</parameter>
+		<parameter key="PNG_SPEED_OPTIMIZE" type="alternative" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>optimize for speed (default=false)</help>
+		</parameter>
+		<parameter key="PNG_NR_LEVELS" type="integer+" default="+30" maximum="255" minimum="6" optional="true">
+			<help>number of colors in the palette (default=30)</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="PGM_IN">
+		<parameter key="PGM_XCOORD" type="decimal" optional="false">
+			<help>lower left x coordinate</help>
+		</parameter>
+		<parameter key="PGM_YCOORD" type="decimal" optional="false">
+			<help>lower left y coordinate</help>
+		</parameter>
+		<parameter key="PGM_CELLSIZE" type="decimal" optional="false">
+			<help>cellsize in meters</help>
+		</parameter>
+		<parameter key="PGM_MIN" type="decimal" optional="false">
+			<help>minimum value in real world coordinates to match with the minimum value read out of the PGM file (such minimum being greater than 0 because 0 is NODATA)</help>
+		</parameter>
+		<parameter key="PGM_MAX" type="decimal" optional="false">
+			<help>maximum value in real world coordinates to match with the maximum value read out of the PGM file</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- Meteo Parameters for Filters, resampling, spatial interpolations-->
+	<parametergroup name="METEOIOPARAMETERS">
+		<option value="TA"/>
+		<option value="RH"/>
+		<option value="VW"/>
+		<option value="DW"/>
+		<option value="VW_MAX"/>
+		<option value="ISWR"/>
+		<option value="RSWR"/>
+		<option value="ILWR"/>
+		<option value="HS"/>
+		<option value="HNW"/>
+		<option value="TSG"/>
+		<option value="TSS"/>
+		<option value="P"/>
+	</parametergroup>
+
+	<!-- Filters -->
+	<parameter key="Add/Remove Filter" type="selector">
+		<section name="filters" />
+
+		<parameter key="%::filter#" type="alternative" counter="1" template="true">
+			<section name="filters" />
+
+			<option label="MeanAvg" value="mean_avg" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			    </help>
+			  </parameter>
+			  <help>Mean average processing. The mean average filter returns the mean value of all values within a user given time window.</help>
+			</option>
+
+			<option label="MedianAvg" value="median_avg" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="decimal" minimum="0" />
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			    </help>
+			  </parameter>
+			  <help>Median average processing. The median average filter returns the median value of all values within a user given time window.</help>
+			</option>
+
+			<option label="Std Deviation Filter" value="std_dev" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			    </help>
+			  </parameter>
+			  <help>Standard deviation filter. Values outside of mean ± 2 std_dev are rejected.</help>
+			</option>
+
+			<option label="MAD" value="mad" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			    </help>
+			  </parameter>
+			  <help>Median Absolute Deviation. Values outside of median ± 3 σ_MAD are rejected. &lt;br&gt;
+			  See http://en.wikipedia.org/wiki/Median_absolute_deviation for more information.</help>
+			</option>
+
+			<option label="Tukey 53H Filter" value="Tukey" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <help>
+			      The keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present.
+			      The two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position.
+			    </help>
+			  </parameter>
+			  <help>Tukey 53H method A smooth time sequence is generated from the median, substracted from the original signal and
+			  compared with the standard deviation. see "Despiking Acoustic Doppler Velocimeter Data", Derek G. Goring and Vladimir
+			  L. Nikora, Journal of Hydraulic Engineering, 128, 1, 2002 The deviation factor coeffecient is currently hard-coded as k=1.5. </help>
+			</option>
+
+			<option label="Wind Averaging Filter" value="wind_avg" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			    </help>
+			  </parameter>
+			  <help>Wind vector averaging. This calculates the vector average over a user given time period. Each wind vector
+			  within this period is added and the final sum is normalized by the number of vectors that have been added. </help>
+			</option>
+
+			<option label="Exponential Smoothing" value="exp_smoothing" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <option label="alpha:" value="0.8" type="decimal" minimum="0" maximum="1"/>
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			      Alpha needs to be provided as last argument. Please note that the standard filter works with a left window!
+			    </help>
+			  </parameter>
+			  <help>Exponential smooting processing, exponential moving average s_0 = x_0 s_n = alpha*x_(t-1) + (1-alpha)*s_t-1</help>
+			</option>
+
+			<option label="Weighted Moving Average Smoothing" value="wma_smoothing" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option value="center" type="dropdown">
+			      <option value="left" type="string" />
+			      <option value="center" type="string" />
+			      <option value="right" type="string" />
+			    </option>
+			    <option label="# of points:" value="1" type="integer" minimum="1" />
+			    <option label="Duration:" value="0" type="integer" minimum="0" />
+			    <help>
+			      Activate "soft" if the window position is allowed to be adjusted, window position maybe left, center or right.
+			      Minimal number of points in window and minimal time interval spanning the window (seconds) are required.
+			      Please note that the standard filter works with a left window!
+			    </help>
+			  </parameter>
+			  <help>Weighted moving average smoothing such as: WMA = (1*X1 + 2*X2 + ... + n*Xn) / sum_of_weights</help>
+			</option>
+
+			<option label="Min Range Filter" value="min" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option label="Min:" value="" type="decimal" />
+			    <option label="Adjust to:" value="" type="decimal" />
+			    <help>The keyword "soft" maybe added, in such a case all data smaller than the min would be
+			    assigned the minimum permissible value or another value given as an extra argument</help>
+			  </parameter>
+			  <help>Min range filter. Reject all values smaller than the min.</help>
+			</option>
+
+			<option label="Max Range Filter" value="max" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option label="Max:" value="" type="decimal" />
+			    <option label="Adjust to:" value="" type="decimal" />
+			    <help>The keyword "soft" maybe added, in such a case all data greater than the max would be
+			    assigned the maximum permissible value or another value given as an extra argument</help>
+			  </parameter>
+			  <help>Max range filter. Reject all values greater than the max.</help>
+			</option>
+
+			<option label="MinMax (2 or 4 arguments)" value="min_max" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option label="Min:" value="" type="decimal" />
+			    <option label="Max:" value="" type="decimal" />
+			    <option label="Min adjust to:" value="" type="decimal" />
+			    <option label="Max adjust to:" value="" type="decimal" />
+			    <help>The keyword "soft" maybe added, in such a case all data greater than the max would be assigned
+			    the maximum permissible value and all data smaller than the min would be assigned the minimum
+			    permissible value or an optional extra set of two user provided values</help>
+			  </parameter>
+			  <help>Reject all values greater than the max or smaller than the min. &lt;br&gt;</help>
+			</option>
+
+			<option label="Rate Filter (1 argument)" value="rate" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option label="Max:" value="1.0" type="decimal" minimum="0" maximum="1" />
+			    <help>the absolute value of the maximum permissible rate of change (per seconds)</help>
+			  </parameter>
+			  <help>Rate of change filter. Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point.</help>
+			</option>
+
+			<option label="Rate Filter (2 arguments)" value="rate" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option label="Min:" value="0.0" type="decimal" minimum="0" maximum="1" />
+			    <option label="Max:" value="1.0" type="decimal" minimum="0" maximum="1" />
+			    <help>the minimum and maximum permissible rate of change (per second)</help>
+			  </parameter>
+			  <help>Rate of change filter. Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point.</help>
+			</option>
+
+			<option label="Unheated Rain Gauge Filter" value="Unheated_RainGauge" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option value="soft" type="choice" />
+			    <option label="RH threshold:" value="0.5" type="decimal" minimum="0" maximum="1" />
+			    <option label="Delta_T threshold:" value="3.0" type="decimal" minimum="0" maximum="20" />
+			  </parameter>
+			  <help>Filters out snow melting in an unheated rain gauge. This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place when the relative humidity is greater than RH_threshold and (TA-TSS) smaller than Delta_T_threshold, otherwise they get reset to 0. If none of these conditions could be tested (for lack of data), then the precipitation is reset to nodata (or left unchanged if "soft" has been selected).</help>
+			</option>
+
+			<option label="WMO Undercatch Filter" value="undercatch_wmo" type="string">
+			  <parameter key="%::arg#" type="combination">
+				<option value="Gage type" type="dropdown">
+					<option value="Nipher" type="string" />
+					<option value="Tretyakov" type="string" />
+					<option value="US8sh" type="string" />
+					<option value="US8unsh" type="string" />
+					<option value="Hellmann" type="string" />
+					<option value="Hellmannsh" type="string" />
+				</option>
+			  </parameter>
+			  <help>This implements the standard methods for precipitation correction as described in "WMO Solid Precipitation Measurement Intercomparison", B. Goodison, P. Louie and D. Yang, 872, 1998 as well as the overview given by "Literature Study on the Correction of Precipitation Measurements", Annette Wagner, 2009. The correction parameters for the shielded Hellmann gauge (German version) are from "Wind-induced Precipitation Undercatch of the Hellmann Gauges", Daqing Yang et al, Nordic Hydrology, 30, 1999, pp 57-80.</help>
+			</option>
+
+			<option label="WMO Undercatch Filter - simplified" value="undercatch_wmo" type="string">
+			  <parameter key="%::arg#" type="combination">
+				<option value="Kind" type="dropdown">
+					<option value="Cst" type="string" />
+				</option>
+				<option label="Snow factor:" value="1.3" type="decimal" minimum="0" maximum="5" />
+				<option label="Mixed prec factor:" value="1.1" type="decimal" minimum="0" maximum="5" />
+			  </parameter>
+			  <help>This applies a constant correction factor to the precipitation, one for pure snow and one for mixed precipitation. The following thresholds are used: pure snow below -2 C; mixed precipitation between -2 and +2 C; pure rain above 2 C. These threshold can be changed (see online documentation).</help>
+			</option>
+
+			<option label="Unventillated temperature sensor" value="Unventilated_T" type="string">
+			  <parameter key="%::arg#" type="combination">
+			    <option label="albedo:" value="0.23" type="decimal" />
+			    <option value="soft" type="choice" />
+			    <help>If the "soft" option is given, the albedo has a value different according to snow (or no snow) on the ground</help>
+			  </parameter>
+			  <help>This implements the correction described in (Reina Nakamura, 2005) with an albedo dependency as introduced in (Huwald, 2009)</help>
+			</option>
+
+			<option label="Add an offset" value="add" type="string">
+			  <parameter key="%::arg#" type="combination">
+				<option label="offset:" value="0." type="decimal" />
+			  </parameter>
+			  <help>This adds a given offset to the data.</help>
+			</option>
+
+			<option label="Multiply by a factor" value="mult" type="string">
+			  <parameter key="%::arg#" type="combination">
+				<option label="factor:" value="1." type="decimal" />
+			  </parameter>
+			  <help>This multiplies the data by a given factor.</help>
+			</option>
+
+		</parameter>
+
+		<reference name="METEOIOPARAMETERS" />
+	</parameter>
+
+	<!-- 1D Interpolation -->
+	<parameter key="WINDOW_SIZE" type="integer+" minimum="1" default="43200">
+		<section name="Interpolations1D" />
+		<help>Default width of the biggest data gap that can be filled by temporal interpolation (in seconds: 1/2 day= 43200, 1 day=86400, 1 week=604800)</help>
+	</parameter>
+
+	<parameter key="Add/Remove 1D Interpolation" type="selector">
+		<section name="Interpolations1D" />
+
+		<parameter key="%::resample" type="alternative" template="true">
+			<section name="Interpolations1D" />
+			<option label="No Interpolation" value="none" type="string" />
+			<option label="Nearest Neighbour" value="nearest" type="string" >
+				<parameter key="%::nearest" type="combination">
+				<option label="window_size:" value="43200" type="integer" minimum="1" />
+				<option value="extrapolate" type="choice" />
+				<help>
+				If "extrapolate" is added, then data *outside* of the original date range can be interpolated.
+				Otherwise, a data point will only be calculated between the original date range.
+				</help>
+				</parameter>
+				<help>Nearest neighbor interpolation between missing points</help>
+			</option>
+			<option label="Linear" value="linear" type="string">
+				<parameter key="%::linear" type="combination">
+				<option label="window_size:" value="43200" type="integer" minimum="1" />
+				<option value="extrapolate" type="choice" />
+				<help>
+				If "extrapolate" is added, then data *outside* of the original date range can be interpolated.
+				Otherwise, a data point will only be calculated between the original date range.
+				</help>
+				</parameter>
+				<help>Linear interpolation between missing points</help>
+			</option>
+			<option label="Accumulate" value="accumulate" type="string">
+				<parameter key="%::accumulate" type="combination">
+				<option value="strict" type="choice" />
+				<option label="Seconds:" value="900" type="integer" minimum="1" />
+				<help>Accumulation period (in seconds). This must usually match the model time step. if enabling "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). Otherwise, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.</help>
+				</parameter>
+				<help>Accumulation over a user given period (filter argument, in seconds -
+				should coincide with your calculation step!).</help>
+			</option>
+			<option label="Solar daily sum" value="daily_solar" type="string" />
+		</parameter>
+
+		<reference name="METEOIOPARAMETERS" />
+	</parameter>
+
+	<!-- 2D Interpolation -->
+	<parameter key="Add/Remove 2D Interpolation" type="selector">
+		<section name="Interpolations2D" />
+
+		<parameter key="%::algorithms" type="choice" template="true">
+			<section name="Interpolations2D" />
+			<option value="STD_PRESS" type="choice">
+				<help>Generate a standard atmosphere pressure as a function of the cell's elevation</help>
+			</option>
+			<option value="CST" type="choice">
+				<help>Fill the grid with the average over all the stations</help>
+			</option>
+			<option value="CST_LAPSE" type="choice">
+			  <parameter key="%::cst_lapse" type="combination">
+			    <option label="Lapse Rate:" value="0.008" type="decimal" optional="false" />
+			    <option value="" type="dropdown">
+			      <option value="" type="string" />
+			      <option value="soft" type="string" />
+			      <option value="frac" type="string" />
+			    </option>
+			  </parameter>
+			  <help>Detrend the measured data, fill the grid with the average over all the stations, reapply the elevation trend</help>
+			</option>
+			<option value="IDW" type="choice">
+				<help>Inverse Distance Weighted average</help>
+			</option>
+			<option value="IDW_LAPSE" type="choice">
+			  <parameter key="%::idw_lapse" type="combination">
+			    <option label="Lapse Rate:" value="0.008" type="decimal" optional="false" />
+			    <option value="" type="dropdown">
+			      <option value="" type="string" />
+			      <option value="soft" type="string" />
+			      <option value="frac" type="string" />
+			    </option>
+			  </parameter>
+			  <help>Detrend the measured data, apply Inverse Distance Weighted average, reapply elevation trend</help>
+			</option>
+			<option value="LIDW_LAPSE" type="choice">
+			  <parameter key="%::lidw_lapse" type="combination">
+			    <option label="Lapse Rate:" value="0.008" type="decimal" optional="false" />
+			    <option value="" type="dropdown">
+			      <option value="" type="string" />
+			      <option value="soft" type="string" />
+			      <option value="frac" type="string" />
+			    </option>
+			  </parameter>
+			  <help>Same as IDW_LAPSE, but only considering a given number of neighboring stations</help>
+			</option>
+			<option value="RH" type="choice">
+				<help>Computes the dew point temperature, distribute it with IDW_LAPSE, recompute RH at each pixel</help>
+			</option>
+			<option value="ILWR" type="choice">
+				<help>Compute emissivity, distribute it with IDW_LAPSE, recompute ILWR at each pixel</help>
+			</option>
+			<option value="WIND_CURV" type="choice">
+				<help>Distribute wind velocity with IDW_LAPSE, then apply correction factors as a function of local slope and curvature</help>
+			</option>
+			<option value="HNW_SNOW" type="choice">
+				<parameter key="%::hnw_snow" type="combination">
+				<option value="IDW_LAPSE" type="dropdown">
+					<option value="CST" type="string" />
+					<option value="CST_LAPSE" type="string" />
+					<option value="IDW" type="string" />
+					<option value="IDW_LAPSE" type="string" />
+					<option value="ODKRIG" type="string" />
+				</option>
+				<help>Base algorithm (do not forget to add the options for the base algorithm)</help>
+				</parameter>
+				<help>Distribute precipitation with a base algorithm (IDW_LAPSE by default), then reduce/remove precipitation on
+				steep slopes and correct with the local curvature. This is to simulate snow redistribution processes.</help>
+			</option>
+			<option value="USER" type="choice">
+			  <parameter key="%::user" type="path" optional="false"/>
+			  <help>User provided grids, named as {numeric date}_{capitalized meteo parameter}.asc</help>
+			</option>
+			<option value="ODKRIG" type="choice">
+			  <parameter key="%::odkrig" type="combination">
+			  	<option value="" type="dropdown">
+					<option value="LINVARIO" type="string" />
+					<option value="EXPVARIO" type="string" />
+					<option value="SPHERICVARIO" type="string" />
+					<option value="RATQUADVARIO" type="string" />
+				</option>
+				<help>Variogram model</help>
+			  </parameter>
+			  <help>Ordinary kriging (EXPERIMENTAL)</help>
+			</option>
+		</parameter>
+
+		<reference name="METEOIOPARAMETERS" />
+	</parameter>
+
+	<!-- Data Generators -->
+	<parameter key="Add/Remove data generator" type="selector">
+		<section name="Generators" />
+
+		<parameter key="%::generators" type="alternative" template="true">
+			<section name="Generators" />
+			<option value="STD_PRESS" type="choice">
+				<help>Generate a standard atmosphere pressure as a function of the station's elevation</help>
+			</option>
+			<option value="CST" type="choice">
+				<parameter key="%::cst" type="combination">
+					<option label="constant:" value="0" type="decimal" optional="false" />
+				</parameter>
+				<help>Generate a constant value, as provided</help>
+			</option>
+			<option value="SIN" type="choice">
+				<parameter key="%::sin" type="combination">
+					<option value="Period: " type="dropdown">
+						<option value="yearly" type="string" />
+						<option value="daily" type="string" />
+					</option>
+					<option label="min:" value="0" type="decimal" optional="false" />
+					<option label="max:" value="0" type="decimal" optional="false" />
+					<option label="phase:" value="0" type="decimal" optional="false" />
+				</parameter>
+				<help>Generate a sinusoidal variation. The min and max values are provided as well as the phase expressed in the same units as the period and representing the time offset from the begining of the period to the first minimum value.</help>
+			</option>
+			<option value="UNSWORTH" type="choice">
+				<help>Generate ILWR using a Dilley clear sky, Karsten cloudiness and Unsworth emissivity</help>
+			</option>
+			<option value="POT_RADIATION" type="choice">
+				<help>Generate the potential incoming short wave radiation (ie. clear sky!)</help>
+			</option>
+		</parameter>
+
+		<reference name="METEOIOPARAMETERS" />
+	</parameter>
+
+</inishell_config>

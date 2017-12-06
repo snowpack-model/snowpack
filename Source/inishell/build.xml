@@ -1,0 +1,137 @@
+<project name="inishell" default="help" basedir=".">
+	<description>
+	Build and run the inishell Application from the command line.
+	</description>
+
+
+	<!-- set global properties for the build -->
+	<!--<javac deprecation="true"
+		includeantruntime="false"
+		debug="true"
+		encoding="UTF-8">
+	<src path="src" />
+		<compilerarg value="-Xlint" />
+	</javac>-->
+		
+	<property name="src" location="src"/>
+	<property name="examples" location="doc/examples"/>
+	<property name="build" location="build"/>
+	<property name="dist"  location="dist"/>
+	<property name="lib.dir" location="lib"/>
+	<tstamp prefix="build-info">
+		<format property="date" pattern="yyyy-MM-dd" locale="en" />
+		<format property="time" pattern="HH:mm:ss" locale="en" />
+		<format property="num-date" pattern="yyyyMMdd" locale="en" />
+	</tstamp>
+	<property name="version.num" value="1.0.3" />
+	<!--<buildnumber file="dist/build.num"/>-->
+	<!--<property name="version-number" value="${version.num}-${build.number}" />-->
+	<property name="version-number" value="${version.num}" />
+	<property name="version-full" value="${version.num}-${build-info.num-date}" />
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+	</path>
+
+
+	<!-- targets -->
+	<target name="help">
+		<echo>You can use the following targets:</echo>
+		<echo> </echo>
+		<echo>  help     : (default) Prints this message </echo>
+		<echo>  init     : create necessary directories</echo>
+		<echo>  clean    : Deletes work directories</echo>
+		<echo>  compile  : Compiles into class files</echo>
+		<echo>  dist     : pack all necessary files into a JAR file</echo>
+		<echo>  alpine3d : dist tailored for alpine3d</echo>
+		<echo>  snowpack : dist tailored for snowpack</echo>
+		<echo>  meteoio  : dist tailored for meteoio</echo>
+		<echo>  run      : run the previously compiled version</echo>
+		<echo>  pack     : pack all in a zip file for a release</echo>
+		<echo></echo>
+	</target>
+
+	<target name="init">
+		<mkdir dir="${build}"/>
+		<mkdir dir="${dist}"/>
+	</target>
+
+	<target name="alpine3d" depends="init" description="Make doc/examples/alpine3d_config.xml the default XML config">
+		<copy file="${examples}/alpine3d_config.xml" tofile="${build}/resources/default_config.xml" overwrite="true"/>
+		<antcall target="dist"/>
+	</target>
+
+	<target name="snowpack" depends="init" description="Make doc/examples/snowpack_config.xml the default XML config">
+		<copy file="${examples}/snowpack_config.xml" tofile="${build}/resources/default_config.xml" overwrite="true"/>
+		<antcall target="dist"/>
+	</target>
+
+	<target name="meteoio" depends="init" description="Make doc/examples/meteoio_config.xml the default XML config">
+		<copy file="${examples}/meteoio_config.xml" tofile="${build}/resources/default_config.xml" overwrite="true"/>
+		<antcall target="dist"/>
+	</target>
+
+	<target name="compile" depends="init" description="Compile from ${src} to ${build}">
+		<javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+			<classpath>
+				<fileset dir="lib">
+				<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+			<compilerarg value="-Xlint:unchecked" />
+		</javac>
+		<copy todir="${build}/resources">
+		<fileset dir="${src}/resources" includes="**"/>
+	</copy>
+	</target>
+
+	<target name="dist" depends="compile" description="generate the distribution" >
+		<!-- Create the distribution directory -->
+		<delete file="MANIFEST.MF"/>
+		<manifest file="MANIFEST.MF">
+			<attribute name="Built-By" value="${user.name}"/>
+			<attribute name="Built-On" value="${build-info.date}" />
+			<attribute name="Built-At" value="${build-info.time}" />
+			<attribute name="Main-Class" value="main/GUIBuilder"/>
+			<attribute name="Entry-Point" value="main/GUIBuilder"/>
+			<attribute name="Application-Name" value="INIshell" />
+			<attribute name="Specification-Title" value="INI file generator"/>
+			<attribute name="Specification-Version" value="${version-full}"/>
+			<attribute name="Specification-Vendor" value="SLF, www.slf.ch"/>
+			<attribute name="Implementation-Title" value="INIshell"/>
+			<attribute name="Implementation-Version" value="${version-number}"/>
+			<attribute name="Implementation-Vendor" value="SLF, www.slf.ch"/>
+		</manifest>
+
+		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+		<jar jarfile="${dist}/inishell.jar" basedir="${build}" manifest="MANIFEST.MF" index="true" >
+			<zipfileset src="${lib.dir}/miglayout-4.0.jar" includes="**/*.class"/>
+		</jar>
+	</target>
+
+	<target name="run" depends="dist">
+		<java fork="true" classname="main/GUIBuilder">
+			<classpath>
+				<path refid="classpath"/>
+				<path location="${dist}/inishell.jar"/>
+			</classpath>
+		</java>
+	</target>
+
+	<target name="clean" description="clean up" >
+		<!-- Delete the ${build} and ${dist} directory trees -->
+		<delete file="MANIFEST.MF"/>
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+	</target>
+
+	<target name="pack" depends="dist" description="pack for distribution">
+		<zip destfile="inishell-${version.num}.zip">
+			<zipfileset dir="doc/examples" prefix="inishell-${version.num}/doc/examples"/>
+			<zipfileset dir="dist" includes="inishell.jar" prefix="inishell-${version.num}/bin" filemode="755"/>
+			<zipfileset dir="." includes="inishell.sh" prefix="inishell-${version.num}/bin" filemode="755"/>
+			<zipfileset dir="." includes="Changelog_${version.num}.txt" prefix="inishell-${version.num}/doc"/>
+		</zip>
+	</target>
+
+</project>

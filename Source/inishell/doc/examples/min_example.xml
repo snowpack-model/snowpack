@@ -1,0 +1,40 @@
+<inishell_config>
+	<parameter key="SOME_PARAMETER" type="string">
+		<section name="section1" />
+		<section name="section2" />
+		<help>
+			This is a parameter that asks for a string value and that is present in
+			both the section "section1" and "section2".
+		</help>
+	</parameter>
+	
+	<parameter key="NESTED_PARAMETERS" type="alternative" optional="false">
+		<section name="section1" />
+		<option value="NONE" type="string" />
+		<option value="ONE" type="string">
+			<parameter key="SOME_INTEGER" type="integer" 
+				minimum="-1" maximum="10" default="2">
+				<help>
+					The value for this parameter may be an integer between -1 and 10.
+					The default value is 2.
+					The user may use the + and - buttons to increment/decrement 
+					the number or type the number into the text field.</help>
+				</parameter>
+		</option>
+		<option value="TWO" type="string">
+			<reference name="a_group_that_can_be_referenced" />
+			<help>Here is a reference to two parameters.</help>
+		</option>
+		<help>
+			This parameter belongs to section1. 
+			When the "null" option is selected, the dropdown menu appears
+			red because this parameter is non-optional.
+			When the value "ONE" is selected a nested parameter "SOME_INTEGER" appears. 
+		</help>
+	</parameter>
+	
+	<parametergroup name="a_group_that_can_be_referenced">
+		<parameter key="SOME_FILE" type="file" />
+		<parameter key="A_PATH" type="path" />
+	</parametergroup>
+</inishell_config>
