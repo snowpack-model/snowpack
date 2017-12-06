@@ -560,6 +560,12 @@
 
 	<frame key="sn_switch_frame" label="Models Selection">
 		<section name="Snowpack"/>
+		<parameter key="FORCING" type="alternative" default="ATMOS" optional="false">
+			<section name="Snowpack" />
+			<option value="ATMOS" type="string" />
+			<option value="MASSBAL" type="string" />
+			<help>Specify meteorological forcing: either atmospheric (i.e., weather station or weather model, providing meteorological parameters) or mass balance forcing (i.e., weather model providing the snow mass balance components).</help>
+		</parameter>
 		<parameter key="ENFORCE_MEASURED_SNOW_HEIGHTS" type="alternative" optional="false">
 			<section name="Snowpack" />
 			<option value="TRUE" type="string" />
@@ -1030,7 +1036,8 @@
 			<section name="SnowpackAdvanced" />
 			<option value="MULTI_BAND" type="string" />
 			<option value="SINGLE_BAND" type="string" />
-			<help>Select either a multi or a single band scheme for shortwave radiation absorption by the snow cover</help>
+			<option value="SURFACE" type="string" />
+			<help>Select either multi or a single band scheme for shortwave radiation absorption by the snow cover, or SURFACE to restrict the shortwave absorption to the surface layer.</help>
 		</parameter>
 		<parameter key="HARDNESS_PARAMETERIZATION" type="alternative" default="MONTI" optional="true">
 			<section name="SnowpackAdvanced" />
