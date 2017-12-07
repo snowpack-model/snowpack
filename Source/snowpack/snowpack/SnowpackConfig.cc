@@ -243,8 +243,11 @@ void SnowpackConfig::setDefaults()
 		if (thresh_rh.empty()) addKey("THRESH_RH", "SnowpackAdvanced", "0.7");
 
 		addKey("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", "0.");
-		addKey("T_CRAZY_MIN", "SnowpackAdvanced", "165.");
-		addKey("T_CRAZY_MAX", "SnowpackAdvanced", "300.");
+		string t_crazy_min; getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min, IOUtils::nothrow);
+		string t_crazy_max; getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max, IOUtils::nothrow);
+		// If not specified in the ini file, set "polar" limits on the crazy temperatures
+		if (t_crazy_min.empty()) addKey("T_CRAZY_MIN", "SnowpackAdvanced", "165.");
+		if (t_crazy_max.empty()) addKey("T_CRAZY_MAX", "SnowpackAdvanced", "300.");
 		addKey("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", "0.2");
 
 	} else if (variant == "CALIBRATION") {
