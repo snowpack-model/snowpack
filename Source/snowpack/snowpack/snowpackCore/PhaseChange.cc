@@ -122,15 +122,14 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 	 */
 	if (((Edata.Te < T_melt) && (ql_Rest < Constants::eps2) && (forcing=="ATMOS"))
 	        || (Edata.theta[ICE] <= 0.0) || (Edata.theta[WATER] >= PhaseChange::theta_s)) {
-	    return; // no melt with atmos forcing
-//	} else if (((Edata.Te < T_melt) && (ql_Rest < Constants::eps2) && (mass_melt < Constants::eps2) && (forcing=="MASSBAL"))
+		return; // no melt with atmos forcing
 	} else if (((mass_melt < Constants::eps2) && (forcing=="MASSBAL"))
-			|| (Edata.theta[ICE] <= 0.0) || (Edata.theta[WATER] >= PhaseChange::theta_s)) {
+	        || (Edata.theta[ICE] <= 0.0) || (Edata.theta[WATER] >= PhaseChange::theta_s)) {
 		return; // no melt with massbal forcing
 	} else {
 		double dth_i;
 		double dth_w;
-		if ((mass_melt > Constants::eps2) && (forcing=="MASSBAL")) { // forced melt
+		if (forcing=="MASSBAL") { // forced melt
 			dth_i = - (mass_melt / (Constants::density_ice * Edata.L)); // dth_i must be negative defined !
 			dth_w = - (Constants::density_ice / Constants::density_water) * dth_i; // change in volumetric water content
 			// You can only melt so much ice as is there ....
@@ -193,9 +192,6 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 			}
 		}
 		Edata.theta[ICE] += dth_i;
-		if (dth_i < (-Constants::eps2)) { // if volumetric ice content of layer changed
-			Edata.reset_theta_ice = true;  // switch for theta[ICE] restoration
-		}
 		Edata.theta[WATER] += dth_w;
 		Edata.theta[AIR] = std::max(0.0, 1.0 - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
 		// State when you have solid element
@@ -389,7 +385,7 @@ void PhaseChange::finalize(const SurfaceFluxes& Sdata, SnowStation& Xdata, const
 			//Restructure temperature arrays
                         EMS[e].gradT = (NDS[e+1].T - NDS[e].T) / EMS[e].L;
 		        EMS[e].Te = (NDS[e].T + NDS[e+1].T) / 2.0;
-			if (((EMS[e].Te - EMS[e].melting_tk) > 0.5) && EMS[e].theta[ICE]>0.) //handle the case of soil layers above ice/snow layers
+			if (((EMS[e].Te - EMS[e].melting_tk) > 0.2) && EMS[e].theta[ICE]>0.) //handle the case of soil layers above ice/snow layers
 				prn_msg(__FILE__, __LINE__, "wrn", date_in,
 				        "%s temperature Te=%f K is above melting point (%f K) in element %d (nE=%d; T0=%f K, T1=%f K, theta_ice=%f)",
 				        (e < Xdata.SoilNode) ? ("Soil") : ("Snow"), EMS[e].Te, EMS[e].melting_tk, e, nE, NDS[e].T, NDS[e+1].T, EMS[e].theta[ICE]);
@@ -482,9 +478,6 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 
 			const bool MoistLayer = (EMS[e].theta[WATER] > cmp_theta + Constants::eps && EMS[e].theta[ICE] < max_theta_ice) ? true : false;
 			if(MoistLayer==true && e==nE-1 && nE>Xdata.SoilNode) retTopNodeT=EMS[nE-1].melting_tk;
-
-			EMS[e].theta_ice_0 = EMS[e].theta[ICE]; // save original theta[ICE]
-			EMS[e].reset_theta_ice = false; // set default value
 
 			// Try melting
 			try {
