@@ -46,8 +46,7 @@ class WaterTransport {
 	protected:
 		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata);
 		void adjustDensity(SnowStation& Xdata);
-		void compVolIceLow(SnowStation& Xdata);
-
+		
 		//To prevent string comparisons, we define an enumerated list:
 		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};
 
@@ -69,7 +68,6 @@ class WaterTransport {
 
 		std::string watertransportmodel_snow;
 		std::string watertransportmodel_soil;
-		std::string forcing;
 		bool enable_pref_flow;
 		std::string pref_flow_rain_input_domain;
 
