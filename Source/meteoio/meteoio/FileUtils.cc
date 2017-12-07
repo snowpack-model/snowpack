@@ -218,8 +218,8 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 		const std::string filename( ffd.cFileName );
 		const std::string full_path( path+"/"+filename );
 		
-		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
-			continue; //skip "." and ".."
+		if ( filename.compare(".")==0 || filename.compare("..")==0 || (ffd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ) 
+			continue; //skip ".", ".." and hidden files/directories
 		
 		if (!isRecursive) {
 			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -280,8 +280,23 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 	while ((dirp = readdir(dp)) != NULL) {
 		const std::string filename( dirp->d_name );
 		const std::string full_path( path+"/"+filename );
-		if ( filename.compare(".")==0 || filename.compare("..")==0 ) 
+		if ( filename.compare(".")==0 || filename.compare("..")==0 )
 			continue; //skip "." and ".."
+		
+		struct stat statbuf;
+		if (stat(full_path.c_str(), &statbuf) == -1) {
+			if (lstat(full_path.c_str(), &statbuf) != -1)
+				throw AccessException("File '"+full_path+"' is a broken link, please fix it", AT);
+			else 
+				throw AccessException("Can not stat '"+full_path+"', please check permissions", AT);
+		}
+		
+	#if defined HAVE_STRUCT_STAT_ST_FLAGS
+		const bool hidden_flag = (filename.compare(0,1,".")==0) || (statbuf.st_flags & UF_HIDDEN); //for osX and BSD
+	#else
+		const bool hidden_flag = (filename.compare(0,1,".")==0);
+	#endif
+		if (hidden_flag) continue; //skip hidden files/directories
 		
 		if (!isRecursive) {
 			if (pattern.empty()) {
@@ -291,14 +306,10 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 				if (pos!=std::string::npos) dirlist.push_back( filename );
 			}
 		} else {
-			struct stat statbuf;
-			if (stat(full_path.c_str(), &statbuf) == -1) 
-				throw AccessException("Can not stat '"+full_path+"', please check permissions", AT); //this should 
-			
 			if (S_ISDIR(statbuf.st_mode)) { //recurse on sub-directory
 				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
 			} else {
-				if (!S_ISREG(statbuf.st_mode)) continue; //skip non-regular files
+				if (!S_ISREG(statbuf.st_mode)) continue; //skip non-regular files, knowing that "stat" already resolved the links
 				if (pattern.empty()) {
 					dirlist.push_back( sub_path+"/"+filename );
 				} else {

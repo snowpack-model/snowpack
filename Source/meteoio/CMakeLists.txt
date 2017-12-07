@@ -27,6 +27,11 @@ SET_COMPILER_OPTIONS()
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
+	INCLUDE (CheckStructHasMember)
+	CHECK_STRUCT_HAS_MEMBER("struct stat" st_flags sys/stat.h HAVE_STRUCT_STAT_ST_FLAGS)
+	IF(HAVE_STRUCT_STAT_ST_FLAGS) 
+		SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
+	ENDIF()	
 	#set a full rpath for both build & install tree
 	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)

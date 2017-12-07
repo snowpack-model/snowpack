@@ -38,9 +38,11 @@ namespace FileUtils {
 	
 	/**
 	* @brief Build a list of file in a given directory.
+	* @details
 	* The matching is very primitive: it only looks for the substring "pattern" in the file names.
 	* If this substrings exists, the file matches. In the case of recursive search, the filenames will be
 	* prefixed by their relative path based on the provided path.
+	* @note Hidden files/directories are excluded, links are followed
 	* @param path directory containing the files
 	* @param dirlist list of matching file names
 	* @param pattern optional pattern that must be part of the file names
@@ -64,6 +66,7 @@ namespace FileUtils {
 
 	/**
 	* @brief returns the extension part of a given filename.
+	* @details
 	* The extension is defined as all the non-whitespace characters after the last '.'
 	* in the filename.
 	* @param filename filename to extract the extension from
@@ -73,6 +76,7 @@ namespace FileUtils {
 
 	/**
 	* @brief remove the extension part of a given filename.
+	* @details
 	* The extension is defined as all the non-whitespace characters after the last '.'
 	* in the filename.
 	* @param filename filename to remove the extension from

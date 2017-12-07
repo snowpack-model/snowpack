@@ -1,13 +1,13 @@
 Begin4
 Title:          MeteoIO
-Version:        2.6.1
-Entered-date:   2017-04-25
+Version:        2.7.0
+Entered-date:   2017-12-06
 Description:    Meteorological data preprocessing library: it covers data retrieval, data filtering, data transformations and statistical spatial interpolations. Convenience classes are also available for related issues.
 Keywords:       meteorological data access filtering spatial interpolation
 Author:         bavay@slf.ch (Mathias Bavay)
 Maintained-by:  bavay@slf.ch (Mathias Bavay)
-Primary-site:   http://models.slf.ch p/meteoio/downloads/269/get/
-                3.39 M MeteoIO-2.6.1-src.tar.gz
+Primary-site:   http://models.slf.ch p/meteoio/downloads/306/get/
+                3.44 M MeteoIO-2.7.0-src.tar.gz
 Home-page:      http://models.slf.ch/p/meteoio
 Platforms:      Linux and other Unices, Windows, OsX
 Copying-policy: GNU Lesser Public License version 3
