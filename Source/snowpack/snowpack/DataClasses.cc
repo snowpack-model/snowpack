@@ -2235,8 +2235,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 		// This is only in case we are considering the top element, to deal with the common situation where top elements are being removed due to low
 		// ice content as a result of melt. We don't want to transfer this low ice content to lower layers.
 		if (EdataUpper.Rho != Constants::undefined && EdataLower.Rho != Constants::undefined && EdataUpper.Rho < EdataLower.Rho && topElement==true) {	// Check if densities are defined, which may not be the case if elements are already marked for removal (may happen when removing multiple adjacent elements).
-			//LNew += (EdataUpper.Rho * L_upper) / EdataLower.Rho;
-			LNew += L_upper; //HACK NANDER IS THIS NECESSARY?
+			LNew += (EdataUpper.Rho * L_upper) / EdataLower.Rho;
 		} else {
 			LNew += L_upper;
 		}
@@ -2588,6 +2587,7 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
+	maxNumberMeasTemperatures = cfg.get("MAX_NUMBER_MEAS_TEMPERATURES", "SnowpackAdvanced", IOUtils::nothrow);
 	cfg.getValue("FIXED_POSITIONS", "SnowpackAdvanced", fixedPositions, IOUtils::nothrow);
 	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", IOUtils::nothrow);
 	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced", IOUtils::nothrow);
