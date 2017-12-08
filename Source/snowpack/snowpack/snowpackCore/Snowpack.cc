@@ -569,7 +569,14 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 	} else {
 		// For mass balance forcing
 		Bdata.qs = alpha * (Tair - Tss);
-		Bdata.ql = (Mdata.sublim * Constants::lh_vaporization) / sn_dt;
+		const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
+		if (Xdata.Edata[Xdata.getNumberOfElements()-1].theta[WATER] > theta_r) {
+			// Case of evaporation
+			Bdata.ql = (Mdata.sublim * Constants::lh_vaporization) / sn_dt;
+		} else {
+			// Case of sublimation
+			Bdata.ql = (Mdata.sublim * Constants::lh_sublimation) / sn_dt;
+		}
 	}
 
 	if (Mdata.psum>0. && Mdata.psum_ph>0.) { //there is some rain
@@ -1021,32 +1028,61 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		// Assemble matrix
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
-				// Calculate the melting/freezing associated with the current temperature state
-				Xdata.Edata[e].Qph = 0.;
-				const double Te_new = 0.5*(U[e+1]+U[e]);
-				double dth_i = 0.;
-				const bool explicitBC= ((Xdata.Edata[nE-1].theta[WATER] > 1E-5/10. + Constants::eps && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].theta[ICE]<ReSolver1d::max_theta_ice*(1.-Constants::eps)));
-				if(Xdata.Edata[e].melting_tk > Te_new) {
-					// Freezing
-					const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
-					/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
-					dth_i=std::min((Xdata.Edata[e].theta[WATER]-1E-5/10.) * (Constants::density_water / Constants::density_ice), dth_i);
-					dth_i=std::min(std::max(0., (ReSolver1d::max_theta_ice - Xdata.Edata[e].theta[ICE])), dth_i);
-					Xdata.Edata[e].Qph += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-					if(e==nE-1 && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
-				}
-				if(Xdata.Edata[e].melting_tk < Te_new) {
-					// Melting
-					const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
-					/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
-					size_t ee=e+1;
-					while(e-->0) {
-						const double dth_i2 = std::max(-Xdata.Edata[ee].theta[ICE] + (Xdata.Edata[ee].Qph/((Constants::density_ice * Constants::lh_fusion) / sn_dt)), dth_i);
-						Xdata.Edata[ee].Qph += (dth_i2 * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-						dth_i-=dth_i2;
-						if(dth_i>0) {dth_i=0.;};
+				if(forcing=="ATMOS") {
+					// Calculate the melting/freezing associated with the current temperature state
+					Xdata.Edata[e].Qph = 0.;
+					const double Te_new = 0.5*(U[e+1]+U[e]);
+					double dth_i = 0.;
+					const bool explicitBC = ((Xdata.Edata[nE-1].theta[WATER] > 1E-5/10. + Constants::eps && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].theta[ICE]<ReSolver1d::max_theta_ice*(1.-Constants::eps)));
+					if(Xdata.Edata[e].melting_tk > Te_new) {
+						// Freezing
+						const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
+						/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
+						dth_i=std::min((Xdata.Edata[e].theta[WATER]-1E-5/10.) * (Constants::density_water / Constants::density_ice), dth_i);
+						dth_i=std::min(std::max(0., (ReSolver1d::max_theta_ice - Xdata.Edata[e].theta[ICE])), dth_i);
+						Xdata.Edata[e].Qph += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt;
+						if(e==nE-1 && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
 					}
-					if(e==nE-1 && dth_i+Xdata.Edata[e].theta[ICE]>Constants::eps && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
+					if(Xdata.Edata[e].melting_tk < Te_new) {
+						// Melting
+						const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
+						/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
+						size_t ee=e+1;
+						while(ee-->0 && dth_i<0.) {
+							const double dth_i2 = std::max(-Xdata.Edata[ee].theta[ICE] + (Xdata.Edata[ee].Qph/((Constants::density_ice * Constants::lh_fusion) / sn_dt)), dth_i);
+							Xdata.Edata[ee].Qph += (dth_i2 * Constants::density_ice * Constants::lh_fusion) / sn_dt;
+							dth_i-=dth_i2;
+							if(dth_i>0) {dth_i=0.;};
+						}
+						if(e==nE-1 && dth_i+Xdata.Edata[e].theta[ICE]>Constants::eps && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
+					}
+				} else {
+					// Calculate the melting/freezing based on the prescribed surface melt
+					Xdata.Edata[e].Qph = 0.;
+					const double Te_new = 0.5*(U[e+1]+U[e]);
+					double dth_i = 0.;
+					const bool explicitBC = ((Xdata.Edata[nE-1].theta[WATER] > 1E-5/10. + Constants::eps && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].theta[ICE]<ReSolver1d::max_theta_ice*(1.-Constants::eps)));
+					if(Xdata.Edata[e].melting_tk > Te_new) {
+						// Freezing
+						const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
+						/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
+						dth_i=std::min((Xdata.Edata[e].theta[WATER]-1E-5/10.) * (Constants::density_water / Constants::density_ice), dth_i);
+						dth_i=std::min(std::max(0., (ReSolver1d::max_theta_ice - Xdata.Edata[e].theta[ICE])), dth_i);
+						Xdata.Edata[e].Qph += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt;
+						if(e==nE-1 && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
+					}
+					if(Mdata.surf_melt > Constants::eps2) {
+						// Melting
+						/*double*/ dth_i = - (Mdata.surf_melt / (Constants::density_ice * Xdata.Edata[e].L)); // dth_i must be negative defined !
+						size_t ee=e+1;
+						while(ee-->0 && dth_i<0.) {
+							const double dth_i2 = std::max(-Xdata.Edata[ee].theta[ICE] + (Xdata.Edata[ee].Qph/((Constants::density_ice * Constants::lh_fusion) / sn_dt)), dth_i);
+							Xdata.Edata[ee].Qph += (dth_i2 * Constants::density_ice * Constants::lh_fusion) / sn_dt;
+							dth_i-=dth_i2;
+							if(dth_i>0) {dth_i=0.;};
+						}
+						if(e==nE-1 && dth_i+Xdata.Edata[e].theta[ICE]>Constants::eps && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
+					}
 				}
 			}
 			EL_INCID( e, Ie );
@@ -1830,6 +1866,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		const double sn_dt_bcu = sn_dt;		// Store original SNOWPACK time step
 		const double psum_bcu = Mdata.psum;	// Store original psum value
 		const double psum_ph_bcu = Mdata.psum_ph;	// Store original psum_ph value
+		const double sublim_bcu = Mdata.sublim; // Store original sublim value
 		int ii = 0;				// Counter for sub-timesteps to match one SNOWPACK time step
 		bool LastTimeStep = false;		// Flag to indicate if it is the last sub-time step
 		double p_dt = 0.;			// Cumulative progress of time steps
@@ -1912,9 +1949,12 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				// Entered after non-convergence
 				if (sn_dt == sn_dt_bcu) std::cout << "[i] [" << Mdata.date.toString(Date::ISO) << "] : using adaptive timestepping\n"; // First time warning
 
-				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;	// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
+				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;				// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim /= sn_dt;	// scale the mass balance components like the precipiation
+
 				sn_dt /= 2.;							// No convergence, half the time step
 				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;	// ... then express psum again as precipitation per time step with the new time step
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;	// scale the mass balance components like the precipiation
 
 				if (sn_dt < 0.01) {	// If time step gets too small, we are lost
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Temperature equation did not converge, even after reducing time step (azi=%.0lf, slope=%.0lf).", Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
@@ -1936,6 +1976,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		sn_dt = sn_dt_bcu;	// Set back SNOWPACK time step to orginal value
 		Mdata.psum = psum_bcu;	// Set back psum to original value
 		Mdata.psum_ph = psum_ph_bcu;	// Set back psum_ph to original value
+		Mdata.sublim = sublim_bcu;	// Set back sublim to original value
 
 		// Compute change of internal energy during last time step (J m-2)
 		Xdata.compSnowpackInternalEnergyChange(sn_dt);
