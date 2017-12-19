@@ -1043,6 +1043,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		double maxd = 0.;		// Tracks max. change in ice contents in domain (convergence criterion)
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
+				// Calculate the melting/freezing associated with the current temperature state
 				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
 				const double dth_i_up_in = dth_i_up[e];
 				const double dth_i_down_in = dth_i_down[e];
