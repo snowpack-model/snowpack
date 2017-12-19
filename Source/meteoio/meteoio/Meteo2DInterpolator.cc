@@ -83,6 +83,14 @@ namespace mio {
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * 
+ * @section virtual_stations_behind_the_scene Behind the scene
+ * Behind the scene, this is a two stages setup: the IOManager that normally requests its data to its internal TimeSeriesManager will first ask the 
+ * Meteo2DInterpolator to perform the spatial interpolations. Once this is done, the Meteo2DInterpolator (that used its own, internal TimeSeriesManager 
+ * to get the real, measured data) pushes the computed timeseries into the raw data buffer of the IOManager's internal TimeSeriesManager. 
+ * The IOManager then request the data as usual, from its TimeSeriesManager.
+ * \image html vstations_workflow.png "Virtual stations internal workflow"
+ * \image latex vstations_workflow.eps "Virtual stations internal workflow" width=0.9\textwidth
+ * 
  */
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)

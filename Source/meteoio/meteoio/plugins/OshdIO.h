@@ -85,6 +85,7 @@ class OshdIO : public IOInterface {
 		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors
 		std::string coordin, coordinparam; //projection parameters
 		std::string grid2dpath_in, in_meteopath, in_metafile;
+		size_t nrMetadata; ///< How many stations have been provided in the metadata file
 		bool debug; ///< write out extra information to help understand what is being read
 		
 		static const char* meteo_ext; //for the file naming scheme

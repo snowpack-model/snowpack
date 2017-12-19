@@ -61,8 +61,9 @@ namespace mio {
         └── name {array of char}
   @endverbatim
  * 
- * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file, given as *METAFILE* key (see below). This file
- * must have the following structure (the *x* and *y* coordinates being the CH1903 easting and northing, respectively): 
+ * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file, given as *METAFILE* key (see below). 
+ * If the number of stations in this list does not match the number of stations declared in one of the meteorological file, an exception will be thrown. 
+ * This file must have the following structure (the *x* and *y* coordinates being the CH1903 easting and northing, respectively): 
  * @verbatim
       statlist {1x1 struct}
         ├── acro {1x623 array of arrays of char}
@@ -120,13 +121,13 @@ std::map< MeteoGrids::Parameters, std::string > OshdIO::grids_map;
 const bool OshdIO::__init = OshdIO::initStaticData();
 
 OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
-               coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), debug(false)
+               coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), nrMetadata(0), debug(false)
 {
 	parseInputOutputSection();
 }
 
 OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
-               coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), debug(false)
+               coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), nrMetadata(0), debug(false)
 {
 	parseInputOutputSection();
 }
@@ -144,6 +145,10 @@ void OshdIO::parseInputOutputSection()
 		bool is_recursive = false;
 		cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
 		cache_meteo_files = scanMeteoPath(in_meteopath, is_recursive);
+		if (debug) {
+			std::cout << "Meteo files cache content:\n";
+			for(size_t ii=0; ii<cache_meteo_files.size(); ii++) std::cout << cache_meteo_files[ii].toString() << "\n";
+		}
 
 		cfg.getValue("METAFILE", "INPUT", in_metafile);
 		if (FileUtils::getFilename(in_metafile) == in_metafile) { //ie there is no path in the provided filename
@@ -158,6 +163,10 @@ void OshdIO::parseInputOutputSection()
 		bool is_recursive = false;
 		cfg.getValue("GRIDPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
 		cache_grid_files = scanMeteoPath(grid2dpath_in, is_recursive);
+		if (debug) {
+			std::cout << "Grid files cache content:\n";
+			for(size_t ii=0; ii<cache_grid_files.size(); ii++) std::cout << cache_grid_files[ii].toString() << "\n";
+		}
 	}
 }
 
@@ -267,7 +276,7 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	vecMeteo.clear();
 	size_t file_idx = getFileIdx( cache_meteo_files, dateStart );
 	Date station_date( cache_meteo_files[file_idx].date );
-	if (station_date<dateStart || station_date>dateEnd) return; //the requested period is NOT in the available files
+	if (station_date>dateEnd || cache_meteo_files.back().date<dateStart) return; //the requested period is NOT in the available files
 
 	const size_t nr_files = cache_meteo_files.size();
 	const size_t nrIDs = vecIDs.size();
@@ -365,6 +374,12 @@ std::vector<double> OshdIO::readFromFile(const std::string& filename, const Mete
 	
 	//check that each station is still at the same index, build the index cache if necessary
 	const std::vector<std::string> vecAcro( matWrap::readStringVector(filename, "acro", matfp, matvar) );
+	if (vecAcro.size()!=nrMetadata) {
+		std::ostringstream ss;
+		ss << "the number of stations changes between the metadata file (" << nrMetadata << ") and the data file '";
+		ss << FileUtils::getFilename( filename ) << "' (" << vecAcro.size() << ")\n";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
 	const size_t nrIDs = vecIDs.size();
 	for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
 		if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
@@ -424,6 +439,7 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 
 void OshdIO::fillStationMeta()
 {
+	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
 	vecMeta.resize( vecIDs.size(), StationData() );
 	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
 	if ( NULL == matfp ) throw AccessException(in_metafile, AT);
@@ -436,12 +452,12 @@ void OshdIO::fillStationMeta()
 	const std::vector<double> easting( matWrap::readDoubleVector(in_metafile, "x", matfp, matvar) );
 	const std::vector<double> northing( matWrap::readDoubleVector(in_metafile, "y", matfp, matvar) );
 	const std::vector<double> altitude( matWrap::readDoubleVector(in_metafile, "z", matfp, matvar) );
-	
+	nrMetadata = vecAcro.size();
 	Mat_VarFree(matvar);
 	Mat_Close(matfp);
 	
 	if (debug) {
-		for (size_t ii=0; ii<vecAcro.size(); ii++) 
+		for (size_t ii=0; ii<nrMetadata; ii++) 
 			std::cout << std::setw(8) << vecAcro[ii] << std::setw(40) << vecNames[ii] << std::setw(8) << easting[ii] << std::setw(8) << northing[ii] << std::setw(8) << altitude[ii] << "\n";
 		std::cout << endl;
 	}

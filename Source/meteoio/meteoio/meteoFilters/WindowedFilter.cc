@@ -165,6 +165,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		}
 		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
+		if (end>ivec.size()) return false; //no way to cut the requested window
 	}
 
 	if (centering == WindowedFilter::right) {
@@ -194,6 +195,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			end_time_idx = 0; //first possible element
 		}
 		const size_t elements_left = max(index - start_time_idx, start_elements);
+		if (elements_left>index) return false; //no way to cut the requested window
 		start = index - elements_left;
 	}
 
@@ -212,7 +214,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			start_time_idx = 0; //first possible element
 		}
 		const size_t elements_left = max(index - start_time_idx, start_elements);
-		start = index - elements_left;
+		start = index - elements_left; //we know that index>=elements_left
 
 		//get end of ideal window
 		size_t end_elements = min_data_points/2; //end elements criteria
@@ -234,7 +236,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		if (!is_soft) return false;
 		if (elements_left<elements_right) { //we hit the left border
 			//get again the end of window
-			size_t end_elems = (min_data_points>(elements_left+1))? min_data_points - (elements_left + 1) : 0;
+			const size_t end_elems = (min_data_points>(elements_left+1))? min_data_points - (elements_left + 1) : 0;
 			const Date end_dt = ivec[start].date+min_time_span;
 			size_t end_tm_idx = (end_dt>date)? IOUtils::seek(end_dt, ivec, false) : index; //end time criteria
 			if (end_tm_idx==IOUtils::npos) {
@@ -242,9 +244,10 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			}
 			const size_t elems_right = max(end_tm_idx - index, end_elems);
 			end = index + elems_right;
+			if (end>ivec.size()) return false; //no way to cut the requested window
 		} else { //we hit the right border
 			//get again the start of window
-			size_t start_elems = (min_data_points>(elements_right+1))? min_data_points - (elements_right + 1) : 0;
+			const size_t start_elems = (min_data_points>(elements_right+1))? min_data_points - (elements_right + 1) : 0;
 			const Date start_dt = ivec[end].date-min_time_span;
 			size_t start_tm_idx = (start_dt<date)? IOUtils::seek(start_dt, ivec, false) : index; //start time criteria
 			if (start_tm_idx!=IOUtils::npos && start_tm_idx!=index) start_tm_idx = (start_tm_idx>0)? start_tm_idx-1 : IOUtils::npos;
@@ -252,6 +255,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 				end_time_idx = 0; //first possible element
 			}
 			const size_t elems_left = max(index - start_tm_idx, start_elems);
+			if (elems_left>index) return false; //no way to cut the requested window
 			start = index - elems_left;
 		}
 	}

@@ -345,7 +345,8 @@ class ElementData {
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
 		double lwc_source;         ///< Source/sink term for Richards equation
 		double PrefFlowArea;       ///< Preferential flow path relative area (-)
-		double Qph;                ///< Heat source/sink due to phase changes for the heat equation (W/m^3)
+		double Qph_up;             ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the upper node of the element
+		double Qph_down;           ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the lower node of the element
 		//NIED (H. Hirashima)
 		double dsm;                ///< Dry snow metamorphism factor
 		double theta_ice_0;        ///< Original theta[ICE]

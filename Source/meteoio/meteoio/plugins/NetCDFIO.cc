@@ -143,7 +143,8 @@ namespace mio {
  * @endcode
  * 
  * With the <A HREF="https://software.ecmwf.int/wiki/display/WEBAPI/Access+ECMWF+Public+Datasets">ECMWF Python Library</A>, the request 
- * would be for example:
+ * would be for example (the area is defined as North/West/South/East, see the
+ * <A HREF="https://software.ecmwf.int/wiki/display/UDOC/Post-processing+keywords#Post-processingkeywords-area">WEBAPI</a> documentation):
  * @code
  * #!/usr/bin/env python
  * from ecmwfapi import ECMWFDataServer

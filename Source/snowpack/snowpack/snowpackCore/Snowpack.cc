@@ -502,8 +502,9 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	Se[1][0] += c;
 
 	// Add the source/sink term resulting from phase changes
-	Fe[0] += 0.5 * Edata.Qph * Edata.L;
-	Fe[1] += 0.5 * Edata.Qph * Edata.L;
+	Fe[1] += Edata.Qph_up * 0.5 * Edata.L;
+	Fe[0] += Edata.Qph_down * 0.5 * Edata.L;
+
 	return true;
 }
 
@@ -1014,6 +1015,10 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	if (nN==2) MaxItnTemp = 400;
 	if (nN==1 || useNewPhaseChange) MaxItnTemp = 2000;
 
+	for(size_t e = nE; e -->0; ) Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;	// Reset the energy flux to the adjecent nodes due to phase changes in the element
+	std::vector<double> dth_i_up(nE, 0.);							// Initialize theta[ICE] change due to phase changes at the upper adjacent node
+	std::vector<double> dth_i_down(nE, 0.);							// Initialize theta[ICE] change due to phase changes at the lower adjacent node
+
 	// IMPLICIT INTEGRATION LOOP
 	bool TempEqConverged = true;	// Return value of this function compTemperatureProfile(...)
 	do {
@@ -1025,65 +1030,43 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 			dU[n] = 0.0;
 		}
 
+		if(useNewPhaseChange) {
+			// Initialize the change in ice contents due to phase changes based on the energy source/sink terms at the adjacent nodes
+			for(size_t e = nE; e -->0; ) {
+				dth_i_up[e] = Xdata.Edata[e].Qph_up / ((Constants::density_ice * Constants::lh_fusion) / sn_dt);
+				dth_i_down[e] = Xdata.Edata[e].Qph_down / ((Constants::density_ice * Constants::lh_fusion) / sn_dt);
+				Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
+			}
+		}
+
 		// Assemble matrix
+		double maxd = 0.;		// Tracks max. change in ice contents in domain (convergence criterion)
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
-				if(forcing=="ATMOS") {
-					// Calculate the melting/freezing associated with the current temperature state
-					Xdata.Edata[e].Qph = 0.;
-					const double Te_new = 0.5*(U[e+1]+U[e]);
-					double dth_i = 0.;
-					const bool explicitBC = ((Xdata.Edata[nE-1].theta[WATER] > 1E-5/10. + Constants::eps && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].theta[ICE]<ReSolver1d::max_theta_ice*(1.-Constants::eps)));
-					if(Xdata.Edata[e].melting_tk > Te_new) {
-						// Freezing
-						const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
-						/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
-						dth_i=std::min((Xdata.Edata[e].theta[WATER]-1E-5/10.) * (Constants::density_water / Constants::density_ice), dth_i);
-						dth_i=std::min(std::max(0., (ReSolver1d::max_theta_ice - Xdata.Edata[e].theta[ICE])), dth_i);
-						Xdata.Edata[e].Qph += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-						if(e==nE-1 && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
-					}
-					if(Xdata.Edata[e].melting_tk < Te_new) {
-						// Melting
-						const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
-						/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
-						size_t ee=e+1;
-						while(ee-->0 && dth_i<0.) {
-							const double dth_i2 = std::max(-Xdata.Edata[ee].theta[ICE] + (Xdata.Edata[ee].Qph/((Constants::density_ice * Constants::lh_fusion) / sn_dt)), dth_i);
-							Xdata.Edata[ee].Qph += (dth_i2 * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-							dth_i-=dth_i2;
-							if(dth_i>0) {dth_i=0.;};
-						}
-						if(e==nE-1 && dth_i+Xdata.Edata[e].theta[ICE]>Constants::eps && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
-					}
-				} else {
-					// Calculate the melting/freezing based on the prescribed surface melt
-					Xdata.Edata[e].Qph = 0.;
-					const double Te_new = 0.5*(U[e+1]+U[e]);
-					double dth_i = 0.;
-					const bool explicitBC = ((Xdata.Edata[nE-1].theta[WATER] > 1E-5/10. + Constants::eps && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].theta[ICE]<ReSolver1d::max_theta_ice*(1.-Constants::eps)));
-					if(Xdata.Edata[e].melting_tk > Te_new) {
-						// Freezing
-						const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
-						/*double*/ dth_i = A * (Xdata.Edata[e].melting_tk - Te_new); // change in volumetric ice content
-						dth_i=std::min((Xdata.Edata[e].theta[WATER]-1E-5/10.) * (Constants::density_water / Constants::density_ice), dth_i);
-						dth_i=std::min(std::max(0., (ReSolver1d::max_theta_ice - Xdata.Edata[e].theta[ICE])), dth_i);
-						Xdata.Edata[e].Qph += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-						if(e==nE-1 && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
-					}
-					if(Mdata.surf_melt > Constants::eps2) {
-						// Melting
-						/*double*/ dth_i = - (Mdata.surf_melt / (Constants::density_ice * Xdata.Edata[e].L)); // dth_i must be negative defined !
-						size_t ee=e+1;
-						while(ee-->0 && dth_i<0.) {
-							const double dth_i2 = std::max(-Xdata.Edata[ee].theta[ICE] + (Xdata.Edata[ee].Qph/((Constants::density_ice * Constants::lh_fusion) / sn_dt)), dth_i);
-							Xdata.Edata[ee].Qph += (dth_i2 * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-							dth_i-=dth_i2;
-							if(dth_i>0) {dth_i=0.;};
-						}
-						if(e==nE-1 && dth_i+Xdata.Edata[e].theta[ICE]>Constants::eps && !explicitBC) {U[e+1]=std::min(Xdata.Edata[e].melting_tk, U[e+1]);}
-					}
+				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
+				const double dth_i_up_in = dth_i_up[e];
+				const double dth_i_down_in = dth_i_down[e];
+				dth_i_up[e] += A * (Xdata.Edata[e].melting_tk - U[e+1]);	// change in volumetric ice content in upper half of element
+				dth_i_down[e] += A * (Xdata.Edata[e].melting_tk - U[e]);	// change in volumetric ice content in lower half of element
+				const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
+				if(dth_i_sum != 0.) {	// Element has phase changes
+					// First limit: only avaiable liquid water can freeze
+					double dth_i_lim = std::min(std::max(0., (Xdata.Edata[e].theta[WATER]-1E-5/10.)) * (Constants::density_water / Constants::density_ice), dth_i_sum);
+					// Second limit: only available ice can melt
+					dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
+					// Correct volumetric changes in upper and lower half of element proportional to limits
+					dth_i_up[e] *= dth_i_lim / dth_i_sum;
+					dth_i_down[e] *= dth_i_lim / dth_i_sum;
 				}
+				// Previous approach: check limits of both halfs of element individually (probably not so accurate):
+				/*dth_i_up[e] = std::min(std::max(0., (Xdata.Edata[e].theta[WATER]-1E-5/10.)) * (Constants::density_water / Constants::density_ice), dth_i_up[e]);
+				dth_i_down[e] = std::min(std::max(0., (Xdata.Edata[e].theta[WATER]-1E-5/10.)) * (Constants::density_water / Constants::density_ice), dth_i_down[e]);
+				dth_i_up[e] = std::max(-Xdata.Edata[e].theta[ICE], dth_i_up[e]);
+				dth_i_down[e] = std::max(-Xdata.Edata[e].theta[ICE], dth_i_down[e]);*/
+				maxd = std::max(maxd, fabs(dth_i_up[e] - dth_i_up_in));
+				maxd = std::max(maxd, fabs(dth_i_down[e] - dth_i_down_in));
+				Xdata.Edata[e].Qph_up = (dth_i_up[e] * Constants::density_ice * Constants::lh_fusion) / sn_dt;
+				Xdata.Edata[e].Qph_down = (dth_i_down[e] * Constants::density_ice * Constants::lh_fusion) / sn_dt;
 			}
 			EL_INCID( e, Ie );
 			EL_TEMP( Ie, T0, TN, NDS, U );
@@ -1176,8 +1159,9 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 			MaxItnTemp = std::max(MaxItnTemp, (unsigned)200); // NOTE originally 100;
 		}
 		if(useNewPhaseChange) {
-			//With new phase change, we want at least one iteration extra, to account for possible phase changes
-			NotConverged = (MaxTDiff > ControlTemp || iteration == 1);
+			// With new phase change, we want at least one iteration extra, to account for possible phase changes,
+			// and we want an additional constraint of maximum change in phase change amount
+			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > 0.0001);
 		} else {
 			NotConverged = (MaxTDiff > ControlTemp);
 		}
@@ -1926,12 +1910,24 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						phasechange.compPhaseChange(Xdata, Mdata.date, false);
 				} else {
 					for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) {
-						const double dth_i = (Xdata.Edata[e].Qph * sn_dt) / (Constants::density_ice * Constants::lh_fusion);
+						// Net ice contents change:
+						double dth_i = 0.5 * (Xdata.Edata[e].Qph_up + Xdata.Edata[e].Qph_down) / ((Constants::density_ice * Constants::lh_fusion) / sn_dt);
+						// Limit to all ice melts:
+						double dth_i2 = (dth_i<0.)?(std::max(-Xdata.Edata[e].theta[ICE], dth_i)):(dth_i);
+						dth_i = dth_i2;
+						// Apply phase change:
+						Xdata.Edata[e].dth_w += -dth_i * Constants::density_ice / Constants::density_water;
+						Xdata.Edata[e].Qmf += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt_bcu; // (W m-3)
 						Xdata.Edata[e].theta[ICE] += dth_i;
 						Xdata.Edata[e].theta[WATER] -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
-						Xdata.Edata[e].Qmf += Xdata.Edata[e].Qph / sn_dt;
-						Xdata.Edata[e].Qph = 0.;
+						Xdata.Edata[e].Rho = Constants::density_ice * Xdata.Edata[e].theta[ICE] +
+					                (Constants::density_water * (Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF])) +
+					                    (Xdata.Edata[e].theta[SOIL] * Xdata.Edata[e].soil[SOIL_RHO]);
+						Xdata.Edata[e].heatCapacity();
+						Xdata.Edata[e].dth_w -= dth_i*Constants::density_ice/Constants::density_water;
+						Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
+						Xdata.Edata[e].Te = 0.5 * (Xdata.Ndata[e+1].T + Xdata.Ndata[e].T);
 					}
 				}
 
