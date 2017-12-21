@@ -270,6 +270,7 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 /**
  * @brief Calculate melting temperature as function of salinity
  * @version 16.08
+ * @param Edata
  */
 void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 {
@@ -375,7 +376,7 @@ double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
  * @version 16.08: initial version
  * @param Edata
  */
-void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double sn_dt)
+void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt)
 {
   	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
@@ -557,7 +558,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
  * @param Bdata
  * @param sn_dt SNOWPACK time step (s)
  */
-void SeaIce::runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double sn_dt)
+void SeaIce::runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt)
 {
 	Xdata.Seaice->compSalinityProfile(Xdata);
 	Xdata.Seaice->OceanHeatFlux=(Bdata.qg == Constants::undefined)?(0.):(Bdata.qg);

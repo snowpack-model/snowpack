@@ -73,16 +73,15 @@ class SeaIce {
 		friend std::iostream& operator<<(std::iostream& os, const SeaIce& data);
 		friend std::iostream& operator>>(std::iostream& is, SeaIce& data);
 
-		// For sea ice: HACK should be moved to own class maybe?
 		void calculateMeltingTemperature(ElementData& Edata);
 		const double static calculateMeltingTemperature(const double& Sal);
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
 		void compFlooding(SnowStation& Xdata);
-		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double sn_dt);
+		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
 
-		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double sn_dt);
+		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt);
 	private:
 
 
