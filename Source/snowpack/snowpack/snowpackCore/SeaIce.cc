@@ -44,13 +44,14 @@ using namespace std;
 const double SeaIce::SeaWaterFreezingTemp = IOUtils::C_TO_K(-1.95);
 const double SeaIce::SeaIceDensity = ReSolver1d::max_theta_ice * Constants::density_ice;
 const double SeaIce::ice_threshold = 800.;
-const double SeaIce::mu = -0.054;
+const double SeaIce::mu = 0.054;
 
 const double SeaIce::ThicknessFirstIceLayer = 0.01;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
-const double SeaIce::InitSalinity = 0.035;
-const double SeaIce::InitSnowSalinity = 0.001;
+const double SeaIce::OceanSalinity = 35.;
+const double SeaIce::InitSalinity = 35.;
+const double SeaIce::InitSnowSalinity = 1.;
 
 
 /************************************************************
@@ -110,12 +111,12 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 	case CONSTANT:
 		{
 			for (size_t e = Xdata.SoilNode; e < nE; e++) {
-				Xdata.Edata[e].salinity = 0.035;		// Default: 35 g/kg = 0.035 kg/kg
+				Xdata.Edata[e].salinity = 35.;			// Default: 35 g/kg
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			/*size_t e = Xdata.SoilNode;
 			for (; e < IceSurfaceNode; e++) {
-				Xdata.Edata[e].salinity = 0.035;		// Default: 35 g/kg = 0.035 kg/kg
+				Xdata.Edata[e].salinity = 35.;			// Default: 35 g/kg
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			for (; e < nE; e++) {
@@ -138,7 +139,6 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 						Xdata.Edata[e].salinity = 7.88 - 1.59 * Xdata.Ndata[e].z;
 					}
 				}
-				Xdata.Edata[e].salinity/=1000.;
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -150,7 +150,6 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			const double botSal = 5.;
 			for (size_t e = Xdata.SoilNode; e < nE; e++) {
 				Xdata.Edata[e].salinity = ((topSal - botSal) / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z)) * 0.5 * (Xdata.Ndata[e].z + Xdata.Ndata[e+1].z);		// linear gradient between 1 psu (top) to 4 psu (bottom) 
-				Xdata.Edata[e].salinity/=1000.;
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -164,13 +163,11 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			size_t e = Xdata.SoilNode;
 			for (; e <  IceSurfaceNode ; e++) {
 				Xdata.Edata[e].salinity = ((topSal - botSal) / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z)) * 0.5 * (Xdata.Ndata[e].z + Xdata.Ndata[e+1].z);		// linear gradient between 1 psu (top) to 4 psu (bottom) 
-				Xdata.Edata[e].salinity/=1000.;
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			// define salinity in snow
 			for (; e <  nE ; e++) {
 				Xdata.Edata[e].salinity = 1;
-				Xdata.Edata[e].salinity/=1000.;
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -186,13 +183,11 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			size_t e = Xdata.SoilNode;
 			for (; e <  IceSurfaceNode ; e++) {
 				Xdata.Edata[e].salinity = ampSal* sin((Xdata.Ndata[e].z / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z))*PI+PI)+topSal;		// c shaped salinity profile in sea ice
-				Xdata.Edata[e].salinity/=1000.;
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			// define salinity in snow
 			for (; e <  nE ; e++) {
 				Xdata.Edata[e].salinity = 1; // 8 after Massom et al. 1997
-				Xdata.Edata[e].salinity/=1000.;
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -264,8 +259,8 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
 		Xdata.Edata[iN].M += dth_w * Constants::density_water * Xdata.Edata[iN].L;
 		Xdata.Edata[iN].Rho = Xdata.Edata[iN].M / Xdata.Edata[iN].L;
-		Xdata.Edata[iN].salinity += 0.032 * dth_w;
-		Xdata.Edata[iN].salinity = std::min(0.032, Xdata.Edata[iN].salinity);
+		Xdata.Edata[iN].salinity += SeaIce::OceanSalinity * dth_w;
+		Xdata.Edata[iN].salinity = std::min(SeaIce::OceanSalinity, Xdata.Edata[iN].salinity);
 		calculateMeltingTemperature(Xdata.Edata[iN]);
 		iN++;
 	}
@@ -280,10 +275,10 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 {
 	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958. 
-	//Edata.melting_tk = Edata.freezing_tk = IOUtils::C_TO_K(SeaIce::mu * (1000. * Edata.salinity));
+	//Edata.melting_tk = Edata.freezing_tk = IOUtils::C_TO_K(SeaIce::mu * Edata.salinity);
 	// Here we have some trickery: if the melting and freezing temperature changes too quickly, we run into trouble with solving
 	// the heat equation, as the nodal temperatures are not consistent anymore with the element temperature and the corresponding melting temperature. So we limit the change in melting temperature here to 0.05 degC at a time.
-	const double newTK = IOUtils::C_TO_K(SeaIce::mu * (1000. * Edata.salinity));
+	const double newTK = IOUtils::C_TO_K(-SeaIce::mu * Edata.salinity);
 	if(Edata.melting_tk!=0.) {
 		double deltaTK = newTK - Edata.melting_tk;
 		deltaTK=std::max(-0.005, std::min(0.005, deltaTK));
@@ -300,7 +295,7 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
  * @brief Heat capacity of sea ice.
  * @version 16.08: initial version
  * @param T: Temperature (K)
- * @param Sal: Salinity (kg/kg)
+ * @param Sal: Salinity (PSU, which is g/kg)
  * @return Heat capacity for sea ice (J / kg / K)
  */
 double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
@@ -323,17 +318,18 @@ double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 9
-	const double beta =  0.117;		// W/m^2/permille
-	const double k0 = 2.034;		// W/m/K
+	const double beta =  0.1172;		// W/m^2/permille
+	const double k0 = 2.034;		// W/m/K, note that this is the thermal conductivity of fresh ice, and it may be coupled to the value in Constants.h
 	// Note the conversion from kg/kg to permille for salinity
-	return (k0 + ((beta * 1000. * Edata.salinity) / Edata.Te));
+	return (k0 + ((beta * Edata.salinity) / Edata.Te));
 }
 
 
 /**
  * @brief Latent heat of melting for sea ice.
  * @version 16.08: initial version
- * @param Edata
+ * @param T: Temperatur (K)
+ * @param Sal: Salinity (PSU, which is g/kg)
  * @return Latent heat of fusion for sea ice (J / kg)
  */
 double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)

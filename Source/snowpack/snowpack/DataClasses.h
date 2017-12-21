@@ -325,7 +325,7 @@ class ElementData {
 		size_t mk;                 ///< grain marker (history dependent)
 		unsigned short int type;   ///< grain class
 		double metamo;             ///< keep track of metamorphism
-		double salinity;           ///< salinity (kg/kg)
+		double salinity;           ///< salinity (PSU, which is g/kg)
 		double dth_w;              ///< Subsurface Melting & Freezing Data: change of water content
 		double res_wat_cont;       ///< Residual water content
 		double Qmf;                ///< Subsurface Melting & Freezing Data: change of energy due to phase changes (melt-freeze)

@@ -1987,8 +1987,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			DeltaSal[i] += (flux_up[i]>0.)?(EMS[i+1].salinity*flux_up[i]):(EMS[i].salinity*flux_up[i]);
 		}
 		if (i==lowernode) {
-			// We assume that ocean water has a salinity of 0.35
-			DeltaSal[i] += (flux_down[i]<0.)?(-1.*0.035*flux_down[i]):(-1.*EMS[i].salinity*flux_down[i]);
+			// We fix the ocean salinity from below
+			DeltaSal[i] += (flux_down[i]<0.)?(-1.*SeaIce::OceanSalinity*flux_down[i]):(-1.*EMS[i].salinity*flux_down[i]);
 		} else {
 			DeltaSal[i] += (flux_down[i]<0.)?(-1.*EMS[i-1].salinity*flux_down[i]):(-1.*EMS[i].salinity*flux_down[i]);
 		}
