@@ -50,7 +50,6 @@ const double SeaIce::ThicknessFirstIceLayer = 0.01;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
 const double SeaIce::OceanSalinity = 35.;
-const double SeaIce::InitSalinity = 35.;
 const double SeaIce::InitSnowSalinity = 1.;
 
 
@@ -383,13 +382,13 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 	} else {
 		// First time freezing, create first ice layer
 		// Here: netBottomEnergy has units W / kg
-		//netBottomEnergy = (Xdata.Ndata[Xdata.SoilNode].T - SeaIce::SeaWaterFreezingTemp) * compSeaIceHeatCapacity(Xdata.Ndata[Xdata.SoilNode].T, InitSalinity) / sn_dt;
+		//netBottomEnergy = (Xdata.Ndata[Xdata.SoilNode].T - SeaIce::SeaWaterFreezingTemp) * compSeaIceHeatCapacity(Xdata.Ndata[Xdata.SoilNode].T, SeaIce::OceanSalinity) / sn_dt;
 		// Convert netBottomEnergy to W / m^2, assuming a 1 cm freezing layer
 		// TODO: insert density ocean water
 		// TODO: we don't know the ocean temperature profile, so we cannot accurately know how thick the first ice layer is
 		//const double freezing_ocean_depth = 0.1;
 		//netBottomEnergy *= Constants::density_water * freezing_ocean_depth;
-		//dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(Xdata.Ndata[Xdata.SoilNode].T, InitSalinity);
+		//dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(Xdata.Ndata[Xdata.SoilNode].T, SeaIce::OceanSalinity);
 		dM = ThicknessFirstIceLayer * SeaIceDensity;
 	}
 
@@ -450,7 +449,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 			EMS[Xdata.SoilNode].mk = 7.;
 			EMS[Xdata.SoilNode].metamo = 0.;
 			EMS[Xdata.SoilNode].snowType(); // Snow classification
-			EMS[Xdata.SoilNode].salinity = InitSalinity;
+			EMS[Xdata.SoilNode].salinity = SeaIce::OceanSalinity;
 			EMS[Xdata.SoilNode].dth_w = 0.;
 			EMS[Xdata.SoilNode].Qmf = 0.;
 			EMS[Xdata.SoilNode].QIntmf = 0.;
