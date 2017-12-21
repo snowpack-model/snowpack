@@ -75,6 +75,7 @@ class SeaIce {
 
 		// For sea ice: HACK should be moved to own class maybe?
 		void calculateMeltingTemperature(ElementData& Edata);
+		const double static calculateMeltingTemperature(const double& Sal);
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);

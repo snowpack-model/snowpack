@@ -266,6 +266,7 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 	return;
 }
 
+
 /**
  * @brief Calculate melting temperature as function of salinity
  * @version 16.08
@@ -287,6 +288,19 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 		Edata.melting_tk = Edata.freezing_tk = newTK;
 	}
 	return;
+}
+
+
+/**
+ * @brief Calculate melting temperature as function of salinity
+ * @version 17.12: initial version
+ * @param Sal: Salinity (PSU, which is g/kg)
+ */
+const double SeaIce::calculateMeltingTemperature(const double& Sal)
+{
+	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
+	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958. 
+	return IOUtils::C_TO_K(-SeaIce::mu * Sal);
 }
 
 
