@@ -275,19 +275,8 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 {
 	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
-	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958. 
-	//Edata.melting_tk = Edata.freezing_tk = IOUtils::C_TO_K(SeaIce::mu * Edata.salinity);
-	// Here we have some trickery: if the melting and freezing temperature changes too quickly, we run into trouble with solving
-	// the heat equation, as the nodal temperatures are not consistent anymore with the element temperature and the corresponding melting temperature. So we limit the change in melting temperature here to 0.05 degC at a time.
-	const double newTK = IOUtils::C_TO_K(-SeaIce::mu * Edata.salinity);
-	if(Edata.melting_tk!=0.) {
-		double deltaTK = newTK - Edata.melting_tk;
-		deltaTK=std::max(-0.005, std::min(0.005, deltaTK));
-		Edata.melting_tk += deltaTK;
-		Edata.freezing_tk += deltaTK;
-	} else {
-		Edata.melting_tk = Edata.freezing_tk = newTK;
-	}
+	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958.
+	Edata.melting_tk = Edata.freezing_tk = SeaIce::calculateMeltingTemperature(Edata.salinity);
 	return;
 }
 
@@ -300,7 +289,7 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 const double SeaIce::calculateMeltingTemperature(const double& Sal)
 {
 	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
-	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958. 
+	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958.
 	return IOUtils::C_TO_K(-SeaIce::mu * Sal);
 }
 
