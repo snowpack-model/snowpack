@@ -54,11 +54,11 @@ class SeaIce {
 		const static double SeaIceDensity;
 		const static double ice_threshold;
 		const static double mu;
-
 		const static double ThicknessFirstIceLayer;
 		const static double InitRg;
 		const static double InitRb;
 		const static double OceanSalinity;
+		const static double InitSeaIceSalinity;
 		const static double InitSnowSalinity;
 
 		double SeaLevel;            ///< Sea level in domain (m)

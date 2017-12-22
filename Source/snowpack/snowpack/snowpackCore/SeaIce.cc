@@ -45,11 +45,11 @@ const double SeaIce::SeaWaterFreezingTemp = IOUtils::C_TO_K(-1.95);
 const double SeaIce::SeaIceDensity = ReSolver1d::max_theta_ice * Constants::density_ice;
 const double SeaIce::ice_threshold = 800.;
 const double SeaIce::mu = 0.054;
-
 const double SeaIce::ThicknessFirstIceLayer = 0.01;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
 const double SeaIce::OceanSalinity = 35.;
+const double SeaIce::InitSeaIceSalinity = 5.;
 const double SeaIce::InitSnowSalinity = 1.;
 
 
@@ -464,7 +464,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 			EMS[Xdata.SoilNode].mk = 7.;
 			EMS[Xdata.SoilNode].metamo = 0.;
 			EMS[Xdata.SoilNode].snowType(); // Snow classification
-			EMS[Xdata.SoilNode].salinity = SeaIce::OceanSalinity;
+			EMS[Xdata.SoilNode].salinity = SeaIce::InitSeaIceSalinity;
 			EMS[Xdata.SoilNode].dth_w = 0.;
 			EMS[Xdata.SoilNode].Qmf = 0.;
 			EMS[Xdata.SoilNode].QIntmf = 0.;
