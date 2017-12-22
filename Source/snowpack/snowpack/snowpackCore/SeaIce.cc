@@ -541,7 +541,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 
 	// Ocean water is infinite, so as much ice will be created as energy available, i.e., the bottom node is at melting_tk!
 	calculateMeltingTemperature(EMS[Xdata.SoilNode]);
-	if (nE > 0) NDS[Xdata.SoilNode].T = EMS[Xdata.SoilNode].melting_tk;
+	if (nE > 0) NDS[Xdata.SoilNode].T = SeaIce::calculateMeltingTemperature(SeaIce::OceanSalinity);
 	EMS[Xdata.SoilNode].Te = 0.5 * (NDS[Xdata.SoilNode].T + NDS[Xdata.SoilNode+1].T);
 	EMS[Xdata.SoilNode].gradT = (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / EMS[Xdata.SoilNode].L;
 	return;
