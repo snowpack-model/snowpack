@@ -286,7 +286,7 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
  * @version 17.12: initial version
  * @param Sal: Salinity (PSU, which is g/kg)
  */
-const double SeaIce::calculateMeltingTemperature(const double& Sal)
+double SeaIce::calculateMeltingTemperature(const double& Sal)
 {
 	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958.
@@ -301,7 +301,7 @@ const double SeaIce::calculateMeltingTemperature(const double& Sal)
  * @param Sal: Salinity (PSU, which is g/kg)
  * @return Heat capacity for sea ice (J / kg / K)
  */
-const double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
+double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 1 and 2
@@ -317,7 +317,7 @@ const double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
  * @param Edata
  * @return Thermal conductivity for sea ice (W K-1 m-1)
  */
-const double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
+double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 9
@@ -335,7 +335,7 @@ const double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
  * @param Sal: Salinity (PSU, which is g/kg)
  * @return Latent heat of fusion for sea ice (J / kg)
  */
-const double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
+double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 5
@@ -350,7 +350,7 @@ const double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& S
  * @param Edata
  * @return Latent heat of fusion for sea ice (J / kg)
  */
-const double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
+double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 5

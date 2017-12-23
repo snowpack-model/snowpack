@@ -45,10 +45,11 @@ class SeaIce {
 		SeaIce& operator=(const SeaIce&); ///<Assignement operator
 
 		//SeaIce(const SnowpackConfig& i_cfg);
-		const static double compSeaIceHeatCapacity(const double& T, const double& Sal);
-		const static double compSeaIceThermalConductivity(const ElementData& Edata);
-		const static double compSeaIceLatentHeatFusion(const ElementData& Edata);
-		const static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
+		static double compSeaIceHeatCapacity(const double& T, const double& Sal);
+		static double compSeaIceThermalConductivity(const ElementData& Edata);
+		static double compSeaIceLatentHeatFusion(const ElementData& Edata);
+		static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
+		static double calculateMeltingTemperature(const double& Sal);
 
 		const static double SeaWaterFreezingTemp;
 		const static double SeaIceDensity;
@@ -74,7 +75,6 @@ class SeaIce {
 		friend std::iostream& operator>>(std::iostream& is, SeaIce& data);
 
 		void calculateMeltingTemperature(ElementData& Edata);
-		const double static calculateMeltingTemperature(const double& Sal);
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
