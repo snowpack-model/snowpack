@@ -301,7 +301,7 @@ const double SeaIce::calculateMeltingTemperature(const double& Sal)
  * @param Sal: Salinity (PSU, which is g/kg)
  * @return Heat capacity for sea ice (J / kg / K)
  */
-double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
+const double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 1 and 2
@@ -317,7 +317,7 @@ double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
  * @param Edata
  * @return Thermal conductivity for sea ice (W K-1 m-1)
  */
-double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
+const double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 9
@@ -335,7 +335,7 @@ double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
  * @param Sal: Salinity (PSU, which is g/kg)
  * @return Latent heat of fusion for sea ice (J / kg)
  */
-double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
+const double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 5
@@ -350,7 +350,7 @@ double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
  * @param Edata
  * @return Latent heat of fusion for sea ice (J / kg)
  */
-double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
+const double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
 {
 	// From: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	// See Eq. 5

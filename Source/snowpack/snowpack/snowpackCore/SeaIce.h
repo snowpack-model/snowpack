@@ -45,10 +45,10 @@ class SeaIce {
 		SeaIce& operator=(const SeaIce&); ///<Assignement operator
 
 		//SeaIce(const SnowpackConfig& i_cfg);
-		static double compSeaIceHeatCapacity(const double& T, const double& Sal);
-		static double compSeaIceThermalConductivity(const ElementData& Edata);
-		static double compSeaIceLatentHeatFusion(const ElementData& Edata);
-		static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
+		const static double compSeaIceHeatCapacity(const double& T, const double& Sal);
+		const static double compSeaIceThermalConductivity(const ElementData& Edata);
+		const static double compSeaIceLatentHeatFusion(const ElementData& Edata);
+		const static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
 
 		const static double SeaWaterFreezingTemp;
 		const static double SeaIceDensity;
