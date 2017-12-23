@@ -1033,8 +1033,9 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		if(useNewPhaseChange) {
 			// Initialize the change in ice contents due to phase changes based on the energy source/sink terms at the adjacent nodes
 			for(size_t e = nE; e -->0; ) {
-				dth_i_up[e] = Xdata.Edata[e].Qph_up / ((Constants::density_ice * Constants::lh_fusion) / sn_dt);
-				dth_i_down[e] = Xdata.Edata[e].Qph_down / ((Constants::density_ice * Constants::lh_fusion) / sn_dt);
+				const double Lh = (Xdata.Edata[e].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Xdata.Edata[e])) : (Constants::lh_fusion);
+				dth_i_up[e] = Xdata.Edata[e].Qph_up / ((Constants::density_ice * Lh) / sn_dt);
+				dth_i_down[e] = Xdata.Edata[e].Qph_down / ((Constants::density_ice * Lh) / sn_dt);
 				Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
 			}
 		}
@@ -1044,7 +1045,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
 				// Calculate the melting/freezing associated with the current temperature state
-				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Constants::lh_fusion );
+				const double Lh = (Xdata.Edata[e].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Xdata.Edata[e])) : (Constants::lh_fusion);
+				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Lh );
 				const double dth_i_up_in = dth_i_up[e];
 				const double dth_i_down_in = dth_i_down[e];
 				dth_i_up[e] += A * (Xdata.Edata[e].melting_tk - U[e+1]);	// change in volumetric ice content in upper half of element
@@ -1072,8 +1074,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				maxd = std::max(maxd, fabs(dth_i_down[e] - dth_i_down_in));
 
 				// Recalculate phase change energy
-				Xdata.Edata[e].Qph_up = (dth_i_up[e] * Constants::density_ice * Constants::lh_fusion) / sn_dt;
-				Xdata.Edata[e].Qph_down = (dth_i_down[e] * Constants::density_ice * Constants::lh_fusion) / sn_dt;
+				Xdata.Edata[e].Qph_up = (dth_i_up[e] * Constants::density_ice * Lh) / sn_dt;
+				Xdata.Edata[e].Qph_down = (dth_i_down[e] * Constants::density_ice * Lh) / sn_dt;
 			}
 			EL_INCID( e, Ie );
 			EL_TEMP( Ie, T0, TN, NDS, U );
@@ -1917,13 +1919,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						phasechange.compPhaseChange(Xdata, Mdata.date, false);
 				} else {
 					for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) {
+						const double Lh = (Xdata.Edata[e].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Xdata.Edata[e])) : (Constants::lh_fusion);
 						// Net ice contents change:
-						double dth_i = 0.5 * (Xdata.Edata[e].Qph_up + Xdata.Edata[e].Qph_down) / ((Constants::density_ice * Constants::lh_fusion) / sn_dt);
+						double dth_i = 0.5 * (Xdata.Edata[e].Qph_up + Xdata.Edata[e].Qph_down) / ((Constants::density_ice * Lh) / sn_dt);
 						// Limit to all ice melts:
 						dth_i = (dth_i<0.)?(std::max(-Xdata.Edata[e].theta[ICE], dth_i)):(dth_i);
 						// Apply phase change:
 						Xdata.Edata[e].dth_w += -dth_i * Constants::density_ice / Constants::density_water;
-						Xdata.Edata[e].Qmf += (dth_i * Constants::density_ice * Constants::lh_fusion) / sn_dt_bcu; // (W m-3)
+						Xdata.Edata[e].Qmf += (dth_i * Constants::density_ice * Lh) / sn_dt_bcu; // (W m-3)
 						Xdata.Edata[e].theta[ICE] += dth_i;
 						Xdata.Edata[e].theta[WATER] -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
