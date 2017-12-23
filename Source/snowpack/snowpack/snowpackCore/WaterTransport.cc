@@ -1194,6 +1194,7 @@ void WaterTransport::compTransportMass(const CurrentMeteo& Mdata,
 
 	try {
 		adjustDensity(Xdata);
+		if (variant=="SEAICE" && Xdata.Seaice!=NULL && iwatertransportmodel_snow == BUCKET) Xdata.Seaice->compFlooding(Xdata);
 		transportWater(Mdata, Xdata, Sdata, ql);
 	} catch(const exception&){
 		prn_msg( __FILE__, __LINE__, "err", Mdata.date, "Error in transportMass()");
