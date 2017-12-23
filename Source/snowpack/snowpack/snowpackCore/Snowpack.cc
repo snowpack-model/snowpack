@@ -104,6 +104,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
+	if (variant=="SEAICE") useNewPhaseChange = true;	// to better deal with variable freezing point due to salinity
 
 	//Define keys for new snow density computation
 	cfg.getValue("HN_DENSITY", "SnowpackAdvanced", hn_density);
@@ -1924,6 +1925,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						double dth_i = 0.5 * (Xdata.Edata[e].Qph_up + Xdata.Edata[e].Qph_down) / ((Constants::density_ice * Lh) / sn_dt);
 						// Limit to all ice melts:
 						dth_i = (dth_i<0.)?(std::max(-Xdata.Edata[e].theta[ICE], dth_i)):(dth_i);
+						// Limit to all liquid water freezes:
+						dth_i = (dth_i>0.)?(std::min(Xdata.Edata[e].theta[WATER] * (Constants::density_water / Constants::density_ice), dth_i)):(dth_i);
 						// Apply phase change:
 						Xdata.Edata[e].dth_w += -dth_i * Constants::density_ice / Constants::density_water;
 						Xdata.Edata[e].Qmf += (dth_i * Constants::density_ice * Lh) / sn_dt_bcu; // (W m-3)
