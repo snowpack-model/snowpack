@@ -1944,6 +1944,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						Xdata.Edata[e].dth_w -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
 						Xdata.Edata[e].Te = 0.5 * (Xdata.Ndata[e+1].T + Xdata.Ndata[e].T);
+						Xdata.Edata[e].gradT = (Xdata.Ndata[e+1].T - Xdata.Ndata[e].T) / Xdata.Edata[e].L;
 					}
 				}
 
