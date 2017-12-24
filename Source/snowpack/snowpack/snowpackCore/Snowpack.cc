@@ -1810,6 +1810,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 	Metamorphism metamorphism(cfg);
 	SnowDrift snowdrift(cfg);
 	PhaseChange phasechange(cfg);
+	if (Xdata.Seaice != NULL) Xdata.Seaice->ConfigSeaIce(cfg);
 
 	try {
 		//since precipitation phase is a little less intuitive than other, measured parameters, make sure it is provided

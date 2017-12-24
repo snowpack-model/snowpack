@@ -25,6 +25,7 @@
  */
 
 #include <snowpack/Constants.h>
+#include <snowpack/Utils.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/SeaIce.h>
 #include <snowpack/snowpackCore/ReSolver1d.h>
@@ -72,6 +73,28 @@ SeaIce& SeaIce::operator=(const SeaIce& source) {
 }
 
 SeaIce::~SeaIce() {}
+
+void SeaIce::ConfigSeaIce(const SnowpackConfig& i_cfg) {
+	std::string tmp_salinityprofile;
+	i_cfg.getValue("SALINITYPROFILE", "SnowpackSeaice", tmp_salinityprofile);
+	if (tmp_salinityprofile=="NONE") {
+		salinityprofile=NONE;
+	} else if (tmp_salinityprofile=="CONSTANT") {
+		salinityprofile=CONSTANT;
+	} else if (tmp_salinityprofile=="COXANDWEEKS") {
+		salinityprofile=COXANDWEEKS;
+	} else if (tmp_salinityprofile=="LINEARSAL") {
+		salinityprofile=LINEARSAL;
+	} else if (tmp_salinityprofile=="LINEARSAL2") {
+		salinityprofile=LINEARSAL2;
+	} else if (tmp_salinityprofile=="SINUSSAL") {
+		salinityprofile=SINUSSAL;
+	} else {
+		prn_msg( __FILE__, __LINE__, "err", Date(), "Unknown salinity profile (key: SALINITYPROFILE).");
+		throw;
+	}
+	return;
+}
 
 std::iostream& operator<<(std::iostream& os, const SeaIce& data)
 {

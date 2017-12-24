@@ -42,6 +42,7 @@ class SeaIce {
 	public:
 		SeaIce();
 		~SeaIce();
+		void ConfigSeaIce(const SnowpackConfig& i_cfg);
 		SeaIce& operator=(const SeaIce&); ///<Assignement operator
 
 		//SeaIce(const SnowpackConfig& i_cfg);
