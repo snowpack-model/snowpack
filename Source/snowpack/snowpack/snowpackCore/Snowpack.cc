@@ -1046,6 +1046,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
 				// Calculate the melting/freezing associated with the current temperature state
+				const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+				const double max_ice = ReSolver1d::max_theta_ice;
 				const double Lh = (Xdata.Edata[e].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Xdata.Edata[e])) : (Constants::lh_fusion);
 				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Lh );
 				const double dth_i_up_in = dth_i_up[e];
@@ -1057,7 +1059,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				/*const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
 				if(dth_i_sum != 0.) {	// Element has phase changes
 					// First limit: only avaiable liquid water can freeze
-					double dth_i_lim = std::min(std::max(0., (Xdata.Edata[e].theta[WATER]-1E-5/10.)) * (Constants::density_water / Constants::density_ice), dth_i_sum);
+					double dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_sum);
 					// Second limit: only available ice can melt
 					dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
 					// Correct volumetric changes in upper and lower half of element proportional to limits
@@ -1065,10 +1067,10 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					dth_i_down[e] *= dth_i_lim / dth_i_sum;
 				}*/
 				// Previous approach: check limits of both halfs of element individually (probably not so accurate):
-				dth_i_up[e] = std::min(std::max(0., (Xdata.Edata[e].theta[WATER]-1E-5/10.)) * (Constants::density_water / Constants::density_ice), dth_i_up[e]);
-				dth_i_down[e] = std::min(std::max(0., (Xdata.Edata[e].theta[WATER]-1E-5/10.)) * (Constants::density_water / Constants::density_ice), dth_i_down[e]);
-				dth_i_up[e] = std::max(-Xdata.Edata[e].theta[ICE], dth_i_up[e]);
-				dth_i_down[e] = std::max(-Xdata.Edata[e].theta[ICE], dth_i_down[e]);
+				dth_i_up[e] = std::min(0.5*std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_up[e]);
+				dth_i_down[e] = std::min(0.5*std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_down[e]);
+				dth_i_up[e] = std::max(-0.5*Xdata.Edata[e].theta[ICE], dth_i_up[e]);
+				dth_i_down[e] = std::max(-0.5*Xdata.Edata[e].theta[ICE], dth_i_down[e]);
 
 				// Track max. abs. change in ice contents
 				maxd = std::max(maxd, fabs(dth_i_up[e] - dth_i_up_in));
@@ -1919,6 +1921,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					else
 						phasechange.compPhaseChange(Xdata, Mdata.date, false);
 				} else {
+					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+					const double max_ice = ReSolver1d::max_theta_ice;
 					for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) {
 						const double Lh = (Xdata.Edata[e].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Xdata.Edata[e])) : (Constants::lh_fusion);
 						// Net ice contents change:
@@ -1926,7 +1930,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						// Limit to all ice melts:
 						dth_i = (dth_i<0.)?(std::max(-Xdata.Edata[e].theta[ICE], dth_i)):(dth_i);
 						// Limit to all liquid water freezes:
-						dth_i = (dth_i>0.)?(std::min(Xdata.Edata[e].theta[WATER] * (Constants::density_water / Constants::density_ice), dth_i)):(dth_i);
+						dth_i = (dth_i>0.)?(std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER] - theta_r) * (Constants::density_water / Constants::density_ice))), dth_i)):(dth_i);
 						// Apply phase change:
 						Xdata.Edata[e].dth_w += -dth_i * Constants::density_ice / Constants::density_water;
 						Xdata.Edata[e].Qmf += (dth_i * Constants::density_ice * Lh) / sn_dt_bcu; // (W m-3)
