@@ -123,8 +123,8 @@ ReSolver1d::ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part)
 		BottomBC=GRAVITATIONALDRAINAGE;
 	} else if (tmp_lb_cond_waterflux=="SEEPAGE") {
 		BottomBC=SEEPAGEBOUNDARY;
-	} else if (tmp_lb_cond_waterflux=="SEAICEFLOODING") {
-		BottomBC=SEAICEFLOODING;
+	} else if (tmp_lb_cond_waterflux=="SEAICE") {
+		BottomBC=SEAICE;
 	}
 
 	//Check for preferential flow
@@ -866,10 +866,10 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		theta_n[lowernode]=EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]);
 	}
 
-	//Initialize lower boundary in case of SEAICEFLOODING: prescribe pressure of water column at lowest ice node.
-	if(BottomBC==SEAICEFLOODING) {
+	//Initialize lower boundary in case of SEAICE: prescribe pressure of water column at lowest ice node.
+	if(BottomBC==SEAICE) {
 		if(Xdata.Seaice == NULL) {
-			prn_msg( __FILE__, __LINE__, "err", Date(), "[Xdata.SeaIce==NULL] You can only use SEAICEFLOODING for simulations with sea ice!");
+			prn_msg( __FILE__, __LINE__, "err", Date(), "[Xdata.SeaIce==NULL] You can only use LB_COND_WATERFLUX = SEAICE for simulations with sea ice!");
 			throw;
 		} else {
 			Xdata.Seaice->updateFreeboard(Xdata);
@@ -1162,7 +1162,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				// http://dx.doi.org/10.1175/2008JHM1011.1
 				aBottomBC=NEUMANN;
 				BottomFluxRate=k_np1_m_im12[lowernode];
-			} else if (BottomBC==SEAICEFLOODING) {
+			} else if (BottomBC==SEAICE) {
 				aBottomBC=DIRICHLET;
 				BottomFluxRate=0.;
 				theta_np1_m[lowernode]=theta_n[lowernode];
