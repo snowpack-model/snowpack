@@ -651,26 +651,6 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	return npos;
 }
 
-void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t &wk, size_t& startx, size_t& nx)
-{
-	if (nbworkers>dimx) {
-		std::ostringstream ss;
-		ss << "Can not split " << dimx << " columns in " << nbworkers << " bands!";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	const size_t nx_avg = dimx / nbworkers;
-	const size_t remainder = dimx % nbworkers;
-
-	if (wk<=remainder) { //distribute remainder, 1 extra column per worker, on first workers
-		nx = nx_avg+1;
-		startx = (wk-1)*nx;
-	} else { //all remainder has been distributed, we now attribute a normal number of columns
-		nx = nx_avg;
-		startx = remainder*(nx+1) + (wk-1-remainder)*nx;
-	}
-}
-
 double unitsPrefix(const char& prefix)
 {
 	switch(prefix) {

@@ -312,18 +312,6 @@ namespace IOUtils {
 	void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out);
 
 	/**
-	* @brief Returns the parameters for splitting an array in several, balanced sub-arrays.
-	* This is mostly usefull for parallel calculations, where an array will be split and sent to different
-	* workers.
-	* @param[in] dimx number of cells in the desired dimension
-	* @param[in] nbworkers total number of slices
-	* @param[in] wk current slice index (starting at 1)
-	* @param[out] startx calculated start index for the current slice
-	* @param[out] nx calculated number of cells (in the desired dimension) of the current slice
-	*/
-	void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t &wk, size_t& startx, size_t& nx);
-
-	/**
 	* @brief Convert a textual representation of a unit prefix (like 'm' or 'G') to multiplying factor
 	* @param prefix unit prefix
 	* return multiplying factor

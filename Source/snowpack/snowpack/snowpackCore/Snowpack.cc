@@ -1046,7 +1046,6 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
 				// Calculate the melting/freezing associated with the current temperature state
-				const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
 				const double max_ice = ReSolver1d::max_theta_ice;
 				const double Lh = (Xdata.Edata[e].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Xdata.Edata[e])) : (Constants::lh_fusion);
 				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Lh );
