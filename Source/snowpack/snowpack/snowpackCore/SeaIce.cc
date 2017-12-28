@@ -45,7 +45,8 @@ using namespace std;
 const double SeaIce::SeaWaterFreezingTemp = IOUtils::C_TO_K(-1.95);
 const double SeaIce::SeaIceDensity = ReSolver1d::max_theta_ice * Constants::density_ice;
 const double SeaIce::ice_threshold = 800.;
-const double SeaIce::mu = 0.054;
+const double SeaIce::mu = 0.054;		// Freezing point coefficient
+const double SeaIce::betaS = 0.824;		// Density coefficient (see: Appendix A Sea Water Density According to UNESCO Formula, https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf)
 const double SeaIce::ThicknessFirstIceLayer = 0.01;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
@@ -226,7 +227,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 void SeaIce::updateFreeboard(SnowStation& Xdata)
 {
 	Xdata.compSnowpackMasses();
-	SeaLevel = (Xdata.swe / Constants::density_water);
+	SeaLevel = (Xdata.swe / (Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity));
 	const double FreeBoard_snow = Xdata.cH - SeaLevel;	// This is the freeboard relative to snow surface
 	FreeBoard = (findIceSurface(Xdata) - (Xdata.cH - FreeBoard_snow));
 	return;
@@ -279,10 +280,10 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 		const double dth_w = std::max(0., Xdata.Edata[iN].theta[AIR] * (Constants::density_ice / Constants::density_water) - Xdata.Edata[iN].theta[WATER] * (Constants::density_water / Constants::density_ice - 1.));
 		Xdata.Edata[iN].theta[WATER] += dth_w;
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
-		Xdata.Edata[iN].updDensity();
-		Xdata.Edata[iN].M = Xdata.Edata[iN].Rho / Xdata.Edata[iN].L;
 		Xdata.Edata[iN].salinity += SeaIce::OceanSalinity * dth_w;
 		Xdata.Edata[iN].salinity = std::min(SeaIce::OceanSalinity, Xdata.Edata[iN].salinity);
+		Xdata.Edata[iN].updDensity();
+		Xdata.Edata[iN].M = Xdata.Edata[iN].Rho * Xdata.Edata[iN].L;
 		calculateMeltingTemperature(Xdata.Edata[iN]);
 		iN++;
 	}

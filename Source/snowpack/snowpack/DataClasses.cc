@@ -1031,8 +1031,10 @@ double ElementData::coldContent() const
  */
 void ElementData::updDensity()
 {
+	// Calculate element density
 	Rho = theta[ICE] * Constants::density_ice +
               (theta[WATER] + theta[WATER_PREF]) * Constants::density_water +
+              salinity * SeaIce::betaS +						//salinity = bulk salinity
               theta[SOIL] * soil[SOIL_RHO];
 	return;
 }

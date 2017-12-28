@@ -56,6 +56,7 @@ class SeaIce {
 		const static double SeaIceDensity;
 		const static double ice_threshold;
 		const static double mu;
+		const static double betaS;
 		const static double ThicknessFirstIceLayer;
 		const static double InitRg;
 		const static double InitRb;
