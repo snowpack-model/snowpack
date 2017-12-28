@@ -420,9 +420,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 		EMS[e].L0 = EMS[e].L = (L0 + dL);
 		NDS[e+1].z = NDS[e].z + EMS[e].L;
 		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
-		EMS[e].Rho = (EMS[e].theta[ICE] * Constants::density_ice) + ((EMS[e].theta[WATER]+EMS[e].theta[WATER_PREF])
-		                *Constants::density_water) + (EMS[e].theta[SOIL]
-		                  * EMS[e].soil[SOIL_RHO]);
+		EMS[e].updDensity();
 		if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR]>=0.)) {
 			prn_msg(__FILE__, __LINE__, "err", Date(),
 			          "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf air=%le",
@@ -1664,9 +1662,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				assert(EMS[nOldE-1].M>=0.); //the mass must be positive
 				EMS[nOldE-1].theta[AIR] = std::max(0., 1.0 - EMS[nOldE-1].theta[WATER] - EMS[nOldE-1].theta[WATER_PREF]
 				                                - EMS[nOldE-1].theta[ICE] - EMS[nOldE-1].theta[SOIL]);
-				EMS[nOldE-1].Rho = (EMS[nOldE-1].theta[ICE] * Constants::density_ice)
-				                      + ((EMS[nOldE-1].theta[WATER]+EMS[nOldE-1].theta[WATER_PREF]) * Constants::density_water)
-				                        + (EMS[nOldE-1].theta[SOIL]  * EMS[nOldE-1].soil[SOIL_RHO]);
+				EMS[nOldE-1].updDensity();
 				assert(EMS[nOldE-1].Rho>=0. || EMS[nOldE-1].Rho==IOUtils::nodata); //we want positive density
 				// Take care of old surface node
 				NDS[nOldN-1].z += dL + NDS[nOldN-1].u;
@@ -1937,9 +1933,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						Xdata.Edata[e].theta[ICE] += dth_i;
 						Xdata.Edata[e].theta[WATER] -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
-						Xdata.Edata[e].Rho = Constants::density_ice * Xdata.Edata[e].theta[ICE] +
-					                (Constants::density_water * (Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF])) +
-					                    (Xdata.Edata[e].theta[SOIL] * Xdata.Edata[e].soil[SOIL_RHO]);
+						Xdata.Edata[e].updDensity();
 						Xdata.Edata[e].heatCapacity();
 						Xdata.Edata[e].dth_w -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;

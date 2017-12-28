@@ -2019,7 +2019,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		EMS[i].theta[WATER]=std::max(0., std::min(1., EMS[i].theta[WATER]));
 		EMS[i].theta[WATER_PREF]=std::max(0., std::min(1., EMS[i].theta[WATER_PREF]));
 		EMS[i].theta[ICE]=std::max(0., std::min(1., EMS[i].theta[ICE]));
-		EMS[i].Rho = (EMS[i].theta[ICE] * Constants::density_ice) + ((EMS[i].theta[WATER] + EMS[i].theta[WATER_PREF]) * Constants::density_water) + (EMS[i].theta[SOIL] * EMS[i].soil[SOIL_RHO]);
+		EMS[i].updDensity();
 		EMS[i].M=EMS[i].L*EMS[i].Rho;
 		EMS[i].heatCapacity();
 
@@ -2114,12 +2114,10 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							EMS[i].theta[WATER]-=dtheta_w*(EMS[i-1].L/EMS[i].L);
 							// After moving the water, adjust the other properties
 							EMS[i].theta[AIR]=1.-EMS[i].theta[WATER]-EMS[i].theta[WATER_PREF]-EMS[i].theta[ICE]-EMS[i].theta[SOIL];
-							EMS[i].Rho=Constants::density_ice * EMS[i].theta[ICE] + (Constants::density_water * (EMS[i].theta[WATER] + EMS[i].theta[WATER_PREF])) + (EMS[i].theta[SOIL] * EMS[i].soil[SOIL_RHO]);
+							EMS[i].updDensity();
 							EMS[i].M=EMS[i].Rho*EMS[i].L;
 							EMS[i-1].theta[AIR]=1.-EMS[i-1].theta[WATER]-EMS[i-1].theta[WATER_PREF]-EMS[i-1].theta[ICE]-EMS[i-1].theta[SOIL];
-							EMS[i-1].Rho = Constants::density_ice * EMS[i-1].theta[ICE] +
-							(Constants::density_water * (EMS[i-1].theta[WATER] + EMS[i-1].theta[WATER_PREF])) +
-							    (EMS[i-1].theta[SOIL] * EMS[i-1].soil[SOIL_RHO]);
+							EMS[i-1].updDensity();
 							EMS[i-1].M=EMS[i-1].Rho*EMS[i-1].L;
 						}
 
@@ -2291,7 +2289,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		Xdata.Edata[newnE-1].theta[AIR] = 0.;
 		Xdata.Edata[newnE-1].theta[SOIL] = 0.;
 		Xdata.Edata[newnE-1].L = Xdata.Edata[newnE-1].L0 = refusedtopflux;
-		EMS[newnE-1].Rho = (EMS[newnE-1].theta[ICE] * Constants::density_ice) + ((EMS[newnE-1].theta[WATER] + EMS[newnE-1].theta[WATER_PREF]) * Constants::density_water) + (EMS[newnE-1].theta[SOIL] * EMS[newnE-1].soil[SOIL_RHO]);
+		EMS[newnE-1].updDensity();
 		EMS[newnE-1].M = EMS[newnE-1].L*EMS[newnE-1].Rho;
 		EMS[newnE-1].Te = (backupWATERLAYER_Te != Constants::undefined) ? (backupWATERLAYER_Te) : NDS[newnE-2].T;
 		NDS[newnE].T = NDS[newnE-1].T = NDS[newnE-2].T = EMS[newnE-1].Te;

@@ -279,8 +279,8 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 		const double dth_w = std::max(0., Xdata.Edata[iN].theta[AIR] * (Constants::density_ice / Constants::density_water) - Xdata.Edata[iN].theta[WATER] * (Constants::density_water / Constants::density_ice - 1.));
 		Xdata.Edata[iN].theta[WATER] += dth_w;
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
-		Xdata.Edata[iN].M += dth_w * Constants::density_water * Xdata.Edata[iN].L;
-		Xdata.Edata[iN].Rho = Xdata.Edata[iN].M / Xdata.Edata[iN].L;
+		Xdata.Edata[iN].updDensity();
+		Xdata.Edata[iN].M = Xdata.Edata[iN].Rho / Xdata.Edata[iN].L;
 		Xdata.Edata[iN].salinity += SeaIce::OceanSalinity * dth_w;
 		Xdata.Edata[iN].salinity = std::min(SeaIce::OceanSalinity, Xdata.Edata[iN].salinity);
 		calculateMeltingTemperature(Xdata.Edata[iN]);
@@ -446,9 +446,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 			EMS[Xdata.SoilNode].theta[WATER_PREF] = 0.;
 			EMS[Xdata.SoilNode].theta[ICE] = (SeaIceDensity/Constants::density_ice);
 			EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
-			EMS[Xdata.SoilNode].Rho = (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice) + ((EMS[Xdata.SoilNode].theta[WATER]+EMS[Xdata.SoilNode].theta[WATER_PREF])
-					*Constants::density_water) + (EMS[Xdata.SoilNode].theta[SOIL]
-					  * EMS[Xdata.SoilNode].soil[SOIL_RHO]);
+			EMS[Xdata.SoilNode].updDensity();
 			EMS[Xdata.SoilNode].M = dM;
 
 			for (unsigned short ii = 0; ii < Xdata.number_of_solutes; ii++) {
@@ -511,8 +509,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 			EMS[Xdata.SoilNode].theta[WATER_PREF] *= L0 / (L0 + dL);
 			EMS[Xdata.SoilNode].theta[ICE] = (EMS[Xdata.SoilNode].theta[ICE] * L0 + dL * (SeaIceDensity/Constants::density_ice)) / (L0 + dL);
 			EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
-			EMS[Xdata.SoilNode].Rho = (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice) + ((EMS[Xdata.SoilNode].theta[WATER]+EMS[Xdata.SoilNode].theta[WATER_PREF])
-					*Constants::density_water) + (EMS[Xdata.SoilNode].theta[SOIL] * EMS[Xdata.SoilNode].soil[SOIL_RHO]);
+			EMS[Xdata.SoilNode].updDensity();
 			EMS[Xdata.SoilNode].M += dM;
 		}
 	} else {
@@ -521,9 +518,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 			const double dL = dM / SeaIceDensity;
 			if(EMS[Xdata.SoilNode].M + dM > Constants::eps2 && EMS[Xdata.SoilNode].L + dL > Constants::eps2) {
 				// Reduce element length
-				EMS[Xdata.SoilNode].Rho = (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice) + ((EMS[Xdata.SoilNode].theta[WATER]+EMS[Xdata.SoilNode].theta[WATER_PREF])
-						*Constants::density_water) + (EMS[Xdata.SoilNode].theta[SOIL]
-						  * EMS[Xdata.SoilNode].soil[SOIL_RHO]);
+				EMS[Xdata.SoilNode].updDensity();
 				EMS[Xdata.SoilNode].M += dM;
 				EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = EMS[Xdata.SoilNode].M / EMS[Xdata.SoilNode].Rho;
 				dM = 0.;

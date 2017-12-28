@@ -320,9 +320,7 @@ void WaterTransport::compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& 
 
 		// Update remaining volumetric contents and density
 		EMS[nE-1].theta[AIR] = std::max(0., 1.0 - EMS[nE-1].theta[WATER] - EMS[nE-1].theta[WATER_PREF] - EMS[nE-1].theta[ICE] - EMS[nE-1].theta[SOIL]);
-		EMS[nE-1].Rho = (EMS[nE-1].theta[ICE] * Constants::density_ice)
-		                     + ((EMS[nE-1].theta[WATER] + EMS[nE-1].theta[WATER_PREF]) * Constants::density_water)
-		                         + (EMS[nE-1].theta[SOIL] * EMS[nE-1].soil[SOIL_RHO]);
+		EMS[nE-1].updDensity();
 	} else if ((ql < (-Constants::eps2)) && (nE > 0)) {
 		// If  there is water in some form and ql < 0, EVAPORATE some mass off
 		std::vector<double> M_Solutes(Xdata.number_of_solutes, 0.); // Mass of solutes from disappearing phases
@@ -387,9 +385,7 @@ void WaterTransport::compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& 
 				}
 				// Update remaining volumetric contents and density
 				EMS[e].theta[AIR] = std::max(0., 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]);
-				EMS[e].Rho = (EMS[e].theta[ICE] * Constants::density_ice)
-						+ ((EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) * Constants::density_water)
-						+ (EMS[e].theta[SOIL] * EMS[e].soil[SOIL_RHO]);
+				EMS[e].updDensity();
 			}
 
 			//check that thetas and densities are consistent
@@ -492,7 +488,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 						EMS[eUpper].theta[WATER]=0.;
 						EMS[eUpper].theta[WATER_PREF]=0.;
 						// Adjust density and mass accordingly
-						EMS[eUpper].Rho = (EMS[eUpper].theta[ICE]*Constants::density_ice) + ((EMS[eUpper].theta[WATER]+EMS[eUpper].theta[WATER_PREF])*Constants::density_water) + (EMS[eUpper].theta[SOIL]*EMS[eUpper].soil[SOIL_RHO]);
+						EMS[eUpper].updDensity();
 						EMS[eUpper].M = EMS[eUpper].Rho*EMS[eUpper].L;
 					}
 				}
@@ -666,7 +662,7 @@ void WaterTransport::adjustDensity(SnowStation& Xdata)
 		}
 		EMS[e].L0 = EMS[e].L = L + dL;
 		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE];
-		EMS[e].Rho = (EMS[e].theta[ICE]*Constants::density_ice) + ((EMS[e].theta[WATER]+EMS[e].theta[WATER_PREF])*Constants::density_water);
+		EMS[e].updDensity();
 		if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR] >= 0.)) {
 			prn_msg(__FILE__, __LINE__, "err", Date(), "Volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le",
 			        e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
@@ -730,10 +726,10 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 
 				EMS[nE-1].Te = Mdata.ta;
 				EMS[nE-1].L0 = EMS[nE-1].L = z_water;
-				EMS[nE-1].Rho = Constants::density_water;
+				EMS[nE-1].theta[WATER] = 1.0;
+				EMS[nE-1].updDensity();
 				EMS[nE-1].M = EMS[nE-1].L0 * EMS[nE-1].Rho;
 				assert(EMS[nE-1].M >= (-Constants::eps2)); //mass must be positive
-				EMS[nE-1].theta[WATER] = 1.0;
 				EMS[nE-1].mk = 19;
 				//NOTE all other microstructure parameters should better be set to Constants::undefined but ...
 				EMS[nE-1].N3 = 1.;
@@ -845,7 +841,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 						const double theta_water_orig=EMS[eUpper].theta[WATER];
 						EMS[eUpper].theta[WATER]=(1.-EMS[eUpper].theta[WATER_PREF]-EMS[eUpper].theta[ICE]-EMS[eUpper].theta[SOIL])*(Constants::density_ice/Constants::density_water);
 						EMS[eUpper].theta[AIR]=(1.-EMS[eUpper].theta[ICE]-EMS[eUpper].theta[SOIL]-EMS[eUpper].theta[WATER]-EMS[eUpper].theta[WATER_PREF]);
-						EMS[eUpper].Rho = (EMS[eUpper].theta[ICE] * Constants::density_ice) + ((EMS[eUpper].theta[WATER] + EMS[eUpper].theta[WATER_PREF]) * Constants::density_water) + (EMS[eUpper].theta[SOIL] * EMS[eUpper].soil[SOIL_RHO]);
+						EMS[eUpper].updDensity();
 						EMS[eUpper].M = EMS[eUpper].Rho*EMS[eUpper].L;
 
 						// Put excess water in excess_water
@@ -863,9 +859,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 					// as it may have caught some rain! Only top element should be considered, as when rain would have
 					// infiltrated lower elements as well, W_upper>Wres.
 					EMS[eUpper].theta[AIR] = std::max(0., 1. - EMS[eUpper].theta[WATER] - EMS[eUpper].theta[WATER_PREF] - EMS[eUpper].theta[ICE] - EMS[eUpper].theta[SOIL]);
-					EMS[eUpper].Rho = (EMS[eUpper].theta[ICE] * Constants::density_ice)
-							  + ((EMS[eUpper].theta[WATER] + EMS[eUpper].theta[WATER_PREF]) * Constants::density_water)
-							      + (EMS[eUpper].theta[SOIL] * EMS[eUpper].soil[SOIL_RHO]);
+					EMS[eUpper].updDensity();
 					if (!(EMS[eUpper].Rho > Constants::eps && EMS[eUpper].theta[AIR] >= 0.)) {
 						prn_msg(__FILE__, __LINE__, "err", Mdata.date,
 							"Volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le",
@@ -990,13 +984,9 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 							assert(EMS[eUpper].M >= (-Constants::eps2)); //mass must be positive
 							EMS[eLower].M += L_lower * Constants::density_water * dThetaW_lower;
 							assert(EMS[eLower].M >= (-Constants::eps2)); //mass must be positive
-							EMS[eUpper].Rho = (EMS[eUpper].theta[ICE] * Constants::density_ice)
-									  + ((EMS[eUpper].theta[WATER] + EMS[eUpper].theta[WATER_PREF]) * Constants::density_water)
-									      + (EMS[eUpper].theta[SOIL] * EMS[eUpper].soil[SOIL_RHO]);
+							EMS[eUpper].updDensity();
 							assert(EMS[eUpper].Rho>=0. || EMS[eUpper].Rho==IOUtils::nodata); //we want positive density
-							EMS[eLower].Rho = (EMS[eLower].theta[ICE] * Constants::density_ice)
-									  + ((EMS[eLower].theta[WATER] + EMS[eLower].theta[WATER_PREF]) * Constants::density_water)
-									      + (EMS[eLower].theta[SOIL] * EMS[eLower].soil[SOIL_RHO]);
+							EMS[eLower].updDensity();
 							assert(EMS[eLower].Rho>=0. || EMS[eLower].Rho==IOUtils::nodata); //we want positive density
 							if (EMS[eUpper].theta[SOIL] < Constants::eps2) {
 								if (!(EMS[eUpper].theta[AIR] >= -Constants::eps)) {
@@ -1024,9 +1014,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 							EMS[eUpper].theta[WATER]=W_upper-dThetaW_upper;
 							EMS[eUpper].theta[AIR] = 1. - EMS[eUpper].theta[WATER] - EMS[eUpper].theta[WATER_PREF] - EMS[eUpper].theta[ICE] - EMS[eUpper].theta[SOIL];
 							EMS[eUpper].M -= L_upper * Constants::density_water * dThetaW_upper;
-							EMS[eUpper].Rho = (EMS[eUpper].theta[ICE] * Constants::density_ice)
-									  + ((EMS[eUpper].theta[WATER] + EMS[eUpper].theta[WATER_PREF]) * Constants::density_water)
-									      + (EMS[eUpper].theta[SOIL] * EMS[eUpper].soil[SOIL_RHO]);
+							EMS[eUpper].updDensity();
 							if (EMS[eUpper].theta[SOIL] < Constants::eps2) {
 								if (!(EMS[eUpper].theta[AIR] >= -Constants::eps)) {
 									prn_msg(__FILE__, __LINE__, "err", Mdata.date,
@@ -1090,9 +1078,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 			assert(EMS[0].M >= (-Constants::eps2)); //mass must be positive
 			EMS[0].theta[WATER] = Wres;
 			EMS[0].theta[AIR] = 1. - EMS[0].theta[WATER] - EMS[0].theta[WATER_PREF] - EMS[0].theta[ICE] - EMS[0].theta[SOIL];
-			EMS[0].Rho = (EMS[0].theta[ICE] * Constants::density_ice)
-					+ ((EMS[0].theta[WATER] + EMS[0].theta[WATER_PREF]) * Constants::density_water)
-					    + (EMS[0].theta[SOIL] * EMS[0].soil[SOIL_RHO]);
+			EMS[0].updDensity();
 			assert(EMS[0].Rho>=0. || EMS[0].Rho==IOUtils::nodata); //we want positive density
 			// Note that remaining excess_water should also be routed to MS_SOIL_RUNOFF and MS_SNOWPACK_RUNOFF
 			if (EMS[0].theta[SOIL] < Constants::eps2) {

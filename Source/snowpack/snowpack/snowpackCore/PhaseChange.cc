@@ -220,9 +220,7 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 			        Edata.theta[ICE], Edata.theta[WATER], Edata.theta[WATER_PREF], Edata.theta[AIR], Edata.theta[SOIL]);
 			throw IOException("In compSubSurfaceMelt!", AT);
 		}
-		Edata.Rho = Constants::density_ice * Edata.theta[ICE]
-		                + (Constants::density_water * (Edata.theta[WATER] + Edata.theta[WATER_PREF]))
-		                    + (Edata.theta[SOIL] * Edata.soil[SOIL_RHO]);
+		Edata.updDensity();
 		Edata.heatCapacity();
 	}
 }
@@ -321,9 +319,7 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 			throw IOException("In compSubSurfaceFrze!", AT);
 		}
 		dT = dth_i / A;	// Recalculate temperature change, as phase change may be limited
-		Edata.Rho = Constants::density_ice * Edata.theta[ICE] +
-		                (Constants::density_water * (Edata.theta[WATER] + Edata.theta[WATER_PREF])) +
-		                    (Edata.theta[SOIL] * Edata.soil[SOIL_RHO]);
+		Edata.updDensity();
 		Edata.heatCapacity();
 		// Compute the volumetric refreezing power
 		Edata.Qmf += (dth_i * Constants::density_ice * Lh) / dt; // (W m-3)

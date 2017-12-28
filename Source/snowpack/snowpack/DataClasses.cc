@@ -1026,6 +1026,18 @@ double ElementData::coldContent() const
 }
 
 /**
+ * @brief Updates element density
+ * @version 17.12
+ */
+void ElementData::updDensity()
+{
+	Rho = theta[ICE] * Constants::density_ice +
+              (theta[WATER] + theta[WATER_PREF]) * Constants::density_water +
+              theta[SOIL] * soil[SOIL_RHO];
+	return;
+}
+
+/**
  * @brief Opical equivalent grain size\n
  * CROCUS implementation as described in Vionnet et al., 2012. The detailed snowpack scheme Crocus and
  * its implementation in SURFEX v7.2, Geosci. Model Dev., 5, 773-791, 10.5194/gmd-5-773-2012. (see section 3.6)
@@ -1919,8 +1931,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 				Edata[e].conc[WATER][ii] = SSdata.Ldata[ll].cWater[ii];
 				Edata[e].conc[AIR][ii]  = SSdata.Ldata[ll].cVoids[ii];
 			}
-			Edata[e].Rho = Edata[e].theta[ICE]*Constants::density_ice +
-				(Edata[e].theta[WATER]+Edata[e].theta[WATER_PREF])*Constants::density_water + Edata[e].theta[SOIL]*Edata[e].soil[SOIL_RHO];
+			Edata[e].updDensity();
 			assert(Edata[e].Rho >= 0. || Edata[e].Rho==IOUtils::nodata); //we want positive density
 			// conductivities, specific heat and moisture content
 			Edata[e].k[TEMPERATURE] = Edata[e].k[SEEPAGE] = Edata[e].k[SETTLEMENT] = 0.;
@@ -2285,7 +2296,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 		EdataLower.theta[WATER_PREF] /= tmpsum;
 	}
 	EdataLower.snowResidualWaterContent();
-	EdataLower.Rho = (EdataLower.theta[ICE]*Constants::density_ice) + ((EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*Constants::density_water) + (EdataLower.theta[SOIL]*EdataLower.soil[SOIL_RHO]);
+	EdataLower.updDensity();
 
 	for (size_t ii = 0; ii < SnowStation::number_of_solutes; ii++) {
 		for (size_t kk = 0; kk < N_COMPONENTS; kk++) {
