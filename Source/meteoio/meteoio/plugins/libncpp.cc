@@ -17,7 +17,7 @@
 */
 #include <meteoio/plugins/libncpp.h>
 #include <meteoio/MathOptim.h>
-#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/IOUtils.h>
@@ -796,7 +796,7 @@ void copy_grid(const std::string& coordin, const std::string& coordinparam, cons
 	}
 	
 	if (resampling_factor_x != mio::IOUtils::nodata || resampling_factor_y != mio::IOUtils::nodata) {
-		grid_out.grid2D = mio::ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
+		grid_out.grid2D = mio::LibResampling2D::Bilinear(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
 	}
 }
 

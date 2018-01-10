@@ -19,7 +19,7 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
-#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteoStats/libresampling2D.h>
 #include <cmath>
 
 using namespace std;
@@ -343,7 +343,7 @@ void Grid2DObject::rescale(const double& i_cellsize)
 	
 	const double factor_x = cellsize / i_cellsize;
 	const double factor_y = cellsize / i_cellsize;
-	grid2D = ResamplingAlgorithms2D::BilinearResampling(grid2D, factor_x, factor_y);
+	grid2D = LibResampling2D::Bilinear(grid2D, factor_x, factor_y);
 	cellsize = i_cellsize;
 }
 

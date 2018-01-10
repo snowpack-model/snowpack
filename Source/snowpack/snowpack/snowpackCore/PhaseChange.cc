@@ -281,18 +281,9 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 			dth_i = - (Constants::density_water / Constants::density_ice) * dth_w;
 		}
 		// See if the element is pure ICE
-		if (Edata.theta[ICE] + dth_i >= max_theta_ice / (1. - Constants::eps)) {
-			dth_i = std::max(0., max_theta_ice / (1. - Constants::eps) - Edata.theta[ICE]);
+		if (Edata.theta[ICE] + dth_i >= max_theta_ice) {
+			dth_i = std::max(0., max_theta_ice - Edata.theta[ICE]);
 			dth_w = - dth_i * (Constants::density_ice / Constants::density_water);
-			Edata.theta[WATER] += dth_w;
-			Edata.theta[ICE] += dth_i;
-			Edata.theta[AIR] = std::max(0., 1.0 - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
-		} else if ((Edata.theta[ICE] + cmp_theta_r + dth_i + Edata.theta[SOIL] + Edata.theta[WATER_PREF]) >= 1.0) {
-			dth_w = - fabs( Edata.theta[WATER] - cmp_theta_r );
-			dth_i = - (Constants::density_water / Constants::density_ice) * dth_w;
-			Edata.theta[WATER] = cmp_theta_r;
-			Edata.theta[ICE] = 1.0 - Edata.theta[SOIL] - Edata.theta[WATER] - Edata.theta[WATER_PREF];
-			Edata.theta[AIR] = 0.0;
 		} else {
 			// Concentration of solutes
 			for (unsigned int ii = 0; ii < nSolutes; ii++) {
@@ -301,10 +292,11 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 					                           dth_i * Edata.conc[WATER][ii]) / ( Edata.theta[ICE] + dth_i);
 				}
 			}
-			Edata.theta[ICE] += dth_i;
-			Edata.theta[WATER] += dth_w;
-			Edata.theta[AIR] = std::max(0., 1.0 - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
 		}
+		Edata.theta[WATER] += dth_w;
+		Edata.theta[ICE] += dth_i;
+		Edata.theta[AIR] = std::max(0., 1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
+
 		// State when the element is wet (PERMAFROST)
 		if (Edata.theta[WATER] >= 1.0) {
 			prn_msg(__FILE__, __LINE__, "msg+", Date(), "Wet Element! (dth_w=%e) (compSubSurfaceFrze)", dth_w);
@@ -600,7 +592,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 
 						// Check the new nodal temperatures to make sure
 						if(e<nE-1) {
-							if(EMS[e+1].theta[WATER] > cmp_theta + Constants::eps && EMS[e].theta[ICE] < max_theta_ice) {
+							if(EMS[e+1].theta[WATER] > cmp_theta + Constants::eps && EMS[e+1].theta[ICE] < max_theta_ice) {
 								NDS[e+2].T=std::max(NDS[e+2].T, EMS[e+1].melting_tk);
 							}
 							if(EMS[e+1].theta[ICE] > Constants::eps) {
@@ -608,14 +600,14 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 							}
 						}
 						if(e>0) {
-							if(EMS[e-1].theta[WATER] > cmp_theta + Constants::eps && EMS[e].theta[ICE] < max_theta_ice) {
+							if(EMS[e-1].theta[WATER] > cmp_theta + Constants::eps && EMS[e-1].theta[ICE] < max_theta_ice) {
 								NDS[e-1].T=std::max(NDS[e-1].T, EMS[e-1].melting_tk);
 							}
 							if(EMS[e-1].theta[ICE] > Constants::eps) {
 								NDS[e-1].T=std::min(NDS[e-1].T, EMS[e-1].freezing_tk);
 							}
 						}
-						
+
 						// Recalculate the element temperature of the affected nodes
 						EMS[e].Te=0.5*(NDS[e].T+NDS[e+1].T);
 						if(e < nE-1) EMS[e+1].Te=0.5*(NDS[e+1].T+NDS[e+2].T);

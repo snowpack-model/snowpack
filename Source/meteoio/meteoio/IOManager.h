@@ -37,18 +37,18 @@ class IOManager {
 		IOManager(const Config& i_cfg);
 
 		//Legacy support to support functionality of the IOInterface superclass:
-		void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
-		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
-		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		void readDEM(DEMObject& dem_out);
-		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
-		void readLanduse(Grid2DObject& landuse_out);
-		void readPOI(std::vector<Coords>& pts);
-		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
-		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
-		void write3DGrid(const Grid3DObject& grid_out, const std::string& options="");
-		void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		void read2DGrid(Grid2DObject& grid_out, const std::string& options="") {gridsmanager.read2DGrid(grid_out, options);}
+		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.read2DGrid(grid_out, parameter, date);}
+		void read3DGrid(Grid3DObject& grid_out, const std::string& options="") {gridsmanager.read3DGrid(grid_out, options);}
+		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.read3DGrid(grid_out, parameter, date);}
+		void readDEM(DEMObject& dem_out) {gridsmanager.readDEM(dem_out);}
+		void readAssimilationData(const Date& date_in, Grid2DObject& da_out) {gridsmanager.readAssimilationData(date_in, da_out);}
+		void readLanduse(Grid2DObject& landuse_out) {gridsmanager.readLanduse(landuse_out);}
+		void readPOI(std::vector<Coords>& pts) {iohandler.readPOI(pts);}
+		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {gridsmanager.write2DGrid(grid_in, options);}
+		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.write2DGrid(grid_in, parameter, date);}
+		void write3DGrid(const Grid3DObject& grid_in, const std::string& options="") {gridsmanager.write3DGrid(grid_in, options);}
+		void write3DGrid(const Grid3DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.write3DGrid(grid_in, parameter, date);}
 		//end legacy support
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
@@ -187,7 +187,7 @@ class IOManager {
 		 */
 		double getAvgSamplingRate() const {return tsmanager.getAvgSamplingRate();}
 
-		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="") {tsmanager.writeMeteoData(vecMeteo, name);}
+		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& option="") {tsmanager.writeMeteoData(vecMeteo, option);}
 
 		/**
 		 * @brief Returns a copy of the internal Config object.
@@ -215,16 +215,13 @@ class IOManager {
 
 	private:
 		void initIOManager();
-		void load_virtual_meteo(const Date& i_date, METEO_SET& vecMeteo);
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler iohandler;
 		TimeSeriesManager tsmanager;
 		GridsManager gridsmanager;
 		Meteo2DInterpolator interpolator;
-		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
-		bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?
-		bool virtual_stations; ///< compute the meteo values at virtual stations
+		bool resampling; ///< Are we performing resampling (grid extract, vstations, etc)?
 };
 } //end namespace
 #endif

@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/CNRMIO.h>
-#include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/FileUtils.h>

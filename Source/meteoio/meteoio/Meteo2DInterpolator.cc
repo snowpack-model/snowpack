@@ -24,17 +24,25 @@ using namespace std;
 namespace mio {
 
 /**
- * @page virtual_stations Virtual stations handling
+ * @page spatial_resampling Spatial resampling handling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
- * This is handled as "virtual stations" since the data **will seem to originate from these virtual stations points** where no station is present. This obviously
- * comes at the cost of much higher run times.
+ * This is handled as "spatial resampling" and the data **will seem to originate from these virtual stations points** where no station is present. This obviously
+ * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword, after setting RESAMPLING to TRUE):
+ *     + VSTATIONS: points measurements are spatially interpolated at the chosen locations;
+ *     + GRID_EXTRACT: gridded values are extracted for the cells containing the given locations;
+ *     + GRID_ALL: all grid points are extracted.
  * 
+ * Currently, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted point. This is described
+ * by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
+ * \image html vstations_sampling.png "Resampling workflow"
+ * \image latex vstations_sampling.eps "Resampling workflow" width=0.9\textwidth
  *
- * @section virtual_stations_from_interpolation From spatial interpolations
+ * @section vstations VSTATIONS
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
  * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive
  * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [Input] section):
- *    + VIRTUAL_STATIONS set to *true*;
+ *    + RESAMPLING set to *true*;
+ *    + RESAMPLING_STRATEGY set to VSTATIONS;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
@@ -61,21 +69,20 @@ namespace mio {
  * STATION4	= *DAV
  * 
  * #here the locations where the data will be generated. The caller will only see these stations!
- * Virtual_stations = true
+ * RESAMPLING = true
+ * RESAMPLING_STRATEGY = VSTATIONS
  * VSTATION1 = 46.793029 9.821343
  * VSTATION2 = 46.793031 9.831572
  * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
  * VSTATIONS_REFRESH_RATE = 21600
  * VSTATIONS_REFRESH_OFFSET = 3600
  * @endcode
- *
- * \image html vstations_sampling.png "virtual stations workflow"
- * \image latex vstations_sampling.eps "virtual stations workflow" width=0.9\textwidth
  * 
- * @section virtual_stations_from_grids From gridded data
+ * @section grids_extract From gridded data
  * The meteorological time series are extracted from time series of user-provided grids. therefore a plugin for 2D grids must have been defined (with the GRID2D key in
  * the [Input] section). The following keys control this downscaling process:
- *    + DOWNSCALING set to *true*;
+ *    + RESAMPLING set to *true*;
+ *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT* or *GRID_ALL*;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
@@ -83,37 +90,40 @@ namespace mio {
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * 
- * @section virtual_stations_behind_the_scene Behind the scene
+ * @section resampling_behind_the_scene Behind the scene
  * Behind the scene, this is a two stages setup: the IOManager that normally requests its data to its internal TimeSeriesManager will first ask the 
  * Meteo2DInterpolator to perform the spatial interpolations. Once this is done, the Meteo2DInterpolator (that used its own, internal TimeSeriesManager 
  * to get the real, measured data) pushes the computed timeseries into the raw data buffer of the IOManager's internal TimeSeriesManager. 
  * The IOManager then request the data as usual, from its TimeSeriesManager.
- * \image html vstations_workflow.png "Virtual stations internal workflow"
- * \image latex vstations_workflow.eps "Virtual stations internal workflow" width=0.9\textwidth
+ * \image html vstations_workflow.png "Resampling internal workflow"
+ * \image latex vstations_workflow.eps "Resampling internal workflow" width=0.9\textwidth
  * 
  */
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
                     : cfg(i_cfg), tsmanager(&i_tsmanager), gridsmanager(&i_gridsmanager),
                       grid_buffer(0), internal_dem(), mapAlgorithms(),
-                      v_params(), v_coords(), v_stations(),
-                     algorithms_ready(false), use_full_dem(false), use_internal_managers(false)
+                      v_params(), v_coords(), v_stations(), vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling_strategy(NONE),
+                      algorithms_ready(false), use_full_dem(false)
 {
-	bool virtual_stations = false; ///< compute the meteo values at virtual stations
-	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
-	if (virtual_stations) {
-		cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
+	std::string resampling_strategy_str( "NONE" );
+	cfg.getValue("Resampling_strategy", "Input", resampling_strategy_str, IOUtils::nothrow);
+	IOUtils::toUpper( resampling_strategy_str );
+	if (resampling_strategy_str=="VSTATIONS") {
+		resampling_strategy = VSTATIONS;
+	} else if (resampling_strategy_str=="GRID_EXTRACT") {
+		resampling_strategy = GRID_EXTRACT;
+	} else if (resampling_strategy_str=="GRID_ALL") {
+		resampling_strategy = GRID_ALL;
+	} else if (resampling_strategy_str=="GRID_SMART") {
+		resampling_strategy = GRID_SMART;
 	}
-
-	bool downscaling = false; ///< Are we downscaling meteo grids instead of interpolating stations' data?
-	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
-	if (virtual_stations && downscaling)
-		throw InvalidArgumentException("It is not possible to use both Virtual_stations and Downscaling!", AT);
-
-	use_internal_managers = (virtual_stations || downscaling);
-	if (use_internal_managers) {
+	
+	if (resampling_strategy!=NONE) {
 		tsmanager = new TimeSeriesManager(i_tsmanager.getIOHandler(), i_cfg);
 		gridsmanager = new GridsManager(i_gridsmanager.getIOHandler(), i_cfg);
+		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
+		cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
 	}
 
 	size_t max_grids = 10; //default number of grids to keep in buffer
@@ -126,8 +136,9 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 Meteo2DInterpolator::Meteo2DInterpolator(const Meteo2DInterpolator& source)
            : cfg(source.cfg), tsmanager(source.tsmanager), gridsmanager(source.gridsmanager),
                       grid_buffer(source.grid_buffer), internal_dem(source.internal_dem), mapAlgorithms(source.mapAlgorithms),
-                      v_params(source.v_params), v_coords(source.v_coords), v_stations(source.v_stations),
-                     algorithms_ready(source.algorithms_ready), use_full_dem(source.use_full_dem), use_internal_managers(source.use_internal_managers)
+                      v_params(source.v_params), v_coords(source.v_coords), v_stations(source.v_stations), 
+                      vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling_strategy(source.resampling_strategy),
+                      algorithms_ready(source.algorithms_ready), use_full_dem(source.use_full_dem)
 {}
 
 Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& source) {
@@ -141,9 +152,11 @@ Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& s
 		v_params = source.v_params;
 		v_coords = source.v_coords;
 		v_stations = source.v_stations;
+		vstations_refresh_rate = source.vstations_refresh_rate;
+		vstations_refresh_offset = source.vstations_refresh_offset;
+		resampling_strategy = source.resampling_strategy;
 		algorithms_ready = source.algorithms_ready;
 		use_full_dem = source.use_full_dem;
-		use_internal_managers = source.use_internal_managers;
 	}
 	return *this;
 }
@@ -156,7 +169,7 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 		for (size_t ii=0; ii<vecAlgs.size(); ++ii)
 			delete vecAlgs[ii];
 	}
-	if (use_internal_managers) {
+	if (resampling_strategy!=NONE) {
 		delete tsmanager;
 		delete gridsmanager;
 	}
@@ -383,28 +396,49 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 	}
 }
 
-//get the stations' data to use for downscaling (=true measurements)
-//HACK this structure must change: the strategy should be fixed in the constructor! The IOManager should not decide about it...
-size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy, const Date& i_date, METEO_SET& vecMeteo)
+//////////////////////////// Starting from here, virtual stations / resampling stuff
+void Meteo2DInterpolator::pushVirtualMeteoData(const Date& i_date, TimeSeriesManager &user_tsmanager)
+{
+	//find the nearest sampling points (vstations_refresh_rate apart) around the requested point
+	const Date i_date_down( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset );
+	const Date i_date_up( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::UP) + vstations_refresh_offset );
+	const Date buff_start( user_tsmanager.getRawBufferStart() );
+	const Date buff_end( user_tsmanager.getRawBufferEnd() );
+	const double half_range = (vstations_refresh_rate)/(3600.*24.*2.);
+
+	if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end) {
+		METEO_SET vecMeteo;
+		getVirtualMeteoData(i_date_down, vecMeteo);
+		user_tsmanager.push_meteo_data(IOUtils::raw, i_date_down - half_range, i_date_down + half_range, vecMeteo);
+	}
+
+	if (i_date_down!=i_date_up && (buff_start.isUndef() || i_date_up<buff_start || i_date_up>buff_end)) { //sometimes, up and down are rounded up to the same value...
+		METEO_SET vecMeteo;
+		getVirtualMeteoData(i_date_up, vecMeteo);
+		user_tsmanager.push_meteo_data(IOUtils::raw, i_date_up - half_range, i_date_up + half_range, vecMeteo);
+	}
+}
+
+size_t Meteo2DInterpolator::getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	if (v_stations.empty()) {
-		if (strategy==GRID_ALL) {
+		if (resampling_strategy==GRID_ALL) {
 			initVirtualStationsAtAllGridPoints();
 		} else {
-			const bool adjust_coordinates = (strategy==GRID_EXTRACT);
+			const bool adjust_coordinates = (resampling_strategy==GRID_EXTRACT);
 			initVirtualStations(adjust_coordinates);
 		}
 	}
 	
-	if (strategy==VSTATIONS) {
+	if (resampling_strategy==VSTATIONS) {
 		//this reads station data, interpolates the stations and extract points from the interpolated grids
 		return getVirtualStationsData(i_date, vecMeteo);
-	} else if (strategy==GRID_EXTRACT) {
+	} else if (resampling_strategy==GRID_EXTRACT || resampling_strategy==GRID_ALL) {
 		//This reads already gridded data and extract points from the grids at the provided locations
+		//(the virtual stations must have been initialized before, see above)
 		return getVirtualStationsFromGrid(i_date, vecMeteo);
-	} else if (strategy==GRID_ALL) {
-		//extract all grid points, the virtual stations MUST have been initialized before!
-		return getVirtualStationsFromGrid(i_date, vecMeteo);
+	} else if (resampling_strategy==GRID_SMART) {
+		
 	}
 
 	throw UnknownValueException("Unknown virtual station strategy", AT);
@@ -507,7 +541,7 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	if (v_stations.empty())
 		throw NoDataException("No virtual stations provided", AT);
 	
-	//cleaning up v_coords so it is still usable (ie no more duplicates)
+	//cleaning up v_coords so it is still usable for the VSTATIONS (ie no more duplicates)
 	v_coords.resize(v_stations.size());
 	for (size_t ii=0; ii<v_stations.size(); ii++) {
 		v_coords[ii] = v_stations[ii].position;

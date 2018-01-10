@@ -24,33 +24,30 @@ namespace mio {
 
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
                                                        tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                                       vstations_refresh_rate(1), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
+                                                       resampling(false)
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
                                             tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
-                                            vstations_refresh_rate(1), vstations_refresh_offset(0.), downscaling(false), virtual_stations(false)
+                                            resampling(false)
 {
 	initIOManager();
 }
 
 void IOManager::initIOManager()
 {
-	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
-	cfg.getValue("Downscaling", "Input", downscaling, IOUtils::nothrow);
-	if (virtual_stations || downscaling) { //in this case, we do not want to re-apply the filters
+	cfg.getValue("Resampling", "Input", resampling, IOUtils::nothrow);
+	if (resampling) { //in this case, we do not want to re-apply the filters
 		tsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
 		gridsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
-		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
-		cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
 	}
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
 {
-	if (!virtual_stations && !downscaling) {
+	if (!resampling) {
 		tsmanager.setProcessingLevel(i_level);
 		gridsmanager.setProcessingLevel(i_level);
 	}
@@ -60,7 +57,7 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	vecStation.clear();
 
-	if (virtual_stations || downscaling) {
+	if (resampling) {
 		return interpolator.getVirtualStationsMeta(date, vecStation);
 	} else { //usual case
 		return tsmanager.getStationData(date, vecStation);
@@ -73,44 +70,15 @@ void IOManager::clear_cache()
 	gridsmanager.clear_cache();
 }
 
-//This is small helper method to call the spatial interpolations when dealing with virtual stations or downsampling
-void IOManager::load_virtual_meteo(const Date& i_date, METEO_SET& vecMeteo)
-{
-	const double half_range = (vstations_refresh_rate)/(3600.*24.*2.);
-	const Date range_start = i_date - half_range;
-	const Date range_end = i_date + half_range;
-
-	if (virtual_stations)
-		interpolator.getVirtualMeteoData(Meteo2DInterpolator::VSTATIONS, i_date, vecMeteo);
-	if (downscaling)
-		interpolator.getVirtualMeteoData(Meteo2DInterpolator::GRID_EXTRACT, i_date, vecMeteo);
-
-	tsmanager.push_meteo_data(IOUtils::raw, range_start, range_end, vecMeteo);
-}
-
 //data can be raw or processed (filtered, resampled)
 size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
+	
+	if (resampling) 
+		interpolator.pushVirtualMeteoData(i_date, tsmanager);
 
-	if (!virtual_stations && !downscaling) { //this is the usual case
-		tsmanager.getMeteoData(i_date, vecMeteo);
-	} else {
-		//find the nearest sampling points (vstations_refresh_rate apart) around the requested point
-		const Date i_date_down( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset );
-		const Date i_date_up( Date::rnd(i_date-vstations_refresh_offset, vstations_refresh_rate, Date::UP) + vstations_refresh_offset );
-		const Date buff_start( tsmanager.getRawBufferStart() );
-		const Date buff_end( tsmanager.getRawBufferEnd() );
-
-		if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end)
-			load_virtual_meteo(i_date_down, vecMeteo);
-
-		if (i_date_down!=i_date_up && (buff_start.isUndef() || i_date_up<buff_start || i_date_up>buff_end)) //sometimes, up and down are rounded up to the same value...
-			load_virtual_meteo(i_date_up, vecMeteo);
-
-		tsmanager.getMeteoData(i_date, vecMeteo);
-	}
-
+	tsmanager.getMeteoData(i_date, vecMeteo);
 	return vecMeteo.size();
 }
 
@@ -146,66 +114,6 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 	interpolator.interpolate(date, dem, meteoparam, in_coords, result, info_string);
 }
 
-void IOManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
-{
-	gridsmanager.read2DGrid(grid2D, filename);
-}
-
-void IOManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
-{
-	gridsmanager.read2DGrid(grid2D, parameter, date);
-}
-
-void IOManager::read3DGrid(Grid3DObject& grid3D, const std::string& filename)
-{
-	gridsmanager.read3DGrid(grid3D, filename);
-}
-
-void IOManager::read3DGrid(Grid3DObject& grid3D, const MeteoGrids::Parameters& parameter, const Date& date)
-{
-	gridsmanager.read3DGrid(grid3D, parameter, date);
-}
-
-void IOManager::readDEM(DEMObject& grid2D)
-{
-	gridsmanager.readDEM(grid2D);
-}
-
-void IOManager::readLanduse(Grid2DObject& grid2D)
-{
-	gridsmanager.readLanduse(grid2D);
-}
-
-void IOManager::readAssimilationData(const Date& date, Grid2DObject& grid2D)
-{
-	gridsmanager.readAssimilationData(date, grid2D);
-}
-
-void IOManager::readPOI(std::vector<Coords>& cpa)
-{
-	iohandler.readPOI(cpa);
-}
-
-void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
-{
-	gridsmanager.write2DGrid(grid2D, name);
-}
-
-void IOManager::write2DGrid(const Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
-{
-	gridsmanager.write2DGrid(grid2D, parameter, date);
-}
-
-void IOManager::write3DGrid(const Grid3DObject& grid3D, const std::string& name)
-{
-	gridsmanager.write3DGrid(grid3D, name);
-}
-
-void IOManager::write3DGrid(const Grid3DObject& grid3D, const MeteoGrids::Parameters& parameter, const Date& date)
-{
-	gridsmanager.write3DGrid(grid3D, parameter, date);
-}
-
 const std::string IOManager::toString() const {
 	ostringstream os;
 	os << "<IOManager>\n";
@@ -214,8 +122,7 @@ const std::string IOManager::toString() const {
 	os << tsmanager.toString();
 	os << gridsmanager.toString();
 	os << interpolator.toString();
-	os << "Downscaling = " << downscaling << "\n";
-	os << "Virtual stations = " << virtual_stations << "\n";
+	os << "Resampling = " << resampling << "\n";
 	os << "</IOManager>\n";
 	return os.str();
 }

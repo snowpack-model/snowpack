@@ -5,4 +5,5 @@ SET(meteoStats_sources
 	meteoStats/libfit1DCore.cc
 	meteoStats/libinterpol1D.cc
 	meteoStats/libinterpol2D.cc
+	meteoStats/libresampling2D.cc
 )

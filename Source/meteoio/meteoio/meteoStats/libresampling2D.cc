@@ -17,7 +17,7 @@
 */
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
-#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteoStats/libresampling2D.h>
 #include <cmath>
 #include <sstream>
 #include <algorithm>
@@ -26,7 +26,7 @@ using namespace std;
 
 namespace mio {
 
-const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &i_grid, const double &factor)
+const Grid2DObject LibResampling2D::Nearest(const Grid2DObject &i_grid, const double &factor)
 {
 	if (factor<=0) {
 		ostringstream ss;
@@ -38,14 +38,14 @@ const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
-	NearestNeighbour(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
+	Nearest(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
 	return o_grid;
 }
 
 /**
  * @brief Bilinear spatial data resampling
  */
-const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject &i_grid, const double &factor)
+const Grid2DObject LibResampling2D::Bilinear(const Grid2DObject &i_grid, const double &factor)
 {
 	if (factor<=0) {
 		ostringstream ss;
@@ -61,7 +61,7 @@ const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject
 	return o_grid;
 }
 
-const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DObject &i_grid, const double &factor)
+const Grid2DObject LibResampling2D::cubicBSpline(const Grid2DObject &i_grid, const double &factor)
 {
 	if (factor<=0) {
 		ostringstream ss;
@@ -77,7 +77,7 @@ const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DOb
 	return o_grid;
 }
 
-const Array2D<double> ResamplingAlgorithms2D::NearestNeighbour(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+const Array2D<double> LibResampling2D::Nearest(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
 	if (factor_x<=0 || factor_y<=0) {
 		ostringstream ss;
 		ss << "Rescaling factors (" << factor_x << "," << factor_y << ") are invalid!";
@@ -87,11 +87,11 @@ const Array2D<double> ResamplingAlgorithms2D::NearestNeighbour(const Array2D<dou
 	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
 	Array2D<double> o_grid(nx, ny);
 
-	NearestNeighbour(o_grid, i_grid);
+	Nearest(o_grid, i_grid);
 	return o_grid;
 }
 
-const Array2D<double> ResamplingAlgorithms2D::BilinearResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+const Array2D<double> LibResampling2D::Bilinear(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
 	if (factor_x<=0 || factor_y<=0) {
 		ostringstream ss;
 		ss << "Rescaling factors (" << factor_x << "," << factor_y << ") are invalid!";
@@ -104,7 +104,7 @@ const Array2D<double> ResamplingAlgorithms2D::BilinearResampling(const Array2D<d
 	return o_grid;
 }
 
-const Array2D<double> ResamplingAlgorithms2D::cubicBSplineResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+const Array2D<double> LibResampling2D::cubicBSpline(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
 	if (factor_x<=0 || factor_y<=0) {
 		ostringstream ss;
 		ss << "Rescaling factors (" << factor_x << "," << factor_y << ") are invalid!";
@@ -121,7 +121,7 @@ const Array2D<double> ResamplingAlgorithms2D::cubicBSplineResampling(const Array
 ///////////////////////////////////////////////////////////////////////
 //Private Methods
 ///////////////////////////////////////////////////////////////////////
-void ResamplingAlgorithms2D::NearestNeighbour(Array2D<double> &o_grid, const Array2D<double> &i_grid)
+void LibResampling2D::Nearest(Array2D<double> &o_grid, const Array2D<double> &i_grid)
 {
 	const size_t org_nx = i_grid.getNx(), org_ny = i_grid.getNy();
 	const size_t dest_nx = o_grid.getNx(), dest_ny = o_grid.getNy();
@@ -138,7 +138,7 @@ void ResamplingAlgorithms2D::NearestNeighbour(Array2D<double> &o_grid, const Arr
 	}
 }
 
-double ResamplingAlgorithms2D::bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_nx, const size_t &org_ny, const double &x, const double &y)
+double LibResampling2D::bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_nx, const size_t &org_ny, const double &x, const double &y)
 {
 	if (org_jj>=(org_ny-1) || org_ii>=(org_nx-1)) return i_grid(org_ii, org_jj);
 
@@ -185,7 +185,7 @@ double ResamplingAlgorithms2D::bilinear_pixel(const Array2D<double> &i_grid, con
 	return value;
 }
 
-void ResamplingAlgorithms2D::Bilinear(Array2D<double> &o_grid, const Array2D<double> &i_grid)
+void LibResampling2D::Bilinear(Array2D<double> &o_grid, const Array2D<double> &i_grid)
 {
 	const size_t org_nx = i_grid.getNx(), org_ny = i_grid.getNy();
 	const size_t dest_nx = o_grid.getNx(), dest_ny = o_grid.getNy();
@@ -207,7 +207,7 @@ void ResamplingAlgorithms2D::Bilinear(Array2D<double> &o_grid, const Array2D<dou
 	}
 }
 
-double ResamplingAlgorithms2D::BSpline_weight(const double &x)
+double LibResampling2D::BSpline_weight(const double &x)
 {
 	double R = 0.;
 	if ((x+2.)>0.) R += Optim::pow3(x+2.);
@@ -218,7 +218,7 @@ double ResamplingAlgorithms2D::BSpline_weight(const double &x)
 	return 1./6.*R;
 }
 
-void ResamplingAlgorithms2D::cubicBSpline(Array2D<double> &o_grid, const Array2D<double> &i_grid)
+void LibResampling2D::cubicBSpline(Array2D<double> &o_grid, const Array2D<double> &i_grid)
 {//see http://paulbourke.net/texture_colour/imageprocess/
 	const size_t org_nx = i_grid.getNx(), org_ny = i_grid.getNy();
 	const size_t dest_nx = o_grid.getNx(), dest_ny = o_grid.getNy();

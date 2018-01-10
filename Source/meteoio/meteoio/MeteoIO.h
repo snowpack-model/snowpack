@@ -82,11 +82,11 @@
 #include <meteoio/meteoStats/libfit1D.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
+#include <meteoio/meteoStats/libresampling2D.h>
 
 //skip all plugins' implementations header files
 #include <meteoio/plugins/libsmet.h>
 
-#include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>
 

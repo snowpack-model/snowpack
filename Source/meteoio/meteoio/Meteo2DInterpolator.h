@@ -105,12 +105,13 @@ class Meteo2DInterpolator {
 		~Meteo2DInterpolator();
 
 		///Keywords for virtual stations strategy
-		typedef enum VSTATIONS_POLICY {
+		enum RESAMPLING_STRATEGY {
+			NONE, ///< default: no resampling
 			VSTATIONS, ///< extract virtual stations as specified in the ini file
 			GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
 			GRID_ALL, ///< extract all grid points from a provided grid
-			SMART_DOWNSCALING ///< extract all relevant grid points from a provided grid
-		} vstations_policy;
+			GRID_SMART ///< extract all relevant grid points from a provided grid
+		};
 
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
@@ -159,11 +160,19 @@ class Meteo2DInterpolator {
 
 		/**
 		 * @brief Compute point measurements from grids following a given computing strategy
-		 * @param strategy sampling/computing strategy
 		 * @param i_date when to compute the virtual stations
 		 * @param vecMeteo a vector of meteodata for the configured virtual stations
 		 */
-		size_t getVirtualMeteoData(const vstations_policy& strategy, const Date& i_date, METEO_SET& vecMeteo);
+		size_t getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo);
+		
+		/**
+		 * @brief Push virtual points resampling into the provided tsmanager, so it appears as if they were coming from real data
+		 * @details This call garantees thatif no point exactly matches the requested date, the nearest points around will be
+		 * provided so the TimeSeriesManager can perform a temporal interpolation.
+		 * @param i_date when to compute the virtual stations
+		 * @param user_tsmanager TimeSeriesManager where to push the data
+		 */
+		void pushVirtualMeteoData(const Date& i_date, TimeSeriesManager &user_tsmanager);
 
 		const std::string toString() const;
 
@@ -191,10 +200,11 @@ class Meteo2DInterpolator {
 		std::vector<size_t> v_params; ///< Parameters for virtual stations
 		std::vector<Coords> v_coords; ///< Coordinates for virtual stations
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
+		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
+		RESAMPLING_STRATEGY resampling_strategy; ///< Should we perform resampling and with which strategy?
 		
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations
-		bool use_internal_managers; ///< When using virtual stations or downsampling, the ts and grids managers need to be private
 };
 
 } //end namespace

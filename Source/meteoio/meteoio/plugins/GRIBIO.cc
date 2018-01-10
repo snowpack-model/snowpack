@@ -17,7 +17,7 @@
 */
 #include <meteoio/plugins/GRIBIO.h>
 
-#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for PI
 #include <meteoio/dataClasses/DEMObject.h>
@@ -404,7 +404,7 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 	
 	//cells were not square, we have to resample
 	if (factor_x!=IOUtils::nodata && factor_y!=IOUtils::nodata) {
-		grid_out.grid2D = ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, factor_x, factor_y);
+		grid_out.grid2D = LibResampling2D::Bilinear(grid_out.grid2D, factor_x, factor_y);
 	}
 	
 	if (!llcorner_initialized) { //take into account aspect ration conversion for computing true llcorner

@@ -431,7 +431,7 @@ bool SMETWriter::valid_header_pair(const std::string& key, const std::string& va
 
 	//nodata value needs extra treatment
 	if (key == "nodata"){
-		istringstream ss(value);
+		std::istringstream ss(value);
 		if (!(ss >> nodata_value)) return false;
 		nodata_string = value;
 	}
@@ -449,7 +449,7 @@ bool SMETWriter::valid_header_pair(const std::string& key, const std::string& va
 
 	//Now do some value checks
 	if (key == "epsg"){
-		istringstream ss(value);
+		std::istringstream ss(value);
 		int intvalue;
 		if (!(ss >> intvalue)) return false;
 	}
@@ -473,7 +473,7 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 {
 	vector<string> tmp_vec;
 	const size_t counter = SMETCommon::readLineToVec(value, tmp_vec);
-
+	
 	//Firstly: Check if number of fields is consistent
 	if (nr_of_fields != 0){
 		if (counter != nr_of_fields) return false;

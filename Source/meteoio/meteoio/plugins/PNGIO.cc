@@ -16,7 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/PNGIO.h>
-#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
@@ -256,9 +256,9 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in) const
 { //scale input image
 	const double factor = getScaleFactor(grid_in.getNx(), grid_in.getNy());
 	if (scaling=="nearest")
-		return ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
+		return LibResampling2D::Nearest(grid_in, factor);
 	else if (scaling=="bilinear")
-		return ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
+		return LibResampling2D::Bilinear(grid_in, factor);
 	else {
 		ostringstream ss;
 		ss << "Grid scaling algorithm \"" << scaling << "\" unknown";

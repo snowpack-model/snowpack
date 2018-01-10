@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef RESAMPLINGALGORITHMS2D_H
-#define RESAMPLINGALGORITHMS2D_H
+#ifndef LIBRESAMPLING2D_H
+#define LIBRESAMPLING2D_H
 
 #include <meteoio/dataClasses/Grid2DObject.h> //this contains Array2D
 
@@ -26,28 +26,28 @@
 namespace mio {
 
 /**
- * @class ResamplingAlgorithms2D
+ * @class LibResampling2D
  * @brief Spatial resampling algorithms
  *
  * @ingroup stats
  * @author Mathias Bavay
  * @date   2011-06-29
  */
-class ResamplingAlgorithms2D {
+class LibResampling2D {
 	public:
 		//Available algorithms
-		static const Grid2DObject NearestNeighbour(const Grid2DObject &i_grid, const double &factor);
-		static const Grid2DObject BilinearResampling(const Grid2DObject &i_grid, const double &factor);
-		static const Grid2DObject cubicBSplineResampling(const Grid2DObject &i_grid, const double &factor);
+		static const Grid2DObject Nearest(const Grid2DObject &i_grid, const double &factor);
+		static const Grid2DObject Bilinear(const Grid2DObject &i_grid, const double &factor);
+		static const Grid2DObject cubicBSpline(const Grid2DObject &i_grid, const double &factor);
 
-		static const Array2D<double> NearestNeighbour(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
-		static const Array2D<double> BilinearResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
-		static const Array2D<double> cubicBSplineResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
+		static const Array2D<double> Nearest(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
+		static const Array2D<double> Bilinear(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
+		static const Array2D<double> cubicBSpline(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
 
 	private:
 		static void cubicBSpline(Array2D<double> &o_grid, const Array2D<double> &i_grid);
 		static void Bilinear(Array2D<double> &o_grid, const Array2D<double> &i_grid);
-		static void NearestNeighbour(Array2D<double> &o_grid, const Array2D<double> &i_grid);
+		static void Nearest(Array2D<double> &o_grid, const Array2D<double> &i_grid);
 
 		static double bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_ncols, const size_t &org_nrows, const double &x, const double &y);
 		static double BSpline_weight(const double &x);

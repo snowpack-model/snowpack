@@ -22,7 +22,6 @@
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 #include <meteoio/MathOptim.h> //math optimizations
-#include <meteoio/ResamplingAlgorithms2D.h> //for Winstral
 
 using namespace std;
 

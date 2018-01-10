@@ -41,7 +41,6 @@ SET(meteoio_sources
 	IOManager.cc
 	IOHandler.cc
 	MeteoProcessor.cc
-	ResamplingAlgorithms2D.cc
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
 	DataCreator.cc
