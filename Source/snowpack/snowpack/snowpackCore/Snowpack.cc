@@ -570,7 +570,7 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 		// For mass balance forcing
 		Bdata.qs = alpha * (Tair - Tss);
 		const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
-		if (Xdata.Edata[Xdata.getNumberOfElements()-1].theta[WATER] > theta_r) {
+		if (Xdata.getNumberOfElements() > 0 && Xdata.Edata[Xdata.getNumberOfElements()-1].theta[WATER] > theta_r) {
 			// Case of evaporation
 			Bdata.ql = (Mdata.sublim * Constants::lh_vaporization) / sn_dt;
 		} else {
