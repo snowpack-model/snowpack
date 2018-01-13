@@ -384,7 +384,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 	} else {
 		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
 		const double topFlux = botFlux;										//top layer flux (kg m-2 s-1)
-		deltaM[nE-1] += std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
+		deltaM[nE-1] += std::min(std::max(0., (ReSolver1d::max_theta_ice - EMS[nE-1].theta[ICE])) * (Constants::density_ice * EMS[nE-1].L), std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt)));
 		// HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
 		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
 		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] -= topFlux * sn_dt;
@@ -420,9 +420,9 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 		assert(EMS[e].Rho > 0 || EMS[e].Rho==IOUtils::nodata); //density must be positive
 
 		if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR] >= 0.)) {
-				prn_msg(__FILE__, __LINE__, "err", Date(),
-				    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf air=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[AIR]);
-				throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
+			prn_msg(__FILE__, __LINE__, "err", Date(),
+			    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].salinity);
+			throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
 		}
 	}
 
