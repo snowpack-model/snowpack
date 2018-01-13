@@ -18,6 +18,7 @@
 #include <meteoio/meteoFilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -43,10 +44,10 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 	for (size_t ii=0; ii<ovec.size(); ii++){
 		double& tmp = ovec[ii](param);
 		double VW = ovec[ii](MeteoData::VW);
-		if (VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
+		if (VW!=IOUtils::nodata) VW = std::min(Atmosphere::windLogProfile(VW, 10., 2.), 7.); //impact seems minimal, but 7m/s restriction is important
 		double t = ovec[ii](MeteoData::TA);
 		if (t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
-		t=IOUtils::K_TO_C(t); //t in celsius
+		t=std::max(IOUtils::K_TO_C(t), -15.); //t in celsius, restricted to >=-15
 		precip_type precip = (t<=Tsnow)? snow : (t>=Train)? rain : mixed;
 
 		//We don't use Tmax, Tmin, Tmean but only the current temperature instead

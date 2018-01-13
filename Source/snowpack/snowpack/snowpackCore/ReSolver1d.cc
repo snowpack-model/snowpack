@@ -692,14 +692,14 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		if ( i >= Xdata.SoilNode ) {		//Snow
 			if(EMS[i].theta[ICE]>max_theta_ice) {
 				//Pure ice layers are a problem for Richards equation (of course...), so we limit the volumetric ice content to 99 %.
-				const double tmp_missing_theta=(EMS[i].theta[ICE]-max_theta_ice)*(Constants::density_ice/Constants::density_water);	//Not too dry (original)
+				const double tmp_excess_theta=(EMS[i].theta[ICE]-max_theta_ice)*(Constants::density_ice/Constants::density_water);
 				//HACK: how to treat ice layers? The line below that is commented out makes the model spiral out of control...
 				// Produce warning, but not when running for sea ice, because then ice layers are too common.
 				//const double Lh = (EMS[i].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[i])) : (Constants::lh_fusion);
-				//dT[i]+=tmp_missing_theta*(Constants::density_water/Constants::density_ice) / ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Lh ));
-				if(variant!="SEAICE") std::cout << "[W] ReSolver1d.cc: ICE LAYER --> WATER CREATED (" << tmp_missing_theta << "): i=" << i << " --- dT=" << dT[i] << " T=" << EMS[i].Te << " theta[WATER]=" << EMS[i].theta[WATER] << " theta[ICE]=" << EMS[i].theta[ICE] << "\n";
-				EMS[i].theta[WATERINDEX]+=tmp_missing_theta;
-				EMS[i].theta[ICE]-=tmp_missing_theta*(Constants::density_water/Constants::density_ice);
+				//dT[i]+=tmp_excess_theta*(Constants::density_water/Constants::density_ice) / ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Lh ));
+				if(variant!="SEAICE") std::cout << "[W] ReSolver1d.cc: ICE LAYER --> WATER CREATED (" << tmp_excess_theta << "): i=" << i << " --- dT=" << dT[i] << " T=" << EMS[i].Te << " theta[WATER]=" << EMS[i].theta[WATER] << " theta[ICE]=" << EMS[i].theta[ICE] << "\n";
+				EMS[i].theta[WATERINDEX]+=tmp_excess_theta;
+				EMS[i].theta[ICE]-=tmp_excess_theta*(Constants::density_water/Constants::density_ice);
 				EMS[i].theta[AIR]=1.-EMS[i].theta[ICE]-EMS[i].theta[WATER]-EMS[i].theta[WATER_PREF];
 			}
 
@@ -714,7 +714,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			}
 
 			// Recheck pref flow area: some processes in SNOWPACK may change pore space and water contents, such that the pref flow area is not consistent to store all water.
-			EMS[i].PrefFlowArea = std::min(0.999*(1.-(EMS[i].theta[WATER]/((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water)))), std::max(1.001*(EMS[i].theta[WATER_PREF]/((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water))), EMS[i].PrefFlowArea));
+			const double tmpPoreSpace = (1. - EMS[i].theta[ICE]) * (Constants::density_ice / Constants::density_water);
+			EMS[i].PrefFlowArea = std::min(0.999*(1.-(EMS[i].theta[WATER]/tmpPoreSpace)), std::max(1.001*(EMS[i].theta[WATER_PREF]/tmpPoreSpace), EMS[i].PrefFlowArea));
+
 			// Scale theta_s
 			if(WATERINDEX==WATER_PREF) {
 				EMS[i].VG.theta_s*=EMS[i].PrefFlowArea;
@@ -743,7 +745,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		if(h_d>tmp_head) h_d=tmp_head;
 		if(i==uppernode) h_d_uppernode=tmp_head;	//We store this value in order to use it for the LIMITEDFLUXEVAPORATION
 		if (WriteDebugOutputput)
-			std::cout << "H_D at " << i << ": " << std::scientific << tmp_head << std::fixed << " [alpha: " << EMS[i].VG.alpha << "; m: " << EMS[i].VG.m << "; n: " << EMS[i].VG.n << "; Sc: " << EMS[i].VG.Sc << "; h_e: " << EMS[i].VG.h_e << "\n";
+			std::cout << "H_D at " << i << ": " << std::scientific << tmp_head << std::fixed << " [alpha: " << EMS[i].VG.alpha << "; m: " << EMS[i].VG.m << "; n: " << EMS[i].VG.n << "; Sc: " << EMS[i].VG.Sc << "]; h_e: " << EMS[i].VG.h_e << "\n";
 	}
 
 
@@ -1038,11 +1040,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					}
 				} else {
 					//For the boundaries, we neglect gradients in K. This corresponds to the specified fluid flux boundary condition (Equation 4 of McCord, WRR, 1991).
-					if(i==uppernode) {
-						k_np1_m_ip12[i]=K[i];
-					} else {
-						k_np1_m_ip12[i]=0.;
-					}
+					k_np1_m_ip12[i]=K[i];
 				}
 
 				// 2) Determine k_np1_m_im12
@@ -1051,11 +1049,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					k_np1_m_im12[i]=k_np1_m_ip12[i-1];
 				} else {
 					//For the boundaries, we neglect gradients in K. This corresponds to the specified fluid flux boundary condition (Equation 4 of McCord, WRR, 1991).
-					if(i==lowernode) {
-						k_np1_m_im12[i]=K[i];
-					} else {
-						k_np1_m_im12[i]=0.;
-					}
+					k_np1_m_im12[i]=K[i];
 				}
 			}
 
@@ -1767,7 +1761,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				for (i = lowernode; i <= uppernode; i++) {
 					printf("    layer [%d]:  h(t): %.3f  h(t+dt): %.3f  th(t): %.3f (%.3f-%.3f)  th(t+dt): %.3f  th_ice(t): %.3f  th_ice(t+dt): %.3f  (vg_params: %.2f %.2f %.2f)\n", int(i), h_n[i], h_np1_m[i], theta_n[i], EMS[i].VG.theta_r, EMS[i].VG.theta_s, theta_np1_m[i], (i<Xdata.SoilNode)?(theta_i_n[i]):(EMS[i].theta[ICE]), (i<Xdata.SoilNode)?(theta_i_np1_m[i]):(EMS[i].theta[ICE]), EMS[i].VG.alpha, EMS[i].VG.m, EMS[i].VG.n);
 				}
-				printf("    upper boundary [ boundary condition: %d ]:   prescribed flux: %G    applied flux: %G\n", TopBC, surfacefluxrate, TopFluxRate);
+				printf("    upper boundary [ boundary condition: %d ]:   prescribed flux: %G    applied flux: %G     domain: %s\n", TopBC, surfacefluxrate, TopFluxRate, (matrix)?("matrix"):("pref_flow"));
 				if(DoThrow==true) {
 					//We are lost. We cannot do another rewind and decrease time step (if we could, niter is reset).
 					throw;
@@ -2046,7 +2040,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//(i==uppernode)?(surfacefluxrate):(((((h_n[i]-h_n[i-1])/dz_up[i-1])+cos_sl)*sqrt(K[i]*K[i-1])*dt))
 				//);
 				//if(max_flux<flux_compare) max_flux=flux_compare;
-				if(i>Xdata.SoilNode-1) {	//For snow only
+				if(i>=Xdata.SoilNode) {	//For snow only
 					// Volumetric area:
 					//vol_area = exp(0.09904-3.557*(EMS[i].ogs));		// As presented at EGU 2016.
 					const double vol_area = 0.0584 * pow((0.5*EMS[i].ogs), -1.1090277);
@@ -2071,7 +2065,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	i = uppernode + 1;
 	while (i-- > lowernode) {
 		if(enable_pref_flow) {
-			if(i>Xdata.SoilNode-1) {	// For snow
+			if(i>=Xdata.SoilNode) {	// For snow
 				if(matrix) {
 					// First from matrix to preferential flow ...
 					if(i==Xdata.SoilNode) {

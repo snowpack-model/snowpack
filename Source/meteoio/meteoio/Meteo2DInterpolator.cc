@@ -89,6 +89,27 @@ namespace mio {
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
+ * @code
+ * DEM = ARC
+ * DEMFILE = ./input/surface-grids/davos.asc
+ *
+ * #here, the real data as measured by some stations 
+ * METEO		= IMIS
+ * DBNAME		= sdbo
+ * DBUSER		= xxx
+ * DBPASS		= xxx
+ * STATION1	= *WFJ
+ * STATION2	= STB2
+ * STATION3	= WFJ2
+ * STATION4	= *DAV
+ * 
+ * #here the locations where the data will be generated. The caller will only see these stations!
+ * RESAMPLING = true
+ * RESAMPLING_STRATEGY = GRID_ALL
+ * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
+ * VSTATIONS_REFRESH_RATE = 21600
+ * VSTATIONS_REFRESH_OFFSET = 3600
+ * @endcode
  * 
  * @section resampling_behind_the_scene Behind the scene
  * Behind the scene, this is a two stages setup: the IOManager that normally requests its data to its internal TimeSeriesManager will first ask the 

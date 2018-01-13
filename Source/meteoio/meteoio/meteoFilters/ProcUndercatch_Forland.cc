@@ -47,7 +47,7 @@ void ProcUndercatch_Forland::process(const unsigned int& param, const std::vecto
 		const double TA = ovec[ii](MeteoData::TA);
 
 		if (tmp == IOUtils::nodata || tmp==0. || VW==IOUtils::nodata || TA==IOUtils::nodata) {
-			continue; //preserve nodata values and no precip or purely liquid precip
+			continue; //preserve nodata values and no precip
 		}
 
 		if (TA<=Tsnow_WMO)
@@ -80,8 +80,8 @@ double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW) const
 	else
 		VW *= 0.84;
 
-	//restrict the range of T and VW
-	if (VW<1.) VW=1.;
+	//restrict the range of T and VW (thresholds from the tech. report)
+	if (VW<1.) return 1.;
 	if (VW>7.) VW=7.;
 	if (TA<-12.) TA=-12.;
 
@@ -126,8 +126,8 @@ double ProcUndercatch_Forland::liquidPrecipitation(const double& Pint, double VW
 	else
 		VW *= 0.84;
 
-	//restrict the range of T and VW
-	if (VW<1.) VW=1.;
+	//restrict the range of T and VW (thresholds from the tech. report)
+	if (VW<1.) return 1.;
 	if (VW>7.) VW=7.;
 
 	const double c = (type==hellmann)? 0. : -0.05;
