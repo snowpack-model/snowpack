@@ -541,7 +541,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	//Initializing and defining Richards solver time domain
 	double dt=10.;					//Set the initial time step for the Richard solver (in seconds). This time step should be smaller or equal to the SNOWPACK time step.
 	bool boolFirstFunctionCall;			//true: first execution of this function, false: not the first execution of this function
-	if (Xdata.ReSolver_dt>0.) {			//Retrieve last dt used in last performed time step. Note Xdata.SoliNumerics_dt<0 when initialized
+	if (Xdata.ReSolver_dt>0.) {			//Retrieve last dt used in last performed time step. Note Xdata.ReSolver_dt<0 when initialized
 		boolFirstFunctionCall=false;		//Subsequent call to ReSolver1d
 		dt=Xdata.ReSolver_dt;			//Set time step to last used time step
  	} else {					//else it is the first time this function is called.
@@ -589,7 +589,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	size_t i, j, k;					//Counters for layers
 	const size_t nmemstates=1;			//Number of memory states, used to store changes of delta_h between iterations. Currently not used, but possible use is to check if delta_h is blowing up.
 	int memstate=0;					//Keeping track of the current memory index
-	double h_d=0.;					//Lower limit for pressure head: definition of "completely dry". This value will determined later on.
+	double h_d=0.;					//Lower limit for pressure head: definition of "completely dry". This value will be determined later.
 
 
 	//Initializing and declaring boundary conditions and flux variables
@@ -817,7 +817,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		theta_n[i]=EMS[i].VG.fromHtoTHETAforICE(h_n[i], theta_i_n[i]);	//This is the current theta, which we determine from h_n[i].
 
 		//Determine source/sink term
-		s[i]=0.;								//Reset source/sink term
+		s[i]=0.;							//Reset source/sink term
 
 		//Now add soilsurfacesourceflux (in case RemoveElements removed the lowest snow element):
 		if(soilsurfacesourceflux>0. && i==Xdata.SoilNode) {		//We assign source flux in the lowest snow element if the source flux is >0. This can only be the case when we use RE for snow, so we don't have to check for this.
@@ -828,9 +828,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Add source/sink term from other parts of SNOWPACK (in particular Canopy.cc)
 		s[i]+=EMS[i].lwc_source/sn_dt;
 		EMS[i].lwc_source=0.;		// Now that we used the variable, reset it.
-
-		//To now the flux of water in/out of the model domain due to the source/sink term.
-		totalsourcetermflux+=s[i]*dz[i];
 	}
 
 
@@ -1177,6 +1174,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				std::cout << "BOUNDARYTOPFLUX: [ BC: " << TopBC << "] " << std::scientific << TopFluxRate << " " << surfacefluxrate << " " << theta_n[lowernode] << " " << K[lowernode] << " " << ((h_np1_mp1[lowernode])+(((TopFluxRate/k_np1_m_im12[lowernode])-1.)*dz_down[lowernode])) << " " << h_np1_mp1[lowernode] << " " << k_np1_m_im12[lowernode] << " " << (TopFluxRate/k_np1_m_im12[lowernode]) << "\n" << std::fixed;
 
 			// Verify source/sink term
+			totalsourcetermflux=0.;
 			for (i = lowernode; i <= uppernode; i++) {
 				if(s[i] != 0.) {
 					//TODO: a similar dt limiting procedure as for the surfacefluxrate should be considered
@@ -1196,6 +1194,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					if(fabs(tmp - s[i])>Constants::eps2) {
 						std::cout << "[W] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied. Term reduced from " << tmp << " to " << s[i] << ".\n";
 					}
+
+					//Update now the flux of water in/out of the model domain due to the source/sink term.
+					totalsourcetermflux+=s[i]*dz[i];
 				}
 			}
 
@@ -2171,7 +2172,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						EMS[i].theta[WATER]+=dtheta_w3;
 						EMS[i].theta[WATER_PREF]-=dtheta_w3;
 					}
-					// Check for first wetting
+					// Check for first wetting to set microstructural marker correctly
 					if ((EMS[i].theta[WATER] > 5E-6 * sn_dt) && (EMS[i].mk%100 < 10)) {
 						EMS[i].mk += 10;
 					}
