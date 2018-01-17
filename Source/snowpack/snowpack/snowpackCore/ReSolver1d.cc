@@ -491,6 +491,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		const bool LIMITEDFLUXINFILTRATION_soil=true;
 		const bool LIMITEDFLUXINFILTRATION_snow=true;
 		const bool LIMITEDFLUXINFILTRATION_snowsoil=true;		//This switch allows to limit the infiltration flux from snow into soil, when the snowpack is solved with the Bucket or NIED water transport scheme.
+	const bool LIMITEDFLUXSOURCESINKTERM=true;				//Check if the source/sink term can be absorbed by the matrix.
 	const bool ApplyIceImpedance=false;					//Apply impedance on hydraulic conductivity in case of soil freezing. See: Zhao et al. (1997) and Hansson et al. (2004)  [Dall'Amicao, 2011].
 
 	//Setting some program flow variables
@@ -1177,22 +1178,28 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			totalsourcetermflux=0.;
 			for (i = lowernode; i <= uppernode; i++) {
 				if(s[i] != 0.) {
-					//TODO: a similar dt limiting procedure as for the surfacefluxrate should be considered
-					const double tmp = s[i];
-					// Determine the limiting influx:
-					const double flux_compare_max =														//The limiting flux is (positive is inflow):
-						std::max(0., (dz[i]*(EMS[i].VG.theta_s - (theta_np1_m[i] + theta_i_np1_m[i]))/dt)						// net flux that would lead to saturation of the layer
-							+ ((i>lowernode) ? k_np1_m_im12[i]*(((h_np1_m[i]-h_np1_m[i-1])/dz_down[i]) + Xdata.cos_sl) : BottomFluxRate)		// plus what could leave below
-							- ((i<uppernode) ? k_np1_m_ip12[i]*(((h_np1_m[i+1]-h_np1_m[i])/dz_up[i]) + Xdata.cos_sl) : TopFluxRate));		// minus what comes from above
-					// Determine the limiting outflux (note we take theta_d as reference "dry")
-					const double flux_compare_min =														//The limiting flux is (positive is outflow):
-						std::max(0., (dz[i]*((theta_np1_m[i] + theta_i_np1_m[i]) - theta_d[i])/dt)							// net flux that would lead to drying of the layer
-							- ((i>lowernode) ? k_np1_m_im12[i]*(((h_np1_m[i]-h_np1_m[i-1])/dz_down[i]) + Xdata.cos_sl) : BottomFluxRate)		// minus what will leave below
-							+ ((i<uppernode) ? k_np1_m_ip12[i]*(((h_np1_m[i+1]-h_np1_m[i])/dz_up[i]) + Xdata.cos_sl) : TopFluxRate));		// plus what comes from above
-					s[i] = std::min(std::max(s[i], -0.999*flux_compare_min), 0.999*flux_compare_max);
+					if(LIMITEDFLUXSOURCESINKTERM==true) {
+						const double tmp = s[i];
+						// Determine the limiting influx:
+						const double flux_compare_max =														//The limiting flux is (positive is inflow):
+							std::max(0., (dz[i]*(EMS[i].VG.theta_s - (theta_np1_m[i] + theta_i_np1_m[i]))/dt)						// net flux that would lead to saturation of the layer
+								+ ((i>lowernode) ? k_np1_m_im12[i]*(((h_np1_m[i]-h_np1_m[i-1])/dz_down[i]) + Xdata.cos_sl) : BottomFluxRate)		// plus what could leave below
+								- ((i<uppernode) ? k_np1_m_ip12[i]*(((h_np1_m[i+1]-h_np1_m[i])/dz_up[i]) + Xdata.cos_sl) : TopFluxRate));		// minus what comes from above
+						// Determine the limiting outflux (note we take theta_d as reference "dry")
+						const double flux_compare_min =														//The limiting flux is (positive is outflow):
+							std::max(0., (dz[i]*((theta_np1_m[i] + theta_i_np1_m[i]) - theta_d[i])/dt)							// net flux that would lead to drying of the layer
+								- ((i>lowernode) ? k_np1_m_im12[i]*(((h_np1_m[i]-h_np1_m[i-1])/dz_down[i]) + Xdata.cos_sl) : BottomFluxRate)		// minus what will leave below
+								+ ((i<uppernode) ? k_np1_m_ip12[i]*(((h_np1_m[i+1]-h_np1_m[i])/dz_up[i]) + Xdata.cos_sl) : TopFluxRate));		// plus what comes from above
+						s[i] = std::min(std::max(s[i], -0.999*flux_compare_min), 0.999*flux_compare_max);
 
-					if(fabs(tmp - s[i])>Constants::eps2) {
-						std::cout << "[W] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied. Term reduced from " << tmp << " to " << s[i] << ".\n";
+						if(fabs(tmp - s[i])>Constants::eps2) {
+							if(dt>MIN_DT_FOR_INFILTRATION) {			//Trigger rewind when the layer cannot accomodate for the source/sink term
+								s[i]=tmp;					//Reset source/sink term to original value
+								solver_result=-1.;				//Trigger rewind
+							} else {
+								std::cout << "[W] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied with dt=" << dt << ". Term reduced from " << tmp << " to " << s[i] << ".\n";
+							}
+						}
 					}
 
 					//Update now the flux of water in/out of the model domain due to the source/sink term.
