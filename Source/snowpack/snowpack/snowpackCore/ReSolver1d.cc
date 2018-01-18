@@ -2112,7 +2112,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 										  std::min((1.-EMS[i-1].theta[ICE])*(Constants::density_ice/Constants::density_water)*EMS[i-1].PrefFlowArea-EMS[i-1].theta[WATER_PREF], ((EMS[i].theta[WATER]-theta_d[i])*(EMS[i].L/EMS[i-1].L)))	//Take MIN of: (i) Don't oversaturate preferential part, and (ii) don't take too much from the matrix part (TODO: actually, this should never happen.... remove it?)
 										  )));
 							if(WriteDebugOutputput) printf("MATRIX->PREF [%d]: %f %f %f %f %f\n", int(i), EMS[i].theta[WATER], EMS[i].theta[WATER_PREF], EMS[i-1].theta[WATER], EMS[i-1].theta[WATER_PREF], dtheta_w);
-							EMS[i-1].theta[WATER_PREF]+=dtheta_w;
+							EMS[i-1].lwc_source+=dtheta_w;	// This works because preferential flow is executed after matrix flow, so the source/sink term will be used directly afterwards.
 							EMS[i].theta[WATER]-=dtheta_w*(EMS[i-1].L/EMS[i].L);
 							// After moving the water, adjust the other properties
 							EMS[i].theta[AIR]=1.-EMS[i].theta[WATER]-EMS[i].theta[WATER_PREF]-EMS[i].theta[ICE]-EMS[i].theta[SOIL];
@@ -2127,8 +2127,11 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						// This is because in wet snow, the preferential flow part is also wet. Moreover, it enables a smaller capillary suction in the preferential flow domain, and allows the water to flow downwards
 						const double tmp_theta_water_tot = EMS[i].theta[WATER] + EMS[i].theta[WATER_PREF];
 						const double dtheta_w = std::max(0., (-1. * ( (EMS[i].VG.theta_r - tmp_theta_water_tot) * (1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water)*(EMS[i].PrefFlowArea) ) / ((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water) - EMS[i].VG.theta_r)) - EMS[i].theta[WATER_PREF]);
-						EMS[i].theta[WATER_PREF] += dtheta_w;
-						EMS[i].theta[WATER] -= dtheta_w;
+						EMS[i].lwc_source+=dtheta_w;	// This works because preferential flow is executed after matrix flow, so the source/sink term will be used directly afterwards.
+						EMS[i].theta[WATER]-=dtheta_w;
+						EMS[i].theta[AIR]=1.-EMS[i].theta[WATER]-EMS[i].theta[WATER_PREF]-EMS[i].theta[ICE]-EMS[i].theta[SOIL];
+						EMS[i].updDensity();
+						EMS[i].M=EMS[i].Rho*EMS[i].L;
 					}
 				} else {
 					// Now from preferential to matrix flow
