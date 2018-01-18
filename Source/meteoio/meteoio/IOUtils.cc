@@ -143,6 +143,18 @@ void trim(std::string& str)
 	}
 }
 
+void replace_all(std::string &input, const std::string& search, const std::string& format)
+{
+	const size_t len = search.length();
+	size_t pos = 0;
+	while (true) {
+		pos = input.find(search, pos);
+		if (pos == std::string::npos) break; //done!
+		input.replace(pos, len, format);
+		pos += len;
+	}
+}
+
 void toUpper(std::string& str) {
 	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }

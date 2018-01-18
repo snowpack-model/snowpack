@@ -484,7 +484,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	//
 	// BEGIN OF SETTINGS
 	//
-	const BoundaryConditions TopBC = LIMITEDFLUX;				//Bottom boundary condition (recommended choice is LIMITEDFLUX, so too much evaporation from dry soil or snow or too much infilitration in wet soil is prohibited).
+	const BoundaryConditions TopBC = LIMITEDFLUX;				//Top boundary condition (DIRICHLET, NEUMANN or LIMITEDFLUX). Recommended: LIMITEDFLUX, i.e. too much evaporation from dry soil or snow or too much infilitration in wet soil or snow is prohibited.
 		//In case you select one of the LIMITEDFLUX options, specify whether these are only for soil, for snow or for both:
 		const bool LIMITEDFLUXEVAPORATION_soil=true;
 		const bool LIMITEDFLUXEVAPORATION_snow=true;

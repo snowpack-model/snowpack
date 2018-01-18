@@ -19,8 +19,10 @@
 #define CSVIO_H
 
 #include <meteoio/IOInterface.h>
+#include <meteoio/FileUtils.h>
 
 #include <string>
+#include <vector>
 
 namespace mio {
 
@@ -37,21 +39,34 @@ class CsvIO : public IOInterface {
 		CsvIO(const std::string& configfile);
 		CsvIO(const CsvIO&);
 		CsvIO(const Config& cfgreader);
-		~CsvIO() throw();
 
-		//virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
-		//virtual void readPOI(std::vector<Coords>& pts);
-		
 	private:
+		void parseInputOutputSection();
 		void cleanup() throw();
-
+		std::string setDateParsing(const std::string& datetime_spec);
+		std::vector<StationData> initStations(const std::vector<std::string>& i_vecFilenames, const std::vector< std::pair<std::string, std::string> >& vecMeta, const std::vector<std::string>& vecMetaSpec) const;
+		std::vector<std::string> readHeaders(std::ifstream& fin, const char& eoln, size_t &date_col, size_t &time_col) const;
+		Date parseDate(const std::string& date_str, const std::string& time_str) const;
+		std::vector<MeteoData> readCSVFile(const std::string& filename, const size_t& stat_idx, const Date& dateStart, const Date& dateEnd);
+		
 		const Config cfg;
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		//std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		mio::FileUtils::FileIndexer indexer; //in order to save file pointers
+		std::vector<StationData> vecStations;
+		std::vector<std::string> vecFilenames, csv_fields;
+		std::vector<double> units_offset, units_multiplier;
+		std::vector<size_t> datetime_idx;
+		
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string meteopath, datetime_format;
+		double csv_tz;
+		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
+		size_t header_lines, columns_headers;
+		char csv_delim;
 };
 
 } //namespace

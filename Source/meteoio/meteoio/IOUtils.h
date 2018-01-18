@@ -137,6 +137,15 @@ namespace IOUtils {
 	void trim(std::string &s);
 
 	void stripComments(std::string& str);
+	
+	/**
+	 * @brief replace the within a given string, a substring by another one.
+	 * @details This should be quite similar to Boost::replace_all.
+	 * @param input string to manipulate
+	 * @param[in] search substring to be searched for 
+	 * @param[in] format substitute string 
+	 */
+	void replace_all(std::string &input, const std::string& search, const std::string& format);
 
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
