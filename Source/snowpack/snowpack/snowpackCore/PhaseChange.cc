@@ -125,12 +125,14 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 		return; // no melt with atmos forcing
 	} else if (((mass_melt < Constants::eps2) && (forcing=="MASSBAL"))
 	        || (Edata.theta[ICE] <= 0.0) || (Edata.theta[WATER] >= PhaseChange::theta_s)) {
+		Edata.Te = std::min(Edata.Te, T_melt);	// Considering the case that the element is above melting temperature, but mass_melt==0, so we are not "allowed" to apply melt.
 		return; // no melt with massbal forcing
 	} else {
 		const double Lh = (Edata.salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Edata)) : (Constants::lh_fusion);
 		double dth_i;
 		double dth_w;
-		if (forcing=="MASSBAL") { // forced melt
+		if (forcing == "MASSBAL" && T_melt > Edata.Te) { // forced melt, when "normal" melt would not occur anymore (snowpack too cold)
+			//Important: in this case, we don't set Edata.Te to T_melt. We only do the melt in order to match the prescribed melt, but we don't want to fiddle with the snowpack temperature profile.
 			dth_i = - (mass_melt / (Constants::density_ice * Edata.L)); // dth_i must be negative defined !
 			dth_w = - (Constants::density_ice / Constants::density_water) * dth_i; // change in volumetric water content
 			// You can only melt so much ice as is there ....
@@ -146,7 +148,6 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 			mass_melt += (dth_i * Constants::density_ice * Edata.L); // update mass_melt (remove mass that was melted in the current layer)
 			// Reset element properties
 			ql_Rest = 0.0;
-			Edata.Te = T_melt; 
 		} else { // temperature induced ("normal") melt
 			double dT = T_melt - Edata.Te; // Edata.melting_tk - Te > 0
 			// Now we take into account that there might be some extra energy that could not
@@ -183,6 +184,7 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 				Edata.Te = T_melt;
 			}
 		}
+		mass_melt += (dth_i * Constants::density_ice * Edata.L); // update mass_melt (remove mass that was melted in the current layer)
 		Edata.Qmf += (dth_i * Constants::density_ice * Lh) / dt; // (W m-3)
 		Edata.melt_m += (-dth_i * Constants::density_ice * Edata.L); // (kg m-2)
 		Edata.dth_w += dth_w; // (1)

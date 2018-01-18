@@ -623,6 +623,15 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
                                          double Se[ N_OF_INCIDENCES ][ N_OF_INCIDENCES ],
                                          double Fe[ N_OF_INCIDENCES ])
 {
+	// First zero out the interiour node contribution
+	Se[0][0] = Se[0][1] = Se[1][0] = Se[1][1] = Fe[0] = Fe[1] = 0.0;
+
+	// Special case for MASSBAL forcing, surf_melt is the energy flux.
+	if(forcing=="MASSBAL") {
+		Fe[1] += Mdata.surf_melt * Constants::lh_fusion / sn_dt;
+		return;
+	}
+
 	// Determine actual height of meteo values above Xdata.SoilNode:
 	double actual_height_of_meteo_values;	// Height with reference Xdata.SoilNode
 	if(!adjust_height_of_meteo_values) {
@@ -636,9 +645,6 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
 	const double T_air = Mdata.ta;
 	const size_t nE = Xdata.getNumberOfElements();
 	const double T_s = Xdata.Edata[nE-1].Te;
-
-	// First zero out the interiour node contribution
-	Se[0][0] = Se[0][1] = Se[1][0] = Se[1][1] = Fe[0] = Fe[1] = 0.0;
 
 	// Now branch between phase change cases (semi-explicit treatment) and
 	// dry snowpack dynamics/ice-free soil dynamics (implicit treatment)
@@ -852,7 +858,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		exit(EXIT_FAILURE);
 	}
 
-	if (forcing=="MASSBAL") {
+	if (surfaceCode == DIRICHLET_BC || forcing=="MASSBAL") {
 		I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
 	}
 
@@ -1817,8 +1823,13 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		double melting_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk : Constants::melting_tk;
 		t_surf = std::min(melting_tk, Xdata.Ndata[Xdata.getNumberOfNodes()-1].T);
 		if (forcing == "MASSBAL") {
-			// always use Dirichlet boundary conditions with massbal forcing
-			surfaceCode = DIRICHLET_BC;
+			if(!(Mdata.surf_melt>0.)) {
+				// always use Dirichlet boundary conditions with massbal forcing, when no melt is going on
+				surfaceCode = DIRICHLET_BC;
+			} else {
+				// in case melting is going on, top node is at melting conditions and we prescribe prescribed melt as Neumann boundary condition
+				t_surf = Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk;
+			}
 		} else if ((change_bc && meas_tss) && ((Mdata.tss < IOUtils::C_TO_K(thresh_change_bc)) && Mdata.tss != IOUtils::nodata)) {
 			surfaceCode = DIRICHLET_BC;
 		}
@@ -1855,18 +1866,25 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			Xdata.splitElements(2. * comb_thresh_l, comb_thresh_l);
 		}
 
-		const double sn_dt_bcu = sn_dt;		// Store original SNOWPACK time step
-		const double psum_bcu = Mdata.psum;	// Store original psum value
+		const double sn_dt_bcu = sn_dt;			// Store original SNOWPACK time step
+		const double psum_bcu = Mdata.psum;		// Store original psum value
 		const double psum_ph_bcu = Mdata.psum_ph;	// Store original psum_ph value
-		const double sublim_bcu = Mdata.sublim; // Store original sublim value
+		const double sublim_bcu = Mdata.sublim;		// Store original sublim value
+		const double surf_melt_bcu = Mdata.surf_melt;	// Store original sublim value
 		int ii = 0;				// Counter for sub-timesteps to match one SNOWPACK time step
 		bool LastTimeStep = false;		// Flag to indicate if it is the last sub-time step
 		double p_dt = 0.;			// Cumulative progress of time steps
 		if ((Mdata.psi_s >= 0. || t_surf > Mdata.ta) && atm_stability_model != Meteo::NEUTRAL && allow_adaptive_timestepping == true) {
 			// To reduce oscillations in TSS, reduce the time step prematurely when atmospheric stability is unstable.
-			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;	// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
+			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;					// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
+			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
+			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt /= sn_dt;	// scale the mass balance components like the precipiation
+
 			sn_dt = 60.;
-			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;	// ... then express psum again as precipitation per time step with the new time step
+
+			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;					// ... then express psum again as precipitation per time step with the new time step
+			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
+			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 		}
 		do {
 			if (ii >= 1) {
@@ -1915,7 +1933,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					if (!alpine3d)
 						phasechange.compPhaseChange(Xdata, Mdata.date, true, Mdata.surf_melt);
 					else
-						phasechange.compPhaseChange(Xdata, Mdata.date, false);
+						phasechange.compPhaseChange(Xdata, Mdata.date, false, Mdata.surf_melt);
 				} else {
 					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
 					const double max_ice = ReSolver1d::max_theta_ice;
@@ -1956,12 +1974,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				// Entered after non-convergence
 				if (sn_dt == sn_dt_bcu) std::cout << "[i] [" << Mdata.date.toString(Date::ISO) << "] : using adaptive timestepping\n"; // First time warning
 
-				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;				// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
-				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim /= sn_dt;	// scale the mass balance components like the precipiation
+				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;					// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt /= sn_dt;	// scale the mass balance components like the precipiation
 
 				sn_dt /= 2.;							// No convergence, half the time step
-				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;	// ... then express psum again as precipitation per time step with the new time step
-				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;	// scale the mass balance components like the precipiation
+				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;					// ... then express psum again as precipitation per time step with the new time step
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 
 				if (sn_dt < 0.01) {	// If time step gets too small, we are lost
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Temperature equation did not converge, even after reducing time step (azi=%.0lf, slope=%.0lf).", Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
@@ -1980,10 +2000,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		}
 		while (LastTimeStep == false);
 
-		sn_dt = sn_dt_bcu;	// Set back SNOWPACK time step to orginal value
-		Mdata.psum = psum_bcu;	// Set back psum to original value
-		Mdata.psum_ph = psum_ph_bcu;	// Set back psum_ph to original value
-		Mdata.sublim = sublim_bcu;	// Set back sublim to original value
+		sn_dt = sn_dt_bcu;			// Set back SNOWPACK time step to orginal value
+		Mdata.psum = psum_bcu;			// Set back psum to original value
+		Mdata.psum_ph = psum_ph_bcu;		// Set back psum_ph to original value
+		Mdata.sublim = sublim_bcu;		// Set back sublim to original value
+		Mdata.surf_melt = surf_melt_bcu;	// Set back sublim to original value
 
 		// Compute change of internal energy during last time step (J m-2)
 		Xdata.compSnowpackInternalEnergyChange(sn_dt);
@@ -1998,7 +2019,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// See if any SUBSURFACE phase changes are occuring due to updated water content (infiltrating rain/melt water in cold snow layers)
 		if(!useNewPhaseChange) {
 			if(!alpine3d)
-				phasechange.compPhaseChange(Xdata, Mdata.date, true, Mdata.surf_melt);
+				phasechange.compPhaseChange(Xdata, Mdata.date, true);
 			else
 				phasechange.compPhaseChange(Xdata, Mdata.date, false);
 
