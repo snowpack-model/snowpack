@@ -2031,9 +2031,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		Xdata.compSnowpackInternalEnergyChange(sn_dt);
 		Xdata.compSoilInternalEnergyChange(sn_dt);
 
-		// Compute internal mass change (melt / refreeze) during last time step (kg m-2)
-		Xdata.compSnowpackInternalMassChange();
-
 		// Find the settlement of the snowpack.
 		// HACK This routine was formerly placed here because the settlement solution MUST ALWAYS follow
 		// computeSnowTemperatures where the vectors U, dU and dUU are allocated.
