@@ -316,7 +316,6 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 		Edata.heatCapacity();
 		// Compute the volumetric refreezing power
 		Edata.Qmf += (dth_i * Constants::density_ice * Lh) / dt; // (W m-3)
-		Edata.refreeze_m += (dth_i * Constants::density_ice * Edata.L); // (kg m-2)
 		Edata.dth_w += dth_w;
 		Edata.Te += dT;
 	}
@@ -348,8 +347,8 @@ void PhaseChange::initialize(SnowStation& Xdata)
 	Xdata.dIntEnergySoil=0.;
 	
 	// Reset melt and refreeze mass
-	Xdata.Tot_melt = 0.;
-	Xdata.Tot_refreeze = 0.;
+	Xdata.meltMassTot = 0.;
+	Xdata.refreezeMassTot = 0.;
 
 	return;
 }
