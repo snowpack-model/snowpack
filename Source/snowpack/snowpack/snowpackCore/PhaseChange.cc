@@ -345,7 +345,7 @@ void PhaseChange::initialize(SnowStation& Xdata)
 	Xdata.meltFreezeEnergySoil=0.;
 	Xdata.dIntEnergy=0.;
 	Xdata.dIntEnergySoil=0.;
-	
+
 	// Reset melt and refreeze mass
 	Xdata.meltMassTot = 0.;
 	Xdata.refreezeMassTot = 0.;
