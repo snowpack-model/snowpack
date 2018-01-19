@@ -2768,6 +2768,11 @@ std::iostream& operator<<(std::iostream& os, const CurrentMeteo& data)
 	os.write(reinterpret_cast<const char*>(&data.hs_rate), sizeof(data.hs_rate));
 	os.write(reinterpret_cast<const char*>(&data.geo_heat), sizeof(data.geo_heat));
 	os.write(reinterpret_cast<const char*>(&data.adv_heat), sizeof(data.adv_heat));
+	os.write(reinterpret_cast<const char*>(&data.surf_melt), sizeof(data.surf_melt));
+	os.write(reinterpret_cast<const char*>(&data.snowdrift), sizeof(data.snowdrift));
+	os.write(reinterpret_cast<const char*>(&data.sublim), sizeof(data.sublim));
+	os.write(reinterpret_cast<const char*>(&data.odc), sizeof(data.odc));
+	os.write(reinterpret_cast<const char*>(&data.p), sizeof(data.p));
 
 	const size_t s_ts = data.ts.size();
 	os.write(reinterpret_cast<const char*>(&s_ts), sizeof(size_t));
@@ -2827,6 +2832,11 @@ std::iostream& operator>>(std::iostream& is, CurrentMeteo& data)
 	is.read(reinterpret_cast<char*>(&data.hs_rate), sizeof(data.hs_rate));
 	is.read(reinterpret_cast<char*>(&data.geo_heat), sizeof(data.geo_heat));
 	is.read(reinterpret_cast<char*>(&data.adv_heat), sizeof(data.adv_heat));
+	is.read(reinterpret_cast<char*>(&data.surf_melt), sizeof(data.surf_melt));
+	is.read(reinterpret_cast<char*>(&data.snowdrift), sizeof(data.snowdrift));
+	is.read(reinterpret_cast<char*>(&data.sublim), sizeof(data.sublim));
+	is.read(reinterpret_cast<char*>(&data.odc), sizeof(data.odc));
+	is.read(reinterpret_cast<char*>(&data.p), sizeof(data.p));
 
 	size_t s_ts;
 	is.read(reinterpret_cast<char*>(&s_ts), sizeof(size_t));
