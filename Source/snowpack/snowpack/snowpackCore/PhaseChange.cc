@@ -186,7 +186,6 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 		}
 		mass_melt += (dth_i * Constants::density_ice * Edata.L); // update mass_melt (remove mass that was melted in the current layer)
 		Edata.Qmf += (dth_i * Constants::density_ice * Lh) / dt; // (W m-3)
-		Edata.melt_m += (-dth_i * Constants::density_ice * Edata.L); // (kg m-2)
 		Edata.dth_w += dth_w; // (1)
 		for (unsigned int ii = 0; ii < nSolutes; ii++) {
 			if (dth_w > 0. ) {
@@ -336,8 +335,6 @@ void PhaseChange::initialize(SnowStation& Xdata)
 	// Initialize and Determine Energy Content
 	for (e = 0; e < nE; e++) {
 		EMS[e].dth_w = EMS[e].Qmf = 0.;
-		EMS[e].melt_m = 0.;
-		EMS[e].refreeze_m = 0.;
 	}
 
 	// Get cold content

@@ -272,7 +272,7 @@ const std::string BoundCond::toString() const
 SurfaceFluxes::SurfaceFluxes()
   : lw_in(0.), lw_out(0.), lw_net(0.), qs(0.), ql(0.), hoar(0.), qr(0.), qg(0.), qg0(0.), sw_hor(0.),
     sw_in(0.), sw_out(0.), qw(0.), sw_dir(0.), sw_diff(0.), pAlbedo(0.), mAlbedo(0.), dIntEnergy(0.), dIntEnergySoil(0.), meltFreezeEnergy(0.), meltFreezeEnergySoil(0.),
-    melt_m(0.), refreeze_m(0.),
+    meltMass(0.), refreezeMass(0.),
     drift(0.), mass(N_MASS_CHANGES, 0.), load(SnowStation::number_of_solutes), dhs_corr(0.), cRho_hn(Constants::undefined), mRho_hn(Constants::undefined) {}
 
 void SurfaceFluxes::reset(const bool& cumsum_mass)
@@ -298,8 +298,8 @@ void SurfaceFluxes::reset(const bool& cumsum_mass)
 		dIntEnergySoil = 0.;
 		meltFreezeEnergy = 0.;
 		meltFreezeEnergySoil = 0.;
-		melt_m = 0;
-		refreeze_m = 0;
+		meltMass = 0;
+		refreezeMass = 0;
 		mass[MS_HNW] = 0.;
 		mass[MS_RAIN] = 0.;
 	} else {
@@ -398,8 +398,8 @@ void SurfaceFluxes::collectSurfaceFluxes(const BoundCond& Bdata,
 	mass[MS_WATER] = Xdata.lwc_sum;
 	
 	// 7) Melt and refreeze mass
-	melt_m += Xdata.Tot_melt;
-	refreeze_m += Xdata.Tot_refreeze;	
+	meltMass += Xdata.meltMassTot;
+	refreezeMass += Xdata.refreezeMassTot;
 }
 
 /**
@@ -453,6 +453,8 @@ std::iostream& operator<<(std::iostream& os, const SurfaceFluxes& data)
 	os.write(reinterpret_cast<const char*>(&data.dIntEnergySoil), sizeof(data.dIntEnergySoil));
 	os.write(reinterpret_cast<const char*>(&data.meltFreezeEnergy), sizeof(data.meltFreezeEnergy));
 	os.write(reinterpret_cast<const char*>(&data.meltFreezeEnergySoil), sizeof(data.meltFreezeEnergySoil));
+	os.write(reinterpret_cast<const char*>(&data.meltMass), sizeof(data.meltMass));
+	os.write(reinterpret_cast<const char*>(&data.refreezeMass), sizeof(data.refreezeMass));
 
 	os.write(reinterpret_cast<const char*>(&data.drift), sizeof(data.drift));
 
@@ -493,6 +495,8 @@ std::iostream& operator>>(std::iostream& is, SurfaceFluxes& data)
 	is.read(reinterpret_cast<char*>(&data.dIntEnergySoil), sizeof(data.dIntEnergySoil));
 	is.read(reinterpret_cast<char*>(&data.meltFreezeEnergy), sizeof(data.meltFreezeEnergy));
 	is.read(reinterpret_cast<char*>(&data.meltFreezeEnergySoil), sizeof(data.meltFreezeEnergySoil));
+	is.read(reinterpret_cast<char*>(&data.meltMass), sizeof(data.meltMass));
+	is.read(reinterpret_cast<char*>(&data.refreezeMass), sizeof(data.refreezeMass));
 
 	is.read(reinterpret_cast<char*>(&data.drift), sizeof(data.drift));
 
@@ -770,7 +774,7 @@ ElementData::ElementData() : depositionDate(), L0(0.), L(0.),
                              S(0.), C(0.), CDot(0.), ps2rb(0.),
                              s_strength(0.), hard(0.), S_dr(0.), crit_cut_length(Constants::undefined), soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), Qph_up(0.), Qph_down(0.), dsm(0.),
                              theta_ice_0(0.), reset_theta_ice(false),
-                             melt_m(0.), refreeze_m(0.), excess_water(0.), vol_ice_low(1.) {}
+                             excess_water(0.), vol_ice_low(1.) {}
 
 ElementData::ElementData(const ElementData& cc) :
                              depositionDate(cc.depositionDate), L0(cc.L0), L(cc.L),
@@ -783,7 +787,7 @@ ElementData::ElementData(const ElementData& cc) :
                              S(cc.S), C(cc.C), CDot(cc.CDot), ps2rb(cc.ps2rb),
                              s_strength(cc.s_strength), hard(cc.hard), S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length), soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down), dsm(cc.dsm),
                              theta_ice_0(cc.theta_ice_0), reset_theta_ice(cc.reset_theta_ice),
-                             melt_m(cc.melt_m), refreeze_m(cc.refreeze_m), excess_water(cc.excess_water), vol_ice_low(cc.vol_ice_low){}
+                             excess_water(cc.excess_water), vol_ice_low(cc.vol_ice_low){}
 
 std::iostream& operator<<(std::iostream& os, const ElementData& data)
 {
@@ -1468,10 +1472,9 @@ SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLaye
 	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), hn(0.), rho_hn(0.), ErosionLevel(0), ErosionMass(0.),
 	S_class1(0), S_class2(0), S_d(0.), z_S_d(0.), S_n(0.), z_S_n(0.),
 	S_s(0.), z_S_s(0.), S_4(0.), z_S_4(0.), S_5(0.), z_S_5(0.),
-	Ndata(), Edata(), Kt(NULL), tag_low(0), ColdContent(0.), ColdContentSoil(0.), dIntEnergy(0.), dIntEnergySoil(0.), meltFreezeEnergy(0.), meltFreezeEnergySoil(0.),
+	Ndata(), Edata(), Kt(NULL), tag_low(0), ColdContent(0.), ColdContentSoil(0.), dIntEnergy(0.), dIntEnergySoil(0.), meltFreezeEnergy(0.), meltFreezeEnergySoil(0.), meltMassTot(0.), refreezeMassTot(0.),
 	ReSolver_dt(-1), windward(false),
 	WindScalingFactor(1.), TimeCountDeltaHS(0.),
-        Tot_melt(0.), Tot_refreeze(0.),
 	nNodes(0), nElems(0), useCanopyModel(i_useCanopyModel), useSoilLayers(i_useSoilLayers)
 {
 	if (i_useSeaIceModule)
@@ -1486,10 +1489,9 @@ SnowStation::SnowStation(const SnowStation& c) :
 	cH(c.cH), mH(c.mH), mass_sum(c.mass_sum), swe(c.swe), lwc_sum(c.lwc_sum), hn(c.hn), rho_hn(c.rho_hn), ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass),
 	S_class1(c.S_class1), S_class2(c.S_class2), S_d(c.S_d), z_S_d(c.z_S_d), S_n(c.S_n), z_S_n(c.z_S_n),
 	S_s(c.S_s), z_S_s(c.z_S_s), S_4(c.S_4), z_S_4(c.z_S_4), S_5(c.S_5), z_S_5(c.z_S_5),
-	Ndata(c.Ndata), Edata(c.Edata), Kt(NULL), tag_low(c.tag_low), ColdContent(c.ColdContent), ColdContentSoil(c.ColdContentSoil), dIntEnergy(c.dIntEnergy), dIntEnergySoil(c.dIntEnergySoil), meltFreezeEnergy(c.meltFreezeEnergy), meltFreezeEnergySoil(c.meltFreezeEnergySoil),
+	Ndata(c.Ndata), Edata(c.Edata), Kt(NULL), tag_low(c.tag_low), ColdContent(c.ColdContent), ColdContentSoil(c.ColdContentSoil), dIntEnergy(c.dIntEnergy), dIntEnergySoil(c.dIntEnergySoil), meltFreezeEnergy(c.meltFreezeEnergy), meltFreezeEnergySoil(c.meltFreezeEnergySoil), meltMassTot(c.meltMassTot), refreezeMassTot(c.refreezeMassTot),
 	ReSolver_dt(-1), windward(c.windward),
-	WindScalingFactor(c.WindScalingFactor), TimeCountDeltaHS(c.TimeCountDeltaHS),
-	Tot_melt(c.Tot_melt), Tot_refreeze(c.Tot_refreeze),
+	WindScalingFactor(c.WindScalingFactor), TimeCountDeltaHS(c.TimeCountDeltaHS), 
 	nNodes(c.nNodes), nElems(c.nElems), useCanopyModel(c.useCanopyModel), useSoilLayers(c.useSoilLayers) {
 	if (c.Seaice != NULL) {
 		// Deep copy pointer to sea ice object
@@ -1548,6 +1550,8 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		dIntEnergySoil = source.dIntEnergySoil;
 		meltFreezeEnergy = source.meltFreezeEnergy;
 		meltFreezeEnergySoil = source.meltFreezeEnergySoil;
+		meltMassTot = source.meltMassTot;
+		refreezeMassTot = source.refreezeMassTot;
 		nNodes = source.nNodes;
 		nElems = source.nElems;
 		useCanopyModel = source.useCanopyModel;
@@ -1603,6 +1607,8 @@ void SnowStation::compSnowpackInternalEnergyChange(const double& sn_dt)
 		const double i_cold_content = ColdContent;
 		ColdContent = 0.;
 		for (size_t e=SoilNode; e<nElems; e++) {
+			meltMassTot += (Edata[e].Qmf > 0.) ? (Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
+			refreezeMassTot += (Edata[e].Qmf < 0.) ? (-Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
 			meltFreezeEnergy -= Edata[e].Qmf * Edata[e].L * sn_dt;
 			ColdContent += Edata[e].coldContent();
 		}
@@ -1636,22 +1642,6 @@ void SnowStation::compSoilInternalEnergyChange(const double& sn_dt)
                 meltFreezeEnergySoil = 0.;
 		ColdContentSoil = 0.;
 		dIntEnergySoil = 0.;
-	}
-}
-
-/**
- * @brief Computes the internal mass change (melt / refreeze) of the snowpack during one computation time step (kg m-2)
- */
-void SnowStation::compSnowpackInternalMassChange()
-{
-	if (nElems > SoilNode) {
-		for (size_t e=SoilNode; e<nElems; e++) {
-			Tot_melt += Edata[e].melt_m;
-			Tot_refreeze += Edata[e].refreeze_m;
-		}		
-	} else {
-		Tot_melt = 0.;
-		Tot_refreeze = 0.;
 	}
 }
 
@@ -2307,8 +2297,6 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 	}
 	EdataLower.dth_w = (L_upper*EdataUpper.dth_w + L_lower*EdataLower.dth_w) / LNew;
 	EdataLower.Qmf = (EdataUpper.Qmf*L_upper + EdataLower.Qmf*L_lower) / LNew;	//Note: Qmf has units W/m^3, so it needs to be scaled with element lengths.
-	EdataLower.melt_m = (EdataUpper.melt_m + EdataLower.melt_m);
-	EdataLower.refreeze_m = (EdataUpper.refreeze_m + EdataLower.refreeze_m);
 	EdataLower.excess_water = (EdataUpper.excess_water + EdataLower.excess_water);
 	EdataLower.sw_abs += EdataUpper.sw_abs;
 	if ((EdataUpper.mk >= 100) && (EdataLower.mk < 100)) {
@@ -2435,6 +2423,8 @@ std::iostream& operator<<(std::iostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.dIntEnergySoil), sizeof(data.dIntEnergySoil));
 	os.write(reinterpret_cast<const char*>(&data.meltFreezeEnergy), sizeof(data.meltFreezeEnergy));
 	os.write(reinterpret_cast<const char*>(&data.meltFreezeEnergySoil), sizeof(data.meltFreezeEnergySoil));
+	os.write(reinterpret_cast<const char*>(&data.meltMassTot), sizeof(data.meltMassTot));
+	os.write(reinterpret_cast<const char*>(&data.refreezeMassTot), sizeof(data.refreezeMassTot));
 	os.write(reinterpret_cast<const char*>(&data.ReSolver_dt), sizeof(data.ReSolver_dt));
 	os.write(reinterpret_cast<const char*>(&data.windward), sizeof(data.windward));
 	os.write(reinterpret_cast<const char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
@@ -2517,6 +2507,8 @@ std::iostream& operator>>(std::iostream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.dIntEnergySoil), sizeof(data.dIntEnergySoil));
 	is.read(reinterpret_cast<char*>(&data.meltFreezeEnergy), sizeof(data.meltFreezeEnergy));
 	is.read(reinterpret_cast<char*>(&data.meltFreezeEnergySoil), sizeof(data.meltFreezeEnergySoil));
+	is.read(reinterpret_cast<char*>(&data.meltMass), sizeof(data.meltMass));
+	is.read(reinterpret_cast<char*>(&data.refreezeMass), sizeof(data.refreezeMass));
 	is.read(reinterpret_cast<char*>(&data.ReSolver_dt), sizeof(data.ReSolver_dt));
 	is.read(reinterpret_cast<char*>(&data.windward), sizeof(data.windward));
 	is.read(reinterpret_cast<char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));

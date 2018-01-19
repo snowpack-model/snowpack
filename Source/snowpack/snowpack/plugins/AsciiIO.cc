@@ -2076,8 +2076,8 @@ void AsciiIO::writeTimeSeriesAddDefault(const SnowStation& Xdata, const SurfaceF
 		// for example, measured turbulent fluxes (W m-2); see also 1-2
 		fout << ",," << (Sdata.meltFreezeEnergy * static_cast<double>(nCalcSteps)) / 1000.;
 		// output melt and refreeze mass (kg m-2)
-		fout << "," << Sdata.melt_m;
-		fout << "," << Sdata.refreeze_m;
+		fout << "," << Sdata.meltMass;
+		fout << "," << Sdata.refreezeMass;
 	}
 }
 

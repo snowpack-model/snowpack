@@ -352,8 +352,6 @@ class ElementData {
 		double dsm;                ///< Dry snow metamorphism factor
 		double theta_ice_0;        ///< Original theta[ICE]
 		bool reset_theta_ice;      ///< Flag for restoring theta[ICE]
-		double melt_m;             ///< Melted mass (kg m-2)
-		double refreeze_m;         ///< Refrozen mass (kg m-2)
 		double excess_water;       ///< Excess water due to snow settling (kg m-2)
 		double vol_ice_low;        ///< Mean volumetric ice content below the element (averaged over 20 m) (1)
 };
@@ -508,7 +506,6 @@ class SnowStation {
 		void compSnowpackMasses();
 		void compSnowpackInternalEnergyChange(const double& sn_dt);
 		void compSoilInternalEnergyChange(const double& sn_dt);
-		void compSnowpackInternalMassChange();
 		double getLiquidWaterIndex() const;
 		double getModelledTemperature(const double& z) const;
 
@@ -567,12 +564,12 @@ class SnowStation {
 		double dIntEnergySoil;      ///< Internal energy change of soil (J m-2)
 		double meltFreezeEnergy;    ///< Melt freeze part of internal energy change of snowpack (J m-2)
 		double meltFreezeEnergySoil;///< Melt freeze part of internal energy change of soil (J m-2)
+		double meltMassTot;         ///< Vertically summed melt per model time step (kg m-2)
+		double refreezeMassTot;     ///< Vertically summed refreeze per model time step (kg m-2)
 		double ReSolver_dt;         ///< Last used RE time step in the previous SNOWPACK time step
 		bool windward;              ///< True for windward (luv) slope
 		double WindScalingFactor;   ///< Local scaling factor for wind at drift station
 		double TimeCountDeltaHS;    ///< Time counter tracking erroneous settlement in operational mode
-		double Tot_melt;            ///< Vertically summed melt per model time step (kg m-2)
-		double Tot_refreeze;        ///< Vertically summed refreeze per model time step (kg m-2)
 
 		static const double comb_thresh_l_ratio, comb_thresh_ice, comb_thresh_water;
 		static const double comb_thresh_dd, comb_thresh_sp, comb_thresh_rg;
@@ -667,8 +664,8 @@ class SurfaceFluxes {
 		double dIntEnergySoil;       ///< Internal energy change in J m-2 in soil (used for OUTPUT only)
 		double meltFreezeEnergy;     ///< Melt freeze part of internal energy change in J m-2 in snowpack (used for OUTPUT only)
 		double meltFreezeEnergySoil; ///< Melt freeze part of internal energy change in J m-2 in soil (used for OUTPUT only)
-		double melt_m;               ///< Melt mass (kg m-2) (used for OUTPUT only)
-		double refreeze_m;           ///< Refreeze mass (kg m-2) (used for OUTPUT only)
+		double meltMass;             ///< Melt mass (kg m-2) (used for OUTPUT only)
+		double refreezeMass;         ///< Refreeze mass (kg m-2) (used for OUTPUT only)
 
 		/// @brief Other surface data:
 		double drift;      ///< the surface flux of drifting snow in kg m-1 s-1
