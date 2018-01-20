@@ -772,9 +772,7 @@ ElementData::ElementData() : depositionDate(), L0(0.), L(0.),
                              type(0), metamo(0.), salinity(0.), dth_w(0.), res_wat_cont(0.), Qmf(0.), QIntmf(0.),
                              dEps(0.), Eps(0.), Eps_e(0.), Eps_v(0.), Eps_Dot(0.), Eps_vDot(0.), E(0.),
                              S(0.), C(0.), CDot(0.), ps2rb(0.),
-                             s_strength(0.), hard(0.), S_dr(0.), crit_cut_length(Constants::undefined), soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), Qph_up(0.), Qph_down(0.), dsm(0.),
-                             theta_ice_0(0.), reset_theta_ice(false),
-                             excess_water(0.), vol_ice_low(1.) {}
+                             s_strength(0.), hard(0.), S_dr(0.), crit_cut_length(Constants::undefined), soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), Qph_up(0.), Qph_down(0.), dsm(0.) {}
 
 ElementData::ElementData(const ElementData& cc) :
                              depositionDate(cc.depositionDate), L0(cc.L0), L(cc.L),
@@ -785,9 +783,7 @@ ElementData::ElementData(const ElementData& cc) :
                              type(cc.type), metamo(cc.metamo), salinity(cc.salinity), dth_w(cc.dth_w), res_wat_cont(cc.res_wat_cont), Qmf(cc.Qmf), QIntmf(cc.QIntmf),
                              dEps(cc.dEps), Eps(cc.Eps), Eps_e(cc.Eps_e), Eps_v(cc.Eps_v), Eps_Dot(cc.Eps_Dot), Eps_vDot(cc.Eps_vDot), E(cc.E),
                              S(cc.S), C(cc.C), CDot(cc.CDot), ps2rb(cc.ps2rb),
-                             s_strength(cc.s_strength), hard(cc.hard), S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length), soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down), dsm(cc.dsm),
-                             theta_ice_0(cc.theta_ice_0), reset_theta_ice(cc.reset_theta_ice),
-                             excess_water(cc.excess_water), vol_ice_low(cc.vol_ice_low){}
+                             s_strength(cc.s_strength), hard(cc.hard), S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length), soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down), dsm(cc.dsm) {}
 
 std::iostream& operator<<(std::iostream& os, const ElementData& data)
 {
@@ -2187,9 +2183,6 @@ void SnowStation::splitElement(const size_t& e)
 	Ndata[e+1].z=(Ndata[e+2].z+Ndata[e].z)/2.;
 	Ndata[e+2].u*=0.5;
 	Ndata[e+1].u*=0.5;
-	// Excess water
-	Edata[e].excess_water*=0.5;
-	Edata[e+1].excess_water*=0.5;	
 }
 
 /**
@@ -2268,8 +2261,6 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 	EdataLower.L0 = EdataLower.L = LNew;
 	EdataLower.M += EdataUpper.M;
 	EdataLower.theta[ICE] = (L_upper*EdataUpper.theta[ICE] + L_lower*EdataLower.theta[ICE]) / LNew;
-	EdataLower.theta_ice_0 = (L_upper*EdataUpper.theta_ice_0 + L_lower*EdataLower.theta_ice_0) / (L_upper + L_lower); // weighted mean
-	EdataLower.reset_theta_ice = (EdataUpper.reset_theta_ice || EdataLower.reset_theta_ice)? true : false;
 	EdataLower.theta[WATER] = (L_upper*EdataUpper.theta[WATER] + L_lower*EdataLower.theta[WATER]) / LNew;
 	EdataLower.theta[WATER_PREF] = (L_upper*EdataUpper.theta[WATER_PREF] + L_lower*EdataLower.theta[WATER_PREF]) / LNew;
 	EdataLower.theta[AIR] = 1.0 - EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF] - EdataLower.theta[ICE] - EdataLower.theta[SOIL];
@@ -2297,7 +2288,6 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 	}
 	EdataLower.dth_w = (L_upper*EdataUpper.dth_w + L_lower*EdataLower.dth_w) / LNew;
 	EdataLower.Qmf = (EdataUpper.Qmf*L_upper + EdataLower.Qmf*L_lower) / LNew;	//Note: Qmf has units W/m^3, so it needs to be scaled with element lengths.
-	EdataLower.excess_water = (EdataUpper.excess_water + EdataLower.excess_water);
 	EdataLower.sw_abs += EdataUpper.sw_abs;
 	if ((EdataUpper.mk >= 100) && (EdataLower.mk < 100)) {
 		EdataLower.mk += static_cast<short unsigned int>( (EdataUpper.mk/100)*100 );

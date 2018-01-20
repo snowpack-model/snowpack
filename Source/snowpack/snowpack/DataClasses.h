@@ -350,10 +350,6 @@ class ElementData {
 		double Qph_down;           ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the lower node of the element
 		//NIED (H. Hirashima)
 		double dsm;                ///< Dry snow metamorphism factor
-		double theta_ice_0;        ///< Original theta[ICE]
-		bool reset_theta_ice;      ///< Flag for restoring theta[ICE]
-		double excess_water;       ///< Excess water due to snow settling (kg m-2)
-		double vol_ice_low;        ///< Mean volumetric ice content below the element (averaged over 20 m) (1)
 };
 
 /// @brief NODAL DATA used as a pointer in the SnowStation structure
