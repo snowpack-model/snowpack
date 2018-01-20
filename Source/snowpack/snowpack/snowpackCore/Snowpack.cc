@@ -2004,7 +2004,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		Mdata.psum = psum_bcu;			// Set back psum to original value
 		Mdata.psum_ph = psum_ph_bcu;		// Set back psum_ph to original value
 		Mdata.sublim = sublim_bcu;		// Set back sublim to original value
-		Mdata.surf_melt = surf_melt_bcu;	// Set back sublim to original value
+		Mdata.surf_melt = surf_melt_bcu;	// Set back surf_melt to original value
 
 		// Compute change of internal energy during last time step (J m-2)
 		Xdata.compSnowpackInternalEnergyChange(sn_dt);
