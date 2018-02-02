@@ -52,6 +52,7 @@ class SunTrajectory {
 		virtual void getDaylight(double& sunrise, double& sunset, double& daylight)=0;
 		virtual double getSolarTime() const;
 		virtual double getSolarTimeOfDay() const;
+		static void getEaster(const int& year, int &month, int &day);
 
 		///(http://en.wikipedia.org/wiki/Equatorial_coordinate_system)
 		virtual void getEquatorialCoordinates(double& right_ascension, double& declination)=0;
@@ -117,6 +118,8 @@ class SunMeeus : public SunTrajectory {
 		void getDaylight(double& sunrise, double& sunset, double& daylight);
 		void getEquatorialSunVector(double& sunx, double& suny, double& sunz);
 		void getEquatorialCoordinates(double& right_ascension, double& declination);
+		
+		static double SideralToLocal(const double& JD);
 	private:
 		void private_init();
 		void update();

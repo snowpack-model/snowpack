@@ -961,6 +961,10 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 	for (size_t e = 0; e < nE; e++)
 		fout << "," << std::fixed << std::setprecision(2) << IOUtils::K_TO_C(EMS[e].Te);
+	// 0504: element ID
+	fout << "\n0504," << nE;
+	for (size_t e = 0; e < nE; e++)
+		fout << "," << std::fixed << std::setprecision(0) << EMS[e].ID;
 	// 0506: liquid water content by volume (%)
 	fout << "\n0506," << nE + Noffset;
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
@@ -1939,7 +1943,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 	}
 	if (maxNumberMeasTemperatures == 5) {
 		// 50: Solute load at ground surface
-		if (out_load)
+		if (out_load && !Sdata.load.empty())
 			fout << "," << Sdata.load[0];
 		else
 			fout << ",";
@@ -1978,21 +1982,6 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				prn_msg(__FILE__, __LINE__, "err", Mdata.date,
 				        "There is not enough space to accomodate your temperature sensors: j=%u > 44!", jj);
 				throw IOException("Writing Time Series data failed", AT);
-			}
-		}
-		if (Xdata.tag_low) {
-			size_t tag = Xdata.tag_low, j_lim;
-			while ( (tag + ii) <= numberFixedSensors ) {
-				if ((tag + ii) <= numberMeasTemperatures)
-					j_lim = 41;
-				else
-					j_lim = 43;
-				if (jj < j_lim) {
-					jj += writeHeightTemperatureTag(fout, tag, Mdata, Xdata);
-					tag++;
-				} else {
-					break;
-				}
 			}
 		}
 		for (; jj < 44; jj++)
@@ -2247,21 +2236,6 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			}
 			jj += 2;
 		}
-		if (Xdata.tag_low) {
-			size_t tag = Xdata.tag_low;
-			while ((tag + numberFixedSensors) <= totNumberSensors) {
-				const size_t j_lim = ((tag + numberFixedSensors) <= numberMeasTemperatures)? 41 : 43;
-				if (jj < j_lim) {
-					fout << ",H(tag" << std::fixed << std::setfill('0') << std::setw(2) << tag << "),T(tag" << tag << ")";
-					jj += 2;
-					if (numberFixedSensors < numberMeasTemperatures) {
-						fout << ",H(meas" << std::fixed << std::setfill('0') << std::setw(2) << tag << "),T(meas" << tag << ")";
-						jj += 2;
-					}
-					tag++;
-				}
-			}
-		}
 		for (; jj < 44; jj++) {
 			fout << ",-";
 		}
@@ -2309,21 +2283,6 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			if (ii < numberMeasTemperatures) {
 				fout << ",degC";
 				jj++;
-			}
-		}
-		if (Xdata.tag_low) {
-			size_t tag = Xdata.tag_low;
-			while ((tag + numberFixedSensors) <= totNumberSensors) {
-				const size_t j_lim = ((tag + numberFixedSensors) <= numberMeasTemperatures)? 41 : 43;
-				if (jj < j_lim) {
-					fout << ",cm,degC";
-					jj += 2;
-					if (numberFixedSensors < numberMeasTemperatures) {
-						fout << ",cm,degC";
-						jj += 2;
-					}
-					tag++;
-				}
 			}
 		}
 		for (; jj < 44; jj++)
@@ -2375,6 +2334,7 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)";
 	fout << "\n0502,nElems,element density (kg m-3)";
 	fout << "\n0503,nElems,element temperature (degC)";
+	fout << "\n0504,nElems,element ID (1)";
 	fout << "\n0506,nElems,liquid water content by volume (%)";
 	if(enable_pref_flow) fout << "\n0507,nElems,liquid preferential flow water content by volume (%)";
 	fout << "\n0508,nElems,dendricity (1)";
@@ -2491,53 +2451,4 @@ bool AsciiIO::writeHazardData(const std::string& /*stationID*/, const std::vecto
                               const std::vector<ProcessInd>& /*Hdata_ind*/, const size_t& /*num*/)
 {
 	throw IOException("Nothing implemented here!", AT);
-}
-
-/**
- * @brief Reads labels and dates from file for tagging
- * @author Thomas Egger
- * @param TAGdata
- * @param filename Filename to read from
- * @param Mdata To pass zv_ts[] values for initialization
- */
-void AsciiIO::readTags(const std::string& filename, const CurrentMeteo&  Mdata, TaggingData& TAGdata)
-{
-	Config tagging_config(filename);
-	tagging_config.getValue("NUMBER_TAGS", numberTags); //HACK: numberTags should be a member of TAGdata?
-	tagging_config.getValue("TAG_LOW", TAGdata.tag_low);
-	tagging_config.getValue("TAG_TOP", TAGdata.tag_top);
-	tagging_config.getValue("REPOS_LOW", TAGdata.repos_low);
-	tagging_config.getValue("REPOS_TOP", TAGdata.repos_top);
-
-	totNumberSensors += numberTags;
-
-	TAGdata.tag_low = std::max((size_t)1, std::min(TAGdata.tag_low, numberTags));
-	TAGdata.tag_top = std::min(TAGdata.tag_top, numberTags);
-	TAGdata.repos_low = std::max((size_t)1, TAGdata.repos_low);
-	TAGdata.repos_top = std::min(TAGdata.repos_top, numberTags);
-
-	TAGdata.resize(numberTags + 1);
-	TAGdata.useSoilLayers = useSoilLayers;
-
-	for (size_t tag=1; tag<=numberTags; tag++) {
-		stringstream ss;
-		ss << setw(2) << setfill('0') << tag;
-
-		tagging_config.getValue("LABEL_" + ss.str(), TAGdata.tags[tag-1].label);
-
-		string date_string;
-		tagging_config.getValue("DATE_" + ss.str(), date_string);
-		IOUtils::convertString(TAGdata.tags[tag-1].date, date_string, time_zone);
-
-		if ( (tag >= TAGdata.repos_low) && (tag <= TAGdata.repos_top) ) {
-			const size_t depth = fixedPositions.size() + tag - 1;
-			if (Mdata.zv_ts.size() > depth) {
-				TAGdata.tags[tag-1].previous_depth = Mdata.zv_ts[depth];
-			} else { //HACK: can I do this? does this make sense?
-				TAGdata.tags[tag-1].previous_depth = IOUtils::nodata;
-			}
-		} else {
-			TAGdata.tags[tag-1].previous_depth = IOUtils::nodata;
-		}
-	}
 }

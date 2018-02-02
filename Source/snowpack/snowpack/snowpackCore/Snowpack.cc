@@ -30,7 +30,6 @@
 #include <snowpack/Constants.h>
 #include <snowpack/Utils.h>
 #include <snowpack/Laws_sn.h>
-#include <snowpack/SnowDrift.h>
 #include <snowpack/snowpackCore/WaterTransport.h>
 #include <snowpack/snowpackCore/VapourTransport.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
@@ -718,6 +717,7 @@ void Snowpack::neumannBoundaryConditionsSoil(const double& flux, const double& T
 
 double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentMeteo& Mdata) const
 {
+	//please keep in mind that the radiation might have been tweaked in Meteo::compRadiation()
 	const vector<NodeData>& NDS = Xdata.Ndata;
 	const vector<ElementData>& EMS = Xdata.Edata;
 	const size_t nN = Xdata.getNumberOfNodes();
@@ -782,6 +782,7 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 
 double Snowpack::getModelAlbedo(const SnowStation& Xdata, CurrentMeteo& Mdata) const
 {
+	//please keep in mind that the radiation might have been tweaked in Meteo::compRadiation()
 	const double pAlbedo = Xdata.pAlbedo;
 
 	// Assign iswr and rswr correct values according to switch value
@@ -1429,6 +1430,20 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 }
 
 /**
+ * @brief Introduce new snow elements as technical snow
+ * @details When there is natural snow as well as man-made snow,
+ * the whole snow fall will have the properties of man-made snow. 
+ * @param Mdata Meteorological data
+ * @param Xdata Snow cover data
+ * @param cumu_precip cumulated amount of precipitation (kg m-2)
+ */
+void Snowpack::compTechnicalSnow(const CurrentMeteo& /*Mdata*/, SnowStation& /*Xdata*/, double& /*cumu_precip*/,
+                            SurfaceFluxes& /*Sdata*/)
+{
+	
+}
+
+/**
  * @brief Determines whether new snow elements are added on top of the snowpack
  * - If enforce_measured_snow_heights=0 (research mode), the new snow height corresponding to the cumulated
  *   new snow water equivalent cumu_precip must be greater than HEIGHT_NEW_ELEM to allow adding elements.
@@ -1444,6 +1459,11 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
                             SurfaceFluxes& Sdata)
 {
+	if (Mdata.psum_tech!=IOUtils::nodata) {
+		compTechnicalSnow(Mdata, Xdata, cumu_precip, Sdata);
+		return;
+	}
+	
 	bool add_element = false;
 	double delta_cH = 0.; // Actual enforced snow depth
 	double hn = 0.; //new snow amount
@@ -1886,12 +1906,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
 			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 		}
+		
+		Meteo M(cfg);
 		do {
-			if (ii >= 1) {
-				// After the first sub-time step, update Meteo object to reflect on the new stability state
-				Meteo M(cfg);
-				M.compMeteo(Mdata, Xdata, false);
-			}
+			// After the first sub-time step, update Meteo object to reflect on the new stability state
+			if (ii >= 1) M.compMeteo(Mdata, Xdata, false);
 			// Reinitialize and compute the initial meteo heat fluxes
 			memset((&Bdata), 0, sizeof(BoundCond));
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
@@ -2051,4 +2070,9 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			Xdata.splitElements(-1., comb_thresh_l);
 		}
 	}
+}
+
+void Snowpack::snowPreparation(SnowStation& /*Xdata*/)
+{
+	
 }

@@ -97,7 +97,7 @@ public:
 	//Constructors
 	Coords();
 	Coords(const std::string& in_coordinatesystem, const std::string& in_parameters="");
-	Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, const std::string& coord_spec);
+	Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec);
 	Coords(const double& in_lat_ref, const double& in_long_ref);
 	Coords(const Coords& c);
 
@@ -166,17 +166,12 @@ public:
  private:
 	double ref_latitude, ref_longitude;
 	double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)
-	double latitude; ///<latitude of the point
-	double longitude; ///<longitude of the point
-	double easting; ///<east coordinate of the point in a cartesian grid
-	double northing; ///<north coordinate of the point in a cartesian grid
-	int grid_i; ///<grid index i (please notice that this index is NOT automatically regenerated NOR checked)
-	int grid_j; ///<grid index j (please notice that this index is NOT automatically regenerated NOR checked)
-	int grid_k; ///<grid index k (please notice that this index is NOT automatically regenerated NOR checked)
+	double latitude, longitude; ///<latitude and longitude of the point
+	double easting, northing; ///<east and north coordinate of the point in a cartesian grid
+	int grid_i, grid_j, grid_k; ///<grid index i, j, k (please notice that this index is NOT automatically regenerated NOR checked)
 	bool validIndex; ///< are grid index invalid?
 
-	std::string coordsystem;
-	std::string coordparam;
+	std::string coordsystem, coordparam;
 	geo_distances distance_algo;
 };
 } //end namespace

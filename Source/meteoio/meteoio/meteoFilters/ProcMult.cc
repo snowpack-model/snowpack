@@ -53,14 +53,14 @@ void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& 
 				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 				ovec[ii].date.getDate(year, month, day);
-				tmp *= vecCorrections[ month-1 ]; //indices start at 0
+				tmp *= vecCorrections[ static_cast<size_t>(month-1) ]; //indices start at 0
 			}
 		} else if (period=='d') {
 			for (size_t ii=0; ii<ovec.size(); ii++){
 				double& tmp = ovec[ii](param);
 				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-				tmp *= vecCorrections[ ovec[ii].date.getJulianDayNumber()-1 ]; //indices start at 0 while day numbers start at 1
+				tmp *= vecCorrections[ static_cast<size_t>(ovec[ii].date.getJulianDayNumber()-1) ]; //indices start at 0 while day numbers start at 1
 			}
 		} else if (period=='h') {
 			int year, month, day, hour;
@@ -69,7 +69,7 @@ void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& 
 				if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 				ovec[ii].date.getDate(year, month, day, hour);
-				tmp *= vecCorrections[ hour ];
+				tmp *= vecCorrections[ static_cast<size_t>(hour) ];
 			}
 		}
 	} else if (type=='n') { //noise

@@ -187,11 +187,11 @@ double Metamorphism::getCoordinationNumberN3(const double& Rho)
 		return 1.75*(Rho/100.);  // Decreases N3 to zero as density goes to zero.
 	}
 
-	const double N_0 = 1.4153;
-	const double N_1 = 7.5580e-5;
-	const double N_2 = 5.1495e-5;
-	const double N_3 = 1.7345e-7;
-	const double N_4 = 1.8082e-10;
+	static const double N_0 = 1.4153;
+	static const double N_1 = 7.5580e-5;
+	static const double N_2 = 5.1495e-5;
+	static const double N_3 = 1.7345e-7;
+	static const double N_4 = 1.8082e-10;
 	const double R_2 = Rho*Rho;
 	const double R_3 = R_2*Rho;
 	const double R_4 = R_2*R_2;
@@ -224,17 +224,29 @@ double Metamorphism::ddRate(const ElementData& Edata)
  * non-static section                                       *
  ************************************************************/
 
-Metamorphism::Metamorphism(const SnowpackConfig& cfg)
-              : metamorphism_model(), sn_dt(0.), new_snow_grain_size(0.)
+static std::string get_model(const SnowpackConfig& cfg) 
+{
+	std::string model;
+	cfg.getValue("METAMORPHISM_MODEL", "SnowpackAdvanced", model);
+	return model;
+}
+
+static double get_sn_dt(const SnowpackConfig& cfg) 
 {
 	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
 	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
-	sn_dt = M_TO_S(calculation_step_length);
+	return M_TO_S(calculation_step_length);
+}
 
-	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
+static double get_nsgs(const SnowpackConfig& cfg) 
+{
+	const double nsgs = cfg.get("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced");
+	return nsgs;
+}
 
-	cfg.getValue("METAMORPHISM_MODEL", "SnowpackAdvanced", metamorphism_model);
-
+Metamorphism::Metamorphism(const SnowpackConfig& cfg)
+              : metamorphism_model( get_model(cfg) ), sn_dt( get_sn_dt(cfg) ), new_snow_grain_size( get_nsgs(cfg) )
+{
 	const map<string, MetaModelFn>::const_iterator it1 = mapMetamorphismModel.find(metamorphism_model);
 	if (it1 == mapMetamorphismModel.end())
 		throw InvalidArgumentException("Unknown metamorphism model: "+metamorphism_model, AT);
@@ -250,7 +262,7 @@ Metamorphism::Metamorphism(const SnowpackConfig& cfg)
  * @param Edata
  * @return Rate of change (d-1)
  */
-double Metamorphism::spRateDEFAULT(const ElementData& Edata)
+double Metamorphism::spRateDEFAULT(const ElementData& Edata) const
 {
 	const double dTdZ = fabs(Edata.gradT);
 	const double c = exp(-6000. / Edata.Te); // Original 6000.
@@ -280,7 +292,7 @@ double Metamorphism::spRateDEFAULT(const ElementData& Edata)
  * @param *Edata
  * @return Rate of change (d-1)
  */
-double Metamorphism::spRateNIED(const ElementData& Edata)
+double Metamorphism::spRateNIED(const ElementData& Edata) const
 {
 	const double dTdZ = fabs(Edata.gradT);
 	const double c = exp(-6000. / Edata.Te); // Original 6000.
@@ -334,7 +346,7 @@ double Metamorphism::TGBondRate(const ElementData& Edata)
  * @param th_ice Volumetric ice content (1)
  * @return Lattice constant (mm)
 */
-double Metamorphism::LatticeConstant0(const double& th_ice)
+double Metamorphism::LatticeConstant0(const double& th_ice) const
 {
 	const double gsz0 = new_snow_grain_size;
 
@@ -362,7 +374,7 @@ double Metamorphism::LatticeConstant0(const double& th_ice)
  * @return Grain radius growth rate (mm d-1)
  */
 double Metamorphism::TGGrainRate(const ElementData& Edata, const double& Tbot, const double& Ttop,
-                                 const double& gradTSub, const double& gradTSup)
+                                 const double& gradTSub, const double& gradTSup) const
 {
 	// Collect the continuum values from the element data structures
 	const double th_i = Edata.theta[ICE]; // Ice content
@@ -378,7 +390,7 @@ double Metamorphism::TGGrainRate(const ElementData& Edata, const double& Tbot, c
 	double a = a0;
 	if ( gsz > new_snow_grain_size ) {
 		// Use an empirical estimation of the lattice constant
-		const double reg0 = 0.15, reg1 = -0.00048; // Empirical regression coefficients
+		static const double reg0 = 0.15, reg1 = -0.00048; // Empirical regression coefficients
 		const double a1 = reg0 + reg1*(th_i * Constants::density_ice);
 		a  = a0 + a1*(gsz - new_snow_grain_size);
 	}
@@ -417,10 +429,10 @@ double Metamorphism::ETBondRate(ElementData& Edata)
 	* mixture theory. Bartelt is so jealous of that fine piece of work.   Please note
 	* hist sarcastic tirade later in this  unreadable program.
 	*/
-	const double B_1 = 0.1436e-3;         //  in mm/sec
-	const double B_2 = -1.8850e-6;        //  in mm
-	const double B_3 = 4.6690e+3;         //  deg K
-	const double B_R = 273.;
+	static const double B_1 = 0.1436e-3;         //  in mm/sec
+	static const double B_2 = -1.8850e-6;        //  in mm
+	static const double B_3 = 4.6690e+3;         //  deg K
+	static const double B_R = 273.;
 	const double rc = Edata.concaveNeckRadius();
 	double rbDot; // Bond radius growth rate (mm s-1)
 
@@ -446,10 +458,10 @@ double Metamorphism::ETBondRate(ElementData& Edata)
 double Metamorphism::ETGrainRate(const ElementData& Edata)
 {
 	// These are the routine's FUDGE FACTORs
-	const double C_1 = 9.403e-11;
-	const double C_2 = 5.860e-9;
-	const double C_3 = 2.900e3;
-	const double C_R = 273.;
+	static const double C_1 = 9.403e-11;
+	static const double C_2 = 5.860e-9;
+	static const double C_3 = 2.900e3;
+	static const double C_R = 273.;
 
 	// Grain radius growth rate (mm s-1)
 	const double rgDot = ((C_1 / Edata.rg) + C_2) * exp((C_3 / C_R) - (C_3 / Edata.Te));
@@ -490,15 +502,15 @@ double Metamorphism::PressureSintering(ElementData& Edata)
  * @param Mdata
  * @param Xdata
  */
-void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& Xdata)
+void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& Xdata) const
 {
 	double rgDot;        // Grain growth rate (mm d-1)
 	double rbDot;        // Bond growth rate (mm d-1)
 	double rgDotMax, rbDotMax;  // Maximum grain and bond growth rates
 	double ddDot;        // Rate of dendricity change (d-1)
 	double spDot;        // Rate of sphericity change (d-1)
-	const double a1 = 1.11e-3, a2 = 3.65e-5;  // mm3 day-1 Volumetric growth coefficients for wet snow
-	const double cw = 1.e8 * exp(-6000. / 273.15);
+	static const double a1 = 1.11e-3, a2 = 3.65e-5;  // mm3 day-1 Volumetric growth coefficients for wet snow
+	static const double cw = 1.e8 * exp(-6000. / 273.15);
 	const size_t nE = Xdata.getNumberOfElements();
 
 	// Dereference the element pointer containing micro-structure data
@@ -528,7 +540,7 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
 		if ( splim2 > 1.0 ) {
 			splim2 = 1.0;
 		}
-		const double splim3 = -0.7;
+		static const double splim3 = -0.7;
 		const size_t marker = EMS[e].mk%100;  // untag EMS[e].mk
 
 		// Compute the pressure gradient (kinetic or equilibrium growth metamorphism??)
@@ -716,15 +728,15 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
  * @param Mdata
  * @param Xdata
  */
-void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdata)
+void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdata) const
 {
 	double rgDot;        // Grain growth rate (mm d-1)
 	double rbDot;        // Bond growth rate (mm d-1)
 	double rgDotMax, rbDotMax;  // Maximum grain and bond growth rates
 	double ddDot;        // Rate of dendricity change (d-1)
 	double spDot;        // Rate of sphericity change (d-1)
-	const double a1 = 1.11e-3, a2 = 3.65e-5;  // mm3 day-1 Volumetric growth coefficients for wet snow
-	const double cw = 1.e8 * exp(-6000. / 273.15);
+	static const double a1 = 1.11e-3, a2 = 3.65e-5;  // mm3 day-1 Volumetric growth coefficients for wet snow
+	static const double cw = 1.e8 * exp(-6000. / 273.15);
 	double dsmDot = Constants::undefined;       //NIED (H. Hirashima) Dry snow metamorphism factor...
 	const size_t nE = Xdata.getNumberOfElements();
 
@@ -975,7 +987,7 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 	}
 }
 
-void Metamorphism::runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) throw()
+void Metamorphism::runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) const throw()
 {
 	CALL_MEMBER_FN(*this, mapMetamorphismModel[metamorphism_model])(Mdata, Xdata);
 }

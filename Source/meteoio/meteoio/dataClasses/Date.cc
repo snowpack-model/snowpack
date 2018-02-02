@@ -112,6 +112,14 @@ Date::Date(const int& in_year, const int& in_month, const int& in_day, const int
 	setDate(in_year, in_month, in_day, in_hour, in_minute, in_timezone, in_dst);
 }
 
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const int& in_second, const double& in_timezone, const bool& in_dst)
+         : timezone(in_timezone), gmt_julian(0.),
+           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0), gmt_second(0),
+           dst(false), undef(true)
+{
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
+}
+
 // SETTERS
 void Date::setUndef(const bool& flag) {
 	undef = flag;

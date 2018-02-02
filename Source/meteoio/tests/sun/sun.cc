@@ -7,29 +7,29 @@ using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
 
 // ----- Constants ----
-const int minutes_per_day = 60 * 24;
+static const int minutes_per_day = 60 * 24;
 
 mio::SunObject Sun(46.77181, 9.86820, 2192.); //Stillberg station
-const double slope_azi=38., slope_elev=35.;   //Stillberg station
-const double TZ=1.;
-const double TA = 273.15+11., RH = 0.5, mean_albedo = 0.5;
-const string f_output("curr_output.txt");
+static const double slope_azi=38., slope_elev=35.;   //Stillberg station
+static const double TZ=1.;
+static const double TA = 273.15+11., RH = 0.5, mean_albedo = 0.5;
+static const std::string f_output("curr_output.txt");
 
 // ---- INPUT Data to controll----
 // if you add an date here, don't forget to add it to list with push_pack in main !!!!
-const mio::Date d1(2000, 12, 16, 01, 00, 00, 1); // Winter, good Weather
-const mio::Date d2(2000, 12, 26, 01, 00, 00, 1); // Winter, "bad" Weather
-const mio::Date d3(2001, 05, 29, 01, 00, 00, 1); // Summer, good Weather
-const mio::Date d4(2001, 05, 26, 01, 00, 00, 1); // Summer, "bad" Weather
-const mio::Date d5(2001, 04, 14, 01, 00, 00, 1); // Higher income then possible
-const mio::Date d6(2001, 05, 22, 01, 00, 00, 1); // double peaks
+static const mio::Date d1(2000, 12, 16, 01, 0, 0, TZ); // Winter, good Weather
+static const mio::Date d2(2000, 12, 26, 01, 0, 0, TZ); // Winter, "bad" Weather
+static const mio::Date d3(2001, 05, 29, 01, 0, 0, TZ); // Summer, good Weather
+static const mio::Date d4(2001, 05, 26, 01, 0, 0, TZ); // Summer, "bad" Weather
+static const mio::Date d5(2001, 04, 14, 01, 0, 0, TZ); // Higher income then possible
+static const mio::Date d6(2001, 05, 22, 01, 0, 0, TZ); // double peaks
 
-const double iswr_ref []= {-1000., -100., -10., -1., -0.1, -0.01, 0, 0.01, 0.1, 1., 10., 100., 1000};
+static const double iswr_ref []= {-1000., -100., -10., -1., -0.1, -0.01, 0, 0.01, 0.1, 1., 10., 100., 1000};
 
 // write out ref file
-bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_ref) {
-
-	for(mio::Date date(start_date); date <= (start_date+1.); date+=(1./(24.*6.))) { //every 10 minutes
+bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_ref) 
+{
+	for (mio::Date date(start_date); date <= (start_date+1.); date+=(10./minutes_per_day)) { //every 10 minutes
 		os << date.toString(Date::ISO) << "\t";
 		os << std::setprecision(10);
 
@@ -93,29 +93,28 @@ void printHeader(ostream& os){
 }
 
 //Test if sun simulation at Stilberg station at different dates and different iswr_ref
-int main() {
-
+int main() 
+{
 	// ----- Cenerate list for loops --------
 	cout << " --- Init Variables \n";
 
-	list<mio::Date> date;
+	std::list<mio::Date> date;
 	date.push_back(d1);
 	date.push_back(d2);
 	date.push_back(d3);
 	date.push_back(d4);
 	date.push_back(d5);
 	date.push_back(d6);
-
-	list<double> iswr(iswr_ref, iswr_ref + sizeof(iswr_ref) / sizeof(double));
+	
+	std::list<double> iswr(iswr_ref, iswr_ref + sizeof(iswr_ref) / sizeof(double));
 
 	// ----- Write reference file ------
-	cout << " --- Start writing Output file \"" << f_output << "\"\n";
-
-	ofstream ofs(f_output.c_str(), ofstream::out | ofstream::trunc);
+	std::cout << " --- Start writing Output file \"" << f_output << "\"\n";
+	std::ofstream ofs(f_output.c_str(), ofstream::out | ofstream::trunc);
 
 	printHeader(ofs);
 	for (list<mio::Date>::iterator it_date = date.begin(); it_date != date.end(); it_date++) {
-		cout << " -- read information for date : " << (*it_date).toString(Date::ISO) << "\n -- Processing reference iswr [";
+		std::cout << " -- read information for date : " << (*it_date).toString(Date::ISO) << "\n -- Processing reference iswr [";
 		for (list<double>::iterator it_iswr = iswr.begin(); it_iswr != iswr.end(); it_iswr++) {
 			cout << " " << *it_iswr;
 			if(!writeSun24h(ofs, *it_date, *it_iswr)){

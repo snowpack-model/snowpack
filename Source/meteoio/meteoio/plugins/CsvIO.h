@@ -29,31 +29,34 @@ namespace mio {
 
 class CsvParameters {
 	public:
-		CsvParameters() : csv_fields(), units_offset(), units_multiplier(), location(), name(), id(), header_lines(1), columns_headers(1), date_col(0), time_col(0), csv_delim(','), eoln('\n'), datetime_idx(), file_and_path(), datetime_format(), csv_tz(0.) {}
+		CsvParameters(const double& tz_in)
+		: csv_fields(), units_offset(), units_multiplier(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), name(), id(), csv_tz(tz_in), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 		
-		void setDateTimeSpec(const std::string& datetime_spec, const double& tz_in);
+		void setDateTimeSpec(const std::string& datetime_spec);
+		void setTimeSpec(const std::string& time_spec);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec);
-		Date parseDate(const std::string& datetime_str, const std::string& /*time_str*/) const;
+		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
+		Date parseDate(const std::string& datetime_str, const std::string& time_str) const;
 		std::string getFilename() const {return file_and_path;}
-		StationData getStation() const {return StationData(location, id, name);}
+		StationData getStation() const;
 		
-		//mio::FileUtils::FileIndexer indexer;
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
 		
-		Coords location;
-		std::string name, id;
-		size_t header_lines, columns_headers;
 		size_t date_col, time_col;
-		char csv_delim, eoln;
+		size_t header_lines, columns_headers;
+		char csv_delim;
+		char eoln;
 	private:
-		static void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
-		std::map< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
+		void parseFields(std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
+		std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec) const;
+		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
 		
-		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate
-		std::string file_and_path, datetime_format; 		///< the scanf() format string for use in parseDate
-		double csv_tz;		///< timezone to apply to parsed dates
-		
+		Coords location;
+		std::vector<size_t> datetime_idx, time_idx;		///< order of the datetime fields for use in parseDate
+		std::string file_and_path, datetime_format, time_format; 		///< the scanf() format string for use in parseDate
+		std::string name, id;
+		double csv_tz, slope, azi;		///< timezone to apply to parsed dates
 };
 
 /**
@@ -84,9 +87,10 @@ class CsvIO : public IOInterface {
 		std::vector<MeteoData> readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd);
 		
 		const Config cfg;
+		mio::FileUtils::FileIndexer indexer;
 		std::vector<CsvParameters> csvparam;
 		std::vector<StationData> vecStations;
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string coordin, coordinparam; //projection parameters
 		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 };
 

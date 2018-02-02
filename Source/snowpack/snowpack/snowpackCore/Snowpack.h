@@ -28,6 +28,9 @@
 
 #include <snowpack/Meteo.h>
 #include <snowpack/DataClasses.h>
+#include <snowpack/SnowDrift.h>
+#include <snowpack/snowpackCore/Metamorphism.h>
+#include <snowpack/snowpackCore/PhaseChange.h>
 
 #include <meteoio/MeteoIO.h>
 #include <vector>
@@ -43,6 +46,12 @@ class Snowpack {
 
 		void runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
 		                      BoundCond& Bdata, SurfaceFluxes& Sdata);
+		
+		/**
+		 * @brief Perform snow preparation (grooming, etc) on a given snowpack
+		 * @param Xdata snowpack to work on
+		 */
+		static void snowPreparation(SnowStation& Xdata);
 
 		void setUseSoilLayers(const bool& value);
 		const static double new_snow_albedo, min_ice_content;
@@ -102,6 +111,9 @@ class Snowpack {
 		void fillNewSnowElement(const CurrentMeteo& Mdata, const double& length, const double& density,
 		                        const bool& is_surface_hoar, const unsigned short& number_of_solutes, ElementData &elem);
 
+		void compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
+                            SurfaceFluxes& Sdata);
+		
 		void compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                  SurfaceFluxes& Sdata);
 

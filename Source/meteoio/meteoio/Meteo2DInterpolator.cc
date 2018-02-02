@@ -43,7 +43,7 @@ namespace mio {
  * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [Input] section):
  *    + RESAMPLING set to *true*;
  *    + RESAMPLING_STRATEGY set to VSTATIONS;
- *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
+ *    + VSTATION# : provide the lat, lon and altitude or easting, northing and altitude for a virtual station (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
@@ -71,8 +71,8 @@ namespace mio {
  * #here the locations where the data will be generated. The caller will only see these stations!
  * RESAMPLING = true
  * RESAMPLING_STRATEGY = VSTATIONS
- * VSTATION1 = 46.793029 9.821343
- * VSTATION2 = 46.793031 9.831572
+ * VSTATION1 = latlon 46.793029 9.821343 1987
+ * VSTATION2 = latlon 46.793031 9.831572 2300
  * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
  * VSTATIONS_REFRESH_RATE = 21600
  * VSTATIONS_REFRESH_OFFSET = 3600

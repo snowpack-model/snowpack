@@ -442,21 +442,21 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 
 }
 
-void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest)
+void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, char &d_i_dest, char &d_j_dest)
 {
 	double max_slope = 0.;
 	d_i_dest = 0;
 	d_j_dest = 0;
 
 	//loop around all adjacent cells to find the cell with the steepest downhill slope
-	for (short d_i=-1; d_i<=1; d_i++) {
-		for (short d_j=-1; d_j<=1; d_j++) {
+	for (char d_i=-1; d_i<=1; d_i++) {
+		for (char d_j=-1; d_j<=1; d_j++) {
 			const double elev_pt1 = dem(ii, jj);
-			const double elev_pt2 = dem(ii + d_i, jj + d_j);
+			const double elev_pt2 = dem(static_cast<size_t>(ii + d_i), static_cast<size_t>(jj + d_j));
 			const double precip_1 = grid(ii, jj);
-			const double precip_2 = grid(ii + d_i, jj + d_j);
+			const double precip_2 = grid(static_cast<size_t>(ii + d_i), static_cast<size_t>(jj + d_j));
 			const double height_ratio = (elev_pt1+precip_1) / (elev_pt2+precip_2);
-			const double new_slope = dem.slope(ii + d_i, jj + d_j);
+			const double new_slope = dem.slope(static_cast<size_t>(ii + d_i), static_cast<size_t>(jj + d_j));
 
 			if ((new_slope>max_slope) && (height_ratio>1.)){
 				max_slope = new_slope;
@@ -473,17 +473,17 @@ double Interpol2D::depositAroundCell(const DEMObject& dem, const size_t& ii, con
 	grid(ii, jj) += precip;
 	double distributed_precip = precip;
 
-	for (short d_i=-1;d_i<=1;d_i++){
-		for (short d_j=-1;d_j<=1;d_j++){
+	for (char d_i=-1;d_i<=1;d_i++){
+		for (char d_j=-1;d_j<=1;d_j++){
 			const double elev_pt1 = dem(ii, jj);
-			const double elev_pt2 = dem(ii + d_i, jj + d_j);
+			const double elev_pt2 = dem(static_cast<size_t>(ii + d_i), static_cast<size_t>(jj + d_j));
 			const double precip_1 = grid(ii, jj);
-			const double precip_2 = grid(ii + d_i, jj + d_j);
+			const double precip_2 = grid(static_cast<size_t>(ii + d_i), static_cast<size_t>(jj + d_j));
 			const double height_ratio = (elev_pt1+precip_1) / (elev_pt2+precip_2);
 
 			if ((d_i!=0)||(d_j!=0)){
 				if (height_ratio>1.){
-					grid(ii + d_i, jj + d_j) += precip;
+					grid(static_cast<size_t>(ii + d_i), static_cast<size_t>(jj + d_j)) += precip;
 					distributed_precip += precip;
 				}
 			}
@@ -522,7 +522,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 
 			size_t ii_dest = ii, jj_dest = jj;
 			while (precip>0.) {
-				short d_i, d_j;
+				char d_i, d_j;
 				steepestDescentDisplacement(dem, grid, ii_dest, jj_dest, d_i, d_j);
 				//move to the destination cell
 				ii_dest += d_i;
@@ -674,7 +674,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 	double max_tan_slope = 0.;
 	size_t nb_cells = 0;
 	while ( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
-		const double altitude = dem(ll, mm);
+		const double altitude = dem((unsigned)ll, (unsigned)mm);
 		if ( (altitude!=mio::IOUtils::nodata) && !(ll==ii && mm==jj) ) {
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;

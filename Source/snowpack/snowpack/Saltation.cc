@@ -63,10 +63,14 @@ const double Saltation::salt_height = 0.07;
  * non-static section                                       *
  ************************************************************/
 
-Saltation::Saltation(const SnowpackConfig& cfg) : saltation_model()
+static std::string get_model(const SnowpackConfig& cfg) 
 {
-	cfg.getValue("SALTATION_MODEL", "SnowpackAdvanced", saltation_model);
+	std::string model;
+	cfg.getValue("SALTATION_MODEL", "SnowpackAdvanced", model);
+	return model;
 }
+
+Saltation::Saltation(const SnowpackConfig& cfg) : saltation_model( get_model(cfg) ) {}
 
 /**
  * @brief Returns the wind profile
@@ -116,7 +120,7 @@ double Saltation::sa_vw2(const double& z, const double& tauA, const double& tauS
 
 	double u = 0., z_act = z0;
 	while (z_act < z) {
-		const double dz = 0.00002;
+		static const double dz = 0.00002;
 		z_act += dz;
 		const double ustarz = ustar * (1. - (1. - sqrt(r)) *  exp(-z_act / hs));
 		const double dudz = ustarz / Saltation::karman / z_act;
@@ -146,8 +150,8 @@ bool Saltation::sa_Traject(const double& u0, const double& angle_e_rad, const do
                            const double& tauA, const double& tauS, const double& z0,
                            double& ubar, double& u_i, double& angle_i_rad, double& t_i, double& z_max)
 {
-	const double DT = 0.0005; //time step in seconds
-	const double vis = 1.74e-5; //viscosity
+	static const double DT = 0.0005; //time step in seconds
+	static const double vis = 1.74e-5; //viscosity
 
 	// Initialize velocities of particle and position
 	double xdot = u0 * cos(angle_e_rad);
@@ -286,8 +290,8 @@ double Saltation::sa_AeroEntrain(const double& z0, const double& tauS, const dou
 	const double u0 = Saltation::ratio_ve_ustar * sqrt((tauS - tau_th) / Constants::density_air);
 	//  u0 = 3.7*sqrt(tauS-tau_th);
 
-	const double eps = 0.001;
-	const int maxit = 40;
+	static const double eps = 0.001;
+	static const int maxit = 40;
 	int iter=0;
 	double tauA_old, Nae;
 	double tauA = .5 * (tauS + tau_th);
@@ -391,7 +395,7 @@ int Saltation::sa_TestSaltation(const double& z0, const double& tauS, const doub
  * @return bool
 */
 bool Saltation::compSaltation(const double& i_tauS, const double& tau_th, const double& slope_angle, const double& dg,
-                                  double& massflux, double& c_salt)
+                                  double& massflux, double& c_salt) const
 {
 	if (saltation_model == "SORENSEN") { // Default model
 		// Sorensen

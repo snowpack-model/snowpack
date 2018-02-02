@@ -344,7 +344,7 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 	int e = (signed)nE-1;
 	for (unsigned int kk = 0; kk <= 5; kk++) {
 		while ((e >= signed(Xdata.SoilNode)) && ((Mdata.date.getJulian() - EMS[e].depositionDate.getJulian()) < (H_TO_D(t_hn[kk])))) {
-				sum_hn  += EMS[e].L;
+			sum_hn += EMS[e].L;
 			sum_precip += EMS[e].L * EMS[e].Rho;
 			e--;
 		}

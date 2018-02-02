@@ -237,10 +237,10 @@ void LibResampling2D::cubicBSpline(Array2D<double> &o_grid, const Array2D<double
 
 			double F = 0., max=-std::numeric_limits<double>::max(), min=std::numeric_limits<double>::max();
 			unsigned int avg_count = 0;
-			for (short n=-1; n<=2; n++) {
-				for (short m=-1; m<=2; m++) {
+			for (char n=-1; n<=2; n++) {
+				for (char m=-1; m<=2; m++) {
 					if (((signed)org_ii+m)<0 || ((signed)org_ii+m)>=(signed)org_nx || ((signed)org_jj+n)<0 || ((signed)org_jj+n)>=(signed)org_ny) continue;
-					const double pixel = i_grid(org_ii+m, org_jj+n);
+					const double pixel = i_grid(static_cast<size_t>(org_ii+m), static_cast<size_t>(org_jj+n));
 					if (pixel!=IOUtils::nodata) {
 						F += pixel * BSpline_weight(m-dx) * BSpline_weight(dy-n);
 						avg_count++;

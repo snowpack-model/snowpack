@@ -207,6 +207,37 @@ double SunTrajectory::getSolarTimeOfDay() const
 		return IOUtils::nodata;
 }
 
+/**
+ * @brief Return the date of easter for the given year.
+ * @details This is the method given in Meeus citing Butcher's Ecclesiastical Calendar.
+ * It is valid for all years after October 1582 (since this was the year of introduction of the  
+ * Gregorian calendar, suppressing 10 days (jumping from 4.10 to 15.10) compared to 
+ * the previous Julian calendar).
+ * @param[in] year the year of interest
+ * @param[out] month the month of Easter
+ * @param[out] day the day of Easter
+ */
+void SunTrajectory::getEaster(const int& year, int &month, int &day)
+{
+	const int a = year % 19;
+	const int b = year / 100;
+	const int c = year % 100;
+	const int d = b / 4;
+	const int e = b % 4;
+	const int f = (b+8) / 25;
+	const int g = (b-f+1) / 3;
+	const int h = (19*a+b-d-g+15) % 30;
+	const int i = c / 4;
+	const int k = c % 4;
+	const int l = (32+2*e+2*i-h-k) % 7;
+	const int m = (a+11*h+22*l) / 451;
+	const int n = (h+l-7*m+114) / 31;
+	const int p = (h+l-7*m+114) % 31;
+	
+	month = n;
+	day = p+1;
+}
+
 const std::string SunTrajectory::toString() const
 {
 	std::ostringstream os;
@@ -220,9 +251,9 @@ const std::string SunTrajectory::toString() const
 	os << std::setprecision(2);
 	os << "Azi./Elev.\t" << std::setw(7)<< SolarAzimuthAngle << "° " << std::setw(7) << SolarElevation << "°\n";
 	os << "RA/decl.\t" << std::setw(7) << SunRightAscension << "° " << std::setw(7) << SunDeclination << "°\n";
-	os << "Sunrise\t\t" << Date::printFractionalDay(SunRise - longitude*1./15.*1./24. + TZ*1./24.) << "\n";
-	os << "SolarNoon\t" << Date::printFractionalDay(SolarNoon - longitude*1./15.*1./24. + TZ*1./24.) << "\n";
-	os << "Sunset\t\t" << Date::printFractionalDay(SunSet - longitude*1./15.*1./24. + TZ*1./24.) << "\n";
+	os << "Sunrise\t\t" << Date::printFractionalDay(SunRise) << "\n";
+	os << "SolarNoon\t" << Date::printFractionalDay(SolarNoon) << "\n";
+	os << "Sunset\t\t" << Date::printFractionalDay(SunSet) << "\n";
 	os << "Daylight\t" << Date::printFractionalDay(SunlightDuration/(60.*24.)) << "\n";
 	os << "</SunTrajectory>\n";
 	os << std::setfill(' ');
@@ -307,9 +338,9 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 
 void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight) {
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
-		sunrise = SunRise - (longitude*1./15. + TZ)*1./24.; //back to TZ, in days
-		sunset = SunSet - (longitude*1./15. + TZ)*1./24.; //back to TZ, in days
-		daylight = SunlightDuration;
+		sunrise = SunRise;
+		sunset = SunSet;
+		daylight = SunlightDuration/(60.*24.);
 	} else {
 		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
 	}
@@ -340,6 +371,14 @@ void SunMeeus::getEquatorialSunVector(double& sunx, double& suny, double& sunz) 
 	sunz =  sin( SolarElevation );
 }
 
+double SunMeeus::SideralToLocal(const double& JD)
+{
+	const double T = (JD-2451545.)/36525.;
+	double theta_0 = (280.46061837 + 360.98564736629*(JD-2451545.) + 0.000387933*T*T - T*T*T/38710000.); //in degrees
+	theta_0 = fmod(fmod(theta_0, 360.)+360., 360.) / (15.*24); //in hours and then in days
+	return theta_0;
+}
+
 void SunMeeus::update() {
 	//calculating various time representations
 	const double julian = julian_gmt;
@@ -351,7 +390,7 @@ void SunMeeus::update() {
 	//parameters of the orbits of the Earth and Sun
 	const double geomMeanLongSun = fmod( 280.46646 + julian_century*(36000.76983 + julian_century*0.0003032) , 360.);
 	const double geomMeanAnomSun = 357.52911 + julian_century*(35999.05029 - 0.0001537*julian_century);
-	eccentricityEarth = 0.016708634 - julian_century*(0.000042037 + 0.0001537*julian_century);
+	eccentricityEarth = 0.016708634 - julian_century*(0.000042037 + 0.0000001267*julian_century);
 	const double SunEqOfCtr =   sin(1.*geomMeanAnomSun*Cst::to_rad)*( 1.914602-julian_century*(0.004817+0.000014*julian_century))
 	             + sin(2.*geomMeanAnomSun*Cst::to_rad)*(0.019993 - 0.000101*julian_century)
 	             + sin(3.*geomMeanAnomSun*Cst::to_rad)*(0.000289);
@@ -385,7 +424,7 @@ void SunMeeus::update() {
 	                 - 1.25*eccentricityEarth*eccentricityEarth*sin(2.*geomMeanAnomSun*Cst::to_rad)
 	                 )*Cst::to_deg;
 
-	SolarNoon = (720. - 4.*longitude - EquationOfTime + lst_TZ*60.)/1440.; //in days, in LST time
+	SolarNoon = (720. - 4.*longitude - EquationOfTime + TZ*60.)/1440.; //in days, in LST time
 
 	const double cos_HAsunrise = cos(90.833*Cst::to_rad) / (cos(latitude*Cst::to_rad) * cos(SunDeclination*Cst::to_rad))
 	             - tan(latitude*Cst::to_rad)*tan(SunDeclination*Cst::to_rad);
@@ -416,13 +455,11 @@ void SunMeeus::update() {
 	                   sin(latitude*Cst::to_rad) * sin(SunDeclination*Cst::to_rad)
 	                   + cos(latitude*Cst::to_rad) * cos(SunDeclination*Cst::to_rad) * cos(HourAngle*Cst::to_rad)
 	                   )*Cst::to_deg;
-
+	
 	SolarElevation = 90. - SolarZenithAngle;
 
-	double AtmosphericRefraction;
-	if ( SolarElevation>85. ) {
-		AtmosphericRefraction = 0.;
-	} else {
+	double AtmosphericRefraction = 0.;
+	if ( SolarElevation<=85. ) {
 		if ( SolarElevation>5. ) {
 			AtmosphericRefraction = 58.1 / tan(SolarElevation*Cst::to_rad) - 0.07 / pow( tan(SolarElevation*Cst::to_rad) , 3 ) + 0.000086/pow( tan(SolarElevation*Cst::to_rad), 5);
 		} else {
@@ -432,8 +469,8 @@ void SunMeeus::update() {
 				AtmosphericRefraction = -20.772 / tan( SolarElevation*Cst::to_rad );
 			}
 		}
+		AtmosphericRefraction /= 3600.;
 	}
-	AtmosphericRefraction /= 3600.;
 
 	SolarElevationAtm = SolarElevation + AtmosphericRefraction; //correction for the effects of the atmosphere
 	const double cos_SAA = (sin(latitude*Cst::to_rad)*cos(SolarZenithAngle*Cst::to_rad) - sin(SunDeclination*Cst::to_rad)) /

@@ -148,6 +148,15 @@ namespace IOUtils {
 	void replace_all(std::string &input, const std::string& search, const std::string& format);
 
 	/**
+	 * @brief count how many times a substring appears in a string
+	 * @details This should be quite similar to Boost::replace_all.
+	 * @param[in] input string to manipulate
+	 * @param[in] search substring to be searched for 
+	 * @return number of non-overlapping matches 
+	 */
+	size_t count(std::string &input, const std::string& search);
+	
+	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
 	* @param in_line (const string&) string to parse
 	* @param delimiter (const string&) delimiter to use for the parsing
@@ -311,6 +320,15 @@ namespace IOUtils {
 	*/
 	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
 	                             std::string& coordout, std::string& coordoutparam);
+	
+	/**
+	* @brief A function that parses a Config object for COORSYS, COORDPARAM keywords in the [Input]
+	*        section and sets the respective strings to the values of those keywords
+	* @param[in] cfg  A Config object
+	* @param[out] coordin The coordinate system to be used for input data
+	* @param[out] coordinparam The coordinate system parameters to be used for output data
+	*/
+	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam);
 
 	/**
 	* @brief A function that parses a Config object for the time_zone keyword and returns the timezone

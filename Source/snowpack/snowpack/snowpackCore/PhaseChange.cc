@@ -46,20 +46,35 @@ const double PhaseChange::theta_s = 1.0;
  * non-static section                                       *
  ************************************************************/
 
+static bool get_bool(const SnowpackConfig& cfg, const std::string& key, const std::string& section)
+{
+	bool value;
+	cfg.getValue(key, section, value);
+	return value;
+}
+
+static double get_double(const SnowpackConfig& cfg, const std::string& key, const std::string& section)
+{
+	double value;
+	cfg.getValue(key, section, value);
+	return value;
+}
+
+static double get_sn_dt(const SnowpackConfig& cfg) 
+{
+	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
+	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
+	return M_TO_S(calculation_step_length);
+}
+
 PhaseChange::PhaseChange(const SnowpackConfig& cfg)
              : iwatertransportmodel_snow(BUCKET), iwatertransportmodel_soil(BUCKET),
                watertransportmodel_snow("BUCKET"), watertransportmodel_soil("BUCKET"),
                forcing("ATMOS"),
-               sn_dt(0.), cold_content_in(IOUtils::nodata), cold_content_soil_in(IOUtils::nodata),
+               sn_dt( get_sn_dt(cfg) ), cold_content_in(IOUtils::nodata), cold_content_soil_in(IOUtils::nodata),
                cold_content_out(IOUtils::nodata), cold_content_soil_out(IOUtils::nodata),
-	       alpine3d(false), t_crazy_min(0.), t_crazy_max(0.), max_theta_ice(1.)
+	       alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ), t_crazy_min( get_double(cfg, "T_CRAZY_MIN", "SnowpackAdvanced") ), t_crazy_max( get_double(cfg, "T_CRAZY_MAX", "SnowpackAdvanced") ), max_theta_ice(1.)
 {
-	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
-	double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
-	sn_dt = M_TO_S(calculation_step_length);
-
-	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
-
 	//Water transport model snow
 	cfg.getValue("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", watertransportmodel_snow);
 	max_theta_ice=1.;
@@ -82,10 +97,12 @@ PhaseChange::PhaseChange(const SnowpackConfig& cfg)
 		iwatertransportmodel_soil=RICHARDSEQUATION;
 	}
 
-	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
-	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
-
 	cfg.getValue("FORCING", "Snowpack", forcing);
+}
+
+void PhaseChange::reset()
+{
+	cold_content_in = cold_content_soil_in = cold_content_out = cold_content_soil_out = IOUtils::nodata;
 }
 
 /**

@@ -111,6 +111,7 @@ class Date {
 		Date();
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
 		Date(const time_t&, const bool& in_dst=false);
 
 		void setFromSys();

@@ -112,7 +112,20 @@ MACRO (SET_COMPILER_OPTIONS)
 		IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
 			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wvector-operation-performance") #for gcc>=4.7.0
 			IF(NOT WIN32)
-				SET(OPTIM "${OPTIM} -flto") #for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
+				#for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
+				find_program(CMAKE_GCC_AR NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ar${_CMAKE_TOOLCHAIN_SUFFIX} HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+				find_program(CMAKE_GCC_NM NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-nm HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+				find_program(CMAKE_GCC_RANLIB NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ranlib HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+
+				if( CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB )
+					SET(OPTIM "${OPTIM} -flto") 
+					set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -fno-fat-lto-objects" )
+					set( CMAKE_AR "${CMAKE_GCC_AR}" )
+					set( CMAKE_NM "${CMAKE_GCC_NM}" )
+					set( CMAKE_RANLIB "${CMAKE_GCC_RANLIB}" )
+				else()
+					message( WARNING "GCC indicates LTO support, but binutils wrappers could not be found. Disabling LTO." )
+				endif()
 			ENDIF(NOT WIN32)
 			#if set to ON, all binaries depending on the library have to be compiled the same way.
 			#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"

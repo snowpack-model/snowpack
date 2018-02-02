@@ -361,36 +361,79 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
 
 /**
 * @brief Local projection onstructor: this constructor is only suitable for building a local projection.
-* Such a projection defines easting and northing as the distance (in meters) to a reference point
+* @details Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
 * @param[in] in_coordinatesystem string identifying the coordinate system to use
 * @param[in] in_parameters string giving some additional parameters for the projection (empty string if not applicable)
 * @param[in] coord_spec coordinate specification
 *
-* The coordinate specification is given as either: "easting northing epsg" or "lat lon" or "(lat, lon)"
+* The coordinate specification is prefixed by either "latlon" or "xy" (for cartesian coordinates) given as either:
+* - latitude longitude altitude
+* - latitude/longitude/altitude
+* - (latitude; longitude; altitude)
+* - (latitude, longitude, altitude)
+* Of course, for cartesian coordinates systems, the easting/northing/altitudes are provided instead of latitude/longitude/altitude.
+* Latitudes and longitudes can be in any format supported by CoordsAlgorithms::dms_to_decimal.
+*
+* For example, those are valid coordinates specification strings:
+* @code
+* latlon (46.75; 9.80; 2200)
+* latlon (46d 43' 51", 9.80, 2200)
+* xy (198754, 723458, 2200)
+* @endcode
 */
-Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, const std::string& coord_spec)
+Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec)
        : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
          altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
          easting(IOUtils::nodata), northing(IOUtils::nodata),
          grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false), 
          coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
-	char rest[32] = "";
-	double x, y;
-	if ((sscanf(coord_spec.c_str(), "%lg %lg%31s", &x, &y, rest) < 2) &&
-	     (sscanf(coord_spec.c_str(), "(%lg,%lg)%31s", &x, &y, rest) < 2) &&
-	     (sscanf(coord_spec.c_str(), "(%lg, %lg)%31s", &x, &y, rest) < 2)) {
-		return;
-	}
+	static const size_t len=128;
+	if (coord_spec.size()>=len)
+			throw InvalidFormatException("Given coordinate string is too long! ",AT);
 
-	int epsg=IOUtils::inodata;
-	if (sscanf(rest, "%d", &epsg)==1) {
-		setEPSG(epsg);
-		setXY(x, y, IOUtils::nodata);
-		setProj(in_coordinatesystem, in_parameters);
+	static const std::string latlon( "latlon" );
+	static const std::string xy( "xy" );
+	IOUtils::toLower( coord_spec );
+	size_t pos_type = coord_spec.find( latlon );
+
+	char alt_str[len]="";
+	if (pos_type!=std::string::npos) {
+		coord_spec.erase(pos_type, latlon.length());
+		char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
+		char lon_str[len]="";
+
+		if     ((sscanf(coord_spec.c_str(), " %[0-9.,°d'\"-] %[0-9.,°d'\"-] %[0-9.,-]", lat_str, lon_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), " %[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]/%[0-9.,- ]", lat_str, lon_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), " (%[0-9.,°d'\"- ];%[0-9.,°d'\"- ];%[0-9.,- ])", lat_str, lon_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), " (%[0-9.°d'\"- ],%[0-9.°d'\"- ],%[0-9.- ])", lat_str, lon_str, alt_str) < 3)) {
+				throw InvalidFormatException("Can not parse given coordinates: "+coord_spec,AT);
+		}
+
+		double alt;
+		if (!IOUtils::convertString(alt, alt_str)) throw InvalidFormatException("Can not parse the altitude given in the coordinates: "+coord_spec,AT);
+		setLatLon( CoordsAlgorithms::dms_to_decimal(std::string(lat_str)), CoordsAlgorithms::dms_to_decimal(std::string(lon_str)), alt);
 	} else {
-		setLatLon(x, y, IOUtils::nodata);
+		pos_type = coord_spec.find( xy );
+		if (pos_type==std::string::npos)
+			throw InvalidFormatException("Can not parse given coordinates: "+coord_spec, AT);
+		coord_spec.erase(pos_type, xy.length());
+		char easting_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
+		char northing_str[len]="";
+
+		if     ((sscanf(coord_spec.c_str(), " %[0-9.,°d'\"-] %[0-9.,°d'\"-] %[0-9.,-]", easting_str, northing_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), " %[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]/%[0-9.,- ]", easting_str, northing_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), " (%[0-9.,°d'\"- ];%[0-9.,°d'\"- ];%[0-9.,- ])", easting_str, northing_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), " (%[0-9.°d'\"- ],%[0-9.°d'\"- ],%[0-9.- ])", easting_str, northing_str, alt_str) < 3)) {
+				throw InvalidFormatException("Can not parse given coordinates: "+coord_spec,AT);
+		}
+
+		double east, north, alt;
+		if (!IOUtils::convertString(east, alt_str)) throw InvalidFormatException("Can not parse the easting given in the coordinates: "+coord_spec,AT);
+		if (!IOUtils::convertString(north, alt_str)) throw InvalidFormatException("Can not parse the northing given in the coordinates: "+coord_spec,AT);
+		if (!IOUtils::convertString(alt, alt_str)) throw InvalidFormatException("Can not parse the altitude given in the coordinates: "+coord_spec,AT);
+		setXY( east, north, alt);
 	}
 }
 

@@ -215,13 +215,13 @@ void ALPUG::readStationData(const Date&, std::vector<StationData>& vecStation)
 Date ALPUG::parseDINDate(const std::string& datum) const
 {
 	int year;
-	unsigned int month, day, hour, minute;
+	int month, day, hour, minute;
 	double second;
 	char rest[32] = "";
 
-	if (sscanf(datum.c_str(), "%u.%u.%d %u:%u:%lg%31s", &day, &month, &year, &hour, &minute, &second, rest) >= 6) {
+	if (sscanf(datum.c_str(), "%d.%d.%d %d:%d:%lg%31s", &day, &month, &year, &hour, &minute, &second, rest) >= 6) {
 		return Date(year, month, day, hour, minute, in_dflt_TZ);
-	} else if (sscanf(datum.c_str(), "%u.%u.%d %u:%u%31s", &day, &month, &year, &hour, &minute, rest) >= 5) {
+	} else if (sscanf(datum.c_str(), "%d.%d.%d %d:%d%31s", &day, &month, &year, &hour, &minute, rest) >= 5) {
 		return Date(year, month, day, hour, minute, in_dflt_TZ);
 	}
 

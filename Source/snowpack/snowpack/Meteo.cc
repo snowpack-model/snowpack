@@ -395,7 +395,7 @@ void Meteo::compRadiation(const SnowStation &station, mio::SunObject &sun, Snowp
 		const double hs = (use_hs_meas)? station.mH - station.Ground : station.cH - station.Ground;
 		const double iswr_factor = Mdata.rswr / (dir_h+diff+Constants::eps); //avoiding "0/0"
 
-		if (hs<0.1 && Mdata.rh<0.7 && iswr_factor<0.3) {
+		if ((hs>0 && hs<0.1) && Mdata.rh<0.7 && iswr_factor<0.3) {
 			dir_h = H_direct;
 			diff = H_diffuse;
 			Mdata.iswr = dir_h+diff;

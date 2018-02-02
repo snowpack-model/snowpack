@@ -107,7 +107,7 @@ void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 	srand( static_cast<unsigned int>(time(NULL)) );
 	size_t ii=1;
 	while (ii<nrRemove) {
-		const size_t idx = rand() % set_size;
+		const size_t idx = (unsigned)rand() % set_size;
 		if (ovec[idx].date.isUndef()) continue; //the point was already removed
 
 		ovec[idx].date.setUndef(true);
