@@ -56,6 +56,7 @@ using namespace mio;
  *                            - 3 Surface Hoar SH
  *                            - 4 Graupel PPgp
  *                            - 5 Not implemented yet --> thin crusts
+ *                            - 6 Technical Snow
  *                            - 7 Glacier ice
  *                            - 8 Ice layer IFil
  *                            - 9 Pure water on top of snowpack, soil, or road

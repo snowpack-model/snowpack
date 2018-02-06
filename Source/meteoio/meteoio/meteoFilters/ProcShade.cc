@@ -32,8 +32,7 @@ namespace mio {
 //custom function for sorting cache_meteo_files
 struct sort_pred {
 	bool operator()(const std::pair<double,double> &left, const std::pair<double,double> &right) {
-		if (left.first < right.first) return true;
-		return false;
+		if (left.first < right.first) return true; else return false;
 	}
 };
 
@@ -61,9 +60,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 		//now look for our specific station hash
 		mask = masks.find( stationHash );
 		if (mask==masks.end()) {
-			std::vector< std::pair<double,double> > tmp_mask;
-			computeMask(dem, ovec[0].meta, tmp_mask, write_mask_out);
-			masks[ stationHash ] = tmp_mask;
+			masks[ stationHash ] = computeMask(dem, ovec[0].meta, write_mask_out);
 			mask = masks.find( stationHash);
 		}
 	}
@@ -140,9 +137,9 @@ double ProcShade::getMaskElevation(const std::vector< std::pair<double,double> >
 	return a*azimuth + b;
 }
 
-void ProcShade::readMask(const std::string& filter, const std::string& filename, std::vector< std::pair<double,double> > &o_mask)
+std::vector< std::pair<double,double> > ProcShade::readMask(const std::string& filter, const std::string& filename)
 {
-	o_mask.clear();
+	std::vector< std::pair<double,double> > o_mask;
 	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
 		std::ostringstream ss;
@@ -155,9 +152,9 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 	try {
 		size_t lcount=0;
 		double azimuth, value;
+		std::string line;
 		do {
 			lcount++;
-			std::string line;
 			getline(fin, line, eoln); //read complete line
 			IOUtils::stripComments(line);
 			IOUtils::trim(line);
@@ -179,8 +176,7 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 
-			const std::pair<double,double> tmp( azimuth, value );
-			o_mask.push_back( tmp );
+			o_mask.push_back( make_pair(azimuth, value) );
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
@@ -192,11 +188,12 @@ void ProcShade::readMask(const std::string& filter, const std::string& filename,
 	
 	if (o_mask.empty()) throw InvalidArgumentException("In filter 'SHADE', no valid mask found in file '"+filename+"'", AT);
 	std::sort(o_mask.begin(), o_mask.end(), sort_pred());
+	return o_mask;
 }
 
-void ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, std::vector< std::pair<double,double> > &o_mask, const bool& dump_mask)
+std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, const bool& dump_mask)
 {
-	o_mask.clear();
+	std::vector< std::pair<double,double> > o_mask;
 	Coords position( sd.position );
 	if (!i_dem.gridify(position)) {
 		const string msg = "In filter 'SHADE', station '"+sd.stationID+"' "+position.toString(Coords::LATLON)+" is not included in the DEM "+i_dem.llcorner.toString(Coords::LATLON);
@@ -212,6 +209,8 @@ void ProcShade::computeMask(const DEMObject& i_dem, const StationData& sd, std::
 			std::cout << o_mask[ii].first << " " << o_mask[ii].second << "\n";
 		std::cout << "\n";
 	}
+
+	return o_mask;
 }
 
 void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
@@ -227,9 +226,7 @@ void ProcShade::parse_args(const std::vector< std::pair<std::string, std::string
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
-			std::vector< std::pair<double,double> > mask;
-			readMask(getName(), filename, mask);
-			masks["*"] = mask; //this mask is valid for ALL stations
+			masks["*"] = readMask(getName(), filename); //this mask is valid for ALL stations
 			from_dem = false;
 		} else if (vecArgs[ii].first=="DUMP_MASK") {
 			IOUtils::parseArg(vecArgs[ii], where, write_mask_out);

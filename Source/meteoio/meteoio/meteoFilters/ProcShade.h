@@ -67,10 +67,10 @@ class ProcShade : public ProcessingBlock {
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 		
-		static void computeMask(const DEMObject& i_dem, const StationData& sd, std::vector< std::pair<double,double> > &o_mask, const bool& dump_mask=false);
+		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd, const bool& dump_mask=false);
 
 	private:
-		static void readMask(const std::string& filter, const std::string& filename, std::vector< std::pair<double,double> > &o_mask);
+		static std::vector< std::pair<double,double> > readMask(const std::string& filter, const std::string& filename);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const;
 

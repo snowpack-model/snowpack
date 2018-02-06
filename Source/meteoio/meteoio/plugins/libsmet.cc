@@ -553,7 +553,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 		if (!append_possible) {
 			//check where to insert the new data
 			SMETReader reader(filename);
-			const std::string last_timestamp = reader.getLastTimestamp();
+			const std::string last_timestamp( reader.getLastTimestamp() );
 			if (last_timestamp.empty() || last_timestamp>=vec_timestamp[0])
 				reader.truncate_file(vec_timestamp[0]);
 			append_possible = true;
@@ -1202,7 +1202,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		} else if (julian_interval && julian_present){
 			fpointer = indexer.getIndex(julian_start);
 		}
-
+		
 		if (fpointer!=static_cast<streampos>(-1))
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
 		else {
@@ -1295,7 +1295,7 @@ std::string SMETReader::getLastTimestamp() const
 	
 	fin.seekg(0, std::ifstream::end);
 	const std::streamoff length = fin.tellg();
-	const int buff_size = 1024; //a better appraoch would be to loop over this buff_size in order to accomodate very different line lengths
+	const int buff_size = 1024; //a better approach would be to loop over this buff_size in order to accomodate very different line lengths
 	if (buff_size<length) 
 		fin.seekg(0-buff_size, fin.end);
 	else

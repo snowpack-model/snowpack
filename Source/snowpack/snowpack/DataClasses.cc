@@ -805,6 +805,17 @@ ElementData::ElementData(const unsigned short int& in_ID) : depositionDate(), L0
                              S(0.), C(0.), CDot(0.), ps2rb(0.),
                              s_strength(0.), hard(0.), S_dr(0.), crit_cut_length(Constants::undefined), soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), Qph_up(0.), Qph_down(0.), dsm(0.), ID(in_ID) {}
 
+ElementData::ElementData(const ElementData& cc) :
+                             depositionDate(cc.depositionDate), L0(cc.L0), L(cc.L),
+                             Te(cc.Te), gradT(cc.gradT), melting_tk(cc.melting_tk), freezing_tk(cc.freezing_tk),
+                             theta(cc.theta), h(cc.h), conc(cc.conc), k(cc.k), c(cc.c), soil(cc.soil),
+                             Rho(cc.Rho), M(cc.M), sw_abs(cc.sw_abs),
+                             rg(cc.rg), dd(cc.dd), sp(cc.sp), ogs(cc.ogs), rb(cc.rb), N3(cc.N3), mk(cc.mk),
+                             type(cc.type), metamo(cc.metamo), salinity(cc.salinity), dth_w(cc.dth_w), res_wat_cont(cc.res_wat_cont), Qmf(cc.Qmf), QIntmf(cc.QIntmf),
+                             dEps(cc.dEps), Eps(cc.Eps), Eps_e(cc.Eps_e), Eps_v(cc.Eps_v), Eps_Dot(cc.Eps_Dot), Eps_vDot(cc.Eps_vDot), E(cc.E),
+                             S(cc.S), C(cc.C), CDot(cc.CDot), ps2rb(cc.ps2rb),
+                             s_strength(cc.s_strength), hard(cc.hard), S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down), dsm(cc.dsm), ID(cc.ID) {}
+
 std::ostream& operator<<(std::ostream& os, const ElementData& data)
 {
 	os << data.depositionDate;

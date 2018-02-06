@@ -111,8 +111,7 @@ class Snowpack {
 		void fillNewSnowElement(const CurrentMeteo& Mdata, const double& length, const double& density,
 		                        const bool& is_surface_hoar, const unsigned short& number_of_solutes, ElementData &elem);
 
-		void compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
-                            SurfaceFluxes& Sdata);
+		void compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip);
 		
 		void compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                  SurfaceFluxes& Sdata);

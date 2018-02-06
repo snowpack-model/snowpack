@@ -1437,11 +1437,104 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
  * @param Xdata Snow cover data
  * @param cumu_precip cumulated amount of precipitation (kg m-2)
  */
-void Snowpack::compTechnicalSnow(const CurrentMeteo& /*Mdata*/, SnowStation& /*Xdata*/, double& /*cumu_precip*/,
-                            SurfaceFluxes& /*Sdata*/)
+void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip)
 {
+	const size_t nOldN = Xdata.getNumberOfNodes(); //Old number of nodes
+	const size_t nOldE = Xdata.getNumberOfElements(); //Old number of elements
+	const double cos_sl = Xdata.cos_sl; //slope cosinus
+
+	static double rho_hn = 400.; // Pirmin's playground I
+
+	const double precip_snow = (Mdata.psum_tech + cumu_precip) * (1. -  Mdata.psum_ph);
+	const double precip_rain = (Mdata.psum_tech + Mdata.psum) * Mdata.psum_ph;
+	const double delta_cH = (precip_snow / rho_hn); // Actual enforced snow depth
+	const double th_w = precip_rain / (delta_cH * Constants::density_water); // volume fraction of liquid water in each element
 	
-}
+	// Now determine whether the increase in snow depth is large enough.
+	double hn = 0.; //new snow amount
+	if ( (delta_cH >= height_new_elem * cos_sl) ) {
+		cumu_precip = 0.0; // we use the mass through delta_cH
+		hn = delta_cH;
+	}
+	if (hn > Snowpack::snowfall_warning)
+				prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
+				          "Large snowfall! hn=%.3f cm (azi=%.0f, slope=%.0f)",
+				            M_TO_CM(hn), Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
+
+	const size_t nAddE = (size_t)(hn / (height_new_elem*cos_sl));
+	if (nAddE < 1) return;
+
+	Xdata.Albedo = Snowpack::new_snow_albedo;
+
+    const size_t nNewN = nOldN + nAddE;
+	const size_t nNewE = nOldE + nAddE;
+	Xdata.resize(nNewE);
+	vector<NodeData>& NDS = Xdata.Ndata;
+	vector<ElementData>& EMS = Xdata.Edata;
+
+	// Fill the nodal data
+	if (!useSoilLayers && (nOldN-1 == Xdata.SoilNode)) // New snow on bare ground w/o soil
+		NDS[nOldN-1].T = 0.5*(t_surf + Mdata.ta);
+	const double Ln = (hn / (double)nAddE);               // New snow element length
+	double z0 = NDS[nOldN-1].z + NDS[nOldN-1].u + Ln; // Position of lowest new node
+	for (size_t n = nOldN; n < nNewN; n++) { //loop over the nodes
+				NDS[n].T = t_surf;                  // Temperature of the new node
+				NDS[n].z = z0;                      // New nodal position
+				NDS[n].u = 0.0;                     // Initial displacement is 0
+				NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
+				NDS[n].udot = 0.0;                  // Settlement rate is also 0
+				NDS[n].f = 0.0;                     // Unbalanced forces are 0
+				NDS[n].S_n = INIT_STABILITY;
+				NDS[n].S_s = INIT_STABILITY;
+				z0 += Ln;
+			}
+
+	// Fill the element data
+	for (size_t e = nOldE; e < nNewE; e++) { //loop over the elements
+				const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
+				fillNewSnowElement(Mdata, length, rho_hn, false, Xdata.number_of_solutes, EMS[e]);
+				
+				// Now give specific properties for technical snow, consider liquid water 
+				// Assume that the user does not specify unreasonably high liquid water contents. 
+				// This depends also on the density of the solid fraction - print a warning if it looks bad
+				EMS[e].theta[WATER] += th_w;
+				if ( (EMS[e].theta[WATER] + EMS[e].theta[ICE]) > 0.7)
+					prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
+				          "Too much liquid water specified or density too high! Dry density =%.0f kg m-3  Water Content = %.0f %", rho_hn, th_w);
+				          
+				EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
+				
+				if (EMS[e].theta[AIR] < 0.) {
+					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Error in technical snow input - no void fraction left");
+					throw IOException("Runtime error in runSnowpackModel", AT);
+					}
+			
+				// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
+				// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.
+				// Note that we use the same branching condition as in the function Snowpack::neumannBoundaryConditions(...)
+				const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+				if(nOldE > 0 && EMS[nOldE-1].theta[WATER] > theta_r + Constants::eps && EMS[nOldE-1].theta[ICE] > Constants::eps) {
+					EMS[e].theta[WATER]+=(2.*Constants::eps);
+					EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
+					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
+				}
+				
+				Xdata.ColdContent += EMS[e].coldContent(); //update cold content
+				
+				// Now adjust default new element values to technical snow (mk = 6) - Pirmin's playground II
+				EMS[e].mk = 6;
+				EMS[e].dd = 0.;
+				EMS[e].sp = 1.;
+				EMS[e].rg = 3.; // Have to adapt after some tests
+				EMS[e].rb = EMS[e].rg/3.;
+
+			}   // End elements
+
+	// Finally, update the computed snowpack height
+	Xdata.cH = NDS[nNewN-1].z + NDS[nNewN-1].u;
+	Xdata.ErosionLevel = nNewE-1;
+
+} // End function technical snow
 
 /**
  * @brief Determines whether new snow elements are added on top of the snowpack
@@ -1459,8 +1552,8 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& /*Mdata*/, SnowStation& /*X
 void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
                             SurfaceFluxes& Sdata)
 {
-	if (Mdata.psum_tech!=IOUtils::nodata) {
-		compTechnicalSnow(Mdata, Xdata, cumu_precip, Sdata);
+	if (Mdata.psum_tech!=IOUtils::nodata && Mdata.psum_tech > 0.) {
+		compTechnicalSnow(Mdata, Xdata, cumu_precip);
 		return;
 	}
 	

@@ -63,6 +63,11 @@ namespace mio {
  * - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  * - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  * - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
+ * - CSV\#_NODATA: a value that should be interpreted as *nodata* (default: NAN);
+ * - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
+ * - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
+ * 
+ * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index.
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -90,7 +95,8 @@ namespace mio {
  * - lon (for the longitude);
  * - lat (for the latitude);
  * - slope (in degrees);
- * - azi (for the slope azimuth, in degree as read from a compass).
+ * - azi (for the slope azimuth, in degree as read from a compass);
+ * - nodata (string to interpret as nodata).
  *
  * Therefore, if the station name is available on line 1, column 3 and the station id on line 2, column 5, the configuration would be:
  * @code
@@ -105,10 +111,12 @@ namespace mio {
  * CSV_NR_HEADERS = 4
  * CSV_COLUMNS_HEADERS = 2
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
+ * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
+ * 
  * STATION1 = DisMa_DisEx.dat
  * POSITION1 = latlon 46.810325 9.806657 2060
- * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
- * CSV_UNITS_MULTIPLIER = 1 1 1 0.01 1 1 1 0.01 1
+ * CSV1_ID = DIS4
+ * CSV1_UNITS_MULTIPLIER = 1 1 1 0.01 1 1 1 0.01 1
  * @endcode
  *
  * In order to read a set of files containing each only one parameter and merge them together (see \ref data_manipulations "raw data editing" for more
@@ -121,6 +129,7 @@ namespace mio {
  * CSV_DATE_SPEC = DD/MM/YYYY
  * CSV_TIME_SPEC = HH24:MI
  * POSITION = latlon (46.8, 9.80, 1700)
+ * CSV_NAME = Generoso
  *
  * CSV1_FIELDS = DATE TIME PSUM
  * STATION1 = H0118_precipitation.DAT
@@ -179,9 +188,11 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		field_val.erase(std::remove_if(field_val.begin(), field_val.end(), &isQuote), field_val.end());
 		
 		if (field_type=="NAME") {
-			name = field_val;
+			if (name.empty()) name = field_val;
 		} else if (field_type=="ID") {
-			id = field_val;
+			if (id.empty()) id = field_val;
+		} else if (field_type=="NODATA") {
+			nodata = field_val;
 		} else {
 			double tmp;
 			if (!IOUtils::convertString(tmp, field_val))
@@ -226,7 +237,7 @@ void CsvParameters::parseFields(std::vector<std::string>& fieldNames, size_t &dt
 }
 
 //read and parse the file's headers in order to extract all possible information
-void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec)
+void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& station_idx)
 {
 	file_and_path = i_file_and_path;
 	const std::multimap< size_t, std::pair<size_t, std::string> > meta_spec( parseHeadersSpecs(vecMetaSpec) );
@@ -256,6 +267,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 			linenr++;
+			if (line.empty()) continue;
+			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
 			
 			if (meta_spec.count(linenr)>0) 
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon);
@@ -273,13 +286,17 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
 	}
 	
-	//cleanup potential '\r' char at the end of the line
-	if (csv_fields.empty())
+	if (csv_fields.empty()) 
 		throw InvalidArgumentException("No columns names could be retrieved, please provide them through the configuration file", AT);
-	std::string &tmp = csv_fields.back();
-	if (*tmp.rbegin()=='\r') tmp.erase(tmp.end()-1); //getline() skipped \n, so \r comes in last position
-	
 	parseFields(csv_fields, date_col, time_col);
+	
+	if (name.empty()) name = FileUtils::removeExtension( FileUtils::getFilename(i_file_and_path) ); //fallback if nothing else could be find
+	if (id.empty()) {
+		if (station_idx.empty()) 
+			id = name; //really nothing, copy "name"
+		else
+			id = "ID"+station_idx; //automatic numbering of default IDs
+	}
 }
 
 struct sort_pred {
@@ -287,7 +304,7 @@ struct sort_pred {
 		return left.first < right.first;
 	}
 };
-	
+
 //from a SPEC string such as "DD.MM.YYYY HH24:MIN:SS", build the format string for scanf as well as the parameters indices
 //the indices are based on ISO timestamp, so year=0, month=1, etc
 void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
@@ -394,7 +411,6 @@ StationData CsvParameters::getStation() const
 	if (slope!=IOUtils::nodata && azi!=IOUtils::nodata)
 		sd.setSlope(slope, azi);
 	return sd;
-	
 }
 
 
@@ -427,9 +443,18 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists("POSITION"+idx, "INPUT")) cfg.getValue("POSITION"+idx, "INPUT", coords_specs);
 		else cfg.getValue("POSITION", "INPUT", coords_specs);
 		const Coords loc(coordin, coordinparam, coords_specs);
-		const std::string name( FileUtils::removeExtension(vecFilenames[ii].second) );
-		tmp_csv.setLocation(loc, name, "ID"+idx);
 		
+		std::string name;
+		if (cfg.keyExists(pre+"NAME", "Input")) cfg.getValue(pre+"NAME", "Input", name);
+		else cfg.getValue(dflt+"NAME", "Input", name, IOUtils::nothrow);
+		
+		std::string id;
+		if (cfg.keyExists(pre+"ID", "Input")) cfg.getValue(pre+"ID", "Input", id);
+		else cfg.getValue(dflt+"ID", "Input", id, IOUtils::nothrow);
+		tmp_csv.setLocation(loc, name, id);
+		
+		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
+		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
 		
 		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", tmp_csv.csv_delim);
 		else cfg.getValue(dflt+"DELIMITER", "Input", tmp_csv.csv_delim, IOUtils::nothrow);
@@ -478,7 +503,7 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
 		
-		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec);
+		tmp_csv.setFile(meteopath + "/" + vecFilenames[ii].second, vecMetaSpec, idx);
 		csvparam.push_back( tmp_csv );
 	}
 }
@@ -518,7 +543,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	std::string line;
 	size_t linenr=0;
 	streampos fpointer = indexer.getIndex(dateStart);
-
 	if (fpointer!=static_cast<streampos>(-1))
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
 	else {
@@ -533,8 +557,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	//and now, read the data and fill the vector vecMeteo
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
+	const std::string nodata( params.nodata );
+	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
 	while (!fin.eof()){
-		const streampos current_fpointer = fin.tellg();
 		getline(fin, line, params.eoln);
 		linenr++;
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
@@ -554,8 +579,10 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			throw InvalidFormatException("Date or time could not be read in file \'"+filename+"' at line "+linenr_str, AT);
 		}
 
-		if ( (linenr % streampos_every_n_lines)==0 && (current_fpointer != static_cast<streampos>(-1)) )
-			indexer.setIndex(dt, current_fpointer);
+		if (linenr % streampos_every_n_lines == 0) {
+			fpointer = fin.tellg();
+			if (fpointer != static_cast<streampos>(-1)) indexer.setIndex(dt, fpointer);
+		}
 		if (dt<dateStart) continue;
 		if (dt>dateEnd) break;
 		
@@ -563,10 +590,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		md.setDate(dt);
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (ii==params.date_col || ii==params.time_col) continue;
-			if (tmp_vec[ii].empty()) { //treat empty value as nodata
-				md( params.csv_fields[ii] ) = IOUtils::nodata;
+			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
-			}
+			
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
 				const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
