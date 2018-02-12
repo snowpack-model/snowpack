@@ -1,0 +1,5 @@
+Alpine3D is a spatially distributed (surface), three dimensional (atmospheric) model for analyzing and predicting dynamics of snow-dominated surface processes in mountainous topography. It includes models for snow cover (SNOWPACK), vegetation and soil, snow transport, radiation transfer and runoff which can be enabled or disabled on demand.
+
+The model supports a variety of input options including interpolation of meteorological weather stations, input from a meteorological model or from remote sensing data (MeteoIO) and has been parallelized in order to run on a multi-core computer (with open-mp or a cluster (with MPI).
+
+Alpine3D has a broad variety of potential applications. Most dominant is the assessment of snow water resource dynamics in mountain catchments (Michlmayr et al., 2008). This includes predictions of future snow on the basis of climate change scenarios (Bavay et al., 2009, 2012). One exotic application of the model system Alpine3D is the forecasting of surface temperatures on ski-pistes, e.g. for the Vancouver winter olympics. For this forecast local shadings (might) change surface temperature up to 5 °C.

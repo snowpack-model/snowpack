@@ -1,0 +1,3 @@
+#STATION  LAT     LON      ALT     SL_ANGLE   SL_AZI
+  1	  9.6     42.0     2240    2          6
+ WFJ      9.8     46.2     2560    1          10

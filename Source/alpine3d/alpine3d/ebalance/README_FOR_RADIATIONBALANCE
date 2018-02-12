@@ -1,0 +1,25 @@
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+/*%												   %*/
+/*%     SOME NOTES FOR THE RADIATION BALANCE MODULE 						   %*/
+/*%     by N. Helbig (2008)									   %*/
+/*%												   %*/
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+// Albedo:
+- NOTE: In the radiation balance module the albedo is always the albedo from the top!
+        In contrast, in SNOWPACK it is always the surface albedo, i.e. if there
+        is snow below the canopy the snow albedo is used and printed out whereas
+        in the radiation balance computation the canopy albedo is used.
+
+// Meteo - Input :
+- NOTE: Even if you use 2D-Meteo - Input make sure that the header in the 1D-Meteo - Input File is 
+        convenient (the following is only an example but your layout should look similar!):
+        Latitude=46.8332825          -------latitude and longitude are for the center of your model
+        Longitude=9.8062515          -------domain ! They are used for the computation of the sun position.
+        X_Coord=780605               -------swiss coordinates for the position of the radiation station
+        Y_Coord=189629               -------swiss coordinates for the position of the radiation station
+        Altitude=2693                -------altitude of the radiation station
+
+-       meteo - input data always has to be in winter time (e.g. here in davos: UTC+1) 
+-       and from an EXPOSED station at the mountain top
+     

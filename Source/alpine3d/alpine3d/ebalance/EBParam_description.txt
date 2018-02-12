@@ -1,0 +1,80 @@
+
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+/*% THIS FILE IS TO EXPLAIN THE PARAMETERS REQUIRED IN EBParam.ini %*/
+/*% by N. Helbig 2008                                              %*/
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+TERRAIN_RADIATION : 	-Use full terrain radiation calculation
+			0: simple modelling (no terrain radiation)
+			1: full modelling (with terrain radiation)
+			--(default: 0)--
+
+CLOUD : - Longwave sky radiation computation from
+          0: longwave radiation measurement
+          1: cloud cover observation
+          --(default: 0)--
+
+albedo: - adjustable albedo for the radiation balance module only,
+          leave it as it is if you want to use the soil/snow albedos
+          from the *.sno files resp. SNOWPACK parameterisation
+        - for research purposes one might investigate incident
+          radiation with different constant albedos or e.g. albedos
+          depending on DHM height; to use this, watch out for the comments in
+          'EnergyBalance::FillSurfaceData' class in "EnergyBalance.cc" !!
+        - NOTE: in ebalance the albedo is always the albedo from the top!
+          In contrast in SNOWPACK it is always the surface albedo, i.e. if there
+          is snow below the canopy the snow albedo is used and printed out whereas
+          in ebalance the canopy albedo is used.
+          --(default: 0.8)--
+
+store_vf: - Progressive Refinement iteration is used; but you can switch between
+            0: view factors are not stored (in case of limited memory capacity i.e. large
+               numbers of grid cells --> slower terrain radiation computation)
+            and
+            1: view factors are stored (in case of sufficient memory capacity --> faster
+               terrain radiation computation)
+            --(default: 1)--
+
+read_vfsum: - in case of store_vf = 0 the view factor sum can be read from file to speed up the run
+              1: read from file: product of sum of terrain view factors and surface area as well
+                 as sky view factors; NOTE: the files have to be in the OUTPUT directory without
+                 any header and have to be named "skyvf.txt" resp. "tvfarea.txt"! Both are obtained
+                 by running the model one time step and by deleting the header in the output files
+                 "geometry.skyvf" and "geometry.tvfarea" and renaming them accordingly...
+                 Additionally, in "skyvf.txt"  the first line has to contain the sky view factor from
+                 the specific sensor plane output : "specificgridcell_output.txt" in OUTPUT directory
+                 but could of course be any number <= 1 if you are not interested on this point
+              0: --(default: 0)--
+
+sub_crit:  - substructuring threshold (in %) of the patches in the view factor computation --(default: 0.4)--
+             note that mccluney(1994) proposes 0.1, i.e. for accurate view factors / radiation exchange
+             computations a threshold of least 0.1 should be used
+
+itEps_SW:  - stopping tolerance/iteration error for shortwave radiation --(default: 0.4)--
+             (make it larger to stop the iteration earlier, i.e. less terrain reflections are
+              included --> with 10 % (0.1) a good accuracy is obtained)
+
+itEps1_SW: - stopping tolerance/iteration error for shortwave radiation --(default: 0.1)--
+             (make it lower to stop the iteration earlier, i.e. less terrain reflections are
+              included)
+
+itEps_LW:  - stopping tolerance/iteration error for longwave radiation  --(default: 0.4)--
+             note that two stopping critera are used
+
+sw_radius: - the distance radius (in m) around each grid cell until which terrain reflection
+             is taken into account --(default: 3000.)--
+
+lw_radius: - the distance radius (in m) around each grid cell until which longwave emission
+             is taken into account --(default: 1500. (Landl(2007)))--
+
+/*    an additional specific grid cell plane for which the radiation is computed with an adjustable */
+/*    height, location and inclination: in your OUTPUT-directory: specificgridcell_output.txt       */
+/*    cf. README_FOR_RADIATIONBALANCE 								    */
+s_i:      - grid cell number in x direction --(default: 1)--
+s_j:      - grid cell number in y direction --(default: 1)--
+s_sx:     - x normal vector component --(default: horizontal, i.e. 0)--
+s_sy:     - y normal vector component --(default: horizontal, i.e. 0)--
+s_offset: - dz offset (in m) (additional height ABOVE the ground/DHM height) --(default: 3)--
+
+thresh_zero: - threshold for the zero value used for solar elevation comparison in rad --(default: 1.e-2)--
+

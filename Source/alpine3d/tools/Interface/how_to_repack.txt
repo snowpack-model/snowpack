@@ -1,0 +1,15 @@
+How to re-pack view.jar
+
+1. Extract all the java bytecode (.class files)
+	* create a temporary directory
+	* enter this directory and run: "jar xvf ../view.jar"
+
+2. make your changes
+	* add/remove the .class files or other ressources as necessary
+	* edit the MANIFEST.MF file if necessary
+
+3. Pack the files as described in the MANIFEST.MF file
+	* from the directory that contains the manifest, run: "jar cvfm ../view.jar MANIFEST.MF *"
+	* go up one directory and test that the jar file works: "java -jar ./view.jar"
+	* then you can delete your temporary directory
+	

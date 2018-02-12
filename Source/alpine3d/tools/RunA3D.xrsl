@@ -1,0 +1,23 @@
+&
+(executable="startA3D")
+(inputFiles=
+  ("startA3D" "file://startA3D")
+  ("setup.tgz" "file://setup.tgz")
+  ("input.tgz" "file://input.tgz")
+  ("bin.tgz" "file://bin.tgz")
+)
+(environment=("APPLIC" "A3D"))
+(stdout="outA3D.txt")
+(stderr="errA3D.txt")
+(gmlog="A3Dpar_log")
+(outputFiles=
+	("A3Dout.tgz" "")
+	("/" "")
+)
+(count=1)
+(runTimeEnvironment="TEST/POPC-1.3.1")
+
+(jobname="A3D test job")
+(executables="startA3D")
+(wallTime="12 hours")
+(notify="e your@email.com")

@@ -1,0 +1,9 @@
+SMET 1.1 ASCII
+[HEADER]
+station_id      = my_pts
+comment = This file contains Points Of Interests (POI) for full snow stratigraphy outputs
+epsg    = 21781
+nodata  = -999
+fields = easting northing altitude
+[DATA]
+785453 183140 2087

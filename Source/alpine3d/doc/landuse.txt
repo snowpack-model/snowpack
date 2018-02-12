@@ -1,0 +1,38 @@
+Land use code:
+1LLDC
+
+where LL=land use code:
+% 01 water
+% 02 settlement
+% 03 coniferous forest
+% 04 decidous forest
+% 05 mixed forest
+% 06 cereals
+% 07 pasture
+% 08 bush
+% 09 undefined
+% 10 undefined
+% 11 road
+% 12 undefined
+% 13 firn
+% 14 bare ice
+% 15 rock
+% 16 undefined
+% 17 undefined
+% 18 fruit
+% 19 vegetables
+% 20 wheat
+% 21 alpine vegetation
+% 22 wetlands
+% 23 rough pasture
+% 24 subalpine meadow
+% 25 alpine meadow
+% 26 bare soil vegetation
+% 27 free
+% 28 corn
+% 29 grapes
+% 30-99 undefined
+
+D is soil depth, between 1 and 9
+
+C is field capacity, between 1 and 9

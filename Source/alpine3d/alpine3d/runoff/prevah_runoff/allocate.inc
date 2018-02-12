@@ -1,0 +1,27 @@
+
+!     Allocate Arrays for PREVAH
+
+
+      ALLOCATE(bil(ncol,nrow))
+      ALLOCATE(slz3tf(ncol,nrow))
+      ALLOCATE(ssotf(ncol,nrow))
+      ALLOCATE(ssnowtf(ncol,nrow))
+      ALLOCATE(sliqtf(ncol,nrow))
+      ALLOCATE(sitf(ncol,nrow))
+      ALLOCATE(ssztf(ncol,nrow))
+      ALLOCATE(ssmtf(ncol,nrow))
+      ALLOCATE(suztf(ncol,nrow))
+      ALLOCATE(slztf(ncol,nrow))
+      ALLOCATE(slz1tf(ncol,nrow))
+      ALLOCATE(slz2tf(ncol,nrow))  
+      ALLOCATE(wrgrd(ncol,nrow))
+      ALLOCATE(spackin(ncol,nrow))
+      ALLOCATE(spr0(ncol,nrow))
+      ALLOCATE(spr1(ncol,nrow))
+      ALLOCATE(spr2(ncol,nrow))
+      ALLOCATE(sprgq(ncol,nrow))
+      ALLOCATE(sprgs(ncol,nrow))
+      ALLOCATE(sprg3(ncol,nrow))
+      ALLOCATE(sprges(ncol,nrow))
+      ALLOCATE(sprperc(ncol,nrow)) 
+      ALLOCATE(exportgrid(ncol,nrow)) 

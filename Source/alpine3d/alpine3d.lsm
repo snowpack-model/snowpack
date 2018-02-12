@@ -1,0 +1,14 @@
+Begin4
+Title:          Alpine3D
+Version:        3.1.0
+Entered-date:   2017-03-13
+Description:    Spatially distributed, three dimensional model of snow-dominated surface processes in mountainous topography.
+Keywords:       alpine meteorology, catchment, energy balance, snow
+Author:         bavay@slf.ch (Mathias Bavay)
+Maintained-by:  bavay@slf.ch (Mathias Bavay)
+Primary-site:   http://models.slf.ch p/alpine3d/downloads/254/get/
+                9.41 M Alpine3D-3.1.0-src.tar.gz
+Home-page:      http://models.slf.ch/p/meteoio
+Platforms:      Linux and other Unices, Windows, OsX
+Copying-policy: GNU Lesser Public License version 3
+End

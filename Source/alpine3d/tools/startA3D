@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# startA3D
+#
+# version : 1.2
+# author  : J-F. Roche, M. Bavay
+# date    : 2011-07-21
+#
+# purpose : preparing the environment and launch the Alpine3D application
+#
+
+# Specify which batch system we use for POP-C++
+export POPC_BATCH=smscg
+export LD_LIBRARY_PATH=${HOME}/usr/lib
+
+# For SMSCG ARC : if we have alpine3d in the environment, use it
+#if [ "X$ALPINE3D_LOCATION" = "X" ];
+#then
+	# In case we send the binaries of Alpine3D
+	# untar from the tared input files and creating directories for the results
+	tar -zxf setup.tgz
+	tar -zxf input.tgz
+
+	#use our won version of Alpine3D
+	tar -zxf bin.tgz
+	#or use the version installed on the cluster
+	#ln -s $ALPINE3D_LOCATION/bin ./bin
+#fi
+
+# we copy the file containing the address of nodes to current directory
+# this is needed because we lost the content of the environment variable when we use ssh for object creation
+#cp $SMSCG_HOSTLIST_FILE setup/nodefile.smscg
+
+#we prefer to do round robin on the nodes instead of on the cores -> keep only unique nodes
+cat $SMSCG_HOSTLIST_FILE | sort -u > setup/nodefile.smscg
+
+install -d output/snowfiles
+install -d output/tables
+
+echo "--- Available nodes : "
+cat setup/nodefile.smscg
+
+# launching of the preparation of the parameters
+cd setup
+./run.sh
+
+# at the end of the execution, prepare the results
+cd ..
+tar -zcf A3Dout.tgz output/*
+
+#if everything was properly packed, we do not need the original outputs anymore
+rm -Rf output/*
+
