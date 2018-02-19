@@ -877,6 +877,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		aBottomBC=DIRICHLET;
 		hbottom=Xdata.Seaice->SeaLevel - NDS[0].z;
 		h_n[lowernode]=hbottom;
+		EMS[lowernode].salinity += SeaIce::OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
+		EMS[lowernode].theta[WATER] = theta_n[lowernode] = EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]);
+		EMS[lowernode].updDensity();
 	}
 
 	//Note: there are 2 iterations. First, the iteration starts to match the Richards solver time step to the SNOWPACK time step. Simple example: assume SNOWPACK time step is 15 minutes and
@@ -1607,7 +1610,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							theta_i_np1_mp1[i]=theta_i_np1_m[i];
 						}
 					}
-
 					delta_theta[i]=theta_np1_mp1[i]-theta_np1_m[i];
 					delta_theta_i[i]=theta_i_np1_mp1[i]-theta_i_np1_m[i];
 				} else {
@@ -1894,41 +1896,87 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				h_n[i]=h_np1_mp1[i];
 				theta_n[i]=theta_np1_mp1[i];
 				theta_i_n[i]=theta_i_np1_mp1[i];
-
-				//Calculate fluxes
-				if(i>lowernode) {
-					flux_down[i]+=((((h_n[i]-h_n[i-1])/dz_up[i-1])+Xdata.cos_sl)*k_np1_m_ip12[i-1]*dt);
-				} else {
-					//This case is treated out of this loop
-				}
-				if(i<uppernode) {
-					flux_up[i]+=((((h_n[i+1]-h_n[i])/dz_up[i])+Xdata.cos_sl)*k_np1_m_ip12[i]*dt);
-				} else {
-					//This case is treated out of this loop
-				}
 			}
 
-
+			if (Xdata.Seaice != NULL) {
+				// flux_up anf flux_down are only used for updating salinity profiles
+				for (i = lowernode; i <= uppernode; i++) {				//Cycle through all Richards solver domain layers.
+					//Calculate fluxes
+					if(i>lowernode) {
+						flux_down[i]+=((((h_n[i]-h_n[i-1])/dz_up[i-1])+Xdata.cos_sl)*k_np1_m_ip12[i-1]*dt);
+					} else {
+						//This case is treated out of this loop
+					}
+					if(i<uppernode) {
+						flux_up[i]+=((((h_n[i+1]-h_n[i])/dz_up[i])+Xdata.cos_sl)*k_np1_m_ip12[i]*dt);
+					} else {
+						//This case is treated out of this loop
+					}
+				}
+			}
 
 			//Determine (estimate) flux across boundaries (downward ==> positive flux):
 			//This is an additional check for the boundaries.
 			actualtopflux+=TopFluxRate*dt;
-			flux_up[uppernode]+=TopFluxRate*dt;
+			if (Xdata.Seaice != NULL) flux_up[uppernode]+=TopFluxRate*dt;
 			refusedtopflux+=(surfacefluxrate-TopFluxRate)*dt;
 			if(aBottomBC==DIRICHLET) {
 				if(uppernode > 0) {
-					const double tmp_flux=-1.*((delta_theta_dt[lowernode]+(delta_theta_i_dt[lowernode]*(Constants::density_ice/Constants::density_water))*dt)-((((h_np1_mp1[lowernode+1]-h_np1_mp1[lowernode])/dz_up[lowernode])+Xdata.cos_sl)*k_np1_m_ip12[lowernode]*dt));
+					const double tmp_flux=-1.*((delta_theta_dt[lowernode]+(delta_theta_i_dt[lowernode]*(Constants::density_ice/Constants::density_water))*dt*dz_[lowernode])-((((h_np1_mp1[lowernode+1]-h_np1_mp1[lowernode])/dz_up[lowernode])+Xdata.cos_sl)*k_np1_m_ip12[lowernode]*dt));
 					actualbottomflux+=tmp_flux;
-					flux_down[lowernode]+=tmp_flux;
+					//if (Xdata.Seaice != NULL) flux_down[lowernode]+=tmp_flux;
+					if (Xdata.Seaice != NULL) flux_down[lowernode]=flux_up[lowernode];
 				} else {
 					//With Dirichlet lower boundary condition and only 1 element, we cannot really estimate the flux, so set it to 0.
 					const double tmp_flux=0.;
 					actualbottomflux+=tmp_flux;
-					flux_down[lowernode]+=tmp_flux;
+					if (Xdata.Seaice != NULL) flux_down[lowernode]+=tmp_flux;
 				}
 			} else {
 				actualbottomflux+=BottomFluxRate*dt;
-				flux_down[lowernode]+=BottomFluxRate*dt;
+				if (Xdata.Seaice != NULL) flux_down[lowernode]+=BottomFluxRate*dt;
+			}
+
+			if (Xdata.Seaice != NULL) {
+				//
+				// For sea ice, deal with salinity flux
+				//
+				std::vector<double> SalBrine(nE, 0.);							//Salinity in brine, in g/(m^3_water)
+				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
+					SalBrine[i] = EMS[i].salinity / theta_n[i];					//Calculate brine salinity
+				}
+
+				std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
+				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
+					const double corr = (flux_up[i] - flux_down[i] == 0. || i==lowernode) ? (1.) : (delta_theta_dt[i] * dt / (flux_up[i] - flux_down[i]));
+					flux_up[i] *= corr;
+					flux_down[i] *= corr;
+					if (i==uppernode) {
+						// We assume that the incoming flux at the top element consists of rain and has no salinity.
+						DeltaSal[i] += (flux_up[i]>0.)   ? (0.*flux_up[i])                          : (SalBrine[i]*flux_up[i]);
+					} else {
+						DeltaSal[i] += (flux_up[i]>0.)   ? (SalBrine[i+1]*flux_up[i])               : (SalBrine[i]*flux_up[i]);
+					}
+					if (i==lowernode) {
+						// We fix the ocean salinity from below
+						DeltaSal[i] += (flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*flux_down[i]) : (-1.*SalBrine[i]*flux_down[i]);
+					} else {
+						DeltaSal[i] += (flux_down[i]<0.) ? (-1.*SalBrine[i-1]*flux_down[i])         : (-1.*SalBrine[i]*flux_down[i]);
+					}
+					flux_up[i] = flux_down[i] = 0.;
+				}
+
+				//Apply new salinity profile
+				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
+					SalBrine[i] += DeltaSal[i] / theta_n[i];
+					EMS[i].salinity = SalBrine[i] * theta_n[i];
+					if(EMS[i].salinity < 0.) {
+						std::cout << "[E] Salinity at e=" << i << ": " << std::setprecision(8) << EMS[i].salinity << "!\n";
+						EMS[i].salinity = 0.;
+						throw;
+					}
+					DeltaSal[i]=0.;
+				}
 			}
 
 			massbalanceerror_sum+=massbalanceerror;
@@ -1984,20 +2032,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	while(StopLoop==false);							//This is the main loop to perform 1 SNOWPACK time step
 
 	// Copy results back to SNOWPACK
-	std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
 	for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
-		if (i==uppernode) {
-			// We assume that the incoming flux at the top element consists of rain and has no salinity.
-			DeltaSal[i] += (flux_up[i]>0.)?(0.*flux_up[i]):(EMS[i].salinity*flux_up[i]);
-		} else {
-			DeltaSal[i] += (flux_up[i]>0.)?(EMS[i+1].salinity*flux_up[i]):(EMS[i].salinity*flux_up[i]);
-		}
-		if (i==lowernode) {
-			// We fix the ocean salinity from below
-			DeltaSal[i] += (flux_down[i]<0.)?(-1.*SeaIce::OceanSalinity*flux_down[i]):(-1.*EMS[i].salinity*flux_down[i]);
-		} else {
-			DeltaSal[i] += (flux_down[i]<0.)?(-1.*EMS[i-1].salinity*flux_down[i]):(-1.*EMS[i].salinity*flux_down[i]);
-		}
 
 		if(EMS[i].theta[SOIL]>Constants::eps2) {					//We are in soil
 			EMS[i].theta[WATER]=EMS[i].VG.fromHtoTHETAforICE(h_n[i], theta_i_n[i]);
@@ -2030,12 +2065,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		EMS[i].Qmf += ((EMS[i].theta[ICE]-snowpackBACKUPTHETAICE[i]) * Constants::density_ice * Lh) / sn_dt;	// Units: [W m-3]
 		//We transferred the temperature change of the element due to soil freezing/thawing in Qmf, so reset delta_Te:
 		delta_Te[i]=0.;
-	}
-
-	//Apply new salinity profile
-	for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
-		EMS[i].salinity+=DeltaSal[i];
-		DeltaSal[i]=0.;
 	}
 
 	//double max_flux=0.;
