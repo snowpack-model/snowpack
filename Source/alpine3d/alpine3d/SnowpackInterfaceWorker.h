@@ -113,6 +113,8 @@ class SnowpackInterfaceWorker
 		static int round_landuse(const double& landuse_dbl);
 		static bool skipThisCell(const double& landuse_val, const double& dem_val);
 		static bool is_special(const std::vector< std::pair<size_t,size_t> >& pts_in, const size_t& ix, const size_t& iy);
+		void getLateralFlow(std::vector<SnowStation*>& snow_station);
+		void setLateralFlow(const std::vector<SnowStation*>& snow_station);
 
 	private:
 		void initGrids(std::vector<std::string>& params);

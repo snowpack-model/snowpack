@@ -76,6 +76,7 @@ class ReSolver1d {
 
 		double sn_dt;					//SNOWPACK time step
 		bool allow_surface_ponding;			//boolean to switch on/off the formation of surface ponds in case prescribed infiltration flux exceeds matrix capacity
+		bool lateral_flow;				//boolean if lateral flow should be calculated
 		bool matrix;					//boolean to define if water transport is calculated for matrixflow or preferential flow
 
 		std::vector<double> dz;				//Layer height (in meters)

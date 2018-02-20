@@ -39,6 +39,7 @@ class ARCIO : public IOInterface {
 		ARCIO(const ARCIO&);
 		ARCIO(const Config&);
 
+		virtual std::map<Date, std::set<size_t> > list2DGrids(const Date& start, const Date& end);
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 

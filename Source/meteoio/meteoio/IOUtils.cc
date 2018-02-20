@@ -328,8 +328,8 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 
 // generic template function convertString must be defined in the header
 
-const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-const char NUM[] = "0123456789";
+static const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+static const char NUM[] = "0123456789";
 
 template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {

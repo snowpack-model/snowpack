@@ -410,6 +410,12 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 	return *this;
 }
 
+std::map<Date, std::set<size_t> > IOHandler::list2DGrids(const Date& start, const Date& end)
+{
+	IOInterface *plugin = getPlugin("GRID2D", "Input");
+	return plugin->list2DGrids(start, end);
+}
+
 void IOHandler::read2DGrid(Grid2DObject& grid_out, const std::string& i_filename)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");

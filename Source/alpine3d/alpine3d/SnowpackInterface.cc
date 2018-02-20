@@ -87,7 +87,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
                   io(io_cfg), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(),
                   glacier_katabatic_flow(false), glaciers(NULL),
-                  sn_cfg(io_cfg), dem(dem_in), is_restart(is_restart_in), useCanopy(false), do_io_locally(true), station_name(),
+                  sn_cfg(io_cfg), dem(dem_in), is_restart(is_restart_in), useCanopy(false), enable_lateral_flow(false), do_io_locally(true), station_name(),
                   soil_temp_depth(IOUtils::nodata), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.), 
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false),
                   meteo_outpath(), tz_out(0.), pts()
@@ -117,6 +117,10 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", IOUtils::nothrow);
 	sn_cfg.addKey("GRIDS_PARAMETERS", "output", all_grids + " " + grids_requirements + " " + getGridsRequirements()); //also consider own requirements
 	
+	//check if lateral flow is enabled
+	enable_lateral_flow = false;
+	sn_cfg.getValue("LATERAL_FLOW", "Alpine3D", enable_lateral_flow, IOUtils::nothrow);
+
 	//If MPI is active, every node gets a slice of the DEM to work on
 	size_t startx = 0, nx = dimx;
 	mpicontrol.getArraySliceParams(dimx, startx, nx);
@@ -707,6 +711,11 @@ void SnowpackInterface::calcNextStep()
 		}
 	}
 
+	//Lateral flow
+	if (enable_lateral_flow) {
+		calcLateralFlow();
+	}
+
 	//Retrieve special points data and write files
 	if (!pts.empty()) write_special_points();
 
@@ -1057,4 +1066,94 @@ void SnowpackInterface::readSnowCover(const std::string& GRID_sno, const std::st
 			ss << " Please check profile '" << LUS_sno << "'";
 		throw IOException(ss.str(), AT);
 	}
+}
+
+/**
+ * @brief Calculates lateral flow
+ * @author Nander Wever
+ */
+void SnowpackInterface::calcLateralFlow()
+{
+	std::vector<SnowStation*> snow_pixel;
+	// Retrieve snow stations
+	for (size_t ii = 0; ii < workers.size(); ii++) {
+		workers[ii]->getLateralFlow(snow_pixel);
+	}
+	// Translate lateral flow in source/sink term
+	size_t ix=0;									// The source cell x coordinate
+	int ixd=-1, iyd=-1;								// The destination cell x and y coordinates
+	for (size_t ii = 0; ii < workers.size(); ii++) {				// Cycle over all workers
+		for (size_t jj = 0; jj < worker_deltax[ii]; jj++) {			// Cycle over x range per worker
+			for (size_t iy = 0; iy < dimy; iy++) {				// Cycle over y
+				const size_t index_SnowStation_src = dimx*ix + iy;	// Index of source cell of water
+				double tmp_dist = -1;					// Cell distance
+				if (snow_pixel[index_SnowStation_src] != NULL) {	// Make sure it is not a NULL pointer (in case of skipped cells)
+					// Now determine destination cell for the water, based on azimuth
+					if ((snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 337.5 && snow_pixel[index_SnowStation_src]->meta.getAzimuth() <= 360.) || (snow_pixel[index_SnowStation_src]->meta.getAzimuth() >=0. && snow_pixel[index_SnowStation_src]->meta.getAzimuth() <= 22.5)) {
+						ixd = ix;
+						iyd = iy-1;
+						tmp_dist = dem.cellsize;
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 22.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 67.5) {
+						ixd = ix+1;
+						iyd = iy-1;
+						tmp_dist = sqrt(2.) * dem.cellsize; 
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 67.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 112.5) {
+						ixd = ix+1;
+						iyd = iy;
+						tmp_dist = dem.cellsize;
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 112.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 157.5) {
+						ixd = ix+1;
+						iyd = iy+1;
+						tmp_dist = sqrt(2.) * dem.cellsize; 
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 157.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 202.5) {
+						ixd = ix;
+						iyd = iy+1;
+						tmp_dist = dem.cellsize;
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 202.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 247.5) {
+						ixd = ix-1;
+						iyd = iy+1;
+						tmp_dist = sqrt(2.) * dem.cellsize; 
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 247.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 292.5) {
+						ixd = ix-1;
+						iyd = iy;
+						tmp_dist = dem.cellsize;
+					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 292.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 337.5) {
+						ixd = ix-1;
+						iyd = iy-1;
+						tmp_dist = sqrt(2.) * dem.cellsize; 
+					} else {
+						// Undefined aspect, don't route the lateral flow by setting destination cell outside domain
+						ixd=-1;
+						iyd=-1;
+					}
+					if (ixd >= 0 && iyd >= 0 && ixd < int(dimx) && iyd < int(dimy)) {								// Check if destination cell is inside domain
+						const size_t index_SnowStation_dst = dimx*ixd + iyd;							// Destination cell of water
+						if (snow_pixel[index_SnowStation_dst] != NULL) {							// Make sure destination cell is not a NULL pointer (in case of skipped cells)
+							for (size_t n=0; n < snow_pixel[index_SnowStation_src]->getNumberOfElements(); n++) {			// Loop over all layers in source cell
+								for (size_t nn=0; nn < snow_pixel[index_SnowStation_dst]->getNumberOfElements(); nn++) {	// Loop over all layers in destination cell
+									// Now check if deposition date is equal or newer (i.e., never put lateral water in an older layer, except when we cycled over all layers and we are at the top layer)
+									if (snow_pixel[index_SnowStation_dst]->Edata[nn].depositionDate >= snow_pixel[index_SnowStation_src]->Edata[n].depositionDate
+										|| nn == snow_pixel[index_SnowStation_dst]->getNumberOfElements()-1) {
+										// The flux into the pixel is a source term for the destination cell
+										snow_pixel[index_SnowStation_dst]->Edata[nn].lwc_source += snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
+										// The flux out of the pixel is a sink term for the source cell
+										snow_pixel[index_SnowStation_src]->Edata[n].lwc_source -= snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
+										// Set the SlopeParFlux to zero, now that we have redistributed it.
+										snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux = 0.;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			ix++;
+		}
+	}
+	// Send back SnowStations to the workers
+	for (size_t ii = 0; ii < workers.size(); ii++) {
+		workers[ii]->setLateralFlow(snow_pixel);
+	}
+	return;
 }

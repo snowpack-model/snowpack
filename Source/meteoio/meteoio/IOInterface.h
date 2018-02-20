@@ -43,6 +43,8 @@ namespace mio {
 class IOInterface {
 	public:
 		virtual ~IOInterface() {}
+		
+		virtual std::map<Date, std::set<size_t> > list2DGrids(const Date& start, const Date& end);
 
 		/**
 		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the

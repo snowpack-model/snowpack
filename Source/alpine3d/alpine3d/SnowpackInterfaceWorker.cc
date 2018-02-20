@@ -694,3 +694,36 @@ bool SnowpackInterfaceWorker::is_special(const std::vector< std::pair<size_t,siz
 
 	return false;
 }
+
+/**
+ * @brief method called by SnowpackInterface to retrieve all snow_pixels, to read the lateral flow variable
+ * @param pointer to vector of SnowStations, where the variable SlopeParFlux contains the lateral flow
+ */
+void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow_pixel)
+{
+	for (size_t iy=0;iy<dimy;iy++) {
+		for (size_t ix=0;ix<dimx;ix++) {
+			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			#pragma omp critical (snow_station_lock)
+			ptr_snow_pixel.push_back( SnowStations[index_SnowStation] );
+		}
+	}
+}
+
+/**
+ * @brief method called by SnowpackInterface to send back the source/sink term for treating lateral flow
+ * @param pointer to vector of SnowStations, in which the lwc_source variable is set to contain the lateral flow.
+ */
+void SnowpackInterfaceWorker::setLateralFlow(const std::vector<SnowStation*>& ptr_snow_pixel)
+{
+	for (size_t iy=0;iy<dimy;iy++) {
+		for (size_t ix=0;ix<dimx;ix++) {
+			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			if (SnowStations[index_SnowStation]!=NULL) {
+				for(size_t n=0; n<SnowStations[index_SnowStation]->getNumberOfElements(); n++) {
+					SnowStations[index_SnowStation]->Edata[n].lwc_source = ptr_snow_pixel[index_SnowStation]->Edata[n].lwc_source;
+				}
+			}
+		}
+	}
+}

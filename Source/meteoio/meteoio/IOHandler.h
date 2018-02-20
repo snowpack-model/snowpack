@@ -44,6 +44,7 @@ class IOHandler : public IOInterface {
 		IOHandler& operator=(const IOHandler&); ///<Assignement operator
 
 		//methods defined in the IOInterface class
+		virtual std::map<Date, std::set<size_t> > list2DGrids(const Date& start, const Date& end);
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");

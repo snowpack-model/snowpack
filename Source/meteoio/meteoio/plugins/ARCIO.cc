@@ -206,8 +206,62 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.close();
 }
 
-void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
+void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) 
+{
 	read2DGrid_internal(grid_out, grid2dpath_in+"/"+filename);
+}
+
+std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Date& end)
+{
+	static const char NUM[] = "0123456789";
+	static const size_t date_str_len = 12; //fix format for this plugin
+	const double TZ = cfg.get("TIME_ZONE", "Input");
+	
+	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recusive if this changes in the plugin!
+	dirlist.sort();
+	
+	std::map<Date, std::set<size_t> > results;
+	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
+		const std::string::size_type pos = it->find_first_not_of(NUM);
+		if (pos!=date_str_len) continue; //for ARC, we skip the seconds -> date is 12 chars
+		if (it->length() < (date_str_len+1)) continue; //we must have either '.' or '_' after the date
+		
+		Date date;
+		if (!IOUtils::convertString(date, it->substr(0, date_str_len), TZ)) continue;
+		if (date<start) continue;
+		if (date>end) return results;
+		
+		if (a3d_view_in) {
+			if ((*it)[date_str_len]!='.') continue;
+			const std::string ext( IOUtils::strToUpper(FileUtils::getExtension( *it )) );
+			
+			size_t param;
+			if (ext=="SDP")
+				param = MeteoGrids::HS;
+			else if (ext=="SWR")
+				param = MeteoGrids::ISWR;
+			else if (ext=="LWR")
+				param = MeteoGrids::ILWR;
+			else if (ext=="ASC")
+				param = MeteoGrids::DEM;
+			else
+				param = MeteoGrids::getParameterIndex( ext );
+			if (param==IOUtils::npos) continue;
+			results[date].insert( param );
+		} else {
+			if ((*it)[date_str_len]!='_') continue;
+			const std::string ext( FileUtils::getExtension( *it ) );
+			if (ext!=grid2d_ext_in) continue;
+
+			const std::string::size_type pos_underscore = it->find('_');
+			const std::string param_str( it->substr(date_str_len+1, (pos_underscore - date_str_len)) );
+			const size_t param = MeteoGrids::getParameterIndex( param_str );
+			if (param==IOUtils::npos) continue;
+			results[date].insert( param );
+		}
+	}
+
+	return results;
 }
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -330,7 +384,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
 			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		} else {
-			std::string date_str = date.toString(Date::ISO);
+			std::string date_str( date.toString(Date::ISO) );
 			std::replace( date_str.begin(), date_str.end(), ':', '.');
 			write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		}

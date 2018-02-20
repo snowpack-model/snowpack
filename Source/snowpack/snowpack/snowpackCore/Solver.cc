@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring> //for memset
+#include <math.h> //for isnan
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -1932,4 +1933,3 @@ int ds_DefineConnectivity(SD_MATRIX_DATA *pMat0, const int& nEq, int Eq[], const
 /*
  * End of SymbFact.c
  */
-
