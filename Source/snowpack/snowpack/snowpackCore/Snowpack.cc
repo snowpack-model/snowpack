@@ -1059,6 +1059,12 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				dth_i_up[e] += A * (Xdata.Edata[e].melting_tk - U[e+1]);	// change in volumetric ice content in upper half of element
 				dth_i_down[e] += A * (Xdata.Edata[e].melting_tk - U[e]);	// change in volumetric ice content in lower half of element
 
+				if (Xdata.Seaice != NULL) {
+					// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
+					const double BrineSal_new = (Xdata.Edata[e].theta[WATER] == 0.) ? (0.) : (Xdata.Edata[e].salinity / (Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * (Constants::density_ice / Constants::density_water)));
+					Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
+				}
+
 				// This approach is not stable, may introduce oscillations such that the temperature equation doesn't converge
 				/*const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
 				if(dth_i_sum != 0.) {	// Element has phase changes
@@ -2069,6 +2075,12 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
 						Xdata.Edata[e].Te = 0.5 * (Xdata.Ndata[e+1].T + Xdata.Ndata[e].T);
 						Xdata.Edata[e].gradT = (Xdata.Ndata[e+1].T - Xdata.Ndata[e].T) / Xdata.Edata[e].L;
+
+						if (Xdata.Seaice != NULL) {
+							// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
+							const double BrineSal_new = (Xdata.Edata[e].theta[WATER] == 0.) ? (0.) : (Xdata.Edata[e].salinity / Xdata.Edata[e].theta[WATER]);
+							Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
+						}
 					}
 				}
 
