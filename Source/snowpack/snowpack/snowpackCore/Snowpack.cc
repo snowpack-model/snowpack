@@ -1975,7 +1975,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
 		}
 
-		if(variant == "SEAICE" ) {
+		if (Xdata.Seaice != NULL) {
 			// Reinitialize and compute the initial meteo heat fluxes
 			memset((&Bdata), 0, sizeof(BoundCond));
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
