@@ -187,6 +187,7 @@ const bool AsciiIO::t_gnd = false;
  * 0534,nElems,hand hardness either (N) or index steps (1)
  * 0535,nElems,optical equivalent grain size (mm)
  * 0540,nElems,bulk salinity (g/kg)
+ * 0541,nElems,brine salinity (g/kg)
  * 0601,nElems,snow shear strength (kPa)
  * 0602,nElems,grain size difference (mm)
  * 0603,nElems,hardness difference (1)
@@ -1139,8 +1140,8 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 				fout << "," << std::fixed << std::setprecision(1) << -EMS[e].hard;
 		}
 	}
-	// 0540: bulk salinity (g/kg)
 	if (Xdata.Seaice!=NULL) {
+		// 0540: bulk salinity (g/kg)
 		if (no_snow) {
 			fout << "\n0540,1,0";
 		} else {
@@ -1148,6 +1149,15 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 			for (size_t e = Xdata.SoilNode; e < nE; e++)
 				fout << "," << std::fixed << std::setprecision(2) << EMS[e].salinity;
+		}
+		// 0541: bulk salinity (g/kg)
+		if (no_snow) {
+			fout << "\n0541,1,0";
+		} else {
+			fout << "\n0541," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << EMS[e].salinity / EMS[e].theta[WATER];
 		}
 	}
 	// 0535: optical equivalent grain size OGS (mm)
@@ -2372,7 +2382,10 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0533,nElems,stability index Sk38";
 	fout << "\n0534,nElems,hand hardness either (N) or index steps (1)";
 	fout << "\n0535,nElems,optical equivalent grain size (mm)";
-	if (Xdata.Seaice != NULL) fout << "\n0540,nElems,salinity (g/kg)";
+	if (Xdata.Seaice != NULL) {
+		fout << "\n0540,nElems,bulk salinity (g/kg)";
+		fout << "\n0541,nElems,brine salinity (g/kg)";
+	}
 	fout << "\n0601,nElems,snow shear strength (kPa)";
 	fout << "\n0602,nElems,grain size difference (mm)";
 	fout << "\n0603,nElems,hardness difference (1)";
