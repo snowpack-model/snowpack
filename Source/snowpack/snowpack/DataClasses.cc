@@ -2303,6 +2303,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 
 	EdataLower.L0 = EdataLower.L = LNew;
 	EdataLower.M += EdataUpper.M;
+	EdataLower.salinity = (L_upper*EdataUpper.salinity + L_lower*EdataLower.salinity) / LNew;
 	EdataLower.theta[ICE] = (L_upper*EdataUpper.theta[ICE] + L_lower*EdataLower.theta[ICE]) / LNew;
 	EdataLower.theta[WATER] = (L_upper*EdataUpper.theta[WATER] + L_lower*EdataLower.theta[WATER]) / LNew;
 	EdataLower.theta[WATER_PREF] = (L_upper*EdataUpper.theta[WATER_PREF] + L_lower*EdataLower.theta[WATER_PREF]) / LNew;
