@@ -1056,31 +1056,46 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				const double A = (Xdata.Edata[e].c[TEMPERATURE] * Xdata.Edata[e].Rho) / ( Constants::density_ice * Lh );
 				const double dth_i_up_in = dth_i_up[e];
 				const double dth_i_down_in = dth_i_down[e];
+
+				if (Xdata.Seaice != NULL) {
+					// For sea ice, balance the melting_tk with assuming thermal equilibrium with the brine:
+					// (1): Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
+					// (2): BrineSal_new = (Xdata.Edata[e].salinity /  Xdata.Edata[e].theta[WATER] + deltaTheta);
+					// (3): deltaTheta = A * (0.5 * (U[e+1] + U[e]) - Xdata.Edata[e].melting_tk) * (Constants::density_water / Constants::density_ice);
+					// Balancing equations (1), (2) and (3) derived using wxmaxima:
+					// T=-m*s/(th+(A*(u-T)))+c
+					// solve(%i1,T);
+					// With:
+					// T = Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk
+					// m = SeaIce::mu
+					// s = Xdata.Edata[e].salinity
+					// th = tmp_Theta
+					// A = A * f
+					// u = tmp_T
+					// c = Constants::melting_tk
+					const double f = Constants::density_ice / Constants::density_water;
+					const double tmp_T = 0.5 * (U[e+1] + U[e]);
+					const double tmp_Theta = Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * f;
+					Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * Constants::freezing_tk) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * Constants::freezing_tk * tmp_Theta + 4. * A * f * SeaIce::mu * Xdata.Edata[e].salinity + A * f * A * f * Constants::freezing_tk * Constants::freezing_tk) - A * f * tmp_T - tmp_Theta - A * f * Constants::freezing_tk) / (2. * A * f);
+				}
+
 				dth_i_up[e] += A * (Xdata.Edata[e].melting_tk - U[e+1]);	// change in volumetric ice content in upper half of element
 				dth_i_down[e] += A * (Xdata.Edata[e].melting_tk - U[e]);	// change in volumetric ice content in lower half of element
 
-				if (Xdata.Seaice != NULL) {
-					// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
-					const double BrineSal_new = (Xdata.Edata[e].theta[WATER] == 0.) ? (0.) : (Xdata.Edata[e].salinity / (Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * (Constants::density_ice / Constants::density_water)));
-					Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
-				}
-
 				// This approach is not stable, may introduce oscillations such that the temperature equation doesn't converge
-				/*const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
+				const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
 				if(dth_i_sum != 0.) {	// Element has phase changes
-					// First limit: only avaiable liquid water can freeze
-					double dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_sum);
-					// Second limit: only available ice can melt
-					dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
+					double dth_i_lim = dth_i_sum;
+					if(dth_i_lim < 0.) {
+						// Melt: Only available ice can melt
+						dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
+					} else {
+						// Freeze: Only available liquid water can feeze, and not more than max_ice
+						dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_lim);
+					}
 					// Correct volumetric changes in upper and lower half of element proportional to limits
-					dth_i_up[e] *= dth_i_lim / dth_i_sum;
-					dth_i_down[e] *= dth_i_lim / dth_i_sum;
-				}*/
-				// Previous approach: check limits of both halfs of element individually (probably not so accurate):
-				dth_i_up[e] = std::min(0.5*std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_up[e]);
-				dth_i_down[e] = std::min(0.5*std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_down[e]);
-				dth_i_up[e] = std::max(-0.5*Xdata.Edata[e].theta[ICE], dth_i_up[e]);
-				dth_i_down[e] = std::max(-0.5*Xdata.Edata[e].theta[ICE], dth_i_down[e]);
+					dth_i_down[e] = dth_i_up[e] = 0.5 * dth_i_lim;
+				}
 
 				// Track max. abs. change in ice contents
 				maxd = std::max(maxd, fabs(dth_i_up[e] - dth_i_up_in));
@@ -1089,6 +1104,13 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				// Recalculate phase change energy
 				Xdata.Edata[e].Qph_up = (dth_i_up[e] * Constants::density_ice * Lh) / sn_dt;
 				Xdata.Edata[e].Qph_down = (dth_i_down[e] * Constants::density_ice * Lh) / sn_dt;
+
+				if (Xdata.Seaice != NULL) {
+					// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
+					const double ThetaWater_new = (Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * (Constants::density_ice / Constants::density_water));
+					const double BrineSal_new = (ThetaWater_new == 0.) ? (0.) : (Xdata.Edata[e].salinity / ThetaWater_new);
+					Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
+				}
 			}
 			EL_INCID( e, Ie );
 			EL_TEMP( Ie, T0, TN, NDS, U );
@@ -2019,6 +2041,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			Xdata.Albedo = getModelAlbedo(Xdata, Mdata); //either parametrized or measured
 
 			// Compute the temperature profile in the snowpack and soil, if present
+			for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
 			if (compTemperatureProfile(Mdata, Xdata, Bdata, (allow_adaptive_timestepping == true)?(false):(true))) {
 				// Entered after convergence
 				ii++;						// Update time step counter
@@ -2039,6 +2062,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					// update the snow albedo
 					Xdata.pAlbedo = getParameterizedAlbedo(Xdata, Mdata);
 					Xdata.Albedo = getModelAlbedo(Xdata, Mdata); //either parametrized or measured
+					for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
 					compTemperatureProfile(Mdata, Xdata, Bdata, true);	// Now, throw on non-convergence
 				}
 				if (LastTimeStep) Sdata.compSnowSoilHeatFlux(Xdata);
@@ -2116,7 +2140,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					prn_msg(__FILE__, __LINE__, "msg", Date(),
 					        "Latent: %lf  Sensible: %lf  Rain: %lf  NetLong:%lf  NetShort: %lf",
 					        Bdata.ql, Bdata.qs, Bdata.qr, Bdata.lw_net, Mdata.iswr - Mdata.rswr);
-					if(useNewPhaseChange) break;
 					throw IOException("Runtime error in runSnowpackModel", AT);
 				}
 				std::cout << "                            --> time step temporarily reduced to: " << sn_dt << "\n";
