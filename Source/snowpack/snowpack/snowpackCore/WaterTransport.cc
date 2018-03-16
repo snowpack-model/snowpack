@@ -1055,7 +1055,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 	EMS[eTop].E = EMS[eTop].Eps = EMS[eTop].dEps = EMS[eTop].Eps_e = EMS[eTop].Eps_v = EMS[eTop].S = 0.0;
 
 	// RUNOFF at bottom of either snowpack or soil
-	if(!useSoilLayers || iwatertransportmodel_soil != RICHARDSEQUATION) {	//Only if lowest element is snow or we do not use RE for soil.
+	if((!useSoilLayers && !(variant=="SEAICE") && iwatertransportmodel_snow != RICHARDSEQUATION) || iwatertransportmodel_soil != RICHARDSEQUATION) {	//Only if lowest element is snow or we do not use RE for soil. Additionally, this part is skipped with sea ice and Richards equation for snow without soil.
 		// Determine the additional storage capacity due to refreezing
 		const double Lh = (EMS[0].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[0])) : (Constants::lh_fusion);
 		const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Lh / Constants::density_water
