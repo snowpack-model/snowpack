@@ -2088,14 +2088,13 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						// Limit to all liquid water freezes:
 						dth_i = (dth_i>0.)?(std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER] - theta_r) * (Constants::density_water / Constants::density_ice))), dth_i)):(dth_i);
 						// Apply phase change:
-						Xdata.Edata[e].dth_w += -dth_i * Constants::density_ice / Constants::density_water;
+						Xdata.Edata[e].dth_w -= dth_i * Constants::density_ice / Constants::density_water;
 						Xdata.Edata[e].Qmf += (dth_i * Constants::density_ice * Lh) / sn_dt_bcu; // (W m-3)
 						Xdata.Edata[e].theta[ICE] += dth_i;
 						Xdata.Edata[e].theta[WATER] -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
 						Xdata.Edata[e].updDensity();
 						Xdata.Edata[e].heatCapacity();
-						Xdata.Edata[e].dth_w -= dth_i*Constants::density_ice/Constants::density_water;
 						Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
 						Xdata.Edata[e].Te = 0.5 * (Xdata.Ndata[e+1].T + Xdata.Ndata[e].T);
 						Xdata.Edata[e].gradT = (Xdata.Ndata[e+1].T - Xdata.Ndata[e].T) / Xdata.Edata[e].L;
