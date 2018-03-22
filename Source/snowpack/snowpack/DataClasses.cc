@@ -2303,7 +2303,10 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 
 	EdataLower.L0 = EdataLower.L = LNew;
 	EdataLower.M += EdataUpper.M;
-	EdataLower.salinity = (L_upper*EdataUpper.salinity + L_lower*EdataLower.salinity) / LNew;
+	// Calculate temporarily the brine salinity to be conserved, in g/m^2 (relative to theta[WATER], as it is the brine salinity)
+	const double tmp_br_salinity = 0.
+			+ (EdataUpper.theta[WATER] != 0.) ? (L_upper*EdataUpper.salinity/EdataUpper.theta[WATER]) : (0.)
+			+ (EdataLower.theta[WATER] != 0.) ? (L_lower*EdataLower.salinity/EdataLower.theta[WATER]) : (0.);
 	EdataLower.theta[ICE] = (L_upper*EdataUpper.theta[ICE] + L_lower*EdataLower.theta[ICE]) / LNew;
 	EdataLower.theta[WATER] = (L_upper*EdataUpper.theta[WATER] + L_lower*EdataLower.theta[WATER]) / LNew;
 	EdataLower.theta[WATER_PREF] = (L_upper*EdataUpper.theta[WATER_PREF] + L_lower*EdataLower.theta[WATER_PREF]) / LNew;
@@ -2323,6 +2326,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 		EdataLower.theta[WATER_PREF] /= tmpsum;
 	}
 	EdataLower.snowResidualWaterContent();
+	EdataLower.salinity = EdataLower.theta[WATER]*tmp_br_salinity/EdataLower.L;
 	EdataLower.updDensity();
 
 	for (size_t ii = 0; ii < SnowStation::number_of_solutes; ii++) {
