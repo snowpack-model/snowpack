@@ -452,22 +452,26 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 
 
 	const double tmp_dynamic_viscosity_water=0.001792;				//In Pa/s, from WaterTransport code by Hirashima: 0.001792
+	if (1. - EMS->theta[ICE] > 0.25) {						//For low density
+		switch ( K_PARAM ) {	//Set saturated hydraulic conductivity
 
-	switch ( K_PARAM ) {	//Set saturated hydraulic conductivity
+		case SHIMIZU:
+			//This formulation for ksat is proposed by Shimizu (1970), and is valid up to 450 kg/m^3. See Equation 5 in Jordan, 1999 + conversion from hydraulic permeability to hydraulic conductivity.
+			if(EMS->theta[ICE] * Constants::density_ice>450.) {
+				ksat=0.077 * (2.*EMS->rg / 1000.)*(2.*EMS->rg / 1000.) * exp(-0.0078 * 450.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+			} else {
+				ksat=0.077 * (2.*EMS->rg / 1000.)*(2.*EMS->rg / 1000.) * exp(-0.0078 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+			}
+			break;
 
-	case SHIMIZU:
-		//This formulation for ksat is proposed by Shimizu (1970), and is valid up to 450 kg/m^3. See Equation 5 in Jordan, 1999 + conversion from hydraulic permeability to hydraulic conductivity.
-		if(EMS->theta[ICE] * Constants::density_ice>450.) {
-			ksat=0.077 * (2.*EMS->rg / 1000.)*(2.*EMS->rg / 1000.) * exp(-0.0078 * 450.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
-		} else {
-			ksat=0.077 * (2.*EMS->rg / 1000.)*(2.*EMS->rg / 1000.) * exp(-0.0078 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+		case CALONNE:
+			//See: Calonne et al., 3-D image-based numerical computations of snow permeability: links to specific surface area, density, and microstructural anisotropy, TC, 2012.
+			ksat=0.75 * (EMS->ogs / 1000.)*(EMS->ogs / 1000.) * exp(-0.013 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+			break;
 		}
-		break;
-
-	case CALONNE:
-		//See: Calonne et al., 3-D image-based numerical computations of snow permeability: links to specific surface area, density, and microstructural anisotropy, TC, 2012.
-		ksat=0.75 * (EMS->ogs / 1000.)*(EMS->ogs / 1000.) * exp(-0.013 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
-		break;
+	} else {									//For high density
+		// Eq. 5 in Golden, K. M., H. Eicken, A. L. Heaton, J. Miner, D. J. Pringle, and J. Zhu (2007), Thermal evolution of permeability and microstructure in sea ice, Geophys. Res. Lett., 34, L16501, doi:10.1029/2007GL030447:
+		ksat = 3E-8 * pow((1. - EMS->theta[ICE]), 3.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 	}
 
 	//Set air entry pressure
