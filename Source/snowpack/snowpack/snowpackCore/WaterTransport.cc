@@ -821,7 +821,10 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 				const double Lh = (EMS[eUpper].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[eUpper])) : (Constants::lh_fusion);
 				const double dth_w = EMS[eUpper].c[TEMPERATURE] * EMS[eUpper].Rho / Lh / Constants::density_water
 							* std::max(0., EMS[eUpper].melting_tk-EMS[eUpper].Te);
-				if ((eUpper == nE-1) && (EMS[eLower].theta[AIR] <= 0.05) && water_layer) {
+				if ((variant=="SEAICE" && Xdata.Seaice!=NULL) && Xdata.Ndata[eUpper].z + 0.5 * Xdata.Edata[eUpper].L < Xdata.Seaice->SeaLevel) {
+					// for sea ice: elements below sea level may fill entire pore space
+					Wres = std::max(0., (1. - Xdata.Edata[eUpper].theta[ICE]) * (Constants::density_ice/Constants::density_water));
+				} else if ((eUpper == nE-1) && (EMS[eLower].theta[AIR] <= 0.05) && water_layer) {
 					// allow for a water table in the last layer above road/rock
 					Wres = Constants::density_ice/Constants::density_water
 						  * (1. - EMS[eUpper].theta[ICE] - EMS[eUpper].theta[SOIL] - 0.05);
