@@ -1157,7 +1157,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 			fout << "\n0541," << nE-Xdata.SoilNode + Noffset;
 			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 			for (size_t e = Xdata.SoilNode; e < nE; e++)
-				fout << "," << std::fixed << std::setprecision(2) << EMS[e].salinity / EMS[e].theta[WATER];
+				fout << "," << std::fixed << std::setprecision(2) << ((EMS[e].theta[WATER] == 0.) ? (mio::IOUtils::nodata) : (EMS[e].salinity / EMS[e].theta[WATER]));
 		}
 	}
 	// 0535: optical equivalent grain size OGS (mm)
