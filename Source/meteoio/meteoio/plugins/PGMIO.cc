@@ -248,6 +248,34 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 	read2DGrid_internal(grid_out, grid2dpath_in+"/"+filename);
 }
 
+bool PGMIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &results)
+{
+	results.clear();
+	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recusive if this changes in the plugin!
+	dirlist.sort();
+	
+	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
+		const std::string ext( FileUtils::getExtension( *it ) );
+		if (ext!=".pgm") continue;
+		const std::string filename( FileUtils::removeExtension( FileUtils::getFilename(*it) ) );
+		const std::string::size_type pos = filename.find_last_of('_');
+		if (pos==std::string::npos) continue;
+		const std::string date_str( filename.substr(0, pos) );
+		
+		Date date;
+		if (!IOUtils::convertString(date, date_str, start.getTimeZone())) continue;
+		if (date<start) continue;
+		if (date>end) return true;
+		
+		const std::string param_str( filename.substr(pos) );
+		const size_t param = MeteoGrids::getParameterIndex( param_str );
+		if (param==IOUtils::npos) continue;
+		results[date].insert( param );
+	}
+	
+	return true;
+}
+
 void PGMIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	std::string date_str( date.toString(Date::ISO) );
@@ -265,7 +293,7 @@ void PGMIO::readDEM(DEMObject& dem_out)
 void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	const std::string full_name( grid2dpath_out+"/"+name );
-	const unsigned int nr_colors = 256;
+	static const unsigned int nr_colors = 256;
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	errno = 0;
 	std::ofstream fout;

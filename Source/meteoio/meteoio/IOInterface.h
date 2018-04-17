@@ -44,7 +44,17 @@ class IOInterface {
 	public:
 		virtual ~IOInterface() {}
 		
-		virtual std::map<Date, std::set<size_t> > list2DGrids(const Date& start, const Date& end);
+		/**
+		* @brief Return the list of grids within a given time period that could be read by the plugin, if requested.
+		* @details This call should be implemented by all plugins reading grids, so the GridsManager can perform all kinds of
+		* advanced features with grids (computing a parameter from other ones, temporally interpolating, etc)
+		* @param[in] start the start of the time interval
+		* @param[in] end the end of the interval
+		* @param[out] list the list of grids. The first key is the date, then a set of parameters (from MeteoGrids::Parameters)
+		* @return true if the list could be filled (even if empty), false if such as list can not be filled by the plugin (for example, it does not have
+		* the data before actually reading it)
+		*/
+		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list);
 
 		/**
 		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the

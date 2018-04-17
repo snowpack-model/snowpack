@@ -54,7 +54,57 @@ const double Date::Excel_offset = 2415018.5;  ///<offset between julian date and
 const double Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
 const double Date::epsilon=1./(24.*3600.025); ///< minimum difference between two dates. 1 second in units of days. 3600.025 is intentional
+std::map< std::string, double> Date::TZAbbrev;
+const bool Date::__init = Date::initStaticData();
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
+
+//see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+bool Date::initStaticData()
+{
+	TZAbbrev["ACDT"] = 10.5;     TZAbbrev["ACST"] = 9.5;      TZAbbrev["ACT"] = -5;        TZAbbrev["ACWST"] = 8.75;    TZAbbrev["ADT"] = -3;
+	TZAbbrev["AEDT"] = 11;       TZAbbrev["AEST"] = 10;       TZAbbrev["AFT"] = 4.5;       TZAbbrev["AKDT"] = -8;       TZAbbrev["AKST"] = -9;
+	TZAbbrev["AMST"] = -3;       TZAbbrev["AMT"] = -4;        TZAbbrev["AMT"] = 4;         TZAbbrev["ART"] = -3;        TZAbbrev["AST"] = 3;
+	TZAbbrev["AST"] = -4;        TZAbbrev["AWST"] = 8;        TZAbbrev["AZOST"] = 0;       TZAbbrev["AZOT"] = -1;       TZAbbrev["AZT"] = 4;
+	TZAbbrev["BDT"] = 8;         TZAbbrev["BIOT"] = 6;        TZAbbrev["BIT"] = -12;       TZAbbrev["BOT"] = -4;        TZAbbrev["BRST"] = -2;
+	TZAbbrev["BRT"] = -3;        TZAbbrev["BST"] = 6;         TZAbbrev["BST"] = 11;        TZAbbrev["BST"] = 1;         TZAbbrev["BTT"] = 6;
+	TZAbbrev["CAT"] = 2;         TZAbbrev["CCT"] = 6.5;       TZAbbrev["CDT"] = -5;        TZAbbrev["CDT"] = -4;        TZAbbrev["CEST"] = 2;
+	TZAbbrev["CET"] = 1;         TZAbbrev["CHADT"] = 13.75;   TZAbbrev["CHAST"] = 12.75;   TZAbbrev["CHOT"] = 8;        TZAbbrev["CHOST"] = 9;
+	TZAbbrev["CHST"] = 10;       TZAbbrev["CHUT"] = 10;       TZAbbrev["CIST"] = -8;       TZAbbrev["CIT"] = 8;         TZAbbrev["CKT"] = -10;
+	TZAbbrev["CLST"] = -3;       TZAbbrev["CLT"] = -4;        TZAbbrev["COST"] = -4;       TZAbbrev["COT"] = -5;        TZAbbrev["CST"] = -6;
+	TZAbbrev["CST"] = 8;         TZAbbrev["CST"] = -5;        TZAbbrev["CT"] = 8;          TZAbbrev["CVT"] = -1;        TZAbbrev["CWST"] = 8.75;
+	TZAbbrev["CXT"] = 7;         TZAbbrev["DAVT"] = 7;        TZAbbrev["DDUT"] = 10;       TZAbbrev["DFT"] = 1;         TZAbbrev["EASST"] = -5;
+	TZAbbrev["EAST"] = -6;       TZAbbrev["EAT"] = 3;         TZAbbrev["ECT"] = -4;        TZAbbrev["ECT"] = -5;        TZAbbrev["EDT"] = -4;
+	TZAbbrev["EEST"] = 3;        TZAbbrev["EET"] = 2;         TZAbbrev["EGST"] = 0;        TZAbbrev["EGT"] = -1;        TZAbbrev["EIT"] = 9;
+	TZAbbrev["EST"] = -5;        TZAbbrev["FET"] = 3;         TZAbbrev["FJT"] = 12;        TZAbbrev["FKST"] = -3;       TZAbbrev["FKT"] = -4;
+	TZAbbrev["FNT"] = -2;        TZAbbrev["GALT"] = -6;       TZAbbrev["GAMT"] = -9;       TZAbbrev["GET"] = 4;         TZAbbrev["GFT"] = -3;
+	TZAbbrev["GILT"] = 12;       TZAbbrev["GIT"] = -9;        TZAbbrev["GMT"] = 0;         TZAbbrev["GST"] = -2;        TZAbbrev["GST"] = 4;
+	TZAbbrev["GYT"] = -4;        TZAbbrev["HDT"] = -9;        TZAbbrev["HAEC"] = 2;        TZAbbrev["HST"] = -10;       TZAbbrev["HKT"] = 8;
+	TZAbbrev["HMT"] = 5;         TZAbbrev["HOVST"] = 8;       TZAbbrev["HOVT"] = 7;        TZAbbrev["ICT"] = 7;         TZAbbrev["IDT"] = 3;
+	TZAbbrev["IOT"] = 3;         TZAbbrev["IRDT"] = 4.5;      TZAbbrev["IRKT"] = 8;        TZAbbrev["IRST"] = 3.5;      TZAbbrev["IST"] = 5.5;
+	TZAbbrev["IST"] = 1;         TZAbbrev["IST"] = 2;         TZAbbrev["JST"] = 9;         TZAbbrev["KGT"] = 6;         TZAbbrev["KOST"] = 11;
+	TZAbbrev["KRAT"] = 7;        TZAbbrev["KST"] = 9;         TZAbbrev["LHST"] = 10.5;     TZAbbrev["LHST"] = 11;       TZAbbrev["LINT"] = 14;
+	TZAbbrev["MAGT"] = 12;       TZAbbrev["MART"] = -9.5;     TZAbbrev["MAWT"] = 5;        TZAbbrev["MDT"] = -6;        TZAbbrev["MET"] = 1;
+	TZAbbrev["MEST"] = 2;        TZAbbrev["MHT"] = 12;        TZAbbrev["MIST"] = 11;       TZAbbrev["MIT"] = -9.5;      TZAbbrev["MMT"] = 6.5;
+	TZAbbrev["MSK"] = 3;         TZAbbrev["MST"] = 8;         TZAbbrev["MST"] = -7;        TZAbbrev["MUT"] = 4;         TZAbbrev["MVT"] = 5;
+	TZAbbrev["MYT"] = 8;         TZAbbrev["NCT"] = 11;        TZAbbrev["NDT"] = -2.5;      TZAbbrev["NFT"] = 11;        TZAbbrev["NPT"] = 5.75;
+	TZAbbrev["NST"] = -3.5;      TZAbbrev["NT"] = -3.5;       TZAbbrev["NUT"] = -11;       TZAbbrev["NZDT"] = 13;       TZAbbrev["NZST"] = 12;
+	TZAbbrev["OMST"] = 6;        TZAbbrev["ORAT"] = 5;        TZAbbrev["PDT"] = -7;        TZAbbrev["PET"] = -5;        TZAbbrev["PETT"] = 12;
+	TZAbbrev["PGT"] = 10;        TZAbbrev["PHOT"] = 13;       TZAbbrev["PHT"] = 8;         TZAbbrev["PKT"] = 5;         TZAbbrev["PMDT"] = -2;
+	TZAbbrev["PMST"] = -3;       TZAbbrev["PONT"] = 11;       TZAbbrev["PST"] = -8;        TZAbbrev["PST"] = 8;         TZAbbrev["PYST"] = -3;
+	TZAbbrev["PYT"] = -4;        TZAbbrev["RET"] = 4;         TZAbbrev["ROTT"] = -3;       TZAbbrev["SAKT"] = 11;       TZAbbrev["SAMT"] = 4;
+	TZAbbrev["SAST"] = 2;        TZAbbrev["SBT"] = 11;        TZAbbrev["SCT"] = 4;         TZAbbrev["SDT"] = -10;       TZAbbrev["SGT"] = 8;
+	TZAbbrev["SLST"] = 5.5;      TZAbbrev["SRET"] = 11;       TZAbbrev["SRT"] = -3;        TZAbbrev["SST"] = -11;       TZAbbrev["SST"] = 8;
+	TZAbbrev["SYOT"] = 3;        TZAbbrev["TAHT"] = -10;      TZAbbrev["THA"] = 7;         TZAbbrev["TFT"] = 5;         TZAbbrev["TJT"] = 5;
+	TZAbbrev["TKT"] = 13;        TZAbbrev["TLT"] = 9;         TZAbbrev["TMT"] = 5;         TZAbbrev["TRT"] = 3;         TZAbbrev["TOT"] = 13;
+	TZAbbrev["TVT"] = 12;        TZAbbrev["ULAST"] = 9;       TZAbbrev["ULAT"] = 8;        TZAbbrev["USZ1"] = 2;        TZAbbrev["UYST"] = -2;
+	TZAbbrev["UYT"] = -3;        TZAbbrev["UZT"] = 5;         TZAbbrev["VET"] = -4;        TZAbbrev["VLAT"] = 10;       TZAbbrev["VOLT"] = 4;
+	TZAbbrev["VOST"] = 6;        TZAbbrev["VUT"] = 11;        TZAbbrev["WAKT"] = 12;       TZAbbrev["WAST"] = 2;        TZAbbrev["WAT"] = 1;
+	TZAbbrev["WEST"] = 1;        TZAbbrev["WET"] = 0;         TZAbbrev["WIT"] = 7;         TZAbbrev["WST"] = 8;         TZAbbrev["YAKT"] = 9;
+	TZAbbrev["YEKT"] = 5;
+
+	return true;
+}
+
 
 // CONSTUCTORS
 /**
@@ -1075,6 +1125,8 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 				return IOUtils::nodata;
 			}
 		}
+	} else if (TZAbbrev.count(timezone_iso)) {
+		return TZAbbrev[ timezone_iso ];
 	} else {
 		return IOUtils::nodata;
 	}

@@ -187,6 +187,9 @@ bool OshdIO::initStaticData()
 	grids_map[ MeteoGrids::TA ] = "tcor"; //old:tair
 	grids_map[ MeteoGrids::VW ] = "wcor"; //old: wind
 	grids_map[ MeteoGrids::DW ] = "wdir";
+	grids_map[ MeteoGrids::ISWR_DIFF ] = "idfc";
+	grids_map[ MeteoGrids::ISWR_DIR ] = "idrc";
+	grids_map[ MeteoGrids::ALB ] = "albd";
 
 	return true;
 }
@@ -244,6 +247,25 @@ std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string
 
 	std::sort(data_files.begin(), data_files.end());
 	return data_files;
+}
+
+bool OshdIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& results)
+{
+	results.clear();
+	
+	for (size_t ii=0; ii<cache_grid_files.size(); ii++) {
+		const Date date( cache_grid_files[ii].date );
+		if (date<start) continue;
+		if (date>end) break;
+		
+		//we consider that all parameters are present at all timesteps
+		std::map< MeteoGrids::Parameters, std::string >::const_iterator it;
+		for (it=grids_map.begin(); it!=grids_map.end(); ++it) {
+			results[date].insert( it->first );
+		}
+	}
+	
+	return true;
 }
 
 size_t OshdIO::getFileIdx(const std::vector< struct file_index >& cache, const Date& start_date)
@@ -312,13 +334,13 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void OshdIO::readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
-	const std::string filename_dir( path + "/" + "idrc" + file_suffix );
+	const std::string filename_dir( path + "/" + grids_map[MeteoGrids::ISWR_DIR] + file_suffix );
 	const std::vector<double> vecDir( readFromFile(filename_dir, MeteoData::ISWR, station_date) );
 	
-	const std::string filename_diff( path + "/" + "idfc" + file_suffix );
+	const std::string filename_diff( path + "/" + grids_map[MeteoGrids::ISWR_DIFF] + file_suffix );
 	const std::vector<double> vecDiff( readFromFile(filename_diff, MeteoData::ISWR, station_date) );
 
-	const std::string filename_albd( path + "/" + "albd" + file_suffix );
+	const std::string filename_albd( path + "/" + grids_map[MeteoGrids::ALB] + file_suffix );
 	if (FileUtils::fileExists(filename_albd)) {
 		const std::vector<double> vecAlbd( readFromFile(filename_albd, MeteoData::RSWR, station_date) ); //We read ALBD and use it to build RSWR
 		for (size_t jj=0; jj<nrIDs; jj++) {
@@ -538,15 +560,6 @@ void OshdIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	if (grids_map.find(parameter)!=grids_map.end()) {
 		const std::string filename( path + "/" + grids_map[parameter] +file_suffix );
 		read2DGrid(grid_out, filename);
-	} else if (parameter==MeteoGrids::ISWR) {
-		const std::string filename_dir( path + "/" + "idrc" + file_suffix );
-		read2DGrid(grid_out, filename_dir);
-
-		Grid2DObject diff;
-		const std::string filename_diff( path + "/" + "idfc" + file_suffix );
-		read2DGrid(diff, filename_diff);
-
-		grid_out += diff;
 	} else
 		throw NotFoundException("Parameter "+MeteoGrids::getParameterName(parameter)+" currently not supported", AT);
 

@@ -43,10 +43,12 @@ namespace ncpp {
 	//Adding attributes
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
+	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value);
 	std::string get_DimAttribute(const int& ncid, const std::string& dimname, const std::string& attr_name);
 	void get_VarAttribute(const int& ncid, const std::string& varname, const std::string& attr_name, std::string& attr_value);
 	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
 	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, double& attr_value);
+	void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, int& attr_value);
 	bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name);
 
 	//Adding dimensions
@@ -67,6 +69,7 @@ namespace ncpp {
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
 	                const size_t& pos_start, const double * const data);
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const int * const data);
+	void write_data(const int& ncid, const std::string& varname, const int& varid, const char * const data);
 	void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
 	                const size_t& pos_start, const int * const data);
 
@@ -89,6 +92,7 @@ namespace ncpp {
 	bool check_dim_var(const int& ncid, const std::string& dimname);
 	bool check_variable(const int& ncid, const std::string& varname);
 	void get_variable(const int& ncid, const std::string& varname, int& varid);
+	void get_variables(const int& ncid, std::vector<std::string>& variables);
 	void get_variables(const int& ncid, const std::vector<std::string>& dimensions, std::vector<std::string>& variables);
 	bool check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
 	void get_dimension(const int& ncid, const std::string& dimname, int& dimid);

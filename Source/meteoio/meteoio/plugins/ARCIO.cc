@@ -211,30 +211,29 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	read2DGrid_internal(grid_out, grid2dpath_in+"/"+filename);
 }
 
-std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Date& end)
+bool ARCIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &results)
 {
-	static const char NUM[] = "0123456789";
-	static const size_t date_str_len = 12; //fix format for this plugin
+	results.clear();
 	const double TZ = cfg.get("TIME_ZONE", "Input");
-	
 	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recusive if this changes in the plugin!
 	dirlist.sort();
 	
-	std::map<Date, std::set<size_t> > results;
-	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
-		const std::string::size_type pos = it->find_first_not_of(NUM);
-		if (pos!=date_str_len) continue; //for ARC, we skip the seconds -> date is 12 chars
-		if (it->length() < (date_str_len+1)) continue; //we must have either '.' or '_' after the date
-		
-		Date date;
-		if (!IOUtils::convertString(date, it->substr(0, date_str_len), TZ)) continue;
-		if (date<start) continue;
-		if (date>end) return results;
-		
-		if (a3d_view_in) {
+	if (a3d_view_in) {
+		static const char NUM[] = "0123456789";
+		static const size_t date_str_len = 12; //fix format for this plugin
+
+		for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
+			const std::string::size_type pos = it->find_first_not_of(NUM);
+			if (pos==std::string::npos || pos!=date_str_len) continue; //for ARC, we skip the seconds -> date is 12 chars
+			if (it->length() < (date_str_len+1)) continue; //we must have either '.' after the date
 			if ((*it)[date_str_len]!='.') continue;
+
+			Date date;
+			if (!IOUtils::convertString(date, it->substr(0, date_str_len), TZ)) continue;
+			if (date<start) continue;
+			if (date>end) return true;
+
 			const std::string ext( IOUtils::strToUpper(FileUtils::getExtension( *it )) );
-			
 			size_t param;
 			if (ext=="SDP")
 				param = MeteoGrids::HS;
@@ -248,20 +247,35 @@ std::map<Date, std::set<size_t> > ARCIO::list2DGrids(const Date& start, const Da
 				param = MeteoGrids::getParameterIndex( ext );
 			if (param==IOUtils::npos) continue;
 			results[date].insert( param );
-		} else {
-			if ((*it)[date_str_len]!='_') continue;
-			const std::string ext( FileUtils::getExtension( *it ) );
+		}
+	} else {
+		static const char DATE_CHAR[] = "0123456789-+T:.";
+		static const size_t max_date_str_len = 19+6; //worst case scenario, with 6 chars for the timezone
+		for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
+			const std::string ext( "."+FileUtils::getExtension( *it ) );
 			if (ext!=grid2d_ext_in) continue;
 
+			const std::string::size_type pos = it->find_first_not_of(DATE_CHAR);
+			if (pos==std::string::npos || pos>max_date_str_len) continue;
+
+			std::string date_str(  it->substr(0, pos) );
+			std::replace( date_str.begin(), date_str.end(), '.', ':');
+			Date date;
+			if (!IOUtils::convertString(date, date_str, TZ)) continue;
+			if (date<start) continue;
+			if (date>end) return true;
+
 			const std::string::size_type pos_underscore = it->find('_');
-			const std::string param_str( it->substr(date_str_len+1, (pos_underscore - date_str_len)) );
+			const std::string::size_type pos_dot = it->find_last_of('.');
+			if (pos==std::string::npos || pos_dot==std::string::npos) continue;
+			const std::string param_str( it->substr(pos_underscore+1, (pos_dot - pos_underscore - 1)) );
 			const size_t param = MeteoGrids::getParameterIndex( param_str );
 			if (param==IOUtils::npos) continue;
 			results[date].insert( param );
 		}
 	}
 
-	return results;
+	return true;
 }
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)

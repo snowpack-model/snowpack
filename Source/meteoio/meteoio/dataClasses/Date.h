@@ -22,6 +22,7 @@
 
 #include <string>
 #include <sstream>
+#include <map>
 
 //#define NEGATIVE_JULIAN
 namespace mio {
@@ -205,8 +206,11 @@ class Date {
 		static long getJulianDayNumber(const int&, const int&, const int&);
 		static bool isLeapYear(const int&);
 		static void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second);
+		static bool initStaticData();///<initialize the static map TZAbbrev
 
+		static std::map< std::string, double> TZAbbrev;
 		static const double epsilon;
+		static const bool __init;
 		double timezone;
 		double gmt_julian;
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second;

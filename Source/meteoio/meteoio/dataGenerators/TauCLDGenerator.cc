@@ -151,7 +151,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		if (!cloudiness_from_cache)
 			last_cloudiness[station_hash] = std::pair<double,double>( julian_gmt, cloudiness );
 
-		value = cloudiness;
+		value = 1.- cloudiness;
 	}
 
 	return true; //all missing values could be filled

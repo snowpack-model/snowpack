@@ -154,7 +154,7 @@ namespace IOUtils {
 	 * @param[in] search substring to be searched for 
 	 * @return number of non-overlapping matches 
 	 */
-	size_t count(std::string &input, const std::string& search);
+	size_t count(const std::string &input, const std::string& search);
 	
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference

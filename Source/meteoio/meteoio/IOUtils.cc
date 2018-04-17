@@ -155,7 +155,7 @@ void replace_all(std::string &input, const std::string& search, const std::strin
 	}
 }
 
-size_t count(std::string &input, const std::string& search)
+size_t count(const std::string &input, const std::string& search)
 {
 	const size_t len = search.length();
 	size_t pos = input.find(search);

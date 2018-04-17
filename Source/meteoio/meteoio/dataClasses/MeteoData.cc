@@ -131,6 +131,16 @@ const std::string& MeteoData::getParameterName(const size_t& parindex)
 	return MeteoData::s_default_paramname[parindex];
 }
 
+size_t MeteoData::getStaticParameterIndex(const std::string& parname)
+{
+	for (size_t ii = 0; ii<MeteoData::nrOfParameters; ii++) {
+		if (s_default_paramname[ii] == parname)
+			return ii;
+	}
+
+	return IOUtils::npos; //parameter not a part of MeteoData
+}
+
 /************************************************************
  * non-static section                                       *
  ************************************************************/

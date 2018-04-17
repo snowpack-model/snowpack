@@ -6,12 +6,13 @@ using namespace mio; //The MeteoIO namespace is called mio
 int main(void) {
 	Grid2DObject grid1, grid2;
 	Config cfg("io.ini");
+	const double TZ = cfg.get("TIME_ZONE", "Input");
 	IOManager io(cfg);
 
 	//reading the 2D grid by filename
 	io.read2DGrid(grid1, "sub_dem.asc");
 	//reading the 2D grid by parameter and date
-	io.read2DGrid(grid2, MeteoGrids::TA, Date(2008, 12, 10, 12, 30, 0));
+	io.read2DGrid(grid2, MeteoGrids::TA, Date(2008, 12, 10, 12, 30, 0, TZ));
 
 	//debug style output
 	std::cout << "Initial air temperatures grid: " << grid2.toString() << "\n";
@@ -23,7 +24,7 @@ int main(void) {
 	//operations between grids
 	Grid2DObject grid3(grid1.getNx(), grid1.getNy(), grid1.cellsize, grid1.llcorner);
 	grid3 = grid1 * (grid2 / 100.); //the parenthesis are required because of constness
-	//std::cout << "Grids multiplication: " << grid3 << "\n";
+	//std::cout << "Grids multiplication: " << grid3.toString() << "\n";
 
 	//locate the cell that contains a specific point in real world coordinates
 	Coords point("CH1903", "");

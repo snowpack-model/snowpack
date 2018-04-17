@@ -18,18 +18,21 @@
 
 #include <meteoio/GridsManager.h>
 #include <meteoio/dataClasses/Coords.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/MathOptim.h>
 
 using namespace std;
 
 namespace mio {
 
 GridsManager::GridsManager(IOHandler& in_iohandler, const Config& in_cfg)
-             : iohandler(in_iohandler), cfg(in_cfg), buffer(0),
-               processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
+             : iohandler(in_iohandler), cfg(in_cfg), buffer(0), grids2d_list(), grids2d_start(), grids2d_end(),
+               grid2d_list_buffer_size(370.), processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated)
 {
 	size_t max_grids = 10;
 	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);
 	buffer.setMaxGrids(max_grids);
+	cfg.getValue("BUFFER_SIZE", "General", grid2d_list_buffer_size, IOUtils::nothrow);
 }
 
 /**
@@ -68,15 +71,232 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
 	}
 }
 
+//do we have the requested parameter either in buffer or raw?
+bool GridsManager::isAvailable(const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date) const
+{
+	const bool in_buffer = buffer.has(parameter, date);
+	if (in_buffer) return true;
+	
+	const bool in_raw = (available_params.find( parameter ) != available_params.end());
+	return in_raw;
+}
+
+//get the requested grid either from buffer or by a direct reading
+//the goal is that subsequent calls to the same grid find it in the buffer transparently
+void GridsManager::getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	if (buffer.get(grid2D, parameter, date)) return;
+	iohandler.read2DGrid(grid2D, parameter, date);
+}
+
+//Grids of meteo params are coming out of models, so we assume that all possible parameters
+//are available at each time steps. So we don't need to search a combination of parameters and timesteps
+bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	if (parameter==MeteoGrids::VW || parameter==MeteoGrids::DW) {
+		const bool hasU = isAvailable(available_params, MeteoGrids::U, date);
+		const bool hasV = isAvailable(available_params, MeteoGrids::V, date);
+		if (!hasU || !hasV) return false;
+		
+		Grid2DObject U,V;
+		getGrid(U, MeteoGrids::U, date);
+		buffer.push(U, MeteoGrids::U, date);
+		getGrid(V, MeteoGrids::V, date);
+		buffer.push(V, MeteoGrids::V, date);
+		
+		grid2D.set(U, IOUtils::nodata);
+		if (parameter==MeteoGrids::VW) {
+			for (size_t ii=0; ii<grid2D.size(); ii++)
+				grid2D(ii) = sqrt( Optim::pow2(U(ii)) + Optim::pow2(V(ii)) );
+		} else {
+			for (size_t ii=0; ii<grid2D.size(); ii++)
+				grid2D(ii) =  fmod( atan2( U(ii), V(ii) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
+		}
+		buffer.push(grid2D, parameter, date);
+		return true;
+	}
+	
+	if (parameter==MeteoGrids::RH) {
+		const bool hasTA = isAvailable(available_params, MeteoGrids::TA, date);
+		if (!hasTA) return false;
+		Grid2DObject TA;
+		getGrid(TA, MeteoGrids::TA, date);
+		buffer.push(TA, MeteoGrids::TA, date);
+		
+		const bool hasDEM = isAvailable(available_params, MeteoGrids::DEM, date);
+		const bool hasQI = isAvailable(available_params, MeteoGrids::QI, date);
+		const bool hasTD = isAvailable(available_params, MeteoGrids::TD, date);
+		
+		if (hasTA && hasTD) {
+			getGrid(grid2D, MeteoGrids::TD, date);
+			buffer.push(grid2D, MeteoGrids::TD, date);
+			
+			for (size_t ii=0; ii<grid2D.size(); ii++)
+				grid2D(ii) = Atmosphere::DewPointtoRh(grid2D(ii), TA(ii), false);
+			return true;
+		} else if (hasQI && hasDEM && hasTA) {
+			Grid2DObject dem;
+			getGrid(dem, MeteoGrids::DEM, date); //HACK use readDEM instead?
+			getGrid(grid2D, MeteoGrids::QI, date);
+			buffer.push(grid2D, MeteoGrids::QI, date);
+			for (size_t ii=0; ii<grid2D.size(); ii++)
+				grid2D(ii) = Atmosphere::specToRelHumidity(dem(ii), TA(ii), grid2D(ii));
+			return true;
+		}
+		
+		return false;
+	}
+	
+	if (parameter==MeteoGrids::ISWR) {
+		const bool hasISWR_DIFF = isAvailable(available_params, MeteoGrids::ISWR_DIFF, date);
+		const bool hasISWR_DIR = isAvailable(available_params, MeteoGrids::ISWR_DIR, date);
+		
+		if (hasISWR_DIFF && hasISWR_DIR) {
+			Grid2DObject iswr_diff;
+			getGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date);
+			getGrid(grid2D, MeteoGrids::ISWR_DIR, date);
+			grid2D += iswr_diff;
+			buffer.push(grid2D, MeteoGrids::ISWR, date);
+			return true;
+		}
+		
+		const bool hasALB = isAvailable(available_params, MeteoGrids::ALB, date);
+		const bool hasRSWR = isAvailable(available_params, MeteoGrids::ISWR, date);
+		if (hasRSWR && hasALB) {
+			Grid2DObject alb;
+			getGrid(alb, MeteoGrids::ALB, date);
+			getGrid(grid2D, MeteoGrids::RSWR, date);
+			grid2D /= alb;
+			buffer.push(grid2D, MeteoGrids::ISWR, date);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	if (parameter==MeteoGrids::RSWR) {
+		const bool hasALB = isAvailable(available_params, MeteoGrids::ALB, date);
+		if (!hasALB) return false;
+		const bool hasISWR = isAvailable(available_params, MeteoGrids::ISWR, date);
+		
+		if (!hasISWR) {
+			const bool hasISWR_DIFF = isAvailable(available_params, MeteoGrids::ISWR_DIFF, date);
+			const bool hasISWR_DIR = isAvailable(available_params, MeteoGrids::ISWR_DIR, date);
+			if (!hasISWR_DIFF || !hasISWR_DIR) return false;
+			
+			Grid2DObject iswr_diff;
+			getGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date);
+			getGrid(grid2D, MeteoGrids::ISWR_DIR, date);
+			grid2D += iswr_diff;
+			buffer.push(grid2D, MeteoGrids::ISWR, date);
+		} else {
+			getGrid(grid2D, MeteoGrids::ISWR, date);
+		}
+		
+		Grid2DObject alb;
+		getGrid(alb, MeteoGrids::ALB, date);
+		
+		grid2D *= alb;
+		buffer.push(grid2D, MeteoGrids::RSWR, date);
+		return true;
+	}
+	
+	if (parameter==MeteoGrids::HS) {
+		const bool hasRSNO = isAvailable(available_params, MeteoGrids::RSNO, date);
+		const bool hasSWE = isAvailable(available_params, MeteoGrids::SWE, date);
+		
+		if (hasRSNO && hasSWE) {
+			Grid2DObject rsno;
+			getGrid(rsno, MeteoGrids::RSNO, date);
+			getGrid(grid2D, MeteoGrids::SWE, date);
+			grid2D *= 1000.0; //convert mm=kg/m^3 into kg
+			grid2D /= rsno;
+			buffer.push(grid2D, MeteoGrids::HS, date);
+			return true;
+		}
+		return false;
+	}
+	
+	if (parameter==MeteoGrids::PSUM) {
+		const bool hasPSUM_S = isAvailable(available_params, MeteoGrids::PSUM_S, date);
+		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
+		
+		if (hasPSUM_S && hasPSUM_L) {
+			Grid2DObject psum_l;
+			getGrid(grid2D, MeteoGrids::PSUM_S, date);
+			buffer.push(grid2D, MeteoGrids::PSUM_S, date);
+			getGrid(psum_l, MeteoGrids::PSUM_L, date);
+			buffer.push(psum_l, MeteoGrids::PSUM_L, date);
+			grid2D += psum_l;
+			buffer.push(grid2D, MeteoGrids::PSUM, date);
+			return true;
+		}
+	}
+	
+	if (parameter==MeteoGrids::PSUM_PH) {
+		const bool hasPSUM_S = isAvailable(available_params, MeteoGrids::PSUM_S, date);
+		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
+		
+		if (hasPSUM_S && hasPSUM_L) {
+			Grid2DObject psum_l;
+			getGrid(grid2D, MeteoGrids::PSUM_S, date);
+			buffer.push(grid2D, MeteoGrids::PSUM_S, date);
+			getGrid(psum_l, MeteoGrids::PSUM_L, date);
+			buffer.push(psum_l, MeteoGrids::PSUM_L, date);
+			grid2D += psum_l;
+			buffer.push(grid2D, MeteoGrids::PSUM, date);
+			
+			for (size_t ii=0; ii<grid2D.size(); ii++) {
+				const double psum = grid2D(ii);
+				if (psum!=IOUtils::nodata && psum>0)
+					grid2D(ii) = psum_l(ii) / psum;
+			}
+			return true;
+		}
+		
+		return false;
+	}
+	
+	return false;
+}
+
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if (processing_level == IOUtils::raw){
 		iohandler.read2DGrid(grid2D, parameter, date);
 	} else {
 		if (buffer.get(grid2D, parameter, date)) return;
-
-		iohandler.read2DGrid(grid2D, parameter, date);
-		buffer.push(grid2D, parameter, date);
+		
+		//should we rebuffer the grids list?
+		if (grids2d_list.empty() || date<grids2d_start || date>grids2d_end) {
+			grids2d_start = date - 1.;
+			grids2d_end = date + grid2d_list_buffer_size;
+			const bool status = iohandler.list2DGrids(grids2d_start, grids2d_end, grids2d_list);
+			if (status) {
+				//the plugin might have returned a range larger than requested, so adjust the min/max dates if necessary
+				if (!grids2d_list.empty()) {
+					if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
+					if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
+				}
+			} else { //this means that the call is not implemeted in the plugin
+				iohandler.read2DGrid(grid2D, parameter, date);
+				buffer.push(grid2D, parameter, date);
+				return;
+			}
+		}
+		
+		const std::map<Date, std::set<size_t> >::const_iterator it = grids2d_list.find(date);
+		if (it!=grids2d_list.end()) {
+			if ( it->second.find(parameter) != it->second.end() ) {
+				iohandler.read2DGrid(grid2D, parameter, date);
+				buffer.push(grid2D, parameter, date);
+			} else { //the right parameter could not be found, can we generate it?
+				if (!read2DGrid(grid2D, it->second, parameter, date))
+					throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
+			}
+		} else {
+			throw NoDataException("Could not find any grids at time "+date.toString(Date::ISO), AT);
+		}
 	}
 }
 

@@ -43,6 +43,7 @@ class ARPSIO : public IOInterface {
 
 		ARPSIO& operator=(const ARPSIO&); ///<Assignement operator, required because of pointer member
 
+		virtual bool list2DGrids(const Date& /*start*/, const Date& /*end*/, std::map<Date, std::set<size_t> >& /*list*/) {return false;}
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 

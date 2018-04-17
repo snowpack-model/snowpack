@@ -38,6 +38,7 @@ class GrassIO : public IOInterface {
 		GrassIO(const GrassIO&);
 		GrassIO(const Config&);
 
+		virtual bool list2DGrids(const Date& /*start*/, const Date& /*end*/, std::map<Date, std::set<size_t> >& /*list*/) {return false;}
 		using IOInterface::read2DGrid; //to call before overwriding the method
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 

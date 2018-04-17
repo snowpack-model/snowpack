@@ -302,8 +302,7 @@ GridBuffer::GridBuffer(const size_t& in_max_grids)
 
 bool GridBuffer::get(Grid2DObject& grid, const std::string& grid_hash) const
 {
-	if (IndexBufferedGrids.empty())
-		return false;
+	if (IndexBufferedGrids.empty()) return false;
 
 	const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find( grid_hash );
 	if (it != mapBufferedGrids.end()) { //already in map
@@ -334,6 +333,19 @@ bool GridBuffer::get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter
 {
 	const std::string grid_hash( date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter) );
 	return get(grid, grid_hash);
+}
+
+bool GridBuffer::has(const std::string& grid_hash) const
+{
+	if (IndexBufferedGrids.empty()) return false;
+	const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find( grid_hash );
+	return (it != mapBufferedGrids.end());
+}
+
+bool GridBuffer::has(const MeteoGrids::Parameters& parameter, const Date& date) const
+{
+	const std::string grid_hash( date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter) );
+	return has(grid_hash);
 }
 
 bool GridBuffer::get(DEMObject& grid, const std::string& grid_hash) const
@@ -410,6 +422,7 @@ void GridBuffer::push(const Grid2DObject& grid, const MeteoGrids::Parameters& pa
 	if (max_grids==0) return;
 	
 	const std::string grid_hash( date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter) );
+	if (has(grid_hash)) return; //the grid is already in buffer
 	push(grid, grid_hash, "");
 }
 

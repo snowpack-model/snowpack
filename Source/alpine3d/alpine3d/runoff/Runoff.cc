@@ -110,13 +110,12 @@ void Runoff::setSnowPack(SnowpackInterface &sn_interface) {
  */
 void Runoff::output(const mio::Date& i_date, const mio::Grid2DObject& psum, const mio::Grid2DObject& ta)
 {
-	if (!MPIControl::instance().master()) return; //only compute on master node
 	if (!output_grids && !output_sums) return;
 
 	timer.restart();
 	updateTotalRunoffGrid();
 
-	if (output_grids)
+	if(MPIControl::instance().master() && output_grids)
 		io->write2DGrid(total_runoff, mio::MeteoGrids::ROT, i_date);
 
 	if (output_sums) {
@@ -136,31 +135,34 @@ void Runoff::output(const mio::Date& i_date, const mio::Grid2DObject& psum, cons
 		std::vector<mio::Grid2DObject> extraGrids;
 		getExtraMeteoGrids(extraGrids);
 
+
+		if(MPIControl::instance().master()){
 		//Resample runoff grids to match the cell size of the catchment masks
-		if (fabs(grid_size_factor - 1.0) > 1e-5) {
-			totalRunoff   = mio::LibResampling2D::Nearest(totalRunoff, grid_size_factor);
-			precipRunoff  = mio::LibResampling2D::Nearest(precipRunoff, grid_size_factor);
-			snowRunoff    = mio::LibResampling2D::Nearest(snowRunoff, grid_size_factor);
-			glacierRunoff = mio::LibResampling2D::Nearest(glacierRunoff, grid_size_factor);
-			for (size_t iVar(0); iVar < n_extra_meteo_variables; ++iVar)
-				extraGrids[iVar] = mio::LibResampling2D::Nearest(extraGrids[iVar], grid_size_factor);
-		}
+			if (fabs(grid_size_factor - 1.0) > 1e-5) {
+				totalRunoff   = mio::LibResampling2D::Nearest(totalRunoff, grid_size_factor);
+				precipRunoff  = mio::LibResampling2D::Nearest(precipRunoff, grid_size_factor);
+				snowRunoff    = mio::LibResampling2D::Nearest(snowRunoff, grid_size_factor);
+				glacierRunoff = mio::LibResampling2D::Nearest(glacierRunoff, grid_size_factor);
+				for (size_t iVar(0); iVar < n_extra_meteo_variables; ++iVar)
+					extraGrids[iVar] = mio::LibResampling2D::Nearest(extraGrids[iVar], grid_size_factor);
+			}
 
-		//Sum the runoffs over each mask and write them in the output files
-		double currTotalRunoff, currPrecipRunoff, currSnowRunoff, currGlacierRunoff;
-		std::vector<double> currMeteoVars(n_extra_meteo_variables);
-		std::map<size_t, mio::Grid2DObject>::const_iterator itMask;
-		for (itMask = catchment_masks.begin(); itMask != catchment_masks.end(); ++itMask) {
-			currTotalRunoff   = sumOverMask(totalRunoff,   itMask->second);
-			currPrecipRunoff  = sumOverMask(precipRunoff,  itMask->second);
-			currSnowRunoff    = sumOverMask(snowRunoff,    itMask->second);
-			currGlacierRunoff = sumOverMask(glacierRunoff, itMask->second);
-			for (size_t iVar(0); iVar < n_extra_meteo_variables; ++iVar)
-				currMeteoVars[iVar] = averageOverMask(extraGrids[iVar], itMask->second);
+			//Sum the runoffs over each mask and write them in the output files
+			double currTotalRunoff, currPrecipRunoff, currSnowRunoff, currGlacierRunoff;
+			std::vector<double> currMeteoVars(n_extra_meteo_variables);
+			std::map<size_t, mio::Grid2DObject>::const_iterator itMask;
+			for (itMask = catchment_masks.begin(); itMask != catchment_masks.end(); ++itMask) {
+				currTotalRunoff   = sumOverMask(totalRunoff,   itMask->second);
+				currPrecipRunoff  = sumOverMask(precipRunoff,  itMask->second);
+				currSnowRunoff    = sumOverMask(snowRunoff,    itMask->second);
+				currGlacierRunoff = sumOverMask(glacierRunoff, itMask->second);
+				for (size_t iVar(0); iVar < n_extra_meteo_variables; ++iVar)
+					currMeteoVars[iVar] = averageOverMask(extraGrids[iVar], itMask->second);
 
-			updateOutputFile(itMask->first, i_date, currTotalRunoff,
-					currPrecipRunoff, currSnowRunoff, currGlacierRunoff,
-					currMeteoVars);
+				updateOutputFile(itMask->first, i_date, currTotalRunoff,
+						currPrecipRunoff, currSnowRunoff, currGlacierRunoff,
+						currMeteoVars);
+			}
 		}
 	}
 	timer.stop();
@@ -438,7 +440,7 @@ mio::IOManager* Runoff::getIOManager(mio::Config cfg, const bool& outputGrids)
 		} else {
 			const std::string runoff_grid2d_path = cfg.get("RUNOFF_GRID2DPATH", "Output");
 			cfg.addKey("GRID2DPATH", "Output", runoff_grid2d_path);
-		}	
+		}
 	}
 
 	return new mio::IOManager(cfg);

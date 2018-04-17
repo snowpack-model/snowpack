@@ -217,6 +217,7 @@ namespace mio {
  * @endcode
  *
  * @subsection data_merging 3. Data merging (MERGE)
+ * @subsubsection stations_merging 3.1 Merging different stations (MERGE)
  * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any 
  * EXCLUDE/KEEP commands. This is useful, for example, to provide measurements from different stations that actually share the 
  * same measurement location or to build "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP 
@@ -245,6 +246,10 @@ namespace mio {
  * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size 
  * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
+ * 
+ * @subsubsection automerge 3.2 Automerge
+ * If the key \em AUTOMERGE is set to true in the Input section, all stations that have identical IDs will be merged together. The first station
+ * to come (usually, the first that was defined in the plugin) has the priority over the next ones.
  * 
  * @subsection data_copy 4. Data copy (COPY)
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
@@ -366,15 +371,16 @@ IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), dataCreator(aio.cfg), timeproc(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params),
              merge_commands(aio.merge_commands), copy_commands(aio.copy_commands), move_commands(aio.move_commands),
              merged_stations(aio.merged_stations), merge_strategy(aio.merge_strategy), 
-             copy_ready(aio.copy_ready), move_ready(aio.move_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready)
+             copy_ready(aio.copy_ready), move_ready(aio.move_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready), automerge(aio.automerge)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), dataCreator(cfgreader), timeproc(cfgreader), mapPlugins(), excluded_params(), kept_params(),
              merge_commands(), copy_commands(), move_commands(), 
              merged_stations(), merge_strategy(MeteoData::STRICT_MERGE), 
-             copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false)
+             copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false)
 {
+	automerge = cfg.get("AUTOMERGE", "Input", IOUtils::nothrow);
 	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", IOUtils::nothrow);
 	if (!merge_strategy_str.empty())
 		merge_strategy = MeteoData::getMergeType(merge_strategy_str);
@@ -410,10 +416,10 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 	return *this;
 }
 
-std::map<Date, std::set<size_t> > IOHandler::list2DGrids(const Date& start, const Date& end)
+bool IOHandler::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
-	return plugin->list2DGrids(start, end);
+	return plugin->list2DGrids(start, end, list);
 }
 
 void IOHandler::read2DGrid(Grid2DObject& grid_out, const std::string& i_filename)
@@ -458,6 +464,8 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);
 	
+	if (automerge) automerge_stations(vecStation);
+	
 	if (!merge_ready) create_merge_map(); 
 	merge_stations(vecStation);
 }
@@ -467,6 +475,8 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
+	
+	if (automerge) automerge_stations(vecMeteo);
 	
 	if (!move_ready) create_move_map();
 	move_params(vecMeteo);
@@ -649,6 +659,43 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 			std::swap( vecVecMeteo[ii], vecVecMeteo.back() );
 			vecVecMeteo.pop_back();
 			ii--; //in case we have multiple identical stations ID
+		}
+	}
+}
+
+//merge stations that have identical IDs
+void IOHandler::automerge_stations(STATIONS_SET& vecStation) const
+{
+	for (size_t ii=0; ii<vecStation.size(); ii++) { //loop over the stations
+		const std::string toStationID( IOUtils::strToUpper(vecStation[ii].stationID) );
+		for (size_t jj=ii+1; jj<vecStation.size(); jj++) { //loop over the stations
+			const std::string fromStationID( IOUtils::strToUpper(vecStation[jj].stationID) );
+			if (fromStationID==toStationID) {
+				vecStation[ii].merge( vecStation[jj] );
+				std::swap( vecStation[jj], vecStation.back() );
+				vecStation.pop_back();
+				jj--; //we need to redo the current jj, because it contains another station
+			}
+		}
+	}
+}
+
+
+//merge stations that have identical IDs
+void IOHandler::automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const
+{
+	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
+		if (vecVecMeteo[ii].empty())  continue;
+		const std::string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
+		for (size_t jj=ii+1; jj<vecVecMeteo.size(); jj++) { //loop over the stations
+			if (vecVecMeteo[jj].empty())  continue;
+			const std::string fromStationID( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
+			if (fromStationID==toStationID) {
+				MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj], static_cast<MeteoData::Merge_Type>(merge_strategy)); //merge timeseries for the two stations
+				std::swap( vecVecMeteo[jj], vecVecMeteo.back() );
+				vecVecMeteo.pop_back();
+				jj--; //we need to redo the current jj, because it contains another station
+			}
 		}
 	}
 }

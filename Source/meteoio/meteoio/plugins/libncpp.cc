@@ -163,6 +163,19 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 }
 
+void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, int& attr_value)
+{
+	size_t attr_len;
+
+	int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+
+	status = nc_get_att_int(ncid, varid, attr_name.c_str(), &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+}
+
 bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name)
 {
 	size_t attr_len;
@@ -190,6 +203,23 @@ bool check_dim_var(const int& ncid, const std::string& dimname)
 	if (status != NC_NOERR) return false;
 
 	return check_variable(ncid, dimname);
+}
+
+// Retrieve all variables
+void get_variables(const int& ncid, std::vector<std::string>& variables)
+{
+	int nr_of_variables = -1;
+	int status = nc_inq_nvars(ncid, &nr_of_variables);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve variables for dataset: " + string(nc_strerror(status)), AT);
+
+	// Variable IDs in a NetCDF file are consecutive integers starting with 0
+	for (int ii=0; ii<nr_of_variables; ++ii) {
+		char name[NC_MAX_NAME+1];
+		const int stat = nc_inq_varname(ncid, ii, name);
+		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
+		variables.push_back( std::string(name) );
+	}
 }
 
 // Retrieve all variables with a certain set of dimensions
@@ -433,6 +463,14 @@ void write_data(const int& ncid, const std::string& varname, const int& varid, c
 		throw IOException("Could not write data for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
+void write_data(const int& ncid, const std::string& varname, const int& varid, const char * const data)
+{
+	const int status = nc_put_var_text(ncid, varid, data);
+	if (status != NC_NOERR)
+		throw IOException("Could not write data for variable '" + varname + "': " + nc_strerror(status), AT);
+}
+
+
 void write_data(const int& ncid, const std::string& varname, const int& varid, const size_t& nrows, const size_t& ncols,
                 const size_t& pos_start, const int * const data)
 {
@@ -671,6 +709,14 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 	if (status != NC_NOERR)
 		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
+
+void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value)
+{
+	const int status = nc_put_att_int(ncid, varid, attr_name.c_str(), NC_INT, 1, &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
+}
+
 
 void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value)
 {

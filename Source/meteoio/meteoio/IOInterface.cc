@@ -66,7 +66,7 @@ namespace mio {
  * - request a data point at the end of a very large data set (tens of Mb) and check that memory consumption remains the same as when requesting a data point at the begining of the data set (ie: that the memory for one buffer is used, but that the temporary memory usage of the plugin does not increase with the amount of data it has to parse before returning it to the BufferedIOHandler)
  */
 
-std::map<Date, std::set<size_t> > IOInterface::list2DGrids(const Date& /*start*/, const Date& /*end*/)
+bool IOInterface::list2DGrids(const Date& /*start*/, const Date& /*end*/, std::map<Date, std::set<size_t> >& /*list*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }

@@ -135,6 +135,8 @@ class MeteoData {
 		                 lastparam=PSUM_PH};
 
 		static const std::string& getParameterName(const size_t& parindex);
+		
+		static size_t getStaticParameterIndex(const std::string& parname);
 
 		/**
 		 * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0

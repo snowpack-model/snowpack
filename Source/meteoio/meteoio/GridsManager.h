@@ -23,6 +23,9 @@
 #include <meteoio/IOHandler.h>
 #include <meteoio/Config.h>
 
+#include <set>
+#include <map>
+
 namespace mio {
 
 class GridsManager {
@@ -63,13 +66,17 @@ class GridsManager {
 		const std::string toString() const;
 
 	private:
-		void addToBuffer(const Grid2DObject& in_grid2Dobj, const std::string& grid_hash);
-		bool getFromBuffer(const std::string& grid_hash, Grid2DObject& grid) const;
+		bool isAvailable(const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date) const;
+		void getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date);
+		bool read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		IOHandler& iohandler;
 		const Config& cfg;
 		GridBuffer buffer;
+		std::map<Date, std::set<size_t> > grids2d_list; ///< list of available 2d grids
+		Date grids2d_start, grids2d_end; ///< validity range of the grids2d_list
 
+		double grid2d_list_buffer_size; ///< how many days to read the list of grids2d for?
 		unsigned int processing_level;
 };
 } //end namespace

@@ -344,9 +344,9 @@ class ElementData {
 		double crit_cut_length;    ///< Critical cut length (m)
 		double soot_ppmv;          ///< Impurity content (ppmv) used for albedo calculation of Gardner
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
-		double lwc_source;         ///< Source/sink term for Richards equation (m^3/m^3)
+		double lwc_source;         ///< Source/sink term for Richards equation (m^3/m^3 / timestep)
 		double PrefFlowArea;       ///< Preferential flow path relative area (-)
-		double SlopeParFlux;       ///< Slope parallel flux (m^3/m^3 / m/s)
+		double SlopeParFlux;       ///< Slope parallel flux (m^3/m^3 * m / timestep)
 		double Qph_up;             ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the upper node of the element
 		double Qph_down;           ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the lower node of the element
 		//NIED (H. Hirashima)

@@ -153,6 +153,9 @@ class GridBuffer {
 		bool get(Grid2DObject& grid, const std::string& grid_hash) const;
 		bool get(Grid2DObject& grid, const std::string& grid_hash, std::string& grid_info) const;
 		bool get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date) const;
+		
+		bool has(const std::string& grid_hash) const;
+		bool has(const MeteoGrids::Parameters& parameter, const Date& date) const;
 
 		void push(const DEMObject& grid, const std::string& grid_hash);
 		void push(const Grid2DObject& grid, const std::string& grid_hash);

@@ -59,7 +59,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 	if (value==IOUtils::nodata) {
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), TAU_CLD=md(MeteoData::TAU_CLD);
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
-		double cloudiness = (TAU_CLD!=IOUtils::nodata)? Atmosphere::Kasten_cloudiness( 1.-TAU_CLD ) : IOUtils::nodata;
+		double cloudiness = (TAU_CLD!=IOUtils::nodata)? Atmosphere::Kasten_cloudiness( TAU_CLD ) : IOUtils::nodata;
 
 		const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
 		const double julian_gmt = md.date.getJulian(true);

@@ -2199,7 +2199,37 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 	}
 }
 
-void Snowpack::snowPreparation(SnowStation& /*Xdata*/)
+void Snowpack::snowPreparation(SnowStation& Xdata)
 {
-	
+	const size_t nE = Xdata.getNumberOfElements();
+	double depth = 0.;
+	vector<NodeData>& NDS = Xdata.Ndata;
+	vector<ElementData>& EMS = Xdata.Edata;
+
+	for (size_t e=nE; e-- > Xdata.SoilNode; ) {
+		const double rho_groom = 12.152 * pow(448.78 - EMS[e].Rho, 1./2.) + 0.9963 * EMS[e].Rho - 35.41;	// Density of the groomed snow
+		const double L0 = EMS[e].L;
+		const double L1 = EMS[e].L * EMS[e].Rho / rho_groom;	// New lenght of the element after grooming
+		if ( rho_groom < 450. ) {
+			depth += L1;
+			EMS[e].L0 = EMS[e].L = L1;
+			EMS[e].Rho = rho_groom;
+			EMS[e].theta[WATER] *= L0 / L1;
+			EMS[e].theta[WATER_PREF] *= L0 / L1;
+			EMS[e].theta[ICE]   *= L0 / L1;
+			NDS[e+1].z = NDS[e].z + EMS[e].L;
+			EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
+			if ( !(EMS[e].theta[AIR]>=0.1) ) {
+				prn_msg(__FILE__, __LINE__, "err", Date(),
+			          "Error in Slope Preparation (Densification) Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf air=%le",
+			            e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
+			throw IOException("Runtime Error in snowPreparation()", AT);
+			}
+		// Update computed snow depth
+			Xdata.cH = NDS[nE].z + NDS[nE].u;	
+			//		Xdata.pAlbedo = getParameterizedAlbedo(Xdata, Mdata);
+		}
+		
+		if (depth > 0.4) break;		// Grooming has only an influence on the upper 40 cm
+	}
 }
