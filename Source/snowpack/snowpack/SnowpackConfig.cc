@@ -182,22 +182,6 @@ void SnowpackConfig::setDefaults()
 
 	getValue("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack", enforce_measured_snow_heights);
 
-	string s_minimum_l_element; getValue("MINIMUM_L_ELEMENT", "SnowpackAdvanced", s_minimum_l_element, IOUtils::nothrow);
-	string s_height_new_elem; getValue("HEIGHT_NEW_ELEM", "SnowpackAdvanced", s_height_new_elem, IOUtils::nothrow);
-	if (s_minimum_l_element.empty()) addKey("MINIMUM_L_ELEMENT", "SnowpackAdvanced", advancedConfig["MINIMUM_L_ELEMENT"]);
-	double minimum_l_element = get("MINIMUM_L_ELEMENT", "SnowpackAdvanced");
-
-	if (enforce_measured_snow_heights) {
-		if(s_height_new_elem.empty()) addKey("HEIGHT_NEW_ELEM", "SnowpackAdvanced", advancedConfig["HEIGHT_NEW_ELEM"]);
-	} else {
-		if(s_height_new_elem.empty()) {
-			stringstream ss;
-			const double tmp = 2. * minimum_l_element;
-			ss << "" << tmp;
-			addKey("HEIGHT_NEW_ELEM", "SnowpackAdvanced", ss.str());
-		}
-	}
-
 	string albedo_model; getValue("ALBEDO_MODEL", "SnowpackAdvanced", albedo_model, IOUtils::nothrow);
 	string hn_density; getValue("HN_DENSITY", "SnowpackAdvanced", hn_density, IOUtils::nothrow);
 	string hn_density_parameterization; getValue("HN_DENSITY_PARAMETERIZATION", "SnowpackAdvanced", hn_density_parameterization, IOUtils::nothrow);
@@ -207,6 +191,36 @@ void SnowpackConfig::setDefaults()
 	string watertransportmodel_snow; getValue("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", watertransportmodel_snow, IOUtils::nothrow);
 	string watertransportmodel_soil; getValue("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", watertransportmodel_soil, IOUtils::nothrow);
 	string lb_cond_waterflux; getValue("LB_COND_WATERFLUX", "SnowpackAdvanced", lb_cond_waterflux, IOUtils::nothrow);
+	string s_minimum_l_element; getValue("MINIMUM_L_ELEMENT", "SnowpackAdvanced", s_minimum_l_element, IOUtils::nothrow);
+	string s_height_new_elem; getValue("HEIGHT_NEW_ELEM", "SnowpackAdvanced", s_height_new_elem, IOUtils::nothrow);
+
+	if (s_minimum_l_element.empty()) addKey("MINIMUM_L_ELEMENT", "SnowpackAdvanced", advancedConfig["MINIMUM_L_ELEMENT"]);
+	double minimum_l_element = get("MINIMUM_L_ELEMENT", "SnowpackAdvanced");
+
+	if (variant == "ANTARCTICA") {	// Defaults for Antarctica variant
+		if (hn_density.empty()) addKey("HN_DENSITY", "SnowpackAdvanced", "EVENT");
+
+		if (s_minimum_l_element.empty()) addKey("MINIMUM_L_ELEMENT", "SnowpackAdvanced", "0.0001"); //Minimum element length (m)
+		minimum_l_element = get("MINIMUM_L_ELEMENT", "SnowpackAdvanced");
+
+		if ( !enforce_measured_snow_heights && s_height_new_elem.empty() ) {
+			stringstream ss;
+			const double tmp = 1.1 * minimum_l_element;
+			ss << "" << tmp;
+			addKey("HEIGHT_NEW_ELEM", "SnowpackAdvanced", ss.str());
+		}
+	} else {
+		if (enforce_measured_snow_heights) {
+			if(s_height_new_elem.empty()) addKey("HEIGHT_NEW_ELEM", "SnowpackAdvanced", advancedConfig["HEIGHT_NEW_ELEM"]);
+		} else {
+			if(s_height_new_elem.empty()) {
+				stringstream ss;
+				const double tmp = 2. * minimum_l_element;
+				ss << "" << tmp;
+				addKey("HEIGHT_NEW_ELEM", "SnowpackAdvanced", ss.str());
+			}
+		}
+	}
 
 	if ((variant.empty()) || (variant == "DEFAULT")) {
 		// Use default settings
@@ -220,20 +234,6 @@ void SnowpackConfig::setDefaults()
 		if (watertransportmodel_soil.empty()) addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", "NIED");
 
 	} else if (variant == "ANTARCTICA" || variant == "POLAR") {
-		if (variant == "ANTARCTICA") {
-			if (hn_density.empty()) addKey("HN_DENSITY", "SnowpackAdvanced", "EVENT");
-
-			addKey("MINIMUM_L_ELEMENT", "SnowpackAdvanced", "0.0001"); //Minimum element length (m)
-			minimum_l_element = get("MINIMUM_L_ELEMENT", "SnowpackAdvanced");
-
-			if ( !enforce_measured_snow_heights) {
-				stringstream ss;
-				const double tmp = 1.1 * minimum_l_element;
-				ss << "" << tmp;
-				addKey("HEIGHT_NEW_ELEM", "SnowpackAdvanced", ss.str());
-			}
-		}
-
 		string hoar_density_buried; getValue("HOAR_DENSITY_BURIED", "SnowpackAdvanced", hoar_density_buried, IOUtils::nothrow);
 		if (hoar_density_buried.empty()) addKey("HOAR_DENSITY_BURIED", "SnowpackAdvanced", "200.0");
 
