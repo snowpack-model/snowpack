@@ -137,7 +137,9 @@ class Snowpack {
 		bool research_mode, useCanopyModel, enforce_measured_snow_heights, detect_grass;
 		bool soil_flux, useSoilLayers;
 		bool useNewPhaseChange;
-		bool combine_elements, reduce_n_elements, change_bc, meas_tss;
+		bool combine_elements, reduce_n_elements;
+		double max_simulated_hs; ///< if >0: lowest elements will be removed if simulated snow depth exceeds max_simulated_hs (in m)
+		bool change_bc, meas_tss;
 		bool vw_dendricity;
 		bool enhanced_wind_slab; ///< to use an even stronger wind slab densification than implemented by default
 		bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)

@@ -2253,6 +2253,38 @@ void SnowStation::splitElements(const double& max_element_length, const double& 
 }
 
 /**
+ * @brief Keep simulated snow depth within MAX_SIMULATED_HS range.
+ * - This function deletes elements at the bottom of the snowpack when the simulated snow depth exceeds max_simulated_hs.
+ *   Useful for simulations of Firn, in studies where one is only interested in the near surface processes.
+ *   Note that this function will always keep at least one snow element.
+ * @param max_simulated_hs If positive: maximum allowed modelled snow depth, above which elements will be removed.
+ */
+void SnowStation::CheckMaxSimHS(const double& max_simulated_hs) {
+	if(max_simulated_hs > 0. && cH > max_simulated_hs) {
+		double tmp_height = 0.;
+		size_t e = nElems;
+		for ( ; e-- > SoilNode; ) {
+			// Find which element exceeds the max_simulated_hs
+			tmp_height += Edata[e].L;
+			if (tmp_height > max_simulated_hs) {
+				if ( e+1 < nElems ) { //Check for the case where the top element L already exceeds max_simulated_hs, in case we skip element deletion.
+					size_t i_offset = e+1;				// The new indexing offset
+					size_t i = i_offset;
+					for ( ; i < nElems; i++) {			// Go from the element above the one that was exceeding max_simulated_hs to the top element
+						Edata[i-i_offset] = Edata[i];		// Shift all the elements down
+						Ndata[i-i_offset] = Ndata[i];		// Shift the node down
+					}
+					Ndata[nElems-i_offset] = Ndata[nElems];		// Take care of the remaining top node
+					resize(i-i_offset);
+				}
+				break;
+			}
+		}
+	}
+	return;
+}
+
+/**
  * @brief Merging two elements
  * - Joining:
  * 	- Keep the lower element, that is, the lowest snow element always survives!

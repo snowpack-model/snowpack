@@ -503,6 +503,7 @@ class SnowStation {
 		static void mergeElements(ElementData& Edata0, const ElementData& Edata1, const bool& merge, const bool& topElement);
 		void splitElement(const size_t& e);							//Split an element
 		void splitElements(const double& max_element_length, const double& comb_thresh_l);	//Check for splitting, calls splitElement(...) for actual splitting
+		void CheckMaxSimHS(const double& max_simulated_hs);					//Check for hs > max_simulated_hs
 
 		void compSnowpackMasses();
 		void compSnowpackInternalEnergyChange(const double& sn_dt);

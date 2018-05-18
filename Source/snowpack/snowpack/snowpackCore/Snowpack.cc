@@ -94,7 +94,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             new_snow_grain_size(0.), new_snow_bond_size(0.), hoar_density_buried(0.), hoar_density_surf(0.), hoar_min_size_buried(0.),
             minimum_l_element(0.), comb_thresh_l(IOUtils::nodata), t_surf(0.),
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
-            soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0.),
+            soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0.), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
             enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), forestfloor_alb(false), adjust_height_of_meteo_values(true),
             advective_heat(false), heat_begin(0.), heat_end(0.), temp_index_degree_day(0.), temp_index_swr_factor(0.)
@@ -220,6 +220,11 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("REDUCE_N_ELEMENTS", "SnowpackAdvanced", reduce_n_elements);
 	cfg.getValue("COMB_THRESH_L", "SnowpackAdvanced", comb_thresh_l, IOUtils::nothrow);
 	if(comb_thresh_l == IOUtils::nodata) comb_thresh_l = SnowStation::comb_thresh_l_ratio * height_new_elem;	// If no comb_thresh_l specified, use the default one (i.e., a fixed ratio from height_new_elem)
+	cfg.getValue("MAX_SIMULATED_HS", "SnowpackAdvanced", max_simulated_hs);
+	if(max_simulated_hs > 0. && useSoilLayers) {
+		prn_msg(__FILE__, __LINE__, "err", Date(), "Inconsistent setting: you cannot use MAX_SIMULATED_HS > 0 for simulations with soil.");
+		throw IOException("Runtime Error in Snowpack::Snowpack()", AT);
+	}
 
 	//Warning is issued if snow tempeartures are out of bonds, that is, crazy
 	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
@@ -2196,6 +2201,10 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		if (reduce_n_elements > 0) {
 			Xdata.splitElements(-1., comb_thresh_l);
 		}
+	}
+
+	if (max_simulated_hs > 0.) {
+		Xdata.CheckMaxSimHS(max_simulated_hs);
 	}
 }
 

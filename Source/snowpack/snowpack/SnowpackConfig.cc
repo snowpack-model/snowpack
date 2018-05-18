@@ -64,6 +64,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["REDUCE_N_ELEMENTS"] = "0";
 	advancedConfig["MASS_BALANCE"] = "false";
 	advancedConfig["MAX_NUMBER_MEAS_TEMPERATURES"] = "5";
+	advancedConfig["MAX_SIMULATED_HS"] = "-1";
 	advancedConfig["MEAS_INCOMING_LONGWAVE"] = "false";
 	advancedConfig["METAMORPHISM_MODEL"] = "DEFAULT";
 	advancedConfig["MIN_DEPTH_SUBSURF"] = "0.07";
