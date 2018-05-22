@@ -78,6 +78,7 @@ class GridsManager {
 
 		double grid2d_list_buffer_size; ///< how many days to read the list of grids2d for?
 		unsigned int processing_level;
+		bool dem_altimeter; ///< use the pressure to compute the elevation?
 };
 } //end namespace
 #endif

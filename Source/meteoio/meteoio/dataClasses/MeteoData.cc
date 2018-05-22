@@ -49,6 +49,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("ISWR_DIFF");
 	paramname.push_back("ISWR_DIR");
 	paramname.push_back("ILWR");
+	paramname.push_back("OLWR");
 	paramname.push_back("TAU_CLD");
 	paramname.push_back("HS");
 	paramname.push_back("PSUM");

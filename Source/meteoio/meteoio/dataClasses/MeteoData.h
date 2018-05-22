@@ -54,6 +54,7 @@ class MeteoGrids {
 				ISWR_DIFF, ///< Incoming short wave, diffuse
 				ISWR_DIR, ///< Incoming short wave, direct
 				ILWR, ///< Incoming long wave radiation
+				OLWR, ///< Outgoing long wave radiation
 				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 				HS, ///< Height of snow
 				PSUM, ///< Water equivalent of precipitations, either solid or liquid

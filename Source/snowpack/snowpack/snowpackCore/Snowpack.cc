@@ -973,7 +973,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 	// Copy Temperature at time0 into First Iteration
 	for (size_t n = 0; n < nN; n++) {
-		if(n==nN-1 && useNewPhaseChange) {
+		if(n==nN-1 && useNewPhaseChange && surfaceCode != DIRICHLET_BC) {
 			//Correct the upper node, as it may have been forced to melting temperature for assessing the energy balance
 			U[n] = 2. * Xdata.Edata[n-1].Te - NDS[n-1].T;
 		} else {

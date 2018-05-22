@@ -467,9 +467,14 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const Date& i_date, METEO_SET& v
 
 void Meteo2DInterpolator::initVirtualStationsAtAllGridPoints()
 {
-	if (!cfg.keyExists("DEM", "Input"))
-		throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
-	if (internal_dem.empty()) gridsmanager->readDEM(internal_dem);
+	if (internal_dem.empty()) {
+		if (cfg.keyExists("GRID2D_DEM", "Input")) {
+			gridsmanager->read2DGrid(internal_dem, MeteoGrids::DEM, Date()); //HACK there are no DEM specific options... (ie different file name,etc)
+		} else {
+			if (!cfg.keyExists("DEM", "Input")) throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
+			gridsmanager->readDEM(internal_dem);
+		}
+	}
 
 	//get virtual stations coordinates
 	std::string coordin, coordinparam, coordout, coordoutparam;
@@ -503,9 +508,14 @@ void Meteo2DInterpolator::initVirtualStationsAtAllGridPoints()
  */
 void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 {
-	if (!cfg.keyExists("DEM", "Input"))
-		throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
-	if (internal_dem.empty()) gridsmanager->readDEM(internal_dem);
+	if (internal_dem.empty()) {
+		if (cfg.keyExists("GRID2D_DEM", "Input")) {
+			gridsmanager->read2DGrid(internal_dem, MeteoGrids::DEM, Date()); //HACK there are no DEM specific options... (ie different file name,etc)
+		} else {
+			if (!cfg.keyExists("DEM", "Input")) throw NoDataException("In order to use virtual stations, please provide a DEM!", AT);
+			gridsmanager->readDEM(internal_dem);
+		}
+	}
 
 	//get virtual stations coordinates
 	std::string coordin, coordinparam, coordout, coordoutparam;
