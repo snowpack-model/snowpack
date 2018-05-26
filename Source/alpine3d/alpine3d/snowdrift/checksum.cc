@@ -134,7 +134,7 @@ double checksum(const mio::Array1D<SnowStation>&x)
 			t+=0.1;
 		}
 
-		t+=checksum(x[ii].Cdata);
+		t+=checksum(*x[ii].Cdata);
 
 		if (t>1.0E20 && first) {
 			first=false;
