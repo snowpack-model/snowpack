@@ -401,6 +401,7 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 	// Runoff rate (kg m-2 h-1)
 	Hdata.runoff /= S_TO_H(sn_dt * static_cast<double>(hazard_steps_between));
 
+#ifndef SNOWPACK_CORE
 	// Profile type
 	if ((Xdata.S_class1 <= 10) && (Xdata.S_class1 >= 0))
 		Hdata.stab_class1 = Xdata.S_class1;
@@ -456,6 +457,7 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 		Hdata.stab_height5 = M_TO_CM(Xdata.z_S_5 / cos_sl);
 	else
 		Hdata_ind.stab_height5 = false;
+#endif
 
 	// Surface crust [type == 772] computed for southerly aspect outside compHazard()
 

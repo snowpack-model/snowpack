@@ -1082,6 +1082,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 	}
 
 	if (out_stab) {
+#ifndef SNOWPACK_CORE
 		data.push_back( Xdata.S_class1 );
 		data.push_back( Xdata.S_class2 );
 		data.push_back( M_TO_CM(Xdata.z_S_d/cos_sl) );
@@ -1094,6 +1095,20 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.S_4 );
 		data.push_back( M_TO_CM(Xdata.z_S_5/cos_sl) );
 		data.push_back( Xdata.getLiquidWaterIndex() ); //Xdata.S_5 HACK
+#else
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( mio::IOUtils::nodata );
+		data.push_back( Xdata.getLiquidWaterIndex() ); //Xdata.S_5 HACK
+#endif
 	}
 
 	/*if (out_canopy)

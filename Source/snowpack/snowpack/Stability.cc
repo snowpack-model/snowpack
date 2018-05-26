@@ -48,6 +48,7 @@ const int Stability::sh_mod = 2; ///< Defines regression model for surface hoar 
  */
 const int Stability::prof_classi = 2;
 
+#ifndef SNOWPACK_CORE
 map<string, StabMemFn> Stability::mapHandHardness;
 map<string, StabFnShearStrength> Stability::mapShearStrength;
 const bool Stability::__init = Stability::initStaticData();
@@ -323,3 +324,5 @@ void Stability::findWeakLayer(const double& Pk, std::vector<unsigned short>& n_l
 		Xdata.S_4 = NDS[nN-1].ssi; Xdata.z_S_4 = Xdata.cH;
 	}
 }
+#else
+#endif

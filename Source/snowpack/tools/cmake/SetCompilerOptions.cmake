@@ -36,6 +36,9 @@ MACRO (SET_COMPILER_OPTIONS)
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
+		IF(SNOWPACK_CORE)
+			SET(EXTRA "${EXTRA} -DSNOWPACK_CORE")
+		ENDIF(SNOWPACK_CORE)
 		
 		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch")
 		SET(DEEP_WARNINGS "-Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
@@ -55,6 +58,9 @@ MACRO (SET_COMPILER_OPTIONS)
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
+		IF(SNOWPACK_CORE)
+			SET(EXTRA "${EXTRA} -DSNOWPACK_CORE")
+		ENDIF(SNOWPACK_CORE)
 		
 		SET(WARNINGS "-hlist=m -h negmsgs -h msglevel_3 -h nomessage=870") #870: accept multibyte chars
 		#SET(EXTRA_WARNINGS "-h msglevel_2")
@@ -82,6 +88,9 @@ MACRO (SET_COMPILER_OPTIONS)
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
+		IF(SNOWPACK_CORE)
+			SET(EXTRA "${EXTRA} -DSNOWPACK_CORE")
+		ENDIF(SNOWPACK_CORE)
 		
 		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch -Wno-unknown-pragmas")
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Wfloat-equal -Wpadded
@@ -157,6 +166,9 @@ MACRO (SET_COMPILER_OPTIONS)
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
+		IF(SNOWPACK_CORE)
+			SET(EXTRA "${EXTRA} -DSNOWPACK_CORE")
+		ENDIF(SNOWPACK_CORE)
 		
 		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unknown-pragmas")
 		SET(WARNINGS "-Wall -Wswitch -Weverything ${WARNINGS_OFF}") #obviously, we should try to fix the warnings! Keeping in mind that some of these W are half buggy...

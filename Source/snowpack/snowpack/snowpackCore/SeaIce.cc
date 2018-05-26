@@ -484,22 +484,30 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 			EMS[Xdata.SoilNode].S = 0.;
 			EMS[Xdata.SoilNode].C = EMS[Xdata.SoilNode].CDot = 0.;
 			EMS[Xdata.SoilNode].ps2rb = 0.;
+#ifndef SNOWPACK_CORE
 			EMS[Xdata.SoilNode].s_strength = 0.;
+#endif
 			EMS[Xdata.SoilNode].hard = 0.;
+#ifndef SNOWPACK_CORE
 			EMS[Xdata.SoilNode].S_dr = INIT_STABILITY;
 			EMS[Xdata.SoilNode].crit_cut_length = Constants::undefined;
+#endif
 			EMS[Xdata.SoilNode].VG.theta_r = 0.;
 			EMS[Xdata.SoilNode].lwc_source = 0.;
 			EMS[Xdata.SoilNode].PrefFlowArea = 0.;
+#ifndef SNOWPACK_CORE
 			EMS[Xdata.SoilNode].dsm = 0.;
+#endif
 			
 			// Initial nodal properties
 			NDS[Xdata.SoilNode].u = 0.;                     // Initial displacement is 0
 			NDS[Xdata.SoilNode].hoar = 0.;                  // The new snow surface hoar is set to zero
 			NDS[Xdata.SoilNode].udot = 0.;                  // Settlement rate is also 0
 			NDS[Xdata.SoilNode].f = 0.;                     // Unbalanced forces are 0
+#ifndef SNOWPACK_CORE
 			NDS[Xdata.SoilNode].S_n = INIT_STABILITY;
 			NDS[Xdata.SoilNode].S_s = INIT_STABILITY;
+#endif
 			NDS[Xdata.SoilNode].z = 0.;
 		} else {
 			// In this case, increase existing element

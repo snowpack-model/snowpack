@@ -29,6 +29,7 @@
 using namespace mio;
 using namespace std;
 
+#ifndef SNOWPACK_CORE
 /**
  * @brief Compute hand hardness for a given grain type and density
  * All the information about hardness parameterizations for PP DF RG FC DH MF FCxf are published in
@@ -1345,3 +1346,4 @@ double StabilityAlgorithms::CriticalCutLength(const double& H_slab, const double
 	 
 	return (H_slab < Stability::minimum_slab || crit_length > 3.) ? (3.) : (crit_length);
 }
+#endif
