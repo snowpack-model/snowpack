@@ -545,7 +545,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		const bool cumsum_mass = cfg.get("CUMSUM_MASS", "Output");
 		surfFluxes.reset(cumsum_mass);
 		if (useCanopyModel)
-			currentSector.Cdata.reset(cumsum_mass);
+			currentSector.Cdata->reset(cumsum_mass);
 
 		const bool mass_balance = cfg.get("MASS_BALANCE", "SnowpackAdvanced");
 		if (mass_balance) {
@@ -1334,7 +1334,7 @@ inline void real_main (int argc, char *argv[])
 
 					if (avgsum_time_series) {
 						surfFluxes.reset(cumsum_mass);
-						if (useCanopyModel) vecXdata[slope.sector].Cdata.reset(cumsum_mass);
+						if (useCanopyModel) vecXdata[slope.sector].Cdata->reset(cumsum_mass);
 					}
 					surfFluxes.cRho_hn = Constants::undefined;
 					surfFluxes.mRho_hn = Constants::undefined;

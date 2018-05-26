@@ -728,12 +728,21 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	smet_writer.set_header_value("BareSoil_z0", ss.str());
 
 	// Canopy Characteristics
-	ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.height;
-	smet_writer.set_header_value("CanopyHeight", ss.str());
-	ss.str(""); ss << fixed << setprecision(6) << Xdata.Cdata.lai;
-	smet_writer.set_header_value("CanopyLeafAreaIndex", ss.str());
-	ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.direct_throughfall;
-	smet_writer.set_header_value("CanopyDirectThroughfall", ss.str());
+	if (Xdata.Cdata != NULL) {
+		ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata->height;
+		smet_writer.set_header_value("CanopyHeight", ss.str());
+		ss.str(""); ss << fixed << setprecision(6) << Xdata.Cdata->lai;
+		smet_writer.set_header_value("CanopyLeafAreaIndex", ss.str());
+		ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata->direct_throughfall;
+		smet_writer.set_header_value("CanopyDirectThroughfall", ss.str());
+	} else {
+		ss.str(""); ss << fixed << setprecision(2) << double(0.);
+		smet_writer.set_header_value("CanopyHeight", ss.str());
+		ss.str(""); ss << fixed << setprecision(6) << double(0.);
+		smet_writer.set_header_value("CanopyLeafAreaIndex", ss.str());
+		ss.str(""); ss << fixed << setprecision(2) << double(1.);
+		smet_writer.set_header_value("CanopyDirectThroughfall", ss.str());
+	}
 
 	// Additional parameters
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.WindScalingFactor;

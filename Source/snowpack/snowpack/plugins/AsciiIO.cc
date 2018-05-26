@@ -797,9 +797,15 @@ void AsciiIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 	fout << "SoilAlbedo= " << setprecision(2) << Xdata.SoilAlb << "\n";
 	fout << "BareSoil_z0= " << setprecision(3) << Xdata.BareSoil_z0 << "\n";
 	// Canopy Characteristics
-	fout << "CanopyHeight= " << setprecision(2) << Xdata.Cdata.height << "\n";
-	fout << "CanopyLeafAreaIndex= " << setprecision(6) << Xdata.Cdata.lai << "\n";
-	fout << "CanopyDirectThroughfall= " << setprecision(2) << Xdata.Cdata.direct_throughfall << "\n";
+	if (Xdata.Cdata != NULL) {
+		fout << "CanopyHeight= " << setprecision(2) << Xdata.Cdata->height << "\n";
+		fout << "CanopyLeafAreaIndex= " << setprecision(6) << Xdata.Cdata->lai << "\n";
+		fout << "CanopyDirectThroughfall= " << setprecision(2) << Xdata.Cdata->direct_throughfall << "\n";
+	} else {
+		fout << "CanopyHeight= " << setprecision(2) << double(0.) << "\n";
+		fout << "CanopyLeafAreaIndex= " << setprecision(6) << double(0.) << "\n";
+		fout << "CanopyDirectThroughfall= " << setprecision(2) << double(1.) << "\n";
+	}
 	// Additional parameters
 	fout << "WindScalingFactor= " << Xdata.WindScalingFactor << "\n";
 	fout << "ErosionLevel= " << Xdata.ErosionLevel << "\n";
@@ -2020,7 +2026,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 		}
 		// 65-92 (28 columns)
 		if (out_canopy && useCanopyModel)
-			Canopy::DumpCanopyData(fout, &Xdata.Cdata, &Sdata, cos_sl);
+			Canopy::DumpCanopyData(fout, Xdata.Cdata, &Sdata, cos_sl);
 		else
 			fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
 	} else if (out_t) {

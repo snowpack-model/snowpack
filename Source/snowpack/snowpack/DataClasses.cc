@@ -1552,7 +1552,7 @@ const std::string NodeData::toString() const
 }
 
 SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLayers, const bool& i_useSeaIceModule) :
-	meta(), cos_sl(1.), sector(0), Cdata(), Seaice(NULL), pAlbedo(0.), Albedo(0.),
+	meta(), cos_sl(1.), sector(0), Cdata(NULL), Seaice(NULL), pAlbedo(0.), Albedo(0.),
 	SoilAlb(0.), BareSoil_z0(0.), SoilNode(0), Ground(0.),
 	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), hn(0.), rho_hn(0.), ErosionLevel(0), ErosionMass(0.),
 #ifndef SNOWPACK_CORE
@@ -1564,6 +1564,11 @@ SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLaye
 	WindScalingFactor(1.), TimeCountDeltaHS(0.),
 	nNodes(0), nElems(0), maxElementID(0), useCanopyModel(i_useCanopyModel), useSoilLayers(i_useSoilLayers)
 {
+	if (i_useCanopyModel)
+		Cdata = new CanopyData;
+	else
+		Cdata = NULL;
+
 	if (i_useSeaIceModule)
 		Seaice = new SeaIce;
 	else
@@ -1582,6 +1587,12 @@ SnowStation::SnowStation(const SnowStation& c) :
 	ReSolver_dt(-1), windward(c.windward),
 	WindScalingFactor(c.WindScalingFactor), TimeCountDeltaHS(c.TimeCountDeltaHS),
 	nNodes(c.nNodes), nElems(c.nElems), maxElementID(c.maxElementID), useCanopyModel(c.useCanopyModel), useSoilLayers(c.useSoilLayers) {
+	if (c.Cdata != NULL) {
+		// Deep copy pointer to sea ice object
+		Cdata = new CanopyData(*c.Cdata);
+	} else {
+		Cdata = NULL;
+	}
 	if (c.Seaice != NULL) {
 		// Deep copy pointer to sea ice object
 		Seaice = new SeaIce(*c.Seaice);
@@ -2084,60 +2095,62 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 
 	// INITIALIZE CANOPY DATA
 	//HACK: do this in Canopy!
-	Cdata.height = (SSdata.Canopy_Height > 0.0)? SSdata.Canopy_Height : 0.;
-	Cdata.storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)
-	Cdata.temp = 273.15; // temperature (K)
-	Cdata.Ttrunk = 273.15; // trunk temperature (K)
-	Cdata.QStrunks = 0.;
-	Cdata.SWnet_Trunks = 0.;
-	Cdata.LWnet_Trunks = 0.;
-	Cdata.CondFluxCanop = 0.;
-	Cdata.CondFluxTrunks = 0.;
-	Cdata.forestfloor_alb = 0.;
-	Cdata.snowfac=0.;
-	Cdata.rainfac=0.;
-	Cdata.liquidfraction=0.;
-	Cdata.canopyalb = Canopy::can_alb_dry; // albedo [-], which is a function of the dry canopy albedo and intercepted snow
-	Cdata.wetfraction = 0.0;
-	Cdata.intcapacity = 0.0;
-	Cdata.ra = 0.0;
-	Cdata.rc = 0.0;
-	Cdata.rs = 0.0;
-	Cdata.rstransp = 0.0;
-	Cdata.sigftrunk = 0.;
-	Cdata.HMLeaves=3.*4190.; //HACK what is this 4190?
-	Cdata.HMTrunks=30.*4190.;
-	if (useCanopyModel) {
-		Cdata.BasalArea = SSdata.Canopy_BasalArea;
-		Cdata.sigf = 1.-exp(-Canopy::krnt_lai * (Cdata.lai)); // 1-radiation transmissivity (-)
-		Cdata.ec = 1.0; //longwave emissivity
-		Cdata.lai = SSdata.Canopy_LAI;
-		Cdata.z0m = Cdata.height*0.1;
-		Cdata.z0h = Cdata.z0m*0.1;
-		Cdata.zdispl = Cdata.height*0.66;
-		Cdata.direct_throughfall = SSdata.Canopy_Direct_Throughfall;
-		if (SSdata.Canopy_Direct_Throughfall < 0. || SSdata.Canopy_Direct_Throughfall > 1.) {
-			prn_msg(__FILE__, __LINE__, "err", Date(), "Invalid Canopy Throughfall (%lf) given in sno file! It should be between 0 and 1.", SSdata.Canopy_Direct_Throughfall);
-			throw IOException("Snowpack Initialization failed", AT);
+	if (Cdata != NULL) {
+		Cdata->height = (SSdata.Canopy_Height > 0.0)? SSdata.Canopy_Height : 0.;
+		Cdata->storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)
+		Cdata->temp = 273.15; // temperature (K)
+		Cdata->Ttrunk = 273.15; // trunk temperature (K)
+		Cdata->QStrunks = 0.;
+		Cdata->SWnet_Trunks = 0.;
+		Cdata->LWnet_Trunks = 0.;
+		Cdata->CondFluxCanop = 0.;
+		Cdata->CondFluxTrunks = 0.;
+		Cdata->forestfloor_alb = 0.;
+		Cdata->snowfac=0.;
+		Cdata->rainfac=0.;
+		Cdata->liquidfraction=0.;
+		Cdata->canopyalb = Canopy::can_alb_dry; // albedo [-], which is a function of the dry canopy albedo and intercepted snow
+		Cdata->wetfraction = 0.0;
+		Cdata->intcapacity = 0.0;
+		Cdata->ra = 0.0;
+		Cdata->rc = 0.0;
+		Cdata->rs = 0.0;
+		Cdata->rstransp = 0.0;
+		Cdata->sigftrunk = 0.;
+		Cdata->HMLeaves=3.*4190.; //HACK what is this 4190?
+		Cdata->HMTrunks=30.*4190.;
+		if (useCanopyModel) {
+			Cdata->BasalArea = SSdata.Canopy_BasalArea;
+			Cdata->sigf = 1.-exp(-Canopy::krnt_lai * (Cdata->lai)); // 1-radiation transmissivity (-)
+			Cdata->ec = 1.0; //longwave emissivity
+			Cdata->lai = SSdata.Canopy_LAI;
+			Cdata->z0m = Cdata->height*0.1;
+			Cdata->z0h = Cdata->z0m*0.1;
+			Cdata->zdispl = Cdata->height*0.66;
+			Cdata->direct_throughfall = SSdata.Canopy_Direct_Throughfall;
+			if (SSdata.Canopy_Direct_Throughfall < 0. || SSdata.Canopy_Direct_Throughfall > 1.) {
+				prn_msg(__FILE__, __LINE__, "err", Date(), "Invalid Canopy Throughfall (%lf) given in sno file! It should be between 0 and 1.", SSdata.Canopy_Direct_Throughfall);
+				throw IOException("Snowpack Initialization failed", AT);
+			}
+		} else {
+			Cdata->BasalArea = 0.0;
+			Cdata->storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)
+			Cdata->temp = 273.15; // temperature (K)
+			Cdata->canopyalb = Canopy::can_alb_dry; // albedo [-], which is a function of the dry canopy albedo and intercepted snow
+			Cdata->wetfraction = 0.0;
+			Cdata->intcapacity = 0.0;
+			Cdata->lai = 0.0;
+			Cdata->sigf = 1.0; // radiation transmissivity (-)
+			Cdata->ec = 1.0; //longwave emissivity
+			Cdata->z0m = 0.0;
+			Cdata->z0h = 0.0;
+			Cdata->zdispl = 0.0;
+			Cdata->direct_throughfall = 1.0;
+			Cdata->ra = 0.0;
+			Cdata->rc = 0.0;
+			Cdata->rs = 0.0;
+			Cdata->rstransp = 0.0;
 		}
-	} else {
-		Cdata.BasalArea = 0.0;
-		Cdata.storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)
-		Cdata.temp = 273.15; // temperature (K)
-		Cdata.canopyalb = Canopy::can_alb_dry; // albedo [-], which is a function of the dry canopy albedo and intercepted snow
-		Cdata.wetfraction = 0.0;
-		Cdata.intcapacity = 0.0;
-		Cdata.lai = 0.0;
-		Cdata.sigf = 1.0; // radiation transmissivity (-)
-		Cdata.ec = 1.0; //longwave emissivity
-		Cdata.z0m = 0.0;
-		Cdata.z0h = 0.0;
-		Cdata.zdispl = 0.0;
-		Cdata.direct_throughfall = 1.0;
-		Cdata.ra = 0.0;
-		Cdata.rc = 0.0;
-		Cdata.rs = 0.0;
-		Cdata.rstransp = 0.0;
 	}
 
 	// Set time step to -1, so we can determine the first time ReSolver1d is called.
@@ -2596,7 +2609,7 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.cos_sl), sizeof(data.cos_sl));
 	is.read(reinterpret_cast<char*>(&data.sector), sizeof(data.sector));
 
-	is >> data.Cdata;
+	//is >> data.Cdata;
 	//is >> data.Seaice;	//HACK how to do this with a pointer?
 	is.read(reinterpret_cast<char*>(&data.pAlbedo), sizeof(data.pAlbedo));
 	is.read(reinterpret_cast<char*>(&data.Albedo), sizeof(data.Albedo));

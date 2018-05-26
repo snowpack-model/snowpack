@@ -544,7 +544,7 @@ class SnowStation {
 		double cos_sl;              ///< Cosinus of slope angle, initialized once!
 		size_t sector;              ///< current slope sector of width 360./max(1, nSlopes-1)
 
-		CanopyData Cdata;           ///< Pointer to canopy data
+		CanopyData* Cdata;          ///< Pointer to canopy data
 		SeaIce* Seaice;             ///< Pointer to sea ice class
 		double pAlbedo;             ///< Parameterized snow albedo
 		double Albedo;              ///< Snow albedo used by the model

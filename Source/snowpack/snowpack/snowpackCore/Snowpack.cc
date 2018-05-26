@@ -746,7 +746,7 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 			default: // Snow, glacier ice, PLASTIC, or soil
 				if (eAlbedo > Xdata.SoilNode && (EMS[eAlbedo].theta[SOIL] < Constants::eps2)) { // Snow, or glacier ice
 					Albedo = SnLaws::parameterizedSnowAlbedo(snow_albedo, albedo_parameterization, albedo_average_schmucki, albedo_NIED_av, albedo_fixedValue, EMS[eAlbedo], NDS[eAlbedo+1].T, Mdata, Xdata, ageAlbedo);
-					if (useCanopyModel && (Xdata.Cdata.height > 3.5)) { //forest floor albedo
+					if (useCanopyModel && (Xdata.Cdata->height > 3.5)) { //forest floor albedo
 						const double age = (forestfloor_alb) ? std::max(0., Mdata.date.getJulian() - Xdata.Edata[eAlbedo].depositionDate.getJulian()) : 0.; // day
 						Albedo = (Albedo -.3)* exp(-age/7.) + 0.3;
 					}
@@ -757,7 +757,7 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 	}
 
 	//enforce albedo range
-	if (useCanopyModel && (Xdata.Cdata.height > 3.5)) { //forest floor albedo
+	if (useCanopyModel && (Xdata.Cdata->height > 3.5)) { //forest floor albedo
 		Albedo = std::max(0.05, std::min(0.95, Albedo));
 	} else {
 		const bool use_hs_meas = enforce_measured_snow_heights && (Xdata.meta.getSlopeAngle() <= Constants::min_slope_angle);
@@ -1688,9 +1688,9 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 		// This is to simulate the gradual sinking of the canopy under the weight of snow.
 		// We also adjust Xdata.mH to have it reflect deposited snow but not the canopy.
 		// This can only be done when SNOWPACK is snow height driven and there is a canopy.
-		if ((enforce_measured_snow_heights)
-			    && (Xdata.Cdata.height > 0.)
-			        && ((Xdata.Cdata.height < ThresholdSmallCanopy) || (useCanopyModel == false))
+		if ((enforce_measured_snow_heights && Xdata.Cdata != NULL)
+			    && (Xdata.Cdata->height > 0.)
+			        && ((Xdata.Cdata->height < ThresholdSmallCanopy) || (useCanopyModel == false))
 			            && (Mdata.hs != mio::IOUtils::nodata)
 			                && (Xdata.mH != Constants::undefined)
 			                    && (Xdata.meta.getSlopeAngle() < Constants::min_slope_angle)) {
@@ -1710,8 +1710,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			 * Then, in the next time step, the canopy height is reduced even more, even without increase in snow
 			 *   depth.
 			 */
-			if (Xdata.cH < (Xdata.mH - (Xdata.Cdata.height - (Xdata.mH - (Xdata.cH + Xdata.Cdata.height))))) {
-				Xdata.Cdata.height -= (Xdata.mH - (Xdata.cH + Xdata.Cdata.height));
+			if (Xdata.cH < (Xdata.mH - (Xdata.Cdata->height - (Xdata.mH - (Xdata.cH + Xdata.Cdata->height))))) {
+				Xdata.Cdata->height -= (Xdata.mH - (Xdata.cH + Xdata.Cdata->height));
 				// The above if-statement looks awkward, but it is just
 				//   (Xdata.cH < (Xdata.mH - (height_new_elem * cos_sl))
 				//   combined with the new value for Xdata.mH, given the change in Xdata.Cdata.height.
@@ -1719,12 +1719,12 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				// If the increase is not large enough to start build up a snowpack yet,
 				//   assign Xdata.mH to Canopy height (as if snow_fall and snowed_in would have been false).
 				if (Xdata.getNumberOfNodes() == Xdata.SoilNode+1) {
-					Xdata.Cdata.height = Xdata.mH - Xdata.Ground;
+					Xdata.Cdata->height = Xdata.mH - Xdata.Ground;
 				}
 			}
-			if (Xdata.Cdata.height < 0.)    // Make sure canopy height doesn't get negative
-				Xdata.Cdata.height = 0.;
-			Xdata.mH -= Xdata.Cdata.height; // Adjust Xdata.mH to represent the "true" enforced snow depth
+			if (Xdata.Cdata->height < 0.)    // Make sure canopy height doesn't get negative
+				Xdata.Cdata->height = 0.;
+			Xdata.mH -= Xdata.Cdata->height; // Adjust Xdata.mH to represent the "true" enforced snow depth
 			if (Xdata.mH < Xdata.Ground)    //   and make sure it doesn't get negative
 				Xdata.mH = Xdata.Ground;
 			delta_cH = Xdata.mH - Xdata.cH  + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer()) );
@@ -1881,20 +1881,20 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			Xdata.ErosionLevel = nNewE-1;
 		}
 	} else { // No snowfall
-		if (detect_grass && ((Xdata.Cdata.height < ThresholdSmallCanopy) || (useCanopyModel == false))) {
+		if (detect_grass && ((Xdata.Cdata->height < ThresholdSmallCanopy) || (useCanopyModel == false))) {
 			// Set canopy height to enforced snow depth if there is no snowpack yet
 			//   but only for small canopies, to prevent problems with Alpine3D simulations in forests.
 			// This prerequisite is only checked for when useCanopyModel is true.
 			// If useCanopyModel is false, we can safely assume all snow to fall on top of canopy.
 			if ((Xdata.getNumberOfNodes() == Xdata.SoilNode+1) && (Xdata.mH != Constants::undefined)) {
-				Xdata.Cdata.height = Xdata.mH - Xdata.Ground;
+				Xdata.Cdata->height = Xdata.mH - Xdata.Ground;
 				// Because there is no snow cover, enforced snow depth is effectively equal to Xdata.Ground.
 				Xdata.mH = Xdata.Ground;
 			} else {
 				if(Mdata.hs != mio::IOUtils::nodata) {
 					// If we have a snowpack, but didn't match the criteria for snow fall, make sure Xdata.mH
 					// only represents the "true" snow height, to stay consistent and for use in other parts of SNOWPACK.
-					Xdata.mH -= Xdata.Cdata.height;
+					Xdata.mH -= Xdata.Cdata->height;
 					if (Xdata.mH < Xdata.Ground)
 						Xdata.mH = Xdata.Ground;
 				}

@@ -270,7 +270,7 @@ void averageFluxTimeSeries(const size_t& n_steps, const bool& useCanopyModel, Su
 	Sdata.multiplyFluxes(1./nr_steps);
 
 	if (useCanopyModel)
-		Xdata.Cdata.multiplyFluxes(1./nr_steps);
+		Xdata.Cdata->multiplyFluxes(1./nr_steps);
 }
 
 /**
