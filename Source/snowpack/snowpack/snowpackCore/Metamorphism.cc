@@ -988,7 +988,7 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 		EMS[e].snowType();
 	}
 #else
-	throw InvalidArgumentException("Metamorphism model: "+metamorphism_model+" not available in SNOWPACK_CORE", AT);
+	throw InvalidArgumentException("Metamorphism model: "+metamorphism_model+" not available in the SNOWPACK_CORE version.", AT);
 #endif
 }
 
