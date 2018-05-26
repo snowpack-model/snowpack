@@ -324,5 +324,14 @@ void Stability::findWeakLayer(const double& Pk, std::vector<unsigned short>& n_l
 		Xdata.S_4 = NDS[nN-1].ssi; Xdata.z_S_4 = Xdata.cH;
 	}
 }
-#else
+#else	// For SNOWPACK_CORE, create empty functions for functions called by Alpine3D
+Stability::Stability(const SnowpackConfig& cfg, const bool& i_classify_profile)
+           : strength_model(), hardness_parameterization(), hoar_density_buried(IOUtils::nodata), plastic(false),
+             classify_profile(i_classify_profile), multi_layer_sk38(false), RTA_ssi(false)
+{
+}
+
+void Stability::checkStability(const CurrentMeteo& Mdata, SnowStation& Xdata)
+{
+}
 #endif
