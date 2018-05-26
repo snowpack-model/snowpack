@@ -384,10 +384,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::PSUM_PH:
 				value = meteoPixel.psum_ph; break;
 			case SnGrids::TSS:
-				if (!useCanopy || snowPixel.Cdata.zdispl < 0.) {
+				if (!useCanopy || snowPixel.Cdata->zdispl < 0.) {
 					value = snowPixel.Ndata.back().T;
 				} else { // radiative surface temperature above canopy
-					value =  pow(snowPixel.Cdata.rlwrac/Constants::stefan_boltzmann, 0.25);
+					value =  pow(snowPixel.Cdata->rlwrac/Constants::stefan_boltzmann, 0.25);
 				}
 				break;
 			case SnGrids::TS0:
@@ -407,10 +407,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = (hs>0.)? snowPixel.mass_sum / hs : IOUtils::nodata; 
 				break; }
 			case SnGrids::TOP_ALB:
-				if (!useCanopy || snowPixel.Cdata.zdispl < 0.) {
+				if (!useCanopy || snowPixel.Cdata->zdispl < 0.) {
 					value = snowPixel.Albedo;
 				} else { // above canopy albedo
-					value =  snowPixel.Cdata.totalalb;
+					value =  snowPixel.Cdata->totalalb;
 				}
 				break;
 			case SnGrids::SURF_ALB:
@@ -532,7 +532,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 
 			if (useEBalance) meteoPixel.diff = diffuse(ix,iy);
 			// Reset Canopy Surface Data to 0 before calling Meteo and Canopy module
-			if (useCanopy) snowPixel.Cdata.initializeSurfaceExchangeData();
+			if (useCanopy) snowPixel.Cdata->initializeSurfaceExchangeData();
 			//if the current pixel contains soil layers, then activate soil modeling in Snowpack
 			sn.setUseSoilLayers( snowPixel.hasSoilLayers() ); //TODO: when Snowpack runs, it should check it
 
@@ -582,7 +582,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 					if (nr_snowsteps > 1) {
 						surfaceFlux.multiplyFluxes(1./nr_snowsteps);
 						if (useCanopy)
-							snowPixel.Cdata.multiplyFluxes(1./nr_snowsteps);
+							snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
 						meteoPixel.psum *= nr_snowsteps;
 						snowPixel.dIntEnergy = dIntEnergy;
 					}
@@ -604,7 +604,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			if (nr_snowsteps > 1) {
 				surfaceFlux.multiplyFluxes(1./nr_snowsteps);
 				if (useCanopy)
-					snowPixel.Cdata.multiplyFluxes(1./nr_snowsteps);
+					snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
 				meteoPixel.psum *= nr_snowsteps;
 				snowPixel.dIntEnergy = dIntEnergy;
 			}
