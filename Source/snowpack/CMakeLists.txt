@@ -67,6 +67,7 @@ FIND_PACKAGE(MeteoIO)
 
 ###########################################################
 #plugins and applications
+SET(SNOWPACK_CORE OFF CACHE BOOL "Compilation SNOWPACK core functionality only ON or OFF")
 SET(SNOWPACK_STANDALONE ON CACHE BOOL "Compilation SNOWPACK standalone ON or OFF")
 SET(PROFEVAL OFF CACHE BOOL "Compilation PROFEVAL ON or OFF")
 

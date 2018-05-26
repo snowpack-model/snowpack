@@ -1158,9 +1158,13 @@ inline void real_main (int argc, char *argv[])
 
 				// SNOWPACK model (Temperature and Settlement computations)
 				Snowpack snowpack(tmpcfg); //the snowpack model to use
+#ifndef SNOWPACK_CORE
 				Stability stability(tmpcfg, classify_profile);
+#endif
 				snowpack.runSnowpackModel(Mdata, vecXdata[slope.sector], cumsum.precip, sn_Bdata, surfFluxes);
+#ifndef SNOWPACK_CORE
 				stability.checkStability(Mdata, vecXdata[slope.sector]);
+#endif
 
 				/***** OUTPUT SECTION *****/
 				surfFluxes.collectSurfaceFluxes(sn_Bdata, vecXdata[slope.sector], Mdata);

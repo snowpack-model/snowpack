@@ -100,7 +100,6 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             advective_heat(false), heat_begin(0.), heat_end(0.), temp_index_degree_day(0.), temp_index_swr_factor(0.)
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
-
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 	if (variant=="SEAICE") useNewPhaseChange = true;	// to better deal with variable freezing point due to salinity
@@ -1449,7 +1448,9 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	elem.snowType(); // Snow classification
 
 	//Initialise the Stability Index for ml_st_CheckStability routine
+#ifndef SNOWPACK_CORE
 	elem.S_dr = INIT_STABILITY;
+#endif
 	elem.hard = IOUtils::nodata;
 
 	elem.h = Constants::undefined;	//Pressure head not initialized yet
@@ -1515,8 +1516,10 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 				NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
 				NDS[n].udot = 0.0;                  // Settlement rate is also 0
 				NDS[n].f = 0.0;                     // Unbalanced forces are 0
+#ifndef SNOWPACK_CORE
 				NDS[n].S_n = INIT_STABILITY;
 				NDS[n].S_s = INIT_STABILITY;
+#endif
 				z0 += Ln;
 			}
 
@@ -1826,8 +1829,10 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[nOldN].hoar = hoar / hoar_density_buried;         // Surface hoar initial size
 				NDS[nOldN].udot = 0.0;               // Settlement rate is also 0
 				NDS[nOldN].f = 0.0;                 // Unbalanced forces is 0
+#ifndef SNOWPACK_CORE
 				NDS[nOldN].S_n = INIT_STABILITY;
 				NDS[nOldN].S_s = INIT_STABILITY;
+#endif
 			} else { // Make sure top node surface hoar mass is removed
 				NDS[nOldN-1].hoar = 0.0;
 			}
@@ -1844,8 +1849,10 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
 				NDS[n].udot = 0.0;                  // Settlement rate is also 0
 				NDS[n].f = 0.0;                     // Unbalanced forces are 0
+#ifndef SNOWPACK_CORE
 				NDS[n].S_n = INIT_STABILITY;
 				NDS[n].S_s = INIT_STABILITY;
+#endif
 				z0 += Ln;
 			}
 

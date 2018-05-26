@@ -803,7 +803,18 @@ ElementData::ElementData(const unsigned short int& in_ID) : depositionDate(), L0
                              type(0), metamo(0.), salinity(0.), dth_w(0.), res_wat_cont(0.), Qmf(0.), QIntmf(0.),
                              dEps(0.), Eps(0.), Eps_e(0.), Eps_v(0.), Eps_Dot(0.), Eps_vDot(0.), E(0.),
                              S(0.), C(0.), CDot(0.), ps2rb(0.),
-                             s_strength(0.), hard(0.), S_dr(0.), crit_cut_length(Constants::undefined), soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), SlopeParFlux(0.), Qph_up(0.), Qph_down(0.), dsm(0.), ID(in_ID) {}
+#ifndef SNOWPACK_CORE
+                             s_strength(0.),
+#endif
+                             hard(0.),
+#ifndef SNOWPACK_CORE
+                             S_dr(0.), crit_cut_length(Constants::undefined),
+#endif
+                             soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), SlopeParFlux(0.), Qph_up(0.), Qph_down(0.),
+#ifndef SNOWPACK_CORE
+                             dsm(0.),
+#endif
+                             ID(in_ID) {}
 
 ElementData::ElementData(const ElementData& cc) :
                              depositionDate(cc.depositionDate), L0(cc.L0), L(cc.L),
@@ -814,7 +825,18 @@ ElementData::ElementData(const ElementData& cc) :
                              type(cc.type), metamo(cc.metamo), salinity(cc.salinity), dth_w(cc.dth_w), res_wat_cont(cc.res_wat_cont), Qmf(cc.Qmf), QIntmf(cc.QIntmf),
                              dEps(cc.dEps), Eps(cc.Eps), Eps_e(cc.Eps_e), Eps_v(cc.Eps_v), Eps_Dot(cc.Eps_Dot), Eps_vDot(cc.Eps_vDot), E(cc.E),
                              S(cc.S), C(cc.C), CDot(cc.CDot), ps2rb(cc.ps2rb),
-                             s_strength(cc.s_strength), hard(cc.hard), S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length), soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), SlopeParFlux(cc.SlopeParFlux), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down), dsm(cc.dsm), ID(cc.ID) {}
+#ifndef SNOWPACK_CORE
+                             s_strength(cc.s_strength),
+#endif
+                             hard(cc.hard),
+#ifndef SNOWPACK_CORE
+                             S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length),
+#endif
+                             soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), SlopeParFlux(cc.SlopeParFlux), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down),
+#ifndef SNOWPACK_CORE
+                             dsm(cc.dsm),
+#endif
+                             ID(cc.ID) {}
 
 std::ostream& operator<<(std::ostream& os, const ElementData& data)
 {
@@ -873,10 +895,14 @@ std::ostream& operator<<(std::ostream& os, const ElementData& data)
 	os.write(reinterpret_cast<const char*>(&data.C), sizeof(data.C));
 	os.write(reinterpret_cast<const char*>(&data.CDot), sizeof(data.CDot));
 	os.write(reinterpret_cast<const char*>(&data.ps2rb), sizeof(data.ps2rb));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.s_strength), sizeof(data.s_strength));
+#endif
 	os.write(reinterpret_cast<const char*>(&data.hard), sizeof(data.hard));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.S_dr), sizeof(data.S_dr));
 	os.write(reinterpret_cast<const char*>(&data.crit_cut_length), sizeof(data.crit_cut_length));
+#endif
 	os.write(reinterpret_cast<const char*>(&data.soot_ppmv), sizeof(data.soot_ppmv));
 	os.write(reinterpret_cast<const char*>(&data.VG), sizeof(data.VG));
 	os.write(reinterpret_cast<const char*>(&data.lwc_source), sizeof(data.lwc_source));
@@ -884,7 +910,9 @@ std::ostream& operator<<(std::ostream& os, const ElementData& data)
 	os.write(reinterpret_cast<const char*>(&data.SlopeParFlux), sizeof(data.SlopeParFlux));
 	os.write(reinterpret_cast<const char*>(&data.Qph_up), sizeof(data.Qph_up));
 	os.write(reinterpret_cast<const char*>(&data.Qph_down), sizeof(data.Qph_down));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.dsm), sizeof(data.dsm));
+#endif
 	os.write(reinterpret_cast<const char*>(&data.ID), sizeof(data.ID));
 	return os;
 }
@@ -950,10 +978,14 @@ std::istream& operator>>(std::istream& is, ElementData& data)
 	is.read(reinterpret_cast<char*>(&data.C), sizeof(data.C));
 	is.read(reinterpret_cast<char*>(&data.CDot), sizeof(data.CDot));
 	is.read(reinterpret_cast<char*>(&data.ps2rb), sizeof(data.ps2rb));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.s_strength), sizeof(data.s_strength));
+#endif
 	is.read(reinterpret_cast<char*>(&data.hard), sizeof(data.hard));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.S_dr), sizeof(data.S_dr));
 	is.read(reinterpret_cast<char*>(&data.crit_cut_length), sizeof(data.crit_cut_length));
+#endif
 	is.read(reinterpret_cast<char*>(&data.soot_ppmv), sizeof(data.soot_ppmv));
 	is.read(reinterpret_cast<char*>(&data.VG), sizeof(data.VG));
 	is.read(reinterpret_cast<char*>(&data.lwc_source), sizeof(data.lwc_source));
@@ -961,7 +993,9 @@ std::istream& operator>>(std::istream& is, ElementData& data)
 	is.read(reinterpret_cast<char*>(&data.SlopeParFlux), sizeof(data.SlopeParFlux));
 	is.read(reinterpret_cast<char*>(&data.Qph_up), sizeof(data.Qph_up));
 	is.read(reinterpret_cast<char*>(&data.Qph_down), sizeof(data.Qph_down));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.dsm), sizeof(data.dsm));
+#endif
 	is.read(reinterpret_cast<char*>(&data.ID), sizeof(data.ID));
 	return is;
 }
@@ -1436,11 +1470,19 @@ const std::string ElementData::toString() const
 	os << "\tMelting: dth_w=" << dth_w << " Qmf=" << Qmf << " res_wat_cont=" << res_wat_cont << "\n";
 	os << "\tSoil: density=" << soil[SOIL_RHO] << " Conductivity=" << soil[SOIL_K] << " Capacity=" << soil[SOIL_C] << "\n";
 
+#ifndef SNOWPACK_CORE
 	os << "\tStrains: S=" <<  S << " C=" << C << " s_strength=" << s_strength << "\n";
+#else
+	os << "\tStrains: S=" <<  S << " C=" << C << "\n";
+#endif
 	os << "\tStrains: dEps=" << dEps << " Eps=" <<  Eps << " Eps_e=" <<  Eps_e << " Eps_v=" <<  Eps_v << "\n";
 	os << "\tYoung's modulus of elasticity=" << E << "\n";
 	os << "\tStrain rates Eps_Dot=" <<  Eps_Dot << " Eps_vDpt=" <<  Eps_vDot << " CDot=" <<  CDot << "\n";
+#ifndef SNOWPACK_CORE
 	os << "\tStability: S_dr=" << S_dr << " hard=" << hard << " dsm=" << dsm << "\n";
+#else
+	os << "\tHard=" << hard << "\n";
+#endif
 	os << "</ElementData>\n";
 	return os.str();
 }
@@ -1452,14 +1494,18 @@ std::ostream& operator<<(std::ostream& os, const NodeData& data)
 	os.write(reinterpret_cast<const char*>(&data.f), sizeof(data.f));
 	os.write(reinterpret_cast<const char*>(&data.udot), sizeof(data.udot));
 	os.write(reinterpret_cast<const char*>(&data.T), sizeof(data.T));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.S_n), sizeof(data.S_n));
 	os.write(reinterpret_cast<const char*>(&data.S_s), sizeof(data.S_s));
 	os.write(reinterpret_cast<const char*>(&data.ssi), sizeof(data.ssi));
+#endif
 	os.write(reinterpret_cast<const char*>(&data.hoar), sizeof(data.hoar));
 
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.dsm), sizeof(data.dsm));
 	os.write(reinterpret_cast<const char*>(&data.S_dsm), sizeof(data.S_dsm));
 	os.write(reinterpret_cast<const char*>(&data.Sigdsm), sizeof(data.Sigdsm));
+#endif
 	return os;
 }
 
@@ -1470,14 +1516,18 @@ std::istream& operator>>(std::istream& is, NodeData& data)
 	is.read(reinterpret_cast<char*>(&data.f), sizeof(data.f));
 	is.read(reinterpret_cast<char*>(&data.udot), sizeof(data.udot));
 	is.read(reinterpret_cast<char*>(&data.T), sizeof(data.T));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.S_n), sizeof(data.S_n));
 	is.read(reinterpret_cast<char*>(&data.S_s), sizeof(data.S_s));
 	is.read(reinterpret_cast<char*>(&data.ssi), sizeof(data.ssi));
+#endif
 	is.read(reinterpret_cast<char*>(&data.hoar), sizeof(data.hoar));
 
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.dsm), sizeof(data.dsm));
 	is.read(reinterpret_cast<char*>(&data.S_dsm), sizeof(data.S_dsm));
 	is.read(reinterpret_cast<char*>(&data.Sigdsm), sizeof(data.Sigdsm));
+#endif
 	return is;
 }
 
@@ -1488,7 +1538,9 @@ const std::string NodeData::toString() const
 	os << "<NodeData>\n";
 	os << "\tz=" << z << " T=" << T << " hoar=" << hoar << "\n";
 	os << "\tCreep: u=" << u << " udot=" << udot << " f=" << f << "\n";
+#ifndef SNOWPACK_CORE
 	os << "\tStability: S_n=" << S_n << " S_s=" << S_s << " ssi=" << ssi << "\n";
+#endif
 	os << "</NodeData>\n";
 	return os.str();
 }
@@ -1497,8 +1549,10 @@ SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLaye
 	meta(), cos_sl(1.), sector(0), Cdata(), Seaice(NULL), pAlbedo(0.), Albedo(0.),
 	SoilAlb(0.), BareSoil_z0(0.), SoilNode(0), Ground(0.),
 	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), hn(0.), rho_hn(0.), ErosionLevel(0), ErosionMass(0.),
+#ifndef SNOWPACK_CORE
 	S_class1(0), S_class2(0), S_d(0.), z_S_d(0.), S_n(0.), z_S_n(0.),
 	S_s(0.), z_S_s(0.), S_4(0.), z_S_4(0.), S_5(0.), z_S_5(0.),
+#endif
 	Ndata(), Edata(), Kt(NULL), ColdContent(0.), ColdContentSoil(0.), dIntEnergy(0.), dIntEnergySoil(0.), meltFreezeEnergy(0.), meltFreezeEnergySoil(0.), meltMassTot(0.), refreezeMassTot(0.),
 	ReSolver_dt(-1), windward(false),
 	WindScalingFactor(1.), TimeCountDeltaHS(0.),
@@ -1514,8 +1568,10 @@ SnowStation::SnowStation(const SnowStation& c) :
 	meta(c.meta), cos_sl(c.cos_sl), sector(c.sector), Cdata(c.Cdata), Seaice(c.Seaice), pAlbedo(c.pAlbedo), Albedo(c.Albedo),
 	SoilAlb(c.SoilAlb),BareSoil_z0(c.BareSoil_z0), SoilNode(c.SoilNode), Ground(c.Ground),
 	cH(c.cH), mH(c.mH), mass_sum(c.mass_sum), swe(c.swe), lwc_sum(c.lwc_sum), hn(c.hn), rho_hn(c.rho_hn), ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass),
+#ifndef SNOWPACK_CORE
 	S_class1(c.S_class1), S_class2(c.S_class2), S_d(c.S_d), z_S_d(c.z_S_d), S_n(c.S_n), z_S_n(c.z_S_n),
 	S_s(c.S_s), z_S_s(c.z_S_s), S_4(c.S_4), z_S_4(c.z_S_4), S_5(c.S_5), z_S_5(c.z_S_5),
+#endif
 	Ndata(c.Ndata), Edata(c.Edata), Kt(NULL), ColdContent(c.ColdContent), ColdContentSoil(c.ColdContentSoil), dIntEnergy(c.dIntEnergy), dIntEnergySoil(c.dIntEnergySoil), meltFreezeEnergy(c.meltFreezeEnergy), meltFreezeEnergySoil(c.meltFreezeEnergySoil), meltMassTot(c.meltMassTot), refreezeMassTot(c.refreezeMassTot),
 	ReSolver_dt(-1), windward(c.windward),
 	WindScalingFactor(c.WindScalingFactor), TimeCountDeltaHS(c.TimeCountDeltaHS),
@@ -1555,6 +1611,7 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		rho_hn = source.rho_hn;
 		ErosionLevel = source.ErosionLevel;
 		ErosionMass = source.ErosionMass;
+#ifndef SNOWPACK_CORE
 		S_class1 = source.S_class1;
 		S_class2 = source.S_class2;
 		S_d = source.S_d;
@@ -1567,6 +1624,7 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		z_S_4 = source.z_S_4;
 		S_5 = source.S_5;
 		z_S_5 = source.z_S_5;
+#endif
 		Ndata = source.Ndata;
 		Edata = source.Edata;
 		Kt = NULL;
@@ -1829,9 +1887,11 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 				Ndata[eNew] = Ndata[e+1];
 				Ndata[eNew].z = Ndata[e+1].z + Ndata[e+1].u + dL;
 				Ndata[eNew].u = Ndata[e].udot = 0.;
+#ifndef SNOWPACK_CORE
 				Ndata[eNew].ssi = Ndata[e+1].ssi;
 				Ndata[eNew].S_s = Ndata[e+1].S_s;
 				Ndata[eNew].S_n = Ndata[e+1].S_n;
+#endif
 			} else { // Removing elements for negative length L
 				dL += Edata[e].L;
 			}
@@ -1842,9 +1902,11 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 			}
 			Ndata[eNew+1].z = Ndata[e+1].z + Ndata[e+1].u + dL;
 			Ndata[eNew+1].u = Ndata[e+1].udot = 0.;
+#ifndef SNOWPACK_CORE
 			Ndata[eNew+1].ssi = Ndata[e+1].ssi;
 			Ndata[eNew+1].S_s = Ndata[e+1].S_s;
 			Ndata[eNew+1].S_n = Ndata[e+1].S_n;
+#endif
 			eNew++;
 		}
 	}
@@ -1896,8 +1958,10 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	Ndata.front().f = 0.;
 	Ndata.front().udot = 0.;
 	Ndata.front().hoar = 0.;
+#ifndef SNOWPACK_CORE
 	Ndata.front().S_n=6.;   // Interface static natural stability index
 	Ndata.front().S_s=6.;   // Interface stability index Sk38 (skier)
+#endif
 
 	bool real_soil_no_sandwich = true;  // Switch to count real soil layers
 	for (size_t ll = 0, n = 1; ll < SSdata.nLayers; ll++) {
@@ -1917,8 +1981,10 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Ndata[n].u = 0.;
 			Ndata[n].f = 0.;
 			Ndata[n].udot = 0.;
+#ifndef SNOWPACK_CORE
 			Ndata[n].S_n = INIT_STABILITY;   // Static natural stability index
 			Ndata[n].S_s = INIT_STABILITY;   // Alternative Stability Index (skier stability)
+#endif
 		}
 	}
 
@@ -1983,7 +2049,9 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].CDot = SSdata.Ldata[ll].CDot;
 			Edata[e].metamo = SSdata.Ldata[ll].metamo;
 			Edata[e].salinity = SSdata.Ldata[ll].salinity;
+#ifndef SNOWPACK_CORE
 			Edata[e].S_dr = INIT_STABILITY;
+#endif
 			Edata[e].hard = IOUtils::nodata;
 			Edata[e].M = Edata[e].Rho * Edata[e].L0;
 			assert(Edata[e].M >= (-Constants::eps2)); //mass must be positive
@@ -2452,6 +2520,7 @@ std::ostream& operator<<(std::ostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.rho_hn), sizeof(data.rho_hn));
 	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	os.write(reinterpret_cast<const char*>(&data.ErosionMass), sizeof(data.ErosionMass));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.S_class1), sizeof(data.S_class1));
 	os.write(reinterpret_cast<const char*>(&data.S_class2), sizeof(data.S_class2));
 	os.write(reinterpret_cast<const char*>(&data.S_d), sizeof(data.S_d));
@@ -2464,6 +2533,7 @@ std::ostream& operator<<(std::ostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.z_S_4), sizeof(data.z_S_4));
 	os.write(reinterpret_cast<const char*>(&data.S_5), sizeof(data.S_5));
 	os.write(reinterpret_cast<const char*>(&data.z_S_5), sizeof(data.z_S_5));
+#endif
 
 	const size_t s_Ndata = data.Ndata.size();
 	os.write(reinterpret_cast<const char*>(&s_Ndata), sizeof(size_t));
@@ -2533,6 +2603,7 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.rho_hn), sizeof(data.rho_hn));
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	is.read(reinterpret_cast<char*>(&data.ErosionMass), sizeof(data.ErosionMass));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.S_class1), sizeof(data.S_class1));
 	is.read(reinterpret_cast<char*>(&data.S_class2), sizeof(data.S_class2));
 	is.read(reinterpret_cast<char*>(&data.S_d), sizeof(data.S_d));
@@ -2545,6 +2616,7 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.z_S_4), sizeof(data.z_S_4));
 	is.read(reinterpret_cast<char*>(&data.S_5), sizeof(data.S_5));
 	is.read(reinterpret_cast<char*>(&data.z_S_5), sizeof(data.z_S_5));
+#endif
 
 	size_t s_Ndata;
 	is.read(reinterpret_cast<char*>(&s_Ndata), sizeof(size_t));
@@ -2617,8 +2689,10 @@ const std::string SnowStation::toString() const
 	os << "Snowdrift:\tsector=" << sector << " windward=" << windward << " ErosionLevel=" << ErosionLevel << " ErosionMass=" << ErosionMass << "\n";
 	os << "WindScalingFactor:          " << WindScalingFactor << "\n";
 	os << "TimeCountDeltaHS:           " << TimeCountDeltaHS << "\n";
+#ifndef SNOWPACK_CORE
 	os << "Stability:\tS_d(" << z_S_d << ")=" << S_d << " S_n(" << z_S_n << ")=" << S_n << " S_s(" << z_S_s << ")=" << S_s;
 	os << " S_1=" << S_class1 << " S_2=" << S_class2 << " S_4(" << z_S_4 << ")=" << S_4 << " S_5(" << z_S_5 << ")=" << S_5 << "\n";
+#endif
 
 	if(Kt==NULL)
 		os << "Kt= NULL\n";

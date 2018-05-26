@@ -337,10 +337,14 @@ class ElementData {
 		double C;                  ///< Total Element Stress (Pa), C being the real or the Cauchy stress, which is output
 		double CDot;               ///< Stress rate (Pa s-1), that is the overload change rate
 		double ps2rb;              ///< proportion of grain bond growth due to pressure sintering (1)
+#ifndef SNOWPACK_CORE
 		double s_strength;         ///< Parameterized snow shear strength (kPa)
+#endif
 		double hard;               ///< Parameterized hand hardness (1)
+#ifndef SNOWPACK_CORE
 		double S_dr;               ///< Stability Index based on deformation rate (Direct Action Avalanching)
 		double crit_cut_length;    ///< Critical cut length (m)
+#endif
 		double soot_ppmv;          ///< Impurity content (ppmv) used for albedo calculation of Gardner
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
 		double lwc_source;         ///< Source/sink term for Richards equation (m^3/m^3 / timestep)
@@ -348,8 +352,10 @@ class ElementData {
 		double SlopeParFlux;       ///< Slope parallel flux (m^3/m^3 * m / timestep)
 		double Qph_up;             ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the upper node of the element
 		double Qph_down;           ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the lower node of the element
+#ifndef SNOWPACK_CORE
 		//NIED (H. Hirashima)
 		double dsm;                ///< Dry snow metamorphism factor
+#endif
 		
 		unsigned short int ID;    ///< Element ID used to track elements
 		static const unsigned short int noID;
@@ -358,8 +364,15 @@ class ElementData {
 /// @brief NODAL DATA used as a pointer in the SnowStation structure
 class NodeData {
 	public:
-		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.), S_n(0.), S_s(0.), ssi(6.), hoar(0.),
-		             dsm(0.), S_dsm(0.), Sigdsm(0.) {} //HACK: set ssi to max_stability!
+		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.)
+#ifndef SNOWPACK_CORE
+                             , S_n(0.), S_s(0.), ssi(6.)
+#endif
+                             , hoar(0.)
+#ifndef SNOWPACK_CORE
+                             , dsm(0.), S_dsm(0.), Sigdsm(0.)
+#endif
+                             {} //HACK: set ssi to max_stability!
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const NodeData& data);
@@ -370,15 +383,19 @@ class NodeData {
 		double f;    ///< reaction or unbalanced forces (CREEP)
 		double udot; ///< downward creep velocity in m s-1
 		double T;    ///< nodal temperature in K
+#ifndef SNOWPACK_CORE
 		double S_n;  ///< Stability Index for natural avalanches
 		double S_s;  ///< Stability Index for skier triggered avalanches
 		double ssi;  ///< Structural Stability Index
+#endif
 		double hoar; ///< Mass of surface hoar collected while node was exposed to surface
 
 		//NIED (H. Hirashima)
+#ifndef SNOWPACK_CORE
 		double dsm;  ///< Dry snow metamorphism factor
 		double S_dsm;
 		double Sigdsm;
+#endif
 };
 
 /**
@@ -543,6 +560,7 @@ class SnowStation {
 		double rho_hn;              ///< Density of new snow to be used on slopes
 		size_t ErosionLevel;        ///< Element where snow erosion stopped previously for the drift index
 		double ErosionMass;         ///< Eroded mass either real or virtually (storage if less than one element)
+#ifndef SNOWPACK_CORE
 		char S_class1;               ///< Stability class based on hand hardness, grain class ...
 		char S_class2;               ///< Stability class based on hand hardness, grain class ...
 		double S_d;                 ///< Minimum Direct Action Stability Index  ...
@@ -555,6 +573,7 @@ class SnowStation {
 		double z_S_4;               ///< Depth of stab_index4
 		double S_5;                 ///< stab_index5
 		double z_S_5;               ///< Depth of stab_index5
+#endif
 		std::vector<NodeData> Ndata;    ///< pointer to nodal data array (e.g. T, z, u, etc..)
 		std::vector<ElementData> Edata; ///< pointer to element data array (e.g. Te, L, Rho, etc..)
 		void *Kt;                   ///< Pointer to pseudo-conductivity and stiffnes matrix

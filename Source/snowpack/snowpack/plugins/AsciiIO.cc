@@ -1093,6 +1093,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(1) << 1.e6*EMS[e].Eps_vDot;
 	}
+#ifndef SNOWPACK_CORE
 	// 0530: position (cm) and minimum stability indices
 	fout << "\n0530,8";
 	fout << "," << std::fixed << +Xdata.S_class1 << "," << +Xdata.S_class2; //force printing type char as numerica value
@@ -1125,7 +1126,9 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_s;
+
 	}
+#endif
 	// 0534: hand hardness ...
 	if (no_snow) {
 		fout << "\n0534,1,0";
@@ -1188,7 +1191,9 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 {
 	const size_t nE = Xdata.getNumberOfElements();
 	const vector<ElementData>& EMS = Xdata.Edata;
+#ifndef SNOWPACK_CORE
 	const vector<NodeData>& NDS = Xdata.Ndata;
+#endif
 
 	if (out_load) {
 		// 06nn: e.g. solute concentration
@@ -1202,10 +1207,12 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 		}
 	} else if (nE > Xdata.SoilNode) { // snow on the ground
 		// 0600-profile specials
+#ifndef SNOWPACK_CORE
 		// 0601: snow shear strength (kPa)
 		fout << "\n0601," << nE-Xdata.SoilNode;
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(2) << EMS[e].s_strength;
+#endif
 		// 0602: grain size difference (mm)
 		fout << "\n0602," << nE-Xdata.SoilNode;
 		for (size_t e = Xdata.SoilNode; e < nE-1; e++)
@@ -1216,6 +1223,7 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 		for (size_t e = Xdata.SoilNode; e < nE-1; e++)
 			fout << "," << std::fixed << std::setprecision(2) << fabs(EMS[e].hard - EMS[e+1].hard);
 		fout << ",0.";
+#ifndef SNOWPACK_CORE
 		// 0604: structural stability index SSI
 		fout << "\n0604," << nE-Xdata.SoilNode;
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
@@ -1250,6 +1258,7 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 				fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_dsm;
 			}
 		}
+#endif
 	} else {
 		for (size_t jj = 1; jj < 7; jj++) {
 			fout << "\n060" << jj << ",1,0";
@@ -1277,10 +1286,12 @@ void AsciiIO::writeProfileProAddCalibration(const SnowStation& Xdata, std::ofstr
 	const vector<NodeData>& NDS = Xdata.Ndata;
 	if (nE > Xdata.SoilNode) { // snow on the ground
 		// 0600-profile specials
+#ifndef SNOWPACK_CORE
 		// 0601: snow shear strength (kPa)
 		fout << "\n0601," << nE-Xdata.SoilNode;
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(2) << EMS[e].s_strength;
+#endif
 		// 0602: grain size difference (mm)
 		fout << "\n0602," << nE-Xdata.SoilNode;
 		for (size_t e = Xdata.SoilNode; e < nE-1; e++)
@@ -1291,6 +1302,8 @@ void AsciiIO::writeProfileProAddCalibration(const SnowStation& Xdata, std::ofstr
 		for (size_t e = Xdata.SoilNode; e < nE-1; e++)
 			fout << "," << std::fixed << std::setprecision(2) << fabs(EMS[e].hard - EMS[e+1].hard);
 		fout << ",0.";
+
+#ifndef SNOWPACK_CORE
 		// 0604: structural stability index SSI
 		fout << "\n0604," << nE-Xdata.SoilNode;
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
@@ -1308,6 +1321,7 @@ void AsciiIO::writeProfileProAddCalibration(const SnowStation& Xdata, std::ofstr
 		for (size_t e = Xdata.SoilNode; e < nE; e++) {
 			fout << "," << std::fixed << std::setprecision(2) << EMS[e].crit_cut_length;
 		}
+#endif
 
 		// 700-profile specials for settling comparison
 		// 0701: SNOWPACK: settling rate due to metamorphism (sig0) (% h-1)
@@ -1414,12 +1428,21 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	//Minima of stability indices at their respective depths as well as stability classifications
 	ofs << "#Stab,stab_height,stab_index,stab_class1,stab_class2\n";
 	ofs << "# ,cm,1,1,1\n";
+#ifndef SNOWPACK_CORE
 	ofs << "deformation," << setprecision(1) << M_TO_CM(Xdata.z_S_d/cos_sl) << "," << setprecision(2) << Xdata.S_d << ",";
 	ofs << +Xdata.S_class1 << "," << +Xdata.S_class2 << "\n"; //force printing type char as numerica value
 	ofs << "natural," << setprecision(1) << M_TO_CM(Xdata.z_S_n/cos_sl) << "," << setprecision(2) << Xdata.S_n << "\n";
 	ofs << "ssi," << setprecision(1) << M_TO_CM(Xdata.z_S_s/cos_sl) << "," << setprecision(2) << Xdata.S_s << "\n";
 	ofs << "S4," << setprecision(1) << M_TO_CM(Xdata.z_S_4/cos_sl) << "," << setprecision(2) << Xdata.S_4 << "\n";
 	ofs << "S5," << setprecision(1) << M_TO_CM(Xdata.z_S_5/cos_sl) << "," << setprecision(2) << Xdata.S_5 << "\n";
+#else
+	ofs << "deformation," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << ",";
+	ofs << mio::IOUtils::nodata << "," << mio::IOUtils::nodata << "\n"; //force printing type char as numerica value
+	ofs << "natural," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << "\n";
+	ofs << "ssi," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << "\n";
+	ofs << "S4," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << "\n";
+	ofs << "S5," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << "\n";
+#endif
 	
 	//Now write all layers starting from the ground
 	if (aggregate)
@@ -1981,6 +2004,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 			fout << ",";
 		// 53-64: Stability Time Series, heights in cm
 		if (out_stab) {
+#ifndef SNOWPACK_CORE
 			fout << "," << +Xdata.S_class1 << "," << +Xdata.S_class2 << std::fixed; //profile type and stability class, force printing type char as numerica value
 			fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_d/cos_sl) << "," << std::setprecision(2) << Xdata.S_d;
 			fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_n/cos_sl) << "," << std::setprecision(2) << Xdata.S_n;
@@ -1988,6 +2012,9 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 			fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_4/cos_sl) << "," << std::setprecision(2) << Xdata.S_4;
 			fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_5/cos_sl) << "," << std::setprecision(2) << Xdata.getLiquidWaterIndex() /*Xdata.S_5*/;
 			fout << std::setprecision(6);
+#else
+			fout << ",,,,,,,,,,,,";
+#endif
 		} else {
 			fout << ",,,,,,,,,,,,";
 		}
@@ -2416,9 +2443,12 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 		fout << "\n0540,nElems,bulk salinity (g/kg)";
 		fout << "\n0541,nElems,brine salinity (g/kg)";
 	}
+#ifndef SNOWPACK_CORE
 	fout << "\n0601,nElems,snow shear strength (kPa)";
+#endif
 	fout << "\n0602,nElems,grain size difference (mm)";
 	fout << "\n0603,nElems,hardness difference (1)";
+#ifndef SNOWPACK_CORE
 	fout << "\n0604,nElems,ssi";
 	fout << "\n0605,nElems,inverse texture index ITI (Mg m-4)";
 	fout << "\n0606,nElems,critical cut length (m)";
@@ -2427,6 +2457,7 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 		fout << "\n0622,nElems,Sigdsm";
 		fout << "\n0623,nElems,S_dsm";
 	}
+#endif
 	if (variant == "CALIBRATION") {
 		fout << "\n0701,nElems,SNOWPACK: total settling rate (% h-1)";
 		fout << "\n0702,nElems,SNOWPACK: settling rate due to load (% h-1)";
