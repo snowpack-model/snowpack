@@ -98,6 +98,7 @@ class Cumsum {
 //Global variables in this file:
 static string cfgfile = "io.ini";
 static string mode = "RESEARCH";
+bool restart = false;
 static mio::Date dateBegin, dateEnd;
 static vector<string> vecStationIDs;
 
@@ -221,6 +222,7 @@ inline void Usage(const string& programname)
 		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
 		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
 		<< "\t[-m, --mode=<operational or research>] (default: research)\n"
+		<< "\t[-r, --restart (skip first time step, only in research mode)\n"
 		<< "\t[-s, --stations=<comma delimited stationnames>] (e.g. DAV2,WFJ2)\n"
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
@@ -239,6 +241,7 @@ inline void parseCmdLine(int argc, char **argv, string& begin_date_str, string& 
 		{"begindate", required_argument, 0, 'b'},
 		{"enddate", required_argument, 0, 'e'},
 		{"mode", required_argument, 0, 'm'},
+		{"restart", no_argument, 0, 'r'},
 		{"config", required_argument, 0, 'c'},
 		{"stations", required_argument, 0, 's'},
 		{"version", no_argument, 0, 'v'},
@@ -251,7 +254,7 @@ inline void parseCmdLine(int argc, char **argv, string& begin_date_str, string& 
 		exit(1);
 	}
 
-	while ((opt=getopt_long( argc, argv, ":b:e:m:c:s:v:h", long_options, &longindex)) != -1) {
+	while ((opt=getopt_long( argc, argv, ":b:e:m:rc:s:v:h", long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 0:
 			break;
@@ -272,6 +275,9 @@ inline void parseCmdLine(int argc, char **argv, string& begin_date_str, string& 
 				Usage(string(argv[0]));
 				exit(1);
 			}
+			break;
+		case 'r':
+			restart = true;
 			break;
 		case 'c':
 			cfgfile = string(optarg);
@@ -1056,7 +1062,7 @@ inline void real_main (int argc, char *argv[])
 			mn_ctrl.resFirstDump = true; //HACK to dump the initial state in research mode
 			deleteOldOutputFiles(outpath, experiment, vecStationIDs[i_stn], slope.nSlopes, snowpackio.getExtensions());
 			cfg.write(outpath + "/" + vecStationIDs[i_stn] + "_" + experiment + ".ini"); //output config
-			current_date -= calculation_step_length/(24.*60.);
+			if (!restart) current_date -= calculation_step_length/(24.*60.);
 		} else {
 			const string db_name = cfg.get("DBNAME", "Output", mio::IOUtils::nothrow);
 			if (db_name == "sdbo" || db_name == "sdbt")
