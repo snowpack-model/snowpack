@@ -22,6 +22,8 @@
 #include <snowpack/Utils.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 
+#define OUTPUT_PRECISION_SNO_FILE 6
+
 using namespace std;
 using namespace mio;
 
@@ -756,29 +758,28 @@ void SmetIO::setFormatting(const size_t& nr_solutes,
 	 */
 	vec_width.clear();
 	vec_precision.clear();
-
-	vec_width.push_back(12); vec_precision.push_back(6); //EMS[e].L
-	vec_width.push_back(12); vec_precision.push_back(6); //Xdata.Ndata[e+1].T
-	vec_width.push_back(12); vec_precision.push_back(6); //EMS[e].theta[ICE]
-	vec_width.push_back(12); vec_precision.push_back(6); //EMS[e].theta[WATER]
+	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].L
+	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //Xdata.Ndata[e+1].T
+	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[ICE]
+	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[WATER]
 	if (write_pref_flow) {
-		vec_width.push_back(12); vec_precision.push_back(6); //EMS[e].theta[WATER_PREF]
+		vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[WATER_PREF]
 	}
-	vec_width.push_back(12); vec_precision.push_back(6); //EMS[e].theta[AIR]
-	vec_width.push_back(12); vec_precision.push_back(6); //EMS[e].theta[SOIL]
+	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[AIR]
+	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[SOIL]
 	vec_width.push_back(9); vec_precision.push_back(1);  //EMS[e].soil[SOIL_RHO]
 	vec_width.push_back(9); vec_precision.push_back(3);  //EMS[e].soil[SOIL_K]
 	vec_width.push_back(12); vec_precision.push_back(1);  //EMS[e].soil[SOIL_C]
-	vec_width.push_back(11); vec_precision.push_back(6);  //EMS[e].rg
-	vec_width.push_back(10); vec_precision.push_back(6);  //EMS[e].rb
-	vec_width.push_back(10); vec_precision.push_back(6);  //EMS[e].dd
-	vec_width.push_back(10); vec_precision.push_back(6);  //EMS[e].sp
+	vec_width.push_back(11); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE);  //EMS[e].rg
+	vec_width.push_back(10); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE);  //EMS[e].rb
+	vec_width.push_back(10); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE);  //EMS[e].dd
+	vec_width.push_back(10); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE);  //EMS[e].sp
 	vec_width.push_back(6); vec_precision.push_back(0);  //EMS[e].mk
 
-	vec_width.push_back(13); vec_precision.push_back(6); //Xdata.Ndata[e+1].hoar
+	vec_width.push_back(13); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //Xdata.Ndata[e+1].hoar
 	vec_width.push_back(4); vec_precision.push_back(0);  //ne
-	vec_width.push_back(15); vec_precision.push_back(6); //EMS[e].CDot
-	vec_width.push_back(15); vec_precision.push_back(6); //EMS[e].metamo
+	vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].CDot
+	vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].metamo
 
 	for (size_t ii = 0; ii < nr_solutes; ii++) {
 		vec_width.push_back(17); vec_precision.push_back(6); //EMS[e].conc(ICE,ii)
