@@ -139,6 +139,7 @@ class Snowpack {
 		bool useNewPhaseChange;
 		bool combine_elements;
 		int reduce_n_elements;
+		bool force_add_snowfall;
 		double max_simulated_hs; ///< if >0: lowest elements will be removed if simulated snow depth exceeds max_simulated_hs (in m)
 		bool change_bc, meas_tss;
 		bool vw_dendricity;
