@@ -154,7 +154,11 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
 	// At main station, measured snow depth controls whether erosion is possible or not
+#ifndef SNOWPACK_CORE
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
+#else
+	const bool windward = false;
+#endif
 	const bool erosion = snow_erosion && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH);
 	if (windward || alpine3d || erosion || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion

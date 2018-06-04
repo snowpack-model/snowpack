@@ -807,9 +807,15 @@ void AsciiIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 		fout << "CanopyDirectThroughfall= " << setprecision(2) << double(1.) << "\n";
 	}
 	// Additional parameters
+#ifndef SNOWPACK_CORE
 	fout << "WindScalingFactor= " << Xdata.WindScalingFactor << "\n";
 	fout << "ErosionLevel= " << Xdata.ErosionLevel << "\n";
 	fout << "TimeCountDeltaHS= " << Xdata.TimeCountDeltaHS << "\n";
+#else
+	fout << "WindScalingFactor= " << static_cast<double>(1.) << "\n";
+	fout << "ErosionLevel= " << Xdata.ErosionLevel << "\n";
+	fout << "TimeCountDeltaHS= " << static_cast<double>(0.) << "\n";
+#endif
 
 	// Layer Data
 	fout << "YYYY MM DD HH MI Layer_Thick           T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V";

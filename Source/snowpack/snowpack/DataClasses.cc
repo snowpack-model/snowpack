@@ -1560,8 +1560,10 @@ SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLaye
 	S_s(0.), z_S_s(0.), S_4(0.), z_S_4(0.), S_5(0.), z_S_5(0.),
 #endif
 	Ndata(), Edata(), Kt(NULL), ColdContent(0.), ColdContentSoil(0.), dIntEnergy(0.), dIntEnergySoil(0.), meltFreezeEnergy(0.), meltFreezeEnergySoil(0.), meltMassTot(0.), refreezeMassTot(0.),
-	ReSolver_dt(-1), windward(false),
-	WindScalingFactor(1.), TimeCountDeltaHS(0.),
+	ReSolver_dt(-1),
+#ifndef SNOWPACK_CORE
+	windward(false), WindScalingFactor(1.), TimeCountDeltaHS(0.),
+#endif
 	nNodes(0), nElems(0), maxElementID(0), useCanopyModel(i_useCanopyModel), useSoilLayers(i_useSoilLayers)
 {
 	if (i_useCanopyModel)
@@ -1584,8 +1586,10 @@ SnowStation::SnowStation(const SnowStation& c) :
 	S_s(c.S_s), z_S_s(c.z_S_s), S_4(c.S_4), z_S_4(c.z_S_4), S_5(c.S_5), z_S_5(c.z_S_5),
 #endif
 	Ndata(c.Ndata), Edata(c.Edata), Kt(NULL), ColdContent(c.ColdContent), ColdContentSoil(c.ColdContentSoil), dIntEnergy(c.dIntEnergy), dIntEnergySoil(c.dIntEnergySoil), meltFreezeEnergy(c.meltFreezeEnergy), meltFreezeEnergySoil(c.meltFreezeEnergySoil), meltMassTot(c.meltMassTot), refreezeMassTot(c.refreezeMassTot),
-	ReSolver_dt(-1), windward(c.windward),
-	WindScalingFactor(c.WindScalingFactor), TimeCountDeltaHS(c.TimeCountDeltaHS),
+	ReSolver_dt(-1),
+#ifndef SNOWPACK_CORE
+	windward(c.windward), WindScalingFactor(c.WindScalingFactor), TimeCountDeltaHS(c.TimeCountDeltaHS),
+#endif
 	nNodes(c.nNodes), nElems(c.nElems), maxElementID(c.maxElementID), useCanopyModel(c.useCanopyModel), useSoilLayers(c.useSoilLayers) {
 	if (c.Cdata != NULL) {
 		// Deep copy pointer to sea ice object
@@ -1654,9 +1658,11 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		meltMassTot = source.meltMassTot;
 		refreezeMassTot = source.refreezeMassTot;
 		ReSolver_dt = source.ReSolver_dt;
+#ifndef SNOWPACK_CORE
 		windward = source.windward;
 		WindScalingFactor = source.WindScalingFactor;
 		TimeCountDeltaHS = source.TimeCountDeltaHS;
+#endif
 		nNodes = source.nNodes;
 		nElems = source.nElems;
 		maxElementID = source.maxElementID;
@@ -1954,8 +1960,10 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	SoilAlb = SSdata.SoilAlb;
 	BareSoil_z0 = SSdata.BareSoil_z0;
 
+#ifndef SNOWPACK_CORE
 	WindScalingFactor = SSdata.WindScalingFactor;
 	TimeCountDeltaHS = SSdata.TimeCountDeltaHS;
+#endif
 
 	meta = SSdata.meta;
 	cos_sl = cos(meta.getSlopeAngle()*mio::Cst::to_rad);
@@ -2576,9 +2584,11 @@ std::ostream& operator<<(std::ostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.meltMassTot), sizeof(data.meltMassTot));
 	os.write(reinterpret_cast<const char*>(&data.refreezeMassTot), sizeof(data.refreezeMassTot));
 	os.write(reinterpret_cast<const char*>(&data.ReSolver_dt), sizeof(data.ReSolver_dt));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.windward), sizeof(data.windward));
 	os.write(reinterpret_cast<const char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	os.write(reinterpret_cast<const char*>(&data.TimeCountDeltaHS), sizeof(data.TimeCountDeltaHS));
+#endif
 
 	//static member variables
 	/*os.write(reinterpret_cast<const char*>(&data.comb_thresh_l), sizeof(data.comb_thresh_l));
@@ -2662,9 +2672,11 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.meltMassTot), sizeof(data.meltMassTot));
 	is.read(reinterpret_cast<char*>(&data.refreezeMassTot), sizeof(data.refreezeMassTot));
 	is.read(reinterpret_cast<char*>(&data.ReSolver_dt), sizeof(data.ReSolver_dt));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.windward), sizeof(data.windward));
 	is.read(reinterpret_cast<char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	is.read(reinterpret_cast<char*>(&data.TimeCountDeltaHS), sizeof(data.TimeCountDeltaHS));
+#endif
 
 	//static member variables
 	/*is.read(reinterpret_cast<char*>(&data.comb_thresh_l), sizeof(data.comb_thresh_l));
@@ -2709,9 +2721,13 @@ const std::string SnowStation::toString() const
 	os << "Snow:\tMeasured HS=" << mH << " Calculated HS=" << cH << " SWE=" << swe << " LWCtot" << lwc_sum << " New snow=" << hn << " of density=" << rho_hn << "\n";
 	os << "Snow Albedo:\tAlbedo=" << Albedo << " parametrized Albedo=" << pAlbedo << "\n";
 	os << "Energy:\tColdContent=" << ColdContent << " dIntEnergy=" << dIntEnergy;
+#ifndef SNOWPACK_CORE
 	os << "Snowdrift:\tsector=" << sector << " windward=" << windward << " ErosionLevel=" << ErosionLevel << " ErosionMass=" << ErosionMass << "\n";
 	os << "WindScalingFactor:          " << WindScalingFactor << "\n";
 	os << "TimeCountDeltaHS:           " << TimeCountDeltaHS << "\n";
+#else
+	os << "Snowdrift:\tsector=" << sector << " ErosionLevel=" << ErosionLevel << " ErosionMass=" << ErosionMass << "\n";
+#endif
 #ifndef SNOWPACK_CORE
 	os << "Stability:\tS_d(" << z_S_d << ")=" << S_d << " S_n(" << z_S_n << ")=" << S_n << " S_s(" << z_S_s << ")=" << S_s;
 	os << " S_1=" << S_class1 << " S_2=" << S_class2 << " S_4(" << z_S_4 << ")=" << S_4 << " S_5(" << z_S_5 << ")=" << S_5 << "\n";
@@ -3076,9 +3092,13 @@ std::ostream& operator<<(std::ostream& os, const SN_SNOWSOIL_DATA& data)
 	os.write(reinterpret_cast<const char*>(&data.Canopy_LAI), sizeof(data.Canopy_LAI));
 	os.write(reinterpret_cast<const char*>(&data.Canopy_BasalArea), sizeof(data.Canopy_BasalArea));
 	os.write(reinterpret_cast<const char*>(&data.Canopy_Direct_Throughfall), sizeof(data.Canopy_Direct_Throughfall));
+#ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	os.write(reinterpret_cast<const char*>(&data.TimeCountDeltaHS), sizeof(data.TimeCountDeltaHS));
+#else
+	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
+#endif
 	return os;
 }
 
@@ -3103,9 +3123,13 @@ std::istream& operator>>(std::istream& is, SN_SNOWSOIL_DATA& data)
 	is.read(reinterpret_cast<char*>(&data.Canopy_LAI), sizeof(data.Canopy_LAI));
 	is.read(reinterpret_cast<char*>(&data.Canopy_BasalArea), sizeof(data.Canopy_BasalArea));
 	is.read(reinterpret_cast<char*>(&data.Canopy_Direct_Throughfall), sizeof(data.Canopy_Direct_Throughfall));
+#ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	is.read(reinterpret_cast<char*>(&data.TimeCountDeltaHS), sizeof(data.TimeCountDeltaHS));
+#else
+	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
+#endif
 	return is;
 }
 

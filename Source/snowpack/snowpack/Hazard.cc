@@ -285,6 +285,7 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
                                       ZwischenData& Zdata, const double& newDrift, const bool stationDriftIndex,
                                       const SnowStation& Xdata, const CurrentMeteo& Mdata, const SurfaceFluxes& Sdata)
 {
+#ifndef SNOWPACK_CORE
 	const size_t nE = Xdata.getNumberOfElements();
 	const double cos_sl = cos(Xdata.meta.getSlopeAngle()*mio::Cst::to_rad);
 	const double hs = Xdata.cH / cos_sl;
@@ -401,7 +402,6 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 	// Runoff rate (kg m-2 h-1)
 	Hdata.runoff /= S_TO_H(sn_dt * static_cast<double>(hazard_steps_between));
 
-#ifndef SNOWPACK_CORE
 	// Profile type
 	if ((Xdata.S_class1 <= 10) && (Xdata.S_class1 >= 0))
 		Hdata.stab_class1 = Xdata.S_class1;
@@ -457,7 +457,6 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 		Hdata.stab_height5 = M_TO_CM(Xdata.z_S_5 / cos_sl);
 	else
 		Hdata_ind.stab_height5 = false;
-#endif
 
 	// Surface crust [type == 772] computed for southerly aspect outside compHazard()
 
@@ -492,6 +491,7 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 
 	if (stationDriftIndex)
 		getDriftIndex(Hdata, Hdata_ind, Zdata.drift24, newDrift, Xdata.cos_sl);
+#endif
 }
 
 /**
