@@ -137,7 +137,9 @@ class Snowpack {
 		bool research_mode, useCanopyModel, enforce_measured_snow_heights, detect_grass;
 		bool soil_flux, useSoilLayers;
 		bool useNewPhaseChange;
-		bool combine_elements, reduce_n_elements;
+		bool combine_elements;
+		int reduce_n_elements;
+		bool force_add_snowfall;
 		double max_simulated_hs; ///< if >0: lowest elements will be removed if simulated snow depth exceeds max_simulated_hs (in m)
 		bool change_bc, meas_tss;
 		bool vw_dendricity;
