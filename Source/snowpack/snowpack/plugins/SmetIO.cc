@@ -751,11 +751,19 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	}
 
 	// Additional parameters
+#ifndef SNOWPACK_CORE
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.WindScalingFactor;
 	smet_writer.set_header_value("WindScalingFactor", ss.str());
 	smet_writer.set_header_value("ErosionLevel", static_cast<double>(Xdata.ErosionLevel));
 	ss.str(""); ss << fixed << setprecision(6) << Xdata.TimeCountDeltaHS;
 	smet_writer.set_header_value("TimeCountDeltaHS", ss.str());
+#else
+	ss.str(""); ss << fixed << setprecision(2) << static_cast<double>(1.);
+	smet_writer.set_header_value("WindScalingFactor", ss.str());
+	smet_writer.set_header_value("ErosionLevel", static_cast<double>(Xdata.ErosionLevel));
+	ss.str(""); ss << fixed << setprecision(6) << static_cast<double>(0.);
+	smet_writer.set_header_value("TimeCountDeltaHS", ss.str());
+#endif
 }
 
 void SmetIO::setFormatting(const size_t& nr_solutes,

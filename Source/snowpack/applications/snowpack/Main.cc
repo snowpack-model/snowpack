@@ -162,6 +162,7 @@ unsigned int Slope::getSectorDir(const double& dir_or_expo) const
  **/
 void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vecXdata, double& wind_dir)
 {
+#ifndef SNOWPACK_CORE
 	mainStationDriftIndex = false;
 	luvDriftIndex = false;
 	switch (slope_sequence) {
@@ -193,6 +194,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 	}
 	north = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 0.);
 	south = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 180.);
+#endif
 }
 
 Cumsum::Cumsum(const unsigned int nSlopes)
@@ -597,7 +599,9 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 	// Find the Wind Profile Parameters, w/ or w/o canopy; take care of canopy
 	meteo.compMeteo(Mdata, currentSector, true);
 
+#ifndef SNOWPACK_CORE
 	if (isMainStation) {
+#endif
 		// Update precipitation memory of main station
 		if (Mdata.psum != mio::IOUtils::nodata) {
 			precip += Mdata.psum;
@@ -606,6 +610,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		if (Mdata.hs != mio::IOUtils::nodata) {
 			currentSector.mH = Mdata.hs + currentSector.Ground;
 		}
+#ifndef SNOWPACK_CORE
 	} else { // Virtual slope
 		currentSector.mH = Constants::undefined;
 
@@ -645,6 +650,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 			Mdata.ea = SnLaws::AirEmissivity(lw_in, Mdata.ta, variant);
 		}
 	}
+#endif
 }
 
 /**
@@ -1387,10 +1393,12 @@ inline void real_main (int argc, char *argv[])
 		//   dump the PROFILEs (Xdata) for every station referred to as sector where sector 0 corresponds to the main station
 		if (computed_one_timestep) {
 			for (size_t sector=slope.mainStation; sector<slope.nSlopes; sector++) {
+#ifndef SNOWPACK_CORE
 				if ((mode == "OPERATIONAL") && (sector == slope.mainStation)) {
 					// Operational mode ONLY: dump snow depth discrepancy time counter
 					vecXdata[slope.mainStation].TimeCountDeltaHS = time_count_deltaHS;
 				}
+#endif
 				snowpackio.writeSnowCover(current_date, vecXdata[sector], sn_Zdata);
 				if (sector == slope.mainStation) {
 					prn_msg(__FILE__, __LINE__, "msg", mio::Date(),
