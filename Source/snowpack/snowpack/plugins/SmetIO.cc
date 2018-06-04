@@ -736,11 +736,11 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 		ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata->direct_throughfall;
 		smet_writer.set_header_value("CanopyDirectThroughfall", ss.str());
 	} else {
-		ss.str(""); ss << fixed << setprecision(2) << double(0.);
+		ss.str(""); ss << fixed << setprecision(2) << static_cast<double>(0.);
 		smet_writer.set_header_value("CanopyHeight", ss.str());
-		ss.str(""); ss << fixed << setprecision(6) << double(0.);
+		ss.str(""); ss << fixed << setprecision(6) << static_cast<double>(0.);
 		smet_writer.set_header_value("CanopyLeafAreaIndex", ss.str());
-		ss.str(""); ss << fixed << setprecision(2) << double(1.);
+		ss.str(""); ss << fixed << setprecision(2) << static_cast<double>(1.);
 		smet_writer.set_header_value("CanopyDirectThroughfall", ss.str());
 	}
 

@@ -802,9 +802,9 @@ void AsciiIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 		fout << "CanopyLeafAreaIndex= " << setprecision(6) << Xdata.Cdata->lai << "\n";
 		fout << "CanopyDirectThroughfall= " << setprecision(2) << Xdata.Cdata->direct_throughfall << "\n";
 	} else {
-		fout << "CanopyHeight= " << setprecision(2) << double(0.) << "\n";
-		fout << "CanopyLeafAreaIndex= " << setprecision(6) << double(0.) << "\n";
-		fout << "CanopyDirectThroughfall= " << setprecision(2) << double(1.) << "\n";
+		fout << "CanopyHeight= " << setprecision(2) << static_cast<double>(0.) << "\n";
+		fout << "CanopyLeafAreaIndex= " << setprecision(6) << static_cast<double>(0.) << "\n";
+		fout << "CanopyDirectThroughfall= " << setprecision(2) << static_cast<double>(1.) << "\n";
 	}
 	// Additional parameters
 #ifndef SNOWPACK_CORE
