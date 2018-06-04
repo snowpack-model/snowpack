@@ -1,7 +1,7 @@
 Adding a new Test to Testenvirenment
 ####################################
 This manual shows how to add a test to the testing environment of MeteoIO 
-(http://slfsmm.indefero.net/p/meteoio/). This example will create from a test
+(https://models.slf.ch/p/meteoio/). This example will create from a test
 source the test excecutabel and add the test.
 
 

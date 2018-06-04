@@ -226,7 +226,7 @@ inline void Usage(const string& programname)
 		<< "\t[-s, --stations=<comma delimited stationnames>] (e.g. DAV2,WFJ2)\n"
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
-	cout << "\tPlease not that the operational mode should only be used within SLF\n";
+	cout << "\tPlease note that the operational mode should only be used within SLF\n";
 
 	cout << "Example: " << programname << " -c io.ini -e 1996-06-17T00:00\n\n";
 }

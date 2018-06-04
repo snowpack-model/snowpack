@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 namespace mio {
 
@@ -277,6 +278,13 @@ class MeteoData {
 		 * @return Merge_Type
 		 */
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
+		
+		/**
+		 * @brief List the parameters that have a least one valid value in a vector of MeteoData.
+		 * @param[in] vecMeteo vector to read the data from
+		 * @return parameters that have at least one valid value
+		 */
+		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);

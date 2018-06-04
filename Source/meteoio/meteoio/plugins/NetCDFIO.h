@@ -40,15 +40,15 @@ class ncParameters {
 		void write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, const Date& date);
 		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
 		
-		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo);
+		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx=IOUtils::npos);
 		
 	private:
-		static std::vector<std::string> initDimensionNames();
 		static std::map< std::string, std::vector<ncpp::var_attr> > initSchemasVars();
 		static std::map< std::string, std::vector<ncpp::nc_dimension> > initSchemasDims();
 		static std::vector<ncpp::var_attr> initUserSchemas(const Config& i_cfg);
 		static std::vector<ncpp::nc_dimension> initUserDimensions(const Config& i_cfg);
 		
+		void initSchemaCst(const std::string& schema);
 		void initFromFile(const std::string& filename, const std::string& schema);
 		void initVariablesFromFile(const int& ncid, const std::string& schema_name);
 		void initDimensionsFromFile(const int& ncid, const std::string& schema_name);
@@ -57,18 +57,25 @@ class ncParameters {
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
+		std::vector<std::string> read_1Dstringvariable(const int& ncid, const size_t& param) const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
+		size_t readDimension(const int& dimid) const;
 		bool hasDimension(const size_t& dim) const;
 		const ncpp::var_attr getSchemaAttributes(const std::string& var, const std::string& schema_name) const;
 		const ncpp::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
 		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		
-		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo);
+		void writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in) const;
+		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const;
+		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
+		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
+		void addToVars(const size_t& param);
+		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
-		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, ncpp::nc_variable& var);
+		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var);
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
-		static void create_variable(const int& ncid, ncpp::nc_variable& var);
+		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
 		
 		static std::map< std::string, std::vector<ncpp::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
 		static std::map< std::string, std::vector<ncpp::nc_dimension> > schemas_dims; ///< all the dimensions' attributes for all schemas
@@ -83,7 +90,9 @@ class ncParameters {
 		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
 		double TZ;
-		bool wrf_hacks, debug, isLatLon;
+		double schema_nodata; ///< nodata value as defined in the schema
+		int schema_dflt_type; ///< default data type as defined in the schema
+		bool debug, isLatLon, force_station_dimension;
 };
 
 /**
@@ -119,7 +128,7 @@ class NetCDFIO : public IOInterface {
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, in_meteo_path, out_meteo_file;
 		double in_dflt_TZ, out_dflt_TZ;
-		bool debug;
+		bool debug, out_single_file;
 };
 
 } //namespace

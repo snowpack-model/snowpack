@@ -91,6 +91,7 @@ public:
 		DEBUG, ///< As much information as possible, useful for debugging
 		FULL, ///< Provide all the usually necessary information
 		LATLON, ///< Simplified, lat/lon only
+		XY, ///< Simplified cartesian, only easting/northing
 		CARTESIAN ///< Compact representation only containing the X/Y and I/J coordinates
 	} FORMATS;
 
