@@ -561,4 +561,20 @@ void MeteoData::merge(const MeteoData& meteo2)
 	}
 }
 
+std::set<std::string> MeteoData::listAvailableParameters(const std::vector<MeteoData>& vecMeteo)
+{
+	std::set<std::string> results;
+	std::set<size_t> tmp; //for efficiency, we assume that through the vector, the indices remain identical for any given parameter
+	
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t jj=0; jj<vecMeteo[ii].getNrOfParameters(); jj++)
+			if (vecMeteo[ii](jj) != IOUtils::nodata && tmp.count(jj)==0) { //for efficiency, we compare on the index
+				tmp.insert( jj );
+				results.insert( vecMeteo[ii].getNameForParameter(jj) );
+			}
+	}
+	
+	return results;
+}
+
 } //namespace

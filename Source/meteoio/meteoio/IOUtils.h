@@ -44,9 +44,10 @@ class Config;
 
 /**
 * @brief Return the library version
+* @param[in] short_version only return the version number (ie skip the compilation date)
 * @return library version string
 */
-std::string getLibVersion();
+std::string getLibVersion(const bool& short_version=false);
 
 namespace IOUtils {
 	enum ProcessingLevel {

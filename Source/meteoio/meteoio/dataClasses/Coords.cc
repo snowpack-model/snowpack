@@ -251,7 +251,11 @@ const std::string Coords::toString(const FORMATS& type) const
 		os << std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")";
 		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
 		os.precision(p);
-	} else if (type==CARTESIAN) {
+	} else if (type==XY) {
+		os << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")";
+		os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
+		os.precision(p);
+	}else if (type==CARTESIAN) {
 		os << "[ (" << getEasting() << "," << getNorthing() << ");(" << getGridI() << "," << getGridJ() << ");@" << altitude << " ]";
 	} else
 		throw InvalidArgumentException("Selected output type is not supported!", AT);
