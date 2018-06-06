@@ -194,6 +194,11 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 	}
 	north = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 0.);
 	south = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 180.);
+#else
+	for (size_t kk=0; kk<nSlopes; kk++) {
+		vecXdata[kk].rho_hn   = 0.;
+		vecXdata[kk].hn       = 0.;
+	}
 #endif
 }
 
