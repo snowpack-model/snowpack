@@ -15,30 +15,48 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef RHGENERATOR_H
-#define RHGENERATOR_H
+#ifndef HUMIDITYGENERATOR_H
+#define HUMIDITYGENERATOR_H
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 
 namespace mio {
 
 /**
- * @class RhGenerator
+ * @class HumidityGenerator
  * @ingroup parametrizations
- * @brief Relative humidity generator.
+ * @brief (Relative/Specifc) Humidity or Dew Point temperature generator.
  * @details
- * Generate the relative humidity from either dew point temperature or specific humidity and air temperature.
- * The dew point temperature must be named "TD" and the specific humidity "SH"
+ * Since Absolute Humidity (AH), Relative Humidity (RH), Specific Humidity (QI) or Dew Point Temperature (TD)
+ * are all measures of the atmospheric humidity, this generates any one of these from any other one (depending on
+ * what is available).The parameter that should be generated is provided as argument (default: RH).
  * @code
- * RH::generators = RELHUM
+ * RH::generators = HUMIDITY
+ * RH::humidity::type = RH
  * @endcode
  */
-class RhGenerator : public GeneratorAlgorithm {
+class HumidityGenerator : public GeneratorAlgorithm {
 	public:
-		RhGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		HumidityGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), type(GEN_RH) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+
+		static bool generateAH(double& value, MeteoData& md);
+		static bool generateRH(double& value, MeteoData& md);
+		static bool generateTD(double& value, MeteoData& md);
+		static bool generateQI(double& value, MeteoData& md);
+
+		typedef enum GEN_TYPE {
+			GEN_AH,
+			GEN_RH,
+			GEN_TD,
+			GEN_QI
+		} gen_type;
+		gen_type type;
 };
 
 } //end namespace mio

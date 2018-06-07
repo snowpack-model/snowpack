@@ -402,7 +402,7 @@ void CNRMIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_
 			size_t index = strict_it->second;
 
 			if (name==cnrm_qair)
-				index = meteo_data.addParameter( "SH" );
+				index = meteo_data.addParameter( "QI" );
 			if (name==cnrm_td)
 				index = meteo_data.addParameter( "TD" );
 			

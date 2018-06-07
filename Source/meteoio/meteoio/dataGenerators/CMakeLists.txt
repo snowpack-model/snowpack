@@ -11,7 +11,7 @@ SET(dataGenerators_sources
 	dataGenerators/IswrAlbedoGenerator.cc
 	dataGenerators/PPHASEGenerator.cc
 	dataGenerators/PrecUnsplit.cc
-	dataGenerators/RelHumGenerator.cc
+	dataGenerators/HumidityGenerator.cc
 	dataGenerators/SinGenerator.cc
 	dataGenerators/StdPressGenerator.cc
 	dataGenerators/TauCLDGenerator.cc

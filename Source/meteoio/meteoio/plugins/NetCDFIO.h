@@ -73,7 +73,7 @@ class ncParameters {
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
 		size_t addTimestamp(const int& ncid, const Date& date);
-		static const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var);
+		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const;
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
 		
@@ -90,6 +90,8 @@ class ncParameters {
 		std::string file_and_path, current_schema;
 		std::string coord_sys, coord_param;
 		double TZ;
+		double dflt_zref, dflt_uref; ///< default reference height for all data or wind data (respectively)
+		double dflt_slope, dflt_azi; ///< default slope and azimuth
 		double schema_nodata; ///< nodata value as defined in the schema
 		int schema_dflt_type; ///< default data type as defined in the schema
 		bool debug, isLatLon, force_station_dimension;
