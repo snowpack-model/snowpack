@@ -29,7 +29,7 @@
 
 namespace ncpp {
 	/// This enum expand the parameters given in mio::MeteoGrids::Parameters and adds parameters used as dimensions in NetCDF files
-	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, lastdimension=STATSTRLEN};
+	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, ZREF, UREF, lastdimension=UREF};
 	
 	std::string getParameterName(const size_t& param);
 	size_t getParameterIndex(const std::string& param);
@@ -58,8 +58,8 @@ namespace ncpp {
 	typedef struct NC_VARIABLE {
 		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}; //please do NOT use this constructor!
 		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
-		NC_VARIABLE(const var_attr& attr)
-							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
+		NC_VARIABLE(const var_attr& attr, const double& i_nodata)
+							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {};
 		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
 							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
 		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};

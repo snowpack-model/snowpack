@@ -130,6 +130,12 @@ namespace IOUtils {
 	* @return host name
 	*/
 	std::string getHostName();
+	
+	/**
+	* @brief Retrieve the domain name of the computer running the binary
+	* @return domain with TLD
+	*/
+	std::string getDomainName();
 
 	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
