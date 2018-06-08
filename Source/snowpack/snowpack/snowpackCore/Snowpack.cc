@@ -391,8 +391,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 
 			// Make sure settling is not larger than the space that is available (basically settling can at most reduce theta[AIR] to 0).
 			// We also leave some room in case all liquid water freezes and thereby expands.
-			double MaxSettlingFactor=1.;	// An additional maximum settling factor, between 0 and 1. 1: allow maximize possible settling, 0: no settling allowed.
-			if (watertransportmodel_snow=="RICHARDSEQUATION") MaxSettlingFactor=0.9;	//For stability in the numerical solver.
+			const double MaxSettlingFactor = (watertransportmodel_snow=="RICHARDSEQUATION") ? (0.9) : (1. - Constants::eps); // An additional maximum settling factor, between 0 and 1. 1: allow maximize possible settling, 0: no settling allowed.
 			dL = std::max(dL, std::min(0., -1.*MaxSettlingFactor*L0*(EMS[e].theta[AIR]-((Constants::density_water/Constants::density_ice)-1.)*(EMS[e].theta[WATER]+EMS[e].theta[WATER_PREF]))));
 
 			// Limit dL when the element length drops below minimum_l_element. This element will be merged in WaterTransport::mergingElements later on.

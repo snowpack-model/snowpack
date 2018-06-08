@@ -1073,6 +1073,7 @@ void ElementData::updDensity()
               (theta[WATER] + theta[WATER_PREF]) * Constants::density_water +
               salinity * SeaIce::betaS +						//salinity = bulk salinity
               theta[SOIL] * soil[SOIL_RHO];
+	M = Rho * L;
 	return;
 }
 
