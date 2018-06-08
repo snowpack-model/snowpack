@@ -163,8 +163,11 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				EMS[nE-1].E = EMS[nE-1].Eps = EMS[nE-1].dEps = EMS[nE-1].Eps_e = EMS[nE-1].Eps_v = EMS[nE-1].S = 0.0;
 				EMS[nE-1].theta[ICE] *= L_top/EMS[nE-1].L;
 				EMS[nE-1].theta[ICE] += dM/(Constants::density_ice*EMS[nE-1].L);
+				EMS[nE-1].theta[ICE] = std::max(0., std::min(1., EMS[nE-1].theta[ICE]));
 				EMS[nE-1].theta[WATER] *= L_top/EMS[nE-1].L;
+				EMS[nE-1].theta[WATER] = std::max(0., std::min(1., EMS[nE-1].theta[WATER]));
 				EMS[nE-1].theta[WATER_PREF] *= L_top/EMS[nE-1].L;
+				EMS[nE-1].theta[WATER_PREF] = std::max(0., std::min(1., EMS[nE-1].theta[WATER_PREF]));
 
 				for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 					EMS[nE-1].conc[ICE][ii] *= L_top*theta_i0/(EMS[nE-1].theta[ICE]*EMS[nE-1].L);
