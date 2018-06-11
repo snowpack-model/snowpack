@@ -65,8 +65,8 @@ class ncParameters {
 		const ncpp::var_attr getSchemaAttributes(const size_t& param, const std::string& schema_name) const;
 		const ncpp::nc_dimension getSchemaDimension(const std::string& dimname, const std::string& schema_name) const;
 		
-		void writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in) const;
-		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx) const;
+		void writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in);
+		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
 		void addToVars(const size_t& param);
@@ -80,6 +80,7 @@ class ncParameters {
 		static std::map< std::string, std::vector<ncpp::var_attr> > schemas_vars; ///< all the variables' attributes for all schemas
 		static std::map< std::string, std::vector<ncpp::nc_dimension> > schemas_dims; ///< all the dimensions' attributes for all schemas
 		
+		ACDD acdd; ///< Object that contains the ACDD metadata
 		std::vector<ncpp::var_attr> user_schemas; ///< all the variables' attributes for the user defined schema
 		std::vector<ncpp::nc_dimension> user_dimensions; ///< all the variables' attributes for the user defined schema
 		std::map<size_t, ncpp::nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file

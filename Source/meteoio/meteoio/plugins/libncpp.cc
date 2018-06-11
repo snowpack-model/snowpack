@@ -21,9 +21,11 @@
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/dataClasses/Date.h>
 #include <meteoio/IOExceptions.h>
 
 #include <algorithm>
+#include <netcdf.h>
 
 using namespace std;
 
@@ -503,6 +505,18 @@ std::string getParameterName(const size_t& param)
 	return mio::MeteoGrids::getParameterName( param );
 }
 
+std::string getParameterDescription(const size_t& param)
+{
+	if (param==mio::IOUtils::npos || param>=NONE) return "";
+	return mio::MeteoGrids::getParameterDescription( param );
+}
+
+std::string getParameterUnits(const size_t& param)
+{
+	if (param==mio::IOUtils::npos || param>=NONE) return "";
+	return mio::MeteoGrids::getParameterUnits( param );
+}
+
 /**
 * @brief Given a parameter name, return its associated index
 * @details Since the MeteoGrids::Parameters have been extended inncpp, this method had to be redefined.
@@ -530,4 +544,104 @@ std::string generateHistoryAttribute()
 }
 
 } //end namespace
+
+///////////////////////////////////////////////////// Now the ACDD class starts //////////////////////////////////////////
+
+void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section)
+{
+	for (size_t ii=0; ii<name.size(); ii++)
+		cfg.getValue(cfg_key[ii], section, value[ii], mio::IOUtils::nothrow);
+}
+
+void ACDD::defaultInit()
+{
+	mio::Date now; 
+	now.setFromSys();
+	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
+	addAttribute("creator_name", mio::IOUtils::getLogName(), "NC_CREATOR");
+	addAttribute("creator_email", "", "NC_EMAIL");
+	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true));
+	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
+	addAttribute("keywords_vocabulary", "AGU Index Terms");
+	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "NC_KEYWORDS");
+	addAttribute("title", "", "NC_TITLE");
+	addAttribute("institution", mio::IOUtils::getDomainName(), "NC_INSTITUTION");
+	addAttribute("summary", "", "NC_SUMMARY");
+	addAttribute("acknowledgement", "", "NC_ACKNOWLEDGEMENT");
+	addAttribute("metadata_link", "", "NC_METADATA_LINK");
+}
+
+/**
+* @brief Add an attribute and its content to the internal list
+* @details This allows to create or edit attributes. For the MERGE or APPEND modes, if the attribute name is not found, it will be created.
+* @param[in] att_name attribute name
+* @param[in] att_value attribute value
+* @param[in] att_cfg_key associated configuration key (to read user provided values from a mio::Config object)
+* @param[in] mode write mode: MERGE (currently empty values will be replaced by the given arguments), APPEND (the value content will be expanded by
+* what is provided in att_value, separated by ", ", REPLACE (the current attribute will be fully replaced by the provided arguments)
+*/
+void ACDD::addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key, Mode mode)
+{
+	if (att_name.empty())
+		throw mio::InvalidFormatException("The attribute name must be provided", AT);
+	
+	if (mode==MERGE) {
+		const size_t pos = find( att_name );
+		if (pos==mio::IOUtils::npos) {
+			mode = REPLACE;
+		} else {
+			if (!att_value.empty()) value[pos] = att_value;
+			if (!att_cfg_key.empty()) cfg_key[pos] = att_cfg_key;
+			return;
+		}
+	} else if (mode==APPEND) {
+		const size_t pos = find( att_name );
+		if (pos==mio::IOUtils::npos) {
+			mode = REPLACE;
+		} else {
+			value[pos] = value[pos] + ", " + att_value;
+			return;
+		}
+	}
+	
+	
+	if (mode==REPLACE) {
+		name.push_back( att_name );
+		value.push_back( att_value );
+		cfg_key.push_back( att_cfg_key );
+		return;
+	}
+	
+	//we should not have come here -> throw
+	throw mio::InvalidFormatException("The specified write mode does not exists", AT);
+}
+
+void ACDD::addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key, const Mode& mode)
+{
+	std::ostringstream os;
+	os << att_value;
+	addAttribute(att_name, os.str(), att_cfg_key, mode);
+}
+
+void ACDD::writeAttributes(const int& ncid) const
+{
+	for (size_t ii=0; ii<name.size(); ii++) {
+		if (name[ii].empty() || value[ii].empty()) continue;
+		ncpp::add_attribute(ncid, NC_GLOBAL, name[ii], value[ii]);
+	}
+}
+
+/**
+* @brief Given an attribute name, return its associated index (or IOUtils::npos if it does not exists)
+* @param[in] search_name attribute name to get the index for
+* @return attribute index or IOUtils::npos
+*/
+size_t ACDD::find(const std::string& search_name) const
+{
+	for (size_t ii=0; ii<name.size(); ii++) {
+		if (name[ii]==search_name) return ii;
+	}
+	
+	return mio::IOUtils::npos;
+}
 

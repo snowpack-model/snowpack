@@ -81,12 +81,14 @@ class MeteoGrids {
 				lastparam=AZI};
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
-		static const std::string& getParameterName(const size_t& parindex);
 		static size_t getParameterIndex(const std::string& parname);
+		static const std::string& getParameterName(const size_t& parindex);
+		static const std::string& getParameterDescription(const size_t& parindex);
+		static const std::string& getParameterUnits(const size_t& parindex);
 
 	private:
 		//static methods
-		static std::vector<std::string> paramname;
+		static std::vector<std::string> paramname, description, units;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static vector paramname
 };

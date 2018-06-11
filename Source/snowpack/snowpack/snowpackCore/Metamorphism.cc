@@ -529,8 +529,8 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
 		// Determine the coordination number which is purely a function of the density
 		EMS[e].N3 = getCoordinationNumberN3(EMS[e].Rho);
 
-		// Compute local values
-		const double thetam_w = 1.e2 * (Constants::density_water * (EMS[e].theta[WATER]) / (EMS[e].Rho));
+		// Compute local value of mass percentage of liquid water (Fig. 6 in Brun, 1989, https://doi.org/10.3189/S0260305500007576, shows the cut-off at 10%)
+		const double thetam_w = std::min(10., 1.e2 * (Constants::density_water * EMS[e].theta[WATER] / EMS[e].Rho));
 
 		 // Constants used to limit changes in sphericity after faceting
 		double splim1 = 20. * (new_snow_grain_size/2. - EMS[e].rg);
@@ -756,8 +756,8 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 		// Determine the coordination number which is purely a function of the density
 		EMS[e].N3 = getCoordinationNumberN3(EMS[e].Rho);
 
-		// Compute local values
-		const double thetam_w = 1.e2 * (Constants::density_water * EMS[e].theta[WATER] / EMS[e].Rho);
+		// Compute local value of mass percentage of liquid water (Fig. 6 in Brun, 1989, https://doi.org/10.3189/S0260305500007576, shows the cut-off at 10%)
+		const double thetam_w = std::min(10., 1.e2 * (Constants::density_water * EMS[e].theta[WATER] / EMS[e].Rho));
 
 		// Constants used to limit changes in sphericity after faceting
 		double splim1 = 20. * (new_snow_grain_size/2. - EMS[e].rg);
