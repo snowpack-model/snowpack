@@ -52,12 +52,16 @@ class SeaIce {
 		static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
 		static double calculateMeltingTemperature(const double& Sal);
 
+		const static double ThetaIceMin;
 		const static double SeaWaterFreezingTemp;
 		const static double SeaIceDensity;
 		const static double ice_threshold;
+		const static double height_new_seaice_elem;
 		const static double mu;
 		const static double betaS;
+		const static double MinBrineMass;
 		const static double ThicknessFirstIceLayer;
+		const static double FractionationCoeff;
 		const static double InitRg;
 		const static double InitRb;
 		const static double OceanSalinity;
@@ -80,8 +84,10 @@ class SeaIce {
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
+		void updateBrinePockets(SnowStation& Xdata, const bool&);
 		void compFlooding(SnowStation& Xdata);
 		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
+		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM);
 
 		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt);
 	private:

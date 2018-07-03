@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <sstream>
 #include <errno.h>
+#include <stdio.h>
 
 using namespace mio;
 using namespace std;
@@ -42,17 +43,21 @@ using namespace std;
  ************************************************************/
 
 //Threshold that defines ice
-const double SeaIce::SeaWaterFreezingTemp = IOUtils::C_TO_K(-1.95);
-const double SeaIce::SeaIceDensity = ReSolver1d::max_theta_ice * Constants::density_ice;
+const double SeaIce::ThetaIceMin = 0.98;	// See Griewank and Notz (2013)
+const double SeaIce::SeaIceDensity = ThetaIceMin * Constants::density_ice;
 const double SeaIce::ice_threshold = 800.;
+const double SeaIce::height_new_seaice_elem = 0.001;
 const double SeaIce::mu = 0.054;		// Freezing point coefficient
 const double SeaIce::betaS = 0.824;		// Density coefficient (see: Appendix A Sea Water Density According to UNESCO Formula, https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf)
+const double SeaIce::MinBrineMass = 10.;	// Minimum brine mass, in kg/m^3. This forces some pore space to remain.
 const double SeaIce::ThicknessFirstIceLayer = 0.01;
+const double SeaIce::FractionationCoeff = 100.;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
 const double SeaIce::OceanSalinity = 35.;
+const double SeaIce::SeaWaterFreezingTemp = SeaIce::calculateMeltingTemperature(OceanSalinity);
 const double SeaIce::InitSeaIceSalinity = 5.;
-const double SeaIce::InitSnowSalinity = 1.;
+const double SeaIce::InitSnowSalinity = 0.;
 
 
 /************************************************************
@@ -135,6 +140,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 		{
 			for (size_t e = Xdata.SoilNode; e < nE; e++) {
 				Xdata.Edata[e].salinity = 35.;			// Default: 35 g/kg
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			/*size_t e = Xdata.SoilNode;
@@ -162,6 +168,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 						Xdata.Edata[e].salinity = 7.88 - 1.59 * Xdata.Ndata[e].z;
 					}
 				}
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -172,7 +179,8 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			const double topSal = 1.;
 			const double botSal = 5.;
 			for (size_t e = Xdata.SoilNode; e < nE; e++) {
-				Xdata.Edata[e].salinity = ((topSal - botSal) / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z)) * 0.5 * (Xdata.Ndata[e].z + Xdata.Ndata[e+1].z);		// linear gradient between 1 psu (top) to 4 psu (bottom) 
+				Xdata.Edata[e].salinity = ((topSal - botSal) / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z)) * 0.5 * (Xdata.Ndata[e].z + Xdata.Ndata[e+1].z);		// linear gradient between 1 psu (top) to 4 psu (bottom)
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -185,12 +193,14 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			// define salinity in ice
 			size_t e = Xdata.SoilNode;
 			for (; e <  IceSurfaceNode ; e++) {
-				Xdata.Edata[e].salinity = ((topSal - botSal) / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z)) * 0.5 * (Xdata.Ndata[e].z + Xdata.Ndata[e+1].z);		// linear gradient between 1 psu (top) to 4 psu (bottom) 
+				Xdata.Edata[e].salinity = ((topSal - botSal) / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z)) * 0.5 * (Xdata.Ndata[e].z + Xdata.Ndata[e+1].z);		// linear gradient between 1 psu (top) to 4 psu (bottom)
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			// define salinity in snow
 			for (; e <  nE ; e++) {
 				Xdata.Edata[e].salinity = 1;
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -206,11 +216,13 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			size_t e = Xdata.SoilNode;
 			for (; e <  IceSurfaceNode ; e++) {
 				Xdata.Edata[e].salinity = ampSal* sin((Xdata.Ndata[e].z / (Xdata.Ndata[IceSurfaceNode].z - Xdata.Ndata[0].z))*PI+PI)+topSal;		// c shaped salinity profile in sea ice
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			// define salinity in snow
 			for (; e <  nE ; e++) {
-				Xdata.Edata[e].salinity = 1; // 8 after Massom et al. 1997
+//				Xdata.Edata[e].salinity = 1; // 8 after Massom et al. 1997
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			break;
@@ -252,20 +264,21 @@ double SeaIce::findIceSurface(SnowStation& Xdata)
 		IceSurfaceNode = 0;
 		return IceSurface;
 	}
-	if (Xdata.Edata[Xdata.SoilNode].theta[ICE] * Constants::density_ice < ice_threshold) {
-		IceSurface = 0.;
-		IceSurfaceNode = 0;
+	// Deal with the case that the top element is ice
+	if (Xdata.Edata[nE-1].theta[ICE] * Constants::density_ice > ice_threshold) {
+		IceSurface = Xdata.Ndata[nE].z;
+		IceSurfaceNode = nE;
 		return IceSurface;
 	}
-	for (size_t e = Xdata.SoilNode; e < nE-1; e++) {
+	for (size_t e = nE-1; e-- > 0;) {
 		if (Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold && Xdata.Edata[e+1].theta[ICE] * Constants::density_ice < ice_threshold) {
 			IceSurface = Xdata.Ndata[e+1].z;
 			IceSurfaceNode = e+1;
 			return IceSurface;
 		}
 	}
-	IceSurfaceNode = nE;
-	IceSurface = Xdata.Ndata[nE].z;
+	IceSurfaceNode = 0;
+	IceSurface = 0.;
 	return IceSurface;
 }
 
@@ -276,12 +289,13 @@ double SeaIce::findIceSurface(SnowStation& Xdata)
 void SeaIce::compFlooding(SnowStation& Xdata)
 {
 	size_t iN = 0;
-	while (Xdata.Ndata[iN].z < SeaLevel && iN < Xdata.getNumberOfElements()) {
+	while (iN < Xdata.getNumberOfElements() && Xdata.Ndata[iN].z + 0.5 * Xdata.Edata[iN].L < SeaLevel) {
 		const double dth_w = std::max(0., Xdata.Edata[iN].theta[AIR] * (Constants::density_ice / Constants::density_water) - Xdata.Edata[iN].theta[WATER] * (Constants::density_water / Constants::density_ice - 1.));
+		//const double dth_w = (1. - Xdata.Edata[iN].theta[ICE]) * Constants::density_ice / Constants::density_water - Xdata.Edata[iN].theta[WATER];
 		Xdata.Edata[iN].theta[WATER] += dth_w;
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
 		Xdata.Edata[iN].salinity += SeaIce::OceanSalinity * dth_w;
-		Xdata.Edata[iN].salinity = std::min(SeaIce::OceanSalinity, Xdata.Edata[iN].salinity);
+		//Xdata.Edata[iN].salinity = std::min(SeaIce::OceanSalinity, Xdata.Edata[iN].salinity);
 		Xdata.Edata[iN].updDensity();
 		Xdata.Edata[iN].M = Xdata.Edata[iN].Rho * Xdata.Edata[iN].L;
 		calculateMeltingTemperature(Xdata.Edata[iN]);
@@ -384,6 +398,33 @@ double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
 }
 
 
+void SeaIce::updateBrinePockets(SnowStation& Xdata, const bool& init=false)
+{
+	const size_t nE = Xdata.getNumberOfElements();
+	findIceSurface(Xdata);
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		// Calculate new brine salinity, assuming thermal equilibrium between the ice and the brine pockets
+		const double BrineSalinity_new = (Xdata.Edata[e].Te - Constants::freezing_tk) / -SeaIce::mu;
+		const double BrineMass_new = (BrineSalinity_new == 0.) ? (SeaIce::MinBrineMass) : (std::max(SeaIce::MinBrineMass, ((Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF]) * Constants::density_water + Xdata.Edata[e].theta[ICE] * Constants::density_ice) * Xdata.Edata[e].salinity / BrineSalinity_new));
+		//printf("AAP: %f %f %f %f\n", Xdata.Edata[e].Te, Xdata.Edata[e].salinity, BrineSalinity_new, BrineMass_new);
+		if(init) {
+			// When initializing, we set a maximum brine volume of 10%.
+			const double dth_w = std::min(0.1, BrineMass_new / Constants::density_water);
+			Xdata.Edata[e].theta[WATER] = dth_w;
+			Xdata.Edata[e].theta[ICE] = 1. - (1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[SOIL]) * (Constants::density_water / Constants::density_ice);
+			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
+		} else {
+			// Calculate new brine mass
+			const double dth_w = std::min(Xdata.Edata[e].theta[ICE] * (Constants::density_ice / Constants::density_water), BrineMass_new / Constants::density_water - Xdata.Edata[e].theta[WATER]);
+			Xdata.Edata[e].theta[WATER] += dth_w;
+			Xdata.Edata[e].theta[ICE] -= dth_w * (Constants::density_water / Constants::density_ice);
+			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
+		}
+	}
+	return;
+}
+
+
 /**
  * @brief Calculate ice formation and decay at the bottom
  * @version 16.08: initial version
@@ -407,6 +448,16 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 		netBottomEnergy = OceanHeatFlux 
 			+ compSeaIceThermalConductivity(EMS[Xdata.SoilNode]) * ( (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / (NDS[Xdata.SoilNode+1].z - NDS[Xdata.SoilNode].z));
 		dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(EMS[Xdata.SoilNode]);
+		const double Sw = SeaIce::OceanSalinity;
+		const double T = IOUtils::K_TO_C(SeaIce::calculateMeltingTemperature(Sw));
+		const double L0 = Constants::lh_fusion;
+		const double c0 = Constants::specific_heat_ice;
+		const double nu = SeaIce::FractionationCoeff;
+		const double rho_i = Constants::density_ice;
+		const double F = netBottomEnergy;
+		const double dhdt = (sqrt((T * T * L0 * L0 - 2. * T * T * T * c0 * L0 + T * T * T * T * c0 * c0) * rho_i * rho_i + (4. * F * Sw * T * T * c0 - 4. * F * Sw * T * L0) * mu * nu * rho_i - 4. * F * Sw * T * T * c0 * mu * nu) + (T * T * c0 - T * L0) * rho_i) / (( 2. * Sw * L0 - 2. * Sw * T * c0) * mu * nu * rho_i + 2. * Sw * T * c0 * mu * nu );
+		//printf("LL: %f\n", dhdt);
+//printf("OO: %f\n", ( (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / (NDS[Xdata.SoilNode+1].z - NDS[Xdata.SoilNode].z)));
 	} else {
 		// First time freezing, create first ice layer
 		// Here: netBottomEnergy has units W / kg
@@ -419,115 +470,139 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 		//dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(Xdata.Ndata[Xdata.SoilNode].T, SeaIce::OceanSalinity);
 		dM = ThicknessFirstIceLayer * SeaIceDensity;
 	}
+	ApplyBottomIceMassBalance(Xdata, Mdata, sn_dt, dM);
+}
+
+
+/**
+ * @brief Calculate ice formation and decay at the bottom
+ * @version 16.08: initial version
+ * @param Edata
+ */
+void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM)
+{
+	vector<NodeData>& NDS = Xdata.Ndata;
+	vector<ElementData>& EMS = Xdata.Edata;
+	size_t nE = Xdata.getNumberOfElements();
 
 	// Apply mass change:
+	double dz = 0.;
 	if (dM > 0) {
 		// dM > 0: mass gain
-		const double dL = dM / SeaIceDensity;
-		if ( nE == 0 || EMS[Xdata.SoilNode].Rho < ice_threshold ) {
-			// In these case, add new element with ice density
-			nE++;
-			Xdata.resize(nE);
-			if(nE > 1) {
-				// Shift all existing elements up in the domain
-				for(size_t ee = nE-1; ee > Xdata.SoilNode; ee--) {
-					EMS[ee]=EMS[ee-1];
-					NDS[ee+1]=NDS[ee];
-					NDS[ee]=NDS[ee-1];
+		if ( nE == 0 || EMS[Xdata.SoilNode].Rho > ThetaIceMin * Constants::density_ice ) {
+			const double dH = dM / SeaIceDensity;								// Total height to be added
+			const size_t nAddE = std::max(size_t(1), (size_t)(dH / (height_new_seaice_elem*Xdata.cos_sl)));	// Number of elements
+			const double dL = (dH / double(nAddE));								// Height of each individual layer
+printf("OPO: %f %f %d\n", dL, dH, nAddE);
+			for ( size_t j = 0; j < nAddE; j++ ) {
+				dz += dL;
+				nE++;
+				Xdata.resize(nE);
+				if(nE > 1) {
+					// Shift all existing elements up in the domain
+					for(size_t ee = nE-1; ee > Xdata.SoilNode; ee--) {
+						EMS[ee]=EMS[ee-1];
+						NDS[ee+1]=NDS[ee];
+						NDS[ee]=NDS[ee-1];
+					}
+				} else {
+					// Set upper node for very first element in the domain that will be newly created
+					NDS[nE].T = SeaIce::SeaWaterFreezingTemp;
 				}
-			} else {
-				// Set upper node for very first element in the domain that will be newly created
-				NDS[nE].T = SeaIce::SeaWaterFreezingTemp;
+				// Set the new ice element
+				EMS[Xdata.SoilNode].depositionDate = Mdata.date;
+				EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = dL;
+				EMS[Xdata.SoilNode].theta[SOIL] = 0.;
+				EMS[Xdata.SoilNode].theta[ICE] = (SeaIceDensity/Constants::density_ice);
+				EMS[Xdata.SoilNode].theta[WATER] = (1. - EMS[Xdata.SoilNode].theta[ICE]) * (Constants::density_ice/Constants::density_water);
+				EMS[Xdata.SoilNode].theta[WATER_PREF] = 0.;
+				EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
+				EMS[Xdata.SoilNode].updDensity();
+				EMS[Xdata.SoilNode].M = dM / nAddE;
+
+				for (unsigned short ii = 0; ii < Xdata.number_of_solutes; ii++) {
+					EMS[Xdata.SoilNode].conc[ICE][ii]   = Mdata.conc[ii]*Constants::density_ice/Constants::density_water;
+					EMS[Xdata.SoilNode].conc[WATER][ii] = Mdata.conc[ii];
+					EMS[Xdata.SoilNode].conc[AIR][ii]   = 0.;
+					EMS[Xdata.SoilNode].conc[SOIL][ii]  = 0.;
+				}
+
+				// Constitutive Parameters
+				EMS[Xdata.SoilNode].k[TEMPERATURE] = EMS[Xdata.SoilNode].k[SEEPAGE] = EMS[Xdata.SoilNode].k[SETTLEMENT]= 0.;
+				EMS[Xdata.SoilNode].heatCapacity();
+				EMS[Xdata.SoilNode].c[SEEPAGE] = EMS[Xdata.SoilNode].c[SETTLEMENT]= 0.;
+				EMS[Xdata.SoilNode].soil[SOIL_RHO] = EMS[Xdata.SoilNode].soil[SOIL_K] = EMS[Xdata.SoilNode].soil[SOIL_C] = 0.;
+				EMS[Xdata.SoilNode].snowResidualWaterContent();
+
+				//new snow micro-structure
+				EMS[Xdata.SoilNode].sw_abs = 0.;
+				EMS[Xdata.SoilNode].rg = InitRg;
+				EMS[Xdata.SoilNode].dd = 0.;
+				EMS[Xdata.SoilNode].sp = 1.;
+				EMS[Xdata.SoilNode].rb = InitRb;
+				EMS[Xdata.SoilNode].N3 = Metamorphism::getCoordinationNumberN3(EMS[Xdata.SoilNode].Rho);
+				EMS[Xdata.SoilNode].opticalEquivalentGrainSize();
+				EMS[Xdata.SoilNode].mk = 7.;
+				EMS[Xdata.SoilNode].metamo = 0.;
+				EMS[Xdata.SoilNode].snowType(); // Snow classification
+				EMS[Xdata.SoilNode].salinity = SeaIce::OceanSalinity * EMS[Xdata.SoilNode].theta[WATER];
+				EMS[Xdata.SoilNode].dth_w = 0.;
+				EMS[Xdata.SoilNode].Qmf = 0.;
+				EMS[Xdata.SoilNode].QIntmf = 0.;
+				EMS[Xdata.SoilNode].dEps = 0.;
+				EMS[Xdata.SoilNode].Eps = EMS[Xdata.SoilNode].Eps_e = EMS[Xdata.SoilNode].Eps_v = EMS[Xdata.SoilNode].Eps_Dot = EMS[Xdata.SoilNode].Eps_vDot = EMS[Xdata.SoilNode].E = 0.;
+				EMS[Xdata.SoilNode].S = 0.;
+				EMS[Xdata.SoilNode].C = EMS[Xdata.SoilNode].CDot = 0.;
+				EMS[Xdata.SoilNode].ps2rb = 0.;
+				EMS[Xdata.SoilNode].s_strength = 0.;
+				EMS[Xdata.SoilNode].hard = 0.;
+				EMS[Xdata.SoilNode].S_dr = INIT_STABILITY;
+				EMS[Xdata.SoilNode].crit_cut_length = Constants::undefined;
+				EMS[Xdata.SoilNode].VG.theta_r = 0.;
+				EMS[Xdata.SoilNode].lwc_source = 0.;
+				EMS[Xdata.SoilNode].PrefFlowArea = 0.;
+				EMS[Xdata.SoilNode].dsm = 0.;
+
+				// Initial nodal properties
+				NDS[Xdata.SoilNode].u = 0.;                     // Initial displacement is 0
+				NDS[Xdata.SoilNode].hoar = 0.;                  // The new snow surface hoar is set to zero
+				NDS[Xdata.SoilNode].udot = 0.;                  // Settlement rate is also 0
+				NDS[Xdata.SoilNode].f = 0.;                     // Unbalanced forces are 0
+				NDS[Xdata.SoilNode].S_n = INIT_STABILITY;
+				NDS[Xdata.SoilNode].S_s = INIT_STABILITY;
+				NDS[Xdata.SoilNode].z = 0.;
 			}
-			// Set the new ice element
-			EMS[Xdata.SoilNode].depositionDate = Mdata.date;
-			EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = dL;
-			EMS[Xdata.SoilNode].theta[SOIL] = 0.;
-			EMS[Xdata.SoilNode].theta[WATER] = 0.;
-			EMS[Xdata.SoilNode].theta[WATER_PREF] = 0.;
-			EMS[Xdata.SoilNode].theta[ICE] = (SeaIceDensity/Constants::density_ice);
-			EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
-			EMS[Xdata.SoilNode].updDensity();
-			EMS[Xdata.SoilNode].M = dM;
-
-			for (unsigned short ii = 0; ii < Xdata.number_of_solutes; ii++) {
-				EMS[Xdata.SoilNode].conc[ICE][ii]   = Mdata.conc[ii]*Constants::density_ice/Constants::density_water;
-				EMS[Xdata.SoilNode].conc[WATER][ii] = Mdata.conc[ii];
-				EMS[Xdata.SoilNode].conc[AIR][ii]   = 0.;
-				EMS[Xdata.SoilNode].conc[SOIL][ii]  = 0.;
-			}
-
-			// Constitutive Parameters
-			EMS[Xdata.SoilNode].k[TEMPERATURE] = EMS[Xdata.SoilNode].k[SEEPAGE] = EMS[Xdata.SoilNode].k[SETTLEMENT]= 0.;
-			EMS[Xdata.SoilNode].heatCapacity();
-			EMS[Xdata.SoilNode].c[SEEPAGE] = EMS[Xdata.SoilNode].c[SETTLEMENT]= 0.;
-			EMS[Xdata.SoilNode].soil[SOIL_RHO] = EMS[Xdata.SoilNode].soil[SOIL_K] = EMS[Xdata.SoilNode].soil[SOIL_C] = 0.;
-			EMS[Xdata.SoilNode].snowResidualWaterContent();
-
-			//new snow micro-structure
-			EMS[Xdata.SoilNode].sw_abs = 0.;
-			EMS[Xdata.SoilNode].rg = InitRg;
-			EMS[Xdata.SoilNode].dd = 0.;
-			EMS[Xdata.SoilNode].sp = 1.;
-			EMS[Xdata.SoilNode].rb = InitRb;
-			EMS[Xdata.SoilNode].N3 = Metamorphism::getCoordinationNumberN3(EMS[Xdata.SoilNode].Rho);
-			EMS[Xdata.SoilNode].opticalEquivalentGrainSize();
-			EMS[Xdata.SoilNode].mk = 7.;
-			EMS[Xdata.SoilNode].metamo = 0.;
-			EMS[Xdata.SoilNode].snowType(); // Snow classification
-			EMS[Xdata.SoilNode].salinity = SeaIce::InitSeaIceSalinity;
-			EMS[Xdata.SoilNode].dth_w = 0.;
-			EMS[Xdata.SoilNode].Qmf = 0.;
-			EMS[Xdata.SoilNode].QIntmf = 0.;
-			EMS[Xdata.SoilNode].dEps = 0.;
-			EMS[Xdata.SoilNode].Eps = EMS[Xdata.SoilNode].Eps_e = EMS[Xdata.SoilNode].Eps_v = EMS[Xdata.SoilNode].Eps_Dot = EMS[Xdata.SoilNode].Eps_vDot = EMS[Xdata.SoilNode].E = 0.;
-			EMS[Xdata.SoilNode].S = 0.;
-			EMS[Xdata.SoilNode].C = EMS[Xdata.SoilNode].CDot = 0.;
-			EMS[Xdata.SoilNode].ps2rb = 0.;
-			EMS[Xdata.SoilNode].s_strength = 0.;
-			EMS[Xdata.SoilNode].hard = 0.;
-			EMS[Xdata.SoilNode].S_dr = INIT_STABILITY;
-			EMS[Xdata.SoilNode].crit_cut_length = Constants::undefined;
-			EMS[Xdata.SoilNode].VG.theta_r = 0.;
-			EMS[Xdata.SoilNode].lwc_source = 0.;
-			EMS[Xdata.SoilNode].PrefFlowArea = 0.;
-			EMS[Xdata.SoilNode].dsm = 0.;
-			
-			// Initial nodal properties
-			NDS[Xdata.SoilNode].u = 0.;                     // Initial displacement is 0
-			NDS[Xdata.SoilNode].hoar = 0.;                  // The new snow surface hoar is set to zero
-			NDS[Xdata.SoilNode].udot = 0.;                  // Settlement rate is also 0
-			NDS[Xdata.SoilNode].f = 0.;                     // Unbalanced forces are 0
-			NDS[Xdata.SoilNode].S_n = INIT_STABILITY;
-			NDS[Xdata.SoilNode].S_s = INIT_STABILITY;
-			NDS[Xdata.SoilNode].z = 0.;
 		} else {
 			// In this case, increase existing element
+			const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
+			dz += dL;
 			const double L0 = EMS[Xdata.SoilNode].L;
 			EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = (L0 + dL);
-
-			EMS[Xdata.SoilNode].theta[WATER] *= L0 / (L0 + dL);
-			EMS[Xdata.SoilNode].theta[WATER_PREF] *= L0 / (L0 + dL);
-			EMS[Xdata.SoilNode].theta[ICE] = (EMS[Xdata.SoilNode].theta[ICE] * L0 + dL * (SeaIceDensity/Constants::density_ice)) / (L0 + dL);
-			EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
-			EMS[Xdata.SoilNode].updDensity();
 			EMS[Xdata.SoilNode].M += dM;
+			EMS[Xdata.SoilNode].updDensity();
 		}
 	} else {
 		// dM < 0: Mass loss
 		while (dM < 0. && nE > 0) {
-			const double dL = dM / SeaIceDensity;
-			if(EMS[Xdata.SoilNode].M + dM > Constants::eps2 && EMS[Xdata.SoilNode].L + dL > Constants::eps2) {
+			const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
+			if(EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice + dM > Constants::eps2 && EMS[Xdata.SoilNode].L + dL > Constants::eps2) {
 				// Reduce element length
-				EMS[Xdata.SoilNode].updDensity();
+				EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = EMS[Xdata.SoilNode].L + dL;
 				EMS[Xdata.SoilNode].M += dM;
-				EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = EMS[Xdata.SoilNode].M / EMS[Xdata.SoilNode].Rho;
+				EMS[Xdata.SoilNode].updDensity();
 				dM = 0.;
+				dz += dL;
 			} else {
 				// Remove element
-				dM += EMS[Xdata.SoilNode].M;
+				dM += EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice;
+				dz += -EMS[Xdata.SoilNode].L;
 				// TODO: put mass in SNOWPACK runoff!
-				if(nE > 1) {
+				if(nE > Xdata.SoilNode) {
+					if(EMS[Xdata.SoilNode+1].VG.defined) {
+						if(EMS[Xdata.SoilNode+1].h > EMS[Xdata.SoilNode+1].VG.h_e) {
+							EMS[Xdata.SoilNode+1].h = EMS[Xdata.SoilNode].h;
+						}
+					}
 					// Shift all existing elements down in the domain
 					for(size_t ee = Xdata.SoilNode; ee < nE-1; ee++) {
 						EMS[ee]=EMS[ee+1];
@@ -544,6 +619,13 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 	// Adjust domain
 	NDS[Xdata.SoilNode].z = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		// Pressure head
+		if(EMS[e].VG.defined) {
+			if(EMS[e].h > EMS[e].VG.h_e) {
+				//EMS[e].h += dz;
+			}
+		}
+		// Nodal z
 		NDS[e + 1].z = NDS[e].z + EMS[e].L;
 	}
 
@@ -568,7 +650,26 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
  */
 void SeaIce::runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt)
 {
+	/*if(Xdata.Edata[0].theta[ICE] < ThetaIceMin) {
+	  	vector<NodeData>& NDS = Xdata.Ndata;
+		vector<ElementData>& EMS = Xdata.Edata;
+		size_t nE = Xdata.getNumberOfElements();
+		const double newL = Xdata.Edata[0].L * (Xdata.Edata[0].theta[ICE] / ThetaIceMin);
+		const double br_sal = Xdata.Edata[0].salinity / Xdata.Edata[0].theta[WATER];
+		Xdata.Edata[0].theta[ICE] *= Xdata.Edata[0].L / newL;
+		Xdata.Edata[0].theta[WATER] = (1. - Xdata.Edata[0].theta[ICE]) * (Constants::density_ice / Constants::density_water);
+		Xdata.Edata[0].salinity = br_sal * Xdata.Edata[0].theta[WATER];
+		Xdata.Edata[0].theta[AIR] = 1. - Xdata.Edata[0].theta[ICE] - Xdata.Edata[0].theta[WATER];
+		Xdata.Edata[0].updDensity();
+		// Adjust domain
+		NDS[Xdata.SoilNode].z = 0.;
+		for (size_t e = Xdata.SoilNode; e < nE; e++) {
+			// Nodal z
+			NDS[e + 1].z = NDS[e].z + EMS[e].L;
+		}
+	}*/
 	Xdata.Seaice->compSalinityProfile(Xdata);
+	//Xdata.Seaice->updateBrinePockets(Xdata);
 	Xdata.Seaice->OceanHeatFlux=(Bdata.qg == Constants::undefined)?(0.):(Bdata.qg);
 	Xdata.Seaice->bottomIceFormation(Xdata, Mdata, sn_dt);
 	Xdata.Seaice->compSalinityProfile(Xdata);

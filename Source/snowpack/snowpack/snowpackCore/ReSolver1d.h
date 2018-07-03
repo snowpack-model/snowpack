@@ -61,7 +61,8 @@ class ReSolver1d {
 		enum SOLVERS{DGESVD, DGTSV, TDMA};
 		//Boundary conditions
 		enum BoundaryConditions{DIRICHLET, NEUMANN, LIMITEDFLUXEVAPORATION, LIMITEDFLUXINFILTRATION, LIMITEDFLUX, WATERTABLE, FREEDRAINAGE, GRAVITATIONALDRAINAGE, SEEPAGEBOUNDARY, SEAICE};
-		
+		//Salinity mixing models
+		enum SalinityMixingModels{NONE, CAPILLARY_GRAVITY, DENSITY_DIFFERENCE, DENSITY_GRAVITY};
 		
 		watertransportmodels iwatertransportmodel_snow, iwatertransportmodel_soil;
 
