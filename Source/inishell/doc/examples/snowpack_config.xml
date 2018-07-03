@@ -778,6 +778,12 @@
 			<section name="SnowpackAdvanced" />
 			<help>If ENFORCE_MEASURED_SNOW_HEIGHTS, (TA-TSS)' threshold for precipitation to occur</help>
 		</parameter>
+		<parameter key="FORCE_ADD_SNOWFALL" type="alternative" default="FALSE" optional="true">
+			<section name="SnowpackAdvanced" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Forces the model to add snowfall timely when precipitation is prescribed regardless of HEIGHT_NEW_ELEM, thereby discarding the internal storage cumu_precip.</help>
+		</parameter>
 	</frame>
 
 	<frame key="hoar_frame" label="Hoar Handling">

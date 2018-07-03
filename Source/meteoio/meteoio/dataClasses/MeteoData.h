@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 namespace mio {
 
@@ -80,12 +81,14 @@ class MeteoGrids {
 				lastparam=AZI};
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
-		static const std::string& getParameterName(const size_t& parindex);
 		static size_t getParameterIndex(const std::string& parname);
+		static const std::string& getParameterName(const size_t& parindex);
+		static const std::string& getParameterDescription(const size_t& parindex);
+		static const std::string& getParameterUnits(const size_t& parindex);
 
 	private:
 		//static methods
-		static std::vector<std::string> paramname;
+		static std::vector<std::string> paramname, description, units;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static vector paramname
 };
@@ -277,6 +280,13 @@ class MeteoData {
 		 * @return Merge_Type
 		 */
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
+		
+		/**
+		 * @brief List the parameters that have a least one valid value in a vector of MeteoData.
+		 * @param[in] vecMeteo vector to read the data from
+		 * @return parameters that have at least one valid value
+		 */
+		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);

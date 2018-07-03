@@ -246,11 +246,6 @@ void SeaIce::updateFreeboard(SnowStation& Xdata)
 }
 
 /**
- * @brief Find marked layer level\n
- * @version 16.08
- */
-
-/**
  * @brief Find snow/ice transition for sea ice simulations\n
  * @version 16.08
  */
@@ -270,6 +265,7 @@ double SeaIce::findIceSurface(SnowStation& Xdata)
 		IceSurfaceNode = nE;
 		return IceSurface;
 	}
+	// Go from top to bottom. Note that ice layers inside the snowpack may fool this simple search.
 	for (size_t e = nE-1; e-- > 0;) {
 		if (Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold && Xdata.Edata[e+1].theta[ICE] * Constants::density_ice < ice_threshold) {
 			IceSurface = Xdata.Ndata[e+1].z;

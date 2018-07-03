@@ -28,7 +28,6 @@
 #cmakedefine PLUGIN_ARCIO
 #cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_ARPSIO
-#cmakedefine PLUGIN_CNRMIO
 #cmakedefine PLUGIN_CSVIO
 #cmakedefine PLUGIN_DBO
 #cmakedefine PLUGIN_GRASSIO
@@ -60,10 +59,6 @@
 
 #ifdef PLUGIN_BORMAIO
 #include <meteoio/plugins/BormaIO.h>
-#endif
-
-#ifdef PLUGIN_CNRMIO
-#include <meteoio/plugins/CNRMIO.h>
 #endif
 
 #ifdef PLUGIN_COSMOXMLIO
@@ -143,7 +138,6 @@ namespace mio {
  * <tr><td>\subpage arc "ARC"</td><td>dem, landuse, grid2d</td><td>ESRI/ARC ascii grid files</td><td></td></tr>
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td>ARPS ascii formatted grids</td><td></td></tr>
  * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
- * <tr><td>\subpage cnrm "CNRM"</td><td>dem, grid2d, meteo</td><td>NetCDF meteorological timeseries following the <A HREF="http://www.cnrm.meteo.fr/?lang=en">CNRM</A> schema</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
  * <tr><td>\subpage csvio "CSV"</td><td>meteo,</td><td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
@@ -152,7 +146,7 @@ namespace mio {
  * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
  * <tr><td>\subpage gsn "GSN"</td><td>meteo</td><td>connects to the Global Sensor Network web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
- * <tr><td>\subpage netcdf "NETCDF"</td><td>dem, grid2d</td><td>NetCDF grids</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
+ * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td>dem, grid2d</td><td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
@@ -330,9 +324,6 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_DBO
 	if (plugin_name == "DBO") return new DBO(cfg);
-#endif
-#ifdef PLUGIN_CNRMIO
-	if (plugin_name == "CNRM") return new CNRMIO(cfg);
 #endif
 #ifdef PLUGIN_GSNIO
 	if (plugin_name == "GSN") return new GSNIO(cfg);

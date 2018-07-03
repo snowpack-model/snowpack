@@ -94,7 +94,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             new_snow_grain_size(0.), new_snow_bond_size(0.), hoar_density_buried(0.), hoar_density_surf(0.), hoar_min_size_buried(0.),
             minimum_l_element(0.), comb_thresh_l(IOUtils::nodata), t_surf(0.),
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
-            soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0.), max_simulated_hs(-1.),
+            soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
             enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), forestfloor_alb(false), adjust_height_of_meteo_values(true),
             advective_heat(false), heat_begin(0.), heat_end(0.), temp_index_degree_day(0.), temp_index_swr_factor(0.)
@@ -194,6 +194,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("HEIGHT_NEW_ELEM", "SnowpackAdvanced", height_new_elem);
 	cfg.getValue("MINIMUM_L_ELEMENT", "SnowpackAdvanced", minimum_l_element);
 	if(minimum_l_element<=0.) throw IOException("MINIMUM_L_ELEMENT must be >0! Please fix your ini file.", AT);
+	cfg.getValue("FORCE_ADD_SNOWFALL", "SnowpackAdvanced", force_add_snowfall);
 
 	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
 
@@ -390,8 +391,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 
 			// Make sure settling is not larger than the space that is available (basically settling can at most reduce theta[AIR] to 0).
 			// We also leave some room in case all liquid water freezes and thereby expands.
-			double MaxSettlingFactor=1.;	// An additional maximum settling factor, between 0 and 1. 1: allow maximize possible settling, 0: no settling allowed.
-			if (watertransportmodel_snow=="RICHARDSEQUATION") MaxSettlingFactor=0.9;	//For stability in the numerical solver.
+			const double MaxSettlingFactor = (watertransportmodel_snow=="RICHARDSEQUATION") ? (0.9) : (1. - Constants::eps); // An additional maximum settling factor, between 0 and 1. 1: allow maximize possible settling, 0: no settling allowed.
 			dL = std::max(dL, std::min(0., -1.*MaxSettlingFactor*L0*(EMS[e].theta[AIR]-((Constants::density_water/Constants::density_ice)-1.)*(EMS[e].theta[WATER]+EMS[e].theta[WATER_PREF]))));
 
 			// Limit dL when the element length drops below minimum_l_element. This element will be merged in WaterTransport::mergingElements later on.
@@ -1624,11 +1624,11 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				if ((hn_density == "MEASURED") || ((hn_density == "FIXED") && (rho_hn > SnLaws::max_hn_density))) {
 					// Make sure that a new element is timely added in the above cases
 					// TODO check whether needed in both cases
-					if (((meteo_step_length / sn_dt) * (precip_snow)) <= cumu_precip || forcing == "MASSBAL") {
+					if (((meteo_step_length / sn_dt) * (precip_snow)) <= cumu_precip || forcing == "MASSBAL" || force_add_snowfall) {
 						delta_cH = (cumu_precip / rho_hn);
 						add_element = true;
 					}
-				} else if ((cumu_precip / rho_hn) > height_new_elem*cos_sl) {
+				} else if ((cumu_precip / rho_hn) > height_new_elem*cos_sl || force_add_snowfall) {
 					delta_cH = (cumu_precip / rho_hn);
 					if (hn_density == "EVENT") { // TODO check whether needed
 						add_element = true;
@@ -1729,7 +1729,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 
 		// Now determine whether the increase in snow depth is large enough.
 		// NOTE On virtual slopes use new snow depth and density from either flat field or luv slope
-		if ((delta_cH >= height_new_elem * cos_sl) || (Xdata.hn > 0.) || add_element) {
+		if ((delta_cH >= height_new_elem * cos_sl) || (Xdata.hn > 0.) || add_element || (force_add_snowfall && delta_cH > Constants::eps)) {
 			cumu_precip = 0.0; // we use the mass through delta_cH
 			//double hn = 0.; //new snow amount
 
@@ -1756,7 +1756,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			if (nAddE < 1) {
 				// Always add snow on virtual slope (as there is no storage variable available) and some other cases
 				if (!alpine3d && ((Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
-				                      || add_element)) { //no virtual slopes in Alpine3D
+				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps))) { //no virtual slopes in Alpine3D
 					nAddE = 1;
 				} else {
 					Xdata.hn = 0.;

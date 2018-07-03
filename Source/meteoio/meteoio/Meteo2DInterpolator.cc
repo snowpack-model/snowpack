@@ -30,6 +30,7 @@ namespace mio {
  * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword, after setting RESAMPLING to TRUE):
  *     + VSTATIONS: points measurements are spatially interpolated at the chosen locations;
  *     + GRID_EXTRACT: gridded values are extracted for the cells containing the given locations;
+ *     + GRID_SMART: the four nodes surrounding each given locations are extracted and potential duplicates are removed (so it is ready for performing spatial interpolations);
  *     + GRID_ALL: all grid points are extracted.
  * 
  * Currently, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted point. This is described
@@ -90,25 +91,22 @@ namespace mio {
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * @code
- * DEM = ARC
- * DEMFILE = ./input/surface-grids/davos.asc
- *
- * #here, the real data as measured by some stations 
- * METEO		= IMIS
- * DBNAME		= sdbo
- * DBUSER		= xxx
- * DBPASS		= xxx
- * STATION1	= *WFJ
- * STATION2	= STB2
- * STATION3	= WFJ2
- * STATION4	= *DAV
+ * DEM     = NETCDF
+ * DEMFILE = ./input/grids/era-interim-dem.nc
+ * 
+ * GRID2D    = NETCDF
+ * GRID2DFILE =  ./input/grids/era-interim.nc
+ * NETCDF_SCHEMA = ECMWF
+ * 
+ * RESAMPLING = true
+ * RESAMPLING_STRATEGY = GRID_EXTRACT
+ * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
+ * VSTATIONS_REFRESH_RATE = 10800
+ * VSTATIONS_REFRESH_OFFSET = 3600
  * 
  * #here the locations where the data will be generated. The caller will only see these stations!
- * RESAMPLING = true
- * RESAMPLING_STRATEGY = GRID_ALL
- * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
- * VSTATIONS_REFRESH_RATE = 21600
- * VSTATIONS_REFRESH_OFFSET = 3600
+ * VSTATION1 = latlon 43.359188 6.693612 150 ;great station
+ * VSTATION2 = latlon 43.324887 6.629711 57 ;another great station
  * @endcode
  * 
  * @section resampling_behind_the_scene Behind the scene
@@ -124,7 +122,7 @@ namespace mio {
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
                     : cfg(i_cfg), tsmanager(&i_tsmanager), gridsmanager(&i_gridsmanager),
                       grid_buffer(0), internal_dem(), mapAlgorithms(),
-                      v_params(), v_coords(), v_stations(), vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling_strategy(NONE),
+                      v_params(), v_stations(), vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling_strategy(NONE),
                       algorithms_ready(false), use_full_dem(false)
 {
 	std::string resampling_strategy_str( "NONE" );
@@ -138,7 +136,7 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 		resampling_strategy = GRID_ALL;
 	} else if (resampling_strategy_str=="GRID_SMART") {
 		resampling_strategy = GRID_SMART;
-	}
+	} //TODO TRAJECTORY
 	
 	if (resampling_strategy!=NONE) {
 		tsmanager = new TimeSeriesManager(i_tsmanager.getIOHandler(), i_cfg);
@@ -157,7 +155,7 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager&
 Meteo2DInterpolator::Meteo2DInterpolator(const Meteo2DInterpolator& source)
            : cfg(source.cfg), tsmanager(source.tsmanager), gridsmanager(source.gridsmanager),
                       grid_buffer(source.grid_buffer), internal_dem(source.internal_dem), mapAlgorithms(source.mapAlgorithms),
-                      v_params(source.v_params), v_coords(source.v_coords), v_stations(source.v_stations), 
+                      v_params(source.v_params), v_stations(source.v_stations), 
                       vstations_refresh_rate(1), vstations_refresh_offset(0.), resampling_strategy(source.resampling_strategy),
                       algorithms_ready(source.algorithms_ready), use_full_dem(source.use_full_dem)
 {}
@@ -171,7 +169,6 @@ Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& s
 		internal_dem = source.internal_dem;
 		mapAlgorithms = source.mapAlgorithms;
 		v_params = source.v_params;
-		v_coords = source.v_coords;
 		v_stations = source.v_stations;
 		vstations_refresh_rate = source.vstations_refresh_rate;
 		vstations_refresh_offset = source.vstations_refresh_offset;
@@ -290,16 +287,14 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                                       Grid2DObject& result, std::string& InfoString)
 {
-	if (!algorithms_ready)
-		setAlgorithms();
+	if (!algorithms_ready) setAlgorithms();
 
 	const std::string param_name( MeteoData::getParameterName(meteoparam) );
 	
 	//Get grid from buffer if it exists
 	std::ostringstream grid_hash;
 	grid_hash << dem.llcorner.toString(Coords::LATLON) << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << " " << date.toString(Date::ISO) << " " << param_name;
-	if (grid_buffer.get(result, grid_hash.str(), InfoString))
-		return;
+	if (grid_buffer.get(result, grid_hash.str(), InfoString)) return;
 
 	//Show algorithms to be used for this parameter
 	const std::map<string, vector<InterpolationAlgorithm*> >::iterator it = mapAlgorithms.find(param_name);
@@ -341,10 +336,9 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 //NOTE make sure that skip_virtual_stations = true before calling this method when using virtual stations!
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
+                            std::vector<Coords> vec_coords, std::vector<double>& result, std::string& info_string)
 {
 	result.clear();
-	std::vector<Coords> vec_coords( in_coords );
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;
@@ -368,6 +362,53 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			//we know the i,j are positive because of gridify_success
 			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
 			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
+
+			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
+			//Copy all other properties of the big DEM into the new one
+			DEMObject one_point_dem(dem, pt_i, pt_j, 1, 1, false);
+
+			one_point_dem.min_altitude = dem.min_altitude;
+			one_point_dem.max_altitude = dem.max_altitude;
+			one_point_dem.min_slope = dem.min_slope;
+			one_point_dem.max_slope = dem.max_slope;
+			one_point_dem.min_curvature = dem.min_curvature;
+			one_point_dem.max_curvature = dem.max_curvature;
+
+			Grid2DObject result_grid;
+			interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
+			result.push_back(result_grid(0,0));
+		}
+	}
+}
+
+//NOTE make sure that skip_virtual_stations = true before calling this method when using virtual stations!
+void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<StationData> vec_stations, std::vector<double>& result, std::string& info_string)
+{
+	result.clear();
+
+	if (use_full_dem) {
+		Grid2DObject result_grid;
+		interpolate(date, dem, meteoparam, result_grid, info_string);
+		const bool gridify_success = dem.gridify(vec_stations);
+		if (!gridify_success)
+			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
+
+		for (size_t ii=0; ii<vec_stations.size(); ii++) {
+			//we know the i,j are positive because of gridify_success
+			const size_t pt_i = static_cast<size_t>( vec_stations[ii].position.getGridI() );
+			const size_t pt_j = static_cast<size_t>( vec_stations[ii].position.getGridJ() );
+			result.push_back( result_grid(pt_i,pt_j) );
+		}
+	} else {
+		for (size_t ii=0; ii<vec_stations.size(); ii++) {
+			const bool gridify_success = dem.gridify(vec_stations[ii].position);
+			if (!gridify_success)
+				throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
+
+			//we know the i,j are positive because of gridify_success
+			const size_t pt_i = static_cast<size_t>( vec_stations[ii].position.getGridI() );
+			const size_t pt_j = static_cast<size_t>( vec_stations[ii].position.getGridJ() );
 
 			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
 			//Copy all other properties of the big DEM into the new one
@@ -426,7 +467,7 @@ void Meteo2DInterpolator::pushVirtualMeteoData(const Date& i_date, TimeSeriesMan
 	const Date buff_start( user_tsmanager.getRawBufferStart() );
 	const Date buff_end( user_tsmanager.getRawBufferEnd() );
 	const double half_range = (vstations_refresh_rate)/(3600.*24.*2.);
-
+	
 	if (buff_start.isUndef() || i_date_down<buff_start || i_date_down>buff_end) {
 		METEO_SET vecMeteo;
 		getVirtualMeteoData(i_date_down, vecMeteo);
@@ -447,19 +488,18 @@ size_t Meteo2DInterpolator::getVirtualMeteoData(const Date& i_date, METEO_SET& v
 			initVirtualStationsAtAllGridPoints();
 		} else {
 			const bool adjust_coordinates = (resampling_strategy==GRID_EXTRACT);
-			initVirtualStations(adjust_coordinates);
+			const bool fourNeighbors = (resampling_strategy==GRID_SMART);
+			initVirtualStations(adjust_coordinates, fourNeighbors);
 		}
 	}
 	
 	if (resampling_strategy==VSTATIONS) {
 		//this reads station data, interpolates the stations and extract points from the interpolated grids
 		return getVirtualStationsData(i_date, vecMeteo);
-	} else if (resampling_strategy==GRID_EXTRACT || resampling_strategy==GRID_ALL) {
+	} else if (resampling_strategy==GRID_EXTRACT || resampling_strategy==GRID_ALL || resampling_strategy==GRID_SMART) {
 		//This reads already gridded data and extract points from the grids at the provided locations
 		//(the virtual stations must have been initialized before, see above)
 		return getVirtualStationsFromGrid(i_date, vecMeteo);
-	} else if (resampling_strategy==GRID_SMART) {
-		
 	}
 
 	throw UnknownValueException("Unknown virtual station strategy", AT);
@@ -504,9 +544,11 @@ void Meteo2DInterpolator::initVirtualStationsAtAllGridPoints()
 }
 
 /** @brief read the list of virtual stations
- * @param adjust_coordinates should the coordinates be recomputed to match DEM cells?
+ * @details Please not that the two options are mutually exclusive.
+ * @param[in] adjust_coordinates should the coordinates be recomputed to match DEM cells?
+ * @param[in] fourNeighbors pick the surrounding four nodes instead of only the exact one?
  */
-void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
+void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates, const bool& fourNeighbors)
 {
 	if (internal_dem.empty()) {
 		if (cfg.keyExists("GRID2D_DEM", "Input")) {
@@ -521,62 +563,61 @@ void Meteo2DInterpolator::initVirtualStations(const bool& adjust_coordinates)
 	std::string coordin, coordinparam, coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	internal_dem.llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
-	const double dem_easting = internal_dem.llcorner.getEasting();
-	const double dem_northing = internal_dem.llcorner.getNorthing();
-	const double cellsize = internal_dem.cellsize;
 
 	//read the provided coordinates, remove duplicates and generate metadata
 	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
+		if (vecStation[ii].first.find('_') != std::string::npos) continue; //so we skip the other vstations_xxx parameters
+		
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
 		Coords curr_point(coordin, coordinparam, vecStation[ii].second);
+		if (curr_point.isNodata()) continue;
 
-		if (!curr_point.isNodata()) {
-			v_coords.push_back( curr_point ); //so we can check for duplicates
+		if (!internal_dem.gridify(curr_point))
+			throw NoDataException("Virtual station "+vecStation[ii].second+" is not contained in provided DEM "+internal_dem.toString(DEMObject::SHORT), AT);
 
-			if (!internal_dem.gridify(curr_point)) {
-				ostringstream ss;
-				ss << "Virtual station \"" << vecStation[ii].second << "\" is not contained in provided DEM " << internal_dem.toString(DEMObject::SHORT);
-				throw NoDataException(ss.str(), AT);
+		size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
+		if (fourNeighbors) { //pick the surrounding four nodes
+			if (i==internal_dem.getNx()) i--;
+			if (j==internal_dem.getNy()) j--;
+			
+			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
+			for (size_t mm=i; mm<=i+1; mm++) {
+				for (size_t nn=j; nn<=j+1; nn++) {
+					const double easting = internal_dem.llcorner.getEasting() + internal_dem.cellsize*static_cast<double>(mm);
+					const double northing = internal_dem.llcorner.getNorthing() + internal_dem.cellsize*static_cast<double>(nn);
+					curr_point.setXY(easting, northing, internal_dem(mm,nn));
+					curr_point.setGridIndex(static_cast<int>(mm), static_cast<int>(nn), IOUtils::inodata, true);
+					const std::string sub_id( static_cast<ostringstream*>( &(ostringstream() << (mm-i)*2+(nn-j)+1) )->str() );
+					const std::string grid_pos( static_cast<ostringstream*>( &(ostringstream() << mm << "-" << nn) )->str() );
+					StationData sd(curr_point, "VIR"+id_num+"_"+sub_id, "Virtual_Station_"+grid_pos);
+					sd.setSlope(internal_dem.slope(mm,nn), internal_dem.azi(mm,nn));
+					v_stations.push_back( sd );
+				}
 			}
-
-			const size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
+		} else { //pick the exact node
 			if (adjust_coordinates) { //adjust coordinates to match the chosen cell
-				const double easting = dem_easting + cellsize*static_cast<double>(i);
-				const double northing = dem_northing + cellsize*static_cast<double>(j);
+				const double easting = internal_dem.llcorner.getEasting() + internal_dem.cellsize*static_cast<double>(i);
+				const double northing = internal_dem.llcorner.getNorthing() + internal_dem.cellsize*static_cast<double>(j);
 				curr_point.setXY(easting, northing, internal_dem(i,j));
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 			} else {
 				curr_point.setAltitude(internal_dem(i,j), false);
 			}
-
-			//remove duplicate stations, ie stations that have same easting,northing,altitude
-			bool is_duplicate = false;
-			for (size_t jj=0; jj<ii; jj++) {
-				if (curr_point==v_coords[jj]) {
-					std::cout << "[W] removing VSTATION" << ii+1 << " as a duplicate of VSTATION" << jj+1 << "\n";
-					is_duplicate = true;
-					break;
-				}
-			}
-			if (!is_duplicate) {
-				//extract vstation number, build the station name and station ID
-				const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
-				StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
-				sd.setSlope(internal_dem.slope(i,j), internal_dem.azi(i,j));
-				v_stations.push_back( sd );
-			}
+			
+			//extract vstation number, build the station name and station ID
+			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
+			StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
+			sd.setSlope(internal_dem.slope(i,j), internal_dem.azi(i,j));
+			v_stations.push_back( sd );
 		}
 	}
 
-	if (v_stations.empty())
-		throw NoDataException("No virtual stations provided", AT);
+	if (v_stations.empty()) throw NoDataException("No virtual stations provided", AT);
 	
-	//cleaning up v_coords so it is still usable for the VSTATIONS (ie no more duplicates)
-	v_coords.resize(v_stations.size());
-	for (size_t ii=0; ii<v_stations.size(); ii++) {
-		v_coords[ii] = v_stations[ii].position;
-	}
+	//removing potential duplicates
+	if (StationData::unique( v_stations, true ) && !fourNeighbors)
+		std::cout << "[W] Some of the input stations have been identified as duplicates and removed\n";
 }
 
 size_t Meteo2DInterpolator::getVirtualStationsMeta(const Date& /*date*/, STATIONS_SET& vecStation)
@@ -616,8 +657,8 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 	std::string info_string;
 	for (size_t param=0; param<v_params.size(); param++) {
 		std::vector<double> result;
-		interpolate(i_date, internal_dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result, info_string);
-		for (size_t ii=0; ii<v_coords.size(); ii++) {
+		interpolate(i_date, internal_dem, static_cast<MeteoData::Parameters>(v_params[param]), v_stations, result, info_string);
+		for (size_t ii=0; ii<v_stations.size(); ii++) {
 			vecMeteo[ii](v_params[param]) = result[ii];
 		}
 	}

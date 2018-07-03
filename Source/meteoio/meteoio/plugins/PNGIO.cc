@@ -342,12 +342,12 @@ size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &
 	}
 }
 
-void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
+png_color* PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr)
 {
 	std::vector<unsigned char> pal;
 	size_t nr_colors;
 	gradient.getPalette(pal, nr_colors);
-	palette = (png_color*)calloc(nr_colors, sizeof (png_color)); //ie: three png_bytes, each being an unsigned char
+	png_color *palette = (png_color*)calloc(nr_colors, sizeof (png_color)); //ie: three png_bytes, each being an unsigned char
 	for (size_t ii=0; ii<nr_colors; ii++) {
 		const size_t interlace = ii*3; //colors from Gradient interlaced
 		palette[ii].red = static_cast<png_byte>(pal[interlace]);
@@ -355,6 +355,7 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
 	}
 	png_set_PLTE(png_ptr, info_ptr, palette, static_cast<int>(nr_colors));
+	return palette;
 }
 
 void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& legend_array, const Gradient& gradient, const size_t& full_width, const png_structp& png_ptr, png_infop& info_ptr)
@@ -426,8 +427,8 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
 {
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	if (indexed_png && palette!=NULL) free(palette);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
+	if (indexed_png && palette!=NULL) free(palette);
 	fclose(fp); fp=NULL;
 	free(info_ptr);
 	free(png_ptr);
@@ -437,7 +438,6 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 {
 	const std::string full_name( grid2dpath+"/"+filename );
 	fp=NULL;
-	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
@@ -456,7 +456,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
-	if (indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
+	png_color *palette = (indexed_png)? setPalette(gradient, png_ptr, info_ptr) : NULL;
 	if (has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
@@ -478,7 +478,6 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	const std::string filename( grid2dpath + "/" + date_str + MeteoGrids::getParameterName(parameter) + ".png" );
 
 	fp=NULL;
-	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
@@ -602,7 +601,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, png_ptr, info_ptr, full_width, nrows);
-	if (indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
+	png_color *palette = (indexed_png)? setPalette(gradient, png_ptr, info_ptr) : NULL;
 	if (has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);

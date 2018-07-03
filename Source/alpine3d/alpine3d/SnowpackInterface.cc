@@ -80,13 +80,13 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                                      const bool is_restart_in)
                 : run_info(), asciiIO(io_cfg, run_info), smetIO(io_cfg, run_info), dimx(dem_in.getNx()), dimy(dem_in.getNy()), landuse(landuse_in),
                   mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
-                  psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), vw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata),
+                  psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata), vw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata),
                   solarElevation(0.), output_grids(),
                   workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), timer(), nextStepTimestamp(startTime), timeStep(dt_main/86400.),
                   drift(NULL), eb(NULL), da(NULL), runoff(NULL),
                   dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
                   io(io_cfg), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(),
-                  glacier_katabatic_flow(false), glaciers(NULL),
+                  glacier_katabatic_flow(false), snow_preparation(false), glaciers(NULL),
                   sn_cfg(io_cfg), dem(dem_in), is_restart(is_restart_in), useCanopy(false), enable_lateral_flow(false), do_io_locally(true), station_name(),
                   soil_temp_depth(IOUtils::nodata), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false),
@@ -174,6 +174,11 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			glaciers->setGlacierMap(maskGlacier);
 		}
 	}
+	
+	//init snow preparation
+	if (snow_preparation) {
+		techSnow = new TechSnow(io_cfg, dem);
+	}
 }
 
 SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source) {
@@ -190,6 +195,8 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		diffuse = source.diffuse;
 		psum = source.psum;
 		psum_ph = source.psum_ph;
+		psum_tech = source.psum_tech;
+		grooming = source.grooming;
 		vw = source.vw;
 		rh = source.rh;
 		ta = source.ta;
@@ -219,7 +226,9 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		maskGlacier = source.maskGlacier;
 
 		glacier_katabatic_flow = source.glacier_katabatic_flow;
+		snow_preparation = source.snow_preparation;
 		glaciers = source.glaciers;
+		techSnow = source.techSnow;
 
 		sn_cfg = source.sn_cfg;
 		//dem = source.dem;
@@ -291,6 +300,7 @@ void SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg)
 	io_cfg.getValue("MASK_GLACIERS", "Output", mask_glaciers, IOUtils::nothrow);
 	io_cfg.getValue("MASK_DYNAMIC", "Output", mask_dynamic, IOUtils::nothrow);
 	io_cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow, IOUtils::nothrow);
+	io_cfg.getValue("SNOW_PREPARATION", "Snowpack", snow_preparation, IOUtils::nothrow);
 	io_cfg.getValue("SOIL_TEMPERATURE_DEPTH", "Output", soil_temp_depth, IOUtils::nothrow);
 
 	sn_cfg.getValue("GRIDS_WRITE", "Output", grids_write);
@@ -366,9 +376,7 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 	}
 
 	// Output Runoff: at each time step
-	if (runoff){
-		runoff->output(date, psum, ta);
-	}
+	if (runoff) runoff->output(date, psum, ta);
 }
 
 /**
@@ -586,6 +594,12 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 		ta = glaciers->correctTemperatures(cH, TSS, new_ta);
 	}
 
+	if (snow_preparation) {
+		techSnow->setMeteo(ta, rh, timestamp);
+		psum_tech = techSnow->getGrid(SnGrids::PSUM_TECH);
+		grooming = techSnow->getGrid(SnGrids::GROOMING);
+	}
+	
 	dataMeteo2D = true;
 	calcNextStep();
 }
@@ -622,7 +636,7 @@ void SnowpackInterface::setRadiationComponents(const mio::Array2D<double>& short
  * @param param parameter
  * @return 2D output grid (empty if the requested parameter was not available)
  */
-mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param)
+mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) const
 {
 	//special case for the meteo forcing grids
 	switch (param) {
@@ -636,6 +650,8 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param)
 			return psum;
 		case SnGrids::PSUM_PH:
 			return psum_ph;
+		case SnGrids::PSUM_TECH:
+			return psum_tech;
 		case SnGrids::ISWR:
 			return shortwave;
 		case SnGrids::ILWR:
@@ -693,6 +709,7 @@ void SnowpackInterface::calcNextStep()
 	for (size_t ii = 0; ii < workers.size(); ii++) { // make slices
 		const mio::Grid2DObject tmp_psum(psum, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_psum_ph(psum_ph, worker_startx[ii], 0, worker_deltax[ii], dimy);
+		const mio::Grid2DObject tmp_psum_tech(psum_tech, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_rh(rh, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_ta(ta, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_vw(vw, worker_startx[ii], 0, worker_deltax[ii], dimy);
@@ -703,7 +720,11 @@ void SnowpackInterface::calcNextStep()
 
 		// run model, process exceptions in a way that is compatible with openmp
 		try {
-			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_rh, tmp_ta, tmp_vw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
+			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_vw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
+			if (snow_preparation) {
+				const mio::Grid2DObject tmp_grooming(grooming, worker_startx[ii], 0, worker_deltax[ii], dimy);
+				workers[ii]->grooming( tmp_grooming );
+			}
 		} catch(const std::exception& e) {
 			++errCount;
 			cout << e.what() << std::endl;

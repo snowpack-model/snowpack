@@ -204,6 +204,23 @@ bool Grid2DObject::gridify(std::vector<Coords>& vec_points, const bool& keep_inv
 	return status;
 }
 
+bool Grid2DObject::gridify(std::vector<StationData>& vec_points, const bool& keep_invalid) const 
+{
+	bool status=true;
+	std::vector<StationData>::iterator v_Itr = vec_points.begin();
+	while ( v_Itr != vec_points.end() ) {
+		if ( gridify(v_Itr->position)==false ) {
+			if (!keep_invalid) v_Itr = vec_points.erase(v_Itr);
+			else ++v_Itr;
+			status=false;
+		} else {
+			++v_Itr;
+		}
+	}
+
+	return status;
+}
+
 bool Grid2DObject::gridify(Coords& point) const {
 	std::string proj_type, proj_args;
 	point.getProj(proj_type, proj_args);

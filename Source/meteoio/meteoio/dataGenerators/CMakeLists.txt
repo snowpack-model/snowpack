@@ -9,9 +9,8 @@ SET(dataGenerators_sources
 	dataGenerators/ConstGenerator.cc
 	dataGenerators/ESOLIPGenerator.cc
 	dataGenerators/IswrAlbedoGenerator.cc
-	dataGenerators/PPHASEGenerator.cc
-	dataGenerators/PrecUnsplit.cc
-	dataGenerators/RelHumGenerator.cc
+	dataGenerators/PrecSplitting.cc
+	dataGenerators/HumidityGenerator.cc
 	dataGenerators/SinGenerator.cc
 	dataGenerators/StdPressGenerator.cc
 	dataGenerators/TauCLDGenerator.cc

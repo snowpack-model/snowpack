@@ -3,7 +3,7 @@ Setting up basic outomated Nightly cDash client
 
 This manual shows how to set up a simple basic cDash client which runs every 
 night the tests. This is based on sources and structure of MeteoIO 
-(http://slfsmm.indefero.net/p/meteoio/) and a Linux host.
+(https://models.slf.ch/p/meteoio/) and a Linux host.
 
 
 1. Needs
@@ -26,7 +26,7 @@ night the tests. This is based on sources and structure of MeteoIO
 1. Make direcotry and checkout svn files:
 	- mkdir -p ${HOME}/cdash_clients/meteoio
 	- cd ${HOME}/cdash_clients/
-	- svn co http://slfsmm.indefero.net/svn/slfsmm/meteoio/YOUR_BRANCH_OR_TRUNK meteoio
+	- svn co https://models.slf.ch/svn/slfsmm/meteoio/YOUR_BRANCH_OR_TRUNK meteoio
 	
 2. Get cDash connection configuration
 	- Login in the cDash site -> myCDash

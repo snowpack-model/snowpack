@@ -19,6 +19,7 @@
 #define GRID2DOBJECT_H
 
 #include <meteoio/dataClasses/Coords.h>
+#include <meteoio/dataClasses/StationData.h>
 #include <meteoio/dataClasses/Array2D.h>
 
 #include <iostream>
@@ -101,6 +102,7 @@ class Grid2DObject {
 		* @return false if invalid or external points had to be removed
 		*/
 		bool gridify(std::vector<Coords>& vec_points, const bool& keep_invalid=false) const;
+		bool gridify(std::vector<StationData>& vec_points, const bool& keep_invalid=false) const;
 
 		/**
 		* @brief Set all variables in one go.

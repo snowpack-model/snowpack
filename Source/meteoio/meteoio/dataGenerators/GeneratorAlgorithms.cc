@@ -24,9 +24,8 @@
 #include <meteoio/dataGenerators/ConstGenerator.h>
 #include <meteoio/dataGenerators/ESOLIPGenerator.h>
 #include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
-#include <meteoio/dataGenerators/PPHASEGenerator.h>
-#include <meteoio/dataGenerators/PrecUnsplit.h>
-#include <meteoio/dataGenerators/RelHumGenerator.h>
+#include <meteoio/dataGenerators/PrecSplitting.h>
+#include <meteoio/dataGenerators/HumidityGenerator.h>
 #include <meteoio/dataGenerators/SinGenerator.h>
 #include <meteoio/dataGenerators/StdPressGenerator.h>
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
@@ -86,7 +85,7 @@ namespace mio {
  * @section generators_keywords Available generators
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
- * - RELHUM: relative humidity from other humidity measurements (see RhGenerator)
+ * - HUMIDITY: generate any of the humidity parameters from the others (see HumidityGenerator)
  * - TS_OLWR: surface temperature from Outgoing Long Wave Radiation (see TsGenerator)
  * - ISWR_ALBEDO: ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on HS (see IswrAlbedoGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
@@ -97,8 +96,7 @@ namespace mio {
  * - ALLSKY_SW: generate the incoming short wave radiation from the potential radiation, corrected for cloudiness if possible (see AllSkySWGenerator)
  * - TAU_CLD: generate the atmospheric transmissivity based on cloud cover fraction (see TauCLDGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
- * - PPHASE: generate precipitation phase with a user-selected method (see PPhaseGenerator)
- * - PrecUnsplit: generate the precipitation amount and/or phase from split precipitation (see PrecUnsplit)
+ * - PRECSPLITTING: generate the precipitation phase and/or convert between amount / phase and split precipitation (see PrecSplitting)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -136,8 +134,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 		return new SinGenerator(vecArgs, i_algoname);
 	} else if (algoname == "STD_PRESS"){
 		return new StandardPressureGenerator(vecArgs, i_algoname);
-	} else if (algoname == "RELHUM"){
-		return new RhGenerator(vecArgs, i_algoname);
+	} else if (algoname == "HUMIDITY"){
+		return new HumidityGenerator(vecArgs, i_algoname);
 	} else if (algoname == "TAU_CLD"){
 		return new TauCLDGenerator(vecArgs, i_algoname);
 	} else if (algoname == "TS_OLWR"){
@@ -155,9 +153,9 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else if (algoname == "PPHASE"){
-		return new PPhaseGenerator(vecArgs, i_algoname);
-	} else if (algoname == "PRECUNSPLIT"){
-		return new PrecUnsplit(vecArgs, i_algoname);
+		throw IOException("The generator algorithm '"+algoname+"' has been replaced by the PRECSPLITTING generator" , AT);
+	} else if (algoname == "PRECSPLITTING"){
+		return new PrecSplitting(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}

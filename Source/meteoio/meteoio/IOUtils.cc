@@ -51,9 +51,10 @@ double round(const double& x) {
 }
 #endif
 
-std::string getLibVersion() {
+std::string getLibVersion(const bool& short_version) {
 	std::ostringstream ss;
-	ss << MIO_VERSION << " compiled on " << __DATE__ << " " << __TIME__;
+	ss << MIO_VERSION;
+	if (!short_version) ss << " compiled on " << __DATE__ << " " << __TIME__;
 	return ss.str();
 }
 
@@ -240,7 +241,7 @@ std::string getLogName()
 		}
 	}
 
-	if (tmp==NULL) return std::string("N/A");
+	if (tmp==NULL) return std::string("");
 	return std::string(tmp);
 }
 
@@ -251,18 +252,30 @@ std::string getHostName() {
 		TCHAR infoBuf[len];
 		DWORD bufCharCount = len;
 		if ( !GetComputerName( infoBuf, &bufCharCount ) )
-			return std::string("N/A");
+			return std::string("");
 
 		return std::string(infoBuf);
     #else
 		char name[len];
 		if (gethostname(name, len) != 0) {
-			return std::string("N/A");
+			return std::string("");
 		}
 
-		if (name[0] == '\0') return std::string("N/A");
+		if (name[0] == '\0') return std::string("");
 		return std::string(name);
 	#endif
+}
+
+std::string getDomainName() {
+	const std::string hostname( getHostName() );
+	if (hostname.empty()) return "";
+	
+	std::size_t tld_pos = hostname.find_last_of(".");
+	if (tld_pos==std::string::npos || tld_pos==0) return "";
+	std::size_t domain_pos = hostname.find_last_of(".", tld_pos-1);
+	if (domain_pos==std::string::npos) return "";
+	
+	return hostname.substr(domain_pos+1);
 }
 
 size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data)

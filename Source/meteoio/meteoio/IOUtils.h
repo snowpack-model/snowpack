@@ -44,9 +44,10 @@ class Config;
 
 /**
 * @brief Return the library version
+* @param[in] short_version only return the version number (ie skip the compilation date)
 * @return library version string
 */
-std::string getLibVersion();
+std::string getLibVersion(const bool& short_version=false);
 
 namespace IOUtils {
 	enum ProcessingLevel {
@@ -129,6 +130,12 @@ namespace IOUtils {
 	* @return host name
 	*/
 	std::string getHostName();
+	
+	/**
+	* @brief Retrieve the domain name of the computer running the binary
+	* @return domain with TLD
+	*/
+	std::string getDomainName();
 
 	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
