@@ -1993,6 +1993,13 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].hard = IOUtils::nodata;
 			Edata[e].M = Edata[e].Rho * Edata[e].L0;
 			assert(Edata[e].M >= (-Constants::eps2)); //mass must be positive
+			// Check if pore space is available when water would freeze
+			const double porespace = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water);
+			if(Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] > porespace) {
+				const double tmp_sum = Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF];
+				Edata[e].theta[WATER] *= porespace / tmp_sum;
+				Edata[e].theta[WATER_PREF] *= porespace / tmp_sum;
+			}
 		} // end of element layer for
 	} // end of layer for
 
@@ -2007,6 +2014,19 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 
 		Edata[e].C = SigC;
 		assert(Edata[e].C<0.);
+	}
+
+	// Sea ice initializations
+	if (Seaice != NULL) {
+		Seaice->updateFreeboard(*this);
+		for(size_t e = nElems; e -->0; ) {
+			const double br_sal = (Edata[e].Te - Constants::freezing_tk) / -SeaIce::mu;
+			Edata[e].salinity = br_sal * Edata[e].theta[WATER];
+			if(Edata[e].salinity > 0.) {
+				Edata[e].melting_tk = Edata[e].freezing_tk = -SeaIce::mu * br_sal + Constants::freezing_tk;
+			}
+			Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
+		}
 	}
 
 	// Cold content and snowpack masses
