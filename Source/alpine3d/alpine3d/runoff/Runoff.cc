@@ -136,7 +136,7 @@ void Runoff::output(const mio::Date& i_date, const mio::Grid2DObject& psum, cons
 		getExtraMeteoGrids(extraGrids);
 
 
-		if(MPIControl::instance().master()){
+		if(MPIControl::instance().master()) {
 		//Resample runoff grids to match the cell size of the catchment masks
 			if (fabs(grid_size_factor - 1.0) > 1e-5) {
 				totalRunoff   = mio::LibResampling2D::Nearest(totalRunoff, grid_size_factor);

@@ -21,75 +21,6 @@
 using namespace std;
 using namespace mio;
 
-/************************************************************
- * static section                                           *
- ************************************************************/
-const size_t SnGrids::nrOfParameters =  SnGrids::lastparam - SnGrids::firstparam + 1;
-std::vector<std::string> SnGrids::paramname;
-const bool SnGrids::__init = SnGrids::initStaticData();
-
-bool SnGrids::initStaticData()
-{
-	//the order must be the same as in the enum
-	paramname.push_back("TA");
-	paramname.push_back("RH");
-	paramname.push_back("VW");
-	paramname.push_back("ISWR");
-	paramname.push_back("ISWR_DIFF");
-	paramname.push_back("ISWR_DIR");
-	paramname.push_back("ILWR");
-	paramname.push_back("HS");
-	paramname.push_back("PSUM");
-	paramname.push_back("PSUM_PH");
-	paramname.push_back("TSG");
-	paramname.push_back("TSS");
-	paramname.push_back("TS0");
-	paramname.push_back("TSNOW");
-	paramname.push_back("TSNOW_AVG");
-	paramname.push_back("RHOSNOW_AVG");
-	paramname.push_back("TSOIL");
-	paramname.push_back("SWE");
-	paramname.push_back("RSNO");
-	paramname.push_back("TOP_ALB");
-	paramname.push_back("SURF_ALB");
-	paramname.push_back("SP");
-	paramname.push_back("RB");
-	paramname.push_back("RG");
-	paramname.push_back("N3");
-	paramname.push_back("MS_SNOWPACK_RUNOFF");
-	paramname.push_back("MS_SOIL_RUNOFF");
-	paramname.push_back("SFC_SUBL");
-	paramname.push_back("STORE");
-	paramname.push_back("GLACIER");
-	paramname.push_back("GLACIER_EXPOSED");
-	
-	if (paramname.size()!=(SnGrids::lastparam+1))
-		throw IOException("Wrong number of string representations for the SnGrids parameters! You forgot to update the \"paramname\" vector.", AT);
-
-	return true;
-}
-
-const std::string& SnGrids::getParameterName(const size_t& parindex)
-{
-	if (parindex >= SnGrids::nrOfParameters)
-		throw IndexOutOfBoundsException("Trying to get name for parameter that does not exist", AT);
-
-	return paramname[parindex];
-}
-
-size_t SnGrids::getParameterIndex(const std::string& parname)
-{
-	for (size_t ii=0; ii<SnGrids::nrOfParameters; ii++) {
-		if (paramname[ii] == parname) return ii;
-	}
-
-	return IOUtils::npos; //parameter not a part of SnGrids
-}
-
-
-/************************************************************
- * SnowpackInterfaceWorker                                           *
- ************************************************************/
 //This is a function to retrieve soil temperature at a given depth (measured from
 //the soil surface, not from the snow surface) for output purposes.
 inline double getSoilTemperature(const SnowStation& pixel, const double& depth)
@@ -426,7 +357,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::MS_SNOWPACK_RUNOFF:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]; break;
 			case SnGrids::MS_SOIL_RUNOFF:
-				value =surfaceFlux.mass[SurfaceFluxes::MS_SOIL_RUNOFF]; break;
+				value = surfaceFlux.mass[SurfaceFluxes::MS_SOIL_RUNOFF]; break;
 			case SnGrids::SFC_SUBL:
 				value = -surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION] /  snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::STORE:
@@ -461,6 +392,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 void SnowpackInterfaceWorker::runModel(const mio::Date &date,
                                        const mio::Grid2DObject &psum,
                                        const mio::Grid2DObject &psum_ph,
+                                       const mio::Grid2DObject &psum_tech,
                                        const mio::Grid2DObject &rh,
                                        const mio::Grid2DObject &ta,
                                        const mio::Grid2DObject &vw,
@@ -510,6 +442,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			if (soil_temp_depth!=IOUtils::nodata) meteoPixel.ts[0] = getGridPoint(SnGrids::TSOIL, ix,iy); //for consistency: previous time step value
 			meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
 			meteoPixel.psum_ph = psum_ph(ix,iy);
+			meteoPixel.psum_tech = psum_tech(ix, iy);
 			meteoPixel.hs = IOUtils::nodata;
 			if (meteoPixel.tss<=100 || meteoPixel.ts0<=100) {
 				cout << "[E] Pixel (" << ix+offset << "," << iy << ") too cold! tss=" << meteoPixel.tss << " ts0=" << meteoPixel.ts0 << std::endl;
@@ -646,6 +579,20 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", bcu_watertransportmodel_snow);
 				sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", bcu_watertransportmodel_soil);
 			}
+		}
+	}
+}
+
+void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
+{
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
+			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
+			if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
+			
+			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
+			Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
 		}
 	}
 }

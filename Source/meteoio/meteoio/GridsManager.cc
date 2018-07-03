@@ -320,7 +320,9 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 					throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
 			}
 		} else {
-			throw NoDataException("Could not find any grids at time "+date.toString(Date::ISO), AT);
+			const std::string msg1("Could not find any grids at time " + date.toString(Date::ISO) + ". " );
+			const std::string msg2("There are grids from " + grids2d_list.begin()->first.toString(Date::ISO) + " until " + grids2d_list.rbegin()->first.toString(Date::ISO));
+			throw NoDataException(msg1 + msg2, AT);
 		}
 	}
 }

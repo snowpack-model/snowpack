@@ -20,6 +20,77 @@
 using namespace mio;
 using namespace std;
 
+/************************************************************
+ * static section                                           *
+ ************************************************************/
+const size_t SnGrids::nrOfParameters =  SnGrids::lastparam - SnGrids::firstparam + 1;
+std::vector<std::string> SnGrids::paramname;
+const bool SnGrids::__init = SnGrids::initStaticData();
+
+bool SnGrids::initStaticData()
+{
+	//the order must be the same as in the enum
+	paramname.push_back("TA");
+	paramname.push_back("RH");
+	paramname.push_back("VW");
+	paramname.push_back("ISWR");
+	paramname.push_back("ISWR_DIFF");
+	paramname.push_back("ISWR_DIR");
+	paramname.push_back("ILWR");
+	paramname.push_back("HS");
+	paramname.push_back("PSUM");
+	paramname.push_back("PSUM_PH");
+	paramname.push_back("PSUM_TECH");
+	paramname.push_back("GROOMING");
+	paramname.push_back("TSG");
+	paramname.push_back("TSS");
+	paramname.push_back("TS0");
+	paramname.push_back("TSNOW");
+	paramname.push_back("TSNOW_AVG");
+	paramname.push_back("RHOSNOW_AVG");
+	paramname.push_back("TSOIL");
+	paramname.push_back("SWE");
+	paramname.push_back("RSNO");
+	paramname.push_back("TOP_ALB");
+	paramname.push_back("SURF_ALB");
+	paramname.push_back("SP");
+	paramname.push_back("RB");
+	paramname.push_back("RG");
+	paramname.push_back("N3");
+	paramname.push_back("MS_SNOWPACK_RUNOFF");
+	paramname.push_back("MS_SOIL_RUNOFF");
+	paramname.push_back("SFC_SUBL");
+	paramname.push_back("STORE");
+	paramname.push_back("GLACIER");
+	paramname.push_back("GLACIER_EXPOSED");
+	
+	if (paramname.size()!=(SnGrids::lastparam+1))
+		throw IOException("Wrong number of string representations for the SnGrids parameters! You forgot to update the \"paramname\" vector.", AT);
+
+	return true;
+}
+
+const std::string& SnGrids::getParameterName(const size_t& parindex)
+{
+	if (parindex >= SnGrids::nrOfParameters)
+		throw IndexOutOfBoundsException("Trying to get name for parameter that does not exist", AT);
+
+	return paramname[parindex];
+}
+
+size_t SnGrids::getParameterIndex(const std::string& parname)
+{
+	for (size_t ii=0; ii<SnGrids::nrOfParameters; ii++) {
+		if (paramname[ii] == parname) return ii;
+	}
+
+	return IOUtils::npos; //parameter not a part of SnGrids
+}
+
+
+/************************************************************
+ * MeteoObj                                           *
+ ************************************************************/
 MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
                      ta(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata), 

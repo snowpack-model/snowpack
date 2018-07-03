@@ -178,8 +178,8 @@ void Glaciers::correctTemperatures(const mio::Grid2DObject& hs, const mio::Grid2
  */
 void Glaciers::correctTemperatures(mio::Grid2DObject& ta) const
 {
-	const double CH = 0.002; //bulk heat transfer coefficient
-	const double Gamma = -mio::Cst::dry_adiabatique_lapse_rate;
+	static const double CH = 0.002; //bulk heat transfer coefficient
+	static const double Gamma = -mio::Cst::dry_adiabatique_lapse_rate;
 
 	std::vector<double> X, Y;
 	for (size_t idx=0; idx<isGlacier.size(); idx++) {
