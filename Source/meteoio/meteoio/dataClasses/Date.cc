@@ -53,7 +53,7 @@ const double Date::RFC868_offset = 2415020.5; ///< offset between julian date an
 const double Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 const double Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
-const double Date::epsilon=1./(24.*3600.025); ///< minimum difference between two dates. 1 second in units of days. 3600.025 is intentional
+const double Date::epsilon=.01/(24.*3600.025); ///< minimum difference between two dates: .1 second in units of days. 3600.025 is intentional
 std::map< std::string, double> Date::TZAbbrev;
 const bool Date::__init = Date::initStaticData();
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
@@ -959,7 +959,7 @@ bool Date::operator==(const Date& indate) const {
 		return( undef==true && indate.isUndef() );
 	}
 
-	return IOUtils::checkEpsilonEquality(gmt_julian, indate.gmt_julian, epsilon);
+	return (fabs(gmt_julian - indate.gmt_julian) <= epsilon);
 }
 
 bool Date::operator!=(const Date& indate) const {

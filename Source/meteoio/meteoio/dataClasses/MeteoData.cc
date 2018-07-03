@@ -70,8 +70,8 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("ALB");				description.push_back("Albedo");									units.push_back("-");
 	paramname.push_back("DEM");				description.push_back("Altitude above Sea Level");		units.push_back("m");
 	paramname.push_back("SHADE");			description.push_back("Hillshade");								units.push_back("-");
-	paramname.push_back("SLOPE");			description.push_back("Slope Angle");							units.push_back("°");
-	paramname.push_back("AZI");				description.push_back("Slope Aspect");							units.push_back("°");
+	paramname.push_back("SLOPE");			description.push_back("Slope Angle");							units.push_back("degree");
+	paramname.push_back("AZI");				description.push_back("Slope Aspect");							units.push_back("degree");
 
 	return true;
 }

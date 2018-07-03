@@ -103,7 +103,7 @@ class StationData {
 		* If some fields of the first argument are empty, they will be filled by the matching field from the
 		* second argument.
 		* @param sd1 first StationData to merge, highest priority
-		* @param sd2 second StationData to merge, lowest priority
+		* @param[in] sd2 second StationData to merge, lowest priority
 		* @return new StationData object
 		*/
 		static StationData merge(StationData sd1, const StationData& sd2);
@@ -112,9 +112,17 @@ class StationData {
 		* @brief Simple merge strategy.
 		* If some fields of the current object are empty, they will be filled by the macthing field from the
 		* provided argument.
-		* @param sd2 extra StationData to merge, lowest priority
+		* @param[in] sd2 extra StationData to merge, lowest priority
 		*/
 		void merge(const StationData& sd2);
+		
+		/**
+		* @brief Remove duplicate stations from a vector.
+		* @param vecStation vector to purge from duplicate entries
+		* @param[in] position_only only consider the station location as criteria for equality (default: false)
+		* @return true if some duplicates have been found
+		*/
+		static bool unique(std::vector<StationData> &vecStation, const bool& position_only=false);
 
 	public:
 		Coords position;

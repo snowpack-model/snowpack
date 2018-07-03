@@ -24,8 +24,7 @@
 #include <meteoio/dataGenerators/ConstGenerator.h>
 #include <meteoio/dataGenerators/ESOLIPGenerator.h>
 #include <meteoio/dataGenerators/IswrAlbedoGenerator.h>
-#include <meteoio/dataGenerators/PPHASEGenerator.h>
-#include <meteoio/dataGenerators/PrecUnsplit.h>
+#include <meteoio/dataGenerators/PrecSplitting.h>
 #include <meteoio/dataGenerators/HumidityGenerator.h>
 #include <meteoio/dataGenerators/SinGenerator.h>
 #include <meteoio/dataGenerators/StdPressGenerator.h>
@@ -97,8 +96,7 @@ namespace mio {
  * - ALLSKY_SW: generate the incoming short wave radiation from the potential radiation, corrected for cloudiness if possible (see AllSkySWGenerator)
  * - TAU_CLD: generate the atmospheric transmissivity based on cloud cover fraction (see TauCLDGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
- * - PPHASE: generate precipitation phase with a user-selected method (see PPhaseGenerator)
- * - PrecUnsplit: generate the precipitation amount and/or phase from split precipitation (see PrecUnsplit)
+ * - PRECSPLITTING: generate the precipitation phase and/or convert between amount / phase and split precipitation (see PrecSplitting)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -155,9 +153,9 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else if (algoname == "PPHASE"){
-		return new PPhaseGenerator(vecArgs, i_algoname);
-	} else if (algoname == "PRECUNSPLIT"){
-		return new PrecUnsplit(vecArgs, i_algoname);
+		throw IOException("The generator algorithm '"+algoname+"' has been replaced by the PRECSPLITTING generator" , AT);
+	} else if (algoname == "PRECSPLITTING"){
+		return new PrecSplitting(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}

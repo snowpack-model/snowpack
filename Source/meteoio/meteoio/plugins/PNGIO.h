@@ -51,7 +51,7 @@ class PNGIO : public IOInterface {
 		double getScaleFactor(const size_t& grid_w, const size_t& grid_h) const;
 		Grid2DObject scaleGrid(const Grid2DObject& grid_in) const;
 		size_t setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array) const;
-		static void setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
+		static png_color* setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr);
 		void createMetadata(const Grid2DObject& grid);
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
 		void setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height);

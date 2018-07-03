@@ -27,6 +27,7 @@ SET(a3d_sources
 	SnowpackInterfaceWorker.cc
 	SnowpackInterface.cc
 	Glaciers.cc
+	TechSnow.cc
 	DataAssimilation.cc
 	MeteoObj.cc
 	MPIControl.cc

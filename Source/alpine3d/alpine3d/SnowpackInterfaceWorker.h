@@ -18,62 +18,11 @@
 #ifndef SNOWPACKINTERFACEWORKER_H
 #define SNOWPACKINTERFACEWORKER_H
 
-#include <iostream>
-#include <meteoio/MeteoIO.h>
-#include <snowpack/libsnowpack.h>
-
-class SnGrids {
-	public:
-		/// \anchor SnGrids this enum provides names for possible Snowpack grids
-		enum Parameters {firstparam=0,
-                                          TA=firstparam, ///< Air temperature
-                                          RH, ///< Relative humidity
-                                          VW, ///< Wind velocity
-                                          ISWR, ///< Incoming short wave radiation
-                                          ISWR_DIFF, ///< Incoming short wave, diffuse
-                                          ISWR_DIR, ///< Incoming short wave, direct
-                                          ILWR, ///< Incoming long wave radiation
-                                          HS, ///< Height of snow
-                                          PSUM, ///< Water equivalent of precipitations, either solid or liquid
-                                          PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
-                                          TSG, ///< Temperature ground surface
-                                          TSS, ///< Temperature snow surface
-                                          TS0, ///< Temperature soil surface
-                                          TSNOW, ///< Snow temperature at depth xxx m
-                                          TSNOW_AVG, ///< Average snow temperature in the top xxx m
-                                          RHOSNOW_AVG, ///< Average snow density in the top xxx m
-                                          TSOIL, ///< Temperature within the soil, at a given depth
-                                          SWE, ///< Snow Water Equivalent
-                                          RSNO, ///< Snow mean density
-                                          TOP_ALB, ///< Albedo from the top (ie above canopy)
-                                          SURF_ALB, ///< Albedo of the surface (ie below canopy)
-                                          SP, ///< sphericity
-                                          RB, ///< bond radius
-                                          RG, ///< grain radius
-                                          N3, ///< grain Coordination number
-                                          MS_SNOWPACK_RUNOFF, ///< runoff on the surface of the soil (vitual lysimeter)
-                                          MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
-                                          SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
-                                          STORE, ///< internal usage (precipitation events that are delayed because they are too small)
-                                          GLACIER, ///< mask showing the glaciated pixels
-                                          GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
-                                          lastparam=GLACIER_EXPOSED};
-
-
-		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
-		static const std::string& getParameterName(const size_t& parindex);
-		static size_t getParameterIndex(const std::string& parname);
-
-	private:
-		static std::vector<std::string> paramname;
-		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname
-};
-
 #include <alpine3d/DataAssimilation.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/ebalance/EnergyBalance.h>
 #include <alpine3d/runoff/Runoff.h>
+#include <alpine3d/MeteoObj.h> //for the SnGrids
 
 class SnowpackInterfaceWorker
 {
@@ -101,6 +50,7 @@ class SnowpackInterfaceWorker
 		void runModel(const mio::Date& julian,
 		              const mio::Grid2DObject &psum,
 		              const mio::Grid2DObject &psum_ph,
+		              const mio::Grid2DObject &psum_tech,
 		              const mio::Grid2DObject &rh,
 		              const mio::Grid2DObject &ta,
 		              const mio::Grid2DObject &vw,
@@ -109,6 +59,8 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &diffuse,
 		              const mio::Grid2DObject &longwave,
 		              const double solarElevation);
+		
+		void grooming(const mio::Grid2DObject &grooming_map);
 
 		static int round_landuse(const double& landuse_dbl);
 		static bool skipThisCell(const double& landuse_val, const double& dem_val);

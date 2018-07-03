@@ -21,6 +21,7 @@
 #include <iostream>
 #include <meteoio/MeteoIO.h>
 #include <snowpack/libsnowpack.h>
+#include <alpine3d/MeteoObj.h>
 
 class SnowpackInterfaceWorker;
 class SnowDriftA3D;
@@ -31,6 +32,7 @@ class Runoff; // forward declaration, cyclic header include
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/Glaciers.h>
+#include <alpine3d/TechSnow.h>
 
 /**
  * @page snowpack Snowpack
@@ -158,7 +160,7 @@ class Runoff; // forward declaration, cyclic header include
 		                            const double& solarElevation,
 		                            const mio::Date& timestamp);
 
-		mio::Grid2DObject getGrid(const SnGrids::Parameters& param);
+		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
 
 	private:
 		std::string getGridsRequirements() const;
@@ -189,7 +191,7 @@ class Runoff; // forward declaration, cyclic header include
 
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;
-		mio::Grid2DObject psum, psum_ph, vw, rh, ta;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, rh, ta;
 		double solarElevation;
 		
 		std::vector<std::string> output_grids; //which grids should be written out
@@ -218,8 +220,9 @@ class Runoff; // forward declaration, cyclic header include
 		bool mask_dynamic; //mask glaciers in outputs changes over time?
 		mio::Grid2DObject maskGlacier; // save the mask
 
-		bool glacier_katabatic_flow;
+		bool glacier_katabatic_flow, snow_preparation;
 		Glaciers *glaciers;
+		TechSnow *techSnow;
 
 		SnowpackConfig sn_cfg;
 		const mio::DEMObject dem;

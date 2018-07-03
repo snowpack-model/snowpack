@@ -254,7 +254,7 @@
  * TSG::MOVE   = T_bottom	;so we can compare the ground temperatures
  * TSS::MOVE   = TSS_meas	;so we can compare the surface temperatures
  *
- * WFJ2::KEEP = TA RH ISWR ILWR HS VW DW SNOWF RAINF PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
+ * WFJ2::KEEP = TA TSS TSG RH ISWR ILWR HS VW DW SNOWF RAINF PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
  *
  * PSUM_PH::create = PrecUnsplit
  * PSUM::create    = PrecUnsplit
