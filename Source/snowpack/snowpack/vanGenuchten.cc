@@ -471,7 +471,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 		}
 	} else {									//For high density
 		// Eq. 5 in Golden, K. M., H. Eicken, A. L. Heaton, J. Miner, D. J. Pringle, and J. Zhu (2007), Thermal evolution of permeability and microstructure in sea ice, Geophys. Res. Lett., 34, L16501, doi:10.1029/2007GL030447:
-		ksat = 3E-8 * pow((1. - EMS->theta[ICE]), 3.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+		ksat = 3E-8 * pow((1. - std::min(1., EMS->theta[ICE] / ReSolver1d::max_theta_ice)), 3.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 	}
 
 	//Set air entry pressure
