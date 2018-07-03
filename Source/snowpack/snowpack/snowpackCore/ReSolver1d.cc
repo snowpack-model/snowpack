@@ -20,8 +20,10 @@
 */
 #include <snowpack/snowpackCore/ReSolver1d.h>
 #include <snowpack/vanGenuchten.h>
+#include <snowpack/snowpackCore/Salinity.h>
 #include <snowpack/Utils.h>
 #include <snowpack/snowpackCore/Snowpack.h>
+
 #ifdef CLAPACK
 	// Matching C data types with FORTRAN data types (taken from f2c.h):
 	typedef long int integer;
@@ -625,10 +627,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	std::vector<double> delta_Te_adv_i(nE, 0.);	//Change in element temperature per iteration time step due to heat advection by the water flow.
 	std::vector<double> rho(nE, 0.);		//Liquid density
 	std::vector<double> BrineSal(nE, 0.);		//Salinity in brine, in g/(m^3_water)
-	std::vector<double> flux_down_1(nE, 0.);	//Flux with element below (negative=upward, positive=downward), we define 2 variables, to allow for mixing
-	std::vector<double> flux_down_2(nE, 0.);	//Flux with element below (negative=upward, positive=downward), we define 2 variables, to allow for mixing
-	std::vector<double> flux_up_1(nE, 0.);		//Flux with element above (negative=upward, positive=downward), we define 2 variables, to allow for mixing
-	std::vector<double> flux_up_2(nE, 0.);		//Flux with element above (negative=upward, positive=downward), we define 2 variables, to allow for mixing
 
 	//std::vector<std::vector<double> > a(nE, std::vector<double> (nE, 0));	//Left hand side matrix. Note, we write immediately to ainv! But this is kept in to understand the original code.
 	std::vector<double> ainv(nE*nE, 0.);			//Inverse of A, written down as a 1D array instead of a 2D array, with the translation: a[i][j]=ainv[i*nlayers+j]
@@ -895,6 +893,12 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		EMS[lowernode].salinity += SeaIce::OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
 		EMS[lowernode].theta[WATER] = theta_n[lowernode] = EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]);
 		EMS[lowernode].updDensity();
+	}
+
+	Salinity Salinity_1, Salinity_2;
+	if(Xdata.Seaice != NULL) {
+		Salinity_1.SetDomainSize(nE);
+		Salinity_2.SetDomainSize(nE);
 	}
 
 	//Note: there are 2 iterations. First, the iteration starts to match the Richards solver time step to the SNOWPACK time step. Simple example: assume SNOWPACK time step is 15 minutes and
@@ -1387,118 +1391,118 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					case NONE:
 					{
 						//No mixing: salt fluxes only based on net fluxes (1) and second term (2) is zero.
-						flux_up_1[i] = term_up[i]/dz_up[i]
+						Salinity_1.flux_up[i] = term_up[i]/dz_up[i]
 							+ Xdata.cos_sl*(k_np1_m_ip12[i])
 							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
-						flux_up_2[i] = 0.;
-						flux_up_1[i]*=dt;///(rho_up);
-						flux_up_2[i]*=dt;///(rho_up);
+						Salinity_2.flux_up[i] = 0.;
+						Salinity_1.flux_up[i]*=dt;///(rho_up);
+						Salinity_2.flux_up[i]*=dt;///(rho_up);
 
-						flux_down_1[i] = term_down[i]/dz_down[i]
+						Salinity_1.flux_down[i] = term_down[i]/dz_down[i]
 							+ Xdata.cos_sl*(k_np1_m_im12[i])
 							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
-						flux_down_2[i] = 0.;
-						flux_down_1[i]*=dt;
-						flux_down_2[i]*=dt;
+						Salinity_2.flux_down[i] = 0.;
+						Salinity_1.flux_down[i]*=dt;
+						Salinity_2.flux_down[i]*=dt;
 						break;
 					}
 					case CAPILLARY_GRAVITY:
 					{
 						//Separate capillary (1) and gravity term (2)
-						flux_up_1[i] = term_up[i]/dz_up[i];				// Capillary term
-						flux_up_2[i] =							// Gravity term
+						Salinity_1.flux_up[i] = term_up[i]/dz_up[i];				// Capillary term
+						Salinity_2.flux_up[i] =							// Gravity term
 							+ Xdata.cos_sl*(k_np1_m_ip12[i])
 							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
-						flux_up_1[i]*=dt;
-						flux_up_2[i]*=dt;
+						Salinity_1.flux_up[i]*=dt;
+						Salinity_2.flux_up[i]*=dt;
 
-						flux_down_1[i] = term_down[i]/dz_down[i];			// Capillary term
-						flux_down_2[i] =						// Gravity term
+						Salinity_1.flux_down[i] = term_down[i]/dz_down[i];			// Capillary term
+						Salinity_2.flux_down[i] =						// Gravity term
 							+ Xdata.cos_sl*(k_np1_m_im12[i])
 							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
-						flux_down_1[i]*=dt;
-						flux_down_2[i]*=dt;
+						Salinity_1.flux_down[i]*=dt;
+						Salinity_2.flux_down[i]*=dt;
 						break;
 					}
 					case DENSITY_DIFFERENCE:
 					{
 						//Separate term constant density (1) and term dependent on density (2)
-						flux_up_1[i] = term_up_crho[i]/dz_up[i] + Xdata.cos_sl*k_np1_m_ip12[i];
-						flux_up_2[i] =
+						Salinity_1.flux_up[i] = term_up_crho[i]/dz_up[i] + Xdata.cos_sl*k_np1_m_ip12[i];
+						Salinity_2.flux_up[i] =
 							+ term_up[i]/dz_up[i] - term_up_crho[i]/dz_up[i]
 							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
-						flux_up_1[i]*=dt;
-						flux_up_2[i]*=dt;
+						Salinity_1.flux_up[i]*=dt;
+						Salinity_2.flux_up[i]*=dt;
 
-						flux_down_1[i] = term_down_crho[i]/dz_down[i] + Xdata.cos_sl*k_np1_m_im12[i];
-						flux_down_2[i] =
+						Salinity_1.flux_down[i] = term_down_crho[i]/dz_down[i] + Xdata.cos_sl*k_np1_m_im12[i];
+						Salinity_2.flux_down[i] =
 							+ term_down[i]/dz_down[i] - term_down_crho[i]/dz_down[i]
 							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
-						flux_down_1[i]*=dt;
-						flux_down_2[i]*=dt;
+						Salinity_1.flux_down[i]*=dt;
+						Salinity_2.flux_down[i]*=dt;
 						break;
 					}
 					case DENSITY_GRAVITY:
 					{
 						//Separate term constant density (1) and term dependent on density (2)
-						flux_up_1[i] = term_up[i]/dz_up[i] + Xdata.cos_sl*(k_np1_m_ip12[i]*rho[i]);
-						flux_up_2[i] =
+						Salinity_1.flux_up[i] = term_up[i]/dz_up[i] + Xdata.cos_sl*(k_np1_m_ip12[i]*rho[i]);
+						Salinity_2.flux_up[i] =
 							+ Xdata.cos_sl*(k_np1_m_ip12[i]*(rho_up-rho[i]))
 							+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_up);
-						flux_up_1[i]*=dt/(rho[i]);
-						flux_up_2[i]*=dt/(rho[i]);
+						Salinity_1.flux_up[i]*=dt/(rho[i]);
+						Salinity_2.flux_up[i]*=dt/(rho[i]);
 
-						flux_down_1[i] = term_down[i]/dz_down[i] + Xdata.cos_sl*(k_np1_m_im12[i]*rho[i]);
-						flux_down_2[i] =
+						Salinity_1.flux_down[i] = term_down[i]/dz_down[i] + Xdata.cos_sl*(k_np1_m_im12[i]*rho[i]);
+						Salinity_2.flux_down[i] =
 							+ Xdata.cos_sl*(k_np1_m_im12[i]*(rho_down-rho[i]))
 							+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_down);
-						flux_down_1[i]*=dt/(rho[i]);
-						flux_down_2[i]*=dt/(rho[i]);
+						Salinity_1.flux_down[i]*=dt/(rho[i]);
+						Salinity_2.flux_down[i]*=dt/(rho[i]);
 						break;
 					}
 				}
 				// TODO: this should not be executed for every i!
 				if(i==lowernode) {
-					flux_down_1[lowernode]=flux_up_1[lowernode] * dz_up[lowernode] / dz_down[lowernode];
-					flux_down_2[lowernode]=flux_up_2[lowernode] * dz_up[lowernode] / dz_down[lowernode];
+					Salinity_1.flux_down[lowernode]=Salinity_1.flux_up[lowernode] * dz_up[lowernode] / dz_down[lowernode];
+					Salinity_2.flux_down[lowernode]=Salinity_2.flux_up[lowernode] * dz_up[lowernode] / dz_down[lowernode];
 				}
 				if(i==uppernode) {
-					flux_up_1[uppernode]+=flux_up_2[uppernode];
-					flux_up_2[uppernode]=0.;
+					Salinity_1.flux_up[uppernode]+=Salinity_2.flux_up[uppernode];
+					Salinity_2.flux_up[uppernode]=0.;
 				}
-/*flux_down_2[i]=flux_down_1[i];
-flux_down_1[i]=0.;
-flux_up_2[i]=flux_up_1[i];
-flux_up_1[i]=0.;*/
+/*Salinity_2.flux_down[i]=Salinity_1.flux_down[i];
+Salinity_1.flux_down[i]=0.;
+Salinity_2.flux_up[i]=Salinity_1.flux_up[i];
+Salinity_1.flux_up[i]=0.;*/
 				//Verify cfl criterion
 				if(Xdata.Seaice != NULL) {
 					/*if(i!=lowernode) {
-						max_cfl = std::max(max_cfl, fabs(flux_down_1[i] * ((flux_down_1[i] > 0.) ? (BrineSal[i]) : (BrineSal[i-1])) / dz_[i]));
-						max_cfl = std::max(max_cfl, fabs(flux_down_2[i] * ((flux_down_2[i] > 0.) ? (BrineSal[i]) : (BrineSal[i-1])) / dz_[i]));
+						max_cfl = std::max(max_cfl, fabs(Salinity_1.flux_down[i] * ((Salinity_1.flux_down[i] > 0.) ? (BrineSal[i]) : (BrineSal[i-1])) / dz_[i]));
+						max_cfl = std::max(max_cfl, fabs(Salinity_2.flux_down[i] * ((Salinity_2.flux_down[i] > 0.) ? (BrineSal[i]) : (BrineSal[i-1])) / dz_[i]));
 					} else {
-						max_cfl = std::max(max_cfl, fabs(flux_down_1[i] * ((flux_down_1[i] > 0.) ? (BrineSal[i]) : (SeaIce::OceanSalinity)) / dz_[i]));
-						max_cfl = std::max(max_cfl, fabs(flux_down_2[i] * ((flux_down_2[i] > 0.) ? (BrineSal[i]) : (SeaIce::OceanSalinity)) / dz_[i]));
+						max_cfl = std::max(max_cfl, fabs(Salinity_1.flux_down[i] * ((Salinity_1.flux_down[i] > 0.) ? (BrineSal[i]) : (SeaIce::OceanSalinity)) / dz_[i]));
+						max_cfl = std::max(max_cfl, fabs(Salinity_2.flux_down[i] * ((Salinity_2.flux_down[i] > 0.) ? (BrineSal[i]) : (SeaIce::OceanSalinity)) / dz_[i]));
 					}
 					if(i!=uppernode) {
-						max_cfl = std::max(max_cfl, fabs(flux_up_1[i] * ((flux_up_1[i] < 0.) ? (BrineSal[i]) : (BrineSal[i+1])) / dz_[i]));
-						max_cfl = std::max(max_cfl, fabs(flux_up_2[i] * ((flux_up_2[i] < 0.) ? (BrineSal[i]) : (BrineSal[i+1])) / dz_[i]));
+						max_cfl = std::max(max_cfl, fabs(Salinity_1.flux_up[i] * ((Salinity_1.flux_up[i] < 0.) ? (BrineSal[i]) : (BrineSal[i+1])) / dz_[i]));
+						max_cfl = std::max(max_cfl, fabs(Salinity_2.flux_up[i] * ((Salinity_2.flux_up[i] < 0.) ? (BrineSal[i]) : (BrineSal[i+1])) / dz_[i]));
 					}*/
 
 
-					//const double tmp_flux1 = (flux_up_1[i] * dz_up[i] + flux_down_1[i] * dz_down[i]) / dz_[i];
-					//const double tmp_flux2 = (flux_up_2[i] * dz_up[i] + flux_down_2[i] * dz_down[i]) / dz_[i];
+					//const double tmp_flux1 = (Salinity_1.flux_up[i] * dz_up[i] + Salinity_1.flux_down[i] * dz_down[i]) / dz_[i];
+					//const double tmp_flux2 = (Salinity_2.flux_up[i] * dz_up[i] + Salinity_2.flux_down[i] * dz_down[i]) / dz_[i];
 
-					/*max_cfl = std::max(max_cfl, fabs(0.5 * (flux_up_1[i] + flux_down_1[i]) / dz_[i]));
-					max_cfl = std::max(max_cfl, fabs(0.5 * (flux_up_2[i] + flux_down_2[i]) / dz_[i]));*/
+					/*max_cfl = std::max(max_cfl, fabs(0.5 * (Salinity_1.flux_up[i] + Salinity_1.flux_down[i]) / dz_[i]));
+					max_cfl = std::max(max_cfl, fabs(0.5 * (Salinity_2.flux_up[i] + Salinity_2.flux_down[i]) / dz_[i]));*/
 					/*max_cfl = std::max(max_cfl, fabs(tmp_flux1 / dz_[i]));
 					max_cfl = std::max(max_cfl, fabs(tmp_flux2 / dz_[i]));
 					max_cfl = std::max(max_cfl, fabs((tmp_flux1 + tmp_flux2) / dz_[i]));*/
-					max_cfl = std::max(max_cfl, fabs(flux_up_1[i] / dz_[i]));
-					max_cfl = std::max(max_cfl, fabs(flux_up_2[i] / dz_[i]));
-					max_cfl = std::max(max_cfl, fabs(flux_down_1[i] / dz_[i]));
-					max_cfl = std::max(max_cfl, fabs(flux_down_2[i] / dz_[i]));
+					max_cfl = std::max(max_cfl, fabs(Salinity_1.flux_up[i] / dz_[i]));
+					max_cfl = std::max(max_cfl, fabs(Salinity_2.flux_up[i] / dz_[i]));
+					max_cfl = std::max(max_cfl, fabs(Salinity_1.flux_down[i] / dz_[i]));
+					max_cfl = std::max(max_cfl, fabs(Salinity_2.flux_down[i] / dz_[i]));
 					if(max_cfl > 0.25) {
-						if(WriteDebugOutputput) printf("CFL: %d %f %f %f %f %d\n", i, max_cfl, dt, flux_down_1[i], flux_down_2[i], niter);
+						if(WriteDebugOutputput) printf("CFL: %d %f %f %f %f %d\n", i, max_cfl, dt, Salinity_1.flux_down[i], Salinity_2.flux_down[i], niter);
 						solver_result=-1;	// cfl violated, trigger smaller time step
 					}
 				}
@@ -1882,7 +1886,7 @@ flux_up_1[i]=0.;*/
 							+Xdata.cos_sl*(rho[lowernode+1]*z[lowernode+1]-rho[lowernode]*z[lowernode])/dz_up[lowernode])
 							*k_np1_m_ip12[lowernode]*dt)
 						);
-					tmp_mb_bottomflux=flux_down_1[lowernode]+flux_down_2[lowernode];
+					tmp_mb_bottomflux=Salinity_1.flux_down[lowernode]+Salinity_2.flux_down[lowernode];
 				} else {
 					//With Dirichlet lower boundary condition and only 1 element, we cannot really estimate the flux, so set it to 0.
 					tmp_mb_bottomflux=0.;
@@ -2076,71 +2080,71 @@ massbalanceerror=0.;
 				double BottomSaltFlux = 0.;
 				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
 					/*const double factor = 0.5;
-					//if(i!=uppernode) printf("TTTT: %d %.10f %.10f %.10f %.10f\n", flux_up_1[i], flux_down_1[i+1], flux_up_2[i], flux_down_2[i+1]);
-					//if(i!=lowernode) printf("GGGG: %d %.10f %.10f %.10f %.10f\n", flux_down_1[i], flux_up_1[i-1], flux_down_2[i], flux_up_2[i-1]);
-					if(i != uppernode && flux_up_2[i] > factor * theta_n[i+1]) {
-						//printf("TTTT: %d %.10f %.10f %.10f ", i, flux_up_1[i], flux_up_2[i], flux_up_1[i] + flux_up_2[i]);
-						flux_up_1[i] += flux_up_2[i] - factor * theta_n[i+1];
-						flux_up_2[i] = factor * theta_n[i+1];
-						//printf("  --   %.10f %.10f %.10f\n", flux_up_1[i], flux_up_2[i], flux_up_1[i] + flux_up_2[i]);
+					//if(i!=uppernode) printf("TTTT: %d %.10f %.10f %.10f %.10f\n", Salinity_1.flux_up[i], Salinity_1.flux_down[i+1], Salinity_2.flux_up[i], Salinity_2.flux_down[i+1]);
+					//if(i!=lowernode) printf("GGGG: %d %.10f %.10f %.10f %.10f\n", Salinity_1.flux_down[i], Salinity_1.flux_up[i-1], Salinity_2.flux_down[i], Salinity_2.flux_up[i-1]);
+					if(i != uppernode && Salinity_2.flux_up[i] > factor * theta_n[i+1]) {
+						//printf("TTTT: %d %.10f %.10f %.10f ", i, Salinity_1.flux_up[i], Salinity_2.flux_up[i], Salinity_1.flux_up[i] + Salinity_2.flux_up[i]);
+						Salinity_1.flux_up[i] += Salinity_2.flux_up[i] - factor * theta_n[i+1];
+						Salinity_2.flux_up[i] = factor * theta_n[i+1];
+						//printf("  --   %.10f %.10f %.10f\n", Salinity_1.flux_up[i], Salinity_2.flux_up[i], Salinity_1.flux_up[i] + Salinity_2.flux_up[i]);
 					}
-					if(i != lowernode && -flux_down_2[i] > factor * theta_n[i-1]) {
-						//printf("GGGG: %d %.10f %.10f %.10f ", i, flux_down_1[i], flux_down_2[i], flux_down_1[i] + flux_down_2[i]);
-						flux_down_1[i] += -flux_down_2[i] - factor * theta_n[i-1];
-						flux_down_2[i] = -factor * theta_n[i-1];
-						//printf("  --   %.10f %.10f %.10f\n", flux_down_1[i], flux_down_2[i], flux_down_1[i] + flux_down_2[i]);
+					if(i != lowernode && -Salinity_2.flux_down[i] > factor * theta_n[i-1]) {
+						//printf("GGGG: %d %.10f %.10f %.10f ", i, Salinity_1.flux_down[i], Salinity_2.flux_down[i], Salinity_1.flux_down[i] + Salinity_2.flux_down[i]);
+						Salinity_1.flux_down[i] += -Salinity_2.flux_down[i] - factor * theta_n[i-1];
+						Salinity_2.flux_down[i] = -factor * theta_n[i-1];
+						//printf("  --   %.10f %.10f %.10f\n", Salinity_1.flux_down[i], Salinity_2.flux_down[i], Salinity_1.flux_down[i] + Salinity_2.flux_down[i]);
 					}*/
-/*flux_up_1[i]+=flux_up_2[i];
-flux_up_2[i]=0.;
-flux_down_1[i]+=flux_down_2[i];
-flux_down_2[i]=0.;*/
+/*Salinity_1.flux_up[i]+=Salinity_2.flux_up[i];
+Salinity_2.flux_up[i]=0.;
+Salinity_1.flux_down[i]+=Salinity_2.flux_down[i];
+Salinity_2.flux_down[i]=0.;*/
 					// To ensure perfect mass balance, we correct the fluxes to match the delta_theta. However, corr should be close to 1.
-					const double corr_frac = ((flux_up_1[i]+flux_up_2[i]) - (flux_down_1[i]+flux_down_2[i]) == 0.) ? (1.) : (delta_theta_dt[i] * dt * dz_[i] / ((flux_up_1[i]+flux_up_2[i]) - (flux_down_1[i]+flux_down_2[i])));
-					const double corr_diff = ((flux_up_1[i]+flux_up_2[i]) - (flux_down_1[i]+flux_down_2[i])) - (delta_theta_dt[i] * dt * dz_[i]);
+					const double corr_frac = ((Salinity_1.flux_up[i]+Salinity_2.flux_up[i]) - (Salinity_1.flux_down[i]+Salinity_2.flux_down[i]) == 0.) ? (1.) : (delta_theta_dt[i] * dt * dz_[i] / ((Salinity_1.flux_up[i]+Salinity_2.flux_up[i]) - (Salinity_1.flux_down[i]+Salinity_2.flux_down[i])));
+					const double corr_diff = ((Salinity_1.flux_up[i]+Salinity_2.flux_up[i]) - (Salinity_1.flux_down[i]+Salinity_2.flux_down[i])) - (delta_theta_dt[i] * dt * dz_[i]);
 					/*if (1==0) {
-						flux_up_1[i] *= corr_frac;
-						flux_up_2[i] *= corr_frac;
-						flux_down_1[i] *= corr_frac;
-						flux_down_2[i] *= corr_frac;
+						Salinity_1.flux_up[i] *= corr_frac;
+						Salinity_2.flux_up[i] *= corr_frac;
+						Salinity_1.flux_down[i] *= corr_frac;
+						Salinity_2.flux_down[i] *= corr_frac;
 					} else {
-						flux_up_1[i] -= 0.25*corr_diff;
-						flux_up_2[i] -= 0.25*corr_diff;
-						flux_down_1[i] += 0.25*corr_diff;
-						flux_down_2[i] += 0.25*corr_diff;
+						Salinity_1.flux_up[i] -= 0.25*corr_diff;
+						Salinity_2.flux_up[i] -= 0.25*corr_diff;
+						Salinity_1.flux_down[i] += 0.25*corr_diff;
+						Salinity_2.flux_down[i] += 0.25*corr_diff;
 					}*/
 					if (i==uppernode) {
 						// We assume that the incoming flux at the top element consists of rain and has no salinity.
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_up_1[i]>0.)   ? (0.*flux_up_1[i])                          : (BrineSal[i]*flux_up_1[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_1.flux_up[i]>0.)   ? (0.*Salinity_1.flux_up[i])                          : (BrineSal[i]*Salinity_1.flux_up[i]));
 					} else {
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_up_1[i]>0.)   ? (BrineSal[i+1]*flux_up_1[i])               : (BrineSal[i]*flux_up_1[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_1.flux_up[i]>0.)   ? (BrineSal[i+1]*Salinity_1.flux_up[i])               : (BrineSal[i]*Salinity_1.flux_up[i]));
 					}
 					if (i==lowernode) {
 						// We fix the ocean salinity from below
-						//BottomSaltFlux += (flux_down_1[i]<0.) ? (-1.*SeaIce::OceanSalinity*flux_down_1[i]) : (-1.*BrineSal[i]*flux_down_1[i]);
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_down_1[i]<0.) ? (-1.*SeaIce::OceanSalinity*flux_down_1[i]) : (-1.*BrineSal[i]*flux_down_1[i]));
+						//BottomSaltFlux += (Salinity_1.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_1.flux_down[i]) : (-1.*BrineSal[i]*Salinity_1.flux_down[i]);
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_1.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_1.flux_down[i]) : (-1.*BrineSal[i]*Salinity_1.flux_down[i]));
 					} else {
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_down_1[i]<0.) ? (-1.*BrineSal[i-1]*flux_down_1[i])         : (-1.*BrineSal[i]*flux_down_1[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_1.flux_down[i]<0.) ? (-1.*BrineSal[i-1]*Salinity_1.flux_down[i])         : (-1.*BrineSal[i]*Salinity_1.flux_down[i]));
 					}
 					if (i==uppernode) {
 						// We assume that the incoming flux at the top element consists of rain and has no salinity.
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_up_2[i]>0.)   ? (0.*flux_up_2[i])                          : (BrineSal[i]*flux_up_2[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_2.flux_up[i]>0.)   ? (0.*Salinity_2.flux_up[i])                          : (BrineSal[i]*Salinity_2.flux_up[i]));
 					} else {
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_up_2[i]>0.)   ? (BrineSal[i+1]*flux_up_2[i])               : (BrineSal[i]*flux_up_2[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_2.flux_up[i]>0.)   ? (BrineSal[i+1]*Salinity_2.flux_up[i])               : (BrineSal[i]*Salinity_2.flux_up[i]));
 					}
 					if (i==lowernode) {
 						// We fix the ocean salinity from below
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_down_2[i]<0.) ? (-1.*SeaIce::OceanSalinity*flux_down_2[i]) : (-1.*BrineSal[i]*flux_down_2[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_2.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_2.flux_down[i]) : (-1.*BrineSal[i]*Salinity_2.flux_down[i]));
 					} else {
-						DeltaSal[i] += (1. / dz_[i]) * ((flux_down_2[i]<0.) ? (-1.*BrineSal[i-1]*flux_down_2[i])         : (-1.*BrineSal[i]*flux_down_2[i]));
+						DeltaSal[i] += (1. / dz_[i]) * ((Salinity_2.flux_down[i]<0.) ? (-1.*BrineSal[i-1]*Salinity_2.flux_down[i])         : (-1.*BrineSal[i]*Salinity_2.flux_down[i]));
 					}
 
 					// Explicit upwind scheme for advection:
-					//const double tmp_flux1 = (flux_up_1[i] * dz_up[i] + flux_down_1[i] * dz_down[i]) / dz_[i];
-					//const double tmp_flux2 = (flux_up_2[i] * dz_up[i] + flux_down_2[i] * dz_down[i]) / dz_[i];
-					//const double tmp_flux1 = ((flux_up_1[i] * dz_up[i] + flux_down_1[i] * dz_down[i]) / (dz_up[i] + dz_down[i]));
-					//const double tmp_flux2 = ((flux_up_2[i] * dz_up[i] + flux_down_2[i] * dz_down[i]) / (dz_up[i] + dz_down[i]));
-					//const double tmp_flux1 = (flux_up_1[i] + flux_down_1[i]); // dz_[i];
-					//const double tmp_flux2 = (flux_up_2[i] + flux_down_2[i]); // dz_[i];
+					//const double tmp_flux1 = (Salinity_1.flux_up[i] * dz_up[i] + Salinity_1.flux_down[i] * dz_down[i]) / dz_[i];
+					//const double tmp_flux2 = (Salinity_2.flux_up[i] * dz_up[i] + Salinity_2.flux_down[i] * dz_down[i]) / dz_[i];
+					//const double tmp_flux1 = ((Salinity_1.flux_up[i] * dz_up[i] + Salinity_1.flux_down[i] * dz_down[i]) / (dz_up[i] + dz_down[i]));
+					//const double tmp_flux2 = ((Salinity_2.flux_up[i] * dz_up[i] + Salinity_2.flux_down[i] * dz_down[i]) / (dz_up[i] + dz_down[i]));
+					//const double tmp_flux1 = (Salinity_1.flux_up[i] + Salinity_1.flux_down[i]); // dz_[i];
+					//const double tmp_flux2 = (Salinity_2.flux_up[i] + Salinity_2.flux_down[i]); // dz_[i];
 
 					// We assume that the incoming flux at the top element consists of rain and has no salinity.
 					//DeltaSal[i] += (tmp_flux1>0.)   ? (tmp_flux1 * (((i==uppernode) ? (0.) : (BrineSal[i+1])) - BrineSal[i]) / dz_[i])            : (tmp_flux1 * ((BrineSal[i] - ((i==lowernode) ? (SeaIce::OceanSalinity) : (BrineSal[i-1]))) / dz_[i]));
@@ -2171,11 +2175,11 @@ flux_down_2[i]=0.;*/
 
 
 					if (i==lowernode) {
-						BottomSaltFlux += (flux_down_1[i]<0.) ? (-1.*SeaIce::OceanSalinity*flux_down_1[i]) : (-1.*BrineSal[i]*flux_down_1[i]);
+						BottomSaltFlux += (Salinity_1.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_1.flux_down[i]) : (-1.*BrineSal[i]*Salinity_1.flux_down[i]);
 					}
 
-					if (WriteDebugOutputput) printf("SAL: %d %f %f %f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f   %.10f\n", i, TimeAdvance, EMS[i].L, rho[i], EMS[i].salinity, BrineSal[i], DeltaSal[i], theta_n[i], flux_up_1[i], flux_up_2[i], flux_down_1[i], flux_down_2[i], corr_frac, corr_diff, BottomSaltFlux);
-					//flux_up_1[i] = flux_up_2[i] = flux_down_1[i] = flux_down_2[i] = 0.;
+					if (WriteDebugOutputput) printf("SAL: %d %f %f %f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f   %.10f\n", i, TimeAdvance, EMS[i].L, rho[i], EMS[i].salinity, BrineSal[i], DeltaSal[i], theta_n[i], Salinity_1.flux_up[i], Salinity_2.flux_up[i], Salinity_1.flux_down[i], Salinity_2.flux_down[i], corr_frac, corr_diff, BottomSaltFlux);
+					//Salinity_1.flux_up[i] = Salinity_2.flux_up[i] = Salinity_1.flux_down[i] = Salinity_2.flux_down[i] = 0.;
 				}
 				printf("SALTFLUX: %.15f %.15f\n", TimeAdvance, BottomSaltFlux);
 
