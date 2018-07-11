@@ -135,6 +135,9 @@ namespace ncpp {
  *  - NC_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
  *  - NC_TITLE: a short title for the data set;
  *  - NC_INSTITUTION: the institution providing the data set (default: domain name);
+ *  - NC_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
+ *  - NC_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
+ *  - NC_PROCESSING_LEVEL: a textual description of the processing level
  *  - NC_SUMMARY: a paragraph describing the dataset;
  *  - NC_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
  *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata;

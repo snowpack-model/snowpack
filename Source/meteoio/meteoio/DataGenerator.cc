@@ -21,7 +21,6 @@
 using namespace std;
 
 namespace mio {
-
 DataGenerator::DataGenerator(const Config& cfg)
               : DataCreator(cfg)
 {

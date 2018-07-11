@@ -23,14 +23,14 @@ using namespace std;
 namespace mio {
 
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
-                                                       tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
+                                                       tsm1(iohandler, cfg), gdm1(iohandler, cfg), interpolator(cfg, tsm1, gdm1),
                                                        resampling(false)
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
-                                            tsmanager(iohandler, cfg), gridsmanager(iohandler, cfg), interpolator(cfg, tsmanager, gridsmanager),
+                                            tsm1(iohandler, cfg), gdm1(iohandler, cfg), interpolator(cfg, tsm1, gdm1),
                                             resampling(false)
 {
 	initIOManager();
@@ -40,16 +40,16 @@ void IOManager::initIOManager()
 {
 	cfg.getValue("Resampling", "Input", resampling, IOUtils::nothrow);
 	if (resampling) { //in this case, we do not want to re-apply the filters
-		tsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
-		gridsmanager.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
+		tsm1.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
+		gdm1.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
 	}
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
 {
 	if (!resampling) {
-		tsmanager.setProcessingLevel(i_level);
-		gridsmanager.setProcessingLevel(i_level);
+		tsm1.setProcessingLevel(i_level);
+		gdm1.setProcessingLevel(i_level);
 	}
 }
 
@@ -60,14 +60,19 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 	if (resampling) {
 		return interpolator.getVirtualStationsMeta(date, vecStation);
 	} else { //usual case
-		return tsmanager.getStationData(date, vecStation);
+		return tsm1.getStationData(date, vecStation);
 	}
+}
+
+size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo) 
+{
+	return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 }
 
 void IOManager::clear_cache()
 {
-	tsmanager.clear_cache();
-	gridsmanager.clear_cache();
+	tsm1.clear_cache();
+	gdm1.clear_cache();
 }
 
 //data can be raw or processed (filtered, resampled)
@@ -76,9 +81,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	vecMeteo.clear();
 	
 	if (resampling) 
-		interpolator.pushVirtualMeteoData(i_date, tsmanager);
+		interpolator.pushVirtualMeteoData(i_date, tsm1);
 
-	tsmanager.getMeteoData(i_date, vecMeteo);
+	tsm1.getMeteoData(i_date, vecMeteo);
 	return vecMeteo.size();
 }
 
@@ -114,13 +119,23 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 	interpolator.interpolate(date, dem, meteoparam, in_coords, result, info_string);
 }
 
+double IOManager::getAvgSamplingRate() const 
+{
+	return tsm1.getAvgSamplingRate();
+}
+
+void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo) 
+{
+	tsm1.add_to_points_cache(i_date, vecMeteo);
+}
+
 const std::string IOManager::toString() const {
 	ostringstream os;
 	os << "<IOManager>\n";
 	os << "Config cfg = " << hex << &cfg << dec << "\n";
 	os << iohandler.toString();
-	os << tsmanager.toString();
-	os << gridsmanager.toString();
+	os << tsm1.toString();
+	os << gdm1.toString();
 	os << interpolator.toString();
 	os << "Resampling = " << resampling << "\n";
 	os << "</IOManager>\n";

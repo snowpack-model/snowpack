@@ -598,6 +598,9 @@ void ACDD::defaultInit()
 	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "NC_KEYWORDS");
 	addAttribute("title", "", "NC_TITLE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "NC_INSTITUTION");
+	addAttribute("id", "", "NC_ID");
+	addAttribute("naming_authority", "", "NC_NAMING_AUTHORITY");
+	addAttribute("processing_level", "", "NC_PROCESSING_LEVEL");
 	addAttribute("summary", "", "NC_SUMMARY");
 	addAttribute("acknowledgement", "", "NC_ACKNOWLEDGEMENT");
 	addAttribute("metadata_link", "", "NC_METADATA_LINK");
@@ -804,7 +807,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::schemas_vars( in
 
 NC_SCHEMA::NC_SCHEMA(const mio::Config& cfg, const std::string& schema) 
           : user_schemas( initUserSchemas(cfg) ), user_dimensions( initUserDimensions(cfg) ), name(schema), 
-            nodata(mio::IOUtils::nodata), dflt_type(NC_DOUBLE), force_station_dimension(false) 
+            nodata(mio::IOUtils::nodata), dflt_type(NC_DOUBLE), force_station_dimension(false)
 {
 	initSchemaCst(schema);
 }
@@ -971,9 +974,9 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::AZI, "aspect", "", "slope aspect", "degrees from north", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "tas", "", "air_temperature", "K", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RH, "hurs", "", "relative_humidity", "%", mio::IOUtils::nodata, NC_FLOAT) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::VW, "wss", "", "wind_speed", "m s-1", mio::IOUtils::nodata, NC_FLOAT) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "pr", "", "precipitation_flux", "kg m-2 s-1", mio::IOUtils::nodata, NC_FLOAT) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "rsds", "", "surface_downwelling_shortwave_flux_in_air", "W m-2", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::VW, "wss", "", "wind_speed", "m/s", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "pr", "", "precipitation_flux", "kg/m2/s", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "rsds", "", "surface_downwelling_shortwave_flux_in_air", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	results["AMUNDSEN"] = tmp;
 
 	//ECMWF schema
@@ -989,17 +992,17 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TD, "d2m", "", "2 metre dewpoint temperature", "K", 2., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "sp", "surface_air_pressure", "Surface pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P_SEA, "msl", "air_pressure_at_sea_level", "Mean sea level pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J m**-2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "strd", "", "Surface thermal radiation downwards", "J m**-2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "strd", "", "Surface thermal radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "tp", "", "Total precipitation", "m", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "u10", "", "10 metre U wind component", "m s**-1", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "v10", "", "10 metre V wind component", "m s**-1", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "u10", "", "10 metre U wind component", "m/s", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "v10", "", "10 metre V wind component", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "sd", "lwe_thickness_of_surface_snow_amount", "Snow depth", "m of water equivalent", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "skt", "", "Skin temperature", "K", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSG, "stl1", "surface_temperature", "Soil temperature level 1", "K", mio::IOUtils::nodata, NC_DOUBLE) ); //this is from 0 to -7cm
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "al", "surface_albedo", "Albedo", "(0 - 1)", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "fal", "", "Forecast albedo", "(0 - 1)", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "rsn", "", "Snow density", "kg m**-3", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "rsn", "", "Snow density", "kg/m3", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "ro", "", "Runoff", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	results["ECMWF"] = tmp;
 
@@ -1014,15 +1017,15 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::DEM, "HGT", "Terrain Height", "Terrain Height", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "PSFC", "Surface pressure", "Surface pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "T2", "2-meter temperature", "2-meter temperature", "K", 2., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::QI, "Q2", "2-meter specific humidity", "2-meter specific humidity", "kg kg-1", 2, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W m**-2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W m**-2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W m**-2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff ", "Surface runoff ", "kg*m2*s-1", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::QI, "Q2", "2-meter specific humidity", "2-meter specific humidity", "kg/kg", 2, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff ", "Surface runoff ", "kg*m2/s", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::HS, "SNOWH", "Snow depth", "Snow depth", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "Surface skin temperature", "K", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "10 metre U wind component", "m s**-1", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "10 metre V wind component", "m s**-1", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "10 metre U wind component", "m/s", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "10 metre V wind component", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
 	
 	return results;
