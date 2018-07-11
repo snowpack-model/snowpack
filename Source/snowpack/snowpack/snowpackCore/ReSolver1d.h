@@ -50,6 +50,10 @@ class ReSolver1d {
 		const static double max_theta_ice;	// Maximum allowed theta[ICE]. RE always need some pore space, which is defined by this value.
 		const static double REQUIRED_ACCURACY_THETA;
 
+		// Solvers
+		static int TDMASolver (size_t n, double *a, double *b, double *c, double *v, double *x);	// Thomas algorithm for tridiagonal matrices
+		static int pinv(int m, int n, int lda, double *a);						// Full matrix inversion
+
 	private:
 		std::string variant;
 
@@ -85,10 +89,6 @@ class ReSolver1d {
 		std::vector<double> dz_up;			//Distance to upper node (in meters)
 		std::vector<double> dz_down;			//Distance to lower node (in meters)
 		std::vector<double> dz_;			//Layer distance for the finite differences, see Rathfelder (2004).
-
-		// Solvers
-		int TDMASolver (size_t n, double *a, double *b, double *c, double *v, double *x);
-		int pinv(int m, int n, int lda, double *a);
 		
 		// General functions
 		void InitializeGrid(const std::vector<ElementData>& EMS, const size_t& lowernode, const size_t& uppernode);

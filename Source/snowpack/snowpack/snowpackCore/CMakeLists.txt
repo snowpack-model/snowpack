@@ -12,5 +12,5 @@ SET(core_sources
 	snowpackCore/PhaseChange.cc
 	snowpackCore/SeaIce.cc
 	snowpackCore/Solver.cc
-	snowpackCore/Salinity.cc
+	snowpackCore/SalinityTransport.cc
 )
