@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.4)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(alpine3d)
 # Version of library
@@ -23,9 +23,9 @@ ENDIF(WIN32)
 #set compiler flags according to the detected compiler and user options
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
 SET_COMPILER_OPTIONS()
-FIND_PACKAGE(MeteoIO REQUIRED)
-FIND_PACKAGE(Libsnowpack REQUIRED)
 
+#The following pre-processor variables are automatically defined:
+# __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
 	#set a full rpath for both build & install tree
 	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -61,12 +61,12 @@ IF(NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
+FIND_PACKAGE(MeteoIO REQUIRED)
+FIND_PACKAGE(Libsnowpack REQUIRED)
+
 ###########################################################
 #plugins and applications
 SET(ALPINE3D_STANDALONE ON CACHE BOOL "Compilation Alpine3D standalone ON or OFF")
-
-###########################################################
-#finally, SET compile flags
 SET(MPI OFF CACHE BOOL "Compile with MPI support ON or OFF")
 SET(OPENMP OFF CACHE BOOL "Compile with OPENMP support ON or OFF")
 SET(PETSC OFF CACHE BOOL "Compile with PETSc support ON or OFF")
@@ -83,6 +83,8 @@ IF(OPENMP)
 	SET(OPENMP_FLAGS "-fopenmp")
 ENDIF(OPENMP)
 
+###########################################################
+#finally, SET compile flags
 SET(CMAKE_CXX_FLAGS "${PETSC_FLAGS} ${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${ARCH} ${CFLAGS} ${EXTRA}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
@@ -90,6 +92,12 @@ SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
 #Add subdirectory, so they can inherit all variables defined above
+ADD_SUBDIRECTORY(alpine3d)
+# ADD_SUBDIRECTORY(alpine3d/ebalance)
+# ADD_SUBDIRECTORY(alpine3d/runoff)
+# #ADD_SUBDIRECTORY(alpine3d/runoff/prevah_runoff)
+# ADD_SUBDIRECTORY(alpine3d/snowdrift)
+
 IF(ALPINE3D_STANDALONE)
 	#it seems that the only reliable way is to test-compile...
 	INCLUDE (CheckCXXSourceCompiles)
@@ -104,11 +112,6 @@ IF(ALPINE3D_STANDALONE)
 		SET(DEBUG_ARITHM ON CACHE BOOL "Force-crash the application if doing an arithmetic exception")
 	ENDIF(HAVE_FEENABLE)
 ENDIF(ALPINE3D_STANDALONE)
-ADD_SUBDIRECTORY(alpine3d)
-ADD_SUBDIRECTORY(alpine3d/ebalance)
-ADD_SUBDIRECTORY(alpine3d/runoff)
-#ADD_SUBDIRECTORY(alpine3d/runoff/prevah_runoff)
-ADD_SUBDIRECTORY(alpine3d/snowdrift)
 
 ###########################################################
 #for the install target
@@ -181,6 +184,7 @@ ENDIF(INSTALL_DOC)
 SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
 IF(CPACK_BUNDLE_ALL)
 	#bundle MeteoIO
+	FIND_PACKAGE(MeteoIO REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
 		FILE(GLOB meteoio_libs "${METEOIO_ROOT}/lib/libmeteo*.${DLL_EXT}")
 		IF(WIN32)
@@ -190,8 +194,9 @@ IF(CPACK_BUNDLE_ALL)
 		ENDIF(WIN32)
 	ENDIF(BUILD_SHARED_LIBS)
 	#bundle Snwpack
+	FIND_PACKAGE(Libsnowpack REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
-		FILE(GLOB snowpack_libs "${SNOWPACK_ROOT}/lib/libsnowpack*.${DLL_EXT}")
+		FILE(GLOB snowpack_libs "${LIBSNOWPACK_ROOT}/lib/libsnowpack*.${DLL_EXT}")
 		IF(WIN32)
 			INSTALL(FILES ${snowpack_libs} DESTINATION bin COMPONENT exe)
 		ELSE(WIN32)
@@ -215,14 +220,14 @@ IF(CPACK_BUNDLE_ALL)
 		INSTALL(FILES ${meteoio_docs} DESTINATION ${METEOIO_DOC} COMPONENT documentation)
 		#snowpack's documentation
 		IF(WIN32)
-			SET(SNOWPACK_INSTALLED_DOC "${SNOWPACK_ROOT}/doc")
+			SET(SNOWPACK_INSTALLED_DOC "${LIBSNOWPACK_ROOT}/doc")
 			SET(SNOWPACK_DOC ${DOC_PATH}/snowpack)
 		ELSE(WIN32)
-			SET(SNOWPACK_INSTALLED_DOC "${SNOWPACK_ROOT}/share/doc/snowpack")
+			SET(SNOWPACK_INSTALLED_DOC "${LIBSNOWPACK_ROOT}/share/doc/snowpack")
 			SET(SNOWPACK_DOC ${DOC_PATH}/../snowpack)
 		ENDIF(WIN32)
 		IF(NOT IS_DIRECTORY "${SNOWPACK_INSTALLED_DOC}") #if we detected neighboring checked out version of Snowpack
-			SET(SNOWPACK_INSTALLED_DOC "${SNOWPACK_ROOT}/doc")
+			SET(SNOWPACK_INSTALLED_DOC "${LIBSNOWPACK_ROOT}/doc")
 		ENDIF()
 		INSTALL(DIRECTORY "${SNOWPACK_INSTALLED_DOC}/html" DESTINATION ${SNOWPACK_DOC} COMPONENT documentation)
 		FILE(GLOB snowpack_docs "${SNOWPACK_INSTALLED_DOC}/*.*")
@@ -243,17 +248,17 @@ IF(CPACK_BUNDLE_ALL)
 	ENDIF("${grid_view}" STREQUAL "")
 	INSTALL(FILES ${grid_view} DESTINATION bin COMPONENT exe)
 
-	#bundle SnopViz
-	SET(CPACK_BUNDLE_SNOPVIZ ON CACHE BOOL "Should SnopViz also be bundled?")
-	IF(CPACK_BUNDLE_SNOPVIZ)
-		SET(SNOPVIZ_DIST_PATH "../snopviz" CACHE PATH "Path to SNOPVIZ 'dist' subdirectory")
-		FILE(GLOB snopviz_html "${SNOPVIZ_DIST_PATH}/*.html")
-		IF("${snopviz_html}" STREQUAL "")
-			MESSAGE("SnopViz not found! Please provide a proper path to SnopViz 'dist' and don't forget to run 'make dist'")
-		ENDIF("${snopviz_html}" STREQUAL "")
-		INSTALL(DIRECTORY "${SNOPVIZ_DIST_PATH}/assets" DESTINATION bin/snopviz COMPONENT exe)
-		INSTALL(FILES ${snopviz_html} DESTINATION bin/snopviz COMPONENT exe)
-	ENDIF(CPACK_BUNDLE_SNOPVIZ)
+	#bundle niViz
+	SET(CPACK_BUNDLE_NIVIZ ON CACHE BOOL "Should niViz also be bundled?")
+	IF(CPACK_BUNDLE_NIVIZ)
+		SET(NIVIZ_DIST_PATH "../niViz" CACHE PATH "Path to niViz 'dist' subdirectory")
+		FILE(GLOB niviz_html "${NIVIZ_DIST_PATH}/*.html")
+		IF("${niviz_html}" STREQUAL "")
+			MESSAGE("niViz not found! Please provide a proper path to niViz 'dist' and don't forget to run 'make dist'")
+		ENDIF("${niviz_html}" STREQUAL "")
+		INSTALL(DIRECTORY "${NIVIZ_DIST_PATH}/assets" DESTINATION bin/niviz COMPONENT exe)
+		INSTALL(FILES ${niviz_html} DESTINATION bin/niviz COMPONENT exe)
+	ENDIF(CPACK_BUNDLE_NIVIZ)
 ENDIF(CPACK_BUNDLE_ALL)
 
 SET(CPACK_PACKAGE_DESCRIPTION "Alpine3D")
@@ -354,7 +359,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MODIFY_PATH ON)
 
 		#Main links (they can get overwritten later)
-		SET(MENU_LINKS_SNOPVIZ "http://snopviz.org" "SNOPVIZ online visualization" )
+		SET(MENU_LINKS_NIVIZ "http://niviz.org" "niViz online visualization" )
 		SET(MENU_LINKS_ALPINE3D "https://models.slf.ch/p/alpine3d/" "Alpine3D Home page")
 		IF(INSTALL_DOC)
 			LIST(APPEND MENU_LINKS_ALPINE3D
@@ -363,12 +368,12 @@ ELSE(UNIX)
 			)
 		ENDIF(INSTALL_DOC)
 
-		#all other links: inishell, local snopviz, meteoio
+		#all other links: inishell, local niviz, meteoio
 		IF(CPACK_BUNDLE_ALL)
 			SET(MENU_LINKS_INISHELL "bin/inishell.jar" "Inishell")
-			IF(CPACK_BUNDLE_SNOPVIZ)
-				SET(MENU_LINKS_SNOPVIZ "bin/snopviz/index.html" "SNOPVIZ visualization")
-			ENDIF(CPACK_BUNDLE_SNOPVIZ)
+			IF(CPACK_BUNDLE_NIVIZ)
+				SET(MENU_LINKS_NIVIZ "bin/niviz/index.html" "NIVIZ visualization")
+			ENDIF(CPACK_BUNDLE_NIVIZ)
 			SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				SET(MENU_LINKS_METEOIO
@@ -378,7 +383,7 @@ ELSE(UNIX)
 			ENDIF(INSTALL_DOC)
 		ENDIF(CPACK_BUNDLE_ALL)
 
-		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_ALPINE3D} ${MENU_LINKS_INISHELL} ${MENU_LINKS_SNOPVIZ} ${MENU_LINKS_METEOIO})
+		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_ALPINE3D} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ} ${MENU_LINKS_METEOIO})
 
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
