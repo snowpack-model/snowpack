@@ -84,10 +84,6 @@ class ReSolver1d {
 		std::vector<double> dz_down;			//Distance to lower node (in meters)
 		std::vector<double> dz_;			//Layer distance for the finite differences, see Rathfelder (2004).
 
-		// Solvers
-		int TDMASolver (size_t n, double *a, double *b, double *c, double *v, double *x);
-		int pinv(int m, int n, int lda, double *a);
-
 		// General functions
 		void InitializeGrid(const std::vector<ElementData>& EMS, const size_t& lowernode, const size_t& uppernode);
 
