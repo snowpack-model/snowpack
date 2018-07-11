@@ -37,18 +37,18 @@ class IOManager {
 		IOManager(const Config& i_cfg);
 
 		//Legacy support to support functionality of the IOInterface superclass:
-		void read2DGrid(Grid2DObject& grid_out, const std::string& options="") {gridsmanager.read2DGrid(grid_out, options);}
-		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.read2DGrid(grid_out, parameter, date);}
-		void read3DGrid(Grid3DObject& grid_out, const std::string& options="") {gridsmanager.read3DGrid(grid_out, options);}
-		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.read3DGrid(grid_out, parameter, date);}
-		void readDEM(DEMObject& dem_out) {gridsmanager.readDEM(dem_out);}
-		void readAssimilationData(const Date& date_in, Grid2DObject& da_out) {gridsmanager.readAssimilationData(date_in, da_out);}
-		void readLanduse(Grid2DObject& landuse_out) {gridsmanager.readLanduse(landuse_out);}
+		void read2DGrid(Grid2DObject& grid_out, const std::string& options="") {gdm1.read2DGrid(grid_out, options);}
+		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.read2DGrid(grid_out, parameter, date);}
+		void read3DGrid(Grid3DObject& grid_out, const std::string& options="") {gdm1.read3DGrid(grid_out, options);}
+		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.read3DGrid(grid_out, parameter, date);}
+		void readDEM(DEMObject& dem_out) {gdm1.readDEM(dem_out);}
+		void readAssimilationData(const Date& date_in, Grid2DObject& da_out) {gdm1.readAssimilationData(date_in, da_out);}
+		void readLanduse(Grid2DObject& landuse_out) {gdm1.readLanduse(landuse_out);}
 		void readPOI(std::vector<Coords>& pts) {iohandler.readPOI(pts);}
-		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {gridsmanager.write2DGrid(grid_in, options);}
-		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.write2DGrid(grid_in, parameter, date);}
-		void write3DGrid(const Grid3DObject& grid_in, const std::string& options="") {gridsmanager.write3DGrid(grid_in, options);}
-		void write3DGrid(const Grid3DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gridsmanager.write3DGrid(grid_in, parameter, date);}
+		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {gdm1.write2DGrid(grid_in, options);}
+		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write2DGrid(grid_in, parameter, date);}
+		void write3DGrid(const Grid3DObject& grid_in, const std::string& options="") {gdm1.write3DGrid(grid_in, options);}
+		void write3DGrid(const Grid3DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write3DGrid(grid_in, parameter, date);}
 		//end legacy support
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
@@ -76,8 +76,7 @@ class IOManager {
 		* @param vecVecMeteo A vector of vector<MeteoData> objects to be filled with data
 		* @return            Number of stations for which data has been found in the interval
 		*/
-		size_t getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                    std::vector< METEO_SET >& vecVecMeteo) {return tsmanager.getMeteoData(dateStart, dateEnd, vecVecMeteo);}
+		size_t getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
@@ -114,7 +113,7 @@ class IOManager {
 		 * @param vecMeteo The actual data being pushed into the IOManager object
 		 */
 		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
-		                     const std::vector< METEO_SET >& vecMeteo) {tsmanager.push_meteo_data(level, date_start, date_end, vecMeteo);}
+		                     const std::vector< METEO_SET >& vecMeteo) {tsm1.push_meteo_data(level, date_start, date_end, vecMeteo);}
 
 		/**
 		 * @brief Fill Grid2DObject with spatial data.
@@ -174,7 +173,7 @@ class IOManager {
 		 * @param buffer_size buffer size in days
 		 * @param buff_before buffer centering in days
 		 */
-		void setMinBufferRequirements(const double& buffer_size, const double& buff_before) {tsmanager.setMinBufferRequirements(buffer_size, buff_before);}
+		void setMinBufferRequirements(const double& buffer_size, const double& buff_before) {tsm1.setMinBufferRequirements(buffer_size, buff_before);}
 
 		/**
 		 * @brief Returns the average sampling rate in the data.
@@ -185,9 +184,9 @@ class IOManager {
 		 * it would return 2 measurements per hour.
 		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
-		double getAvgSamplingRate() const {return tsmanager.getAvgSamplingRate();}
+		double getAvgSamplingRate() const;
 
-		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& option="") {tsmanager.writeMeteoData(vecMeteo, option);}
+		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& option="") {tsm1.writeMeteoData(vecMeteo, option);}
 
 		/**
 		 * @brief Returns a copy of the internal Config object.
@@ -206,7 +205,7 @@ class IOManager {
 		 * @param i_date Representing a point in time
 		 * @param vecMeteo A vector of MeteoData objects to be copied into the point cache
 		 */
-		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo) {tsmanager.add_to_points_cache(i_date, vecMeteo);}
+		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
 
 		/**
 		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.
@@ -218,8 +217,8 @@ class IOManager {
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler iohandler;
-		TimeSeriesManager tsmanager;
-		GridsManager gridsmanager;
+		TimeSeriesManager tsm1;
+		GridsManager gdm1;
 		Meteo2DInterpolator interpolator;
 		bool resampling; ///< Are we performing resampling (grid extract, vstations, etc)?
 };

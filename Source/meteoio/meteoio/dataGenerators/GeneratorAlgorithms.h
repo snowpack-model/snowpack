@@ -108,7 +108,6 @@ namespace mio {
  * @ingroup meteoLaws
 */
 class GeneratorAlgorithm {
-
 	public:
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station. This is used by the dataGenerators

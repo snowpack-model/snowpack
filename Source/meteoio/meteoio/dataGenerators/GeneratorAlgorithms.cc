@@ -152,10 +152,10 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 		return new ClearSkySWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
-	} else if (algoname == "PPHASE"){
-		throw IOException("The generator algorithm '"+algoname+"' has been replaced by the PRECSPLITTING generator" , AT);
 	} else if (algoname == "PRECSPLITTING"){
 		return new PrecSplitting(vecArgs, i_algoname);
+	} else if (algoname == "PPHASE"){
+		throw IOException("The generator algorithm '"+algoname+"' has been replaced by the PRECSPLITTING generator" , AT);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}

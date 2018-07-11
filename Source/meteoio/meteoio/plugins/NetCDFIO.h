@@ -29,7 +29,7 @@ class ncFiles {
 	public:
 		enum Mode {READ, WRITE};
 		
-		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug=false, const bool& i_writeAcdd=true);
+		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug=false);
 		
 		std::pair<Date, Date> getDateRange() const;
 		std::set<size_t> getParams() const;
@@ -84,7 +84,7 @@ class ncFiles {
 		double TZ;
 		double dflt_zref, dflt_uref; ///< default reference height for all data or wind data (respectively)
 		double dflt_slope, dflt_azi; ///< default slope and azimuth
-		bool debug, writeAcdd, isLatLon;
+		bool debug, isLatLon;
 };
 
 /**
@@ -124,7 +124,7 @@ class NetCDFIO : public IOInterface {
 		std::vector<MeteoGrids::Parameters> available_params;
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, out_meteo_file;
-		bool debug, out_single_file, writeAcdd;
+		bool debug, out_single_file;
 };
 
 } //namespace
