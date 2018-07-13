@@ -575,7 +575,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	double max_delta_h=0.;				//Tracks max_delta_h, to determine if our time step is too large. Note: this is different from checking the convergence criterion. This is just to check the time step. If a too large time step is used, big values of delta_h may arise, which cause pressure head to hit the singularities for dry and wet soil, and causes problems with the power functions in the Von Genuchten-Mualem model.
 	bool boolConvergence=false;			//true: convergence is reached, false: convergence not reached
 	double mass1=0, mass2=0, massbalanceerror=0.;	//Mass balance check variables.
-	double maxallowedmassbalanceerror=1E-10;	//This value is carefully chosen. It should be considered together with REQUIRED_ACCURACY_THETA and REQUIRED_ACCURACY_H
+	const double maxallowedmassbalanceerror=1E-10;	//This value is carefully chosen. It should be considered together with REQUIRED_ACCURACY_THETA and REQUIRED_ACCURACY_H
 	double massbalanceerror_sum=0.;			//Sum of mass balance error over snowpack time step.
 
 
@@ -817,8 +817,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Now copy the EMS water content into the working arrays to solve Richards-equation (so this is the important part were this function is coupled to the rest of SNOWPACK).
 		if(EMS[i].theta[SOIL]<Constants::eps2) {		//For snow
 			h_n[i]=EMS[i].VG.fromTHETAtoHforICE(EMS[i].theta[WATERINDEX], h_d, theta_i_n[i]);
-//printf("YYY: %f %f %f %.20f %.20f\n", h_n[i], EMS[i].h, EMS[i].VG.h_e, EMS[i].theta[WATERINDEX], EMS[i].VG.theta_s);
-			if((NDS[i].z < Xdata.Seaice->SeaLevel && fabs(EMS[i].theta[WATERINDEX]-EMS[i].VG.theta_s) < Constants::eps2) || h_n[i]>EMS[i].VG.h_e-Constants::eps2 && EMS[i].h>EMS[i].VG.h_e-Constants::eps2 && variant=="SEAICE") {
+			if(variant=="SEAICE" && ((NDS[i].z < Xdata.Seaice->SeaLevel && fabs(EMS[i].theta[WATERINDEX]-EMS[i].VG.theta_s) < Constants::eps2) || (h_n[i]>EMS[i].VG.h_e-Constants::eps2 && EMS[i].h>EMS[i].VG.h_e-Constants::eps2))) {
 				h_n[i]=EMS[i].h;
 			}
 		} else {
@@ -888,9 +887,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		aBottomBC=DIRICHLET;
 		hbottom=Xdata.Seaice->SeaLevel - NDS[lowernode].z - .5 * EMS[lowernode].L;
 		h_n[lowernode]=hbottom;
-//		EMS[lowernode].salinity += SeaIce::OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
+		EMS[lowernode].salinity += SeaIce::OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
 		EMS[lowernode].theta[WATER] = theta_n[lowernode] = EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]);
-//EMS[lowernode].salinity = SeaIce::OceanSalinity * EMS[lowernode].theta[WATER];
 		EMS[lowernode].updDensity();
 	}
 
@@ -1201,7 +1199,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				std::cout << "ERROR in ReSolver1d.cc: LIMITEDFLUXINFILTRATION cannot be applied as bottom boundary condition (doesn't make sense)!\n";
 				throw;
 			}
-			if (aBottomBC==DIRICHLET) maxallowedmassbalanceerror=1E-3;
 
 			if (WriteDebugOutputput)
 				std::cout << "BOUNDARYTOPFLUX: [ BC: " << TopBC << "] " << std::scientific << TopFluxRate << " " << surfacefluxrate << " " << theta_n[lowernode] << " " << K[lowernode] << " " << ((h_np1_mp1[lowernode])+(((TopFluxRate/k_np1_m_im12[lowernode])-1.)*dz_down[lowernode])) << " " << h_np1_mp1[lowernode] << " " << k_np1_m_im12[lowernode] << " " << (TopFluxRate/k_np1_m_im12[lowernode]) << "\n" << std::fixed;
@@ -1825,14 +1822,14 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				tmp_mb_bottomflux=BottomFluxRate*dt;
 			} else {			//Else when using Dirichlet, we should estimate the outflux: (Note that basically with Dirichlet, the change of theta in the element is 0., so the outflux in the model domain is equal to the flux from the element above the lowest one to the lowest one.)
 				if(uppernode > 0) {
-					tmp_mb_bottomflux=-1.*(
+					/*tmp_mb_bottomflux=-1.*(
 						((theta_np1_mp1[lowernode]+theta_i_np1_mp1[lowernode]*(Constants::density_ice/Constants::density_water))-(theta_n[lowernode] + theta_i_n[lowernode]*(Constants::density_ice/Constants::density_water)))*dz[lowernode]
 						-(2./(rho[lowernode+1]+rho[lowernode]))*
 							((((h_np1_mp1[lowernode+1]*rho[lowernode+1]-h_np1_mp1[lowernode]*rho[lowernode])/dz_up[lowernode])
 							+Xdata.cos_sl*(rho[lowernode+1]*z[lowernode+1]-rho[lowernode]*z[lowernode])/dz_up[lowernode])
 							*k_np1_m_ip12[lowernode]*dt)
-						);
-					//tmp_mb_bottomflux=Salinity_1.flux_down[lowernode]+Salinity_2.flux_down[lowernode];
+						);*/
+					tmp_mb_bottomflux=(Salinity_1.flux_down[lowernode]+Salinity_2.flux_down[lowernode]) * dt;
 				} else {
 					//With Dirichlet lower boundary condition and only 1 element, we cannot really estimate the flux, so set it to 0.
 					tmp_mb_bottomflux=0.;
