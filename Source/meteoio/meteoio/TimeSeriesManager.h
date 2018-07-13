@@ -77,12 +77,13 @@ class TimeSeriesManager {
 		 * @param date_start Representing the beginning of the data
 		 * @param date_end Representing the end of the data
 		 * @param vecMeteo The actual data being pushed into the TimeSeriesManager object
+		 * @param invalidate_cache Should the point_cache be reset? (set it to false when pushing resampled data!)
 		 */
 		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
-		                     const std::vector< METEO_SET >& vecMeteo);
-
-		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
 		                     const std::vector< MeteoData >& vecMeteo, const bool& invalidate_cache=true);
+		
+		void push_meteo_data(const IOUtils::ProcessingLevel& level, const Date& date_start, const Date& date_end,
+		                     const std::vector< METEO_SET >& vecMeteo);
 
 		/**
 		 * @brief Set the desired ProcessingLevel of the TimeSeriesManager instance
@@ -100,17 +101,24 @@ class TimeSeriesManager {
 
 		/**
 		 * @brief Set buffer window properties requirements as known to the application itself.
-		 * This will compare these requirements with the ones expressed by the end user and keep the max between them.
+		 * @details This will compare these requirements with the ones expressed by the end user and keep the max between them.
 		 * The method can be called several times, it will NOT reset the calculated buffer's requirements but keep
 		 * on merging with new submissions. Any parameter given as IOUtils::nodata will be ignored.
 		 * @param buffer_size buffer size in days
 		 * @param buff_before buffer centering in days
 		 */
-		void setMinBufferRequirements(const double& buffer_size, const double& buff_before);
+		void setBufferProperties(const double& buffer_size, const double& buff_before);
+		
+		/**
+		 * @brief Get the current buffer properties
+		 * @param o_buffer_size buffer size in days
+		 * @param o_buff_before buffer centering in days
+		 */
+		void getBufferProperties(Duration &o_buffer_size, Duration &o_buff_before) const;
 
 		/**
 		 * @brief Returns the average sampling rate in the data.
-		 * This computes the average sampling rate of the data that is contained in the buffer. This is a quick
+		 * @details This computes the average sampling rate of the data that is contained in the buffer. This is a quick
 		 * estimate, centered on how often a station measures "something" (ie, how many timestamps do we have
 		 * for this station in the buffer). if the station measures TA at h+0 and h+30 and
 		 * RH at h+15 and h+45, it would return 4 measurements per hour. If the station measures TA and RH at h+0 and h+30,
@@ -124,7 +132,8 @@ class TimeSeriesManager {
 		const std::string toString() const;
 
 		/**
-		 * @brief Add a METEO_SET for a specific instance to the point cache. This is a way to manipulate
+		 * @brief Add a METEO_SET for a specific instance to the point cache. 
+		 * @details This is a way to manipulate
 		 * MeteoData variables and be sure that the manipulated values are later used for requests
 		 * regarding that specific date (e.g. 2D interpolations)
 		 *
@@ -140,7 +149,7 @@ class TimeSeriesManager {
 		
 		/**
 		 * @brief Returns a copy of the internal Config object.
-		 * This is convenient to clone an iomanager
+		 * @details This is convenient to clone an iomanager
 		 * @return new Config object as a copy of the internal Config
 		 */
 		const Config getConfig() const {return cfg;}
@@ -154,7 +163,7 @@ class TimeSeriesManager {
 
 		/**
 		 * @brief Returns the begining of the raw buffer.
-		 * This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
+		 * @details This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the first data would be greater.
 		 * @return start date of the buffer
 		 */
@@ -162,7 +171,7 @@ class TimeSeriesManager {
 
 		/**
 		 * @brief Returns the end of the raw buffer.
-		 * This is the end date of the <b>request</b> that was given to the IOHandler. If there was no data
+		 * @details This is the end date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the last data would be less.
 		 * @return end date of the buffer
 		 */

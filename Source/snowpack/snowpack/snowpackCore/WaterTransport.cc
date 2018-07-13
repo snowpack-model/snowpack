@@ -1058,38 +1058,40 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 	EMS[eTop].E = EMS[eTop].Eps = EMS[eTop].dEps = EMS[eTop].Eps_e = EMS[eTop].Eps_v = EMS[eTop].S = 0.0;
 
 	// RUNOFF at bottom of either snowpack or soil
-	if((!useSoilLayers && !(variant=="SEAICE") && iwatertransportmodel_snow != RICHARDSEQUATION) || iwatertransportmodel_soil != RICHARDSEQUATION) {	//Only if lowest element is snow or we do not use RE for soil. Additionally, this part is skipped with sea ice and Richards equation for snow without soil.
-		// Determine the additional storage capacity due to refreezing
-		const double Lh = (EMS[0].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[0])) : (Constants::lh_fusion);
-		const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Lh / Constants::density_water
-					* std::max(0., EMS[0].melting_tk-EMS[0].Te);
-		if (EMS[0].theta[SOIL] < Constants::eps2) {
-			Wres = std::min((1. - EMS[0].theta[ICE]) * Constants::density_ice / Constants::density_water,
-				  EMS[0].res_wat_cont + dth_w);
-		} else { // treat soil separately
-			Wres = std::min(Constants::density_ice/Constants::density_water*(1. - EMS[0].theta[ICE] - EMS[0].theta[SOIL]),
-			      EMS[0].soilFieldCapacity() + dth_w);
-		}
-		Wres = std::max(0., Wres);
-
-		const double W0 = EMS[0].theta[WATER];
-		if ((W0 > Wres) // NOTE: if water_layer is set, do not drain water element on top of soil
-			&& !(water_layer && (EMS[0].theta[ICE] < Snowpack::min_ice_content)
-				&& (EMS[0].theta[SOIL] < Constants::eps2))) {
-			const double dM = EMS[0].L * Constants::density_water * (W0 - Wres);
-			EMS[0].M -= dM;
-			assert(EMS[0].M >= (-Constants::eps2)); //mass must be positive
-			EMS[0].theta[WATER] = Wres;
-			EMS[0].theta[AIR] = 1. - EMS[0].theta[WATER] - EMS[0].theta[WATER_PREF] - EMS[0].theta[ICE] - EMS[0].theta[SOIL];
-			EMS[0].updDensity();
-			assert(EMS[0].Rho>=0. || EMS[0].Rho==IOUtils::nodata); //we want positive density
-			// Note that remaining excess_water should also be routed to MS_SOIL_RUNOFF and MS_SNOWPACK_RUNOFF
+	if(variant != "SEAICE") {	//Not for sea ice, where we assume the lowest element to be under water.
+		if((!useSoilLayers && iwatertransportmodel_snow != RICHARDSEQUATION) || iwatertransportmodel_soil != RICHARDSEQUATION) {	//Only if lowest element is snow or we do not use RE for soil.
+			// Determine the additional storage capacity due to refreezing
+			const double Lh = (EMS[0].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[0])) : (Constants::lh_fusion);
+			const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Lh / Constants::density_water
+						* std::max(0., EMS[0].melting_tk-EMS[0].Te);
 			if (EMS[0].theta[SOIL] < Constants::eps2) {
-				Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] += dM + (excess_water * Constants::density_water);
+				Wres = std::min((1. - EMS[0].theta[ICE]) * Constants::density_ice / Constants::density_water,
+					  EMS[0].res_wat_cont + dth_w);
+			} else { // treat soil separately
+				Wres = std::min(Constants::density_ice/Constants::density_water*(1. - EMS[0].theta[ICE] - EMS[0].theta[SOIL]),
+				      EMS[0].soilFieldCapacity() + dth_w);
 			}
-			Sdata.mass[SurfaceFluxes::MS_SOIL_RUNOFF] += dM + (excess_water * Constants::density_water);
-			for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
-				Sdata.load[ii] +=  (EMS[0].conc[WATER][ii] * dM / S_TO_H(sn_dt));
+			Wres = std::max(0., Wres);
+
+			const double W0 = EMS[0].theta[WATER];
+			if ((W0 > Wres) // NOTE: if water_layer is set, do not drain water element on top of soil
+				&& !(water_layer && (EMS[0].theta[ICE] < Snowpack::min_ice_content)
+					&& (EMS[0].theta[SOIL] < Constants::eps2))) {
+				const double dM = EMS[0].L * Constants::density_water * (W0 - Wres);
+				EMS[0].M -= dM;
+				assert(EMS[0].M >= (-Constants::eps2)); //mass must be positive
+				EMS[0].theta[WATER] = Wres;
+				EMS[0].theta[AIR] = 1. - EMS[0].theta[WATER] - EMS[0].theta[WATER_PREF] - EMS[0].theta[ICE] - EMS[0].theta[SOIL];
+				EMS[0].updDensity();
+				assert(EMS[0].Rho>=0. || EMS[0].Rho==IOUtils::nodata); //we want positive density
+				// Note that remaining excess_water should also be routed to MS_SOIL_RUNOFF and MS_SNOWPACK_RUNOFF
+				if (EMS[0].theta[SOIL] < Constants::eps2) {
+					Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] += dM + (excess_water * Constants::density_water);
+				}
+				Sdata.mass[SurfaceFluxes::MS_SOIL_RUNOFF] += dM + (excess_water * Constants::density_water);
+				for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
+					Sdata.load[ii] +=  (EMS[0].conc[WATER][ii] * dM / S_TO_H(sn_dt));
+				}
 			}
 		}
 	}

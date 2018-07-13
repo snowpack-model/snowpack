@@ -173,7 +173,7 @@ class IOManager {
 		 * @param buffer_size buffer size in days
 		 * @param buff_before buffer centering in days
 		 */
-		void setMinBufferRequirements(const double& buffer_size, const double& buff_before) {tsm1.setMinBufferRequirements(buffer_size, buff_before);}
+		void setMinBufferRequirements(const double& buffer_size, const double& buff_before) {tsm1.setBufferProperties(buffer_size, buff_before);}
 
 		/**
 		 * @brief Returns the average sampling rate in the data.

@@ -160,6 +160,9 @@ namespace mio {
  * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the 
  * "invariants" section on the left hand side of the page where you select the fields to download).
  *
+ * @note The radiation fields are accumulated since the start of the forecast period (00:00 and 12:00 as recommended above), so they must be corrected 
+ * before using them (see ProcDeAccumulate)! 
+ * 
  * You should therefore have the following request:
  * @code
  * Parameter: 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo,
@@ -1316,9 +1319,9 @@ void ncFiles::applyUnits(Grid2DObject& grid, const std::string& units, const siz
 {
 	if (units.empty()) return;
 	
-	if (units=="m**2 s**-2") grid /= Cst::gravity;
+	if (units=="m2/s2" || units=="m**2 s**-2") grid /= Cst::gravity;
 	else if (units=="%") grid /= 100.;
-	else if (units=="J m**-2") {
+	else if (units=="J/m2" || units=="J m**-2") {
 		if (vecTime.size()>1 && time_pos!=IOUtils::npos) {
 			const Date integration_period = (time_pos>0)? (vecTime[time_pos] - vecTime[time_pos-1]) : (vecTime[time_pos+1] - vecTime[time_pos]);
 			grid /= (integration_period.getJulian()*24.*3600.); //converting back to W/m2
