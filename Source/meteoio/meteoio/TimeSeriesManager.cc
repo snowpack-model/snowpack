@@ -67,7 +67,7 @@ void TimeSeriesManager::setDfltBufferProperties()
 	//-> we end up not reading enough data and rebuffering...
 }
 
-void TimeSeriesManager::setMinBufferRequirements(const double& i_chunk_size, const double& i_buff_before)
+void TimeSeriesManager::setBufferProperties(const double& i_chunk_size, const double& i_buff_before)
 {
 	if (i_buff_before!=IOUtils::nodata) {
 		const Duration app_buff_before(i_buff_before, 0);
@@ -80,6 +80,12 @@ void TimeSeriesManager::setMinBufferRequirements(const double& i_chunk_size, con
 
 	//if buff_before>chunk_size, we will have a problem (ie: we won't ever read the whole data we need)
 	if (buff_before>chunk_size) chunk_size = buff_before;
+}
+
+void TimeSeriesManager::getBufferProperties(Duration &o_buffer_size, Duration &o_buff_before) const
+{
+	o_buffer_size = chunk_size;
+	o_buff_before = buff_before;
 }
 
 void TimeSeriesManager::setProcessingLevel(const unsigned int& i_level)
@@ -156,7 +162,8 @@ size_t TimeSeriesManager::getMeteoData(const Date& dateStart, const Date& dateEn
 
 		if (!success) {
 			std::vector< std::vector<MeteoData> > tmp_meteo;
-			if ((IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(dateStart, dateEnd);
+			const bool cached_raw = (!raw_buffer.empty()) && (raw_buffer.getBufferStart() <= dateStart) && (raw_buffer.getBufferEnd() >= dateEnd);
+			if (!cached_raw && (IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(dateStart, dateEnd);
 			raw_buffer.get(dateStart, dateEnd, tmp_meteo);
 
 			//now it needs to be secured that the data is actually filtered, if configured
@@ -207,7 +214,8 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		const bool cached = (!filtered_cache.empty()) && (filtered_cache.getBufferStart() <= buffer_start) && (filtered_cache.getBufferEnd() >= buffer_end);
 		if (!cached) {
 			//explicit caching, rebuffer if necessary
-			if ((IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(buffer_start, buffer_end);
+			const bool cached_raw = (!raw_buffer.empty()) && (raw_buffer.getBufferStart() <= buffer_start) && (raw_buffer.getBufferEnd() >= buffer_end);
+			if (!cached_raw && (IOUtils::raw & processing_level) == IOUtils::raw) fillRawBuffer(buffer_start, buffer_end);
 			fill_filtered_cache();
 		}
 		data = &filtered_cache.getBuffer();

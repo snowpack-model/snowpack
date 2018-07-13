@@ -220,11 +220,6 @@ void MeteoBuffer::push(const Date& date_start, const Date& date_end, const std::
 	ts_end = max(ts_end, date_end);
 }
 
-/*void MeteoBuffer::push(const Date& date, const METEO_SET& vecMeteo)
-{
-
-}*/
-
 double MeteoBuffer::getAvgSamplingRate() const
 {
 	if (ts_buffer.empty())

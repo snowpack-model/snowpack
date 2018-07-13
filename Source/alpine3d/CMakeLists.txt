@@ -27,6 +27,7 @@ SET_COMPILER_OPTIONS()
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
+	SET(LIB_DEST "lib")
 	#set a full rpath for both build & install tree
 	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -49,6 +50,7 @@ IF(UNIX)
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
+		SET(LIB_DEST "bin") #since for Windows, dlls have to be alongside the exe
 		#SET(PLATFORM "-D_WIN32 -U__STRICT_ANSI__")
 		ADD_DEFINITIONS(-U__STRICT_ANSI__)
 		SET(DLL_EXT "dll")
@@ -196,7 +198,7 @@ IF(CPACK_BUNDLE_ALL)
 	#bundle Snwpack
 	FIND_PACKAGE(Libsnowpack REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
-		FILE(GLOB snowpack_libs "${LIBSNOWPACK_ROOT}/lib/libsnowpack*.${DLL_EXT}")
+		FILE(GLOB snowpack_libs "${LIBSNOWPACK_ROOT}/${LIB_DEST}/libsnowpack*.${DLL_EXT}")
 		IF(WIN32)
 			INSTALL(FILES ${snowpack_libs} DESTINATION bin COMPONENT exe)
 		ELSE(WIN32)

@@ -31,7 +31,6 @@ FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::st
 	properties.time_after  = min_time_span;
 	properties.points_before = min_data_points;
 	properties.points_after = min_data_points;
-	
 }
 
 void FilterNoChange::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
