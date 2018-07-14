@@ -1838,7 +1838,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			massbalanceerror+=tmp_mb_topflux;		//Add topflux (note: topflux>0. means influx)
 			massbalanceerror-=tmp_mb_bottomflux;		//Substract bottomflufx (note: bottomflux>0. means outflux)
 			massbalanceerror+=totalsourcetermflux*dt;	//Add the sink/source term flux.
-//massbalanceerror=0.;
+
 			if(WriteDebugOutputput) printf("MASSBALANCETEST: mass1 %.8E    mass2 %.8E    topflux %.8E (%.8E)  bottomflux %.8E (%.8E) sourceflux %.8E    delta %.8E\n", mass1, mass2, tmp_mb_topflux, ((theta_np1_mp1[uppernode]+theta_i_np1_mp1[uppernode]*(Constants::density_ice/Constants::density_water))-(theta_n[uppernode] + theta_i_n[uppernode]*(Constants::density_ice/Constants::density_water)))*dz[uppernode] + ((((h_np1_m[uppernode]-h_np1_m[uppernode-1])/dz_down[uppernode])+1.)*k_np1_m_im12[uppernode]*dt), tmp_mb_bottomflux, -1.*(((theta_np1_mp1[lowernode]+theta_i_np1_mp1[lowernode]*(Constants::density_ice/Constants::density_water))-(theta_n[lowernode] + theta_i_n[lowernode]*(Constants::density_ice/Constants::density_water)))*dz[lowernode]-(1./rho[lowernode])*((((h_np1_m[lowernode+1]*rho[lowernode+1]-h_np1_m[lowernode]*rho[lowernode])/dz_up[lowernode])+Xdata.cos_sl*rho[lowernode])*k_np1_m_ip12[lowernode]*dt)), totalsourcetermflux*dt, massbalanceerror);
 
 			//Make sure to trigger a rewind by making max_delta_h very large in case the mass balance is violated or change in head are too large.
@@ -2021,7 +2021,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					Salinity_1.theta1[i] = theta_n[i];
 					Salinity_1.theta2[i] = theta_np1_mp1[i];
 					Salinity_2.BrineSal[i] = EMS[i].salinity / theta_n[i];				//Calculate brine salinity
-					Salinity_2.theta1[i] = theta_n[i];
+					Salinity_2.theta1[i] = theta_np1_mp1[i];					//This is not a mistake, Salinity_2 should neglect the theta(t+1)-theta(t) term
 					Salinity_2.theta2[i] = theta_np1_mp1[i];
 					Salinity_1.dz_[i] = dz_[i];
 					Salinity_1.dz_up[i] = dz_up[i];
@@ -2029,35 +2029,30 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					Salinity_2.dz_[i] = dz_[i];
 					Salinity_2.dz_up[i] = dz_up[i];
 					Salinity_2.dz_down[i] = dz_down[i];
-					Salinity_1.D[i] = 1E-10;
-					Salinity_2.D[i] = 1E-10;
+					Salinity_1.D[i] = 1E-15;
+					Salinity_2.D[i] = 0.;			// The second salinity transport should not consider diffusion!
 				}
 				std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
 				double BottomSaltFlux = 0.;
-				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
-					if (i==lowernode) {
-						BottomSaltFlux += (Salinity_1.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_1.flux_down[i]) : (-1.*Salinity_1.BrineSal[i]*Salinity_1.flux_down[i]);
-					}
-
-					//if (WriteDebugOutputput) printf("SAL: %d %f %f %f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f %.10f   %.10f\n", i, TimeAdvance, EMS[i].L, rho[i], EMS[i].salinity, Salinity_1.BrineSal[i], DeltaSal[i], theta_n[i], Salinity_1.flux_up[i], Salinity_2.flux_up[i], Salinity_1.flux_down[i], Salinity_2.flux_down[i], corr_frac, corr_diff, BottomSaltFlux);
-					//Salinity_1.flux_up[i] = Salinity_2.flux_up[i] = Salinity_1.flux_down[i] = Salinity_2.flux_down[i] = 0.;
-				}
+				i=lowernode;
+				BottomSaltFlux += (Salinity_1.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_1.flux_down[i]*dt) : (-1.*Salinity_1.BrineSal[i]*Salinity_1.flux_down[i]*dt);
+				BottomSaltFlux += (Salinity_2.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity_2.flux_down[i]*dt) : (-1.*Salinity_2.BrineSal[i]*Salinity_1.flux_down[i]*dt);
 				printf("SALTFLUX: %.15f %.15f\n", TimeAdvance, BottomSaltFlux);
 
 				Salinity_1.SolveSalinityTransportEquationExplicit(dt, DeltaSal);
 				for (i = lowernode; i <= uppernode; i++) {
 					EMS[i].salinity = Salinity_1.BrineSal[i] * theta_np1_mp1[i];
-					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);// - theta_n[i]);
+					Salinity_2.BrineSal[i] = Salinity_1.BrineSal[i];
+					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);
 				}
-				//Salinity_2.SolveSalinityTransportEquation(dt, DeltaSal);
+				Salinity_2.SolveSalinityTransportEquationExplicit(dt, DeltaSal);
 				for (i = lowernode; i <= uppernode; i++) {
-					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]); // - theta_n[i]);
+					EMS[i].salinity = Salinity_2.BrineSal[i] * theta_np1_mp1[i];
+					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);
 				}
 
-				//Apply new salinity profile
+				//Verify new salinity profile
 				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
-					//EMS[i].salinity = (Salinity_1.BrineSal[i] * theta_n[i]) + (DeltaSal[i] * theta_n[i]/* / dz_[i]*/);
-//EMS[i].salinity = Salinity_1.BrineSal[i] * theta_np1_mp1[i];
 					if(EMS[i].salinity < 0.) {
 						if(EMS[i].salinity>-Constants::eps) {
 							EMS[i].salinity = 0.;
@@ -2067,7 +2062,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							//throw;
 						}
 					}
-					DeltaSal[i]=0.;
 				}
 			}
 
