@@ -34,6 +34,7 @@
 #include <meteoio/meteoFilters/FilterMAD.h>
 #include <meteoio/meteoFilters/ProcAggregate.h>
 #include <meteoio/meteoFilters/ProcIIR.h>
+#include <meteoio/meteoFilters/ProcDeAccumulate.h>
 #include <meteoio/meteoFilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Forland.h>
 #include <meteoio/meteoFilters/ProcUndercatch_Hamon.h>
@@ -116,6 +117,7 @@ namespace mio {
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
  * - IIR: Low Pass or High Pass critically damped filter, see ProcIIR
  * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
+ * - DEACCUMULATE: recompute instantaneous values from accumulated values, see ProcDeAccumulate
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
@@ -177,6 +179,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcIIR(vecArgs, blockname);
 	} else if (blockname == "AGGREGATE"){
 		return new ProcAggregate(vecArgs, blockname);
+	} else if (blockname == "DEACCUMULATE"){
+		return new ProcDeAccumulate(vecArgs, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){
 		return new ProcUndercatch_WMO(vecArgs, blockname);
 	} else if (blockname == "UNDERCATCH_FORLAND"){
