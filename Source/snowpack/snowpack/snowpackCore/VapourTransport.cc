@@ -419,7 +419,11 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
 			}
 		}
-
+		// Numerical rounding errors were found to lead to theta[AIR] < 0, so force the other components between [0,1]:
+		EMS[e].theta[ICE] = std::max(0., std::min(1., EMS[e].theta[ICE]));
+		EMS[e].theta[WATER] = std::max(0., std::min(1., EMS[e].theta[WATER]));
+		EMS[e].theta[WATER_PREF] = std::max(0., std::min(1., EMS[e].theta[WATER_PREF]));
+		// Update theta[AIR] and density:
 		EMS[e].theta[AIR] = (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]);
 		EMS[e].updDensity();
 		assert(EMS[e].Rho > 0 || EMS[e].Rho==IOUtils::nodata); //density must be positive
