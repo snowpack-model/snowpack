@@ -93,7 +93,8 @@ void SalinityTransport::SetDomainSize(size_t nE) {
  * @par This function solves the following equation ($n$ and $i$ denoting time and spatial level, respectively), in Latex code:
 \begin{multline}
 \frac{ \left ( \theta^{n+1}_i S_{\mathrm{b}, i}^{n+1} - \theta^{n}_i S_{\mathrm{b}, i}^{n} \right ) } { \Delta t } \\
-- f \left [ \frac { \left ( D_{i+1}^{n} \theta^{n+1}_{i+1} S_{\mathrm{b}, i+1}^{n+1} - 2 D_{i}^{n} \theta^{n+1}_{i} S_{\mathrm{b}, i}^{n+1} + D_{i-1}^{n} \theta^{n+1}_{i-1} S_{\mathrm{b}, i-1}^{n+1} \right ) } { \left ( \Delta z \right )^2 } \right ] - \left ( 1-f \right ) \left [ \frac { \left ( D_{i+1}^{n} \theta^n_{i+1} S_{\mathrm{b}, i+1}^{n} - 2 D_{i}^{n} \theta^n_{i} S_{\mathrm{b}, i}^{n} + D_{i-1}^{n} \theta^n_{i-1} S_{\mathrm{b}, i-1}^{n} \right ) } { \left ( \Delta z \right )^2} \right ] \\
+- f \left [ \left ( \frac{ 2 D_{i+1}^{n} \theta^{n+1}_{i+1} S_{\mathrm{b}, i+1}^{n+1} }{ \Delta z_{\mathrm{up}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } - \frac{ 2 D_{i}^{n} \theta^{n+1}_{i} S_{\mathrm{b}, i}^{n+1} }{\left ( \Delta z_{\mathrm{up}} \Delta z_{\mathrm{down}} \right ) } + \frac{ D_{i-1}^{n} \theta^{n+1}_{i-1} S_{\mathrm{b}, i-1}^{n+1} }{ \Delta z_{\mathrm{down}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] \\
+- \left ( 1-f \right ) \left [ \left ( \frac{ 2 D_{i+1}^{n} \theta^{n}_{i+1} S_{\mathrm{b}, i+1}^{n} }{ \Delta z_{\mathrm{up}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } - \frac{ 2 D_{i}^{n} \theta^{n}_{i} S_{\mathrm{b}, i}^{n} }{\left ( \Delta z_{\mathrm{up}} \Delta z_{\mathrm{down}} \right ) } + \frac{ D_{i-1}^{n} \theta^{n}_{i-1} S_{\mathrm{b}, i-1}^{n} }{ \Delta z_{\mathrm{down}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] \\
 - f \left [ \left ( \frac{q^{n}_{i+1} S_{\mathrm{b},i+1}^{n+1} - q^{n}_{i-1} S_{\mathrm{b},i-1}^{n+1}}{\left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] - \left ( 1-f \right ) \left [ \left ( \frac{q^{n}_{i+1} S_{\mathrm{b},i+1}^{n} - q^{n}_{i-1} S_{\mathrm{b},i-1}^{n}}{\left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] - s_{\mathrm{sb}} = 0
 \end{multline}
 Here, $f=1$ results in the fully implicit scheme, whereas $f=0.5$ corresponds to the Crank-Nicolson scheme. The implicit scheme is first order accurate, whereas the Crank-Nicolson scheme is second order accurate. Furthermore, both are unconditionally stable and suffer only minimal numerical diffusion for the advection part. As with many other common schemes, the advection part is not perfectly conserving sharp transitions. Futhermore, the reason to not use the fully implicit or the Crank Nicolson scheme is the occurrence of spurious oscillations in the solution, which negatively impact the accuracy of the simulations more than the negative effect on computational efficiency imposed by the CFL criterion required for the explicit method (see SalinityTransport::SolveSalinityTransportEquationExcplicit).
@@ -123,12 +124,12 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		// The matrix diagonal, the time derivative:
 		ad[i] += theta2[i] / dt;
 		// The matrix diagonal, the diffusion part:
-		ad[i] += (D[i] * theta12[i]) / (dz_[i] * dz_[i]);
+		ad[i] += (2. * D[i] * theta12[i]) / (dz_up[i] * dz_down[i]);
 
 		// The lower diagonal
 		if(i!=0) {
 			// the diffusion part:
-			adl[i-1] += -f * D[i-1] * theta12[i-1] / (dz_[i] * dz_[i]);
+			adl[i-1] += -f * 2. * D[i-1] * theta12[i-1] / (dz_down[i] * (dz_up[i] + dz_down[i]));
 
 			// the advection part:
 			adl[i-1] += f * flux_down[i] / (dz_up[i] + dz_down[i]);
@@ -137,7 +138,7 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		// The upper diagonal
 		if(i!=NumberOfElements-1) {
 			// the diffusion part:
-			adu[i] += -f * D[i+1] * theta12[i+1] / (dz_[i] * dz_[i]);
+			adu[i] += -f * 2. * D[i+1] * theta12[i+1] / (dz_up[i] * (dz_up[i] + dz_down[i]));
 
 			// the advection part:
 			adu[i] += -f * flux_up[i] / (dz_up[i] + dz_down[i]);
@@ -151,13 +152,13 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		if(i==NumberOfElements-1) {
 			b[i] += 0.;
 		} else {
-			b[i] += (1. - f) * (D[i+1] * theta12[i+1] * BrineSal[i+1]) / (dz_[i] * dz_[i]);
+			b[i] += (1. - f) * (2. * D[i+1] * theta12[i+1] * BrineSal[i+1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
 		}
-		b[i] += -D[i] * theta12[i] * BrineSal[i] / (dz_[i] * dz_[i]);
+		b[i] += -2. * D[i] * theta12[i] * BrineSal[i] / (dz_up[i] * dz_down[i]);
 		if(i==0) {
-			b[i] += (1. - f) * D[i] * SeaIce::OceanSalinity / (dz_[i] * dz_[i]);
+			b[i] += (1. - f) * 2. * D[i] * SeaIce::OceanSalinity / (dz_down[i] * (dz_up[i] + dz_down[i]));
 		} else {
-			b[i] += (1. - f) * D[i-1] * theta12[i-1]  * BrineSal[i-1] / (dz_[i] * dz_[i]);
+			b[i] += (1. - f) * 2. * D[i-1] * theta12[i-1]  * BrineSal[i-1] / (dz_down[i] * (dz_up[i] + dz_down[i]));
 		}
 
 		//The r.h.s. vector advection part:
@@ -180,8 +181,8 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 	// Deal with boundary conditions:
 
 	// Add the terms from "out of boundary" diffusion
-	b[0] += -f * (D[0] * SeaIce::OceanSalinity) / (dz_[0] * dz_[0]);
-	b[NumberOfElements-1] += f * (D[NumberOfElements-1] * 0.) / (dz_[NumberOfElements-1] * dz_[NumberOfElements-1]);
+	b[0] += -f * (2. * D[0] * SeaIce::OceanSalinity) / (dz_down[0] * (dz_up[0] + dz_down[0]));
+	b[NumberOfElements-1] += f * (2. * D[NumberOfElements-1] * 0.) / (dz_up[NumberOfElements-1] * (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]));
 
 	// Add the terms from "out of boundary" advection
 	b[0] += -f * (flux_down[0] * SeaIce::OceanSalinity) / (dz_up[0] + dz_down[0]);
@@ -269,7 +270,7 @@ bool SalinityTransport::SolveSalinityTransportEquationExplicit(const double dt, 
 		b[i] += (theta1[i] * BrineSal[i]) +  (  (tmp_flux > 0.)   ? (tmp_flux * dt * (((i==NumberOfElements-1) ? (TopFluxSalinity) : (BrineSal[i+1])) - BrineSal[i]) / dz_up[i])            : (tmp_flux * dt * ((BrineSal[i] - ((i==0) ? (SeaIce::OceanSalinity) : (BrineSal[i-1]))) / dz_down[i]))  );
 
 		// Explicit scheme for diffusion
-		b[i] += dt * ((i==NumberOfElements-1) ? (D[i] * 0.) : (theta12[i+1] * D[i+1] * BrineSal[i+1])) - 2. * theta12[i] * D[i] * BrineSal[i] + ((i==0) ? (D[i] * SeaIce::OceanSalinity) : (theta12[i-1] * D[i-1] * BrineSal[i-1])) / ((dz_up[i] + dz_down[i]) * (dz_up[i] + dz_down[i]));
+		b[i] += dt * ( ((i==NumberOfElements-1) ? (D[i] * 0.) : (theta12[i+1] * D[i+1] * BrineSal[i+1])) / (dz_up[i]*(dz_up[i]+dz_down[i])) - (2. * theta12[i] * D[i] * BrineSal[i]) / (dz_up[i]+dz_down[i]) + (((i==0) ? (D[i] * SeaIce::OceanSalinity) : (theta12[i-1] * D[i-1] * BrineSal[i-1]))) / (dz_down[i]*(dz_up[i]+dz_down[i])) );
 
 		// Source/sink term
 		b[i] += -sb[i];
