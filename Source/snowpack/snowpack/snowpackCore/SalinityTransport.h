@@ -44,6 +44,8 @@ class SalinityTransport {
 
 		std::vector<double> flux_up;		//Flux with element above (negative=upward, positive=downward)
 		std::vector<double> flux_down;		//Flux with element below (negative=upward, positive=downward)
+		std::vector<double> flux_up_2;		//Flux with element above (negative=upward, positive=downward)
+		std::vector<double> flux_down_2;	//Flux with element below (negative=upward, positive=downward)
 		std::vector<double> dz_;		//Grid cell size
 		std::vector<double> dz_up;		//Grid cell distance above
 		std::vector<double> dz_down;		//Grid cell distance below

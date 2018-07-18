@@ -59,7 +59,7 @@
  * @param nE Domain size
  */
 SalinityTransport::SalinityTransport(const size_t nE)
-           : flux_up(), flux_down(), dz_(), dz_up(), dz_down(), theta1(), theta2(), BrineSal(), D(), sb(), NumberOfElements(0)
+           : flux_up(), flux_down(), flux_up_2(), flux_down_2(),dz_(), dz_up(), dz_down(), theta1(), theta2(), BrineSal(), D(), sb(), NumberOfElements(0)
 {
 	SetDomainSize(nE);
 }
@@ -75,6 +75,8 @@ void SalinityTransport::SetDomainSize(size_t nE) {
 
 	flux_up.resize(nE, 0.);
 	flux_down.resize(nE, 0.);
+	flux_up_2.resize(nE, 0.);
+	flux_down_2.resize(nE, 0.);
 	dz_.resize(nE, 0.);
 	dz_up.resize(nE, 0.);
 	dz_down.resize(nE, 0.);
@@ -263,11 +265,18 @@ bool SalinityTransport::SolveSalinityTransportEquationExplicit(const double dt, 
 
 	// Fill matrix and r.h.s. vector
 	for(size_t i = 0; i < NumberOfElements; i++) {
+		b[i] += (theta1[i] * BrineSal[i]);
+
 		// Explicit upwind scheme for advection:
 		const double tmp_flux = (flux_up[i] * dz_up[i] + flux_down[i] * dz_down[i]) / (dz_up[i] + dz_down[i]);
+		const double tmp_flux_2 = (flux_up_2[i] * dz_up[i] + flux_down_2[i] * dz_down[i]) / (dz_up[i] + dz_down[i]);
+
 		// We assume that the incoming flux at the top element consists of rain and has no salinity, and the incoming flux at the bottom element consists of ocean salinity.
 		const double TopFluxSalinity = 0.;
-		b[i] += (theta1[i] * BrineSal[i]) +  (  (tmp_flux > 0.)   ? (tmp_flux * dt * (((i==NumberOfElements-1) ? (TopFluxSalinity) : (BrineSal[i+1])) - BrineSal[i]) / dz_up[i])            : (tmp_flux * dt * ((BrineSal[i] - ((i==0) ? (SeaIce::OceanSalinity) : (BrineSal[i-1]))) / dz_down[i]))  );
+		// First diffusion term
+		b[i] += (  (tmp_flux > 0.)   ? (tmp_flux * dt * (((i==NumberOfElements-1) ? (TopFluxSalinity) : (BrineSal[i+1])) - BrineSal[i]) / dz_up[i])            : (tmp_flux * dt * ((BrineSal[i] - ((i==0) ? (SeaIce::OceanSalinity) : (BrineSal[i-1]))) / dz_down[i]))  );
+		// Second diffusion term
+		b[i] += (  (tmp_flux_2 > 0.)   ? (tmp_flux_2 * dt * (((i==NumberOfElements-1) ? (TopFluxSalinity) : (BrineSal[i+1])) - BrineSal[i]) / dz_up[i])            : (tmp_flux_2 * dt * ((BrineSal[i] - ((i==0) ? (SeaIce::OceanSalinity) : (BrineSal[i-1]))) / dz_down[i]))  );
 
 		// Explicit scheme for diffusion
 		b[i] += dt * ( ((i==NumberOfElements-1) ? (D[i] * 0.) : (theta12[i+1] * D[i+1] * BrineSal[i+1])) / (dz_up[i]*(dz_up[i]+dz_down[i])) - (2. * theta12[i] * D[i] * BrineSal[i]) / (dz_up[i]+dz_down[i]) + (((i==0) ? (D[i] * SeaIce::OceanSalinity) : (theta12[i-1] * D[i-1] * BrineSal[i-1]))) / (dz_down[i]*(dz_up[i]+dz_down[i])) );
@@ -297,6 +306,7 @@ bool SalinityTransport::VerifyCFL(const double dt)
 	const double CFL_limit = 0.98;
 	for(size_t i = 0; i < NumberOfElements; i++) {
 		if (std::max(fabs(flux_up[i]), fabs(flux_down[i])) * dt / std::min(dz_up[i], dz_down[i]) > CFL_limit) return false;
+		if (std::max(fabs(flux_up_2[i]), fabs(flux_down_2[i])) * dt / std::min(dz_up[i], dz_down[i]) > CFL_limit) return false;
 	}
 	return true;
 }
