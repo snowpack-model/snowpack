@@ -65,7 +65,7 @@ using namespace mio;
  * <tr><th>Vol_Frac_S</th><td>fractional soil volume [0-1]</td></tr>
  * <tr><th>Rho_S</th><td>soil density [kg/m3]</td></tr>
  * <tr><th>Conduc_S</th><td>mineral phase soil thermal conductivity [w/(mK)]</td></tr>
- * <tr><th>HeatCapac_S</th><td>mineral phase soil thermal capacity [J/K]</td></tr>
+ * <tr><th>HeatCapac_S</th><td>mineral phase soil thermal capacity [J/(kg*K)]</td></tr>
  * </table></td><td><table border="1">
  * <tr><th>Field</th><th>Description</th></tr>
  * <tr><th>rg</th><td>grain radius [mm]</td></tr>

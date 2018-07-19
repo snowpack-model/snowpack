@@ -285,6 +285,55 @@ bool GridsManager::read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& avai
 	return false;
 }
 
+/**
+* @brief Check if the grids2d_list "buffer" covers the proper range and rebuffer if not.
+* @details This does not mean that the requested date is in the buffer, but that the range covered by the buffer contains this date. 
+* @param[in] date the timestamp that we would like to have
+* @return true if the buffer is ready (it was already ready or it has been rebuffered) or false if the grid plugin could not provide the information
+*/
+bool GridsManager::setGrids2d_list(const Date& date)
+{
+	if (grids2d_list.empty() || date<grids2d_start || date>grids2d_end) {
+		grids2d_start = date - 1.;
+		grids2d_end = date + grid2d_list_buffer_size;
+		
+		const bool status = iohandler.list2DGrids(grids2d_start, grids2d_end, grids2d_list);
+		if (status) {
+			//the plugin might have returned a range larger than requested, so adjust the min/max dates if necessary
+			if (!grids2d_list.empty()) {
+				if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
+				if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
+			}
+			return true;
+		}
+		
+		return false;
+	}
+	
+	return true;
+}
+
+bool GridsManager::setGrids2d_list(const Date& dateStart, const Date& dateEnd)
+{
+	if (grids2d_list.empty() || dateStart<grids2d_start || dateEnd>grids2d_end) {
+		grids2d_start = dateStart;
+		grids2d_end = dateEnd;
+		const bool status = iohandler.list2DGrids(grids2d_start, grids2d_end, grids2d_list);
+		if (status) {
+			//the plugin might have returned a range larger than requested, so adjust the min/max dates if necessary
+			if (!grids2d_list.empty()) {
+				if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
+				if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
+			}
+			return true;
+		}
+		
+		return false;
+	}
+	
+	return true;
+}
+
 void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if (processing_level == IOUtils::raw){
@@ -292,22 +341,11 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 	} else {
 		if (buffer.get(grid2D, parameter, date)) return;
 		
-		//should we rebuffer the grids list?
-		if (grids2d_list.empty() || date<grids2d_start || date>grids2d_end) {
-			grids2d_start = date - 1.;
-			grids2d_end = date + grid2d_list_buffer_size;
-			const bool status = iohandler.list2DGrids(grids2d_start, grids2d_end, grids2d_list);
-			if (status) {
-				//the plugin might have returned a range larger than requested, so adjust the min/max dates if necessary
-				if (!grids2d_list.empty()) {
-					if (grids2d_start > grids2d_list.begin()->first) grids2d_start = grids2d_list.begin()->first;
-					if (grids2d_end < grids2d_list.rbegin()->first) grids2d_end = grids2d_list.rbegin()->first;
-				}
-			} else { //this means that the call is not implemeted in the plugin
-				iohandler.read2DGrid(grid2D, parameter, date);
-				buffer.push(grid2D, parameter, date);
-				return;
-			}
+		const bool status = setGrids2d_list( date ); //rebuffer the grid list if necessary
+		if (!status) { //this means that the list2DGrids call is not implemeted in the plugin, we try to save the day...
+			iohandler.read2DGrid(grid2D, parameter, date);
+			buffer.push(grid2D, parameter, date);
+			return;
 		}
 		
 		const std::map<Date, std::set<size_t> >::const_iterator it = grids2d_list.find(date);
@@ -397,6 +435,199 @@ void GridsManager::write3DGrid(const Grid3DObject& grid_out, const std::string& 
 void GridsManager::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	iohandler.write3DGrid(grid_out, parameter, date);
+}
+
+/** @brief Create a list of virtual stations from each grid point
+ * @details Please not that the two options are mutually exclusive.
+ * @param[in] dem the Digital Elevation Model to use (each grid point will be made into a virtual station)
+ * @return a vector of virtual stations
+ */
+std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const DEMObject& dem) const
+{
+	std::vector<StationData> v_stations;
+	//get virtual stations coordinates
+	std::string coordin, coordinparam, coordout, coordoutparam;
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	Coords llcorner( dem.llcorner );
+	llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
+	const double dem_easting = llcorner.getEasting();
+	const double dem_northing = llcorner.getNorthing();
+	
+	Coords curr_point(coordin, coordinparam);
+	size_t stat_id=0;
+	for (size_t jj=0; jj<dem.getNy(); jj++) {
+		for (size_t ii=0; ii<dem.getNx(); ii++) {
+			const double easting = dem_easting + dem.cellsize*static_cast<double>(ii);
+			const double northing = dem_northing + dem.cellsize*static_cast<double>(jj);
+			curr_point.setXY(easting, northing, dem(ii,jj));
+			curr_point.setGridIndex(static_cast<int>(ii), static_cast<int>(jj), IOUtils::inodata, true);
+			
+			//extract vstation number, build the station name and station ID
+			stat_id++;
+			const std::string id_str( static_cast<ostringstream*>( &(ostringstream() << stat_id) )->str() );
+			StationData sd(curr_point, "VIR"+id_str, "Virtual_Station_"+id_str);
+			sd.setSlope(dem.slope(ii,jj), dem.azi(ii,jj));
+			v_stations.push_back( sd );
+		}
+	}
+	
+	return v_stations;
+}
+
+/** @brief Create a list of virtual stations from the user-provided input
+ * @details Please not that the two options are mutually exclusive.
+ * @param[in] dem the Digital Elevation Model to use
+ * @param[in] adjust_coordinates should the coordinates be recomputed to match DEM cells?
+ * @param[in] fourNeighbors pick the surrounding four nodes instead of only the exact one?
+ * @return a vector of virtual stations
+ */
+std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem, const bool& adjust_coordinates, const bool& fourNeighbors) const
+{
+	//get virtual stations coordinates
+	std::string coordin, coordinparam, coordout, coordoutparam;
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	Coords llcorner( dem.llcorner );
+	llcorner.setProj(coordin, coordinparam); //make sure the DEM and the VStations are in the same projection
+	const double dem_easting = llcorner.getEasting();
+	const double dem_northing = llcorner.getNorthing();
+
+	//read the provided coordinates, remove duplicates and generate metadata
+	std::vector<StationData> v_stations;
+	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
+	for (size_t ii=0; ii<vecStation.size(); ii++) {
+		if (vecStation[ii].first.find('_') != std::string::npos) continue; //so we skip the other vstations_xxx parameters
+		
+		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
+		Coords curr_point(coordin, coordinparam, vecStation[ii].second);
+		if (curr_point.isNodata()) continue;
+
+		if (!dem.gridify(curr_point))
+			throw NoDataException("Virtual station "+vecStation[ii].second+" is not contained in provided DEM "+dem.toString(DEMObject::SHORT), AT);
+
+		size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
+		if (fourNeighbors) { //pick the surrounding four nodes
+			if (i==dem.getNx()) i--;
+			if (j==dem.getNy()) j--;
+			
+			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
+			for (size_t mm=i; mm<=i+1; mm++) {
+				for (size_t nn=j; nn<=j+1; nn++) {
+					const double easting = dem_easting + dem.cellsize*static_cast<double>(mm);
+					const double northing = dem_northing + dem.cellsize*static_cast<double>(nn);
+					curr_point.setXY(easting, northing, dem(mm,nn));
+					curr_point.setGridIndex(static_cast<int>(mm), static_cast<int>(nn), IOUtils::inodata, true);
+					const std::string sub_id( static_cast<ostringstream*>( &(ostringstream() << (mm-i)*2+(nn-j)+1) )->str() );
+					const std::string grid_pos( static_cast<ostringstream*>( &(ostringstream() << mm << "-" << nn) )->str() );
+					StationData sd(curr_point, "VIR"+id_num+"_"+sub_id, "Virtual_Station_"+grid_pos);
+					sd.setSlope(dem.slope(mm,nn), dem.azi(mm,nn));
+					v_stations.push_back( sd );
+				}
+			}
+		} else { //pick the exact node
+			if (adjust_coordinates) { //adjust coordinates to match the chosen cell
+				const double easting = dem_easting + dem.cellsize*static_cast<double>(i);
+				const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
+				curr_point.setXY(easting, northing, dem(i,j));
+				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
+			} else {
+				curr_point.setAltitude(dem(i,j), false);
+			}
+			
+			//extract vstation number, build the station name and station ID
+			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
+			StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
+			sd.setSlope(dem.slope(i,j), dem.azi(i,j));
+			v_stations.push_back( sd );
+		}
+	}
+
+	if (v_stations.empty()) throw NoDataException("No virtual stations provided", AT);
+	
+	//removing potential duplicates
+	if (StationData::unique( v_stations, true ) && !fourNeighbors)
+		std::cout << "[W] Some of the input stations have been identified as duplicates and removed\n";
+	
+	return v_stations;
+}
+
+/**
+* @brief Extract time series from grids at the specified points (virtual stations).
+* @param[in] dem the Digital Elevation Model to use to check the geolocalization of the grids
+* @param[in] v_params the MeteoGrids parameter index that have to be extracted
+* @param[in] v_stations a vector of StationData where to provide the meteorological data
+* @param[in] date when to extract the virtual stations
+* @return a vector of meteodata for the configured virtual stations at the provided date, for the provided parameters
+*/
+METEO_SET GridsManager::getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date)
+{
+	//HACK handle extra parameters when possible
+	const size_t nrStations = v_stations.size();
+	METEO_SET vecMeteo;
+	
+	//create stations without measurements
+	for (size_t ii=0; ii<nrStations; ii++) {
+		MeteoData md(date, v_stations[ii]);
+		vecMeteo.push_back( md );
+	}
+	
+	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters
+		const MeteoGrids::Parameters grid_param = static_cast<MeteoGrids::Parameters>( v_params[param] );
+		Grid2DObject grid;
+		read2DGrid(grid, grid_param, date);
+		
+		if (!grid.isSameGeolocalization(dem))
+			throw InvalidArgumentException("In GRID_EXTRACT, the DEM and the source grid don't match for '"+MeteoGrids::getParameterName(grid_param)+"' on "+date.toString(Date::ISO));
+		
+		for (size_t ii=0; ii<nrStations; ii++) { //loop over all virtual stations
+			const size_t grid_i = v_stations[ii].position.getGridI(); //this should work since invalid stations have been removed in init
+			const size_t grid_j = v_stations[ii].position.getGridJ();
+			
+			//check if this is a standard MeteoData parameter
+			const size_t meteo_param = vecMeteo[ii].getParameterIndex( MeteoGrids::getParameterName(grid_param) ); //is this name also a meteoparameter?
+			if (meteo_param!=IOUtils::npos)
+				vecMeteo[ii]( static_cast<MeteoData::Parameters>(meteo_param) ) = grid(grid_i, grid_j);
+		}
+	}
+	
+	return vecMeteo;
+}
+
+/**
+* @brief Extract time series from grids at the specified points (virtual stations).
+* @param[in] dem the Digital Elevation Model to use to check the geolocalization of the grids
+* @param[in] v_params the MeteoGrids parameter index that have to be extracted
+* @param[in] v_stations a vector of StationData where to provide the meteorological data
+* @param[in] dateStart when to start extracting the virtual stations
+* @param[in] dateEnd when to stop extracting the virtual stations
+* @return a vector of meteodata for the configured virtual stations at the provided date, for the provided parameters
+*/
+std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd)
+{
+	const size_t nrStations = v_stations.size();
+	std::vector<METEO_SET> vecvecMeteo( nrStations );
+	
+	const bool status = setGrids2d_list(dateStart, dateEnd);
+	if (!status)
+		throw InvalidArgumentException("The chosen plugin seems not to support the list2DGrids call that is required for gridded data extraction", AT);
+	
+	//look for the last date in grids2d_list just before dateStart
+	std::map<Date, std::set<size_t> >::const_iterator it;
+	for (it=grids2d_list.begin(); it!=grids2d_list.end(); ++it) {
+		if (it->first>=dateStart) break;
+	}
+	if (it==grids2d_list.end()) return std::vector<METEO_SET>();
+	if (it!=grids2d_list.begin() && it->first!=dateStart) --it; //we want to ensure the range contains the start date (for interpolations)
+	
+	//now, we read the data for each available timestep
+	for (; it!=grids2d_list.end(); ++it) {
+		const METEO_SET vecMeteo( getVirtualStationsFromGrid(dem, v_params, v_stations, it->first) ); //the number of stations can not change
+		for (size_t ii=0; ii<nrStations; ii++) 
+			vecvecMeteo[ii].push_back( vecMeteo[ii] );
+		
+		if (it->first>=dateEnd) break;
+	}
+	
+	return vecvecMeteo;
 }
 
 const std::string GridsManager::toString() const {

@@ -46,6 +46,7 @@ namespace ncpp {
 		VAR_ATTR(const size_t& prm, const std::string& i_name, const std::string& std_name, const std::string& lg_name, const std::string& i_units, const double& hgt, const int& i_type)
 								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {};
 		
+		bool isUndef() const {return (type==-1);};
 		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
 		std::string name; ///< variable name (it is possible to retrieve a variable by name)
@@ -66,6 +67,7 @@ namespace ncpp {
 		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
 							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
 		
+		bool isUndef() const {return (attributes.isUndef());};
 		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
 		
 		var_attr attributes; ///< metadata about the variable

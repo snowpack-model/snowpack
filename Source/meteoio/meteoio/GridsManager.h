@@ -62,6 +62,11 @@ class GridsManager {
 		 * @return new IOHandler object as a copy of the internal IOHandler
 		 */
 		IOHandler& getIOHandler() const {return iohandler;}
+		
+		std::vector<StationData> initVirtualStationsAtAllGridPoints(const DEMObject& dem) const;
+		std::vector<StationData> initVirtualStations(const DEMObject& dem, const bool& adjust_coordinates, const bool& fourNeighbors) const;
+		METEO_SET getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date);
+		std::vector<METEO_SET> getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd);
 
 		const std::string toString() const;
 
@@ -69,6 +74,8 @@ class GridsManager {
 		bool isAvailable(const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date) const;
 		void getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date);
 		bool read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
+		bool setGrids2d_list(const Date& date);
+		bool setGrids2d_list(const Date& dateStart, const Date& dateEnd);
 
 		IOHandler& iohandler;
 		const Config& cfg;

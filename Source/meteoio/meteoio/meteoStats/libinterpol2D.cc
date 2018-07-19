@@ -162,7 +162,7 @@ void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
  
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (size_t ii=0; ii<grid.size(); ii++) {
-		const double& cell_altitude=dem(ii);
+		const double cell_altitude=dem(ii);
 		if (cell_altitude!=IOUtils::nodata)
 			grid(ii) = Atmosphere::stdAirPressure(cell_altitude);
 	}
