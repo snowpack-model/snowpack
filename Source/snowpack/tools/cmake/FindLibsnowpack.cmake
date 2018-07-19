@@ -60,7 +60,7 @@ ELSE(WIN32)
 			"/usr/local/lib"
 			"/usr/lib"
 			"/opt/lib"
-		DOC "Location of the libsnowpack, like /usr/lib"
+		DOC "Location of the libsnowpack, like /usr/lib/libsnowpack.so"
 		)
 	ENDIF(APPLE)
 ENDIF(WIN32)

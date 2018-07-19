@@ -104,15 +104,6 @@ class Meteo2DInterpolator {
 
 		~Meteo2DInterpolator();
 
-		///Keywords for virtual stations strategy
-		enum RESAMPLING_STRATEGY {
-			NONE, ///< default: no resampling
-			VSTATIONS, ///< extract virtual stations as specified in the ini file
-			GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
-			GRID_ALL, ///< extract all grid points from a provided grid
-			GRID_SMART ///< extract all relevant grid points from a provided grid
-		};
-
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
 		 *
@@ -154,56 +145,22 @@ class Meteo2DInterpolator {
 		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname,
 		                                const std::string& algorithm, const std::string& section) const;
 
-		/**
-		 * @brief Returns the metadata associated with the configured virtual stations
-		 * @param date when to extract the virtual stations' metadata
-		 * @param vecStation a vector of stationdata for the configured virtual stations
-		 */
-		size_t getVirtualStationsMeta(const Date& date, STATIONS_SET& vecStation);
-
-		/**
-		 * @brief Compute point measurements from grids following a given computing strategy
-		 * @param i_date when to compute the virtual stations
-		 * @param vecMeteo a vector of meteodata for the configured virtual stations
-		 */
-		size_t getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo);
-		
-		/**
-		 * @brief Push virtual points resampling into the provided tsmanager, so it appears as if they were coming from real data
-		 * @details This call garantees thatif no point exactly matches the requested date, the nearest points around will be
-		 * provided so the TimeSeriesManager can perform a temporal interpolation.
-		 * @param i_date when to compute the virtual stations
-		 * @param user_tsmanager TimeSeriesManager where to push the data
-		 */
-		void pushVirtualMeteoData(const Date& i_date, TimeSeriesManager &user_tsmanager);
-
 		const std::string toString() const;
 
 	private:
-		static Config stripVirtualConfig(const Config& cfg);
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 		static void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
 		static std::set<std::string> getParameters(const Config& cfg);
 		static std::vector<std::string> getAlgorithmsForParameter(const Config& cfg, const std::string& parname);
 
-		size_t getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo);
-		size_t getVirtualStationsFromGrid(const Date& i_date, METEO_SET& vecMeteo);
 		void setAlgorithms();
-		void initVirtualStations(const bool& adjust_coordinates, const bool& fourNeighbors);
-		void initVirtualStationsAtAllGridPoints();
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		TimeSeriesManager *tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
 		GridsManager *gridsmanager; ///< Reference to GridsManager object, used for callbacks, initialized during construction
-		GridBuffer grid_buffer;
-		DEMObject internal_dem; ///< With virtual stations & resampling, we must have a DEM, so we keep an internal copy
+		GridBuffer grid_buffer; ///< Buffer the interpolated grids for more efficiency
 
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
-
-		std::vector<size_t> v_params; ///< Parameters for virtual stations
-		std::vector<StationData> v_stations; ///< metadata for virtual stations
-		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated?
-		RESAMPLING_STRATEGY resampling_strategy; ///< Should we perform resampling and with which strategy?
 		
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations
