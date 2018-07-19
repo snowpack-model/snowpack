@@ -83,7 +83,7 @@ const bool AsciiIO::t_gnd = false;
  * <tr><th>Field</th><th>Description</th></tr>
  * <tr><th>Rho_S</th><td>soil density [kg/m3]</td></tr>
  * <tr><th>Conduc_S</th><td>mineral phase soil thermal conductivity [w/(mK)]</td></tr>
- * <tr><th>HeatCapac_S</th><td>mineral phase soil thermal capacity [J/K]</td></tr>
+ * <tr><th>HeatCapac_S</th><td>mineral phase soil thermal capacity [J/(kg*K)]</td></tr>
  * <tr><th>rg</th><td>grain radius [mm]</td></tr>
  * <tr><th>rb</th><td>bond radius [mm]</td></tr>
  * <tr><th>dd</th><td>dendricity [0-1]</td></tr>

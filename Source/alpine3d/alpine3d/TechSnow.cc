@@ -18,6 +18,8 @@
 #include <alpine3d/TechSnow.h>
 #include <alpine3d/MPIControl.h>
 
+#include <errno.h>
+
 using namespace std;
 using namespace mio;
 
@@ -36,6 +38,41 @@ TechSnow::TechSnow(const mio::Config& cfg, const mio::DEMObject& dem)
 	}
 	
 	MPIControl::instance().broadcast( skiRunsMap );
+}
+
+void TechSnow::readStrategy(const std::string& filename)
+{
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+	
+	const char eoln = mio::FileUtils::getEoln(fin); //get the end of line character for the file
+
+	try {
+		double key, value;
+		do {
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			mio::IOUtils::stripComments(line);
+			mio::IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss( line );
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> key;
+			iss >> std::skipws >> value;
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
 }
 
 short int TechSnow::getRunNumber(const double& dbl_code)

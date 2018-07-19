@@ -32,10 +32,6 @@ SET(snowpacklib_sources
 
 #set compiling targets
 IF(BUILD_SHARED_LIBS)
-	SET(LIB_DEST "lib")
-	IF(WIN32)
-		SET(LIB_DEST "bin") #since for Windows, dlls have to be alongside the exe
-	ENDIF(WIN32)
 	SET(SHAREDNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${SHAREDNAME} ${snowpacklib_sources})
 	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${extra_libs} ${METEOIO_LIBRARIES})

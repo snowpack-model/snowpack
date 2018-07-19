@@ -27,6 +27,7 @@ SET_COMPILER_OPTIONS()
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
+	SET(LIB_DEST "lib")
 	#set a full rpath for both build & install tree
 	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -49,6 +50,7 @@ IF(UNIX)
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
+		SET(LIB_DEST "bin") #since for Windows, dlls have to be alongside the exe
 		#SET(PLATFORM "-D_WIN32 -U__STRICT_ANSI__")
 		ADD_DEFINITIONS(-U__STRICT_ANSI__)
 		SET(DLL_EXT "dll")
@@ -138,9 +140,9 @@ ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/c
 #Build the documentation if doxygen is found
 INCLUDE(FindDoxygen)
 FIND_PACKAGE(Doxygen)
-IF (DOXYGEN_FOUND)
+IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(doc "doxygen" ${PROJECT_SOURCE_DIR}/snowpack/config.dox)
-ENDIF (DOXYGEN_FOUND)
+ENDIF(DOXYGEN_FOUND)
 #Install the documentation if the user desires it
 SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
 IF(INSTALL_DOC)

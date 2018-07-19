@@ -362,6 +362,9 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 	if (vec_argument.size() == 2) {
 		const ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema, debug);
 		grid_out = file.read2DGrid(vec_argument[1]);
+	} else if (vec_argument.size() == 1) {
+		const ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema, debug);
+		grid_out = file.read2DGrid("");
 	} else {
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::read2DGrid is filename:varname", AT);
 	}
@@ -569,23 +572,63 @@ std::pair<Date, Date> ncFiles::getDateRange() const
 std::set<size_t> ncFiles::getParams() const 
 {
 	std::set<size_t> available_params;
-	for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it)
-		available_params.insert( it->first );
+	for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it) {
+		if (it->second.varid!=-1) available_params.insert( it->first );
+	}
 	
 	return available_params;
 }
 
 Grid2DObject ncFiles::read2DGrid(const std::string& varname) const
 {
-	for (std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.begin(); it!=vars.end(); ++it) {
-		if (it->second.attributes.name==varname) return read2DGrid(it->second, IOUtils::npos);
+	ncpp::nc_variable var;
+	
+	if (varname.empty()) { //there must be only 1 valid variable
+		for (std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.begin(); it!=vars.end(); ++it) {
+			if (it->second.attributes.param>=MeteoGrids::nrOfParameters) continue; //exclude associated variables
+			if (it->second.varid!=-1) {
+				if (!var.isUndef()) throw InvalidFormatException("Multiple variables found in file '"+file_and_path+"', please provide a variable name to read", AT);
+				var = it->second;
+			}
+		}
+		for (std::map<std::string, ncpp::nc_variable>::const_iterator it = unknown_vars.begin(); it!=unknown_vars.end(); ++it) {
+			if (it->second.varid!=-1) {
+				if (!var.isUndef()) throw InvalidFormatException("Multiple variables found in file '"+file_and_path+"', please provide a variable name to read", AT);
+				var = it->second;
+			}
+		}
+		
+		if (var.isUndef()) throw NotFoundException("No variable could be found in file '"+file_and_path+"'", AT);
+	} else {
+		//look for variable as normal variable
+		for (std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.begin(); it!=vars.end(); ++it) {
+			if (it->second.attributes.name==varname && it->second.varid!=-1) {
+				var = it->second;
+				break;
+			}
+		}
+		
+		//look for variable as unknown variable
+		if (var.isUndef()) {
+			for (std::map<std::string, ncpp::nc_variable>::const_iterator it = unknown_vars.begin(); it!=unknown_vars.end(); ++it) {
+				if (it->first==varname && it->second.varid!=-1) {
+					var = it->second;
+					break;
+				}
+			}
+		}
+		
+		if (var.isUndef()) throw NotFoundException("The variable '"+varname+"' could not be found in file '"+file_and_path+"'", AT);
 	}
 	
-	for (std::map<std::string, ncpp::nc_variable>::const_iterator it = unknown_vars.begin(); it!=unknown_vars.end(); ++it) {
-		if (it->first==varname) return read2DGrid(it->second, IOUtils::npos);
-	}
+	//now check that the variable has no dependency on time or there is only 1 time step
+	const std::map<size_t, ncpp::nc_dimension>::const_iterator it2 = dimensions_map.find(ncpp::TIME);
+	const int time_id = (it2!=dimensions_map.end())? it2->second.dimid : -1;
+	const bool depend_on_time = (std::find(var.dimids.begin(), var.dimids.end(), time_id) != var.dimids.end());
+	if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it
+		throw InvalidFormatException("No time requirement has been provided for a file that contains multiple timestamps", AT);
 	
-	throw NotFoundException("The variable '"+varname+"' could not be found in file '"+file_and_path+"'", AT);
+	return read2DGrid(var, IOUtils::npos);
 }
 
 Grid2DObject ncFiles::read2DGrid(const size_t& param, const Date& date) const
@@ -931,7 +974,7 @@ std::vector< std::pair<size_t, std::string> > ncFiles::getTSParameters() const
 	//get the dimensions that are required for timeseries
 	int time_dim=IOUtils::inodata, station_dim=IOUtils::inodata;
 	for (std::map<size_t, ncpp::nc_dimension>::const_iterator it=dimensions_map.begin(); it!=dimensions_map.end(); ++it) {
-		if  (it->second.dimid==-1) continue;
+		if (it->second.dimid==-1) continue;
 		if (it->second.param==ncpp::TIME) time_dim = it->second.dimid;
 		if (it->second.param==ncpp::STATION) station_dim = it->second.dimid;
 	}

@@ -145,12 +145,16 @@ class IOManager {
 		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 
+
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result);
 
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string);
-
+		
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+				 const std::vector<StationData>& in_stations, std::vector<double>& result, std::string& info_string);
+		
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
 		 *        The processing level affects the way meteo data is read and processed
@@ -213,14 +217,21 @@ class IOManager {
 		void clear_cache();
 
 	private:
+		static IOHandler::operation_mode setMode(const Config& i_cfg);
+		void initVirtualStations();
+		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);
 		void initIOManager();
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler iohandler;
-		TimeSeriesManager tsm1;
+		TimeSeriesManager tsm1, tsm2;
 		GridsManager gdm1;
 		Meteo2DInterpolator interpolator;
-		bool resampling; ///< Are we performing resampling (grid extract, vstations, etc)?
+		DEMObject source_dem;
+		std::vector<size_t> v_params; ///< Parameters for virtual stations
+		std::vector<StationData> v_stations; ///< metadata for virtual stations
+		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated? (in seconds)
+		const IOHandler::operation_mode mode;
 };
 } //end namespace
 #endif

@@ -40,6 +40,7 @@ class TechSnow
 		static std::string getGridsRequirements() { return "TA RH"; }
 
 	private:
+		static void readStrategy(const std::string& filename);
 		static short int getRunNumber(const double& dbl_code);
 		
 		mio::Grid2DObject skiRunsMap; ///< All ski runs pixels are tagged by ski run and section number
