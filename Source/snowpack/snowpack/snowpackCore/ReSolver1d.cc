@@ -527,6 +527,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	const vanGenuchten::VanGenuchten_ModelTypesSnow VGModelTypeSnow=vanGenuchten::YAMAGUCHI2012;	//[Water retention curve]    Recommended: YAMAGUCHI2012   Set a VanGenuchten model for snow (relates pressure head to theta and vice versa)
 	const vanGenuchten::K_Parameterizations K_PARAM=vanGenuchten::CALONNE;				//[Hydraulic conductivity]   Recommended: CALONNE         Implemented choices: SHIMIZU, CALONNE, based on Shimizu (1970) and Calonne (2012).
 	const SalinityMixingModels SALINITY_MIXING = NONE; //DENSITY_DIFFERENCE; //CAPILLARY_GRAVITY; //DENSITY_DIFFERENCE; //DENSITY_GRAVITY; //DENSITY_DIFFERENCE; //CAPILLARY_GRAVITY; //DENSITY_DIFFERENCE;
+	const SalinityTransport::SalinityTransportSolvers SalinityTransportSolver = SalinityTransport::EXPLICIT;
 
 	//
 	// END OF SETTINGS
@@ -556,6 +557,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
  	} else {					//else it is the first time this function is called.
 		boolFirstFunctionCall=true;		//Set this flag to true, so we know that no previous pressure head information is available, and we can only work with theta.
 	}
+	if(SalinityTransportSolver == SalinityTransport::EXPLICITIMPLICIT) dt = std::min(dt, 1.);
 	double TimeAdvance=0.;				//Time advance of the Richards solver
 
 
@@ -705,8 +707,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				const double tmp_excess_theta=(EMS[i].theta[ICE]-max_theta_ice)*(Constants::density_ice/Constants::density_water);
 				//HACK: how to treat ice layers? The line below that is commented out makes the model spiral out of control...
 				// Produce warning, but not when running for sea ice, because then ice layers are too common.
-				//const double Lh = (EMS[i].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[i])) : (Constants::lh_fusion);
-				//dT[i]+=tmp_excess_theta*(Constants::density_water/Constants::density_ice) / ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Lh ));
+				const double Lh = (EMS[i].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[i])) : (Constants::lh_fusion);
+				dT[i]+=tmp_excess_theta*(Constants::density_water/Constants::density_ice) / ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Lh ));
 				if(variant!="SEAICE") std::cout << "[W] ReSolver1d.cc: ICE LAYER --> WATER CREATED (" << tmp_excess_theta << "): i=" << i << " --- dT=" << dT[i] << " T=" << EMS[i].Te << " theta[WATER]=" << EMS[i].theta[WATER] << " theta[ICE]=" << EMS[i].theta[ICE] << "\n";
 				EMS[i].theta[WATERINDEX]+=tmp_excess_theta;
 				EMS[i].theta[ICE]-=tmp_excess_theta*(Constants::density_water/Constants::density_ice);
@@ -804,7 +806,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			if(EMS[i].theta[WATERINDEX]<theta_d[i]) {
 				const double tmp_missing_theta=(theta_d[i]-EMS[i].theta[WATERINDEX]);	//Not too dry (original)
 				const double Lh = (EMS[i].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[i])) : (Constants::lh_fusion);
-				dT[i]+=tmp_missing_theta*(Constants::density_water/Constants::density_ice) / ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Lh ));
+				//dT[i]+=tmp_missing_theta*(Constants::density_water/Constants::density_ice) / ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Lh ));
 				if (WriteDebugOutputput)
 					std::cout << "WATER CREATED (" << tmp_missing_theta << "): i=" << i << " --- dT=" << dT[i] << " T=" << EMS[i].Te << "  theta[WATER]=" << EMS[i].theta[WATER] << " theta[ICE]=" << EMS[i].theta[ICE] << "\n";
 				EMS[i].theta[WATERINDEX]+=tmp_missing_theta;
@@ -1384,6 +1386,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				Salinity.dz_[i] = dz_[i];
 				Salinity.dz_up[i] = dz_up[i];
 				Salinity.dz_down[i] = dz_down[i];
+				Salinity.theta1[i] = theta_n[i];
+				Salinity.D[i] = 1.E-9;
 				switch (SALINITY_MIXING) {
 					case NONE:
 					{
@@ -1415,16 +1419,16 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					}
 					case DENSITY_DIFFERENCE:
 					{
-						//Separate term constant density (1) and term dependent on density (2)
-						Salinity.flux_up[i] = term_up_crho[i]/dz_up[i] + Xdata.cos_sl*k_np1_m_ip12[i];
-						Salinity.flux_up_2[i] =
+						//Separate term dependent on density (1) and term constant density (2)
+						Salinity.flux_up[i] =
 							+ term_up[i]/dz_up[i] - term_up_crho[i]/dz_up[i]
 							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
+						Salinity.flux_up_2[i] = term_up_crho[i]/dz_up[i] + Xdata.cos_sl*k_np1_m_ip12[i];
 
-						Salinity.flux_down[i] = term_down_crho[i]/dz_down[i] + Xdata.cos_sl*k_np1_m_im12[i];
-						Salinity.flux_down_2[i] =
+						Salinity.flux_down[i] =
 							+ term_down[i]/dz_down[i] - term_down_crho[i]/dz_down[i]
 							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
+						Salinity.flux_down_2[i] = term_down_crho[i]/dz_down[i] + Xdata.cos_sl*k_np1_m_im12[i];
 						break;
 					}
 					case DENSITY_GRAVITY:
@@ -1443,9 +1447,14 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					}
 				}
 				if(i==uppernode) {
-					//Salinity.flux_up[uppernode]+=Salinity.flux_up_2[uppernode];
-					//Salinity.flux_up_2[uppernode]=0.;
+					Salinity.flux_up[uppernode]+=Salinity.flux_up_2[uppernode];
+					Salinity.flux_up_2[uppernode]=0.;
 				}
+				if(i==lowernode) {
+					Salinity.flux_down[lowernode]+=Salinity.flux_down_2[lowernode];
+					Salinity.flux_down_2[lowernode]=0.;
+				}
+
 
 				// r_mpfd is an approximation of how far one is away from the solution. So in case of Dirichlet boundaries, we are *at* the solution:
 				if(aTopBC==DIRICHLET) r_mpfd[uppernode]=0.;
@@ -1454,7 +1463,15 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				r_mpfd2[i]=r_mpfd[i];			// We make a copy for use with DGTSV and TDMA solvers.
 			}
 
-			if(Salinity.VerifyCFL(dt)==false) solver_result=-1;
+			if((SalinityTransportSolver==SalinityTransport::EXPLICIT || (SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT && TimeAdvance<60.)) && Salinity.VerifyCFL(dt)==false) {
+				printf("CFL failed for dt=%.10f\n", dt);
+				solver_result=-1;
+			}
+			if((SalinityTransportSolver==SalinityTransport::IMPLICIT || (SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT && !(TimeAdvance<60.))) && Salinity.VerifyImplicitDt(dt)==false) {
+				printf("ImplicitLimit failed for dt=%.10f\n", dt);
+				solver_result=-1;
+			}
+
 
 			//Before solving the system of equations, reset convergence tracking variables:
 			track_accuracy_h=0.;
@@ -2019,7 +2036,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					Salinity.BrineSal[i] = EMS[i].salinity / theta_n[i];				//Calculate brine salinity
 					Salinity.theta1[i] = theta_n[i];
 					Salinity.theta2[i] = theta_np1_mp1[i];
-					Salinity.D[i] = 0.; //1E-15;
 				}
 				std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
 				double BottomSaltFlux = 0.;
@@ -2028,7 +2044,11 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				BottomSaltFlux += (Salinity.flux_down_2[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity.flux_down_2[i]*dt) : (-1.*Salinity.BrineSal[i]*Salinity.flux_down_2[i]*dt);
 				printf("SALTFLUX: %.15f %.15f\n", TimeAdvance, BottomSaltFlux);
 
-				Salinity.SolveSalinityTransportEquationExplicit(dt, DeltaSal);
+				if((TimeAdvance<60. && SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT) || SalinityTransportSolver==SalinityTransport::EXPLICIT) {
+					Salinity.SolveSalinityTransportEquationExplicit(dt, DeltaSal);
+				} else {
+					Salinity.SolveSalinityTransportEquationImplicit(dt, DeltaSal, 0.5);
+				}
 				for (i = lowernode; i <= uppernode; i++) {
 					EMS[i].salinity = Salinity.BrineSal[i] * theta_np1_mp1[i];
 					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);

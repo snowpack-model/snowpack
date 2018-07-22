@@ -38,9 +38,10 @@ class SalinityTransport {
 		SalinityTransport(size_t nE);		// Class constructor
 
 		bool VerifyCFL(const double dt);
-		bool SolveSalinityTransportEquationImplicit(const double dt, std::vector <double>& DeltaSal);
+		bool VerifyImplicitDt(const double dt);
+		bool SolveSalinityTransportEquationImplicit(const double dt, std::vector <double>& DeltaSal, const double f);
 		bool SolveSalinityTransportEquationExplicit(const double dt, std::vector <double>& DeltaSal);
-
+		enum SalinityTransportSolvers{EXPLICIT, IMPLICIT, EXPLICITIMPLICIT};
 
 		std::vector<double> flux_up;		//Flux with element above (negative=upward, positive=downward)
 		std::vector<double> flux_down;		//Flux with element below (negative=upward, positive=downward)

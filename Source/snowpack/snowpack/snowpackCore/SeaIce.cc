@@ -489,7 +489,6 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 			const double dH = dM / SeaIceDensity;								// Total height to be added
 			const size_t nAddE = std::max(size_t(1), (size_t)(dH / (height_new_seaice_elem*Xdata.cos_sl)));	// Number of elements
 			const double dL = (dH / double(nAddE));								// Height of each individual layer
-printf("OPO: %f %f %d\n", dL, dH, nAddE);
 			for ( size_t j = 0; j < nAddE; j++ ) {
 				dz += dL;
 				nE++;
@@ -615,12 +614,6 @@ printf("OPO: %f %f %d\n", dL, dH, nAddE);
 	// Adjust domain
 	NDS[Xdata.SoilNode].z = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
-		// Pressure head
-		if(EMS[e].VG.defined) {
-			if(EMS[e].h > EMS[e].VG.h_e) {
-				//EMS[e].h += dz;
-			}
-		}
 		// Nodal z
 		NDS[e + 1].z = NDS[e].z + EMS[e].L;
 	}
