@@ -1095,11 +1095,11 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 						// Melt: Only available ice can melt
 						dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
 					} else {
-						// Freeze: Only available liquid water can feeze, and not more than max_ice
+						// Freeze: Only available liquid water can freeze, and not more than max_ice
 						dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_lim);
 					}
 					// Correct volumetric changes in upper and lower half of element proportional to limits
-					dth_i_down[e] = dth_i_up[e] = 0.5 * dth_i_lim;
+					dth_i_down[e] = dth_i_up[e] = dth_i_lim;
 				}
 
 				// Track max. abs. change in ice contents
@@ -1314,8 +1314,11 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	}
 	free(U); free(dU); free(ddU);
 	if(useNewPhaseChange) {
+		// Ensure that when top element consists of ice, its upper node does not exceed melting temperature
+		// This is to have consistent surface energy balance calculation and for having good looking output
+		// With sea ice, this was found to mess up certain things for very low bulk salinity / very high brine salinity.
 		const size_t e=nE-1;
-		if(e==nE-1 && Xdata.Edata[e].theta[ICE]>Constants::eps)
+		if(variant != "SEAICE" && e==nE-1 && Xdata.Edata[e].theta[ICE]>Constants::eps)
 			NDS[e+1].T=std::min(Xdata.Edata[e].melting_tk, NDS[e+1].T);
 	}
 
