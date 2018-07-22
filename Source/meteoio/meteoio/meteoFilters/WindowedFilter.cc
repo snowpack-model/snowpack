@@ -70,7 +70,7 @@ void WindowedFilter::setWindowFParams(const std::vector< std::pair<std::string, 
 	}
 
 	if (!has_min_span && !has_min_pts)
-		throw InvalidArgumentException("Please provide a window width specification (either MIN_PTS or MIN_SPAN) for "+where, AT);
+		throw InvalidArgumentException("Please provide a window width specification (MIN_PTS and MIN_SPAN) for "+where, AT);
 }
 
 /**
