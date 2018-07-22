@@ -2425,14 +2425,11 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 
 	EdataLower.L0 = EdataLower.L = LNew;
 	EdataLower.M += EdataUpper.M;
-	// Calculate temporarily the brine salinity to be conserved, in g/m^2 (relative to theta[WATER], as it is the brine salinity)
-	const double tmp_br_salinity = 0.
-			+ (EdataUpper.theta[WATER] != 0.) ? (L_upper*EdataUpper.salinity/EdataUpper.theta[WATER]) : (0.)
-			+ (EdataLower.theta[WATER] != 0.) ? (L_lower*EdataLower.salinity/EdataLower.theta[WATER]) : (0.);
 	EdataLower.theta[ICE] = (L_upper*EdataUpper.theta[ICE] + L_lower*EdataLower.theta[ICE]) / LNew;
 	EdataLower.theta[WATER] = (L_upper*EdataUpper.theta[WATER] + L_lower*EdataLower.theta[WATER]) / LNew;
 	EdataLower.theta[WATER_PREF] = (L_upper*EdataUpper.theta[WATER_PREF] + L_lower*EdataLower.theta[WATER_PREF]) / LNew;
 	EdataLower.theta[AIR] = 1.0 - EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF] - EdataLower.theta[ICE] - EdataLower.theta[SOIL];
+	EdataLower.salinity = (L_upper * EdataUpper.salinity + L_lower * EdataLower.salinity) / LNew;
 	// For snow, check if there is enough space to store all ice if all water would freeze. This also takes care of cases where theta[AIR]<0.
 	if ((merge==false && topElement==true) && EdataLower.theta[SOIL]<Constants::eps2 && EdataLower.theta[AIR] < (EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*((Constants::density_water/Constants::density_ice)-1.)) {
 		// Note: we can only do this for the uppermost snow element, as otherwise it is not possible to adapt the element length.
@@ -2448,7 +2445,6 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 		EdataLower.theta[WATER_PREF] /= tmpsum;
 	}
 	EdataLower.snowResidualWaterContent();
-	EdataLower.salinity = EdataLower.theta[WATER]*tmp_br_salinity/EdataLower.L;
 	EdataLower.updDensity();
 
 	for (size_t ii = 0; ii < SnowStation::number_of_solutes; ii++) {

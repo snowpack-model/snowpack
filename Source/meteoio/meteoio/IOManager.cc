@@ -168,7 +168,7 @@ IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
 void IOManager::initIOManager()
 {
 	//TODO support extra parameters by getting the param index from vecTrueMeteo[0]
-	if (mode>IOHandler::GRID_EXTRACT) {
+	if (mode>=IOHandler::GRID_EXTRACT) {
 		std::vector<std::string> vecStr;
 		cfg.getValue("Virtual_parameters", "Input", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
@@ -188,12 +188,8 @@ void IOManager::initIOManager()
 				throw InvalidArgumentException("Invalid parameter '" + vecStr[ii] + "', only standard parameters can be extracted from grids for virtual stations! ", AT);
 			v_params.push_back( param_idx );
 		}
+		tsm2.setProcessingLevel(IOUtils::resampled | IOUtils::generated); //in this case, we do not want to re-apply the filters (or force filter pass=2 on tsm2?)
 	}
-	
-	if (mode==IOHandler::VSTATION) { //in this case, we do not want to re-apply the filters
-		tsm2.setProcessingLevel(IOUtils::resampled | IOUtils::generated);
-	}
-	//TODO: force filter pass2 on tsm2?
 	
 	if (mode!=IOHandler::STD) initVirtualStations();
 }
