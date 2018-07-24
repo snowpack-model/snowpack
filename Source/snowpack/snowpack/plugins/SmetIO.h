@@ -41,7 +41,7 @@ class SmetIO : public SnowpackIOInterface {
 		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
 
 		virtual void readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata);
+		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 		                            const ZwischenData& Zdata, const bool& forbackup=false);
@@ -61,18 +61,18 @@ class SmetIO : public SnowpackIOInterface {
 	private:
 		std::string getFilenamePrefix(const std::string& fnam, const std::string& path, const bool addexp=true) const;
 		void writeSnoFile(const std::string& snofilename, const mio::Date& date, const SnowStation& Xdata, const ZwischenData& Zdata, const bool& write_pref_flow) const;
-		mio::Date read_snosmet(const std::string& snofilename, const std::string& stationID, SN_SNOWSOIL_DATA& SSdata) const;
+		mio::Date read_snosmet(const std::string& snofilename, const std::string& stationID, SN_SNOWSOIL_DATA& SSdata, const bool& read_salinity) const;
 		mio::Date read_snosmet_header(const smet::SMETReader& sno_reader, const std::string& stationID,
 		                              SN_SNOWSOIL_DATA& SSdata) const;
 		double compPerpPosition(const double& z_vert, const double& hs_ref, const double& ground, const double& cos_sl) const;
-		std::string getFieldsHeader() const;
+		std::string getFieldsHeader(const SnowStation& Xdata) const;
 		void writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, smet::SMETWriter& smet_writer) const;
 		void writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata, const ProcessDat& Hdata, const double &wind_trans24, smet::SMETWriter& smet_writer) const;
 
 		static void setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer);
 		static void setSnoSmetHeader(const SnowStation& Xdata, const mio::Date& date, smet::SMETWriter& smet_writer);
 		static void setFormatting(const size_t& nr_solutes,
-		                   std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow);
+		                   std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_sea_ice);
 
 		static bool keyExists(const smet::SMETReader& reader, const std::string& key);
 		static double get_doubleval(const smet::SMETReader& reader, const std::string& keyname);

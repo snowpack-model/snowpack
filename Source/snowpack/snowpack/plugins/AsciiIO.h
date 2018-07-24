@@ -33,7 +33,7 @@ class AsciiIO : public SnowpackIOInterface {
 		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
 
 		virtual void readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata);
+		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 		                            const ZwischenData& Zdata, const bool& forbackup=false);

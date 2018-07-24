@@ -74,6 +74,8 @@ class SeaIce {
 		size_t IceSurfaceNode;      ///< Interface node sea ice/snow (m)
 		double OceanHeatFlux;       ///< Ocean heat flux (W/m^2)
 
+		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
+
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
 		salinityprofiles salinityprofile;
 
@@ -88,6 +90,9 @@ class SeaIce {
 		void compFlooding(SnowStation& Xdata);
 		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
 		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM);
+
+		double getBulkSalinity(const SnowStation& Xdata);
+		double getBrineSalinity(const SnowStation& Xdata);
 
 		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt);
 	private:

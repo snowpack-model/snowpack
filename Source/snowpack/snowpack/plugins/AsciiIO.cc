@@ -446,7 +446,7 @@ bool AsciiIO::snowCoverExists(const std::string& i_snowfile, const std::string& 
  * @param Zdata
  */
 void AsciiIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-                            SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata)
+                            SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity)
 {
 	string snofilename = getFilenamePrefix(i_snowfile, i_snowpath, false);
 	if (snofilename.rfind(".snoold") == string::npos) {
@@ -1994,8 +1994,25 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 		// 65-92 (28 columns)
 		if (out_canopy && useCanopyModel)
 			Canopy::DumpCanopyData(fout, &Xdata.Cdata, &Sdata, cos_sl);
-		else
-			fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
+		else {
+			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
+				// Total thickness (m), Ice thickness (m), snow thickness (m), freeboard (m), sea level (m), bulk salinity, average bulk salinity, brine salinity, average brine salinity, bottom salinity flux, top salinity flux
+				fout << "," << std::setprecision(3) << Xdata.cH - Xdata.Ground;
+				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground;
+				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z;
+				fout << "," << std::setprecision(3) << Xdata.Seaice->FreeBoard;
+				fout << "," << std::setprecision(3) << Xdata.Seaice->SeaLevel;
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getBulkSalinity(Xdata);
+				fout << "," << std::setprecision(3) << (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata);
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getBrineSalinity(Xdata);
+				fout << "," << std::setprecision(3) << (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata);
+				fout << "," << std::setprecision(3) << Xdata.Seaice->BottomSalFlux;
+				fout << "," << std::setprecision(3) << Xdata.Seaice->TopSalFlux;
+				fout << ",,,,,,,,,,,,,,,,,";
+			} else {
+				fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
+			}
+		}
 	} else if (out_t) {
 		// 50-93 (44 columns)
 		size_t ii, jj = 0;
@@ -2231,8 +2248,13 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 		if (useCanopyModel && out_canopy) {
 			Canopy::DumpCanopyHeader(fout);
 		} else {
-			// 28 empty fields
-			fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
+				fout << ",Total thickness,Ice thickness,Snow thickness,Freeboard,Sea level,Bulk salinity,Average bulk salinity,Brine salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
+				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+			} else {
+				// 28 empty fields
+				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+			}
 		}
 	} else if (out_t) {
 		size_t jj = 0;
@@ -2291,7 +2313,12 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 		if (out_canopy && useCanopyModel) {
 			Canopy::DumpCanopyUnits(fout);
 		} else {
-			fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
+			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
+				fout << ",m,m,m,m,m,kg m-2,kg m-3,kg m-2,kg m^3,kg m-2,kg m-2";
+				fout << ",,,,,,,,,,,,,,,,,";
+			} else {
+				fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
+			}
 		}
 	} else if (out_t) {
 		size_t jj = 0;
