@@ -60,7 +60,7 @@ const double SeaIce::InitSnowSalinity = 1.;
  ************************************************************/
 
 SeaIce::SeaIce():
-	SeaLevel(0.), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), salinityprofile(SINUSSAL) {}
+	SeaLevel(0.), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), salinityprofile(SINUSSAL) {}
 
 SeaIce& SeaIce::operator=(const SeaIce& source) {
 	if(this != &source) {
@@ -550,6 +550,35 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 	EMS[Xdata.SoilNode].Te = 0.5 * (NDS[Xdata.SoilNode].T + NDS[Xdata.SoilNode+1].T);
 	EMS[Xdata.SoilNode].gradT = (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / EMS[Xdata.SoilNode].L;
 	return;
+}
+
+/**
+ * @brief Returns the total salinity (kg / m^2)
+ * @param Xdata Snow cover data
+ */
+double SeaIce::getBulkSalinity(const SnowStation& Xdata)
+{
+	const size_t nE = Xdata.getNumberOfElements();
+	double ret = 0.;
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		ret += Xdata.Edata[e].salinity * Xdata.Edata[e].L;
+	}
+	return ret;
+}
+
+
+/**
+ * @brief Returns the total brine salinity (kg / m^2)
+ * @param Xdata Snow cover data
+ */
+double SeaIce::getBrineSalinity(const SnowStation& Xdata)
+{
+	const size_t nE = Xdata.getNumberOfElements();
+	double ret = 0.;
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		ret += Xdata.Edata[e].L * (((Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF]) != 0.) ? (Xdata.Edata[e].salinity / (Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF])) : (0.));
+	}
+	return ret;
 }
 
 
