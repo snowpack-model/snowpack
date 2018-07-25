@@ -994,7 +994,7 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 					// read standard values of pixel
 					try {
 						ZwischenData zwischenData; //not used by Alpine3D but necessary for Snowpack
-						readSnowCover(GRID_sno.str(), LUS_sno.str(), sno_type, is_special_point, snow_soil, zwischenData);
+						readSnowCover(GRID_sno.str(), LUS_sno.str(), sno_type, is_special_point, snow_soil, zwischenData, (snowPixel.Seaice!=NULL));
 					} catch (exception& e) {
 						cout << e.what()<<"\n";
 						throw IOException("Can not read snow files", AT);
@@ -1042,37 +1042,37 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 }
 
 void SnowpackInterface::readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const std::string& sno_type,
-                                      const bool& is_special_point, SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData)
+                                      const bool& is_special_point, SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice)
 {
 	// read standard values of pixel
 	if (sno_type=="SMET") { //HACK
 		if (is_special_point && !is_restart) {
 			//special points can come either from LUS snow files or GRID snow files
 			if (smetIO.snowCoverExists(GRID_sno, station_name)) {
-				smetIO.readSnowCover(GRID_sno, station_name, sno, zwischenData);
+				smetIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
 			} else {
-				smetIO.readSnowCover(LUS_sno, station_name, sno, zwischenData);
+				smetIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
 			}
 		} else {
 			if (is_restart) {
-				smetIO.readSnowCover(GRID_sno, station_name, sno, zwischenData);
+				smetIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
 			} else {
-				smetIO.readSnowCover(LUS_sno, station_name, sno, zwischenData);
+				smetIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
 			}
 		}
 	} else {
 		if (is_special_point && !is_restart) {
 			//special points can come either from LUS snow files or GRID snow files
 			if (asciiIO.snowCoverExists(GRID_sno, station_name)) {
-				asciiIO.readSnowCover(GRID_sno, station_name, sno, zwischenData);
+				asciiIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
 			} else {
-				asciiIO.readSnowCover(LUS_sno, station_name, sno, zwischenData);
+				asciiIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
 			}
 		} else {
 			if (is_restart) {
-				asciiIO.readSnowCover(GRID_sno, station_name, sno, zwischenData);
+				asciiIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
 			} else {
-				asciiIO.readSnowCover(LUS_sno, station_name, sno, zwischenData);
+				asciiIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
 			}
 		}
 	}

@@ -100,7 +100,7 @@ class ImisIO : public IOInterface {
 		void readStationMetaData(oracle::occi::Connection*& conn);
 		void convertSnowTemperature(MeteoData& meteo, const std::string& parameter);
 		void convertSensorDepth(MeteoData& meteo, const std::string& parameter);
-		void convertUnits(MeteoData& meteo);
+		void convertUnits(MeteoData& meteo, const bool& reduce_pressure);
 
 		//helper functions for the Anetz coefficient mangling:
 		void findAnetzStations(std::map<std::string, size_t>& mapAnetzNames, std::vector<StationData>& vecAnetzStation) const;

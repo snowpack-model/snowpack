@@ -590,9 +590,10 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
+	const bool reduce_pressure = (tmpmd.meta.stationID!="STB2")? true : false; //unfortunatelly, there is no metadata to know this...
 	for (size_t ii=0; ii<vecResult.size(); ii++) {
 		parseDataSet(vecResult[ii], tmpmd, fullStation);
-		convertUnits(tmpmd);
+		convertUnits(tmpmd, reduce_pressure);
 
 		//For IMIS stations the psum value is a rate (kg m-2 h-1), therefore we need to
 		//divide it by two to conjure the accumulated value for the half hour
@@ -975,7 +976,7 @@ void ImisIO::convertSensorDepth(MeteoData& meteo, const std::string& parameter)
 	}
 }
 
-void ImisIO::convertUnits(MeteoData& meteo)
+void ImisIO::convertUnits(MeteoData& meteo, const bool& reduce_pressure)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
@@ -998,8 +999,12 @@ void ImisIO::convertUnits(MeteoData& meteo)
 		hs /= 100.0;
 	
 	double& p = meteo(MeteoData::P);
-	if (p != IOUtils::nodata)
-		p *= 100. * Atmosphere::stdAirPressure(meteo.meta.position.getAltitude()) / Cst::std_press;
+	if (p != IOUtils::nodata) {
+		if (reduce_pressure) 
+			p *= 100. * Atmosphere::stdAirPressure(meteo.meta.position.getAltitude()) / Cst::std_press;
+		else
+			p *= 100.; //simply convert the units
+	}
 
 	//convert extra parameters (if present) //HACK TODO: find a dynamic way...
 	convertSnowTemperature(meteo, "TS1");

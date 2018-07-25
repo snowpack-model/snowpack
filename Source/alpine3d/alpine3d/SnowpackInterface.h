@@ -171,7 +171,7 @@ class Runoff; // forward declaration, cyclic header include
 		
 		std::vector<SnowStation*> readInitalSnowCover();
 		void readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const std::string& sno_type,
-		                   const bool& is_special_point, SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData);
+		                   const bool& is_special_point, SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice);
 		void writeSnowCover(const mio::Date& date, const std::vector<SnowStation*>& snow_station);
 
 		void write_SMET_header(const mio::StationData& meta, const double& landuse_code) const;
