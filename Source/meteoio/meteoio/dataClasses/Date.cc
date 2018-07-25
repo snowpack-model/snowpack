@@ -1099,14 +1099,23 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 		throw UnknownValueException("Date object is undefined!", AT);
 	
 	//the date are displayed in LOCAL timezone (more user friendly)
-	const double julian_out = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	const double julian_out = (gmt || (type==ISO_Z))? gmt_julian : GMTToLocal(gmt_julian);
 	int year_out, month_out, day_out, hour_out, minute_out;
 	double second_out;
 	calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out, second_out);
+	double whole_sec;
+	const double subseconds = modf( second_out, &whole_sec);
+	std::string subsec_str;
+	if (subseconds!=0) {
+		std::ostringstream subsec_tmp;
+		subsec_tmp << std::fixed << '.' << setw(3) << setprecision(3) << setfill('0') << (int)(subseconds*1000. + .5);
+		subsec_str = subsec_tmp.str();
+	}
 
 	std::ostringstream tmpstr;
 	switch(type) {
 		case(ISO_TZ):
+		case(ISO_Z):
 		case(ISO):
 			tmpstr
 			<< setw(4) << setfill('0') << year_out << "-"
@@ -1114,8 +1123,10 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out << ":"
-			<< setw(2) << setfill('0') << second_out;
-			if (type==ISO_TZ) {
+			<< setw(2) << setfill('0') << whole_sec << subsec_str;
+			if (type==ISO_Z) {
+				tmpstr << "Z";
+			} else if (type==ISO_TZ) {
 				int tz_h, tz_min;
 				if (timezone>=0.) {
 					tz_h = static_cast<int>(timezone);
@@ -1130,18 +1141,6 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 				<< setw(2) << setfill('0') << tz_min;
 			}
 			break;
-		case(ISO_Z):
-			int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
-			double gmt_second;
-			calculateValues(julian_out, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second);
-			tmpstr
-			<< setw(4) << setfill('0') << gmt_year << "-"
-			<< setw(2) << setfill('0') << gmt_month << "-"
-			<< setw(2) << setfill('0') << gmt_day << "T"
-			<< setw(2) << setfill('0') << gmt_hour << ":"
-			<< setw(2) << setfill('0') << gmt_minute << ":"
-			<< setw(2) << setfill('0') << gmt_second << "Z";
-			break;
 		case(ISO_DATE):
 			tmpstr
 			<< setw(4) << setfill('0') << year_out << "-"
@@ -1155,7 +1154,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(2) << setfill('0') << day_out
 			<< setw(2) << setfill('0') << hour_out
 			<< setw(2) << setfill('0') << minute_out
-			<< setw(2) << setfill('0') << second_out;
+			<< setw(2) << setfill('0') << whole_sec;
 			break;
 		case(FULL):
 			tmpstr
@@ -1174,7 +1173,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(4) << setfill('0') << year_out << " "
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out << ":"
-			<< setw(2) << setfill('0') << second_out;
+			<< setw(2) << setfill('0') << whole_sec << subsec_str;
 			break;
 		case(ISO_WEEK):
 		{

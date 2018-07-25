@@ -81,14 +81,14 @@ namespace mio {
 
 class Date {
 	public:
-		///Keywords for selecting the date formats
+		///Keywords for selecting the date formats (the subsecond resolution is dropped when not needed)
 		typedef enum {
-			ISO, ///< ISO 8601 extended format combined date: YYYY-MM-DDTHH:mm:SS (fields might be dropped, in the least to the most significant order)
+			ISO, ///< ISO 8601 extended format combined date: YYYY-MM-DDTHH:mm:SS.sss (fields might be dropped, in the least to the most significant order)
 			ISO_TZ, ///< ISO 8601 format (same as ISO) but with time zone specification
 			ISO_Z, ///< ISO 8601 format, forcing GMT and Zulu (Z) timezone specification
 			FULL, ///< ISO 8601 followed by the julian date (in parenthesis)
 			NUM, ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
-			DIN, ///<DIN5008 format: DD.MM.YYYY HH:MM
+			DIN, ///<DIN5008 format: DD.MM.YYYY HH:MM:SS.sss
 			ISO_WEEK, ///< ISO 8601 week date: YYYY-Www-D (for example: 2014-W41-1)
 			ISO_DATE ///< ISO 8601 date format without the time (ie YYYY-MM-DD)
 		} FORMATS;

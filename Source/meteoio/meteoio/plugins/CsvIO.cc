@@ -54,6 +54,7 @@ namespace mio {
  * - METEOPATH: the directory where the data files are available (mandatory);
  * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
  * - POSITION\#: coordinates of the station (default: reading key "POSITION"; see (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax));
+ * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false).
  * 
  * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
  * - CSV\#_DELIMITER: field delimiter to use (default: ',');
@@ -76,7 +77,7 @@ namespace mio {
  * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
  * column of the file, including the date and time.
  * 
- * @note Since most parameter won't have names that are recognized by MeteoIO, it is necessary to map them to \ref meteoparam "MeteoIO's internal names". 
+ * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names". 
  * This is done either by using the CSV_FIELDS key or using the \ref data_move "data renaming" feature of the 
  * \ref data_manipulations "Raw Data Editing" stage.
  * 
@@ -639,16 +640,17 @@ const size_t CsvIO::streampos_every_n_lines = 2000; //save streampos every 2000 
 
 CsvIO::CsvIO(const std::string& configfile) 
       : cfg(configfile), indexer_map(), csvparam(), vecStations(),
-        coordin(), coordinparam() { parseInputOutputSection(); }
+        coordin(), coordinparam(), silent_errors(false) { parseInputOutputSection(); }
 
 CsvIO::CsvIO(const Config& cfgreader)
       : cfg(cfgreader), indexer_map(), csvparam(), vecStations(),
-        coordin(), coordinparam() { parseInputOutputSection(); }
+        coordin(), coordinparam(), silent_errors(false) { parseInputOutputSection(); }
 
 void CsvIO::parseInputOutputSection()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
 	
+	silent_errors = cfg.get("CSV_SILENT_ERRORS", "Input", IOUtils::nothrow);
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
 	const std::string meteopath = cfg.get("METEOPATH", "Input");
 	const std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
@@ -792,6 +794,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
+		IOUtils::trim( line );
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 		
 		const size_t nr_curr_data_fields = IOUtils::readLineToVec(line, tmp_vec, params.csv_delim);
@@ -799,14 +802,21 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		if (nr_curr_data_fields!=nr_of_data_fields) {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares (either as first data line or columns headers or units offset/multiplier) " << nr_of_data_fields << " columns ";
-			ss << "but this does not match the following line:\n" << line << "\n";
-			throw InvalidFormatException(ss.str(), AT);
+			ss << "but this does not match line " << linenr << ":\n'" << line << "'\n";
+			if (silent_errors) {
+				std::cerr << ss.str();
+				continue;
+			} else throw InvalidFormatException(ss.str(), AT);
 		}
 		
 		const Date dt( params.parseDate(tmp_vec[params.date_col], tmp_vec[params.time_col]) );
 		if (dt.isUndef()) {
 			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-			throw InvalidFormatException("Date or time could not be read in file \'"+filename+"' at line "+linenr_str, AT);
+			const std::string err_msg( "Date or time could not be read in file \'"+filename+"' at line "+linenr_str );
+			if (silent_errors) {
+				std::cerr << err_msg << "\n";
+				continue;
+			} else throw InvalidFormatException(err_msg, AT);
 		}
 		if (!prev_dt.isUndef()) {
 			const bool asc = (dt>prev_dt);
@@ -824,6 +834,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		
 		MeteoData md(template_md);
 		md.setDate(dt);
+		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (ii==params.date_col || ii==params.time_col) continue;
 			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
@@ -832,13 +843,18 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {
 				const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-				throw InvalidFormatException("Could not parse field '"+tmp_vec[ii]+"' in file \'"+filename+"' at line "+linenr_str, AT);
+				const std::string err_msg( "Could not parse field '"+tmp_vec[ii]+"' in file \'"+filename+"' at line "+linenr_str );
+				if (silent_errors) {
+					std::cerr << err_msg << "\n";
+					no_errors = false;
+					continue;
+				} else throw InvalidFormatException(err_msg, AT);
 			}
 			if (use_multiplier) tmp *= params.units_multiplier[ii];
 			if (use_offset) tmp += params.units_offset[ii];
 			md( params.csv_fields[ii] ) = tmp;
 		}
-		vecMeteo.push_back( md );
+		if (no_errors) vecMeteo.push_back( md );
 	}
 	
 	if (count_dsc>count_asc) std::reverse(vecMeteo.begin(), vecMeteo.end()); //since we might have DST, we might have localy asc/dsc order...

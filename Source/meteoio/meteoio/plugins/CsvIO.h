@@ -99,6 +99,7 @@ class CsvIO : public IOInterface {
 		std::vector<StationData> vecStations;
 		std::string coordin, coordinparam; //projection parameters
 		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
+		bool silent_errors; ///< when reading a file, should errors throw or just be ignored?
 };
 
 } //namespace
