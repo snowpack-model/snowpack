@@ -15,4 +15,5 @@ SET(dataGenerators_sources
 	dataGenerators/StdPressGenerator.cc
 	dataGenerators/TauCLDGenerator.cc
 	dataGenerators/TsGenerator.cc
+	dataGenerators/WindComponents.cc
 )

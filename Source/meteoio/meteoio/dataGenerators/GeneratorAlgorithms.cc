@@ -30,6 +30,7 @@
 #include <meteoio/dataGenerators/StdPressGenerator.h>
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
 #include <meteoio/dataGenerators/TsGenerator.h>
+#include <meteoio/dataGenerators/WindComponents.h>
 
 namespace mio {
 
@@ -97,6 +98,7 @@ namespace mio {
  * - TAU_CLD: generate the atmospheric transmissivity based on cloud cover fraction (see TauCLDGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
  * - PRECSPLITTING: generate the precipitation phase and/or convert between amount / phase and split precipitation (see PrecSplitting)
+ * - WINDCOMPONENTS: generate the wind velocity and/or wind direction from the U and V wind components (see WindComponents)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -150,6 +152,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 		return new AllSkySWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "CLEARSKY_SW"){
 		return new ClearSkySWGenerator(vecArgs, i_algoname);
+	} else if (algoname == "WINDCOMPONENTS"){
+		return new WindComponents(vecArgs, i_algoname);
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else if (algoname == "PRECSPLITTING"){
