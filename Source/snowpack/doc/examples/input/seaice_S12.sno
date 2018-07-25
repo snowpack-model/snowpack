@@ -22,8 +22,8 @@ CanopyDirectThroughfall = 1
 WindScalingFactor = 1
 ErosionLevel      = 0
 TimeCountDeltaHS  = 0
-fields        = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo
+fields        = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo Sal
 [DATA]
-2014-01-17T18:32 1.54000 271.56 0.95 0.00 0.05 0.00 0.00 0.00 0.00 3.00 2.00 1.00 0.00 7.00 0.00 100.00   0 0.00
-2014-01-17T18:32 0.02000 271.56 0.95 0.00 0.05 0.00 0.00 0.00 0.00 3.00 2.00 1.00 0.00 007.00 0.00 1.00   0 0.00
-2014-01-17T18:32 0.01800 271.56 0.12 0.00 0.88 0.00 0.00 0.00 0.00 0.15 0.09 0.00 0.00 0.00 0.00 1.00   0 0.00
+2014-01-17T18:32 1.54000 271.56 0.95 0.00 0.05 0.00 0.00 0.00 0.00 3.00 2.00 1.00 0.00 7.00 0.00 100.00   0 0.00 0.00
+2014-01-17T18:32 0.02000 271.56 0.95 0.00 0.05 0.00 0.00 0.00 0.00 3.00 2.00 1.00 0.00 007.00 0.00 1.00   0 0.00 0.00
+2014-01-17T18:32 0.01800 271.56 0.12 0.00 0.88 0.00 0.00 0.00 0.00 0.15 0.09 0.00 0.00 0.00 0.00 1.00   0 0.00 0.00
