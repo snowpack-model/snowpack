@@ -802,7 +802,9 @@ void SmetIO::setFormatting(const size_t& nr_solutes,
 	vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].CDot
 	vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].metamo
 
-	if (write_sea_ice) vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].salinity
+	if (write_sea_ice) {
+		vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].salinity
+	}
 
 	for (size_t ii = 0; ii < nr_solutes; ii++) {
 		vec_width.push_back(17); vec_precision.push_back(6); //EMS[e].conc(ICE,ii)
