@@ -723,7 +723,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 						((pos_dot != string::npos) && (pos_slash == string::npos))) //so that the dot is not in a directory name
 						snowfile.erase(pos_dot, snowfile.size()-pos_dot);
 				}
-				snowpackio.readSnowCover(snowfile, vecStationIDs[i_stn], vecSSdata[slope.mainStation], sn_Zdata);
+				snowpackio.readSnowCover(snowfile, vecStationIDs[i_stn], vecSSdata[slope.mainStation], sn_Zdata, (vecXdata[sector].Seaice!=NULL));
 				prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Reading snow cover data for station %s",
 				        vecStationIDs[i_stn].c_str());
 				// NOTE (Is it a HACK?) Reading station meta data provided in meteo data and prebuffering those data
@@ -744,7 +744,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 				sec_snowfile << "" << snowfile << sector;
 				ss.str("");
 				ss << "" << vecSSdata[slope.mainStation].meta.getStationID() << sector;
-				snowpackio.readSnowCover(sec_snowfile.str(), ss.str(), vecSSdata[sector], sn_Zdata);
+				snowpackio.readSnowCover(sec_snowfile.str(), ss.str(), vecSSdata[sector], sn_Zdata, (vecXdata[sector].Seaice!=NULL));
 				vecSSdata[sector].meta.position = vecSSdata[slope.mainStation].meta.getPosition();
 				vecSSdata[sector].meta.stationName = vecSSdata[slope.mainStation].meta.getStationName();
 				if (!current_date.isUndef()) vecSSdata[sector].profileDate = current_date; //this should have been set when processing the main station

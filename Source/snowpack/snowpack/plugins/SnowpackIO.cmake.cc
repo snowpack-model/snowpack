@@ -159,16 +159,16 @@ bool SnowpackIO::snowCoverExists(const std::string& i_snowfile, const std::strin
 }
 
 void SnowpackIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-                               SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata)
+                               SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity)
 {
 	if (input_snow_as_ascii) {
-		asciiio->readSnowCover(i_snowfile, stationID, SSdata, Zdata);
+		asciiio->readSnowCover(i_snowfile, stationID, SSdata, Zdata, read_salinity);
 #ifdef PLUGIN_CAAMLIO
 	} else if (input_snow_as_caaml) {
-		caamlio->readSnowCover(i_snowfile, stationID, SSdata, Zdata);
+		caamlio->readSnowCover(i_snowfile, stationID, SSdata, Zdata, read_salinity);
 #endif
 	} else {
-		smetio->readSnowCover(i_snowfile, stationID, SSdata, Zdata);
+		smetio->readSnowCover(i_snowfile, stationID, SSdata, Zdata, read_salinity);
 	}
 }
 

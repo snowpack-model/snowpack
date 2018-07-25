@@ -260,7 +260,7 @@ bool SmetIO::snowCoverExists(const std::string& i_snowfile, const std::string& /
  * @param Zdata
  */
 void SmetIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata)
+                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity)
 {
 	std::string snofilename( getFilenamePrefix(i_snowfile, i_snowpath, false) );
 	std::string hazfilename(snofilename);
@@ -272,7 +272,7 @@ void SmetIO::readSnowCover(const std::string& i_snowfile, const std::string& sta
 		hazfilename.replace(hazfilename.rfind(".sno"), 4, ".haz");
 	}
 
-	const Date sno_date( read_snosmet(snofilename, stationID, SSdata) );
+	const Date sno_date( read_snosmet(snofilename, stationID, SSdata, read_salinity) );
 	if (FileUtils::fileExists(hazfilename)) {
 		const Date haz_date( read_hazsmet(hazfilename, Zdata) );
 		if (haz_date != sno_date)
@@ -323,7 +323,7 @@ mio::Date SmetIO::read_hazsmet(const std::string& hazfilename, ZwischenData& Zda
 }
 
 //Read SNO SMET file, parse header and fill SSdata with values from the [DATA] section
-mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string& stationID, SN_SNOWSOIL_DATA& SSdata) const
+mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string& stationID, SN_SNOWSOIL_DATA& SSdata, const bool& read_salinity) const
 {
 	smet::SMETReader sno_reader(snofilename);
 	Date profile_date( read_snosmet_header(sno_reader, stationID, SSdata) );
@@ -404,6 +404,8 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 
 		SSdata.Ldata[ll].CDot = vec_data[current_index++];
 		SSdata.Ldata[ll].metamo = vec_data[current_index++];
+
+		if (read_salinity) SSdata.Ldata[ll].salinity = vec_data[current_index++];
 
 		for (size_t ii=0; ii<SnowStation::number_of_solutes; ii++) {
 			SSdata.Ldata[ll].cIce[ii] = vec_data[current_index++];
@@ -623,13 +625,13 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 	stringstream ss;
 	if (write_pref_flow) {
 		// Header in case preferential flow is used
-		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S " //8
-		   << "Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
+		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
 	} else {
 		// Default header
-		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S " //8
-		   << "Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
+		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
 	}
+	ss << " Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
+	if (Xdata.Seaice != NULL) ss << " Sal";
 	for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 		ss << " cIce cWater cAir  cSoil";
 	}
@@ -640,7 +642,7 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 	vector<string> vec_timestamp;
 	vector<double> vec_data;
 	vector<int> vec_width, vec_precision;
-	setFormatting(Xdata.number_of_solutes, vec_width, vec_precision, write_pref_flow);
+	setFormatting(Xdata.number_of_solutes, vec_width, vec_precision, write_pref_flow, (Xdata.Seaice!=NULL));
 	sno_writer.set_width(vec_width);
 	sno_writer.set_precision(vec_precision);
 
@@ -669,6 +671,8 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		vec_data.push_back(1.);
 		vec_data.push_back(EMS[e].CDot);
 		vec_data.push_back(EMS[e].metamo);
+
+		if (Xdata.Seaice != NULL) vec_data.push_back(EMS[e].salinity);
 
 		for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 			vec_data.push_back(EMS[e].conc(ICE,ii));
@@ -763,7 +767,7 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 }
 
 void SmetIO::setFormatting(const size_t& nr_solutes,
-                           std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow)
+                           std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_sea_ice)
 {
 	/*
 	 * When writing a SNOW SMET file each written parameter may have a different
@@ -797,6 +801,8 @@ void SmetIO::setFormatting(const size_t& nr_solutes,
 	vec_width.push_back(4); vec_precision.push_back(0);  //ne
 	vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].CDot
 	vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].metamo
+
+	if (write_sea_ice) vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].salinity
 
 	for (size_t ii = 0; ii < nr_solutes; ii++) {
 		vec_width.push_back(17); vec_precision.push_back(6); //EMS[e].conc(ICE,ii)
@@ -834,7 +840,7 @@ double SmetIO::compPerpPosition(const double& z_vert, const double& hs_ref, cons
 	return pos;
 }
 
-std::string SmetIO::getFieldsHeader() const
+std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 {
 	std::ostringstream os;
 	os << "timestamp ";
@@ -864,15 +870,19 @@ std::string SmetIO::getFieldsHeader() const
 	}
 	if (out_stab)
 		os << "Sclass1 Sclass2 zSd Sd zSn Sn zSs Ss zS4 S4 zS5 S5" << " "; //S5 is liquidWaterIndex
+
 	/*if (out_canopy)
 		os << " ";*/
+
+	if (Xdata.Seaice != NULL)
+		os << "Total_thickness Ice_thickness Snow_thickness Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Brine_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
 
 	return os.str();
 }
 
 void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, smet::SMETWriter& smet_writer) const
 {
-	const std::string fields( getFieldsHeader() );
+	const std::string fields( getFieldsHeader(Xdata) );
 	setBasicHeader(Xdata, fields, smet_writer);
 	smet_writer.set_header_value("tz", tz);
 	if (out_haz) { // HACK To avoid troubles in A3D
@@ -992,6 +1002,15 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	/*if (out_canopy) { //HACK
 		os << " ";
 	}	*/
+	if (Xdata.Seaice != NULL) {
+		plot_description << "total_thickness  ice_thickness  snow_thickness  freeboard  sea_level  bulk_salinity  avg_bulk_salinity  brine_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
+		plot_units << "m m m m m kg/m2 kg/m3 kg/m2 kg/m3 kg/m2 kg/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_min << "" << " ";
+		plot_max << "" << " ";
+	}
 
 	smet_writer.set_header_value("units_offset", units_offset.str());
 	smet_writer.set_header_value("units_multiplier", units_multiplier.str());
@@ -1131,6 +1150,21 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 
 	/*if (out_canopy)
 		os << " ";*/
+
+	if (Xdata.Seaice != NULL) {
+		data.push_back( Xdata.cH - Xdata.Ground );
+		data.push_back( Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground );
+		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z );
+		data.push_back( Xdata.Seaice->FreeBoard );
+		data.push_back( Xdata.Seaice->SeaLevel );
+		data.push_back( Xdata.Seaice->getBulkSalinity(Xdata) );
+		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
+		data.push_back( Xdata.Seaice->getBrineSalinity(Xdata) );
+		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
+		data.push_back( (Xdata.Seaice->BottomSalFlux));
+		data.push_back( (Xdata.Seaice->TopSalFlux));
+	}
+
 	smet_writer.write(timestamp, data);
 }
 
@@ -1148,7 +1182,7 @@ void SmetIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sdat
 				throw InvalidNameException(filename, AT);
 
 		if (FileUtils::fileExists(filename)) {
-			tsWriters[filename] = new smet::SMETWriter(filename, getFieldsHeader(), IOUtils::nodata); //set to append mode
+			tsWriters[filename] = new smet::SMETWriter(filename, getFieldsHeader(Xdata), IOUtils::nodata); //set to append mode
 		} else {
 			tsWriters[filename] = new smet::SMETWriter(filename);
 			writeTimeSeriesHeader(Xdata, Mdata.date.getTimeZone(), *tsWriters[filename]);
