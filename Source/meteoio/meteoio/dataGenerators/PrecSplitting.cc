@@ -67,7 +67,7 @@ bool PrecSplitting::create(const size_t& param, std::vector<MeteoData>& vecMeteo
 	if (!acceptedParameter)
 		throw InvalidArgumentException("Only the PSUM_L and PSUM_S parameters are supported by the "+where+" generator", AT);
 	
-	bool all_filled = true;	
+	bool all_filled = true;
 	if (param==MeteoData::PSUM_PH) {
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			double &value = vecMeteo[ii](param);
