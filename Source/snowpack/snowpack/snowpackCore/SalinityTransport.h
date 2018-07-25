@@ -56,6 +56,8 @@ class SalinityTransport {
 		std::vector<double> D;			//Diffusivity
 		std::vector<double> sb;			//Source/sink term for brine salinity
 
+		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
+
 	private:
 		void SetDomainSize(size_t nE);
 		size_t NumberOfElements;

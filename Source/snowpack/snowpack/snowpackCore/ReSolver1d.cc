@@ -526,7 +526,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	//Set parameterization for hydraulic functions for snow
 	const vanGenuchten::VanGenuchten_ModelTypesSnow VGModelTypeSnow=vanGenuchten::YAMAGUCHI2012;	//[Water retention curve]    Recommended: YAMAGUCHI2012   Set a VanGenuchten model for snow (relates pressure head to theta and vice versa)
 	const vanGenuchten::K_Parameterizations K_PARAM=vanGenuchten::CALONNE;				//[Hydraulic conductivity]   Recommended: CALONNE         Implemented choices: SHIMIZU, CALONNE, based on Shimizu (1970) and Calonne (2012).
-	const SalinityMixingModels SALINITY_MIXING = NONE; //DENSITY_DIFFERENCE; //CAPILLARY_GRAVITY; //DENSITY_DIFFERENCE; //DENSITY_GRAVITY; //DENSITY_DIFFERENCE; //CAPILLARY_GRAVITY; //DENSITY_DIFFERENCE;
+	const SalinityMixingModels SALINITY_MIXING = NONE; //DENSITY_DIFFERENCE;
 	const SalinityTransport::SalinityTransportSolvers SalinityTransportSolver = SalinityTransport::EXPLICIT;
 
 	//
@@ -2032,30 +2032,29 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//
 				// For sea ice, deal with salinity flux
 				//
+
+				// Set the SalinityTransport vector with the solution after liquid water flow
+				std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
 				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
 					Salinity.BrineSal[i] = EMS[i].salinity / theta_n[i];				//Calculate brine salinity
 					Salinity.theta1[i] = theta_n[i];
 					Salinity.theta2[i] = theta_np1_mp1[i];
 				}
-				std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
-				double BottomSaltFlux = 0.;
-				i=lowernode;
-				BottomSaltFlux += (Salinity.flux_down[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity.flux_down[i]*dt) : (-1.*Salinity.BrineSal[i]*Salinity.flux_down[i]*dt);
-				BottomSaltFlux += (Salinity.flux_down_2[i]<0.) ? (-1.*SeaIce::OceanSalinity*Salinity.flux_down_2[i]*dt) : (-1.*Salinity.BrineSal[i]*Salinity.flux_down_2[i]*dt);
-				printf("SALTFLUX: %.15f %.15f\n", TimeAdvance, BottomSaltFlux);
 
+				// Solve the transport equation
 				if((TimeAdvance<60. && SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT) || SalinityTransportSolver==SalinityTransport::EXPLICIT) {
 					Salinity.SolveSalinityTransportEquationExplicit(dt, DeltaSal);
+					//Salinity.SolveSalinityTransportEquationImplicit(dt, DeltaSal, 1.);
 				} else {
 					Salinity.SolveSalinityTransportEquationImplicit(dt, DeltaSal, 0.5);
 				}
+
+				// Apply and verify solution
 				for (i = lowernode; i <= uppernode; i++) {
 					EMS[i].salinity = Salinity.BrineSal[i] * theta_np1_mp1[i];
 					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);
-				}
 
-				//Verify new salinity profile
-				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
+					//Verify new salinity profile
 					if(EMS[i].salinity < 0.) {
 						if(EMS[i].salinity>-Constants::eps) {
 							EMS[i].salinity = 0.;
@@ -2067,6 +2066,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					}
 					Xdata.Edata[i].melting_tk = Xdata.Edata[i].freezing_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::freezing_tk;
 				}
+
+				Xdata.Seaice->BottomSalFlux += Salinity.BottomSalFlux;
+				Xdata.Seaice->TopSalFlux += Salinity.TopSalFlux;
 			}
 
 			for (i = lowernode; i <= uppernode; i++) {				//Cycle through all Richards solver domain layers.

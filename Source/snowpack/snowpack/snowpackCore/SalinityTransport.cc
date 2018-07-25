@@ -59,7 +59,8 @@
  * @param nE Domain size
  */
 SalinityTransport::SalinityTransport(const size_t nE)
-           : flux_up(), flux_down(), flux_up_2(), flux_down_2(),dz_(), dz_up(), dz_down(), theta1(), theta2(), BrineSal(), D(), sb(), NumberOfElements(0)
+           : flux_up(), flux_down(), flux_up_2(), flux_down_2(),dz_(), dz_up(), dz_down(), theta1(), theta2(), BrineSal(), D(), sb(),
+	     BottomSalFlux(0.), TopSalFlux(0.), NumberOfElements(0)
 {
 	SetDomainSize(nE);
 }
@@ -180,6 +181,19 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 
 		// The r.h.s. vector source/sink term:
 		b[i] += -sb[i];
+
+		// Track boundary fluxes
+		if(i==0) {
+			// Lower boundary advection
+			BottomSalFlux = dt * (1. - f) * (- flux_down[i] * SeaIce::OceanSalinity) / (dz_up[i] + dz_down[i]) +
+					dt * (1. - f) * (- flux_down_2[i] * SeaIce::OceanSalinity) / (dz_up[i] + dz_down[i]);
+		}
+		/*if(i==NumberOfElements-1) {
+			// Upper boundary advection
+			TopSalFlux    =  BrineSal[i] * flux_up[i] * dt - BrineSal[i] * flux_up_2[i] * dt +
+				tmp_flux   * dt * (  (tmp_flux   > 0.)   ?  ((TopFluxSalinity - BrineSal[i]) / dz_down[i])  :  (0.)  ) +
+				tmp_flux_2 * dt * (  (tmp_flux_2 > 0.)   ?  ((TopFluxSalinity - BrineSal[i]) / dz_down[i])  :  (0.)  );
+		}*/
 	}
 
 
@@ -192,8 +206,8 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 	// Add the terms from "out of boundary" advection
 	b[0] += -f * (flux_down[0] * SeaIce::OceanSalinity) / (dz_up[0] + dz_down[0]);
 	b[0] += -f * (flux_down_2[0] * SeaIce::OceanSalinity) / (dz_up[0] + dz_down[0]);
-	b[NumberOfElements-1] += f * (flux_down[NumberOfElements-1] * 0.) / (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]);
-	b[NumberOfElements-1] += f * (flux_down_2[NumberOfElements-1] * 0.) / (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]);
+	b[NumberOfElements-1] += f * (flux_up[NumberOfElements-1] * 0.) / (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]);
+	b[NumberOfElements-1] += f * (flux_up_2[NumberOfElements-1] * 0.) / (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]);
 
 
 	if(WriteDebugOutput) {
@@ -246,6 +260,22 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		BrineSal[i]=b[i];
 	}
 
+
+		// Track boundary fluxes
+		/*if(i==0) {
+			// Lower boundary advection
+			BottomSalFlux = -BrineSal[i] * flux_down[i] * dt - BrineSal[i] * flux_down_2[i] * dt +
+				tmp_flux   * dt * (  (tmp_flux   > 0.)   ?  (0.)  :  ((BrineSal[i] - SeaIce::OceanSalinity) / dz_down[i])  ) +
+				tmp_flux_2 * dt * (  (tmp_flux_2 > 0.)   ?  (0.)  :  ((BrineSal[i] - SeaIce::OceanSalinity) / dz_down[i])  );
+		}
+		if(i==NumberOfElements-1) {
+			// Upper boundary advection
+			TopSalFlux    =  BrineSal[i] * flux_up[i] * dt - BrineSal[i] * flux_up_2[i] * dt +
+				tmp_flux   * dt * (  (tmp_flux   > 0.)   ?  ((TopFluxSalinity - BrineSal[i]) / dz_down[i])  :  (0.)  ) +
+				tmp_flux_2 * dt * (  (tmp_flux_2 > 0.)   ?  ((TopFluxSalinity - BrineSal[i]) / dz_down[i])  :  (0.)  );
+		}*/
+
+
 	return true;
 }
 
@@ -292,6 +322,25 @@ bool SalinityTransport::SolveSalinityTransportEquationExplicit(const double dt, 
 		b[i] += -sb[i];
 
 		b[i] /= theta2[i];
+
+		// Track boundary fluxes
+		if(i==0) {
+			// Lower boundary advection
+			BottomSalFlux = -BrineSal[i] * flux_down[i] * dt - BrineSal[i] * flux_down_2[i] * dt +
+				flux_down[i]   * dt * (  /*(tmp_flux   > 0.)   ?  (0.)  :*/  ((BrineSal[i] - SeaIce::OceanSalinity) / dz_down[i])  ) +
+				flux_down_2[i] * dt * (  /*(tmp_flux_2 > 0.)   ?  (0.)  : */ ((BrineSal[i] - SeaIce::OceanSalinity) / dz_down[i])  );
+			// Lower boundary diffusion
+			BottomSalFlux += dt * (-D[i] * theta1[i] * BrineSal[i] + D[i] * theta1[i] * SeaIce::OceanSalinity) / (dz_down[i]);
+
+		}
+		if(i==NumberOfElements-1) {
+			// Upper boundary advection
+			TopSalFlux    =  BrineSal[i] * flux_up[i] * dt - BrineSal[i] * flux_up_2[i] * dt +
+				tmp_flux   * dt * (  (tmp_flux   > 0.)   ?  ((TopFluxSalinity - BrineSal[i]) / dz_down[i])  :  (0.)  ) +
+				tmp_flux_2 * dt * (  (tmp_flux_2 > 0.)   ?  ((TopFluxSalinity - BrineSal[i]) / dz_down[i])  :  (0.)  );
+			// Upper boundary diffusion
+			TopSalFlux += dt * (-D[i] * theta1[i] * BrineSal[i] + D[i] * theta1[i] * TopFluxSalinity) / (dz_up[i]);
+		}
 	}
 
 	// Apply solution
