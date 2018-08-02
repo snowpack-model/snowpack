@@ -22,12 +22,10 @@
 
 namespace mio {
 
-const double WinstralListonAlgorithm::dmax = 300.;
-
 WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
 		                               GridsManager& i_gdm, Meteo2DInterpolator& i_mi)
                   : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"), ref_station(),
-                    inputIsAllZeroes(false)
+                    inputIsAllZeroes(false), dmax(300.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_base=false, has_ref=false;
@@ -39,6 +37,8 @@ WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<st
 		} else if(vecArgs[ii].first=="BASE") {
 			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
 			has_base = true;
+		} else if (vecArgs[ii].first=="DMAX") {
+			IOUtils::parseArg(vecArgs[ii], where, dmax);
 		}
 	}
 
