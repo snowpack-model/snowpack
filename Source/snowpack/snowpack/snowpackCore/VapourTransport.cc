@@ -140,8 +140,8 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 	 * In both cases: add/subtract mass to MS_SUBLIMATION
 	 */
 	if (ql > Constants::eps2) { // Add Mass
-		const double melting_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk : Constants::melting_tk;
-		if (Tss < melting_tk) { // Add Ice
+		const double meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
+		if (Tss < meltfreeze_tk) { // Add Ice
 			dM = ql*sn_dt/Constants::lh_sublimation;
 			//if rh is very close to 1, vw too high or ta too high, surface hoar is destroyed and should not be formed
 			if (!((Mdata.rh > hoar_thresh_rh) || (Mdata.vw > hoar_thresh_vw) || (Mdata.ta >= IOUtils::C_TO_K(hoar_thresh_ta)))) {
@@ -413,7 +413,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 				dHoar = std::max(-NDS[nN-1].hoar, deltaM[e]);
 			}
 		} else {		// Mass gain: add water in case temperature at or above melting point, ice otherwise
-			if (EMS[e].Te >= EMS[e].freezing_tk) {
+			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
 			} else {
 				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
