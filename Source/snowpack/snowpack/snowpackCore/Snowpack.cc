@@ -891,7 +891,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 	// Set bare ground surface temperature with no soil and return
 	if (nN == 1) {
-		if ((Mdata.ts0 > Constants::melting_tk) && ((Mdata.ts0 - Mdata.ta) > 10.))
+		if ((Mdata.ts0 > Constants::meltfreeze_tk) && ((Mdata.ts0 - Mdata.ta) > 10.))
 			NDS[0].T = (Mdata.ts0 + Mdata.ta) / 2.;
 		else
 			NDS[0].T = Mdata.ts0;
@@ -953,12 +953,12 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	// This only in case the soil_flux is not used.
 	if (!(soil_flux)) {
 		if ((EMS[0].theta[ICE] >= min_ice_content)) {
-			// NOTE if there is water and ice in the base element, then the base temperature MUST be melting_tk
+			// NOTE if there is water and ice in the base element, then the base temperature MUST be meltfreeze_tk
 			if ((EMS[0].theta[WATER] > SnowStation::thresh_moist_snow)) {
-				NDS[0].T = EMS[0].melting_tk;
+				NDS[0].T = EMS[0].meltfreeze_tk;
 			} else if (!useSoilLayers) {
 				// To avoid temperatures above freezing while snow covered
-				NDS[0].T = std::min(Mdata.ts0, EMS[0].melting_tk);
+				NDS[0].T = std::min(Mdata.ts0, EMS[0].meltfreeze_tk);
 			} else {
 				NDS[0].T = Mdata.ts0;
 			}
@@ -1063,29 +1063,29 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				const double dth_i_down_in = dth_i_down[e];
 
 				if (Xdata.Seaice != NULL) {
-					// For sea ice, balance the melting_tk with assuming thermal equilibrium with the brine:
-					// (1): Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
-					// (2): BrineSal_new = (Xdata.Edata[e].salinity /  Xdata.Edata[e].theta[WATER] + deltaTheta);
-					// (3): deltaTheta = A * (0.5 * (U[e+1] + U[e]) - Xdata.Edata[e].melting_tk) * (Constants::density_water / Constants::density_ice);
+					// For sea ice, balance the meltfreeze_tk with assuming thermal equilibrium with the brine:
+					// (1): Xdata.Edata[e].meltfreeze_tk = Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+					// (2): BrineSal_new = (Xdata.Edata[e].salinity /  (Xdata.Edata[e].theta[WATER] + deltaTheta));
+					// (3): deltaTheta = A * (0.5 * (U[e+1] + U[e]) - Xdata.Edata[e].meltfreeze_tk) * (Constants::density_water / Constants::density_ice);
 					// Balancing equations (1), (2) and (3) derived using wxmaxima:
 					// T=-m*s/(th+(A*(u-T)))+c
 					// solve(%i1,T);
 					// With:
-					// T = Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk
+					// T = Xdata.Edata[e].meltfreeze_tk
 					// m = SeaIce::mu
 					// s = Xdata.Edata[e].salinity
 					// th = tmp_Theta
 					// A = A * f
 					// u = tmp_T
-					// c = Constants::melting_tk
+					// c = Constants::meltfreeze_tk
 					const double f = Constants::density_ice / Constants::density_water;
 					const double tmp_T = 0.5 * (U[e+1] + U[e]);
 					const double tmp_Theta = Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * f;
-					Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * Constants::freezing_tk) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * Constants::freezing_tk * tmp_Theta + 4. * A * f * SeaIce::mu * Xdata.Edata[e].salinity + A * f * A * f * Constants::freezing_tk * Constants::freezing_tk) - A * f * tmp_T - tmp_Theta - A * f * Constants::freezing_tk) / (2. * A * f);
+					Xdata.Edata[e].meltfreeze_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * Constants::meltfreeze_tk) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * Constants::meltfreeze_tk * tmp_Theta + 4. * A * f * SeaIce::mu * Xdata.Edata[e].salinity + A * f * A * f * Constants::meltfreeze_tk * Constants::meltfreeze_tk) - A * f * tmp_T - tmp_Theta - A * f * Constants::meltfreeze_tk) / (2. * A * f);
 				}
 
-				dth_i_up[e] += A * (Xdata.Edata[e].melting_tk - U[e+1]);	// change in volumetric ice content in upper half of element
-				dth_i_down[e] += A * (Xdata.Edata[e].melting_tk - U[e]);	// change in volumetric ice content in lower half of element
+				dth_i_up[e] += A * (Xdata.Edata[e].meltfreeze_tk - U[e+1]);	// change in volumetric ice content in upper half of element
+				dth_i_down[e] += A * (Xdata.Edata[e].meltfreeze_tk - U[e]);	// change in volumetric ice content in lower half of element
 
 				// This approach is not stable, may introduce oscillations such that the temperature equation doesn't converge
 				const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
@@ -1114,7 +1114,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
 					const double ThetaWater_new = (Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * (Constants::density_ice / Constants::density_water));
 					const double BrineSal_new = (ThetaWater_new == 0.) ? (0.) : (Xdata.Edata[e].salinity / ThetaWater_new);
-					Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
+					Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
 				}
 			}
 			EL_INCID( e, Ie );
@@ -1203,7 +1203,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		 * must be constant. This means that the fluxes must be treated explicitely
 		 * (see neumannBoundaryConditions)
 		 */
-		if (U[nE] + ddU[nE] > EMS[nE-1].melting_tk || EMS[nE-1].theta[WATER] > 0.) {
+		if (U[nE] + ddU[nE] > EMS[nE-1].meltfreeze_tk || EMS[nE-1].theta[WATER] > 0.) {
 			ControlTemp = 0.007;
 			MaxItnTemp = std::max(MaxItnTemp, (unsigned)200); // NOTE originally 100;
 		}
@@ -1319,7 +1319,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		// With sea ice, this was found to mess up certain things for very low bulk salinity / very high brine salinity.
 		const size_t e=nE-1;
 		if(variant != "SEAICE" && e==nE-1 && Xdata.Edata[e].theta[ICE]>Constants::eps)
-			NDS[e+1].T=std::min(Xdata.Edata[e].melting_tk, NDS[e+1].T);
+			NDS[e+1].T=std::min(Xdata.Edata[e].meltfreeze_tk, NDS[e+1].T);
 	}
 
 	return TempEqConverged;
@@ -1653,8 +1653,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	// Let's check for the solid precipitation thresholds:
 	// -> check relative humidity as well as difference between air and snow surface temperatures,
 	//    that is, no new snow during cloud free conditions!
-	const double melting_tk = (nOldE>0)? Xdata.Edata[nOldE-1].melting_tk : Constants::melting_tk;
-	const double dtempAirSnow = (change_bc && !meas_tss)? Mdata.ta - melting_tk : Mdata.ta - t_surf; //we use t_surf only if meas_tss & change_bc
+	const double meltfreeze_tk = (nOldE>0)? Xdata.Edata[nOldE-1].meltfreeze_tk : Constants::meltfreeze_tk;
+	const double dtempAirSnow = (change_bc && !meas_tss)? Mdata.ta - meltfreeze_tk : Mdata.ta - t_surf; //we use t_surf only if meas_tss & change_bc
 
 	const bool snow_fall = (((((Mdata.rh > thresh_rh) && (Mdata.psum_ph<1.) && (dtempAirSnow < thresh_dtempAirSnow))
                                || !enforce_measured_snow_heights || (Xdata.hn > 0.)) && (forcing=="ATMOS")) || ((Mdata.psum_ph<1.) && (forcing=="MASSBAL")));                        
@@ -1969,15 +1969,15 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 		// Set and adjust boundary conditions
 		surfaceCode = NEUMANN_BC;
-		double melting_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk : Constants::melting_tk;
-		t_surf = std::min(melting_tk, Xdata.Ndata[Xdata.getNumberOfNodes()-1].T);
+		double meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
+		t_surf = std::min(meltfreeze_tk, Xdata.Ndata[Xdata.getNumberOfNodes()-1].T);
 		if (forcing == "MASSBAL") {
 			if(!(Mdata.surf_melt>0.)) {
 				// always use Dirichlet boundary conditions with massbal forcing, when no melt is going on
 				surfaceCode = DIRICHLET_BC;
 			} else {
 				// in case melting is going on, top node is at melting conditions and we prescribe prescribed melt as Neumann boundary condition
-				t_surf = Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk;
+				t_surf = Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk;
 			}
 		} else if ((change_bc && meas_tss) && ((Mdata.tss < IOUtils::C_TO_K(thresh_change_bc)) && Mdata.tss != IOUtils::nodata)) {
 			surfaceCode = DIRICHLET_BC;
@@ -2065,8 +2065,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				if ((change_bc && meas_tss) && (surfaceCode == NEUMANN_BC)
 						&& (Xdata.Ndata[Xdata.getNumberOfNodes()-1].T < mio::IOUtils::C_TO_K(thresh_change_bc))) {
 					surfaceCode = DIRICHLET_BC;
-					melting_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk : Constants::melting_tk;
-					Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = std::min(Mdata.tss, melting_tk); /*C_TO_K(thresh_change_bc/2.);*/
+					meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
+					Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = std::min(Mdata.tss, meltfreeze_tk); /*C_TO_K(thresh_change_bc/2.);*/
 					// update the snow albedo
 					Xdata.pAlbedo = getParameterizedAlbedo(Xdata, Mdata);
 					Xdata.Albedo = getModelAlbedo(Xdata, Mdata); //either parametrized or measured
@@ -2110,7 +2110,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						if (Xdata.Seaice != NULL) {
 							// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
 							const double BrineSal_new = (Xdata.Edata[e].theta[WATER] == 0.) ? (0.) : (Xdata.Edata[e].salinity / Xdata.Edata[e].theta[WATER]);
-							Xdata.Edata[e].melting_tk = Xdata.Edata[e].freezing_tk = -SeaIce::mu * BrineSal_new + Constants::freezing_tk;
+							Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
 						}
 					}
 				}

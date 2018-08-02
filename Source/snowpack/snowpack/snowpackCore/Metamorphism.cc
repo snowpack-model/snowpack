@@ -486,7 +486,7 @@ double Metamorphism::PressureSintering(ElementData& Edata)
 	if (Edata.theta[ICE] < Snowpack::min_ice_content) {
 		return 0.;
 	}
-	if (Edata.Te > Edata.melting_tk) {
+	if (Edata.Te > Edata.meltfreeze_tk) {
 		return 0.;
 	}
 
@@ -713,7 +713,7 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
 			}
 		}
 		// Check for first complete melt-freeze cycle
-		else if ((marker < 20) && (marker >= 10) && (EMS[e].Te < EMS[e].melting_tk - 0.3)) {
+		else if ((marker < 20) && (marker >= 10) && (EMS[e].Te < EMS[e].meltfreeze_tk - 0.3)) {
 			EMS[e].mk += 10;
 		}
 
@@ -980,7 +980,7 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 			EMS[e].mk += 10;
 		}
 		// First melt-freeze cycle completed
-		else if ((marker < 20) && (marker >= 10) && (EMS[e].Te < EMS[e].melting_tk - 0.3)) {
+		else if ((marker < 20) && (marker >= 10) && (EMS[e].Te < EMS[e].meltfreeze_tk - 0.3)) {
 			EMS[e].mk += 10;
 		}
 

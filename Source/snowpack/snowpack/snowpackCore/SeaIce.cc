@@ -297,7 +297,7 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 {
 	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958.
-	Edata.melting_tk = Edata.freezing_tk = SeaIce::calculateMeltingTemperature(Edata.salinity);
+	Edata.meltfreeze_tk = SeaIce::calculateMeltingTemperature(Edata.salinity);
 	return;
 }
 
@@ -377,7 +377,7 @@ double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
 	// See Eq. 5
 	const double L0 = Constants::lh_fusion;
 	const double c0 = Constants::specific_heat_ice;
-	return c0 * (Edata.melting_tk - Edata.Te) + L0 * (1. + (SeaIce::mu * Edata.salinity) / Edata.Te);
+	return c0 * (Edata.meltfreeze_tk - Edata.Te) + L0 * (1. + (SeaIce::mu * Edata.salinity) / Edata.Te);
 }
 
 
@@ -544,7 +544,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 		NDS[e + 1].z = NDS[e].z + EMS[e].L;
 	}
 
-	// Ocean water is infinite, so as much ice will be created as energy available, i.e., the bottom node is at melting_tk!
+	// Ocean water is infinite, so as much ice will be created as energy available, i.e., the bottom node is at meltfreeze_tk!
 	calculateMeltingTemperature(EMS[Xdata.SoilNode]);
 	if (nE > 0) NDS[Xdata.SoilNode].T = SeaIce::calculateMeltingTemperature(SeaIce::OceanSalinity);
 	EMS[Xdata.SoilNode].Te = 0.5 * (NDS[Xdata.SoilNode].T + NDS[Xdata.SoilNode+1].T);

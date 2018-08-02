@@ -572,7 +572,7 @@ double Canopy::IntRate(const double& capacity, const double& storage, const doub
 double Canopy::CanopyAlbedo(const double& tair, const double& wetfrac)
 {
 	// Albedo of partly "wet" canopy = weighted average of dry and wet parts
-	if (tair > Constants::melting_tk ) {
+	if (tair > Constants::meltfreeze_tk ) {
 		return (wetfrac * Canopy::can_alb_wet + (1. - wetfrac) * Canopy::can_alb_dry);
 	} else {
 		return (wetfrac * Canopy::can_alb_snow + (1. - wetfrac) * Canopy::can_alb_dry);
@@ -1123,7 +1123,7 @@ void Canopy::CanopyEvaporationComponents(const double& ce_canopy,
                                       double& LECANOPYCORR,
                                       const double& wetfraction, const double& HM0, const double& HM1)
 {
-	if ( ta > Constants::freezing_tk ) {
+	if ( ta > Constants::meltfreeze_tk ) {
 		CanopyEvaporation = DT * 3600.0 * LECANOPY / Constants::lh_vaporization; // [mm]
 	} else {
 		CanopyEvaporation = DT * 3600.0 * LECANOPY / Constants::lh_sublimation;  // [mm]
@@ -1139,7 +1139,7 @@ void Canopy::CanopyEvaporationComponents(const double& ce_canopy,
                 if ( INTEVAP > I ) {
 			INTEVAP = I;
 			CanopyEvaporation = INTEVAP + TRANSPIRATION;
-			if ( ta > Constants::freezing_tk ) {
+			if ( ta > Constants::meltfreeze_tk ) {
 				LECANOPYCORR = CanopyEvaporation * Constants::lh_vaporization / (DT * 3600.0);
 			} else {
 				LECANOPYCORR = CanopyEvaporation * Constants::lh_sublimation / (DT * 3600.0);
@@ -1196,7 +1196,7 @@ void Canopy::CanopyEvaporationComponents2L(const double& ce_canopy,
                                       const double& wetfraction,
                                       const double& HM0, const double& HM1)
 {
-	if ( ta > Constants::freezing_tk ) {
+	if ( ta > Constants::meltfreeze_tk ) {
 		CanopyEvaporation = DT * 3600.0 * LECANOPY / Constants::lh_vaporization; // [mm]
 	} else {
 		CanopyEvaporation = DT * 3600.0 * LECANOPY / Constants::lh_sublimation;  // [mm]
@@ -1212,7 +1212,7 @@ void Canopy::CanopyEvaporationComponents2L(const double& ce_canopy,
                 if ( INTEVAP > I ) {
 			INTEVAP = I;
 			CanopyEvaporation = INTEVAP + TRANSPIRATION;
-			if ( ta > Constants::freezing_tk ) {
+			if ( ta > Constants::meltfreeze_tk ) {
 				LECANOPYCORR = CanopyEvaporation * Constants::lh_vaporization / (DT * 3600.0);
 			} else {
 				LECANOPYCORR = CanopyEvaporation * Constants::lh_sublimation / (DT * 3600.0);
