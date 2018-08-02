@@ -41,6 +41,7 @@ namespace mio {
  * to provide any necessary arguments for this base method!
  *  - DW_SYNOP: provide a fixed synoptic wind bearing that is used for all time steps (optional);
  *  - REF: provides the station_id of the station to get the wind direction from (optional);
+ *  - DMAX: maximum search distance or radius (default: 300m);
  *
  * If neither the DW_SYNOP nor REF arguments have been provided, the synoptic wind direction will be computed as follow:
  * the stations are located in the DEM and their wind shading (or exposure) is computed. If at least one station is found
@@ -53,6 +54,7 @@ namespace mio {
  * PSUM::algorithms         = WINSTRAL
  * PSUM::winstral::base     = idw_lapse
  * PSUM::winstral::dw_synop = 180
+ * PSUM::winstral::dmax     = 300
  * @endcode
  */
 class WinstralAlgorithm : public InterpolationAlgorithm {
@@ -74,7 +76,7 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		std::string base_algo_user, ref_station;
 		double user_synoptic_bearing;
 		bool inputIsAllZeroes;
-		static const double dmax;
+		double dmax;
 };
 
 } //end namespace mio

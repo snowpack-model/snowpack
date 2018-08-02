@@ -37,7 +37,7 @@ class WinstralListonAlgorithm : public InterpolationAlgorithm {
 		GridsManager& gdm;
 		std::string base_algo_user, ref_station;
 		bool inputIsAllZeroes;
-		static const double dmax;
+		double dmax;
 };
 
 } //end namespace mio
