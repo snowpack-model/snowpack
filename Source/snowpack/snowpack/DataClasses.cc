@@ -379,13 +379,13 @@ void SurfaceFluxes::collectSurfaceFluxes(const BoundCond& Bdata,
 	if(Xdata.SoilNode>0) {
 		dIntEnergySoil += Xdata.dIntEnergySoil;
 		// Now take care of the source and sink terms:
-		dIntEnergySoil += (mass[MS_SOIL_RUNOFF] * Constants::specific_heat_water * (Xdata.Edata[0].Te - Constants::melting_tk));
+		dIntEnergySoil += (mass[MS_SOIL_RUNOFF] * Constants::specific_heat_water * (Xdata.Edata[0].Te - Constants::meltfreeze_tk));
 		if (Xdata.SoilNode <  Xdata.getNumberOfElements()) {
-			dIntEnergySoil -= mass[MS_SNOWPACK_RUNOFF] * Constants::specific_heat_water * (Xdata.Edata[Xdata.SoilNode].Te - Constants::melting_tk);
+			dIntEnergySoil -= mass[MS_SNOWPACK_RUNOFF] * Constants::specific_heat_water * (Xdata.Edata[Xdata.SoilNode].Te - Constants::meltfreeze_tk);
 		}
 		if (Xdata.SoilNode == Xdata.getNumberOfElements()) {
 			//Note: at this stage, MS_RAIN is still in kg/m^2! In Main.cc, it is recalculated to kg/m^2/h if PRECIP_RATES==TRUE.
-			dIntEnergySoil -= (mass[MS_RAIN] + mass[MS_EVAPORATION] + mass[MS_SUBLIMATION]) * Constants::specific_heat_water * (Xdata.Edata[Xdata.SoilNode-1].Te - Constants::melting_tk);
+			dIntEnergySoil -= (mass[MS_RAIN] + mass[MS_EVAPORATION] + mass[MS_SUBLIMATION]) * Constants::specific_heat_water * (Xdata.Edata[Xdata.SoilNode-1].Te - Constants::meltfreeze_tk);
 		}
 		meltFreezeEnergySoil += Xdata.meltFreezeEnergySoil;
 	}
@@ -796,7 +796,7 @@ void CanopyData::initializeSurfaceExchangeData()
 // Class ElementData
 const unsigned short int ElementData::noID = static_cast<unsigned short int>(-1);
 ElementData::ElementData(const unsigned short int& in_ID) : depositionDate(), L0(0.), L(0.),
-                             Te(0.), gradT(0.), melting_tk(Constants::melting_tk), freezing_tk(Constants::freezing_tk),
+                             Te(0.), gradT(0.), meltfreeze_tk(Constants::meltfreeze_tk),
                              theta((size_t)N_COMPONENTS), h(Constants::undefined), conc((size_t)N_COMPONENTS, SnowStation::number_of_solutes), k((size_t)N_SN_FIELDS), c((size_t)N_SN_FIELDS), soil((size_t)N_SOIL_FIELDS),
                              Rho(0.), M(0.), sw_abs(0.),
                              rg(0.), dd(0.), sp(0.), ogs(0.), rb(0.), N3(0.), mk(0),
@@ -807,7 +807,7 @@ ElementData::ElementData(const unsigned short int& in_ID) : depositionDate(), L0
 
 ElementData::ElementData(const ElementData& cc) :
                              depositionDate(cc.depositionDate), L0(cc.L0), L(cc.L),
-                             Te(cc.Te), gradT(cc.gradT), melting_tk(cc.melting_tk), freezing_tk(cc.freezing_tk),
+                             Te(cc.Te), gradT(cc.gradT), meltfreeze_tk(cc.meltfreeze_tk),
                              theta(cc.theta), h(cc.h), conc(cc.conc), k(cc.k), c(cc.c), soil(cc.soil),
                              Rho(cc.Rho), M(cc.M), sw_abs(cc.sw_abs),
                              rg(cc.rg), dd(cc.dd), sp(cc.sp), ogs(cc.ogs), rb(cc.rb), N3(cc.N3), mk(cc.mk),
@@ -823,8 +823,7 @@ std::ostream& operator<<(std::ostream& os, const ElementData& data)
 	os.write(reinterpret_cast<const char*>(&data.L), sizeof(data.L));
 	os.write(reinterpret_cast<const char*>(&data.Te), sizeof(data.Te));
 	os.write(reinterpret_cast<const char*>(&data.gradT), sizeof(data.gradT));
-	os.write(reinterpret_cast<const char*>(&data.melting_tk), sizeof(data.melting_tk));
-	os.write(reinterpret_cast<const char*>(&data.freezing_tk), sizeof(data.freezing_tk));
+	os.write(reinterpret_cast<const char*>(&data.meltfreeze_tk), sizeof(data.meltfreeze_tk));
 
 	const size_t s_theta = data.theta.size();
 	os.write(reinterpret_cast<const char*>(&s_theta), sizeof(size_t));
@@ -897,8 +896,7 @@ std::istream& operator>>(std::istream& is, ElementData& data)
 	is.read(reinterpret_cast<char*>(&data.L), sizeof(data.L));
 	is.read(reinterpret_cast<char*>(&data.Te), sizeof(data.Te));
 	is.read(reinterpret_cast<char*>(&data.gradT), sizeof(data.gradT));
-	is.read(reinterpret_cast<char*>(&data.melting_tk), sizeof(data.melting_tk));
-	is.read(reinterpret_cast<char*>(&data.freezing_tk), sizeof(data.freezing_tk));
+	is.read(reinterpret_cast<char*>(&data.meltfreeze_tk), sizeof(data.meltfreeze_tk));
 
 	size_t s_theta;
 	is.read(reinterpret_cast<char*>(&s_theta), sizeof(size_t));
@@ -1040,26 +1038,21 @@ void ElementData::heatCapacity()
 	double c_p;
 
 	c_p  = Constants::density_air * theta[AIR] * Constants::specific_heat_air;
-	if (salinity > 0. && theta[ICE] > 0.94) {
-		c_p += Constants::density_ice * theta[ICE] * SeaIce::compSeaIceHeatCapacity(Te, salinity);
-		c_p += Constants::density_water * (theta[WATER] + theta[WATER_PREF]) * Constants::specific_heat_water;
-	} else {
-		c_p += Constants::density_ice * theta[ICE] * Constants::specific_heat_ice;
-		c_p += Constants::density_water * (theta[WATER] + theta[WATER_PREF]) * Constants::specific_heat_water;
-	}
+	c_p += Constants::density_ice * theta[ICE] * Constants::specific_heat_ice;
+	c_p += Constants::density_water * (theta[WATER] + theta[WATER_PREF]) * Constants::specific_heat_water;
 	c_p += soil[SOIL_RHO] * theta[SOIL] * soil[SOIL_C];
 	c_p /= Rho;
 	c[TEMPERATURE] = c_p;
 }
 
 /**
- * @brief Computes cold content of an element, taking melting_tk as reference
+ * @brief Computes cold content of an element, taking meltfreeze_tk as reference
  * @version 10.08
  * @return Cold content (J m-2)
  */
 double ElementData::coldContent() const
 {
-	return (Rho * c[TEMPERATURE] * (Te - Constants::melting_tk) * L);
+	return (Rho * c[TEMPERATURE] * (Te - Constants::meltfreeze_tk) * L);
 }
 
 /**
@@ -1898,7 +1891,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	SoilNode = 0;
 	Ground = 0.0;
 	Ndata.front().z = 0.;
-	Ndata.front().T = (SSdata.nLayers > 0)? SSdata.Ldata.front().tl : Constants::melting_tk;
+	Ndata.front().T = (SSdata.nLayers > 0)? SSdata.Ldata.front().tl : Constants::meltfreeze_tk;
 	Ndata.front().u = 0.;
 	Ndata.front().f = 0.;
 	Ndata.front().udot = 0.;

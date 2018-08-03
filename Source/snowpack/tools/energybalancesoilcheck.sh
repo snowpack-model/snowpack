@@ -4,7 +4,7 @@
 # pl "<(cat ./output.txt | awk '{sum+=$16; print sum}')" u 1 w l title 'energy in', "<(cat ./output.txt | awk '{sum+=$17; print -1.0*sum}')" w l title 'energy out', "<(cat ./output.txt | awk '{sum+=$15; print 1.0*sum}')" w l title 'storage'
 if [ $# -lt 1 ]; then
         echo "This script reads a met-file (provided as first argument) and writes the energy balance on the stdout and statistics to stderr." > /dev/stderr
-	echo "Invoke with: ./energybalancecheck.sh <met file> [firstdate=YYYYMMDD] [lastdate=YYYYMMDD]" > /dev/stderr
+	echo "Invoke with: ./energybalancesoilcheck.sh <met file> [firstdate=YYYYMMDD] [lastdate=YYYYMMDD]" > /dev/stderr
 	echo "" > /dev/stderr
 	echo "Note: 1) the energy balance represents only the snow cover energy balance!" > /dev/stderr
 	echo "      2) the energy balance can only be properly checked when the output resolution of the met file is the" > /dev/stderr
@@ -21,10 +21,10 @@ if [ $# -lt 1 ]; then
 	echo "     turbulent and radiative fluxes at the surface. These fluxes are shown in the output." > /dev/stderr
 	echo "" > /dev/stderr
 	echo "Examples:" > /dev/stderr
-	echo " ./energybalancecheck.sh WFJ2_flat.met > output.txt	Writes energy balance in output.txt and shows overall energy balance statistics on screen." > /dev/stderr
-	echo " ./energybalancecheck.sh WFJ2_flat.met > /dev/null	Just shows overall energy balance statistics on screen." > /dev/stderr
-	echo " ./energybalancecheck.sh WFJ2_flat.met | less		View the energy balance in less." > /dev/stderr
-	echo " ./energybalancecheck.sh WFJ2_flat.met firstdate=20071001 lastdate=20080323" > /dev/stderr
+	echo " ./energybalancesoilcheck.sh WFJ2_flat.met > output.txt	Writes energy balance in output.txt and shows overall energy balance statistics on screen." > /dev/stderr
+	echo " ./energybalancesoilcheck.sh WFJ2_flat.met > /dev/null	Just shows overall energy balance statistics on screen." > /dev/stderr
+	echo " ./energybalancesoilcheck.sh WFJ2_flat.met | less		View the energy balance in less." > /dev/stderr
+	echo " ./energybalancesoilcheck.sh WFJ2_flat.met firstdate=20071001 lastdate=20080323" > /dev/stderr
 	echo "								  Determines energy balance between 1st of October 2007" > /dev/stderr
 	echo "								     up to and including 23rd of March 2008." > /dev/stderr
         exit
@@ -51,20 +51,20 @@ fi
 
 # Check if file exists
 if [ ! -e "${met_file}" ]; then
-	echo "energybalancecheck.sh: ERROR: file ${met_file} does not exist or cannot be opened!" > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: file ${met_file} does not exist or cannot be opened!" > /dev/stderr
 	exit
 fi
 
 # Check if file is not empty
 if [ ! -s "${met_file}" ]; then
-	echo "energybalancecheck.sh: ERROR: file ${met_file} is empty!" > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: file ${met_file} is empty!" > /dev/stderr
 	exit
 fi
 
 # Read header from met file
 header=`cat ${met_file} | grep -m 1 ^ID`
 if [ -z "${header}" ]; then
-	echo "energybalancecheck.sh: ERROR: no header found." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: no header found." > /dev/stderr
 	exit
 fi
 
@@ -82,6 +82,7 @@ colSHF=`echo ${header} | sed 's/,/\n/g' | grep -nx "Sensible heat" | awk -F: '{p
 colLHF=`echo ${header} | sed 's/,/\n/g' | grep -nx "Latent heat" | awk -F: '{print $1}'`
 colOLWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Outgoing longwave radiation" | awk -F: '{print $1}'`
 colILWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Incoming longwave radiation" | awk -F: '{print $1}'`
+colNetLWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Net absorbed longwave radiation" | awk -F: '{print $1}'`
 colRSWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Reflected shortwave radiation" | awk -F: '{print $1}'`
 colISWR=`echo ${header} | sed 's/,/\n/g' | grep -nx "Incoming shortwave radiation" | awk -F: '{print $1}'`
 colsoilheat=`echo ${header} | sed 's/,/\n/g' | grep -nx "Heat flux at ground surface" | awk -F: '{print $1}'`
@@ -92,7 +93,7 @@ colPhchEnergy=`echo ${header} | sed 's/,/\n/g' | grep -nx "Melt freeze part of i
 
 error=0
 if [ -z "${coldatetime}" ]; then
-	echo "energybalancecheck.sh: ERROR: date/time not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: date/time not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colhsmeasured}" ]; then
@@ -104,48 +105,52 @@ if [ -z "${colhsmodel}" ]; then
 	error=1
 fi
 if [ -z "${colSHF}" ]; then
-	echo "energybalancecheck.sh: ERROR: sensible heat flux (SHF) not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: sensible heat flux (SHF) not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colLHF}" ]; then
-	echo "energybalancecheck.sh: ERROR: latent heat flux (LHF) not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: latent heat flux (LHF) not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colOLWR}" ]; then
-	echo "energybalancecheck.sh: ERROR: OLWR not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: OLWR not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colILWR}" ]; then
-	echo "energybalancecheck.sh: ERROR: ILWR not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: ILWR not found in one of the columns." > /dev/stderr
+	error=1
+fi
+if [ -z "${colNetLWR}" ]; then
+	echo "energybalancesoilcheck.sh: ERROR: Net_LWR not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colRSWR}" ]; then
-	echo "energybalancecheck.sh: ERROR: RSWR not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: RSWR not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colISWR}" ]; then
-	echo "energybalancecheck.sh: ERROR: ISWR not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: ISWR not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colsoilheat}" ]; then
-	echo "energybalancecheck.sh: ERROR: soil heat flux not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: soil heat flux not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colbottomheat}" ]; then
-	echo "energybalancecheck.sh: ERROR: bottom heat flux not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: bottom heat flux not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colRainNRG}" ]; then
-	echo "energybalancecheck.sh: ERROR: rain energy not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: rain energy not found in one of the columns." > /dev/stderr
 	error=1
 fi
 if [ -z "${colIntNRG}" ]; then
-	echo "energybalancecheck.sh: ERROR: internal energy change soil not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: internal energy change soil not found in one of the columns." > /dev/stderr
 	echo "  Make sure to set OUT_HAZ = FALSE and OUT_SOILEB = TRUE in the ini-file." > /dev/stderr
 	error=1
 fi
 if [ -z "${colPhchEnergy}" ]; then
-	echo "energybalancecheck.sh: ERROR: phase change energy soil not found in one of the columns." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: phase change energy soil not found in one of the columns." > /dev/stderr
 	echo "  Make sure to set OUT_HAZ = FALSE and OUT_SOILEB = TRUE in the ini-file." > /dev/stderr
 	error=1
 fi
@@ -154,17 +159,17 @@ if [ "${error}" -eq 1 ]; then
 fi
 
 # -- Determine file resolution
-nsamplesperday=`cat ${met_file} | sed '1,/\[DATA\]/d' | awk -F, '{print $'${coldatetime}'}' | awk '{print $1}' | sort | uniq -c | awk '{print $1}' | sort -nu | tail -1`
+nsamplesperday=$(cat ${met_file} | sed '1,/\[DATA\]/d' | awk -F, '{year=substr($2,7,4);month=substr($2,4,2);day=substr($2,1,2);hour=substr($2,12,2);minute=substr($2,15,2);doy1=mktime(sprintf("%04d %02d %02d %02d %02d %02d %d", year, month, day, hour, minute, 0, 0)); print (24*60*60)/(doy1-doy2); doy2=doy1}' | sort | uniq -c | sort -nu | awk '{print $2}' | tail -1)
 if [ -z "${nsamplesperday}" ]; then
-	echo "energybalancecheck.sh: ERROR: file resolution could not be determined." > /dev/stderr
+	echo "energybalancesoilcheck.sh: ERROR: file resolution could not be determined." > /dev/stderr
 	exit
 fi
 
 
 # Create header
-echo "#Date time measured_HS modelled_HS SHF     LHF    OLWR   ILWR   RSWR   ISWR   SoilHeatFlux BottomHeatFlux RainEnergy PhaseChangeEnergy deltaIntEnergy EnergyBalance energy_in energy_out"
-echo "#--   --   --          --          E+      E+     E+     E+     E+     E+     E+           E+             E+         --                E-             error         totals    totals"
-echo "#-    -    cm          cm          W_m-2   W_m-2  W_m-2  W_m-2  W_m-2  W_m-2  W_m-2        W_m-2          W_m-2      W_m-2             W_m-2          W_m-2         W_m-2     W_m-2"
+echo "#Date time measured_HS modelled_HS SHF     LHF    OLWR   ILWR_absorb   RSWR   ISWR   SoilHeatFlux BottomHeatFlux RainEnergy PhaseChangeEnergy deltaIntEnergy EnergyBalance energy_in energy_out"
+echo "#--   --   --          --          E+      E+     E+     E+            E+     E+     E+           E+             E+         --                E-             error         totals    totals"
+echo "#-    -    cm          cm          W_m-2   W_m-2  W_m-2  W_m-2         W_m-2  W_m-2  W_m-2        W_m-2          W_m-2      W_m-2             W_m-2          W_m-2         W_m-2     W_m-2"
 
 
 # Process data (note that the lines below are all piped together).
@@ -172,7 +177,7 @@ echo "#-    -    cm          cm          W_m-2   W_m-2  W_m-2  W_m-2  W_m-2  W_m
 sed '1,/\[DATA\]/d' ${met_file} | \
 #  -- Select all the energybalance terms, make them correct sign and correct units. Also makes sure some terms are only considered when they are a part of the SNOW energy balance (like SHF, which may also originate from soil).
 #     Note: some terms need a change of sign, others need to be converted from kJ/m^2 to W/m^2 and one needs an extra term to be added.
-awk -F, '{print $'${coldatetime}', $'${colhsmeasured}', $'${colhsmodel}', ($'${colhsmodel}'==0)?($'${colSHF}'):0, ($'${colhsmodel}'==0)?($'${colLHF}'):0, ($'${colhsmodel}'==0)?-1.0*($'${colOLWR}'):0, ($'${colhsmodel}'==0)?($'${colILWR}'):0, ($'${colhsmodel}'==0)?-1.0*($'${colRSWR}'):0, ($'${colhsmodel}'==0)?($'${colISWR}'):0, ($'${colhsmodel}'>0.0)?(-1.0*$'${colsoilheat}'):0, $'${colbottomheat}', ($'${colhsmodel}'==0)?($'${colRainNRG}'):0, $'${colPhchEnergy}'*(1000.0/((24.0/'${nsamplesperday}')*3600)), ($'${colIntNRG}'!=-999.0)?(1000.0*$'${colIntNRG}'/((24.0/'${nsamplesperday}')*3600)):0}' | \
+awk -F, '{print $'${coldatetime}', $'${colhsmeasured}', $'${colhsmodel}', ($'${colhsmodel}'==0)?($'${colSHF}'):0, ($'${colhsmodel}'==0)?($'${colLHF}'):0, ($'${colhsmodel}'==0)?-1.0*($'${colOLWR}'):0, ($'${colhsmodel}'==0)?($'${colOLWR}'+$'${colNetLWR}'):0, ($'${colhsmodel}'==0)?-1.0*($'${colRSWR}'):0, ($'${colhsmodel}'==0)?($'${colISWR}'):0, ($'${colhsmodel}'>0.0)?(-1.0*$'${colsoilheat}'):0, $'${colbottomheat}', ($'${colhsmodel}'==0)?($'${colRainNRG}'):0, $'${colPhchEnergy}'*(1000.0/((24.0/'${nsamplesperday}')*3600)), ($'${colIntNRG}'!=-999.0)?(1000.0*$'${colIntNRG}'/((24.0/'${nsamplesperday}')*3600)):0}' | \
 #  -- Reformat time
 sed 's/\./ /'  | sed 's/\./ /' | sed 's/:/ /' | awk '{printf "%04d%02d%02d %02d%02d", $3, $2, $1, $4, $5; for(i=6; i<=NF; i++) {printf " %s", $i}; printf "\n"}' | \
 # Now select period

@@ -296,8 +296,8 @@ void WaterTransport::compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& 
 	 * potential surface hoar formation/destruction is tested in VapourTransport.
 	 */
 	if (ql > Constants::eps2) { // Add Mass
-		const double melting_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk : Constants::melting_tk;
-		if (!(Tss < melting_tk)) {
+		const double meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
+		if (!(Tss < meltfreeze_tk)) {
 			// Add water
 			if ((iwatertransportmodel_snow != RICHARDSEQUATION && nE>Xdata.SoilNode) || (iwatertransportmodel_soil != RICHARDSEQUATION && nE==Xdata.SoilNode)) {	//NANDER: check if the upper element is not part of the domain solved by the Richards Equation, because if so, we should put it in the surface flux
 				// Add Water
@@ -519,8 +519,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 					EMS[eUpper].theta[ICE] = 0.;
 
 					// Take care of energy used for melting the ice:
-					const double Lh = (EMS[eUpper].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[eUpper])) : (Constants::lh_fusion);
-					const double ql = (EMS[eUpper].theta[ICE] * EMS[eUpper].L * Constants::density_ice * Lh );	// J/m^2
+					const double ql = (EMS[eUpper].theta[ICE] * EMS[eUpper].L * Constants::density_ice * Constants::lh_fusion);	// J/m^2
 
 					// ql is energy crossing the soil-snow interface and should be considered part of the soil-snow heat flux:
 					Sdata.qg0 += ql/sn_dt;
@@ -592,7 +591,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 	if (rnE < nE) {
 		Xdata.reduceNumberOfElements(rnE);
 		if (!useSoilLayers && (rnE == Xdata.SoilNode)) {
-			Xdata.Ndata[Xdata.SoilNode].T = std::min(Constants::melting_tk, Xdata.Ndata[Xdata.SoilNode].T);
+			Xdata.Ndata[Xdata.SoilNode].T = std::min(Constants::meltfreeze_tk, Xdata.Ndata[Xdata.SoilNode].T);
 		}
 		if (verify_top_element && rnE > 0 && rnE > Xdata.SoilNode) {
 			// Note: we have to check for the SoilNode, because verify_top_element may have been set to true, but multiple element removals may have
@@ -818,9 +817,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 		if (iwatertransportmodel_snow != RICHARDSEQUATION && (iwatertransportmodel_soil != RICHARDSEQUATION || nE>Xdata.SoilNode)) {
 			for (size_t eUpper = nE-1, eLower = nE-2; eUpper >= 1; eUpper--, eLower-- ) {
 				// Determine the additional storage capacity due to refreezing
-				const double Lh = (EMS[eUpper].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[eUpper])) : (Constants::lh_fusion);
-				const double dth_w = EMS[eUpper].c[TEMPERATURE] * EMS[eUpper].Rho / Lh / Constants::density_water
-							* std::max(0., EMS[eUpper].melting_tk-EMS[eUpper].Te);
+				const double dth_w = EMS[eUpper].c[TEMPERATURE] * EMS[eUpper].Rho / Constants::lh_fusion / Constants::density_water
+							* std::max(0., EMS[eUpper].meltfreeze_tk-EMS[eUpper].Te);
 				if ((variant=="SEAICE" && Xdata.Seaice!=NULL) && Xdata.Ndata[eUpper].z + 0.5 * Xdata.Edata[eUpper].L < Xdata.Seaice->SeaLevel) {
 					// for sea ice: elements below sea level may fill entire pore space
 					Wres = std::max(0., (1. - Xdata.Edata[eUpper].theta[ICE]) * (Constants::density_ice/Constants::density_water));
@@ -1042,8 +1040,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 		const bool isTopLayerSolvedByREQ = (nE == Xdata.SoilNode || (nE > Xdata.SoilNode && iwatertransportmodel_snow == RICHARDSEQUATION));
 
 		// Only send ql if ql should first be considered as evaporation / condensation, and NOT sublimation / deposition, depending on surface temperature:
-		const double melting_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].melting_tk : Constants::melting_tk;
-		const bool isSurfaceMelting = !(NDS[nE].T < melting_tk);
+		const double meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
+		const bool isSurfaceMelting = !(NDS[nE].T < meltfreeze_tk);
 
 		RichardsEquationSolver1d_matrix.SolveRichardsEquation(Xdata, Sdata, (isTopLayerSolvedByREQ && isSurfaceMelting) ? (ql) : (dummy_ql));					
 		if(Xdata.getNumberOfElements() > Xdata.SoilNode && enable_pref_flow) RichardsEquationSolver1d_pref.SolveRichardsEquation(Xdata, Sdata, dummy_ql);	// Matrix flow will take care of potential evaporation/condensation, provided by ql, so send dummy_ql for preferential flow
@@ -1061,9 +1059,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 	if(variant != "SEAICE") {	//Not for sea ice, where we assume the lowest element to be under water.
 		if((!useSoilLayers && iwatertransportmodel_snow != RICHARDSEQUATION) || iwatertransportmodel_soil != RICHARDSEQUATION) {	//Only if lowest element is snow or we do not use RE for soil.
 			// Determine the additional storage capacity due to refreezing
-			const double Lh = (EMS[0].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[0])) : (Constants::lh_fusion);
-			const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Lh / Constants::density_water
-						* std::max(0., EMS[0].melting_tk-EMS[0].Te);
+			const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Constants::lh_fusion / Constants::density_water
+						* std::max(0., EMS[0].meltfreeze_tk-EMS[0].Te);
 			if (EMS[0].theta[SOIL] < Constants::eps2) {
 				Wres = std::min((1. - EMS[0].theta[ICE]) * Constants::density_ice / Constants::density_water,
 					  EMS[0].res_wat_cont + dth_w);

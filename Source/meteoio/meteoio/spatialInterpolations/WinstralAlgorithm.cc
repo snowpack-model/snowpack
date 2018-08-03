@@ -23,12 +23,10 @@
 
 namespace mio {
 
-const double WinstralAlgorithm::dmax = 300.;
-
 WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
 		                               GridsManager& i_gdm, Meteo2DInterpolator& i_mi)
                   : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"), ref_station(),
-                    user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false)
+                    user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false), dmax(300.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	bool has_ref=false, has_synop=false;
@@ -41,6 +39,8 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
 		} else if(vecArgs[ii].first=="DW_SYNOP") {
 			IOUtils::parseArg(vecArgs[ii], where, user_synoptic_bearing);
 			has_synop = true;
+		} else if (vecArgs[ii].first=="DMAX") {
+			IOUtils::parseArg(vecArgs[ii], where, dmax);
 		}
 	}
 

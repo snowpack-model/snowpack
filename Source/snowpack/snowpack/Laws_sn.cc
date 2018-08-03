@@ -877,7 +877,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 
 	const double rg = MM_TO_M(Edata.rg); //Grain radius (m)
 	const double rb = MM_TO_M(Edata.rb); //Bond radius (m)
-	const double Te = std::min(Edata.Te, Edata.melting_tk); //Element temperature (K)
+	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk); //Element temperature (K)
 
 	// Check for elements with no ice and assume they contain only water
 	if (Edata.theta[ICE] < Snowpack::min_ice_content)
@@ -933,7 +933,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 	const double C5 = (Constants::conductivity_ice * Constants::conductivity_water * Aiw)
 	                  / (rg * Constants::conductivity_water  + (1./C1 - rg) * Constants::conductivity_ice);
 
-	double C_eff  = SnLaws::montana_c_fudge * C1 * (C2 + C3 + C4 + C5) * (2.0 - Edata.dd) * (1.0 + pow(Edata.theta[ICE], 1.7)) * (0.5 + Optim::pow2(Te/Edata.melting_tk) );
+	double C_eff  = SnLaws::montana_c_fudge * C1 * (C2 + C3 + C4 + C5) * (2.0 - Edata.dd) * (1.0 + pow(Edata.theta[ICE], 1.7)) * (0.5 + Optim::pow2(Te/Edata.meltfreeze_tk) );
 
 	if (!((C_eff < 5.*Constants::conductivity_ice) && (C_eff > 0.2*Constants::conductivity_air)) && show_warnings) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Conductivity out of range (0.2*Constants::conductivity_air=%.3lf, 5.*Constants::conductivity_ice=%.3lf):", 0.2 * Constants::conductivity_air, 5. * Constants::conductivity_ice);
@@ -993,7 +993,7 @@ double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	const size_t nElems = Xdata.getNumberOfElements();
 	const double T_air = Mdata.ta;
 	const double Tss = Xdata.Ndata[nElems].T;
-	const double Tse = (nElems > 0) ? (Xdata.Edata[nElems-1].Te) : Constants::melting_tk;
+	const double Tse = (nElems > 0) ? (Xdata.Edata[nElems-1].Te) : Constants::meltfreeze_tk;
 	double eS;
 
 	// Vapor Pressures
@@ -1005,7 +1005,7 @@ double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 
 	// First, the case of no snow
 	if (Xdata.getNumberOfNodes() == Xdata.SoilNode + 1 && nElems > 0) {
-		if ( Tss < Xdata.Edata[nElems-1].melting_tk) {
+		if ( Tss < Xdata.Edata[nElems-1].meltfreeze_tk) {
 			eS = Vp1 ;
 		} else {
 			/*
@@ -1022,8 +1022,8 @@ double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 		}
 	} else {
 		// for snow assume saturation
-		const double melting_tk = (nElems > 0) ? Xdata.Edata[nElems-1].melting_tk : Constants::melting_tk;
-		if (Tss < melting_tk)
+		const double meltfreeze_tk = (nElems > 0) ? Xdata.Edata[nElems-1].meltfreeze_tk : Constants::meltfreeze_tk;
+		if (Tss < meltfreeze_tk)
 			eS = Vp1;
 		else
 			eS = Vp2;
@@ -1066,9 +1066,9 @@ double SnLaws::compLatentHeat(const CurrentMeteo& Mdata, SnowStation& Xdata, con
 
 	double c = compSensibleHeatCoefficient(Mdata, Xdata, height_of_meteo_values);
 
-	if (SurfSoil && (Xdata.Ndata[nElems].T >= Xdata.Edata[nElems-1].melting_tk)
+	if (SurfSoil && (Xdata.Ndata[nElems].T >= Xdata.Edata[nElems-1].meltfreeze_tk)
 		    && (SnLaws::soil_evaporation == EVAP_RESISTANCE)) {
-		const double Tse = (nElems > 0) ? (Xdata.Edata[nElems-1].Te) : Constants::melting_tk;
+		const double Tse = (nElems > 0) ? (Xdata.Edata[nElems-1].Te) : Constants::meltfreeze_tk;
 		const double eA = Mdata.rh * Atmosphere::vaporSaturationPressure( Mdata.ta );
 		const double eS = Atmosphere::vaporSaturationPressure( Tse );
 		if (eS >= eA) {
@@ -1187,7 +1187,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		rho_hn = pow(10., arg);
 
 	} else if (i_hn_model == "PAHAUT") {
-		rho_hn = 109. + 6.*(IOUtils::C_TO_K(TA) - Constants::melting_tk) + 26.*sqrt(VW);
+		rho_hn = 109. + 6.*(IOUtils::C_TO_K(TA) - Constants::meltfreeze_tk) + 26.*sqrt(VW);
 
 	} else if (i_hn_model == "NIED") {
 		rho_hn = 62. + 3.6 * VW - 0.2 * TA;
@@ -1319,14 +1319,14 @@ double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 		const double criticalExp = (current_variant == "POLAR") ? (0.3) : (0.7); //0.5; //0.3; //
 		const double T_r = 265.15; // Reference temperature (K), from Schweizer et al. (2004)
 		return ((1. / SnLaws::ArrheniusLaw(Q_fac * Q, Te, T_r))
-		             * (0.3 * pow((Constants::melting_tk - Te), criticalExp) + 0.4));
+		             * (0.3 * pow((Constants::meltfreeze_tk - Te), criticalExp) + 0.4));
 	}
 	case t_term_arrhenius:
 		return (1. / SnLaws::ArrheniusLaw(Q, Te, 263.));
 	case t_term_stk: // Master thesis, September 2009
 		return (0.35 * sqrt(274.15 - Te));
 	case t_term_837: // as of revision 243, used up to revision 837 (deprecated)
-		return (9. - 8.7 * exp(0.015 * (Te - Constants::melting_tk)));
+		return (9. - 8.7 * exp(0.015 * (Te - Constants::meltfreeze_tk)));
 	}
 
 	throw UnknownValueException("Unknown viscosity temperature dependency selected!", AT);
@@ -1570,7 +1570,7 @@ double SnLaws::snowViscosityDEFAULT(ElementData& Edata)
 	static const double sig1 = 0.5e6;         // Unit stress from Sinha's formulation (Pa)
 	const double visc_factor = 1./eps1Dot * Optim::pow3(sig1/visc_fudge);
 	const double visc_macro = Edata.neck2VolumetricStrain(); // Macro-structure (layer) related factor
-	const double Te = std::min(Edata.Te, Edata.melting_tk);
+	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk);
 	double eta = (1. / visc_macro) * SnLaws::snowViscosityTemperatureTerm(Te) * visc_factor;
 
 	static const double sigNeckYield = 0.4e6; // Yield stress for ice in neck (Pa)
@@ -1630,7 +1630,7 @@ double SnLaws::snowViscosityCALIBRATION(ElementData& Edata, const mio::Date& dat
 	static const double sig1 = 0.5e6;         // Unit stress from Sinha's formulation (Pa)
 	const double visc_factor = 1./eps1Dot * Optim::pow3(sig1/visc_fudge);
 	const double visc_macro = Edata.neck2VolumetricStrain(); // Macro-structure (layer) related factor
-	const double Te = std::min(Edata.Te, Edata.melting_tk);
+	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk);
 	double eta = (1. / visc_macro) * SnLaws::snowViscosityTemperatureTerm(Te) * visc_factor;
 
 	static const double sigNeckYield = 0.4e6; // Yield stress for ice in neck (Pa)

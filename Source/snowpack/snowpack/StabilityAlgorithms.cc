@@ -477,7 +477,7 @@ double StabilityAlgorithms::setDeformationRateIndex(ElementData& Edata)
 	const double eps1Dot = 1.76e-7; // Unit strain rate (at stress = 1 MPa) (s-1)
 	const double sig1 = 0.5e6;      // Unit stress from Sinha's formulation (Pa)
 	const double sig = -Edata.C;   // Overburden stress, that is, absolute value of Cauchy stress (Pa)
-	const double Te = std::min(Edata.Te, Edata.melting_tk); // Element temperature (K)
+	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk); // Element temperature (K)
 
 	// First find the absolute neck stress
 	const double sigNeck = Edata.neckStressEnhancement() * (sig); // Neck stress (Pa)
