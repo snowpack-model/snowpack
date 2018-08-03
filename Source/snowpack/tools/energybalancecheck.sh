@@ -144,7 +144,7 @@ if [ "${error}" -eq 1 ]; then
 fi
 
 # -- Determine file resolution
-nsamplesperday=`cat ${met_file} | sed '1,/\[DATA\]/d' | awk -F, '{print $'${coldatetime}'}' | awk '{print $1}' | sort | uniq -c | awk '{print $1}' | sort -nu | tail -1`
+nsamplesperday=$(cat ${met_file} | sed '1,/\[DATA\]/d' | awk -F, '{year=substr($2,7,4);month=substr($2,4,2);day=substr($2,1,2);hour=substr($2,12,2);minute=substr($2,15,2);doy1=mktime(sprintf("%04d %02d %02d %02d %02d %02d %d", year, month, day, hour, minute, 0, 0)); print (24*60*60)/(doy1-doy2); doy2=doy1}' | sort | uniq -c | sort -nu | awk '{print $2}' | tail -1)
 if [ -z "${nsamplesperday}" ]; then
 	echo "energybalancecheck.sh: ERROR: file resolution could not be determined." > /dev/stderr
 	exit
@@ -153,8 +153,8 @@ fi
 
 # Create header
 echo "#Date time measured_HS modelled_HS SHF     LHF    OLWR   ILWR_absorb   RSWR   ISWR   SoilHeatFlux RainEnergy PhaseChangeEnergy deltaIntEnergy EnergyBalance energy_in energy_out"
-echo "#--   --   --          --          E+      E+     E+     E+     E+     E+     E+           E+         --                E-             error         totals    totals"
-echo "#-    -    cm          cm          W_m-2   W_m-2  W_m-2  W_m-2  W_m-2  W_m-2  W_m-2        W_m-2      W_m-2             W_m-2          W_m-2         W_m-2     W_m-2"
+echo "#--   --   --          --          E+      E+     E+     E+            E+     E+     E+           E+         --                E-             error         totals    totals"
+echo "#-    -    cm          cm          W_m-2   W_m-2  W_m-2  W_m-2         W_m-2  W_m-2  W_m-2        W_m-2      W_m-2             W_m-2          W_m-2         W_m-2     W_m-2"
 
 
 # Process data (note that the lines below are all piped together).

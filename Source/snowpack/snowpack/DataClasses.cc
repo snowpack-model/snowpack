@@ -1038,13 +1038,8 @@ void ElementData::heatCapacity()
 	double c_p;
 
 	c_p  = Constants::density_air * theta[AIR] * Constants::specific_heat_air;
-	if (salinity > 0. && theta[ICE] > 0.94) {
-		c_p += Constants::density_ice * theta[ICE] * SeaIce::compSeaIceHeatCapacity(Te, salinity);
-		c_p += Constants::density_water * (theta[WATER] + theta[WATER_PREF]) * Constants::specific_heat_water;
-	} else {
-		c_p += Constants::density_ice * theta[ICE] * Constants::specific_heat_ice;
-		c_p += Constants::density_water * (theta[WATER] + theta[WATER_PREF]) * Constants::specific_heat_water;
-	}
+	c_p += Constants::density_ice * theta[ICE] * Constants::specific_heat_ice;
+	c_p += Constants::density_water * (theta[WATER] + theta[WATER_PREF]) * Constants::specific_heat_water;
 	c_p += soil[SOIL_RHO] * theta[SOIL] * soil[SOIL_C];
 	c_p /= Rho;
 	c[TEMPERATURE] = c_p;

@@ -316,7 +316,7 @@ double SeaIce::calculateMeltingTemperature(const double& Sal)
 
 
 /**
- * @brief Heat capacity of sea ice.
+ * @brief Heat capacity of sea ice, for the combined system ICE + WATER (brine).
  * @version 16.08: initial version
  * @param T: Temperature (K)
  * @param Sal: Salinity (PSU, which is g/kg)
@@ -333,7 +333,7 @@ double SeaIce::compSeaIceHeatCapacity(const double& T, const double& Sal)
 
 
 /**
- * @brief Heat conduction in sea ice.
+ * @brief Heat conduction in sea ice, for the combined system ICE + WATER (brine)
  * @version 16.08: initial version
  * @param Edata
  * @return Thermal conductivity for sea ice (W K-1 m-1)
@@ -350,7 +350,7 @@ double SeaIce::compSeaIceThermalConductivity(const ElementData& Edata)
 
 
 /**
- * @brief Latent heat of melting for sea ice.
+ * @brief Latent heat of melting for sea ice, for the combined system ICE + WATER (brine)
  * @version 16.08: initial version
  * @param T: Temperatur (K)
  * @param Sal: Salinity (PSU, which is g/kg)
@@ -366,7 +366,7 @@ double SeaIce::compSeaIceLatentHeatFusion(const double& T, const double& Sal)
 
 
 /**
- * @brief Latent heat of melting for sea ice.
+ * @brief Latent heat of melting for sea ice, for the combined system ICE + WATER (brine)
  * @version 16.08: initial version
  * @param Edata
  * @return Latent heat of fusion for sea ice (J / kg)
