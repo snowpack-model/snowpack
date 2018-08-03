@@ -519,8 +519,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 					EMS[eUpper].theta[ICE] = 0.;
 
 					// Take care of energy used for melting the ice:
-					const double Lh = (EMS[eUpper].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[eUpper])) : (Constants::lh_fusion);
-					const double ql = (EMS[eUpper].theta[ICE] * EMS[eUpper].L * Constants::density_ice * Lh );	// J/m^2
+					const double ql = (EMS[eUpper].theta[ICE] * EMS[eUpper].L * Constants::density_ice * Constants::lh_fusion);	// J/m^2
 
 					// ql is energy crossing the soil-snow interface and should be considered part of the soil-snow heat flux:
 					Sdata.qg0 += ql/sn_dt;
@@ -818,8 +817,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 		if (iwatertransportmodel_snow != RICHARDSEQUATION && (iwatertransportmodel_soil != RICHARDSEQUATION || nE>Xdata.SoilNode)) {
 			for (size_t eUpper = nE-1, eLower = nE-2; eUpper >= 1; eUpper--, eLower-- ) {
 				// Determine the additional storage capacity due to refreezing
-				const double Lh = (EMS[eUpper].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[eUpper])) : (Constants::lh_fusion);
-				const double dth_w = EMS[eUpper].c[TEMPERATURE] * EMS[eUpper].Rho / Lh / Constants::density_water
+				const double dth_w = EMS[eUpper].c[TEMPERATURE] * EMS[eUpper].Rho / Constants::lh_fusion / Constants::density_water
 							* std::max(0., EMS[eUpper].meltfreeze_tk-EMS[eUpper].Te);
 				if ((variant=="SEAICE" && Xdata.Seaice!=NULL) && Xdata.Ndata[eUpper].z + 0.5 * Xdata.Edata[eUpper].L < Xdata.Seaice->SeaLevel) {
 					// for sea ice: elements below sea level may fill entire pore space
@@ -1061,8 +1059,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 	if(variant != "SEAICE") {	//Not for sea ice, where we assume the lowest element to be under water.
 		if((!useSoilLayers && iwatertransportmodel_snow != RICHARDSEQUATION) || iwatertransportmodel_soil != RICHARDSEQUATION) {	//Only if lowest element is snow or we do not use RE for soil.
 			// Determine the additional storage capacity due to refreezing
-			const double Lh = (EMS[0].salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(EMS[0])) : (Constants::lh_fusion);
-			const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Lh / Constants::density_water
+			const double dth_w = EMS[0].c[TEMPERATURE] * EMS[0].Rho / Constants::lh_fusion / Constants::density_water
 						* std::max(0., EMS[0].meltfreeze_tk-EMS[0].Te);
 			if (EMS[0].theta[SOIL] < Constants::eps2) {
 				Wres = std::min((1. - EMS[0].theta[ICE]) * Constants::density_ice / Constants::density_water,
