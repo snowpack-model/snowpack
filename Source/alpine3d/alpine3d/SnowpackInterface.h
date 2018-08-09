@@ -151,6 +151,7 @@ class Runoff; // forward declaration, cyclic header include
 		void setMeteo(const mio::Grid2DObject& new_psum,
 		                const mio::Grid2DObject& new_psum_ph,
 		                const mio::Grid2DObject& new_vw,
+		                const mio::Grid2DObject& new_dw,
 		                const mio::Grid2DObject& new_rh,
 		                const mio::Grid2DObject& new_ta,
 		                const mio::Date& timestamp);
@@ -191,7 +192,7 @@ class Runoff; // forward declaration, cyclic header include
 
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, rh, ta;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, dw, rh, ta;
 		double solarElevation;
 		
 		std::vector<std::string> output_grids; //which grids should be written out
