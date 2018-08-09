@@ -1996,10 +1996,13 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 			Canopy::DumpCanopyData(fout, &Xdata.Cdata, &Sdata, cos_sl);
 		else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				// Total thickness (m), Ice thickness (m), snow thickness (m), freeboard (m), sea level (m), bulk salinity, average bulk salinity, brine salinity, average brine salinity, bottom salinity flux, top salinity flux
+				// Total thickness (m), Ice thickness (m), snow thickness (m), snow thickness wrt reference (m), freeboard (m), sea level (m), bulk salinity, average bulk salinity, brine salinity, average brine salinity, bottom salinity flux, top salinity flux
 				fout << "," << std::setprecision(3) << Xdata.cH - Xdata.Ground;
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground;
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z;
+				// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
+				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->FreeBoard;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->SeaLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->getBulkSalinity(Xdata);
@@ -2008,7 +2011,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				fout << "," << std::setprecision(3) << (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata);
 				fout << "," << std::setprecision(3) << Xdata.Seaice->BottomSalFlux;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->TopSalFlux;
-				fout << ",,,,,,,,,,,,,,,,,";
+				fout << ",,,,,,,,,,,,,,,,";
 			} else {
 				fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
 			}
@@ -2249,8 +2252,8 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			Canopy::DumpCanopyHeader(fout);
 		} else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				fout << ",Total thickness,Ice thickness,Snow thickness,Freeboard,Sea level,Bulk salinity,Average bulk salinity,Brine salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
-				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+				fout << ",Total thickness,Ice thickness,Snow thickness,Snow thickness wrt reference,Freeboard,Sea level,Bulk salinity,Average bulk salinity,Brine salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
+				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
 			} else {
 				// 28 empty fields
 				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
@@ -2314,8 +2317,8 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			Canopy::DumpCanopyUnits(fout);
 		} else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				fout << ",m,m,m,m,m,kg m-2,kg m-3,kg m-2,kg m^3,kg m-2,kg m-2";
-				fout << ",,,,,,,,,,,,,,,,,";
+				fout << ",m,m,m,m,m,m,kg m-2,kg m-3,kg m-2,kg m^3,kg m-2,kg m-2";
+				fout << ",,,,,,,,,,,,,,,,";
 			} else {
 				fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
 			}
