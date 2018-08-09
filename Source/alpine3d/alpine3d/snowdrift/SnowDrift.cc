@@ -816,10 +816,12 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 		cout <<"[i] Snowdrift: ARPS wind field successfully read"<<endl;
 	}
 
+	mio::Grid2DObject dw(vw, IOUtils::nodata);	// dw field with vw as template for dimensions
 	//adjust the meteo fields that depend on the 3D wind field
 	for (size_t jj=0; jj<ny; jj++) {
 		for (size_t ii=0; ii<nx; ii++) {
 			vw.grid2D(ii,jj) = Optim::fastSqrt_Q3( Optim::pow2(nodes_u.grid3D(ii,jj,2)) + Optim::pow2(nodes_v.grid3D(ii,jj,2)) ); //Third layer is first layer in the air
+			dw.grid2D(ii,jj) = (180./Constants::pi) * (atan2(nodes_u.grid3D(ii,jj,2), nodes_v.grid3D(ii,jj,2)));
 		}
 	}
 	
@@ -827,7 +829,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 	if (SUBLIMATION) 	initializeTRH();
 	
 	//TODO: feedback mecanism: make it more general!
-	if (snowpack!=NULL) snowpack->setMeteo(psum, psum_ph, vw, rh, ta, calcDate);
+	if (snowpack!=NULL) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, calcDate);
 	if (eb!=NULL) eb->setMeteo(new_ilwr, ta, rh, p, calcDate);
 }
 

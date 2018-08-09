@@ -300,6 +300,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = meteoPixel.rh; break;
 			case SnGrids::VW:
 				value = meteoPixel.vw; break;
+			case SnGrids::DW:
+				value = meteoPixel.dw; break;
 			case SnGrids::ISWR:
 				value = meteoPixel.iswr; break;
 			case SnGrids::ISWR_DIFF:
@@ -396,6 +398,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
                                        const mio::Grid2DObject &rh,
                                        const mio::Grid2DObject &ta,
                                        const mio::Grid2DObject &vw,
+                                       const mio::Grid2DObject &dw,
                                        const mio::Grid2DObject &mns,
                                        const mio::Grid2DObject &shortwave,
                                        const mio::Grid2DObject &diffuse,
@@ -435,6 +438,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			meteoPixel.rh = rh(ix,iy);
 			meteoPixel.ta = ta(ix,iy);
 			meteoPixel.vw = vw(ix,iy);
+			meteoPixel.dw = dw(ix,iy);
 			meteoPixel.iswr = shortwave(ix,iy);
 			meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
 			meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
@@ -533,7 +537,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				surfaceFlux.mass[SurfaceFluxes::MS_HNW] += meteoPixel.psum;
 			}
 			
-			 //some variables are now wrong if we ran multiple Snowpack steps -> recompute them!
+			//some variables are now wrong if we ran multiple Snowpack steps -> recompute them!
 			if (nr_snowsteps > 1) {
 				surfaceFlux.multiplyFluxes(1./nr_snowsteps);
 				if (useCanopy)

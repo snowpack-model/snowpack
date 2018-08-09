@@ -877,7 +877,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 		os << " ";*/
 
 	if (Xdata.Seaice != NULL)
-		os << "Total_thickness Ice_thickness Snow_thickness Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Brine_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
+		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Brine_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
 
 	return os.str();
 }
@@ -1005,11 +1005,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		os << " ";
 	}	*/
 	if (Xdata.Seaice != NULL) {
-		plot_description << "total_thickness  ice_thickness  snow_thickness  freeboard  sea_level  bulk_salinity  avg_bulk_salinity  brine_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
-		plot_units << "m m m m m kg/m2 kg/m3 kg/m2 kg/m3 kg/m2 kg/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  bulk_salinity  avg_bulk_salinity  brine_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
+		plot_units << "m m m m m m kg/m2 kg/m3 kg/m2 kg/m3 kg/m2 kg/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1157,6 +1157,9 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.cH - Xdata.Ground );
 		data.push_back( Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground );
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z );
+		// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
+		const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel );
 		data.push_back( Xdata.Seaice->FreeBoard );
 		data.push_back( Xdata.Seaice->SeaLevel );
 		data.push_back( Xdata.Seaice->getBulkSalinity(Xdata) );

@@ -33,6 +33,7 @@ class SnGrids {
                                           TA=firstparam, ///< Air temperature
                                           RH, ///< Relative humidity
                                           VW, ///< Wind velocity
+                                          DW, ///< Wind direction (deg)
                                           ISWR, ///< Incoming short wave radiation
                                           ISWR_DIFF, ///< Incoming short wave, diffuse
                                           ISWR_DIR, ///< Incoming short wave, direct
@@ -90,6 +91,7 @@ class MeteoObj
 		         mio::Grid2DObject& psum,
 		         mio::Grid2DObject& psum_ph,
 		         mio::Grid2DObject& vw,
+		         mio::Grid2DObject& dw,
 		         mio::Grid2DObject& p,
 		         mio::Grid2DObject& ilwr);
 		void get(const mio::Date& in_date, std::vector<mio::MeteoData>& o_vecMeteo);
@@ -108,7 +110,7 @@ class MeteoObj
 		const mio::Config &config;
 		mio::IOManager io;
 		const mio::DEMObject &dem;
-		mio::Grid2DObject ta, rh, psum, psum_ph, vw, p, ilwr;
+		mio::Grid2DObject ta, rh, psum, psum_ph, vw, dw, p, ilwr;
 		mio::Grid2DObject sum_ta, sum_rh, sum_rh_psum, sum_psum, sum_psum_ph, sum_vw, sum_ilwr;
 		std::vector<mio::MeteoData> vecMeteo;
 		mio::Date date;
