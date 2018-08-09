@@ -145,7 +145,6 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 		Edata.Te = std::min(Edata.Te, T_melt);	// Considering the case that the element is above melting temperature, but mass_melt==0, so we are not "allowed" to apply melt.
 		return; // no melt with massbal forcing
 	} else {
-		const double Lh = (Edata.salinity > 0.) ? (SeaIce::compSeaIceLatentHeatFusion(Edata)) : (Constants::lh_fusion);
 		double dth_i;
 		double dth_w;
 		if (forcing == "MASSBAL" && T_melt > Edata.Te) { // forced melt, when "normal" melt would not occur anymore (snowpack too cold)
