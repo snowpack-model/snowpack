@@ -50,7 +50,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	const double timeStep = dt_main/86400.;
 	Timer elapsed;
 	std::vector<MeteoData> vecMeteo; // to transfer meteo information
-	mio::Grid2DObject p, psum, psum_ph, vw, rh, ta, ilwr;
+	mio::Grid2DObject p, psum, psum_ph, vw, dw, rh, ta, ilwr;
 	const bool isMaster = MPIControl::instance().master();
 
 	if (isMaster) {
@@ -91,7 +91,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		//get 1D and 2D meteo for the current time step
 		try {
 			meteo.get(calcDate, vecMeteo);
-			meteo.get(calcDate, ta, rh, psum, psum_ph, vw, p, ilwr);
+			meteo.get(calcDate, ta, rh, psum, psum_ph, vw, dw, p, ilwr);
 		} catch (IOException&) {
 			//saving state files before bailing out
 			if (isMaster) {
@@ -110,7 +110,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		}
 
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
-			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, rh, ta, calcDate);
+			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, calcDate);
 		}
 
 		try { //Snowdrift

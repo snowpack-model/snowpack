@@ -54,6 +54,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &rh,
 		              const mio::Grid2DObject &ta,
 		              const mio::Grid2DObject &vw,
+		              const mio::Grid2DObject &dw,
 		              const mio::Grid2DObject &mns,
 		              const mio::Grid2DObject &shortwave,
 		              const mio::Grid2DObject &diffuse,

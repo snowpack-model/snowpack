@@ -33,6 +33,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("TA");
 	paramname.push_back("RH");
 	paramname.push_back("VW");
+	paramname.push_back("DW");
 	paramname.push_back("ISWR");
 	paramname.push_back("ISWR_DIFF");
 	paramname.push_back("ISWR_DIR");
@@ -94,7 +95,7 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
 MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
                      ta(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata), 
-                     psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
+                     psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
                      sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(), sum_vw(), sum_ilwr(),
                      vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false) {}
 
@@ -117,7 +118,7 @@ void MeteoObj::prepare(const mio::Date& in_date)
 }
 
 void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Grid2DObject& out_rh, mio::Grid2DObject& out_psum,
-                   mio::Grid2DObject& out_psum_ph, mio::Grid2DObject& out_vw, mio::Grid2DObject& out_p, mio::Grid2DObject& out_ilwr)
+                   mio::Grid2DObject& out_psum_ph, mio::Grid2DObject& out_vw, mio::Grid2DObject& out_dw, mio::Grid2DObject& out_p, mio::Grid2DObject& out_ilwr)
 {
 	timer.restart(); //this method is called first, so we initiate the timing here
 	
@@ -140,6 +141,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 	MPIControl::instance().broadcast(psum);
 	MPIControl::instance().broadcast(psum_ph);
 	MPIControl::instance().broadcast(vw);
+	MPIControl::instance().broadcast(dw);
 	MPIControl::instance().broadcast(p);
 	MPIControl::instance().broadcast(ilwr);
 
@@ -148,6 +150,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 	out_psum = psum;
 	out_psum_ph = psum_ph;
 	out_vw = vw;
+	out_dw = dw;
 	out_p = p;
 	out_ilwr = ilwr;
 	timer.stop();
@@ -225,7 +228,10 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 		io.getMeteoData(calcDate, dem, MeteoData::PSUM_PH, psum_ph);
 		io.getMeteoData(calcDate, dem, MeteoData::RH, rh);
 		io.getMeteoData(calcDate, dem, MeteoData::TA, ta);
-		if (!skipWind) io.getMeteoData(calcDate, dem, MeteoData::VW, vw);
+		if (!skipWind) {
+			io.getMeteoData(calcDate, dem, MeteoData::VW, vw);
+			io.getMeteoData(calcDate, dem, MeteoData::DW, dw);
+		}
 		io.getMeteoData(calcDate, dem, MeteoData::P, p);
 		io.getMeteoData(calcDate, dem, MeteoData::ILWR, ilwr);
 		cout << "[i] 2D Interpolations done for " << calcDate.toString(Date::ISO) << "\n";
