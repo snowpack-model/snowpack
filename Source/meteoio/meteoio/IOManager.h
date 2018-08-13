@@ -142,9 +142,14 @@ class IOManager {
 		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result);
 
+		bool getMeteoData(const Date& date, const DEMObject& dem, const std::string& param_name,
+		                 Grid2DObject& result);
+
 		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 
+		bool getMeteoData(const Date& date, const DEMObject& dem, const std::string& param_name,
+		                 Grid2DObject& result, std::string& info_string);
 
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result);

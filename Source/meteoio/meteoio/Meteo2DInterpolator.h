@@ -129,6 +129,9 @@ class Meteo2DInterpolator {
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& InfoString);
 
+		void interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
+		                 Grid2DObject& result, std::string& InfoString);
+
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             std::vector<Coords> vec_coords, std::vector<double>& result, std::string& info_string);
 		

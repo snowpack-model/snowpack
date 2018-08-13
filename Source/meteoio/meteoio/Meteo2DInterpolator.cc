@@ -162,6 +162,14 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 	const std::string param_name( MeteoData::getParameterName(meteoparam) );
 	
+	interpolate(date, dem, param_name, result, InfoString);
+}
+
+void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
+                                      Grid2DObject& result, std::string& InfoString)
+{
+	if (!algorithms_ready) setAlgorithms();
+
 	//Get grid from buffer if it exists
 	std::ostringstream grid_hash;
 	grid_hash << dem.llcorner.toString(Coords::LATLON) << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << " " << date.toString(Date::ISO) << " " << param_name;
@@ -191,13 +199,13 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	InfoString = vecAlgs[bestalgorithm]->getInfo();
 
 	//Run soft min/max filter for RH, PSUM and HS
-	if (meteoparam == MeteoData::RH){
+	if (param_name == "RH"){
 		Meteo2DInterpolator::checkMinMax(0.0, 1.0, result);
-	} else if (meteoparam == MeteoData::PSUM){
+	} else if (param_name == "PSUM"){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
-	} else if (meteoparam == MeteoData::HS){
+	} else if (param_name == "HS"){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
-	} else if (meteoparam == MeteoData::VW){
+	} else if (param_name == "VW"){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
 	}
 
