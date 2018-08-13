@@ -1194,6 +1194,7 @@ inline void real_main (int argc, char *argv[])
 								cumsum.erosion[slope.mainStation] += vecXdata[slope.mainStation].ErosionMass;
 							else
 								cumsum.erosion[slope.mainStation] = vecXdata[slope.mainStation].ErosionMass;
+							vecXdata[slope.mainStation].ErosionMass = 0.;
 						} else {
 							// Potential erosion at main station only
 							if (cumsum.erosion[slope.mainStation] < -Constants::eps)
@@ -1296,6 +1297,7 @@ inline void real_main (int argc, char *argv[])
 
 					// Update erosion mass from windward virtual slope
 					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;
+					vecXdata[slope.sector].ErosionMass = 0.;
 				}
 
 				// TIME SERIES (*.met)

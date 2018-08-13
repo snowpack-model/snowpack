@@ -329,6 +329,16 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 	return status;
 }
 
+bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::string& param_name,
+                  Grid2DObject& result)
+{
+	std::string info_string;
+	const bool status = getMeteoData(date, dem, param_name, result, info_string);
+	cerr << "[i] Interpolating " << param_name;
+	cerr << " (" << info_string << ") " << endl;
+	return status;
+}
+
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result, std::string& info_string)
 {
@@ -347,6 +357,27 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 	}
 
 	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	return (!result.empty());
+}
+
+bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::string& param_name,
+                  Grid2DObject& result, std::string& info_string)
+{
+	if (mode==IOHandler::GRID_RESAMPLE) { //fill tsm1's buffer
+		const Date bufferStart( tsm1.getRawBufferStart() );
+		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		
+		if (bufferStart.isUndef() || date<bufferStart || date>bufferEnd) {
+			Duration buffer_size, buffer_before;
+			tsm1.getBufferProperties(buffer_size, buffer_before);
+			
+			const Date dateStart( date - buffer_before );
+			const Date dateEnd( date - buffer_before + buffer_size );
+			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd));
+		}
+	}
+
+	interpolator.interpolate(date, dem, param_name, result, info_string);
 	return (!result.empty());
 }
 
