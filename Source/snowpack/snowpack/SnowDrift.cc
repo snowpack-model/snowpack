@@ -143,7 +143,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	const bool no_snow = ((nE < Xdata.SoilNode+1) || (EMS[nE-1].theta[SOIL] > 0.));
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
 	if (no_snow || no_wind_data) {
-		Xdata.ErosionMass = 0.;
+		Xdata.ErosionMass += 0.;
 		if (no_snow) {
 			Xdata.ErosionLevel = Xdata.SoilNode;
 			Sdata.drift = 0.;
@@ -181,7 +181,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 			nE--;
 			Xdata.cH -= EMS[nE].L;
 			NDS[nE].hoar = 0.;
-			Xdata.ErosionMass = EMS[nE].M;
+			Xdata.ErosionMass += EMS[nE].M;
 			Xdata.ErosionLevel = std::min(nE-1, Xdata.ErosionLevel);
 			nErode++;
 			massErode -= EMS[nE].M;
@@ -203,10 +203,10 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 			NDS[nE].hoar = 0.;
 			EMS[nE-1].M -= massErode;
 			assert(EMS[nE-1].M>=0.); //mass must be positive
-			Xdata.ErosionMass = massErode;
+			Xdata.ErosionMass += massErode;
 			forced_massErode = 0.;
 		} else {
-			Xdata.ErosionMass = 0.;
+			Xdata.ErosionMass += 0.;
 		}
 		if (nErode > 0)
 			Xdata.resize(nE);
@@ -234,16 +234,16 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 				virtuallyErodedMass -= EMS[Xdata.ErosionLevel].M;
 				Xdata.ErosionLevel--;
 			}
-			Xdata.ErosionMass = -virtuallyErodedMass;
+			Xdata.ErosionMass += -virtuallyErodedMass;
 			Xdata.ErosionLevel = std::max(Xdata.SoilNode, std::min(Xdata.ErosionLevel, nE-1));
 		} else {
-			Xdata.ErosionMass = 0.;
+			Xdata.ErosionMass += 0.;
 		}
 		if (!alpine3d && SnowDrift::msg_erosion) { //messages on demand but not in Alpine3D
 			if (Xdata.ErosionLevel > nE-1)
 				prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "Virtual erosion: ErosionLevel=%d did get messed up (nE-1=%d)", Xdata.ErosionLevel, nE-1);
 		}
 	} else {
-		Xdata.ErosionMass = 0.;
+		Xdata.ErosionMass += 0.;
 	}
 }
