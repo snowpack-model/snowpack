@@ -33,6 +33,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("TA");
 	paramname.push_back("RH");
 	paramname.push_back("VW");
+	paramname.push_back("VW_DRIFT");
 	paramname.push_back("DW");
 	paramname.push_back("ISWR");
 	paramname.push_back("ISWR_DIFF");
@@ -62,6 +63,8 @@ bool SnGrids::initStaticData()
 	paramname.push_back("MS_SOIL_RUNOFF");
 	paramname.push_back("SFC_SUBL");
 	paramname.push_back("STORE");
+	paramname.push_back("ERODEDMASS");
+	paramname.push_back("WINDEROSIONDEPOSITION");
 	paramname.push_back("GLACIER");
 	paramname.push_back("GLACIER_EXPOSED");
 	
@@ -95,9 +98,14 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
 MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
                      ta(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata), 
-                     psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
+                     psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
                      sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(), sum_vw(), sum_ilwr(),
-                     vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false) {}
+                     vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false), enable_simple_snow_drift(false)
+{
+	//check if simple snow drift is enabled
+	enable_simple_snow_drift = false;
+	in_config.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+}
 
 MeteoObj::~MeteoObj() 
 {
@@ -118,7 +126,7 @@ void MeteoObj::prepare(const mio::Date& in_date)
 }
 
 void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Grid2DObject& out_rh, mio::Grid2DObject& out_psum,
-                   mio::Grid2DObject& out_psum_ph, mio::Grid2DObject& out_vw, mio::Grid2DObject& out_dw, mio::Grid2DObject& out_p, mio::Grid2DObject& out_ilwr)
+                   mio::Grid2DObject& out_psum_ph, mio::Grid2DObject& out_vw, mio::Grid2DObject& out_vw_drift, mio::Grid2DObject& out_dw, mio::Grid2DObject& out_p, mio::Grid2DObject& out_ilwr)
 {
 	timer.restart(); //this method is called first, so we initiate the timing here
 	
@@ -141,6 +149,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 	MPIControl::instance().broadcast(psum);
 	MPIControl::instance().broadcast(psum_ph);
 	MPIControl::instance().broadcast(vw);
+	MPIControl::instance().broadcast(vw_drift);
 	MPIControl::instance().broadcast(dw);
 	MPIControl::instance().broadcast(p);
 	MPIControl::instance().broadcast(ilwr);
@@ -150,6 +159,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 	out_psum = psum;
 	out_psum_ph = psum_ph;
 	out_vw = vw;
+	out_vw_drift = vw_drift;
 	out_dw = dw;
 	out_p = p;
 	out_ilwr = ilwr;
@@ -230,6 +240,7 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 		io.getMeteoData(calcDate, dem, MeteoData::TA, ta);
 		if (!skipWind) {
 			io.getMeteoData(calcDate, dem, MeteoData::VW, vw);
+			if (enable_simple_snow_drift) io.getMeteoData(calcDate, dem, "VW_DRIFT", vw_drift);
 			io.getMeteoData(calcDate, dem, MeteoData::DW, dw);
 		}
 		io.getMeteoData(calcDate, dem, MeteoData::P, p);

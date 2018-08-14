@@ -42,6 +42,7 @@
 #include <meteoio/spatialInterpolations/UserAlgorithm.h>
 #include <meteoio/spatialInterpolations/WinstralAlgorithm.h>
 #include <meteoio/spatialInterpolations/WinstralListonAlgorithm.h>
+#include <meteoio/spatialInterpolations/WinstralListonDriftAlgorithm.h>
 
 #include <sstream>
 #include <vector>
@@ -194,6 +195,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(std::string algoname,
 		return new WinstralAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "WINSTRAL++") {// Winstral/Liston wind exposure factor
 		return new WinstralListonAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
+	} else if (algoname == "WINSTRAL++_DRIFT") {// Winstral/Liston wind exposure factor based snow drift wind velocity
+		return new WinstralListonDriftAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "ODKRIG") {// ordinary kriging
 		return new OrdinaryKrigingAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "ODKRIG_LAPSE") {// ordinary kriging with lapse rate

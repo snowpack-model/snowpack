@@ -35,12 +35,16 @@ using namespace std;
  */
 AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& dem)
               : meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda), runoff(myrunoff),
-                snow_days_between(0.), nocompute(false), out_snow(true)
+                snow_days_between(0.), enable_simple_snow_drift(false), nocompute(false), out_snow(true)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
 	if (out_snow) {
 		cfg.getValue("SNOW_DAYS_BETWEEN", "Output", snow_days_between);
 	}
+
+	//check if simple snow drift is enabled
+	enable_simple_snow_drift = false;
+	cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
 }
 
 void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
@@ -50,7 +54,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	const double timeStep = dt_main/86400.;
 	Timer elapsed;
 	std::vector<MeteoData> vecMeteo; // to transfer meteo information
-	mio::Grid2DObject p, psum, psum_ph, vw, dw, rh, ta, ilwr;
+	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, ilwr;
 	const bool isMaster = MPIControl::instance().master();
 
 	if (isMaster) {
@@ -91,7 +95,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		//get 1D and 2D meteo for the current time step
 		try {
 			meteo.get(calcDate, vecMeteo);
-			meteo.get(calcDate, ta, rh, psum, psum_ph, vw, dw, p, ilwr);
+			meteo.get(calcDate, ta, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
 		} catch (IOException&) {
 			//saving state files before bailing out
 			if (isMaster) {
@@ -112,6 +116,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
 			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, calcDate);
 		}
+		if (snowpack && enable_simple_snow_drift) snowpack->setVwDrift(vw_drift, calcDate);
 
 		try { //Snowdrift
 			if (snowdrift) {
