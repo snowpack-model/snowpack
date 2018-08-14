@@ -1122,7 +1122,7 @@ void SnowpackInterface::calcLateralFlow()
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 22.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 67.5) {
 						ixd = ix+1;
 						iyd = iy-1;
-						tmp_dist = sqrt(2.) * dem.cellsize;
+						tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 67.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 112.5) {
 						ixd = ix+1;
 						iyd = iy;
@@ -1130,7 +1130,7 @@ void SnowpackInterface::calcLateralFlow()
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 112.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 157.5) {
 						ixd = ix+1;
 						iyd = iy+1;
-						tmp_dist = sqrt(2.) * dem.cellsize;
+						tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 157.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 202.5) {
 						ixd = ix;
 						iyd = iy+1;
@@ -1138,7 +1138,7 @@ void SnowpackInterface::calcLateralFlow()
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 202.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 247.5) {
 						ixd = ix-1;
 						iyd = iy+1;
-						tmp_dist = sqrt(2.) * dem.cellsize;
+						tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 247.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 292.5) {
 						ixd = ix-1;
 						iyd = iy;
@@ -1146,7 +1146,7 @@ void SnowpackInterface::calcLateralFlow()
 					} else if (snow_pixel[index_SnowStation_src]->meta.getAzimuth() > 292.5 || snow_pixel[index_SnowStation_src]->meta.getAzimuth() < 337.5) {
 						ixd = ix-1;
 						iyd = iy-1;
-						tmp_dist = sqrt(2.) * dem.cellsize;
+						tmp_dist = mio::Cst::Sqrt2 * dem.cellsize;
 					} else {
 						// Undefined aspect, don't route the lateral flow by setting destination cell outside domain
 						ixd=-1;

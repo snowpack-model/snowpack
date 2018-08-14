@@ -207,7 +207,9 @@ inline void setStaticData(const Config &cfg, IOManager& io, DEMObject &dem, Grid
 	const bool isMaster = MPIControl::instance().master(); // Check if this process is the master (always true for non-parallel mode)
 
 	if (isMaster) { //Reading DEM, LANDUSE, special PTS on master process only
-		dem.setDefaultAlgorithm(DEMObject::CORR);
+		std::string slope_algorithm( "CORRIPIO" );
+		cfg.getValue("SLOPE_ALGORITHM", "Input", slope_algorithm, IOUtils::nothrow);
+		dem.setDefaultAlgorithm(slope_algorithm);
 		dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE | DEMObject::NORMAL | DEMObject::CURVATURE));
 
 		io.readDEM(dem);

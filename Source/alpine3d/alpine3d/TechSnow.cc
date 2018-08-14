@@ -81,12 +81,12 @@ short int TechSnow::getRunNumber(const double& dbl_code)
 	return static_cast<short int>( (dbl_code + epsilon) / 100. );
 }
 
-void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh, const mio::Date& timestamp)
+void TechSnow::setMeteo(const mio::Grid2DObject& /*ta*/, const mio::Grid2DObject& /*rh*/, const mio::Date& /*timestamp*/)
 {
 	grooming.clear();
 	psum_tech.clear();
 	
-	const unsigned short weekNr = timestamp.getISOWeekNr();
+	//const unsigned short weekNr = timestamp.getISOWeekNr();
 	
 	//according to ta and rh, fill grooming and psum_tech grids
 	for (size_t ii=0; ii<grooming.size(); ii++) {

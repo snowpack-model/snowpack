@@ -821,7 +821,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 	for (size_t jj=0; jj<ny; jj++) {
 		for (size_t ii=0; ii<nx; ii++) {
 			vw.grid2D(ii,jj) = Optim::fastSqrt_Q3( Optim::pow2(nodes_u.grid3D(ii,jj,2)) + Optim::pow2(nodes_v.grid3D(ii,jj,2)) ); //Third layer is first layer in the air
-			dw.grid2D(ii,jj) = (180./Constants::pi) * (atan2(nodes_u.grid3D(ii,jj,2), nodes_v.grid3D(ii,jj,2)));
+			dw.grid2D(ii,jj) = (atan2(nodes_u.grid3D(ii,jj,2), nodes_v.grid3D(ii,jj,2))) * mio::Cst::to_deg;
 		}
 	}
 	
