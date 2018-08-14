@@ -155,6 +155,8 @@ class Runoff; // forward declaration, cyclic header include
 		                const mio::Grid2DObject& new_rh,
 		                const mio::Grid2DObject& new_ta,
 		                const mio::Date& timestamp);
+		void setVwDrift(const mio::Grid2DObject& new_vw_drift,
+				const mio::Date& timestamp);
 		void setRadiationComponents(const mio::Array2D<double>& shortw,
 		                            const mio::Array2D<double>& longwave,
 		                            const mio::Array2D<double>& diff,
@@ -181,6 +183,8 @@ class Runoff; // forward declaration, cyclic header include
 		                              const std::vector<SurfaceFluxes*>& surface_flux);
 		void write_special_points();
 		void calcLateralFlow();
+		void calcSimpleSnowDrift(const mio::Grid2DObject& ErodedMass, mio::Grid2DObject& psum);
+
 
 		// simulation dependent information
 		RunInfo run_info;
@@ -192,7 +196,7 @@ class Runoff; // forward declaration, cyclic header include
 
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, dw, rh, ta;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta;
 		double solarElevation;
 		
 		std::vector<std::string> output_grids; //which grids should be written out
@@ -227,7 +231,7 @@ class Runoff; // forward declaration, cyclic header include
 
 		SnowpackConfig sn_cfg;
 		const mio::DEMObject dem;
-		bool is_restart, useCanopy, enable_lateral_flow;
+		bool is_restart, useCanopy, enable_simple_snow_drift, enable_lateral_flow;
 		bool do_io_locally; // if false all I/O will only be done on the master process
 		std::string station_name; // value for the key OUTPUT::EXPERIMENT
 
@@ -239,6 +243,7 @@ class Runoff; // forward declaration, cyclic header include
 		std::string meteo_outpath;
 		double tz_out;
 		std::vector< std::pair<size_t,size_t> > pts; //special points
+		mio::Grid2DObject winderosiondeposition;
 };
 
 #endif

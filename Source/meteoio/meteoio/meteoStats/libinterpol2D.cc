@@ -886,6 +886,41 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 }
 
 /**
+* @brief Create special wind speed field based the Winstral Sx exposure coefficient for simple snow drift algorithm
+
+* This implements the wind exposure coefficient (Sx) for a given wind direction field, to assess in a simple way drifting snow.
+* When the exposure is negative, the grid is filled with the wind speed, to later assess the drifting snow.
+* When the exposure is positive, the grid is filled with the negative value of Sx, to later redistribute eroded mass in sheltered areas.
+* <i>"Simulating wind fields and snow redistribution using terrain‐based parameters to model
+* snow accumulation and melt over a semi‐arid mountain catchment."</i>, Winstral, Adam, and Danny Marks, Hydrological Processes <b>16.18</b> (2002), pp3585-3603.
+*
+* @param dem digital elevation model
+* @param DW wind direction grid
+* @param VW wind speed grid
+* @param dmax search radius
+* @param grid 2D array of wind speed to fill
+* @author Nander Wever
+*/
+void Interpol2D::WinstralDrift(const DEMObject& dem, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
+{
+	//compute wind exposure factor
+	Grid2DObject Sx;
+	WinstralSX(dem, dmax, DW, Sx);
+
+	for (size_t ii=0; ii<Sx.size(); ii++) {
+		const double sx = Sx(ii);
+		double &val = grid(ii);
+		if (sx > 0.) {
+			val = -sx;
+		} else if (sx==IOUtils::nodata) {
+			val = 0;
+		} else {
+			val = VW(ii);
+		}
+	}
+}
+
+/**
 * @brief Ordinary Kriging matrix formulation
 * This implements the matrix formulation of Ordinary Kriging, as shown (for example) in
 * <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp122.

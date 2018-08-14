@@ -271,6 +271,30 @@ void DEMObject::update(const std::string& algorithm) {
 
 /**
 * @brief Sets the default slope calculation algorithm
+* @param algorithm specify the default algorithm to use for slope computation
+*/
+void DEMObject::setDefaultAlgorithm(const std::string& algorithm) {
+	slope_type type;
+
+	if (algorithm.compare("HICK")==0) {
+		type=HICK;
+	} else if (algorithm.compare("FLEMING")==0) {
+		type=FLEM;
+	} else if (algorithm.compare("HORN")==0) {
+		type=HORN;
+	} else if (algorithm.compare("CORRIPIO")==0) {
+		type=CORR;
+	} else if (algorithm.compare("D8")==0) {
+		type=D8;
+	} else {
+		throw InvalidArgumentException("Chosen slope algorithm " + algorithm + " not available", AT);
+	}
+	
+	dflt_algorithm = type;
+}
+
+/**
+* @brief Sets the default slope calculation algorithm
 * @param i_algorithm specify the default algorithm to use for slope computation
 */
 void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
@@ -723,8 +747,8 @@ void DEMObject::CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, dou
 	if ( A[1][1]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata &&
 	     A[2][1]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata &&
 	     A[3][1]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata) {
-		o_Nx = ((A[3][3]+2.*A[2][3]+A[1][3]) - (A[3][1]+2.*A[2][1]+A[1][1])) / (8.*cellsize);
-		o_Ny = ((A[1][3]+2.*A[1][2]+A[1][1]) - (A[3][3]+2.*A[3][2]+A[3][1])) / (8.*cellsize);
+		o_Nx = ((A[1][1]+2*A[2][1]+A[3][1]) - (A[1][3]+2*A[2][3]+A[3][3])) / (8.*cellsize);
+		o_Ny = ((A[3][3]+2*A[3][2]+A[3][1]) - (A[1][3]+2*A[1][2]+A[1][1])) / (8.*cellsize);
 		o_Nz = 1.;
 
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))

@@ -46,21 +46,23 @@ namespace mio {
  * For example, to generate the precipitation phase when only the precipitation amout is available, using a simple temperature
  * threshold for doing the splitting:
  * @code
+ * [Generators]
  * PSUM_PH::generators     = PRECSPLITTING
- * PSUM_PH::PPHASE::type   = THRESH
- * PSUM_PH::PPHASE::snow   = 274.35
+ * PSUM_PH::PRECSPLITTING::type   = THRESH
+ * PSUM_PH::PRECSPLITTING::snow   = 274.35
  * @endcode
  * 
  * To generate the liquid and solid amounts from the precipitation sum, relying on a simple temperature threshold for the splitting
  * (if the precipitation phase is available, it will be used instead of calling the splitting model):
  * @code
- * PSUM_L::create     = PPHASE
- * PSUM_L::PPHASE::type   = THRESH
- * PSUM_L::PPHASE::snow   = 274.35
+ * [Input]
+ * PSUM_L::create     = PRECSPLITTING
+ * PSUM_L::PRECSPLITTING::type   = THRESH
+ * PSUM_L::PRECSPLITTING::snow   = 274.35
  * 
- * PSUM_S::create     = PPHASE
- * PSUM_S::PPHASE::type   = THRESH
- * PSUM_S::PPHASE::snow   = 274.35
+ * PSUM_S::create     = PRECSPLITTING
+ * PSUM_S::PRECSPLITTING::type   = THRESH
+ * PSUM_S::PRECSPLITTING::snow   = 274.35
  * @endcode
  * 
  * @note When generating PSUM_L / PSUM_S, you most probably also need to set their resampling to "accumulate", like for PSUM...

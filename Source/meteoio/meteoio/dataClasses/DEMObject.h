@@ -84,6 +84,7 @@ class DEMObject : public Grid2DObject {
 		           const size_t& i_ncols, const size_t& i_nrows, //dimensions of the sub-plane
 		           const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
+		void setDefaultAlgorithm(const std::string& i_algorithm);
 		void setDefaultAlgorithm(const slope_type& i_algorithm);
 		int getDefaultAlgorithm() const;
 		void setUpdatePpt(const update_type& in_update_flag);
