@@ -54,6 +54,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &rh,
 		              const mio::Grid2DObject &ta,
 		              const mio::Grid2DObject &vw,
+		              const mio::Grid2DObject &vw_drift,
 		              const mio::Grid2DObject &dw,
 		              const mio::Grid2DObject &mns,
 		              const mio::Grid2DObject &shortwave,
@@ -87,6 +88,7 @@ class SnowpackInterfaceWorker
 
 		const mio::Grid2DObject landuse;
 		mio::Grid2DObject store;
+		mio::Grid2DObject erodedmass;
 		std::map< SnGrids::Parameters, mio::Grid2DObject > grids;
 
 		// cache special point data for output on master process:
@@ -97,6 +99,7 @@ class SnowpackInterfaceWorker
 		double calculation_step_length;
 		double height_of_wind_value;
 		double soil_temp_depth, snow_temp_depth, snow_avg_temp_depth, snow_avg_rho_depth;
+		bool enable_simple_snow_drift;
 		bool useDrift, useEBalance, useCanopy;
 };
 

@@ -131,10 +131,10 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const size_t offset_in)
  : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), dem(dem_in),
    dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), isSpecialPoint(snow_stations.size(), false), 
-   landuse(landuse_in), store(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(), surface_flux(), 
+   landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(), surface_flux(),
    calculation_step_length(0.), height_of_wind_value(0.),
    soil_temp_depth(IOUtils::nodata), snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
-   useDrift(false), useEBalance(false), useCanopy(false)
+   enable_simple_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
 {
 	if (SnowStations.size() != (dimx*dimy)) throw IOException("Initial snow data does not match the provided grid size", AT);
 	
@@ -145,6 +145,10 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	io_cfg.getValue("SNOW_TEMPERATURE_DEPTH", "Output", snow_temp_depth, IOUtils::nothrow);
 	io_cfg.getValue("SNOW_AVG_TEMPERATURE_DEPTH", "Output", snow_avg_temp_depth, IOUtils::nothrow);
 	io_cfg.getValue("SNOW_AVG_DENSITY_DEPTH", "Output", snow_avg_rho_depth, IOUtils::nothrow);
+
+	//check if simple snow drift is enabled
+	enable_simple_snow_drift = false;
+	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
 	
 	//create the vector of output grids
 	std::vector<std::string> params = sn_cfg.get("GRIDS_PARAMETERS", "output");
@@ -300,6 +304,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = meteoPixel.rh; break;
 			case SnGrids::VW:
 				value = meteoPixel.vw; break;
+			case SnGrids::VW_DRIFT:
+				value = meteoPixel.vw_drift; break;
 			case SnGrids::DW:
 				value = meteoPixel.dw; break;
 			case SnGrids::ISWR:
@@ -364,6 +370,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = -surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION] /  snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::STORE:
 				value = store(ii,jj); break;
+			case SnGrids::ERODEDMASS:
+				value = erodedmass(ii,jj); break;
+			case SnGrids::WINDEROSIONDEPOSITION: // This grid does not exist on the workers, but may be requested, so return IOUtils::nodata in such cases.
+				value = IOUtils::nodata; break;
 			case SnGrids::GLACIER:
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:
@@ -398,6 +408,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
                                        const mio::Grid2DObject &rh,
                                        const mio::Grid2DObject &ta,
                                        const mio::Grid2DObject &vw,
+                                       const mio::Grid2DObject &vw_drift,
                                        const mio::Grid2DObject &dw,
                                        const mio::Grid2DObject &mns,
                                        const mio::Grid2DObject &shortwave,
@@ -415,6 +426,11 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	if (soil_temp_depth!=IOUtils::nodata) {
 		meteoPixel.zv_ts.push_back( soil_temp_depth );
 		meteoPixel.ts.push_back( IOUtils::nodata );
+	}
+
+	if (enable_simple_snow_drift) {
+		// reset eroded mass grid
+		erodedmass.set(erodedmass, 0.);
 	}
 
 	// make SN calculations....
@@ -438,6 +454,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			meteoPixel.rh = rh(ix,iy);
 			meteoPixel.ta = ta(ix,iy);
 			meteoPixel.vw = vw(ix,iy);
+			meteoPixel.vw_drift = (vw_drift(ix,iy) > 0.) ? (vw_drift(ix,iy)) : (0.);	//negative vw_drift is used by the Simple Snow Drift to store the positive sx values (sheltered pixels)
 			meteoPixel.dw = dw(ix,iy);
 			meteoPixel.iswr = shortwave(ix,iy);
 			meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
@@ -504,6 +521,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 					surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);
 					dIntEnergy += snowPixel.dIntEnergy; //it is reset at every new call to runSnowpackModel
 					meteoPixel.hs = snowPixel.cH - snowPixel.Ground; //do not reproject here, otherwise Snowpack outputs would get messed up
+					if (enable_simple_snow_drift) erodedmass(ix,iy) += snowPixel.ErosionMass; //store the eroded mass
 				} catch (const std::bad_alloc&) { //don't try anything fancy when running low on memory
 					const int lus =(int)floor( landuse(ix,iy));
 					const double slope2horiz = (1. / snowPixel.cos_sl);

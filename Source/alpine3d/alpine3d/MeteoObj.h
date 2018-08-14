@@ -33,6 +33,7 @@ class SnGrids {
                                           TA=firstparam, ///< Air temperature
                                           RH, ///< Relative humidity
                                           VW, ///< Wind velocity
+                                          VW_DRIFT, ///< Wind velocity
                                           DW, ///< Wind direction (deg)
                                           ISWR, ///< Incoming short wave radiation
                                           ISWR_DIFF, ///< Incoming short wave, diffuse
@@ -62,6 +63,8 @@ class SnGrids {
                                           MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
                                           SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
+                                          ERODEDMASS, ///< wind eroded mass (kg/m2)
+                                          WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
                                           lastparam=GLACIER_EXPOSED};
@@ -91,6 +94,7 @@ class MeteoObj
 		         mio::Grid2DObject& psum,
 		         mio::Grid2DObject& psum_ph,
 		         mio::Grid2DObject& vw,
+		         mio::Grid2DObject& vw_drift,
 		         mio::Grid2DObject& dw,
 		         mio::Grid2DObject& p,
 		         mio::Grid2DObject& ilwr);
@@ -110,13 +114,14 @@ class MeteoObj
 		const mio::Config &config;
 		mio::IOManager io;
 		const mio::DEMObject &dem;
-		mio::Grid2DObject ta, rh, psum, psum_ph, vw, dw, p, ilwr;
+		mio::Grid2DObject ta, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr;
 		mio::Grid2DObject sum_ta, sum_rh, sum_rh_psum, sum_psum, sum_psum_ph, sum_vw, sum_ilwr;
 		std::vector<mio::MeteoData> vecMeteo;
 		mio::Date date;
 		Glaciers *glaciers;
 		unsigned int count_sums, count_precip;
 		bool skipWind; ///<should the grids be filled or only the data vectors returned?
+		bool enable_simple_snow_drift;
 };
 
 #endif
