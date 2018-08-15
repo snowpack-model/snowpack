@@ -24,7 +24,6 @@
 #ifndef SALINITYTRANSPORT_H
 #define SALINITYTRANSPORT_H
 
-#include <snowpack/snowpackCore/ReSolver1d.h>
 #include <meteoio/MeteoIO.h>
 
 /**
@@ -55,6 +54,8 @@ class SalinityTransport {
 		std::vector<double> BrineSal;		//Salinity in brine, in g/(m^3_water)
 		std::vector<double> D;			//Diffusivity
 		std::vector<double> sb;			//Source/sink term for brine salinity
+
+		double BottomSalinity, TopSalinity;	//The boundary conditions bottom and top salinities.
 
 		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
 

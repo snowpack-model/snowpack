@@ -416,6 +416,194 @@ void ReSolver1d::InitializeGrid(const vector<ElementData>& EMS, const size_t& lo
 	return;
 }
 
+
+/**
+ * @brief Assemble the right hand side and assess the fluxes
+ * @author Nander Wever
+ * @param Takes many arguments, but in the future, many variables should become owned by the class.
+ */
+vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
+					const size_t& uppernode,
+					const vector<double>& h_np1_m,
+					const vector<double>& theta_n,
+					const vector<double>& theta_np1_m,
+					const vector<double>& theta_i_n,
+					const vector<double>& theta_i_np1_m,
+					const vector<double>& s,
+					const double& dt,
+					const vector<double>& rho,
+					const vector<double>& k_np1_m_im12,
+					const vector<double>& k_np1_m_ip12,
+					const BoundaryConditions aTopBC,
+					const double& TopFluxRate,
+					const BoundaryConditions aBottomBC,
+					const double& BottomFluxRate,
+					const SnowStation& Xdata,
+					SalinityTransport& Salinity,
+					const SalinityMixingModels& SALINITY_MIXING
+					)
+{
+	size_t nE = (uppernode - lowernode) + 1;
+	std::vector<double> term_up(nE, 0.);			//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990).
+	std::vector<double> term_down(nE, 0.);			//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990).
+	std::vector<double> term_up_crho(nE, 0.);		//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990), assuming constant density.
+	std::vector<double> term_down_crho(nE, 0.);		//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990), assuming constant density.
+
+	std::vector<double> r_mpfd(nE, 0.);			//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990).
+
+	for (size_t i = lowernode; i <= uppernode; i++) {	//We loop over all Richards solver domain layers
+		// Calculate density related variables
+		double rho_up = 0;
+		double rho_down = 0;
+		double drho_up = 0;
+		double drho_down = 0;
+		if(i==uppernode) {
+			rho_up = 0.5 * (rho[i] + Constants::density_water);
+			drho_up = (Constants::density_water - rho[i]) / dz_up[i];
+		} else {
+			rho_up = 0.5 * (rho[i] + rho[i+1]);
+			drho_up = (rho[i+1] - rho[i]) / (dz_up[i]);
+		}
+		if(i==lowernode) {
+			rho_down = 0.5 * (rho[i] + Constants::density_water + SeaIce::betaS * Xdata.Seaice->OceanSalinity);
+			drho_down = (rho[i] - Constants::density_water + SeaIce::betaS * Xdata.Seaice->OceanSalinity) / dz_down[i];
+		} else {
+			rho_down = 0.5 * (rho[i] + rho[i-1]);
+			drho_down = (rho[i] - rho[i-1]) / (dz_down[i]);
+		}
+
+		//Determine R:
+		term_up[i]=0.;
+		term_down[i]=0.;
+		term_up_crho[i]=0.;
+		term_down_crho[i]=0.;
+
+		//Fill R.H.S. vector
+		//Note: the gravity term is not explicitly in Celia et al (1990). It is just z[i], as pressure head should already be scaled by rho_water * g. Then it is taken outside the nabla, by using the chain rule.
+		if(i==uppernode) {
+			if(aTopBC==NEUMANN) {		//Neumann, following Equation 4 in McCord, WRR (1991).
+				term_up[i]=(TopFluxRate)*dz_up[i] - Xdata.cos_sl*(dz_up[i]*k_np1_m_ip12[i]);
+			} else {			//Dirichlet
+				term_up[i]=0.;
+			}
+			term_up_crho[i]=term_up[i];
+		} else {
+			term_up[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho[i+1]-h_np1_m[i]*rho[i]);
+			//term_up_crho[i]=k_np1_m_ip12[i]*(h_np1_m[i+1]*0.5*(rho[i]+rho[i+1])-h_np1_m[i]*0.5*(rho[i]+rho[i+1]));
+			term_up_crho[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho_up-h_np1_m[i]*rho_up);
+		}
+		if(i==lowernode) {
+			if(aBottomBC == NEUMANN) {	//Neumann, following Equation 4 in McCord, WRR (1991).
+				term_down[i]=(BottomFluxRate)*dz_down[i] - Xdata.cos_sl*(dz_down[i]*k_np1_m_im12[i]);
+			} else {			//Dirichlet (r_mpfd[lowernode] should equal 0.)
+				term_down[i]=(term_up[i]/dz_up[i])*dz_down[i];
+
+				term_down[i]+=
+			(+ Xdata.cos_sl*((k_np1_m_ip12[i]-k_np1_m_im12[i])/(dz_[i]))
+			+ Xdata.cos_sl*(((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i])) * (drho_up) - (k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i])) * (drho_down)) / (dz_[i]))
+			- (1./dt)*((theta_np1_m[i]-theta_n[i]) + (theta_i_np1_m[i]-theta_i_n[i])*(Constants::density_ice/Constants::density_water))
+			+ s[i]) * dz_[i] * dz_down[i];
+			}
+			term_down_crho[i]=term_down[i];
+		} else {
+			term_down[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho[i] - h_np1_m[i-1]*rho[i-1]);
+			//term_down_crho[i]=k_np1_m_im12[i]*(h_np1_m[i]*0.5*(rho[i]+rho[i-1]) - h_np1_m[i-1]*0.5*(rho[i]+rho[i-1]));
+			term_down_crho[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho_down - h_np1_m[i-1]*rho_down);
+		}
+
+		//RHS eq. 17 in Celia et al. (1990):
+		r_mpfd[i]=(1./(dz_[i]))*((term_up[i]/dz_up[i])-(term_down[i]/dz_down[i]))
+			+ Xdata.cos_sl*((k_np1_m_ip12[i]-k_np1_m_im12[i])/(dz_[i]))
+			+ Xdata.cos_sl*(((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i])) * (drho_up) - (k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i])) * (drho_down)) / (dz_[i]))
+			- (1./dt)*((theta_np1_m[i]-theta_n[i]) + (theta_i_np1_m[i]-theta_i_n[i])*(Constants::density_ice/Constants::density_water))
+			+ s[i];
+
+		//Determine individual fluxes (defined as: negative = upward, positive = downward):
+		Salinity.dz_[i] = dz_[i];
+		Salinity.dz_up[i] = dz_up[i];
+		Salinity.dz_down[i] = dz_down[i];
+		Salinity.theta1[i] = theta_n[i];
+		Salinity.D[i] = 1E-9;
+		switch (SALINITY_MIXING) {
+			case NONE:
+			{
+				//No mixing: salt fluxes only based on net fluxes (1) and second term (2) is zero.
+				Salinity.flux_up[i] = term_up[i]/dz_up[i]
+					+ Xdata.cos_sl*(k_np1_m_ip12[i])
+					+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
+				Salinity.flux_up_2[i] = 0.;
+
+				Salinity.flux_down[i] = term_down[i]/dz_down[i]
+					+ Xdata.cos_sl*(k_np1_m_im12[i])
+					+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
+				Salinity.flux_down_2[i] = 0.;
+				break;
+			}
+			case CAPILLARY_GRAVITY:
+			{
+				//Separate capillary (1) and gravity term (2)
+				Salinity.flux_up[i] = term_up[i]/dz_up[i];				// Capillary term
+				Salinity.flux_up_2[i] =							// Gravity term
+					+ Xdata.cos_sl*(k_np1_m_ip12[i])
+					+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
+
+				Salinity.flux_down[i] = term_down[i]/dz_down[i];			// Capillary term
+				Salinity.flux_down_2[i] =						// Gravity term
+					+ Xdata.cos_sl*(k_np1_m_im12[i])
+					+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
+				break;
+			}
+			case DENSITY_DIFFERENCE:
+			{
+				//Separate term dependent on density (1) and term constant density (2)
+				Salinity.flux_up[i] =
+					+ term_up[i]/dz_up[i] - term_up_crho[i]/dz_up[i]
+					+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
+				Salinity.flux_up_2[i] = term_up_crho[i]/dz_up[i] + Xdata.cos_sl*k_np1_m_ip12[i];
+
+				Salinity.flux_down[i] =
+					+ term_down[i]/dz_down[i] - term_down_crho[i]/dz_down[i]
+					+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
+				Salinity.flux_down_2[i] = term_down_crho[i]/dz_down[i] + Xdata.cos_sl*k_np1_m_im12[i];
+				break;
+			}
+			case DENSITY_GRAVITY:
+			{
+				//Separate term constant density (1) and term dependent on density (2)
+				Salinity.flux_up[i] = term_up[i]/dz_up[i] + Xdata.cos_sl*(k_np1_m_ip12[i]*rho[i]);
+				Salinity.flux_up_2[i] =
+					+ Xdata.cos_sl*(k_np1_m_ip12[i]*(rho_up-rho[i]))
+					+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_up);
+
+				Salinity.flux_down[i] = term_down[i]/dz_down[i] + Xdata.cos_sl*(k_np1_m_im12[i]*rho[i]);
+				Salinity.flux_down_2[i] =
+					+ Xdata.cos_sl*(k_np1_m_im12[i]*(rho_down-rho[i]))
+					+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_down);
+				break;
+			}
+		}
+		if(i==uppernode) {
+			Salinity.flux_up[uppernode]+=Salinity.flux_up_2[uppernode];
+			Salinity.flux_up_2[uppernode]=0.;
+		}
+		if(i==lowernode) {
+			Salinity.flux_down[lowernode]+=Salinity.flux_down_2[lowernode];
+			Salinity.flux_down_2[lowernode]=0.;
+		}
+	}
+
+
+	// r_mpfd is an approximation of how far one is away from the solution. So in case of Dirichlet boundaries, we are *at* the solution:
+	if(aTopBC==DIRICHLET) r_mpfd[uppernode]=0.;
+	if(aBottomBC==DIRICHLET) r_mpfd[lowernode]=0.;
+
+
+	// return the right hand side vector
+	return r_mpfd;
+}
+
+
+
 /**
  * @brief Solve Richards Equation \n
  * Solve Richards Equation \n
@@ -601,6 +789,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	const size_t nmemstates=1;			//Number of memory states, used to store changes of delta_h between iterations. Currently not used, but possible use is to check if delta_h is blowing up.
 	int memstate=0;					//Keeping track of the current memory index
 	double h_d=0.;					//Lower limit for pressure head: definition of "completely dry". This value will be determined later.
+	double min_theta=Constants::eps2;
 
 
 	//Initializing and declaring boundary conditions and flux variables
@@ -643,10 +832,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	std::vector<double> K(nE, 0.);				//Hydraulic conductivity function
 	std::vector<double> impedance(nE, 0.);			//Impedance factor due to ice formation in matrix (see Dall'Amico, 2011);
 	std::vector<double> Se(nE, 0.);				//Effective saturation, sometimes called dimensionless volumetric water content.
-	std::vector<double> term_up(nE, 0.);			//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990).
-	std::vector<double> term_down(nE, 0.);			//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990).
-	std::vector<double> term_up_crho(nE, 0.);		//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990), assuming constant density.
-	std::vector<double> term_down_crho(nE, 0.);		//Variable to support construction of the R.H.S. (R_mpfd in Celia et al., 1990), assuming constant density.
 	std::vector<double> r_mpfd(nE, 0.);			//R_mpfd (see Celia et al, 1990).
 	std::vector<double> r_mpfd2(nE, 0.);			//Copy of R_mpfd, used for DGTSV. Note: R_mpfd2 is overwritten by DGTSV, so we need a copy.
 	std::vector<double> h_np1_mp1(nE, 0.);			//Pressure head for the solution time step in the next iteration
@@ -693,6 +878,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 		//Make backup of incoming values for theta[ICE]
 		snowpackBACKUPTHETAICE[i]=EMS[i].theta[ICE];
+
+		//Check min theta which is not 0.
+		if (EMS[i].theta[WATERINDEX] > 0. && EMS[i].theta[WATERINDEX] < min_theta) min_theta = EMS[i].theta[WATERINDEX];
 	}
 
 	// Grid initialization (this needs to be done every time step, as snowpack layers will settle and thereby change height)
@@ -715,14 +903,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			}
 
 			EMS[i].VG.SetVGParamsSnow(VGModelTypeSnow, K_PARAM, matrix);
-
-			// Special case for ice
-			if(EMS[i].theta[ICE]>700./Constants::density_ice && variant=="SEAICE") {
-				// For sea ice, this probably has to become a function of ice temperature and salinity.
-				const double tmp_permeability = 1E-12;
-				const double tmp_dynamic_viscosity_water=0.001792;				//In Pa/s, from WaterTransport code by Hirashima: 0.001792
-				EMS[i].VG.ksat=tmp_permeability * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
-			}
 
 			// Recheck pref flow area: some processes in SNOWPACK may change pore space and water contents, such that the pref flow area is not consistent to store all water.
 			const double tmpPoreSpace = (1. - EMS[i].theta[ICE]) * (Constants::density_ice / Constants::density_water);
@@ -751,7 +931,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Explanation: cold dry new snow layers are initialized with this value. We need to make sure that ALL the other layers have at least a higher pressure head when they contain at least a little bit of water. Else, various numerical troubles arise.
 		//In case the value is too high, we get fluxes out of the completely dry snow layer, and a too low value causes many numerical difficulties as in that case, it represents a much stronger gradient in pressure head than necessary (many iterations and small time steps).
 		//So we check for each particular layer what pressure head is associated with a theta[WATER] that is a smaller deviation from theta_r then the solver will resolve.
-		const double tmp_head=EMS[i].VG.fromTHETAtoHforICE(EMS[i].VG.theta_r+(REQUIRED_ACCURACY_THETA/10.), h_d, theta_i_n[i]);
+		const double tmp_head=EMS[i].VG.fromTHETAtoHforICE(min_theta, h_d, theta_i_n[i]);
 		if(h_d>tmp_head) h_d=tmp_head;
 		if(i==uppernode) h_d_uppernode=tmp_head;	//We store this value in order to use it for the LIMITEDFLUXEVAPORATION
 		if (WriteDebugOutputput)
@@ -884,9 +1064,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			Xdata.Seaice->updateFreeboard(Xdata);
 		}
 		aBottomBC=DIRICHLET;
-		hbottom=Xdata.Seaice->SeaLevel - NDS[lowernode].z - .5 * EMS[lowernode].L;
+		hbottom=std::min((Xdata.Seaice->SeaLevel - NDS[lowernode].z - .5 * EMS[lowernode].L), NDS[uppernode+1].z); // Keep hbottom smaller than depth of simulation domain.
 		h_n[lowernode]=hbottom;
-		EMS[lowernode].salinity += SeaIce::OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
+		EMS[lowernode].salinity += Xdata.Seaice->OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
 		EMS[lowernode].theta[WATER] = theta_n[lowernode] = EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]);
 		EMS[lowernode].updDensity();
 	}
@@ -1242,21 +1422,15 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				// Calculate density related variables
 				double rho_up = 0;
 				double rho_down = 0;
-				double drho_up = 0;
-				double drho_down = 0;
 				if(i==uppernode) {
 					rho_up = 0.5 * (rho[i] + Constants::density_water);
-					drho_up = (Constants::density_water - rho[i]) / dz_up[i];
 				} else {
 					rho_up = 0.5 * (rho[i] + rho[i+1]);
-					drho_up = (rho[i+1] - rho[i]) / (dz_up[i]);
 				}
 				if(i==lowernode) {
-					rho_down = 0.5 * (rho[i] + Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity);
-					drho_down = (rho[i] - Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity) / dz_down[i];
+					rho_down = 0.5 * (rho[i] + Constants::density_water + SeaIce::betaS * Xdata.Seaice->OceanSalinity);
 				} else {
 					rho_down = 0.5 * (rho[i] + rho[i-1]);
-					drho_down = (rho[i] - rho[i-1]) / (dz_down[i]);
 				}
 
 
@@ -1332,133 +1506,10 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 				//We copy here the matrix to the ainv, which is passed to the SVD-routine later on. This ainv is altered externally, that's why we need a copy.
 				//ainv[j*(uppernode+1)+i]=a[i][j];
-
-				//Determine R:
-				term_up[i]=0.;
-				term_down[i]=0.;
-				term_up_crho[i]=0.;
-				term_down_crho[i]=0.;
-
-				//Fill R.H.S. vector
-				//Note: the gravity term is not explicitly in Celia et al (1990). It is just z[i], as pressure head should already be scaled by rho_water * g. Then it is taken outside the nabla, by using the chain rule.
-				if(i==uppernode) {
-					if(aTopBC==NEUMANN) {		//Neumann, following Equation 4 in McCord, WRR (1991).
-						term_up[i]=(TopFluxRate)*dz_up[i] - Xdata.cos_sl*(dz_up[i]*k_np1_m_ip12[i]);
-					} else {	//Dirichlet
-						term_up[i]=0.;
-					}
-					term_up_crho[i]=term_up[i];
-				} else {
-					term_up[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho[i+1]-h_np1_m[i]*rho[i]);
-					//term_up_crho[i]=k_np1_m_ip12[i]*(h_np1_m[i+1]*0.5*(rho[i]+rho[i+1])-h_np1_m[i]*0.5*(rho[i]+rho[i+1]));
-					term_up_crho[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho_up-h_np1_m[i]*rho_up);
-				}
-				if(i==lowernode) {
-					if(aBottomBC == NEUMANN) {	//Neumann, following Equation 4 in McCord, WRR (1991).
-						term_down[i]=(BottomFluxRate)*dz_down[i] - Xdata.cos_sl*(dz_down[i]*k_np1_m_im12[i]);
-					} else {			//Dirichlet (r_mpfd[lowernode] should equal 0.)
-						term_down[i]=(term_up[i]/dz_up[i])*dz_down[i];
-
-						term_down[i]+=
-					(+ Xdata.cos_sl*((k_np1_m_ip12[i]-k_np1_m_im12[i])/(dz_[i]))
-					+ Xdata.cos_sl*(((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i])) * (drho_up) - (k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i])) * (drho_down)) / (dz_[i]))
-					- (1./dt)*((theta_np1_m[i]-theta_n[i]) + (theta_i_np1_m[i]-theta_i_n[i])*(Constants::density_ice/Constants::density_water))
-					+ s[i]) * dz_[i] * dz_down[i];
-					}
-					term_down_crho[i]=term_down[i];
-				} else {
-					term_down[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho[i] - h_np1_m[i-1]*rho[i-1]);
-					//term_down_crho[i]=k_np1_m_im12[i]*(h_np1_m[i]*0.5*(rho[i]+rho[i-1]) - h_np1_m[i-1]*0.5*(rho[i]+rho[i-1]));
-					term_down_crho[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho_down - h_np1_m[i-1]*rho_down);
-				}
-
-				//RHS eq. 17 in Celia et al. (1990):
-				r_mpfd[i]=(1./(dz_[i]))*((term_up[i]/dz_up[i])-(term_down[i]/dz_down[i]))
-					+ Xdata.cos_sl*((k_np1_m_ip12[i]-k_np1_m_im12[i])/(dz_[i]))
-					+ Xdata.cos_sl*(((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i])) * (drho_up) - (k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i])) * (drho_down)) / (dz_[i]))
-					- (1./dt)*((theta_np1_m[i]-theta_n[i]) + (theta_i_np1_m[i]-theta_i_n[i])*(Constants::density_ice/Constants::density_water))
-					+ s[i];
-
-				//Determine individual fluxes (defined as: negative = upward, positive = downward):
-				Salinity.dz_[i] = dz_[i];
-				Salinity.dz_up[i] = dz_up[i];
-				Salinity.dz_down[i] = dz_down[i];
-				Salinity.theta1[i] = theta_n[i];
-				Salinity.D[i] = 1.E-9;
-				switch (SALINITY_MIXING) {
-					case NONE:
-					{
-						//No mixing: salt fluxes only based on net fluxes (1) and second term (2) is zero.
-						Salinity.flux_up[i] = term_up[i]/dz_up[i]
-							+ Xdata.cos_sl*(k_np1_m_ip12[i])
-							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
-						Salinity.flux_up_2[i] = 0.;
-
-						Salinity.flux_down[i] = term_down[i]/dz_down[i]
-							+ Xdata.cos_sl*(k_np1_m_im12[i])
-							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
-						Salinity.flux_down_2[i] = 0.;
-						break;
-					}
-					case CAPILLARY_GRAVITY:
-					{
-						//Separate capillary (1) and gravity term (2)
-						Salinity.flux_up[i] = term_up[i]/dz_up[i];				// Capillary term
-						Salinity.flux_up_2[i] =							// Gravity term
-							+ Xdata.cos_sl*(k_np1_m_ip12[i])
-							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
-
-						Salinity.flux_down[i] = term_down[i]/dz_down[i];			// Capillary term
-						Salinity.flux_down_2[i] =						// Gravity term
-							+ Xdata.cos_sl*(k_np1_m_im12[i])
-							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
-						break;
-					}
-					case DENSITY_DIFFERENCE:
-					{
-						//Separate term dependent on density (1) and term constant density (2)
-						Salinity.flux_up[i] =
-							+ term_up[i]/dz_up[i] - term_up_crho[i]/dz_up[i]
-							+ Xdata.cos_sl*((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
-						Salinity.flux_up_2[i] = term_up_crho[i]/dz_up[i] + Xdata.cos_sl*k_np1_m_ip12[i];
-
-						Salinity.flux_down[i] =
-							+ term_down[i]/dz_down[i] - term_down_crho[i]/dz_down[i]
-							+ Xdata.cos_sl*((k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
-						Salinity.flux_down_2[i] = term_down_crho[i]/dz_down[i] + Xdata.cos_sl*k_np1_m_im12[i];
-						break;
-					}
-					case DENSITY_GRAVITY:
-					{
-						//Separate term constant density (1) and term dependent on density (2)
-						Salinity.flux_up[i] = term_up[i]/dz_up[i] + Xdata.cos_sl*(k_np1_m_ip12[i]*rho[i]);
-						Salinity.flux_up_2[i] =
-							+ Xdata.cos_sl*(k_np1_m_ip12[i]*(rho_up-rho[i]))
-							+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_up);
-
-						Salinity.flux_down[i] = term_down[i]/dz_down[i] + Xdata.cos_sl*(k_np1_m_im12[i]*rho[i]);
-						Salinity.flux_down_2[i] =
-							+ Xdata.cos_sl*(k_np1_m_im12[i]*(rho_down-rho[i]))
-							+ Xdata.cos_sl*(k_np1_m_ip12[i]*(z[i]+0.5*(dz_[i]))-k_np1_m_im12[i]*(z[i]-0.5*(dz_[i]))) * (drho_down);
-						break;
-					}
-				}
-				if(i==uppernode) {
-					Salinity.flux_up[uppernode]+=Salinity.flux_up_2[uppernode];
-					Salinity.flux_up_2[uppernode]=0.;
-				}
-				if(i==lowernode) {
-					Salinity.flux_down[lowernode]+=Salinity.flux_down_2[lowernode];
-					Salinity.flux_down_2[lowernode]=0.;
-				}
-
-
-				// r_mpfd is an approximation of how far one is away from the solution. So in case of Dirichlet boundaries, we are *at* the solution:
-				if(aTopBC==DIRICHLET) r_mpfd[uppernode]=0.;
-				if(aBottomBC==DIRICHLET) r_mpfd[lowernode]=0.;
-
-				r_mpfd2[i]=r_mpfd[i];			// We make a copy for use with DGTSV and TDMA solvers.
 			}
+
+			r_mpfd = AssembleRHS(lowernode, uppernode, h_np1_m, theta_n, theta_np1_m, theta_i_n, theta_i_np1_m, s, dt, rho, k_np1_m_im12, k_np1_m_ip12, aTopBC, TopFluxRate, aBottomBC, BottomFluxRate, Xdata, Salinity, SALINITY_MIXING);
+			r_mpfd2 = r_mpfd;			// We make a copy for use with DGTSV and TDMA solvers.
 
 			if((SalinityTransportSolver==SalinityTransport::EXPLICIT || (SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT && TimeAdvance<60.)) && Salinity.VerifyCFL(dt)==false) {
 				printf("CFL failed for dt=%.10f\n", dt);
@@ -1560,6 +1611,20 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				delta_h[memstate%nmemstates][lowernode]=0.;
 				delta_theta[lowernode]=0.;
 			}
+
+
+			if (Xdata.Seaice != NULL && solver_result != -1) {
+				AssembleRHS(lowernode, uppernode, h_np1_m, theta_n, theta_np1_m, theta_i_n, theta_i_np1_m, s, dt, rho, k_np1_m_im12, k_np1_m_ip12, aTopBC, TopFluxRate, aBottomBC, BottomFluxRate, Xdata, Salinity, SALINITY_MIXING);
+				if((SalinityTransportSolver==SalinityTransport::EXPLICIT || (SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT && TimeAdvance<60.)) && Salinity.VerifyCFL(dt)==false) {
+					printf("CFL failed for dt=%.10f @ second time\n", dt);
+					solver_result=-1;
+				}
+				if((SalinityTransportSolver==SalinityTransport::IMPLICIT || (SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT && !(TimeAdvance<60.))) && Salinity.VerifyImplicitDt(dt)==false) {
+					printf("ImplicitLimit failed for dt=%.10f @ second time\n", dt);
+					solver_result=-1;
+				}
+			}
+
 
 			i = uppernode + 1;
 			while (i-- > lowernode) {
@@ -1841,7 +1906,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							+Xdata.cos_sl*(rho[lowernode+1]*z[lowernode+1]-rho[lowernode]*z[lowernode])/dz_up[lowernode])
 							*k_np1_m_ip12[lowernode]*dt)
 						);*/
-					tmp_mb_bottomflux=(Salinity.flux_down[lowernode]+Salinity.flux_down_2[lowernode]) * dt;
+					tmp_mb_bottomflux=(Salinity.flux_down[lowernode] + Salinity.flux_down_2[lowernode]) * dt;		// Units: [m]
 				} else {
 					//With Dirichlet lower boundary condition and only 1 element, we cannot really estimate the flux, so set it to 0.
 					tmp_mb_bottomflux=0.;
@@ -2035,6 +2100,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					Salinity.BrineSal[i] = EMS[i].salinity / theta_n[i];				//Calculate brine salinity
 					Salinity.theta1[i] = theta_n[i];
 					Salinity.theta2[i] = theta_np1_mp1[i];
+					Salinity.BottomSalinity = Xdata.Seaice->OceanSalinity;
+					Salinity.TopSalinity = 0.;
 				}
 
 				// Solve the transport equation
@@ -2051,16 +2118,16 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);
 
 					//Verify new salinity profile
-					if(EMS[i].salinity < 0.) {
+					if(EMS[i].salinity < Constants::eps) {
 						if(EMS[i].salinity>-Constants::eps) {
-							EMS[i].salinity = 0.;
+							EMS[i].salinity = Constants::eps;
 						} else {
 							std::cout << "[E] Salinity at e=" << i << ": " << std::setprecision(8) << EMS[i].salinity << "!\n";
-							/*if(TimeAdvance == 900.)*/ EMS[i].salinity = 0.;
+							/*if(TimeAdvance == 900.)*/ EMS[i].salinity = Constants::eps;
 							//throw;
 						}
 					}
-					Xdata.Edata[i].melting_tk = Xdata.Edata[i].freezing_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::freezing_tk;
+					Xdata.Edata[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
 				}
 
 				Xdata.Seaice->BottomSalFlux += Salinity.BottomSalFlux;
@@ -2107,7 +2174,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			if(aBottomBC==DIRICHLET) {
 				if(uppernode > 0) {
 					const double tmp_flux=-1.*((delta_theta_dt[lowernode]+(delta_theta_i_dt[lowernode]*(Constants::density_ice/Constants::density_water))*dt*dz_[lowernode]) - (1./rho[lowernode])*((((h_np1_mp1[lowernode+1]*rho[lowernode+1]-h_np1_mp1[lowernode]*rho[lowernode])/dz_up[lowernode])+Xdata.cos_sl)*k_np1_m_ip12[lowernode]*dt));
-					actualbottomflux+=tmp_flux;
+					//actualbottomflux+=tmp_flux;
+					actualbottomflux+=(Salinity.flux_down[0]+Salinity.flux_down_2[0])*dt;
 				} else {
 					//With Dirichlet lower boundary condition and only 1 element, we cannot really estimate the flux, so set it to 0.
 					const double tmp_flux=0.;

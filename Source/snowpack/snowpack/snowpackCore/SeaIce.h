@@ -64,7 +64,7 @@ class SeaIce {
 		const static double FractionationCoeff;
 		const static double InitRg;
 		const static double InitRb;
-		const static double OceanSalinity;
+		const static double InitOceanSalinity;
 		const static double InitSeaIceSalinity;
 		const static double InitSnowSalinity;
 
@@ -73,7 +73,8 @@ class SeaIce {
 		double IceSurface;          ///< Interface sea ice/snow (m)
 		size_t IceSurfaceNode;      ///< Interface node sea ice/snow (m)
 		double OceanHeatFlux;       ///< Ocean heat flux (W/m^2)
-
+		double OceanSalinity;
+		double OceanBufferLayerDepth;
 		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
 
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
@@ -87,9 +88,10 @@ class SeaIce {
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
 		void updateBrinePockets(SnowStation& Xdata, const bool&);
+		void updateOceanBufferLayer(const double& BottomFlux, const double& Salinity);
 		void compFlooding(SnowStation& Xdata);
 		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
-		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM);
+		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM, const bool& ForceMerge);
 
 		double getBulkSalinity(const SnowStation& Xdata);
 		double getBrineSalinity(const SnowStation& Xdata);

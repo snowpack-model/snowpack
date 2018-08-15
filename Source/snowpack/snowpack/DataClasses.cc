@@ -2014,10 +2014,9 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	if (Seaice != NULL) {
 		Seaice->updateFreeboard(*this);
 		for(size_t e = nElems; e -->0; ) {
-			const double br_sal = (Edata[e].Te - Constants::freezing_tk) / -SeaIce::mu;
-			Edata[e].salinity = br_sal * Edata[e].theta[WATER];
+			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
 			if(Edata[e].salinity > 0.) {
-				Edata[e].melting_tk = Edata[e].freezing_tk = -SeaIce::mu * br_sal + Constants::freezing_tk;
+				Edata[e].meltfreeze_tk = -SeaIce::mu * br_sal + Constants::meltfreeze_tk;
 			}
 			Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
 		}
