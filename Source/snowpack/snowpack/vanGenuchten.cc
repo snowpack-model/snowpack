@@ -381,6 +381,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 
 	if(theta_s<Constants::eps2) {
 		// This case is not handled well
+		std::cout << "ERROR: theta_s= " << theta_s << "   theta_r=" << theta_r << "\n";
 		throw;
 	}
 	//Make sure theta_r << theta_s
