@@ -145,9 +145,11 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			/*size_t e = Xdata.SoilNode;
 			for (; e < IceSurfaceNode; e++) {
 				Xdata.Edata[e].salinity = 35.;			// Default: 35 g/kg
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
 			for (; e < nE; e++) {
+				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}*/
 			break;
@@ -314,7 +316,7 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 
 
 /**
- * @brief Calculate melting temperature as function of salinity
+ * @brief Calculate melting temperature as function of brine salinity
  * @version 16.08
  * @param Edata
  */
@@ -328,9 +330,9 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 
 
 /**
- * @brief Calculate melting temperature as function of salinity
+ * @brief Calculate melting temperature as function of brine salinity
  * @version 17.12: initial version
- * @param Sal: Salinity (PSU, which is g/kg)
+ * @param Sal: Brine salinity (PSU, which is g/kg)
  */
 double SeaIce::calculateMeltingTemperature(const double& Sal)
 {
@@ -478,28 +480,31 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 		//dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(Xdata.Ndata[Xdata.SoilNode].T, SeaIce::OceanSalinity);
 		dM = ThicknessFirstIceLayer * SeaIceDensity;
 	}
-	ApplyBottomIceMassBalance(Xdata, Mdata, sn_dt, dM, false);
+	ApplyBottomIceMassBalance(Xdata, Mdata, dM);
 }
 
 
 /**
- * @brief Calculate ice formation and decay at the bottom
+ * @brief Apply mass gain/loss at the bottom (dM)
  * @version 16.08: initial version
- * @param Edata
+ * @param Xdata
+ * @param Mdata
+ * @param dM: mass change (kg/m^2), positive=gain, negative=loss.
  */
-void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM, const bool& ForceMerge)
+void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM)
 {
+	//Dereference pointers
 	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
 	size_t nE = Xdata.getNumberOfElements();
 
 	// Apply mass change:
 	double dz = 0.;
-	if (dM > 0) {
+	if ( dM > 0 ) {
 		// dM > 0: mass gain
-		if ( nE == 0 || (EMS[Xdata.SoilNode].theta[ICE] > ThetaIceMin && !ForceMerge) ) {
 			const double dH = dM / SeaIceDensity;								// Total height to be added
-			const size_t nAddE = std::max(size_t(1), (size_t)(dH / (height_new_seaice_elem*Xdata.cos_sl)));	// Number of elements
+			const double dH = dM / SeaIceDensity;								// Total height to be added
+			const size_t nAddE = 1;										// Number of elements
 			const double dL = (dH / double(nAddE));								// Height of each individual layer
 			for ( size_t j = 0; j < nAddE; j++ ) {
 				dz += dL;
@@ -597,8 +602,8 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 	} else {
 		// dM < 0: Mass loss
 		while (dM < 0. && nE > 0) {
-			const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
-			if(EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice * EMS[Xdata.SoilNode].L + dM > Constants::eps2 && EMS[Xdata.SoilNode].L + dL > Constants::eps2) {
+			if(EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice * EMS[Xdata.SoilNode].L + dM > Constants::eps2) {
+				const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
 				// Reduce element length
 				EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = EMS[Xdata.SoilNode].L + dL;
 				EMS[Xdata.SoilNode].M += dM;

@@ -91,7 +91,7 @@ class SeaIce {
 		void updateOceanBufferLayer(const double& BottomFlux, const double& Salinity);
 		void compFlooding(SnowStation& Xdata);
 		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
-		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, double dM, const bool& ForceMerge);
+		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM);
 
 		double getBulkSalinity(const SnowStation& Xdata);
 		double getBrineSalinity(const SnowStation& Xdata);
