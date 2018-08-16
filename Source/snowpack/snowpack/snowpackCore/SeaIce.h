@@ -84,6 +84,7 @@ class SeaIce {
 		double findIceSurface(SnowStation& Xdata);
 		void compFlooding(SnowStation& Xdata);
 		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
+		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM);
 
 		double getBulkSalinity(const SnowStation& Xdata);
 		double getBrineSalinity(const SnowStation& Xdata);
