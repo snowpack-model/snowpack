@@ -965,7 +965,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	}
 	// Now treat sea ice variant, in which ocean heat flux is used already at this point to build or destroy sea ice based on the net energy balance, so just set the temperature of the lowest node to melting.
 	if (variant == "SEAICE") {
-		NDS[0].T = SeaIce::calculateMeltingTemperature(SeaIce::OceanSalinity);
+		NDS[0].T = SeaIce::calculateMeltingTemperature(Xdata.Seaice->OceanSalinity);
 	}
 
 	// Copy Temperature at time0 into First Iteration

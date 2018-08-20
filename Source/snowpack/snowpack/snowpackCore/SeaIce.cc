@@ -502,7 +502,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 	double dz = 0.;
 	if ( dM > 0 ) {
 		// dM > 0: mass gain
-			const double dH = dM / SeaIceDensity;								// Total height to be added
+		if ( nE == 0 || EMS[Xdata.SoilNode].theta[ICE] > ThetaIceMin ) {
 			const double dH = dM / SeaIceDensity;								// Total height to be added
 			const size_t nAddE = 1;										// Number of elements
 			const double dL = (dH / double(nAddE));								// Height of each individual layer
