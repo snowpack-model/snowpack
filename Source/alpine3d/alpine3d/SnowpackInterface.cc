@@ -108,6 +108,10 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		std::cout << " each using Snowpack " << snowpack::getLibVersion() << "\n";
 	}
 
+	//check if simple snow drift is enabled (needs to be determined before grid requirements check!)
+	enable_simple_snow_drift = false;
+	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+
 	//create and prepare  the vector of output grids
 	if (grids_write) {
 		sn_cfg.getValue("GRIDS_PARAMETERS", "output", output_grids);
@@ -116,10 +120,6 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	//add the grids that are necessary for the other modules
 	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", IOUtils::nothrow);
 	sn_cfg.addKey("GRIDS_PARAMETERS", "output", all_grids + " " + grids_requirements + " " + getGridsRequirements()); //also consider own requirements
-
-	//check if simple snow drift is enabled
-	enable_simple_snow_drift = false;
-	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
 
 	//check if lateral flow is enabled
 	enable_lateral_flow = false;

@@ -801,25 +801,23 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
 	double sum_erosion=0., sum_deposition=0.;
-
 	//erosion: fully eroded at min_sx
 	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
 		if (sx<0.) {
-			const double eroded = val * sx/min_sx;
+			const double eroded = val * sx/min_sx; //sx<0, so there is min_sx!=0
 			sum_erosion += eroded;
 			val -= eroded;
-		}
-		else { //at this point, we can only compute the sum of deposition
-			const double deposited = sx/max_sx;
+		} else if (sx>0.) { //at this point, we can only compute the sum of deposition
+			const double deposited = sx/max_sx; //sx>0 so there is max_sx!=0
 			sum_deposition += deposited;
 		}
 	}
 	
 	//no cells can take the eroded mass or no cells even got freezing temperatures
-	if (sum_deposition==0 || sum_erosion==0) return;
+	if (sum_deposition==0 || sum_erosion==0) return; //if max_sx==0, sum_deposition==0
 	
 	//deposition: garantee mass balance conservation
 	//-> we now have the proper scaling factor so we can deposit in individual cells
@@ -851,25 +849,23 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	const double min_sx = Sx.grid2D.getMin(); //negative
 	const double max_sx = Sx.grid2D.getMax(); //positive
 	double sum_erosion=0., sum_deposition=0.;
-
 	//erosion: fully eroded at min_sx
 	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
 		if (sx==IOUtils::nodata || (sx<0 && VW(ii)<vw_thresh)) continue; //low wind speed pixels don't contribute to erosion
 		double &val = grid(ii);
 		if (sx<0.) {
-			const double eroded = val * sx/min_sx;
+			const double eroded = val * sx/min_sx; //sx<0, so there is min_sx!=0
 			sum_erosion += eroded;
 			val -= eroded;
-		}
-		else { //at this point, we can only compute the sum of deposition
-			const double deposited = sx/max_sx;
+		} else if (sx>0.) { //at this point, we can only compute the sum of deposition
+			const double deposited = sx/max_sx; //sx>0 so there is max_sx!=0
 			sum_deposition += deposited;
 		}
 	}
 	
 	//no cells can take the eroded mass or no cells even got freezing temperatures
-	if (sum_deposition==0 || sum_erosion==0) return;
+	if (sum_deposition==0 || sum_erosion==0) return; //if max_sx==0, sum_deposition==0
 	
 	//deposition: garantee mass balance conservation
 	//-> we now have the proper scaling factor so we can deposit in individual cells

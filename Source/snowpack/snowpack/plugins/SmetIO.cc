@@ -361,10 +361,10 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 				   ll+1, SSdata.Ldata[ll].depositionDate.toString(Date::ISO).c_str(), SSdata.profileDate.toString(Date::ISO).c_str());
 			throw IOException("Cannot generate Xdata from file " + sno_reader.get_filename(), AT);
 		}
-		if (SSdata.Ldata[ll].depositionDate < prev_depositionDate) {
+		if (SSdata.Ldata[ll].depositionDate < prev_depositionDate && !read_salinity) {
 			prn_msg(__FILE__, __LINE__, "err", Date(),
 				   "Layer %d is younger (%s) than layer above (%s) !!!",
-				   ll, prev_depositionDate.toString(Date::ISO).c_str(), SSdata.profileDate.toString(Date::ISO).c_str());
+				   ll, prev_depositionDate.toString(Date::ISO).c_str(), SSdata.Ldata[ll].depositionDate.toString(Date::ISO).c_str());
 			throw IOException("Cannot generate Xdata from file " + sno_reader.get_filename(), AT);
 		}
 		prev_depositionDate = SSdata.Ldata[ll].depositionDate;
@@ -1166,8 +1166,8 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
 		data.push_back( Xdata.Seaice->getBrineSalinity(Xdata) );
 		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
-		data.push_back( (Xdata.Seaice->BottomSalFlux));
-		data.push_back( (Xdata.Seaice->TopSalFlux));
+		data.push_back( Xdata.Seaice->BottomSalFlux );
+		data.push_back( Xdata.Seaice->TopSalFlux );
 	}
 
 	smet_writer.write(timestamp, data);
