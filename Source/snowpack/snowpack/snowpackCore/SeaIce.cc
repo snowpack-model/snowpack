@@ -524,6 +524,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				EMS[Xdata.SoilNode].PrefFlowArea = 0.;
 #ifndef SNOWPACK_CORE
 				EMS[Xdata.SoilNode].dsm = 0.;
+#endif
 
 				EMS[Xdata.SoilNode].h = EMS[Xdata.SoilNode+1].h + .5 * dL;
 
