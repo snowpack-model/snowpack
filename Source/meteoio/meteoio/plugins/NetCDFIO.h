@@ -68,7 +68,7 @@ class ncFiles {
 		void addToVars(const size_t& param);
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
-		size_t addTimestamp(const int& ncid, const Date& date);
+		size_t addTimestamp(const int& ncid, Date date);
 		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const;
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
 		void applyUnits(Grid2DObject& grid, const std::string& units, const size_t& time_pos, const bool& m2mm) const;
@@ -81,7 +81,7 @@ class ncFiles {
 		std::vector<double> vecX, vecY; ///< caching the lats/lons or eastings/northings to deal with grids
 		std::map<size_t, ncpp::nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path, coord_sys, coord_param;
-		double TZ;
+		double TZ, time_precision; ///< this is the timezone used for reading data
 		double dflt_zref, dflt_uref; ///< default reference height for all data or wind data (respectively)
 		double dflt_slope, dflt_azi; ///< default slope and azimuth
 		bool debug, isLatLon;

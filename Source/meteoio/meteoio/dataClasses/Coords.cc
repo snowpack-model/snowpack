@@ -139,6 +139,12 @@ bool Coords::isNodata() const {
 	return false;
 }
 
+///< Returns true if the coordinate system is a cartesian coordinate system (so it can be used as-is for distance computations)
+bool Coords::isCartesian() const {
+	if (coordsystem=="NULL" || (coordsystem=="PROJ4" && coordparam=="4326")) return false;
+	return true;
+}
+
 ///< move the point by the specified distance (in m) along easting and northing
 void Coords::moveByXY(const double& x_displacement, const double& y_displacement) {
 	setXY(easting+x_displacement, northing+y_displacement, altitude, true);

@@ -217,6 +217,11 @@ void IOManager::initVirtualStations()
 		v_stations = gdm1.initVirtualStations(source_dem, false, false);
 	} else
 		throw InvalidArgumentException("Unsupported mode of operation", AT);
+	
+	for (size_t ii=0; ii<v_stations.size(); ii++) {
+		if (!v_stations[ii].position.isCartesian())
+			throw ConversionFailedException("Please define a cartesian coordinate system for point {"+v_stations[ii].position.toString(Coords::FULL)+"}", AT);
+	}
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
@@ -312,7 +317,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			const Date dateEnd( i_date - buffer_before + buffer_size );
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd));
 		}
-		
 		return tsm1.getMeteoData(i_date, vecMeteo);
 	}
 	

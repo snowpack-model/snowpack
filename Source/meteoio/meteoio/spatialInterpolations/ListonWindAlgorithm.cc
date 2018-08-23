@@ -119,8 +119,7 @@ void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObje
 	}
 
 	//recompute VW, DW in each cell
-	const size_t nrCells = VW.size();
-	for (size_t ii=0; ii<nrCells; ii++) {
+	for (size_t ii=0; ii<VW.size(); ii++) {
 		const double ve = VW(ii);
 		const double vn = DW(ii);
 

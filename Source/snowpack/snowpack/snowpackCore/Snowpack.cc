@@ -538,7 +538,7 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 	double actual_height_of_meteo_values;	// Height with reference Xdata.SoilNode
 	if(!adjust_height_of_meteo_values) {
 		// Case of fixed height above snow surface (e.g., weather model)
-		actual_height_of_meteo_values = height_of_meteo_values + Xdata.cH - Xdata.Ground;
+		actual_height_of_meteo_values = height_of_meteo_values + Xdata.cH - Xdata.Ground + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer())  - Xdata.Ground);
 	} else {
 		// Case of fixed height above ground surface (e.g., weather station)
 		actual_height_of_meteo_values = height_of_meteo_values;
@@ -1643,7 +1643,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			return;
 		}
 	} else { // HS driven, correct for a possible offset in measured snow height provided by a marked reference layer
-		delta_cH = Xdata.mH - Xdata.cH + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer()) );
+		delta_cH = Xdata.mH - Xdata.cH + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground) );
 	}
 	if (rho_hn == Constants::undefined)
 		return;
@@ -1725,7 +1725,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			Xdata.mH -= Xdata.Cdata->height; // Adjust Xdata.mH to represent the "true" enforced snow depth
 			if (Xdata.mH < Xdata.Ground)    //   and make sure it doesn't get negative
 				Xdata.mH = Xdata.Ground;
-			delta_cH = Xdata.mH - Xdata.cH  + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer()) );
+			delta_cH = Xdata.mH - Xdata.cH + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground) );
 		}
 
 		// Now determine whether the increase in snow depth is large enough.
