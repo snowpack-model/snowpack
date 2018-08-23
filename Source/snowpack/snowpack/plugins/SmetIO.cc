@@ -1158,7 +1158,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground );
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z );
 		// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-		const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+		const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel );
 		data.push_back( Xdata.Seaice->FreeBoard );
 		data.push_back( Xdata.Seaice->SeaLevel );
