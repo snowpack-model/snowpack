@@ -92,7 +92,7 @@ std::string FitModel::toString() const
 		const double Ymin = *std::min_element(Y.begin(),Y.end());
 		const double Ymax = *std::max_element(Y.begin(),Y.end());
 		os << nPts << " calibration point(s) in\t";
-		os << "X[" << Xmin << "-" << Xmax << "]\tY[" << Ymin << "-" << Ymax << "]\n";
+		os << "X[" << Xmin << " - " << Xmax << "]\tY[" << Ymin << " - " << Ymax << "]\n";
 	} else {
 		os << "0 calibration points provided\n";
 	}

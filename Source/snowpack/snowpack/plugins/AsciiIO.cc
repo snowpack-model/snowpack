@@ -931,7 +931,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	// Offset profile [m]:
 	const double offset = (SeaIce)?(4.):(0.);
 	// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  - Xdata.Ground);
 	// Number of fill elements for offset (only 0 or 1 is supported now):
 	const int Noffset = (SeaIce)?(1):(0);
 
@@ -1861,7 +1861,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 	setNumberSensors(Mdata);
 
 	// Correction for snow depth. If we have a marked reference layer, then subtract the height of the reference layer in the output.
-	const double HScorrC = (Xdata.findMarkedReferenceLayer()==IOUtils::nodata)?(0.):(Xdata.findMarkedReferenceLayer());
+	const double HScorrC = (Xdata.findMarkedReferenceLayer()==IOUtils::nodata) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 
 	// Check file for header
 	if (!checkHeader(Xdata, filename, "met", "[STATION_PARAMETERS]")) {
@@ -2001,7 +2001,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground;
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z;
 				// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->FreeBoard;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->SeaLevel;

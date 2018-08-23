@@ -249,7 +249,12 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	const double t_surf_v = t_surf * (1. + 0.377 * sat_vap / p0);
 
 	// Adjust for snow height if fixed_height_of_wind=false
-	const double zref = (adjust_VW_height)? std::max(0.5, height_of_wind_value - (Xdata.cH - Xdata.Ground)) : height_of_wind_value ;
+	const double zref = (adjust_VW_height)
+				? std::max(
+					    0.5,
+					    height_of_wind_value - (Xdata.cH - Xdata.Ground + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground) ))
+					  )
+				: height_of_wind_value ;
 	// In case of ventilation ... Wind pumping displacement depth (m)
 	const double d_pump = (SnLaws::wind_pump)? SnLaws::compWindPumpingDisplacement(Xdata) : 0.;
 

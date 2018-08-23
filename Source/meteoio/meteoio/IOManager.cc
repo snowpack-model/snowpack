@@ -312,7 +312,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			const Date dateEnd( i_date - buffer_before + buffer_size );
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd));
 		}
-		
 		return tsm1.getMeteoData(i_date, vecMeteo);
 	}
 	
