@@ -34,6 +34,7 @@ class FitModel {
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
 		void setGuess(const std::vector<double>& lambda_in);
 		virtual void setLapseRate(const double& /*lapse_rate*/) {throw InvalidArgumentException("Lapse rates can only be forced for linear regressions!", AT);}
+		virtual void setDegree(const int& /*degree*/) {throw InvalidArgumentException("Degree can only be set for polynomial regression!", AT);}
 		virtual bool fit() = 0;
 		virtual double f(const double& x) const = 0;
 		double operator ()(const double& x) const { return f(x);}
@@ -54,7 +55,7 @@ class FitModel {
 
 		const std::string regname; //model name
 		size_t nPts; //number of data points
-		const size_t nParam; //number of parameters
+		size_t nParam; //number of parameters
 		size_t min_nb_pts; //minimum number of data points
 		bool fit_ready; //set to false if fit() must be called before using the fit
 };

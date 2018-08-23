@@ -110,7 +110,7 @@ class TimeSeriesManager {
 		void setBufferProperties(const double& buffer_size, const double& buff_before);
 		
 		/**
-		 * @brief Get the current buffer properties
+		 * @brief Get the current buffer requirements (ie user defined buffer + filters/resampling requirements)
 		 * @param o_buffer_size buffer size in days
 		 * @param o_buff_before buffer centering in days
 		 */

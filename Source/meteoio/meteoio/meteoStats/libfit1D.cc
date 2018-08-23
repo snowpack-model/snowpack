@@ -28,17 +28,17 @@ using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) 
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL)
 {
 	const bool status = setModel(regType, in_X, in_Y, updatefit);
-	if (updatefit && status==false) 
+	if (updatefit && status==false)
 		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) 
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL)
 {
 	const bool status = setModel(regType, in_X, in_Y, updatefit);
-	if (updatefit && status==false) 
+	if (updatefit && status==false)
 		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
@@ -66,6 +66,7 @@ bool Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 	else if (i_regType=="RATQUADVARIO") regType=RATQUADVARIO;
 	else if (i_regType=="LINEARLS") regType=LINEARLS;
 	else if (i_regType=="QUADRATIC") regType=QUADRATIC;
+	else if (i_regType=="POLYNOMIAL") regType=POLYNOMIAL;
 	else {
 		throw IOException("The regression algorithm '"+i_regType+"' is not implemented" , AT);
 	}
@@ -86,6 +87,7 @@ bool Fit1D::setModel(const regression& regType, const std::vector<double>& in_X,
 	if (regType==RATQUADVARIO) model=new RatQuadVario;
 	if (regType==LINEARLS) model=new LinearLS;
 	if (regType==QUADRATIC) model=new Quadratic;
+	if (regType==POLYNOMIAL) model=new PolynomialRegression;
 
 	//remove nodata points
 	std::vector<double> X, Y;
@@ -144,6 +146,71 @@ bool SimpleLinear::fit()
 	Lambda.push_back(a);
 	Lambda.push_back(b);
 	infoString = ss.str();
+	fit_ready = true;
+	return true;
+}
+
+void PolynomialRegression::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y)
+{
+	X = in_X;
+	Y = in_Y;
+
+	fit_ready = false;
+}
+
+double PolynomialRegression::f(const double& x) const
+{
+	double fittedValue = Lambda.at(0);
+	for (size_t ii=1; ii<=degree; ii++){
+		fittedValue = fittedValue + Lambda.at(ii)*pow(x,ii);
+	}
+	return fittedValue;
+}
+
+bool PolynomialRegression::fit()
+{
+	if (!checkInputs())
+		return false;
+
+	const size_t N = X.size();
+	const size_t n = degree;
+
+	// Xh = vector that stores values of sigma(xi^2n)
+	std::vector<double> Xh(2*n + 1);
+	for (size_t i = 0; i < (2*n + 1); i++){
+		Xh[i] = 0;
+		for (size_t j = 0; j < N; j++){
+			Xh[i] += pow(X[j], i);
+		}
+	}
+
+	// BM = normal augmented matrix that stores the equations.
+	Matrix BM(n+1,n+1);
+	for (size_t i = 0; i <= n; i++){
+		for (size_t j = 0; j <= n; j++){
+			BM(j+1,i+1)=Xh[i+j];
+		}
+	}
+
+	// YM = vector to store values of sigma(xi^n * yi)
+	Matrix YM(n+1,(size_t)1);
+	for (size_t i = 0; i < (n+1); i++){
+		YM(i+1,1) = 0;
+		for (size_t j = 0; j < N; j++){
+			YM(i+1,1) += pow(X[j], i)*Y[j];
+		}
+	}
+
+	//bM = vector to store the resulting coefficients
+	Matrix bM(n+1,(size_t)1);
+	if (!Matrix::solve(BM,YM,bM))
+		return false;
+
+	//set the coefficients to Lambda
+	Lambda.resize(n+1);
+	for (size_t i = 0; i < (n+1); i++){
+		Lambda[i] = bM(i+1,1);
+	}
 	fit_ready = true;
 	return true;
 }

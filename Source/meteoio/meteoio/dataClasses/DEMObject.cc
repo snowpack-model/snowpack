@@ -333,7 +333,7 @@ void DEMObject::updateAllMinMax() {
 	
 	static const double sun_elev_thresh = 5.;
 	if (min_altitude!=IOUtils::nodata && max_altitude!=IOUtils::nodata) 
-		max_shade_distance = (max_altitude - min_altitude) / tan(sun_elev_thresh*Cst::to_rad);
+		max_shade_distance = max( (max_altitude - min_altitude) / tan(sun_elev_thresh*Cst::to_rad), cellsize*1.5); //make sure we use at least 1 cell, even in the diagonal
 }
 
 /**

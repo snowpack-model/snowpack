@@ -173,7 +173,7 @@ void Config::parseFile(const std::string& filename)
 
 	std::string section( defaultSection );
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-	unsigned int linenr = 0;
+	unsigned int linenr = 1;
 	std::vector<std::string> import_after; //files to import after the current one
 	bool accept_import_before = true;
 	imported.push_back(filename);
@@ -205,8 +205,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	//First thing cut away any possible comments (may start with "#" or ";")
 	IOUtils::stripComments(line);
 	IOUtils::trim(line);    //delete leading and trailing whitespace characters
-	if (line.empty()) //ignore empty lines
-		return;
+	if (line.empty()) return;//ignore empty lines
 
 	//if this is a section header, read it
 	if (line[0] == '[') {
@@ -221,6 +220,13 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		}
 	}
 
+	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
+	if (std::count(line.begin(), line.end(), '=') != 1) {
+		const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
+		const std::string source_msg = (sourcename.empty())? "" : " in \""+sourcename+"\"";
+		throw InvalidFormatException("Error reading line "+linenr_str+source_msg, AT);
+	}
+	
 	//this can only be a key value pair...
 	std::string key, value;
 	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
@@ -245,7 +251,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		accept_import_before = false; //this is not an import, so no further import_before allowed
 	} else {
 		if (IOUtils::readKeyValuePair(line_backup, "=", key, value, true)) {
-			if (value==";" || value=="#") { //so we can accept the comments char if they need to be provided only by themselves
+			if (value==";" || value=="#") { //so we can accept the comments char if are given only by themselves
 				properties[section+"::"+key] = value; //save the key/value pair
 				accept_import_before = false; //this is not an import, so no further import_before allowed
 				return;

@@ -493,7 +493,7 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 ///////////////////////////////////////////////////// Now the ncFiles class starts //////////////////////////////////////////
 
 ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug)
-             : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
+             : acdd(), schema(cfg, schema_name), vars(), unknown_vars(), vecTime(), vecX(), vecY(), dimensions_map(), file_and_path(filename), coord_sys(), coord_param(), TZ(0.), time_precision(Date::epsilon_sec), dflt_zref(IOUtils::nodata), dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
              debug(i_debug), isLatLon(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
@@ -625,7 +625,7 @@ Grid2DObject ncFiles::read2DGrid(const std::string& varname) const
 	const std::map<size_t, ncpp::nc_dimension>::const_iterator it2 = dimensions_map.find(ncpp::TIME);
 	const int time_id = (it2!=dimensions_map.end())? it2->second.dimid : -1;
 	const bool depend_on_time = (std::find(var.dimids.begin(), var.dimids.end(), time_id) != var.dimids.end());
-	if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it
+	if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it otherwise, we throw
 		throw InvalidFormatException("No time requirement has been provided for a file that contains multiple timestamps", AT);
 	
 	return read2DGrid(var, IOUtils::npos);
@@ -647,7 +647,7 @@ Grid2DObject ncFiles::read2DGrid(const size_t& param, const Date& date) const
 		const std::map<size_t, ncpp::nc_dimension>::const_iterator it2 = dimensions_map.find(ncpp::TIME);
 		const int time_id = (it2!=dimensions_map.end())? it2->second.dimid : -1;
 		const bool depend_on_time = (std::find(it->second.dimids.begin(), it->second.dimids.end(), time_id) != it->second.dimids.end());
-		if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it
+		if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it, otherwise we throw
 			throw InvalidFormatException("No time requirement has been provided for a file that contains multiple timestamps", AT);
 	}
 	
@@ -943,8 +943,8 @@ std::vector<StationData> ncFiles::readStationData() const
 		const double slope = (hasVariable(MeteoGrids::SLOPE))? read_0Dvariable(ncid, MeteoGrids::SLOPE) : IOUtils::nodata;
 		const double azi = (hasVariable(MeteoGrids::AZI))? read_0Dvariable(ncid, MeteoGrids::AZI) : IOUtils::nodata;
 		std::string stationID, stationName;
-		ncpp::getGlobalAttribute(ncid, "station_id", stationID); //TODO: fallback?
-		ncpp::getGlobalAttribute(ncid, "station_name", stationName); //TODO: fallback?
+		ncpp::getGlobalAttribute(ncid, "station_id", stationID);
+		ncpp::getGlobalAttribute(ncid, "station_name", stationName);
 		if (stationName.empty()) stationName = FileUtils::removeExtension( FileUtils::getFilename(file_and_path) );
 		if (stationID.empty()) stationID = stationName;
 		
@@ -1092,9 +1092,9 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 		if (isPrecipIntensity) { //in this case, we need to accumulate the precipitation
 			for (size_t st=0; st<nrStations; st++) {
 				for (size_t jj=0; jj<nrSteps; jj++) {
-					const double curr_julian = vecMeteo[st][jj].date.getJulian();
+					const double curr_julian = vecMeteo[st][jj].date.getJulian(true);
 					//trick: in order to get an accumulation period at start, we take the one from the next timestep and assume they are the same
-					const double ts_duration_s = ((jj>0)? (curr_julian - vecMeteo[st][jj-1].date.getJulian()) : (vecMeteo[st][jj+1].date.getJulian() - curr_julian) ) * (24.*3600.);
+					const double ts_duration_s = ((jj>0)? (curr_julian - vecMeteo[st][jj-1].date.getJulian(true)) : (vecMeteo[st][jj+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
 					
 					vecMeteo[st][jj](parname) = ((data[st + jj*nrStations] * scale) + offset) * ts_duration_s;
 				}
@@ -1185,7 +1185,7 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 		vars[ param ].dimids.push_back( dimensions_map[ param ].dimid );
 		if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ ncpp::STATSTRLEN ].dimid );
 		if (param==ncpp::TIME) {
-			const Date ref_date_simplified(ref_date.getYear(), 1, 1, 0, 0, 0.); //we force data into GMT
+			const Date ref_date_simplified(ref_date.getYear(), 1, 1, 0, 0, 0.); //force writing to GMT
 			std::string date_str( ref_date_simplified.toString(Date::ISO) );
 			date_str[ 10 ] = ' '; //replace "T" by " "
 			
@@ -1193,9 +1193,11 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 			if (units=="h") {
 				vars[param].attributes.units = "hours since " + date_str;
 				vars[param].scale = 24.;
+				time_precision /= 3600.;
 			} else if (units=="min") {
 				vars[param].attributes.units = "minutes since " + date_str;
 				vars[param].scale = (24.*60);
+				time_precision /= 60.;
 			} else if (units=="s") {
 				vars[param].attributes.units = "seconds since " + date_str;
 				vars[param].scale = (24.*3600.);
@@ -1208,6 +1210,16 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 		return true;
 	}
 	return false;
+}
+
+//This function computes the NetCDF representation of time, rounded to the given precision. It is inlined for performance reasons.
+//TRICK to reduce rounding errors, we use the scale as a divisor for TIME
+inline double transformTime(const double& julian, const double& offset, const double& scale, const double& precision)
+{
+	const double julian_transformed = (julian - offset) * scale;
+	double integral;
+	const double fractional = modf(julian_transformed-.5, &integral);
+	return integral + (double)Optim::round( fractional/precision ) * precision + .5;
 }
 
 const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, ncpp::nc_variable& var) const
@@ -1223,17 +1235,25 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		if (param==ncpp::TIME) { //TRICK to reduce rounding errors, we use the scale as a divisor for TIME
 			const size_t nrTimeSteps = vecMeteo[ref_station_idx].size();
 			std::vector<double> data(nrTimeSteps, var.nodata);
-			const char units_prefix = var.attributes.units[0]; //for now, a very simple criteria to round the time representation
-			if (var.attributes.type==NC_INT || units_prefix=='s') { //in this case, we pre-round the data so when libnetcdf will cast, it will fall on what we want
+
+			if (var.attributes.type==NC_INT) {
 				double prev = IOUtils::nodata;
 				for (size_t ll=0; ll<nrTimeSteps; ll++) {
+					//we pre-round the data so when libnetcdf will cast, it will fall on what we want
 					data[ll] = static_cast<double>( Optim::round( (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale) );
-					if (prev!=IOUtils::nodata && data[ll]==prev) throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
+					if (prev!=IOUtils::nodata && data[ll]==prev) 
+						throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 					prev = data[ll];
 				}
 			} else {
-				for (size_t ll=0; ll<nrTimeSteps; ll++)
-					data[ll] = (vecMeteo[ref_station_idx][ll].date.getJulian(true) - var.offset) * var.scale;
+				double prev = IOUtils::nodata;
+				for (size_t ll=0; ll<nrTimeSteps; ll++) {
+					//for better numerical consistency, we round the data to Date::epsilon_sec in NetCDF internal representation
+					data[ll] = transformTime(vecMeteo[ref_station_idx][ll].date.getJulian(true), var.offset, var.scale, time_precision);
+					if (prev!=IOUtils::nodata && data[ll]==prev) 
+						throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
+					prev = data[ll];
+				}
 			}
 			return data;
 		} else {
@@ -1283,9 +1303,9 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 		if (isPrecip && var.attributes.units=="kg/m2/s") {
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
 				for (size_t jj=st_start; jj<st_end; jj++) {
-					const double curr_julian = vecMeteo[jj][ll].date.getJulian();
+					const double curr_julian = vecMeteo[jj][ll].date.getJulian(true);
 					//trick: in order to get an accumulation period at start, we take the one from the next timestep and assume they are the same
-					const double ts_duration_s = ((ll>0)? (curr_julian - vecMeteo[jj][ll-1].date.getJulian()) : (vecMeteo[jj][ll+1].date.getJulian() - curr_julian) ) * (24.*3600.);
+					const double ts_duration_s = ((ll>0)? (curr_julian - vecMeteo[jj][ll-1].date.getJulian(true)) : (vecMeteo[jj][ll+1].date.getJulian(true) - curr_julian) ) * (24.*3600.);
 					
 					if (stationHasParameter[jj-st_start] && vecMeteo[jj][ll]( meteodata_param )!=IOUtils::nodata && ts_duration_s>0.)
 						data[ll*nrStations + (jj-st_start)] = vecMeteo[jj][ll]( meteodata_param ) / ts_duration_s;
@@ -1374,7 +1394,7 @@ void ncFiles::applyUnits(Grid2DObject& grid, const std::string& units, const siz
 }
 
 //this returns the index where to insert the new grid
-size_t ncFiles::addTimestamp(const int& ncid, const Date& date)
+size_t ncFiles::addTimestamp(const int& ncid, Date date)
 {
 	size_t time_pos = vecTime.size();
 	bool create_timestamp = true;
@@ -1393,7 +1413,8 @@ size_t ncFiles::addTimestamp(const int& ncid, const Date& date)
 	}
 	
 	if (create_timestamp) {
-		const double dt = (date.getJulian() - vars[ncpp::TIME].offset) * vars[ncpp::TIME].scale;
+		date.setTimeZone(0.);
+		const double dt = (date.getJulian(true) - vars[ncpp::TIME].offset) * vars[ncpp::TIME].scale;
 		const size_t start[] = {time_pos};
 		const size_t count[] = {1};
 		const int status = nc_put_vara_double(ncid, vars[ncpp::TIME].varid, start, count, &dt);
