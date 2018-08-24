@@ -124,9 +124,13 @@ double checksum(const mio::Array1D<SnowStation>&x)
 	{
 		double t=0;
 		t+=x[ii].Albedo+x[ii].SoilAlb+x[ii].BareSoil_z0+static_cast<double>(x[ii].SoilNode)+x[ii].cH+x[ii].mH+x[ii].Ground;
+#ifndef SNOWPACK_CORE
 		t+=x[ii].hn+x[ii].rho_hn+x[ii].windward+static_cast<double>(x[ii].ErosionLevel);
 		t+=x[ii].S_class1+x[ii].S_class2+x[ii].S_d+x[ii].z_S_d+x[ii].S_s+x[ii].z_S_s+
 			x[ii].S_n+x[ii].z_S_n+x[ii].S_4+x[ii].z_S_4+x[ii].S_5+x[ii].z_S_5+static_cast<double>(x[ii].getNumberOfNodes());
+#else
+		t+=x[ii].hn+x[ii].rho_hn+static_cast<double>(x[ii].ErosionLevel);
+#endif
 
 		t+=checksum(x[ii].Ndata, x[ii].getNumberOfNodes());
 		t+=checksum(x[ii].Edata, x[ii].getNumberOfElements());
@@ -151,7 +155,11 @@ double checksum(const std::vector<NodeData>& x, const size_t n)
 {
 	double t=0;
 	for (size_t i=0;i<n;i++) {
+#ifndef SNOWPACK_CORE
 		t+=x[i].z+x[i].u+x[i].f+x[i].udot+x[i].T+x[i].S_n+x[i].S_s+x[i].hoar;
+#else
+		t+=x[i].z+x[i].u+x[i].f+x[i].udot+x[i].T+x[i].hoar;
+#endif
 	}
 	return t;
 
@@ -175,8 +183,11 @@ double checksum(const std::vector<ElementData>& x, const size_t n)
 		}
 
 		t+=x[i].sw_abs+x[i].rg+x[i].dd+x[i].sp+x[i].rb+x[i].N3+static_cast<double>(x[i].mk+x[i].type);
-
+#ifndef SNOWPACK_CORE
 		t+=x[i].dEps+x[i].Eps+x[i].Eps_e+x[i].Eps_v+x[i].Eps_Dot+x[i].Eps_vDot+x[i].S+x[i].C+ x[i].S_dr+x[i].hard;
+#else
+		t+=x[i].dEps+x[i].Eps+x[i].Eps_e+x[i].Eps_v+x[i].Eps_Dot+x[i].Eps_vDot+x[i].S+x[i].C+ x[i].hard;
+#endif
 	}
 	return t;
 }

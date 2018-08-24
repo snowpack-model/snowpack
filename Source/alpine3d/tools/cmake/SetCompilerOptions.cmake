@@ -179,6 +179,10 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(ARCH  "${ARCH_OPTIM}")
 	ENDIF(DEST STREQUAL "optimized")
 
+	IF(SNOWPACK_CORE)
+		SET(EXTRA "${EXTRA} -DSNOWPACK_CORE")
+	ENDIF(SNOWPACK_CORE)
+
 	#show exception messages in a graphical message box
 	#SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 

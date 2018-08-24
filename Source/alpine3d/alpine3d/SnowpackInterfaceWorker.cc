@@ -581,7 +581,9 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			try{
 				stability.checkStability(meteoPixel, snowPixel);
 			} catch(...) {
+#ifndef SNOWPACK_CORE
 				snowPixel.S_4 = Stability::max_stability; //nothing else to do...
+#endif
 			}
 
 			surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] = 0.0;
