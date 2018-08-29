@@ -59,10 +59,10 @@ using namespace mio;
 const double ReSolver1d::max_theta_ice = 0.998;	//An ice pore space of around 5% is a reasonable value: K. M. Golden et al. The Percolation Phase Transition in Sea Ice, Science 282, 2238 (1998), doi: 10.1126/science.282.5397.2238
 
 //Setting convergence criteria and numerical limits
-const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-3;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion
-const double ReSolver1d::REQUIRED_ACCURACY_THETA = 1E-5;	//Required accuracy for the Richard solver: this is for the delta theta convergence criterion. It is recommended to adjust PhaseChange::RE_theta_r in PhaseChanges.cc in case this value is changed.
+const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-8;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion
+const double ReSolver1d::REQUIRED_ACCURACY_THETA = 1E-6;	//Required accuracy for the Richard solver: this is for the delta theta convergence criterion. It is recommended to adjust PhaseChange::RE_theta_r in PhaseChanges.cc in case this value is changed.
 								//Huang et al. (1996) proposes 0.0001 here (=1E-4). 1E-4 causes some mass balance problems. Therefore, it is set to 1E-5.
-const double ReSolver1d::convergencecriterionthreshold = 0.9;	//Based on this value of theta_dim, either theta-based convergence is chosen, or h-based. Note we need to make this destinction, beacuse theta-based does not work close to saturation or with ponding.
+const double ReSolver1d::convergencecriterionthreshold = 0.8;	//Based on this value of theta_dim, either theta-based convergence is chosen, or h-based. Note we need to make this destinction, beacuse theta-based does not work close to saturation or with ponding.
 const double ReSolver1d::MAX_ALLOWED_DELTA_H = 1E32;		//Set an upper threshold for the delta_h[i] that is allowed. The idea is that when delta_h for an iteration is too large, we have a too large time step and a rewind is necessary.
 const size_t ReSolver1d::INCR_ITER = 5;				//Number of iterations for the Richard solver after which time step is increased.
 const size_t ReSolver1d::DECR_ITER = 10;			//Number of iterations for the Richard solver after which time step is decreased.
@@ -482,33 +482,36 @@ vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
 		//Note: the gravity term is not explicitly in Celia et al (1990). It is just z[i], as pressure head should already be scaled by rho_water * g. Then it is taken outside the nabla, by using the chain rule.
 		if(i==uppernode) {
 			if(aTopBC==NEUMANN) {		//Neumann, following Equation 4 in McCord, WRR (1991).
-				term_up[i]=(TopFluxRate)*dz_up[i] - Xdata.cos_sl*(dz_up[i]*k_np1_m_ip12[i]);
+				term_up[i]=(TopFluxRate)*dz_up[i] - Xdata.cos_sl*(dz_up[i]*k_np1_m_ip12[i]) - Xdata.cos_sl*(dz_up[i]*(k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i]))) * (drho_up);
+				term_up_crho[i]=(TopFluxRate)*dz_up[i] - Xdata.cos_sl*(dz_up[i]*k_np1_m_ip12[i]);
 			} else {			//Dirichlet
 				term_up[i]=0.;
+				term_up_crho[i]=0.;
+				std::cout << "DIRICHLET NOT CORRECTLY IMPLEMENTED.\n";
+				throw;
 			}
-			term_up_crho[i]=term_up[i];
 		} else {
 			term_up[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho[i+1]-h_np1_m[i]*rho[i]);
-			//term_up_crho[i]=k_np1_m_ip12[i]*(h_np1_m[i+1]*0.5*(rho[i]+rho[i+1])-h_np1_m[i]*0.5*(rho[i]+rho[i+1]));
-			term_up_crho[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho_up-h_np1_m[i]*rho_up);
+			term_up_crho[i]=k_np1_m_ip12[i]*(h_np1_m[i+1]*0.5*(rho[i]+rho[i+1])-h_np1_m[i]*0.5*(rho[i]+rho[i+1]));
+			//term_up_crho[i]=(k_np1_m_ip12[i]/rho_up)*(h_np1_m[i+1]*rho_up-h_np1_m[i]*rho_up);
 		}
 		if(i==lowernode) {
 			if(aBottomBC == NEUMANN) {	//Neumann, following Equation 4 in McCord, WRR (1991).
-				term_down[i]=(BottomFluxRate)*dz_down[i] - Xdata.cos_sl*(dz_down[i]*k_np1_m_im12[i]);
+				term_down[i]=(BottomFluxRate)*dz_down[i] - Xdata.cos_sl*(dz_down[i]*k_np1_m_im12[i]) - Xdata.cos_sl*(dz_down[i]*(k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i]))) * (drho_down);
+				term_down_crho[i]=(BottomFluxRate)*dz_down[i] - Xdata.cos_sl*(dz_down[i]*k_np1_m_im12[i]);
 			} else {			//Dirichlet (r_mpfd[lowernode] should equal 0.)
 				term_down[i]=(term_up[i]/dz_up[i])*dz_down[i];
-
 				term_down[i]+=
-			(+ Xdata.cos_sl*((k_np1_m_ip12[i]-k_np1_m_im12[i])/(dz_[i]))
-			+ Xdata.cos_sl*(((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i])) * (drho_up) - (k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i])) * (drho_down)) / (dz_[i]))
-			- (1./dt)*((theta_np1_m[i]-theta_n[i]) + (theta_i_np1_m[i]-theta_i_n[i])*(Constants::density_ice/Constants::density_water))
-			+ s[i]) * dz_[i] * dz_down[i];
+					(+ Xdata.cos_sl*((k_np1_m_ip12[i]-k_np1_m_im12[i])/(dz_[i]))
+					+ Xdata.cos_sl*(((k_np1_m_ip12[i]/rho_up)*(z[i]+0.5*(dz_up[i])) * (drho_up) - (k_np1_m_im12[i]/rho_down)*(z[i]-0.5*(dz_down[i])) * (drho_down)) / (dz_[i]))
+					- (1./dt)*((theta_np1_m[i]-theta_n[i]) + (theta_i_np1_m[i]-theta_i_n[i])*(Constants::density_ice/Constants::density_water))
+					+ s[i]) * dz_[i] * dz_down[i];
+				term_down_crho[i]=term_down[i];
 			}
-			term_down_crho[i]=term_down[i];
 		} else {
 			term_down[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho[i] - h_np1_m[i-1]*rho[i-1]);
-			//term_down_crho[i]=k_np1_m_im12[i]*(h_np1_m[i]*0.5*(rho[i]+rho[i-1]) - h_np1_m[i-1]*0.5*(rho[i]+rho[i-1]));
-			term_down_crho[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho_down - h_np1_m[i-1]*rho_down);
+			term_down_crho[i]=k_np1_m_im12[i]*(h_np1_m[i]*0.5*(rho[i]+rho[i-1]) - h_np1_m[i-1]*0.5*(rho[i]+rho[i-1]));
+			//term_down_crho[i]=(k_np1_m_im12[i]/rho_down)*(h_np1_m[i]*rho_down - h_np1_m[i-1]*rho_down);
 		}
 
 		//RHS eq. 17 in Celia et al. (1990):
@@ -715,7 +718,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	const vanGenuchten::VanGenuchten_ModelTypesSnow VGModelTypeSnow=vanGenuchten::YAMAGUCHI2012;	//[Water retention curve]    Recommended: YAMAGUCHI2012   Set a VanGenuchten model for snow (relates pressure head to theta and vice versa)
 	const vanGenuchten::K_Parameterizations K_PARAM=vanGenuchten::CALONNE;				//[Hydraulic conductivity]   Recommended: CALONNE         Implemented choices: SHIMIZU, CALONNE, based on Shimizu (1970) and Calonne (2012).
 	const SalinityMixingModels SALINITY_MIXING = NONE; //DENSITY_DIFFERENCE;
-	const SalinityTransport::SalinityTransportSolvers SalinityTransportSolver = SalinityTransport::EXPLICIT;
+	const SalinityTransport::SalinityTransportSolvers SalinityTransportSolver = SalinityTransport::IMPLICIT;
 
 	//
 	// END OF SETTINGS
@@ -765,7 +768,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	double max_delta_h=0.;				//Tracks max_delta_h, to determine if our time step is too large. Note: this is different from checking the convergence criterion. This is just to check the time step. If a too large time step is used, big values of delta_h may arise, which cause pressure head to hit the singularities for dry and wet soil, and causes problems with the power functions in the Von Genuchten-Mualem model.
 	bool boolConvergence=false;			//true: convergence is reached, false: convergence not reached
 	double mass1=0, mass2=0, massbalanceerror=0.;	//Mass balance check variables.
-	const double maxallowedmassbalanceerror=1E-10;	//This value is carefully chosen. It should be considered together with REQUIRED_ACCURACY_THETA and REQUIRED_ACCURACY_H
+	const double maxallowedmassbalanceerror=1E-6;	//This value is carefully chosen. It should be considered together with REQUIRED_ACCURACY_THETA and REQUIRED_ACCURACY_H
 	double massbalanceerror_sum=0.;			//Sum of mass balance error over snowpack time step.
 
 
@@ -874,7 +877,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 	//Backup SNOWPACK state
 	for (i = lowernode; i <= uppernode; i++) {
-		if (WriteDebugOutputput) std::cout << "RECEIVING at layer " << i << std::fixed << std::setprecision(15) <<  " air=" << EMS[i].theta[AIR] << " ice=" << EMS[i].theta[ICE] << " soil=" << EMS[i].theta[SOIL] << " water=" << EMS[i].theta[WATER] << " water_pref=" << EMS[i].theta[WATER_PREF] << " Te=" << EMS[i].Te << " L=" << EMS[i].L << "\n" << std::setprecision(6) ;
+		if (WriteDebugOutputput) std::cout << "RECEIVING at layer " << i << std::fixed << std::setprecision(10) <<  " air=" << EMS[i].theta[AIR] << " ice=" << EMS[i].theta[ICE] << " soil=" << EMS[i].theta[SOIL] << " water=" << EMS[i].theta[WATER] << " water_pref=" << EMS[i].theta[WATER_PREF] << " Te=" << EMS[i].Te << " L=" << EMS[i].L << " " << EMS[i].h << "\n" << std::setprecision(6) ;
 
 		//Make backup of incoming values for theta[ICE]
 		snowpackBACKUPTHETAICE[i]=EMS[i].theta[ICE];
@@ -1174,7 +1177,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//Update liquid density and brine salinity
 				rho[i] = Constants::density_water + SeaIce::betaS * EMS[i].salinity;
 
-				if(WriteDebugOutputput) std::cout << "HYDPROPS: i=" << i << std::scientific << " Se=" << Se[i] << " C=" << C[i] << " K=" << K[i] << " rho=" << rho[i] << ".\n" << std::fixed;
+				if(WriteDebugOutputput) std::cout << "HYDPROPS: i=" << i << std::scientific << " Se=" << Se[i] << " C=" << C[i] << " K=" << K[i] << " rho=" << rho[i] << " sal=" << EMS[i].salinity << ".\n" << std::fixed;
 			}
 
 			for (i = lowernode; i <= uppernode; i++) {
@@ -1907,6 +1910,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							*k_np1_m_ip12[lowernode]*dt)
 						);*/
 					tmp_mb_bottomflux=(Salinity.flux_down[lowernode] + Salinity.flux_down_2[lowernode]) * dt;		// Units: [m]
+					if(variant == "SEAICE" && Xdata.Seaice != NULL) Xdata.Seaice->updateOceanBufferLayer(tmp_mb_bottomflux, (Xdata.Edata[lowernode].theta[WATER] + Xdata.Edata[lowernode].theta[WATER_PREF] != 0.) ? (Xdata.Edata[lowernode].salinity / (Xdata.Edata[lowernode].theta[WATER] + Xdata.Edata[lowernode].theta[WATER_PREF])) : (0.));
 				} else {
 					//With Dirichlet lower boundary condition and only 1 element, we cannot really estimate the flux, so set it to 0.
 					tmp_mb_bottomflux=0.;
@@ -2096,13 +2100,14 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 				// Set the SalinityTransport vector with the solution after liquid water flow
 				std::vector<double> DeltaSal(nE, 0.);							//Salinity changes
+				std::vector<double> DeltaSal2(nE, 0.);							//Salinity changes
 				for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
 					Salinity.BrineSal[i] = EMS[i].salinity / theta_n[i];				//Calculate brine salinity
 					Salinity.theta1[i] = theta_n[i];
 					Salinity.theta2[i] = theta_np1_mp1[i];
-					Salinity.BottomSalinity = Xdata.Seaice->OceanSalinity;
-					Salinity.TopSalinity = 0.;
 				}
+				Salinity.BottomSalinity = Xdata.Seaice->OceanSalinity;
+				Salinity.TopSalinity = 0.;
 
 				// Solve the transport equation
 				if((TimeAdvance<60. && SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT) || SalinityTransportSolver==SalinityTransport::EXPLICIT) {
@@ -2114,21 +2119,58 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 				// Apply and verify solution
 				for (i = lowernode; i <= uppernode; i++) {
-					EMS[i].salinity = Salinity.BrineSal[i] * theta_np1_mp1[i];
+					//EMS[i].salinity = Salinity.BrineSal[i] * theta_np1_mp1[i];
 					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);
 
 					//Verify new salinity profile
-					if(EMS[i].salinity < Constants::eps) {
+					if(EMS[i].salinity < Constants::eps && TimeAdvance > 900. - Constants::eps2) {
 						if(EMS[i].salinity>-Constants::eps) {
-							EMS[i].salinity = Constants::eps;
+							//EMS[i].salinity = Constants::eps;
 						} else {
 							std::cout << "[E] Salinity at e=" << i << ": " << std::setprecision(8) << EMS[i].salinity << "!\n";
-							/*if(TimeAdvance == 900.)*/ EMS[i].salinity = Constants::eps;
+							/*if(TimeAdvance == 900.)*/ //EMS[i].salinity = Constants::eps;
 							//throw;
 						}
 					}
 					Xdata.Edata[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
 				}
+
+				if (SALINITY_MIXING != NONE) {
+					for (i = lowernode; i <= uppernode; i++) {						//We loop over all Richards solver domain layers
+						//DeltaSal[i] = 0.;
+						//Salinity.BrineSal[i] = EMS[i].salinity / theta_n[i];
+						Salinity.flux_up[i] = Salinity.flux_up_2[i];
+						Salinity.flux_down[i] = Salinity.flux_down_2[i];
+						Salinity.flux_up_2[i] = Salinity.flux_down_2[i] = 0.;
+						//Salinity.D[i] = 0.;
+					}
+					// Solve the transport equation
+					if((TimeAdvance<60. && SalinityTransportSolver==SalinityTransport::EXPLICITIMPLICIT) || SalinityTransportSolver==SalinityTransport::EXPLICIT) {
+						Salinity.SolveSalinityTransportEquationExplicit(dt, DeltaSal2);
+						//Salinity.SolveSalinityTransportEquationImplicit(dt, DeltaSal, 1.);
+					} else {
+						Salinity.SolveSalinityTransportEquationImplicit(dt, DeltaSal2, 0.5);
+					}
+				}
+
+				// Apply and verify solution
+				for (i = lowernode; i <= uppernode; i++) {
+					EMS[i].salinity = Salinity.BrineSal[i] * theta_np1_mp1[i];
+					//EMS[i].salinity += (DeltaSal[i] + DeltaSal2[i]) * (theta_np1_mp1[i]);
+
+					//Verify new salinity profile
+					if(EMS[i].salinity < Constants::eps && TimeAdvance > 900. - Constants::eps2) {
+						if(EMS[i].salinity>-Constants::eps) {
+							EMS[i].salinity = Constants::eps;
+						} else {
+							std::cout << "[E] Salinity at e=" << i << ": " << std::setprecision(8) << EMS[i].salinity << "!\n";
+							EMS[i].salinity = Constants::eps;
+						}
+					}
+					Xdata.Edata[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
+				}
+
+
 
 				Xdata.Seaice->BottomSalFlux += Salinity.BottomSalFlux;
 				Xdata.Seaice->TopSalFlux += Salinity.TopSalFlux;
