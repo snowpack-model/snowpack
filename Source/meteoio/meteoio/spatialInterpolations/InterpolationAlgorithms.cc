@@ -62,6 +62,10 @@ namespace mio {
  * in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
  * memory of (eventual) previous time steps is kept. This means that all parameters and variables that are
  * automatically calculated get recalculated anew for each time step.
+ * 
+ * @note Please keep in mind that you need to specify a proper 
+ * <a href="https://en.wikipedia.org/wiki/Coordinate_system#Cartesian_coordinate_system">cartesian coordinate system</a> in your [Input] section 
+ * in order to be able to perform most of the spatial interpolations (Lat/lon coordinates are <b>not</b> cartesian, they are spherical!).
  *
  * @section interpol2D_section Spatial interpolations section
  * Practically, the user

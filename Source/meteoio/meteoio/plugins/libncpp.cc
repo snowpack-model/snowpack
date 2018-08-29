@@ -399,7 +399,7 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	
 	std::vector<std::string> vecString;
 	const size_t nrWords = mio::IOUtils::readLineToVec(time_units, vecString);
-	if (nrWords<3 || nrWords>4) throw mio::InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
+	if (nrWords<3 || nrWords>5) throw mio::InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
 	
 	if (vecString[0]=="years") o_time_multiplier = equinox_year;
 	else if (vecString[0]=="months") o_time_multiplier = equinox_year/12.;
@@ -409,7 +409,14 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	else if (vecString[0]=="seconds") o_time_multiplier = 1./(24.*3600);
 	else throw mio::InvalidArgumentException("Unknown time unit \'"+vecString[0]+"\'", AT);
 	
-	const std::string ref_date_str = (nrWords==3)? vecString[2] : vecString[2]+"T"+vecString[3];
+	std::string ref_date_str = (nrWords>3)? vecString[2]+"T"+vecString[3] : vecString[2];
+	if (nrWords==5) {
+		const char first = vecString[4][0];
+		if (first>=48 && first<=57) //ie starts with a number
+			ref_date_str += (std::string("+")+vecString[4]);
+		else 
+			ref_date_str += vecString[4];
+	}
 	mio::Date refDate;
 	if (!mio::IOUtils::convertString(refDate, ref_date_str, i_TZ))
 		throw mio::InvalidArgumentException("Invalid reference date \'"+ref_date_str+"\'", AT);
@@ -558,7 +565,7 @@ std::string getParameterUnits(const size_t& param)
 size_t getParameterIndex(const std::string& param)
 {
 	for (size_t ii=firstdimension; ii<=lastdimension; ii++) {
-		if (dimnames[ii]==param) return ii;
+		if (dimnames[ii - firstdimension]==param) return ii;
 	}
 	
 	return mio::MeteoGrids::getParameterIndex( param );
@@ -761,20 +768,24 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 
 void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
 {
-	mio::Date set_start, set_end;
+	if (vecMeteo.empty()) return;
+	
+	mio::Date set_start( vecMeteo[0].front().date );
+	mio::Date set_end( vecMeteo[0].back().date );
 	int sampling_period = -1;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) { //we must redo station 0 in order to get sampling_period
 		if (vecMeteo[ii].empty()) continue;
 		const mio::Date curr_start = vecMeteo[ii].front().date;
 		const mio::Date curr_end = vecMeteo[ii].back().date;
 		if (set_start>curr_start) set_start = curr_start;
 		if (set_end<curr_end) set_end = curr_end;
 		
-		if (vecMeteo[ii].size()==1) continue;
-		const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(vecMeteo[ii].size() - 1) * 24.*3600. + .5);
-		if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
+		const size_t npts = vecMeteo[ii].size();
+		if (npts>1) {
+			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
+			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
+		}
 	}
-	
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
 	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
 	
@@ -787,6 +798,8 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 
 void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 {
+	if (vecMeteo.empty()) return;
+	
 	const mio::Date set_start = vecMeteo.front().date;
 	const mio::Date set_end = vecMeteo.back().date;
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));

@@ -49,6 +49,7 @@
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
+#include <meteoio/meteoFilters/FilterDespikingPS.h>
 
 namespace mio {
 /**
@@ -124,7 +125,7 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
- * 
+ *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps, see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
@@ -133,7 +134,7 @@ namespace mio {
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
 	//the indenting is a little weird, this is in order to show the same groups as in the documentation above
-	
+
 	//normal filters
 	if (blockname == "MIN"){
 		return new FilterMin(vecArgs, blockname);
@@ -159,8 +160,10 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterDeGrass(vecArgs, blockname);
 	} else if (blockname == "POTENTIALSW"){
 		return new FilterPotentialSW(vecArgs, blockname);
+	} else if (blockname == "DESPIKING"){
+		return new FilterDespikingPS(vecArgs, blockname);
 	}
-	
+
 	//general data transformations
 	else if (blockname == "SUPPR"){
 		return new FilterSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
@@ -169,7 +172,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "MULT"){
 		return new ProcMult(vecArgs, blockname, cfg.getConfigRootDir());
 	}
-	
+
 	//more specific data transformations
 	else if (blockname == "EXP_SMOOTHING"){
 		return new ProcExpSmoothing(vecArgs, blockname);
@@ -249,7 +252,7 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
-	
+
 	size_t maxIndex = 0;
 	const size_t minIndex = (c_type=='h')? 0 : 1;
 	if (c_type=='m') maxIndex = 12;
@@ -302,7 +305,7 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		}
 		throw;
 	}
-	
+
 	return corrections;
 }
 
@@ -310,7 +313,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 {
 	if (col_idx<2)
 		throw InvalidArgumentException("Filter "+filter+": the column index must be greater than 1!", AT);
-	
+
 	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
 		std::ostringstream ss;
@@ -369,7 +372,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 		}
 		throw;
 	}
-	
+
 	std::sort(corrections.begin(), corrections.end());
 	return corrections;
 }
@@ -378,7 +381,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
-	
+
 	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
 		std::ostringstream ss;
@@ -388,7 +391,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 	}
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	std::map< std::string, std::vector<dates_range> > dates_specs;
-	
+
 	Date d1, d2;
 	try {
 		size_t lcount=0;
@@ -399,7 +402,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 			IOUtils::stripComments(line);
 			IOUtils::trim(line);
 			if (line.empty()) continue;
-			
+
 			std::vector<std::string> vecString;
 			const size_t nrElems = IOUtils::readLineToVec(line, vecString);
 			if (nrElems<2)

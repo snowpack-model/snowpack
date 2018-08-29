@@ -108,6 +108,8 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 
 	for (size_t i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
+		if (!position.isCartesian())
+			throw ConversionFailedException("Please use a cartesian coordinate system for point "+position.toString(Coords::FULL), AT);
 		const double DX = x-position.getEasting();
 		const double DY = y-position.getNorthing();
 		const double d2 = (DX*DX + DY*DY);
@@ -126,6 +128,8 @@ void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStatio
 	vecNorthings.resize( nr_stations );
 	for (size_t i=0; i<nr_stations; i++) {
 		const Coords& position = vecStations[i].position;
+		if (!position.isCartesian())
+			throw ConversionFailedException("Please use a cartesian coordinate system for point "+position.toString(Coords::FULL), AT);
 		vecEastings[i] = position.getEasting();
 		vecNorthings[i] = position.getNorthing();
 	}
@@ -565,9 +569,9 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 */
 void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
 {
-	if (!grid.isSameGeolocalization(dem)) {
+	if (!grid.isSameGeolocalization(dem))
 		throw IOException("Requested grid does not match the geolocalization of the DEM", AT);
-	}
+
 	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
 
 	for (size_t ii=0; ii<grid.size(); ii++) {
@@ -606,9 +610,8 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
  */
 void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW)
 {
-	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem))){
+	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem)))
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
-	}
 
 	static const double shade_factor = 5.;
 	const double cellsize = dem.cellsize;
@@ -1000,6 +1003,8 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	//fill the Ginv matrix
 	for (size_t j=1; j<=nrOfMeasurments; j++) {
 		const Coords& st1 = vecStations[j-1].position;
+		if (!st1.isCartesian())
+			throw ConversionFailedException("Please use a cartesian coordinate system for point "+st1.toString(Coords::FULL), AT);
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 
