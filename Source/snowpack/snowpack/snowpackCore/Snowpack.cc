@@ -2021,14 +2021,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		if ((Mdata.psi_s >= 0. || t_surf > Mdata.ta) && atm_stability_model != Meteo::NEUTRAL && allow_adaptive_timestepping == true) {
 			// To reduce oscillations in TSS, reduce the time step prematurely when atmospheric stability is unstable.
 			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;					// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
-			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
-			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt /= sn_dt;	// scale the mass balance components like the precipiation
+			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
+			if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt /= sn_dt;	// scale the mass balance components like the precipiation
 
 			sn_dt = 60.;
 
 			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;					// ... then express psum again as precipitation per time step with the new time step
-			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
-			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
+			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
+			if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 		}
 		
 		Meteo M(cfg);
@@ -2057,7 +2057,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				// If you switched from DIRICHLET to NEUMANN boundary conditions, correct
 				//   for a possibly erroneous surface energy balance. The latter can be due e.g. to a lack
 				//   of data on nebulosity leading to a clear sky assumption for incoming long wave.
-				if ((change_bc && meas_tss) && (surfaceCode == NEUMANN_BC)
+				if ((change_bc && meas_tss) && (surfaceCode == NEUMANN_BC) && forcing != "MASSBAL"
 						&& (Xdata.Ndata[Xdata.getNumberOfNodes()-1].T < mio::IOUtils::C_TO_K(thresh_change_bc))) {
 					surfaceCode = DIRICHLET_BC;
 					meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
@@ -2124,13 +2124,13 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				if (sn_dt == sn_dt_bcu) std::cout << "[i] [" << Mdata.date.toString(Date::ISO) << "] : using adaptive timestepping\n"; // First time warning
 
 				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;					// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
-				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
-				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt /= sn_dt;	// scale the mass balance components like the precipiation
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
+				if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt /= sn_dt;	// scale the mass balance components like the precipiation
 
 				sn_dt /= 2.;							// No convergence, half the time step
 				if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum *= sn_dt;					// ... then express psum again as precipitation per time step with the new time step
-				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
-				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
+				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
+				if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 
 				if (sn_dt < 0.01) {	// If time step gets too small, we are lost
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Temperature equation did not converge, even after reducing time step (azi=%.0lf, slope=%.0lf).", Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
