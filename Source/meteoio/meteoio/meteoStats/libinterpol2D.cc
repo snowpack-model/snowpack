@@ -108,8 +108,6 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 
 	for (size_t i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
-		if (!position.isCartesian())
-			throw ConversionFailedException("Please use a cartesian coordinate system for point "+position.toString(Coords::FULL), AT);
 		const double DX = x-position.getEasting();
 		const double DY = y-position.getNorthing();
 		const double d2 = (DX*DX + DY*DY);
@@ -128,8 +126,6 @@ void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStatio
 	vecNorthings.resize( nr_stations );
 	for (size_t i=0; i<nr_stations; i++) {
 		const Coords& position = vecStations[i].position;
-		if (!position.isCartesian())
-			throw ConversionFailedException("Please use a cartesian coordinate system for point "+position.toString(Coords::FULL), AT);
 		vecEastings[i] = position.getEasting();
 		vecNorthings[i] = position.getNorthing();
 	}
@@ -1003,8 +999,6 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	//fill the Ginv matrix
 	for (size_t j=1; j<=nrOfMeasurments; j++) {
 		const Coords& st1 = vecStations[j-1].position;
-		if (!st1.isCartesian())
-			throw ConversionFailedException("Please use a cartesian coordinate system for point "+st1.toString(Coords::FULL), AT);
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 

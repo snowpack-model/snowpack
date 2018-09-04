@@ -116,6 +116,7 @@ bool SnowpackConfig::initStaticData()
 	//temporary keys for Stability until we decide for a permanent solution
 	advancedConfig["MULTI_LAYER_SK38"] = "false";
 	advancedConfig["SSI_IS_RTA"] = "false";
+	advancedConfig["SNOW_PREPARATION"] = "false";
 
 	//[Input] section
 	inputConfig["METEOPATH"] = "./input";

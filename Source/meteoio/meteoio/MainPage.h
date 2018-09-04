@@ -78,6 +78,7 @@ namespace mio {
  *    -# How to \subpage dev_coords "write a coordinate system support"
  *    -# How to \subpage dev_plugins "write a Plugin"
  *    -# How to \subpage dev_processing "write a processing element"
+ *    -# How to \subpage dev_1Dinterpol "write a resampling algorithm"
  *    -# How to \subpage dev_DataGenerator "Write a data generator"
  *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
  * 

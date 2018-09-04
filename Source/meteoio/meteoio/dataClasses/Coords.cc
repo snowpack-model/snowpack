@@ -139,12 +139,6 @@ bool Coords::isNodata() const {
 	return false;
 }
 
-///< Returns true if the coordinate system is a cartesian coordinate system (so it can be used as-is for distance computations)
-bool Coords::isCartesian() const {
-	if (coordsystem=="NULL" || (coordsystem=="PROJ4" && coordparam=="4326")) return false;
-	return true;
-}
-
 ///< move the point by the specified distance (in m) along easting and northing
 void Coords::moveByXY(const double& x_displacement, const double& y_displacement) {
 	setXY(easting+x_displacement, northing+y_displacement, altitude, true);
@@ -370,7 +364,7 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
                    coordsystem(c.coordsystem), coordparam(c.coordparam), distance_algo(c.distance_algo) {}
 
 /**
-* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* @brief Local projection constructor: this constructor is only suitable for building a local projection.
 * @details Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
 * @param[in] in_coordinatesystem string identifying the coordinate system to use
@@ -583,6 +577,9 @@ void Coords::setAltitude(const double in_altitude, const bool in_update) {
 */
 void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) 
 {
+	if (in_coordinatesystem=="PROJ4" && in_parameters=="4326")
+		throw InvalidArgumentException("Please define a cartesian coordinate system, not a spehrical one!", AT);
+
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
 	if ((coordsystem != "NULL") && ((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata))) {

@@ -81,7 +81,7 @@ class InterpolationAlgorithm;
  *
  * @section doc_2Dinterpol Documentation
  * The newly added interpolation algorithm must be added to the list of available algorithms in
- * InterpolationAlgorithms.h with a proper description. An example can also be given in the example section
+ * InterpolationAlgorithms.cc with a proper description. An example can also be given in the example section
  * of the same file. Please feel free to add necessary bibliographic references to the bibliographic section!
  *
 */

@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/BormaIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
 #include <sstream>

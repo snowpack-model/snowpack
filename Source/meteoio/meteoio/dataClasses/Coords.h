@@ -107,7 +107,6 @@ public:
 	bool operator==(const Coords&) const; ///<Operator that tests for equality
 	bool operator!=(const Coords&) const; ///<Operator that tests for inequality
 	bool isNodata() const;
-	bool isCartesian() const;
 	void moveByXY(const double& x_displacement, const double& y_displacement);
 	void moveByBearing(const double& i_bearing, const double& i_distance);
 

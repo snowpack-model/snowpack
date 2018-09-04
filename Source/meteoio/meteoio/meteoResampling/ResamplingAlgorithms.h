@@ -29,54 +29,6 @@
 #endif
 
 namespace mio {
- /**
- * @page resampling Resampling overview
- * The resampling infrastructure is described in ResamplingAlgorithms (for its API).
- * The goal of this page is to give an overview of the available resampling algorithms and their usage.
- *
- * @section resampling_section Resampling section
- * The resampling is specified for each parameter in the [Interpol1D] section. This section contains
- * a list of the various meteo parameters with their associated choice of resampling algorithm and
- * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
- * assumed. An example of such section is given below:
- * @code
- * [Interpolations1D]
- * WINDOW_SIZE     = 86400
- * TA::resample    = linear
- *
- * RH::resample            = linear
- * RH::linear::window_size = 172800
- *
- * VW::resample             = nearest
- * VW::nearest::extrapolate = true
- *
- * PSUM::resample           = accumulate
- * PSUM::accumulate::period = 3600
- * @endcode
- *
- * Most of the resampling algorithms allow you to define per-meteo parameter and per-algorithm the WINDOW_SIZE. Otherwise, the section's WINDOW_SIZE is
- * used as default window size. This represents the biggest gap that can be interpolated (in seconds). Therefore if two valid points are less than
- * WINDOW_SIZE seconds apart, points in between will be interpolated. If they are further apart, all points in between will remain IOUtils::nodata.
- * If using the "extrapolate" optional argument, points at WINDOW_SIZE distance of only one valid point will be extrapolated, otherwise they will remain
- * IOUtils::nodata. Please keep in mind that allowing extrapolated values can lead to grossly out of range data: using the slope
- * between two hourly measurements to extrapolate a point 10 days ahead is obviously risky!
- *
- * By default, WINDOW_SIZE is set to 2 days. This key has a <b>potentially large impact on run time/performance</b>.
- *
- * @section algorithms_available Available Resampling Algorithms
- * Several algorithms for the resampling are implemented:
- * - none: do not perform resampling, see NoResampling
- * - nearest:  nearest neighbor data resampling, see NearestNeighbour
- * - linear: linear data resampling, see LinearResampling
- * - accumulate: data re-accumulation as suitable for precipitations, see Accumulate
- * - solar: resample solar radiation by interpolating an atmospheric loss factor, see Solar
- * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
- * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
- * 
- * By default a linear resampling will be performed. It is possible to turn off all resampling by setting the *Enable_Resampling* key 
- * to *false* in the [Interpolations1D] section.
- */
-
 /**
  * @class ResamplingAlgorithms
  * @brief Interface class for the temporal resampling algorithms

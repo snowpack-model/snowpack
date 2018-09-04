@@ -387,12 +387,10 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 	} else {
 		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
 		const double topFlux = botFlux;										//top layer flux (kg m-2 s-1)
-		deltaM[nE-1] += (topFlux < 0)
-			? (std::min(std::max(0., (ReSolver1d::max_theta_ice - EMS[nE-1].theta[ICE]) * (Constants::density_ice * EMS[nE-1].L)), -(topFlux * sn_dt)))		// not more deposition than max_theta_ice
-			: (std::max(-(EMS[nE-1].theta[ICE] - (1.-Constants::eps)*Snowpack::min_ice_content) * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt)));	// not more sublimation than available mass
+		deltaM[nE-1] += std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
 		// HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
 		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
-		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[nE-1];
+		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] -= topFlux * sn_dt;
 	}
 
 	double dHoar = 0.;
@@ -416,7 +414,19 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
 			} else {
-				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+				if (e == nE-1) {
+					// The top layer will increase length due to deposition
+					const double dL = deltaM[e] / (Constants::density_ice * EMS[e].theta[ICE]);
+					const double L_old = EMS[e].L;
+					const double L_new = EMS[e].L + dL;
+					EMS[e].L = L_new;
+					EMS[e].theta[WATER] *= L_old / L_new;
+					EMS[e].theta[WATER_PREF] *= L_old / L_new;
+					NDS[e+1].z = NDS[e].z + EMS[e].L;
+					Xdata.cH = NDS[e+1].z + NDS[e+1].u;
+				} else {
+					EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+				}
 			}
 		}
 		// Numerical rounding errors were found to lead to theta[AIR] < 0, so force the other components between [0,1]:

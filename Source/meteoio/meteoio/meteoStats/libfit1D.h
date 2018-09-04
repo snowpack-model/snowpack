@@ -117,14 +117,14 @@ class Quadratic : public FitLeastSquare {
 class PolynomialRegression : public FitModel {
 	public:
 	    //the default-constructor sets the degree to 2 (= quadratic regression)
-		PolynomialRegression() : FitModel("PolynomialRegression", 3, 3), degree(2) {fit_ready=false;}
+		PolynomialRegression() : FitModel("POLYNOMIAL", 3, 3), degree(2) {fit_ready=false;}
 		PolynomialRegression(const std::string& i_regname, int degreeOfRegression) :
                             FitModel(i_regname, degreeOfRegression+1, degreeOfRegression+1),
                             degree(degreeOfRegression){fit_ready=false;}
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
-		void setDegree(const size_t& in_degree) {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
+		void setDegree(const int& in_degree) {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
 	protected:
 		size_t degree;
 };
