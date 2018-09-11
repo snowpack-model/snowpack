@@ -571,12 +571,16 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 		// For mass balance forcing
 		Bdata.qs = alpha * (Tair - Tss);
 		const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
-		if (Xdata.getNumberOfElements() > 0 && Xdata.Edata[Xdata.getNumberOfElements()-1].theta[WATER] > theta_r) {
-			// Case of evaporation
-			Bdata.ql = (Mdata.sublim * Constants::lh_vaporization) / sn_dt;
+		if (Mdata.sublim != IOUtils::nodata) {
+			if (Xdata.getNumberOfElements() > 0 && Xdata.Edata[Xdata.getNumberOfElements()-1].theta[WATER] > theta_r) {
+				// Case of evaporation
+				Bdata.ql = (Mdata.sublim * Constants::lh_vaporization) / sn_dt;
+			} else {
+				// Case of sublimation
+				Bdata.ql = (Mdata.sublim * Constants::lh_sublimation) / sn_dt;
+			}
 		} else {
-			// Case of sublimation
-			Bdata.ql = (Mdata.sublim * Constants::lh_sublimation) / sn_dt;
+			Bdata.ql = 0.;
 		}
 	}
 
@@ -629,7 +633,7 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
 
 	// Special case for MASSBAL forcing, surf_melt is the energy flux.
 	if(forcing=="MASSBAL") {
-		Fe[1] += Mdata.surf_melt * Constants::lh_fusion / sn_dt;
+		if (Mdata.surf_melt != IOUtils::nodata) Fe[1] += Mdata.surf_melt * Constants::lh_fusion / sn_dt;
 		return;
 	}
 
@@ -2090,9 +2094,9 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				// See if any SUBSURFACE phase changes are occuring due to updated temperature profile
 				if(!useNewPhaseChange) {
 					if (!alpine3d)
-						phasechange.compPhaseChange(Xdata, Mdata.date, true, Mdata.surf_melt);
+						phasechange.compPhaseChange(Xdata, Mdata.date, true, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
 					else
-						phasechange.compPhaseChange(Xdata, Mdata.date, false, Mdata.surf_melt);
+						phasechange.compPhaseChange(Xdata, Mdata.date, false, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
 				} else {
 					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
 					const double max_ice = ReSolver1d::max_theta_ice;
