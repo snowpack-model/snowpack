@@ -9,14 +9,15 @@ BuildVersion()
 MACRO (SET_COMPILER_OPTIONS)
 	###########################################################
 	IF(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)	#this is required for building libraries
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} /EHa")
 		ENDIF(DEBUG_ARITHM)
 		
 		#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
+		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions /w35045: inform about Spectre mitigation
 		#SET(EXTRA_WARNINGS "/Wp64") #/Wall
-		SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
+		SET(OPTIM "/O2 /DNDEBUG /DEBUG:FASTLINK /MD /DNOSAFECHECKS")
 		SET(ARCH_OPTIM "/arch:AVX2")
 		SET(ARCH_SAFE "")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
@@ -24,9 +25,6 @@ MACRO (SET_COMPILER_OPTIONS)
 		ENDIF()
 		SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 		SET(_VERSION "/D_VERSION=${_versionString}")
-		IF(BUILD_SHARED_LIBS)
-			ADD_DEFINITIONS(/DMIO_DLL)
-		ENDIF(BUILD_SHARED_LIBS)
 		
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL Intel)

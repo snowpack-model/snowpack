@@ -1035,6 +1035,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							}
 							break;
 						}
+						default:
+							InvalidArgumentException("Unknown K_AverageType value provided", AT);
+
 					}
 					if(matrix==false) {
 						// When solving preferential flow, we suppress liquid water flow in soil by setting hydraulic conductivity to 0.

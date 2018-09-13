@@ -60,7 +60,6 @@ namespace IOUtils {
 
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
-	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = static_cast<unsigned int>(-1);
 	const int inodata = -999;
 	const short int snodata = -999;

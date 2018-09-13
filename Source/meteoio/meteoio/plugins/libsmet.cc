@@ -228,7 +228,7 @@ void SMETCommon::stripComments(std::string& str)
 
 void SMETCommon::toUpper(std::string& str)
 {
-	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
 char SMETCommon::getEoln(std::istream& fin)

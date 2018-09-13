@@ -43,8 +43,10 @@ namespace mio {
  *
  * @section smetio_keywords Keywords
  * This plugin uses the following keywords:
- * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
+ * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
+ * will be scanned for files ending in ".smet";
+ * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively;
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
@@ -98,21 +100,6 @@ SMETIO::SMETIO(const Config& cfgreader)
 	parseInputOutputSection();
 }
 
-void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
-{//HACK: It should support coordinates in the data, ie: it should use the given date! (and TZ)
-	vecStation.clear();
-	vecStation.reserve(nr_stations);
-
-	//Now loop through all requested stations, open the respective files and parse them
-	for (size_t ii=0; ii<vec_smet_reader.size(); ii++){
-		StationData sd;
-		smet::SMETReader& myreader = vec_smet_reader[ii];
-
-		read_meta_data(myreader, sd);
-		vecStation.push_back(sd);
-	}
-}
-
 void SMETIO::parseInputOutputSection()
 {
 	//default timezones
@@ -128,7 +115,15 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue("METEOPATH", "Input", inpath);
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
-
+		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
+			bool is_recursive = false;
+			cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, ".smet", is_recursive) );
+			dirlist.sort();
+			vecFilenames.reserve( dirlist.size() );
+			std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
+		} 
+		
 		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 			const std::string filename( vecFilenames[ii] );
 			const std::string extension( FileUtils::getExtension(filename) );
@@ -166,21 +161,41 @@ void SMETIO::parseInputOutputSection()
 		throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
 }
 
+void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
+{//HACK: It should support coordinates in the data, ie: it should use the given date! (and TZ)
+	vecStation.clear();
+	vecStation.reserve(nr_stations);
+
+	//Now loop through all requested stations, open the respective files and parse them
+	for (size_t ii=0; ii<vec_smet_reader.size(); ii++){
+		StationData sd;
+		smet::SMETReader& myreader = vec_smet_reader[ii];
+
+		read_meta_data(myreader, sd);
+		vecStation.push_back(sd);
+	}
+}
+
+/**
+* @brief Associate MeteoData parameter index with each SMET field.
+* @details This function associates a parameter index for MeteoData objects with the
+* lineup of field types in a SMET header. The following SMET fields are treated
+* exceptionally:
+* - julian, associated with IOUtils::npos
+* - latitude, associated with IOUtils::npos-1
+* - longitude, associated with IOUtils::npos-2
+* - easting, associated with IOUtils::npos-3
+* - norhting, associated with IOUtils::npos-4
+* - altitude, associated with IOUtils::npos-5
+* If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
+* @param[in] fields the fields coming from the SMET file
+* @param[out] indexes the matching parameter indexes
+* @param[out] julian_present set to true if a column contains a julian date
+* @param[out] md a MeteoData object where extra parameters would be added
+*/
 void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
                              bool& julian_present, MeteoData& md)
 {
-	/*
-	 * This function associates a parameter index for MeteoData objects with the
-	 * lineup of field types in a SMET header. The following SMET fields are treated
-	 * exceptionally:
-	 * - julian, associated with IOUtils::npos
-	 * - latitude, associated with IOUtils::npos-1
-	 * - longitude, associated with IOUtils::npos-2
-	 * - easting, associated with IOUtils::npos-3
-	 * - norhting, associated with IOUtils::npos-4
-	 * - altitude, associated with IOUtils::npos-5
-	 * If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
-	 */
 	for (size_t ii=0; ii<fields.size(); ii++){
 		const std::string& key = fields[ii];
 

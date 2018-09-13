@@ -590,7 +590,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio,
 						snowfile.erase(pos_dot, snowfile.size() - pos_dot);
 				}
 				snowpackio.readSnowCover(snowfile, vecStationIDs[i_stn],
-				                         vecSSdata[slope.mainStation], sn_Zdata);
+				                         vecSSdata[slope.mainStation], sn_Zdata, false);
 				prn_msg(__FILE__, __LINE__, "msg-", mio::Date(),
 				        "Reading snow cover data for station %s",
 				        vecStationIDs[i_stn].c_str());
@@ -615,7 +615,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio,
 				ss.str("");
 				ss << vecSSdata[slope.mainStation].meta.getStationID() << sector;
 				snowpackio.readSnowCover(sec_snowfile.str(), ss.str(),
-				                         vecSSdata[sector], sn_Zdata);
+				                         vecSSdata[sector], sn_Zdata, false);
 				vecSSdata[sector].meta.position = vecSSdata[slope.mainStation].meta
 				    .getPosition();
 				vecSSdata[sector].meta.stationName = vecSSdata[slope.mainStation].meta

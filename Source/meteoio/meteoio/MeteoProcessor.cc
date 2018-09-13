@@ -17,6 +17,7 @@
 */
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -78,8 +79,8 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties) const
 
 void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current)
 {
-	current.points_before = max(current.points_before, newprop.points_before);
-	current.points_after = max(current.points_after, newprop.points_after);
+	current.points_before = std::max(current.points_before, newprop.points_before);
+	current.points_after = std::max(current.points_after, newprop.points_after);
 
 	if (newprop.time_before > current.time_before)
 		current.time_before = newprop.time_before;

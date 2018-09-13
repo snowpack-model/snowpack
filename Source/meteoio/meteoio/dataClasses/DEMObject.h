@@ -96,12 +96,6 @@ class DEMObject : public Grid2DObject {
 		void printFailures();
 		void sanitize();
 
-		Grid2DObject getHillshade(const double& elev=38., const double& azimuth=0.) const;
-		double getHorizon(const size_t& ix1, const size_t& iy1, const double& bearing) const;
-		double getHorizon(const Coords& point, const double& bearing) const;
-		void getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const;
-		double getCellSkyViewFactor(const size_t& ii, const size_t& jj) const;
-
 		DEMObject& operator=(const Grid2DObject&); ///<Assignement operator
 		DEMObject& operator=(const double& value); ///<Assignement operator
 
@@ -133,7 +127,6 @@ class DEMObject : public Grid2DObject {
 		friend std::istream& operator>>(std::istream& is, DEMObject& dem);
 
 	private:
-		double getTanMaxSlope(const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j) const;
 		void CalculateAziSlopeCurve(slope_type algorithm);
 		static double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);
 		double getCurvature(double A[4][4]);

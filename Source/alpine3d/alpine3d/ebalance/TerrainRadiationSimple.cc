@@ -82,7 +82,7 @@ void TerrainRadiationSimple::initSkyViewFactors(const mio::DEMObject &dem)
 	for (size_t jj=0; jj<dimy; jj++) {
 		for (size_t ii=startx; ii<endx; ii++) {
 			if (dem(ii,jj) != IOUtils::nodata)
-				sky_vf(ii,jj) = dem.getCellSkyViewFactor(ii, jj);
+				sky_vf(ii,jj) = mio::DEMAlgorithms::getCellSkyViewFactor(dem, ii, jj);
 		}
 	}
 }

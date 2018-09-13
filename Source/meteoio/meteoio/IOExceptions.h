@@ -38,7 +38,7 @@ namespace mio {
  */
 
 
-class MIO_API IOException : public std::exception {
+class IOException : public std::exception {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
 		~IOException() throw() {}
@@ -57,7 +57,7 @@ class MIO_API IOException : public std::exception {
  *
  * @author Thomas Egger
  */
-class MIO_API NotFoundException : public IOException {
+class NotFoundException : public IOException {
 	public:
 		NotFoundException(const std::string& filename="",
 		                      const std::string& position="") : IOException("NotFound: " + filename, position){}
@@ -69,7 +69,7 @@ class MIO_API NotFoundException : public IOException {
  *
  * @author Thomas Egger
  */
-class MIO_API AccessException : public IOException {
+class AccessException : public IOException {
 	public:
 		AccessException(const std::string& filename="",
 		                    const std::string& position="") : IOException("InvalidAccess: " + filename, position){}
@@ -81,7 +81,7 @@ class MIO_API AccessException : public IOException {
  *
  * @author Thomas Egger
  */
-class MIO_API InvalidNameException : public IOException {
+class InvalidNameException : public IOException {
 	public:
 		InvalidNameException(const std::string& filename="",
 		                         const std::string& position="") : IOException("InvalidName: " + filename, position){}
@@ -93,7 +93,7 @@ class MIO_API InvalidNameException : public IOException {
  *
  * @author Thomas Egger
  */
-class MIO_API InvalidFormatException : public IOException {
+class InvalidFormatException : public IOException {
 	public:
 		InvalidFormatException(const std::string& message="",
 		                       const std::string& position="") : IOException("InvalidFormat: " + message, position){}
@@ -105,7 +105,7 @@ class MIO_API InvalidFormatException : public IOException {
  *
  * @author Thomas Egger
  */
-class MIO_API IndexOutOfBoundsException : public IOException {
+class IndexOutOfBoundsException : public IOException {
 	public:
 		IndexOutOfBoundsException(const std::string& message="",
 		                          const std::string& position="") : IOException("IndexOutOfBounds: " + message, position){}
@@ -117,7 +117,7 @@ class MIO_API IndexOutOfBoundsException : public IOException {
  *
  * @author Thomas Egger
  */
-class MIO_API ConversionFailedException : public IOException {
+class ConversionFailedException : public IOException {
 	public:
 		ConversionFailedException(const std::string& message="",
 		                          const std::string& position="") : IOException("ConversionFailed: " + message, position){}
@@ -129,7 +129,7 @@ class MIO_API ConversionFailedException : public IOException {
  *
  * @author Florian Hof
  */
-class MIO_API InvalidArgumentException : public IOException {
+class InvalidArgumentException : public IOException {
 	public:
 		InvalidArgumentException(const std::string& message="",
 		                         const std::string& position="") : IOException("InvalidArgument: " + message, position){}
@@ -141,7 +141,7 @@ class MIO_API InvalidArgumentException : public IOException {
  *
  * @author Florian Hof
  */
-class MIO_API UnknownValueException : public IOException {
+class UnknownValueException : public IOException {
 	public:
 		UnknownValueException(const std::string& message="",
 		                      const std::string& position="") : IOException("UnknownValue: " + message, position){}
@@ -153,7 +153,7 @@ class MIO_API UnknownValueException : public IOException {
  *
  * @author Florian Hof
  */
-class MIO_API NoDataException : public IOException
+class NoDataException : public IOException
 {
 	public:
 		NoDataException(const std::string& message="",

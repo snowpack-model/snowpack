@@ -38,11 +38,11 @@
  * @brief This module contains water vapour transport routines for the 1d snowpack model
  */
 class VapourTransport : public WaterTransport {
-	public: 
+	public:
 		VapourTransport(const SnowpackConfig& cfg);
 		void compTransportMass(const CurrentMeteo& Mdata, double& ql, SnowStation& Xdata, SurfaceFluxes& Sdata);
 
-	private:  
+	private:
 		void compSurfaceSublimation(const CurrentMeteo& Mdata, double& ql, SnowStation& Xdata, SurfaceFluxes& Sdata);
 		void LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql);
 
@@ -56,8 +56,8 @@ class VapourTransport : public WaterTransport {
 		std::string watertransportmodel_soil;
 		double sn_dt;
 		double hoar_thresh_rh, hoar_thresh_vw, hoar_thresh_ta;
-		double hoar_density_buried, hoar_density_surf, hoar_min_size_buried;
-		double minimum_l_element;
+		//double hoar_density_buried, hoar_density_surf, hoar_min_size_buried;
+		//double minimum_l_element;
 		bool useSoilLayers, water_layer;
 
 		bool enable_vapour_transport;

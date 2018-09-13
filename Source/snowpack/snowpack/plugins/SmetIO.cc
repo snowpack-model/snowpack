@@ -35,7 +35,7 @@ using namespace mio;
  * <i>"Available plugins and usage"</i>, then <i>"smet"</i>).
  *
  * @section fluxes_ts Fluxes timeseries
- * These files are very regular SMET files with a large number of fields. 
+ * These files are very regular SMET files with a large number of fields.
  *
  * @section layers_data Layers data
  * The snow/soil layers file has the structure described below:
@@ -95,18 +95,18 @@ using namespace mio;
  * source           = WSL-SLF			;optional key
  * ProfileDate      = 2009-10-01T00:00		;when was the profile made, see explanations above
  * HS_Last          = 0.0000			;last measured snow height
- * SlopeAngle       = 38.0			
- * SlopeAzi         = 0.0			
+ * SlopeAngle       = 38.0
+ * SlopeAzi         = 0.0
  * nSoilLayerData   = 0				;number of soil layers
  * nSnowLayerData   = 1				;number of snow layers
  * SoilAlbedo       = 0.20				;albedo of the exposed soil
  * BareSoil_z0      = 0.020			;roughtness length of the exposed soil
  * CanopyHeight     = 0.00				;height (in m) of the canopy
- * CanopyLeafAreaIndex     = 0.00		
- * CanopyDirectThroughfall = 1.00		
+ * CanopyLeafAreaIndex     = 0.00
+ * CanopyDirectThroughfall = 1.00
  * WindScalingFactor       = 1.00			;some stations consistently measure a wind that is too low
- * ErosionLevel     = 0				
- * TimeCountDeltaHS = 0.000000			
+ * ErosionLevel     = 0
+ * TimeCountDeltaHS = 0.000000
  * fields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo
  * [DATA]
  * 2009-09-19T02:30 0.003399 273.15 0.579671 0.068490 0.351839 0.000000 0.0 0.0 0.0 1.432384 1.028390 0.000000 1.000000 22 0.000000 1 0.000000 0.000000
@@ -504,6 +504,14 @@ mio::Date SmetIO::read_snosmet_header(const smet::SMETReader& sno_reader, const 
 	SSdata.ErosionLevel = get_intval(sno_reader, "ErosionLevel");
 	SSdata.TimeCountDeltaHS = get_doubleval(sno_reader, "TimeCountDeltaHS");
 
+  SSdata.Canopy_int_cap_snow = get_doubleval_no_error(sno_reader, "CanopySnowIntCapacity");
+  SSdata.Canopy_alb_dry = get_doubleval_no_error(sno_reader, "CanopyAlbedoDry");
+  SSdata.Canopy_alb_wet = get_doubleval_no_error(sno_reader, "CanopyAlbedoWet");
+  SSdata.Canopy_alb_snow = get_doubleval_no_error(sno_reader, "CanopyAlbedoSnow");
+  SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
+  SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
+  SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
+
 	return SSdata.profileDate;
 }
 
@@ -528,6 +536,19 @@ double SmetIO::get_doubleval(const smet::SMETReader& reader, const std::string& 
 		throw InvalidFormatException("Cannot generate Xdata from file " + reader.get_filename(), AT);
 	}
 
+	return value;
+}
+
+double SmetIO::get_doubleval_no_error(const smet::SMETReader& reader, const std::string& key)
+{
+	// Retrieve a double value from a SMETReader object header and make sure it exist
+	// If the header key does not exist or the value is not set, set it to meteoIO nodata
+	const double nodata = reader.get_header_doublevalue("nodata");
+	double value = reader.get_header_doublevalue(key);
+
+	if (value == nodata){
+	   value=mio::IOUtils::nodata;
+	}
 	return value;
 }
 
@@ -740,6 +761,20 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	smet_writer.set_header_value("CanopyLeafAreaIndex", ss.str());
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.direct_throughfall;
 	smet_writer.set_header_value("CanopyDirectThroughfall", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.int_cap_snow;
+  smet_writer.set_header_value("CanopySnowIntCapacity", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.can_alb_dry;
+  smet_writer.set_header_value("CanopyAlbedoDry", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.can_alb_wet;
+  smet_writer.set_header_value("CanopyAlbedoWet", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.can_alb_snow;
+  smet_writer.set_header_value("CanopyAlbedoSnow", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.can_diameter;
+  smet_writer.set_header_value("CanopyDiameter", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.lai_frac_top_default;
+  smet_writer.set_header_value("CanopyFracLAIUpperLayer", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.BasalArea;
+  smet_writer.set_header_value("CanopyBasalArea", ss.str());
 
 	// Additional parameters
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.WindScalingFactor;

@@ -166,15 +166,13 @@ bool isAbsolutePath(const std::string& in_path)
 
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
-	static const std::string sub_path( "." );
-	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
+	readDirectoryPrivate(path, "", dirlist, pattern, isRecursive);
 }
 
 std::list<std::string> readDirectory(const std::string& path, const std::string& pattern, const bool& isRecursive)
 {
 	std::list<std::string> dirlist;
-	static const std::string sub_path( "." );
-	readDirectoryPrivate(path, sub_path, dirlist, pattern, isRecursive);
+	readDirectoryPrivate(path, "", dirlist, pattern, isRecursive);
 	return dirlist;
 }
 
@@ -229,11 +227,12 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 				if (pos!=std::string::npos) dirlist.push_back( filename );
 			}
 		} else {
+			const std::string target = (sub_path.empty())? filename : sub_path+"/"+filename;
 			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
+				readDirectoryPrivate(full_path, target, dirlist, pattern, isRecursive);
 			} else {
 				const size_t pos = filename.find(pattern);
-				if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+filename );
+				if (pos!=std::string::npos) dirlist.push_back( target );
 			}
 		}
 	}
@@ -306,15 +305,16 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 				if (pos!=std::string::npos) dirlist.push_back( filename );
 			}
 		} else {
+			const std::string target = (sub_path.empty())? filename : sub_path+"/"+filename;
 			if (S_ISDIR(statbuf.st_mode)) { //recurse on sub-directory
-				readDirectoryPrivate(full_path, sub_path+"/"+filename, dirlist, pattern, isRecursive);
+				readDirectoryPrivate(full_path, target, dirlist, pattern, isRecursive);
 			} else {
 				if (!S_ISREG(statbuf.st_mode)) continue; //skip non-regular files, knowing that "stat" already resolved the links
 				if (pattern.empty()) {
-					dirlist.push_back( sub_path+"/"+filename );
+					dirlist.push_back( target );
 				} else {
 					const size_t pos = filename.find(pattern);
-					if (pos!=std::string::npos) dirlist.push_back( sub_path+"/"+filename );
+					if (pos!=std::string::npos) dirlist.push_back( target );
 				}
 			}
 		}

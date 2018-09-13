@@ -182,7 +182,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			}
 			break;
 		}
-		
+
 	case LINEARSAL2:
 		{
 			const double topSal = 1.;
@@ -203,7 +203,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			break;
 		}
 
-	// C shaped salinity profile	
+	// C shaped salinity profile
 	case SINUSSAL:
 		{
 			const double topSal = 12.;
@@ -224,6 +224,9 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			}
 			break;
 		}
+		default:
+			InvalidArgumentException("Unknown salinity profile provided", AT);
+
 	}
 }
 
@@ -410,7 +413,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 	if (nE > 0 ) {
 		// With at least one element, calculate net energy flux
 		// Here: netBottomEnergy has units W/m^2
-		netBottomEnergy = OceanHeatFlux 
+		netBottomEnergy = OceanHeatFlux
 			+ compSeaIceThermalConductivity(EMS[Xdata.SoilNode]) * ( (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / (NDS[Xdata.SoilNode+1].z - NDS[Xdata.SoilNode].z));
 		dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(EMS[Xdata.SoilNode]);
 	} else {

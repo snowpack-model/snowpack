@@ -18,6 +18,7 @@
 
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
+#include <algorithm>
 
 namespace mio {
 

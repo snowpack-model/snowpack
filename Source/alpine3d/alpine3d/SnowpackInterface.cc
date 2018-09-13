@@ -122,7 +122,6 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	sn_cfg.addKey("GRIDS_PARAMETERS", "output", all_grids + " " + grids_requirements + " " + getGridsRequirements()); //also consider own requirements
 
 	//check if lateral flow is enabled
-	enable_lateral_flow = false;
 	sn_cfg.getValue("LATERAL_FLOW", "Alpine3D", enable_lateral_flow, IOUtils::nothrow);
 
 	//If MPI is active, every node gets a slice of the DEM to work on
@@ -1195,14 +1194,12 @@ void SnowpackInterface::calcLateralFlow()
 									// Now check if deposition date is equal or newer (i.e., never put lateral water in an older layer, except when we cycled over all layers and we are at the top layer)
 									if (snow_pixel[index_SnowStation_dst]->Edata[nn].depositionDate >= snow_pixel[index_SnowStation_src]->Edata[n].depositionDate
 										|| nn == snow_pixel[index_SnowStation_dst]->getNumberOfElements()-1) {
-// NOTE: SNOWPACK/TRUNK DOESN'T HAVE SLOPEPARFLUX, SO ALPINE3D DOESN'T COMPILE
-// IN ORDER TO USE LATERAL FLOW, USE SNOWPACK/BRANCHES/DEV AND UNCOMMENT THE LINE BELOW
-//										// The flux into the pixel is a source term for the destination cell
-//										snow_pixel[index_SnowStation_dst]->Edata[nn].lwc_source += snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
-//										// The flux out of the pixel is a sink term for the source cell
-//										snow_pixel[index_SnowStation_src]->Edata[n].lwc_source -= snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
-//										// Set the SlopeParFlux to zero, now that we have redistributed it.
-//										snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux = 0.;
+										// The flux into the pixel is a source term for the destination cell
+										snow_pixel[index_SnowStation_dst]->Edata[nn].lwc_source += snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
+										// The flux out of the pixel is a sink term for the source cell
+										snow_pixel[index_SnowStation_src]->Edata[n].lwc_source -= snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
+										// Set the SlopeParFlux to zero, now that we have redistributed it.
+										snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux = 0.;
 										break;
 									}
 								}

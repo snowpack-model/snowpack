@@ -56,7 +56,9 @@ SET(meteoio_sources
 	${dataGenerators_sources}
 )
 
-set_source_files_properties(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
+IF(!MSVC)
+	set_source_files_properties(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
+ENDIF(!MSVC)
 
 IF(GUI_EXCEPTIONS)
 	IF(MSVC)

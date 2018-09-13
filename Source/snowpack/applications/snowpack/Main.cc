@@ -977,7 +977,7 @@ inline void real_main (int argc, char *argv[])
 	double first_backup = 0.;
 	cfg.getValue("FIRST_BACKUP", "Output", first_backup, mio::IOUtils::nothrow);
 
-	const bool snowPrep = cfg.get("SNOW_PREPARATION", "Snowpack", mio::IOUtils::nothrow);
+	const bool snowPrep = cfg.get("SNOW_PREPARATION", "SnowpackAdvanced");
 	const bool classify_profile = cfg.get("CLASSIFY_PROFILE", "Output", mio::IOUtils::nothrow);
 	const bool profwrite = cfg.get("PROF_WRITE", "Output");
 	const double profstart = cfg.get("PROF_START", "Output", (profwrite)? mio::IOUtils::dothrow : mio::IOUtils::nothrow);
@@ -1161,16 +1161,17 @@ inline void real_main (int argc, char *argv[])
 				Snowpack snowpack(tmpcfg); //the snowpack model to use
 				Stability stability(tmpcfg, classify_profile);
 				snowpack.runSnowpackModel(Mdata, vecXdata[slope.sector], cumsum.precip, sn_Bdata, surfFluxes);
-				if (snowPrep) {
+				
+				if (snowPrep) { //potentially do technical snow preparation
 					const unsigned short iso_week = current_date.getISOWeekNr();
-					if (iso_week>17 && iso_week<46) return;
-	
-					int hour, minute;
-					current_date.getTime(hour, minute);
-					if (hour==20 && minute==30){
-						snowpack.snowPreparation( vecXdata[slope.sector] );
+					if (iso_week<=17 || iso_week>=46) {	
+						int hour, minute;
+						current_date.getTime(hour, minute);
+						if (hour==20 && minute==30){
+							snowpack.snowPreparation( vecXdata[slope.sector] );
+						}
 					}
-				}					
+				}
 
 				stability.checkStability(Mdata, vecXdata[slope.sector]);
 

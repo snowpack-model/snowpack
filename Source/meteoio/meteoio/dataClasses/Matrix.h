@@ -66,12 +66,6 @@ class Matrix {
 		Matrix(const size_t& n, const double& init);
 
 		/**
-		* @brief Copy constructor
-		* @param init matrix to copy
-		*/
-		Matrix(const Matrix& init) : vecData(init.vecData), ncols(init.ncols), nrows(init.nrows) {}
-
-		/**
 		* @brief Convert the current matrix to a identity matrix of size n
 		* @param n dimension of the new square matrix
 		* @param init initial value to fill the matrix with

@@ -33,9 +33,9 @@ class SmetIO : public SnowpackIOInterface {
 	public:
 		SmetIO(const SnowpackConfig& i_cfg, const RunInfo& run_info);
 		SmetIO(const SmetIO&);
-		
+
 		~SmetIO();
-		
+
 		SmetIO& operator=(const SmetIO&); ///<Assignement operator, required because of pointer member
 
 		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
@@ -76,6 +76,7 @@ class SmetIO : public SnowpackIOInterface {
 
 		static bool keyExists(const smet::SMETReader& reader, const std::string& key);
 		static double get_doubleval(const smet::SMETReader& reader, const std::string& keyname);
+		static double get_doubleval_no_error(const smet::SMETReader& reader, const std::string& key);
 		static int get_intval(const smet::SMETReader& reader, const std::string& keyname);
 
 	private:

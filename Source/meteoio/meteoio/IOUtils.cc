@@ -19,12 +19,15 @@
 #include <cmath>
 #include <cstring>
 #include <ctype.h>
-#include <algorithm>
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 	#include <winsock.h>
 #else
 	#include <unistd.h>
 #endif
+#include <algorithm>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>

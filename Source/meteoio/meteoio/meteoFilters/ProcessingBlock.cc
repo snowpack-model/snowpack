@@ -102,6 +102,7 @@ namespace mio {
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
+ * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - TIME_CONSISTENCY: reject data that changes too much , see FilterTimeconsistency

@@ -37,6 +37,7 @@
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/DEMObject.h>
+#include <meteoio/dataClasses/DEMAlgorithms.h>
 #include <meteoio/dataClasses/Grid2DObject.h>
 #include <meteoio/dataClasses/Grid3DObject.h>
 #include <meteoio/dataClasses/Matrix.h>

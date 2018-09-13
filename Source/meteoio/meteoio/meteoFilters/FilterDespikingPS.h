@@ -35,14 +35,14 @@ namespace mio {
  *      Goring, D.G. and Nikora, V.I. (2002). "Despiking Acoustic Doppler Velocimeter Data" J. Hydraul. Eng., 128(1): 117-126
  *
  * Detection of the spikes works like this:
- *  -calculate first and second derivatives of the whole signal
- *  -the data points plotted in phase space are enclosed by an ellipsoid defined
+ *  - calculate first and second derivatives of the whole signal
+ *  - the data points plotted in phase space are enclosed by an ellipsoid defined
  *     by the standard deviations and the universal threshold (=sqrt(2*ln(number of data points)))
- *  -points outside this ellipsoid are designated as spikes
+ *  - points outside this ellipsoid are designated as spikes
  *
  * Replacement of the spikes:
- *  -find a quadratic or cubic fit for the data points around the spike
- *  -replace the spike with a fitted value
+ *  - find a quadratic or cubic fit for the data points around the spike
+ *  - replace the spike with a fitted value
  *
  * Parameters:
  * The sensitivity parameter was added to be able to control the sensitivity of the filter. The universal threshold is divided by
@@ -73,31 +73,32 @@ class FilterDespikingPS : public FilterBlock {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
-		std::vector<int> findSpikes(const std::vector<double>& ivec, unsigned int& nNewSpikes);
-		void replaceSpikes(std::vector<double>& uVec, std::vector<int>& spikesVec);
+		std::vector<int> findSpikes(const std::vector<double>& timeVec, const std::vector<double>& ivec, unsigned int& nNewSpikes);
+		void replaceSpikes(const std::vector<double>& timeVec, std::vector<double>& uVec, std::vector<int>& spikesVec);
 
-		std::vector<double> calculateDerivatives(const std::vector<double>& ivec);
+		std::vector<double> calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec);
 		double calculateCrossCorrelation(const std::vector<double>& aVec,const std::vector<double>& bVec);
 		unsigned int nNodataElements(const std::vector<double>& iVec);
 		void findPointsOutsideEllipse(const std::vector<double>& xVec,const std::vector<double>& yVec,
-									  const double a,const double b,const double theta, std::vector<int>& outsideVec);
-		void getWindowForInterpolation(const size_t index, const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-									   const unsigned int windowWidth, std::vector<double>& xVec, std::vector<double>& yVec);
-		bool checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const size_t index,const unsigned int minPoints,
-													   const bool avoidExtrapolation);
+                                      const double a,const double b,const double theta, std::vector<int>& outsideVec);
+		void getWindowForInterpolation(const size_t index,const std::vector<double>& timeVec, const std::vector<double>& uVec,
+                                       const std::vector<int>& spikesVec, const unsigned int& windowWidth, std::vector<double>& xVec,
+                                       std::vector<double>& yVec);
+		bool checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,const unsigned int minPoints,
+                                                       const bool avoidExtrapolation);
 		//helper functions:
 		void solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x);
-		const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<const MeteoData*> ivec,
-																			const unsigned int& param);
 		const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec, const unsigned int& param);
+		const std::vector<double> helperGetTimeVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec);
 		void helperWriteDebugFile1DerivativesAndFittedEllipses (const std::vector<double>& uVec, const std::vector<double>& duVec,
-										  const std::vector<double>& du2Vec,
-										  double a1,double b1,double a2,double b2,double a3,double b3,double theta);
+                                                                const std::vector<double>& du2Vec,
+                                                                double a1,double b1,double a2,double b2,double a3,double b3,double theta);
 		void helperWriteDebugFile2Interpolation(const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-												const std::vector<double>& x, const std::vector<double>& y, const Fit1D& quadraticFit,unsigned int iiSpike);
+                                                const std::vector<double>& x, const std::vector<double>& y,
+                                                const Fit1D& quadraticFit,unsigned int iiSpike);
 		void helperWriteDebugFile3WindowForInterpolation(size_t ii,std::vector<double>& x,std::vector<double>& y);
 		void helperWriteDebugFile4OriginalAndFinalSignal(std::vector<double>& ivec, std::vector<double>& ovec,
-														 std::vector<int>& allSpikesVec,double mean);
+                                                         std::vector<int>& allSpikesVec,double mean);
 
 		double sensitivityParam; //this parameter controls the sensitivity of the filter. standard value: 1
 		int nIterations;   //this counts the iterations

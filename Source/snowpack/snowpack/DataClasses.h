@@ -84,7 +84,7 @@ class CurrentMeteo {
 	public:
 		CurrentMeteo();
 		CurrentMeteo(const SnowpackConfig& i_cfg);
-		
+
 		void reset(const SnowpackConfig& i_cfg);
 		void setMeasTempParameters(const mio::MeteoData& md);
 		size_t getNumberMeasTemperatures() const;
@@ -226,9 +226,16 @@ class LayerData {
 class SN_SNOWSOIL_DATA {
 	public:
 		SN_SNOWSOIL_DATA() : meta(), profileDate(), nN(0), Height(0.),
-                     nLayers(0), Ldata(), HS_last(0.), Albedo(0.), SoilAlb(0.), BareSoil_z0(0.),
-                     Canopy_Height(0.), Canopy_LAI(0.), Canopy_BasalArea(0.004), Canopy_Direct_Throughfall(0.),
-                     WindScalingFactor(1.), ErosionLevel(0), TimeCountDeltaHS(0.) {}
+                     nLayers(0), Ldata(), HS_last(0.), Albedo(mio::IOUtils::nodata),
+								     SoilAlb(mio::IOUtils::nodata), BareSoil_z0(mio::IOUtils::nodata),
+                     Canopy_Height(mio::IOUtils::nodata), Canopy_LAI(mio::IOUtils::nodata),
+										 Canopy_Direct_Throughfall(mio::IOUtils::nodata),  WindScalingFactor(1.),
+										 ErosionLevel(static_cast<int>(mio::IOUtils::nodata)), TimeCountDeltaHS(mio::IOUtils::nodata),
+										 Canopy_BasalArea(mio::IOUtils::nodata), Canopy_diameter(mio::IOUtils::nodata),
+										 Canopy_lai_frac_top_default(mio::IOUtils::nodata),Canopy_int_cap_snow(mio::IOUtils::nodata),
+										 Canopy_alb_dry(mio::IOUtils::nodata),Canopy_alb_wet(mio::IOUtils::nodata),
+										 Canopy_alb_snow(mio::IOUtils::nodata)
+                    {}
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const SN_SNOWSOIL_DATA& data);
@@ -241,16 +248,25 @@ class SN_SNOWSOIL_DATA {
 		size_t nLayers;                   ///< Total number of soil and snow layers at loading
 		std::vector<LayerData> Ldata;     ///< contains all the information required to construct the Xdata
 		double HS_last;                   ///< Last checked calculated snow depth used for albedo control
+		/// REQUIRED PARAMETERS, an error will be thrown at reading (SnowpackIO) if no parameter are provided
 		double Albedo;                    ///< Snow albedo
 		double SoilAlb;                   ///< Soil albedo, default 0.2
 		double BareSoil_z0;               ///< Bare soil roughness in m, default 0.02 m
 		double Canopy_Height;             ///< Canopy Height in m
 		double Canopy_LAI;                ///< Canopy Leaf Area Index in m2 m-2
-		double Canopy_BasalArea;          ///< Canopy Basal Area in m2 m-2
 		double Canopy_Direct_Throughfall; ///< Direct throughfall [fraction of precipitation]
 		double WindScalingFactor;         ///< Local scaling factor for wind at drift station
 		int    ErosionLevel;              ///< Erosion Level in operational mode (flat field virtual erosion)
 		double TimeCountDeltaHS;          ///< Time counter tracking erroneous settlement in operational mode
+		/// OPTIONNAL PARAMETERS, a warning will be thrown in CANOPY::Initialze if no value is provided
+		double Canopy_BasalArea;          ///< Canopy Basal Area in m2 m-2
+		double Canopy_diameter;						///< Average canopy (tree) diameter [m], parameter in the new radiation transfer model
+		double Canopy_lai_frac_top_default;	///< fraction of total LAI that is attributed to the uppermost layer. Here calibrated for Alptal.
+		double Canopy_int_cap_snow;				///< Specific interception capacity for rain (I_LAI) (mm/LAI)
+		double Canopy_alb_dry;  // Albedo of dry canopy (calibr: 0.09, Alptal)
+		double Canopy_alb_wet;  // Albedo of wet canopy (calibr: 0.09, Alptal)
+		double Canopy_alb_snow;  // Albedo of snow covered albedo (calibr: 0.35, Alptal)
+
 };
 
 /**
@@ -267,7 +283,7 @@ class ElementData {
 			    Pow, ///< another power law
 		            Exp ///< exponential law
 		} Young_Modulus;
-		
+
 		ElementData(const unsigned short int& in_ID);
 		ElementData(const ElementData& cc); //required to get the correct back-reference in vanGenuchten object
 
@@ -291,7 +307,7 @@ class ElementData {
 		void snowType();
 		unsigned short int getSnowType() const;
 		static unsigned short int snowType(const double& dendricity, const double& sphericity, const double& grain_dia, const unsigned short int& marker,
-                        const double& theta_w, const double& res_wat_cont);
+                        const double& theta_w, const double& res_wat_cont_loc);
 		static double getYoungModule(const double& rho_slab, const Young_Modulus& model);
 
 		const std::string toString() const;
@@ -350,7 +366,7 @@ class ElementData {
 		double Qph_down;           ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the lower node of the element
 		//NIED (H. Hirashima)
 		double dsm;                ///< Dry snow metamorphism factor
-		
+
 		unsigned short int ID;    ///< Element ID used to track elements
 		static const unsigned short int noID;
 };
@@ -397,17 +413,22 @@ class NodeData {
  */
 class CanopyData {
 	public:
-		CanopyData() : storage(0.), temp(0.), sigf(0.), ec(0.), lai(0.), z0m(0.), z0h(0.), zdispl(0.),
-		     height(0.), direct_throughfall(0.), ra(0.), rc(0.), rs(0.), rstransp(0.), canopyalb(0.),
-		     totalalb(0.), wetfraction(0.), intcapacity(0.), rswrac(0.), iswrac(0.), rswrbc(0.),
-		     iswrbc(0.), ilwrac(0.), rlwrac(0.), ilwrbc(0.), rlwrbc(0.), rsnet(0.), rlnet(0.),
-		     sensible(0.), latent(0.), latentcorr(0.), transp(0.), intevap(0.),
-		     interception(0.), throughfall(0.), snowunload(0.),
-		     snowfac(0.), rainfac(0.),liquidfraction(0.),
-		     sigftrunk(0), Ttrunk(0.), CondFluxCanop(0.), CondFluxTrunks(0.),
-		     LWnet_Trunks(0.), SWnet_Trunks(0.), QStrunks(0.),
-		     forestfloor_alb(0.), BasalArea(0), HMLeaves(0.), HMTrunks(0.) {}
+		CanopyData() : int_cap_snow(0.), int_cap_rain(0.),  interception_timecoef(0.), can_alb_dry(0.),
+		can_alb_wet(0.), can_alb_snow(0.), krnt_lai(0.), can_diameter(0.), biomass_heat_capacity(0.),
+		biomass_density(0.), lai_frac_top_default(0.), trunk_frac_height(0.), trunkalb(0.), et(0.),
+		canopy_stabilitycorrection(true), roughmom_to_canopyheight_ratio(0.), displ_to_canopyheight_ratio(0.),
+		raincrease_snow(0.), canopytemp_maxchange_perhour(0.), roughheat_to_roughmom_ratio(0.),
+		can_ch0(0.), can_rs_mult(0.), rsmin(0.), f3_gd(0.), rootdepth(0.), wp_fraction(0.),
+		h_wilt(0.), storage(0.), temp(0.), sigf(0.), ec(0.), lai(0.), z0m(0.), z0h(0.), zdispl(0.),
+		height(0.), direct_throughfall(0.), ra(0.), rc(0.), rs(0.), rstransp(0.), canopyalb(0.),
+		totalalb(0.), wetfraction(0.), intcapacity(0.), rswrac(0.), iswrac(0.), rswrbc(0.), iswrbc(0.),
+		ilwrac(0.), rlwrac(0.), ilwrbc(0.), rlwrbc(0.), rsnet(0.), rlnet(0.), sensible(0.), latent(0.),
+		latentcorr(0.), transp(0.), intevap(0.), interception(0.), throughfall(0.), snowunload(0.),
+		snowfac(0.), rainfac(0.), liquidfraction(0.), sigftrunk(0.), Ttrunk(0.), CondFluxCanop(0.),
+		CondFluxTrunks(0.), LWnet_Trunks(0.), SWnet_Trunks(0.), QStrunks(0.), forestfloor_alb(0.),
+		BasalArea(0.), HMLeaves(0.), HMTrunks(0.) {}
 
+		void initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopyModel);
 		void reset(const bool& cumsum_mass);
 		void initializeSurfaceExchangeData();
 		void multiplyFluxes(const double& factor);
@@ -415,6 +436,79 @@ class CanopyData {
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const CanopyData& data);
 		friend std::istream& operator>>(std::istream& is, CanopyData& data);
+
+		/**
+		* CANOPY PARAMETERS DEFAULT VALUES
+		* These values can be changed in the .sno file
+		* brief History of changed values:
+		* - 2007-12-20: update based on data from all SnowMIP2 sites, and calibration using Alptal data
+		* brief Specific interception capacity for snow (i_LAI) (mm/LAI) \n
+		* Please note that this parameter is further multiplied with (0.27+46/new_snow_density[Ta]) following (Pomeroy et al, Hydr. Proc. 1998)
+		* - 5.9 Spruce and 6.6 Pine (Schmidt&Glums,CanJForRes,1991)
+		*/
+	 	double int_cap_snow; //iMax in Gouttevin,2015
+		/// Specific interception capacity for rain (I_LAI) (mm/LAI)
+		double int_cap_rain;
+		/** Coef in interception function, see (Pomeroy et al,1998) where a value of 0.7 was
+		 * found to be appropriate for hourly time-step, but smaller time steps require smaller
+		 * values, 0.5 was found reasoanble by using the SnowMIP2 data (2007-12-09)
+	  	*/
+		double interception_timecoef;
+
+		/// RADIATION BALANCE
+		double can_alb_dry;  	// Albedo of dry canopy (calibr: 0.09, Alptal)
+		double can_alb_wet; 	// Albedo of wet canopy (calibr: 0.09, Alptal)
+		double can_alb_snow; 	// Albedo of snow covered albedo (calibr: 0.35, Alptal)
+		double krnt_lai;      	// Radiation transmissivity parameter, in the range 0.4-0.8 if the true LAI is used; higher if optical LAI is used.
+		                        // (calibrated on Alptal)
+		double can_diameter;	// average canopy (tree) diameter [m], parameter in the new radiation transfer model
+		///  ENERGY BALANCE
+		/// parameters for HeatMass and 2layercanopy
+		double biomass_heat_capacity;	// from Linroth et al., 2013 (J Kg-1 K-1)
+		double biomass_density;		// from Linroth et al., 2013 (Kg m-3)
+		double lai_frac_top_default;	// fraction of total LAI that is attributed to the uppermost layer. Here calibrated for Alptal.
+		double trunk_frac_height;	// (optional) fraction of total tree height occupied by trunks,
+						// used to calculate direct solar insolation of trunks.
+		double trunkalb;		// trunk albedo
+		double et;			// trunk emissivity
+		///  TURBULENT HEAT EXCHANGE
+		/// Stab. corr. aerodyn. resist. above and below canopy: 0=off and 1=on (Monin-Obukhov formulation)
+		bool canopy_stabilitycorrection;
+		/// Ratio between canopy height and roughness length
+		double roughmom_to_canopyheight_ratio;
+		/// As above for displacement height
+		double displ_to_canopyheight_ratio;
+		/**
+		 * Fractional increase of aerodynamic resistance for evaporation of intercepted snow.
+		 * - 10.0 from Koivusalo and Kokkonen (2002)
+		 * - 8.0 calibration with Alptal data
+		 */
+		double raincrease_snow;
+
+		/// @brief Maximum allowed canopy temperature change (K hr-1)
+		double canopytemp_maxchange_perhour;
+		/// @brief (~=1, but Not allowed to be exactly 1)
+		double roughheat_to_roughmom_ratio;
+		/// @brief minimum heat exchange (Wm-2K-1) at zero wind
+		double can_ch0;
+		/// @brief 1+CAN_RS_MULT = maximum factor to increase Cdata->rs below canopy
+		double can_rs_mult;
+		/// @brief TRANSPIRATION
+		/// @brief Minimum canopy surface resistance, 500 (sm-1) is for needle leaf treas van den Hurk et al (2000) *75% Gustafsson et al (2003)
+		double rsmin;
+		/**
+		 * @brief gd (Pa-1) parameter for canopy surface resistance response to vapour pressure:
+		 * - 0.0003 = trees (needle or broadleafs)
+		 * - 0=crops, grass, tundra etc
+		 */
+		double f3_gd;
+		/// @brief Root depth, determining the soil layers influenced by root water uptake
+		double rootdepth;
+		/// @brief Wilting point, defined as a fraction of water content at field capacity (-)
+		double wp_fraction;
+		/// @brief Wilting point pressure head, when using Richards equation for soil.
+		double h_wilt;
+		//@}
 
 		// State variable
 		double storage;     ///< intercepted water (mm or kg m-2)
@@ -460,22 +554,21 @@ class CanopyData {
 		double interception;
 		double throughfall;
 		double snowunload;
-		
-		double snowfac;     ///< snowfall above canopy
-		double rainfac;     ///< rainfall above canopy
-		double liquidfraction;
-		double sigftrunk;   ///< radiation interception cross section for trunk layer ()
-		double Ttrunk;      ///< trunk temperature (K)
-		double CondFluxCanop; ///< biomass heat storage flux towards Canopy (if 1L) towards Leaves (if 2L). (>0 towards canopy)
-		double CondFluxTrunks; ///< biomass heat storage flux towards Trunks (if 2L)
-		double LWnet_Trunks; ///< net LW to trunks (>0 towards trunks)
-		double SWnet_Trunks; ///< net SW to trunks (>0 towards trunks)
-		double QStrunks;      ///< sensible heat flux from trunks (>0 if heat lost from trunk)
-		double forestfloor_alb; ///< albedo of the forest floor
-		double BasalArea;    ///< basal area of trees on the stand
-		double HMLeaves;     ///< Leaves heat mass (J K-1 /m2 ground surface)
-		double HMTrunks;     ///< Trunks heat mass (J K-1 /m2 ground surface)
 
+		double snowfac;     	///< snowfall above canopy
+		double rainfac;     	///< rainfall above canopy
+		double liquidfraction;
+		double sigftrunk;   	///< radiation interception cross section for trunk layer ()
+		double Ttrunk;      	///< trunk temperature (K)
+		double CondFluxCanop; 	///< biomass heat storage flux towards Canopy (if 1L) towards Leaves (if 2L). (>0 towards canopy)
+		double CondFluxTrunks; 	///< biomass heat storage flux towards Trunks (if 2L)
+		double LWnet_Trunks; 	///< net LW to trunks (>0 towards trunks)
+		double SWnet_Trunks; 	///< net SW to trunks (>0 towards trunks)
+		double QStrunks;      	///< sensible heat flux from trunks (>0 if heat lost from trunk)
+		double forestfloor_alb; ///< albedo of the forest floor
+		double BasalArea;    	///< basal area of trees on the stand
+		double HMLeaves;     	///< Leaves heat mass (J K-1 /m2 ground surface)
+		double HMTrunks;     	///< Trunks heat mass (J K-1 /m2 ground surface)
 };
 
 /**
@@ -593,6 +686,7 @@ class BoundCond {
 	public:
 		BoundCond() : lw_out(0.), lw_net(0.), qs(0.), ql(0.), qr(0.), qg(Constants::undefined) {}
 		const std::string toString() const;
+		void reset();
 
 		double lw_out;  ///< outgoing longwave radiation
 		double lw_net;  ///< net longwave radiation
