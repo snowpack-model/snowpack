@@ -5,9 +5,16 @@
 # set Memory check command
 set(CTEST_MEMORYCHECK_COMMAND valgrind)
 
-#get all include flags needed to make executables
-SET(SHAREDNAME ${PROJECT_NAME})
-SET(LIBRARIES ${SHAREDNAME} ${CMAKE_DL_LIBS})
+#get the proper MeteoIO library
+IF(BUILD_SHARED_LIBS)
+	SET(METEOIO_LIBRARIES ${PROJECT_NAME})
+ELSE(BUILD_SHARED_LIBS)
+	IF(BUILD_STATIC_LIBS)
+		SET(METEOIO_LIBRARIES "${PROJECT_NAME}_STATIC")
+	ELSE(BUILD_STATIC_LIBS)
+		MESSAGE(SEND_ERROR "Not building MeteoIO, the test won't be able to build")
+	ENDIF(BUILD_STATIC_LIBS)
+ENDIF(BUILD_SHARED_LIBS)
 
 # go back to the source dir to have all .h files as would be installed
 INCLUDE_DIRECTORIES(..)

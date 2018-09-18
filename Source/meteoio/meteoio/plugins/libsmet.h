@@ -108,7 +108,7 @@ class SMETWriter {
 		 * @param[in] in_nodata Value representing nodata
 		 */
 		SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata);
-
+		
 		/**
 		 * @brief Set a key, value pair in the SMET header (both strings)
 		 * @param[in] key A string key to set in the header (overwritten if already present)
@@ -159,6 +159,7 @@ class SMETWriter {
 		const std::string toString() const;
 		
 	private:
+		void setAppendMode(std::vector<std::string> vecFields);
 		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
 		void write_header(std::ofstream& fout); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);

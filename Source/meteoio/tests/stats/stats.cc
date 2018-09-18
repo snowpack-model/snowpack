@@ -195,7 +195,7 @@ bool check_basics(const vector<double>& X, const vector<double>& Y) {
 	const vector<double> weights(X.size(), 1./static_cast<double>(X.size()));
 	const double vector_mean = Interpol1D::weightedMean(X, weights);
 	const double mean = Interpol1D::arithmeticMean(X);
-	const double vector_mean_status = IOUtils::checkEpsilonEquality(vector_mean, mean, 1e-6);
+	const bool vector_mean_status = IOUtils::checkEpsilonEquality(vector_mean, mean, 1e-6);
 	if(vector_mean_status)
 		std::cout << "Vector weighted mean: success\n";
 	else

@@ -106,12 +106,12 @@ using namespace std;
 namespace mio {
  /**
  * @page data_sources Data input overview
- * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they 
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they
  * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
  *
  * Please have a look at the support for \subpage coords "coordinate systems".
- * 
+ *
  * @section available_categories Data sources categories
  * Several data sources categories have been defined that can be provided by a different plugin. Each data source category is defined by a specific key in the configuration file (usually, io.ini):
  * - METEO, for meteorological time series
@@ -167,8 +167,8 @@ namespace mio {
  *     -# \ref data_merging "merge stations together;"
  *     -# \ref data_copy "make a copy of a certain parameter under a new parameter name for all stations;"
  *     -# \ref data_creation "create certain parameters based on some parametrizations."
- * 
- * @note Please note that the processing order is the following: the MOVE directives are processed first, then the EXCLUDE directives, 
+ *
+ * @note Please note that the processing order is the following: the MOVE directives are processed first, then the EXCLUDE directives,
  * then the KEEP directives, then the MERGE directives and finally the COPY directives. The CREATE directives only come after all the raw data
  * has been edited.
  *
@@ -180,13 +180,13 @@ namespace mio {
  * TA::MOVE = air_temp air_temperature temperature_air
  * @endcode
  * This can be used to rename non-standard parameter names into standard ones.
- * 
+ *
  * @subsection data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
- * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard) 
+ * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard)
  * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
  * Another possibility is to provide a file containing one station ID per line followed by a space delimited list of \ref meteoparam "meteorological parameters"
  * to exclude for the station (the path to the file can be a relative path and will be properly resolved).
- * 
+ *
  * The exact opposite can also be done, excluding ALL parameters except the ones declared with the "::keep" statement (or a file containing one station ID
  * per line followed by a space delimited list of \ref meteoparam "meteorological parameters" to keep for the station).
  *
@@ -203,7 +203,7 @@ namespace mio {
  * WFJ2 TA RH
  * KLO3 HS PSUM
  * @endcode
- * 
+ *
  * Another example relying on wildcards (the kept/excluded parameters lists are additive):
  * @code
  * *::KEEP = TA RH                               ;all stations will keep TA and RH and reject the other parameters
@@ -212,39 +212,39 @@ namespace mio {
  *
  * @subsection data_merging 3. Data merging (MERGE)
  * @subsubsection stations_merging 3.1 Merging different stations (MERGE)
- * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any 
- * EXCLUDE/KEEP commands. This is useful, for example, to provide measurements from different stations that actually share the 
- * same measurement location or to build "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP 
- * commands to fine tune how the composite station(s) is/are built). 
+ * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any
+ * EXCLUDE/KEEP commands. This is useful, for example, to provide measurements from different stations that actually share the
+ * same measurement location or to build "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP
+ * commands to fine tune how the composite station(s) is/are built).
  * Please note that the order of declaration defines the priority (ie the first station that has a value for a given parameter has priority). Please also
  * note that only common timestamps will be merged! (ie if the stations have different sampling rates, it might end up that no merge gets performed)
- * 
+ *
  * @code
  * STATION1 = STB
  * STATION2 = WFJ2
  * STATION3 = WFJ1
  * STATION4 = DAV1
  * [...]
- * 
+ *
  * STB::EXCLUDE = ILWR PSUM
  * WFJ2::KEEP = PSUM ILWR RSWR
- * 
+ *
  * STB::MERGE = WFJ2 WFJ1
  * DAV1::MERGE = WFJ2
  * @endcode
- * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a 
+ * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a
  * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY key in
  * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
- * 
- * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra 
- * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size 
+ *
+ * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
+ * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size
  * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
- * 
+ *
  * @subsubsection automerge 3.2 Automerge
  * If the key \em AUTOMERGE is set to true in the Input section, all stations that have identical IDs will be merged together. The first station
  * to come (usually, the first that was defined in the plugin) has the priority over the next ones.
- * 
+ *
  * @subsection data_copy 4. Data copy (COPY)
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
  * new_name::COPY = existing_parameter. For example:
@@ -269,7 +269,7 @@ namespace mio {
  * @section spatial_resampling_section Spatial resampling
  * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
  * This is handled as "spatial resampling" and is described in the \subpage spatial_resampling "spatial resampling" page.
- * 
+ *
  */
 
 IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
@@ -361,17 +361,17 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), dataCreator(aio.cfg), timeproc(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params),
              merge_commands(aio.merge_commands), copy_commands(aio.copy_commands), move_commands(aio.move_commands),
-             merged_stations(aio.merged_stations), merge_strategy(aio.merge_strategy), 
+             merged_stations(aio.merged_stations), merge_strategy(aio.merge_strategy),
              copy_ready(aio.copy_ready), move_ready(aio.move_ready), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready), merge_ready(aio.merge_ready), automerge(aio.automerge)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), dataCreator(cfgreader), timeproc(cfgreader), mapPlugins(), excluded_params(), kept_params(),
-             merge_commands(), copy_commands(), move_commands(), 
-             merged_stations(), merge_strategy(MeteoData::STRICT_MERGE), 
+             merge_commands(), copy_commands(), move_commands(),
+             merged_stations(), merge_strategy(MeteoData::STRICT_MERGE),
              copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false)
 {
-	automerge = cfg.get("AUTOMERGE", "Input", IOUtils::nothrow);
+	cfg.getValue("AUTOMERGE", "Input",automerge, IOUtils::nothrow);
 	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", IOUtils::nothrow);
 	if (!merge_strategy_str.empty())
 		merge_strategy = MeteoData::getMergeType(merge_strategy_str);
@@ -454,10 +454,10 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);
-	
+
 	if (automerge) automerge_stations(vecStation);
-	
-	if (!merge_ready) create_merge_map(); 
+
+	if (!merge_ready) create_merge_map();
 	merge_stations(vecStation);
 }
 
@@ -466,24 +466,24 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
-	
+
 	if (automerge) automerge_stations(vecMeteo);
-	
+
 	if (!move_ready) create_move_map();
 	move_params(vecMeteo);
-	
+
 	if (!excludes_ready) create_exclude_map();
 	exclude_params(vecMeteo);
-	
+
 	if (!keeps_ready) create_keep_map();
 	keep_params(vecMeteo);
-	
-	if (!merge_ready) create_merge_map(); 
+
+	if (!merge_ready) create_merge_map();
 	merge_stations(vecMeteo);
-	
+
 	if (!copy_ready) create_copy_map();
 	copy_params(vecMeteo);
-	
+
 	timeproc.process(vecMeteo, false);
 	TimeProcStack::checkUniqueTimestamps(vecMeteo);
 
@@ -535,7 +535,7 @@ void IOHandler::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Para
 void IOHandler::create_merge_map()
 {
 	merge_ready = true;
-	
+
 	const std::vector<std::string> merge_keys( cfg.getKeys("::MERGE", "Input", true) );
 	const size_t nrOfStations = merge_keys.size();
 	for (size_t ii=0; ii<nrOfStations; ++ii) {
@@ -546,7 +546,7 @@ void IOHandler::create_merge_map()
 		std::vector<std::string> vecString;
 		cfg.getValue(merge_keys[ii], "Input", vecString);
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+merge_keys[ii]+"\"", AT);
-		
+
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
 			IOUtils::toUpper( *it );
 			const std::vector<std::string>::const_iterator vec_it = find (merged_stations.begin(), merged_stations.end(), *it);
@@ -554,10 +554,10 @@ void IOHandler::create_merge_map()
 		}
 		merge_commands[ station ] = vecString;
 	}
-	
+
 	//sort the merged_stations vector so searches will be faster
 	std::sort(merged_stations.begin(), merged_stations.end());
-	
+
 	//make sure there is no "chain merge": station A merging station B and station C merging station A
 	std::map< std::string, std::vector<std::string> >::iterator it_dest;
 	for(it_dest=merge_commands.begin(); it_dest!=merge_commands.end(); ++it_dest) {
@@ -571,19 +571,19 @@ void IOHandler::create_merge_map()
 void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 {
 	if (merge_commands.empty()) return;
-	
+
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		const std::string toStationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
-		
+
 		const std::map< string, vector<string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
 		const std::vector<std::string> merge_from( it->second );
 		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
 			const std::string fromStationID( *it_set );
-			
+
 			bool found = false;
 			for (size_t jj=0; jj<vecStation.size(); jj++) {
 				const std::string curr_station( IOUtils::strToUpper(vecStation[jj].stationID) );
@@ -596,7 +596,7 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'. Consider increasing BUFFER_SIZE!", AT);
 		}
 	}
-	
+
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		const std::string stationID( IOUtils::strToUpper( vecStation[ii].stationID ) );
@@ -613,20 +613,20 @@ void IOHandler::merge_stations(STATIONS_SET& vecStation) const
 void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 {
 	if (merge_commands.empty()) return;
-	
+
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
 		const std::string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
 		//we do not support "chain merge": station A merging station B and station C merging station A
 		if ( std::find(merged_stations.begin(), merged_stations.end(), toStationID)!=merged_stations.end() ) continue;
-		
+
 		const std::map< std::string, std::vector<std::string> >::const_iterator it = merge_commands.find( toStationID );
 		if (it == merge_commands.end()) continue; //no merge commands for this station
 
 		const std::vector<std::string> merge_from( it->second );
 		for (std::vector<std::string>::const_iterator it_set=merge_from.begin(); it_set != merge_from.end(); ++it_set) {
 			const std::string fromStationID( *it_set );
-			
+
 			bool found = false;
 			for (size_t jj=0; jj<vecVecMeteo.size(); jj++) { //loop over the available stations in the current dataset
 				if (vecVecMeteo[jj].empty()) continue;
@@ -640,7 +640,7 @@ void IOHandler::merge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 				throw InvalidArgumentException("Station ID '"+fromStationID+"' not found when merging toward station '"+toStationID+"'. Consider increasing BUFFER_SIZE!", AT);
 		}
 	}
-	
+
 	//remove the stations that have been merged into other ones
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) {
 		if (vecVecMeteo[ii].empty())  continue;
@@ -751,17 +751,17 @@ void IOHandler::create_exclude_map()
 		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
 		excluded_params[ station ] = tmpset;
 	}
-	
+
 	//Handle "*" wildcard: add the params to all other declared stations
 	std::map< std::string, std::set<std::string> >::const_iterator it_station = excluded_params.find("*");
 	if (it_station!=excluded_params.end()) {
 		const std::set<std::string> wildcard( excluded_params["*"] );
 		for (it_station=excluded_params.begin(); it_station!=excluded_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
-			
+
 			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
-			
+
 			excluded_params[ it_station->first ] = params;
 		}
 	}
@@ -827,17 +827,17 @@ void IOHandler::create_keep_map()
 		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
 		kept_params[ station ] = tmpset;
 	}
-	
+
 	//Handle "*" wildcard: add the params to all other declared stations
 	std::map< std::string, std::set<std::string> >::const_iterator it_station = kept_params.find("*");
 	if (it_station!=kept_params.end()) {
 		const std::set<std::string> wildcard( kept_params["*"] );
 		for (it_station=kept_params.begin(); it_station!=kept_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
-			
+
 			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
-			
+
 			kept_params[ it_station->first ] = params;
 		}
 	}
@@ -880,7 +880,7 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
-		
+
 		const std::string stationID( IOUtils::strToUpper(vecVecMeteo[station][0].meta.stationID) );
 		std::map< std::string, std::set<std::string> >::const_iterator it = kept_params.find(stationID);
 		if (it == kept_params.end()) {
@@ -889,18 +889,18 @@ void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
 		}
 
 		const std::set<std::string> kept( it->second );
-		
+
 		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
 			MeteoData& md_ref( vecVecMeteo[station][ii] );
 			MeteoData md( md_ref );
 			md.reset(); //delete all meteo fields
-			
+
 			for (std::set<std::string>::const_iterator it_set=kept.begin(); it_set != kept.end(); ++it_set) { //loop over the parameters to keep
 				const std::string param( *it_set);
 				if (!md.param_exists(param)) continue;
 				 md(param) = md_ref(param);
 			}
-			
+
 			//copy back the new object into vecVecMeteo
 			md_ref = md;
 		}
@@ -920,16 +920,16 @@ void IOHandler::create_move_map()
 		const std::string dest_param( move_keys[ii].substr( 0, move_keys[ii].find_first_of(":") ) );
 		std::vector<std::string> vecString;
 		cfg.getValue(move_keys[ii], "Input", vecString); //multiple source can be provided
-		
+
 		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+move_keys[ii]+"\"", AT);
 		for (vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
 			IOUtils::toUpper( *it );
 		}
-		
+
 		const std::set<std::string> tmpset(vecString.begin(), vecString.end());
 		move_commands[ dest_param ] = tmpset;
 	}
-	
+
 	move_ready = true;
 }
 
@@ -948,12 +948,12 @@ void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 
 	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
 		if (vecMeteo[station].empty()) continue;
-		
+
 		std::map< std::string, std::set<std::string> >::const_iterator param = move_commands.begin();
 		for (; param!=move_commands.end(); ++param) { //loop over all the MOVE commands
 			const std::string dest_param( param->first );
 			const std::set<std::string> src( param->second );
-			
+
 			for (std::set<std::string>::const_iterator it_set=src.begin(); it_set != src.end(); ++it_set) { //loop over the parameters to move
 				const std::string src_param( *it_set );
 				const size_t src_index = vecMeteo[station].front().getParameterIndex( src_param );
@@ -962,7 +962,7 @@ void IOHandler::move_params(std::vector< METEO_SET >& vecMeteo) const
 				for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) {
 					const size_t dest_index = vecMeteo[station][jj].addParameter( dest_param ); //either add or just return the proper index
 					vecMeteo[station][jj]( dest_index ) = vecMeteo[station][jj]( src_index );
-					vecMeteo[station][jj]( src_index ) = IOUtils::nodata; 
+					vecMeteo[station][jj]( src_index ) = IOUtils::nodata;
 				}
 			}
 		}
@@ -985,7 +985,7 @@ void IOHandler::create_copy_map()
 		if (!dest_param.empty() && !src_param.empty())
 			copy_commands[ dest_param ] = src_param;
 	}
-	
+
 	copy_ready = true;
 }
 
@@ -1004,7 +1004,7 @@ void IOHandler::copy_params(std::vector< METEO_SET >& vecMeteo) const
 
 	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
 		if (vecMeteo[station].empty()) continue;
-		
+
 		std::map< std::string, std::string >::const_iterator param = copy_commands.begin();
 		for (; param!=copy_commands.end(); ++param) {
 			const size_t src_index = vecMeteo[station].front().getParameterIndex(param->second);
@@ -1012,7 +1012,7 @@ void IOHandler::copy_params(std::vector< METEO_SET >& vecMeteo) const
 				const std::string stationID( vecMeteo[station].front().meta.stationID );
 				throw InvalidArgumentException("Station "+stationID+" has no parameter '"+param->second+"' to copy", AT);
 			}
-			
+
 			const std::string dest( param->first );
 			for (size_t jj=0; jj<vecMeteo[station].size(); ++jj) { //for each MeteoData object of one station
 				const size_t dest_index = vecMeteo[station][jj].addParameter( dest );
@@ -1047,7 +1047,7 @@ const std::string IOHandler::toString() const
 		}
 		os << "</excluded_params>\n";
 	}
-	
+
 	if (!merge_commands.empty()) {
 		os << "<merge_commands>\n";
 		std::map< std::string, std::vector<std::string> >::const_iterator it_merge;

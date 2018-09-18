@@ -55,6 +55,7 @@ class ProcessingStack {
 		const std::string param_name;
 		static const std::string arg_key;
 		static const char NUM[];
+		bool data_qa_logs;
 };
 
 } //end namespace

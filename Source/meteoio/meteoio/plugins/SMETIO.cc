@@ -49,6 +49,8 @@ namespace mio {
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively;
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
+ * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
+ * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section  
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
  *
  * Example:
@@ -86,7 +88,8 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputPlotHeaders(true)
+          plugin_nodata(IOUtils::nodata), nr_stations(0), 
+          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true)
 {
 	parseInputOutputSection();
 }
@@ -95,7 +98,8 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputPlotHeaders(true)
+          plugin_nodata(IOUtils::nodata), nr_stations(0), 
+          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true)
 {
 	parseInputOutputSection();
 }
@@ -144,6 +148,8 @@ void SMETIO::parseInputOutputSection()
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
 	cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
+	cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
+	cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 
 	if (outpath.empty()) return;
 
@@ -419,18 +425,30 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		//2. check which meteo parameter fields are actually in use
 		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
-		std::vector<bool> vecParamInUse = vector<bool>(nr_of_parameters, false);
-		std::vector<std::string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
+		std::vector<bool> vecParamInUse(nr_of_parameters, false);
+		std::vector<std::string> vecColumnName(nr_of_parameters, "NULL");
 		double timezone = IOUtils::nodata; //time zone of the data
 		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
 		if (out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
-
-			smet::SMETWriter mywriter(filename, type);
-			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
-                               nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
+			smet::SMETWriter *mywriter = NULL;
+			const bool fileExists = FileUtils::fileExists(filename);
+			if (fileExists && allowAppend) {
+				std::string fields = (outputIsAscii)? "timestamp" : "julian"; //we force the first field to have the time
+				for (size_t jj=0; jj<vecParamInUse.size(); jj++) {
+					if (vecParamInUse[jj]) fields = fields + " " + vecColumnName[jj];
+				}
+				mywriter = new smet::SMETWriter(filename, fields, IOUtils::nodata); //set to append mode
+			} else {
+				if (fileExists && !allowOverwrite)
+					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
+				
+				mywriter = new smet::SMETWriter(filename, type);
+				generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
+                               nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
+			}
 
 			std::vector<std::string> vec_timestamp;
 			std::vector<double> vec_data;
@@ -467,9 +485,10 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 			}
 
-			if (outputIsAscii) mywriter.write(vec_timestamp, vec_data);
-			else mywriter.write(vec_data);
+			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data);
+			else mywriter->write(vec_data);
 
+			delete mywriter;
 		} catch(exception&) {
 			throw;
 		}

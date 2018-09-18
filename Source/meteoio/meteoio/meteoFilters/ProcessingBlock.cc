@@ -54,7 +54,12 @@
 namespace mio {
 /**
  * @page processing Processing overview
- * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage.
+ * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage. Moreover, there is a special mode of operation where MeteoIO writes on the screen a line for each data point that gets modified 
+ * (either filtered, resampled or generated). This is enabled by setting the DATA_QA_LOGS key to *true* in the [General] section. The outputs then look like the following:
+ * @code
+ * [DATA_QA] Filtering WFJ2::ILWR::MIN_MAX 2016-01-18T09:00:00+01:00 [2016-W03-01]
+ * [DATA_QA] Resampling WFJ1::VW_MAX::LINEAR 2015-10-12T13:00:00+01:00 [2015-W42-01]
+ * @endcode
  *
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.

@@ -60,7 +60,8 @@ class DEMObject : public Grid2DObject {
 			NO_UPDATE=0, ///< no updates at all
 			SLOPE=1, ///< update the slopes
 			NORMAL=2, ///< update the normals
-			CURVATURE=4 ///< update the curvatures
+			CURVATURE=4, ///< update the curvatures
+			UPDATE_UNSET ///< property not set
 		} update_type;
 
 		///Keywords for selecting the toString formats

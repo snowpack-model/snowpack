@@ -446,12 +446,12 @@ double Canopy::IntCapacity(const CurrentMeteo& Mdata, const SnowStation& Xdata, 
 	const double rho_new_snow = SnLaws::compNewSnowDensity(hn_density, hn_density_parameterization,
 	                                                   hn_density_fixedValue, Mdata, Xdata, Xdata.Cdata.temp, variant);
 
-	 if (!force_rain && rho_new_snow!=Constants::undefined && Mdata.psum_ph<1.) { //right conditions for snow
-		 const double density_of_mixed = rho_new_snow*(1.-Mdata.psum_ph) + 1000.*Mdata.psum_ph;
-                return ( Xdata.Cdata.int_cap_snow * Xdata.Cdata.lai * ( 0.27+46.0 / density_of_mixed ));
-        } else {
-                return ( Xdata.Cdata.int_cap_rain * Xdata.Cdata.lai);
-        }
+	if (!force_rain && rho_new_snow!=Constants::undefined && Mdata.psum_ph<1.) { //right conditions for snow
+		const double density_of_mixed = rho_new_snow*(1.-Mdata.psum_ph) + 1000.*Mdata.psum_ph;
+		return ( Xdata.Cdata.int_cap_snow * Xdata.Cdata.lai * ( 0.27+46.0 / density_of_mixed ));
+	} else {
+		return ( Xdata.Cdata.int_cap_rain * Xdata.Cdata.lai);
+	}
 }
 
 /**
@@ -1507,15 +1507,15 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, const CurrentMeteo& Mdata
 	// Scaling of results with CanopyClosureDiffuse and CanopyClosureDirect
 	const double  CanopyClosureDiffuse = 1. - Xdata.Cdata.direct_throughfall;
 
-	 if (Twolayercanopy) {
-		 double CanClosDirLeaves = (canopytransmission)? CanopyShadeSoilCover(Xdata.Cdata.height, CanopyClosureDiffuse, Mdata.elev,Xdata.Cdata.can_diameter) : CanopyClosureDiffuse;
-		 double CanClosDirTrunks = 0;
-		 /*if (canopytransmission) { // below (optional): if uncommented, allows direct solar insolation of the trunks
+	if (Twolayercanopy) {
+		double CanClosDirLeaves = (canopytransmission)? CanopyShadeSoilCover(Xdata.Cdata.height, CanopyClosureDiffuse, Mdata.elev,Xdata.Cdata.can_diameter) : CanopyClosureDiffuse;
+		double CanClosDirTrunks = 0;
+		/*if (canopytransmission) { // below (optional): if uncommented, allows direct solar insolation of the trunks
 			CanClosDirLeaves = CanopyShadeSoilCover(Xdata.Cdata.height*(1. - trunk_frac_height), CanopyClosureDiffuse, Mdata.elev);
 			CanClosDirTrunks = CanopyShadeSoilCover(Xdata.Cdata.height, CanopyClosureDiffuse, Mdata.elev)- CanClosDirLeaves;
 		}*/
 
-		 // Shortwave fluxes (diffuse)
+		// Shortwave fluxes (diffuse)
 		rswrac = (rswrac_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
 		iswrbc = (iswrbc_loc * CanopyClosureDiffuse + iswrac * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
 		rswrbc = (rswrbc_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
@@ -1537,7 +1537,7 @@ void Canopy::CanopyRadiationOutput(SnowStation& Xdata, const CurrentMeteo& Mdata
 		Xdata.Cdata.LWnet_Trunks = RAT  * CanopyClosureDiffuse ;
 
 	 } else {
-		 // Shortwave fluxes (diffuse)
+		// Shortwave fluxes (diffuse)
 		rswrac = (rswrac_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
 		iswrbc = (iswrbc_loc * CanopyClosureDiffuse + iswrac * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
 		rswrbc = (rswrbc_loc * CanopyClosureDiffuse + iswrac * ag * (1.0 - CanopyClosureDiffuse)) * (1.0 - RadFracDirect);
@@ -1653,7 +1653,7 @@ bool Canopy::runCanopyModel(CurrentMeteo &Mdata, SnowStation &Xdata, const doubl
 		lai_frac_top = 1.;
 	}
 	Xdata.Cdata.sigf = CanopyTransmissivity(lai_frac_top*Xdata.Cdata.lai, Constants::pi / 2.0, Xdata.Cdata.krnt_lai );
-  Xdata.Cdata.sigftrunk = CanopyTransmissivity((1-lai_frac_top)*Xdata.Cdata.lai, Constants::pi / 2.0, Xdata.Cdata.krnt_lai );
+	Xdata.Cdata.sigftrunk = CanopyTransmissivity((1-lai_frac_top)*Xdata.Cdata.lai, Constants::pi / 2.0, Xdata.Cdata.krnt_lai );
 
 	// Secondly, transmissivity of direct solar radiation
 	const double sigfdirect = (canopytransmission)? CanopyTransmissivity(lai_frac_top*Xdata.Cdata.lai, Mdata.elev,Xdata.Cdata.krnt_lai ) : Xdata.Cdata.sigf;

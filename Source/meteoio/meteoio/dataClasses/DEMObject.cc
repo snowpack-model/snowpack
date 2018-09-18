@@ -43,7 +43,7 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -64,7 +64,7 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -85,7 +85,7 @@ DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const A
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -108,7 +108,7 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);

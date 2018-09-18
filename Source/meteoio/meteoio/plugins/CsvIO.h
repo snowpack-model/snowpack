@@ -62,17 +62,17 @@ class CsvParameters {
 		std::string file_and_path, datetime_format, time_format, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
 		double slope, azi;
-		float csv_tz;		///< timezone to apply to parsed dates
+		double csv_tz;		///< timezone to apply to parsed dates
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
 };
 
 /**
  * @class CsvIO
- * @brief This (empty) class is to be used as a template for developing new plugins
+ * @brief Reads meteo data from a comma separated file.
  *
  * @ingroup plugins
  * @author Mathias Bavay
- * @date   2010-06-14
+ * @date   2018-01
  */
 class CsvIO : public IOInterface {
 	public:
@@ -100,6 +100,7 @@ class CsvIO : public IOInterface {
 		std::string coordin, coordinparam; //projection parameters
 		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 		bool silent_errors; ///< when reading a file, should errors throw or just be ignored?
+		bool errors_to_nodata;    //unparseable values are treated as nodata, but the dataset is kept
 };
 
 } //namespace

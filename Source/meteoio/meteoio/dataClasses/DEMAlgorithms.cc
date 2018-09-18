@@ -37,8 +37,9 @@ namespace mio {
 /**
 * @brief Computes the hillshade for the dem
 * This "fake illumination" method is used to better show the relief on maps.
-* @param elev elevation (in degrees) of the source of light
-* @param azimuth azimuth (in degrees) of the source of light
+* @param[in] dem DEM to work with
+* @param[in] elev elevation (in degrees) of the source of light
+* @param[in] azimuth azimuth (in degrees) of the source of light
 * @return hillshade grid that containing the illumination
 *
 */
@@ -54,8 +55,8 @@ Grid2DObject DEMAlgorithms::getHillshade(const DEMObject& dem, const double& ele
 
 	Grid2DObject hillshade(ncols, nrows, dem.cellsize, dem.llcorner);
 
-	for ( size_t j = 0; j < nrows; j++ ) {
-		for ( size_t i = 0; i < ncols; i++ ) {
+	for (size_t j=0; j<nrows; j++) {
+		for (size_t i=0; i<ncols; i++) {
 			const double alt = dem.grid2D(i,j);
 			const double sl = dem.slope(i,j);
 			const double az = dem.azi(i,j);
@@ -75,17 +76,19 @@ Grid2DObject DEMAlgorithms::getHillshade(const DEMObject& dem, const double& ele
 double DEMAlgorithms::getSearchDistance(const DEMObject& dem)
 {
 	static const double sun_elev_thresh = 5.;
-	if (dem.min_altitude!=IOUtils::nodata && dem.max_altitude!=IOUtils::nodata) 
+	if (dem.min_altitude!=IOUtils::nodata && dem.max_altitude!=IOUtils::nodata) {
 		return max( (dem.max_altitude - dem.min_altitude) / tan(sun_elev_thresh*Cst::to_rad), dem.cellsize*1.5); //make sure we use at least 1 cell, even in the diagonal
+	}
 	
-		return IOUtils::nodata;
+	return IOUtils::nodata;
 }
 
 /**
 * @brief Returns the tangente of the horizon from a given point looking toward a given bearing
-* @param ix1 x index of the origin point
-* @param iy1 y index of the origin point
-* @param bearing direction given by a compass bearing
+* @param[in] dem DEM to work with
+* @param[in] ix1 x index of the origin point
+* @param[in] iy1 y index of the origin point
+* @param[in] bearing direction given by a compass bearing
 * @return tangente of angle above the horizontal (in deg)
 */
 double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing)
@@ -128,8 +131,9 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 
 /**
 * @brief Returns the tangente of the horizon from a given point looking toward a given bearing
-* @param point the origin point
-* @param bearing direction given by a compass bearing
+* @param[in] dem DEM to work with
+* @param[in] point the origin point
+* @param[in] bearing direction given by a compass bearing
 * @return tangente of angle above the horizontal (in deg)
 */
 double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& bearing)
@@ -141,9 +145,10 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, cons
 
 /**
 * @brief Returns the horizon from a given point looking 360 degrees around by increments
-* @param point the origin point
-* @param increment to the bearing between two angles
-* @param horizon vector of heights above a given angle
+* @param[in] dem DEM to work with
+* @param[in] point the origin point
+* @param[in] increment to the bearing between two angles
+* @param[out] horizon vector of heights above a given angle
 *
 */
 void DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon)
@@ -160,8 +165,9 @@ void DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const 
  * topographic features for high‐resolution weather prediction"</i>, Quarterly journal of the
  * royal meteorological society, <b>138.664</b>, pp720-733, 2012.
  *
- * @param ii x coordinate of the cell whose view factor should be computed
- * @param jj y coordinate of the cell whose view factor should be computed
+ * @param[in] dem DEM to work with
+ * @param[in] ii x coordinate of the cell whose view factor should be computed
+ * @param[in] jj y coordinate of the cell whose view factor should be computed
  * @return sky view factor
  */
 double DEMAlgorithms::getCellSkyViewFactor(const DEMObject& dem, const size_t& ii, const size_t& jj)

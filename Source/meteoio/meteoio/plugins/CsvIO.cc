@@ -54,7 +54,8 @@ namespace mio {
  * - METEOPATH: the directory where the data files are available (mandatory);
  * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
  * - POSITION\#: coordinates of the station (default: reading key "POSITION"; see (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax));
- * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false).
+ * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false, has priority over CSV_ERRORS_TO_NODATA);
+ * - CSV_ERRORS_TO_NODATA: if true, unparseable fields (like text fields) are set to nodata, but the rest of the line is kept (default: false).
  * 
  * The following keys may either be prefixed by "CSV_" (ie as default for all stations) or by "CSV#_" (as only for the current station):
  * - CSV\#_DELIMITER: field delimiter to use (default: ',');
@@ -640,17 +641,19 @@ const size_t CsvIO::streampos_every_n_lines = 2000; //save streampos every 2000 
 
 CsvIO::CsvIO(const std::string& configfile) 
       : cfg(configfile), indexer_map(), csvparam(), vecStations(),
-        coordin(), coordinparam(), silent_errors(false) { parseInputOutputSection(); }
+        coordin(), coordinparam(), silent_errors(false), errors_to_nodata(false) { parseInputOutputSection(); }
 
 CsvIO::CsvIO(const Config& cfgreader)
       : cfg(cfgreader), indexer_map(), csvparam(), vecStations(),
-        coordin(), coordinparam(), silent_errors(false) { parseInputOutputSection(); }
+        coordin(), coordinparam(), silent_errors(false), errors_to_nodata(false) { parseInputOutputSection(); }
 
 void CsvIO::parseInputOutputSection()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
 	
-	silent_errors = cfg.get("CSV_SILENT_ERRORS", "Input", IOUtils::nothrow);
+	cfg.getValue("CSV_SILENT_ERRORS", "Input", silent_errors, IOUtils::nothrow);
+	cfg.getValue("CSV_ERRORS_TO_NODATA", "Input", errors_to_nodata, IOUtils::nothrow);
+
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
 	const std::string meteopath = cfg.get("METEOPATH", "Input");
 	const std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
@@ -848,10 +851,12 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 					std::cerr << err_msg << "\n";
 					no_errors = false;
 					continue;
+				} else if (errors_to_nodata) {
+					tmp = IOUtils::nodata;
 				} else throw InvalidFormatException(err_msg, AT);
 			}
-			if (use_multiplier) tmp *= params.units_multiplier[ii];
-			if (use_offset) tmp += params.units_offset[ii];
+			if (use_multiplier && tmp!=IOUtils::nodata) tmp *= params.units_multiplier[ii];
+			if (use_offset && tmp!=IOUtils::nodata) tmp += params.units_offset[ii];
 			md( params.csv_fields[ii] ) = tmp;
 		}
 		if (no_errors) vecMeteo.push_back( md );

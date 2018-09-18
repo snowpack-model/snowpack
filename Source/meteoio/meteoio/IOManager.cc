@@ -135,8 +135,8 @@ IOHandler::operation_mode IOManager::setMode(const Config& i_cfg)
 	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", IOUtils::nothrow);
 	if (resampling_strategy_str.empty())
 		return IOHandler::STD;
-	if (resampling_strategy_str=="VSTATION")
-		return IOHandler::VSTATION;
+	if (resampling_strategy_str=="VSTATIONS")
+		return IOHandler::VSTATIONS;
 	if (resampling_strategy_str=="GRID_RESAMPLE")
 		return IOHandler::GRID_RESAMPLE;
 	if (resampling_strategy_str=="GRID_EXTRACT")
@@ -179,7 +179,7 @@ void IOManager::initIOManager()
 		}
 	}
 	
-	if (mode==IOHandler::VSTATION) {
+	if (mode==IOHandler::VSTATIONS) {
 		std::vector<std::string> vecStr;
 		cfg.getValue("Virtual_parameters", "Input", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
@@ -211,7 +211,7 @@ void IOManager::initVirtualStations()
 		const bool adjust_coordinates = (mode==IOHandler::GRID_EXTRACT);
 		const bool fourNeighbors = (mode==IOHandler::GRID_SMART);
 		v_stations = gdm1.initVirtualStations(source_dem, adjust_coordinates, fourNeighbors);
-	} else if (mode==IOHandler::VSTATION) {
+	} else if (mode==IOHandler::VSTATIONS) {
 		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
 		cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
 		v_stations = gdm1.initVirtualStations(source_dem, false, false);
@@ -248,7 +248,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 {
 	if (mode==IOHandler::STD) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 	
-	if (mode==IOHandler::VSTATION) {
+	if (mode==IOHandler::VSTATIONS) {
 		const Date bufferStart( tsm2.getRawBufferStart() );
 		const Date bufferEnd( tsm2.getRawBufferEnd() );
 		
@@ -284,7 +284,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		return tsm1.getMeteoData(i_date, vecMeteo);
 	}
 	
-	if (mode==IOHandler::VSTATION) {
+	if (mode==IOHandler::VSTATIONS) {
 		const Date bufferStart( tsm2.getRawBufferStart() );
 		const Date bufferEnd( tsm2.getRawBufferEnd() );
 		

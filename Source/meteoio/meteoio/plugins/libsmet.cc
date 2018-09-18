@@ -301,18 +301,25 @@ SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type)
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(false), append_possible(false) {}
 
-//what the caller MUST provide: 
-//	* the fields header (for checks)
-//	* the ascii width and precision
-//	* nodata_value provided through set_header_value() calls
-//HACK: the multipliers and offsets are not handled yet...
-//for now, we do the most basic append: all the data after the first insertion point is deleted
 SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(ASCII), nodata_value(in_nodata), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(true), append_possible(false)
+{
+	std::vector<std::string> vecFields;
+	SMETCommon::readLineToVec(in_fields, vecFields);
+	setAppendMode(vecFields);
+}
+
+//what the caller MUST provide: 
+//	* the fields header (for checks)
+//	* the ascii width and precision
+//	* nodata_value provided through set_header_value() calls
+//HACK: the multipliers and offsets are not handled yet...
+//for now, we do the most basic append: all the data after the first insertion point is deleted
+void SMETWriter::setAppendMode(std::vector<std::string> vecFields)
 {
 	SMETReader reader(filename);
 	smet_type = (reader.isAscii)? ASCII : BINARY;
@@ -332,12 +339,10 @@ SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fie
 	location_in_data_epsg = reader.location_in_data(EPSG);
 	
 	//check that the fields match
-	std::vector<std::string> vecFields;
-	SMETCommon::readLineToVec(in_fields, vecFields);
 	if (timestamp_present) {
 		if (vecFields[timestamp_field]!="timestamp") {
 			std::ostringstream ss;
-			ss << "Timestamp should be in field at position " << timestamp_field << "when  appending data to file '" << filename << "' but instead '" << reader.get_field_name(timestamp_field) << "' was found";
+			ss << "Timestamp should be in field at position " << timestamp_field << " when  appending data to file '" << filename << "' but instead '" << reader.get_field_name(timestamp_field) << "' was found";
 			throw SMETException(ss.str(), AT);
 		}
 		vecFields.erase( vecFields.begin()+timestamp_field );
