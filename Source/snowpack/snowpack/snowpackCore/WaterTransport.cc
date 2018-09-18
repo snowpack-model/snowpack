@@ -571,8 +571,13 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 			rnN--;
 			if(UpperJoin==false) {
 				EMS[eUpper].Rho = Constants::undefined;
-				if (!merged)
+				if (!merged) {
 					EMS[eUpper].L *= -1.;	// Mark element as "removed".
+				}
+				if ((eUpper < nE-1) && (EMS[eUpper+1].Rho < 0.) && (EMS[eUpper+1].L > 0.)) {
+					// When upper+1 element is not marked to be removed, but we merge the upper element, we should remove the upper+1 element.
+					EMS[eUpper+1].L *= -1.;
+				}
 			} else {
 				if (EMS[eUpper+1].Rho == Constants::undefined) {
 					// The upper join has the risk that an element (eUpper+1) could become marked Rho == Constants::undefined twice,
@@ -581,8 +586,12 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 					rnN++;
 				} else {
 					EMS[eUpper+1].Rho = Constants::undefined;
-					if (!merged && EMS[eUpper+1].L > 0.)
+					if (!merged && EMS[eUpper+1].L > 0.) {
 						EMS[eUpper+1].L *= -1.;	// Mark element as "removed".
+					}
+					if ((eUpper+1 < nE-1) && (EMS[eUpper+2].Rho < 0.) && (EMS[eUpper+2].L > 0.)) {
+						EMS[eUpper+2].L *= -1.;
+					}
 				}
 			}
 		}

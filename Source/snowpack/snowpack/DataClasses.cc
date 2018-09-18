@@ -2490,7 +2490,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 void SnowStation::splitElement(const size_t& e)
 {
 	resize(nElems+1);
-	if(e!=nElems-1) { // If it is not the top node that needs splitting ...
+	if(e!=nElems-2) { // If it is not the top node that needs splitting ...     (Note that we have to reference nElems-2, as resize has been called already.)
 		// then shift all elements and nodes above upward
 		for(size_t ee = nElems-1; ee >= e+2; ee--) {
 			Edata[ee]=Edata[ee-1];
