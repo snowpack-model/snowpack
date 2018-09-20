@@ -1990,7 +1990,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				surfaceCode = DIRICHLET_BC;
 			} else {
 				// in case melting is going on, top node is at melting conditions and we prescribe prescribed melt as Neumann boundary condition
-				t_surf = Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk;
+				t_surf = Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = (Xdata.getNumberOfElements()>0) ? (Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk) : (Constants::meltfreeze_tk);
 			}
 		} else if ((change_bc && meas_tss) && ((Mdata.tss < IOUtils::C_TO_K(thresh_change_bc)) && Mdata.tss != IOUtils::nodata)) {
 			surfaceCode = DIRICHLET_BC;
