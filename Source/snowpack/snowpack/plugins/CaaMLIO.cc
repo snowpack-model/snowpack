@@ -45,7 +45,9 @@ using namespace mio;
  * @page caaml CAAML
  * @section caaml_format Format
  * This plugin reads the CAAML files as generated according <A HREF="http://caaml.org/">CAAML V5.0</A>'s
- * <A HREF="http://caaml.org/Schemas/V5.0/Profiles/SnowProfileIACS">specification</A>.
+ * <A HREF="http://caaml.org/Schemas/V5.0/Profiles/SnowProfileIACS">specification</A>. In order to validate
+ * a CAAML file, download the <A HREF="http://caaml.org/Schemas/V5.0/Profiles/SnowProfileIACS/CAAMLv5_SnowProfileIACS.xsd">xsd</A>
+ * file and use either an online XML validator or an offline tool (such as Notepad++'s XML tool).
  *
  * @section caaml_keywords Keywords
  * This plugin uses the following keywords:
@@ -257,6 +259,7 @@ bool CaaMLIO::snowCoverExists(const std::string& i_snowfile, const std::string& 
  * @param stationID
  * @param SSdata
  * @param Zdata
+ * @param read_salinity
  */
 void CaaMLIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
                             SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool&)

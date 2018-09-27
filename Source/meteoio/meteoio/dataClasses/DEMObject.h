@@ -71,6 +71,8 @@ class DEMObject : public Grid2DObject {
 		} FORMATS;
 
 		DEMObject(const slope_type& i_algorithm=DFLT);
+		
+		DEMObject(const size_t& ncols_in, const size_t& nrows_in, const Coords& llcorner_in, const double& init);
 
 		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const slope_type& i_algorithm=DFLT);

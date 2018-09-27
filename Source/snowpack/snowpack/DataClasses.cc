@@ -2490,7 +2490,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 void SnowStation::splitElement(const size_t& e)
 {
 	resize(nElems+1);
-	if(e!=nElems-2) { // If it is not the top node that needs splitting ...     (Note that we have to reference nElems-2, as resize has been called already.)
+	if(e!=nElems-2) { // If it is not the top node that needs splitting ...     (Note that we have to reference nElems-2, as resize has been called (thus nElems increased) already.)
 		// then shift all elements and nodes above upward
 		for(size_t ee = nElems-1; ee >= e+2; ee--) {
 			Edata[ee]=Edata[ee-1];
@@ -2953,10 +2953,10 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
-	maxNumberMeasTemperatures = cfg.get("MAX_NUMBER_MEAS_TEMPERATURES", "SnowpackAdvanced", IOUtils::nothrow);
-	cfg.getValue("FIXED_POSITIONS", "SnowpackAdvanced", fixedPositions, IOUtils::nothrow);
-	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", IOUtils::nothrow);
-	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced", IOUtils::nothrow);
+	maxNumberMeasTemperatures = cfg.get("MAX_NUMBER_MEAS_TEMPERATURES", "SnowpackAdvanced");
+	cfg.getValue("FIXED_POSITIONS", "SnowpackAdvanced", fixedPositions);
+	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced");
+	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced");
 }
 
 void CurrentMeteo::reset(const SnowpackConfig& i_cfg)

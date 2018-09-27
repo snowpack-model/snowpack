@@ -118,7 +118,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		uniqueOutputGrids(output_grids);
 	}
 	//add the grids that are necessary for the other modules
-	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", IOUtils::nothrow);
+	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", "");
 	sn_cfg.addKey("GRIDS_PARAMETERS", "output", all_grids + " " + grids_requirements + " " + getGridsRequirements()); //also consider own requirements
 
 	//check if lateral flow is enabled
@@ -297,19 +297,12 @@ void SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg)
 	sn_cfg.addKey("ALPINE3D", "SnowpackAdvanced", "true");
 	sn_cfg.addKey("PERP_TO_SLOPE", "SnowpackAdvanced", "true");
 
-	std::string adjust_wind = io_cfg.get("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", IOUtils::nothrow);
-	if (adjust_wind.empty()) adjust_wind = "true";
-	sn_cfg.addKey("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_wind);
-	/*string adjust_meteo= io_cfg.get("ADJUST_HEIGHT_METEO_VALUE", "SnowpackAdvanced", IOUtils::nothrow);
-	if (adjust_meteo.empty()) adjust_meteo = "true";
-	sn_cfg.addKey("ADJUST_HEIGHT_METEO_VALUE", "SnowpackAdvanced", adjust_meteo);*/
-
 	io_cfg.getValue("LOCAL_IO", "General", do_io_locally, IOUtils::nothrow);
 	sn_cfg.getValue("GRID2DPATH", "Output", outpath);
 	io_cfg.getValue("MASK_GLACIERS", "Output", mask_glaciers, IOUtils::nothrow);
 	io_cfg.getValue("MASK_DYNAMIC", "Output", mask_dynamic, IOUtils::nothrow);
 	io_cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow, IOUtils::nothrow);
-	io_cfg.getValue("SNOW_PREPARATION", "Snowpack", snow_preparation, IOUtils::nothrow);
+	io_cfg.getValue("SNOW_PREPARATION", "Input", snow_preparation, IOUtils::nothrow);
 	io_cfg.getValue("SOIL_TEMPERATURE_DEPTH", "Output", soil_temp_depth, IOUtils::nothrow);
 
 	sn_cfg.getValue("GRIDS_WRITE", "Output", grids_write);
@@ -607,7 +600,8 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 	}
 
 	if (snow_preparation) {
-		techSnow->setMeteo(ta, rh, timestamp);
+		const Grid2DObject cH( getGrid(SnGrids::HS) );
+		techSnow->setMeteo(ta, rh, cH, timestamp);
 		psum_tech = techSnow->getGrid(SnGrids::PSUM_TECH);
 		grooming = techSnow->getGrid(SnGrids::GROOMING);
 	}
@@ -756,7 +750,6 @@ void SnowpackInterface::calcNextStep()
 		const mio::Grid2DObject tmp_shortwave(shortwave, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_diffuse(diffuse, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_longwave(longwave, worker_startx[ii], 0, worker_deltax[ii], dimy);
-
 		// run model, process exceptions in a way that is compatible with openmp
 		try {
 			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
@@ -992,10 +985,9 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 
 	if (MPIControl::instance().master() || do_io_locally) {
 		const bool useSoil = sn_cfg.get("SNP_SOIL", "Snowpack");
-		std::string sno_type("SMET");
-		sn_cfg.getValue("SNOW", "Input", sno_type, IOUtils::nothrow);
+		const std::string sno_type = sn_cfg.get("SNOW", "Input", "SMET");
 		const std::string coordsys = sn_cfg.get("COORDSYS", "Input");
-		const std::string coordparam = sn_cfg.get("COORDPARAM", "Input", IOUtils::nothrow);
+		const std::string coordparam = sn_cfg.get("COORDPARAM", "Input", "");
 		Coords llcorner_out( dem.llcorner );
 		llcorner_out.setProj(coordsys, coordparam);
 		const double refX = llcorner_out.getEasting();

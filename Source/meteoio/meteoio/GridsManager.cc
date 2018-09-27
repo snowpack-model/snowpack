@@ -530,8 +530,6 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 				const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
 				curr_point.setXY(easting, northing, dem(i,j));
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
-			} else {
-				curr_point.setAltitude(dem(i,j), false);
 			}
 			
 			//extract vstation number, build the station name and station ID

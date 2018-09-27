@@ -95,10 +95,6 @@ MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
 #Add subdirectory, so they can inherit all variables defined above
 ADD_SUBDIRECTORY(alpine3d)
-# ADD_SUBDIRECTORY(alpine3d/ebalance)
-# ADD_SUBDIRECTORY(alpine3d/runoff)
-# #ADD_SUBDIRECTORY(alpine3d/runoff/prevah_runoff)
-# ADD_SUBDIRECTORY(alpine3d/snowdrift)
 
 IF(ALPINE3D_STANDALONE)
 	#it seems that the only reliable way is to test-compile...

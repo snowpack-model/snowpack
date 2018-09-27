@@ -27,7 +27,7 @@ using namespace std;
 namespace mio {
 
 FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name), sensitivityParam(1), nIterations(0), maxIterations(50)
+          : FilterBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -55,18 +55,23 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 	//a vector containing all detected spikes. only for debugging and visualization of the result:
 	std::vector<int> allSpikesVec(ivec.size(),0);
 
-	//1. subtract mean from signal
-	const double mean = Interpol1D::arithmeticMean(doubleVec);
-	for (size_t ii=0; ii<doubleVec.size(); ii++){
-		if (doubleVec[ii] != IOUtils::nodata)
-			doubleVec[ii] -= mean;
-	}
 	bool keepLookingForSpikes = true;
 	unsigned int nNewSpikes=0;
 	nIterations=0;
 	while(keepLookingForSpikes == true){
+		//1. subtract mean from signal
+		const double mean = Interpol1D::arithmeticMean(doubleVec);
+		for (size_t ii=0; ii<doubleVec.size(); ii++){
+			if (doubleVec[ii] != IOUtils::nodata)
+				doubleVec[ii] -= mean;
+		}
 		//2. find spikes
-		std::vector<int> spikesVec( findSpikes(timeVec,doubleVec,nNewSpikes) );
+		std::vector<int> spikesVec;
+		if (methodParam==MORI){
+			spikesVec = findSpikesMori(timeVec,doubleVec,nNewSpikes);
+		}else{
+			spikesVec = findSpikesGoring(timeVec,doubleVec,nNewSpikes);
+		}
 		for (size_t ii=0; ii<spikesVec.size();ii++){
 			allSpikesVec[ii] = allSpikesVec[ii] + spikesVec[ii];
 		}
@@ -93,12 +98,17 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 			keepLookingForSpikes=false;
 			std::cout << "We finish the iteration for spike detection. The standard deviation is not decreasing anymore...  " << std::endl;
 		}
+		//4. add mean back to signal again
+		for (size_t ii=0; ii<doubleVec.size(); ii++){
+			if (doubleVec[ii] != IOUtils::nodata)
+				doubleVec[ii] += mean;
+		}
 	}
 
-	//4. add mean to signal again
+	//5. set output
 	for (size_t ii=0; ii<ovec.size(); ii++){
 		double& value = ovec[ii](param);
-		if (value != IOUtils::nodata) value = doubleVec[ii]+mean;
+		value = doubleVec[ii];
 	}
 
 	//just for outputting some information about the despiking:
@@ -107,9 +117,12 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 	for (size_t ii=0; ii<allSpikesVec.size(); ii++){
 		if (allSpikesVec[ii] != 0) nSpikes++;
 	}
+
+	std::string methodString("Goring (2D) method.");
+	if (methodParam==MORI) methodString="Mori (3D) method.";
 	std::cout << nSpikes << " spikes were found after " << nIterations << " iterations with a sensitivity parameter of "
-	                 << sensitivityParam << std::endl;
-	//helperWriteDebugFile4OriginalAndFinalSignal(doubleVecOrig,doubleVec,allSpikesVec,mean);
+	                 << sensitivityParam << " using " << methodString << std::endl;
+	//helperWriteDebugFile4OriginalAndFinalSignal(doubleVecOrig,doubleVec,allSpikesVec);
 }
 
 /**
@@ -123,17 +136,25 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 
 	//to perform syntax checks (see after the "for" loop)
 	bool hasSensitivityParam=false;
+	bool hasMethodParam=false;
 
 	//parse the arguments (the keys are all upper case)
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SENSITIVITY") {
 			IOUtils::parseArg(vecArgs[ii], where, sensitivityParam);
 			hasSensitivityParam=true;
+		} else if (vecArgs[ii].first=="METHOD") {
+			const std::string type_str( vecArgs[ii].second );
+			if (type_str=="MORI") methodParam = MORI;
+			else if (type_str=="GORING") methodParam = GORING;
+			else throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for \""+where+"\". Please use \"MORI\" or \"GORING\".", AT);
+			hasMethodParam=true;
 		}
 	}
 
 	//second part of the syntax check
 	if (!hasSensitivityParam) throw InvalidArgumentException("Please provide a sensitivity-argument "+where, AT);
+	if (!hasMethodParam) throw InvalidArgumentException("Please provide a method-argument "+where, AT);
 }
 
 /**
@@ -153,25 +174,25 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 		if (ivec[ii]==IOUtils::nodata){
 			ovec.push_back(IOUtils::nodata);
 		} else {
-			size_t i1 = ii;
-			size_t i2 = ii;
+			int i1 = static_cast<int>(ii);
+			int i2 = static_cast<int>(ii);
 			bool stop=false;
-			const size_t maxSteps = 100;
+			const int maxSteps = 100;
 			while (stop==false){
 				i1 = i1-1;
 				i2 = i2+1;
-				if(i1<=0){
+				if (i1<0){
 					stop=true;
-					i1=ii;
+					i1=static_cast<int>(ii);
 				}
-				if(i2>=ivec.size()){
+				if (i2>=static_cast<int>(ivec.size())){
 					stop=true;
-					i2=ii;
+					i2=static_cast<int>(ii);
 				}
-				if(ivec[i1]!=IOUtils::nodata && ivec[i2]!=IOUtils::nodata){
+				if (ivec[i1]!=IOUtils::nodata && ivec[i2]!=IOUtils::nodata){
 					stop=true;
 				}
-				if(i1<ii-maxSteps || i2>ii+maxSteps){
+				if (i1+maxSteps < static_cast<int>(ii) || i2 > static_cast<int>(ii)+maxSteps){
 					stop=true;
 				}
 			}
@@ -179,8 +200,9 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 			if (dt != 0 && ivec[i1] != IOUtils::nodata && ivec[i2] != IOUtils::nodata){
 				const double derivative = (ivec[i2]-ivec[i1]) / dt;
 				ovec.push_back(derivative);
-			} else
+			} else{
 				ovec.push_back(IOUtils::nodata);
+			}
 		}
 	}
 	return ovec;
@@ -263,13 +285,13 @@ void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec
 
 
 /**
- * @brief This function detects spikes in a signal.
+ * @brief This function detects spikes in a signal according to the paper by Derek G. Goring (2002).
  * @param uVec input-signal
  * @param timeVec time-vector (same length as uVec)
  * @param nNewSpikes output: the number of new detected spikes.
  * @param return a vector of the same length as uVec, which is set to 1 if there is a spike in the signal, 0 otherwise
  */
-std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes)
+std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes)
 {
 	std::vector<int> spikesVec(uVec.size(),0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
 
@@ -319,6 +341,107 @@ std::vector<int> FilterDespikingPS::findSpikes(const std::vector<double>& timeVe
 	}
 
 	//helperWriteDebugFile1DerivativesAndFittedEllipses(uVec,duVec,du2Vec,a1,b1,a2,b2,a3,b3,theta);
+
+	return spikesVec;
+}
+
+/**
+ * @brief This function finds points (described by xVec, yVec, zVec) which lie outside of the ellipsoid (described by a,b and c)
+ *        and sets outsideVec to 1 (if a point lies outside of the ellipsoid).
+ *           xVec, yVec, zVec and outsideVec all have the same size.
+ *           The condition for a point to be outside the ellipsoid is:
+ *               x^2/a^2 + y^2/b^2 + z^2/c^2 > 1
+ * @param xVec input x-coordinates
+ * @param yVec input y-coordinates
+ * @param zVec input z-coordinates
+ * @param a input. the major axis of the ellipsoid
+ * @param b input. the minor axis of the ellipsoid
+ * @param c input. second minor axis of the ellipsoid
+ * @param outsideVec output: outsideVector is set to 1 if the point is outside of the ellipsoid, 0 otherwise.
+ */
+void FilterDespikingPS::findPointsOutsideEllipsoid(const std::vector<double>& xVec,const std::vector<double>& yVec, const std::vector<double>& zVec,
+                                                   const double a,const double b,const double c, std::vector<int>& outsideVec)
+{
+	if(xVec.size() != yVec.size()) return;
+	if(xVec.size() != zVec.size()) return;
+
+	for (size_t ii=0; ii<xVec.size(); ii++) {
+		const double x = xVec[ii];
+		const double y = yVec[ii];
+		const double z = zVec[ii];
+		if (x!=IOUtils::nodata && y!=IOUtils::nodata && z!=IOUtils::nodata){
+			const double helper = (x*x)/(a*a) + (y*y)/(b*b) + (z*z)/(c*c);
+			if (helper > 1){
+				outsideVec[ii]=1;
+			}
+		}
+	}
+}
+
+/**
+ * @brief This function detects spikes in a signal according to the paper by Nobuhito Mori (2005), which is a further development of the
+ *        algorithm proposed by Goring and Nikora (implemented in FilterDespikingPS::findeSpikesGoring).
+ * @param uVec input-signal
+ * @param timeVec time-vector (same length as uVec)
+ * @param nNewSpikes output: the number of new detected spikes.
+ * @param return a vector of the same length as uVec, which is set to 1 if there is a spike in the signal, 0 otherwise
+ */
+std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes)
+{
+	std::vector<int> spikesVec(uVec.size(),0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
+
+	//step 1: calculate the first and second derivatives:
+	const std::vector<double> duVec( calculateDerivatives(uVec,timeVec) );
+	const std::vector<double> du2Vec( calculateDerivatives(duVec,timeVec) );
+
+	//step 2: calculate the universal threshold:
+	const double nElements = static_cast<double>(uVec.size()) - nNodataElements(uVec);
+	double universalThreshold = sqrt(2*log(nElements));
+	//make the filter a little bit adjustable by the sensitivity parameter
+	//the larger the parameter the smaller the threshold and the more spikes are detected
+	universalThreshold=universalThreshold/sensitivityParam;
+
+	//step 3: calculate the rotation angle of the principal axis of du2Vec versus uVec:
+	const double crossCorrelation = calculateCrossCorrelation(du2Vec, uVec);
+	const double theta = atan(crossCorrelation);
+
+	//step 4: rotate all points by theta:
+	std::vector<double> X(uVec.size(),0);
+	std::vector<double> Y(uVec.size(),0);
+	std::vector<double> Z(uVec.size(),0);
+
+	std::cout << "Theta: " << theta << std::endl;
+	for (size_t ii=0; ii<uVec.size(); ii++) {
+		if (uVec[ii] != IOUtils::nodata && du2Vec[ii] != IOUtils::nodata){
+			X[ii] = uVec[ii]*cos(theta) + du2Vec[ii]*sin(theta);
+			Y[ii] = duVec[ii];
+			Z[ii] = uVec[ii]*(-sin(theta)) + du2Vec[ii]*cos(theta);
+		}else{
+			X[ii] = IOUtils::nodata;
+			Y[ii] = IOUtils::nodata;
+			Z[ii] = IOUtils::nodata;
+		}
+	}
+
+	//step 5: calculate the standard deviations:
+	const double XStdDev = Interpol1D::std_dev( X );
+	const double YStdDev = Interpol1D::std_dev( Y );
+	const double ZStdDev = Interpol1D::std_dev( Z );
+	//major and minor axes of ellipsoid:
+	const double a = universalThreshold*XStdDev;
+	const double b = universalThreshold*YStdDev;
+	const double c = universalThreshold*ZStdDev;
+
+	//step 5: identify the points that lie outside the ellipsoid:
+	findPointsOutsideEllipsoid(X,Y,Z,a,b,c,spikesVec);
+
+	//step 6: count number of detected spikes:
+	nNewSpikes=0;
+	for (size_t ii=0; ii<spikesVec.size(); ii++){
+		nNewSpikes=nNewSpikes+spikesVec[ii];
+	}
+
+	//helperWriteDebugFile1DerivativesAndFittedEllipses(X,Y,Z,a,b,b,c,a,c,theta);
 
 	return spikesVec;
 }
@@ -413,9 +536,9 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 {
 	std::vector<double> xVec;
 	std::vector<double> yVec;
-	const unsigned int windowWidth = 12; //wished width of the window for interpolation
-	const unsigned int degreeOfInterpolation = 2; //1: linear fit, 2: quadratic fit, 3: cubic fit
-	const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
+	static const unsigned int windowWidth = 24; //wished width of the window for interpolation
+	static const unsigned int degreeOfInterpolation = 3; //1: linear fit, 2: quadratic fit, 3: cubic fit
+	static const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
 	bool avoidExtrapolation = true; //to avoid extrapolation, we need data points left and right of the spike
 
 	for (size_t ii=0; ii<uVec.size(); ii++) {
@@ -430,21 +553,10 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 					double interpolatedValue = quadraticFit.f(0);
 					uVec[ii] = interpolatedValue;
 					//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
-					if(1==2){ //this is for debugging of the nonlinear quadratic fit function. try to use pivoting!
-						Fit1D quadraticFit2 = Fit1D("QUADRATIC",xVec,yVec,false);
-						quadraticFit2.fit();
-						//interpolate the spike data point
-						double interpolatedValue2 = quadraticFit2.f(0);
-						std::cout << "replace spikes... ii, uVec[ii], f(x[ii]),f_correct(x[ii]) " << timeVec[ii] << " " << uVec[ii]
-													<< " " << interpolatedValue2 <<" "<<interpolatedValue << std::endl;
-						//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
-					}
 				} catch (const std::exception &e) {
 					std::cout << "An exception occurred: " << e.what() << std::endl;
 					//helperWriteDebugFile3WindowForInterpolation(ii,xVec,yVec);
 				}
-			} else{
-				//std::cout << "We were not able to create a window for interpolation. " << std::endl;
 			}
 		}
 	}
@@ -583,7 +695,7 @@ void FilterDespikingPS::helperWriteDebugFile3WindowForInterpolation(size_t itera
  * @brief This function is just for debugging purposes...
  */
 void FilterDespikingPS::helperWriteDebugFile4OriginalAndFinalSignal(std::vector<double>& ivec, std::vector<double>& ovec,
-                                                                    std::vector<int>& allSpikesVec, double mean)
+                                                                    std::vector<int>& allSpikesVec)
 {
 	ofstream myfile;
 	std::string filename("debugOutputFiles/debugFilterDespikingPS_OriginalAndFinalSignal.csv");
@@ -591,13 +703,7 @@ void FilterDespikingPS::helperWriteDebugFile4OriginalAndFinalSignal(std::vector<
 
 	myfile << "i; original signal; filtered signal; spikes" << std::endl;
 	for (size_t ii=0; ii<ivec.size(); ii++) {
-		double h=ovec[ii];
-		if(h != IOUtils::nodata){
-			h=h+mean;
-		}
-		if(ovec[ii]){
-			myfile << ii <<";"<< ivec[ii] <<";"<< h <<";"<< allSpikesVec[ii]<< std::endl;
-		}
+		myfile << ii <<";"<< ivec[ii] <<";"<< ovec[ii] <<";"<< allSpikesVec[ii]<< std::endl;
 	}
 	myfile.close();
 }

@@ -28,12 +28,13 @@ namespace mio {
  * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword):
  *     + VSTATIONS: points measurements are spatially interpolated at the chosen locations;
  *     + GRID_EXTRACT: gridded values are extracted for the cells containing the given locations;
- *     + GRID_SMART: the four nodes surrounding each given locations are extracted and potential duplicates are removed (so it is ready for performing spatial interpolations);
+ *     + GRID_SMART: the four nodes surrounding each given locations are extracted and potential duplicates are removed, then the meteo fields are 
+ *       spatially interpolated at the chosen locations;
  *     + GRID_ALL: all grid points are extracted;
  *     + GRID_RESAMPLE: all grid points are extracted and used with an additional DEM to resample the grids to a different resolution (by calling spatial interpolations).
  * 
- * Currently, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted point. This is described
- * by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
+ * For VSTATIONS and GRID_SMART, it is necessary to provide a hint on how often the data should be extrated versus temporally interpolated between extracted 
+ * point. This is done by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
  * \image html vstations_sampling.png "Resampling workflow"
  * \image latex vstations_sampling.eps "Resampling workflow" width=0.9\textwidth
  *
@@ -46,7 +47,7 @@ namespace mio {
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
- *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTAL).
+ *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  * 
  * Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
  * 
@@ -77,7 +78,7 @@ namespace mio {
  * @endcode
  * 
  * @section grids_extract From gridded data
- * The meteorological time series are extracted from time series of user-provided grids. therefore a plugin for 2D grids must have been defined (with the GRID2D key in
+ * The meteorological time series are extracted from time series of user-provided grids. Therefore a plugin for 2D grids must have been defined (with the GRID2D key in
  * the [Input] section). The following keys control this downscaling process:
  *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT* or *GRID_ALL*;
  *    + VSTATION# : provide the lat, lon and (optionally) the epsg code for a virtual station;
@@ -100,6 +101,31 @@ namespace mio {
  * VSTATION2 = latlon 43.324887 6.629711 57 ;another great station
  * @endcode
  * @note If the temporal resolution of the gridded data is greater than the WINDOW_SIZE of the [Interpolations1D], then no data will be interpolated.
+ * 
+ * @subsection grids_smart From gridded data, with spatial interpolations
+ * This is a combination between \ref grids_extract "gridded data extraction" and \ref vstations "Vstations": the meteorological time series are extracted 
+ * from time series of user-provided grids at 4 points around each provided location and then spatially interpolated at the said locations. 
+ * Therefore, the following additional keys are required:
+ *    + RESAMPLING_STRATEGY set to *GRID_SMART*;
+ *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
+ *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
+ *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
+ *
+ * @code
+ * DEM     = NETCDF
+ * DEMFILE = ./input/grids/era-interim-dem.nc
+ * 
+ * GRID2D    = NETCDF
+ * GRID2DFILE = ./input/grids/era-interim.nc
+ * NETCDF_SCHEMA = ECMWF
+ * 
+ * RESAMPLING_STRATEGY = GRID_SMART
+ * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
+ * 
+ * #here the locations where the data will be generated. The caller will only see these stations!
+ * VSTATION1 = latlon 43.359188 6.693612 150 ;great station
+ * VSTATION2 = latlon 43.324887 6.629711 57 ;another great station
+ * @endcode
  * 
  * @section grids_resample Resampling of gridded data
  * The meteorological time series are extracted as laid out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
@@ -132,7 +158,7 @@ namespace mio {
 
 IOHandler::operation_mode IOManager::setMode(const Config& i_cfg)
 {
-	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", IOUtils::nothrow);
+	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", "");
 	if (resampling_strategy_str.empty())
 		return IOHandler::STD;
 	if (resampling_strategy_str=="VSTATIONS")
@@ -153,14 +179,14 @@ IOHandler::operation_mode IOManager::setMode(const Config& i_cfg)
 //TODO write an IOHandler that can directly tap into the buffers of a tsm or gdm
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), iohandler(cfg),
                                                        tsm1(iohandler, cfg), tsm2(iohandler, cfg), gdm1(iohandler, cfg), interpolator(cfg, tsm1, gdm1), source_dem(),
-                                                       v_params(), v_stations(), vstations_refresh_rate(3600), vstations_refresh_offset(0), mode(setMode(cfg))
+                                                       v_params(), grids_params(), v_stations(), v_gridstations(), vstations_refresh_rate(3600), vstations_refresh_offset(0), mode(setMode(cfg))
 {
 	initIOManager();
 }
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), iohandler(cfg),
                                             tsm1(iohandler, cfg), tsm2(iohandler, cfg), gdm1(iohandler, cfg), interpolator(cfg, tsm1, gdm1), source_dem(),
-                                            v_params(), v_stations(), vstations_refresh_rate(3600), vstations_refresh_offset(0), mode(setMode(cfg))
+                                            v_params(), grids_params(), v_stations(), v_gridstations(), vstations_refresh_rate(3600), vstations_refresh_offset(0), mode(setMode(cfg))
 {
 	initIOManager();
 }
@@ -175,11 +201,11 @@ void IOManager::initIOManager()
 			const size_t param_idx = MeteoGrids::getParameterIndex( vecStr[ii] );
 			if (param_idx==IOUtils::npos)
 				throw InvalidArgumentException("Invalid parameter '" + vecStr[ii] + "', only standard parameters can be extracted from grids for virtual stations! ", AT);
-			v_params.push_back( param_idx );
+			grids_params.push_back( param_idx );
 		}
 	}
 	
-	if (mode==IOHandler::VSTATIONS) {
+	if (mode==IOHandler::VSTATIONS || mode==IOHandler::GRID_SMART) {
 		std::vector<std::string> vecStr;
 		cfg.getValue("Virtual_parameters", "Input", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
@@ -206,17 +232,19 @@ void IOManager::initVirtualStations()
 	}
 	
 	if (mode==IOHandler::GRID_ALL || mode==IOHandler::GRID_RESAMPLE) {
-		v_stations = gdm1.initVirtualStationsAtAllGridPoints(source_dem);
-	} else if (mode==IOHandler::GRID_EXTRACT || mode==IOHandler::GRID_SMART) {
-		const bool adjust_coordinates = (mode==IOHandler::GRID_EXTRACT);
-		const bool fourNeighbors = (mode==IOHandler::GRID_SMART);
-		v_stations = gdm1.initVirtualStations(source_dem, adjust_coordinates, fourNeighbors);
-	} else if (mode==IOHandler::VSTATIONS) {
-		cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
-		cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
-		v_stations = gdm1.initVirtualStations(source_dem, false, false);
-	} else
-		throw InvalidArgumentException("Unsupported mode of operation", AT);
+		v_gridstations = gdm1.initVirtualStationsAtAllGridPoints(source_dem);
+	} else {
+		if (mode==IOHandler::GRID_EXTRACT || mode==IOHandler::GRID_SMART) {
+			const bool fourNeighbors = (mode==IOHandler::GRID_SMART);
+			v_gridstations = gdm1.initVirtualStations(source_dem, true, fourNeighbors);
+		}
+		
+		if (mode==IOHandler::VSTATIONS || mode==IOHandler::GRID_SMART) {
+			cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate, IOUtils::nothrow);
+			cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
+			v_stations = gdm1.initVirtualStations(source_dem, false, false);
+		}
+	}
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
@@ -238,8 +266,14 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 
 	if (mode==IOHandler::STD) return tsm1.getStationData(date, vecStation);
 	
-	if (v_stations.empty()) initVirtualStations();
-	vecStation = v_stations;
+	if (mode==IOHandler::VSTATIONS || mode==IOHandler::GRID_SMART) {
+		if (v_stations.empty()) initVirtualStations();
+		vecStation = v_stations;
+	} else {
+		if (v_gridstations.empty()) initVirtualStations();
+		vecStation = v_gridstations;
+	}
+	
 	return vecStation.size();
 }
 
@@ -248,7 +282,19 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 {
 	if (mode==IOHandler::STD) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 	
-	if (mode==IOHandler::VSTATIONS) {
+	if (mode>=IOHandler::GRID_EXTRACT) {
+		const Date bufferStart( tsm1.getRawBufferStart() );
+		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		
+		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
+			vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
+			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
+		}
+		
+		if (mode!=IOHandler::GRID_SMART) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+	}
+	
+	if (mode==IOHandler::VSTATIONS || mode==IOHandler::GRID_SMART) {
 		const Date bufferStart( tsm2.getRawBufferStart() );
 		const Date bufferEnd( tsm2.getRawBufferEnd() );
 		
@@ -257,18 +303,6 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 		}
 		
 		return tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
-	}
-	
-	if (mode>=IOHandler::GRID_EXTRACT) {
-		const Date bufferStart( tsm1.getRawBufferStart() );
-		const Date bufferEnd( tsm1.getRawBufferEnd() );
-		
-		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
-			vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd);
-			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
-		}
-		
-		return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 	}
 	
 	throw InvalidArgumentException("Unsuppported operation_mode", AT);
@@ -284,7 +318,23 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		return tsm1.getMeteoData(i_date, vecMeteo);
 	}
 	
-	if (mode==IOHandler::VSTATIONS) {
+	if (mode>=IOHandler::GRID_EXTRACT) {
+		const Date bufferStart( tsm1.getRawBufferStart() );
+		const Date bufferEnd( tsm1.getRawBufferEnd() );
+		
+		if (bufferStart.isUndef() || i_date<bufferStart || i_date>bufferEnd) {
+			Duration buffer_size, buffer_before;
+			tsm1.getBufferProperties(buffer_size, buffer_before);
+			
+			//for GRID_SMART, we need to start before, because to spatially interpolate at dt-buff_before we need the data at dt-buff_before*2
+			const Date dateStart = (mode==IOHandler::GRID_SMART)? ( i_date - buffer_before*2.) : ( i_date - buffer_before);
+			const Date dateEnd( i_date - buffer_before + buffer_size + 1 );
+			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
+		}
+		if (mode!=IOHandler::GRID_SMART) return tsm1.getMeteoData(i_date, vecMeteo);
+	}
+	
+	if (mode==IOHandler::VSTATIONS || mode==IOHandler::GRID_SMART) {
 		const Date bufferStart( tsm2.getRawBufferStart() );
 		const Date bufferEnd( tsm2.getRawBufferEnd() );
 		
@@ -298,21 +348,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		}
 		
 		return tsm2.getMeteoData(i_date, vecMeteo);
-	}
-	
-	if (mode>=IOHandler::GRID_EXTRACT) {
-		const Date bufferStart( tsm1.getRawBufferStart() );
-		const Date bufferEnd( tsm1.getRawBufferEnd() );
-		
-		if (bufferStart.isUndef() || i_date<bufferStart || i_date>bufferEnd) {
-			Duration buffer_size, buffer_before;
-			tsm1.getBufferProperties(buffer_size, buffer_before);
-			
-			const Date dateStart( i_date - buffer_before );
-			const Date dateEnd( i_date - buffer_before + buffer_size );
-			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd));
-		}
-		return tsm1.getMeteoData(i_date, vecMeteo);
 	}
 	
 	throw InvalidArgumentException("Unsuppported operation_mode", AT);
@@ -351,7 +386,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 			
 			const Date dateStart( date - buffer_before );
 			const Date dateEnd( date - buffer_before + buffer_size );
-			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd));
+			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	}
 
@@ -372,7 +407,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 			
 			const Date dateStart( date - buffer_before );
 			const Date dateEnd( date - buffer_before + buffer_size );
-			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, v_params, v_stations, dateStart, dateEnd));
+			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	}
 
@@ -411,6 +446,7 @@ void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMete
 	tsm1.add_to_points_cache(i_date, vecMeteo);
 }
 
+//this is only called when mode==IOHandler::VSTATIONS
 std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd)
 {
 	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset, vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );
@@ -420,11 +456,13 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 	std::vector<METEO_SET> vecvecMeteo(v_stations.size());
 	const double date_inc = static_cast<double>(vstations_refresh_rate) / (24.*3600.);
 	for (Date date=buff_start; date<=buff_end; date += date_inc) {
+		//fill vecvecMeteo with metadata
 		for (size_t ii=0; ii<v_stations.size(); ii++) {
 			MeteoData md(date, v_stations[ii]);
 			vecvecMeteo[ii].push_back( md );
 		}
-		
+
+		//interpolate each field and fill vecvecMeteo with data
 		for (size_t param=0; param<v_params.size(); param++) {
 			std::vector<double> result;
 			interpolate(date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_stations, result, info_string);

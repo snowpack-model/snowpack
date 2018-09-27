@@ -372,7 +372,7 @@ IOHandler::IOHandler(const Config& cfgreader)
              copy_ready(false), move_ready(false), excludes_ready(false), keeps_ready(false), merge_ready(false), automerge(false)
 {
 	cfg.getValue("AUTOMERGE", "Input",automerge, IOUtils::nothrow);
-	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", IOUtils::nothrow);
+	const std::string merge_strategy_str = cfg.get("MERGE_STRATEGY", "Input", "");
 	if (!merge_strategy_str.empty())
 		merge_strategy = MeteoData::getMergeType(merge_strategy_str);
 }
@@ -694,7 +694,7 @@ void IOHandler::automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 void IOHandler::create_exclude_map()
 {
 	excludes_ready = true;
-	const std::string exclude_file = cfg.get("EXCLUDE_FILE", "Input", IOUtils::nothrow);
+	const std::string exclude_file = cfg.get("EXCLUDE_FILE", "Input", "");
 
 	if (!exclude_file.empty()) {
 		//if this is a relative path, prefix the path with the current path
@@ -770,7 +770,7 @@ void IOHandler::create_exclude_map()
 void IOHandler::create_keep_map()
 {
 	keeps_ready = true;
-	const std::string keep_file = cfg.get("KEEP_FILE", "Input", IOUtils::nothrow);
+	const std::string keep_file = cfg.get("KEEP_FILE", "Input", "");
 
 	if (!keep_file.empty()) {
 		//if this is a relative path, prefix the path with the current path

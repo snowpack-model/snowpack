@@ -207,8 +207,7 @@ inline void setStaticData(const Config &cfg, IOManager& io, DEMObject &dem, Grid
 	const bool isMaster = MPIControl::instance().master(); // Check if this process is the master (always true for non-parallel mode)
 
 	if (isMaster) { //Reading DEM, LANDUSE, special PTS on master process only
-		std::string slope_algorithm( "CORRIPIO" );
-		cfg.getValue("SLOPE_ALGORITHM", "Input", slope_algorithm, IOUtils::nothrow);
+		const std::string slope_algorithm = cfg.get("SLOPE_ALGORITHM", "Input", "CORRIPIO");
 		dem.setDefaultAlgorithm(slope_algorithm);
 		dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE | DEMObject::NORMAL | DEMObject::CURVATURE));
 
@@ -290,7 +289,7 @@ inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, c
 
 	//SNOWPACK
 	bool glacier_katabatic_flow = false;
-	glacier_katabatic_flow = cfg.get("GLACIER_KATABATIC_FLOW", "Snowpack", IOUtils::nothrow);
+	cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow);
 	if (!nocompute || glacier_katabatic_flow){
 		try {
 			std::string grids_requirements;

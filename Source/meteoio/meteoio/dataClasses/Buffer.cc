@@ -275,7 +275,8 @@ const std::string MeteoBuffer::toString() const
 	os << "Buffer content (" << ts_buffer.size() << " stations)\n";
 	for (size_t ii=0; ii<ts_buffer.size(); ii++) {
 		if (!ts_buffer[ii].empty()){
-			os << std::setw(10) << ts_buffer[ii].front().meta.stationID << " = "
+			os << std::setw(10) << ts_buffer[ii].front().meta.stationID << " ("
+			   << ts_buffer[ii].front().meta.getAltitude() << ") = "
 			   << ts_buffer[ii].front().date.toString(Date::ISO) << " - "
 			   << ts_buffer[ii].back().date.toString(Date::ISO) << ", "
 			   << ts_buffer[ii].size() << " timesteps" << endl;

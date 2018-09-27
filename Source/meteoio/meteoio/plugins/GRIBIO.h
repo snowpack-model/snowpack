@@ -52,7 +52,6 @@ class GRIBIO : public IOInterface {
 		
 	private:
 		void setOptions();
-		void listFields(const std::string& filename);
 		void getDate(grib_handle* h, Date &base, double &d1, double &d2);
 		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
 		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out);
@@ -61,6 +60,7 @@ class GRIBIO : public IOInterface {
 		void readWind(const std::string& filename, const Date& date);
 		void indexFile(const std::string& filename);
 		void readStations(std::vector<Coords> &vecPoints);
+		void listFields(const std::string& filename);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
 		void cleanup() throw();
@@ -97,7 +97,7 @@ class GRIBIO : public IOInterface {
 		bool indexed; //flag to know if the file has already been indexed
 		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
 		bool llcorner_initialized; //set to true after we properly computed llcorner
-		bool update_dem;
+		bool update_dem, debug;
 
 };
 

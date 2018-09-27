@@ -9,14 +9,15 @@ BuildVersion()
 MACRO (SET_COMPILER_OPTIONS)
 	###########################################################
 	IF(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)	#this is required for building libraries
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} /EHa")
 		ENDIF(DEBUG_ARITHM)
 		
 		#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
+		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions /w35045: inform about Spectre mitigation
 		#SET(EXTRA_WARNINGS "/Wp64") #/Wall
-		SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
+		SET(OPTIM "/O2 /DNDEBUG /DEBUG:FASTLINK /MD /DNOSAFECHECKS")
 		SET(ARCH_OPTIM "/arch:AVX2")
 		SET(ARCH_SAFE "")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
@@ -24,9 +25,6 @@ MACRO (SET_COMPILER_OPTIONS)
 		ENDIF()
 		SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 		SET(_VERSION "/D_VERSION=${_versionString}")
-		IF(BUILD_SHARED_LIBS)
-			ADD_DEFINITIONS(/DMIO_DLL)
-		ENDIF(BUILD_SHARED_LIBS)
 		
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL Intel)
@@ -37,7 +35,8 @@ MACRO (SET_COMPILER_OPTIONS)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
 		
-		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch")
+		SET(WARNINGS_OFF "-Wno-long-long -Wno-unknown-pragmas -wd2015,11071")
+		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch ${WARNINGS_OFF}")
 		SET(DEEP_WARNINGS "-Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
 		SET(EXTRA_WARNINGS "-Wextra -pedantic ${DEEP_WARNINGS}")
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
@@ -83,18 +82,15 @@ MACRO (SET_COMPILER_OPTIONS)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
 		
-		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch -Wno-unknown-pragmas")
+		SET(WARNINGS "-Wall -Wno-long-long -Wno-unknown-pragmas -Wswitch")
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Wfloat-equal -Wpadded -Wconversion
-		SET(EXTRA_WARNINGS "-Wextra -pedantic ${DEEP_WARNINGS}") #-Weffc++
+		SET(EXTRA_WARNINGS "-Wextra -pedantic ${DEEP_WARNINGS}") #-Weffc++ 
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
 			SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
 		ENDIF()
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
-		#IF(BUILD_SHARED_LIBS)
-		#	ADD_DEFINITIONS(-DMIO_DLL)
-		#ENDIF(BUILD_SHARED_LIBS)
 		
 		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wwrite-strings")
@@ -112,7 +108,20 @@ MACRO (SET_COMPILER_OPTIONS)
 		IF(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
 			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wvector-operation-performance") #for gcc>=4.7.0
 			IF(NOT WIN32)
-				SET(OPTIM "${OPTIM} -flto") #for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
+				#for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
+				FIND_PROGRAM(CMAKE_GCC_AR NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ar${_CMAKE_TOOLCHAIN_SUFFIX} HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+				FIND_PROGRAM(CMAKE_GCC_NM NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-nm HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+				FIND_PROGRAM(CMAKE_GCC_RANLIB NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ranlib HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+
+				IF( CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB )
+					SET(OPTIM "${OPTIM} -flto") 
+					SET( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -fno-fat-lto-objects" )
+					SET( CMAKE_AR "${CMAKE_GCC_AR}" )
+					SET( CMAKE_NM "${CMAKE_GCC_NM}" )
+					SET( CMAKE_RANLIB "${CMAKE_GCC_RANLIB}" )
+				ELSE()
+					MESSAGE( WARNING "GCC indicates LTO support, but binutils wrappers could not be found. Disabling LTO." )
+				ENDIF()
 			ENDIF(NOT WIN32)
 			#if set to ON, all binaries depending on the library have to be compiled the same way.
 			#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"

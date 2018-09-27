@@ -106,7 +106,7 @@ void ALPUG::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	const std::string in_meteo = cfg.get("METEO", "Input", IOUtils::nothrow);
+	const std::string in_meteo = cfg.get("METEO", "Input", "");
 	if (in_meteo == "ALPUG") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		vecIDs.clear();

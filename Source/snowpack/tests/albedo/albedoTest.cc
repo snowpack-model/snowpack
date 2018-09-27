@@ -682,8 +682,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio,
 }
 
 inline void addSpecialKeys(SnowpackConfig &cfg) {
-	const string variant = cfg.get("VARIANT", "SnowpackAdvanced",
-	                               mio::IOUtils::nothrow);
+	const string variant = cfg.get("VARIANT", "SnowpackAdvanced");
 
 	// Add keys to perform running mean in Antarctic variant
 	if (variant == "ANTARCTICA") {
@@ -788,8 +787,7 @@ inline void writeForcing(Date d1, const Date& d2, const double& Tstep,
 	prn_msg(__FILE__, __LINE__, "msg", mio::Date(),
 	        "Reading and writing out forcing data...");
 
-	const std::string experiment = io.getConfig().get("EXPERIMENT", "Output",
-	                                                  mio::IOUtils::nothrow);
+	const std::string experiment = io.getConfig().get("EXPERIMENT", "Output");
 	std::map<std::string, size_t> mapIDs;  //over a large time range, the number of stations might change... this is the way to make it work
 	std::vector<MeteoData> Meteo;  //we need some intermediate storage, for storing data sets for 1 timestep
 
@@ -824,8 +822,7 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name) {
 		        mode.c_str());
 	}
 
-	const string variant = cfg.get("VARIANT", "SnowpackAdvanced",
-	                               mio::IOUtils::nothrow);
+	const string variant = cfg.get("VARIANT", "SnowpackAdvanced");
 	if (variant != "DEFAULT") {
 		prn_msg(__FILE__, __LINE__, "msg", mio::Date(), "Variant is '%s'",
 		        variant.c_str());
@@ -834,8 +831,7 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name) {
 	        name.c_str(), __DATE__, __TIME__);
 
 	if (mode != "OPERATIONAL") {
-		const string experiment = cfg.get("EXPERIMENT", "Output",
-		                                  mio::IOUtils::nothrow);
+		const string experiment = cfg.get("EXPERIMENT", "Output");
 		const string outpath = cfg.get("METEOPATH", "Output");
 		prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Experiment : %s",
 		        experiment.c_str());
@@ -874,11 +870,9 @@ inline void real_main(int argc, char *argv[]) {
 		mio::IOUtils::convertString(dateEnd, end_date_str, i_time_zone);
 	}
 
-	const string variant = cfg.get("VARIANT", "SnowpackAdvanced",
-	                               mio::IOUtils::nothrow);
-	const string experiment = cfg.get("EXPERIMENT", "Output",
-	                                  mio::IOUtils::nothrow);
-	const string outpath = cfg.get("METEOPATH", "Output", mio::IOUtils::nothrow);
+	const string variant = cfg.get("VARIANT", "SnowpackAdvanced");
+	const string experiment = cfg.get("EXPERIMENT", "Output");
+	const string outpath = cfg.get("METEOPATH", "Output");
 	const bool useSoilLayers = cfg.get("SNP_SOIL", "Snowpack");
 	const bool useCanopyModel = cfg.get("CANOPY", "Snowpack");
 	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH",
@@ -899,26 +893,15 @@ inline void real_main(int argc, char *argv[]) {
 	cfg.getValue("FIRST_BACKUP", "Output", first_backup, mio::IOUtils::nothrow);
 
 	const bool profwrite = cfg.get("PROF_WRITE", "Output");
-	const double profstart = cfg.get(
-	    "PROF_START", "Output",
-	    (profwrite) ? mio::IOUtils::dothrow : mio::IOUtils::nothrow);
-	const double profdaysbetween = cfg.get(
-	    "PROF_DAYS_BETWEEN", "Output",
-	    (profwrite) ? mio::IOUtils::dothrow : mio::IOUtils::nothrow);
+	const double profstart = cfg.get("PROF_START", "Output");
+	const double profdaysbetween = cfg.get("PROF_DAYS_BETWEEN", "Output");
 	const bool tswrite = cfg.get("TS_WRITE", "Output");
-	const double tsstart = cfg.get(
-	    "TS_START", "Output",
-	    (tswrite) ? mio::IOUtils::dothrow : mio::IOUtils::nothrow);
-	const double tsdaysbetween = cfg.get(
-	    "TS_DAYS_BETWEEN", "Output",
-	    (tswrite) ? mio::IOUtils::dothrow : mio::IOUtils::nothrow);
+	const double tsstart = cfg.get("TS_START", "Output");
+	const double tsdaysbetween = cfg.get("TS_DAYS_BETWEEN", "Output");
 
 	const double thresh_rain = cfg.get("THRESH_RAIN", "SnowpackAdvanced");  //Rain only for air temperatures warmer than threshold (degC)
-	const bool advective_heat = cfg.get("ADVECTIVE_HEAT", "SnowpackAdvanced",
-	                                    mio::IOUtils::nothrow);
-	const bool soil_flux =
-	    (useSoilLayers) ?
-	        cfg.get("SOIL_FLUX", "Snowpack", mio::IOUtils::nothrow) : false;
+	const bool advective_heat = cfg.get("ADVECTIVE_HEAT", "SnowpackAdvanced");
+	const bool soil_flux = (useSoilLayers) ? cfg.get("SOIL_FLUX", "Snowpack") : false;
 
 	//If the user provides the stationIDs - operational use case
 	if (!vecStationIDs.empty()) {  //operational use case: stationIDs provided on the command line
@@ -997,7 +980,7 @@ inline void real_main(int argc, char *argv[]) {
 			    outpath + "/" + vecStationIDs[i_stn] + "_" + experiment + ".ini");  //output config
 			current_date -= calculation_step_length / (24. * 60.);
 		} else {
-			const string db_name = cfg.get("DBNAME", "Output", mio::IOUtils::nothrow);
+			const string db_name = cfg.get("DBNAME", "Output", "");
 			if (db_name == "sdbo" || db_name == "sdbt")
 				mn_ctrl.sdbDump = true;
 		}

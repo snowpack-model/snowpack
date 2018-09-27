@@ -36,8 +36,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 		throw IOException("WINDOW_SIZE not valid, it should be a duration in seconds at least greater than 1", AT);
 	window_size /= 86400.; //user uses seconds, internally julian day is used
 	
-	if (cfg.keyExists("ENABLE_RESAMPLING", "Interpolations1D"))
-		enable_resampling = cfg.get("ENABLE_RESAMPLING", "Interpolations1D");
+	cfg.getValue("ENABLE_RESAMPLING", "Interpolations1D", enable_resampling, IOUtils::nothrow);
 
 	//create the resampling algorithms for each MeteoData::Parameters parameter
 	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables

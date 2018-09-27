@@ -333,7 +333,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 
 	// Input section
 	cfg.getValue("METEOPATH", "Input", inpath, IOUtils::nothrow);
-	const string in_snowpath = cfg.get("SNOWPATH", "Input", IOUtils::nothrow);
+	const std::string in_snowpath = cfg.get("SNOWPATH", "Input", "");
 	cfg.getValue("TIME_ZONE", "Input", time_zone);
 
 	// Output section
@@ -353,7 +353,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("OUT_SW", "Output", out_sw);
 	cfg.getValue("OUT_T", "Output", out_t);
 	cfg.getValue("HARDNESS_IN_NEWTON", "Output", r_in_n, IOUtils::nothrow);
-	const string out_snowpath = cfg.get("SNOWPATH", "Output", IOUtils::nothrow);
+	const std::string out_snowpath = cfg.get("SNOWPATH", "Output", "");
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("PROF_FORMAT", "Output", vecProfileFmt);
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
@@ -444,6 +444,7 @@ bool AsciiIO::snowCoverExists(const std::string& i_snowfile, const std::string& 
  * @param stationID
  * @param SSdata
  * @param Zdata
+ * @param read_salinity
  */
 void AsciiIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
                             SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool&)

@@ -1461,6 +1461,10 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	//Initial snow salinity
 	if (variant == "SEAICE" ) {
 		elem.salinity = SeaIce::InitSnowSalinity;
+		const double BrineSal_new = (elem.theta[WATER] == 0.) ? (0.) : (elem.salinity / elem.theta[WATER]);
+		elem.meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+	} else {
+		elem.meltfreeze_tk = Constants::meltfreeze_tk;
 	}
 }
 

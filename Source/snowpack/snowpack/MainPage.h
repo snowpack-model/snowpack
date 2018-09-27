@@ -289,11 +289,13 @@
  * - incoming short wave radiation (ISWR) <i>and/or</i> reflected short wave radiation (RSWR)
  * - incoming long wave radiation (ILWR) <i>and/or</i> surface temperature (TSS)
  * - precipitation (PSUM) <i>and/or</i> snow height (HS)
- * - ground temperature (TSG, if available. Otherwise, you will have to use <a href="https://models.slf.ch">MeteoIO</A>'s data generators to generate a value)
+ * - ground temperature (TSG, if available. Otherwise, you will have to use <a href="https://models.slf.ch">MeteoIO</A>'s 
+ * data generators to generate a value) <i>or</i> geothermal heat flux
  * - snow temperatures at various depths (TS1, TS2, etc if available and only for comparisons, see section \ref SnowSoilTemperatures)
  *
  * These parameters <b>should best</b> be available at a hourly time step and preferably in MKSA units 
- * (please check the MeteoIO plugins documentation for specific cases, like GRIB, NetCDF... that are automatically handled).
+ * (please check the MeteoIO plugins documentation for specific cases, like GRIB, NetCDF... that are automatically handled). Please have a look 
+ * at the \ref snowpackio "other input parameters" that are required to run your simulation!
  *
  * @section data_preparation Data preparation
  * In order to help %Snowpack handle the (sometimes broken) data sets to be used in a simulation, the <a href="https://models.slf.ch/p/meteoio">MeteoIO library</a> is used.

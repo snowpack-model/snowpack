@@ -52,8 +52,10 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords);
  * - TIME_ZONE: the timezone that should be used to interpret the dates/times (default: 0);
  * - METEOPATH: the directory where the data files are available (mandatory);
- * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified;
+ * - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
+ * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false);
  * - POSITION\#: coordinates of the station (default: reading key "POSITION"; see (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax));
+ * - CSV_FILE_EXTENSION: When scanning the whole directory, look for these files (default: .csv). Note that this matching isn't restricted to the end of the file name so if you had files stat1_jan.csv, stat1_feb.csv and stat2_jan.csv you could select January's data by putting "_jan" here;
  * - CSV_SILENT_ERRORS: if set to true, lines that can not be read will be silently ignored (default: false, has priority over CSV_ERRORS_TO_NODATA);
  * - CSV_ERRORS_TO_NODATA: if true, unparseable fields (like text fields) are set to nodata, but the rest of the line is kept (default: false).
  * 
@@ -656,7 +658,27 @@ void CsvIO::parseInputOutputSection()
 
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
 	const std::string meteopath = cfg.get("METEOPATH", "Input");
-	const std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
+	std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
+
+	if (vecFilenames.empty()) { //scan all of the data path for a given file extension if no stations are specified
+		bool is_recursive = false;
+		std::string csvext(".csv");
+		cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+		cfg.getValue("CSV_FILE_EXTENSION", "Input", csvext, IOUtils::nothrow); 
+		
+		std::list<std::string> dirlist( FileUtils::readDirectory(meteopath, csvext, is_recursive) );
+		dirlist.sort();
+
+		size_t hit = 0;	//human readable iterator
+		for (std::list<std::string>::iterator it=dirlist.begin(); it!=dirlist.end(); ++it) {
+			hit++;
+			std::stringstream ss;
+			ss << "STATION" << hit; //assign alphabetically ordered ID to station
+			
+			const std::pair<std::string, std::string> stat_id_and_name(ss.str(), *it);
+			vecFilenames.push_back(stat_id_and_name);
+		}
+	} 
 	
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
 		const std::string idx( vecFilenames[ii].first.substr(string("STATION").length()) );

@@ -50,6 +50,25 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
 }
 
 /**
+* @brief Constructor that sets a constant DEM. 
+* @details The resulting DEM will have the same elevation everywhere, constant slope (flat) and curvature (flat).
+* @param ncols_in number of colums in the grid2D
+* @param nrows_in number of rows in the grid2D
+* @param llcorner_in lower lower corner point
+* @param init initial value to fill the DEM with
+*/
+DEMObject::DEMObject(const size_t& ncols_in, const size_t& nrows_in, const Coords& llcorner_in, const double& init)
+           : Grid2DObject(ncols_in, nrows_in, 10., llcorner_in, init), 
+             slope(ncols_in, nrows_in, 0.), azi(ncols_in, nrows_in, 0.), curvature(ncols_in, nrows_in, 0.), 
+             Nx(ncols_in, nrows_in, 0.), Ny(ncols_in, nrows_in, 0.), Nz(ncols_in, nrows_in, 1.),
+             min_altitude(init), min_slope(0.), min_curvature(0.),
+             max_altitude(init), max_slope(0.), max_curvature(0.),
+             CalculateSlope(&DEMObject::CalculateCorripio),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(DFLT),
+             slope_failures(0), curvature_failures(0)
+{}
+
+/**
 * @brief Constructor that sets variables.
 * @param i_ncols number of colums in the grid2D
 * @param i_nrows number of rows in the grid2D

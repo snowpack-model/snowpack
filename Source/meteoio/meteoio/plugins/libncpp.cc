@@ -1049,7 +1049,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 std::vector<ncpp::var_attr> NC_SCHEMA::initUserSchemas(const mio::Config& i_cfg)
 {
 	std::vector<ncpp::var_attr> results;
-	const std::string user_type_str = i_cfg.get("NC_TYPE", "Input", mio::IOUtils::nothrow);
+	const std::string user_type_str = i_cfg.get("NC_TYPE", "Input", "");
 	char user_type = -1;
 	if (!user_type_str.empty()) {
 		if (user_type_str=="DOUBLE") user_type = NC_DOUBLE;

@@ -28,7 +28,7 @@ namespace mio {
  * @section psql_format Format
  * This plugin connects to a <i>generic</i> <A HREF="www.postgresql.org/">PostgreSQL</A> server to retrieve its meteorological data. The server
  * parameters must be provided as well as the queries to retrieve the stations' data and metadata. In order to compile this plugin,
- * the development package of libpq is required (this is the PostgreSQL c client library).
+ * the development package of libpq is required (this is the PostgreSQL c client library) and most probably also postgresql-server-dev-all.
  *
  * @subsection psql_meta_query Metadata query
  * This query is used to retrieve the stations' metadata. This SQL query string should retrieve the following columns as result set (in this very order):

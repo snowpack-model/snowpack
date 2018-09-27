@@ -222,7 +222,7 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				// Keep layer if it is a soil layer inside the snowpack (for example with snow farming)
 				if(e>=Xdata.SoilNode) {
 					if(EMS[e].theta[SOIL]<Constants::eps) {
-						SnowStation::mergeElements(EMS[e-1], EMS[e], false, true);
+						if (e>0) SnowStation::mergeElements(EMS[e-1], EMS[e], false, true);
 						// Now reduce the number of elements by one.
 						nE--;
 					}

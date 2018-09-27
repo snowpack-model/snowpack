@@ -144,7 +144,7 @@ using namespace mio;
  * the profile date.
  */
 SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
-        : fixedPositions(), outpath(), o_snowpath(), snowpath(), experiment(), inpath(), i_snowpath(), sw_mode(),
+        : fixedPositions(), outpath(), o_snowpath(), experiment(), inpath(), i_snowpath(), sw_mode(),
           info(run_info), tsWriters(),
           in_dflt_TZ(0.), calculation_step_length(0.), ts_days_between(0.), min_depth_subsurf(0.),
           avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false),
@@ -162,13 +162,12 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 
 	cfg.getValue("EXPERIMENT", "Output", experiment);
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
-	cfg.getValue("SNOWPATH", "Output", snowpath, IOUtils::nothrow);
-	o_snowpath = (!snowpath.empty())? snowpath : outpath;
+	cfg.getValue("SNOWPATH", "Output", o_snowpath, IOUtils::nothrow);
+	if (o_snowpath.empty()) o_snowpath = outpath;
 
 	cfg.getValue("METEOPATH", "Input", inpath, IOUtils::nothrow);
-	snowpath = string();
-	cfg.getValue("SNOWPATH", "Input", snowpath, IOUtils::nothrow);
-	i_snowpath = (!snowpath.empty())? snowpath : inpath;
+	cfg.getValue("SNOWPATH", "Input", i_snowpath, IOUtils::nothrow);
+	if (i_snowpath.empty()) i_snowpath = inpath;
 
 	cfg.getValue("OUT_CANOPY", "Output", out_canopy);
 	cfg.getValue("OUT_HAZ", "Output", out_haz);
@@ -201,7 +200,6 @@ SmetIO& SmetIO::operator=(const SmetIO& source) {
 		fixedPositions = source.fixedPositions;
 		outpath = source.outpath;
 		o_snowpath = source.o_snowpath;
-		snowpath = source.snowpath;
 		experiment = source.experiment;
 		inpath = source.inpath;
 		i_snowpath = source.i_snowpath;
@@ -258,6 +256,7 @@ bool SmetIO::snowCoverExists(const std::string& i_snowfile, const std::string& /
  * @param stationID
  * @param SSdata
  * @param Zdata
+ * @param read_salinity
  */
 void SmetIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
                            SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity)

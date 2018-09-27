@@ -506,7 +506,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 					verify_top_element=true;
 				}
 			} else {										// We are dealing with first snow element above soil
-				if (rnE-1 > Xdata.SoilNode && EMS[eUpper+1].L > 0.) {				// If at least one snow layer above AND this layer above is not marked to be removed yet.
+				if (rnE-1 > Xdata.SoilNode && EMS[eUpper+1].L > 0. && EMS[eUpper+1].Rho > 0.) { // If at least one snow layer above AND this layer above is not marked to be removed yet.
 					// In case it is the lowest snow element and there are snow elements above, join with the element above:
 					merged=true;
 					SnowStation::mergeElements(EMS[eUpper], EMS[eUpper+1], true, (eUpper==nE-1));
@@ -1077,6 +1077,10 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 				      EMS[0].soilFieldCapacity() + dth_w);
 			}
 			Wres = std::max(0., Wres);
+
+			// Add excess water to the bottom element, such that it does not get lost
+			EMS[0].theta[WATER] += excess_water / EMS[0].L;
+			excess_water = 0.;
 
 			const double W0 = EMS[0].theta[WATER];
 			if ((W0 > Wres) // NOTE: if water_layer is set, do not drain water element on top of soil

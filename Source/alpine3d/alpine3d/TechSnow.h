@@ -33,6 +33,7 @@ class TechSnow
 
 		void setMeteo(const mio::Grid2DObject& ta,
 		              const mio::Grid2DObject& rh,
+		              const mio::Grid2DObject& hs,
 		              const mio::Date& timestamp);
 		
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
@@ -40,9 +41,11 @@ class TechSnow
 		static std::string getGridsRequirements() { return "TA RH"; }
 
 	private:
-		static void readStrategy(const std::string& filename);
-		static short int getRunNumber(const double& dbl_code);
-		
+		static void readSlopeConditions(const int& column, struct condition * slope_condition, const std::string& filename);
+		static short int getSlopeNumber(const double& dbl_code);
+		static short int findSlope(const int& numbers_of_slopes, struct condition * slope_condition, const int& findSlope);
+		static double setPriority(const std::string& date, const std::string& season_opening, const std:: string& season_closing, const std::string& start_prod, const std::string& end_prod, const double& start_aim, const double& end_aim, const double& gun_operation, const double& snow_height, const double& V_water, const double& slope_area, const double& nr_snowguns, const double& min_height, const int date_hour, const int slope_open, const int slope_closed);
+							 	  
 		mio::Grid2DObject skiRunsMap; ///< All ski runs pixels are tagged by ski run and section number
 		mio::Grid2DObject grooming, psum_tech;
 		

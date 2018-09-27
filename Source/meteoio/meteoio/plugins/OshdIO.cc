@@ -138,12 +138,11 @@ void OshdIO::parseInputOutputSection()
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
 	
-	const std::string meteo_in = cfg.get("METEO", "Input", IOUtils::nothrow);
+	const std::string meteo_in = cfg.get("METEO", "Input", "");
 	if (meteo_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValues("STATION", "INPUT", vecIDs);
 		cfg.getValue("METEOPATH", "Input", in_meteopath);
-		bool is_recursive = false;
-		cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+		const bool is_recursive = cfg.get("METEOPATH_RECURSIVE", "Input", false);
 		cache_meteo_files = scanMeteoPath(in_meteopath, is_recursive);
 		if (debug) {
 			std::cout << "Meteo files cache content:\n";
@@ -156,12 +155,11 @@ void OshdIO::parseInputOutputSection()
 		}
 	}
 
-	const std::string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	const std::string grid_in = cfg.get("GRID2D", "Input", "");
 	if (grid_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
 		grid2dpath_in.clear();
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-		bool is_recursive = false;
-		cfg.getValue("GRIDPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
+		const bool is_recursive = cfg.get("GRIDPATH_RECURSIVE", "Input", false);
 		cache_grid_files = scanMeteoPath(grid2dpath_in, is_recursive);
 		if (debug) {
 			std::cout << "Grid files cache content:\n";
