@@ -57,21 +57,25 @@ SnowpackIO::SnowpackIO(const SnowpackConfig& cfg):
 		throw InvalidArgumentException("Invalid input snow profile format '"+in_snow+"'. Please choose from SMET, CAAML, SNOOLD", AT);
 
 	//Format of transitional and final snow profile(s):
-	const string out_snow = cfg.get("SNOW", "Output");
-	if (out_snow == "SNOOLD") {
-		output_snow_as_ascii = true;
-		vecExtension.push_back("snoold");	//Snow-cover profile file (I/O)
-	} else if (out_snow == "CAAML") {
-		output_snow_as_caaml = true;
-		vecExtension.push_back("haz");	//Snow-cover profile file (I/O)
-		vecExtension.push_back("caaml");	//Snow-cover profile file (I/O & SnopViz)
-		vecExtension.push_back("acaaml");	//Aggregated snow-cover profile file (I/O & SnopViz)
-	} else if (out_snow == "SMET") {
-		output_snow_as_smet = true;
-		vecExtension.push_back("haz");	//Snow-cover profile file (I/O)
-		vecExtension.push_back("sno");	//Snow-cover profile file (I/O)
-	} else
-		throw InvalidArgumentException("Invalid output snow profile format '"+out_snow+"'. Please choose from SMET, CAAML, SNOOLD", AT);
+	const bool snow_out = cfg.get("SNOW_WRITE", "Output");
+	const bool a3d_pts = cfg.get("ALPINE3D_PTS", "SnowpackAdvanced");
+	if (snow_out || a3d_pts) {
+		const string out_snow = cfg.get("SNOW", "Output");
+		if (out_snow == "SNOOLD") {
+			output_snow_as_ascii = true;
+			vecExtension.push_back("snoold");	//Snow-cover profile file (I/O)
+		} else if (out_snow == "CAAML") {
+			output_snow_as_caaml = true;
+			vecExtension.push_back("haz");	//Snow-cover profile file (I/O)
+			vecExtension.push_back("caaml");	//Snow-cover profile file (I/O & SnopViz)
+			vecExtension.push_back("acaaml");	//Aggregated snow-cover profile file (I/O & SnopViz)
+		} else if (out_snow == "SMET") {
+			output_snow_as_smet = true;
+			vecExtension.push_back("haz");	//Snow-cover profile file (I/O)
+			vecExtension.push_back("sno");	//Snow-cover profile file (I/O)
+		} else
+			throw InvalidArgumentException("Invalid output snow profile format '"+out_snow+"'. Please choose from SMET, CAAML, SNOOLD", AT);
+	}
 
 	const std::vector<string> vecProfileFmt = cfg.get("PROF_FORMAT", "Output");
 	if (vecProfileFmt.size() > 3) {
@@ -107,7 +111,7 @@ SnowpackIO::SnowpackIO(const SnowpackConfig& cfg):
 		} else
 			throw InvalidArgumentException("The key TS_FORMAT in [Output] takes only SMET or MET as value", AT);
 	}
-	
+
 	vecExtension.push_back("ini");	//Record of run configuration
 
 	//set the "plugins" pointers

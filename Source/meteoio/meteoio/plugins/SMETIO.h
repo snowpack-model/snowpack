@@ -54,6 +54,7 @@ class SMETIO : public IOInterface {
 		virtual void readPOI(std::vector<Coords>& pts);
 
 	private:
+		static double getSnowpackSlope(const std::string& id);
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
 		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
 		                     bool& julian_present, MeteoData& md);
@@ -63,18 +64,19 @@ class SMETIO : public IOInterface {
 		void parseInputOutputSection();
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
-		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& tz,
+		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& smet_timezone,
 		                            std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
 		static void getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max);
 		static void getFormatting(const size_t& param, int& prec, int& width);
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-		                        const double& timezone, const size_t& nr_of_parameters,
+		                        const double& smet_timezone, const size_t& nr_of_parameters,
 		                        const std::vector<bool>& vecParamInUse,
 		                        const std::vector<std::string>& vecColumnName,
 		                        smet::SMETWriter& mywriter);
 
 		static const char* dflt_extension;
+		static const double snVirtualSlopeAngle;
 		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;
@@ -83,7 +85,7 @@ class SMETIO : public IOInterface {
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		size_t nr_stations; //number of stations to read from
-		bool outputIsAscii, outputPlotHeaders, allowAppend, allowOverwrite;//read from the Config [Output] section
+		bool outputIsAscii, outputPlotHeaders, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 
 } //namespace

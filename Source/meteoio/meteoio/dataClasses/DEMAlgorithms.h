@@ -31,8 +31,8 @@ namespace mio {
 class DEMAlgorithms {
 	public:
 		static Grid2DObject getHillshade(const DEMObject& dem, const double& elev, const double& azimuth);
-		static double getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing);
-		static double getHorizon(const DEMObject& dem, const Coords& point, const double& bearing);
+		static double getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing, const double& offset=0.);
+		static double getHorizon(const DEMObject& dem, const Coords& point, const double& bearing, const double& offset=0.);
 		static void getHorizon(const DEMObject& dem, const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon);
 		static double getCellSkyViewFactor(const DEMObject& dem, const size_t& ii, const size_t& jj);
 

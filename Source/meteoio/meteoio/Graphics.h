@@ -144,7 +144,7 @@ class Gradient_model {
 		double getInterpol(const double& val, const std::vector<double>& i_X, const std::vector<double>& i_Y) const;
 		void HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b) const;
 
-		std::vector<double> X, v_h,v_s,v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
+		std::vector<double> X, v_h, v_s, v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
 };
 
 /**
@@ -299,7 +299,7 @@ class gr_freeze : public Gradient_model {
 		void getColor(const double &val, double &r, double &g, double &b) const;
 	private:
 		//This gradient is interpolated in RGB color space
-		std::vector<double> X, v_r, v_g, v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
+		std::vector<double> v_r, v_g, v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
 };
 
 class gr_bluewhitered : public Gradient_model {

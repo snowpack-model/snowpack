@@ -60,15 +60,15 @@ const double Snowpack::min_snow_albedo = 0.3;
 const double Snowpack::min_ice_content = SnLaws::min_hn_density / Constants::density_ice;
 
 /// @brief Define the assembly macro
-void Snowpack::EL_INCID(const size_t &e, int Ie[]) {
-	Ie[0] = static_cast<int>( e );
-	Ie[1] = static_cast<int>( e+1 );
+void Snowpack::EL_INCID(const int &e, int Ie[]) {
+	Ie[0] = e;
+	Ie[1] = e+1;
 }
 
 /// @brief Define the node to element temperature macro
 void Snowpack::EL_TEMP( const int Ie[], double Te0[], double Tei[], const std::vector<NodeData> &T0, const double Ti[] ) {
-	Te0[ 0 ] = T0[ static_cast<size_t>(Ie[ 0 ]) ].T;
-	Te0[ 1 ] = T0[ static_cast<size_t>(Ie[ 1 ]) ].T;
+	Te0[ 0 ] = T0[ Ie[ 0 ] ].T;
+	Te0[ 1 ] = T0[ Ie[ 1 ] ].T;
 	Tei[ 0 ] = Ti[ Ie[ 0 ] ];
 	Tei[ 1 ] = Ti[ Ie[ 1 ] ];
 }
@@ -96,8 +96,8 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), forestfloor_alb(false), adjust_height_of_meteo_values(true),
-            advective_heat(false), heat_begin(0.), heat_end(0.), temp_index_degree_day(0.), temp_index_swr_factor(0.)
+            enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
+            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 
@@ -294,7 +294,27 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("ADVECTIVE_HEAT", "SnowpackAdvanced", advective_heat, IOUtils::nothrow);
 	cfg.getValue("HEAT_BEGIN", "SnowpackAdvanced", heat_begin, IOUtils::nothrow);
 	cfg.getValue("HEAT_END", "SnowpackAdvanced", heat_end, IOUtils::nothrow);
-	
+
+	// Get the soil evaporation model to be used
+	std::string soil_evap;
+	cfg.getValue("SOIL_EVAP_MODEL", "SnowpackAdvanced", soil_evap);
+	if(soil_evap=="RESISTANCE")
+	{
+		soil_evaporation = EVAP_RESISTANCE;
+	}
+	else if(soil_evap=="RELATIVE_HUMIDITY")
+	{
+		soil_evaporation = EVAP_RELATIVE_HUMIDITY;
+	}
+	else if(soil_evap=="NONE")
+	{
+		soil_evaporation = EVAP_NONE;
+	}
+	else
+	{
+		throw IOException("Unknown value for key SOIL_EVAP_MODEL in [SnowpackAdvanced]. Accepted values are \"RESISTANCE\", \"RELATIVE HUMIDITY\", and \"NONE\".", AT);
+	}
+
 	// Soot/impurity in ppmv for albedo caclulations
 	cfg.getValue("SOOT_PPMV", "SnowpackAdvanced", soot_ppmv);
 }
@@ -555,7 +575,7 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 	if (forcing == "ATMOS") {
 		// For atmospheric forcing
 		Bdata.qs = alpha * (Tair - Tss);
-		Bdata.ql = SnLaws::compLatentHeat_Rh(Mdata, Xdata, actual_height_of_meteo_values);
+		Bdata.ql = SnLaws::compLatentHeat_Rh(soil_evaporation, Mdata, Xdata, actual_height_of_meteo_values);
 		if (Xdata.getNumberOfElements() > 0) {
 		  	// Limit fluxes in case of explicit treatment of boundary conditions
 			const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
@@ -734,17 +754,11 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 	// Parameterized albedo (statistical model) including correct treatment of PLASTIC and WATER_LAYER
 	if (nE > Xdata.SoilNode) { //there are some non-soil layers
 		size_t eAlbedo = nE-1;
-		const size_t marker = EMS[eAlbedo].mk % 10;
+		size_t marker = EMS[eAlbedo].mk % 10;
 
-		if(marker==9) // WATER_LAYER
-		{
-				if (eAlbedo > Xdata.SoilNode)
-					eAlbedo--;
-		}
-		else if (marker==8) // Ice layer within the snowpack
- 		{
-				while (eAlbedo > Xdata.SoilNode)
-					eAlbedo--;
+		while ((marker==8 || marker==9) && eAlbedo > Xdata.SoilNode){ //If Water or ice layer, go one layer down
+			eAlbedo--;
+			marker = EMS[eAlbedo].mk % 10;
 		}
 
 		if (eAlbedo > Xdata.SoilNode && (EMS[eAlbedo].theta[SOIL] < Constants::eps2)) { // Snow, or glacier ice
@@ -762,10 +776,9 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 	if (useCanopyModel && (Xdata.Cdata.height > 3.5)) { //forest floor albedo
 		Albedo = std::max(0.05, std::min(0.95, Albedo));
 	} else {
-		const bool use_hs_meas = enforce_measured_snow_heights && (Xdata.meta.getSlopeAngle() <= Constants::min_slope_angle);
-		const double hs = (use_hs_meas)? Xdata.mH - Xdata.Ground : Xdata.cH - Xdata.Ground;
-
 		if (research_mode) { // Treatment of "No Snow" on the ground in research mode
+			const bool use_hs_meas = enforce_measured_snow_heights && (Xdata.meta.getSlopeAngle() <= Constants::min_slope_angle);
+			const double hs = (use_hs_meas)? Xdata.mH - Xdata.Ground : Xdata.cH - Xdata.Ground;
 			const bool snow_free_ground = (hs < 0.02) || (NDS[nN-1].T > IOUtils::C_TO_K(3.5)) || ((hs < 0.05) && (NDS[nN-1].T > IOUtils::C_TO_K(1.7)));
 			if (snow_free_ground)
 				Albedo = Xdata.SoilAlb;
@@ -799,8 +812,7 @@ double Snowpack::getModelAlbedo(const SnowStation& Xdata, CurrentMeteo& Mdata) c
 	} else if (sw_mode == "BOTH") { // use measured albedo ...
 		// ... while the ground is still snow covered according to HS measurements
 		if (Mdata.mAlbedo != Constants::undefined) {
-			if ((!((Mdata.mAlbedo < 2.*Xdata.SoilAlb)
-			        && ((Xdata.cH - Xdata.Ground) > 0.05))) && Mdata.mAlbedo <= 0.95)
+			if ( (!( (Mdata.mAlbedo < 2.*Xdata.SoilAlb) && ((Xdata.cH - Xdata.Ground) > 0.05)) ) && Mdata.mAlbedo <= 0.95)
 				return Mdata.mAlbedo; //we have a measured albedo
 			else
 				Mdata.rswr = Mdata.iswr * pAlbedo;
@@ -901,7 +913,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 	if (Kt != NULL)
 		ds_Solve(ReleaseMatrixData, (SD_MATRIX_DATA*)Kt, 0);
-	ds_Initialize(nN, (SD_MATRIX_DATA**)&Kt);
+	ds_Initialize(static_cast<int>(nN), (SD_MATRIX_DATA**)&Kt);
 	/*
 	 * Define the structure of the matrix, i.e. its connectivity. For each element
 	 * we compute the element incidences and pass the incidences to the solver.
@@ -909,8 +921,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	 * equations specified by the incidence set are all connected to each other.
 	 * Initialize element data.
 	*/
-	for (size_t e = 0; e < nE; e++) {
-		int Nodes[2] = {(int)e, (int)e+1};
+	for (int e = 0; e < static_cast<int>(nE); e++) {
+		int Nodes[2] = {e, e+1};
 		ds_DefineConnectivity( (SD_MATRIX_DATA*)Kt, 2, Nodes , 1, 0 );
 	}
 
@@ -1116,7 +1128,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
 				}
 			}
-			EL_INCID( e, Ie );
+			EL_INCID( static_cast<int>(e), Ie );
 			EL_TEMP( Ie, T0, TN, NDS, U );
 			// Update the wind pumping velocity gradient
 			const double dvdz = SnLaws::compWindGradientSnow(EMS[e], v_pump);
@@ -1142,7 +1154,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		 */
 
 		if (surfaceCode == NEUMANN_BC) {
-			EL_INCID(nE-1, Ie);
+			EL_INCID(static_cast<int>(nE-1), Ie);
 			EL_TEMP(Ie, T0, TN, NDS, U);
 			neumannBoundaryConditions(Mdata, Bdata, Xdata, T0[1], TN[1], Se, Fe);
 			ds_AssembleMatrix( (SD_MATRIX_DATA*)Kt, 2, Ie, 2,  (double*) Se );
@@ -1153,7 +1165,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		if (surfaceCode == DIRICHLET_BC) {
 			// Dirichlet BC at surface: prescribed temperature value
 			// NOTE Insert Big at this location to hold the temperature constant at the prescribed value.
-			Ie[0] = static_cast<int>( nE );
+			Ie[0] = static_cast<int>(nE);
 			ds_AssembleMatrix((SD_MATRIX_DATA*) Kt, 1, Ie, 1, &Big);
 		}
 		// Bottom node
@@ -1516,7 +1528,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 
 	Xdata.Albedo = Snowpack::new_snow_albedo;
 
-    const size_t nNewN = nOldN + nAddE;
+	const size_t nNewN = nOldN + nAddE;
 	const size_t nNewE = nOldE + nAddE;
 	Xdata.resize(nNewE);
 	vector<NodeData>& NDS = Xdata.Ndata;
@@ -1528,16 +1540,16 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	const double Ln = (hn / (double)nAddE);               // New snow element length
 	double z0 = NDS[nOldN-1].z + NDS[nOldN-1].u + Ln; // Position of lowest new node
 	for (size_t n = nOldN; n < nNewN; n++) { //loop over the nodes
-				NDS[n].T = IOUtils::C_TO_K(Tw);                  // t_surf Temperature of the new node
-				NDS[n].z = z0;                      // New nodal position
-				NDS[n].u = 0.0;                     // Initial displacement is 0
-				NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
-				NDS[n].udot = 0.0;                  // Settlement rate is also 0
-				NDS[n].f = 0.0;                     // Unbalanced forces are 0
-				NDS[n].S_n = INIT_STABILITY;
-				NDS[n].S_s = INIT_STABILITY;
-				z0 += Ln;
-			}
+			NDS[n].T = IOUtils::C_TO_K(Tw);                  // t_surf Temperature of the new node
+			NDS[n].z = z0;                      // New nodal position
+			NDS[n].u = 0.0;                     // Initial displacement is 0
+			NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
+			NDS[n].udot = 0.0;                  // Settlement rate is also 0
+			NDS[n].f = 0.0;                     // Unbalanced forces are 0
+			NDS[n].S_n = INIT_STABILITY;
+			NDS[n].S_s = INIT_STABILITY;
+			z0 += Ln;
+	}
 
 	// Fill the element data
 	for (size_t e = nOldE; e < nNewE; e++) { //loop over the elements
@@ -1683,13 +1695,13 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	} else {
 		snowed_in = ((Xdata.getNumberOfNodes() > Xdata.SoilNode+1)
 		            || (detect_grass &&
-		                   (((Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
-		                        && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                    || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
-		                        && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                    || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
-		                        && (Mdata.hs_rate > HS_threshold_largeincrease))
-		                   )
+		                (((Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
+		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
+		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
+		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
+		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
+		                    && (Mdata.hs_rate > HS_threshold_largeincrease))
+		                 )
 		               )
 		            || (Mdata.hs_rate > HS_threshold_verylargeincrease)
 		);
@@ -1706,11 +1718,11 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 		// We also adjust Xdata.mH to have it reflect deposited snow but not the canopy.
 		// This can only be done when SNOWPACK is snow height driven and there is a canopy.
 		if ((enforce_measured_snow_heights)
-			    && (Xdata.Cdata.height > 0.)
-			        && ((Xdata.Cdata.height < ThresholdSmallCanopy) || (useCanopyModel == false))
-			            && (Mdata.hs != mio::IOUtils::nodata)
-			                && (Xdata.mH != Constants::undefined)
-			                    && (Xdata.meta.getSlopeAngle() < Constants::min_slope_angle)) {
+			   && (Xdata.Cdata.height > 0.)
+			   && ((Xdata.Cdata.height < ThresholdSmallCanopy) || (useCanopyModel == false))
+			   && (Mdata.hs != mio::IOUtils::nodata)
+			   && (Xdata.mH != Constants::undefined)
+			   && (Xdata.meta.getSlopeAngle() < Constants::min_slope_angle)) {
 			/* The third clause above limits the issue to small canopies only, to prevent problems
 			 *   with Alpine3D simulations in forests. This prerequisite is only checked for when useCanopyModel
 			 *    is true. If useCanopyModel is false, we can safely assume all snow to fall on top of canopy.

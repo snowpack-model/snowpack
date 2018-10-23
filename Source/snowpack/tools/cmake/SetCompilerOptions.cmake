@@ -42,6 +42,7 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
 			SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
+			SET(ARCH_OPTIM "-march=native -mtune=native")
 		ENDIF()
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
@@ -154,7 +155,7 @@ MACRO (SET_COMPILER_OPTIONS)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
 		
-		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unknown-pragmas")
+		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unused-template")
 		SET(WARNINGS "-Wall -Wswitch -Weverything ${WARNINGS_OFF}") #obviously, we should try to fix the warnings! Keeping in mind that some of these W are half buggy...
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Rpass=.* for static analysis
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")

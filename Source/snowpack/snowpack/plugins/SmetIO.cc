@@ -718,6 +718,8 @@ void SmetIO::setBasicHeader(const SnowStation& Xdata, const std::string& fields,
 	smet_writer.set_header_value("longitude", Xdata.meta.position.getLon());
 	smet_writer.set_header_value("altitude", Xdata.meta.position.getAltitude());
 	smet_writer.set_header_value("epsg", Xdata.meta.position.getEPSG());
+	smet_writer.set_header_value("slope_angle", Xdata.meta.getSlopeAngle());
+	smet_writer.set_header_value("slope_azi", Xdata.meta.getAzimuth());
 }
 
 void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::SMETWriter& smet_writer)

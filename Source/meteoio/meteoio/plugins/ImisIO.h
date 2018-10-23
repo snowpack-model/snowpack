@@ -127,6 +127,7 @@ class ImisIO : public IOInterface {
 		bool useAnetz, use_imis_psum, use_psum_snowpack;
 
 		static std::map<std::string, AnetzData> mapAnetz;
+		static std::map< std::string, std::pair<double, double> > mapSlopes;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname
 };

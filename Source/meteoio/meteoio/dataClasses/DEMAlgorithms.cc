@@ -89,9 +89,10 @@ double DEMAlgorithms::getSearchDistance(const DEMObject& dem)
 * @param[in] ix1 x index of the origin point
 * @param[in] iy1 y index of the origin point
 * @param[in] bearing direction given by a compass bearing
+* @param[in] offset optional height over the DEM cell (for a sensor on a mast, etc)
 * @return tangente of angle above the horizontal (in deg)
 */
-double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing)
+double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing, const double& offset)
 {
 	const double max_shade_distance = getSearchDistance(dem);
 	if (max_shade_distance==IOUtils::nodata) 
@@ -101,7 +102,7 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 	const int dimy = (signed)dem.grid2D.getNy();
 	if (ix1==0 || (signed)ix1==dimx-1 || iy1==0 || (signed)iy1==dimy-1) return 0.; //a border cell is not shadded
 	
-	const double cell_alt = dem.grid2D(ix1, iy1);
+	const double cell_alt = dem.grid2D(ix1, iy1) + offset;
 	double horizon_tan_angle = 0.;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
@@ -134,13 +135,14 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 * @param[in] dem DEM to work with
 * @param[in] point the origin point
 * @param[in] bearing direction given by a compass bearing
+* @param[in] offset optional height over the DEM cell (for a sensor on a mast, etc)
 * @return tangente of angle above the horizontal (in deg)
 */
-double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& bearing)
+double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& bearing, const double& offset)
 {
 	const int ix1 = (int)point.getGridI();
 	const int iy1 = (int)point.getGridJ();
-	return getHorizon(dem, ix1, iy1, bearing);
+	return getHorizon(dem, ix1, iy1, bearing, offset);
 }
 
 /**

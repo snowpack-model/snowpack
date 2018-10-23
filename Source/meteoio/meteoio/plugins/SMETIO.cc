@@ -47,6 +47,9 @@ namespace mio {
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet";
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively;
+ * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
+ * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
+ * naming scheme will be used to derive the slope information (default: false).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
@@ -83,13 +86,14 @@ namespace mio {
  */
 
 const char* SMETIO::dflt_extension = ".smet";
+const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true)
+          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
@@ -99,7 +103,7 @@ SMETIO::SMETIO(const Config& cfgreader)
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true)
+          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
@@ -116,13 +120,14 @@ void SMETIO::parseInputOutputSection()
 	std::string inpath, in_meteo;
 	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
 		cfg.getValue("METEOPATH", "Input", inpath);
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 			bool is_recursive = false;
 			cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, ".smet", is_recursive) );
+			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, dflt_extension, is_recursive) );
 			dirlist.sort();
 			vecFilenames.reserve( dirlist.size() );
 			std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
@@ -241,6 +246,26 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 	}
 }
 
+//assume an operational snowpack virtual slopes naming: the station ID is made of letters followed by a station
+//number (1 digit) and an optional virtual slope (1 digit, between 1 and 4)
+double SMETIO::getSnowpackSlope(const std::string& id)
+{
+	static const char ALPHA[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	
+	const std::size_t end_name_pos = id.find_first_not_of(ALPHA);
+	if (end_name_pos==std::string::npos) return IOUtils::nodata; //this is not a Snowpack virtual station naming
+	if (id[end_name_pos]<'0' || id[end_name_pos]>'9') return IOUtils::nodata;
+	
+	if (id.size() - end_name_pos == 1) return 0.; //this is the flat field station
+	const char slope_code = id[end_name_pos+1]; //we are now sure that there is another char at this position
+	
+	if (slope_code=='1') return 1.;
+	else if (slope_code=='2') return 2.;
+	else if (slope_code=='3') return 3.;
+	else if (slope_code=='4') return 4.;
+	else return IOUtils::nodata; //this is not a digit or not in the [1-4] range
+}
+
 void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 {
 	/*
@@ -269,6 +294,19 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
+	const double slope_angle = myreader.get_header_doublevalue("slope_angle");
+	const double slope_azi = myreader.get_header_doublevalue("slope_azi");
+	if (slope_angle!=IOUtils::nodata && slope_azi!=IOUtils::nodata) {
+		meta.setSlope(slope_angle, slope_azi);
+	} else if (slope_angle==0.) {
+		meta.setSlope(slope_angle, 0.);
+	} else if (snowpack_slopes) {
+		const double exposition = getSnowpackSlope( meta.stationID );
+		if (exposition==0.) 
+			meta.setSlope(0., 0.);
+		else if (exposition!=IOUtils::nodata) 
+			meta.setSlope(snVirtualSlopeAngle, (exposition - 1.)*90.);
+	}
 
 	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 	if (data_epsg){
@@ -419,7 +457,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			sd.stationID = ss.str();
 		}
 
-		const std::string filename( outpath + "/" + sd.stationID + ".smet" );
+		const std::string filename( outpath + "/" + sd.stationID + dflt_extension );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);
 
@@ -427,9 +465,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
 		std::vector<bool> vecParamInUse(nr_of_parameters, false);
 		std::vector<std::string> vecColumnName(nr_of_parameters, "NULL");
-		double timezone = IOUtils::nodata; //time zone of the data
-		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
-		if (out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
+		double smet_timezone = IOUtils::nodata; //time zone of the data
+		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, smet_timezone, vecParamInUse, vecColumnName);
+		if (out_dflt_TZ != IOUtils::nodata) smet_timezone = out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
@@ -446,7 +484,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
 				
 				mywriter = new smet::SMETWriter(filename, type);
-				generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
+				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
 
@@ -496,7 +534,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 }
 
 void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-                                const double& timezone, const size_t& nr_of_parameters,
+                                const double& smet_timezone, const size_t& nr_of_parameters,
                                 const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
                                 smet::SMETWriter& mywriter)
 {
@@ -506,7 +544,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	 * - station_id, station_name (if present)
 	 * - nodata (set to IOUtils::nodata)
 	 * - fields (depending on ASCII/BINARY format and whether the meta data is part of the header or data)
-	 * - timezone
+	 * - smet_timezone
 	 * - meta data (lat/lon/alt or east/north/alt/epsg if not part of data section)
 	 */
 	std::ostringstream ss;
@@ -543,9 +581,16 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		mywriter.set_header_value("altitude", sd.position.getAltitude());
 		const short int epsg = sd.position.getEPSG();
 		if (epsg!=IOUtils::snodata) mywriter.set_header_value("epsg", static_cast<double>(epsg));
+		
+		const double slope = sd.getSlopeAngle(), azi = sd.getAzimuth();
+		if ((slope==0.) || (slope!=IOUtils::nodata && azi!=IOUtils::nodata)) {
+			mywriter.set_header_value("slope_angle", slope);
+			if (azi!=IOUtils::nodata) mywriter.set_header_value("slope_azi", azi);
+			else mywriter.set_header_value("slope_azi", 0.); //flat terrain gets N azimuth
+		}
 
-		if (timezone != IOUtils::nodata)
-			mywriter.set_header_value("tz", timezone);
+		if (smet_timezone != IOUtils::nodata)
+			mywriter.set_header_value("tz", smet_timezone);
 	} else {
 		ss << " latitude longitude altitude";
 		myprecision.push_back(8); //for latitude
@@ -707,7 +752,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 	return actual_nr_of_parameters;
 }
 
-void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& timezone,
+void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& smet_timezone,
                                     std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName)
 {
 	/**
@@ -728,7 +773,7 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, cons
 	}
 
 	if (!vecMeteo.empty())
-		timezone = vecMeteo[0].date.getTimeZone();
+		smet_timezone = vecMeteo[0].date.getTimeZone();
 }
 
 bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)

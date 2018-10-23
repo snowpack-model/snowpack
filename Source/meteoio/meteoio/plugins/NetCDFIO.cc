@@ -152,9 +152,10 @@ namespace mio {
  *
  * @section netcdf_ecmwf ECMWF Era Interim / Era 5
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A>
- * after creating an account and login in.
+ * after creating an account and login in, or from the <a href="https://cds.climate.copernicus.eu/cdsapp#!/home>Copernicus Climate Data Store</a> (either from the web interface or using the 
+ * <a href="https://pypi.org/project/cdsapi/>cdsapi</a>).
  *
- * It is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
+ * For Era Interim, it is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
  * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
  *
  * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the 

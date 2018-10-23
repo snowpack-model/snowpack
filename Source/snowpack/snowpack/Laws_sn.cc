@@ -39,7 +39,6 @@
 #include <snowpack/Laws_sn.h>
 #include <snowpack/Utils.h>
 #include <snowpack/Constants.h>
-#include <snowpack/snowpackCore/Snowpack.h> //some constants are necessary
 #include <snowpack/snowpackCore/Metamorphism.h>
 
 using namespace std;
@@ -74,7 +73,7 @@ std::vector<double> SnLaws::swa_fb; ///< fudge_bohren
  *  - none, assume saturation pressure and no extra resistance
  */
 //@{
-const SnLaws::soil_evap_model SnLaws::soil_evaporation = EVAP_RESISTANCE; //EVAP_RELATIVE_HUMIDITY
+//const SnLaws::soil_evap_model SnLaws::soil_evaporation = EVAP_RESISTANCE; //EVAP_RELATIVE_HUMIDITY
 
 /// @brief Minimum soil surface resistance, 50 sm-1 (van den Hurk et al, 2000)
 const double SnLaws::rsoilmin = 50.0;
@@ -988,7 +987,7 @@ double SnLaws::compSensibleHeatCoefficient(const CurrentMeteo& Mdata, const Snow
  * @param height_of_meteo_values Height at which meteo parameters are measured
  * @return Latent heat flux (W m-2)
  */
-double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
+double SnLaws::compLatentHeat_Rh(const Snowpack::soil_evap_model soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
 {
 	const size_t nElems = Xdata.getNumberOfElements();
 	const double T_air = Mdata.ta;
@@ -1014,7 +1013,7 @@ double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 			 * function is defined in compLatentHeat, and the Switch SnLaws::soil_evaporation is found
 			 * in Laws_sn.h
 			*/
-			if (SnLaws::soil_evaporation==EVAP_RELATIVE_HUMIDITY) {
+			if (soil_evaporation==Snowpack::EVAP_RELATIVE_HUMIDITY) {
 				eS = Vp2 * Xdata.Edata[Xdata.SoilNode-1].RelativeHumidity();
 			} else {
 				eS = Vp2;
@@ -1029,7 +1028,7 @@ double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 			eS = Vp2;
 	}
 	// Now the latent heat
-	const double beta = SnLaws::compLatentHeat(Mdata, Xdata, height_of_meteo_values);
+	const double beta = SnLaws::compLatentHeat(soil_evaporation, Mdata, Xdata, height_of_meteo_values);
 
 	return (beta * (eA - eS));
 }
@@ -1059,7 +1058,7 @@ double SnLaws::compLatentHeat_Rh(const CurrentMeteo& Mdata, SnowStation& Xdata, 
  * @param[in] height_of_meteo_values Height at which meteo parameters are measured
  * @return Latent heat flux (W m-2)
  */
-double SnLaws::compLatentHeat(const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
+double SnLaws::compLatentHeat(const Snowpack::soil_evap_model soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
 {
 	const size_t nElems = Xdata.getNumberOfElements();
 	const bool SurfSoil = (nElems > 0) ? (Xdata.Edata[nElems-1].theta[SOIL] > 0.) : false;
@@ -1067,7 +1066,7 @@ double SnLaws::compLatentHeat(const CurrentMeteo& Mdata, SnowStation& Xdata, con
 	double c = compSensibleHeatCoefficient(Mdata, Xdata, height_of_meteo_values);
 
 	if (SurfSoil && (Xdata.Ndata[nElems].T >= Xdata.Edata[nElems-1].meltfreeze_tk)
-		    && (SnLaws::soil_evaporation == EVAP_RESISTANCE)) {
+		    && (soil_evaporation == Snowpack::EVAP_RESISTANCE)) {
 		const double Tse = (nElems > 0) ? (Xdata.Edata[nElems-1].Te) : Constants::meltfreeze_tk;
 		const double eA = Mdata.rh * Atmosphere::vaporSaturationPressure( Mdata.ta );
 		const double eS = Atmosphere::vaporSaturationPressure( Tse );

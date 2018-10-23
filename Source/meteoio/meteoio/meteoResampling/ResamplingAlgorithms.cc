@@ -146,17 +146,17 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
  * @param paramindex meteo parameter to use
  * @param vecM vector of MeteoData
  * @param resampling_date date to resample
- * @param window_size size of the search window
+ * @param i_window_size size of the search window
  * @param indexP1 index of point before the current position (IOUtils::npos if none could be found)
  * @param indexP2 index of point after the current position (IOUtils::npos if none could be found)
  */
 void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& window_size, size_t& indexP1, size_t& indexP2)
+                                              const double& i_window_size, size_t& indexP1, size_t& indexP2)
 {
 	indexP1=IOUtils::npos;
 	indexP2=IOUtils::npos;
 
-	const Date dateStart( resampling_date - window_size );
+	const Date dateStart( resampling_date - i_window_size );
 	for (size_t ii=pos; ii-- >0; ) { //because idx gets decremented right away
 		if (vecM[ii].date < dateStart) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata) {
@@ -165,8 +165,8 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 		}
 	}
 
-	//make sure the search window remains window_size
-	const Date dateEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+window_size : resampling_date+window_size;
+	//make sure the search window remains i_window_size
+	const Date dateEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+i_window_size : resampling_date+i_window_size;
 	for (size_t ii=pos; ii<vecM.size(); ++ii) {
 		if (vecM[ii].date > dateEnd) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata) {

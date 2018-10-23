@@ -137,24 +137,24 @@ void ProcIIR::computeCoefficients(const double& fs, const double& f0, double A[3
 	}
 }
 
-void ProcIIR::getFilterParameters(const IIR_Type& type, const bool& isLowPass, const double& n, double &g, double &p, double &c)
+void ProcIIR::getFilterParameters(const IIR_Type& i_type, const bool& isLowPass, const double& n, double &i_g, double &i_p, double &i_c)
 {
-	if (type==BUTTERWORTH) {
-		g = 1.;
-		p = sqrt(2.);
-		c = 1. / pow( pow(2, 1./n) - 1., 1./4. ); //3dB cutoff correction
-	} else if (type==CRITICALLY_DAMPED) {
-		g = 1.;
-		p = 2.;
-		c = sqrt( pow(2., 1./(2.*n)) - 1. ); //3dB cutoff correction
-	} else if (type==BESSEL) {
-		g = 3.;
-		p = 3.;
-		c = sqrt( sqrt(pow(2., 1/n) - 3./4.) - 0.5 ) / sqrt(3.); //3dB cutoff correction
+	if (i_type==BUTTERWORTH) {
+		i_g = 1.;
+		i_p = sqrt(2.);
+		i_c = 1. / pow( pow(2, 1./n) - 1., 1./4. ); //3dB cutoff correction
+	} else if (i_type==CRITICALLY_DAMPED) {
+		i_g = 1.;
+		i_p = 2.;
+		i_c = sqrt( pow(2., 1./(2.*n)) - 1. ); //3dB cutoff correction
+	} else if (i_type==BESSEL) {
+		i_g = 3.;
+		i_p = 3.;
+		i_c = sqrt( sqrt(pow(2., 1/n) - 3./4.) - 0.5 ) / sqrt(3.); //3dB cutoff correction
 	} else
 		throw UnknownValueException("The requested IIR filter type has not been defined", AT);
 
-	if (isLowPass) c = 1. / c;
+	if (isLowPass) i_c = 1. / i_c;
 }
 
 }

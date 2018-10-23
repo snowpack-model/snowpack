@@ -925,6 +925,8 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(ncpp::EASTING, "easting", "projection_x_coordinate", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "northing", "projection_y_coordinate", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::DEM, "orog", "surface_altitude", "height above mean sea level", "m", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SLOPE, "slope", "slope_angle", "slope angle", "degrees from horizontal", mio::IOUtils::nodata, NC_FLOAT) ); //HACK this is not official cf!
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::AZI, "azimuth", "slope_azimuth", "slope azimuth", "degrees from north", mio::IOUtils::nodata, NC_FLOAT) ); //HACK this is not official cf!
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "ta", "air_temperature", "near surface air temperature", "K", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RH, "hur", "relative_humidity", "", "1", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::DW, "dw", "wind_from_direction", "", "degree", mio::IOUtils::nodata, NC_FLOAT) );
