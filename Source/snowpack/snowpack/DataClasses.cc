@@ -2446,7 +2446,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	compSoilInternalEnergyChange(900.); // Time (900 s) will not matter as Qmf == 0. for all layers
 	compSnowpackMasses();
 
-	Cdata->initialize(SSdata, useCanopyModel);
+	if (Cdata!=NULL) Cdata->initialize(SSdata, useCanopyModel);
 
 	// Set time step to -1, so we can determine the first time ReSolver1d is called.
 	ReSolver_dt = -1.;
