@@ -60,7 +60,8 @@ class DEMObject : public Grid2DObject {
 			NO_UPDATE=0, ///< no updates at all
 			SLOPE=1, ///< update the slopes
 			NORMAL=2, ///< update the normals
-			CURVATURE=4 ///< update the curvatures
+			CURVATURE=4, ///< update the curvatures
+			UPDATE_UNSET ///< property not set
 		} update_type;
 
 		///Keywords for selecting the toString formats
@@ -70,6 +71,8 @@ class DEMObject : public Grid2DObject {
 		} FORMATS;
 
 		DEMObject(const slope_type& i_algorithm=DFLT);
+		
+		DEMObject(const size_t& ncols_in, const size_t& nrows_in, const Coords& llcorner_in, const double& init);
 
 		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const slope_type& i_algorithm=DFLT);
@@ -95,12 +98,6 @@ class DEMObject : public Grid2DObject {
 		void updateAllMinMax();
 		void printFailures();
 		void sanitize();
-
-		Grid2DObject getHillshade(const double& elev=38., const double& azimuth=0.) const;
-		double getHorizon(const size_t& ix1, const size_t& iy1, const double& bearing) const;
-		double getHorizon(const Coords& point, const double& bearing) const;
-		void getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const;
-		double getCellSkyViewFactor(const size_t& ii, const size_t& jj) const;
 
 		DEMObject& operator=(const Grid2DObject&); ///<Assignement operator
 		DEMObject& operator=(const double& value); ///<Assignement operator
@@ -133,7 +130,6 @@ class DEMObject : public Grid2DObject {
 		friend std::istream& operator>>(std::istream& is, DEMObject& dem);
 
 	private:
-		double getTanMaxSlope(const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j) const;
 		void CalculateAziSlopeCurve(slope_type algorithm);
 		static double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);
 		double getCurvature(double A[4][4]);

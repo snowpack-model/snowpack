@@ -81,7 +81,7 @@ class InterpolationAlgorithm;
  *
  * @section doc_2Dinterpol Documentation
  * The newly added interpolation algorithm must be added to the list of available algorithms in
- * InterpolationAlgorithms.h with a proper description. An example can also be given in the example section
+ * InterpolationAlgorithms.cc with a proper description. An example can also be given in the example section
  * of the same file. Please feel free to add necessary bibliographic references to the bibliographic section!
  *
 */
@@ -154,7 +154,7 @@ class Meteo2DInterpolator {
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 		static void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
 		static std::set<std::string> getParameters(const Config& cfg);
-		static std::vector<std::string> getAlgorithmsForParameter(const Config& cfg, const std::string& parname);
+		static std::vector<std::string> getAlgorithmsForParameter(const Config& i_cfg, const std::string& parname);
 
 		void setAlgorithms();
 

@@ -9,14 +9,15 @@ BuildVersion()
 MACRO (SET_COMPILER_OPTIONS)
 	###########################################################
 	IF(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)	#this is required for building libraries
 		IF(DEBUG_ARITHM)
 			SET(EXTRA "${EXTRA} /EHa")
 		ENDIF(DEBUG_ARITHM)
 		
 		#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
+		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions /w35045: inform about Spectre mitigation
 		#SET(EXTRA_WARNINGS "/Wp64") #/Wall
-		SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
+		SET(OPTIM "/O2 /DNDEBUG /DEBUG:FASTLINK /MD /DNOSAFECHECKS")
 		SET(ARCH_OPTIM "/arch:AVX2")
 		SET(ARCH_SAFE "")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
@@ -24,9 +25,6 @@ MACRO (SET_COMPILER_OPTIONS)
 		ENDIF()
 		SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 		SET(_VERSION "/D_VERSION=${_versionString}")
-		IF(BUILD_SHARED_LIBS)
-			ADD_DEFINITIONS(/DMIO_DLL)
-		ENDIF(BUILD_SHARED_LIBS)
 		
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL Intel)
@@ -38,12 +36,13 @@ MACRO (SET_COMPILER_OPTIONS)
 		ENDIF(DEBUG_ARITHM)
 		
 		SET(WARNINGS_OFF "-Wno-unknown-pragmas")
-		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch ${WARNINGS_OFF}")
+		SET(WARNINGS "-Wall -Wno-long-long  -Wswitch ${WARNINGS_OFF} -wd2015,11071")
 		SET(DEEP_WARNINGS "-Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
 		SET(EXTRA_WARNINGS "-Wextra -pedantic ${DEEP_WARNINGS}")
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
 			SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
+			SET(ARCH_OPTIM  "-march=native -mtune=native")
 		ENDIF()
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
@@ -151,7 +150,7 @@ MACRO (SET_COMPILER_OPTIONS)
 			SET(EXTRA "${EXTRA} -DDEBUG_ARITHM")
 		ENDIF(DEBUG_ARITHM)
 		
-		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unknown-pragmas")
+		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unused-template")
 		SET(WARNINGS "-Wall -Wswitch -Weverything ${WARNINGS_OFF}") #obviously, we should try to fix the warnings! Keeping in mind that some of these W are half buggy...
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Rpass=.* for static analysis
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")

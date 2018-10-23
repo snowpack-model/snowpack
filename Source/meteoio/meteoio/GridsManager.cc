@@ -358,7 +358,8 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters
 					throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
 			}
 		} else {
-			const std::string msg1("Could not find any grids at time " + date.toString(Date::ISO) + ". " );
+
+			const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
 			const std::string msg2("There are grids from " + grids2d_list.begin()->first.toString(Date::ISO) + " until " + grids2d_list.rbegin()->first.toString(Date::ISO));
 			throw NoDataException(msg1 + msg2, AT);
 		}
@@ -529,12 +530,10 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 				const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
 				curr_point.setXY(easting, northing, dem(i,j));
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
-			} else {
-				curr_point.setAltitude(dem(i,j), false);
 			}
 			
 			//extract vstation number, build the station name and station ID
-			const std::string id_num( vecStation[ii].first.substr(string("Vstation").length()) );
+			const std::string id_num( vecStation[ii].first.substr(std::string("Vstation").length()) );
 			StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
 			sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 			v_stations.push_back( sd );

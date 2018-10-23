@@ -47,35 +47,35 @@ int ComputeTmpConMatrix(SD_CON_MATRIX_DATA *pMat0, SD_TMP_CON_MATRIX_DATA *pMat)
 int  ComputeFillIn(SD_TMP_CON_MATRIX_DATA *pMat);
 int ComputeBlockMatrix( SD_TMP_CON_MATRIX_DATA *pTmpMat, SD_BLOCK_MATRIX_DATA *pMat);
 
-#define GD_MALLOC( POINTER, TYPE, N, MSG )                                                     \
+#define GD_MALLOC( pointer, TYPE, N, MSG )                                                     \
 {                                                                                              \
-	POINTER = (TYPE *)malloc( sizeof(TYPE)*(N+1) );                                        \
-	if ( POINTER  ) {                                                                      \
+	pointer = (TYPE *)malloc( sizeof(TYPE)*(N+1) );                                        \
+	if ( pointer  ) {                                                                      \
 		gd_MemErr = false;                                                             \
 	} else {                                                                               \
 		gd_MemErr = true; fprintf(stderr, "\n+++++ %s: %s\n",  "NO SPACE TO ALLOCATE", MSG);               \
 	}                                                                                      \
 }
 
-#define GD_REALLOC( POINTER, TYPE, N, MSG )                                                    \
+#define GD_REALLOC( pointer, TYPE, N, MSG )                                                    \
 {                                                                                              \
-	if ( POINTER )  {                                                                      \
-  		POINTER = (TYPE *)realloc( (char*)POINTER, sizeof(TYPE)*(N+1) );               \
-  		if ( POINTER  ) {                                                                      \
+	if ( pointer )  {                                                                      \
+  		pointer = (TYPE *)realloc( (char*)pointer, sizeof(TYPE)*(N+1) );               \
+  		if ( pointer  ) {                                                                      \
 			gd_MemErr = false;                                                             \
 		} else {                                                                               \
 			gd_MemErr = true; fprintf(stderr, "\n+++++ %s: %s\n", "NO SPACE TO REALLOCATE", MSG);               \
 		}                                                                                   \
 	} else {                                                                               \
-  		GD_MALLOC(  POINTER, TYPE, N, MSG );                                           \
+  		GD_MALLOC(  pointer, TYPE, N, MSG );                                           \
 	}                                                                                      \
 }
 
-#define GD_FREE( POINTER )                                                                     \
+#define GD_FREE( pointer )                                                                     \
 {                                                                                              \
-	if ( POINTER ) {                                                                       \
-   		free ( (char*) POINTER );                                                      \
-   		POINTER = NULL;                                                                \
+	if ( pointer ) {                                                                       \
+   		free ( (char*) pointer );                                                      \
+   		pointer = NULL;                                                                \
 	}                                                                                      \
 }                                                                                              \
 
@@ -274,8 +274,8 @@ int ComputeBlockMatrix( SD_TMP_CON_MATRIX_DATA *pTmpMat, SD_BLOCK_MATRIX_DATA *p
 {                                                                                              \
    FOUND      = 0;                                                                             \
    SD_COL_BLOCK_DATA *pB_ = (pFIRST_BLK);                                                      \
-   size_t Col0_  = COL+1;                                                                      \
-   size_t Col1_  = COL-1;                                                                      \
+   int Col0_  = COL+1;                                                                      \
+   int Col1_  = COL-1;                                                                      \
    while ( pB_ )                                                                               \
    {  if      ( Col1_ >  pB_->Col1  ) { ppBLK = &pB_->Next; pB_ = pB_->Next; }                 \
       else if ( Col0_ >= pB_->Col0  )                                                          \
@@ -392,7 +392,7 @@ int ComputeBlockMatrix( SD_TMP_CON_MATRIX_DATA *pTmpMat, SD_BLOCK_MATRIX_DATA *p
  * @param pMat SD_CON_MATRIX_DATA
  * @return int
 */
-inline int AllocateConData( size_t Dim, SD_CON_MATRIX_DATA *pMat )
+inline int AllocateConData( int Dim, SD_CON_MATRIX_DATA *pMat )
 {
 	pMat->nRow = Dim;
 	GD_MALLOC( pMat->pRow, SD_ROW_DATA, pMat->nRow, "Row Allocation");
@@ -420,7 +420,7 @@ int ReleaseConMatrix( SD_CON_MATRIX_DATA *pMat )
 /*
  * INTERFACE FUNCITONS TO ACCESS THE SOLVER
  */
-int ds_Initialize(const size_t& MatDim, SD_MATRIX_DATA **ppMat)
+int ds_Initialize(const int& MatDim, SD_MATRIX_DATA **ppMat)
 {
 	SD_MATRIX_DATA  *pMat = NULL;
 
@@ -902,14 +902,15 @@ int  InverseMatrixVector( SD_BLOCK_MATRIX_DATA *pMat, double *X )
  * @param tag -- int tag value.
 */
 static void MmdUpdate( int ehead,  int neqns,  int *xadj,  int *adjncy,  int delta,  int *mdeg,
-  			int *head, int *forward,  int *backward, int *qsize, int *list,  int *marker,  int maxint,  int *tag)
+                       int *head, int *forward,  int *backward, int *qsize, int *list,  int *marker,  int maxint,  int *tag)
 {
-      int  deg, deg0, element, enode, fnode, i, iq2, istop,
-           istart, j, jstop, jstart, link, mdeg0, mtag, nabor,
-           node, q2head, qxhead;
+	int deg, deg0, element, enode, fnode, i, iq2, istop,
+	    istart, j, jstop, jstart, link, mdeg0, mtag, nabor,
+	    node, q2head, qxhead;
 
-      mdeg0 = *mdeg + delta;
-      element = ehead;
+
+	mdeg0 = *mdeg + delta;
+	element = ehead;
 
 n100:
 	if ( element <= 0 ) {
@@ -1144,10 +1145,11 @@ n2300:
 static void MmdElimin(int mdeg_node, int *xadj, int *adjncy, int *head, int *forward, int *backward,
 				  int *qsize, int *list, int *marker, int maxint, int tag)
 {
-	int   element, i,   istop, istart, j,
-		jstop, jstart, link,
-		nabor, node, npv, nqnbrs, nxnode,
-		pvnode, rlmt, rloc, rnode, xqnbr;
+	int element, i, istop, istart, j,
+	    jstop, jstart, link,
+	    nabor, node, npv, nqnbrs, nxnode,
+	    pvnode, rlmt, rloc, rnode, xqnbr;
+
 
 	// find the reachable set of 'mdeg_node' and
 	// place it in the data structure.
@@ -1593,7 +1595,7 @@ int ComputeTmpConMatrix(SD_CON_MATRIX_DATA *pMat0, SD_TMP_CON_MATRIX_DATA *pMat)
 	* Set the temporary adjacency block data. For each row block process each single column
 	* coefficients and the diagonal one.
 	*/
-	for (size_t PermRow = 0; PermRow < pMat->nRow; PermRow++) {
+	for (int PermRow = 0; PermRow < pMat->nRow; PermRow++) {
 		int Supernode, Row, Found;
 		SD_COL_BLOCK_DATA **ppColBlock, *pColBlock, *pFreeColBlock, *pStartColBlock;
 
@@ -1623,7 +1625,7 @@ int ComputeTmpConMatrix(SD_CON_MATRIX_DATA *pMat0, SD_TMP_CON_MATRIX_DATA *pMat)
 		* the first one.
 		*/
 		for ( SD_COL_DATA *pCol = pRow[Row].Col; pCol; pCol = pCol->Next ) {
-			const size_t PermCol = pPerm[ SD_COL(pCol) ];
+			const int PermCol = pPerm[ SD_COL(pCol) ];
 			if ( PermRow > PermCol ) {
 				continue;
 			}
@@ -1891,7 +1893,7 @@ int ReleaseBlockMatrix( SD_BLOCK_MATRIX_DATA *pMat )
 int ds_DefineConnectivity(SD_MATRIX_DATA *pMat0, const int& nEq, int Eq[], const int& nEl, const int& Dim )
 {
 	int e, i, j;
-	size_t Row_i;
+	int Row_i;
 	SD_ROW_DATA        *pRow_i;
 	SD_CON_MATRIX_DATA *pMat;
 
@@ -1903,7 +1905,7 @@ int ds_DefineConnectivity(SD_MATRIX_DATA *pMat0, const int& nEq, int Eq[], const
 			pRow_i = &SD_ROW(Row_i, pMat);
 
 			for (j = 0; j < nEq; j++) {
-				size_t Col_j, Found;
+				int Col_j, Found;
 				SD_COL_DATA **ppC, *pCol;
 				Col_j  = Eq[j];
 				if ( Row_i == Col_j ) {

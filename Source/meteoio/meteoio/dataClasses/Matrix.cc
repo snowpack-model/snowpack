@@ -82,7 +82,7 @@ void Matrix::clear()
 
 void Matrix::random(const double& range)
 {
-	srand( static_cast<unsigned>(time(0)) );
+	srand( static_cast<unsigned>(time(NULL)) );
 
 	for (size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] = (double)rand()/(double)RAND_MAX*range;

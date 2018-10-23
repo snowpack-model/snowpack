@@ -148,7 +148,7 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 		double dth_i;
 		double dth_w;
 		if (forcing == "MASSBAL" && T_melt > Edata.Te) { // forced melt, when "normal" melt would not occur anymore (snowpack too cold)
-			//Important: in this case, we don't set Edata.Te to T_melt. We only do the melt in order to match the prescribed melt, but we don't want to fiddle with the snowpack temperature profile.
+			mass_melt += ql_Rest / Constants::lh_fusion;
 			dth_i = - (mass_melt / (Constants::density_ice * Edata.L)); // dth_i must be negative defined !
 			dth_w = - (Constants::density_ice / Constants::density_water) * dth_i; // change in volumetric water content
 			// You can only melt so much ice as is there ....
@@ -161,9 +161,9 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 				dth_w = PhaseChange::theta_s - Edata.theta[WATER];
 				dth_i = - (Constants::density_water / Constants::density_ice) * dth_w;
 			}
-			mass_melt += (dth_i * Constants::density_ice * Edata.L); // update mass_melt (remove mass that was melted in the current layer)
 			// Reset element properties
 			ql_Rest = 0.0;
+			Edata.Te = Edata.meltfreeze_tk;
 		} else { // temperature induced ("normal") melt
 			double dT = T_melt - Edata.Te; // Edata.meltfreeze_tk - Te > 0
 			// Now we take into account that there might be some extra energy that could not

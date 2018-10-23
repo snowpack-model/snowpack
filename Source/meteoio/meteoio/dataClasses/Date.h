@@ -108,6 +108,7 @@ class Date {
 		static const double Unix_offset;
 		static const double Excel_offset;
 		static const double Matlab_offset;
+		static const double epsilon_sec;
 
 		Date();
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
@@ -133,7 +134,7 @@ class Date {
 		void setMatlabDate(const double matlab_in, const double& in_timezone, const bool& in_dst=false);
 		void setUndef(const bool& flag);
 
-		bool isUndef() const {return undef;};
+		bool isUndef() const {return undef;}
 		double getTimeZone() const;
 		bool getDST() const;
 		double getJulian(const bool& gmt=false) const;
@@ -212,7 +213,7 @@ class Date {
 		static bool initStaticData();///<initialize the static map TZAbbrev
 
 		static std::map< std::string, double> TZAbbrev;
-		static const double epsilon_sec, epsilon;
+		static const double epsilon;
 		static const bool __init;
 		double timezone;
 		double gmt_julian;

@@ -130,14 +130,14 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const std::vector<SnowStation*>& snow_stations,
                                                  const size_t offset_in)
  : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), dem(dem_in),
-   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), isSpecialPoint(snow_stations.size(), false), 
+   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), isSpecialPoint(snow_stations.size(), false),
    landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(), surface_flux(),
    calculation_step_length(0.), height_of_wind_value(0.),
    soil_temp_depth(IOUtils::nodata), snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
    enable_simple_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
 {
 	if (SnowStations.size() != (dimx*dimy)) throw IOException("Initial snow data does not match the provided grid size", AT);
-	
+
 	sn_cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
 	sn_cfg.getValue("HEIGHT_OF_WIND_VALUE", "Snowpack", height_of_wind_value); //currently unused
 	sn_cfg.getValue("CANOPY", "Snowpack", useCanopy);
@@ -149,7 +149,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
 	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
-	
+
 	//create the vector of output grids
 	std::vector<std::string> params = sn_cfg.get("GRIDS_PARAMETERS", "output");
 	if (soil_temp_depth!=IOUtils::nodata) params.push_back("TSOIL");
@@ -157,10 +157,10 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	if (snow_avg_temp_depth!=IOUtils::nodata) params.push_back("TSNOW_AVG");
 	if (snow_avg_rho_depth!=IOUtils::nodata) params.push_back("RHOSNOW_AVG");
 	initGrids(params);
-	
+
 	const CurrentMeteo meteoPixel; //this is only necessary in order to have something for fillGrids()
 	const SurfaceFluxes surfaceFlux; //this is only necessary in order to have something for fillGrids()
-	
+
 	for (size_t iy = 0; iy < dimy; iy++) {
 		for (size_t ix = 0; ix < dimx; ix++) {
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) { //skip nodata cells as well as water bodies, etc
@@ -168,12 +168,12 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 					std::cout << "[W] POI (" << ix+offset << "," << iy << ") will be skipped (nodatat, water body, etc)" << std::endl;
 				continue;
 			}
-			
+
 			const size_t index_SnowStation = ix + dem.getNx()*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skip cells initialized with NULL
 			const SnowStation &snowPixel = *SnowStations[index_SnowStation];
 			fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
-			
+
 			if (!pts_in.empty()) { //is it a special point?
 				isSpecialPoint[index_SnowStation] = is_special(pts_in, ix, iy);
 			}
@@ -184,7 +184,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 SnowpackInterfaceWorker::~SnowpackInterfaceWorker()
 {
 	//sorry for this cryptic syntax, this is to guarantee execution order with the "," operator
-	while (!SnowStations.empty()) 
+	while (!SnowStations.empty())
 		((SnowStations.back()!=NULL)? delete SnowStations.back() : (void)0) , SnowStations.pop_back();
 }
 
@@ -199,11 +199,11 @@ void SnowpackInterfaceWorker::initGrids(std::vector<std::string>& params)
 {
 	for (size_t ii = 0; ii<params.size(); ++ii) {
 		IOUtils::toUpper(params[ii]); //make sure all parameters are upper case
-		
+
 		const size_t param_idx = SnGrids::getParameterIndex( params[ii] );
 		if (param_idx==IOUtils::npos)
 			throw UnknownValueException("Unknow meteo grid '"+params[ii]+"' selected for gridded output", AT);
-		
+
 		const std::map< SnGrids::Parameters, mio::Grid2DObject >::const_iterator it = grids.find( static_cast<SnGrids::Parameters>(param_idx) );
 		if (it==grids.end()) { //the parameter did not already exist, adding it
 			Grid2DObject tmp_grid(dem, IOUtils::nodata);
@@ -254,7 +254,7 @@ void SnowpackInterfaceWorker::getOutputSNO(std::vector<SnowStation*>& snow_stati
 
 /**
  * @brief Method that the Master can search the neded data (in grids) from Worker (Pull from client)
- * @param param says which grid param the Master wants to have 
+ * @param param says which grid param the Master wants to have
  * @return the 2D output grid, which gives back the data to the master
  */
 mio::Grid2DObject SnowpackInterfaceWorker::getGrid(const SnGrids::Parameters& param) const
@@ -263,14 +263,14 @@ mio::Grid2DObject SnowpackInterfaceWorker::getGrid(const SnGrids::Parameters& pa
 	if (it==grids.end()) {
 		throw UnknownValueException("Undeclared grid '"+SnGrids::getParameterName(param)+"' requested from SnowpackInterfaceWorker", AT);
 	}
-	
+
 	return it->second;
 }
 
 /**
- * @brief Retrieve one point (ii,jj) from the specified grid. 
+ * @brief Retrieve one point (ii,jj) from the specified grid.
  * @param param says which grid param the Master wants to have
- * @param ii ii index 
+ * @param ii ii index
  * @param jj jj index
  * @return grid value at point (ii,jj) for parameter param
  */
@@ -279,14 +279,14 @@ double& SnowpackInterfaceWorker::getGridPoint(const SnGrids::Parameters& param, 
 	const std::map< SnGrids::Parameters, mio::Grid2DObject >::const_iterator it( grids.find(param) );
 	if (it==grids.end())
 		throw UnknownValueException("Undeclared grid '"+SnGrids::getParameterName(param)+"' requested from SnowpackInterfaceWorker", AT);
-	
+
 	return grids[ param ](ii,jj);
 }
 
 /**
  * @brief Fill all the grids stored in the **grids** map of 2D grids with all the necessary values for the provided pixel.
  * Before calling this method, make sure that snowPixel is not NULL (as it could be for pixels that should be skipped)
- * @param ii ii index 
+ * @param ii ii index
  * @param jj jj index
  * @param meteoPixel meteorological forcing for the pixel
  * @param snowPixel canopy/snow/soil stratigraphy information
@@ -343,7 +343,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] /  snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::RSNO: {
 				const double hs = (snowPixel.cH - snowPixel.Ground);
-				value = (hs>0.)? snowPixel.mass_sum / hs : IOUtils::nodata; 
+				value = (hs>0.)? snowPixel.mass_sum / hs : IOUtils::nodata;
 				break; }
 			case SnGrids::TOP_ALB:
 				if (!useCanopy || snowPixel.Cdata->zdispl < 0.) {
@@ -366,8 +366,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]; break;
 			case SnGrids::MS_SOIL_RUNOFF:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_SOIL_RUNOFF]; break;
+			case SnGrids::MS_WATER:
+				value = surfaceFlux.mass[SurfaceFluxes::MS_WATER] / snowPixel.cos_sl; break;
 			case SnGrids::SFC_SUBL:
-				value = -surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION] /  snowPixel.cos_sl; break; //slope2horiz
+				value = -surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION] / snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::STORE:
 				value = store(ii,jj); break;
 			case SnGrids::ERODEDMASS:
@@ -381,7 +383,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			default:
 				throw  UnknownValueException("Unknown/unsupported grid requested", AT);
 		}
-		
+
 		it->second(ii,jj) = value;
 	}
 }
@@ -419,7 +421,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	const Meteo::ATM_STABILITY USER_STABILITY = meteo.getStability();
 	const std::string bcu_watertransportmodel_snow = sn_cfg.get("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced");
 	const std::string bcu_watertransportmodel_soil = sn_cfg.get("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced");
-	
+
 	CurrentMeteo meteoPixel(sn_cfg);
 	meteoPixel.date = date;
 	meteoPixel.elev = solarElevation*Cst::to_rad; //HACK: Snowpack uses RAD !!!!!
@@ -554,7 +556,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				// Fill the surfaceFlux.mass variable for output
 				surfaceFlux.mass[SurfaceFluxes::MS_HNW] += meteoPixel.psum;
 			}
-			
+
 			//some variables are now wrong if we ran multiple Snowpack steps -> recompute them!
 			if (nr_snowsteps > 1) {
 				surfaceFlux.multiplyFluxes(1./nr_snowsteps);
@@ -571,7 +573,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				snowPixel.Albedo = Constants::glacier_albedo;
 				surfaceFlux.pAlbedo = Constants::glacier_albedo;
 			}
-			if (!std::isfinite( getGridPoint(SnGrids::TOP_ALB, ix, iy) )) { 
+			if (!std::isfinite( getGridPoint(SnGrids::TOP_ALB, ix, iy) )) {
 				//if the albedo is nan, infinity, etc reset it to its previous
 				//value to try to rescue the pixel...
 				cerr << "[E] pixel (" << ix+offset << "," << iy << ") found with a nan/infinit albedo ["<<  getGridPoint(SnGrids::TOP_ALB, ix, iy) <<"]; reseting to " << previous_albedo << std::endl;
@@ -591,7 +593,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 					surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] += EMS[e].M;
 				}
 			}
-			
+
 			// Output special points and grids
 			if (isSpecialPoint[index_SnowStation]) gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux);
 			fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
@@ -611,7 +613,7 @@ void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
 		for (size_t ix=0; ix<dimx; ix++) {
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
 			if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
-			
+
 			const size_t index_SnowStation = ix + dem.getNx()*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
@@ -645,11 +647,11 @@ bool SnowpackInterfaceWorker::skipThisCell(const double& landuse_val, const doub
 	//determines from the landuse and dem if this cell has to be included in the computation
 	//landuse codes are PREVAH codes
 	if (landuse_val==IOUtils::nodata) return true;
-	
+
 	const int land = (SnowpackInterfaceWorker::round_landuse(landuse_val) - 10000) / 100;
 	if (land==9 || land==10 || land==12 || land==16 || land==17 || land>=30) return true; //undefined
 	if (land==1) return true;//water
-	
+
 	if (dem_val==IOUtils::nodata) return true; //no DEM data
 
 	return false;

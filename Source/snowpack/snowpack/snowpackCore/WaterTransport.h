@@ -40,13 +40,13 @@ class WaterTransport {
 
 	public:
 		WaterTransport(const SnowpackConfig& cfg);
-		virtual ~WaterTransport() {};
+		virtual ~WaterTransport() {}
 		void compTransportMass(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql);
 
 	protected:
 		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata);
 		void adjustDensity(SnowStation& Xdata);
-		
+
 		//To prevent string comparisons, we define an enumerated list:
 		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};
 
@@ -78,4 +78,3 @@ class WaterTransport {
 		bool useSoilLayers, water_layer, jam;
 };
 #endif //End of WaterTransport.h
-

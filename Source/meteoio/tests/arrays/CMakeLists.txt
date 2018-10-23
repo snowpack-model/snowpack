@@ -2,7 +2,7 @@
 ## Test arrays
 # generate executable
 ADD_EXECUTABLE(arrays arrays.cc)
-TARGET_LINK_LIBRARIES(arrays ${LIBRARIES})
+TARGET_LINK_LIBRARIES(arrays ${METEOIO_LIBRARIES})
 
 # add the tests
 ADD_TEST(arrays.smoke arrays)

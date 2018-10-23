@@ -119,12 +119,12 @@ ARPSIO& ARPSIO::operator=(const ARPSIO& source) {
 
 void ARPSIO::setOptions()
 {
-	const string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	const string grid_in = cfg.get("GRID2D", "Input", "");
 	if (grid_in == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	}
 	
-	const string grid3d_in = cfg.get("GRID3D", "Input", IOUtils::nothrow);
+	const string grid3d_in = cfg.get("GRID3D", "Input", "");
 	if (grid3d_in == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID3DPATH", "Input", grid3dpath_in);
 	}

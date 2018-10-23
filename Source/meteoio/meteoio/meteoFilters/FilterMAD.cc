@@ -18,6 +18,7 @@
 #include <meteoio/meteoFilters/FilterMAD.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 

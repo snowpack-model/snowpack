@@ -44,8 +44,8 @@ rm -f output_ref/5_2_dischma.pro
 
 rm -f output_ref/5_2_dischma.smet
 bunzip2 -k output_ref/5_2_dischma.smet.bz2
-sed -i '16,17d' output_ref/5_2_dischma.smet; sed -i '16,17d' output/5_2_dischma.smet
-numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.smet output/5_2_dischma.smet | grep "+++"
+sed -i '16,17d' output_ref/5_2_dischma.smet; sed -i '16,17d' output/5_2_dischma_meteo.smet
+numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.smet output/5_2_dischma_meteo.smet | grep "+++"
 rm -f output_ref/5_2_dischma.smet
 
 for fichier in $(ls output_ref/grids/2014*); do

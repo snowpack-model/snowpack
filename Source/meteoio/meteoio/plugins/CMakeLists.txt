@@ -49,9 +49,9 @@ IF(PLUGIN_GRASSIO)
 ENDIF(PLUGIN_GRASSIO)
 
 IF(PLUGIN_GRIBIO)
-	FIND_PACKAGE(GribApi REQUIRED)
-	INCLUDE_DIRECTORIES(SYSTEM ${GribApi_INCLUDE_DIRS})
-	SET(plugin_libs ${plugin_libs} ${GribApi_LIBRARIES})
+	FIND_PACKAGE(ecCodes REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM ${ecCodes_INCLUDE_DIRS})
+	SET(plugin_libs ${plugin_libs} ${ecCodes_LIBRARIES})
 	SET(plugins_sources ${plugins_sources} plugins/GRIBIO.cc)
 ENDIF(PLUGIN_GRIBIO)
 

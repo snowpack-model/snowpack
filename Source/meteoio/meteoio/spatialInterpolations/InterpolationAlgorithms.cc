@@ -24,6 +24,7 @@
 #include <meteoio/spatialInterpolations/AvgLapseAlgorithm.h>
 #include <meteoio/spatialInterpolations/ConstAlgorithm.h>
 #include <meteoio/spatialInterpolations/IDWAlgorithm.h>
+#include <meteoio/spatialInterpolations/IDWSlopesAlgorithm.h>
 #include <meteoio/spatialInterpolations/IDWLapseAlgorithm.h>
 #include <meteoio/spatialInterpolations/IDWLapseLocalAlgorithm.h>
 #include <meteoio/spatialInterpolations/ILWREpsAlgorithm.h>
@@ -62,6 +63,10 @@ namespace mio {
  * in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
  * memory of (eventual) previous time steps is kept. This means that all parameters and variables that are
  * automatically calculated get recalculated anew for each time step.
+ * 
+ * @note Please keep in mind that you need to specify a proper 
+ * <a href="https://en.wikipedia.org/wiki/Coordinate_system#Cartesian_coordinate_system">cartesian coordinate system</a> in your [Input] section 
+ * in order to be able to perform most of the spatial interpolations (Lat/lon coordinates are <b>not</b> cartesian, they are spherical!).
  *
  * @section interpol2D_section Spatial interpolations section
  * Practically, the user
@@ -101,6 +106,7 @@ namespace mio {
  * - AVG_LAPSE: constant value reprojected to the elevation of the cell (see AvgLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
+ * - IDW_SLOPES: IDW_LAPSE with separate processing for each of the 4 aspects+flat before merging with weighted average (see IDW_SLOPES)
  * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - LISTON_RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHListonAlgorithm)
  * - ILWR_EPS: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWREpsAlgorithm)
@@ -179,6 +185,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(std::string algoname,
 		return new AvgLapseRateAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "IDW") {// Inverse Distance Weighting fill
 		return new IDWAlgorithm(vecArgs, algoname, param, tsm);
+	} else if (algoname == "IDW_SLOPES") {// Inverse Distance Weighting fill
+		return new IDWSlopesAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "IDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill
 		return new IDWLapseAlgorithm(vecArgs, algoname, param, tsm);
 	} else if (algoname == "LIDW_LAPSE") {// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale

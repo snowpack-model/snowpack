@@ -93,6 +93,42 @@ class Quadratic : public FitLeastSquare {
 		double f(const double& x) const;
 };
 
+  /**
+ * @class PolynomialRegression
+ * @brief A class to perform 1D polynomial regression
+ * @details
+ * Polynomial Regression aims to fit a non-linear relationship to a set of
+ * points. It approximates this by solving a series of linear equations using
+ * a least-squares approach.
+ *
+ * We can model the expected value y as an nth degree polynomial, yielding
+ * the general polynomial regression model:
+ *
+ * yi = b0 + b1*xi + b2*xi^2 + ... + bm*xi^m, with i=1...n
+ * m corresponds to the degree of the polynomial equation
+ * n is the number of data points (for fitting)
+ *
+ * see https://en.wikipedia.org/wiki/Polynomial_regression
+ *
+ * @ingroup stats
+ * @author Thiemo Theile
+ * @date   2018-08-20
+ */
+class PolynomialRegression : public FitModel {
+	public:
+	    //the default-constructor sets the degree to 2 (= quadratic regression)
+		PolynomialRegression() : FitModel("POLYNOMIAL", 3, 3), degree(2) {fit_ready=false;}
+		PolynomialRegression(const std::string& i_regname, const size_t& degreeOfRegression) :
+                            FitModel(i_regname, degreeOfRegression+1, degreeOfRegression+1),
+                            degree(degreeOfRegression){fit_ready=false;}
+		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
+		bool fit();
+		double f(const double& x) const;
+		void setDegree(const size_t& in_degree) {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
+	protected:
+		size_t degree;
+};
+
 /**
  * @class Fit1D
  * @brief A class to perform 1D regressions
@@ -102,6 +138,7 @@ class Quadratic : public FitLeastSquare {
  * - Specific fits:
  *    - SimpleLinear
  *    - NoisyLinear
+ *    - PolynomialRegression
  * - Least Square fits:
  *    - SphericVario
  *    - LinVario
@@ -130,7 +167,8 @@ class Fit1D {
 			SPHERICVARIO, ///< spherical variogram
 			RATQUADVARIO, ///< rational quadratic variogram
 			LINEARLS, ///< linear, using least squares
-			QUADRATIC ///< quadratic
+			QUADRATIC, ///< quadratic
+			POLYNOMIAL ///< polynomial regression. not implemented yet how to set the degree of the polynomial model
 		} regression;
 
 		/**
@@ -199,6 +237,13 @@ class Fit1D {
 		* @param lapse_rate lapse rate to set
 		*/
 		void setLapseRate(const double& lapse_rate) {model->setLapseRate(lapse_rate);}
+
+		/**
+		* @brief Set the degree of the polynomial regression
+		* This will throw an exception for all other regression models!
+		* @param degree degree of the polynomial regression to set
+		*/
+		void setDegree(const size_t& degree) {model->setDegree(degree);}
 
 		/**
 		* @brief Compute the regression parameters

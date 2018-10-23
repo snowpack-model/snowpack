@@ -74,13 +74,11 @@ namespace mio {
 ARCIO::ARCIO(const std::string& configfile)
        : cfg(configfile),
          coordin(), coordinparam(), coordout(), coordoutparam(),
-         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
+         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(".asc"), grid2d_ext_out(".asc"),
          a3d_view_in(false), a3d_view_out(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	a3d_view_in = false;
 	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, IOUtils::nothrow);
-	a3d_view_out = false;
 	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, IOUtils::nothrow);
 	getGridPaths();
 }
@@ -88,13 +86,11 @@ ARCIO::ARCIO(const std::string& configfile)
 ARCIO::ARCIO(const Config& cfgreader)
        : cfg(cfgreader),
          coordin(), coordinparam(), coordout(), coordoutparam(),
-         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
+         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(".asc"), grid2d_ext_out(".asc"),
          a3d_view_in(false), a3d_view_out(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	a3d_view_in = false;
 	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, IOUtils::nothrow);
-	a3d_view_out = false;
 	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, IOUtils::nothrow);
 	getGridPaths();
 }
@@ -103,17 +99,15 @@ void ARCIO::getGridPaths()
 {
 	grid2dpath_in.clear();
 	grid2dpath_out.clear();
-	const std::string grid_in = cfg.get("GRID2D", "Input", IOUtils::nothrow);
+	const std::string grid_in = cfg.get("GRID2D", "Input", "");
 	if (grid_in == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	const std::string grid_out = cfg.get("GRID2D", "Output", IOUtils::nothrow);
+	const std::string grid_out = cfg.get("GRID2D", "Output", "");
 	if (grid_out == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 
-	grid2d_ext_in = ".asc";
 	cfg.getValue("GRID2DEXT", "Input", grid2d_ext_in, IOUtils::nothrow);
 	if (grid2d_ext_in=="none") grid2d_ext_in.clear();
-	grid2d_ext_out = ".asc";
 	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, IOUtils::nothrow);
 	if (grid2d_ext_out=="none") grid2d_ext_out.clear();
 }

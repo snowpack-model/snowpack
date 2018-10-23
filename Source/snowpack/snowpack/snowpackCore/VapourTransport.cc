@@ -36,8 +36,9 @@ VapourTransport::VapourTransport(const SnowpackConfig& cfg)
                  iwatertransportmodel_snow(BUCKET), iwatertransportmodel_soil(BUCKET), watertransportmodel_snow("BUCKET"), watertransportmodel_soil("BUCKET"),
                  sn_dt(IOUtils::nodata),
                  hoar_thresh_rh(IOUtils::nodata), hoar_thresh_vw(IOUtils::nodata), hoar_thresh_ta(IOUtils::nodata),
-                 hoar_density_buried(IOUtils::nodata), hoar_density_surf(IOUtils::nodata), hoar_min_size_buried(IOUtils::nodata), 
-                 minimum_l_element(IOUtils::nodata), useSoilLayers(false), water_layer(false), enable_vapour_transport(false)
+                 useSoilLayers(false), water_layer(false), enable_vapour_transport(false)
+                 //hoar_density_buried(IOUtils::nodata), hoar_density_surf(IOUtils::nodata), hoar_min_size_buried(IOUtils::nodata),
+                 //minimum_l_element(IOUtils::nodata),
 {
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 
@@ -62,7 +63,7 @@ VapourTransport::VapourTransport(const SnowpackConfig& cfg)
 	 * - r242: HOAR_THRESH_VW set to 3.5
 	 */
 	cfg.getValue("HOAR_THRESH_VW", "SnowpackAdvanced", hoar_thresh_vw);
-	
+
 	/**
 	 * @brief No surface hoar will form at air temperatures above threshold (m s-1)
 	 * - Originaly, using THRESH_RAIN
@@ -136,7 +137,7 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 	 * If there are elements and ql < 0:
 	 * If ql is large enough to remove full surface elements, remove them.
 	 * left over ql is used as boundary condition when calculating vapour flux.
-	 * 
+	 *
 	 * In both cases: add/subtract mass to MS_SUBLIMATION
 	 */
 	if (ql > Constants::eps2) { // Add Mass
@@ -219,16 +220,14 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				EMS[e].updDensity();
 				// Merge the element if it is a snow layer. This will take care of possible left over liquid water (will be put one layer down)
 				// Keep layer if it is a soil layer inside the snowpack (for example with snow farming)
-				if(e>Xdata.SoilNode) {
+				if(e>=Xdata.SoilNode) {
 					if(EMS[e].theta[SOIL]<Constants::eps) {
-						SnowStation::mergeElements(EMS[e-1], EMS[e], false, true);
+						if (e>0) SnowStation::mergeElements(EMS[e-1], EMS[e], false, true);
 						// Now reduce the number of elements by one.
 						nE--;
-						Xdata.reduceNumberOfElements(nE);
 					}
-				} else {
 					//In case e==Xdata.SoilNode, we removed the last snow element and we should break out of the loop.
-					break;
+					if(e==Xdata.SoilNode) break;
 				}
 			} else {
 				// Not enough energy anymore to remove complete element, so we should break out of the loop.
@@ -245,7 +244,7 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 		}
 
 		// Now take care of left over solute mass.
-		if (e == 0) { // Add Solute Mass to Runoff TODO HACK CHECK
+		if (nE == Xdata.SoilNode) { // Add Solute Mass to Runoff TODO HACK CHECK
 			for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 				Sdata.load[ii] += M_Solutes[ii]/S_TO_H(sn_dt);
 			}
@@ -264,6 +263,7 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				}
 			}
 		}
+		Xdata.reduceNumberOfElements(nE);
 	}
 
 	// HACK: this code is under verification. The comment reads "surface hoar *is* destroyed, but the next line says surface hoar *may be* destroyed, depending on the sign of the latent heat flux.
@@ -294,14 +294,14 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 	if (Xdata.mH!=Constants::undefined) Xdata.mH -= (cH_old - Xdata.cH);
 }
 
-/** 
+/**
  * @brief Layer to layer vapour flux in both soil and snowpack
  * Calculates the difference in vapour flux between the snowpack elements and add/remove the corresponding mass
  * to the element ice lattice.
- * In soil the lowest element has a bottom flux equal to zero, the vapour fluxes in the rest of the soil are calculated according 
+ * In soil the lowest element has a bottom flux equal to zero, the vapour fluxes in the rest of the soil are calculated according
  * to Saito et al., 2006 "Numerical analysis of coupled water, vapor, and heat transport in the vadose zone".
- * In snow, the formulation is similar to the one made in Metamorphism.cc for the vapour transfer at a microscopic level. 
- * At the lowest snow element, the bottom flux is either equal to zero in case of no soil layer or to the uppermost soil flux if there is soil below. 
+ * In snow, the formulation is similar to the one made in Metamorphism.cc for the vapour transfer at a microscopic level.
+ * At the lowest snow element, the bottom flux is either equal to zero in case of no soil layer or to the uppermost soil flux if there is soil below.
  * At the uppermost element, the flux corresponds at the amount of atmospheric latent heat available for deposition/ sublimation.
  * @author Margaux Couttet
  * @param Xdata Nodes and elements data (temperature, temperature gradient, volumetric water/air/ice content)
@@ -316,8 +316,8 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 
 	// For snow, update theta_s (i.e., pore space)
 	if (nE > Xdata.SoilNode) {
-		for (size_t e = Xdata.SoilNode; e < nE; e++) {
-			EMS[e].VG.theta_s = (1. - EMS[e].theta[ICE])*(Constants::density_ice/Constants::density_water);	// TODO: link to van Genuchten parameterisation
+		for (size_t el = Xdata.SoilNode; el < nE; el++) {
+			EMS[el].VG.theta_s = (1. - EMS[el].theta[ICE])*(Constants::density_ice/Constants::density_water);	// TODO: link to van Genuchten parameterisation
 		}
 	}
 
@@ -334,7 +334,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 		// Solve vapour transport in snow
 		while (e-- > 0) {
 			const double topFlux = botFlux;										//top layer flux (kg m-2 s-1)
-			
+
 			const double gradTbot = (e == 0) ? (0.) : .5 * (EMS[e-1].gradT + EMS[e].gradT);				//Temperature gradient at the upper node (K m-1)
 			const double gradHbot = (e == 0) ? (0.) : (EMS[e].h - EMS[e-1].h) / (EMS[e].L/2. + EMS[e-1].L/2.);	//Pressure head gradient at the upper node (m m-1)
 
@@ -367,7 +367,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 
 			// - we should not remove more ICE from the snow layer then just below the minimum ice content, such that the layer is removed in the next time step
 			if (EMS[e].theta[ICE] > (1. - Constants::eps) * Snowpack::min_ice_content && EMS[e].theta[SOIL] < Constants::eps) {
-				// Make sure elements don't get too light. By setting element ice content just below the threshold to merge, it will be merged in the next time step. 
+				// Make sure elements don't get too light. By setting element ice content just below the threshold to merge, it will be merged in the next time step.
 				dM = std::max(-Constants::density_ice * EMS[e].L * (EMS[e].theta[ICE] - (1. - Constants::eps) * Snowpack::min_ice_content), dM);
 			}
 
@@ -387,12 +387,10 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 	} else {
 		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
 		const double topFlux = botFlux;										//top layer flux (kg m-2 s-1)
-		deltaM[nE-1] += (topFlux < 0)
-			? (std::min(std::max(0., (ReSolver1d::max_theta_ice - EMS[nE-1].theta[ICE]) * (Constants::density_ice * EMS[nE-1].L)), -(topFlux * sn_dt)))		// not more deposition than max_theta_ice
-			: (std::max(-(EMS[nE-1].theta[ICE] - (1.-Constants::eps)*Snowpack::min_ice_content) * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt)));	// not more sublimation than available mass
+		deltaM[nE-1] += std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
 		// HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
 		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
-		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[nE-1];
+		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] -= topFlux * sn_dt;
 	}
 
 	double dHoar = 0.;
@@ -416,12 +414,24 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
 			} else {
-				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+				if (e == nE-1 && e >= Xdata.SoilNode) {
+					// The top layer will increase length due to deposition
+					const double dL = deltaM[e] / (Constants::density_ice * EMS[e].theta[ICE]);
+					const double L_old = EMS[e].L;
+					const double L_new = EMS[e].L + dL;
+					EMS[e].L = L_new;
+					EMS[e].theta[WATER] *= L_old / L_new;
+					EMS[e].theta[WATER_PREF] *= L_old / L_new;
+					NDS[e+1].z = NDS[e].z + EMS[e].L;
+					Xdata.cH = NDS[e+1].z + NDS[e+1].u;
+				} else {
+					EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+				}
 			}
 		}
 		// Numerical rounding errors were found to lead to theta[AIR] < 0, so force the other components between [0,1]:
-		EMS[e].theta[ICE] = std::max(0., std::min(1., EMS[e].theta[ICE]));
-		EMS[e].theta[WATER] = std::max(0., std::min(1., EMS[e].theta[WATER]));
+		EMS[e].theta[ICE] = std::max(0., std::min(1. - EMS[e].theta[SOIL], EMS[e].theta[ICE]));
+		EMS[e].theta[WATER] = std::max(0., std::min(1. - EMS[e].theta[SOIL], EMS[e].theta[WATER]));
 		EMS[e].theta[WATER_PREF] = std::max(0., std::min(1., EMS[e].theta[WATER_PREF]));
 		// Update theta[AIR] and density:
 		EMS[e].theta[AIR] = (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]);
@@ -429,9 +439,13 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 		assert(EMS[e].Rho > 0 || EMS[e].Rho==IOUtils::nodata); //density must be positive
 
 		if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR] >= 0.)) {
-			prn_msg(__FILE__, __LINE__, "err", Date(),
-			    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].salinity);
-			throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
+			if(EMS[e].theta[AIR] > -Constants::eps2) {
+				EMS[e].theta[AIR] = 0.;
+			} else {
+				prn_msg(__FILE__, __LINE__, "err", Date(),
+				    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].salinity);
+				throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
+			}
 		}
 	}
 
@@ -443,7 +457,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 }
 
 void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
-                                       SnowStation& Xdata, SurfaceFluxes& Sdata) 
+                                       SnowStation& Xdata, SurfaceFluxes& Sdata)
 {
 	// First, consider no soil with no snow on the ground
 	if (!useSoilLayers && Xdata.getNumberOfNodes() == Xdata.SoilNode+1) {
@@ -451,6 +465,9 @@ void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
 	}
 
 	compSurfaceSublimation(Mdata, ql, Xdata, Sdata);
+
+	// No snow (sublimation removed last snow element)
+	if (Xdata.getNumberOfNodes() == Xdata.SoilNode+1) return;
 
 	try {
 		WaterTransport::adjustDensity(Xdata);

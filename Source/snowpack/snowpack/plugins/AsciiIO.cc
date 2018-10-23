@@ -333,7 +333,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 
 	// Input section
 	cfg.getValue("METEOPATH", "Input", inpath, IOUtils::nothrow);
-	const string in_snowpath = cfg.get("SNOWPATH", "Input", IOUtils::nothrow);
+	const std::string in_snowpath = cfg.get("SNOWPATH", "Input", "");
 	cfg.getValue("TIME_ZONE", "Input", time_zone);
 
 	// Output section
@@ -353,7 +353,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("OUT_SW", "Output", out_sw);
 	cfg.getValue("OUT_T", "Output", out_t);
 	cfg.getValue("HARDNESS_IN_NEWTON", "Output", r_in_n, IOUtils::nothrow);
-	const string out_snowpath = cfg.get("SNOWPATH", "Output", IOUtils::nothrow);
+	const std::string out_snowpath = cfg.get("SNOWPATH", "Output", "");
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("PROF_FORMAT", "Output", vecProfileFmt);
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
@@ -444,6 +444,7 @@ bool AsciiIO::snowCoverExists(const std::string& i_snowfile, const std::string& 
  * @param stationID
  * @param SSdata
  * @param Zdata
+ * @param read_salinity
  */
 void AsciiIO::readSnowCover(const std::string& i_snowfile, const std::string& stationID,
                             SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool&)
@@ -943,9 +944,9 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	// Offset profile [m]:
 	const double offset = (SeaIce)?(4.):(0.);
 	// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  - Xdata.Ground);
 	// Number of fill elements for offset (only 0 or 1 is supported now):
-	const int Noffset = (SeaIce)?(1):(0);
+	const size_t Noffset = (SeaIce)?(1):(0);
 
 	//  501: height [> 0: top, < 0: bottom of elem.] (cm)
 	const size_t nz = (useSoilLayers)? nN : nE;
@@ -1280,7 +1281,7 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 			      fout << "\n062" << jj << ",1,0";
 			}
 		}
-		
+
 	}
 }
 
@@ -1402,7 +1403,7 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	if (Xdata.getNumberOfElements() == Xdata.SoilNode) { //only, so nothing to write
 		return;
 	}
-	
+
 	//open profile filestream
 	const std::string ext = (aggregate)? ".aprf" : ".prf";
 	const std::string filename( getFilenamePrefix(Xdata.meta.getStationID(), outpath) + ext );
@@ -1427,7 +1428,7 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	ofs << "#-,-,-,deg,deg,1,cm,kg m-2,degC,degC\n";
 	ofs << fixed << dateOfProfile.toString(Date::ISO) << "," << setprecision(6) << dateOfProfile.getJulian() << ",";
 	ofs << Xdata.meta.getStationName() << "," << setprecision(1) << Xdata.meta.getAzimuth() << "," << Xdata.meta.getSlopeAngle() << ",";
-	
+
 	vector<SnowProfileLayer> Pdata( SnowProfileLayer::generateProfile(dateOfProfile, Xdata, hoar_density_surf, hoar_min_size_surf) );
 	if (aggregate) {
 		Aggregate::aggregate(Pdata);
@@ -1436,7 +1437,7 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	const size_t nL = Pdata.size();
 	ofs << nL << "," << setprecision(1) << Pdata[nL-1].height << "," << Xdata.swe << "," << Xdata.lwc_sum << ",";
 	ofs << Pdata[nL-1].T << "," << IOUtils::K_TO_C(Xdata.Ndata[Xdata.SoilNode].T) << "\n";
-	
+
 	//Minima of stability indices at their respective depths as well as stability classifications
 	ofs << "#Stab,stab_height,stab_index,stab_class1,stab_class2\n";
 	ofs << "# ,cm,1,1,1\n";
@@ -1455,7 +1456,7 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	ofs << "S4," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << "\n";
 	ofs << "S5," << setprecision(1) << mio::IOUtils::nodata << "," << setprecision(2) << mio::IOUtils::nodata << "\n";
 #endif
-	
+
 	//Now write all layers starting from the ground
 	if (aggregate)
 		ofs << "#Aggregated profile\n";
@@ -1472,7 +1473,7 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 		ofs << Pdata[ll].type << "," << Pdata[ll].marker << "," << setprecision(1) << Pdata[ll].hard << "\n";
 	}
 	ofs << "\n\n";
-	
+
 	ofs.close();
 }
 
@@ -1896,7 +1897,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 	setNumberSensors(Mdata);
 
 	// Correction for snow depth. If we have a marked reference layer, then subtract the height of the reference layer in the output.
-	const double HScorrC = (Xdata.findMarkedReferenceLayer()==IOUtils::nodata)?(0.):(Xdata.findMarkedReferenceLayer());
+	const double HScorrC = (Xdata.findMarkedReferenceLayer()==IOUtils::nodata) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 
 	// Check file for header
 	if (!checkHeader(Xdata, filename, "met", "[STATION_PARAMETERS]")) {
@@ -2040,14 +2041,14 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground;
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z;
 				// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  );
+				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->FreeBoard;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->SeaLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->getBulkSalinity(Xdata);
-				fout << "," << std::setprecision(3) << (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata);
+				fout << "," << std::setprecision(3) << ((Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata));
 				fout << "," << std::setprecision(3) << Xdata.Seaice->getBrineSalinity(Xdata);
-				fout << "," << std::setprecision(3) << (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata);
+				fout << "," << std::setprecision(3) << ((Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata));
 				fout << "," << std::setprecision(3) << Xdata.Seaice->BottomSalFlux;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->TopSalFlux;
 				fout << ",,,,,,,,,,,,,,,,";

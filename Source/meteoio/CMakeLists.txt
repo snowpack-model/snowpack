@@ -90,7 +90,6 @@ SET(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
 SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PLUGIN_SASEIO OFF CACHE BOOL "Compilation SASEIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
-SET(DATA_QA OFF CACHE BOOL "Data Quality Assurance outputs ON or OFF")
 
 ###########################################################
 #finally, SET compile flags

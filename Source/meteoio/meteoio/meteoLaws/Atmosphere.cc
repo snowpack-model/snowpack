@@ -68,6 +68,28 @@ double Atmosphere::stdAirPressure(const double& altitude) {
 }
 
 /**
+ * @brief Atmospheric pressure reduced to sea level.
+ * This calculates the following formula (with P the pressure at altitude h, L the adiabatic lapse rate,
+ * and T<sub>0</sub> the standard sea level temperature, the air mol mass m, gravity g at height, and the
+ * gas constant R):
+ * \f[
+ * P_0 = P / (1-L*h/T_0)^((m*g)/(R*L))
+ * \f]
+ * With growing altitude the output is of little use to predict the pressure, but it can be used to
+ * baseline plots.
+ * @param pressure Measured pressure at an altitude (Pa)
+ * @param altitude The station's altitude above sea level (m)
+ * @param latitude The station's latitude (degrees)
+ * @return Reduced atmospheric pressure (Pa)
+ */
+double Atmosphere::reducedAirPressure(const double& pressure, const double& altitude, const double& latitude) {
+	const double pp = pressure / pow( 1. - Cst::mean_adiabatique_lapse_rate * altitude / Cst::std_temp,
+	    (Cst::dry_air_mol_mass * Atmosphere::gravity( altitude, latitude )) /
+	    (Cst::gaz_constant * Cst::mean_adiabatique_lapse_rate) );
+	return pp;
+}
+
+/**
  * @brief Acceleration due to gravity
  * @param altitude altitude above sea level (m)
  * @param latitude latitude in degrees

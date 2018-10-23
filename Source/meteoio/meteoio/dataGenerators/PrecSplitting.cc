@@ -17,13 +17,14 @@
 */
 
 #include <meteoio/dataGenerators/PrecSplitting.h>
+#include <algorithm>
 
 namespace mio {
 
 void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	bool has_model=false, has_snow=false, has_rain=false;
-	double snow_thresh=273.15, rain_thresh=273.15; //to silence a warning
+	double snow_T_thresh=273.15, rain_T_thresh=273.15; //to silence a warning
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
@@ -36,10 +37,10 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 
 			has_model = true;
 		} else if(vecArgs[ii].first=="SNOW") {
-			IOUtils::parseArg(vecArgs[ii], where, snow_thresh);
+			IOUtils::parseArg(vecArgs[ii], where, snow_T_thresh);
 			has_snow = true;
 		} else if(vecArgs[ii].first=="RAIN") {
-			IOUtils::parseArg(vecArgs[ii], where, rain_thresh);
+			IOUtils::parseArg(vecArgs[ii], where, rain_T_thresh);
 			has_rain = true;
 		} else
 			throw InvalidArgumentException("Unknown argument \""+vecArgs[ii].first+"\" supplied for "+where+" generator", AT);
@@ -48,14 +49,14 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 	if (!has_model) throw InvalidArgumentException("Please provide a MODEL for "+where, AT);
 	if (model == THRESH) {
 		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for "+where, AT);
-		fixed_thresh = snow_thresh;
+		fixed_thresh = snow_T_thresh;
 	}
 	if (model == RANGE) {
 		if (!has_snow || !has_rain) throw InvalidArgumentException("Please provide a a snow and a rain threshold for "+where, AT);
-		if (snow_thresh==rain_thresh) throw InvalidArgumentException(where+" : the two provided threshold must be different", AT);
-		if (snow_thresh>rain_thresh) std::swap(snow_thresh, rain_thresh);
-		range_start = snow_thresh;
-		range_norm = 1. / (rain_thresh-snow_thresh);
+		if (snow_T_thresh==rain_T_thresh) throw InvalidArgumentException(where+" : the two provided threshold must be different", AT);
+		if (snow_T_thresh>rain_T_thresh) std::swap(snow_T_thresh, rain_T_thresh);
+		range_start = snow_T_thresh;
+		range_norm = 1. / (rain_T_thresh-snow_T_thresh);
 	}
 }
 
@@ -208,7 +209,7 @@ bool PrecSplitting::generatePSUM(double& value, MeteoData& md) const
 		if (PSUM_PH==0.) return false; //precip is fully solid but we only have the liquid phase...
 		value = PSUM_L / PSUM_PH;
 		return true;
-	} else {
+	} else if (hasPSUMS) {
 		if (PSUM_PH==1.) return false; //precip is fully liquid but we only have the solid phase...
 		value = PSUM_S / (1. - PSUM_PH);
 		return true;

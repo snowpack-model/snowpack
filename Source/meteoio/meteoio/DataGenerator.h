@@ -44,7 +44,6 @@ namespace mio {
 class DataGenerator : public DataCreator {
 	public:
 		DataGenerator(const Config& cfg);
-		DataGenerator(const DataGenerator& c) : DataCreator(c) {}
 
 		void fillMissing(METEO_SET& vecMeteo) const;
 		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -52,6 +51,8 @@ class DataGenerator : public DataCreator {
 		DataGenerator& operator=(const DataGenerator& source);
 
 		const std::string toString() const;
+	private:
+		bool data_qa_logs;
 };
 
 } //end namespace

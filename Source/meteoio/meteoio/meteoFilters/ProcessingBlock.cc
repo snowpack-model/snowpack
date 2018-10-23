@@ -49,11 +49,17 @@
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
+#include <meteoio/meteoFilters/FilterDespikingPS.h>
 
 namespace mio {
 /**
  * @page processing Processing overview
- * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage.
+ * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage. Moreover, there is a special mode of operation where MeteoIO writes on the screen a line for each data point that gets modified 
+ * (either filtered, resampled or generated). This is enabled by setting the DATA_QA_LOGS key to *true* in the [General] section. The outputs then look like the following:
+ * @code
+ * [DATA_QA] Filtering WFJ2::ILWR::MIN_MAX 2016-01-18T09:00:00+01:00 [2016-W03-01]
+ * [DATA_QA] Resampling WFJ1::VW_MAX::LINEAR 2015-10-12T13:00:00+01:00 [2015-W42-01]
+ * @endcode
  *
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
@@ -101,6 +107,7 @@ namespace mio {
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
+ * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - TIME_CONSISTENCY: reject data that changes too much , see FilterTimeconsistency
@@ -124,7 +131,7 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
- * 
+ *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps, see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
@@ -133,7 +140,7 @@ namespace mio {
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
 	//the indenting is a little weird, this is in order to show the same groups as in the documentation above
-	
+
 	//normal filters
 	if (blockname == "MIN"){
 		return new FilterMin(vecArgs, blockname);
@@ -159,8 +166,10 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterDeGrass(vecArgs, blockname);
 	} else if (blockname == "POTENTIALSW"){
 		return new FilterPotentialSW(vecArgs, blockname);
+	} else if (blockname == "DESPIKING"){
+		return new FilterDespikingPS(vecArgs, blockname);
 	}
-	
+
 	//general data transformations
 	else if (blockname == "SUPPR"){
 		return new FilterSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
@@ -169,7 +178,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "MULT"){
 		return new ProcMult(vecArgs, blockname, cfg.getConfigRootDir());
 	}
-	
+
 	//more specific data transformations
 	else if (blockname == "EXP_SMOOTHING"){
 		return new ProcExpSmoothing(vecArgs, blockname);
@@ -249,7 +258,7 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
-	
+
 	size_t maxIndex = 0;
 	const size_t minIndex = (c_type=='h')? 0 : 1;
 	if (c_type=='m') maxIndex = 12;
@@ -302,7 +311,7 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		}
 		throw;
 	}
-	
+
 	return corrections;
 }
 
@@ -310,7 +319,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 {
 	if (col_idx<2)
 		throw InvalidArgumentException("Filter "+filter+": the column index must be greater than 1!", AT);
-	
+
 	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
 		std::ostringstream ss;
@@ -369,7 +378,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 		}
 		throw;
 	}
-	
+
 	std::sort(corrections.begin(), corrections.end());
 	return corrections;
 }
@@ -378,7 +387,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
-	
+
 	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
 		std::ostringstream ss;
@@ -388,7 +397,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 	}
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	std::map< std::string, std::vector<dates_range> > dates_specs;
-	
+
 	Date d1, d2;
 	try {
 		size_t lcount=0;
@@ -399,7 +408,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 			IOUtils::stripComments(line);
 			IOUtils::trim(line);
 			if (line.empty()) continue;
-			
+
 			std::vector<std::string> vecString;
 			const size_t nrElems = IOUtils::readLineToVec(line, vecString);
 			if (nrElems<2)

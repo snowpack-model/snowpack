@@ -197,7 +197,7 @@ std::vector<SnowProfileLayer> SnowProfileLayer::generateProfile(const mio::Date&
 	const vector<ElementData>& EMS = Xdata.Edata;
 	const double cos_sl = Xdata.cos_sl;
 	const bool surf_hoar = (NDS[nE].hoar > (hoar_density_surf * MM_TO_M(hoar_min_size_surf)));
-	
+
 	// Generate the profile data from the element data (1 layer = 1 element)
 	unsigned char snowloc = 0;
 	string mystation = Xdata.meta.getStationID();
@@ -216,7 +216,7 @@ std::vector<SnowProfileLayer> SnowProfileLayer::generateProfile(const mio::Date&
 		Pdata[ll].stationname = mystation;
 		Pdata[ll].loc_for_snow = snowloc;
 		Pdata[ll].loc_for_wind = 1;
-		
+
 		// Write snow layer data
 		if (ll < nE) {
 			Pdata[ll].generateLayer(EMS[e], NDS[e+1]);
@@ -268,6 +268,18 @@ const std::string BoundCond::toString() const
 	os <<"</BoundCond>\n";
 	return os.str();
 }
+
+void BoundCond::reset()
+{
+  lw_out=0;  ///< outgoing longwave radiation
+  lw_net=0;  ///< net longwave radiation
+  qs=0;      ///< sensible heat
+  ql=0;      ///< latent heat
+  qr=0;      ///< rain energy
+  qg=0;
+}
+
+
 
 SurfaceFluxes::SurfaceFluxes()
   : lw_in(0.), lw_out(0.), lw_net(0.), qs(0.), ql(0.), hoar(0.), qr(0.), qg(0.), qg0(0.), sw_hor(0.),
@@ -516,6 +528,224 @@ std::istream& operator>>(std::istream& is, SurfaceFluxes& data)
 	return is;
 }
 
+
+
+/**
+ * @brief Initialize all the CData elements value with values by default or
+ *with values read from the SNO file.
+ *This function is called in SnowStation::initialize, whch is called by XXX in the main().
+ * @param snow soil data SN_SNOWSOIL_DATA& SSdata created in the main.
+ * @author Adrien Michel
+ */
+
+void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopyModel){
+
+  int_cap_snow = SSdata.Canopy_int_cap_snow; //iMax in Gouttevin,2015
+  if(useCanopyModel &&  (int_cap_snow < 0.0 || int_cap_snow == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopySnowIntCapacity(" << int_cap_snow << ") in soil file is not valid, the default value of 5.9 sill be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    int_cap_snow = 5.9;
+  }
+
+  /// Specific interception capacity for rain (I_LAI) (mm/LAI)
+  int_cap_rain = 0.3;
+  /** Coef in interception function, see (Pomeroy et al,1998) where a value of 0.7 was
+   * found to be appropriate for hourly time-step, but smaller time steps require smaller
+   * values, 0.5 was found reasoanble by using the SnowMIP2 data (2007-12-09)
+  */
+  interception_timecoef = 0.5;
+
+  /// RADIATION BALANCE
+  can_alb_dry = SSdata.Canopy_alb_dry;  // Albedo of dry canopy (calibr: 0.09, Alptal)
+  if(useCanopyModel &&  (can_alb_dry < 0.0 || can_alb_dry> 1.0 || can_alb_dry == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopyAlbedoDry (" << can_alb_dry << ") in soil file is not valid, the default value of 0.11 will be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    can_alb_dry = 0.11;
+  }
+
+  can_alb_wet = SSdata.Canopy_alb_wet;  // Albedo of wet canopy (calibr: 0.09, Alptal)
+  if(useCanopyModel &&  (can_alb_wet < 0.0 || can_alb_wet > 1.0 ||  can_alb_wet == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopyAlbedoWet (" << can_alb_wet << ") in soil file is not valid, the default value of 0.11 will be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    can_alb_wet = 0.11;
+  }
+
+  can_alb_snow = SSdata.Canopy_alb_snow;  // Albedo of snow covered albedo (calibr: 0.35, Alptal)
+  if(useCanopyModel &&  (can_alb_snow < 0.0 || can_alb_snow > 1.0 || can_alb_snow == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopyAlbedoSnow (" << can_alb_snow << ") in soil file is not valid, the default value of 0.35 will be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    can_alb_snow = 0.35;
+  }
+
+  krnt_lai = .75;       // Radiation transmissivity parameter, in the range 0.4-0.8 if the true LAI is used; higher if optical LAI is used.
+                                            // (calibrated on Alptal)
+  can_diameter = SSdata.Canopy_diameter;  // average canopy (tree) diameter [m], parameter in the new radiation transfer model
+  if(useCanopyModel &&  (can_diameter < 0.0 || can_diameter == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopyDiameter (" << can_diameter << ") in soil file is not valid, the default value of 1.0 will be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    can_diameter = 1.0;
+  }
+
+  ///  ENERGY BALANCE
+  /// parameters for HeatMass and 2layercanopy
+  biomass_heat_capacity = 2800.;	// from Linroth et al., 2013 (J Kg-1 K-1)
+  biomass_density = 900.;		// from Linroth et al., 2013 (Kg m-3)
+
+  lai_frac_top_default = SSdata.Canopy_lai_frac_top_default;	// fraction of total LAI that is attributed to the uppermost layer. Here calibrated for Alptal.
+  if(useCanopyModel &&  (lai_frac_top_default < 0.0 || lai_frac_top_default > 1.0 || lai_frac_top_default == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopyFracLAIUpperLayer (" << lai_frac_top_default << ") in soil file is not valid, the default value of 0.5 will be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    lai_frac_top_default = 0.5;
+  }
+
+  trunk_frac_height = 0.2;		// (optional) fraction of total tree height occupied by trunks,
+                                    // used to calculate direct solar insolation of trunks.
+  trunkalb = 0.09;			// trunk albedo
+  et = 1.;				// trunk emissivity
+  ///  TURBULENT HEAT EXCHANGE
+  /// Stab. corr. aerodyn. resist. above and below canopy: 0=off and 1=on (Monin-Obukhov formulation)
+  canopy_stabilitycorrection = true;
+  /// Ratio between canopy height and roughness length
+  roughmom_to_canopyheight_ratio = 0.10;
+  /// As above for displacement height
+  displ_to_canopyheight_ratio = 0.6667;
+  /**
+   * Fractional increase of aerodynamic resistance for evaporation of intercepted snow.
+   * - 10.0 from Koivusalo and Kokkonen (2002)
+   * - 8.0 calibration with Alptal data
+   */
+  raincrease_snow = 10.0;
+
+  /// @brief Maximum allowed canopy temperature change (K hr-1)
+  canopytemp_maxchange_perhour = 7.0;
+  /// @brief (~=1, but Not allowed to be exactly 1)
+  roughheat_to_roughmom_ratio = 0.9999;
+  /// @brief minimum heat exchange (Wm-2K-1) at zero wind
+  can_ch0 = 3.;
+  /// @brief 1+CAN_RS_MULT = maximum factor to increase Cdata->rs below canopy
+  can_rs_mult = 3.0;
+  /// @brief TRANSPIRATION
+  /// @brief Minimum canopy surface resistance, 500 (sm-1) is for needle leaf treas van den Hurk et al (2000) *75% Gustafsson et al (2003)
+  rsmin = 375.0;
+  /**
+   * @brief gd (Pa-1) parameter for canopy surface resistance response to vapour pressure:
+   * - 0.0003 = trees (needle or broadleafs)
+   * - 0=crops, grass, tundra etc
+   */
+  f3_gd = 0.0003;
+  /// @brief Root depth, determining the soil layers influenced by root water uptake
+  rootdepth = 1.0;
+  /// @brief Wilting point, defined as a fraction of water content at field capacity (-)
+  wp_fraction = 0.17;
+  /// @brief Wilting point pressure head, when using Richards equation for soil.
+  h_wilt = -1.55E6;
+  //@}
+
+  // INITIALIZE CANOPY DATA
+  // State variable
+  temp = 273.15; // temperature (K)
+  storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)  temp;        ///< temperature (K)
+  ec = 1.0;          ///< longwave emissivity (1)
+  // parameters
+  lai = SSdata.Canopy_LAI;
+  if(useCanopyModel &&  (lai < 0.0 || lai == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for LAI (" << lai << ") in soil file is not valid.";
+		throw UnknownValueException(msg.str(), AT);
+  }
+
+  z0m = height*0.1;
+  z0h = z0m*0.1;
+  zdispl = height*0.66;
+
+  height =  SSdata.Canopy_Height;
+  if(useCanopyModel &&  (height < 0.0 || height == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for height (" << height << ") in soil file is not ialid.";
+		throw UnknownValueException(msg.str(), AT);
+  }
+
+  direct_throughfall = SSdata.Canopy_Direct_Throughfall;
+  if(useCanopyModel &&  (direct_throughfall < 0.0 || direct_throughfall >1.0 || direct_throughfall == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for direct throughfall (" << direct_throughfall << ") in soil file is not valid.";
+		throw UnknownValueException(msg.str(), AT);
+  }
+
+  sigf= 1.-exp(-krnt_lai * (lai));;        ///< radiation transmissivity (1)
+
+  // aerodynamic resistances
+  ra = 0.;          ///< from canopy air to reference height
+  rc = 0.;          ///< from canopy to canopy air
+  rs = 0.;          ///< from subsurface to canpopy air
+  rstransp = 0.;    ///< stomatal surface resistance for transpiration
+  // Averaged variables
+  canopyalb = can_alb_dry;  ///< canopy albedo [-]
+  totalalb=0;    ///< total albedo above canopy and snow/soil surface [-]
+  wetfraction = 0.; ///< fraction of canopy covered by interception [-]
+  intcapacity = 0.; ///< maximum interception storage [mm]
+  // Radiations
+  rswrac = 0.;      ///< upward shortwave above canopy
+  iswrac = 0.;	    ///< downward shortwave radiation above canopy
+  rswrbc = 0.;      ///< upward shortwave below canopy
+  iswrbc = 0.;      ///< downward shortwave radiation below canopy
+  ilwrac = 0.;      ///< downward longwave radiation ABOVE canopy
+  rlwrac = 0.;      ///< upward longwave radiation ABOVE canopy
+  ilwrbc = 0.;      ///< downward longwave radiation BELOW canopy
+  rlwrbc = 0.;      ///< upward longwave radiation BELOW canopy
+  rsnet = 0.;       ///< net shortwave radiation
+  rlnet = 0.;       ///< net longwave radiation
+  // Turbulent fluxes
+  sensible = 0.;
+  latent = 0.;
+  latentcorr = 0.;
+  // Evap fluxes
+  transp = 0.;
+  intevap = 0.;
+  // Mass fluxes
+  interception = 0.;
+  throughfall = 0.;
+  snowunload = 0.;
+
+  snowfac = 0.;     ///< snowfall above canopy
+  rainfac = 0.;     ///< rainfall above canopy
+  liquidfraction = 0.;
+  sigftrunk = 0.;   ///< radiation interception cross section for trunk layer ()
+  Ttrunk = 273.15; // trunk temperature (K)
+  CondFluxCanop = 0.; ///< biomass heat storage flux towards Canopy (if 1L) towards Leaves (if 2L). (>0 towards canopy)
+  CondFluxTrunks = 0.; ///< biomass heat storage flux towards Trunks (if 2L)
+  LWnet_Trunks = 0.; ///< net LW to trunks (>0 towards trunks)
+  SWnet_Trunks= 0.; ///< net SW to trunks (>0 towards trunks)
+  QStrunks = 0.;      ///< sensible heat flux from trunks (>0 if heat lost from trunk)
+  forestfloor_alb = 0.; ///< albedo of the forest floor
+  BasalArea =  SSdata.Canopy_BasalArea; ///< basal area of trees on the stand
+  if(useCanopyModel &&  (BasalArea < 0.0 || BasalArea == mio::IOUtils::nodata ))
+  {
+    std::stringstream msg;
+    msg << "Value provided for CanopyBasalArea (" << BasalArea << ") in soil file is not valid, the default value of 0.004 will be used.";
+    prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
+    BasalArea=0.004;
+  }
+
+  HMLeaves=3.*4190.;     ///< Leaves heat mass (J K-1 /m2 ground surface)
+  HMTrunks=30.*4190.;     ///< Trunks heat mass (J K-1 /m2 ground surface)
+}
+
 void CanopyData::reset(const bool& cumsum_mass)
 {
 	if (cumsum_mass) { // Do not reset cumulated mass balance
@@ -629,7 +859,7 @@ std::ostream& operator<<(std::ostream& os, const CanopyData& data)
 	os.write(reinterpret_cast<const char*>(&data.interception), sizeof(data.interception));
 	os.write(reinterpret_cast<const char*>(&data.throughfall), sizeof(data.throughfall));
 	os.write(reinterpret_cast<const char*>(&data.snowunload), sizeof(data.snowunload));
-	
+
 	os.write(reinterpret_cast<const char*>(&data.snowfac), sizeof(data.snowfac));
 	os.write(reinterpret_cast<const char*>(&data.rainfac), sizeof(data.rainfac));
 	os.write(reinterpret_cast<const char*>(&data.liquidfraction), sizeof(data.liquidfraction));
@@ -644,6 +874,34 @@ std::ostream& operator<<(std::ostream& os, const CanopyData& data)
 	os.write(reinterpret_cast<const char*>(&data.BasalArea), sizeof(data.BasalArea));
 	os.write(reinterpret_cast<const char*>(&data.HMLeaves), sizeof(data.HMLeaves));
 	os.write(reinterpret_cast<const char*>(&data.HMTrunks), sizeof(data.HMTrunks));
+
+	os.write(reinterpret_cast< const char*>(&data.int_cap_snow), sizeof(data.int_cap_snow));
+	os.write(reinterpret_cast< const char*>(&data.int_cap_rain), sizeof(data.int_cap_rain));
+	os.write(reinterpret_cast< const char*>(&data.interception_timecoef), sizeof(data.interception_timecoef));
+	os.write(reinterpret_cast<const char*>(&data.can_alb_dry), sizeof(data.can_alb_dry));
+	os.write(reinterpret_cast<const char*>(&data.can_alb_wet), sizeof(data.can_alb_wet));
+	os.write(reinterpret_cast<const char*>(&data.can_alb_snow), sizeof(data.can_alb_snow));
+	os.write(reinterpret_cast<const char*>(&data.krnt_lai), sizeof(data.krnt_lai));
+	os.write(reinterpret_cast<const char*>(&data.can_diameter), sizeof(data.can_diameter));
+	os.write(reinterpret_cast<const char*>(&data.biomass_heat_capacity), sizeof(data.biomass_heat_capacity));
+	os.write(reinterpret_cast<const char*>(&data.lai_frac_top_default), sizeof(data.lai_frac_top_default));
+	os.write(reinterpret_cast<const char*>(&data.trunk_frac_height), sizeof(data.trunk_frac_height));
+	os.write(reinterpret_cast<const char*>(&data.trunkalb), sizeof(data.trunkalb));
+	os.write(reinterpret_cast<const char*>(&data.et), sizeof(data.et));
+	os.write(reinterpret_cast<const char*>(&data.canopy_stabilitycorrection), sizeof(data.canopy_stabilitycorrection));
+	os.write(reinterpret_cast<const char*>(&data.roughmom_to_canopyheight_ratio), sizeof(data.roughmom_to_canopyheight_ratio));
+	os.write(reinterpret_cast<const char*>(&data.displ_to_canopyheight_ratio), sizeof(data.displ_to_canopyheight_ratio));
+	os.write(reinterpret_cast<const char*>(&data.raincrease_snow), sizeof(data.raincrease_snow));
+	os.write(reinterpret_cast<const char*>(&data.canopytemp_maxchange_perhour), sizeof(data.canopytemp_maxchange_perhour));
+	os.write(reinterpret_cast<const char*>(&data.roughheat_to_roughmom_ratio), sizeof(data.roughheat_to_roughmom_ratio));
+	os.write(reinterpret_cast<const char*>(&data.can_ch0), sizeof(data.can_ch0));
+	os.write(reinterpret_cast<const char*>(&data.can_rs_mult), sizeof(data.can_rs_mult));
+	os.write(reinterpret_cast<const char*>(&data.rsmin), sizeof(data.rsmin));
+	os.write(reinterpret_cast<const char*>(&data.f3_gd), sizeof(data.f3_gd));
+	os.write(reinterpret_cast<const char*>(&data.rootdepth), sizeof(data.rootdepth));
+	os.write(reinterpret_cast<const char*>(&data.wp_fraction), sizeof(data.wp_fraction));
+	os.write(reinterpret_cast<const char*>(&data.h_wilt), sizeof(data.h_wilt));
+
 	return os;
 }
 
@@ -691,7 +949,7 @@ std::istream& operator>>(std::istream& is, CanopyData& data)
 	is.read(reinterpret_cast<char*>(&data.interception), sizeof(data.interception));
 	is.read(reinterpret_cast<char*>(&data.throughfall), sizeof(data.throughfall));
 	is.read(reinterpret_cast<char*>(&data.snowunload), sizeof(data.snowunload));
-	
+
 	is.read(reinterpret_cast<char*>(&data.snowfac), sizeof(data.snowfac));
 	is.read(reinterpret_cast<char*>(&data.rainfac), sizeof(data.rainfac));
 	is.read(reinterpret_cast<char*>(&data.liquidfraction), sizeof(data.liquidfraction));
@@ -706,6 +964,34 @@ std::istream& operator>>(std::istream& is, CanopyData& data)
 	is.read(reinterpret_cast<char*>(&data.BasalArea), sizeof(data.BasalArea));
 	is.read(reinterpret_cast<char*>(&data.HMLeaves), sizeof(data.HMLeaves));
 	is.read(reinterpret_cast<char*>(&data.HMTrunks), sizeof(data.HMTrunks));
+
+	is.read(reinterpret_cast<char*>(&data.int_cap_snow), sizeof(data.int_cap_snow));
+	is.read(reinterpret_cast<char*>(&data.int_cap_rain), sizeof(data.int_cap_rain));
+	is.read(reinterpret_cast<char*>(&data.interception_timecoef), sizeof(data.interception_timecoef));
+	is.read(reinterpret_cast<char*>(&data.can_alb_dry), sizeof(data.can_alb_dry));
+	is.read(reinterpret_cast<char*>(&data.can_alb_wet), sizeof(data.can_alb_wet));
+	is.read(reinterpret_cast<char*>(&data.can_alb_snow), sizeof(data.can_alb_snow));
+	is.read(reinterpret_cast<char*>(&data.krnt_lai), sizeof(data.krnt_lai));
+	is.read(reinterpret_cast<char*>(&data.can_diameter), sizeof(data.can_diameter));
+	is.read(reinterpret_cast<char*>(&data.biomass_heat_capacity), sizeof(data.biomass_heat_capacity));
+ 	is.read(reinterpret_cast<char*>(&data.lai_frac_top_default), sizeof(data.lai_frac_top_default));
+	is.read(reinterpret_cast<char*>(&data.trunk_frac_height), sizeof(data.trunk_frac_height));
+ 	is.read(reinterpret_cast<char*>(&data.trunkalb), sizeof(data.trunkalb));
+ 	is.read(reinterpret_cast<char*>(&data.et), sizeof(data.et));
+ 	is.read(reinterpret_cast<char*>(&data.canopy_stabilitycorrection), sizeof(data.canopy_stabilitycorrection));
+	is.read(reinterpret_cast<char*>(&data.roughmom_to_canopyheight_ratio), sizeof(data.roughmom_to_canopyheight_ratio));
+	is.read(reinterpret_cast<char*>(&data.displ_to_canopyheight_ratio), sizeof(data.displ_to_canopyheight_ratio));
+	is.read(reinterpret_cast<char*>(&data.raincrease_snow), sizeof(data.raincrease_snow));
+	is.read(reinterpret_cast<char*>(&data.canopytemp_maxchange_perhour), sizeof(data.canopytemp_maxchange_perhour));
+	is.read(reinterpret_cast<char*>(&data.roughheat_to_roughmom_ratio), sizeof(data.roughheat_to_roughmom_ratio));
+	is.read(reinterpret_cast<char*>(&data.can_ch0), sizeof(data.can_ch0));
+	is.read(reinterpret_cast<char*>(&data.can_rs_mult), sizeof(data.can_rs_mult));
+	is.read(reinterpret_cast<char*>(&data.rsmin), sizeof(data.rsmin));
+	is.read(reinterpret_cast<char*>(&data.f3_gd), sizeof(data.f3_gd));
+	is.read(reinterpret_cast<char*>(&data.rootdepth), sizeof(data.rootdepth));
+	is.read(reinterpret_cast<char*>(&data.wp_fraction), sizeof(data.wp_fraction));
+	is.read(reinterpret_cast<char*>(&data.h_wilt), sizeof(data.h_wilt));
+
 	return is;
 }
 
@@ -713,40 +999,91 @@ const std::string CanopyData::toString() const
 {
 	std::ostringstream os;
 	os << "<CanopyData>" << "\n";
+	os << "\tstorage:                           " << storage << "\n";
+	os << "\ttemp:                              " << temp << "\n";
+	os << "\tsigf:                              " <<  sigf << "\n";
+	os << "\tec:                                " << ec << "\n";
+	os << "\theight:                            " << height << "\n";
+	os << "\tlai:                               " << lai << "\n";
+ 	os << "\tdirect_throughfall:                " << direct_throughfall << "\n";
+	os << "\tz0m:                               " << z0m <<  "\n";
+	os << "\tz0h:                               " <<  z0h << "\n";
+	os << "\tzdispl:                            " << zdispl << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\tra:                                " << ra << "\n";
+	os << "\trc:                                " <<  rc << "\n";
+	os << "\tdrs:                               " << rs << "\n";
+	os << "\trstransp:                          " << rstransp << "\n";
+	os << "\tcanopyalb:                         " << canopyalb << "\n";
+	os << "\ttotalalb:                          " << totalalb << "\n";
+	os << "\twetfraction:                       " << wetfraction << "\n";
+	os << "\tintcapacity:                       " << intcapacity << "\n";
+	os << "\trswrac:                            " << rswrac << "\n";
+	os << "\tiswrac:                            " << iswrac << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\tiswrbc:                            " << iswrbc << "\n";
+	os << "\tilwrac:                            " << ilwrac << "\n";
+	os << "\trlwrac:                            " << rlwrac << "\n";
+	os << "\tilwrbc:                            " << ilwrbc << "\n";
+	os << "\trlwrbc:                            " << rlwrbc << "\n";
+	os << "\trsnet:                             " << rsnet << "\n";
+	os << "\trlnet:                             " << rlnet << "\n";
+	os << "\tsensible:                          " << sensible << "\n";
+	os << "\tlatent:                            " << latent << "\n";
+	os << "\tlatentcorr:                        " << latentcorr << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\ttransp:                            " << transp << "\n";
+	os << "\tintevap:                           " << intevap << "\n";
+	os << "\tinterception:                      " << interception << "\n";
+	os << "\tthroughfall:                       " << throughfall << "\n";
+	os << "\tsnowunload:                        " << snowunload << "\n";
+	os << "\tint_cap_snow:                      " << int_cap_snow << "\n";
+  	os << "\tint_cap_rain:                      " << int_cap_rain << "\n";
+  	os << "\tinterception_timecoef:             " << interception_timecoef << "\n";
+	os << "\tcan_alb_dry:                       " << can_alb_dry << "\n";
+	os << "\tcan_alb_wet:                       " << can_alb_wet << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\tcan_alb_snow:                      " << can_alb_snow << "\n";
+	os << "\tkrnt_lai:                          " << krnt_lai << "\n";
+	os << "\tcan_diameter:                      " << can_diameter << "\n";
+	os << "\tbiomass_heat_capacity:             " << biomass_heat_capacity << "\n";
+	os << "\tbiomass_density:                   " << biomass_density << "\n";
+	os << "\tlai_frac_top_default:              " << lai_frac_top_default << "\n";
+	os << "\ttrunk_frac_height:                 " << trunk_frac_height << "\n";
+	os << "\ttrunkalb:                          " << trunkalb << "\n";
+	os << "\tet:                                " << et << "\n";
+	os << "\tcanopy_stabilitycorrection:        " << canopy_stabilitycorrection << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\troughmom_to_canopyheight_ratio:    " << roughmom_to_canopyheight_ratio << "\n";
+	os << "\tdispl_to_canopyheight_ratio:       " << displ_to_canopyheight_ratio << "\n";
+	os << "\traincrease_snow:                   " << raincrease_snow << "\n";
+	os << "\tcanopytemp_maxchange_perhour:      " << canopytemp_maxchange_perhour << "\n";
+	os << "\troughheat_to_roughmom_ratio:       " << roughheat_to_roughmom_ratio << "\n";
+	os << "\tcan_ch0:                           " << can_ch0 << "\n";
+	os << "\tcan_rs_mult:                       " << can_rs_mult << "\n";
+	os << "\trsmin:                             " << rsmin << "\n";
+	os << "\tf3_gd:                             " << f3_gd << "\n";
+	os << "\trootdepth:                         " << rootdepth << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\twp_fraction:                       " << wp_fraction << "\n";
+	os << "\th_wilt:                            " << h_wilt << "\n";
+	os << "\tsnowfac:                           " << snowfac << "\n";
+	os << "\trainfac:                           " << rainfac << "\n";
+	os << "\tliquidfraction:                    " << liquidfraction << "\n";
+	os << "\tsigftrunk:                         " << sigftrunk << "\n";
+	os << "\tTtrunk:                            " << Ttrunk << "\n";
+	os << "\tCondFluxCanop:                     " << CondFluxCanop << "\n";
+	os << "\tCondFluxTrunks:                    " << CondFluxTrunks << "\n";
+	os << "\tLWnet_Trunks:                      " << LWnet_Trunks << "\n";
+	os << "_____________________________________" <<  "\n";
+	os << "\tSWnet_Trunks:                      " << SWnet_Trunks << "\n";
+	os << "\tQStrunks:                          " << QStrunks << "\n";
+	os << "\tforestfloor_alb:                   " << forestfloor_alb << "\n";
+	os << "\tBasalArea:                         " << BasalArea << "\n";
+	os << "\tHMLeaves:                          " << HMLeaves << "\n";
+	os << "\tHMTrunks:                          " << HMLeaves << "\n";
 
-	os << "\t<Aa>\n";
-	os << "\tstorage:  " << storage << "\n";
-	os << "\ttemp:     " << temp << "\n";
-	os << "\tsigf:     " << sigf << "\tec:       " << ec << "\n";
-	os << "\t</Aa>\n\t<Ab>\n";
-	os << "\theight:              " << height << "\n";
-	os << "\tlai:                 " << lai << "\tdirect_throughfall:  " << direct_throughfall << "\n";
-	os << "\tz0m:                 " << z0m << "\tz0h:                 " << z0h << "\n";
-	os << "\tzdispl:              " << zdispl << "\n";
-	os << "\t</Ab>\n\t<Ac>\n";
-	os << "\tra:        " << ra << " rc: " << rc << " rs: " << rs << "\n";
-	os << "\trstransp:  " << rstransp << "\n";
-	os << "\t</Ac>\n\t<Ba>\n";
-	os << "\tcanopyalb:    " << canopyalb << " totalalb: " << totalalb << "\n";
-	os << "\twetfraction:  " << wetfraction << "\n";
-	os << "\tintcapacity:  " << intcapacity << "\n";
-	os << "\t</Ba>\n\t<Bb>\n";
-	os << "\trswrac:  " << rswrac << " iswrac: " << iswrac << "\n";
-	os << "\trswrbc:  " << rswrbc << " iswrbc: " << iswrbc << "\n";
-	os << "\tilwrac:  " << ilwrac << " rlwrac: " << rlwrac << "\n";
-	os << "\tilwrbc:  " << ilwrbc << " rlwrbc: " << rlwrbc << "\n";
-	os << "\trsnet:   " << rsnet << " rlnet: " << rlnet << "\n";
-	os << "\t</Bb>\n\t<Bc>\n";
-	os << "\tsensible:    " << sensible << "\n";
-	os << "\tlatent:      " << latent << " latentcorr: " << latentcorr << "\n";
-	os << "\t</Bc>\n\t<Bd>\n";
-	os << "\ttransp:   " << transp << "\n";
-	os << "\tintevap:  " << intevap << "\n";
-	os << "\t</Bd>\n\t<Be>\n";
-	os << "\tinterception:  " << interception << "\n";
-	os << "\tthroughfall:   " << throughfall << "\n";
-	os << "\tsnowunload:    " << snowunload << "\n";
-	os << "\t</Be>\n</CanopyData>\n";
+	os << "</CanopyData>\n";
 	return os.str();
 }
 
@@ -1005,16 +1342,16 @@ double ElementData::getYoungModule(const double& rho_slab, const Young_Modulus& 
 	switch (model) {
 		case Sigrist: {//This is the parametrization by Sigrist, 2006
 			static const double A = 968.e6; //in Pa
-			const double E = A * pow( rho_slab/Constants::density_ice, 2.94 ); //in Pa
-			return E;
+			const double E_local = A * pow( rho_slab/Constants::density_ice, 2.94 ); //in Pa
+			return E_local;
 		}
 		case Pow: {
-			const double E = 5.07e9 * (pow((rho_slab/Constants::density_ice), 5.13));
-			return E;
+			const double E_local = 5.07e9 * (pow((rho_slab/Constants::density_ice), 5.13));
+			return E_local;
 		}
 		case Exp: {
-			const double E = 1.873e5 * exp(0.0149*(rho_slab));
-			return E;
+			const double E_local = 1.873e5 * exp(0.0149*(rho_slab));
+			return E_local;
 		}
 		default:
 			throw mio::UnknownValueException("Selected Young's modulus model has not been implemented", AT);
@@ -1176,29 +1513,36 @@ double ElementData::snowResidualWaterContent(const double& theta_i)
  * (Richtwerte Baugrund), which once more proves that "nomen est omen".
  * If my name was "Schachtschabel", I would never ever be dealing with
  * wet soils and Baugrund.
- * @author Michael Lehning
+ * For the USDA soil classes used if Richards equation is used, the field capacity is obtained using the Saxton formula (K.E. Saxton et al., 1986, Estimating generalized soil-water characteristics from texture. Soil Sci. Soc. Amer. J. 50(4):1031-1036) and defined in the VG class
+ * @author Michael Lehning & Adrien michel
  * @version 9Y.mm
- * @return Soil field capacity (?)
+ * @return Soil field capacity (-)
  */
 double ElementData::soilFieldCapacity() const
 {
 	double fc;
-	if (!(rg > 0.)) {
-		fc = std::min(SnLaws::field_capacity_soil, (1. - theta[SOIL]) * 0.1);
-	} else {
-		//Follow implementation by Tobias Hipp master thesis.
-		//Note that the value of 0.0976114 is more precise and the value of 60.8057 is
-		//slightly different from what is mentioned in thesis, to make the function continuous over rg.
-		if(rg<17.0) {
-			fc = std::min(0.95, 0.32 / sqrt(rg) + 0.02);
-		} else {
-			if(rg<60.8057) {
-				fc=0.0976114-0.002*(rg-17.0);
-			} else {
-				fc=0.01;
-			}
-		}
-	}
+  if (VG.defined == true)
+  {
+    fc=VG.field_capacity;
+  }
+  else{
+  	if (!(rg > 0.)) {
+  		fc = std::min(SnLaws::field_capacity_soil, (1. - theta[SOIL]) * 0.1);
+  	} else {
+  		//Follow implementation by Tobias Hipp master thesis.
+  		//Note that the value of 0.0976114 is more precise and the value of 60.8057 is
+  		//slightly different from what is mentioned in thesis, to make the function continuous over rg.
+  		if(rg<17.0) {
+  			fc = std::min(0.95, 0.32 / sqrt(rg) + 0.02);
+  		} else {
+  			if(rg<60.8057) {
+  				fc=0.0976114-0.002*(rg-17.0);
+  			} else {
+  				fc=0.01;
+  			}
+  		}
+  	}
+  }
 	return std::min(1. - theta[SOIL], fc);		// Ensure that the field capacity does not exceed the pore space.
 }
 
@@ -1206,16 +1550,16 @@ double ElementData::soilFieldCapacity() const
  * @brief RelativeHumidity
  * @author Nander Wever et al.
  * @brief Relative humidity in soil.
- * The formulation is based on Saito et al., 2006 "Numerical analysis of 
+ * The formulation is based on Saito et al., 2006 "Numerical analysis of
  * coupled water vapor and heat transport in the vadose zone".
- * Calculated from the pressure head using a thermodynamic relationship 
+ * Calculated from the pressure head using a thermodynamic relationship
  * between liquid water and water vapor in soil pores (Philip and de Vries, 1957)
  * @author Margaux Couttet
  * @param Edata element data
  * @param Temperature temperature (K)
  * @return Soil relative humidity (-)
  */
- 
+
 double ElementData::RelativeHumidity() const
 {
 	if (VG.defined == true) {
@@ -1316,7 +1660,7 @@ unsigned short int ElementData::getSnowType() const
 }
 
 unsigned short int ElementData::snowType(const double& dendricity, const double& sphericity,
-                          const double& grain_size, const unsigned short int& marker, const double& theta_w, const double& res_wat_cont)
+                          const double& grain_size, const unsigned short int& marker, const double& theta_w, const double& res_wat_cont_loc)
 {
 	int a=-1,b=-1,c=0;
 
@@ -1438,7 +1782,7 @@ unsigned short int ElementData::snowType(const double& dendricity, const double&
 	}
 	// Now treat a couple of exceptions - note that the order is important
 	if (b < 0) b = a;
-	if ((marker >= 20) && (theta_w < 0.1 * res_wat_cont)) { // MFcr Melt-Freeze
+	if ((marker >= 20) && (theta_w < 0.1 * res_wat_cont_loc)) { // MFcr Melt-Freeze
 		c = 2;
 	}
 	switch (marker) {
@@ -1448,9 +1792,16 @@ unsigned short int ElementData::snowType(const double& dendricity, const double&
 		case 4: // PPgp Graupel
 			a = 0; b = 0; c = 0;
 			break;
+		case 6: // technical Snow
+			a = 0; b = 0; c= 6;
+			break;
 		case 7: case 8: case 17: case 18: case 27: case 28: // Glacier ice & IFil, that is, ice layers within the snowpack
 			a = 8; b = 8; c = 0;
 			break;
+    default: // do nothing sinc we take care of exceptions here
+      break;
+
+
 	}
 
 	return static_cast<unsigned short int>(a*100 + b*10 + c);
@@ -1791,7 +2142,7 @@ void SnowStation::resize(const size_t& number_of_elements)
 	} catch(const exception& e){
 		throw IOException(e.what(), AT); //this will catch all allocation exceptions
 	}
-	
+
 	if (number_of_elements>nEdata_old) {
 		for(size_t ii=nEdata_old; ii<Edata.size(); ii++) {
 			if (Edata[ii].ID==ElementData::noID) Edata[ii].ID = ++maxElementID;
@@ -2095,65 +2446,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	compSoilInternalEnergyChange(900.); // Time (900 s) will not matter as Qmf == 0. for all layers
 	compSnowpackMasses();
 
-	// INITIALIZE CANOPY DATA
-	//HACK: do this in Canopy!
-	if (Cdata != NULL) {
-		Cdata->height = (SSdata.Canopy_Height > 0.0)? SSdata.Canopy_Height : 0.;
-		Cdata->storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)
-		Cdata->temp = 273.15; // temperature (K)
-		Cdata->Ttrunk = 273.15; // trunk temperature (K)
-		Cdata->QStrunks = 0.;
-		Cdata->SWnet_Trunks = 0.;
-		Cdata->LWnet_Trunks = 0.;
-		Cdata->CondFluxCanop = 0.;
-		Cdata->CondFluxTrunks = 0.;
-		Cdata->forestfloor_alb = 0.;
-		Cdata->snowfac=0.;
-		Cdata->rainfac=0.;
-		Cdata->liquidfraction=0.;
-		Cdata->canopyalb = Canopy::can_alb_dry; // albedo [-], which is a function of the dry canopy albedo and intercepted snow
-		Cdata->wetfraction = 0.0;
-		Cdata->intcapacity = 0.0;
-		Cdata->ra = 0.0;
-		Cdata->rc = 0.0;
-		Cdata->rs = 0.0;
-		Cdata->rstransp = 0.0;
-		Cdata->sigftrunk = 0.;
-		Cdata->HMLeaves=3.*4190.; //HACK what is this 4190?
-		Cdata->HMTrunks=30.*4190.;
-		if (useCanopyModel) {
-			Cdata->BasalArea = SSdata.Canopy_BasalArea;
-			Cdata->sigf = 1.-exp(-Canopy::krnt_lai * (Cdata->lai)); // 1-radiation transmissivity (-)
-			Cdata->ec = 1.0; //longwave emissivity
-			Cdata->lai = SSdata.Canopy_LAI;
-			Cdata->z0m = Cdata->height*0.1;
-			Cdata->z0h = Cdata->z0m*0.1;
-			Cdata->zdispl = Cdata->height*0.66;
-			Cdata->direct_throughfall = SSdata.Canopy_Direct_Throughfall;
-			if (SSdata.Canopy_Direct_Throughfall < 0. || SSdata.Canopy_Direct_Throughfall > 1.) {
-				prn_msg(__FILE__, __LINE__, "err", Date(), "Invalid Canopy Throughfall (%lf) given in sno file! It should be between 0 and 1.", SSdata.Canopy_Direct_Throughfall);
-				throw IOException("Snowpack Initialization failed", AT);
-			}
-		} else {
-			Cdata->BasalArea = 0.0;
-			Cdata->storage = 0.0; // intercepted water (kg m-2 or mm Water Equivalent)
-			Cdata->temp = 273.15; // temperature (K)
-			Cdata->canopyalb = Canopy::can_alb_dry; // albedo [-], which is a function of the dry canopy albedo and intercepted snow
-			Cdata->wetfraction = 0.0;
-			Cdata->intcapacity = 0.0;
-			Cdata->lai = 0.0;
-			Cdata->sigf = 1.0; // radiation transmissivity (-)
-			Cdata->ec = 1.0; //longwave emissivity
-			Cdata->z0m = 0.0;
-			Cdata->z0h = 0.0;
-			Cdata->zdispl = 0.0;
-			Cdata->direct_throughfall = 1.0;
-			Cdata->ra = 0.0;
-			Cdata->rc = 0.0;
-			Cdata->rs = 0.0;
-			Cdata->rstransp = 0.0;
-		}
-	}
+	Cdata->initialize(SSdata, useCanopyModel);
 
 	// Set time step to -1, so we can determine the first time ReSolver1d is called.
 	ReSolver_dt = -1.;
@@ -2284,7 +2577,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 void SnowStation::splitElement(const size_t& e)
 {
 	resize(nElems+1);
-	if(e!=nElems-1) { // If it is not the top node that needs splitting ...
+	if(e!=nElems-2) { // If it is not the top node that needs splitting ...     (Note that we have to reference nElems-2, as resize has been called (thus nElems increased) already.)
 		// then shift all elements and nodes above upward
 		for(size_t ee = nElems-1; ee >= e+2; ee--) {
 			Edata[ee]=Edata[ee-1];
@@ -2761,10 +3054,10 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
-	maxNumberMeasTemperatures = cfg.get("MAX_NUMBER_MEAS_TEMPERATURES", "SnowpackAdvanced", IOUtils::nothrow);
-	cfg.getValue("FIXED_POSITIONS", "SnowpackAdvanced", fixedPositions, IOUtils::nothrow);
-	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", IOUtils::nothrow);
-	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced", IOUtils::nothrow);
+	maxNumberMeasTemperatures = cfg.get("MAX_NUMBER_MEAS_TEMPERATURES", "SnowpackAdvanced");
+	cfg.getValue("FIXED_POSITIONS", "SnowpackAdvanced", fixedPositions);
+	minDepthSubsurf = cfg.get("MIN_DEPTH_SUBSURF", "SnowpackAdvanced");
+	numberFixedRates = cfg.get("NUMBER_FIXED_RATES", "SnowpackAdvanced");
 }
 
 void CurrentMeteo::reset(const SnowpackConfig& i_cfg)
@@ -3082,6 +3375,12 @@ std::ostream& operator<<(std::ostream& os, const SN_SNOWSOIL_DATA& data)
 	os.write(reinterpret_cast<const char*>(&data.Canopy_LAI), sizeof(data.Canopy_LAI));
 	os.write(reinterpret_cast<const char*>(&data.Canopy_BasalArea), sizeof(data.Canopy_BasalArea));
 	os.write(reinterpret_cast<const char*>(&data.Canopy_Direct_Throughfall), sizeof(data.Canopy_Direct_Throughfall));
+	os.write(reinterpret_cast<const char*>(&data.Canopy_diameter), sizeof(data.Canopy_diameter));
+	os.write(reinterpret_cast<const char*>(&data.Canopy_lai_frac_top_default), sizeof(data.Canopy_lai_frac_top_default));
+	os.write(reinterpret_cast<const char*>(&data.Canopy_int_cap_snow), sizeof(data.Canopy_int_cap_snow));
+	os.write(reinterpret_cast<const char*>(&data.Canopy_alb_dry), sizeof(data.Canopy_alb_dry));
+	os.write(reinterpret_cast<const char*>(&data.Canopy_alb_wet), sizeof(data.Canopy_alb_wet));
+	os.write(reinterpret_cast<const char*>(&data.Canopy_alb_snow), sizeof(data.Canopy_alb_snow));
 #ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
@@ -3113,6 +3412,12 @@ std::istream& operator>>(std::istream& is, SN_SNOWSOIL_DATA& data)
 	is.read(reinterpret_cast<char*>(&data.Canopy_LAI), sizeof(data.Canopy_LAI));
 	is.read(reinterpret_cast<char*>(&data.Canopy_BasalArea), sizeof(data.Canopy_BasalArea));
 	is.read(reinterpret_cast<char*>(&data.Canopy_Direct_Throughfall), sizeof(data.Canopy_Direct_Throughfall));
+	is.read(reinterpret_cast<char*>(&data.Canopy_diameter), sizeof(data.Canopy_diameter));
+	is.read(reinterpret_cast<char*>(&data.Canopy_lai_frac_top_default), sizeof(data.Canopy_lai_frac_top_default));
+	is.read(reinterpret_cast<char*>(&data.Canopy_int_cap_snow), sizeof(data.Canopy_int_cap_snow));
+	is.read(reinterpret_cast<char*>(&data.Canopy_alb_dry), sizeof(data.Canopy_alb_dry));
+	is.read(reinterpret_cast<char*>(&data.Canopy_alb_wet), sizeof(data.Canopy_alb_wet));
+	is.read(reinterpret_cast<char*>(&data.Canopy_alb_snow), sizeof(data.Canopy_alb_snow));
 #ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
@@ -3128,25 +3433,30 @@ const std::string SN_SNOWSOIL_DATA::toString() const
 	std::ostringstream os;
 	os << "<SN_SNOWSOIL_DATA>\n";
 	os << "" << meta.toString()   << "\n";
-	os << "profileDate:                " << profileDate.toString(Date::ISO) << "\n";
-	os << "nN:                         " << nN << "\n";
-	os << "Height:                     " << Height << "\n";
-	os << "nLayers:                    " << nLayers << "\n";
+	os << "profileDate:                  " << profileDate.toString(Date::ISO) << "\n";
+	os << "nN:                           " << nN << "\n";
+	os << "Height:                       " << Height << "\n";
+	os << "nLayers:                      " << nLayers << "\n";
 
 	for(size_t ii=0; ii<nLayers; ii++)
 		os << "" << Ldata[ii].toString();
 
-	os << "HS_last:                    " << HS_last << "\n";
-	os << "Albedo:                     " << Albedo << "\n";
-	os << "SoilAlb:                    " << SoilAlb << "\n";
-	os << "BareSoil_z0:                " << BareSoil_z0 << "\n";
-	os << "Canopy_Height:              " << Canopy_Height << "\n";
-	os << "Canopy_LAI:                 " << Canopy_LAI << "\n";
-	os << "Canopy_BasalArea:           " << Canopy_BasalArea << "\n";
-	os << "Canopy_Direct_Throughfall:  " << Canopy_Direct_Throughfall << "\n";
-	os << "WindScalingFactor:          " << WindScalingFactor << "\n";
-	os << "ErosionLevel:               " << ErosionLevel << "\n";
-	os << "TimeCountDeltaHS:           " << TimeCountDeltaHS << "\n";
+	os << "HS_last:                      " << HS_last << "\n";
+	os << "Albedo:                       " << Albedo << "\n";
+	os << "SoilAlb:                      " << SoilAlb << "\n";
+	os << "BareSoil_z0:                  " << BareSoil_z0 << "\n";
+	os << "Canopy_Height:                " << Canopy_Height << "\n";
+	os << "Canopy_LAI:                   " << Canopy_LAI << "\n";
+	os << "Canopy_BasalArea:             " << Canopy_BasalArea << "\n";
+	os << "Canopy_diameter:              " << Canopy_diameter << "\n";
+	os << "Canopy_lai_frac_top_default:  " << Canopy_lai_frac_top_default << "\n";
+	os << "Canopy_int_cap_snow:          " << Canopy_int_cap_snow << "\n";
+	os << "Canopy_alb_dry:               " << Canopy_alb_dry << "\n";
+	os << "Canopy_alb_wet:               " << Canopy_alb_wet << "\n";
+	os << "Canopy_alb_snow:              " << Canopy_alb_snow << "\n";
+	os << "WindScalingFactor:            " << WindScalingFactor << "\n";
+	os << "ErosionLevel:                 " << ErosionLevel << "\n";
+	os << "TimeCountDeltaHS:             " << TimeCountDeltaHS << "\n";
 
 	os << "</SN_SNOWSOIL_DATA>\n";
 	return os.str();

@@ -342,6 +342,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 */
 void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW)
 {
+	static const double eps = 1e-3;
 	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(i_dem))){
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
 	}
@@ -359,7 +360,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 
 	//calculate terrain slope in the direction of the wind
 	Array2D<double> Omega_s(VW.getNx(), VW.getNy());
-	for (size_t ii=0; ii<Omega_s.getNx()*Omega_s.getNy(); ii++) {
+	for (size_t ii=0; ii<Omega_s.size(); ii++) {
 		const double theta = DW(ii);
 		const double beta = dem->slope(ii);
 		const double xi = dem->azi(ii);
@@ -386,8 +387,8 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 		if (dw==IOUtils::nodata) continue; //we can not apply any correction factor!
 
 		if (Omega_s(ii)==IOUtils::nodata) continue; //we can not calculate any correction factor!
-		const double omega_s = (omega_s_range!=0.)? (Omega_s(ii)-omega_s_min)/omega_s_range - 0.5 : 0.;
-		const double omega_c = (dem->curvature(ii)!=IOUtils::nodata && omega_c_range!=0.)? (dem->curvature(ii) - omega_c_min)/omega_c_range - 0.5 : 0.;
+		const double omega_s = (omega_s_range>eps)? (Omega_s(ii)-omega_s_min)/omega_s_range - 0.5 : 0.;
+		const double omega_c = (dem->curvature(ii)!=IOUtils::nodata && omega_c_range>eps)? (dem->curvature(ii) - omega_c_min)/omega_c_range - 0.5 : 0.;
 
 		const double Ww = 1. + gamma_s*omega_s + gamma_c*omega_c;
 		VW(ii) *= Ww;
@@ -564,9 +565,9 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 */
 void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
 {
-	if (!grid.isSameGeolocalization(dem)) {
+	if (!grid.isSameGeolocalization(dem))
 		throw IOException("Requested grid does not match the geolocalization of the DEM", AT);
-	}
+
 	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
 
 	for (size_t ii=0; ii<grid.size(); ii++) {
@@ -605,9 +606,8 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
  */
 void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW)
 {
-	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem))){
+	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem)))
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
-	}
 
 	static const double shade_factor = 5.;
 	const double cellsize = dem.cellsize;

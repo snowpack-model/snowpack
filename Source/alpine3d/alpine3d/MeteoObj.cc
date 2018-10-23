@@ -61,6 +61,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("N3");
 	paramname.push_back("MS_SNOWPACK_RUNOFF");
 	paramname.push_back("MS_SOIL_RUNOFF");
+	paramname.push_back("MS_WATER");
 	paramname.push_back("SFC_SUBL");
 	paramname.push_back("STORE");
 	paramname.push_back("ERODEDMASS");
@@ -97,7 +98,7 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
  ************************************************************/
 MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
-                     ta(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata), 
+                     ta(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata),
                      psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
                      sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(), sum_vw(), sum_ilwr(),
                      vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false), enable_simple_snow_drift(false)
@@ -107,7 +108,7 @@ MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
 	in_config.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
 }
 
-MeteoObj::~MeteoObj() 
+MeteoObj::~MeteoObj()
 {
 	if (glaciers!=NULL) delete glaciers;
 }
@@ -129,7 +130,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
                    mio::Grid2DObject& out_psum_ph, mio::Grid2DObject& out_vw, mio::Grid2DObject& out_vw_drift, mio::Grid2DObject& out_dw, mio::Grid2DObject& out_p, mio::Grid2DObject& out_ilwr)
 {
 	timer.restart(); //this method is called first, so we initiate the timing here
-	
+
 	if (MPIControl::instance().master()) {
 		if (date.isUndef()) {
 			date = in_date;
@@ -142,7 +143,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 			getMeteo(date); //it will throw an exception if something goes wrong
 		}
 	}
-	
+
 	//this acts as a barrier and forces MPI synchronization
 	MPIControl::instance().broadcast(ta);
 	MPIControl::instance().broadcast(rh);
@@ -169,7 +170,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 void MeteoObj::get(const mio::Date& in_date, std::vector<mio::MeteoData>& o_vecMeteo)
 {
 	timer.start();
-	
+
 	if (MPIControl::instance().master()) {
 		if (date.isUndef()) {
 			date = in_date;
@@ -206,11 +207,11 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 
 	for (size_t ii=0; ii<vecData.size(); ii++) {
 		if (vecData[ii](MeteoData::TA) != IOUtils::nodata) nb_ta++;
-		
+
 		if (vecData[ii](MeteoData::ISWR) != IOUtils::nodata) nb_iswr++;
-		
+
 		if (vecData[ii](MeteoData::RH) != IOUtils::nodata) nb_rh++;
-		
+
 		if (vecData[ii](MeteoData::ILWR) != IOUtils::nodata) {
 			nb_ilwr++;
 			//We need ILWR and TA at the same location (so that the emissivity can be computed)
@@ -265,7 +266,7 @@ void MeteoObj::getMeteo(const Date& calcDate)
 
 	// Now fill the 2D Meteo Fields. Keep in mind that snowdrift might edit these fields
 	fillMeteoGrids(calcDate);
-	
+
 	cout << "[i] Success reading/preparing meteo data for date: " << calcDate.toString(Date::ISO) << endl;
 }
 
@@ -279,19 +280,19 @@ void MeteoObj::checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, con
 			vecAltitudes.push_back( i_vecMeteo[ii].meta.position.getAltitude() );
 		}
 	}
-	
+
 	if (vecData.size()<2) return;
 	if (param==MeteoData::PSUM) { //skip when there is no precip
 		if (mio::Interpol2D::allZeroes(vecData)) return;
 	}
-	
+
 	double A, B, R;
 	std::string mesg;
 	Interpol1D::NoisyLinRegression(vecAltitudes, vecData, A, B, R, mesg);
 	const std::string date_str( i_vecMeteo[0].date.toString(Date::ISO) );
 	const std::string param_str( MeteoData::getParameterName(param) );
 	std::cout << "[check:Data_Lapse_Rate] " << date_str << " " << param_str << " " << std::fixed << std::setw(7) << std::setprecision(5) << A << " ";
-	
+
 	if (param==MeteoData::PSUM && A<-1e-3) { //when precip gradient is "too wrong", print values
 		const std::streamsize prec = std::cout.precision();
 		std::cout << "- ";
@@ -315,7 +316,7 @@ void MeteoObj::checkGridRange(const mio::Date& calcDate, const mio::Grid2DObject
 		if (max>40.)
 			std::cout << "[check:Grids_Range_Check] " << calcDate.toString(Date::ISO) << " VW_max=" << max << "\n";
 	} else
-		throw IOException("Parameter '"+MeteoData::getParameterName(param)+"' not supported here", AT); 
+		throw IOException("Parameter '"+MeteoData::getParameterName(param)+"' not supported here", AT);
 }
 
 void MeteoObj::setGlacierMask(const Grid2DObject& glacierMask)
@@ -326,7 +327,7 @@ void MeteoObj::setGlacierMask(const Grid2DObject& glacierMask)
 	}
 }
 
-//this should only be called when "--nocompute" was set. So we consider that 
+//this should only be called when "--nocompute" was set. So we consider that
 //most of the other modules have NOT been called.
 void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 {
@@ -336,11 +337,11 @@ void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 		date = calcDate;
 		getMeteo(date); //it will throw an exception if something goes wrong
 	}
-	
+
 	if (glaciers!=NULL) {
 		glaciers->correctTemperatures( ta );
 	}
-	
+
 	//produce monthly gridded sums
 	int year, month, day, hour, minute, second;
 	calcDate.getDate(year, month, day, hour, minute, second);
@@ -354,7 +355,7 @@ void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 			if (count_precip>0) sum_psum_ph /= static_cast<double>(count_precip);
 			sum_vw /= static_cast<double>(count_sums);
 			sum_ilwr /= static_cast<double>(count_sums);
-			
+
 			io.write2DGrid(sum_ta, MeteoGrids::TA, calcDate);
 			//io.write2DGrid(sum_rh, MeteoGrids::RH, calcDate+1./(3600.*24));
 			io.write2DGrid(sum_vw, MeteoGrids::VW, calcDate);
@@ -363,7 +364,7 @@ void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 			if (count_precip>0) io.write2DGrid(sum_psum, MeteoGrids::PSUM, calcDate);
 			if (count_precip>0) io.write2DGrid(sum_psum_ph, MeteoGrids::PSUM_PH, calcDate);
 		}
-		
+
 		count_sums=0;
 		count_precip=0;
 		sum_ta.set(dem, 0.);
@@ -374,7 +375,7 @@ void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 		sum_vw.set(dem, 0.);
 		sum_ilwr.set(dem, 0.);
 	}
-	
+
 	count_sums++;
 	sum_ta += ta;
 	//sum_rh += rh;
@@ -386,11 +387,11 @@ void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 		sum_rh_psum += rh;
 		count_precip++;
 	}
-	
+
 	//check range in the grids
 	checkGridRange(calcDate, rh, MeteoData::RH);
 	checkGridRange(calcDate, vw, MeteoData::VW);
-	
+
 	//now get and print the lapse rates
 	vector<MeteoData> vecMd;
 	io.getMeteoData(calcDate, vecMd);

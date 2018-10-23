@@ -2,7 +2,7 @@
 ## Test statistical functions
 # generate executable
 ADD_EXECUTABLE(stats stats.cc)
-TARGET_LINK_LIBRARIES(stats ${LIBRARIES})
+TARGET_LINK_LIBRARIES(stats ${METEOIO_LIBRARIES})
 
 # add the tests
 ADD_TEST(stats.smoke stats)

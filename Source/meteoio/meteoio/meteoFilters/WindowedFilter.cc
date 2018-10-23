@@ -165,7 +165,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		}
 		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
-		if (end>ivec.size()) return false; //no way to cut the requested window
+		if (end>=ivec.size()) return false; //no way to cut the requested window
 	}
 
 	if (centering == WindowedFilter::right) {

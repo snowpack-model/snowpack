@@ -22,6 +22,38 @@
 
 namespace mio {
 
+/**
+ * @class WinstralListonAlgorithm
+ * @ingroup spatialization
+ * @brief DEM-based wind-exposure interpolation algorithm, for a spatially explicit varying DW field.
+ * @details
+ * This is an implementation of the method described in Winstral, Elder, & Davis,
+ * <i>"Spatial snow modeling of wind-redistributed snow using terrain-based parameters"</i>, 2002,
+ * Journal of Hydrometeorology, <b>3(5)</b>, 524-538.
+ * The wind direction for determining wind-exposure is taken from a 2D wind direction field.
+ * The DEM is used to compute wind exposure factors that are used to alter the precipitation fields.
+ * It is usually a good idea to provide a DEM that also contain the accumulated snow height in order
+ * to get a progressive softening of the terrain features.
+ *
+ * It takes the following arguments:
+ *  - BASE:: provide the base algorithm to pre-fill the grid, since this method must first use another algorithm to
+ * generate an initial precipitation field, and then modify it. By default, this base method is "idw_lapse" and switches to
+ * "avg" if only one station can provide the precipitation at a given time step (for an easy fallback). Please do not forget
+ * to provide any necessary arguments for this base method!
+ *  - DMAX: maximum search distance or radius (default: 300m);
+ *
+ * @remarks
+ *  - Only cells with an air temperature below freezing participate in the redistribution
+ *  - Using the WinstralListonAlgorithm also requires the specification of an interpolation method for DW
+ *
+ * @code
+ * PSUM::algorithms         = WINSTRAL++
+ * PSUM::winstral++::base   = idw_lapse
+ * PSUM::winstral++::dmax   = 300
+ * DW::algorithms           = LISTON_WIND
+ * DW::liston_wind::scale   = 300
+ * @endcode
+ */
 class WinstralListonAlgorithm : public InterpolationAlgorithm {
 	public:
 		WinstralListonAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
@@ -30,12 +62,10 @@ class WinstralListonAlgorithm : public InterpolationAlgorithm {
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
-		static bool windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
-		static void getSynopticWind(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, double& VW, double& DW);
 
 		Meteo2DInterpolator& mi;
 		GridsManager& gdm;
-		std::string base_algo_user, ref_station;
+		std::string base_algo_user;
 		bool inputIsAllZeroes;
 		double dmax;
 };

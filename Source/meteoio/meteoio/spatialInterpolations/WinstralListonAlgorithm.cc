@@ -24,17 +24,14 @@ namespace mio {
 
 WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
 		                               GridsManager& i_gdm, Meteo2DInterpolator& i_mi)
-                  : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"), ref_station(),
+                  : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), gdm(i_gdm), base_algo_user("IDW_LAPSE"),
                     inputIsAllZeroes(false), dmax(300.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
-	bool has_base=false, has_ref=false;
+	bool has_base=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="REF") {
-			ref_station = vecArgs[ii].second;
-			has_ref = true;
-		} else if(vecArgs[ii].first=="BASE") {
+		if(vecArgs[ii].first=="BASE") {
 			base_algo_user = IOUtils::strToUpper( vecArgs[ii].second );
 			has_base = true;
 		} else if (vecArgs[ii].first=="DMAX") {
@@ -42,7 +39,7 @@ WinstralListonAlgorithm::WinstralListonAlgorithm(const std::vector< std::pair<st
 		}
 	}
 
-	if (!has_ref || !has_base) throw InvalidArgumentException("Wrong number of arguments supplied for "+where, AT);
+	if (!has_base) throw InvalidArgumentException("Wrong number of arguments supplied for "+where, AT);
 }
 
 double WinstralListonAlgorithm::getQualityRating(const Date& i_date)
@@ -54,12 +51,6 @@ double WinstralListonAlgorithm::getQualityRating(const Date& i_date)
 	if (inputIsAllZeroes) return 0.99;
 
 	if (nrOfMeasurments==0) return 0.0;
-
-	//check that the necessary wind data is available
-	if (!ref_station.empty()) {
-		if (!windIsAvailable(vecMeteo, ref_station))
-			return 0.0;
-	}
 
 	return 0.99;
 }
@@ -77,35 +68,6 @@ void WinstralListonAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	delete algorithm;
 }
 
-bool WinstralListonAlgorithm::windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station)
-{
-	if (ref_station.empty()) {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-			const double VW = vecMeteo[ii](MeteoData::VW);
-			const double DW = vecMeteo[ii](MeteoData::DW);
-			if (VW!=IOUtils::nodata && DW!=IOUtils::nodata)
-				return true; //at least one station is enough
-		}
-	} else {
-		double VW, DW;
-		getSynopticWind(vecMeteo, ref_station, VW, DW);
-		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata)
-			return true;
-	}
-
-	return false;
-}
-
-void WinstralListonAlgorithm::getSynopticWind(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, double& VW, double& DW)
-{
-	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {
-		if (vecMeteo[ii].meta.stationID==ref_station) {
-			VW = vecMeteo[ii](MeteoData::VW);
-			DW = vecMeteo[ii](MeteoData::DW);
-			return;
-		}
-	}
-}
 
 void WinstralListonAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {

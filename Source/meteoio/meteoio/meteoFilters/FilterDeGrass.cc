@@ -39,7 +39,7 @@ void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoDa
 	//find first tag of the Spring when min(TSS)>1C for 24 hours
 	size_t tssWarmDay_idx, tsgWarmDay_idx;
 	findFirstWarmDay(ovec, tssWarmDay_idx, tsgWarmDay_idx);
-	const Date warmDayTSS = (tssWarmDay_idx!=IOUtils::npos)? ovec[tssWarmDay_idx].date : Date(0.); //ie disable the check if not found
+	const Date warmDayTSS = (tssWarmDay_idx!=IOUtils::npos)? ovec[tssWarmDay_idx].date : Date(0., 0.); //ie disable the check if not found
 	const Date warmDayTSG = (tsgWarmDay_idx!=IOUtils::npos)? ovec[tsgWarmDay_idx].date : ovec.back().date; //ie disable the check if not found
 	
 	//find correlation between TSS and TSG for the 7 days after the firstWarmDay
@@ -151,9 +151,9 @@ void FilterDeGrass::findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t 
 	tsgWarmDay_idx = IOUtils::npos;
 	for (size_t ii=10; ii<ovec.size(); ii++) {
 		const Date current = ovec[ii].date;
-		int year, month, day;
-		current.getDate(year, month, day);
-		if (month>=9) continue; //HACK: this is location dependant...
+		int curr_year, curr_month, curr_day;
+		current.getDate(curr_year, curr_month, curr_day);
+		if (curr_month>=9) continue; //HACK: this is location dependant...
 			
 		double TSS_min = Cst::dbl_max;
 		double TSG_min = Cst::dbl_max;
@@ -177,7 +177,7 @@ void FilterDeGrass::findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t 
 //compute the TSS offset/correction
 double FilterDeGrass::getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec) 
 {
-	Date prev_day;
+	Date tmp_prev_day;
 	double HS_daily_median, TSS_daily_median, RSWR_daily_10pc;
 	bool high_tss_day = false;
 	std::vector<double> tss_dat;
@@ -186,12 +186,12 @@ double FilterDeGrass::getTSSOffset(const unsigned int& param, const std::vector<
 		if (ivec[ii](param)==IOUtils::nodata) continue;
 
 		const Date day_start = getDailyStart(ivec[ii].date);
-		if (day_start!=prev_day) {
+		if (day_start!=tmp_prev_day) {
 			const bool status = getDailyParameters(ivec, day_start, HS_daily_median, TSS_daily_median, RSWR_daily_10pc);
 			if (!status || HS_daily_median==IOUtils::nodata || TSS_daily_median==IOUtils::nodata || RSWR_daily_10pc==IOUtils::nodata) 
 				continue;
 			high_tss_day = (HS_daily_median>0.3) && (TSS_daily_median>IOUtils::C_TO_K(1.)) && (RSWR_daily_10pc>350.);
-			prev_day = day_start;
+			tmp_prev_day = day_start;
 		}
 		
 		if (high_tss_day) tss_dat.push_back( ivec[ii](MeteoData::TSS) );

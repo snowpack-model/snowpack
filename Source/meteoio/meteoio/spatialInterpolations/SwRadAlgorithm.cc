@@ -18,6 +18,7 @@
 
 #include <meteoio/spatialInterpolations/SwRadAlgorithm.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
+#include <meteoio/dataClasses/DEMAlgorithms.h>
 
 namespace mio {
 
@@ -136,7 +137,7 @@ void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 			Sun.getHorizontalRadiation(cell_toa, cell_direct, cell_diffuse);
 
 			if (glob_day && shading) { //at dawn/dusk, we consider it to be all diffuse, so no shading
-				const double tan_horizon = dem.getHorizon(ii, jj, solarAzimuth);
+				const double tan_horizon = DEMAlgorithms::getHorizon(dem, ii, jj, solarAzimuth);
 
 				//redo the splitting using the distributed splitting coefficient
 				const double global = cell_direct + cell_diffuse;

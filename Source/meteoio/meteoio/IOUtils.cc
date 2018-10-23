@@ -19,12 +19,15 @@
 #include <cmath>
 #include <cstring>
 #include <ctype.h>
-#include <algorithm>
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 	#include <winsock.h>
 #else
 	#include <unistd.h>
 #endif
+#include <algorithm>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
@@ -430,6 +433,30 @@ template<> bool convertString<double>(double& t, std::string str, std::ios_base&
 		return false;
 	}
 	return true;
+}
+
+template<> bool convertString<char>(char& t, std::string str, std::ios_base& (*f)(std::ios_base&))
+{
+	trim(str); //delete trailing and leading whitespaces and tabs
+	if (str.empty()) {
+		t = cnodata;
+		return true;
+	} else {
+		std::istringstream iss(str);
+		iss.setf(std::ios::fixed);
+		iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
+		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
+		//Conversion failed
+		if (iss.fail()) return false;
+		std::string tmp;
+		getline(iss,  tmp); //get rest of line, if any
+		trim(tmp);
+		if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {
+			//if line holds more than one value it's invalid
+			return false;
+		}
+		return true;
+	}
 }
 
 template<> bool convertString<unsigned int>(unsigned int& t, std::string str, std::ios_base& (*f)(std::ios_base&))

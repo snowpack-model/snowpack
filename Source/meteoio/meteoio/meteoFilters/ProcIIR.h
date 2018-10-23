@@ -65,7 +65,7 @@ class ProcIIR : public ProcessingBlock {
 			BESSEL
 		} IIR_Type;
 
-		static void getFilterParameters(const IIR_Type& type, const bool& isLowPass, const double& n, double &g, double &p, double &c);
+		static void getFilterParameters(const IIR_Type& i_type, const bool& isLowPass, const double& n, double &i_g, double &i_p, double &i_c);
 		static double filterPoint(const double& raw_val, const double A[3], const double B[3], std::vector<double> &X, std::vector<double> &Y);
 		void computeCoefficients(const double& fs, const double& f0, double A[3], double B[3]) const;
 

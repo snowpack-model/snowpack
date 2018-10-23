@@ -304,17 +304,17 @@ void typeToCode(int *F1, int *F2, int *F3, int type)
 double unitConversion(const double val, char* unitIn, char* unitOut)
 {
 	if (!strcmp(unitIn,"degK") || !strcmp(unitIn,"°K") || !strcmp(unitIn,"Kelvin"))
-		unitIn = (char*) "K";
+		unitIn = strdup("K");
 	if (!strcmp(unitOut,"degK") || !strcmp(unitOut,"°K") || !strcmp(unitOut,"Kelvin"))
-		unitOut = (char*) "K";
+		unitOut = strdup("K");
 	if (!strcmp(unitIn,"degC") || !strcmp(unitIn,"Celsius"))
-		unitIn = (char*) "°C";
+		unitIn = strdup("°C");
 	if (!strcmp(unitOut,"degC") || !strcmp(unitOut,"Celsius"))
-		unitOut = (char*) "°C";
+		unitOut = strdup("°C");
 	if (!strcmp(unitIn,"degF") || !strcmp(unitIn,"Fahrenheit"))
-		unitIn = (char*) "°F";
+		unitIn = strdup("°F");
 	if (!strcmp(unitOut,"degF") || !strcmp(unitOut,"Fahrenheit"))
-		unitOut = (char*) "°F";
+		unitOut = strdup("°F");
 
 	if (!strcmp(unitIn,"°C") && !strcmp(unitOut,"K")) {
 		return (val+273.15);
@@ -371,7 +371,7 @@ double unitConversion(const double val, char* unitIn, char* unitOut)
 		}
 		return val*ratio;
 	}
-	throw IOException("Unable to perform unit conversion.", AT); //if we don't missuse the method, this should never be reached
+	//NOT REACHABLE... throw IOException("Unable to perform unit conversion.", AT); //if we don't missuse the method, this should never be reached
 }
 
 /**

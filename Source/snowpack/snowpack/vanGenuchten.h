@@ -25,8 +25,6 @@
 
 #include <sstream>
 
-using namespace std;
-
 /**
  * @class vanGenuchten
  * @version 1.0
@@ -41,7 +39,7 @@ class vanGenuchten {
 	public:
 		vanGenuchten(ElementData &pEMS);
 		vanGenuchten(const vanGenuchten& c);
-		virtual ~vanGenuchten() {};
+		virtual ~vanGenuchten() {}
 		vanGenuchten& operator=(const vanGenuchten&); ///<Assignement operator
 		friend std::iostream& operator<<(std::iostream& os, const vanGenuchten& data);
 		friend std::iostream& operator>>(std::iostream& is, vanGenuchten& data);
@@ -75,7 +73,7 @@ class vanGenuchten {
 		double h_e;	//Soil property, air entry pressure, see Ippisch (2006) for details.
 		double Sc;	//Saturation at cut-off point h_e (see Ippisch et al (2006)).
 		double ksat;	//Soil property. Saturation hydraulic conductivity.
-
+		double field_capacity; //Soil property, grain size
 		bool defined;	//true: the van Genuchten model has been initialized for this layer, false: the van Genuchten model is not initialized and should not be used.
 
 	private:

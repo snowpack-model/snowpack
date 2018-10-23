@@ -26,6 +26,7 @@ using namespace std;
 /************************************************************
  * static section                                           *
  ************************************************************/
+map<string,string> SnowpackConfig::snowpackConfig;
 map<string,string> SnowpackConfig::advancedConfig;
 map<string,string> SnowpackConfig::inputConfig;
 map<string,string> SnowpackConfig::outputConfig;
@@ -34,10 +35,14 @@ const bool SnowpackConfig::__init = SnowpackConfig::initStaticData();
 
 bool SnowpackConfig::initStaticData()
 {
+	//[Snowpack] section
+	advancedConfig["SOIL_FLUX"] = "false";
+
 	//[SnowpackAdvanced] section
 	advancedConfig["ADVECTIVE_HEAT"] = "false";
-	advancedConfig["ALPINE3D"] = "false";
 	advancedConfig["ALLOW_ADAPTIVE_TIMESTEPPING"] = "true";
+	advancedConfig["ALPINE3D"] = "false";
+	advancedConfig["ALPINE3D_PTS"] = "false";
 	advancedConfig["DETECT_GRASS"] = "false";
 	advancedConfig["ALBEDO_FIXEDVALUE"] = "-999.";
 	advancedConfig["ALBEDO_PARAMETERIZATION"] = "LEHNING_2";
@@ -106,16 +111,19 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ADJUST_HEIGHT_OF_METEO_VALUES"] = "true";
 	advancedConfig["ADJUST_HEIGHT_OF_WIND_VALUE"] = "true";
 	advancedConfig["WIND_SCALING_FACTOR"] = "1.0";
-	advancedConfig["ADVECTIVE_HEAT"] = "0.0";
+	advancedConfig["ADVECTIVE_HEAT"] = "false";
 	advancedConfig["HEAT_BEGIN"] = "0.0";
 	advancedConfig["HEAT_END"] = "0.0";
 	advancedConfig["TWO_LAYER_CANOPY"] = "true";
 	advancedConfig["CANOPY_HEAT_MASS"] = "true";
 	advancedConfig["CANOPY_TRANSMISSION"] = "true";
 	advancedConfig["FORESTFLOOR_ALB"] = "true";
+	advancedConfig["SOIL_EVAP_MODEL"] = "RELATIVE_HUMIDITY";
+
 	//temporary keys for Stability until we decide for a permanent solution
 	advancedConfig["MULTI_LAYER_SK38"] = "false";
 	advancedConfig["SSI_IS_RTA"] = "false";
+	advancedConfig["SNOW_PREPARATION"] = "false";
 
 	//[Input] section
 	inputConfig["METEOPATH"] = "./input";
@@ -277,6 +285,12 @@ void SnowpackConfig::setDefaults()
 	 * That is, loop through advancedConfig (then inputConfig & outputConfig) and check whether user has set
 	 * the parameter in the corresponding section, if not add default value
 	 */
+	for(map<string,string>::const_iterator it = snowpackConfig.begin(); it != snowpackConfig.end(); ++it) {
+		//[Snowpack] section
+		string value; getValue(it->first, "Snowpack", value, IOUtils::nothrow);
+		if (value.empty()) addKey(it->first, "Snowpack", it->second);
+	}
+
 	for(map<string,string>::const_iterator it = advancedConfig.begin(); it != advancedConfig.end(); ++it) {
 		//[SnowpackAdvanced] section
 		string value; getValue(it->first, "SnowpackAdvanced", value, IOUtils::nothrow);

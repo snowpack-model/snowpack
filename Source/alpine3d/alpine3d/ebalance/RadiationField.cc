@@ -163,7 +163,7 @@ void RadiationField::setMeteo(const mio::Grid2DObject& in_ta, const mio::Grid2DO
 			Sun.getHorizontalRadiation(cell_toa, cell_direct, cell_diffuse);
 			
 			if (day) {
-				const double tan_horizon = dem.getHorizon(i_dem, jj, solarAzimuth);
+				const double tan_horizon = mio::DEMAlgorithms::getHorizon(dem, i_dem, jj, solarAzimuth);
 				const double global = cell_direct + cell_diffuse; //redo the splitting according to the interpolated Md
 				
 				if ( tan_sun_elev<tan_horizon ) { //cell is shaded
