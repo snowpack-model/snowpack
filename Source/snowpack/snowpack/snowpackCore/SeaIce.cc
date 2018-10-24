@@ -33,7 +33,6 @@
 #include <assert.h>
 #include <sstream>
 #include <errno.h>
-#include <stdio.h>
 
 using namespace mio;
 using namespace std;
@@ -49,13 +48,10 @@ const double SeaIce::ice_threshold = 800.;
 const double SeaIce::height_new_seaice_elem = 0.001;
 const double SeaIce::mu = 0.054;		// Freezing point coefficient
 const double SeaIce::betaS = 0.824;		// Density coefficient (see: Appendix A Sea Water Density According to UNESCO Formula, https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf)
-const double SeaIce::MinBrineMass = 10.;	// Minimum brine mass, in kg/m^3. This forces some pore space to remain.
 const double SeaIce::ThicknessFirstIceLayer = 0.01;
-const double SeaIce::FractionationCoeff = 100.;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
 const double SeaIce::InitOceanSalinity = 35.;
-const double SeaIce::InitSeaIceSalinity = 5.;
 const double SeaIce::InitSnowSalinity = 0.;
 
 
@@ -186,7 +182,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			}
 			break;
 		}
-		
+
 	case LINEARSAL2:
 		{
 			const double topSal = 1.;
@@ -207,7 +203,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			break;
 		}
 
-	// C shaped salinity profile	
+	// C shaped salinity profile
 	case SINUSSAL:
 		{
 			const double topSal = 12.;
@@ -228,6 +224,9 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			}
 			break;
 		}
+		default:
+			InvalidArgumentException("Unknown salinity profile provided", AT);
+
 	}
 }
 
@@ -301,7 +300,6 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 	size_t iN = 0;
 	while (iN < Xdata.getNumberOfElements() && Xdata.Ndata[iN].z + 0.5 * Xdata.Edata[iN].L < SeaLevel) {
 		const double dth_w = std::max(0., Xdata.Edata[iN].theta[AIR] * (Constants::density_ice / Constants::density_water) - Xdata.Edata[iN].theta[WATER] * (Constants::density_water / Constants::density_ice - 1.));
-		//const double dth_w = (1. - Xdata.Edata[iN].theta[ICE]) * Constants::density_ice / Constants::density_water - Xdata.Edata[iN].theta[WATER];
 		Xdata.Edata[iN].theta[WATER] += dth_w;
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
 		Xdata.Edata[iN].salinity += OceanSalinity * dth_w;
@@ -408,33 +406,6 @@ double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
 }
 
 
-void SeaIce::updateBrinePockets(SnowStation& Xdata, const bool& init=false)
-{
-	const size_t nE = Xdata.getNumberOfElements();
-	findIceSurface(Xdata);
-	for (size_t e = Xdata.SoilNode; e < nE; e++) {
-		// Calculate new brine salinity, assuming thermal equilibrium between the ice and the brine pockets
-		const double BrineSalinity_new = (Xdata.Edata[e].Te - Constants::meltfreeze_tk) / -SeaIce::mu;
-		const double BrineMass_new = (BrineSalinity_new == 0.) ? (SeaIce::MinBrineMass) : (std::max(SeaIce::MinBrineMass, ((Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF]) * Constants::density_water + Xdata.Edata[e].theta[ICE] * Constants::density_ice) * Xdata.Edata[e].salinity / BrineSalinity_new));
-		//printf("AAP: %f %f %f %f\n", Xdata.Edata[e].Te, Xdata.Edata[e].salinity, BrineSalinity_new, BrineMass_new);
-		if(init) {
-			// When initializing, we set a maximum brine volume of 10%.
-			const double dth_w = std::min(0.1, BrineMass_new / Constants::density_water);
-			Xdata.Edata[e].theta[WATER] = dth_w;
-			Xdata.Edata[e].theta[ICE] = 1. - (1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[SOIL]) * (Constants::density_water / Constants::density_ice);
-			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
-		} else {
-			// Calculate new brine mass
-			const double dth_w = std::min(Xdata.Edata[e].theta[ICE] * (Constants::density_ice / Constants::density_water), BrineMass_new / Constants::density_water - Xdata.Edata[e].theta[WATER]);
-			Xdata.Edata[e].theta[WATER] += dth_w;
-			Xdata.Edata[e].theta[ICE] -= dth_w * (Constants::density_water / Constants::density_ice);
-			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[WATER_PREF] - Xdata.Edata[e].theta[ICE] - Xdata.Edata[e].theta[SOIL];
-		}
-	}
-	return;
-}
-
-
 /**
  * @brief Calculate ice formation and decay at the bottom
  * @version 16.08: initial version
@@ -455,19 +426,9 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
 	if (nE > 0 ) {
 		// With at least one element, calculate net energy flux
 		// Here: netBottomEnergy has units W/m^2
-		netBottomEnergy = OceanHeatFlux 
+		netBottomEnergy = OceanHeatFlux
 			+ compSeaIceThermalConductivity(EMS[Xdata.SoilNode]) * ( (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / (NDS[Xdata.SoilNode+1].z - NDS[Xdata.SoilNode].z));
 		dM = (-netBottomEnergy * sn_dt) / compSeaIceLatentHeatFusion(EMS[Xdata.SoilNode]);
-		const double Sw = OceanSalinity;
-		const double T = IOUtils::K_TO_C(SeaIce::calculateMeltingTemperature(Sw));
-		const double L0 = Constants::lh_fusion;
-		const double c0 = Constants::specific_heat_ice;
-		const double nu = SeaIce::FractionationCoeff;
-		const double rho_i = Constants::density_ice;
-		const double F = netBottomEnergy;
-		const double dhdt = (sqrt((T * T * L0 * L0 - 2. * T * T * T * c0 * L0 + T * T * T * T * c0 * c0) * rho_i * rho_i + (4. * F * Sw * T * T * c0 - 4. * F * Sw * T * L0) * mu * nu * rho_i - 4. * F * Sw * T * T * c0 * mu * nu) + (T * T * c0 - T * L0) * rho_i) / (( 2. * Sw * L0 - 2. * Sw * T * c0) * mu * nu * rho_i + 2. * Sw * T * c0 * mu * nu );
-		//printf("LL: %f\n", dhdt);
-//printf("OO: %f\n", ( (NDS[Xdata.SoilNode+1].T - NDS[Xdata.SoilNode].T) / (NDS[Xdata.SoilNode+1].z - NDS[Xdata.SoilNode].z)));
 	} else {
 		// First time freezing, create first ice layer
 		// Here: netBottomEnergy has units W / kg
@@ -504,7 +465,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 		// dM > 0: mass gain
 		if ( nE == 0 || EMS[Xdata.SoilNode].theta[ICE] > ThetaIceMin ) {
 			const double dH = dM / SeaIceDensity;								// Total height to be added
-			const size_t nAddE = 1;										// Number of elements
+			const size_t nAddE = std::max(size_t(1), (size_t)(dH / (height_new_seaice_elem*Xdata.cos_sl)));	// Number of elements
 			const double dL = (dH / double(nAddE));								// Height of each individual layer
 			for ( size_t j = 0; j < nAddE; j++ ) {
 				dz += dL;
@@ -530,7 +491,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				EMS[Xdata.SoilNode].theta[WATER_PREF] = 0.;
 				EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
 				EMS[Xdata.SoilNode].updDensity();
-				EMS[Xdata.SoilNode].M = dM / nAddE;
+				EMS[Xdata.SoilNode].M = dM / double(nAddE);
 
 				for (unsigned short ii = 0; ii < Xdata.number_of_solutes; ii++) {
 					EMS[Xdata.SoilNode].conc[ICE][ii]   = Mdata.conc[ii]*Constants::density_ice/Constants::density_water;
@@ -589,6 +550,11 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				BottomSalFlux += EMS[Xdata.SoilNode].salinity * dL;
 			}
 		} else {
+			// First add theta[ICE]
+			const double dth_ice = std::min((dM / Constants::density_ice / EMS[Xdata.SoilNode].L), std::min(0., (ThetaIceMin - EMS[Xdata.SoilNode].theta[ICE])));
+			EMS[Xdata.SoilNode].theta[ICE] += dth_ice;
+			EMS[Xdata.SoilNode].theta[WATER] -= dth_ice * (Constants::density_ice / Constants::density_water);
+			dM -= dth_ice * Constants::density_ice * EMS[Xdata.SoilNode].L;
 			// In this case, increase existing element
 			const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
 			dz += dL;
@@ -640,7 +606,6 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 	// Adjust domain
 	NDS[Xdata.SoilNode].z = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
-		// Nodal z
 		NDS[e + 1].z = NDS[e].z + EMS[e].L;
 	}
 
@@ -694,26 +659,7 @@ double SeaIce::getBrineSalinity(const SnowStation& Xdata)
  */
 void SeaIce::runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt)
 {
-	/*if(Xdata.Edata[0].theta[ICE] < ThetaIceMin) {
-	  	vector<NodeData>& NDS = Xdata.Ndata;
-		vector<ElementData>& EMS = Xdata.Edata;
-		size_t nE = Xdata.getNumberOfElements();
-		const double newL = Xdata.Edata[0].L * (Xdata.Edata[0].theta[ICE] / ThetaIceMin);
-		const double br_sal = Xdata.Edata[0].salinity / Xdata.Edata[0].theta[WATER];
-		Xdata.Edata[0].theta[ICE] *= Xdata.Edata[0].L / newL;
-		Xdata.Edata[0].theta[WATER] = (1. - Xdata.Edata[0].theta[ICE]) * (Constants::density_ice / Constants::density_water);
-		Xdata.Edata[0].salinity = br_sal * Xdata.Edata[0].theta[WATER];
-		Xdata.Edata[0].theta[AIR] = 1. - Xdata.Edata[0].theta[ICE] - Xdata.Edata[0].theta[WATER];
-		Xdata.Edata[0].updDensity();
-		// Adjust domain
-		NDS[Xdata.SoilNode].z = 0.;
-		for (size_t e = Xdata.SoilNode; e < nE; e++) {
-			// Nodal z
-			NDS[e + 1].z = NDS[e].z + EMS[e].L;
-		}
-	}*/
 	Xdata.Seaice->compSalinityProfile(Xdata);
-	//Xdata.Seaice->updateBrinePockets(Xdata);
 	Xdata.Seaice->OceanHeatFlux=(Bdata.qg == Constants::undefined)?(0.):(Bdata.qg);
 	Xdata.Seaice->bottomIceFormation(Xdata, Mdata, sn_dt);
 	Xdata.Seaice->compSalinityProfile(Xdata);

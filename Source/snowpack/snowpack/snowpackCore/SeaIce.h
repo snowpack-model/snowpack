@@ -59,13 +59,10 @@ class SeaIce {
 		const static double height_new_seaice_elem;
 		const static double mu;
 		const static double betaS;
-		const static double MinBrineMass;
 		const static double ThicknessFirstIceLayer;
-		const static double FractionationCoeff;
 		const static double InitRg;
 		const static double InitRb;
 		const static double InitOceanSalinity;
-		const static double InitSeaIceSalinity;
 		const static double InitSnowSalinity;
 
 		double SeaLevel;            ///< Sea level in domain (m)
@@ -87,7 +84,6 @@ class SeaIce {
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
-		void updateBrinePockets(SnowStation& Xdata, const bool&);
 		void updateOceanBufferLayer(const double& BottomFlux, const double& Salinity);
 		void compFlooding(SnowStation& Xdata);
 		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
