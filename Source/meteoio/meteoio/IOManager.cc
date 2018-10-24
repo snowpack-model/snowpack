@@ -49,7 +49,11 @@ namespace mio {
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
  *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  * 
- * Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
+ * @note Please keep in mind that the WINDOW_SIZE in the [Interpolations1D] section and BUFFER_SIZE in the [General] section have a direct influence on the success 
+ * (or lack of) the virtual stations: they will contribute to define how much raw data should be read and can lead to an exception being thrown when working with
+ * little data and large buffer or resampling windows values. 
+ * 
+ * @note Currently, a DEM also has to be provided since this will be used to retrieve the elevation, slope and azimuth of the virtual stations.
  * 
  * In the example provided below, 4 stations provide the original data that will be spatially interpolated at 2 points (or virtual stations, VIR1 and VIR2) for
  * 7 meteorological parameters. Every 6 hours, with starting offset of on hour, the original data will be spatially interpolated (so at 01:00, 07:00, 13:00 and 19:00).

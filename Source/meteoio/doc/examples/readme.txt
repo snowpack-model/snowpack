@@ -20,6 +20,7 @@ The necessary data set for these examples lies in "input" directory. It contains
 	meteo_reading.cc : read one timestep and shows the meteo data at this step
 	sun.cc : calculate solar radiation at a given place and time
 	time.cc : time handling example
+	random_numbers.cc : generating different kinds of random numbers
 
 4) Available scripts
 Several useful scripts are given in the "tools" subdirectory of MeteoIO's root sources directory. These scripts allow to 
