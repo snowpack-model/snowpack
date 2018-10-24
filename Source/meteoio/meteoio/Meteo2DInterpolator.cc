@@ -115,19 +115,19 @@ std::set<std::string> Meteo2DInterpolator::getParameters(const Config& cfg)
 }
 
 
-std::vector<std::string> Meteo2DInterpolator::getAlgorithmsForParameter(const Config& cfg, const std::string& parname)
+std::vector<std::string> Meteo2DInterpolator::getAlgorithmsForParameter(const Config& i_cfg, const std::string& parname)
 {
 	// This function retrieves the user defined interpolation algorithms for
 	// parameter 'parname' by querying the Config object
 	std::vector<std::string> vecAlgorithms;
-	const std::vector<std::string> vecKeys( cfg.getKeys(parname+"::algorithms", "Interpolations2D") );
+	const std::vector<std::string> vecKeys( i_cfg.getKeys(parname+"::algorithms", "Interpolations2D") );
 
 	if (vecKeys.size() > 1)
 		throw IOException("Multiple definitions of " + parname + "::algorithms in config file", AT);;
 
 	if (vecKeys.empty()) return vecAlgorithms;
 
-	cfg.getValue(vecKeys[0], "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
+	i_cfg.getValue(vecKeys[0], "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
 	return vecAlgorithms;
 }
 
@@ -159,7 +159,6 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
                                       Grid2DObject& result, std::string& InfoString)
 {
 	if (!algorithms_ready) setAlgorithms();
-
 	const std::string param_name( MeteoData::getParameterName(meteoparam) );
 	
 	interpolate(date, dem, param_name, result, InfoString);
@@ -281,28 +280,12 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		}
 	} else {
 		for (size_t ii=0; ii<vec_stations.size(); ii++) {
-			const bool gridify_success = dem.gridify(vec_stations[ii].position);
-			if (!gridify_success)
-				throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
-
-			//we know the i,j are positive because of gridify_success
-			const size_t pt_i = static_cast<size_t>( vec_stations[ii].position.getGridI() );
-			const size_t pt_j = static_cast<size_t>( vec_stations[ii].position.getGridJ() );
-
 			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
-			//Copy all other properties of the big DEM into the new one
-			DEMObject one_point_dem(dem, pt_i, pt_j, 1, 1, false);
-
-			one_point_dem.min_altitude = dem.min_altitude;
-			one_point_dem.max_altitude = dem.max_altitude;
-			one_point_dem.min_slope = dem.min_slope;
-			one_point_dem.max_slope = dem.max_slope;
-			one_point_dem.min_curvature = dem.min_curvature;
-			one_point_dem.max_curvature = dem.max_curvature;
+			const DEMObject one_point_dem(1, 1, vec_stations[ii].position, vec_stations[ii].position.getAltitude());
 
 			Grid2DObject result_grid;
 			interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
-			result.push_back(result_grid(0,0));
+			result.push_back( result_grid(0,0) );
 		}
 	}
 }

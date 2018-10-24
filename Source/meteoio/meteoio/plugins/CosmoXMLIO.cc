@@ -139,7 +139,7 @@ void CosmoXMLIO::init(const Config& cfg)
 {
 	LIBXML_TEST_VERSION //check lib versions and call xmlInitParser()
 
-	string coordout, coordoutparam;
+	std::string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	cfg.getValues("STATION", "INPUT", input_id);
@@ -147,14 +147,13 @@ void CosmoXMLIO::init(const Config& cfg)
 	cfg.getValue("USE_MODEL_LOC", "INPUT", use_model_loc, IOUtils::nothrow);
 
 	const std::string meteopath = cfg.get("METEOPATH", "INPUT");
-	const std::string meteofile = cfg.get("METEOFILE", "INPUT", IOUtils::nothrow);
+	const std::string meteofile = cfg.get("METEOFILE", "INPUT", "");
 	cfg.getValue("METEO_PREFIX", "INPUT", meteo_prefix, IOUtils::nothrow);
 	cfg.getValue("METEO_EXT", "INPUT", meteo_ext, IOUtils::nothrow);
 	if ( IOUtils::strToUpper(meteo_ext)=="NONE" ) meteo_ext="";
 
 	//input encoding forcing
-	string tmp;
-	cfg.getValue("XML_ENCODING", "INPUT", tmp, IOUtils::nothrow);
+	const std::string tmp = cfg.get("XML_ENCODING", "INPUT", "");
 	if (!tmp.empty()) {
 		if (tmp=="UTF-8") in_encoding=XML_CHAR_ENCODING_UTF8;
 		else if (tmp=="UTF-16-LE") in_encoding=XML_CHAR_ENCODING_UTF16LE;
@@ -183,7 +182,7 @@ void CosmoXMLIO::init(const Config& cfg)
 	}
 
 	if (!meteofile.empty()) {
-		const string file_and_path = meteopath + "/" + meteofile;
+		const std::string file_and_path( meteopath + "/" + meteofile );
 		const std::pair<Date,std::string> tmp_pair(Date(), file_and_path);
 		cache_meteo_files.push_back( tmp_pair );
 	} else {
@@ -214,7 +213,6 @@ CosmoXMLIO::~CosmoXMLIO() throw()
 void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files) const
 {
 	meteo_files.clear();
-
 	std::list<std::string> dirlist = FileUtils::readDirectory(meteopath_in, meteo_ext);
 	dirlist.sort();
 
@@ -222,7 +220,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 	const size_t prefix_len = meteo_prefix.size();
 	std::list<std::string>::const_iterator it = dirlist.begin();
 	while ((it != dirlist.end())) {
-		const std::string& filename = *it;
+		const std::string& filename( *it );
 		const std::string::size_type prefix_pos = (prefix_len==0)? 0 : filename.find_first_of(meteo_prefix);
 		if (prefix_pos==string::npos) continue;
 
@@ -295,9 +293,9 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	//match something like "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col[@id='station_abbreviation' and text()='ATT']/.."
 	//the namespace "ns" has been previously defined
 	const std::string xpath_id = (imis_stations)? station_id.substr(0, station_id.find_first_of("0123456789")) : station_id;
-	const std::string xpath = std::string(StationData_xpath)+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
+	const std::string xpath( std::string(StationData_xpath)+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.." ); //and we take the parent node <row>
 
-	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
+	xmlXPathObjectPtr xpathObj( xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx) );
 	if (xpathObj == NULL) return false;
 
 	//check the number of matches
@@ -448,9 +446,9 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 
 bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id, const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const
 {
-	const std::string xpath = std::string(MeteoData_xpath)+"[@id='identifier' and text()='"+station_id+"']";
+	const std::string xpath( std::string(MeteoData_xpath)+"[@id='identifier' and text()='"+station_id+"']" );
 
-	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
+	xmlXPathObjectPtr xpathObj( xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx) );
 	if (xpathObj == NULL) return false;
 
 	//check the number of matches
@@ -501,7 +499,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		//read all the stations' data
 		for (size_t ii=0; ii<input_id.size(); ii++) {
-			const string station_id = xml_stations_id[ input_id[ii] ];
+			const std::string station_id( xml_stations_id[ input_id[ii] ] );
 
 			//do we already have a vector with this station meteo?
 			size_t found_id = IOUtils::npos;

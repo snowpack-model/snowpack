@@ -95,6 +95,8 @@ The following are optional:
 \begin{itemize}
 	\item station\_name: human readable name for the station, any string
 	\item tz: timezone of the measurements, decimal number positive going east. If not provided, utc is assumed
+	\item slope\_angle: the angle in degrees from the horizontal (so 0. is horizontal)
+	\item slope\_azi: the bearing, in degrees (as read from a compass, so North is 0. and South is 180.). If an azimuth is provided, a slope must be provided!
 	\item creation: timestamp of the file's creation date (ISO 8601 Combined date and time formatted)
 	\item source: string describing the origin of the file
 	\item units\_offset: a vector of decimal numbers to add to each value of the matching column in order to get back to MKSA

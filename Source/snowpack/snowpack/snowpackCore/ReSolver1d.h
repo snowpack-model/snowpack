@@ -88,7 +88,7 @@ class ReSolver1d {
 
 		// General functions
 		void InitializeGrid(const std::vector<ElementData>& EMS, const size_t& lowernode, const size_t& uppernode);
-		vector<double> AssembleRHS(const size_t& lowernode, const size_t& uppernode, const vector<double>& h_np1_m, const vector<double>& theta_n, const vector<double>& theta_np1_m, const vector<double>& theta_i_n, const vector<double>& theta_i_np1_m, const vector<double>& s, const double& dt, const vector<double>& rho, const vector<double>& k_np1_m_im12, const vector<double>& k_np1_m_ip12, const BoundaryConditions aTopBC, const double& TopFluxRate, const BoundaryConditions aBottomBC, const double& BottomFluxRate, const SnowStation& Xdata, SalinityTransport& Salinity, const SalinityMixingModels& SALINITY_MIXING);
+		std::vector<double> AssembleRHS(const size_t& lowernode, const size_t& uppernode, const std::vector<double>& h_np1_m, const std::vector<double>& theta_n, const std::vector<double>& theta_np1_m, const std::vector<double>& theta_i_n, const std::vector<double>& theta_i_np1_m, const std::vector<double>& s, const double& dt, const std::vector<double>& rho, const std::vector<double>& k_np1_m_im12, const std::vector<double>& k_np1_m_ip12, const BoundaryConditions aTopBC, const double& TopFluxRate, const BoundaryConditions aBottomBC, const double& BottomFluxRate, const SnowStation& Xdata, SalinityTransport& Salinity, const SalinityMixingModels& SALINITY_MIXING);
 
 		// Solver control variables
 		const static double REQUIRED_ACCURACY_H, convergencecriterionthreshold, MAX_ALLOWED_DELTA_H;

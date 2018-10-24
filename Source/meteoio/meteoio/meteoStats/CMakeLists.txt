@@ -6,4 +6,5 @@ SET(meteoStats_sources
 	meteoStats/libinterpol1D.cc
 	meteoStats/libinterpol2D.cc
 	meteoStats/libresampling2D.cc
+	meteoStats/RandomNumberGenerator.cc
 )

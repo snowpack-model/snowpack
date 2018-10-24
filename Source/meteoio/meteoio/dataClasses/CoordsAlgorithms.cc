@@ -350,7 +350,10 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 }
 
 /**
-* @brief Build the string representation for a given EPSG code
+* @brief Build the string representation for a given EPSG code.
+* @note We assume that the ETRS datum is equal to the WGS84 (although there is a .5m difference and 
+* <A href="https://confluence.qps.nl/qinsy/en/how-to-deal-with-etrs89-datum-and-time-dependent-transformation-parameters-45353274.html">growing</A>). 
+* Therefore, all ETRS coordinates will be written out as WGS84 coordinates.
 * @param[in] epsg epsg code
 * @param[out] coordsystem string representation of the coordinate system
 *@param[out] coordparam string representation of the optional coordinate system parameters (such as zone for utm, etc) 
@@ -372,6 +375,15 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 	}
 	if (epsg==2056) {
 		coordsystem.assign("CH1903+");
+		return;
+	}
+	if ((epsg>=25828) && (epsg<=25837)) {
+		//as ETRS89 and further, this is only Europe. We assume ETRS==WGS84 although there is ~.5m difference
+		coordsystem.assign("UTM");
+		const int zoneNumber = epsg-25800;
+		std::ostringstream osstream;
+		osstream << zoneNumber << "N";
+		coordparam=osstream.str();
 		return;
 	}
 	if ((epsg>=32601) && (epsg<=32660)) {

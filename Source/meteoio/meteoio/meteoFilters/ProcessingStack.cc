@@ -52,8 +52,10 @@ std::vector< std::pair<std::string, std::string> > ProcessingStack::parseArgs(co
 	return vecArgs;
 }
 
-ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
+ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname), data_qa_logs(false)
 {
+	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
+	
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
@@ -120,18 +122,18 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 			throw IndexOutOfBoundsException(ss.str(), AT);
 		}
 
-		#ifdef DATA_QA
-		for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
-			const double orig = ivec[kk](param);
-			const double filtered = ovec[stat_idx][kk](param);
-			if (orig!=filtered) {
-				const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
-				const std::string stat = (!statID.empty())? statID : statName;
-				const std::string filtername( (*filter_stack[jj]).getName() );
-				cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+		if (data_qa_logs) {
+			for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
+				const double orig = ivec[kk](param);
+				const double filtered = ovec[stat_idx][kk](param);
+				if (orig!=filtered) {
+					const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
+					const std::string stat = (!statID.empty())? statID : statName;
+					const std::string filtername( (*filter_stack[jj]).getName() );
+					cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+				}
 			}
 		}
-		#endif
 		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
 			for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
 				ivec[kk](param) = ovec[stat_idx][kk](param);

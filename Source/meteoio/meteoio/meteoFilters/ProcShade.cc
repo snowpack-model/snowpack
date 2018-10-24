@@ -25,6 +25,7 @@
 #include <meteoio/meteoLaws/Sun.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/dataClasses/DEMAlgorithms.h>
 
 using namespace std;
 
@@ -200,7 +201,7 @@ std::vector< std::pair<double,double> > ProcShade::computeMask(const DEMObject& 
 		throw NoDataException(msg, AT);
 	}
 	
-	i_dem.getHorizon(position, 10., o_mask); //by 10deg increments
+	DEMAlgorithms::getHorizon(i_dem, position, 10., o_mask); //by 10deg increments
 	if (o_mask.empty()) throw InvalidArgumentException( "In filter 'SHADE', could not compute mask from DEM '"+i_dem.llcorner.toString(Coords::LATLON)+"'", AT);
 
 	if (dump_mask) {

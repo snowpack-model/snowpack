@@ -681,12 +681,12 @@ void A3DIO::readPOI(std::vector<Coords>& pts)
 	fin.close();
 }
 
-int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
+bool A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 {
 	std::string tmp_path;
 	cfg.getValue("METEOPATH", "Output", tmp_path);
 	const size_t sta_nr = data.size();
-	if (sta_nr==0) return EXIT_FAILURE;
+	if (sta_nr==0) return false;
 
 	for (size_t ii=0; ii<sta_nr; ii++) {
 		const size_t size = data[ii].size();
@@ -742,16 +742,16 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 			file.close();
 		}
 	}
-	return EXIT_SUCCESS;
+	return true;
 }
 
-int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& data, const std::string& parameter_name)
+bool A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& data, const std::string& parameter_name)
 {
 	std::ostringstream str_altitudes;
 	std::ostringstream str_eastings;
 	std::ostringstream str_northings;
 	const size_t sta_nr = data.size();
-	if (sta_nr==0) return EXIT_FAILURE;
+	if (sta_nr==0) return false;
 
 	file << "X:\\filepath " << parameter_name <<endl;
 	for (size_t ii=0; ii<sta_nr; ii++) {
@@ -772,7 +772,7 @@ int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<Meteo
 	}
 	file << std::endl;
 
-	return EXIT_SUCCESS;
+	return true;
 }
 
 void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
@@ -792,14 +792,14 @@ void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
 	writeHeader(file, data, label);
 }
 
-int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
+bool A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
                             const unsigned int& parindex, const std::string& fileprefix,
                             const std::string& label)
 {
 	const size_t sta_nr = data.size();
-	if (sta_nr==0) return EXIT_FAILURE;
+	if (sta_nr==0) return false;
 	const size_t nb_timesteps = data[0].size();
-	if (nb_timesteps==0) return EXIT_FAILURE;
+	if (nb_timesteps==0) return false;
 
 	std::ofstream file;
 	int startyear, year, month, day, hour;
@@ -836,7 +836,7 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 		file << "\n";
 	}
 	file.close();
-	return EXIT_SUCCESS;
+	return true;
 }
 
 void A3DIO::write2DMeteo(const std::vector< std::vector<MeteoData> >& data)

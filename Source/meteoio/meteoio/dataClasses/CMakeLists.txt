@@ -8,6 +8,7 @@ SET(dataClasses_sources
 	dataClasses/CoordsAlgorithms.cc
 	dataClasses/Coords.cc
 	dataClasses/DEMObject.cc
+	dataClasses/DEMAlgorithms.cc
 	dataClasses/StationData.cc
 	dataClasses/MeteoData.cc
 	dataClasses/Buffer.cc

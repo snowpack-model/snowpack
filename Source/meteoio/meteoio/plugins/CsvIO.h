@@ -30,7 +30,7 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(static_cast<float>(tz_in)), has_tz(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
 		
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
@@ -62,17 +62,17 @@ class CsvParameters {
 		std::string file_and_path, datetime_format, time_format, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
 		double slope, azi;
-		float csv_tz;		///< timezone to apply to parsed dates
+		double csv_tz;		///< timezone to apply to parsed dates
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
 };
 
 /**
  * @class CsvIO
- * @brief This (empty) class is to be used as a template for developing new plugins
+ * @brief Reads meteo data from a comma separated file.
  *
  * @ingroup plugins
  * @author Mathias Bavay
- * @date   2010-06-14
+ * @date   2018-01
  */
 class CsvIO : public IOInterface {
 	public:
@@ -100,6 +100,7 @@ class CsvIO : public IOInterface {
 		std::string coordin, coordinparam; //projection parameters
 		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 		bool silent_errors; ///< when reading a file, should errors throw or just be ignored?
+		bool errors_to_nodata;    //unparseable values are treated as nodata, but the dataset is kept
 };
 
 } //namespace

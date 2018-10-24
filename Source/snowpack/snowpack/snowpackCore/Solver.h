@@ -23,7 +23,7 @@
 #ifndef  SOLVER_H
 #define  SOLVER_H
 
-#include <cstddef> //needed for size_t
+#include <cstddef> //needed for int
 
 /**
  * @file Solver.h
@@ -58,7 +58,7 @@ typedef struct
 {
 	int     nChunks;
 	int     pChunksSize;
-	char   **pChunks;
+	char    **pChunks;
 	int     TotChunkSize;
 } SD_CHUNK_DATA;
 
@@ -66,7 +66,7 @@ typedef struct
 {
 	int                Row0;
 	int                Row1;
-	size_t             nCol;
+	int                nCol;
 	int                nColBlock;
 	int                iColBlock;
 	int                iFloat;
@@ -74,7 +74,7 @@ typedef struct
 
 typedef struct
 {
-	size_t              Dim;
+	int                Dim;
 	int                *pPerm;
 	int                 nRowBlock;
 	SD_ROW_BLOCK_DATA  *pRowBlock;
@@ -89,7 +89,7 @@ typedef struct
 
 typedef struct SD_COL_DATA
 {
-	size_t               Col;
+	int                 Col;
 	struct SD_COL_DATA  *Next;
 } SD_COL_DATA;
 
@@ -100,7 +100,7 @@ typedef struct SD_ROW_DATA
 
 typedef struct
 {
-	size_t                 nRow;
+	int                   nRow;
 	int                   *pPerm;
 	int                   *pPermInv;
 	int                    nSupernode;
@@ -110,12 +110,12 @@ typedef struct
 	SD_CHUNK_DATA          PoolCol;
 	SD_COL_DATA           *FreeCol;
 	int                    nFreeCol;
-	size_t                 nCol;
+	int                    nCol;
 }  SD_CON_MATRIX_DATA;
 
 typedef struct SD_COL_BLOCK_DATA
 {
-	size_t Col0, Col1;
+	int Col0, Col1;
 	struct SD_COL_BLOCK_DATA  *Next;
 } SD_COL_BLOCK_DATA;
 
@@ -137,7 +137,7 @@ typedef union
 
 typedef struct
 {
-	size_t                 nRow;
+	int                   nRow;
 	int                   *pPerm;
 
 	int                    nRowBlock;
@@ -166,8 +166,8 @@ typedef  struct
 	StateType State;
 	union
 	{  SD_CON_MATRIX_DATA      Con;
-	SD_TMP_CON_MATRIX_DATA  TmpCon;
-	SD_BLOCK_MATRIX_DATA    Block;
+	SD_TMP_CON_MATRIX_DATA     TmpCon;
+	SD_BLOCK_MATRIX_DATA       Block;
 	}  Mat;
 }  SD_MATRIX_DATA;
 
@@ -249,7 +249,7 @@ typedef enum SD_MATRIX_WHAT
  * NOTE: Except the definition of the multiplicity in ds_Initialize(), all steps performed to
  * define the structure of matrix [A] are stricktly independent from the multiplicity
  *
- * @param [in] pMat0 Pointer to the matrix [A] opaque data returned by ds_Initialize()
+ * @param [in] pMat0 pointer to the matrix [A] opaque data returned by ds_Initialize()
  * @param [in] nEq No. of equations for one element forming a crique
  * @param [in] Eq Element list of equations for more elements with equal no. of eqs.
  * @param [in] nEl No. of elements  ( 0 <= i "<" nEq ;  0 <= e "<" nEl )
@@ -278,7 +278,7 @@ int ds_DefineConnectivity( SD_MATRIX_DATA *const pMat0, const int& nEq, int Eq[]
  * and unknowns is given by: MatDim * Multiplicity
  * @param ppMat A pointer to an opaque data type storing data related to the matrix [A]
  */
-int ds_Initialize( const size_t& MatDim, SD_MATRIX_DATA **ppMat );
+int ds_Initialize( const int& MatDim, SD_MATRIX_DATA **ppMat );
 
 /**
 * @brief This function assemble the element square matrix [ElMat] for one element with nEq*M x nEq*M

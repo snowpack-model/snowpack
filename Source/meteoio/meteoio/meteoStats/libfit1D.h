@@ -117,8 +117,8 @@ class Quadratic : public FitLeastSquare {
 class PolynomialRegression : public FitModel {
 	public:
 	    //the default-constructor sets the degree to 2 (= quadratic regression)
-		PolynomialRegression() : FitModel("PolynomialRegression", 3, 3), degree(2) {fit_ready=false;}
-		PolynomialRegression(const std::string& i_regname, int degreeOfRegression) :
+		PolynomialRegression() : FitModel("POLYNOMIAL", 3, 3), degree(2) {fit_ready=false;}
+		PolynomialRegression(const std::string& i_regname, const size_t& degreeOfRegression) :
                             FitModel(i_regname, degreeOfRegression+1, degreeOfRegression+1),
                             degree(degreeOfRegression){fit_ready=false;}
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
@@ -243,7 +243,7 @@ class Fit1D {
 		* This will throw an exception for all other regression models!
 		* @param degree degree of the polynomial regression to set
 		*/
-		void setDegree(const int& degree) {model->setDegree(degree);}
+		void setDegree(const size_t& degree) {model->setDegree(degree);}
 
 		/**
 		* @brief Compute the regression parameters

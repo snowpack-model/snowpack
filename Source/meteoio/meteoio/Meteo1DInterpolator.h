@@ -28,6 +28,48 @@
 #include <map>
 
 namespace mio {
+/**
+ * @page dev_1Dinterpol How to write a resampling algorithm
+ * Timeseries can be resampled to any arbitrary timestep through the use of resampling algorithms. The user
+ * defines for each parameter which algorithm should be used and whenever a requested timestep can not be found
+ * in the original data, the user-defined resampling algorithms will be called for every parameter available in MeteoData.
+ *
+ * Please keep in mind that the input sampling rate can be anything (including variable) as well as the output
+ * sampling rate!
+ *
+ * @section structure_1Dinterpol Structure
+ * When a specific timestep is requested and can not be found in the original data (but lies within the time range of the original data), the
+ * TimeSeriesManager calls the MeteoProcessor and requests a temporal interpolation. The request is forwarded to a Meteo1DInterpolator
+ * that computes what should be the index of the element just after the one that needs to be computed as well as some flags to
+ * know if is the first or the last element in the timeseries. Then the Meteo1DInterpolator calls for each meteorological parameters the
+ * algorithm that is responsible for temporally interpolating this parameter with the above computed information. Depending on the
+ * user configuration for the algorithm (that is parsed and setup in the constructor of the algorithm), the requested point is computed
+ * (or the algorithm simply returns if it can not compute a value). Some helper functions are defined in the ResamplingAlgorithms
+ * class that is inherited by every algorithm.
+ *
+ * @section implementation_1Dinterpol Implementation
+ * Using the template.cc and template.h files, build your own algorithm:
+ *  - rename template.cc and template.h into a proper name for your algorithm as well as all mentions of "TEMPLATE" in the files;
+ *  - declare your cc file in meteoio/meteoResampling/CMakeLists.txt;
+ *  - declare your class in meteoio/meteoResampling/ResamplingAlgorithms.cc (both as \#include and in the object factory
+ * ResamplingAlgorithmsFactory::getAlgorithm);
+ *  - implement your arguments parsing in your constructor;
+ *  - implement the temporal interpolation in the resample() method. You receive the full vector of data, the index at or right after where
+ * you should compute the interpolation, a hint about some specifics of this location and a single MeteoData object where you should fill
+ * the value for the parameter given by paramindex;
+ *  - implement an informative toString() method that could help for debugging.
+ *
+ * In order to debug and test your implementation, it is recommended to use a very small buffer (keys BUFFER_SIZE and BUFF_BEFORE)
+ * so it is easy to follow what is going on. You can also always switch back and forth between <i>Enable_Resampling = true</i> and
+ * <i>false</i> in the <i>[Interpolations1D]</i> section to see what your algorithm is doing. Please keep in mind that you can not make
+ * any assumption regarding the sampling rate, so each neighbouring point has to be checked for validity.
+ *
+ * @section doc_1Dinterpol Documentation
+ * The newly added resampling algorithm must be added to the list of available algorithms in
+ * ResamplingAlgorithms.cc with a proper description and a link to its documentation.
+ * Please feel free to add necessary bibliographic references to the bibliographic section!
+ *
+*/
 
 /**
  * @class Meteo1DInterpolator
@@ -78,7 +120,7 @@ class Meteo1DInterpolator {
 		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
 		const Config& cfg;
 		double window_size; ///< In seconds
-		bool enable_resampling; ///< easy way to turn resampling off
+		bool enable_resampling, data_qa_logs; ///< easy way to turn resampling off
 };
 } //end namespace
 

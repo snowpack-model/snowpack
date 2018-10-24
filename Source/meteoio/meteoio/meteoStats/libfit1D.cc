@@ -150,6 +150,37 @@ bool SimpleLinear::fit()
 	return true;
 }
 
+bool NoisyLinear::fit()
+{
+	if (!checkInputs()) return false;
+
+	Lambda.clear();
+	double a,b,r;
+	std::string mesg;
+	std::ostringstream ss;
+
+	if (fixed_lapse_rate==IOUtils::nodata) {
+		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
+		ss << mesg  << "Computed regression with " << regname << " model - r=" << std::setprecision(2) << r;
+	} else {
+		a = fixed_lapse_rate;
+		if (a!=0.) {
+			Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
+			ss << mesg  << "Computed regression with " << regname << " model ";
+			ss << "(fixed lapse rate=" << a << ") - r=" << std::setprecision(2) << r;
+		} else {
+			a=0.;
+			b=0.;
+			ss << mesg << "Computed regression with " << regname << " model";
+		}
+	}
+	Lambda.push_back(a);
+	Lambda.push_back(b);
+	infoString = ss.str();
+	fit_ready = true;
+	return true;
+}
+
 void PolynomialRegression::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y)
 {
 	X = in_X;
@@ -211,37 +242,6 @@ bool PolynomialRegression::fit()
 	for (size_t i = 0; i < (n+1); i++){
 		Lambda[i] = bM(i+1,1);
 	}
-	fit_ready = true;
-	return true;
-}
-
-bool NoisyLinear::fit()
-{
-	if (!checkInputs()) return false;
-
-	Lambda.clear();
-	double a,b,r;
-	std::string mesg;
-	std::ostringstream ss;
-
-	if (fixed_lapse_rate==IOUtils::nodata) {
-		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
-		ss << mesg  << "Computed regression with " << regname << " model - r=" << std::setprecision(2) << r;
-	} else {
-		a = fixed_lapse_rate;
-		if (a!=0.) {
-			Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
-			ss << mesg  << "Computed regression with " << regname << " model ";
-			ss << "(fixed lapse rate=" << a << ") - r=" << std::setprecision(2) << r;
-		} else {
-			a=0.;
-			b=0.;
-			ss << mesg << "Computed regression with " << regname << " model";
-		}
-	}
-	Lambda.push_back(a);
-	Lambda.push_back(b);
-	infoString = ss.str();
 	fit_ready = true;
 	return true;
 }

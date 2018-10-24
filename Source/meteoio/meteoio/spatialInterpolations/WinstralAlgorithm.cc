@@ -79,28 +79,28 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	delete algorithm;
 }
 
-bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station)
+bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
-	if (ref_station.empty()) {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-			const double VW = vecMeteo[ii](MeteoData::VW);
-			const double DW = vecMeteo[ii](MeteoData::DW);
+	if (i_ref_station.empty()) {
+		for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
+			const double VW = i_vecMeteo[ii](MeteoData::VW);
+			const double DW = i_vecMeteo[ii](MeteoData::DW);
 			if (VW!=IOUtils::nodata && DW!=IOUtils::nodata)
 				return true; //at least one station is enough
 		}
 	} else {
-		if (getSynopticBearing(vecMeteo, ref_station) != IOUtils::nodata)
+		if (getSynopticBearing(i_vecMeteo, i_ref_station) != IOUtils::nodata)
 			return true;
 	}
 
 	return false;
 }
 
-double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station)
+double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
-	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {
-		if (vecMeteo[ii].meta.stationID==ref_station)
-			return vecMeteo[ii](MeteoData::DW);
+	for (size_t ii=0; ii<i_vecMeteo.size(); ++ii) {
+		if (i_vecMeteo[ii].meta.stationID==i_ref_station)
+			return i_vecMeteo[ii](MeteoData::DW);
 	}
 
 	return IOUtils::nodata;
@@ -149,13 +149,13 @@ bool WinstralAlgorithm::isExposed(const DEMObject& dem, Coords location)
 	return true;
 }
 
-double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo)
+double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo)
 {
 	double ve=0.0, vn=0.0;
 	size_t count=0;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		const double VW = vecMeteo[ii](MeteoData::VW);
-		const double DW = vecMeteo[ii](MeteoData::DW);
+	for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
+		const double VW = i_vecMeteo[ii](MeteoData::VW);
+		const double DW = i_vecMeteo[ii](MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
 			ve += VW * sin(DW*Cst::to_rad);
 			vn += VW * cos(DW*Cst::to_rad);
@@ -175,23 +175,23 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 	return IOUtils::nodata;
 }
 
-double WinstralAlgorithm::getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& vecMeteo)
+double WinstralAlgorithm::getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& i_vecMeteo)
 {
 	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
 	// 2) simply compute a mean or median direction
 	// (2) can be used on all the stations selected in (1)
 
 	std::vector<MeteoData> stationsSubset;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (isExposed(dem, vecMeteo[ii].meta.position))
-			stationsSubset.push_back( vecMeteo[ii] );
+	for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
+		if (isExposed(dem, i_vecMeteo[ii].meta.position))
+			stationsSubset.push_back( i_vecMeteo[ii] );
 	}
 
 	if (!stationsSubset.empty()) {
 		return getSynopticBearing(stationsSubset);
 	} else {
 		//std::cerr << "[W] Synoptic wind direction computed from wind-sheltered stations only\n";
-		return getSynopticBearing(vecMeteo);
+		return getSynopticBearing(i_vecMeteo);
 	}
 }
 

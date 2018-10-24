@@ -233,8 +233,8 @@ class IOManager {
 		GridsManager gdm1;
 		Meteo2DInterpolator interpolator;
 		DEMObject source_dem;
-		std::vector<size_t> v_params; ///< Parameters for virtual stations
-		std::vector<StationData> v_stations; ///< metadata for virtual stations
+		std::vector<size_t> v_params, grids_params; ///< Parameters for virtual stations
+		std::vector<StationData> v_stations, v_gridstations; ///< metadata for virtual stations
 		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated? (in seconds)
 		const IOHandler::operation_mode mode;
 };

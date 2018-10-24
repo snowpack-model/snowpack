@@ -422,25 +422,25 @@ void ReSolver1d::InitializeGrid(const vector<ElementData>& EMS, const size_t& lo
  * @author Nander Wever
  * @param Takes many arguments, but in the future, many variables should become owned by the class.
  */
-vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
-					const size_t& uppernode,
-					const vector<double>& h_np1_m,
-					const vector<double>& theta_n,
-					const vector<double>& theta_np1_m,
-					const vector<double>& theta_i_n,
-					const vector<double>& theta_i_np1_m,
-					const vector<double>& s,
-					const double& dt,
-					const vector<double>& rho,
-					const vector<double>& k_np1_m_im12,
-					const vector<double>& k_np1_m_ip12,
-					const BoundaryConditions aTopBC,
-					const double& TopFluxRate,
-					const BoundaryConditions aBottomBC,
-					const double& BottomFluxRate,
-					const SnowStation& Xdata,
-					SalinityTransport& Salinity,
-					const SalinityMixingModels& SALINITY_MIXING
+std::vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
+					     const size_t& uppernode,
+					     const std::vector<double>& h_np1_m,
+					     const std::vector<double>& theta_n,
+					     const std::vector<double>& theta_np1_m,
+					     const std::vector<double>& theta_i_n,
+					     const std::vector<double>& theta_i_np1_m,
+					     const std::vector<double>& s,
+					     const double& dt,
+					     const std:: vector<double>& rho,
+					     const std::vector<double>& k_np1_m_im12,
+					     const std::vector<double>& k_np1_m_ip12,
+					     const BoundaryConditions aTopBC,
+					     const double& TopFluxRate,
+					     const BoundaryConditions aBottomBC,
+					     const double& BottomFluxRate,
+					     const SnowStation& Xdata,
+					     SalinityTransport& Salinity,
+					     const SalinityMixingModels& SALINITY_MIXING
 					)
 {
 	size_t nE = (uppernode - lowernode) + 1;
@@ -1228,6 +1228,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							}
 							break;
 						}
+						default:
+							InvalidArgumentException("Unknown K_AverageType value provided", AT);
+
 					}
 					if(matrix==false) {
 						// When solving preferential flow, we suppress liquid water flow in soil by setting hydraulic conductivity to 0.

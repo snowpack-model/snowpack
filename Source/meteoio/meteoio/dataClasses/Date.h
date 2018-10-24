@@ -134,7 +134,7 @@ class Date {
 		void setMatlabDate(const double matlab_in, const double& in_timezone, const bool& in_dst=false);
 		void setUndef(const bool& flag);
 
-		bool isUndef() const {return undef;};
+		bool isUndef() const {return undef;}
 		double getTimeZone() const;
 		bool getDST() const;
 		double getJulian(const bool& gmt=false) const;

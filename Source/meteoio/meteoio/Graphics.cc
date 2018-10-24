@@ -568,7 +568,7 @@ gr_blue_pink::gr_blue_pink(const double& /*i_min*/, const double& /*i_max*/, con
 }
 
 gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& /*i_autoscale*/)
-           : Gradient_model(), X(), v_r(), v_g(), v_b()
+           : Gradient_model(), v_r(), v_g(), v_b()
 {
 	//we want the yellow/green step to always be at zero celsius
 	double begin=0., middle=0.5, end=1.;

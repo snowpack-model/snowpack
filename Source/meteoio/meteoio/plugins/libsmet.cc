@@ -228,7 +228,7 @@ void SMETCommon::stripComments(std::string& str)
 
 void SMETCommon::toUpper(std::string& str)
 {
-	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
 char SMETCommon::getEoln(std::istream& fin)
@@ -301,12 +301,6 @@ SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type)
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(false), append_possible(false) {}
 
-//what the caller MUST provide: 
-//	* the fields header (for checks)
-//	* the ascii width and precision
-//	* nodata_value provided through set_header_value() calls
-//HACK: the multipliers and offsets are not handled yet...
-//for now, we do the most basic append: all the data after the first insertion point is deleted
 SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(ASCII), nodata_value(in_nodata), nr_of_fields(0),
@@ -314,30 +308,41 @@ SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fie
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(true), append_possible(false)
 {
+	std::vector<std::string> vecFields;
+	SMETCommon::readLineToVec(in_fields, vecFields);
+	setAppendMode(vecFields);
+}
+
+//what the caller MUST provide:
+//	* the fields header (for checks)
+//	* the ascii width and precision
+//	* nodata_value provided through set_header_value() calls
+//HACK: the multipliers and offsets are not handled yet...
+//for now, we do the most basic append: all the data after the first insertion point is deleted
+void SMETWriter::setAppendMode(std::vector<std::string> vecFields)
+{
 	SMETReader reader(filename);
 	smet_type = (reader.isAscii)? ASCII : BINARY;
 	nodata_string = reader.get_header_value("nodata");
 	//nodata_value = reader.nodata_value; //we trust the value provided to the constructor
-	
+
 	nr_of_fields = reader.nr_of_fields; //in SMETReader, this does NOT contain the timestamp
 	julian_field = reader.julian_field;
 	timestamp_field = reader.timestamp_field;
 	timestamp_present = reader.timestamp_present;
 	julian_present = reader.julian_present;
-	
+
 	location_wgs84 = reader.location_wgs84;
 	location_epsg = reader.location_epsg;
 	location_in_header = reader.location_in_header(WGS84) || reader.location_in_header(EPSG);
 	location_in_data_wgs84 = reader.location_in_data(WGS84);
 	location_in_data_epsg = reader.location_in_data(EPSG);
-	
+
 	//check that the fields match
-	std::vector<std::string> vecFields;
-	SMETCommon::readLineToVec(in_fields, vecFields);
 	if (timestamp_present) {
 		if (vecFields[timestamp_field]!="timestamp") {
 			std::ostringstream ss;
-			ss << "Timestamp should be in field at position " << timestamp_field << "when  appending data to file '" << filename << "' but instead '" << reader.get_field_name(timestamp_field) << "' was found";
+			ss << "Timestamp should be in field at position " << timestamp_field << " when  appending data to file '" << filename << "' but instead '" << reader.get_field_name(timestamp_field) << "' was found";
 			throw SMETException(ss.str(), AT);
 		}
 		vecFields.erase( vecFields.begin()+timestamp_field );
@@ -350,7 +355,7 @@ SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fie
 		}
 		vecFields.erase( vecFields.begin()+julian_field );
 	}
-	
+
 	if (nr_of_fields!=vecFields.size()) {
 		std::ostringstream ss;
 		ss << "Trying to append " << vecFields.size() << " fields in existing file '" << filename << "' that has " << nr_of_fields << " fields";
@@ -363,7 +368,7 @@ SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fie
 			throw SMETException(ss.str(), AT);
 		}
 	}
-	
+
 	//adjust the number of fields to reflect the potential presence of timestamp and julian
 	if (timestamp_present) nr_of_fields++;
 	if (julian_present) nr_of_fields++;
@@ -473,7 +478,7 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 {
 	vector<string> tmp_vec;
 	const size_t counter = SMETCommon::readLineToVec(value, tmp_vec);
-	
+
 	//Firstly: Check if number of fields is consistent
 	if (nr_of_fields != 0){
 		if (counter != nr_of_fields) return false;
@@ -547,7 +552,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
-	
+
 	ofstream fout;
 	if (append_mode) {
 		if (!append_possible) {
@@ -574,7 +579,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
 		}
 	}
-	
+
 	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
 		fout.close();
 		return;
@@ -749,14 +754,14 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::of
 	for (size_t ii = 0; ii < data.size(); ii++){
 		if (julian_present && (julian_field == ii)){
 			const double julian = data[ii];
-			fout.write((char*)&julian, sizeof(double)); //the julian date is written in 64bit IEEE754 precision
+			fout.write((const char*)&julian, sizeof(double)); //the julian date is written in 64bit IEEE754 precision
 		} else {
 			const float val = (float)data[ii];
-			fout.write((char*)&val, sizeof(float)); //normal data fields are written in 32bit IEEE754 precision
+			fout.write((const char*)&val, sizeof(float)); //normal data fields are written in 32bit IEEE754 precision
 		}
 	}
 
-	fout.write((char*)&eoln, sizeof(char));
+	fout.write((const char*)&eoln, sizeof(char));
 }
 
 void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout)
@@ -1009,7 +1014,7 @@ void SMETReader::process_header()
 		}
 		if (!missing.empty())
 			ss << ": " << missing;
-		
+
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -1086,7 +1091,7 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
 	}
-	
+
 	std::ofstream fout; //for the tmp file
 	const std::string filename_tmp( filename + ".tmp" );
 	fout.open(filename_tmp.c_str(), ios::out|ios::binary);
@@ -1096,13 +1101,13 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
 	}
-	
+
 	copy_file_header(fin, fout);
 	copy_file_data(date_stop, fin, fout);
-	
+
 	fout.close();
 	fin.close();
-	
+
 	SMETCommon::copy_file(filename_tmp, filename);
 
 	errno = 0;
@@ -1202,7 +1207,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		} else if (julian_interval && julian_present){
 			fpointer = indexer.getIndex(julian_start);
 		}
-		
+
 		if (fpointer!=static_cast<streampos>(-1))
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
 		else {
@@ -1289,22 +1294,22 @@ std::string SMETReader::getLastTimestamp() const
 		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
-	
+
 	if (!fin.is_open())
 		throw SMETException("Please open the file before attempting to read its last line!", AT);
-	
+
 	fin.seekg(0, std::ifstream::end);
 	const std::streamoff length = fin.tellg();
 	const int buff_size = 1024; //a better approach would be to loop over this buff_size in order to accomodate very different line lengths
-	if (buff_size<length) 
+	if (buff_size<length)
 		fin.seekg(0-buff_size, fin.end);
 	else
 		return "";
-	
+
 	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
 	std::string line, timestamp;
 	vector<string> tmp_vec;
-	
+
 	getline(fin, line, eoln); //scrap the first line since it will be a partial line
 	while (!fin.eof()){ //Read until end of file or break
 		line.clear();
@@ -1312,12 +1317,12 @@ std::string SMETReader::getLastTimestamp() const
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
-		
+
 		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields) {
 			timestamp = tmp_vec[timestamp_field];
 		}
 	}
-	
+
 	fin.close();
 	return timestamp;
 }
@@ -1328,23 +1333,23 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 	//either ascii or binary
 	if (!isAscii) throw SMETException("Truncating binary SMET files is currently not supported", AT);
 	if (!timestamp_present) throw SMETException("Truncating SMET files without timestamps is currently not supported", AT);
-	
+
 	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
 	const size_t date_stop_len = date_stop.length();
 	std::string line;
 	vector<string> tmp_vec;
-	
+
 	while (!fin.eof()){ //Read until end of file or break
 		line.clear();
 		getline(fin, line, eoln); //read complete signature line
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
-		
+
 		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields) {
 			const string& current_timestamp = tmp_vec[timestamp_field];
 			const size_t cmp_len = min(date_stop_len, current_timestamp.length());
-			
+
 			if (current_timestamp.compare(0, cmp_len, date_stop) >= 0) break;
 		} else {
 			std::ostringstream ss;
@@ -1352,7 +1357,7 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 			ss << "but this does not match the following line:\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);
 		}
-		
+
 		fout << line << "\n";
 	}
 }
@@ -1524,4 +1529,3 @@ std::string SMETReader::get_filename() const
 }
 
 } //end namespace
-

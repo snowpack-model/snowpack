@@ -60,10 +60,10 @@ namespace IOUtils {
 
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
-	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = static_cast<unsigned int>(-1);
 	const int inodata = -999;
 	const short int snodata = -999;
+	const char cnodata = std::numeric_limits<char>::max();
 	const size_t npos    = static_cast<size_t>(-1);  ///<npos is the out-of-range value
 
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
@@ -222,6 +222,7 @@ namespace IOUtils {
 	template<> bool convertString<double>(double& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<char>(char& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<unsigned int>(unsigned int& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Coords>(Coords& t, std::string str, std::ios_base& (*f)(std::ios_base&));
 

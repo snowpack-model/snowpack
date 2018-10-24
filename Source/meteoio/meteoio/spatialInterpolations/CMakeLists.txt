@@ -7,6 +7,7 @@ SET(spatialInterpolations_sources
 	spatialInterpolations/AvgLapseAlgorithm.cc
 	spatialInterpolations/ConstAlgorithm.cc
 	spatialInterpolations/IDWAlgorithm.cc
+	spatialInterpolations/IDWSlopesAlgorithm.cc
 	spatialInterpolations/IDWLapseAlgorithm.cc
 	spatialInterpolations/IDWLapseLocalAlgorithm.cc
 	spatialInterpolations/ILWREpsAlgorithm.cc

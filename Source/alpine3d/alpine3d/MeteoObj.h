@@ -60,7 +60,8 @@ class SnGrids {
                                           RG, ///< grain radius
                                           N3, ///< grain Coordination number
                                           MS_SNOWPACK_RUNOFF, ///< runoff on the surface of the soil (vitual lysimeter)
-                                          MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
+                                          MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column	
+                                          MS_WATER, ///< The total amount of water in the snowpack at the present time
                                           SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
                                           ERODEDMASS, ///< wind eroded mass (kg/m2)
@@ -85,7 +86,7 @@ class MeteoObj
 	public:
 		MeteoObj(const mio::Config& config, const mio::DEMObject& in_dem);
 		~MeteoObj();
-		
+
 		void setSkipWind(const bool& i_skipWind);
 		void prepare(const mio::Date& in_date);
 		void get(const mio::Date& in_date,

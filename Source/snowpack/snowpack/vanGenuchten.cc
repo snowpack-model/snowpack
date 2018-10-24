@@ -36,7 +36,7 @@
  * @param pEMS pointer to the ElementData class which owns the van Genuchten class, so the van Genuchten class can access objects from the ElementData class.
  */
 vanGenuchten::vanGenuchten(ElementData& pEMS) :
-	EMS(&pEMS), theta_r(0.), theta_s(1.), alpha(0.), n(0.), m(0.), h_e(0.), Sc(0.), ksat(0.), defined(false) {}
+	EMS(&pEMS), theta_r(0.), theta_s(1.), alpha(0.), n(0.), m(0.), h_e(0.), Sc(0.), ksat(0.), field_capacity(0), defined(false) {}
 
 
 /**
@@ -45,7 +45,7 @@ vanGenuchten::vanGenuchten(ElementData& pEMS) :
  * @param c Class to copy
  */
 vanGenuchten::vanGenuchten(const vanGenuchten& c) :
-	EMS(c.EMS), theta_r(c.theta_r), theta_s(c.theta_s), alpha(c.alpha), n(c.n), m(c.m), h_e(c.h_e), Sc(c.Sc), ksat(c.ksat), defined(c.defined) {}
+	EMS(c.EMS), theta_r(c.theta_r), theta_s(c.theta_s), alpha(c.alpha), n(c.n), m(c.m), h_e(c.h_e), Sc(c.Sc), ksat(c.ksat), field_capacity(c.field_capacity), defined(c.defined) {}
 
 
 /**
@@ -140,9 +140,11 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			n=1.2039;
 			ksat=8.000/(365.*24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.2;
 			break;
 
 		//ROSETTA Class Average Hydraulic Parameters: http://ars.usda.gov/Services/docs.htm?docid=8955
+		//Field capacity computed from: K.E. Saxton et al., 1986, Estimating generalized soil-water characteristics from texture. Soil Sci. Soc. Amer. J. 50(4):1031-1036
 		case CLAY:
 			theta_r=0.098;
 			theta_s=0.459;
@@ -150,6 +152,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=1.496;
 			ksat=0.14757/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.479;
 			break;
 
 		case CLAYLOAM:
@@ -159,6 +162,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=1.581;
 			ksat=0.0818/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.336;
 			break;
 
 		case LOAM:
@@ -168,6 +172,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			n=1.47;
 			ksat=0.02947/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.262;
 			break;
 
 		case LOAMYSAND:
@@ -177,6 +182,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=3.475;
 			ksat=1.052/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.171;
 			break;
 
 		case SAND:
@@ -186,6 +192,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=3.524;
 			ksat=6.427/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.132;
 			break;
 
 		case SANDYCLAY:
@@ -195,6 +202,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=3.342;
 			ksat=0.1135/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.368;
 			break;
 
 		case SANDYCLAYLOAM:
@@ -204,6 +212,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=2.109;
 			ksat=0.1318/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.272;
 			break;
 
 		case SANDYLOAM:
@@ -213,6 +222,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=2.667;
 			ksat=0.3828/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.205;
 			break;
 
 		case SILT:
@@ -222,6 +232,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=0.6577;
 			ksat=0.4375/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.316;
 			break;
 
 		case SILTYCLAY:
@@ -231,6 +242,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=1.622;
 			ksat=0.09616/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.452;
 			break;
 
 		case SILTYCLAYLOAM:
@@ -240,6 +252,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=0.8395;
 			ksat=0.1112/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.367;
 			break;
 
 		case SILTLOAM:
@@ -249,6 +262,7 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=0.5058;
 			ksat=0.1824/(24.*60.*60.);
 			MaximumPoreSize=0.005;
+			field_capacity=0.292;
 			break;
 
 		case WFJGRAVELSAND: //Gravel/sand
@@ -258,7 +272,12 @@ void vanGenuchten::SetSoil(const SoilTypes type)
 			alpha=3.5;
 			ksat=0.000003171; //Equal to 100 m/year, for clean sand and silty sand, according to: http://web.ead.anl.gov/resrad/datacoll/conuct.htm
 			MaximumPoreSize=0.005;
+			field_capacity=0.07;
 			break;
+
+		default:
+			throw mio::UnknownValueException("Unknown soil type", AT);
+
 	}
 
 	h_e=vanGenuchten::AirEntryPressureHead(MaximumPoreSize, 273.);
@@ -360,7 +379,7 @@ double vanGenuchten::dtheta_dh(const double h) {
  * @brief Initialize van Genuchten model for snow layers\n
  * @author Nander Wever
  * @param VGModelTypeSnow van Genuchten model parameterization to use
- * @param VGModelTypeSnow hydraulic conductivity parameterization to use
+ * @param K_PARAM hydraulic conductivity parameterization to use
  * @param matrix true: set parameters for matrix domain. false: set parameters for preferential flow domain
  */
 void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelTypeSnow, const K_Parameterizations K_PARAM, const bool& matrix)
@@ -400,7 +419,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 
 	switch ( VGModelTypeSnow ) {	//Set Van Genuchten parameters for snow, depending on the chosen model for snow.
 
-	case YAMAGUCHI2012:
+		case YAMAGUCHI2012:
 		{
 			//Calculate ratio density/grain size (see Yamaguchi (2012)):
 			double tmp_rho_d=(EMS->theta[ICE]*Constants::density_ice)/( (2.*EMS->rg) / 1000.);
@@ -411,7 +430,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			break;
 		}
 
-	case YAMAGUCHI2010:
+		case YAMAGUCHI2010:
 		{
 			//Limit grain size, to stay within the bounds of the Van Genuchten parameterizations for snow.
 			const double GRAINRADIUSLOWERTHRESHOLD=0.0;		//Lower threshold
@@ -426,7 +445,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			break;
 		}
 
-	case YAMAGUCHI2010_ADAPTED:
+		case YAMAGUCHI2010_ADAPTED:
 		{
 			//Limit grain size, the parameterizations still hold, but high values of alpha and small values of n are causing numerical troubles.
 			const double GRAINRADIUSLOWERTHRESHOLD=0.0;		//Lower threshold
@@ -441,7 +460,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			break;
 		}
 
-	case DAANEN:
+		case DAANEN:
 		{
 			const double GRAINRADIUSLOWERTHRESHOLD=0.0;		//Equal to Yamaguchi adapted
 			const double GRAINRADIUSUPPERTHRESHOLD=4.0;		//Equal to Yamaguchi adapted
@@ -453,6 +472,9 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			n=0.800*(2.*EMS->rg)+3.;
 			break;
 		}
+		default:
+			throw mio::UnknownValueException("Unknown Van Genuchten parameter for snow", AT);
+
 	}
 
 
@@ -473,6 +495,8 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			//See: Calonne et al., 3-D image-based numerical computations of snow permeability: links to specific surface area, density, and microstructural anisotropy, TC, 2012.
 			ksat=0.75 * (EMS->ogs / 1000.)*(EMS->ogs / 1000.) * exp(-0.013 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 			break;
+		default:
+			throw mio::UnknownValueException("Unknown hydraulic conductivity parameter", AT);
 		}
 	} else {									//For high density
 		// Eq. 5 in Golden, K. M., H. Eicken, A. L. Heaton, J. Miner, D. J. Pringle, and J. Zhu (2007), Thermal evolution of permeability and microstructure in sea ice, Geophys. Res. Lett., 34, L16501, doi:10.1029/2007GL030447:

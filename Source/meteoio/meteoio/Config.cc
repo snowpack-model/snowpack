@@ -36,9 +36,53 @@ Config::Config(const std::string& i_filename) : properties(), imported(), source
 	addFile(i_filename);
 }
 
-ConfigProxy Config::get(const std::string& key, std::string section, const IOUtils::ThrowOptions& opt) const
+const ConfigProxy Config::get(const std::string& key, const std::string& section) const
 {
-	return ConfigProxy(*this, key, section, opt);
+	return ConfigProxy(*this, key, section);
+}
+
+template <typename T> T Config::get(const std::string& key, const std::string& section, const T& dflt) const
+{
+	if (keyExists(key, section)) {
+		T tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return dflt;
+	}
+}
+
+std::string Config::get(const std::string& key, const std::string& section, const std::string& dflt) const
+{
+	if (keyExists(key, section)) {
+		std::string tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return dflt;
+	}
+}
+
+std::string Config::get(const std::string& key, const std::string& section, const char dflt[]) const
+{
+	if (keyExists(key, section)) {
+		std::string tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return std::string(dflt);
+	}
+}
+
+bool Config::get(const std::string& key, const std::string& section, const bool& dflt) const
+{
+	if (keyExists(key, section)) {
+		bool tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return dflt;
+	}
 }
 
 //Populating the property map

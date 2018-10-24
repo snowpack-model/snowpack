@@ -35,9 +35,9 @@ Glaciers::Glaciers(const mio::Config& cfg, const mio::DEMObject& in_dem)
 
 void Glaciers::init(const mio::Config& cfg)
 {
-	KBL = cfg.get("KATABATIC_LAYER_HEIGHT", "Snowpack"); //Katabatic Boundary Layer (KBL) thickness, 17m in GB
-	scale = cfg.get("KATABATIC_SCALING", "Snowpack", IOUtils::nothrow); //a value of .25 seems to work quite well
-	K = cfg.get("KATABATIC_K_COEFFICIENT", "Snowpack", IOUtils::nothrow); //K=0 for original GB model
+	cfg.getValue("KATABATIC_LAYER_HEIGHT", "Snowpack", KBL, IOUtils::nothrow); //Katabatic Boundary Layer (KBL) thickness, 17m in GB
+	cfg.getValue("KATABATIC_SCALING", "Snowpack", scale, IOUtils::nothrow); //a value of .25 seems to work quite well
+	cfg.getValue("KATABATIC_K_COEFFICIENT", "Snowpack", K, IOUtils::nothrow); //K=0 for original GB model
 	
 	if (MPIControl::instance().master()) 
 		std::cout << "[i] Enabled katabatic flows TA corrections\n";

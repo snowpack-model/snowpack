@@ -50,7 +50,7 @@ class CaaMLIO : public SnowpackIOInterface {
 		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
 
 		virtual void readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata);
+		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 		                            const ZwischenData& Zdata, const bool& forbackup=false);
@@ -99,7 +99,7 @@ class CaaMLIO : public SnowpackIOInterface {
 		mio::StationData xmlGetStationData(const std::string& stationID);
 		double xmlSetVal(const std::string& xpath, const std::string& property, const double& dflt);
 		int xmlSetVal(const std::string& xpath, const std::string& property, const int& dflt);
-		void setCustomSnowSoil(SN_SNOWSOIL_DATA& Xdata);
+		void setCustomSnowSoil(SN_SNOWSOIL_DATA& Xdata,const std::string& in_snowFilename);
 		bool getLayersDir();
 		LayerData xmlGetLayer(xmlNodePtr cur);
 		void getProfiles(const std::string path, std::vector<double> &depths, std::vector<double> &val);

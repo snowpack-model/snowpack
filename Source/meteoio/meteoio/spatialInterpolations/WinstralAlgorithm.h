@@ -65,11 +65,11 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
-		static bool windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
+		static bool windIsAvailable(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station);
 		static bool isExposed(const DEMObject& dem, Coords location);
-		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
-		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo);
-		static double getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& vecMeteo);
+		static double getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station);
+		static double getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo);
+		static double getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& i_vecMeteo);
 
 		Meteo2DInterpolator& mi;
 		GridsManager& gdm;

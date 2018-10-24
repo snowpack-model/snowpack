@@ -46,7 +46,7 @@ class Snowpack {
 
 		void runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
 		                      BoundCond& Bdata, SurfaceFluxes& Sdata);
-		
+
 		/**
 		 * @brief Perform snow preparation (grooming, etc) on a given snowpack
 		 * @param Xdata snowpack to work on
@@ -69,6 +69,12 @@ class Snowpack {
 			DIRICHLET_BC
 		};
 
+		typedef enum SOIL_EVAP_MODEL {
+			EVAP_RESISTANCE,
+			EVAP_RELATIVE_HUMIDITY,
+			EVAP_NONE
+		} soil_evap_model;
+
 		double getParameterizedAlbedo(const SnowStation& Xdata,
 		                              const CurrentMeteo& Mdata) const;
 		double getModelAlbedo(const SnowStation& Xdata, CurrentMeteo& Mdata) const;
@@ -82,7 +88,7 @@ class Snowpack {
 		BoundaryCondition surfaceCode;
 
  private:
-		static void EL_INCID(const size_t &e, int Ie[]);
+		static void EL_INCID(const int &e, int Ie[]);
 		static void EL_TEMP( const int Ie[], double Te0[], double Tei[], const std::vector<NodeData> &T0, const double Ti[] );
 		static void EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]);
 
@@ -112,7 +118,7 @@ class Snowpack {
 		                        const bool& is_surface_hoar, const unsigned short& number_of_solutes, ElementData &elem);
 
 		void compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip);
-		
+
 		void compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                  SurfaceFluxes& Sdata);
 
@@ -147,7 +153,6 @@ class Snowpack {
 		bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)
 		bool ageAlbedo; ///< use the age of snow in the albedo parametrizations? default: true
 		double soot_ppmv; ///< Impurity content in ppmv for albedo calculatoins
-		bool forestfloor_alb;
 
 		const static bool hydrometeor;
 		const static double snowfall_warning;
@@ -156,6 +161,8 @@ class Snowpack {
 		bool advective_heat;
 		double heat_begin, heat_end;
 		double temp_index_degree_day, temp_index_swr_factor;
+		bool forestfloor_alb;
+		soil_evap_model soil_evaporation;
 }; //end class Snowpack
 
 #endif

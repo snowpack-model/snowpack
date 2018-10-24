@@ -43,11 +43,30 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
 }
+
+/**
+* @brief Constructor that sets a constant DEM. 
+* @details The resulting DEM will have the same elevation everywhere, constant slope (flat) and curvature (flat).
+* @param ncols_in number of colums in the grid2D
+* @param nrows_in number of rows in the grid2D
+* @param llcorner_in lower lower corner point
+* @param init initial value to fill the DEM with
+*/
+DEMObject::DEMObject(const size_t& ncols_in, const size_t& nrows_in, const Coords& llcorner_in, const double& init)
+           : Grid2DObject(ncols_in, nrows_in, 10., llcorner_in, init), 
+             slope(ncols_in, nrows_in, 0.), azi(ncols_in, nrows_in, 0.), curvature(ncols_in, nrows_in, 0.), 
+             Nx(ncols_in, nrows_in, 0.), Ny(ncols_in, nrows_in, 0.), Nz(ncols_in, nrows_in, 1.),
+             min_altitude(init), min_slope(0.), min_curvature(0.),
+             max_altitude(init), max_slope(0.), max_curvature(0.),
+             CalculateSlope(&DEMObject::CalculateCorripio),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(DFLT),
+             slope_failures(0), curvature_failures(0)
+{}
 
 /**
 * @brief Constructor that sets variables.
@@ -64,7 +83,7 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -85,7 +104,7 @@ DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const A
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -108,7 +127,7 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(INT_MAX), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -313,6 +332,7 @@ void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
 int DEMObject::getDefaultAlgorithm() const {
 	return dflt_algorithm;
 }
+
 /**
 * @brief Recomputes the min/max of altitude, slope and curvature
 * It return +/- std::numeric_limits\<double\>\:\:max() for a given parameter if its grid was empty/undefined
@@ -330,10 +350,6 @@ void DEMObject::updateAllMinMax() {
 
 	min_altitude = grid2D.getMin();
 	max_altitude = grid2D.getMax();
-	
-	static const double sun_elev_thresh = 5.;
-	if (min_altitude!=IOUtils::nodata && max_altitude!=IOUtils::nodata) 
-		max_shade_distance = max( (max_altitude - min_altitude) / tan(sun_elev_thresh*Cst::to_rad), cellsize*1.5); //make sure we use at least 1 cell, even in the diagonal
 }
 
 /**
@@ -409,181 +425,6 @@ void DEMObject::sanitize() {
 			}
 		}
 	}
-}
-
-/**
-* @brief Computes the hillshade for the dem
-* This "fake illumination" method is used to better show the relief on maps.
-* @param elev elevation (in degrees) of the source of light
-* @param azimuth azimuth (in degrees) of the source of light
-* @return hillshade grid that containing the illumination
-*
-*/
-Grid2DObject DEMObject::getHillshade(const double& elev, const double& azimuth) const
-{
-	if (slope.empty() || azi.empty())
-		throw InvalidArgumentException("Hillshade computation requires slope and azimuth!", AT);
-
-	const double zenith_rad = (90.-elev)*Cst::to_rad;
-	const double azimuth_rad = azimuth*Cst::to_rad;
-	const size_t ncols = getNx();
-	const size_t nrows = getNy();
-
-	Grid2DObject hillshade(ncols, nrows, cellsize, llcorner);
-
-	for ( size_t j = 0; j < nrows; j++ ) {
-		for ( size_t i = 0; i < ncols; i++ ) {
-			const double alt = grid2D(i,j);
-			const double sl = slope(i,j);
-			const double az = azi(i,j);
-			if (alt!=IOUtils::nodata && sl!=IOUtils::nodata && az!=IOUtils::nodata) {
-				const double sl_rad = sl*Cst::to_rad;
-				const double tmp = cos(zenith_rad) * cos(sl_rad) + sin(zenith_rad) * sin(sl_rad) * cos(azimuth_rad-az*Cst::to_rad);
-				hillshade(i,j) = (tmp>=0.)? tmp : 0.;
-			} else
-				hillshade(i,j) = IOUtils::nodata;
-		}
-	}
-
-	return hillshade;
-}
-
-/**
-* @brief Returns the tangente of the horizon from a given point looking toward a given bearing
-* @param ix1 x index of the origin point
-* @param iy1 y index of the origin point
-* @param bearing direction given by a compass bearing
-* @return tangente of angle above the horizontal (in deg)
-*/
-double DEMObject::getHorizon(const size_t& ix1, const size_t& iy1, const double& bearing) const
-{
-	if (max_shade_distance==IOUtils::nodata) 
-		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
-	
-	const int dimx = (signed)grid2D.getNx();
-	const int dimy = (signed)grid2D.getNy();
-	if (ix1==0 || (signed)ix1==dimx-1 || iy1==0 || (signed)iy1==dimy-1) return 0.; //a border cell is not shadded
-	
-	const double cell_alt = grid2D(ix1, iy1);
-	double horizon_tan_angle = 0.;
-	const double sin_alpha = sin(bearing*Cst::to_rad);
-	const double cos_alpha = cos(bearing*Cst::to_rad);
-	
-	size_t nb_cells = 1;
-	bool horizon_found = false;
-	while (!horizon_found) {
-		nb_cells++;
-		const int ix2 = (int)ix1 + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
-		const int iy2 = (int)iy1 + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
-
-		if (ix2<=0 || ix2>=dimx-1 || iy2<=0 || iy2>=dimy-1) break; //we are out of the dem
-
-		const double new_altitude = grid2D(ix2, iy2);
-		if (new_altitude==mio::IOUtils::nodata) break; //we stop at nodata cells
-
-		const double DeltaH = new_altitude - cell_alt;
-		const double distance = sqrt( (double)( Optim::pow2(ix2-(signed)ix1) + Optim::pow2(iy2-(signed)iy1)) ) * cellsize;
-		const double tan_angle = DeltaH/distance;
-		if (tan_angle>horizon_tan_angle) horizon_tan_angle = tan_angle;
-
-		if (distance>max_shade_distance) horizon_found=true; //maximum lookup distance reached
-	}
-
-	return horizon_tan_angle;
-}
-
-/**
-* @brief Returns the tangente of the horizon from a given point looking toward a given bearing
-* @param point the origin point
-* @param bearing direction given by a compass bearing
-* @return tangente of angle above the horizontal (in deg)
-*/
-double DEMObject::getHorizon(const Coords& point, const double& bearing) const
-{
-	if (max_shade_distance==IOUtils::nodata) 
-		throw InvalidArgumentException("DEM not properly initialized or only filled with nodata", AT);
-	
-	const int ix1 = (int)point.getGridI();
-	const int iy1 = (int)point.getGridJ();
-	return getHorizon(ix1, iy1, bearing);
-}
-
-/**
-* @brief Returns the horizon from a given point looking 360 degrees around by increments
-* @param point the origin point
-* @param increment to the bearing between two angles
-* @param horizon vector of heights above a given angle
-*
-*/
-void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon) const
-{
-	for (double bearing=0.0; bearing <360.; bearing += increment) {
-		const double tan_alpha = getHorizon(point, bearing);
-		horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
-	}
-}
-
-/**
- * @brief Compute the sky view factors for the terrain radiation based on the DEM.
- * This is based on Manners, J., S. B. Vosper, and N. Roberts, <i>"Radiative transfer over resolved
- * topographic features for high‐resolution weather prediction"</i>, Quarterly journal of the
- * royal meteorological society, <b>138.664</b>, pp720-733, 2012.
- *
- * @param ii x coordinate of the cell whose view factor should be computed
- * @param jj y coordinate of the cell whose view factor should be computed
- * @return sky view factor
- */
-double DEMObject::getCellSkyViewFactor(const size_t& ii, const size_t& jj) const
-{
-	const double tan_slope = tan( slope(ii,jj)*Cst::to_rad );
-	const unsigned int nSectors = 32;
-
-	double sum=0.;
-	for (unsigned int sector=0; sector<nSectors; sector++) {
-		const double bearing = 360. * (double)sector / (double)nSectors;
-		const double cos_azi_diff = cos( IOUtils::bearing_to_angle(bearing - azi(ii,jj)) );
-		const double T_phi = (tan_slope*cos_azi_diff==0)? mio::Cst::PI2 : atan( 1. / (-tan_slope * cos_azi_diff) );
-		const double elev = atan( getTanMaxSlope(tan_slope, max_shade_distance, bearing, ii, jj) );
-		const double H_phi = ((mio::Cst::PI2 - elev)<=T_phi)? (mio::Cst::PI2 - elev) : T_phi; //self shadowing
-		const double sector_vf = Optim::pow2( sin( H_phi + mio::Cst::PI2 - T_phi ) );
-		sum += sector_vf;
-	}
-
-	return sum / nSectors;
-}
-
-double DEMObject::getTanMaxSlope(const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j) const
-{
-	const double inv_dmax = 1./dmax;
-	const double sin_alpha = sin(bearing*Cst::to_rad);
-	const double cos_alpha = cos(bearing*Cst::to_rad);
-	const double ref_altitude = grid2D(i, j);
-	const double cellsize_sq = mio::Optim::pow2(cellsize);
-	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
-	const int ncols = static_cast<int>(getNx()), nrows = static_cast<int>(getNy());
-
-	int ll=ii, mm=jj;
-
-	double max_tan_slope = tan_local_slope;
-	size_t nb_cells = 0;
-	while ( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
-		const double altitude = grid2D(ll, mm);
-		if ( (altitude!=mio::IOUtils::nodata) && !(ll==ii && mm==jj) ) {
-			const double delta_elev = altitude - ref_altitude;
-			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
-			if (inv_distance<inv_dmax) break; //stop if distance>dmax
-
-			const double tan_slope = delta_elev*inv_distance;
-			if ( tan_slope>max_tan_slope ) max_tan_slope = tan_slope;
-		}
-
-		//move to next cell
-		nb_cells++;
-		ll = ii + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
-		mm = jj + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
-	}
-
-	return max_tan_slope;
 }
 
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {

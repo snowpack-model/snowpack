@@ -152,9 +152,10 @@ namespace mio {
  *
  * @section netcdf_ecmwf ECMWF Era Interim / Era 5
  * The Era Interim data can be downloaded on the <A HREF="http://apps.ecmwf.int/datasets/data/interim-full-daily/levtype=sfc/">ECMWF dataserver</A>
- * after creating an account and login in.
+ * after creating an account and login in, or from the <a href="https://cds.climate.copernicus.eu/cdsapp#!/home>Copernicus Climate Data Store</a> (either from the web interface or using the 
+ * <a href="https://pypi.org/project/cdsapi/>cdsapi</a>).
  *
- * It is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
+ * For Era Interim, it is recommended to extract data at 00:00, and 12:00 for all steps 3, 6, 9, 12. The select the following fields:
  * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Forecast albedo, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Surface solar radiation downwards, Surface thermal radiation downwards, Total precipitation
  *
  * Here we have included the *forecast albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the 
@@ -248,13 +249,12 @@ NetCDFIO::NetCDFIO(const Config& cfgreader)
 
 void NetCDFIO::parseInputOutputSection()
 {
-	std::string in_grid2d, out_grid2d;
-	cfg.getValue("GRID2D", "Input", in_grid2d, IOUtils::nothrow);
+	const std::string in_grid2d = cfg.get("GRID2D", "Input", "");
 	if (in_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
 		
-		const std::string grid2d_in_file = cfg.get("GRID2DFILE", "Input", IOUtils::nothrow);
+		const std::string grid2d_in_file = cfg.get("GRID2DFILE", "Input", "");
 		if (!grid2d_in_file.empty()) {
 			if (!FileUtils::fileExists(grid2d_in_file)) throw AccessException(grid2d_in_file, AT); //prevent invalid filenames
 			const ncFiles file(grid2d_in_file, ncFiles::READ, cfg, in_schema, debug);
@@ -265,15 +265,14 @@ void NetCDFIO::parseInputOutputSection()
 		}
 	}
 	
-	cfg.getValue("GRID2D", "Output", out_grid2d, IOUtils::nothrow);
+	const std::string out_grid2d = cfg.get("GRID2D", "Output", "");
 	if (out_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("GRID2DPATH", "Output", out_grid2d_path);
 		cfg.getValue("GRID2DFILE", "Output", grid2d_out_file);
 	}
 	
-	std::string in_meteo, out_meteo;
-	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
+	const std::string in_meteo = cfg.get("METEO", "Input", "");
 	if (in_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
@@ -294,7 +293,7 @@ void NetCDFIO::parseInputOutputSection()
 		if (cache_inmeteo_files.empty()) throw InvalidArgumentException("No valid input meteo files provided", AT);
 	}
 	
-	cfg.getValue("METEO", "Output", out_meteo, IOUtils::nothrow);
+	const std::string out_meteo = cfg.get("METEO", "Output", "");
 	if (out_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
@@ -399,7 +398,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 void NetCDFIO::readDEM(DEMObject& dem_out)
 {
 	const std::string filename = cfg.get("DEMFILE", "Input");
-	const std::string varname = cfg.get("DEMVAR", "Input", IOUtils::nothrow);
+	const std::string varname = cfg.get("DEMVAR", "Input", "");
 	
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 	const ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);

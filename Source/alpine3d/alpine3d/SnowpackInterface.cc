@@ -35,9 +35,9 @@ inline bool pair_comparator(const std::pair<double, double>& l, const std::pair<
 }
 
 //convert the POI to grid index representation and warn of duplicates
-inline void prepare_pts(const std::vector<Coords>& vec_pts, std::vector< std::pair<size_t,size_t> > &pts)
+std::vector< std::pair<size_t,size_t> > prepare_pts(const std::vector<Coords>& vec_pts)
 {
-	pts.clear();
+	std::vector< std::pair<size_t,size_t> > pts;
 	std::vector<size_t> vec_idx;
 	for (size_t ii=0; ii<vec_pts.size(); ii++) {
 		const size_t ix = vec_pts[ii].getGridI();
@@ -57,6 +57,7 @@ inline void prepare_pts(const std::vector<Coords>& vec_pts, std::vector< std::pa
 		}
 	}
 	sort(pts.begin(), pts.end(), pair_comparator);
+	return pts;
 }
 
 /**
@@ -78,24 +79,22 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                                      const mio::Date &startTime,
                                      const std::string& grids_requirements,
                                      const bool is_restart_in)
-                : run_info(), asciiIO(io_cfg, run_info), smetIO(io_cfg, run_info), dimx(dem_in.getNx()), dimy(dem_in.getNy()), landuse(landuse_in),
-                  mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
-                  psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata), vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata),
-                  solarElevation(0.), output_grids(),
-                  workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), timer(), nextStepTimestamp(startTime), timeStep(dt_main/86400.),
-                  drift(NULL), eb(NULL), da(NULL), runoff(NULL),
-                  dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
-                  io(io_cfg), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(),
-                  glacier_katabatic_flow(false), snow_preparation(false), glaciers(NULL),
-                  sn_cfg(io_cfg), dem(dem_in), is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), do_io_locally(true), station_name(),
+                : run_info(), io(io_cfg), pts(prepare_pts(vec_pts)),dem(dem_in),
+                  is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
+                  do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_preparation(false),
                   soil_temp_depth(IOUtils::nodata), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false),
-                  meteo_outpath(), tz_out(0.), pts(), winderosiondeposition(dem_in, 0)
+                  meteo_outpath(), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(), tz_out(0.),
+                  sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), landuse(landuse_in),
+                  mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
+                  psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
+                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
+                  solarElevation(0.), output_grids(), workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), timer(),
+                  nextStepTimestamp(startTime), timeStep(dt_main/86400.), dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
+                  drift(NULL), eb(NULL), da(NULL), runoff(NULL), glaciers(NULL), techSnow(NULL)
+
 {
 	MPIControl& mpicontrol = MPIControl::instance();
-
-	readAndTweakConfig(io_cfg);
-	prepare_pts(vec_pts, pts); //convert POI to index representation, sort by y asc, then x asc
 
 	std::vector<SnowStation*> snow_stations( readInitalSnowCover());
 
@@ -118,12 +117,14 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		uniqueOutputGrids(output_grids);
 	}
 	//add the grids that are necessary for the other modules
-	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", IOUtils::nothrow);
+	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", "");
 	sn_cfg.addKey("GRIDS_PARAMETERS", "output", all_grids + " " + grids_requirements + " " + getGridsRequirements()); //also consider own requirements
 
 	//check if lateral flow is enabled
-	enable_lateral_flow = false;
 	sn_cfg.getValue("LATERAL_FLOW", "Alpine3D", enable_lateral_flow, IOUtils::nothrow);
+
+	//check if A3D viez should be used for grids
+	sn_cfg.getValue("A3d_VIEW", "Output", a3d_view, IOUtils::nothrow);
 
 	//If MPI is active, every node gets a slice of the DEM to work on
 	size_t mpi_offset = 0, mpi_nx = dimx;
@@ -178,7 +179,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			glaciers->setGlacierMap(maskGlacier);
 		}
 	}
-	
+
 	//init snow preparation
 	if (snow_preparation) {
 		techSnow = new TechSnow(io_cfg, dem);
@@ -188,8 +189,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source) {
 	if (this != &source) {
 		run_info = source.run_info;
-		asciiIO = source.asciiIO;
-		smetIO = source.smetIO;
+		snowpackIO = source.snowpackIO;
 		dimx = source.dimx;
 		dimy = source.dimy;
 		landuse = source.landuse;
@@ -235,6 +235,8 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		snow_preparation = source.snow_preparation;
 		glaciers = source.glaciers;
 		techSnow = source.techSnow;
+		enable_lateral_flow = source.enable_lateral_flow;
+		a3d_view = source.a3d_view;
 
 		sn_cfg = source.sn_cfg;
 		//dem = source.dem;
@@ -287,48 +289,44 @@ void SnowpackInterface::uniqueOutputGrids(std::vector<std::string>& output_grids
 	output_grids.resize( std::distance(output_grids.begin(),it) );
 }
 
-void SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg)
+mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, const bool have_pts)
 {
+	SnowpackConfig tmp_cfg(io_cfg);
 	//force some keys
 	double calculation_step_length;
-	sn_cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
+	tmp_cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
 	std::stringstream ss;
 	ss << calculation_step_length;
-	sn_cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss.str());
-	sn_cfg.addKey("ALPINE3D", "SnowpackAdvanced", "true");
-	sn_cfg.addKey("PERP_TO_SLOPE", "SnowpackAdvanced", "true");
+	tmp_cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss.str());
+	tmp_cfg.addKey("ALPINE3D", "SnowpackAdvanced", "true");
+	tmp_cfg.addKey("ALPINE3D_PTS", "SnowpackAdvanced",have_pts?"true":"false");
+	tmp_cfg.addKey("PERP_TO_SLOPE", "SnowpackAdvanced", "true");
+	tmp_cfg.getValue("LOCAL_IO", "General", do_io_locally, IOUtils::nothrow);
+	tmp_cfg.getValue("GRID2DPATH", "Output", outpath);
+	tmp_cfg.getValue("MASK_GLACIERS", "Output", mask_glaciers, IOUtils::nothrow);
+	tmp_cfg.getValue("MASK_DYNAMIC", "Output", mask_dynamic, IOUtils::nothrow);
+	tmp_cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow, IOUtils::nothrow);
+	tmp_cfg.getValue("SNOW_PREPARATION", "Input", snow_preparation, IOUtils::nothrow);
+	tmp_cfg.getValue("SOIL_TEMPERATURE_DEPTH", "Output", soil_temp_depth, IOUtils::nothrow);
 
-	std::string adjust_wind = io_cfg.get("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", IOUtils::nothrow);
-	if (adjust_wind.empty()) adjust_wind = "true";
-	sn_cfg.addKey("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_wind);
-	/*string adjust_meteo= io_cfg.get("ADJUST_HEIGHT_METEO_VALUE", "SnowpackAdvanced", IOUtils::nothrow);
-	if (adjust_meteo.empty()) adjust_meteo = "true";
-	sn_cfg.addKey("ADJUST_HEIGHT_METEO_VALUE", "SnowpackAdvanced", adjust_meteo);*/
+	tmp_cfg.getValue("GRIDS_WRITE", "Output", grids_write);
+	tmp_cfg.getValue("GRIDS_START", "Output", grids_start);
+	tmp_cfg.getValue("GRIDS_DAYS_BETWEEN", "Output", grids_days_between);
+	tmp_cfg.getValue("TS_WRITE", "Output", ts_write);
+	tmp_cfg.getValue("TS_START", "Output", ts_start);
+	tmp_cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
+	tmp_cfg.getValue("PROF_WRITE", "Output", prof_write);
+	tmp_cfg.getValue("PROF_START", "Output", prof_start);
+	tmp_cfg.getValue("PROF_DAYS_BETWEEN", "Output", prof_days_between);
 
-	io_cfg.getValue("LOCAL_IO", "General", do_io_locally, IOUtils::nothrow);
-	sn_cfg.getValue("GRID2DPATH", "Output", outpath);
-	io_cfg.getValue("MASK_GLACIERS", "Output", mask_glaciers, IOUtils::nothrow);
-	io_cfg.getValue("MASK_DYNAMIC", "Output", mask_dynamic, IOUtils::nothrow);
-	io_cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow, IOUtils::nothrow);
-	io_cfg.getValue("SNOW_PREPARATION", "Snowpack", snow_preparation, IOUtils::nothrow);
-	io_cfg.getValue("SOIL_TEMPERATURE_DEPTH", "Output", soil_temp_depth, IOUtils::nothrow);
+	tmp_cfg.getValue("METEOPATH", "Output", meteo_outpath);
+	tmp_cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
+	tmp_cfg.getValue("EXPERIMENT", "Output", station_name, IOUtils::dothrow);
 
-	sn_cfg.getValue("GRIDS_WRITE", "Output", grids_write);
-	sn_cfg.getValue("GRIDS_START", "Output", grids_start);
-	sn_cfg.getValue("GRIDS_DAYS_BETWEEN", "Output", grids_days_between);
-	sn_cfg.getValue("TS_WRITE", "Output", ts_write);
-	sn_cfg.getValue("TS_START", "Output", ts_start);
-	sn_cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
-	sn_cfg.getValue("PROF_WRITE", "Output", prof_write);
-	sn_cfg.getValue("PROF_START", "Output", prof_start);
-	sn_cfg.getValue("PROF_DAYS_BETWEEN", "Output", prof_days_between);
+	tmp_cfg.getValue("SNOW_WRITE", "Output", snow_write);
+	tmp_cfg.getValue("CANOPY", "Snowpack", useCanopy);
 
-	sn_cfg.getValue("METEOPATH", "Output", meteo_outpath);
-	sn_cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
-	sn_cfg.getValue("EXPERIMENT", "Output", station_name, IOUtils::dothrow);
-
-	sn_cfg.getValue("SNOW_WRITE", "Output", snow_write);
-	sn_cfg.getValue("CANOPY", "Snowpack", useCanopy);
+	return tmp_cfg;
 }
 
 /**
@@ -378,15 +376,25 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 				if (meteoGrids_idx!=IOUtils::npos) { //for this, the grid plugins must be thread-safe!
 					io.write2DGrid(grid, static_cast<MeteoGrids::Parameters>(meteoGrids_idx), date);
 				} else {
-					const std::string name( date.toString(Date::NUM) + "_" + output_grids[ii] + ".asc" );
-					io.write2DGrid(grid, name);
+					std::string file_name;
+					if(a3d_view){
+						std::string dateStr( date.toString(Date::NUM) );
+						dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
+						file_name =  dateStr + "_" + output_grids[ii] + ".asc" ;
+					}
+					else{
+						std::string date_str(date.toString(mio::Date::ISO));
+						std::replace( date_str.begin(), date_str.end(), ':', '.');
+						file_name =  date_str + "_" + output_grids[ii] + ".asc" ;
+					}
+					io.write2DGrid(grid, file_name);
+
 					// Reset WINDEROSIONDEPOSITION, which is cumulative since the previous output grid
 					if (output_grids[ii] == "WINDEROSIONDEPOSITION") winderosiondeposition.set(winderosiondeposition, 0.);
 				}
 			}
 		}
 	}
-
 	// Output Runoff: at each time step
 	if (runoff) runoff->output(date, psum, ta);
 }
@@ -443,7 +451,7 @@ void SnowpackInterface::writeOutputSNO(const mio::Date& date)
 void SnowpackInterface::writeSnowCover(const mio::Date& date, const std::vector<SnowStation*>& snow_station)
 {
 	for (size_t jj=0; jj<snow_station.size(); jj++)
-		smetIO.writeSnowCover(date, *(snow_station[jj]), ZwischenData());
+		snowpackIO.writeSnowCover(date, *(snow_station[jj]), ZwischenData());
 }
 
 /* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -608,11 +616,12 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 	}
 
 	if (snow_preparation) {
-		techSnow->setMeteo(ta, rh, timestamp);
+		const Grid2DObject cH( getGrid(SnGrids::HS) );
+		techSnow->setMeteo(ta, rh, cH, timestamp);
 		psum_tech = techSnow->getGrid(SnGrids::PSUM_TECH);
 		grooming = techSnow->getGrid(SnGrids::GROOMING);
 	}
-	
+
 	dataMeteo2D = true;
 	calcNextStep();
 }
@@ -757,7 +766,6 @@ void SnowpackInterface::calcNextStep()
 		const mio::Grid2DObject tmp_shortwave(shortwave, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_diffuse(diffuse, worker_startx[ii], 0, worker_deltax[ii], dimy);
 		const mio::Grid2DObject tmp_longwave(longwave, worker_startx[ii], 0, worker_deltax[ii], dimy);
-
 		// run model, process exceptions in a way that is compatible with openmp
 		try {
 			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
@@ -806,6 +814,8 @@ void SnowpackInterface::calcNextStep()
 	if (MPIControl::instance().master())
 		cout << "[i] Snowpack simulations done for " << nextStepTimestamp.toString(Date::ISO) << "\n";
 	nextStepTimestamp = nextStepTimestamp + timeStep;
+	MPIControl::instance().barrier();
+
 }
 
 void SnowpackInterface::write_special_points()
@@ -875,11 +885,10 @@ void SnowpackInterface::writeOutputSpecialPoints(const mio::Date& date, const st
 	const ProcessDat Hdata; // empty ProcessDat, get it from where ??
 	for (size_t ii=0; ii<snow_pixel.size(); ii++) {
 		write_SMET(*meteo_pixel[ii], snow_pixel[ii]->meta, *surface_flux[ii]);
-		if (TS) asciiIO.writeTimeSeries(*snow_pixel[ii], *surface_flux[ii], *meteo_pixel[ii], Hdata, 0.);
-		if (PR) asciiIO.writeProfile(date, *snow_pixel[ii]);
+		if (TS) snowpackIO.writeTimeSeries(*snow_pixel[ii], *surface_flux[ii], *meteo_pixel[ii], Hdata, 0.);
+		if (PR) snowpackIO.writeProfile(date, *snow_pixel[ii]);
 	}
 }
-
 
 /**
  * @brief Write header of SMET file for specific point
@@ -887,7 +896,7 @@ void SnowpackInterface::writeOutputSpecialPoints(const mio::Date& date, const st
  */
 void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const double& landuse_code) const
 {
-	const std::string filename( meteo_outpath + "/" + meta.stationName + ".smet" );
+	const std::string filename( meteo_outpath + "/" + meta.stationName + "_meteo.smet" );
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 	errno = 0;
 
@@ -933,7 +942,7 @@ void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const do
  */
 void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationData& meta, const SurfaceFluxes& surf) const
 {
-	const std::string filename( meteo_outpath + "/" + meta.stationName + ".smet" );
+	const std::string filename( meteo_outpath + "/" + meta.stationName + "_meteo.smet" );
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 
 	std::ofstream smet_out; //Output file streams
@@ -993,10 +1002,8 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 
 	if (MPIControl::instance().master() || do_io_locally) {
 		const bool useSoil = sn_cfg.get("SNP_SOIL", "Snowpack");
-		std::string sno_type("SMET");
-		sn_cfg.getValue("SNOW", "Input", sno_type, IOUtils::nothrow);
 		const std::string coordsys = sn_cfg.get("COORDSYS", "Input");
-		const std::string coordparam = sn_cfg.get("COORDPARAM", "Input", IOUtils::nothrow);
+		const std::string coordparam = sn_cfg.get("COORDPARAM", "Input", "");
 		Coords llcorner_out( dem.llcorner );
 		llcorner_out.setProj(coordsys, coordparam);
 		const double refX = llcorner_out.getEasting();
@@ -1034,7 +1041,7 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 					// read standard values of pixel
 					try {
 						ZwischenData zwischenData; //not used by Alpine3D but necessary for Snowpack
-						readSnowCover(GRID_sno.str(), LUS_sno.str(), sno_type, is_special_point, snow_soil, zwischenData, (snowPixel.Seaice!=NULL));
+						readSnowCover(GRID_sno.str(), LUS_sno.str(), is_special_point, snow_soil, zwischenData, (snowPixel.Seaice!=NULL));
 					} catch (exception& e) {
 						cout << e.what()<<"\n";
 						throw IOException("Can not read snow files", AT);
@@ -1081,39 +1088,22 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 	return snow_stations;
 }
 
-void SnowpackInterface::readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const std::string& sno_type,
-                                      const bool& is_special_point, SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice)
+void SnowpackInterface::readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const bool& is_special_point,
+																			SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice)
 {
 	// read standard values of pixel
-	if (sno_type=="SMET") { //HACK
-		if (is_special_point && !is_restart) {
-			//special points can come either from LUS snow files or GRID snow files
-			if (smetIO.snowCoverExists(GRID_sno, station_name)) {
-				smetIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
-			} else {
-				smetIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
-			}
+	if (is_special_point && !is_restart) {
+		//special points can come either from LUS snow files or GRID snow files
+		if (snowpackIO.snowCoverExists(GRID_sno, station_name)) {
+			snowpackIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
 		} else {
-			if (is_restart) {
-				smetIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
-			} else {
-				smetIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
-			}
+			snowpackIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
 		}
 	} else {
-		if (is_special_point && !is_restart) {
-			//special points can come either from LUS snow files or GRID snow files
-			if (asciiIO.snowCoverExists(GRID_sno, station_name)) {
-				asciiIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
-			} else {
-				asciiIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
-			}
+		if (is_restart) {
+			snowpackIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
 		} else {
-			if (is_restart) {
-				asciiIO.readSnowCover(GRID_sno, station_name, sno, zwischenData, read_seaice);
-			} else {
-				asciiIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
-			}
+			snowpackIO.readSnowCover(LUS_sno, station_name, sno, zwischenData, read_seaice);
 		}
 	}
 
@@ -1121,7 +1111,7 @@ void SnowpackInterface::readSnowCover(const std::string& GRID_sno, const std::st
 	if (sno.nLayers>0 && sno.Ldata.front().depositionDate>nextStepTimestamp) {
 		ostringstream ss;
 		ss <<  "A layer can not be younger than the start date!";
-		if (is_restart)
+		if (snowpackIO.snowCoverExists(GRID_sno, station_name))
 			ss << " Please check profile '" << GRID_sno << "'";
 		else
 			ss << " Please check profile '" << LUS_sno << "'";
@@ -1195,14 +1185,12 @@ void SnowpackInterface::calcLateralFlow()
 									// Now check if deposition date is equal or newer (i.e., never put lateral water in an older layer, except when we cycled over all layers and we are at the top layer)
 									if (snow_pixel[index_SnowStation_dst]->Edata[nn].depositionDate >= snow_pixel[index_SnowStation_src]->Edata[n].depositionDate
 										|| nn == snow_pixel[index_SnowStation_dst]->getNumberOfElements()-1) {
-// NOTE: SNOWPACK/TRUNK DOESN'T HAVE SLOPEPARFLUX, SO ALPINE3D DOESN'T COMPILE
-// IN ORDER TO USE LATERAL FLOW, USE SNOWPACK/BRANCHES/DEV AND UNCOMMENT THE LINE BELOW
-//										// The flux into the pixel is a source term for the destination cell
-//										snow_pixel[index_SnowStation_dst]->Edata[nn].lwc_source += snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
-//										// The flux out of the pixel is a sink term for the source cell
-//										snow_pixel[index_SnowStation_src]->Edata[n].lwc_source -= snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
-//										// Set the SlopeParFlux to zero, now that we have redistributed it.
-//										snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux = 0.;
+										// The flux into the pixel is a source term for the destination cell
+										snow_pixel[index_SnowStation_dst]->Edata[nn].lwc_source += snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
+										// The flux out of the pixel is a sink term for the source cell
+										snow_pixel[index_SnowStation_src]->Edata[n].lwc_source -= snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux / tmp_dist * (snow_pixel[index_SnowStation_dst]->Edata[nn].L / snow_pixel[index_SnowStation_src]->Edata[n].L);
+										// Set the SlopeParFlux to zero, now that we have redistributed it.
+										snow_pixel[index_SnowStation_src]->Edata[n].SlopeParFlux = 0.;
 										break;
 									}
 								}

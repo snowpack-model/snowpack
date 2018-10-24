@@ -20,14 +20,6 @@ IF(PROJ4)
 	ENDIF(MSVC)
 ENDIF(PROJ4)
 
-IF(DATA_QA)
-	IF(MSVC)
-		ADD_DEFINITIONS(/DDATA_QA) #it looks like some VC++ versions don't support -D syntax
-	ELSE(MSVC)
-		ADD_DEFINITIONS(-DDATA_QA)
-	ENDIF(MSVC)
-ENDIF(DATA_QA)
-
 SET(meteoio_sources
 	${dataClasses_sources}
 	Timer.cc
@@ -56,7 +48,9 @@ SET(meteoio_sources
 	${dataGenerators_sources}
 )
 
-set_source_files_properties(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
+IF(!MSVC)
+	set_source_files_properties(IOUtils.cc PROPERTIES COMPILE_FLAGS -Wno-date-time)
+ENDIF(!MSVC)
 
 IF(GUI_EXCEPTIONS)
 	IF(MSVC)

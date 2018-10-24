@@ -39,7 +39,7 @@ class IOHandler : public IOInterface {
 		///Keywords for mode of operation. Please keep all the GRID_xxx last!
 		typedef enum OPERATION_MODE {
 			STD, ///< default: extract timeseries from timeseries or grids from grids or spatially interpolate timeseries
-			VSTATION, ///< extract virtual stations as specified in the ini file
+			VSTATIONS, ///< extract virtual stations as specified in the ini file
 			GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
 			GRID_SMART, ///< extract all relevant grid points from a provided grid
 			GRID_ALL, ///< extract all grid points from a provided grid

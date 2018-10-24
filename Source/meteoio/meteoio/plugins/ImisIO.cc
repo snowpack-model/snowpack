@@ -96,10 +96,19 @@ const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24
 const string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into PSUM
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
+std::map< std::string, std::pair<double, double> > ImisIO::mapSlopes;
 const bool ImisIO::__init = ImisIO::initStaticData();
 
 bool ImisIO::initStaticData()
 {
+	//Some stations are not on the flat but in the slope
+	mapSlopes["FRA3"] = std::make_pair(43., 225.);
+	mapSlopes["DAV5"] = std::make_pair(25., 45.);
+	mapSlopes["STB2"] = std::make_pair(35., 45.);
+	mapSlopes["WAN5"] = std::make_pair(20., 225.);
+	mapSlopes["ROA4"] = std::make_pair(36., 115.);
+	mapSlopes["CAM3"] = std::make_pair(40., 60.);
+	
 	//Associate string with AnetzData
 	//map[station ID] = (#stations, STA1, STA2, STA3, #coeffs, coeff1, coeff2, coeff3)
 	mapAnetz["ALI2"] = AnetzData(2, "*SIO", "*PUY", "", 3, 2.14, 1.72, -1.669);
@@ -343,7 +352,14 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		}
 		Coords myCoord(coordin, coordinparam);
 		myCoord.setXY(east, north, alt);
-		vecStationMetaData.push_back( StationData(myCoord, vecStationID[ii], station_name) );
+		StationData sd(myCoord, vecStationID[ii], station_name);
+		if (mapSlopes.count(vecStationID[ii])==0) {
+			sd.setSlope(0., 0.);
+		} else {
+			sd.setSlope(mapSlopes[ vecStationID[ii] ].first, mapSlopes[ vecStationID[ii] ].second);
+		}
+		
+		vecStationMetaData.push_back( sd );
 	}
 	conn->terminateStatement(stmt);
 }
