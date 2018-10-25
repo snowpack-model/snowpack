@@ -112,7 +112,8 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 	const bool WriteDebugOutput = false;
 	if(WriteDebugOutput) setvbuf(stdout, NULL, _IONBF, 0);
 
-	const bool ZeroFluxLowerBoundary = false;		// For diffusion
+	const bool ZeroFluxLowerBoundary = true;		// For diffusion
+	const bool ZeroFluxUpperBoundary = false;		// For diffusion
 
 	// Declare and initialize l.h.s. matrix and r.h.s. vector
 	std::vector<double> ad(NumberOfElements, 0.);		// Matrix diagonal
@@ -137,7 +138,7 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		} else {
 			// no flux lower boundary for diffusion (mirroring the cell i+1)
 			if(ZeroFluxLowerBoundary) {
-				if(NumberOfElements>0) adu[i] += -f * 2. * D[i+1] * theta2[i+1] / (dz_down[i] * (dz_up[i] + dz_down[i]));
+				if(NumberOfElements>0) adu[i] += -f * 2. * D[i+1] * theta2[i+1] / (dz_up[i] * (dz_up[i] + dz_down[i]));
 			}
 
 			// the advection part is a constant flux and is added to the r.h.s.
@@ -152,7 +153,9 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 			adu[i] += -f * flux_up[i] / (dz_up[i] + dz_down[i]);
 		} else {
 			// no flux upper boundary for diffusion (mirroring the cell i-1)
-			if(i>0) adl[i-1] += -f * 2. * D[i-1] * theta2[i-1] / (dz_up[i] * (dz_up[i] + dz_down[i]));
+			if(ZeroFluxUpperBoundary) {
+				if(i>0) adl[i-1] += -f * 2. * D[i-1] * theta2[i-1] / (dz_down[i] * (dz_up[i] + dz_down[i]));
+			}
 
 			// the advection part is a constant flux and is added to the r.h.s.
 		}
@@ -164,7 +167,11 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		// The r.h.s. vector diffusion part:
 		if(i==NumberOfElements-1) {
 			// No flux upper boundary for diffusion (mirroring the i-1 node)
-			if(i>0) b[i] += (1. - f) * (2. * D[i-1] * theta1[i-1] * BrineSal[i-1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
+			if(ZeroFluxUpperBoundary) {
+				if(i>0) b[i] += (1. - f) * (2. * D[i-1] * theta1[i-1] * BrineSal[i-1]) / (dz_down[i] * (dz_up[i] + dz_down[i]));
+			} else {
+				b[i] += (1. - f) * 2. * D[i] * theta1[i] * TopSalinity / (dz_up[i] * (dz_up[i] + dz_down[i]));
+			}
 		} else {
 			b[i] += (1. - f) * (2. * D[i+1] * theta1[i+1] * BrineSal[i+1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
 		}
@@ -172,7 +179,7 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 		if(i==0) {
 			// No flux lower boundary for diffusion (mirroring the i+1 node)
 			if(ZeroFluxLowerBoundary) {
-				if(NumberOfElements>0) b[i] += (1. - f) * (2. * D[i+1] * theta1[i+1] * BrineSal[i+1]) / (dz_down[i] * (dz_up[i] + dz_down[i]));
+				if(NumberOfElements>0) b[i] += (1. - f) * (2. * D[i+1] * theta1[i+1] * BrineSal[i+1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
 			} else {
 				b[i] += (1. - f) * 2. * D[i] * theta1[i] * BottomSalinity / (dz_down[i] * (dz_up[i] + dz_down[i]));
 			}
@@ -202,6 +209,7 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 
 	// Add the terms from "out of boundary" diffusion
 	if(!ZeroFluxLowerBoundary) b[0] += f * (2. * D[0] * theta2[0] * BottomSalinity) / (dz_down[0] * (dz_up[0] + dz_down[0]));
+	if(!ZeroFluxUpperBoundary) b[NumberOfElements-1] += f * (2. * D[NumberOfElements-1] * theta2[NumberOfElements-1] * TopSalinity) / (dz_up[NumberOfElements-1] * (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]));
 
 
 	// Add the terms from "out of boundary" advection
