@@ -452,7 +452,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 	while (eUpper-- > Xdata.SoilNode) {
 		bool enforce_merge = true;	// To enforce merging in special cases
 		if ((EMS[eUpper].L < minimum_l_element) || (EMS[eUpper].mk%100 == 3)) {
-			if ((EMS[eUpper].mk >= 100) && (EMS[eUpper].L >= 0.5 * minimum_l_element)) {
+			if ((EMS[eUpper].mk >= 100 && int(EMS[eUpper].mk/1000)!=9) && (EMS[eUpper].L >= 0.5 * minimum_l_element)) {
 				enforce_merge = false;
 			}
 			if (EMS[eUpper].mk%100 == 3) {

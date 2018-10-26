@@ -13,9 +13,10 @@ namespace mio {
 class RngCore {
 	public:
 		bool hardware_seed_success; //store if hardware seed went as planned (Windows?) 
-		
+	
+		RngCore();	
 		virtual ~RngCore();
-		
+	
 		virtual uint64_t int64() = 0;
 		virtual uint32_t int32() = 0;
 		virtual void getState(std::vector<uint64_t>& ovec_seed) const = 0;
@@ -63,8 +64,10 @@ class RandomNumberGenerator : private RngCore {
 		//distribution_params's default is an empty vector, which means choose default params
 		RandomNumberGenerator(const RNG_TYPE& type = RNG_XOR, const RNG_DISTR& distribution = RNG_UNIFORM,
     		    const std::vector<double>& distribution_params = std::vector<double>());
-
+		RandomNumberGenerator(const RandomNumberGenerator& rng);
 		virtual ~RandomNumberGenerator();
+
+		RandomNumberGenerator& operator=(const RandomNumberGenerator& rng);
 
 		uint64_t int64();
 		uint32_t int32();
@@ -150,27 +153,6 @@ class RngFactory { //factory for the generator algorithm
 	public: //(so that memory dedicated to the states lives only as long as the RNG)
 		static RngCore* getCore(const RandomNumberGenerator::RNG_TYPE& algorithm);
 };
-
-
-////////////////////////////////////////////////////////////////////////////////
-/* Most compact RNG still recommended by Ref. [NR3], fast inline code without
- * invoking class. Seed any # (!=v). Should not be called more than ~10e12 times
- * Usage: mio::RNG_FAST RNG( (uint64_t)time(NULL) ); double r = RNG.doub(); */
-struct RNG_FAST { //lightweight, good and fast random number generator
-	uint64_t v;
-	RNG_FAST(uint64_t seed) : v(88172645463325252LL) { //Ref. [GM03]
-		v ^= seed;
-		v = int64(); 
-	}
-	inline uint64_t int64() {
-		//3 shifts, 3 xors, 1 multiply:
-		v ^= v >> 38; v ^= v >> 13; v ^= v << 35; //Ref. [GM03]
-		return v * 1803442709493370165LL; //Ref. [NR3] 
-	} 
-	inline double doub() {return 5.42101086242752217E-20 * int64();}
-	inline uint32_t int32() {return (uint32_t)int64();}
-};
-///////////////////////////////////////////////////////////////////////////////
 
 } //namespace
 
