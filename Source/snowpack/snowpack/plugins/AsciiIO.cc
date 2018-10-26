@@ -357,7 +357,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("PROF_FORMAT", "Output", vecProfileFmt);
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
-	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer);
+	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 
 	// SnowpackAdvanced section
 	cfg.getValue("HOAR_DENSITY_SURF", "SnowpackAdvanced", hoar_density_surf); // Density of SH at surface node (kg m-3)

@@ -180,7 +180,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("OUT_STAB", "Output", out_stab);
 	cfg.getValue("OUT_SW", "Output", out_sw);
 	cfg.getValue("OUT_T", "Output", out_t);
-	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer);
+	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
 	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
