@@ -500,8 +500,8 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 			// Try freezing
 			try {
 				if(!(iwatertransportmodel_soil==RICHARDSEQUATION && e<Xdata.SoilNode) &&
-				   !(iwatertransportmodel_soil==RICHARDSEQUATION && e==Xdata.SoilNode && EMS[e].mk==19) &&
-				   !(iwatertransportmodel_snow==RICHARDSEQUATION && e==nE-1           && EMS[e].mk==19)) {
+				   !(iwatertransportmodel_soil==RICHARDSEQUATION && e==Xdata.SoilNode && EMS[e].mk%100==19) &&
+				   !(iwatertransportmodel_snow==RICHARDSEQUATION && e==nE-1           && EMS[e].mk%100==19)) {
 					// For Richards Equation, phase changes in soil are taken care of in WaterTransport.
 					// Furthermore, in case we use Richards Equation, we suppress phase changes in potential water layers on the top. As a water layer is 100% water, we cannot freeze it, as it is not programmed that the element length should increase in such cases HACK/TODO: improve upon this in case someone wants it.
 					compSubSurfaceFrze(EMS[e], Xdata.number_of_solutes, sn_dt, date_in);

@@ -134,17 +134,6 @@ short int TechSnow::findSlope(const int& numbers_of_slopes, struct condition * s
 }	
 
 
-//void TechSnow::writeOutputFile(const int& numbers_of_slopes, struct condition slope_condition[numbers_of_slopes], const std::string& filename)
-//{
-//	std::ifstream fin( filename.c_str() );
-//	if (fin.fail()) {
-//		std::ostringstream ss;
-//		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
-//		throw AccessException(ss.str(), AT);
-//	}	
-//}
-
-
 double TechSnow::setPriority(const std::string& date, const std::string& season_opening, 
 							 const std:: string& season_closing, const std::string& start_prod, 
 							 const std::string& end_prod, const double& start_aim, const double& end_aim,
@@ -193,14 +182,12 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 	int slope_nr;
 	int slope_index;
 	double psum_technical = IOUtils::nodata;				// [mm] Technical snow height in water equivalent
-	static double T_wet = 0;			// [C] Wet bulb temperature
+	static double T_wet;			// [C] Wet bulb temperature
 
-	bool production = false;			// [-] Starting of snow production or not
-	static double A_cell = Optim::pow2(skiRunsMap.cellsize);	// [m2] Area of a raster
 	const double wet_bulb_thresh = cfg.get("WET_BULB_THRESH", "Slope_Priority");		// [C] wet bulb temperature
 	const std::string start_prod = cfg.get("PRIO1::start_prod", "Slope_Priority");	// [-] earliest snow production date
-	std::string end_prod = cfg.get("SEASON_CLOSING", "Slope_Priority");	// [-] latest production date
-	std::string date = timestamp.toString(Date::ISO);		// [-] actual simulation date
+	const std::string end_prod = cfg.get("SEASON_CLOSING", "Slope_Priority");	// [-] latest production date
+	const std::string date = timestamp.toString(Date::ISO);		// [-] actual simulation date
 	int slope_open = cfg.get("SLOPE_OPEN", "Slope_Priority");
 	int slope_closed = cfg.get("SLOPE_CLOSED", "Slope_Priority");
 	const int number_of_slopes = cfg.get("NUMBER_OF_SLOPES", "Input");
@@ -213,9 +200,6 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 	// Read slope conditions
 	readSlopeConditions(number_of_slopes, slope_condition, cfg.get("SLOPE_CONDITIONS", "Input"));
 	
-//	std::cout << std::setprecision(15) << "test " << date << " " << start_prod << " season " << season << endl;
-//	std::cout << std::setprecision(15) << "hs = " << dt_main << endl;
-
 	//according to ta and rh, fill grooming and psum_tech grids
 	if (date >= start_prod && date <= end_prod){
 		std::cout << "Production of technical snow has started" << endl;
@@ -267,10 +251,8 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 				}
 				else psum_technical = IOUtils::nodata;
 			}
-			// Check whether production periode is within the time
-//			if (psum_technical == -999) break;
 			// Grooming and technical snow production
-			if (hs(ii) > 0.4) grooming(ii) = 1;
+			if (hs(ii) >= 0.4) grooming(ii) = 1;
 			else grooming(ii) = IOUtils::nodata;
 			psum_tech(ii) = psum_technical;
 		}
@@ -278,6 +260,7 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 
 	}
 }
+
 
 mio::Grid2DObject TechSnow::getGrid(const SnGrids::Parameters& param) const
 {
