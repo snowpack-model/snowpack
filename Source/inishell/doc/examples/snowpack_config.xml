@@ -82,13 +82,18 @@
 				<section name="input" />
 				<reference name="BORMA" />
 			</option>
-			<option value="CNRM" type="string">
-				<section name="input" />
-				<reference name="CNRM_IN" />
-			</option>
 			<option value="COSMO" type="string">
 				<section name="input" />
 				<reference name="COSMO_IN" />
+			</option>
+			<option value="CSV" type="string">
+				<section name="input" />
+				<reference name="CSV_IN" />
+				<help>&lt;b&gt;Please read the &lt;a href="https://models.slf.ch"&gt;online documentation&lt;/a&gt; to learn more about all the possibilities and usage of this plugin!&lt;/b&gt;</help>
+			</option>
+			<option value="DBO" type="string">
+				<section name="input" />
+				<reference name="DBO_IN" />
 			</option>
 			<option value="GEOTOP" type="string">
 				<section name="input" />
@@ -98,13 +103,13 @@
 				<section name="input" />
 				<reference name="GRIB_METEO" />
 			</option>
-			<option value="GSN" type="string">
-				<section name="input" />
-				<reference name="GSN" />
-			</option>
 			<option value="IMIS" type="string">
 				<section name="input" />
 				<reference name="IMIS" />
+			</option>
+			<option value="NETCDF" type="string">
+				<section name="input" />
+				<reference name="NETCDF_IN" />
 			</option>
 			<option value="OSHD" type="string">
 				<section name="input" />
@@ -192,6 +197,7 @@
 		</parameter> -->
 	</frame>
 
+	<!-- Data Creators -->
 	<parameter key="Add/Remove data creator" type="selector">
 		<section name="input" />
 		<parameter key="%::create" type="choice" template="true">
@@ -200,8 +206,16 @@
 				<help>Generate a standard atmosphere pressure as a function of the station's elevation</help>
 			</option>
 
-			<option value="RELHUM" type="choice">
-				<help>Generate a relative humidity from other humidity measurements (dew point temperature "TD" and/or specific humidity "SH")</help>
+			<option value="HUMIDITY" type="choice">
+				<parameter key="%::humidity::type" type="combination" default="RH">
+					<option value="type: " type="dropdown">
+						<option value="AH" type="string" />
+						<option value="QI" type="string" />
+						<option value="TD" type="string" />
+						<option value="RH" type="string" />
+					</option>
+				</parameter>
+				<help>Generate any humidity parameter from other humidity measurements: absolute humidity (AH), specific humidity (QI), dew point temperature (TD), or relative humidity (RH)</help>
 			</option>
 
 			<option value="TS_OLWR" type="choice">
@@ -209,37 +223,44 @@
 			</option>
 
 			<option value="ISWR_ALBEDO" type="choice">
+				<parameter key="%::iswr_albedo::force" type="combination" default="FALSE">
+					<option value="type: " type="dropdown">
+						<option value="FALSE" type="string" />
+						<option value="TRUE" type="string" />
+					</option>
+				<help>If no snow height is available, the generator will simply return unless the "FORCE" argument is set to TRUE</help>
+				</parameter>
 				<help>Generate ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on the snow height</help>
 			</option>
 
 			<option value="CST" type="choice">
-				<parameter key="%::cst::value" type="combination">
+				<parameter key="%::cst::value" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
 				<help>Generate a constant value, as provided</help>
 			</option>
 
 			<option value="SIN" type="choice">
-				<parameter key="%::sin::type" type="combination">
+				<parameter key="%::sin::type" type="combination" default="FALSE">
 					<option value="Period: " type="dropdown">
 						<option value="yearly" type="string" />
 						<option value="daily" type="string" />
 					</option>
 				</parameter>
-				<parameter key="%::sin::min" type="combination">
+				<parameter key="%::sin::min" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
-				<parameter key="%::sin::max" type="combination">
+				<parameter key="%::sin::max" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
-				<parameter key="%::sin::phase" type="combination">
+				<parameter key="%::sin::phase" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
 				<help>Generate a sinusoidal variation. The min and max values are provided as well as the phase expressed in the same units as the period and representing the time offset from the begining of the period to the first minimum value.</help>
 			</option>
 
 			<option value="CLEARSKY_LW" type="choice">
-				<parameter key="%::clearsky_lw::type" type="combination">
+				<parameter key="%::clearsky_lw::type" type="combination" default="FALSE">
 					<option value="Model: " type="dropdown">
 						<option value="Brutsaert" type="string" />
 						<option value="Dilley" type="string" />
@@ -253,13 +274,20 @@
 			</option>
 
 			<option value="ALLSKY_LW" type="choice">
-				<parameter key="%::allsky_lw::type" type="combination">
+				<parameter key="%::allsky_lw::type" type="combination" default="FALSE">
 					<option value="Model: " type="dropdown">
 						<option value="Omstedt" type="string" />
 						<option value="Konzelmann" type="string" />
 						<option value="Unsworth" type="string" />
 						<option value="Crawford" type="string" />
 					</option>
+				</parameter>
+				<parameter key="%::allsky_lw::use_rswr" type="combination" default="FALSE">
+					<option value="use_rswr: " type="dropdown">
+						<option value="FALSE" type="string" />
+						<option value="TRUE" type="string" />
+					</option>
+				<help>Should iswr be computed from rswr and an estimated albedo (not very precise)?</help>
 				</parameter>
 				<help>Generate ILWR using an all sky model. If no cloudiness is available, it is parametrized based on solar index (ratio of potential short wave radiation and measured short wave radiation)</help>
 			</option>
@@ -273,6 +301,13 @@
 			</option>
 
 			<option value="TAU_CLD" type="choice">
+				<parameter key="%::tau_cld::use_rswr" type="combination" default="FALSE">
+					<option value="use_rswr: " type="dropdown">
+						<option value="FALSE" type="string" />
+						<option value="TRUE" type="string" />
+					</option>
+				<help>Should iswr be computed from rswr and an estimated albedo (not very precise)?</help>
+				</parameter>
 				<help>Generate the atmospheric transmissivity based on cloud cover fraction.</help>
 			</option>
 
@@ -280,28 +315,28 @@
 				<help>Generate precipitation from changes in snow height (see Mair et al., &lt;i&gt;"ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height and rain gauge measurements"&lt;/i&gt;, Hydrology and Earth System Sciences Discussions, 10(7), 8683-8714, 2013).</help>
 			</option>
 
-			<option label="PSUM phase" value="PPHASE" type="choice">
-				<parameter key="%::pphase::type" type="alternative" optional="false">
+			<option value="PRECSPLITTING" type="choice">
+				<parameter key="%::precsplitting::type" type="alternative" optional="false">
 					<option value="THRESH" type="string">
-						<parameter key="%::pphase::snow" type="combination">
+						<parameter key="%::precsplitting::snow" type="combination">
 							<option label="" type="decimal" optional="false" value="273.35"/>
 						</parameter>
 					</option>
 					<option value="RANGE" type="string">
-						<parameter key="%::pphase::snow" type="combination">
+						<parameter key="%::precsplitting::snow" type="combination">
 							<option label="" type="decimal" optional="false" value="273.35"/>
 						</parameter>
-						<parameter key="%::pphase::rain" type="combination">
+						<parameter key="%::precsplitting::rain" type="combination">
 							<option label="" type="decimal" optional="false" value="275.35"/>
 						</parameter>
 					</option>
 				</parameter>
 
-				<help>Generate the precipitation phase with a fixed temperature threshold or with a linear evolution from snow to rain within a given air temperature range</help>
+				<help>Generate either precip. sum and phase from solid and liquid precip. amounts or the other way around, performing precipitation splitting if necessary. This generator identifies what should be generated based on the parameter name, therefore it only applies to PSUM, PSUM_PH, PSUM_L and PSUM_S.</help>
 			</option>
 
-			<option value="PRECUNSPLIT" type="choice">
-				<help>Generate split precipitation (as provided by the "RAINF" and "SNOWF" parameters) into amount/phase. It is suitable for PSUM or PSUM_PH.</help>
+			<option value="WINDCOMPONENTS" type="choice">
+				<help>Generate VW and DW from the U and V wind components</help>
 			</option>
 
 		</parameter>
@@ -324,10 +359,15 @@
 		<section name="output" />
 		<help>Option to give an additional simulation specific output name to the run in addition to "STATION_NAME")</help>
 	</parameter>
+	<parameter key="USEREFERENCELAYER" type="alternative" default="FALSE" optional="true">
+		<section name="output" />
+		<option value="TRUE" type="string" />
+		<option value="FALSE" type="string" />
+		<help>Option to reference the output to a marked referenced layer in the snowpack (i.e., a layer with int(mk/1000)==9).</help>
+	</parameter>
 
 	<frame key="sno_frame" label="Status Files">
 		<section name="output"/>
-		SNOW_WRITE
 		<parameter key="SNOW" type="alternative" default="SMET" optional="true">
 			<section name="output" />
 			<option value="SMET" type="string" >
@@ -1111,7 +1151,7 @@
 		<parameter key="MAX_SIMULATED_HS" type="decimal" default="-1" optional="true">
 			<section name="SnowpackAdvanced" />
 			<help>Units: m. If positive: remove bottom snow elements when the simulated snow depth exceeds MAX_SIMULATED_HS, keeping the simulated snow depth below MAX_SIMULATED_HS. Useful for deep Firn simulations to reduce computational load.</help>
-		</parameter>-->
+		</parameter>
 	</frame>
 
 	<frame key="canopy_frame" label="Canopy">
@@ -1172,9 +1212,19 @@
 			<help>station id for the given station number # </help>
 		</parameter>
 	</parametergroup>
+	<parametergroup name="optional_stationgroup_names">
+		<parameter key="STATION#" type="string" counter="1" optional="true">
+			<help>station id for the given station number # </help>
+		</parameter>
+	</parametergroup>
 	<parametergroup name="stationgroup_pos">
 		<parameter key="STATION#" type="string" counter="1">
 			<help>Coordinates are given as "lat lon" or "xcoord ycoord epsg_code"</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="stationgroup_pos_specs">
+		<parameter key="POSITION#" type="string" counter="1" optional="true">
+			<help>Coordinates are given as lat/lon/alt or easting/northing/alt such as &lt;i&gt;latlon (46.75; 9.80; 2200)&lt;/i&gt; or &lt;i&gt;xy (198754, 723458, 2200)&lt;/i&gt;</help>
 		</parameter>
 	</parametergroup>
 
@@ -1247,121 +1297,8 @@
 			<help>force the input file encoding, overriding the file's own encoding declaration</help>
 		</parameter>
 	</parametergroup>
-
-	<parametergroup name="IMIS">
-		<parameter key="DBNAME" type="string" optional="false">
-			<help>database name, as provided by your database administrator</help>
-		</parameter>
-		<parameter key="DBUSER" type="string" optional="false">
-			<help>database user name</help>
-		</parameter>
-		<parameter key="DBPASS" type="string" optional="false">
-			<help>database password associated with the user name</help>
-		</parameter>
-		<parameter key="USEANETZ" type="alternative" default="FALSE" optional="true">
-			<option value="TRUE" type="string" />
-			<option value="FALSE" type="string" />
-			<help>OPTIONAL: use ANETZ stations to provide precipitations for normal IMIS stations.
-			Each IMIS station is associated with one or two ANETZ stations and does a weighted
-			average to get what should be its local precipitations</help>
-		</parameter>
-		<parameter key="USE_IMIS_PSUM" type="alternative" default="FALSE" optional="true">
-			<option value="TRUE" type="string" />
-			<option value="FALSE" type="string" />
-			<help>OPTIONAL: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, it is strongly advised to use a UNHEATED_RAINGAUGE filter to detect snow melting in the rain gauge and perform winter conditions detection in the application.</help>
-		</parameter>
-		<parameter key="USE_SNOWPACK_PSUM" type="alternative" default="FALSE" optional="true">
-			<option value="TRUE" type="string" />
-			<option value="FALSE" type="string" />
-			<help>if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)</help>
-		</parameter>
-		<reference name="stationgroup_names" />
-	</parametergroup>
-
-	<parametergroup name="OSHD">
-		<parameter key="METEOPATH" type="path" optional="false">
-			<help>Path to the data files; this path MUST exist, it won't be created</help>
-		</parameter>
-		<parameter key="METAFILE" type="file" optional="false">
-			<help>absolute filename of the metadata file</help>
-		</parameter>
-		<reference name="stationgroup_names" />
-	</parametergroup>
-
-       <parametergroup name="SASE">
-	       <parameter key="SASE_HOST" type="string" optional="false">
-		       <help>database host name, as provided by your database administrator</help>
-	       </parameter>
-	       <parameter key="SASE_DB" type="string" optional="false">
-		       <help>database name, as provided by your database administrator</help>
-	       </parameter>
-	       <parameter key="SASE_USER" type="string" optional="false">
-		       <help>database user name</help>
-	       </parameter>
-	       <parameter key="SASE_PASS" type="string" optional="false">
-		       <help>database password associated with the user name</help>
-	       </parameter>
-	       <reference name="stationgroup_names" />
-       </parametergroup>
-
-	<parametergroup name="GRIB_METEO">
-		<parameter key="METEOPATH" type="path" optional="false">
-			<help>Path to the grib files; this path MUST exist, it won't be created</help>
-		</parameter>
-		<parameter key="METEOEXT" type="string" default="" optional="true">
-			<help>grib file extension, or none for no file extension (default: .grb)</help>
-		</parameter>
-		<reference name="stationgroup_pos" />
-	</parametergroup>
-
-	<parametergroup name="GEOTOP_IN">
-		<parameter key="METEOPATH" type="path" optional="false">
-			<help>Path to the data files; this path MUST exist, it won't be created</help>
-		</parameter>
-		<parameter key="METEOPREFIX" type="string" optional="true">
-			<help>prefix to append when generating a file name for reading</help>
-		</parameter>
-		<parameter key="METAFILE" type="file" optional="false">
-			<help>absolute filename of the geotop.inpts file</help>
-		</parameter>
-	</parametergroup>
-
-	<parametergroup name="PSQL_IN">
-		<parameter key="PSQL_URL" type="string" optional="false">
-			<help>database URL</help>
-		</parameter>
-		<parameter key="PSQL_PORT" type="string" optional="true">
-			<help>database port to use for connection</help>
-		</parameter>
-		<parameter key="PSQL_DB" type="string" optional="false">
-			<help>database name</help>
-		</parameter>
-		<parameter key="PSQL_USER" type="string" optional="false" />
-		<parameter key="PSQL_PASS" type="string" optional="false" />
-		<parameter key="SQL_META" type="string" optional="false">
-			<help>Query to retrieve the metadata. For example, &lt;i&gt;SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN&lt;/i&gt;
-			</help>
-		</parameter>
-		<parameter key="SQL_DATA" type="string" optional="false">
-			<help>Query to retrieve the data. For example, &lt;i&gt;SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date&gt;=''DATE_START'' AND date&lt;=''DATE_END'' ORDER BY date&lt;/i&gt;
-			</help>
-		</parameter>
-		<parameter key="STATIONS" type="string" optional="false">
-			<help>comma separated list of station ids to use</help>
-		</parameter>
-	</parametergroup>
-
-	<parametergroup name="CNRM_IN">
-		<parameter key="METEOPATH" type="path" optional="false">
-			<help>Path to the data files; this path MUST exist, it won't be created</help>
-		</parameter>
-		<parameter key="METEOFILE" type="string" optional="true">
-			<help>Specify the NetCDF file that contains the data (in METEOPATH)</help>
-		</parameter>
-		<reference name="stationgroup_names" />
-       </parametergroup>
-
-       <parametergroup name="COSMO_IN">
+	
+	<parametergroup name="COSMO_IN">
 		<parameter key="METEOPATH" type="path" optional="false">
 			<help>Path to the data files; this path MUST exist, it won't be created</help>
 		</parameter>
@@ -1412,22 +1349,198 @@
 			<help>force the input file encoding, overriding the file's own encoding declaration</help>
 		</parameter>
 		<reference name="stationgroup_names" />
-       </parametergroup>
-
-	<parametergroup name="GSN">
-		<parameter key="GSN_URL" type="string" optional="false">
-			<help>webserver running GSN with its port number and full path. For example:
-			http://montblanc.slf.ch:22001/rest</help>
+	</parametergroup>
+	
+	<parametergroup name="CSV_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the grib files; this path MUST exist, it won't be created</help>
 		</parameter>
-		<parameter key="GSN_USER" type="string" optional="true" />
-		<parameter key="GSN_PASS" type="string" optional="true" />
-		<parameter key="GSN_TIMEOUT" type="decimal" default="60">
-			<help>Time out in seconds to abort a connection and return an error</help>
+		<parameter key="CSV_DELIMITER" type="string" default="," optional="true">
+			<help>field delimiter character</help>
 		</parameter>
-		<parameter key="GSN_DEBUG" type="alternative" optional="true" default="FALSE">
+		<parameter key="CSV_NODATA" type="string" default="NAN" optional="true">
+			<help>a value that should be interpreted as nodata</help>
+		</parameter>
+		<parameter key="CSV_NR_HEADERS" type="integer" minimum="0" default="1" optional="true">
+			<help>Number of header lines</help>
+		</parameter>
+		
+		<parameter key="CSV_TIMESTAMP" type="alternative" optional="false">
+			<option value="COMBINED" type="string">
+				<parameter key="CSV_DATETIME_SPEC" type="string" default="" optional="false">
+					<help>mixed date and time format specification, such as &lt;i&gt;YYYY-MM-DDTHH24:MI:SS&lt;/i&gt;</help>
+				</parameter>
+			</option>
+			<option value="SPLIT" type="string">
+				<parameter key="CSV_DATE_SPEC" type="string" default="" optional="false">
+					<help>date format specification, such as &lt;i&gt;YYYY-MM-DD&lt;/i&gt;</help>
+				</parameter>
+				<parameter key="CSV_TIME_SPEC" type="string" default="" optional="false">
+					<help>time format specification, such as &lt;i&gt;HH24:MI:SS&lt;/i&gt;</help>
+				</parameter>
+			</option>
+			<help>How is time represented: a filed combines date and time or these are split into two fields?</help>
+		</parameter>
+		
+		<parameter key="CSV_COLUMNS_HEADERS" type="integer" minimum="-1" default="-1" optional="true">
+			<help>header line to interpret as columns headers</help>
+		</parameter>
+		<parameter key="CSV_FIELDS" type="string" default="" optional="true">
+			<help>provide a column header (if none is present or to overwrite it) such as &lt;i&gt;DATE TIME TA&lt;/i&gt;</help>
+		</parameter>
+		<parameter key="CSV_UNITS_HEADERS" type="integer" minimum="-1" default="-1" optional="true">
+			<help>header line providing the measurements units</help>
+		</parameter>
+		<parameter key="CSV_UNITS_OFFSET" type="string" default="" optional="true">
+			<help>offset to add to each value in order to convert it to SI, such as &lt;i&gt;0 0 273.15&lt;/i&gt;</help>
+		</parameter>
+		<parameter key="CSV_UNITS_MULTIPLIER" type="string" default="" optional="true">
+			<help>factor to multiply each value by, in order to convert it to SI, such as &lt;i&gt;1 1 0.01&lt;/i&gt;</help>
+		</parameter>
+		<parameter key="CSV_NAME" type="string" default="" optional="true">
+			<help>the station name to use (if provided, has priority over the special headers)</help>
+		</parameter>
+		<parameter key="CSV_ID" type="string" default="" optional="true">
+			<help>the station name to use (if provided, has priority over the special headers)</help>
+		</parameter>
+		<parameter key="CSV_SPECIAL_HEADERS" type="string" default="" optional="true">
+			<help>description of how to extract more metadata out of the headers, such as &lt;i&gt;name:1:3 id:2:5 lat:3:2 lon:3:4 alt:3:6&lt;/i&gt;</help>
+		</parameter>
+		<parameter key="CSV_FILENAME_SPEC" type="string" default="" optional="true">
+			<help>pattern to parse the filename and extract metadata out of it, such as &lt;i&gt;{ID}_{NAME}-{SKIP}_-_{PARAM}&lt;/i&gt;</help>
+		</parameter>
+		<parameter key="CSV_SILENT_ERRORS" type="alternative" default="FALSE" optional="true">
 			<option value="TRUE" type="string" />
 			<option value="FALSE" type="string" />
-			<help>Print extra information in case of errors?</help>
+			<help>If set to true, lines that can not be read are silently ignored</help>
+		</parameter>
+		
+		<reference name="stationgroup_names" />
+		<reference name="stationgroup_pos_specs" />
+	</parametergroup>
+	
+	<parametergroup name="GRIB_METEO">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the grib files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METEOEXT" type="string" default="" optional="true">
+			<help>grib file extension, or none for no file extension (default: .grb)</help>
+		</parameter>
+		<reference name="stationgroup_pos" />
+	</parametergroup>
+
+	<parametergroup name="GEOTOP_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="METEOPREFIX" type="string" optional="true">
+			<help>prefix to append when generating a file name for reading</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="false">
+			<help>absolute filename of the geotop.inpts file</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="IMIS">
+		<parameter key="DBNAME" type="string" optional="false">
+			<help>database name, as provided by your database administrator</help>
+		</parameter>
+		<parameter key="DBUSER" type="string" optional="false">
+			<help>database user name</help>
+		</parameter>
+		<parameter key="DBPASS" type="string" optional="false">
+			<help>database password associated with the user name</help>
+		</parameter>
+		<parameter key="USEANETZ" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>OPTIONAL: use ANETZ stations to provide precipitations for normal IMIS stations.
+			Each IMIS station is associated with one or two ANETZ stations and does a weighted
+			average to get what should be its local precipitations</help>
+		</parameter>
+		<parameter key="USE_IMIS_PSUM" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>OPTIONAL: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, it is strongly advised to use a UNHEATED_RAINGAUGE filter to detect snow melting in the rain gauge and perform winter conditions detection in the application.</help>
+		</parameter>
+		<parameter key="USE_SNOWPACK_PSUM" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+	
+	<parametergroup name="NETCDF_IN">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files</help>
+		</parameter>
+		<parameter key="NC_EXT" type="string" default=".nc" optional="true">
+			<help>netcdf file extension (for example: .nc)</help>
+		</parameter>
+		<parameter key="NETCDF_SCHEMA" type="alternative" default="CF-1.6" optional="true">
+			<option value="CF-1.6" type="string" />
+			<option value="CROCUS" type="string" />
+			<option value="AMUNDSEN" type="string" />
+			<option value="ECMWF" type="string" />
+			<option value="WRF" type="string" />
+			<help>Data schema to use (ie mostly variables and dimensions naming)</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+
+	<parametergroup name="OSHD">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files</help>
+		</parameter>
+		<parameter key="METEOPATH_RECURSIVE" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>if set to true, files are recursively searched within METEOPATH</help>
+		</parameter>
+		<parameter key="METAFILE" type="file" optional="false">
+			<help>absolute filename of the metadata file</help>
+		</parameter>
+		<reference name="stationgroup_names" />
+	</parametergroup>
+	
+	<parametergroup name="PSQL_IN">
+		<parameter key="PSQL_URL" type="string" optional="false">
+			<help>database URL</help>
+		</parameter>
+		<parameter key="PSQL_PORT" type="string" optional="true">
+			<help>database port to use for connection</help>
+		</parameter>
+		<parameter key="PSQL_DB" type="string" optional="false">
+			<help>database name</help>
+		</parameter>
+		<parameter key="PSQL_USER" type="string" optional="false" />
+		<parameter key="PSQL_PASS" type="string" optional="false" />
+		<parameter key="SQL_META" type="string" optional="false">
+			<help>Query to retrieve the metadata. For example, &lt;i&gt;SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN&lt;/i&gt;
+			</help>
+		</parameter>
+		<parameter key="SQL_DATA" type="string" optional="false">
+			<help>Query to retrieve the data. For example, &lt;i&gt;SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date&gt;=''DATE_START'' AND date&lt;=''DATE_END'' ORDER BY date&lt;/i&gt;
+			</help>
+		</parameter>
+		<parameter key="STATIONS" type="string" optional="false">
+			<help>comma separated list of station ids to use</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="SASE">
+		<parameter key="SASE_HOST" type="string" optional="false">
+			<help>database host name, as provided by your database administrator</help>
+		</parameter>
+		<parameter key="SASE_DB" type="string" optional="false">
+			<help>database name, as provided by your database administrator</help>
+		</parameter>
+		<parameter key="SASE_USER" type="string" optional="false">
+			<help>database user name</help>
+		</parameter>
+		<parameter key="SASE_PASS" type="string" optional="false">
+			<help>database password associated with the user name</help>
 		</parameter>
 		<reference name="stationgroup_names" />
 	</parametergroup>
@@ -1436,7 +1549,12 @@
 		<parameter key="METEOPATH" type="path" optional="false">
 			<help>Path to the smet files; this path MUST exist, it won't be created</help>
 		</parameter>
-		<reference name="stationgroup_files" />
+		<parameter key="METEOPATH_RECURSIVE" type="alternative" default="FALSE" optional="true">
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>If set to true, METEOPATH will be search recursively for data files</help>
+		</parameter>
+		<reference name="optional_stationgroup_names" />
 	</parametergroup>
 
 	<parametergroup name="SNIO_IN">
@@ -1494,6 +1612,27 @@
 	</parametergroup>
 
 	<!-- Filters -->
+	<parameter key="TIME::filter#" type="alternative" counter="1">
+			<section name="filters" />
+		
+			<option label="Suppress (at random)" value="suppr" type="string">
+				<parameter key="TIME::arg#::frac" type="combination" optional="false">
+						<option label="" value="0.5" type="decimal" minimum="0" maximum="1" optional="false" />
+				</parameter>
+				<help>This suppress a given fraction of the data for all meteorological parameters.</help>
+			</option>
+			<option label="Suppress (from file)" value="suppr" type="string">
+				<parameter key="TIME::arg#::suppr" type="file" optional="false" />
+				<help>This suppresses all values at the timesteps and station IDs as given in the provided file.</help>
+			</option>
+			
+			<option label="Remove DST" value="UnDST" type="string">
+				<parameter key="TIME::arg#::corrections" type="file" optional="false" />
+				<help>This removes the Daylight Saving Time for following a provided correction file.</help>
+			</option>
+		
+	</parameter>
+		
 	<parameter key="Add/Remove Filter" type="selector">
 		<section name="filters" />
 
@@ -1642,6 +1781,15 @@
 				<help>Tukey 53H method A smooth time sequence is generated from the median, substracted from the original signal and
 				compared with the standard deviation. See "Despiking Acoustic Doppler Velocimeter Data", Derek G. Goring and Vladimir
 				L. Nikora, Journal of Hydraulic Engineering, 128, 1, 2002 The deviation factor coeffecient is currently hard-coded as k=1.5. </help>
+			</option>
+			
+			<option label="Phase space despiking" value="Despiking" type="string">
+				<parameter key="%::arg#::sensitivity" type="combination">
+						<option label="" value="1.0" type="decimal" minimum="0" />
+						<help>Scaling factor applied to the universal threshold, a larger value rejects more spikes</help>
+				</parameter>
+				<help>The first and second derivatives are used to plot each point in phase space. The points are enclosed within an ellipsoid and the points lying outside are removed, the gaps being interpolated with a quadratic fit. See "Despiking Acoustic Doppler Velocimeter Data", Derek G. Goring and Vladimir
+				L. Nikora, Journal of Hydraulic Engineering, 128, 1, 2002</help>
 			</option>
 
 			<option label="Unheated Rain Gauge Filter" value="Unheated_RainGauge" type="string">
@@ -1902,6 +2050,10 @@
 				</parameter>
 				<help>Aggregate the data from a given time window.</help>
 			</option>
+			
+			<option label="DeAccumulate" value="Deaccumulate" type="string">
+				<help>Convert accumulated values back to instantaneous values (for example, accumulated solar radiation from ECMWF). This filter recomputes the instantaneous values by considering that once a value gets smaller than its preceding values, the end of the accumulation period has been reached, so the value is kept as is and the process starts over again (thus this assumes that they are no negative values).</help>
+			</option>
 
 			<option label="WMO Undercatch Filter" value="undercatch_wmo" type="string">
 				<parameter key="%::arg#::type" type="alternative" optional="false">
@@ -2108,8 +2260,16 @@
 				<help>Generate a standard atmosphere pressure as a function of the station's elevation</help>
 			</option>
 
-			<option value="RELHUM" type="choice">
-				<help>Generate a relative humidity from other humidity measurements (dew point temperature "TD" and/or specific humidity "SH")</help>
+			<option value="HUMIDITY" type="choice">
+				<parameter key="%::humidity::type" type="combination" default="RH">
+					<option value="type: " type="dropdown">
+						<option value="AH" type="string" />
+						<option value="QI" type="string" />
+						<option value="TD" type="string" />
+						<option value="RH" type="string" />
+					</option>
+				</parameter>
+				<help>Generate any humidity parameter from other humidity measurements: absolute humidity (AH), specific humidity (QI), dew point temperature (TD), or relative humidity (RH)</help>
 			</option>
 
 			<option value="TS_OLWR" type="choice">
@@ -2117,37 +2277,44 @@
 			</option>
 
 			<option value="ISWR_ALBEDO" type="choice">
+				<parameter key="%::iswr_albedo::force" type="combination" default="FALSE">
+					<option value="type: " type="dropdown">
+						<option value="FALSE" type="string" />
+						<option value="TRUE" type="string" />
+					</option>
+				<help>If no snow height is available, the generator will simply return unless the "FORCE" argument is set to TRUE</help>
+				</parameter>
 				<help>Generate ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on the snow height</help>
 			</option>
 
 			<option value="CST" type="choice">
-				<parameter key="%::cst::value" type="combination">
+				<parameter key="%::cst::value" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
 				<help>Generate a constant value, as provided</help>
 			</option>
 
 			<option value="SIN" type="choice">
-				<parameter key="%::sin::type" type="combination">
+				<parameter key="%::sin::type" type="combination" default="FALSE">
 					<option value="Period: " type="dropdown">
 						<option value="yearly" type="string" />
 						<option value="daily" type="string" />
 					</option>
 				</parameter>
-				<parameter key="%::sin::min" type="combination">
+				<parameter key="%::sin::min" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
-				<parameter key="%::sin::max" type="combination">
+				<parameter key="%::sin::max" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
-				<parameter key="%::sin::phase" type="combination">
+				<parameter key="%::sin::phase" type="combination" default="FALSE">
 					<option label="" value="0" type="decimal" optional="false" />
 				</parameter>
 				<help>Generate a sinusoidal variation. The min and max values are provided as well as the phase expressed in the same units as the period and representing the time offset from the begining of the period to the first minimum value.</help>
 			</option>
 
 			<option value="CLEARSKY_LW" type="choice">
-				<parameter key="%::clearsky_lw::type" type="combination">
+				<parameter key="%::clearsky_lw::type" type="combination" default="FALSE">
 					<option value="Model: " type="dropdown">
 						<option value="Brutsaert" type="string" />
 						<option value="Dilley" type="string" />
@@ -2161,7 +2328,7 @@
 			</option>
 
 			<option value="ALLSKY_LW" type="choice">
-				<parameter key="%::allsky_lw::type" type="combination">
+				<parameter key="%::allsky_lw::type" type="combination" default="FALSE">
 					<option value="Model: " type="dropdown">
 						<option value="Omstedt" type="string" />
 						<option value="Konzelmann" type="string" />
@@ -2169,10 +2336,12 @@
 						<option value="Crawford" type="string" />
 					</option>
 				</parameter>
-				<parameter key="%::allsky_lw::use_rswr" type="alternative" optional="true">
-					<option value="FALSE" type="string" />
-					<option value="TRUE" type="string" />
-					<help>if enabling "use_rswr", when no ISWR is available it will be computed from RSWR and a ground albedo (if HS is greater than a threshold, it will be a snow albedo, otherwise a soil albedo). Keep in mind that this is not very precise!</help>
+				<parameter key="%::allsky_lw::use_rswr" type="combination" default="FALSE">
+					<option value="use_rswr: " type="dropdown">
+						<option value="FALSE" type="string" />
+						<option value="TRUE" type="string" />
+					</option>
+				<help>Should iswr be computed from rswr and an estimated albedo (not very precise)?</help>
 				</parameter>
 				<help>Generate ILWR using an all sky model. If no cloudiness is available, it is parametrized based on solar index (ratio of potential short wave radiation and measured short wave radiation)</help>
 			</option>
@@ -2186,10 +2355,12 @@
 			</option>
 
 			<option value="TAU_CLD" type="choice">
-				<parameter key="%::tau_cld::use_rswr" type="alternative" optional="true">
-					<option value="FALSE" type="string" />
-					<option value="TRUE" type="string" />
-					<help>if enabling "use_rswr", when no ISWR is available it will be computed from RSWR and a ground albedo (if HS is greater than a threshold, it will be a snow albedo, otherwise a soil albedo). Keep in mind that this is not very precise!</help>
+				<parameter key="%::tau_cld::use_rswr" type="combination" default="FALSE">
+					<option value="use_rswr: " type="dropdown">
+						<option value="FALSE" type="string" />
+						<option value="TRUE" type="string" />
+					</option>
+				<help>Should iswr be computed from rswr and an estimated albedo (not very precise)?</help>
 				</parameter>
 				<help>Generate the atmospheric transmissivity based on cloud cover fraction.</help>
 			</option>
@@ -2198,33 +2369,33 @@
 				<help>Generate precipitation from changes in snow height (see Mair et al., &lt;i&gt;"ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height and rain gauge measurements"&lt;/i&gt;, Hydrology and Earth System Sciences Discussions, 10(7), 8683-8714, 2013).</help>
 			</option>
 
-			<option label="PSUM phase" value="PPHASE" type="choice">
-				<parameter key="%::pphase::type" type="alternative" optional="false">
+			<option value="PRECSPLITTING" type="choice">
+				<parameter key="%::precsplitting::type" type="alternative" optional="false">
 					<option value="THRESH" type="string">
-						<parameter key="%::pphase::snow" type="combination">
+						<parameter key="%::precsplitting::snow" type="combination">
 							<option label="" type="decimal" optional="false" value="273.35"/>
 						</parameter>
 					</option>
 					<option value="RANGE" type="string">
-						<parameter key="%::pphase::snow" type="combination">
+						<parameter key="%::precsplitting::snow" type="combination">
 							<option label="" type="decimal" optional="false" value="273.35"/>
 						</parameter>
-						<parameter key="%::pphase::rain" type="combination">
+						<parameter key="%::precsplitting::rain" type="combination">
 							<option label="" type="decimal" optional="false" value="275.35"/>
 						</parameter>
 					</option>
 				</parameter>
 
-				<help>Generate the precipitation phase with a fixed temperature threshold or with a linear evolution from snow to rain within a given air temperature range</help>
+				<help>Generate either precip. sum and phase from solid and liquid precip. amounts or the other way around, performing precipitation splitting if necessary. This generator identifies what should be generated based on the parameter name, therefore it only applies to PSUM, PSUM_PH, PSUM_L and PSUM_S.</help>
 			</option>
 
-			<option value="PRECUNSPLIT" type="choice">
-				<help>Generate split precipitation (as provided by the "RAINF" and "SNOWF" parameters) into amount/phase. It is suitable for PSUM or PSUM_PH.</help>
+			<option value="WINDCOMPONENTS" type="choice">
+				<help>Generate VW and DW from the U and V wind components</help>
 			</option>
 
 		</parameter>
 		<reference name="METEOIOPARAMETERS" />
-		<help>&lt;font color="FF0000"&gt;&lt;strong&gt;The order of declaration of the data generator defines the priority!&lt;/strong&gt;&lt;/font&gt; Ie. only if the first one can not provide data, would the second one get called...</help>
+		<help>&lt;font color="FF0000"&gt;&lt;strong&gt;The order of declaration of the data creators defines the priority!&lt;/strong&gt;&lt;/font&gt; Ie. only if the first one can not provide data, would the second one get called...</help>
 	</parameter>
-
+	
 </inishell_config>

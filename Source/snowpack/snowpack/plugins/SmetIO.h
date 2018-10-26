@@ -88,6 +88,7 @@ class SmetIO : public SnowpackIOInterface {
 		double calculation_step_length, ts_days_between;
 		double min_depth_subsurf;
 		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope;
+		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool enable_pref_flow;
 };

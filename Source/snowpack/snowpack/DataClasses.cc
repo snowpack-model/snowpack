@@ -2431,7 +2431,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	if ( Edata0.theta[SOIL] > 0. || Edata1.theta[SOIL] > 0. )
 		return false;
 
-	if ( (Edata0.mk >= 100) || (Edata1.mk >= 100) )
+	if ( (Edata0.mk >= 100 && int(Edata0.mk/1000)!=9) || (Edata1.mk >= 100 && int(Edata0.mk/1000)!=9) )
 		return false;
 
 	if ( (Edata0.mk%100 == 3) || (Edata1.mk%100 == 3) )

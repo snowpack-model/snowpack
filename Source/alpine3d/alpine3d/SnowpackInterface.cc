@@ -82,7 +82,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                 : run_info(), io(io_cfg), pts(prepare_pts(vec_pts)),dem(dem_in),
                   is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
                   do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_preparation(false),
-                  soil_temp_depth(IOUtils::nodata), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
+                  Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false),
                   meteo_outpath(), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(), tz_out(0.),
                   sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), landuse(landuse_in),
@@ -114,7 +114,17 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	//create and prepare  the vector of output grids
 	if (grids_write) {
 		sn_cfg.getValue("GRIDS_PARAMETERS", "output", output_grids);
-		uniqueOutputGrids(output_grids);
+		std::vector<double> soil_temp_depths;
+		sn_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
+		const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
+		if (soil_temp_depths.size()>max_Tsoil) 
+			throw InvalidArgumentException("Too many soil temperatures requested", AT);
+		for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
+			const std::string ii_str( static_cast<ostringstream*>( &(ostringstream() << (ii+1)) )->str() );
+			Tsoil_idx.push_back( ii_str );
+			output_grids.push_back( "TSOIL"+ii_str );
+		}
+		SnowpackInterfaceWorker::uniqueOutputGrids(output_grids);
 	}
 	//add the grids that are necessary for the other modules
 	const std::string all_grids = sn_cfg.get("GRIDS_PARAMETERS", "output", "");
@@ -245,7 +255,7 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		do_io_locally = source.do_io_locally;
 		station_name = source.station_name;
 
-		soil_temp_depth = source.soil_temp_depth;
+		Tsoil_idx = source.Tsoil_idx;
 		grids_start = source.grids_start;
 		grids_days_between = source.grids_days_between;
 		ts_start = source.ts_start;
@@ -276,19 +286,6 @@ std::string SnowpackInterface::getGridsRequirements() const
 	return ret;
 }
 
-/** @brief Make sure all requested grids only appear once
- * @param output_grids vector of requeste grids to sort and filter
- */
-void SnowpackInterface::uniqueOutputGrids(std::vector<std::string>& output_grids)
-{
-	for (size_t ii = 0; ii<output_grids.size(); ++ii)
-		IOUtils::toUpper(output_grids[ii]);
-
-	std::sort (output_grids.begin(), output_grids.end());
-	const std::vector<std::string>::iterator it = std::unique (output_grids.begin(), output_grids.end());
-	output_grids.resize( std::distance(output_grids.begin(),it) );
-}
-
 mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, const bool have_pts)
 {
 	SnowpackConfig tmp_cfg(io_cfg);
@@ -307,8 +304,6 @@ mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, con
 	tmp_cfg.getValue("MASK_DYNAMIC", "Output", mask_dynamic, IOUtils::nothrow);
 	tmp_cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow, IOUtils::nothrow);
 	tmp_cfg.getValue("SNOW_PREPARATION", "Input", snow_preparation, IOUtils::nothrow);
-	tmp_cfg.getValue("SOIL_TEMPERATURE_DEPTH", "Output", soil_temp_depth, IOUtils::nothrow);
-
 	tmp_cfg.getValue("GRIDS_WRITE", "Output", grids_write);
 	tmp_cfg.getValue("GRIDS_START", "Output", grids_start);
 	tmp_cfg.getValue("GRIDS_DAYS_BETWEEN", "Output", grids_days_between);
@@ -927,7 +922,9 @@ void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const do
 	if (useCanopy) smet_out << "comment      = " << "ISWR/RSWR are above the canopy, ISWR_can/RSWR_can and PSUM/PSUM_PH are below the canopy\n";
 
 	smet_out << "fields       = timestamp TA TSS TSG VW DW VW_MAX ISWR OSWR ILWR PSUM PSUM_PH HS RH";
-	if (soil_temp_depth!=IOUtils::nodata) smet_out << " TSOIL";
+	for (size_t ii=0; ii<Tsoil_idx.size(); ii++) 
+		smet_out << " TSOIL" << Tsoil_idx[ii];
+	
 	if (useCanopy) smet_out << " ISWR_can RSWR_can";
 	smet_out << "\n[DATA]\n";
 

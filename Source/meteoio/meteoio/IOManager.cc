@@ -453,8 +453,8 @@ void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMete
 //this is only called when mode==IOHandler::VSTATIONS
 std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd)
 {
-	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset, vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );
-	const Date buff_end( Date::rnd(dateEnd-vstations_refresh_offset, vstations_refresh_rate, Date::UP) + vstations_refresh_offset/(24.*3600.) );
+	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );
+	const Date buff_end( Date::rnd(dateEnd-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::UP) + vstations_refresh_offset/(24.*3600.) );
 	std::string info_string;
 	
 	std::vector<METEO_SET> vecvecMeteo(v_stations.size());
