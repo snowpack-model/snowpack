@@ -73,7 +73,7 @@ double Atmosphere::stdAirPressure(const double& altitude) {
  * and T<sub>0</sub> the standard sea level temperature, the air mol mass m, gravity g at height, and the
  * gas constant R):
  * \f[
- * P_0 = P / (1-L*h/T_0)^((m*g)/(R*L))
+ * P_0 = \frac{P}{(1-\frac{Lh}{T_0})^\frac{mg}{RL}}
  * \f]
  * With growing altitude the output is of little use to predict the pressure, but it can be used to
  * baseline plots.

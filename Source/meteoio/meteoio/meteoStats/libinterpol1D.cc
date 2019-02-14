@@ -66,41 +66,56 @@ double Interpol1D::max_element(const std::vector<double>& X)
 std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const std::vector<double>& quartiles)
 {
 	const size_t Xsize = X.size();
-	const size_t Qsize = quartiles.size();
 	if (Xsize == 0)
 		throw NoDataException("Trying to calculate quantiles with no data points", AT);
-	if (Qsize == 0)
-		throw NoDataException("No quantiles specified", AT);
 
 	//in order to properly escape nodata points, we need to copy in a temporary vector
-	vector<double> vecTemp;
+	std::vector<double> vecTemp;
 	for (size_t i=0; i<Xsize; i++) {
 		const double value=X[i];
 		if (value!=IOUtils::nodata) vecTemp.push_back(value);
 	}
 
+	return quantiles_core(vecTemp, quartiles);
+}
+
+/**
+ * @brief This function returns a vector of quantiles, but does not filter out nodata values!
+ * The vector does not have to be sorted. See https://secure.wikimedia.org/wikipedia/en/wiki/Quartile for more.
+ * This code is heavily inspired by Ken Wilder, https://sites.google.com/site/jivsoft/Home/compute-ranks-of-elements-in-a-c---array-or-vector
+ * (quantile method, replacing the nth-element call by direct access to a sorted vector).
+ * @param X vector to classify (nodata values processed as normal values)
+ * @param quartiles vector of quartiles, between 0 and 1
+ * @return vector of ordinates of the quantiles
+ */
+std::vector<double> Interpol1D::quantiles_core(std::vector<double> X, const std::vector<double>& quartiles)
+{
+	const size_t Qsize = quartiles.size();
+	if (Qsize == 0)
+		throw NoDataException("No quantiles specified", AT);
+
 	//we will store results in a new vector
 	std::vector<double> vecResults(Qsize, IOUtils::nodata);
 
-	const size_t vecSize = vecTemp.size();
+	const size_t vecSize = X.size();
 	if (vecSize == 0) return vecResults; //ie: nodata values
 	if (vecSize == 1) {
-		std::fill(vecResults.begin(), vecResults.end(), vecTemp[0]);
+		std::fill(vecResults.begin(), vecResults.end(), X[0]);
 		return vecResults;
 	}
 
 	//compute quantiles
-	std::sort( vecTemp.begin(), vecTemp.end()); //since we will process several values, we sort the vector
+	std::sort( X.begin(), X.end()); //since we will process several values, we sort the vector
 	for (size_t ii=0; ii<Qsize; ii++) {
 		const double q = quartiles[ii];
-		if (q<=0.) vecResults[ii] = vecTemp.front();
-		else if (q>=1.) vecResults[ii] = vecTemp.back();
+		if (q<=0.) vecResults[ii] = X.front();
+		else if (q>=1.) vecResults[ii] = X.back();
 		else {
 			const double pos = static_cast<double>(vecSize - 1) * q;
 			const size_t ind = static_cast<size_t>(pos);
 			const double delta = pos - static_cast<double>(ind);
-			const double i1 = vecTemp[ind];
-			const double i2 = vecTemp[ind+1];
+			const double i1 = X[ind];
+			const double i2 = X[ind+1];
 			vecResults[ii] = i1 * (1.0 - delta) + i2 * delta;
 		}
 	}

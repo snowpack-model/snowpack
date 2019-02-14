@@ -434,8 +434,8 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 		}
 
 		double east, north, alt;
-		if (!IOUtils::convertString(east, alt_str)) throw InvalidFormatException("Can not parse the easting given in the coordinates: "+coord_spec,AT);
-		if (!IOUtils::convertString(north, alt_str)) throw InvalidFormatException("Can not parse the northing given in the coordinates: "+coord_spec,AT);
+		if (!IOUtils::convertString(east, easting_str)) throw InvalidFormatException("Can not parse the easting given in the coordinates: "+coord_spec,AT);
+		if (!IOUtils::convertString(north, northing_str)) throw InvalidFormatException("Can not parse the northing given in the coordinates: "+coord_spec,AT);
 		if (!IOUtils::convertString(alt, alt_str)) throw InvalidFormatException("Can not parse the altitude given in the coordinates: "+coord_spec,AT);
 		setXY( east, north, alt);
 	}

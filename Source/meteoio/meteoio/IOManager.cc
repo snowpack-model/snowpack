@@ -394,7 +394,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 		}
 	}
 
-	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	info_string = interpolator.interpolate(date, dem, meteoparam, result);
 	return (!result.empty());
 }
 
@@ -415,15 +415,14 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 		}
 	}
 
-	interpolator.interpolate(date, dem, param_name, result, info_string);
+	info_string = interpolator.interpolate(date, dem, param_name, result);
 	return (!result.empty());
 }
 
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result)
 {
-	std::string info_string;
-	interpolate(date, dem, meteoparam, in_coords, result, info_string);
+	const std::string info_string( interpolator.interpolate(date, dem, meteoparam, in_coords, result) );
 	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
 	cerr << " (" << info_string << ") " << endl;
 }
@@ -431,13 +430,13 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
-	interpolator.interpolate(date, dem, meteoparam, in_coords, result, info_string);
+	info_string = interpolator.interpolate(date, dem, meteoparam, in_coords, result);
 }
 
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<StationData>& in_stations, std::vector<double>& result, std::string& info_string)
 {
-	interpolator.interpolate(date, dem, meteoparam, in_stations, result, info_string);
+	info_string = interpolator.interpolate(date, dem, meteoparam, in_stations, result);
 }
 
 double IOManager::getAvgSamplingRate() const 
@@ -455,11 +454,16 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 {
 	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );
 	const Date buff_end( Date::rnd(dateEnd-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::UP) + vstations_refresh_offset/(24.*3600.) );
-	std::string info_string;
 	
 	std::vector<METEO_SET> vecvecMeteo(v_stations.size());
 	const double date_inc = static_cast<double>(vstations_refresh_rate) / (24.*3600.);
-	for (Date date=buff_start; date<=buff_end; date += date_inc) {
+	
+	METEO_SET vecMeteo;
+	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer. HACK what happens if BUFFER_SIZE is smaller than dateEnd-dateStart?
+	const Date dataEnd( tsm1.getRawDataEnd() ); //we won't try to spatially interpolate after the end of data
+	if (dataEnd.isUndef()) return vecvecMeteo;
+	
+	for (Date date=buff_start; date<=std::min(dataEnd, dateEnd); date += date_inc) {
 		//fill vecvecMeteo with metadata
 		for (size_t ii=0; ii<v_stations.size(); ii++) {
 			MeteoData md(date, v_stations[ii]);
@@ -469,12 +473,11 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 		//interpolate each field and fill vecvecMeteo with data
 		for (size_t param=0; param<v_params.size(); param++) {
 			std::vector<double> result;
-			interpolate(date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_stations, result, info_string);
+			interpolator.interpolate(date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_stations, result);
 			for (size_t ii=0; ii<v_stations.size(); ii++) {
 				vecvecMeteo[ii].back()(v_params[param]) = result[ii];
 			}
 		}
-
 	}
 	
 	return vecvecMeteo;

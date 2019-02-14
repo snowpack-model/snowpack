@@ -18,7 +18,7 @@
 #ifndef FilterDespikingPS_H
 #define FilterDespikingPS_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/libfit1D.h>
 
 #include <vector>
@@ -79,7 +79,7 @@ namespace mio {
  */
 
 
-class FilterDespikingPS : public FilterBlock {
+class FilterDespikingPS : public ProcessingBlock {
 	public:
 		FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
@@ -114,15 +114,6 @@ class FilterDespikingPS : public FilterBlock {
 		void solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x);
 		const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec, const unsigned int& param);
 		const std::vector<double> helperGetTimeVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec);
-		void helperWriteDebugFile1DerivativesAndFittedEllipses (const std::vector<double>& uVec, const std::vector<double>& duVec,
-                                                                const std::vector<double>& du2Vec,
-                                                                double a1,double b1,double a2,double b2,double a3,double b3,double theta);
-		void helperWriteDebugFile2Interpolation(const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-                                                const std::vector<double>& x, const std::vector<double>& y,
-                                                const Fit1D& quadraticFit,unsigned int iiSpike);
-		void helperWriteDebugFile3WindowForInterpolation(size_t ii,std::vector<double>& x,std::vector<double>& y);
-		void helperWriteDebugFile4OriginalAndFinalSignal(std::vector<double>& ivec, std::vector<double>& ovec,
-                                                         std::vector<int>& allSpikesVec);
 
 		double sensitivityParam; //this parameter controls the sensitivity of the filter. standard value: 1
 		implementation_type methodParam; //this parameter controls which implementation of the filter is used: according to Mori or Goring

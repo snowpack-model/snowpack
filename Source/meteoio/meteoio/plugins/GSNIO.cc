@@ -42,7 +42,7 @@ namespace mio {
  * it will probably not be usable by a numerical model. Several solutions could then be applied:
  *     + rename the parameter in GSN in line with the names that are already recognized by this plugin;
  *     + run a small test (for example with the example "meteo_reading") in order to identify the names that are not recognized, then
- * configure MeteoIO to copy these parameter into a standard name (see \ref data_manipulations "raw data editing").
+ * configure MeteoIO to copy these parameter into a standard name (see \ref raw_data_editing "raw data editing").
  *
  * @section gsn_units Units
  * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known,

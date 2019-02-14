@@ -97,6 +97,8 @@ class ProcessingBlock {
 		const std::string toString() const;
 		bool skipStation(const std::string& station_id) const;
 
+		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y);
+		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2);
 		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
 		static std::vector<offset_spec> readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx=2);
 		static std::map< std::string, std::vector<dates_range> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
@@ -104,6 +106,11 @@ class ProcessingBlock {
 
 	protected:
 		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+
+		static void extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
+		                               std::vector<double>& ovec);
+		static void extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
+                                               std::vector<double>& ovec);
 		
 		const std::set<std::string> excluded_stations, kept_stations;
 		ProcessingProperties properties;

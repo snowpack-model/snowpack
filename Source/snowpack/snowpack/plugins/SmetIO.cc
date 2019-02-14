@@ -1025,11 +1025,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		os << " ";
 	}	*/
 	if (Xdata.Seaice != NULL) {
-		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  bulk_salinity  avg_bulk_salinity  brine_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
-		plot_units << "m m m m m m kg/m2 kg/m3 kg/m2 kg/m3 kg/m2 kg/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
+		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1167,10 +1167,9 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel );
 		data.push_back( Xdata.Seaice->FreeBoard );
 		data.push_back( Xdata.Seaice->SeaLevel );
-		data.push_back( Xdata.Seaice->getBulkSalinity(Xdata) );
-		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
-		data.push_back( Xdata.Seaice->getBrineSalinity(Xdata) );
-		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
+		data.push_back( Xdata.Seaice->getTotSalinity(Xdata) );
+		data.push_back( Xdata.Seaice->getAvgBulkSalinity(Xdata) );
+		data.push_back( Xdata.Seaice->getAvgBrineSalinity(Xdata) );
 		data.push_back( Xdata.Seaice->BottomSalFlux );
 		data.push_back( Xdata.Seaice->TopSalFlux );
 	}

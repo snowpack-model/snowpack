@@ -18,7 +18,7 @@
 #ifndef PROCDEACCUMULATE_H
 #define PROCDEACCUMULATE_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 

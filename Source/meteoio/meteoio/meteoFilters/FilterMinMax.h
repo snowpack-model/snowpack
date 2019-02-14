@@ -20,7 +20,7 @@
 
 //#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -53,7 +53,7 @@ namespace mio {
  *
  */
 
-class FilterMinMax : public FilterBlock {
+class FilterMinMax : public ProcessingBlock {
 	public:
 		FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

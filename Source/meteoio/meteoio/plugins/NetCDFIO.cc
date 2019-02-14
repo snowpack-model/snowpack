@@ -57,7 +57,8 @@ namespace mio {
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CROCUS - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
  * - AMUNDSEN - from the <A HREF="https://geographie.uibk.ac.at/blog/ahc/models/">Alpine, Hydro, climatology</A> group in Innsbruck;
- * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model.
+ * - WRF - the <A HREF="http://www.wrf-model.org/index.php">Weather Research & Forecasting</A> model;
+ * - METEOCH - for datasets produced by <A HREF="https://www.meteoswiss.admin.ch/home/climate/swiss-climate-in-detail/raeumliche-klimaanalysen.html">Meteo Swiss</A>.
  * 
  * Moreover, when writing NetCDF files with MeteoIO, all the generated files will contain as much of the Attribute Conventions Dataset Discovery 
  * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> metadata as (automatically) possible, 
@@ -665,9 +666,9 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	if (isLatLon)
 		llcorner.setLatLon( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
 	else
-		llcorner.setXY( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
+		llcorner.setXY( std::min(vecX.front(), vecX.back()), std::min(vecY.front(), vecY.back()), IOUtils::nodata);
 	//TODO expand the definition of Grid2DObject to support lat/lon grids and reproject in GridsManager
-	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
+	double resampling_factor_x = IOUtils::nodata, resampling_factor_y = IOUtils::nodata;
 	const double cellsize = (isLatLon)? ncpp::calculate_cellsize(resampling_factor_x, resampling_factor_y, vecX, vecY) : ncpp::calculate_XYcellsize(resampling_factor_x, resampling_factor_y, vecX, vecY);
 	Grid2DObject grid(vecX.size(), vecY.size(), cellsize, llcorner);
 	
@@ -744,7 +745,7 @@ void ncFiles::write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, c
 		if (param==ncpp::LATITUDE || param==ncpp::NORTHING) length = grid_in.getNy();
 		if (param==ncpp::LONGITUDE || param==ncpp::EASTING) length = grid_in.getNx();
 		ncpp::createDimension(ncid, dimensions_map[ param ], length);
-		if (setAssociatedVariable(ncid, param, date)) nc_variables.push_back( dimensions[ii] ); //associated variable will have to be filled
+		if (setAssociatedVariable(ncid, param, date)) nc_variables.push_back( param ); //associated variable will have to be filled
 		if (var.varid == -1) var.dimids.push_back( dimensions_map[param].dimid );
 	}
 	if (var.varid == -1) ncpp::create_variable(ncid, var); //create the "main" variable if necessary
@@ -1189,7 +1190,11 @@ bool ncFiles::setAssociatedVariable(const int& ncid, const size_t& param, const 
 			date_str[ 10 ] = ' '; //replace "T" by " "
 			
 			const std::string units( vars[ param ].attributes.units );
-			if (units=="h") {
+			if (units=="d") {
+				vars[param].attributes.units = "days since " + date_str;
+				vars[param].scale = 1.;
+				time_precision /= 1.;
+			} else if (units=="h") {
 				vars[param].attributes.units = "hours since " + date_str;
 				vars[param].scale = 24.;
 				time_precision /= 3600.;
@@ -1319,6 +1324,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 
 			//perform some units corrections, if necessary
 			if (var.attributes.units=="%") for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 100.;
+			if (var.attributes.units=="kilometer") for (size_t ii=0; ii<data.size(); ii++) data[ii] *= 1e-3;
 		}
 
 		return data;
@@ -1556,6 +1562,9 @@ std::vector<double> ncFiles::read_1Dvariable(const int& ncid, const size_t& para
 	ncpp::read_data(ncid, it->second, data);
 	std::copy(data, data+length, results.begin());
 	delete[] data;
+	
+	//potential units transformations
+	if (schema.name!="METEOCH" && it->second.attributes.units=="kilometer") for (size_t ii=0; ii<length; ii++) results[ii] *= 1000.;
 	return results;
 }
 

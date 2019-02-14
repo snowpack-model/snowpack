@@ -2007,10 +2007,9 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->FreeBoard;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->SeaLevel;
-				fout << "," << std::setprecision(3) << Xdata.Seaice->getBulkSalinity(Xdata);
-				fout << "," << std::setprecision(3) << ((Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata));
-				fout << "," << std::setprecision(3) << Xdata.Seaice->getBrineSalinity(Xdata);
-				fout << "," << std::setprecision(3) << ((Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata));
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getTotSalinity(Xdata);
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getAvgBulkSalinity(Xdata);
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getAvgBrineSalinity(Xdata);
 				fout << "," << std::setprecision(3) << Xdata.Seaice->BottomSalFlux;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->TopSalFlux;
 				fout << ",,,,,,,,,,,,,,,,";
@@ -2254,8 +2253,8 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			Canopy::DumpCanopyHeader(fout);
 		} else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				fout << ",Total thickness,Ice thickness,Snow thickness,Snow thickness wrt reference,Freeboard,Sea level,Bulk salinity,Average bulk salinity,Brine salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
-				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+				fout << ",Total thickness,Ice thickness,Snow thickness,Snow thickness wrt reference,Freeboard,Sea level,Tot salinity,Average bulk salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
+				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
 			} else {
 				// 28 empty fields
 				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
@@ -2319,8 +2318,8 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			Canopy::DumpCanopyUnits(fout);
 		} else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				fout << ",m,m,m,m,m,m,kg m-2,kg m-3,kg m-2,kg m^3,kg m-2,kg m-2";
-				fout << ",,,,,,,,,,,,,,,,";
+				fout << ",m,m,m,m,m,m,g m-2,g kg-1,g kg-1,g m-2,g m-2";
+				fout << ",,,,,,,,,,,,,,,,,";
 			} else {
 				fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
 			}

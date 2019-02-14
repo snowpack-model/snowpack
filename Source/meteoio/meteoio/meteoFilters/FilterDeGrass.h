@@ -18,7 +18,7 @@
 #ifndef FilterDeGrass_H
 #define FilterDeGrass_H
 
-#include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
+#include <meteoio/meteoFilters/ProcessingBlock.h> //use this one for all others
 #include <vector>
 #include <string>
 
@@ -60,7 +60,7 @@ namespace mio {
  * @date   2015-12-16
  */
 
-class FilterDeGrass : public FilterBlock {
+class FilterDeGrass : public ProcessingBlock {
 	public:
 		FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

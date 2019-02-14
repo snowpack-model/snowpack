@@ -18,7 +18,7 @@
 #ifndef PROCUNDERCATCH_HAMON_H
 #define PROCUNDERCATCH_HAMON_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 

@@ -429,7 +429,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		if (useAnetz) { //Important: we don't care about the metadata for ANETZ stations
 			std::vector<StationData> vecAnetzStation;       //holds the unique ANETZ stations that need to be read
-			std::map<string, size_t> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
+			std::map<std::string, size_t> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
 			findAnetzStations(mapAnetzNames, vecAnetzStation);
 
 			//read Anetz Data, convert it to PSUMs at XX:00 and XX:30
@@ -519,7 +519,7 @@ void ImisIO::assimilateAnetzData(const AnetzData& ad,
 
 		//replace by ANETZ psum if there is no own value measured
 		double& md_psum = vecMeteo[stationindex][ii](MeteoData::PSUM);
-		if ((md_psum == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(md_psum, 0.0, 0.001)))
+		if ((md_psum == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(md_psum, 0.0, 0.001) && sum!=IOUtils::nodata))
 			md_psum = sum;
 	}
 }

@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterDeGrass::FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata),
+          : ProcessingBlock(vecArgs, name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata),
 		    TSS_daily_mean(IOUtils::nodata), TSG_daily_var(IOUtils::nodata), month(7)
 {
 	properties.stage = ProcessingProperties::first;

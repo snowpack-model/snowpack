@@ -453,9 +453,9 @@ double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<
 	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
 	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
 
-	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
 	} else {
@@ -471,9 +471,9 @@ double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vecto
 	const double distanceX = fabs(vecX.front() - vecX.back());
 	const double distanceY = fabs(vecY.front() - vecY.back());
 
-	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
 
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
@@ -839,6 +839,8 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_DOUBLE;
 	} else if (schema=="AMUNDSEN") {
 		dflt_type = NC_FLOAT;
+	} else if (schema=="METEOCH") {
+		dflt_type = NC_FLOAT;
 	} else
 		throw mio::InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
@@ -908,6 +910,18 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
 	results["WRF"] = tmp;
 	
+	//METEOCH schema
+	tmp.clear();
+	tmp.push_back( ncpp::nc_dimension(ncpp::TIME, "REFERENCE_TS") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::LATITUDE, "latitude") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "longitude") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "x") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "y") );
+	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "alt") );
+	results["METEOCH"] = tmp;
+	
 	return results;
 }
 
@@ -916,7 +930,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	std::map< std::string, std::vector<ncpp::var_attr> > results;
 	std::vector<ncpp::var_attr> tmp;
 
-	//CF-1.6 schema -> to be checked and improved from CF-1.6 documentation
+	//CF-1.6 schema
 	tmp.clear();
 	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "", "min", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "", "degree_north", mio::IOUtils::nodata, NC_FLOAT) );
@@ -1043,6 +1057,17 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "10 metre U wind component", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "10 metre V wind component", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
+	
+	//METEOCH schema
+	tmp.clear();
+	tmp.push_back( ncpp::var_attr(ncpp::TIME, "REFERENCE_TS", "REFERENCE_TS", "REFERENCE_TS", "d", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "LAT", "latitude", "latitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "LONG", "longitude", "longitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", mio::IOUtils::nodata, NC_CHAR) );
+	tmp.push_back( ncpp::var_attr(ncpp::EASTING, "x", "projection_x_coordinate", "x coordinate of projection", "m", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "y", "projection_y_coordinate", "y coordinate of projection", "m", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "RhiresD", "", "", "mm", mio::IOUtils::nodata, NC_FLOAT) );
+	results["METEOCH"] = tmp;
 	
 	return results;
 }

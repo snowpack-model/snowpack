@@ -599,31 +599,51 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 	return;
 }
 
+
 /**
- * @brief Returns the total salinity (kg / m^2)
+ * @brief Returns the average bulk salinity (g / kg)
  * @param Xdata Snow cover data
  */
-double SeaIce::getBulkSalinity(const SnowStation& Xdata)
+double SeaIce::getAvgBulkSalinity(const SnowStation& Xdata)
 {
 	const size_t nE = Xdata.getNumberOfElements();
 	double ret = 0.;
+	double dH = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
-		ret += Xdata.Edata[e].salinity * Xdata.Edata[e].L;
+		ret += Xdata.Edata[e].salinity * Xdata.Edata[e].Rho * Xdata.Edata[e].L;
+		dH += Xdata.Edata[e].Rho * Xdata.Edata[e].L;
 	}
-	return ret;
+	return (dH>0.) ? (ret/dH) : (IOUtils::nodata);
 }
 
 
 /**
- * @brief Returns the total brine salinity (kg / m^2)
+ * @brief Returns the average brine salinity (g / kg)
  * @param Xdata Snow cover data
  */
-double SeaIce::getBrineSalinity(const SnowStation& Xdata)
+double SeaIce::getAvgBrineSalinity(const SnowStation& Xdata)
+{
+	const size_t nE = Xdata.getNumberOfElements();
+	double ret = 0.;
+	double dH = 0.;
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		ret += Xdata.Edata[e].theta[WATER] * Xdata.Edata[e].L * (((Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF]) != 0.) ? (Xdata.Edata[e].salinity / (Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF])) : (0.));
+		dH += Xdata.Edata[e].theta[WATER] * Xdata.Edata[e].L;
+	}
+	return (dH>0.) ? (ret/dH) : (IOUtils::nodata);
+}
+
+
+/**
+ * @brief Returns the total salinity (g / m^2)
+ * @param Xdata Snow cover data
+ */
+double SeaIce::getTotSalinity(const SnowStation& Xdata)
 {
 	const size_t nE = Xdata.getNumberOfElements();
 	double ret = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
-		ret += Xdata.Edata[e].L * (((Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF]) != 0.) ? (Xdata.Edata[e].salinity / (Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF])) : (0.));
+		ret += (Xdata.Edata[e].theta[WATER] + Xdata.Edata[e].theta[WATER_PREF]) * Constants::density_water * Xdata.Edata[e].L * Xdata.Edata[e].salinity;
 	}
 	return ret;
 }

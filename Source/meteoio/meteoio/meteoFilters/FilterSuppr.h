@@ -18,7 +18,7 @@
 #ifndef FILTERSUPPR_H
 #define FILTERSUPPR_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <map>
 #include <string>
@@ -60,7 +60,7 @@ namespace mio {
  * space character on both sides, as shown in the example above).
  */
 
-class FilterSuppr : public FilterBlock {
+class FilterSuppr : public ProcessingBlock {
 	public:
 		FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
 

@@ -1,5 +1,20 @@
-/* DO NOT USE this file until you see the usual header here */
-//(mr 2018-10)
+/***********************************************************************************/
+/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <ctime>
 #include <inttypes.h>
@@ -116,20 +131,6 @@ int main(/*int argc, char** argv*/)
 	
 	std::cout << "--- Done" << std::endl;
 
-/*
-	//code snippet for future distributions that may want to automate input from many parameters via containers,
-	//or a user that wants to automate runs with different distribution inputs
-	std::vector<double> distribution_params; //all params are stored to and also retrieved to a vector
-	double gamma_in = 0.7;
-	distribution_params.push_back(gamma_in);
- 	RNG.setDistribution(mio::RandomNumberGenerator::RNG_GAMMA, distribution_params); //set distribution with vector
-	
-	distribution_params.clear();
-	const mio::RandomNumberGenerator::RNG_DISTR dist_t = RNG.getDistribution(distribution_params); 
-	const double gamma_out = distribution_params[0]; //see doc for index
-	const bool is_gamma_distr = (dist_t == mio::RandomNumberGenerator::RNG_GAMMA);
-*/
-
 	return 0;
 }
 
@@ -181,8 +182,4 @@ Size: 64 bit
 Period: ~3.138*10^57
 Hardware seeded: yes
 Distribution: uniform
-
---- Using fast generator
-FAST:: 1921424058301183269 464594646 0.9259207787352589
---- Done
 */

@@ -82,6 +82,20 @@ class MeteoBuffer {
 		 * @return end date of the buffer
 		 */
 		Date getBufferEnd() const;
+		
+		/**
+		 * @brief Returns the real begining of the data contained in the buffer.
+		 * This is the start date of the <b>available data</b> that is in the buffer (it can be much later than the requested start date).
+		 * @return start date of the data or Date::undefined if no data is available
+		 */
+		Date getDataStart() const;
+		
+		/**
+		 * @brief Returns the real end of the data contained in the buffer.
+		 * This is the end date of the <b>available data</b> that is in the buffer (it can be much earlier than the requested end date).
+		 * @return end date of the data or Date::undefined if no data is available
+		 */
+		Date getDataEnd() const;
 
 		/**
 		* @brief Check if the buffer is empty

@@ -54,7 +54,7 @@ using namespace mio;
 #pragma clang diagnostic ignored "-Wsign-conversion"
 #endif
 
-const double ReSolver1d::max_theta_ice = 0.99;	//An ice pore space of around 5% is a reasonable value: K. M. Golden et al. The Percolation Phase Transition in Sea Ice, Science 282, 2238 (1998), doi: 10.1126/science.282.5397.2238
+const double ReSolver1d::max_theta_ice = 0.95;	//An ice pore space of around 5% is a reasonable value: K. M. Golden et al. The Percolation Phase Transition in Sea Ice, Science 282, 2238 (1998), doi: 10.1126/science.282.5397.2238
 
 //Setting convergence criteria and numerical limits
 const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-3;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion

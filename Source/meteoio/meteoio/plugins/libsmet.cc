@@ -1012,8 +1012,8 @@ void SMETReader::process_header()
 			if (!missing.empty()) missing += ", ";
 			missing += "epsg";
 		}
-		if (!missing.empty())
-			ss << ": " << missing;
+		if (missing.empty()) missing = "lat/lon or easting/northing";
+		ss << ": " << missing;
 
 		throw SMETException(ss.str(), SMET_AT);
 	}

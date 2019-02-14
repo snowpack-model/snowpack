@@ -254,6 +254,34 @@ Date MeteoBuffer::getBufferEnd() const
 	return ts_end;
 }
 
+Date MeteoBuffer::getDataStart() const
+{
+	Date start;
+	
+	for (size_t ii=1; ii<ts_buffer.size(); ii++) {
+		if (!ts_buffer[ii].empty()) {
+			if (start.isUndef() || ts_buffer[ii].front().date < start)
+				start = ts_buffer[ii].front().date;
+		}
+	}
+	
+	return start;
+}
+
+Date MeteoBuffer::getDataEnd() const
+{
+	Date end;
+	
+	for (size_t ii=1; ii<ts_buffer.size(); ii++) {
+		if (!ts_buffer[ii].empty()) {
+			if (end.isUndef() || ts_buffer[ii].back().date < end)
+				end = ts_buffer[ii].back().date;
+		}
+	}
+	
+	return end;
+}
+
 std::vector< METEO_SET >& MeteoBuffer::getBuffer()
 {
 	return ts_buffer;

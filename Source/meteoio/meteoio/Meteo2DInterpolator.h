@@ -112,31 +112,19 @@ class Meteo2DInterpolator {
 		 * @param meteoparam Any MeteoData member variable as specified in the
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
+		 * @return some information about the interpolation process (useful for GUIs)
 		 */
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result);
 
-		/**
-		 * @brief A generic function that can interpolate for any given MeteoData member variable
-		 *
-		 * @param date date for which to interpolate
-		 * @param dem Digital Elevation Model on which to perform the interpolation
-		 * @param meteoparam Any MeteoData member variable as specified in the
-		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
-		 * @param result A Grid2DObject that will be filled with the interpolated data
-		 * @param InfoString some information about the interpolation process (useful for GUIs)
-		 */
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result, std::string& InfoString);
+		std::string interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
+		                 Grid2DObject& result);
 
-		void interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
-		                 Grid2DObject& result, std::string& InfoString);
-
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<Coords> vec_coords, std::vector<double>& result, std::string& info_string);
+		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<Coords> vec_coords, std::vector<double>& result);
 		
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<StationData> vec_stations, std::vector<double>& result, std::string& info_string);
+		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<StationData> vec_stations, std::vector<double>& result);
 
 		/**
 		 * @brief Retrieve the arguments vector for a given interpolation algorithm

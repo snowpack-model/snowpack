@@ -37,6 +37,7 @@ class Interpol1D {
 		static double min_element(const std::vector<double>& X);
 		static double max_element(const std::vector<double>& X);
 		static std::vector<double> quantiles(const std::vector<double>& X, const std::vector<double>& quartiles);
+		static std::vector<double> quantiles_core(std::vector<double> X, const std::vector<double>& quartiles);
 		static std::vector<double> derivative(const std::vector<double>& X, const std::vector<double>& Y);
 		static void sort(std::vector<double>& X, std::vector<double>& Y, const bool& keep_nodata=true);
 		static void equalBin(const unsigned int k, std::vector<double> &X, std::vector<double> &Y);

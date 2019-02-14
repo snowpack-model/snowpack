@@ -154,11 +154,11 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	if (snow_temp_depth!=IOUtils::nodata) params.push_back("TSNOW");
 	if (snow_avg_temp_depth!=IOUtils::nodata) params.push_back("TSNOW_AVG");
 	if (snow_avg_rho_depth!=IOUtils::nodata) params.push_back("RHOSNOW_AVG");
-	
+
 	//handle the soil temperatures
 	io_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
 	const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
-	if (soil_temp_depths.size()>max_Tsoil) 
+	if (soil_temp_depths.size()>max_Tsoil)
 		throw InvalidArgumentException("Too many soil temperatures requested", AT);
 	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
 		const std::string ii_str( static_cast<ostringstream*>( &(ostringstream() << (ii+1)) )->str() );
@@ -178,7 +178,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 				continue;
 			}
 
-			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			const size_t index_SnowStation = ix + dimx*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skip cells initialized with NULL
 			const SnowStation &snowPixel = *SnowStations[index_SnowStation];
 			fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
@@ -261,7 +261,7 @@ void SnowpackInterfaceWorker::getOutputSNO(std::vector<SnowStation*>& snow_stati
 	for (size_t iy=0;iy<dimy;iy++) {
 		for (size_t ix=0;ix<dimx;ix++) {
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			const size_t index_SnowStation = dimx*iy + ix;
 
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			#pragma omp critical (snow_station_lock)
@@ -405,10 +405,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			default:
 				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::lastparam) //dealing with soil temperatures
 					value = (soil_temp_depths.empty())? IOUtils::nodata : getSoilTemperature(snowPixel, soil_temp_depths[ it->first - SnGrids::TSOIL1 ]);
-				else 
+				else
 					throw InvalidArgumentException("Invalid parameter requested", AT);
 		}
-		
+
 		it->second(ii,jj) = value;
 	}
 }
@@ -460,7 +460,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			const size_t index_SnowStation = ix + dimx*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			SnowStation &snowPixel = *SnowStations[index_SnowStation];
 			const bool isGlacier = snowPixel.isGlacier(false);
@@ -634,7 +634,7 @@ void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
 			if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
 
-			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			const size_t index_SnowStation = ix + dimx*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
 		}
@@ -694,7 +694,7 @@ void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow
 {
 	for (size_t iy=0;iy<dimy;iy++) {
 		for (size_t ix=0;ix<dimx;ix++) {
-			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			const size_t index_SnowStation = dimx*iy + ix;
 			#pragma omp critical (snow_station_lock)
 			ptr_snow_pixel.push_back( SnowStations[index_SnowStation] );
 		}
@@ -709,7 +709,7 @@ void SnowpackInterfaceWorker::setLateralFlow(const std::vector<SnowStation*>& pt
 {
 	for (size_t iy=0;iy<dimy;iy++) {
 		for (size_t ix=0;ix<dimx;ix++) {
-			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			const size_t index_SnowStation = dimx*iy + ix;
 			if (SnowStations[index_SnowStation]!=NULL) {
 				for(size_t n=0; n<SnowStations[index_SnowStation]->getNumberOfElements(); n++) {
 					SnowStations[index_SnowStation]->Edata[n].lwc_source = ptr_snow_pixel[index_SnowStation]->Edata[n].lwc_source;

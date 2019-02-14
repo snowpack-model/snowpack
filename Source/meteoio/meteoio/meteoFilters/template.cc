@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name) //this has to match the class you are inheriting from! ie FilterBlock or ProcessingBlock or WindowedFilter
+          : ProcessingBlock(vecArgs, name) //this has to match the class you are inheriting from! ie ProcessingBlock or WindowedFilter
 {
 	parse_args(vecArgs);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)

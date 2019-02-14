@@ -14,6 +14,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcAggregate.cc
 	meteoFilters/ProcIIR.cc
 	meteoFilters/ProcUnventilatedT.cc
+	meteoFilters/ProcQuantileMapping.cc
 	meteoFilters/ProcShade.cc
 	meteoFilters/ProcPSUMDistribute.cc
 	meteoFilters/ProcDeAccumulate.cc
@@ -24,13 +25,12 @@ SET(meteoFilters_sources
 	meteoFilters/ProcMult.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
-	meteoFilters/FilterBlock.cc
-	meteoFilters/WindowedFilter.cc
-	meteoFilters/ProcessingBlock.cc
-	meteoFilters/ProcessingStack.cc
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
 	meteoFilters/FilterDeGrass.cc
 	meteoFilters/TimeFilters.cc
 	meteoFilters/FilterDespikingPS.cc
+	meteoFilters/ProcessingBlock.cc
+	meteoFilters/ProcessingStack.cc
+	meteoFilters/WindowedFilter.cc
 )

@@ -18,7 +18,7 @@
 #ifndef FILTERPOTENTIALSW_H
 #define FILTERPOTENTIALSW_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -46,7 +46,7 @@ namespace mio {
  * @endcode
  */
 
-class FilterPotentialSW : public FilterBlock {
+class FilterPotentialSW : public ProcessingBlock {
 	public:
 		FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

@@ -82,7 +82,7 @@ namespace mio {
  * 
  * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names". 
  * This is done either by using the CSV_FIELDS key or using the \ref data_move "data renaming" feature of the 
- * \ref data_manipulations "Raw Data Editing" stage.
+ * \ref raw_data_editing "Raw Data Editing" stage.
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -165,7 +165,7 @@ namespace mio {
  * CSV1_ID = DIS4
  * @endcode
  *
- * In order to read a set of files containing each only one parameter and merge them together (see \ref data_manipulations "raw data editing" for more
+ * In order to read a set of files containing each only one parameter and merge them together (see \ref raw_data_editing "raw data editing" for more
  * on the merge feature), extracting the station ID, name and meteorological parameter from the filename:
  *@code
  * METEO = CSV
@@ -191,7 +191,7 @@ namespace mio {
  * AUTOMERGE = true
  * @endcode
  * 
- * In order to read a set of files and merge them together (see \ref data_manipulations "raw data editing" for more
+ * In order to read a set of files and merge them together (see \ref raw_data_editing "raw data editing" for more
  * on the merge feature):
  *@code
  * METEO = CSV

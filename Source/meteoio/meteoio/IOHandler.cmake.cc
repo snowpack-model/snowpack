@@ -156,11 +156,13 @@ namespace mio {
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
  *
- * In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
+ * @note In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
  * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure \b BUFFER_SIZE
  * to the intended duration of the simulation (in days).
- *
- * @section data_manipulations Raw data editing
+ */
+ 
+ /**
+ * @page raw_data_editing Raw Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data:
  *     -# \ref data_move "rename certain parameters for all stations;"
  *     -# \ref data_exclusion "exclude/keep certain parameters on a per station basis;"
@@ -172,7 +174,7 @@ namespace mio {
  * then the KEEP directives, then the MERGE directives and finally the COPY directives. The CREATE directives only come after all the raw data
  * has been edited.
  *
- * @subsection data_move 1. Data renaming (MOVE)
+ * @section data_move 1. Data renaming (MOVE)
  * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take multiple source names that will be processed in the
  * order of declaration. The syntax is new_name::MOVE = {*space delimited list of original names*}. Original names that are not found in the current
  * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
@@ -181,7 +183,7 @@ namespace mio {
  * @endcode
  * This can be used to rename non-standard parameter names into standard ones.
  *
- * @subsection data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
+ * @section data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard)
  * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
  * Another possibility is to provide a file containing one station ID per line followed by a space delimited list of \ref meteoparam "meteorological parameters"
@@ -210,8 +212,8 @@ namespace mio {
  * WFJ2::KEEP = HS PSUM                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
  * @endcode
  *
- * @subsection data_merging 3. Data merging (MERGE)
- * @subsubsection stations_merging 3.1 Merging different stations (MERGE)
+ * @section data_merging 3. Data merging (MERGE)
+ * @subsection stations_merging 3.1 Merging different stations (MERGE)
  * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any
  * EXCLUDE/KEEP commands. This is useful, for example, to provide measurements from different stations that actually share the
  * same measurement location or to build "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP
@@ -241,11 +243,11 @@ namespace mio {
  * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
  *
- * @subsubsection automerge 3.2 Automerge
+ * @subsection automerge 3.2 Automerge
  * If the key \em AUTOMERGE is set to true in the Input section, all stations that have identical IDs will be merged together. The first station
  * to come (usually, the first that was defined in the plugin) has the priority over the next ones.
  *
- * @subsection data_copy 4. Data copy (COPY)
+ * @section data_copy 4. Data copy (COPY)
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
  * new_name::COPY = existing_parameter. For example:
  * @code
@@ -255,7 +257,7 @@ namespace mio {
  * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
  * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
  *
- * @subsection data_creation 5. Data creation (CREATE)
+ * @section data_creation 5. Data creation (CREATE)
  * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
  * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
  * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the
@@ -265,11 +267,6 @@ namespace mio {
  * P::create = STD_PRESS			#the pressure is filled with STD_PRESS if no measured values are available
  * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
  * @endcode
- *
- * @section spatial_resampling_section Spatial resampling
- * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
- * This is handled as "spatial resampling" and is described in the \subpage spatial_resampling "spatial resampling" page.
- *
  */
 
 IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const

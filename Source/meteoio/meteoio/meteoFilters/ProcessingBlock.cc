@@ -40,6 +40,7 @@
 #include <meteoio/meteoFilters/ProcUndercatch_Hamon.h>
 #include <meteoio/meteoFilters/ProcPSUMDistribute.h>
 #include <meteoio/meteoFilters/ProcUnventilatedT.h>
+#include <meteoio/meteoFilters/ProcQuantileMapping.h>
 #include <meteoio/meteoFilters/ProcShade.h>
 #include <meteoio/meteoFilters/ProcAdd.h>
 #include <meteoio/meteoFilters/ProcMult.h>
@@ -118,6 +119,7 @@ namespace mio {
  * - SUPPR: delete all or some data, see FilterSuppr
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
+ * - QM: quantile mapping, see ProcQuantileMapping
  *
  * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
@@ -177,7 +179,9 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcAdd(vecArgs, blockname, cfg.getConfigRootDir());
 	} else if (blockname == "MULT"){
 		return new ProcMult(vecArgs, blockname, cfg.getConfigRootDir());
-	}
+	} else if (blockname == "QM"){
+		return new ProcQuantileMapping(vecArgs, blockname, cfg.getConfigRootDir());
+	} 
 
 	//more specific data transformations
 	else if (blockname == "EXP_SMOOTHING"){
@@ -249,6 +253,116 @@ bool ProcessingBlock::skipStation(const std::string& station_id) const
 	return (kept_stations.count(station_id)==0);
 }
 
+void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y)
+{
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	try {
+		size_t lcount=0;
+		double xvalue, yvalue;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss( line );
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> xvalue;
+			if (!iss) {
+				std::ostringstream ss;
+				ss << "Invalid index in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			iss >> std::skipws >> yvalue;
+			if ( iss.fail() ) {
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			
+			X.push_back( xvalue );
+			Y.push_back( yvalue );
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+}
+
+void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2)
+{
+	std::ifstream fin( filename.c_str() );
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw AccessException(ss.str(), AT);
+	}
+
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	try {
+		size_t lcount=0;
+		double xvalue, y1value, y2value;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss( line );
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> xvalue;
+			if (!iss) {
+				std::ostringstream ss;
+				ss << "Invalid index in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			iss >> std::skipws >> y1value;
+			if ( iss.fail() ) {
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			
+			iss >> std::skipws >> y2value;
+			if ( iss.fail() ) {
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			
+			X.push_back( xvalue );
+			Y1.push_back( y1value );
+			Y2.push_back( y2value );
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
+}
+
 std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init)
 {
 	std::ifstream fin( filename.c_str() );
@@ -261,7 +375,8 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 
 	size_t maxIndex = 0;
 	const size_t minIndex = (c_type=='h')? 0 : 1;
-	if (c_type=='m') maxIndex = 12;
+	if (c_type=='y') maxIndex = IOUtils::npos;
+	else if (c_type=='m') maxIndex = 12;
 	else if (c_type=='d') maxIndex = 366;
 	else if (c_type=='h') maxIndex = 24;
 	std::vector<double> corrections(maxIndex, init);
@@ -451,6 +566,25 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 		std::sort(station_it->second.begin(), station_it->second.end());
 	}
 	return dates_specs;
+}
+
+
+void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
+                                     std::vector<double>& ovec)
+{
+	ovec.resize( ivec.size() );
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		ovec[ii] = ivec[ii](param);
+	}
+}
+
+void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
+                                     std::vector<double>& ovec)
+{
+	ovec.resize( ivec.size() );
+	for (size_t ii=0; ii<ivec.size(); ii++) {
+		ovec[ii] =  (*ivec[ii])(param);
+	}
 }
 
 const std::string ProcessingBlock::toString() const {
