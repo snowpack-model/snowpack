@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace ncpp {
-	/// This enum expand the parameters given in mio::MeteoGrids::Parameters and adds parameters used as dimensions in NetCDF files
+	/// This enum expands the parameters given in mio::MeteoGrids::Parameters and adds parameters used as dimensions in NetCDF files
 	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, ZREF, UREF, lastdimension=UREF};
 	
 	//These methods are needed by the structures defined below
@@ -47,7 +47,7 @@ namespace ncpp {
 								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {};
 		
 		bool isUndef() const {return (type==-1);};
-		std::string toString() const {std::ostringstream os; os << "["  << getParameterName(param) << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
+		std::string toString() const {std::ostringstream os; os << "["  << ((param<=ncpp::lastdimension)? getParameterName(param) : "Unknown") << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
 
 		std::string name; ///< variable name (it is possible to retrieve a variable by name)
 		std::string standard_name; ///< somehow human-friendly, standardized description of the name
@@ -114,8 +114,8 @@ namespace ncpp {
 	void read_data(const int& ncid, const nc_variable& var, double* data);
 	void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform=false, const double& TZ=0.);
 	void write_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, const double * const data);
-	void write_data(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited);
-	void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen);
+	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited=false);
+	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen);
 
 	double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
 	double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
@@ -137,13 +137,17 @@ namespace ncpp {
  *  - NC_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
  *  - NC_TITLE: a short title for the data set;
  *  - NC_INSTITUTION: the institution providing the data set (default: domain name);
+ *  - NC_PROJECT: the scientific project that created the data;
  *  - NC_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
  *  - NC_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
  *  - NC_PROCESSING_LEVEL: a textual description of the processing level
  *  - NC_SUMMARY: a paragraph describing the dataset;
+ *  - NC_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of NC_SUMMARY if present;
+ *  - NC_COMMENT: miscellaneous informartion about the dataset;
  *  - NC_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
  *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata;
- *  - NC_LICENSE: describes the license applicable to the dataset.
+ *  - NC_LICENSE: describes the license applicable to the dataset;
+ *  - NC_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0).
 */
 class ACDD {
 	public:

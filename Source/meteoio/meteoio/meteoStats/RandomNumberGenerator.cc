@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 Michael Reisecker and work cited in documentation and source    */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -145,7 +145,7 @@ double RandomNumberGenerator::doub()
 double RandomNumberGenerator::doub(const RNG_BOUND& bounds, const bool& true_double)
 {
 	if (rng_distribution != RNG_UNIFORM)
-		throw InvalidArgumentException("RNG: Boundary exclusion not implemented for non-uniform distributions. Please use doub() and check against the limits in your own code.", AT);
+		throw InvalidArgumentException("RNG: Boundary exclusion not implemented for non-uniform distributions. Please use doub() and check against the limits in your own code (cf. example in doc).", AT);
 	
 	double rr = true_double? RngCore::trueDoub() : doubUniform();
 	if (bounds != RNG_AINCBINC) {
@@ -590,7 +590,7 @@ std::string RandomNumberGenerator::toString()
 		   << ", beta: " << DistributionParameters.at(1) << "\n";
 		break;
 	case RNG_CHISQUARED:
-		ss << "Distribution: Chi-Square\n";
+		ss << "Distribution: Chi-Squared\n";
 		ss << "Nu: " << DistributionParameters.at(0) << "\n";
 		break;
 	case RNG_STUDENTT:
@@ -624,10 +624,10 @@ double RandomNumberGenerator::doubUniform()
 	return RngCore::doubFromInt(rn);
 }
 
-double RandomNumberGenerator::pdfUniform(const double& xx) const
+double RandomNumberGenerator::pdfUniform(const double& /*xx*/) const
 {
 	//in a given interval, it is 1/(b-a) or 0 outside; for [0, 1] this is 1
-	return xx*0.+ 1.; //guard against "unused parameter" compiler warning
+	return 1.;
 }
 
 double RandomNumberGenerator::cdfUniform(const double& xx) const
@@ -701,12 +701,8 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 	return 0.5 + sign * (yy - 0.5);
 }
 
-/* - doc piece - 
- * The Gamma distribution as proposed by Ref. [MT00].
- * The GNU Scientific Library also implements its Gamma-distribution like this but chooses a slightly different pdf.
- */
 double RandomNumberGenerator::doubGamma() //Ref. [MT00]
-{
+{ //The Gamma distribution
 	const double alpha = DistributionParameters[0];
 	const double beta = DistributionParameters[1];
 
@@ -723,8 +719,10 @@ double RandomNumberGenerator::doubGammaKernel(const double& alpha, const double&
 		do {
 			ru = doubUniform();
 		} while (ru == 0. || ru == 1.);
-		return doubGammaKernel(1. + alpha, beta) * pow(ru, 1. / alpha); //cf. GSL/randist/gamma.c
+		return doubGammaKernel(1. + alpha, beta) * pow(ru, 1. / alpha);
 	}
+	//The GNU Scientific Library also implements its Gamma-distribution like this but
+	//chooses a slightly different pdf, cf. GSL/randist/gamma.c
 
 	const double dd = alpha - 1. / 3.;
 	const double cc = 1. / sqrt(9. * dd);
@@ -802,13 +800,11 @@ double RandomNumberGenerator::doubF()
 double RandomNumberGenerator::pdfNotImplemented(const double& /*xx*/) const
 { //pdfs and cdfs are often very hard - we only implement them as needed
 	throw InvalidArgumentException("RNG: Probability density function (pdf) not implemented for this distribution.", AT);
-	//return xx;
 }
 
 double RandomNumberGenerator::cdfNotImplemented(const double& /*xx*/) const
 {
 	throw InvalidArgumentException("RNG: Cumulative distribution function (cdf) not implemented for this distribution.", AT);
-	//return xx;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -825,7 +821,7 @@ RngXor::RngXor() : state(0), uu(0), vv(0), ww(0)
 uint64_t RngXor::int64()
 {
 	//first, a linear congruential generator with good figures of merit:
-	uu = uu * 7664345821815920749LL + 6204829405619482337LL; //Ref. [PE99] + arb. odd value
+	uu = uu * 3935559000370003845LL + 6204829405619482337LL; //Ref. [PE99] + arb. odd value
 	//64 bit xorshift, using one of the empirical triplets preserving order 2^64-1:
 	vv ^= (vv << 13); vv ^= (vv >> 7); vv ^= (vv << 17); //Ref. [GM03]
 	//multiply with carry:

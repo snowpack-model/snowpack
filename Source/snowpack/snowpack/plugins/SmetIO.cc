@@ -511,6 +511,8 @@ mio::Date SmetIO::read_snosmet_header(const smet::SMETReader& sno_reader, const 
   SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
   SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
   SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
+  SSdata.Emissivity_soil = get_doubleval_no_error(sno_reader, "SoilEmissivity");
+
 
 	return SSdata.profileDate;
 }
@@ -777,6 +779,8 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	smet_writer.set_header_value("CanopyFracLAIUpperLayer", ss.str());
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.BasalArea;
 	smet_writer.set_header_value("CanopyBasalArea", ss.str());
+  ss.str(""); ss << fixed << setprecision(2) << Xdata.SoilEmissivity;
+  smet_writer.set_header_value("SoilEmissivity", ss.str());
 
 	// Additional parameters
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.WindScalingFactor;

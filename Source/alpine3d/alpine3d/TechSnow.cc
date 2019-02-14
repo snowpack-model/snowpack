@@ -44,18 +44,7 @@ TechSnow::TechSnow(const mio::Config& cfg, const mio::DEMObject& dem)
 	MPIControl::instance().broadcast( skiRunsMap );
 }
 
-
-struct condition
-{
-	double slope_number;
-	double slope_area;
-	double number_snowguns;
-	int priority;
-	double min_height;
-};
-
-
-void TechSnow::readSlopeConditions(const int& numbers_of_slopes, struct condition * slope_condition, const std::string& filename)
+void TechSnow::readSlopeConditions(const int& numbers_of_slopes, std::vector<condition>& slope_condition, const std::string& filename)
 {	
 	int jj=0;
 	
@@ -110,8 +99,8 @@ short int TechSnow::getSlopeNumber(const double& dbl_code)
 }
 
 
-short int TechSnow::findSlope(const int& numbers_of_slopes, struct condition * slope_condition, 
-										   const int& findSlope)
+short int TechSnow::findSlope(const int& numbers_of_slopes, const std::vector<condition>& slope_condition, 
+                              const int& findSlope)
 {
 	static const double epsilon = 0.001;
 	int index = -1;
@@ -135,7 +124,7 @@ short int TechSnow::findSlope(const int& numbers_of_slopes, struct condition * s
 
 
 double TechSnow::setPriority(const std::string& date, const std::string& season_opening, 
-							 const std:: string& season_closing, const std::string& start_prod, 
+							 const std::string& start_prod, 
 							 const std::string& end_prod, const double& start_aim, const double& end_aim,
 							 const double& gun_operation, const double& snow_height, const double& V_water, 
 							 const double& slope_area, const double& nr_snowguns, const double& min_height,
@@ -186,12 +175,13 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 
 	const double wet_bulb_thresh = cfg.get("WET_BULB_THRESH", "Slope_Priority");		// [C] wet bulb temperature
 	const std::string start_prod = cfg.get("PRIO1::start_prod", "Slope_Priority");	// [-] earliest snow production date
-	const std::string end_prod = cfg.get("SEASON_CLOSING", "Slope_Priority");	// [-] latest production date
+	const std::string end_season = cfg.get("SEASON_CLOSING", "Slope_Priority");	// [-] latest production date
 	const std::string date = timestamp.toString(Date::ISO);		// [-] actual simulation date
 	int slope_open = cfg.get("SLOPE_OPEN", "Slope_Priority");
 	int slope_closed = cfg.get("SLOPE_CLOSED", "Slope_Priority");
 	const int number_of_slopes = cfg.get("NUMBER_OF_SLOPES", "Input");
-	struct condition slope_condition[number_of_slopes];
+	//condition slope_condition[number_of_slopes];
+	std::vector<condition> slope_condition(number_of_slopes);
 	
 	// Get actual time (hour and minutes)
 	int date_hour, date_min;
@@ -200,8 +190,8 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 	// Read slope conditions
 	readSlopeConditions(number_of_slopes, slope_condition, cfg.get("SLOPE_CONDITIONS", "Input"));
 	
-	//according to ta and rh, fill grooming and psum_tech grids
-	if (date >= start_prod && date <= end_prod){
+	//Period of technical snow production and grooming
+	if (date >= start_prod && date <= end_season){
 		std::cout << "Production of technical snow has started" << endl;
 		for (size_t ii=0; ii<skiRunsMap.size(); ii++) {
 			// Check if slope or not -> if not, do nothing
@@ -218,7 +208,7 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 			else
 			{
 				if (slope_condition[slope_index].priority == 1){
-					psum_technical = setPriority(date, cfg.get("SEASON_OPENING", "Slope_Priority"), cfg.get("SEASON_CLOSING", "Slope_Priority"), 
+					psum_technical = setPriority(date, cfg.get("SEASON_OPENING", "Slope_Priority"), 
 								  cfg.get("PRIO1::start_prod", "Slope_Priority"), cfg.get("PRIO1::end_prod", "Slope_Priority"), 
 								  cfg.get("PRIO1::start_aim", "Slope_Priority"), cfg.get("PRIO1::end_aim", "Slope_Priority"),
 						    	  cfg.get("PRIO1::gun_operation", "Slope_Priority"), hs(ii),
@@ -228,7 +218,7 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 						    	  date_hour, slope_open, slope_closed);
 				}
 				else if (slope_condition[slope_index].priority == 2){
-					psum_technical = setPriority(date, cfg.get("SEASON_OPENING", "Slope_Priority"), cfg.get("SEASON_CLOSING", "Slope_Priority"), 
+					psum_technical = setPriority(date, cfg.get("SEASON_OPENING", "Slope_Priority"), 
 								  cfg.get("PRIO2::start_prod", "Slope_Priority"), cfg.get("PRIO2::end_prod", "Slope_Priority"), 
 								  cfg.get("PRIO2::start_aim", "Slope_Priority"), cfg.get("PRIO2::end_aim", "Slope_Priority"),
 						    	  cfg.get("PRIO2::gun_operation", "Slope_Priority"), hs(ii),
@@ -239,7 +229,7 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 
 				}
 				else if (slope_condition[slope_index].priority == 3){
-					psum_technical = setPriority(date, cfg.get("SEASON_OPENING", "Slope_Priority"), cfg.get("SEASON_CLOSING", "Slope_Priority"), 
+					psum_technical = setPriority(date, cfg.get("SEASON_OPENING", "Slope_Priority"), 
 								  cfg.get("PRIO3::start_prod", "Slope_Priority"), cfg.get("PRIO3::end_prod", "Slope_Priority"), 
 								  cfg.get("PRIO3::start_aim", "Slope_Priority"), cfg.get("PRIO3::end_aim", "Slope_Priority"),
 						    	  cfg.get("PRIO3::gun_operation", "Slope_Priority"), hs(ii),
@@ -257,7 +247,6 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 			psum_tech(ii) = psum_technical;
 		}
 		std::cout << "Production of technical snow has finished" << endl;
-
 	}
 }
 

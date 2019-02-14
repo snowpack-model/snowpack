@@ -69,7 +69,7 @@ class ProcExpSmoothing : public WindowedFilter {
 
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		static double calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& alpha);
+		static double calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& i_alpha);
 
 		double alpha;
 };

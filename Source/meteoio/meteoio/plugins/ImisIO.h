@@ -111,7 +111,7 @@ class ImisIO : public IOInterface {
 
 		static const double in_tz; //timezone
 		const Config cfg;
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecStationMetaData;
 		std::map<std::string, std::string> mapDriftStation;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
@@ -121,6 +121,7 @@ class ImisIO : public IOInterface {
 		static const std::string sqlQueryMeteoDataDrift; // combined snow_drift query from two stations (ams.v_ams_raw)
 		static const std::string sqlQueryMeteoData; // single station query (ams.v_ams_raw)
 		static const std::string sqlQuerySWEData; //SWE as computed by SNOWPACK
+		static const std::string coordin, coordinparam; //these are fixed for IMIS
 		std::string oracleUserName_in;
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;

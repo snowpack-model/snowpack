@@ -297,9 +297,7 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
+		if (fin.is_open()) fin.close();
 		throw;
 	}
 }
@@ -356,9 +354,7 @@ void ProcessingBlock::readCorrections(const std::string& filter, const std::stri
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
+		if (fin.is_open()) fin.close();
 		throw;
 	}
 }
@@ -421,9 +417,7 @@ std::vector<double> ProcessingBlock::readCorrections(const std::string& filter, 
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
+		if (fin.is_open()) fin.close();
 		throw;
 	}
 
@@ -488,9 +482,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
+		if (fin.is_open()) fin.close();
 		throw;
 	}
 
@@ -554,9 +546,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&){
-		if (fin.is_open()) {//close fin if open
-			fin.close();
-		}
+		if (fin.is_open()) fin.close();
 		throw;
 	}
 

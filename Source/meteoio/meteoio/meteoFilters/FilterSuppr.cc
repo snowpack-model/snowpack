@@ -51,8 +51,7 @@ FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> 
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
 			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
-		} else
-			throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
+		}
 	}
 }
 

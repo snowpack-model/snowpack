@@ -1,60 +1,60 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <manifest>
 	<file>
-		<name>MeteoIO-2.7.0-x86_64.tar.gz</name>
+		<name>MeteoIO-2.8.0-x86_64.tar.gz</name>
 		<summary>Linux binary tarball</summary>
-		<description>Binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 14.04</description>
-		<replaces>MeteoIO-2.6.1-x86_64.tar.gz</replaces>
+		<description>Binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 16.04</description>
+		<replaces>MeteoIO-2.7.0-x86_64.tar.gz</replaces>
 		<labels>
 			<label>Type:Archive</label>
 			<label>OpSys:Linux</label>
 		</labels>
 	</file>
 	<file>
-		<name>MeteoIO-2.7.0-x86_64.deb</name>
+		<name>MeteoIO-2.8.0-x86_64.deb</name>
 		<summary>Linux DEB binary package</summary>
-		<description>DEB binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 14.04</description>
-		<replaces>MeteoIO-2.6.1-x86_64.deb</replaces>
+		<description>DEB binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 16.04</description>
+		<replaces>MeteoIO-2.7.0-x86_64.deb</replaces>
 		<labels>
 			<label>Type:Package</label>
 			<label>OpSys:Linux</label>
 		</labels>
 	</file>
 	<file>
-		<name>MeteoIO-2.7.0-x86_64.rpm</name>
+		<name>MeteoIO-2.8.0-x86_64.rpm</name>
 		<summary>Linux RPM binary package</summary>
-		<description>RPM binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 14.04</description>
-		<replaces>MeteoIO-2.6.1-x86_64.rpm</replaces>
+		<description>RPM binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 16.04</description>
+		<replaces>MeteoIO-2.7.0-x86_64.rpm</replaces>
 		<labels>
 			<label>Type:Package</label>
 			<label>OpSys:Linux</label>
 		</labels>
 	</file>
 	<file>
-		<name>MeteoIO-2.7.0-x86_64.dmg</name>
+		<name>MeteoIO-2.8.0-x86_64.dmg</name>
 		<summary>OsX Installer</summary>
 		<description>Binary package for MeteoIO compiled on Mac OsX. Compiled with XCode on Intel</description>
-		<replaces>MeteoIO-2.6.1-x86_64.dmg</replaces>
+		<replaces>MeteoIO-2.7.0-x86_64.dmg</replaces>
 		<labels>
 			<label>Type:Installer</label>
 			<label>OpSys:OSX</label>
 		</labels>
 	</file>
 	<file>
-		<name>MeteoIO-2.7.0-x86_64.exe</name>
+		<name>MeteoIO-2.8.0-x86_64.exe</name>
 		<summary>Windows Installer</summary>
-		<description>Binary package for MeteoIO compiled for 64 bits</description>
-		<replaces>MeteoIO-2.6.1-x86_64.exe</replaces>
+		<description>Binary package for MeteoIO compiled for 64 bits (gcc5.1)</description>
+		<replaces>MeteoIO-2.7.0-x86_64.exe</replaces>
 		<labels>
 			<label>Type:Installer</label>
 			<label>OpSys:Windows</label>
 		</labels>
 	</file>
 	<file>
-		<name>MeteoIO-2.7.0-doc.tar.gz</name>
+		<name>MeteoIO-2.8.0-doc.tar.gz</name>
 		<summary>Documentation only package</summary>
 		<description>Documentation only package</description>
-		<replaces>MeteoIO-2.6.1-doc.tar.gz</replaces>
+		<replaces>MeteoIO-2.7.0-doc.tar.gz</replaces>
 		<labels>
 			<label>Type:Docs</label>
 			<label>Other:Featured</label>
@@ -62,10 +62,10 @@
 		</labels>
 	</file>
 	<file>
-		<name>MeteoIO-2.7.0-src.tar.gz</name>
+		<name>MeteoIO-2.8.0-src.tar.gz</name>
 		<summary>Source package</summary>
-		<description>Please have a look at <a href="https://models.slf.ch/p/meteoio/page/Getting-started/">Getting-started</a> for instructions. <b>Please use cmake for building MeteoIO!</b>, the autotools are deprecated.</description>
-		<replaces>MeteoIO-2.6.1-src.tar.gz</replaces>
+		<description>Please have a look at <a href="https://models.slf.ch/p/meteoio/page/Getting-started/">Getting-started</a> for instructions (the build is based on cmake)</description>
+		<replaces>MeteoIO-2.7.0-src.tar.gz</replaces>
 		<labels>
 			<label>Type:Source</label>
 			<label>OpSys:All</label>

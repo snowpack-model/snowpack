@@ -258,7 +258,7 @@ Date MeteoBuffer::getDataStart() const
 {
 	Date start;
 	
-	for (size_t ii=1; ii<ts_buffer.size(); ii++) {
+	for (size_t ii=0; ii<ts_buffer.size(); ii++) {
 		if (!ts_buffer[ii].empty()) {
 			if (start.isUndef() || ts_buffer[ii].front().date < start)
 				start = ts_buffer[ii].front().date;
@@ -271,10 +271,10 @@ Date MeteoBuffer::getDataStart() const
 Date MeteoBuffer::getDataEnd() const
 {
 	Date end;
-	
-	for (size_t ii=1; ii<ts_buffer.size(); ii++) {
+
+	for (size_t ii=0; ii<ts_buffer.size(); ii++) {
 		if (!ts_buffer[ii].empty()) {
-			if (end.isUndef() || ts_buffer[ii].back().date < end)
+			if (end.isUndef() || ts_buffer[ii].back().date > end)
 				end = ts_buffer[ii].back().date;
 		}
 	}

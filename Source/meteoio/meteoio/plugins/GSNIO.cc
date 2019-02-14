@@ -250,7 +250,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		const bool meta_status = parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
 
 		if (units.empty() || fields.empty() || meta_status==false) {
-			//when printing out a GSN error message, the # and ' ' have to be stripped from the begining -> substr(2)
+			//when printing out a GSN error message, the # and ' ' have to be stripped from the beginning -> substr(2)
 			if (ss.str().find("doesn't exist in GSN!") != std::string::npos)
 				throw NotFoundException(ss.str().substr(2), AT);
 			if (ss.str().find("doesn't have access to the sensor") != std::string::npos)

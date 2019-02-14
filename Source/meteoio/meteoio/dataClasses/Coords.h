@@ -53,7 +53,7 @@ namespace mio {
  *      -# link the coordinate system abbreviation to the conversion methods you have implemented in Coords::convert_to_WGS84() and Coords::convert_from_WGS84()
  * 
  * @section coords_documentation Documenting the coordinate system
- * Please update and expand the doxygen documentation at the begining of the Coords.cc file in order to specify the coordinate system keywords 
+ * Please update and expand the doxygen documentation at the beginning of the Coords.cc file in order to specify the coordinate system keywords 
  * that has been used (ie the the coordinate system abbreviation). Feel free to add links to official documentation about this coordinate system. 
  * Please also properly document the conversion (with links to the official specification) in the conversion implementations. 
  * 

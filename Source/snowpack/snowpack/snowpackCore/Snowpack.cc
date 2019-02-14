@@ -611,8 +611,10 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 		Bdata.qr = 0.;
 	}
 
-	const double lw_in  = Constants::emissivity_snow * Constants::stefan_boltzmann * Mdata.ea * Optim::pow4(Tair);
-	Bdata.lw_out = Constants::emissivity_snow * Constants::stefan_boltzmann * Optim::pow4(Tss);
+  const double emmisivity = (Xdata.getNumberOfElements() > Xdata.SoilNode) ? Constants::emissivity_snow : Xdata.SoilEmissivity;
+
+	const double lw_in  = emmisivity * Constants::stefan_boltzmann * Mdata.ea * Optim::pow4(Tair);
+	Bdata.lw_out = emmisivity * Constants::stefan_boltzmann * Optim::pow4(Tss);
 	Bdata.lw_net = lw_in - Bdata.lw_out;
 
 	if (Mdata.geo_heat != IOUtils::nodata) {

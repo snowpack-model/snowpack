@@ -16,6 +16,7 @@
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <alpine3d/MPIControl.h>
+#include <alpine3d/SnowpackInterfaceWorker.h>
 
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 	#include <winsock.h>
@@ -28,6 +29,21 @@
 
 using namespace std;
 using namespace mio;
+
+// Local oprators << and >> on pais, nedded to serialize pairs in MPI communication
+std::istream& operator>>(std::istream& is, std::pair<size_t,size_t>& data)
+{
+  is.read(reinterpret_cast<char*>(&data.first), sizeof(data.first));
+  is.read(reinterpret_cast<char*>(&data.second), sizeof(data.second));
+  return is;
+}
+
+std::ostream& operator<<(std::ostream& os, const std::pair<size_t,size_t>& data)
+{
+  os.write(reinterpret_cast<const char*>(&data.first), sizeof(data.first));
+  os.write(reinterpret_cast<const char*>(&data.second), sizeof(data.second));
+  return os;
+}
 
 bool MPIControl::openmp() const
 {
@@ -93,10 +109,10 @@ MPIControl::MPIControl()
 	int o_rank, o_size;
 	MPI_Comm_rank(MPI_COMM_WORLD, &o_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &o_size);
-	
+
 	if (o_rank<0 || o_size<0)
 		throw mio::IOException("Invalid rank or size returned by MPI", AT);
-	
+
 	rank_ = static_cast<size_t>(o_rank);
 	size_ = static_cast<size_t>(o_size);
 
@@ -243,7 +259,7 @@ std::string getHostName() {
 	#endif
 }
 
-MPIControl::MPIControl() : rank_(0), size_(1), name_( getHostName() ) 
+MPIControl::MPIControl() : rank_(0), size_(1), name_( getHostName() )
 {
 	#ifdef _OPENMP
 		std::cout << "[i] Init of OpenMP on '" << name_ << "' with a pool of " << omp_get_max_threads() << " threads\n";
@@ -257,6 +273,134 @@ void MPIControl::allreduce_min(double&) {}
 void MPIControl::allreduce_sum(double&) {}
 void MPIControl::allreduce_sum(int&) {}
 void MPIControl::gather(const int& val, std::vector<int>& vec, const size_t&) { vec.resize(1, val); }
+#endif
+
+
+#ifdef ENABLE_MPI
+/**
+ * @brief	Send the objects pointed to by vector<T*> to process \#destination
+ * @param[in] vec_local A vector of T* pointers to objects that shall be sent
+ * @param[in] destination The process rank that will receive the values
+ * @param[in] tag Arbitrary non-negative integer assigned to uniquely identify a message
+ * @note Class T needs to have the serialize and deseralize operator << and >> implemented
+ */
+template <class T> void MPIControl::send(const std::vector<T*>& vec_local, const size_t& destination, const int& tag)
+{
+  if ((size_ <= 1) || (rank_ == destination)) return;
+
+  size_t v_size = vec_local.size();
+
+  send((int)v_size, destination, tag); // first send the size of the vector
+  for (size_t ii=0; ii<v_size; ii++) {
+    std::string obj_string;
+    std::stringstream objs_stream;
+
+    objs_stream << *(vec_local[ii]);
+    obj_string.insert(0, objs_stream.str());
+    send(obj_string, destination, tag);
+  }
+}
+/**
+ * @brief	Receive vector of objects from process \#source
+ * @param[in] vec_local A vector of T* pointers to receive the object pointers
+ * @param[in] source The process rank that will send the objects
+ * @param[in] tag Arbitrary non-negative integer assigned to uniquely identify a message
+ * @note Class T needs to have the serialize and deseralize operator << and >> implemented
+ */
+template <class T> void MPIControl::receive(std::vector<T*>& vec_local, const size_t& source, const int& tag)
+{
+  if ((size_ <= 1) || (rank_ == source)) return;
+
+  if (!vec_local.empty())
+    throw mio::IOException("The vector to receive pointers has to be empty (please properly free the vector)", AT);
+
+  std::string obj_string;
+  int v_size;
+  receive(v_size, source, tag);
+  vec_local.resize((size_t)v_size);
+
+  T obj; // temporary object
+  for (size_t ii=0; ii<vec_local.size(); ii++) {
+    std::stringstream objs_stream;
+    receive(obj_string, source, tag);
+
+    objs_stream << obj_string;
+
+    objs_stream >> obj;
+    vec_local[ii] = new T(obj);
+  }
+}
+
+
+/**
+ * @brief	Send the objects pointed to by vector<T*> to process \#destination
+ * @param[in] vec_local A vector of T* pointers to objects that shall be sent
+ * @param[in] destination The process rank that will receive the values
+ * @param[in] tag Arbitrary non-negative integer assigned to uniquely identify a message
+ * @note Class T needs to have the serialize and deseralize operator << and >> implemented
+ */
+template <class T> void MPIControl::send(const std::vector<T>& vec_local, const size_t& destination, const int& tag)
+{
+  if ((size_ <= 1) || (rank_ == destination)) return;
+
+  size_t v_size = vec_local.size();
+
+  send((int)v_size, destination, tag); // first send the size of the vector
+  for (size_t ii=0; ii<v_size; ii++) {
+    std::string obj_string;
+    std::stringstream objs_stream;
+
+    objs_stream << vec_local[ii];
+    obj_string.insert(0, objs_stream.str());
+    send(obj_string, destination, tag);
+  }
+}
+/**
+ * @brief	Receive vector of objects from process \#source
+ * @param[in] vec_local A vector of T* pointers to receive the object pointers
+ * @param[in] source The process rank that will send the objects
+ * @param[in] tag Arbitrary non-negative integer assigned to uniquely identify a message
+ * @note Class T needs to have the serialize and deseralize operator << and >> implemented
+ */
+template <class T> void MPIControl::receive(std::vector<T>& vec_local, const size_t& source, const int& tag)
+{
+  if ((size_ <= 1) || (rank_ == source)) return;
+
+  if (!vec_local.empty())
+    throw mio::IOException("The vector to receive pointers has to be empty (please properly free the vector)", AT);
+
+  std::string obj_string;
+  int v_size;
+  receive(v_size, source, tag);
+  vec_local.resize((size_t)v_size);
+
+  T obj; // temporary object
+  for (size_t ii=0; ii<vec_local.size(); ii++) {
+    std::stringstream objs_stream;
+    receive(obj_string, source, tag);
+
+    objs_stream << obj_string;
+
+    objs_stream >> obj;
+    vec_local[ii] =  T(obj);
+  }
+}
+
+// Since template is in cc file (not possible to template on h, becuse if definition is is
+// h file, the custom >> and << declaration for std::pair should be in h file, which creates
+// conflict with other h files).
+template void MPIControl::receive<SnowStation>(std::vector<SnowStation*>&, const size_t&, const int&);
+template void MPIControl::send<SnowStation>(const std::vector<SnowStation*>&, const size_t&, const int&);
+
+template void MPIControl::receive<CurrentMeteo>(std::vector<CurrentMeteo*>&, const size_t&, const int&);
+template void MPIControl::send<CurrentMeteo>(const std::vector<CurrentMeteo*>&, const size_t&, const int&);
+
+template void MPIControl::receive<SurfaceFluxes>(std::vector<SurfaceFluxes*>&, const size_t&, const int&);
+template void MPIControl::send<SurfaceFluxes>(const std::vector<SurfaceFluxes*>&, const size_t&, const int&);
+
+template void MPIControl::receive< std::pair<unsigned long, unsigned long> >(std::vector<std::pair<unsigned long, unsigned long>>&, const size_t&, const int&);
+template void MPIControl::send< std::pair<unsigned long, unsigned long> >(const std::vector<std::pair<unsigned long, unsigned long>>&, const size_t&, const int&);
+
 #endif
 
 MPIControl& MPIControl::instance()
@@ -287,4 +431,85 @@ void MPIControl::getArraySliceParams(const size_t& dimx, const size_t& nbworkers
 			startx_sub = 0;
 		}
 	}
+}
+
+
+void MPIControl::getArraySliceParamsOptim(const size_t& dimx, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse)
+{
+  //Nothing to do is size_=1
+  if(size_==1)
+  {
+    nx_sub = dimx;
+    startx_sub = 0;
+    return;
+  }
+
+  //Check for each col how many cells to compute
+  const size_t dimy=dem.getNy();
+  size_t n_skip_cell=0;
+  std::vector<size_t> cells_per_col(dimx,0);
+  for (size_t ix = 0; ix < dimx; ix++) {
+    for (size_t iy = 0; iy < dimy; iy++) {
+      if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy)))
+      { //skip nodata cells as well as water bodies, etc
+        n_skip_cell++;
+      }
+      else
+      {
+        cells_per_col.at(ix)++;
+      }
+    }
+  }
+
+  size_t num_cells_to_compute = dimx*dimy-n_skip_cell;
+
+  size_t mean_num_cells_per_mpi=num_cells_to_compute/size_;
+  size_t mean_num_cell_per_col=num_cells_to_compute/dimx;
+
+  std::vector<size_t> startx(size_,0);
+  std::vector<size_t> nx(size_,0);
+  std::vector<size_t> n_cells(size_,0);
+  size_t current_x=0;
+  size_t current_num_cells=0;
+  for (size_t i=0; i<size_;++i)
+  {
+    startx.at(i)=current_x;
+    current_num_cells=0;
+    while( current_num_cells <= mean_num_cells_per_mpi - mean_num_cell_per_col/2 && current_x < dimx)
+    {
+      current_num_cells+=cells_per_col.at(current_x);
+      current_x++;
+    }
+    n_cells.at(i)=current_num_cells;
+    //No -1 required because curent_x already incremented once in the while
+    nx.at(i)=current_x-startx.at(i);
+  }
+  //Finish to fill the last slice with remaining cells
+  while( current_x < dimx)
+  {
+    current_num_cells+=cells_per_col.at(current_x);
+    current_x++;
+  }
+  n_cells.at(size_-1)=current_num_cells;
+  nx.at(size_-1)=current_x-startx.at(size_-1);
+
+  // if (idx_wk==0){
+  //   std::cout << "Skip:" <<  n_skip_cell << " cells over " << dimx*dimy << " cells." << std::endl;
+  //   std::cout << "The repartiom is: ";
+  //   for (size_t i=0; i < size_;++i){
+  //     std::cout << nx.at(i) << " ";
+  //   }
+  //   std::cout << std::endl;
+  //   std::cout << "With: ";
+  //   for (size_t i=0; i < size_;++i){
+  //     std::cout << n_cells.at(i) << " ";
+  //   }
+  //   std::cout << " cells to compute per slice." <<std::endl;
+  //   std::cout << "There are  " << num_cells_to_compute << " cells to cumpute" << std::endl;
+  //   std::cout << "Mean number of cells per MPI is "<< mean_num_cells_per_mpi << std::endl;
+  //   std::cout << "Mean number of cells per col is "<< mean_num_cell_per_col << "(over "<< dimx <<" cols)"<< std::endl;
+  // }
+
+  startx_sub = startx.at(idx_wk);
+  nx_sub = nx.at(idx_wk);
 }

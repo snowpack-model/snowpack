@@ -419,9 +419,11 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
  * @param date current simulation time step
  * @param psum precipitation grid (kg m-2)
  * @param psum_ph precipitation phase grid (between 0 and 1)
+ * @param psum_tech technical precipitation grid (kg m-2)
  * @param rh relative humidity grid (% or 1)
  * @param ta air temperature grid (K)
  * @param vw wind velocity grid (m s-1)
+ * @param dw wind direction grid (degrees north)
  * @param mns map of the Precipitation (mm/h) HACK get this map only if per pull from Master if Drift is used !!
  * @param shortwave incoming shortwave radiation grid (W m-2)
  * @param diffuse diffuse radiation from the sky grid (W m-2)
@@ -688,7 +690,7 @@ bool SnowpackInterfaceWorker::is_special(const std::vector< std::pair<size_t,siz
 
 /**
  * @brief method called by SnowpackInterface to retrieve all snow_pixels, to read the lateral flow variable
- * @param pointer to vector of SnowStations, where the variable SlopeParFlux contains the lateral flow
+ * @param ptr_snow_pixel to vector of SnowStations, where the variable SlopeParFlux contains the lateral flow
  */
 void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow_pixel)
 {
@@ -703,7 +705,7 @@ void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow
 
 /**
  * @brief method called by SnowpackInterface to send back the source/sink term for treating lateral flow
- * @param pointer to vector of SnowStations, in which the lwc_source variable is set to contain the lateral flow.
+ * @param ptr_snow_pixel to vector of SnowStations, in which the lwc_source variable is set to contain the lateral flow.
  */
 void SnowpackInterfaceWorker::setLateralFlow(const std::vector<SnowStation*>& ptr_snow_pixel)
 {

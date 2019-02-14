@@ -174,7 +174,7 @@ namespace mio {
  * @endcode
  *
  * @section Config_structure Configuration file structure
- * MeteoIO imposes a minimum structure to the configuration %file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, an potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.
+ * MeteoIO imposes a minimum structure to the configuration %file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, and potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.
  * The keys and their location in the configuration file (ie: to which section they belong) depends on the module that is actually using them. The optional keys depend on the specific options handled by each specific module (or plugin, or algorithm). Therefore, we can draw the following skeleton:
  * @code
  * [General]
@@ -218,6 +218,7 @@ namespace mio {
  *
  */
 
+//TODO: Get rid of ?? in [General]
 /**
  * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
@@ -230,6 +231,7 @@ namespace mio {
  * You first need to create the various sections:
  * - [General] : The documentation about this section is found in ??. It currently contains the PLUGIN_PATH key that
  *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler).
+ *
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
  *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for the Points Of Interest
  *             (key=POI), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
@@ -238,20 +240,20 @@ namespace mio {
  *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
  *             possible to perform some editing on the raw data, see \ref raw_data_editing.
  *
- *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
+ * - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *
- *  - [Filters] : This section lists the pre-processing that has to be performed on the incoming meteorological data.
+ * - [Filters] : This section lists the pre-processing that has to be performed on the incoming meteorological data.
  *                It builds a stack of processing elements one after the other one, for each meteorological parameter.
- *                See \ref processing for more information. It also contains
+ *                See \ref processing for more information.
  *
- *  - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
+ * - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
  *                         to be able to take in data at any sampling rate and to extract values at any user given time step
  *                         according to the resampling specifications of the user. The search window size can be given with
  *                         key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
  *                         re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point).
  *                         See \ref resampling .
  *
- *  - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
+ * - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
  *                         Digital Elevation Model. The goal is to populate two dimensional grids with meteorological
  *                         parameters from point measurements, according to the specifications of the user.
  *                         See \ref interpol2d .
@@ -276,7 +278,7 @@ namespace mio {
  * \image latex structure.eps "simplified class structure" width=0.9\textwidth
  *
  * @section iohandler_sec Data reading
- * The class IOHandler provides the meteorological data from the sources selected by the user in its configuration file. This class inherits from IOInterface and is implemented through plugins that are responsible for implementing a given data access (see \ref dev_plugins "Plugins developer's guide" for more information). It therefore proposes a uniform, standardized access to the data that can be meteorological data, gridded data (including Digital Elevation Model (DEM) data or variations like for landuse codes) and tables of coordinates (for special processing at users selected locations). A buffered version of this class exists: BufferedIOHandler that should be prefered. The description of the plugins and their usage can be found in \ref plugins "Available plugins".
+ * The class IOHandler provides the meteorological data from the sources selected by the user in its configuration file. This class inherits from IOInterface and is implemented through plugins that are responsible for implementing a given data access (see \ref dev_plugins "Plugins developer's guide" for more information). It therefore proposes a uniform, standardized access to the data that can be meteorological data, gridded data (including Digital Elevation Model (DEM) data or variations like for landuse codes) and tables of coordinates (for special processing at users selected locations). A buffered version of this class exists: BufferedIOHandler that should be preferred. The description of the plugins and their usage can be found in \ref plugins "Available plugins".
  * This class also transparently calls the filtering class, FilterAlgorithms in order to filter the data according to the configuration of the user.
  *
  *
@@ -323,7 +325,7 @@ namespace mio {
  *
  *
  * @section exceptions_sec Exceptions
- * A few customized exceptions have been defined in IOException : these exceptions have to do with I/O, parameter parsing, argument validity, etc and consistently print usefull debuging information when thrown.
+ * A few customized exceptions have been defined in IOException : these exceptions have to do with I/O, parameter parsing, argument validity, etc and consistently print useful debuging information when thrown.
  *
  *
  * @section misc_sec Miscellaneous
@@ -366,7 +368,7 @@ namespace mio {
  * 	}
  *    @endcode
  *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
- * -# Include the filter's header file in meteoFilters/ProcessingBlocks.cc
+ * -# Include the filter's header file in meteoFilters/ProcessingBlock.cc
  * -# Try to compile and run your filter on a test data set (for example with the "meteo_reading" example)
  * -# Then really implement your filter. Its class contains two public methods: a constructor and a "process" method and at least one private method,
  *    "parse_args" to read the arguments from a provided vector of strings.
@@ -378,7 +380,7 @@ namespace mio {
  *    @endcode
  *    -# The <b>process</b> method applies the element to the provided vector of values, for a meteo parameter pointed to by index.
  *    This index is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
- *    parameters). The constructor must set up porcessing.stage to mark if the filter should be applied only during the
+ *    parameters). The constructor must set up processing.stage to mark if the filter should be applied only during the
  *    first pass (ie before the resampling), or both at the first and second pass (ie before and after resampling).
  *    Its declaration is such as:
  *    @code
@@ -502,8 +504,8 @@ namespace mio {
  * 
  * Then, for a real world application, the following would also be needed:
  * 	+ wrapping up the MeteoIO calls in a <i>try/catch</i> block (at least for calls such as <i>getMeteoData</i>). This is particularly required for Windows and Mac platforms since uncaught exceptions on these plateforms won't print any error message on the screen.
- * 	+ checking the data returned by <i>getMeteoData</i> against your application's minimum requirements. For example, you might want to check that there is at least one air temperature and one wind velocity at each time step. If your application's requirements are not fulfilled, then print an error message and exit (or thrown an exception with a proper error message).
- * 	+ if your application is written in another language (for example C or Fortran), then you need a wrapper that will wrapp the call to MeteoIO and copy the returned data into your own data structures. 
+ * 	+ checking the data returned by <i>getMeteoData</i> against your application's minimum requirements. For example, you might want to check that there is at least one air temperature and one wind velocity at each time step. If your application's requirements are not fulfilled, then print an error message and exit (or throw an exception with a proper error message).
+ * 	+ if your application is written in another language (for example C or Fortran), then you need a wrapper that will wrap the call to MeteoIO and copy the returned data into your own data structures. 
  * 	+ finally, it might be a good idea to print the MeteoIO version information somewhere in your application's output. This could help with support and debugging. Such version information is returned by <i>getLibVersion()</i>.
  *
  */

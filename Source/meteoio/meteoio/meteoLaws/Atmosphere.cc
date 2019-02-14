@@ -198,7 +198,7 @@ double Atmosphere::windLogProfile(const double& v_ref, const double& z_ref, cons
 /**
 * @brief Wind chill temperature.
 * This is an index aiming at expressing the human-percived feeling of air temperature on exposed skin due to wind.
-* This is NOT a sceintific measurement, only an index to express a subjective feeling.
+* This is NOT a scientific measurement, only an index to express a subjective feeling.
 * It is inapplicable above 10 Celsius and a few m/s wind (5 m/s used here), therefore returning air temperature.
 * @param TA air temperature (K)
 * @param VW wind velocity (m/s)
@@ -219,7 +219,7 @@ double Atmosphere::windChill(const double& TA, const double& VW)
 /**
 * @brief Heat index.
 * This is an index aiming at expressing the human-perceived air temperature due to humidity.
-* This is NOT a sceintific measurement, only an index to express a subjective feeling.
+* This is NOT a scientific measurement, only an index to express a subjective feeling.
 * It is inapplicable below 26.7 Celsius and below 40% humidity, therefore returning air temperature.
 * @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)

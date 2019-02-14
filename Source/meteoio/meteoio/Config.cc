@@ -29,9 +29,9 @@ namespace mio {
 const char* Config::defaultSection = "GENERAL";
 
 //Constructors
-Config::Config() : properties(), imported(), sourcename(), configRootDir() {}
+Config::Config() : properties(), imported(), sections(), sourcename(), configRootDir() {}
 
-Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
+Config::Config(const std::string& i_filename) : properties(), imported(), sections(), sourcename(i_filename), configRootDir(FileUtils::getPath(i_filename, true))
 {
 	addFile(i_filename);
 }
@@ -255,20 +255,19 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	if (line[0] == '[') {
 		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
-			const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
-			throw IOException("Section header corrupt in line " + linenr_str, AT);
+			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
 		} else {
 			section = line.substr(1,endpos-1);
 			IOUtils::toUpper(section);
+			sections.insert( section );
 			return;
 		}
 	}
 
 	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
 	if (std::count(line.begin(), line.end(), '=') != 1) {
-		const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
 		const std::string source_msg = (sourcename.empty())? "" : " in \""+sourcename+"\"";
-		throw InvalidFormatException("Error reading line "+linenr_str+source_msg, AT);
+		throw InvalidFormatException("Error reading line "+IOUtils::toString(linenr)+source_msg, AT);
 	}
 	
 	//this can only be a key value pair...
@@ -301,13 +300,12 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 				return;
 			}
 		}
-		const std::string linenr_str( static_cast<ostringstream*>( &(ostringstream() << linenr) )->str() );
 		const std::string key_msg = (key.empty())? "" : "key "+key+" ";
 		const std::string key_value_link = (key.empty() && !value.empty())? "value " : "";
 		const std::string value_msg = (value.empty())? "" : value+" " ;
 		const std::string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
 		const std::string section_msg = (section.empty())? "" : "in section "+section+" ";
-		const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+linenr_str;
+		const std::string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+IOUtils::toString(linenr);
 
 		throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
 	}

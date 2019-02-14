@@ -368,9 +368,9 @@ namespace mio {
  * @section rng_developer Developer's guide
  * For developers of statistical filters it may be important to be able to implement custom probability distributions,
  * for example for an empirical nonlinear sensor response. This class tries to be easy to expand in that regard.
- * There are comment markers in the header file and in here leading with "CUSTOM_DIST step #: ..." in the 6 places
+ * There are comment markers in the header and source files leading with "CUSTOM_DIST step #: ..." in the 6 places
  * you need to register your custom distribution functions at. These 6 steps are:
- *  -# Give your distribution a name within meteoIO
+ *  -# Give your distribution a name within MeteoIO
  *  -# Put your functions' prototypes in the header
  *  -# Point to your distribution function in the generic setDistribution() function,
  *     and use the interface to the caller to set your distribution parameters
@@ -644,7 +644,7 @@ class RandomNumberGenerator : private RngCore {
 			RNG_GAUSS, //!< Gaussian deviates
 			RNG_NORMAL, //!< = RNG_GAUSS
 			RNG_GAMMA, //!< Gamma deviates
-			RNG_CHISQUARED, //!< Chi-Square deviates
+			RNG_CHISQUARED, //!< Chi-Squared deviates
 			RNG_STUDENTT, //!< Student-t deviates
 			RNG_BETA, //!< Beta deviates
 			RNG_F //!< Fisher deviates

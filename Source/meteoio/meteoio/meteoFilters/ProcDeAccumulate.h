@@ -30,7 +30,7 @@ namespace mio {
  * @brief Convert accumulated values back to instantaneous values.
  * @details
  * Some radiation parameters are sometimes provided as accumulated values over a given period (such as ECMWF radiation fields). 
- * The value at any given timestep is either the instantaneous value (at the begining of the accumulation period) or the sum of
+ * The value at any given timestep is either the instantaneous value (at the beginning of the accumulation period) or the sum of
  * the instantaneous value and the preceeding values.
  * This can be illustrated as:
  *  - at time t, the value is x1;

@@ -83,18 +83,19 @@ namespace mio {
 const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value
 const double ImisIO::in_tz = 1.; ///< All IMIS data is in gmt+1, that is UTC+1 (a quelques secondes près;-)
 
-const string ImisIO::sqlQueryStationIDs = "SELECT station_name, drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' AND station_code=:1"; ///< Wind drift station meta data
+const std::string ImisIO::sqlQueryStationIDs = "SELECT station_name, drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' AND station_code=:1"; ///< Wind drift station meta data
 
-const string ImisIO::sqlQueryStationMetaData = "SELECT stao_name, stao_x, stao_y, stao_h FROM station2.v_station_standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Snow station meta data
+const std::string ImisIO::sqlQueryStationMetaData = "SELECT stao_name, stao_x, stao_y, stao_h FROM station2.v_station_standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Snow station meta data
 
-const string ImisIO::sqlQuerySensorDepths = "SELECT hts1_1, hts1_2, hts1_3 FROM station2.v_station_standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Sensor depths at station
+const std::string ImisIO::sqlQuerySensorDepths = "SELECT hts1_1, hts1_2, hts1_3 FROM station2.v_station_standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Sensor depths at station
 
-const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, a.ap, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
+const std::string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, a.ap, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
 
-const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ap, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
+const std::string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ap, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
 
-const string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into PSUM
+const std::string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into PSUM
 
+const std::string ImisIO::coordin("CH1903"), ImisIO::coordinparam("");
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 std::map< std::string, std::pair<double, double> > ImisIO::mapSlopes;
 const bool ImisIO::__init = ImisIO::initStaticData();
@@ -236,18 +237,18 @@ void ImisIO::getDBParameters()
 }
 
 ImisIO::ImisIO(const std::string& configfile)
-        : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
+        : cfg(configfile), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
           oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_psum(false), use_psum_snowpack(false)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	IOUtils::getProjectionParameters(cfg, coordout, coordoutparam);
 	getDBParameters();
 }
 
 ImisIO::ImisIO(const Config& cfgreader)
-        : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
+        : cfg(cfgreader), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
           oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_psum(false), use_psum_snowpack(false)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	IOUtils::getProjectionParameters(cfg, coordout, coordoutparam);
 	getDBParameters();
 }
 
@@ -911,7 +912,7 @@ std::vector<std::string> ImisIO::getStationMetaData(const std::string& stat_abk,
  * Each record returned are vector of strings which are pushed back in vecMeteoData.
  * @param stat_abk :     a string key of ams.v_ams_raw
  * @param stao_nr :      a string key of ams.v_ams_raw
- * @param dateS :        begining of the recording date
+ * @param dateS :        beginning of the recording date
  * @param dateE :        end of the recording date
  * @param vecMeteoData : a vector of vector of string in which data will be filled
  * @param return true if the station is a full station, false otherwise (ex: wind station)

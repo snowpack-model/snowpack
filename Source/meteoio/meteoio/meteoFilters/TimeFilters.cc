@@ -53,8 +53,7 @@ TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& v
 		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
 		suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
-	} else
-		throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
+	}
 }
 
 void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,

@@ -58,6 +58,16 @@ namespace IOUtils {
 		num_of_levels = 1 << 4
 	};
 
+	///Keywords for mode of operation. Please keep all the GRID_xxx last!
+	enum OperationMode {
+		STD, ///< default: extract timeseries from timeseries or grids from grids or spatially interpolate timeseries
+		VSTATIONS, ///< extract virtual stations as specified in the ini file
+		GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+		GRID_SMART, ///< extract all relevant grid points from a provided grid
+		GRID_ALL, ///< extract all grid points from a provided grid
+		GRID_RESAMPLE ///< generate a grid at a different resolution
+	};
+
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
 	const unsigned int unodata = static_cast<unsigned int>(-1);
@@ -146,7 +156,7 @@ namespace IOUtils {
 	void stripComments(std::string& str);
 	
 	/**
-	 * @brief replace the within a given string, a substring by another one.
+	 * @brief Replace a substring within a given string by another one.
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param input string to manipulate
 	 * @param[in] search substring to be searched for 
@@ -162,6 +172,16 @@ namespace IOUtils {
 	 * @return number of non-overlapping matches 
 	 */
 	size_t count(const std::string &input, const std::string& search);
+	
+	/**
+	 * @brief Fowler/Noll/Vo hash function (FNV-1a)
+	 * @details This returns a non-cryptographic, 32 bits hash for the string given as argument 
+	 * (see https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+	 * or https://tools.ietf.org/html/draft-eastlake-fnv-16)
+	 * @param[in] text string to get a hash for
+	 * @return 32 bits hash 
+	 */
+	size_t FNV_hash(const std::string& text);
 	
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
@@ -184,6 +204,12 @@ namespace IOUtils {
 	size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
+	
+	template <class T> std::string toString(const T& t) {
+		std::ostringstream os;
+		os << t;
+		return os.str();
+	}
 
 	/**
 	* @brief Convert a string to the requested type (template function).

@@ -461,7 +461,7 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 	if (xcoord==IOUtils::nodata) xcoord = -cellsize;
 	if (ycoord==IOUtils::nodata) ycoord = -cellsize;
 
-	//come back to the begining of the file
+	//come back to the beginning of the file
 	rewind(fin);
 }
 
@@ -514,7 +514,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 	// Read until the parameter is found
 	moveToMarker(fin, filename, parameter);
 
-	// move to the begining of the layer of interest
+	// move to the beginning of the layer of interest
 	skipToLayer(fin, filename, layer);
 
 	//read the data we are interested in

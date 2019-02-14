@@ -139,7 +139,7 @@ class DEMObject : public Grid2DObject {
 		void CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void (DEMObject::*CalculateSlope)(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		
-		static double steepestGradient(const double& cellsize, double A[4][4]);
+		static double steepestGradient(const double& i_cellsize, double A[4][4]);
 		static double lineGradient(const double& A1, const double& A2, const double& A3);
 		static double fillMissingGradient(const double& delta1, const double& delta2);
 		static void surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]);

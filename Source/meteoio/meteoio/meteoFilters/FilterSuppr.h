@@ -30,7 +30,7 @@ namespace mio {
  * @ingroup processing
  * @brief Suppression filter.
  * @details
- * Normally, this filter simply reject all values. This is convenient to quickly turn a parameter off
+ * Normally, this filter simply rejects all values. This is convenient to quickly turn a parameter off
  * without modifying the original data. It is also possible to suppress some values based on
  * specific criterias, with the following arguments:
  *  - SUPPR: provide a file that contains a list of station ID's and timesteps specifying where the parameter should be suppressed;

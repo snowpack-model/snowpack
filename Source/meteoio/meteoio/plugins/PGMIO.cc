@@ -249,7 +249,7 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 bool PGMIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &results)
 {
 	results.clear();
-	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recusive if this changes in the plugin!
+	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recursive if this changes in the plugin!
 	dirlist.sort();
 	
 	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {

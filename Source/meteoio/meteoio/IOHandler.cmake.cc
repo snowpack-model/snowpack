@@ -45,6 +45,7 @@
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_PSQLIO
 #cmakedefine PLUGIN_SASEIO
+#cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
 #include <meteoio/plugins/ARCIO.h>
@@ -101,6 +102,10 @@
 #include <meteoio/plugins/SASEIO.h>
 #endif
 
+#ifdef PLUGIN_ZRXPIO
+#include <meteoio/plugins/ZRXPIO.h>
+#endif
+
 using namespace std;
 
 namespace mio {
@@ -139,7 +144,7 @@ namespace mio {
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td>ARPS ascii formatted grids</td><td></td></tr>
  * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
- * <tr><td>\subpage csvio "CSV"</td><td>meteo,</td><td>flexible reading of CSV files</td><td></td></tr>
+ * <tr><td>\subpage csvio "CSV"</td><td>meteo</td><td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage geotop "GEOTOP"</td><td>meteo</td><td>GeoTop meteo files</td><td></td></tr>
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>Grass grid files</td><td></td></tr>
@@ -154,6 +159,7 @@ namespace mio {
  * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
+ * <tr><td>\subpage zrxpio "ZRXP"</td><td>meteo</td><td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
  * @note In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
@@ -239,7 +245,7 @@ namespace mio {
  * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
  *
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
- * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size
+ * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
  * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
  *
@@ -333,6 +339,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_SASEIO
 	if (plugin_name == "SASE") return new SASEIO(cfg);
+#endif
+#ifdef PLUGIN_ZRXPIO
+	if (plugin_name == "ZRXP") return new ZRXPIO(cfg);
 #endif
 
 	return NULL; //no plugin found
@@ -756,7 +765,7 @@ void IOHandler::create_exclude_map()
 		for (it_station=excluded_params.begin(); it_station!=excluded_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
 
-			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+			for (std::set<std::string>::const_iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
 
 			excluded_params[ it_station->first ] = params;
@@ -832,7 +841,7 @@ void IOHandler::create_keep_map()
 		for (it_station=kept_params.begin(); it_station!=kept_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
 
-			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+			for (std::set<std::string>::const_iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
 
 			kept_params[ it_station->first ] = params;

@@ -896,8 +896,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		double true_lat, true_lon;
 		CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
 		sd.position.setLatLon(true_lat, true_lon, values[ii]);
-		const std::string idx_str( static_cast<ostringstream*>( &(ostringstream() << indexes[ii]) )->str() );
-		sd.stationID = "Point_" + idx_str;
+		sd.stationID = "Point_" + IOUtils::toString(indexes[ii]);
 		ostringstream ss2;
 		ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
 		sd.stationName=ss2.str();

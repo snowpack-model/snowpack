@@ -80,7 +80,7 @@ void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 	throw IOException("Nothing implemented here", AT);
 	
 	/* Example: how to read coordinate in the input coordinate system and make them availabe to any other coordinate system*/
-	/* //we assume we already have eatsing, northing and altitude in "double" variables
+	/* //we assume we already have easting, northing and altitude in "double" variables
 	* Coords point1(coordin, coordinparam);
 	* point1.setXY(easting , northing., altitude);
 	* 

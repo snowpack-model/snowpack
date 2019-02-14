@@ -31,7 +31,6 @@ class GridsManager;
 class Meteo2DInterpolator;
 
 class IOManager {
-
 	public:
 		IOManager(const std::string& filename_in);
 		IOManager(const Config& i_cfg);
@@ -220,14 +219,21 @@ class IOManager {
 		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.
 		 */
 		void clear_cache();
-
+		
+		/**
+		 * @brief Returns the mode to be used for the IOManager
+		 * @param i_cfg configuration object
+		 * @return mode as of IOUtils::OperationMode
+		 */
+		static IOUtils::OperationMode getIOManagerMode(const Config& i_cfg);
+		
 	private:
-		static IOHandler::operation_mode setMode(const Config& i_cfg);
 		void initVirtualStations();
 		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);
 		void initIOManager();
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
+		const IOUtils::OperationMode mode;
 		IOHandler iohandler;
 		TimeSeriesManager tsm1, tsm2;
 		GridsManager gdm1;
@@ -236,7 +242,6 @@ class IOManager {
 		std::vector<size_t> v_params, grids_params; ///< Parameters for virtual stations
 		std::vector<StationData> v_stations, v_gridstations; ///< metadata for virtual stations
 		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated? (in seconds)
-		const IOHandler::operation_mode mode;
 };
 } //end namespace
 #endif

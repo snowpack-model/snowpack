@@ -62,7 +62,7 @@ class MPIControl
 		 * @return current thread number
 		 */
 		size_t thread() const;
-		
+
 		/**
 		 * Returns the total number of OpenMP threads or 1 if OpenMP has not been activated
 		 * @return number of threads
@@ -235,7 +235,7 @@ class MPIControl
 		template <class T> void broadcast(T& obj, const size_t& root = 0)
 		{
 			if (size_ <= 1) return;
-			
+
 			std::string obj_string;
 
 			if (rank_ == root) { // Build the string that represents the object
@@ -298,7 +298,7 @@ class MPIControl
 		#else
 		template <class T> void broadcast(std::vector<T>& /*vec_obj*/, const size_t& root=0) {(void)root;}
 		#endif
-		
+
 		#ifdef ENABLE_MPI
 		/**
 		 * @brief	Scatter the objects pointed to by vector<T*> by slices to all preocesses.
@@ -364,25 +364,13 @@ class MPIControl
 		 * @param[in] tag Arbitrary non-negative integer assigned to uniquely identify a message
 		 * @note Class T needs to have the serialize and deseralize operator << and >> implemented
 		 */
-		template <class T> void send(const std::vector<T*>& vec_local, const size_t& destination, const int& tag=0)
-		{
-			if ((size_ <= 1) || (rank_ == destination)) return;
+		template <class T> void send(const std::vector<T*>& vec_local, const size_t& destination, const int& tag=0);
+    template <class T> void send(const std::vector<T>& vec_local, const size_t& destination, const int& tag=0);
 
-			size_t v_size = vec_local.size();
-
-			send((int)v_size, destination, tag); // first send the size of the vector
-			for (size_t ii=0; ii<v_size; ii++) {
-				std::string obj_string;
-				std::stringstream objs_stream;
-
-				objs_stream << *(vec_local[ii]);
-				obj_string.insert(0, objs_stream.str());
-				send(obj_string, destination, tag);
-			}
-		}
 		#else
 		template <class T> void send(const std::vector<T*>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
-		#endif
+    template <class T> void send(const std::vector<T>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
+    #endif
 
 		#ifdef ENABLE_MPI
 		/**
@@ -392,31 +380,13 @@ class MPIControl
 		 * @param[in] tag Arbitrary non-negative integer assigned to uniquely identify a message
 		 * @note Class T needs to have the serialize and deseralize operator << and >> implemented
 		 */
-		template <class T> void receive(std::vector<T*>& vec_local, const size_t& source, const int& tag=0)
-		{
-			if ((size_ <= 1) || (rank_ == source)) return;
+		template <class T> void receive(std::vector<T*>& vec_local, const size_t& source, const int& tag=0);
+    template <class T> void receive(std::vector<T>& vec_local, const size_t& source, const int& tag=0);
 
-			if (!vec_local.empty())
-				throw mio::IOException("The vector to receive pointers has to be empty (please properly free the vector)", AT);
-
-			std::string obj_string;
-			int v_size;
-			receive(v_size, source, tag);
-			vec_local.resize((size_t)v_size);
-
-			T obj; // temporary object
-			for (size_t ii=0; ii<vec_local.size(); ii++) {
-				std::stringstream objs_stream;
-				receive(obj_string, source, tag);
-
-				objs_stream << obj_string;
-
-				objs_stream >> obj;
-				vec_local[ii] = new T(obj);
-			}
-		}
 		#else
 		template <class T> void receive(std::vector<T*>& /*vec_local*/, const size_t& /*source*/, const int& tag=0) {(void)tag;}
+    template <class T> void receive(std::vector<T>& /*vec_local*/, const size_t& /*source*/, const int& tag=0) {(void)tag;}
+
 		#endif
 
 		#ifdef ENABLE_MPI
@@ -473,7 +443,7 @@ class MPIControl
 		#else
 		template <class T> void gather(std::vector<T*>& /*vec_local*/, const size_t& root=0) {(void)root;}
 		#endif
-		
+
 		/** @brief Helper to split an array for domain decomposition.
 		 * Given the overall size of an array calculate a start index and block length
 		 * for the subarray on the basis of the current MPI rank
@@ -483,7 +453,12 @@ class MPIControl
 		 */
 		void getArraySliceParams(const size_t& dimx, size_t& startx_sub, size_t& nx_sub) const {getArraySliceParams(dimx, size_, rank_, startx_sub, nx_sub);}
 		void getArraySliceParams(const size_t& dimx, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub) const {getArraySliceParams(dimx, size_, idx_wk, startx_sub, nx_sub);}
-		
+
+    void getArraySliceParamsOptim(const size_t& dimx, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse)
+      {getArraySliceParamsOptim(dimx, rank_, startx_sub, nx_sub, dem, landuse);}
+
+    void getArraySliceParamsOptim(const size_t& dimx, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse);
+
 		/**
 		* @brief Returns the parameters for splitting an array in several, balanced sub-arrays.
 		* This is mostly usefull for parallel calculations, where an array will be split and sent to different
@@ -495,7 +470,7 @@ class MPIControl
 		* @param[out] nx_sub calculated number of cells (in the desired dimension) of the current slice
 		*/
 		static void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub);
-		
+
 		/**
 		* @brief Returns the parameters for splitting an array in several, balanced sub-arrays.
 		* This is mostly usefull for parallel calculations, where an array will be split and sent to different

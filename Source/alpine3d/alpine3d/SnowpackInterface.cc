@@ -85,8 +85,8 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false),
                   meteo_outpath(), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(), tz_out(0.),
-                  sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), landuse(landuse_in),
-                  mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
+                  sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
+                  landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
                   psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
                   vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
                   solarElevation(0.), output_grids(), workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), timer(),
@@ -96,7 +96,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 {
 	MPIControl& mpicontrol = MPIControl::instance();
 
-	std::vector<SnowStation*> snow_stations( readInitalSnowCover());
+	std::vector<SnowStation*> snow_stations(readInitalSnowCover());
 
 	if (mpicontrol.master()) {
 		std::cout << "[i] SnowpackInterface initializing a total of " << mpicontrol.size();
@@ -117,7 +117,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		std::vector<double> soil_temp_depths;
 		sn_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
 		const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
-		if (soil_temp_depths.size()>max_Tsoil) 
+		if (soil_temp_depths.size()>max_Tsoil)
 			throw InvalidArgumentException("Too many soil temperatures requested", AT);
 		for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
 			const std::string ii_str( static_cast<ostringstream*>( &(ostringstream() << (ii+1)) )->str() );
@@ -137,8 +137,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	sn_cfg.getValue("A3d_VIEW", "Output", a3d_view, IOUtils::nothrow);
 
 	//If MPI is active, every node gets a slice of the DEM to work on
-	size_t mpi_offset = 0, mpi_nx = dimx;
-	mpicontrol.getArraySliceParams(dimx, mpi_offset, mpi_nx);
+  mpicontrol.getArraySliceParamsOptim(dimx, mpi_offset, mpi_nx,dem,landuse);
 
 	// construct slices and workers
 	#pragma omp parallel for schedule(static)
@@ -371,18 +370,27 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 				if (meteoGrids_idx!=IOUtils::npos) { //for this, the grid plugins must be thread-safe!
 					io.write2DGrid(grid, static_cast<MeteoGrids::Parameters>(meteoGrids_idx), date);
 				} else {
-					std::string file_name;
-					if(a3d_view){
-						std::string dateStr( date.toString(Date::NUM) );
-						dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
-						file_name =  dateStr + "_" + output_grids[ii] + ".asc" ;
-					}
-					else{
-						std::string date_str(date.toString(mio::Date::ISO));
-						std::replace( date_str.begin(), date_str.end(), ':', '.');
-						file_name =  date_str + "_" + output_grids[ii] + ".asc" ;
-					}
-					io.write2DGrid(grid, file_name);
+					std::string grid_type;
+					sn_cfg.getValue("GRID2D", "output",grid_type);
+					if (grid_type == "ARC") {
+						std::string file_name;
+						if (a3d_view) {
+							std::string dateStr( date.toString(Date::NUM) );
+							dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
+							file_name =  dateStr + "_" + output_grids[ii] + ".asc" ;
+						} else {
+							std::string date_str(date.toString(mio::Date::ISO));
+							std::replace( date_str.begin(), date_str.end(), ':', '.');
+							file_name =  date_str + "_" + output_grids[ii] + ".asc" ;
+						}
+						io.write2DGrid(grid, file_name);
+					} else if (grid_type=="NETCDF") {
+						std::string file;
+						sn_cfg.getValue("GRID2DFILE", "output", file);
+						io.write2DGrid(grid, output_grids[ii]+"@"+date.toString(mio::Date::ISO));
+					} else {
+						throw InvalidFormatException("[E] Only ARC and NetCDF allow writing out non-standard grids such as "+output_grids[ii], AT);
+ 					}
 
 					// Reset WINDEROSIONDEPOSITION, which is cumulative since the previous output grid
 					if (output_grids[ii] == "WINDEROSIONDEPOSITION") winderosiondeposition.set(winderosiondeposition, 0.);
@@ -580,6 +588,7 @@ void SnowpackInterface::setSnowMassChange(const mio::Grid2DObject& new_mns, cons
  * @param new_psum gives the new values for new Water High
  * @param new_psum_ph gives the new values for the precipitation phase
  * @param new_vw gives the new values for the wind speed
+ * @param new_dw gives the new values for the wind direction
  * @param new_rh gives the new values for the realtiv Humidity
  * @param new_ta gives the new values for the Aire temperature
  * @param timestamp is the time of the calculation step from which this new values are comming
@@ -922,9 +931,9 @@ void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const do
 	if (useCanopy) smet_out << "comment      = " << "ISWR/RSWR are above the canopy, ISWR_can/RSWR_can and PSUM/PSUM_PH are below the canopy\n";
 
 	smet_out << "fields       = timestamp TA TSS TSG VW DW VW_MAX ISWR OSWR ILWR PSUM PSUM_PH HS RH";
-	for (size_t ii=0; ii<Tsoil_idx.size(); ii++) 
+	for (size_t ii=0; ii<Tsoil_idx.size(); ii++)
 		smet_out << " TSOIL" << Tsoil_idx[ii];
-	
+
 	if (useCanopy) smet_out << " ISWR_can RSWR_can";
 	smet_out << "\n[DATA]\n";
 
@@ -1013,7 +1022,7 @@ std::vector<SnowStation*> SnowpackInterface::readInitalSnowCover()
 
 			SN_SNOWSOIL_DATA snow_soil;
 			size_t startx, deltax;
-			MPIControl::instance().getArraySliceParams(dimx, ii, startx, deltax);
+			MPIControl::instance().getArraySliceParamsOptim(dimx, ii, startx, deltax,dem,landuse);
 			vector<SnowStation*> snow_stations_tmp;
 			snow_stations_tmp.reserve( dimy*deltax );
 

@@ -215,7 +215,7 @@ void Coords::merge(const Coords& coord2) {
 }
 
 /**
-* @brief Print the content of the Coords object (usefull for debugging)
+* @brief Print the content of the Coords object (useful for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
 const std::string Coords::toString(const FORMATS& type) const 
@@ -376,6 +376,7 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
 * - latitude/longitude/altitude
 * - (latitude; longitude; altitude)
 * - (latitude, longitude, altitude)
+* 
 * Of course, for cartesian coordinates systems, the easting/northing/altitudes are provided instead of latitude/longitude/altitude.
 * Latitudes and longitudes can be in any format supported by CoordsAlgorithms::dms_to_decimal.
 *

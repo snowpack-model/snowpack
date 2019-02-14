@@ -30,8 +30,11 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), nodata("NAN"), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), header_repeat_at_start(false), asc_order(true), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
 		
+		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
+		void setDelimiter(const std::string& delim);
+		void setSkipFields(const std::vector<size_t>& vecSkipFields);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
@@ -42,12 +45,14 @@ class CsvParameters {
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
+		std::map<size_t, bool> skip_fields;		///< Fields that should not be read
 		
-		std::string nodata;
+		std::string nodata, header_repeat_mk;
 		size_t date_col, time_col;
 		size_t header_lines, columns_headers, units_headers;
 		char csv_delim;
 		char eoln;
+		bool header_repeat_at_start, asc_order;
 	private:
 		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon);
 		void parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon);
@@ -91,7 +96,9 @@ class CsvIO : public IOInterface {
 		std::string setDateParsing(const std::string& datetime_spec);
 		std::vector<std::string> readHeaders(std::ifstream& fin, CsvParameters& params) const;
 		Date parseDate(const std::string& date_str, const std::string& time_str) const;
-		std::vector<MeteoData> readCSVFile(CsvParameters& params, const Date& dateStart, const Date& dateEnd);
+		static MeteoData createTemplate(const CsvParameters& params);
+		static Date getDate(const CsvParameters& params, const std::string& date_str, const std::string& time_str, const bool& silent_errors, const std::string& filename, const size_t& linenr);
+		std::vector<MeteoData> readCSVFile(const CsvParameters& params, const Date& dateStart, const Date& dateEnd);
 		
 		const Config cfg;
 		std::map<std::string, mio::FileUtils::FileIndexer> indexer_map;
