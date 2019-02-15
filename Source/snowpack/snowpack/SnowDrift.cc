@@ -50,6 +50,29 @@ static bool get_bool(const SnowpackConfig& cfg, const std::string& key, const st
 	return value;
 }
 
+static std::string get_erosion(const SnowpackConfig& cfg)
+{
+	std::string erosion = "NONE";
+	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", erosion);
+	std::transform(erosion.begin(), erosion.end(), erosion.begin(), ::toupper);	// Force upper case
+	if (erosion != "NONE" && erosion != "VIRTUAL" && erosion != "HS_DRIVEN" && erosion != "FREE") {
+		if (erosion == "TRUE") {
+			// SNOW_EROSION==TRUE is deprecated and now interpreted as HS_DRIVEN.
+			// TODO/HACK: remove this hack in the future.
+			erosion="HS_DRIVEN";
+		} else if (erosion == "FALSE") {
+			// SNOW_EROSION==FALSE is deprecated and now interpreted as NONE.
+			// TODO/HACK: remove this hack in the future.
+			erosion="NONE";
+		} else {
+			std::stringstream msg;
+			msg << "Value provided for SNOW_EROSION (" << erosion << ") is not valid. Choose either NONE, VIRTUAL, HS_DRIVEN, FREE.";
+			throw UnknownValueException(msg.str(), AT);
+		}
+	}
+	return erosion;
+}
+
 static bool get_redistribution(const SnowpackConfig& cfg)
 {
 	bool redistribution = false;
@@ -72,7 +95,7 @@ static double get_sn_dt(const SnowpackConfig& cfg)
 }
 
 SnowDrift::SnowDrift(const SnowpackConfig& cfg) : saltation(cfg),
-                     enforce_measured_snow_heights( get_bool(cfg, "ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack") ), snow_redistribution( get_redistribution(cfg) ), snow_erosion( get_bool(cfg, "SNOW_EROSION", "SnowpackAdvanced") ), alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ),
+                     enforce_measured_snow_heights( get_bool(cfg, "ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack") ), snow_redistribution( get_redistribution(cfg) ), snow_erosion( get_erosion(cfg) ), alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ),
                      sn_dt( get_sn_dt(cfg) ), forcing("ATMOS")
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
@@ -155,8 +178,8 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
 	// At main station, measured snow depth controls whether erosion is possible or not
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
-	const bool erosion = snow_erosion && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH);
-	if (windward || alpine3d || erosion || (forcing == "MASSBAL")) {
+	const bool erosion = (  (snow_erosion == "FREE") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
+	if (windward || alpine3d || erosion || (fabs(forced_massErode) > Constants::eps2) || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
 		if (forcing == "MASSBAL") {
 			if (forced_massErode != IOUtils::nodata) {
@@ -225,7 +248,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 		}
 	// ... or, in case of no real erosion, check whether you can potentially erode at the main station.
 	// This will never contribute to the drift index VI24, though!
-	} else if (snow_erosion && (Xdata.ErosionLevel > Xdata.SoilNode)) {
+	} else if (snow_erosion == "VIRTUAL" && (Xdata.ErosionLevel > Xdata.SoilNode)) {
 		double virtuallyErodedMass = compMassFlux(EMS[Xdata.ErosionLevel], Mdata.ustar, Xdata.meta.getSlopeAngle());  // kg m-1 s-1, main station, local vw && erosion level
 		virtuallyErodedMass *= sn_dt / Hazard::typical_slope_length; // Convert to eroded snow mass in kg m-2
 		if (virtuallyErodedMass > Constants::eps) {
