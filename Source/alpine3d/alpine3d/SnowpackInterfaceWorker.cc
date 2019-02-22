@@ -132,8 +132,8 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
  : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), dem(dem_in),
    dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), isSpecialPoint(snow_stations.size(), false),
    landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(), surface_flux(),
-   calculation_step_length(0.), height_of_wind_value(0.),
-   soil_temp_depth(IOUtils::nodata), snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
+   soil_temp_depths(), calculation_step_length(0.), height_of_wind_value(0.),
+   snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
    enable_simple_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
 {
 	if (SnowStations.size() != (dimx*dimy)) throw IOException("Initial snow data does not match the provided grid size", AT);
@@ -141,7 +141,6 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	sn_cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
 	sn_cfg.getValue("HEIGHT_OF_WIND_VALUE", "Snowpack", height_of_wind_value); //currently unused
 	sn_cfg.getValue("CANOPY", "Snowpack", useCanopy);
-	io_cfg.getValue("SOIL_TEMPERATURE_DEPTH", "Output", soil_temp_depth, IOUtils::nothrow);
 	io_cfg.getValue("SNOW_TEMPERATURE_DEPTH", "Output", snow_temp_depth, IOUtils::nothrow);
 	io_cfg.getValue("SNOW_AVG_TEMPERATURE_DEPTH", "Output", snow_avg_temp_depth, IOUtils::nothrow);
 	io_cfg.getValue("SNOW_AVG_DENSITY_DEPTH", "Output", snow_avg_rho_depth, IOUtils::nothrow);
@@ -152,10 +151,20 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 
 	//create the vector of output grids
 	std::vector<std::string> params = sn_cfg.get("GRIDS_PARAMETERS", "output");
-	if (soil_temp_depth!=IOUtils::nodata) params.push_back("TSOIL");
 	if (snow_temp_depth!=IOUtils::nodata) params.push_back("TSNOW");
 	if (snow_avg_temp_depth!=IOUtils::nodata) params.push_back("TSNOW_AVG");
 	if (snow_avg_rho_depth!=IOUtils::nodata) params.push_back("RHOSNOW_AVG");
+
+	//handle the soil temperatures
+	io_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
+	const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
+	if (soil_temp_depths.size()>max_Tsoil)
+		throw InvalidArgumentException("Too many soil temperatures requested", AT);
+	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
+		const std::string ii_str( static_cast<ostringstream*>( &(ostringstream() << (ii+1)) )->str() );
+		params.push_back( "TSOIL"+ii_str );
+	}
+	uniqueOutputGrids(params);
 	initGrids(params);
 
 	const CurrentMeteo meteoPixel; //this is only necessary in order to have something for fillGrids()
@@ -169,7 +178,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 				continue;
 			}
 
-			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			const size_t index_SnowStation = ix + dimx*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skip cells initialized with NULL
 			const SnowStation &snowPixel = *SnowStations[index_SnowStation];
 			fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
@@ -191,6 +200,19 @@ SnowpackInterfaceWorker::~SnowpackInterfaceWorker()
 /******************************************************************************
  * Methods that have to do with output
  ******************************************************************************/
+
+/** @brief Make sure all requested grids only appear once
+ * @param output_grids vector of requeste grids to sort and filter
+ */
+void SnowpackInterfaceWorker::uniqueOutputGrids(std::vector<std::string>& output_grids)
+{
+	for (size_t ii = 0; ii<output_grids.size(); ++ii)
+		IOUtils::toUpper(output_grids[ii]);
+
+	std::sort (output_grids.begin(), output_grids.end());
+	const std::vector<std::string>::iterator it = std::unique (output_grids.begin(), output_grids.end());
+	output_grids.resize( std::distance(output_grids.begin(),it) );
+}
 
 /** @brief Initialize and add to the grid map the requested grids
  * @param params string representation of the grids to add
@@ -239,7 +261,7 @@ void SnowpackInterfaceWorker::getOutputSNO(std::vector<SnowStation*>& snow_stati
 	for (size_t iy=0;iy<dimy;iy++) {
 		for (size_t ix=0;ix<dimx;ix++) {
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			const size_t index_SnowStation = dimx*iy + ix;
 
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			#pragma omp critical (snow_station_lock)
@@ -329,6 +351,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 					value =  pow(snowPixel.Cdata->rlwrac/Constants::stefan_boltzmann, 0.25);
 				}
 				break;
+			case SnGrids::TSG:
+				value = snowPixel.Ndata[snowPixel.SoilNode].T; break;
 			case SnGrids::TS0:
 				value = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : IOUtils::nodata; break;
 			case SnGrids::TSNOW:
@@ -337,8 +361,6 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = getAvgAtDepth(snowPixel, snow_temp_depth, true); break;
 			case SnGrids::RHOSNOW_AVG:
 				value = getAvgAtDepth(snowPixel, snow_temp_depth, false); break;
-			case SnGrids::TSOIL:
-				value = (soil_temp_depth != IOUtils::nodata)? getSoilTemperature(snowPixel, soil_temp_depth) : IOUtils::nodata; break;
 			case SnGrids::SWE:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] /  snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::RSNO: {
@@ -381,7 +403,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::GLACIER_EXPOSED:
 				value = (!snowPixel.isGlacier(false))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			default:
-				throw  UnknownValueException("Unknown/unsupported grid requested", AT);
+				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::lastparam) //dealing with soil temperatures
+					value = (soil_temp_depths.empty())? IOUtils::nodata : getSoilTemperature(snowPixel, soil_temp_depths[ it->first - SnGrids::TSOIL1 ]);
+				else
+					throw InvalidArgumentException("Invalid parameter requested", AT);
 		}
 
 		it->second(ii,jj) = value;
@@ -394,9 +419,11 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
  * @param date current simulation time step
  * @param psum precipitation grid (kg m-2)
  * @param psum_ph precipitation phase grid (between 0 and 1)
+ * @param psum_tech technical precipitation grid (kg m-2)
  * @param rh relative humidity grid (% or 1)
  * @param ta air temperature grid (K)
  * @param vw wind velocity grid (m s-1)
+ * @param dw wind direction grid (degrees north)
  * @param mns map of the Precipitation (mm/h) HACK get this map only if per pull from Master if Drift is used !!
  * @param shortwave incoming shortwave radiation grid (W m-2)
  * @param diffuse diffuse radiation from the sky grid (W m-2)
@@ -425,10 +452,6 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	CurrentMeteo meteoPixel(sn_cfg);
 	meteoPixel.date = date;
 	meteoPixel.elev = solarElevation*Cst::to_rad; //HACK: Snowpack uses RAD !!!!!
-	if (soil_temp_depth!=IOUtils::nodata) {
-		meteoPixel.zv_ts.push_back( soil_temp_depth );
-		meteoPixel.ts.push_back( IOUtils::nodata );
-	}
 
 	if (enable_simple_snow_drift) {
 		// reset eroded mass grid
@@ -439,7 +462,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			const size_t index_SnowStation = ix + dimx*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			SnowStation &snowPixel = *SnowStations[index_SnowStation];
 			const bool isGlacier = snowPixel.isGlacier(false);
@@ -462,7 +485,6 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
 			meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
 			meteoPixel.ts0 = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : meteoPixel.tss; //we use previous timestep value
-			if (soil_temp_depth!=IOUtils::nodata) meteoPixel.ts[0] = getGridPoint(SnGrids::TSOIL, ix,iy); //for consistency: previous time step value
 			meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
 			meteoPixel.psum_ph = psum_ph(ix,iy);
 			meteoPixel.psum_tech = psum_tech(ix, iy);
@@ -616,7 +638,7 @@ void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
 			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
 			if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
 
-			const size_t index_SnowStation = ix + dem.getNx()*iy;
+			const size_t index_SnowStation = ix + dimx*iy;
 			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
 			Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
 		}
@@ -670,13 +692,13 @@ bool SnowpackInterfaceWorker::is_special(const std::vector< std::pair<size_t,siz
 
 /**
  * @brief method called by SnowpackInterface to retrieve all snow_pixels, to read the lateral flow variable
- * @param pointer to vector of SnowStations, where the variable SlopeParFlux contains the lateral flow
+ * @param ptr_snow_pixel to vector of SnowStations, where the variable SlopeParFlux contains the lateral flow
  */
 void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow_pixel)
 {
 	for (size_t iy=0;iy<dimy;iy++) {
 		for (size_t ix=0;ix<dimx;ix++) {
-			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			const size_t index_SnowStation = dimx*iy + ix;
 			#pragma omp critical (snow_station_lock)
 			ptr_snow_pixel.push_back( SnowStations[index_SnowStation] );
 		}
@@ -685,13 +707,13 @@ void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow
 
 /**
  * @brief method called by SnowpackInterface to send back the source/sink term for treating lateral flow
- * @param pointer to vector of SnowStations, in which the lwc_source variable is set to contain the lateral flow.
+ * @param ptr_snow_pixel to vector of SnowStations, in which the lwc_source variable is set to contain the lateral flow.
  */
 void SnowpackInterfaceWorker::setLateralFlow(const std::vector<SnowStation*>& ptr_snow_pixel)
 {
 	for (size_t iy=0;iy<dimy;iy++) {
 		for (size_t ix=0;ix<dimx;ix++) {
-			const size_t index_SnowStation = dem.getNy()*ix + iy;
+			const size_t index_SnowStation = dimx*iy + ix;
 			if (SnowStations[index_SnowStation]!=NULL) {
 				for(size_t n=0; n<SnowStations[index_SnowStation]->getNumberOfElements(); n++) {
 					SnowStations[index_SnowStation]->Edata[n].lwc_source = ptr_snow_pixel[index_SnowStation]->Edata[n].lwc_source;

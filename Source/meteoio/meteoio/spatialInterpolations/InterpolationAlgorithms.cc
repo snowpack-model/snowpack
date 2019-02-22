@@ -139,7 +139,7 @@ namespace mio {
  *
  * @section interpol2D_dev_use Developer usage
  * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its
- * IOManager::interpolate method.
+ * IOManager::getMeteoData method with an elevation model and a grid.
  * @code
  * 	Config cfg("io.ini");
  * 	IOManager io(cfg);
@@ -150,7 +150,7 @@ namespace mio {
  *
  * 	//performing spatial interpolations
  * 	Grid2DObject param;
- * 	io.interpolate(date, dem, MeteoData::TA, param);
+ * 	io.getMeteoData(date, dem, MeteoData::TA, param);
  *
  * @endcode
  *

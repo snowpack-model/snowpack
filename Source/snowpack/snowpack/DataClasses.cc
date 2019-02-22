@@ -1898,7 +1898,7 @@ const std::string NodeData::toString() const
 
 SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLayers, const bool& i_useSeaIceModule) :
 	meta(), cos_sl(1.), sector(0), Cdata(NULL), Seaice(NULL), pAlbedo(0.), Albedo(0.),
-	SoilAlb(0.), BareSoil_z0(0.), SoilNode(0), Ground(0.),
+	SoilAlb(0.), SoilEmissivity(0.), BareSoil_z0(0.), SoilNode(0), Ground(0.),
 	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), hn(0.), rho_hn(0.), ErosionLevel(0), ErosionMass(0.),
 #ifndef SNOWPACK_CORE
 	S_class1(0), S_class2(0), S_d(0.), z_S_d(0.), S_n(0.), z_S_n(0.),
@@ -1924,7 +1924,7 @@ SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLaye
 
 SnowStation::SnowStation(const SnowStation& c) :
 	meta(c.meta), cos_sl(c.cos_sl), sector(c.sector), Cdata(c.Cdata), Seaice(c.Seaice), pAlbedo(c.pAlbedo), Albedo(c.Albedo),
-	SoilAlb(c.SoilAlb),BareSoil_z0(c.BareSoil_z0), SoilNode(c.SoilNode), Ground(c.Ground),
+	SoilAlb(c.SoilAlb), SoilEmissivity(c.SoilEmissivity), BareSoil_z0(c.BareSoil_z0), SoilNode(c.SoilNode), Ground(c.Ground),
 	cH(c.cH), mH(c.mH), mass_sum(c.mass_sum), swe(c.swe), lwc_sum(c.lwc_sum), hn(c.hn), rho_hn(c.rho_hn), ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass),
 #ifndef SNOWPACK_CORE
 	S_class1(c.S_class1), S_class2(c.S_class2), S_d(c.S_d), z_S_d(c.z_S_d), S_n(c.S_n), z_S_n(c.z_S_n),
@@ -1965,6 +1965,7 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		pAlbedo = source.pAlbedo;
 		Albedo = source.Albedo;
 		SoilAlb = source.SoilAlb;
+		SoilEmissivity = source.SoilEmissivity;
 		BareSoil_z0 = source.BareSoil_z0;
 		SoilNode = source.SoilNode;
 		Ground = source.Ground;
@@ -2306,6 +2307,8 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	BareSoil_z0 = SSdata.BareSoil_z0;
 
 #ifndef SNOWPACK_CORE
+	SoilEmissivity = (SSdata.Emissivity_soil == mio::IOUtils::nodata) ? Constants::emissivity_soil : SSdata.Emissivity_soil;
+
 	WindScalingFactor = SSdata.WindScalingFactor;
 	TimeCountDeltaHS = SSdata.TimeCountDeltaHS;
 #endif
@@ -2425,6 +2428,14 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].hard = IOUtils::nodata;
 			Edata[e].M = Edata[e].Rho * Edata[e].L0;
 			assert(Edata[e].M >= (-Constants::eps2)); //mass must be positive
+
+			// Check if pore space is available when water would freeze
+			const double porespace = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water);
+			if(Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] > porespace) {
+				const double tmp_sum = Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF];
+				Edata[e].theta[WATER] *= porespace / tmp_sum;
+				Edata[e].theta[WATER_PREF] *= porespace / tmp_sum;
+			}
 		} // end of element layer for
 	} // end of layer for
 
@@ -2439,6 +2450,18 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 
 		Edata[e].C = SigC;
 		assert(Edata[e].C<0.);
+	}
+
+	// Sea ice initializations
+	if (Seaice != NULL) {
+		Seaice->updateFreeboard(*this);
+		for(size_t e = nElems; e -->0; ) {
+			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
+			if(Edata[e].salinity > 0.) {
+				Edata[e].meltfreeze_tk = -SeaIce::mu * br_sal + Constants::meltfreeze_tk;
+			}
+			Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
+		}
 	}
 
 	// Cold content and snowpack masses
@@ -2518,7 +2541,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	if ( Edata0.theta[SOIL] > 0. || Edata1.theta[SOIL] > 0. )
 		return false;
 
-	if ( (Edata0.mk >= 100) || (Edata1.mk >= 100) )
+	if ( (Edata0.mk >= 100 && int(Edata0.mk/1000)!=9) || (Edata1.mk >= 100 && int(Edata0.mk/1000)!=9) )
 		return false;
 
 	if ( (Edata0.mk%100 == 3) || (Edata1.mk%100 == 3) )
@@ -2823,6 +2846,7 @@ std::ostream& operator<<(std::ostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.pAlbedo), sizeof(data.pAlbedo));
 	os.write(reinterpret_cast<const char*>(&data.Albedo), sizeof(data.Albedo));
 	os.write(reinterpret_cast<const char*>(&data.SoilAlb), sizeof(data.SoilAlb));
+	os.write(reinterpret_cast<const char*>(&data.SoilEmissivity), sizeof(data.SoilEmissivity));
 	os.write(reinterpret_cast<const char*>(&data.BareSoil_z0), sizeof(data.BareSoil_z0));
 	os.write(reinterpret_cast<const char*>(&data.SoilNode), sizeof(data.SoilNode));
 	os.write(reinterpret_cast<const char*>(&data.Ground), sizeof(data.Ground));
@@ -2908,6 +2932,7 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.pAlbedo), sizeof(data.pAlbedo));
 	is.read(reinterpret_cast<char*>(&data.Albedo), sizeof(data.Albedo));
 	is.read(reinterpret_cast<char*>(&data.SoilAlb), sizeof(data.SoilAlb));
+	is.read(reinterpret_cast<char*>(&data.SoilEmissivity), sizeof(data.SoilEmissivity));
 	is.read(reinterpret_cast<char*>(&data.BareSoil_z0), sizeof(data.BareSoil_z0));
 	is.read(reinterpret_cast<char*>(&data.SoilNode), sizeof(data.SoilNode));
 	is.read(reinterpret_cast<char*>(&data.Ground), sizeof(data.Ground));
@@ -3001,7 +3026,7 @@ const std::string SnowStation::toString() const
 		os << " canopy=false";
 	os << "\n";
 
-	os << "Soil:\tSoilNode=" << SoilNode  << " depth=" << Ground << " BareSoil_z0=" << BareSoil_z0 << " SoilAlb=" << SoilAlb << "\n";
+	os << "Soil:\tSoilNode=" << SoilNode  << " depth=" << Ground << " BareSoil_z0=" << BareSoil_z0 << " SoilAlb=" << SoilAlb << " SoilEmissivity=" << SoilEmissivity <<  "\n";
 	os << "Snow:\tMeasured HS=" << mH << " Calculated HS=" << cH << " SWE=" << swe << " LWCtot" << lwc_sum << " New snow=" << hn << " of density=" << rho_hn << "\n";
 	os << "Snow Albedo:\tAlbedo=" << Albedo << " parametrized Albedo=" << pAlbedo << "\n";
 	os << "Energy:\tColdContent=" << ColdContent << " dIntEnergy=" << dIntEnergy;
@@ -3383,6 +3408,7 @@ std::ostream& operator<<(std::ostream& os, const SN_SNOWSOIL_DATA& data)
 	os.write(reinterpret_cast<const char*>(&data.Canopy_alb_wet), sizeof(data.Canopy_alb_wet));
 	os.write(reinterpret_cast<const char*>(&data.Canopy_alb_snow), sizeof(data.Canopy_alb_snow));
 #ifndef SNOWPACK_CORE
+	os.write(reinterpret_cast<const char*>(&data.Emissivity_soil), sizeof(data.Emissivity_soil));
 	os.write(reinterpret_cast<const char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	os.write(reinterpret_cast<const char*>(&data.TimeCountDeltaHS), sizeof(data.TimeCountDeltaHS));
@@ -3420,6 +3446,7 @@ std::istream& operator>>(std::istream& is, SN_SNOWSOIL_DATA& data)
 	is.read(reinterpret_cast<char*>(&data.Canopy_alb_wet), sizeof(data.Canopy_alb_wet));
 	is.read(reinterpret_cast<char*>(&data.Canopy_alb_snow), sizeof(data.Canopy_alb_snow));
 #ifndef SNOWPACK_CORE
+	is.read(reinterpret_cast<char*>(&data.Emissivity_soil), sizeof(data.Emissivity_soil));
 	is.read(reinterpret_cast<char*>(&data.WindScalingFactor), sizeof(data.WindScalingFactor));
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	is.read(reinterpret_cast<char*>(&data.TimeCountDeltaHS), sizeof(data.TimeCountDeltaHS));
@@ -3455,6 +3482,7 @@ const std::string SN_SNOWSOIL_DATA::toString() const
 	os << "Canopy_alb_dry:               " << Canopy_alb_dry << "\n";
 	os << "Canopy_alb_wet:               " << Canopy_alb_wet << "\n";
 	os << "Canopy_alb_snow:              " << Canopy_alb_snow << "\n";
+	os << "Soil_Emissivity:              " << Emissivity_soil << "\n";
 	os << "WindScalingFactor:            " << WindScalingFactor << "\n";
 	os << "ErosionLevel:                 " << ErosionLevel << "\n";
 	os << "TimeCountDeltaHS:             " << TimeCountDeltaHS << "\n";

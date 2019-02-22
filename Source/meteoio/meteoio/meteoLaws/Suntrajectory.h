@@ -115,7 +115,7 @@ class SunMeeus : public SunTrajectory {
 
 		void getHorizontalCoordinates(double& azimuth, double& elevation) const;
 		void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const;
-		void getDaylight(double& sunrise, double& sunset, double& daylight);
+		void getDaylight(double& sunrise, double& sunset, double& MeeusDaylight);
 		void getEquatorialSunVector(double& sunx, double& suny, double& sunz);
 		void getEquatorialCoordinates(double& right_ascension, double& declination);
 		

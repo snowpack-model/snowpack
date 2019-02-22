@@ -18,7 +18,7 @@
 #ifndef WINDOWEDFILTER_H
 #define WINDOWEDFILTER_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -31,7 +31,7 @@ namespace mio {
  * @date   2011-01-22
  */
 
-class WindowedFilter : public FilterBlock {
+class WindowedFilter : public ProcessingBlock {
 	public:
 		enum Centering {
 			left,   ///< left centered window

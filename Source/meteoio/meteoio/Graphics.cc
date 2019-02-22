@@ -439,7 +439,7 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 		throw UnknownValueException("Please define the number of colors for indexed gradients!", AT);
 	}
 
-	//watch out!! the palette contains some reserved values at the begining
+	//watch out!! the palette contains some reserved values at the beginning
 	if (val<min) index=reserved_idx-2;
 	else if (val>max) index=reserved_idx-1;
 	else index = static_cast<unsigned char>( static_cast<unsigned char>((val-min)/delta*(double)nr_unique_cols) + reserved_idx);

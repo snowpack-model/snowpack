@@ -55,7 +55,7 @@ class Runoff; // forward declaration, cyclic header include
  * @section gridded_outputs Gridded outputs
  * The gridded outputs are written out for all requested the parameters every GRIDS_DAYS_BETWEEN (in days), starting at GRIDS_START
  * (in days, <i>0</i> being noon). The available parameters are provided in SnGrids::Parameters and should be written as a space delimited
- * list of parameters as GRIDS_PARAMETERS keys (in the [Output] section).
+ * list of parameters as GRIDS_PARAMETERS key (in the [Output] section).
  *
  * It is possible to mask the glaciated areas (in order to keep a relevant scaling
  * on snow water equivalent or similar parameters) either statically (performed once and for all at the begining of the run) or dynamically
@@ -63,9 +63,10 @@ class Runoff; // forward declaration, cyclic header include
  * currently defined as more than 2 meters of pure ice in the whole snowpack. The keys to enable glaciers masking and dynamic masking are
  * MASK_GLACIERS and MASK_DYNAMIC in the [Output] section.
  *
- * Finally, the soil temperature at a given depth can be written out simply by setting the SOIL_TEMPERATURE_DEPTH key in the [Output] section
- * to the chosen depth (in meters). It is possible to do the same in the snow at a given depth by setting the SNOW_TEMPERATURE_DEPTH key,
- * or the average snow temperature from the surface until a given depth (SNOW_AVG_TEMPERATURE_DEPTH key) or the snow density from
+ * Finally, the soil temperature at multiple given depths can be written out simply by setting the SOIL_TEMPERATURE_DEPTHS key in the [Output] section
+ * to the chosen depths (in meters). In this case, there is no need to declare a TSOILx parameter for the GRIDS_PARAMETERS key (it is currently limited
+ * to at most 5 different depths but could be increased in the future). It is possible to do the same in the snow at a given depth by setting
+ * the SNOW_TEMPERATURE_DEPTH key, or the average snow temperature from the surface until a given depth (SNOW_AVG_TEMPERATURE_DEPTH key) or the snow density from
  * the surface until a given depth (SNOW_AVG_DENSITY_DEPTH key). When averaging either temperature or density, if the snow height is less
  * than the requested depth, the average is performed on the whole snow pack.
  *
@@ -76,7 +77,7 @@ class Runoff; // forward declaration, cyclic header include
  * GRID2DPATH    = ../output
  * MASK_GLACIERS = TRUE
  * MASK_DYNAMIC  = FALSE
- * SOIL_TEMPERATURE_DEPTH = 0.1        ;output soil temperatures at 0.1m - leave this key out to skip this output
+ * SOIL_TEMPERATURE_DEPTHS = 0.1 0.5 1.5       ;output soil temperatures at 0.1m, 0.5m and 1.5m - leave this key out to skip this output
  *
  * GRIDS_WRITE        = TRUE           ;default
  * GRIDS_START        = 0.
@@ -168,7 +169,6 @@ class Runoff; // forward declaration, cyclic header include
 	private:
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
-		static void uniqueOutputGrids(std::vector<std::string>& output_grids);
 		bool do_grid_output(const mio::Date &date) const;
 		void calcNextStep();
 
@@ -200,7 +200,7 @@ class Runoff; // forward declaration, cyclic header include
 		std::string station_name; // value for the key OUTPUT::EXPERIMENT
 		bool glacier_katabatic_flow, snow_preparation;
 		// Output
-		double soil_temp_depth; //if set, output the soil temperatures at this depth.
+		std::vector<std::string> Tsoil_idx; //TSOIL names in order to build the "field" header of the smet output
 		double grids_start, grids_days_between; //gridded outputs
 		double ts_start, ts_days_between; //time series outputs
 		double prof_start, prof_days_between; //profiles outputs
@@ -217,6 +217,7 @@ class Runoff; // forward declaration, cyclic header include
 		SnowpackIO snowpackIO;
 
 		size_t dimx, dimy;
+    size_t mpi_offset, mpi_nx;
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;

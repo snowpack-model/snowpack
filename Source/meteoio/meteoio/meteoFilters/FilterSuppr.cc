@@ -29,7 +29,7 @@ using namespace std;
 namespace mio {
 
 FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : FilterBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -51,8 +51,7 @@ FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> 
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
 			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
-		} else
-			throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
+		}
 	}
 }
 

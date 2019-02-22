@@ -234,7 +234,7 @@ class SN_SNOWSOIL_DATA {
 										 Canopy_BasalArea(mio::IOUtils::nodata), Canopy_diameter(mio::IOUtils::nodata),
 										 Canopy_lai_frac_top_default(mio::IOUtils::nodata),Canopy_int_cap_snow(mio::IOUtils::nodata),
 										 Canopy_alb_dry(mio::IOUtils::nodata),Canopy_alb_wet(mio::IOUtils::nodata),
-										 Canopy_alb_snow(mio::IOUtils::nodata)
+										 Canopy_alb_snow(mio::IOUtils::nodata),Emissivity_soil(mio::IOUtils::nodata)
                     {}
 
 		const std::string toString() const;
@@ -266,6 +266,9 @@ class SN_SNOWSOIL_DATA {
 		double Canopy_alb_dry;  // Albedo of dry canopy (calibr: 0.09, Alptal)
 		double Canopy_alb_wet;  // Albedo of wet canopy (calibr: 0.09, Alptal)
 		double Canopy_alb_snow;  // Albedo of snow covered albedo (calibr: 0.35, Alptal)
+    /// OPTIONNAL PARAMETERS, if not provided Constants::emissivity_soil will be used
+    double Emissivity_soil;
+
 
 };
 
@@ -641,6 +644,7 @@ class SnowStation {
 		double pAlbedo;             ///< Parameterized snow albedo
 		double Albedo;              ///< Snow albedo used by the model
 		double SoilAlb;             ///< Soil albedo
+    double SoilEmissivity;      ///< Soil emissivity
 		double BareSoil_z0;         ///< Bare soil roughness in m
 		size_t SoilNode;            ///< The top soil node, 0 in case of SNP_SOIL == 0
 		double Ground;              ///< The ground height -- meaning the height of the top soil node

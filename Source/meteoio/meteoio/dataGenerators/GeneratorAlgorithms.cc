@@ -43,7 +43,7 @@ namespace mio {
  * In the first case, the goal is to create new parameters fully based on parametrizations. In such a case, the "generator" is called
  * a "creator" and behaves the same way as a generator, except that it creates an additional parameter. It is declared as
  * {new_parameter}::%create = {data generators} in the [Input] section (see \ref data_creation "data creation" in the
- * \ref data_manipulations "Raw data editing" section).
+ * \ref raw_data_editing "Raw data editing" section).
  *
  * The second case takes place once the data has been read, filtered and resampled, if some data points are still missing.
  * These are either a few isolated periods (a sensor was not functioning) that are too large for performing
@@ -59,7 +59,7 @@ namespace mio {
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
  * off and let the spatial interpolations algorithms adjust to the amount of measured data.
  * @note it is also possible to make a copy of a given parameter under a different name. This is explained in section
- * \ref data_manipulations "Raw data editing".
+ * \ref raw_data_editing "Raw data editing".
  *
  * @section generators_section Data generators section
  * The data generators are defined per meteorological parameter. They are applied to all stations

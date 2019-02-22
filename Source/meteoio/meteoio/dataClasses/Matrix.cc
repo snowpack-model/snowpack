@@ -34,7 +34,7 @@ Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
 {
 	if (rows<0 || cols<0) {
 		std::ostringstream tmp;
-		tmp << "Trying construct a matrix with negative dimensions: ";
+		tmp << "Trying to construct a matrix with negative dimensions: ";
 		tmp << "(" << rows << "," << cols << ")";
 		throw IOException(tmp.str(), AT);
 	}
@@ -158,7 +158,7 @@ Matrix& Matrix::operator+=(const Matrix& rhs)
 	//check dimensions compatibility
 	if (nrows!=rhs.nrows || ncols!=rhs.ncols) {
 		std::ostringstream tmp;
-		tmp << "Trying to add two matrix with incompatible dimensions: ";
+		tmp << "Trying to add two matrices with incompatible dimensions: ";
 		tmp << "(" << nrows << "," << ncols << ") * ";
 		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
 		throw IOException(tmp.str(), AT);

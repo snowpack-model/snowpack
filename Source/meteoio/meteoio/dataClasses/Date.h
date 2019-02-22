@@ -184,7 +184,7 @@ class Date {
 
 		///Intervals arithmetic
 		///Can be used to add an interval to an existing Date object.
-		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
+		///For example, you can add 1 day to a Date object `dt` simply with `dt += 1.0`.
 		///Please use the Duration type instead of Date for such calculations!
 		Date& operator+=(const Date&);
 		Date& operator-=(const Date&);

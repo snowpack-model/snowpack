@@ -43,7 +43,7 @@ set<string> SMETCommon::all_optional_header_keys  = set<std::string>();
 set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 
 SMETException::SMETException(const std::string& message, const std::string& position)
-              : msg( (position.empty())? "At unknown position: " + message : position + ": " + message) {}
+              : msg( (position.empty())? "At unknown position: " + message : position + ": " + message + "\n") {}
 
 SMETException::~SMETException() throw() {}
 
@@ -1012,8 +1012,8 @@ void SMETReader::process_header()
 			if (!missing.empty()) missing += ", ";
 			missing += "epsg";
 		}
-		if (!missing.empty())
-			ss << ": " << missing;
+		if (missing.empty()) missing = "lat/lon or easting/northing";
+		ss << ": " << missing;
 
 		throw SMETException(ss.str(), SMET_AT);
 	}

@@ -1,5 +1,20 @@
-/* DO NOT USE this file until you see the usual header here */
-//(mr 2018-10)
+/***********************************************************************************/
+/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <ctime>
 #include <inttypes.h>
@@ -28,7 +43,7 @@ int main(/*int argc, char** argv*/)
 		std::cout << "--- Had to resort to 64 bit time mixer for seeding (Windows?)" << std::endl;
 	std::vector<uint64_t> vec_seed;
 	RNG.getState(vec_seed);
-	std::cout << "SEED: " << vec_seed[0] << std::endl;
+	std::cout << "SEED: " << vec_seed.at(0) << std::endl;
 	
 	std::cout << "--- Using Xor, Shift and Multiply generator" << std::endl;	
 	//generate two 64 bit integers:
@@ -53,7 +68,7 @@ int main(/*int argc, char** argv*/)
 
 	double mu = 5.; //set mean and standard deviation like this
 	double sigma = 2.;
- 	RNG.setDistribution(mio::RandomNumberGenerator::RNG_GAUSS); //only used for doubles!
+	RNG.setDistribution(mio::RandomNumberGenerator::RNG_GAUSS); //only used for doubles!
 	RNG.setDistributionParameter("mean", mu);
 	RNG.setDistributionParameter("sigma", sigma);
 
@@ -61,8 +76,8 @@ int main(/*int argc, char** argv*/)
 	double sigma_read = RNG.getDistributionParameter("sigma");
 	std::cout << "--- Drawing a Gaussian distribution (mu=" << mu_read << ", s=" << sigma_read << ")" << std::endl; 
 	const unsigned int NN = 1e4; //draw this many numbers
- 	const unsigned int OO = 100; //limit output
- 	unsigned int hist[10] = {0};
+	const unsigned int OO = 100; //limit output
+	unsigned int hist[10] = {0};
 	for (size_t i = 0; i < NN; ++i) {
  		const double rg = RNG.doub();
 		if ( (rg >= 0.) && (rg < 10.) ) ++hist[(unsigned int)rg];
@@ -113,30 +128,8 @@ int main(/*int argc, char** argv*/)
 	std::cout << "--- Some info about the generator" << std::endl;
 	std::cout << RN2.toString();
 	std::cout << std::endl;
-
-	//fast inline generator:
-	mio::RNG_FAST RNGFast( (uint64_t)time(NULL) );
-	const uint64_t mf = RNGFast.int64();
-	const uint32_t nf = RNGFast.int32();
-	const double rf = RNGFast.doub();
-
-	std::cout << "--- Using fast generator" << std::endl;
-	std::cout << "FAST:: "  << mf << " " << nf << " " << rf << std::endl;
 	
 	std::cout << "--- Done" << std::endl;
-
-/*	//code snippet for future distributions that may want to automate input from many parameters via containers,
-	//or a user that wants to automate runs with different distribution inputs
-	std::vector<double> distribution_params; //all params are stored to and also retrieved to a vector
-	double gamma_in = 0.7;
-	distribution_params.push_back(gamma_in);
- 	RNG.setDistribution(mio::RandomNumberGenerator::RNG_GAMMA, distribution_params); //set distribution with vector
-	
-	distribution_params.clear();
-	const mio::RandomNumberGenerator::RNG_DISTR dist_t = RNG.getDistribution(distribution_params); 
-	const double gamma_out = distribution_params[0]; //see doc for index
-	const bool is_gamma_distr = (dist_t == mio::RandomNumberGenerator::RNG_GAMMA);
-*/
 
 	return 0;
 }
@@ -189,8 +182,4 @@ Size: 64 bit
 Period: ~3.138*10^57
 Hardware seeded: yes
 Distribution: uniform
-
---- Using fast generator
-FAST:: 1921424058301183269 464594646 0.9259207787352589
---- Done
 */

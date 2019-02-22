@@ -27,7 +27,7 @@ using namespace std;
 
 namespace mio {
 
-//Usefull functions
+//Useful functions
 /**
  * @brief check if the points measurements are all at zero
  * This check can be performed to trigger optimizations: it is quicker
@@ -318,7 +318,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 	std::vector<double> vecEastings, vecNorthings;
 	buildPositionsVectors(vecStations_in, vecEastings, vecNorthings);
 
-	//multiple source stations: simple IDW Krieging
+	//multiple source stations: simple IDW Kriging
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;

@@ -439,7 +439,7 @@ void GridsManager::write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::P
 }
 
 /** @brief Create a list of virtual stations from each grid point
- * @details Please not that the two options are mutually exclusive.
+ * @details Please note that the two options are mutually exclusive.
  * @param[in] dem the Digital Elevation Model to use (each grid point will be made into a virtual station)
  * @return a vector of virtual stations
  */
@@ -465,7 +465,7 @@ std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const 
 			
 			//extract vstation number, build the station name and station ID
 			stat_id++;
-			const std::string id_str( static_cast<ostringstream*>( &(ostringstream() << stat_id) )->str() );
+			const std::string id_str( IOUtils::toString(stat_id) );
 			StationData sd(curr_point, "VIR"+id_str, "Virtual_Station_"+id_str);
 			sd.setSlope(dem.slope(ii,jj), dem.azi(ii,jj));
 			v_stations.push_back( sd );
@@ -476,7 +476,7 @@ std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const 
 }
 
 /** @brief Create a list of virtual stations from the user-provided input
- * @details Please not that the two options are mutually exclusive.
+ * @details Please note that the two options are mutually exclusive.
  * @param[in] dem the Digital Elevation Model to use
  * @param[in] adjust_coordinates should the coordinates be recomputed to match DEM cells?
  * @param[in] fourNeighbors pick the surrounding four nodes instead of only the exact one?
@@ -517,8 +517,8 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 					const double northing = dem_northing + dem.cellsize*static_cast<double>(nn);
 					curr_point.setXY(easting, northing, dem(mm,nn));
 					curr_point.setGridIndex(static_cast<int>(mm), static_cast<int>(nn), IOUtils::inodata, true);
-					const std::string sub_id( static_cast<ostringstream*>( &(ostringstream() << (mm-i)*2+(nn-j)+1) )->str() );
-					const std::string grid_pos( static_cast<ostringstream*>( &(ostringstream() << mm << "-" << nn) )->str() );
+					const std::string sub_id( IOUtils::toString((mm-i)*2+(nn-j)+1) );
+					const std::string grid_pos( IOUtils::toString(mm) + "-" + IOUtils::toString(nn) );
 					StationData sd(curr_point, "VIR"+id_num+"_"+sub_id, "Virtual_Station_"+grid_pos);
 					sd.setSlope(dem.slope(mm,nn), dem.azi(mm,nn));
 					v_stations.push_back( sd );

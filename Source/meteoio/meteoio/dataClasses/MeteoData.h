@@ -105,12 +105,12 @@ class MeteoGrids {
 class MeteoData {
 	public:
 		/** @brief Available %MeteoData merging strategies.
-		* When the two stations both have data at a given time step, only the parameters that are *not* present 
+		* When the two stations both have data at a given time step, only the parameters that are *not* present
 		* in station1 will be taken from station2 (ie. station1 has priority).
 		*
 		* \image html merging_strategies.png "Merging strategies for two stations with different sampling rates"
 		* \image latex merging_strategies.eps "Merging strategies for two stations with different sampling rates" width=0.9\textwidth
-		* @note Keep in mind that if a station is moving (ie. if its location might change in time) merge strategies other than STRICT_MERGE 
+		* @note Keep in mind that if a station is moving (ie. if its location might change in time) merge strategies other than STRICT_MERGE
 		* will introduce potentially invalid metadata (since the new position can not be reconstructed).
 		*/
 		typedef enum MERGE_TYPE {
@@ -118,7 +118,7 @@ class MeteoData {
 				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
 				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
 		} Merge_Type;
-				 
+
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
 		                 P=firstparam, ///< Air pressure
@@ -139,7 +139,7 @@ class MeteoData {
 		                 lastparam=PSUM_PH};
 
 		static const std::string& getParameterName(const size_t& parindex);
-		
+
 		static size_t getStaticParameterIndex(const std::string& parname);
 
 		/**
@@ -200,7 +200,7 @@ class MeteoData {
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const {return nrOfAllParameters;}
-		
+
 		/**
 		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.
 		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
@@ -244,8 +244,8 @@ class MeteoData {
 
 		/**
 		 * @brief Simple merge strategy within a vector of MeteoData.
-		 * All stations that can be considerd as identical (see note) will be merged in case of fields set to nodata. 
-		 * The priority goes to the stations at the begining of the vector. For example, if vec[0] has TA but no HS and 
+		 * All stations that can be considerd as identical (see note) will be merged in case of fields set to nodata.
+		 * The priority goes to the stations at the beginning of the vector. For example, if vec[0] has TA but no HS and
 		 * vec[3] has TA and HS, then vec[0] will <i>keep</i> its TA and get HS from vec[3]. If vec[2] is further away than
 		 * 5m from vec[0], then it can not contribute to vec[0].
 		 * @note two stations are considered to be identical if they fit within a 5m 3D box
@@ -254,7 +254,7 @@ class MeteoData {
 		 * @param vec vector of stations
 		 */
 		static void merge(std::vector<MeteoData>& vec);
-		
+
 		/**
 		 * @brief Simple merge strategy.
 		 * If some fields of the object given as first argument are nodata, they will be filled by the matching field from the
@@ -273,14 +273,14 @@ class MeteoData {
 		 * @param meteo2 extra MeteoData to merge, lowest priority
 		 */
 		void merge(const MeteoData& meteo2);
-		
+
 		/**
 		 * @brief Parse a string containing a merge type and return the proper enum member for it.
 		 * @param[in] merge_type
 		 * @return Merge_Type
 		 */
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
-		
+
 		/**
 		 * @brief List the parameters that have a least one valid value in a vector of MeteoData.
 		 * @param[in] vecMeteo vector to read the data from
@@ -303,6 +303,8 @@ class MeteoData {
 		StationData meta; ///<The meta data of the measurement
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+
+		const std::string getStationID() const {return meta.stationID;}
 
 	private:
 		//static methods

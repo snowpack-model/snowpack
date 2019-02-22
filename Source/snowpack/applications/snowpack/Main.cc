@@ -67,7 +67,8 @@ class Slope {
 		unsigned int luv;
 		unsigned int lee;
 		bool north, south;
-		bool snow_erosion, mainStationDriftIndex;
+		std::string snow_erosion;
+		bool mainStationDriftIndex;
 		bool snow_redistribution, luvDriftIndex;
 
 		unsigned int getSectorDir(const double& dir_or_expo) const;
@@ -124,12 +125,13 @@ Slope::Slope(const mio::Config& cfg)
        : prevailing_wind_dir(0.), nSlopes(0), mainStation(0), sector(0),
          first(1), luv(0), lee(0),
          north(false), south(false),
-         snow_erosion(false), mainStationDriftIndex(false),
+         snow_erosion("NONE"), mainStationDriftIndex(false),
          snow_redistribution(false), luvDriftIndex(false),
          sector_width(0)
 {
 	cfg.getValue("NUMBER_SLOPES", "SnowpackAdvanced", nSlopes);
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
+	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
 	stringstream ss;
 	ss << "" << nSlopes;
 	cfg.getValue("SNOW_REDISTRIBUTION", "SnowpackAdvanced", snow_redistribution);
@@ -182,7 +184,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 			luv = lee = 0;
 		}
 		sector = mainStation;
-		mainStationDriftIndex = ((nSlopes == 1) && snow_erosion);
+		mainStationDriftIndex = ((nSlopes == 1) && (snow_erosion != "NONE"));
 		break;
 	case 1:
 		sector = luv;
@@ -1209,7 +1211,7 @@ inline void real_main (int argc, char *argv[])
 						surfFluxes.cRho_hn = vecXdata[slope.mainStation].rho_hn;
 						surfFluxes.mRho_hn = Mdata.rho_hn;
 					}
-					if (slope.snow_erosion) {
+					if (slope.snow_erosion != "NONE") {
 						// Update drifting snow index (VI24),
 						//   from erosion at the main station only if no virtual slopes are available
 						if (slope.mainStationDriftIndex)

@@ -50,7 +50,6 @@ class SnGrids {
                                           TSNOW, ///< Snow temperature at depth xxx m
                                           TSNOW_AVG, ///< Average snow temperature in the top xxx m
                                           RHOSNOW_AVG, ///< Average snow density in the top xxx m
-                                          TSOIL, ///< Temperature within the soil, at a given depth
                                           SWE, ///< Snow Water Equivalent
                                           RSNO, ///< Snow mean density
                                           TOP_ALB, ///< Albedo from the top (ie above canopy)
@@ -68,7 +67,8 @@ class SnGrids {
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
-                                          lastparam=GLACIER_EXPOSED};
+                                          TSOIL1, TSOIL2, TSOIL3, TSOIL4, TSOIL5, ///< Temperature within the soil, at a given depth
+                                          lastparam=TSOIL5};
 
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData

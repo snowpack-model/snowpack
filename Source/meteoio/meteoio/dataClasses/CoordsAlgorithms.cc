@@ -419,7 +419,7 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 
 /**
 * @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
-* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
+* See https://www.swisstopo.admin.ch/de/karten-daten-online/calculation-services.html in the "Documents" section for more.
 * @param[in] lat_in Decimal Latitude
 * @param[in] long_in Decimal Longitude
 * @param[out] east_out easting coordinate (Swiss system)
@@ -455,7 +455,7 @@ void CoordsAlgorithms::WGS84_to_CH1903(const double& lat_in, const double& long_
 
 /**
 * @brief Coordinate conversion: from Swiss grid to WGS84 Lat/Long
-* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
+* See https://www.swisstopo.admin.ch/de/karten-daten-online/calculation-services.html in the "Documents" section for more.
 * @param[in] east_in easting coordinate (Swiss system)
 * @param[in] north_in northing coordinate (Swiss system)
 * @param[out] lat_out Decimal Latitude

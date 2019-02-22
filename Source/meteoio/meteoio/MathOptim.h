@@ -87,7 +87,7 @@ namespace Optim {
 
 	#ifdef _MSC_VER
 	#pragma warning( push ) //for Visual C++
-	#pragma warning(disable:4244) //Visual C++ righhtfully complains... but this behavior is what we want!
+	#pragma warning(disable:4244) //Visual C++ rightfully complains... but this behavior is what we want!
 	#endif
 	//maximum relative error is <1.7% while computation time for sqrt is <1/4. At 0, returns a large number
 	//on a large scale interpolation test on TA, max relative error is 1e-6

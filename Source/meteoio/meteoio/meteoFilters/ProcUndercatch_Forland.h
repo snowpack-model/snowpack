@@ -18,7 +18,7 @@
 #ifndef PROCUNDERCATCH_FORLAND_H
 #define PROCUNDERCATCH_FORLAND_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 

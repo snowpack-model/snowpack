@@ -63,7 +63,6 @@
 #include <meteoio/Meteo1DInterpolator.h>
 #include <meteoio/Meteo2DInterpolator.h>
 
-#include <meteoio/meteoFilters/FilterBlock.h>
 //skip all the filters' implementations header files
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoFilters/ProcessingStack.h>

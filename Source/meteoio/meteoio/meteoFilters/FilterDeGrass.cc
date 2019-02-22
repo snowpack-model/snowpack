@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterDeGrass::FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata),
+          : ProcessingBlock(vecArgs, name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata),
 		    TSS_daily_mean(IOUtils::nodata), TSG_daily_var(IOUtils::nodata), month(7)
 {
 	properties.stage = ProcessingProperties::first;
@@ -36,7 +36,7 @@ void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoDa
 	double TSS_offset = getTSSOffset(param, ovec);
 	if (TSS_offset==IOUtils::nodata) TSS_offset = 0.;
 	
-	//find first tag of the Spring when min(TSS)>1C for 24 hours
+	//find first day of the Spring when min(TSS)>1C for 24 hours
 	size_t tssWarmDay_idx, tsgWarmDay_idx;
 	findFirstWarmDay(ovec, tssWarmDay_idx, tsgWarmDay_idx);
 	const Date warmDayTSS = (tssWarmDay_idx!=IOUtils::npos)? ovec[tssWarmDay_idx].date : Date(0., 0.); //ie disable the check if not found
@@ -215,7 +215,7 @@ bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const
 			RSWR_dat.push_back( ivec[jj](MeteoData::RSWR) );
 		}
 	}
-	if (HS_dat.empty()) return false; //this happens at the begining of the period
+	if (HS_dat.empty()) return false; //this happens at the beginning of the period
 	
 	std::vector<double> quantiles;
 	quantiles.push_back( 0.9 );
@@ -228,7 +228,7 @@ bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const
 }
 
 //daily values for TSS-based correction
-void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean)
+void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &o_TSS_daily_min, double &o_TSS_daily_max, double &o_TSS_daily_mean)
 {
 	const Date day_end = day_start + 1;
 	
@@ -241,9 +241,9 @@ void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Dat
 		}
 	}
 	
-	TSS_daily_min = Interpol1D::min_element(TSS_dat);
-	TSS_daily_max = Interpol1D::max_element(TSS_dat);
-	TSS_daily_mean = Interpol1D::arithmeticMean(TSS_dat);
+	o_TSS_daily_min = Interpol1D::min_element(TSS_dat);
+	o_TSS_daily_max = Interpol1D::max_element(TSS_dat);
+	o_TSS_daily_mean = Interpol1D::arithmeticMean(TSS_dat);
 }
 
 //daily values for TSG-based correction

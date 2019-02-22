@@ -18,7 +18,7 @@
 #ifndef FILTERHUNHEATEDPSUM_H
 #define FILTERHUNHEATEDPSUM_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -43,7 +43,7 @@ namespace mio {
  * @endcode
  */
 
-class FilterUnheatedPSUM : public FilterBlock {
+class FilterUnheatedPSUM : public ProcessingBlock {
 	public:
 		FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

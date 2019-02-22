@@ -68,7 +68,7 @@ class MeteoBuffer {
 		double getAvgSamplingRate() const;
 
 		/**
-		 * @brief Returns the begining of the buffer.
+		 * @brief Returns the beginning of the buffer.
 		 * This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
 		 * at this date, then the date of the first data would be greater.
 		 * @return start date of the buffer
@@ -82,6 +82,20 @@ class MeteoBuffer {
 		 * @return end date of the buffer
 		 */
 		Date getBufferEnd() const;
+		
+		/**
+		 * @brief Returns the real beginning of the data contained in the buffer.
+		 * This is the start date of the <b>available data</b> that is in the buffer (it can be much later than the requested start date).
+		 * @return start date of the data or Date::undefined if no data is available
+		 */
+		Date getDataStart() const;
+		
+		/**
+		 * @brief Returns the real end of the data contained in the buffer.
+		 * This is the end date of the <b>available data</b> that is in the buffer (it can be much earlier than the requested end date).
+		 * @return end date of the data or Date::undefined if no data is available
+		 */
+		Date getDataEnd() const;
 
 		/**
 		* @brief Check if the buffer is empty
@@ -131,7 +145,7 @@ class MeteoBuffer {
 /**
  * @class GridBuffer
  * @brief A class to buffer gridded data.
- * This class buffers Grid2D objects. It implements a proper ring buffer, thus removing old bufered grids
+ * This class buffers Grid2D objects. It implements a proper ring buffer, thus removing old buffered grids
  * when necessary.
  *
  * @ingroup data_str

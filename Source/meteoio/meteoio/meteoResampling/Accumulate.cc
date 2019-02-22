@@ -85,13 +85,13 @@ double Accumulate::easySampling(const std::vector<MeteoData>& vecM, const size_t
 double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const
 {//to keep in mind: start_idx is last index <= dateStart and index is first index >= resampling_date
 	double sum = IOUtils::nodata;
-	//resample begining point, in the [start_idx ; start_idx+1] interval
+	//resample beginning point, in the [start_idx ; start_idx+1] interval
 	const double start_val = partialAccumulateAtRight(vecM, paramindex, start_idx, dateStart);
 	if (start_val!=IOUtils::nodata)
 		sum = start_val;
 	else if (strict) return IOUtils::nodata;
 
-	//sum all whole periods AFTER the begining point, in the [start_idx+2 ; index-1] interval
+	//sum all whole periods AFTER the beginning point, in the [start_idx+2 ; index-1] interval
 	for (size_t idx=(start_idx+2); idx<index; idx++) {
 		const double curr_value = vecM[idx](paramindex);
 		if (curr_value!=IOUtils::nodata) {

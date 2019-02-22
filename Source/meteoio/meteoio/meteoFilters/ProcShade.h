@@ -18,7 +18,7 @@
 #ifndef PROCSHADE_H
 #define PROCSHADE_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/DEMObject.h>
 #include <vector>

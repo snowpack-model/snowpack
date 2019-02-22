@@ -18,7 +18,7 @@
 #ifndef FILTERMAX_H
 #define FILTERMAX_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -43,7 +43,7 @@ namespace mio {
  * @endcode
  */
 
-class FilterMax : public FilterBlock {
+class FilterMax : public ProcessingBlock {
 	public:
 		FilterMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

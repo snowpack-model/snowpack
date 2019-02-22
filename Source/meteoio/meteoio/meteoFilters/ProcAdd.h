@@ -18,7 +18,7 @@
 #ifndef PROCADD_H
 #define PROCADD_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 

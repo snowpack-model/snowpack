@@ -94,7 +94,6 @@ class DBO : public IOInterface {
 		std::vector< std::vector<DBO::tsMeta> > vecTsMeta; ///< for every station, a map that contains for each timeseries the relevant timeseries properties
 		std::string coordin, coordinparam, coordout, coordoutparam; ///< projection parameters
 		std::string endpoint; ///< Variables for endpoint configuration
-		double default_timezone;
 		int http_timeout; //time out for http connections
 		bool dbo_debug;
 

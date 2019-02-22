@@ -18,7 +18,7 @@
 #ifndef FILTERRATE_H
 #define FILTERRATE_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -43,7 +43,7 @@ namespace mio {
  * TA::arg1::MAX = 0.015
  * @endcode
  */
-class FilterRate : public FilterBlock {
+class FilterRate : public ProcessingBlock {
 	public:
 		FilterRate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

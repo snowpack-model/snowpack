@@ -18,7 +18,7 @@
 #ifndef FILTERSUPPR_H
 #define FILTERSUPPR_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <map>
 #include <string>
@@ -30,7 +30,7 @@ namespace mio {
  * @ingroup processing
  * @brief Suppression filter.
  * @details
- * Normally, this filter simply reject all values. This is convenient to quickly turn a parameter off
+ * Normally, this filter simply rejects all values. This is convenient to quickly turn a parameter off
  * without modifying the original data. It is also possible to suppress some values based on
  * specific criterias, with the following arguments:
  *  - SUPPR: provide a file that contains a list of station ID's and timesteps specifying where the parameter should be suppressed;
@@ -60,7 +60,7 @@ namespace mio {
  * space character on both sides, as shown in the example above).
  */
 
-class FilterSuppr : public FilterBlock {
+class FilterSuppr : public ProcessingBlock {
 	public:
 		FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
 

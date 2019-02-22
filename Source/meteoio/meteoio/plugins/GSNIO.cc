@@ -42,7 +42,7 @@ namespace mio {
  * it will probably not be usable by a numerical model. Several solutions could then be applied:
  *     + rename the parameter in GSN in line with the names that are already recognized by this plugin;
  *     + run a small test (for example with the example "meteo_reading") in order to identify the names that are not recognized, then
- * configure MeteoIO to copy these parameter into a standard name (see \ref data_manipulations "raw data editing").
+ * configure MeteoIO to copy these parameter into a standard name (see \ref raw_data_editing "raw data editing").
  *
  * @section gsn_units Units
  * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known,
@@ -250,7 +250,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		const bool meta_status = parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
 
 		if (units.empty() || fields.empty() || meta_status==false) {
-			//when printing out a GSN error message, the # and ' ' have to be stripped from the begining -> substr(2)
+			//when printing out a GSN error message, the # and ' ' have to be stripped from the beginning -> substr(2)
 			if (ss.str().find("doesn't exist in GSN!") != std::string::npos)
 				throw NotFoundException(ss.str().substr(2), AT);
 			if (ss.str().find("doesn't have access to the sensor") != std::string::npos)

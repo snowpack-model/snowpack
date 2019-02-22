@@ -384,16 +384,20 @@ double vanGenuchten::dtheta_dh(const double h) {
  */
 void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelTypeSnow, const K_Parameterizations K_PARAM, const bool& matrix)
 {
-	if(matrix==true) {
-		//Scaling theta_r between 0 and 0.02:
-		const double TuningFactor=0.75;				//Tuning factor for scaling
-		//Increase theta_r in case of wetting:
-		theta_r=std::max(0., std::min(0.02, std::max(theta_r, TuningFactor*EMS->theta[WATER])));
-		//Decrease theta_r in case of refreezing:
-		theta_r=std::max(0., std::min(theta_r, EMS->theta[WATER]-(ReSolver1d::REQUIRED_ACCURACY_THETA/10.)));
-	} else {
-		//For preferential flow, we fix theta_r to 0:
+	if (EMS->theta[ICE] > 0.75) {
 		theta_r=0.;
+	} else {
+		if(matrix==true) {
+			//Scaling theta_r between 0 and 0.02:
+			const double TuningFactor=0.75;				//Tuning factor for scaling
+			//Increase theta_r in case of wetting:
+			theta_r=std::max(0., std::min(0.02, std::max(theta_r, TuningFactor*EMS->theta[WATER])));
+			//Decrease theta_r in case of refreezing:
+			theta_r=std::max(0., std::min(theta_r, EMS->theta[WATER]-(ReSolver1d::REQUIRED_ACCURACY_THETA/10.)));
+		} else {
+			//For preferential flow, we fix theta_r to 0:
+			theta_r=0.;
+		}
 	}
 
 	theta_s=(1. - EMS->theta[ICE])*(Constants::density_ice/Constants::density_water);
@@ -496,7 +500,7 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 		}
 	} else {									//For high density
 		// Eq. 5 in Golden, K. M., H. Eicken, A. L. Heaton, J. Miner, D. J. Pringle, and J. Zhu (2007), Thermal evolution of permeability and microstructure in sea ice, Geophys. Res. Lett., 34, L16501, doi:10.1029/2007GL030447:
-		ksat = 3E-8 * pow((1. - EMS->theta[ICE]), 3.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+		ksat = 3E-8 * pow((1. - std::min(1., EMS->theta[ICE])), 3.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 	}
 
 	//Set air entry pressure

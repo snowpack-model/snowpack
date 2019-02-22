@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 FilterMinMax::FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-             : FilterBlock(vecArgs, name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(false)
+             : ProcessingBlock(vecArgs, name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(false)
 
 {
 	parse_args(vecArgs);

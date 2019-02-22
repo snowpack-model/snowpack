@@ -67,6 +67,7 @@ class SnowpackInterfaceWorker
 		static int round_landuse(const double& landuse_dbl);
 		static bool skipThisCell(const double& landuse_val, const double& dem_val);
 		static bool is_special(const std::vector< std::pair<size_t,size_t> >& pts_in, const size_t& ix, const size_t& iy);
+		static void uniqueOutputGrids(std::vector<std::string>& output_grids);
 		void getLateralFlow(std::vector<SnowStation*>& snow_station);
 		void setLateralFlow(const std::vector<SnowStation*>& snow_station);
 
@@ -95,10 +96,11 @@ class SnowpackInterfaceWorker
 		std::vector<SnowStation> snow_pixel;
 		std::vector<CurrentMeteo> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
+		std::vector<double> soil_temp_depths;
 		
 		double calculation_step_length;
 		double height_of_wind_value;
-		double soil_temp_depth, snow_temp_depth, snow_avg_temp_depth, snow_avg_rho_depth;
+		double snow_temp_depth, snow_avg_temp_depth, snow_avg_rho_depth;
 		bool enable_simple_snow_drift;
 		bool useDrift, useEBalance, useCanopy;
 };

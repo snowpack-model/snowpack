@@ -25,6 +25,7 @@
 #ifndef RESOLVER1D_H
 #define RESOLVER1D_H
 
+#include <snowpack/snowpackCore/SalinityTransport.h>
 #include <snowpack/DataClasses.h>
 
 /**
@@ -44,6 +45,10 @@ class ReSolver1d {
 		const static double max_theta_ice;	// Maximum allowed theta[ICE]. RE always need some pore space, which is defined by this value.
 		const static double REQUIRED_ACCURACY_THETA;
 
+		// Solvers
+		static int TDMASolver (size_t n, double *a, double *b, double *c, double *v, double *x);	// Thomas algorithm for tridiagonal matrices
+		static int pinv(int m, int n, int lda, double *a);						// Full matrix inversion
+
 	private:
 		std::string variant;
 
@@ -55,7 +60,8 @@ class ReSolver1d {
 		enum SOLVERS{DGESVD, DGTSV, TDMA};
 		//Boundary conditions
 		enum BoundaryConditions{DIRICHLET, NEUMANN, LIMITEDFLUXEVAPORATION, LIMITEDFLUXINFILTRATION, LIMITEDFLUX, WATERTABLE, FREEDRAINAGE, GRAVITATIONALDRAINAGE, SEEPAGEBOUNDARY, SEAICE};
-
+		//Salinity mixing models
+		enum SalinityMixingModels{NONE, CAPILLARY_GRAVITY, DENSITY_DIFFERENCE, DENSITY_GRAVITY};
 
 		watertransportmodels iwatertransportmodel_snow, iwatertransportmodel_soil;
 
@@ -72,19 +78,18 @@ class ReSolver1d {
 		bool allow_surface_ponding;			//boolean to switch on/off the formation of surface ponds in case prescribed infiltration flux exceeds matrix capacity
 		bool lateral_flow;				//boolean if lateral flow should be calculated
 		bool matrix;					//boolean to define if water transport is calculated for matrixflow or preferential flow
+		SalinityTransport::SalinityTransportSolvers SalinityTransportSolver;	//How to solve salinity transport?
 
+		// Grid info
 		std::vector<double> dz;				//Layer height (in meters)
 		std::vector<double> z;				//Height above the surface (so -1 is 1m below surface)
 		std::vector<double> dz_up;			//Distance to upper node (in meters)
 		std::vector<double> dz_down;			//Distance to lower node (in meters)
 		std::vector<double> dz_;			//Layer distance for the finite differences, see Rathfelder (2004).
 
-		// Solvers
-		int TDMASolver (size_t n, double *a, double *b, double *c, double *v, double *x);
-		int pinv(int m, int n, int lda, double *a);
-
 		// General functions
 		void InitializeGrid(const std::vector<ElementData>& EMS, const size_t& lowernode, const size_t& uppernode);
+		std::vector<double> AssembleRHS(const size_t& lowernode, const size_t& uppernode, const std::vector<double>& h_np1_m, const std::vector<double>& theta_n, const std::vector<double>& theta_np1_m, const std::vector<double>& theta_i_n, const std::vector<double>& theta_i_np1_m, const std::vector<double>& s, const double& dt, const std::vector<double>& rho, const std::vector<double>& k_np1_m_im12, const std::vector<double>& k_np1_m_ip12, const BoundaryConditions aTopBC, const double& TopFluxRate, const BoundaryConditions aBottomBC, const double& BottomFluxRate, const SnowStation& Xdata, SalinityTransport& Salinity, const SalinityMixingModels& SALINITY_MIXING);
 
 		// Solver control variables
 		const static double REQUIRED_ACCURACY_H, convergencecriterionthreshold, MAX_ALLOWED_DELTA_H;

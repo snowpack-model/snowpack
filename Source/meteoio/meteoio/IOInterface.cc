@@ -33,7 +33,7 @@ namespace mio {
  * }
  * @endcode
  *
- * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units). This includes converting the nodata value used internally in the plugin (as could be defined in the data itself) into the unified IOUtils::nodata nodata value. Moreover, it is required by the BufferedIOHandler that each plugin that implements readMeteoData @em also implements the readStationData method. This is required so that the metadata is available even if not data exists for the requested time period.
+ * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units). This includes converting the nodata value used internally in the plugin (as could be defined in the data itself) into the unified IOUtils::nodata nodata value. Moreover, it is required by the BufferedIOHandler that each plugin that implements readMeteoData @em also implements the readStationData method. This is required so that the metadata is available even if no data exists for the requested time period.
  *
  * Finally, plugins must properly handle time zones. The Date class provides everything that is necessary, but the plugin developer must still properly set the time zone to each Date object (using the "TZ" key in the io.ini configuration file at least as a default value and afterwards overwriting with a plugin specified time zone specification if available). The time zone should be set \em before setting the date (so that the date that is given is understood as a date within the specified time zone).
  *
@@ -45,12 +45,13 @@ namespace mio {
  * A template for writing a plugin class is available in the plugin directory under the name template.cc and template.h. Simply copy these two files under a new name and fill the methods that you want to implement. Some easy example implementation can be found in ARCIO or A3DIO.
  *
  * @section plugins_registration Plugins registration
- * Once a plugin has been written, it must be "registered" so that it is known by the rest of the library. This is done in IOHandler.cmake.cc in method registerPlugins by adding a plugin key (that will be used by the user in the configuration file when he wants to use the said plugin), the name of the dynamic library that the plugin is bunddled in (knowing that CMake adds "lib" to prefix all library names, which means that you should expect a file name to look like "libmyplugin"), the name of its implementation class, a pointer to the implementation class (use NULL and it will be properly initialized), and a pointer to the dynamicl library (again, set as NULL and the proper initialization will take place). For more information, see the IOPlugin class.
+ * Once a plugin has been written, it must be "registered" so that it is known by the rest of the library. This is done in IOHandler.cmake.cc by a) adding a compilation flag similar to the other plugins (`cmakedefine PLUGIN_...`), b) including its header file
+ * (optionally compiling it only if it is being installed), c) giving it a plugin key in `IOHandler::getPlugin` (that will be used by the user in the configuration file when they want to use said plugin), and d) adding it to the doc in the HTML table.
  *
- * Finally, the build system has to be updated so that it offers the plugin to be build: a local file (<a href="../../meteoio/plugins/CMakeLists.txt">meteoio/plugins/CMakeLists.txt</a>) has to be edited so that the plugin is really built, then the toplevel file has to be modified so the user can choose to build the plugin if he wishes (<a href="../../CMakeLists.txt">CMakeLists.txt</a>). Please keep in mind that all plugins should be optional (ie: they should not prevent the build of MeteoIO without them) and please call your plugin compilation flag similarly as the other plugins (ie: PLUGIN_MYNAME).
+ * Finally, the build system has to be updated so that it offers the plugin to be built: a local file (<a href="../../meteoio/plugins/CMakeLists.txt">meteoio/plugins/CMakeLists.txt</a>) has to be edited so that the plugin is really built, then the toplevel file has to be modified so the user can choose to build the plugin if he wishes (<a href="../../CMakeLists.txt">CMakeLists.txt</a>). Please keep in mind that all plugins should be optional (ie: they should not prevent the build of MeteoIO without them) and please call your plugin compilation flag similarly as the other plugins (ie: PLUGIN_MYNAME).
  *
  * @section plugins_documentation Plugins documentation
- * It is the responsibility of the plugin developer to properly document his plugin. The documentation should be placed as doxygen comments in the implementation file, following the example of A3DIO.cc: a subpage nammed after the plugin should be created (and referenced in MainPage.h) with at least the following sections:
+ * It is the responsibility of the plugin developer to properly document his plugin. The documentation should be placed as doxygen comments in the implementation file, following the example of A3DIO.cc: a subpage named after the plugin should be created (and referenced in MainPage.h) with at least the following sections:
  * - format, for describing the data format
  * - units, expressing what the input units should be
  * - keywords, listing (with a brief description) the keywords that are recognized by the plugin for its configuration
@@ -63,7 +64,7 @@ namespace mio {
  * - request one time stamp within the period of the original data set, but not matching an existing time stamp
  * - request a data point @em before the original data set
  * - request a data point @em after the original data set
- * - request a data point at the end of a very large data set (tens of Mb) and check that memory consumption remains the same as when requesting a data point at the begining of the data set (ie: that the memory for one buffer is used, but that the temporary memory usage of the plugin does not increase with the amount of data it has to parse before returning it to the BufferedIOHandler)
+ * - request a data point at the end of a very large data set (tens of Mb) and check that memory consumption remains the same as when requesting a data point at the beginning of the data set (ie: that the memory for one buffer is used, but that the temporary memory usage of the plugin does not increase with the amount of data it has to parse before returning it to the BufferedIOHandler)
  */
 
 bool IOInterface::list2DGrids(const Date& /*start*/, const Date& /*end*/, std::map<Date, std::set<size_t> >& /*list*/)

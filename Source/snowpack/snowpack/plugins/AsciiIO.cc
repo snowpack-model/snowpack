@@ -320,7 +320,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
            fixedPositions(), numberMeasTemperatures(0), maxNumberMeasTemperatures(0), numberTags(0), numberFixedSensors(0),
            totNumberSensors(0), time_zone(0.), calculation_step_length(0.), hazard_steps_between(0.), ts_days_between(0.),
            min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), enable_pref_flow(false),
-           avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false),
+           avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
            out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_t(false),
            out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false)
 {
@@ -357,6 +357,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("PROF_FORMAT", "Output", vecProfileFmt);
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
+	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 
 	// SnowpackAdvanced section
 	cfg.getValue("HOAR_DENSITY_SURF", "SnowpackAdvanced", hoar_density_surf); // Density of SH at surface node (kg m-3)
@@ -944,7 +945,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	// Offset profile [m]:
 	const double offset = (SeaIce)?(4.):(0.);
 	// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  - Xdata.Ground);
+	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata || !useReferenceLayer  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  - Xdata.Ground);
 	// Number of fill elements for offset (only 0 or 1 is supported now):
 	const size_t Noffset = (SeaIce)?(1):(0);
 
@@ -1897,7 +1898,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 	setNumberSensors(Mdata);
 
 	// Correction for snow depth. If we have a marked reference layer, then subtract the height of the reference layer in the output.
-	const double HScorrC = (Xdata.findMarkedReferenceLayer()==IOUtils::nodata) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
+	const double HScorrC = (Xdata.findMarkedReferenceLayer()==IOUtils::nodata || !useReferenceLayer) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 
 	// Check file for header
 	if (!checkHeader(Xdata, filename, "met", "[STATION_PARAMETERS]")) {
@@ -2041,14 +2042,13 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground;
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z;
 				// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
+				const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata || !useReferenceLayer  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 				fout << "," << std::setprecision(3) << Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->FreeBoard;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->SeaLevel;
-				fout << "," << std::setprecision(3) << Xdata.Seaice->getBulkSalinity(Xdata);
-				fout << "," << std::setprecision(3) << ((Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata));
-				fout << "," << std::setprecision(3) << Xdata.Seaice->getBrineSalinity(Xdata);
-				fout << "," << std::setprecision(3) << ((Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata));
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getTotSalinity(Xdata);
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getAvgBulkSalinity(Xdata);
+				fout << "," << std::setprecision(3) << Xdata.Seaice->getAvgBrineSalinity(Xdata);
 				fout << "," << std::setprecision(3) << Xdata.Seaice->BottomSalFlux;
 				fout << "," << std::setprecision(3) << Xdata.Seaice->TopSalFlux;
 				fout << ",,,,,,,,,,,,,,,,";
@@ -2292,8 +2292,8 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			Canopy::DumpCanopyHeader(fout);
 		} else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				fout << ",Total thickness,Ice thickness,Snow thickness,Snow thickness wrt reference,Freeboard,Sea level,Bulk salinity,Average bulk salinity,Brine salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
-				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+				fout << ",Total thickness,Ice thickness,Snow thickness,Snow thickness wrt reference,Freeboard,Sea level,Tot salinity,Average bulk salinity,Average Brine Salinity,Bottom Sal Flux,Top Sal Flux";
+				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
 			} else {
 				// 28 empty fields
 				fout << ",-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
@@ -2357,8 +2357,8 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 			Canopy::DumpCanopyUnits(fout);
 		} else {
 			if (variant == "SEAICE" && Xdata.Seaice != NULL) {
-				fout << ",m,m,m,m,m,m,kg m-2,kg m-3,kg m-2,kg m^3,kg m-2,kg m-2";
-				fout << ",,,,,,,,,,,,,,,,";
+				fout << ",m,m,m,m,m,m,g m-2,g kg-1,g kg-1,g m-2,g m-2";
+				fout << ",,,,,,,,,,,,,,,,,";
 			} else {
 				fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,";
 			}

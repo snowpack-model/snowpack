@@ -147,7 +147,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
         : fixedPositions(), outpath(), o_snowpath(), experiment(), inpath(), i_snowpath(), sw_mode(),
           info(run_info), tsWriters(),
           in_dflt_TZ(0.), calculation_step_length(0.), ts_days_between(0.), min_depth_subsurf(0.),
-          avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false),
+          avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
           out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_t(false),
           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), enable_pref_flow(false)
 {
@@ -180,6 +180,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("OUT_STAB", "Output", out_stab);
 	cfg.getValue("OUT_SW", "Output", out_sw);
 	cfg.getValue("OUT_T", "Output", out_t);
+	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
 	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
@@ -510,6 +511,8 @@ mio::Date SmetIO::read_snosmet_header(const smet::SMETReader& sno_reader, const 
   SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
   SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
   SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
+  SSdata.Emissivity_soil = get_doubleval_no_error(sno_reader, "SoilEmissivity");
+
 
 	return SSdata.profileDate;
 }
@@ -777,6 +780,8 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 		smet_writer.set_header_value("CanopyFracLAIUpperLayer", ss.str());
 		ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata->BasalArea;
 		smet_writer.set_header_value("CanopyBasalArea", ss.str());
+		ss.str(""); ss << fixed << setprecision(2) << Xdata.SoilEmissivity;
+		smet_writer.set_header_value("SoilEmissivity", ss.str());
 	} else {
 		ss.str(""); ss << fixed << setprecision(2) << static_cast<double>(0.);
 		smet_writer.set_header_value("CanopyHeight", ss.str());
@@ -798,6 +803,8 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 		smet_writer.set_header_value("CanopyFracLAIUpperLayer", ss.str());
 		ss.str(""); ss << fixed << setprecision(2) << static_cast<double>(0.);
 		smet_writer.set_header_value("CanopyBasalArea", ss.str());
+		ss.str(""); ss << fixed << setprecision(2) << static_cast<double>(0.);
+		smet_writer.set_header_value("SoilEmissivity", ss.str());
 	}
 
 	// Additional parameters
@@ -1055,11 +1062,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		os << " ";
 	}	*/
 	if (Xdata.Seaice != NULL) {
-		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  bulk_salinity  avg_bulk_salinity  brine_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
-		plot_units << "m m m m m m kg/m2 kg/m3 kg/m2 kg/m3 kg/m2 kg/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
+		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1208,14 +1215,13 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z - Xdata.Ground );
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - Xdata.Ndata[Xdata.Seaice->IceSurfaceNode].z );
 		// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
-		const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
+		const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==IOUtils::nodata || !useReferenceLayer  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel );
 		data.push_back( Xdata.Seaice->FreeBoard );
 		data.push_back( Xdata.Seaice->SeaLevel );
-		data.push_back( Xdata.Seaice->getBulkSalinity(Xdata) );
-		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
-		data.push_back( Xdata.Seaice->getBrineSalinity(Xdata) );
-		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
+		data.push_back( Xdata.Seaice->getTotSalinity(Xdata) );
+		data.push_back( Xdata.Seaice->getAvgBulkSalinity(Xdata) );
+		data.push_back( Xdata.Seaice->getAvgBrineSalinity(Xdata) );
 		data.push_back( Xdata.Seaice->BottomSalFlux );
 		data.push_back( Xdata.Seaice->TopSalFlux );
 	}

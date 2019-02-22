@@ -248,16 +248,20 @@
  * METEOPATH  = ../input/meteo
  * STATION1   = WFJ2
  *
- * SNOWF::MOVE = MS_Snow
- * RAINF::MOVE = MS_Rain
+ * PSUM_S::MOVE = MS_Snow
+ * PSUM_L::MOVE = MS_Rain
  * HS::MOVE    = HS_meas	;so we can still compare measured vs modelled snow height
  * TSG::MOVE   = T_bottom	;so we can compare the ground temperatures
  * TSS::MOVE   = TSS_meas	;so we can compare the surface temperatures
  *
- * WFJ2::KEEP = TA TSS TSG RH ISWR ILWR HS VW DW SNOWF RAINF PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
+ * WFJ2::KEEP = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
  *
- * PSUM_PH::create = PrecUnsplit
- * PSUM::create    = PrecUnsplit
+ * PSUM_PH::create     = PRECSPLITTING
+ * PSUM_PH::PRECSPLITTING::type   = THRESH
+ * PSUM_PH::PRECSPLITTING::snow   = 274.35
+ * PSUM::create     = PRECSPLITTING
+ * PSUM::PRECSPLITTING::type   = THRESH
+ * PSUM::PRECSPLITTING::snow   = 274.35
  *
  * [SNOWPACK]
  * ENFORCE_MEASURED_SNOW_HEIGHTS = FALSE

@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 FilterMin::FilterMin(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name), min_val(0.), min_soft(0.), is_soft(false)
+          : ProcessingBlock(vecArgs, name), min_val(0.), min_soft(0.), is_soft(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values

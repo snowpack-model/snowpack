@@ -25,7 +25,7 @@ using namespace std;
 
 namespace mio {
 
-Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
+Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg, const char& rank, const IOUtils::OperationMode &mode)
                      : mapAlgorithms(), cfg(in_cfg), window_size(86400.), enable_resampling(true), data_qa_logs(false)
 {
 	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
@@ -41,10 +41,17 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 	//create the resampling algorithms for each MeteoData::Parameters parameter
 	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		const std::string parname( MeteoData::getParameterName(ii) ); //Current parameter name
-		const std::string algo_name( getAlgorithmsForParameter(parname) );
-		const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
+		const std::string algo_name( IOUtils::strToUpper(getAlgorithmsForParameter(parname)) );
 
-		mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
+		if (algo_name=="ACCUMULATE" && mode==IOUtils::VSTATIONS && rank==1) {
+			//when doing VSTATIONS, the first pass must re-accumulate over the refresh rate while the second will do over the original user choice
+			const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "Input");
+			const std::vector< std::pair<std::string, std::string> > vecArgs( 1, std::make_pair("PERIOD", vstations_refresh_rate));
+			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
+		} else {
+			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
+			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
+		}
 	}
 }
 

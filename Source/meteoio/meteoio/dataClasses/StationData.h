@@ -127,7 +127,7 @@ class StationData {
 	public:
 		Coords position;
 		std::string stationID; ///<ID of the Station, typically a short string
-		std::string stationName; ///<Name of the Station, detailled description
+		std::string stationName; ///<Name of the Station, detailed description
 
 	private:
 		double slope; ///<Local slope at the station, in degrees, between 0 and 90 degrees
