@@ -678,6 +678,7 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
 	if ((Xdata.Edata[nE-1].theta[WATER] > theta_r + Constants::eps		// Water and ice ...
 	     && Xdata.Edata[nE-1].theta[ICE] > Constants::eps			// ... coexisting
 	     && Xdata.Edata[nE-1].theta[ICE] < max_ice)
+	     && variant != "SEAICE"
 	     && (T_iter != T_snow)) {
 		// Explicit
 		// Now allow a temperature index method if desired by the user

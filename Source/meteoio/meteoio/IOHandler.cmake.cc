@@ -156,8 +156,8 @@ namespace mio {
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
  *
- * In order to optimize the data retrieval, the raw data is buffered. This means that up to BUFFER_SIZE days of data will be read at once by the plugin
- * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure BUFFER_SIZE
+ * In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
+ * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure \b BUFFER_SIZE
  * to the intended duration of the simulation (in days).
  *
  * @section data_manipulations Raw data editing

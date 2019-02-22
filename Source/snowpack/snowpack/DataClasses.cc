@@ -2624,6 +2624,7 @@ void SnowStation::splitElements(const double& max_element_length, const double& 
 		max_elem_l = (max_element_length > 0) ? (0.5 * max_element_length) : (flexibleMaxElemLength(depth, comb_thresh_l));
 		if(0.5*(Edata[e].L) > max_elem_l) {
 			splitElement(e);
+			e--;			// Make sure the same element gets checked again, in case 1 split is not sufficient
 		}
 	}
 }

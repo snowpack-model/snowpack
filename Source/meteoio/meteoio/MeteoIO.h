@@ -83,6 +83,7 @@
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
 #include <meteoio/meteoStats/libresampling2D.h>
+#include <meteoio/meteoStats/RandomNumberGenerator.h>
 
 //skip all plugins' implementations header files
 #include <meteoio/plugins/libsmet.h>
