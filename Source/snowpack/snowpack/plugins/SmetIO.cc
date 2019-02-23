@@ -504,14 +504,14 @@ mio::Date SmetIO::read_snosmet_header(const smet::SMETReader& sno_reader, const 
 	SSdata.ErosionLevel = get_intval(sno_reader, "ErosionLevel");
 	SSdata.TimeCountDeltaHS = get_doubleval(sno_reader, "TimeCountDeltaHS");
 
-  SSdata.Canopy_int_cap_snow = get_doubleval_no_error(sno_reader, "CanopySnowIntCapacity");
-  SSdata.Canopy_alb_dry = get_doubleval_no_error(sno_reader, "CanopyAlbedoDry");
-  SSdata.Canopy_alb_wet = get_doubleval_no_error(sno_reader, "CanopyAlbedoWet");
-  SSdata.Canopy_alb_snow = get_doubleval_no_error(sno_reader, "CanopyAlbedoSnow");
-  SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
-  SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
-  SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
-  SSdata.Emissivity_soil = get_doubleval_no_error(sno_reader, "SoilEmissivity");
+	SSdata.Canopy_int_cap_snow = get_doubleval_no_error(sno_reader, "CanopySnowIntCapacity");
+	SSdata.Canopy_alb_dry = get_doubleval_no_error(sno_reader, "CanopyAlbedoDry");
+	SSdata.Canopy_alb_wet = get_doubleval_no_error(sno_reader, "CanopyAlbedoWet");
+	SSdata.Canopy_alb_snow = get_doubleval_no_error(sno_reader, "CanopyAlbedoSnow");
+	SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
+	SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
+	SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
+	SSdata.Emissivity_soil = get_doubleval_no_error(sno_reader, "SoilEmissivity");
 
 
 	return SSdata.profileDate;

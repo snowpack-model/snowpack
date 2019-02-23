@@ -398,8 +398,8 @@ template void MPIControl::send<CurrentMeteo>(const std::vector<CurrentMeteo*>&, 
 template void MPIControl::receive<SurfaceFluxes>(std::vector<SurfaceFluxes*>&, const size_t&, const int&);
 template void MPIControl::send<SurfaceFluxes>(const std::vector<SurfaceFluxes*>&, const size_t&, const int&);
 
-template void MPIControl::receive< std::pair<unsigned long, unsigned long> >(std::vector<std::pair<unsigned long, unsigned long>>&, const size_t&, const int&);
-template void MPIControl::send< std::pair<unsigned long, unsigned long> >(const std::vector<std::pair<unsigned long, unsigned long>>&, const size_t&, const int&);
+template void MPIControl::receive< std::pair<unsigned long, unsigned long> >(std::vector<std::pair<unsigned long, unsigned long> >&, const size_t&, const int&);
+template void MPIControl::send< std::pair<unsigned long, unsigned long> >(const std::vector<std::pair<unsigned long, unsigned long> >&, const size_t&, const int&);
 
 #endif
 

@@ -895,12 +895,15 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
 
 	if (station_idx==IOUtils::npos) { //multiple stations per file
-		if (vecMeteo.size()<10) {
+		if (vecMeteo.size()<30) {
 			std::string stats_list( vecMeteo[0].front().meta.stationID );
 			for (size_t ii=1; ii<vecMeteo.size(); ii++) {
 				stats_list = stats_list + ", " + vecMeteo[ii].front().meta.stationID;
 			}
-			acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list);
+			if (stats_list.length()<=140)
+				acdd.addAttribute("title", "Meteorological data timeseries for stations "+stats_list);
+			else 
+				acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		} else {
 			acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		}
@@ -940,7 +943,7 @@ std::vector<StationData> ncFiles::readStationData() const
 		if (hasSlope && (vecSlope.size()!=nrStations || vecAzi.size()!=nrStations))
 			throw InvalidFormatException("Vectors of altitudes, slopes and azimuths don't match in file "+file_and_path, AT);
 
-		std::vector<Coords> vecPosition( nrStations );
+		std::vector<Coords> vecPosition( nrStations, Coords(coord_sys, coord_param) );
 		if (hasLatLon) {
 			const std::vector<double> vecLat( read_1Dvariable(ncid, ncpp::LATITUDE) );
 			const std::vector<double> vecLon( read_1Dvariable(ncid, ncpp::LONGITUDE) );

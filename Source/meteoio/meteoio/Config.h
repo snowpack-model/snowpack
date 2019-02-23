@@ -339,6 +339,14 @@ class Config {
 		 */
 		std::set<std::string> getSections() const {return sections;}
 
+		/**
+		 * @brief Move all keys of the \e org section to the \e dest section.
+		 * @param[in] org Section of origin
+		 * @param[in] dest Section of destination
+		 * @param[in] overwrite if true, all keys in the destination section are erased before creating the new keys
+		 */
+		void moveSection(std::string org, std::string dest, const bool& overwrite);
+
 	private:
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
