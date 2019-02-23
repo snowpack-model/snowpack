@@ -158,7 +158,12 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	if (var.attributes.param!=ncpp::STATION && var.attributes.param!=ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
 
 	if (var.attributes.param==ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "cf_role", "timeseries_id");
-	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+	if (var.attributes.param==ncpp::EASTING || var.attributes.param==ncpp::LONGITUDE) ncpp::add_attribute(ncid, var.varid, "axis", "X");
+	if (var.attributes.param==ncpp::NORTHING || var.attributes.param==ncpp::LATITUDE) ncpp::add_attribute(ncid, var.varid, "axis", "Y");
+	if (var.attributes.param==ncpp::TIME) {
+		ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+		ncpp::add_attribute(ncid, var.varid, "axis", "T");
+	}
 	if (var.attributes.param==mio::MeteoGrids::DEM) {
 		ncpp::add_attribute(ncid, var.varid, "positive", "up");
 		ncpp::add_attribute(ncid, var.varid, "axis", "Z");
@@ -1085,6 +1090,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "ACLWUPB", "Upwelling LW surface radiation", "Upwelling LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "ALBEDO", "surface albedo", "ALBEDO", "-", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff", "SURFACE RUNOFF", "kg*m2/s", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "SNOW", "snow water equivalent", "SNOW WATER EQUIVALENT", "kg/m2", mio::IOUtils::nodata, NC_DOUBLE) );

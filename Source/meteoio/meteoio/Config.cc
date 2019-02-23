@@ -146,6 +146,45 @@ bool Config::keyExists(std::string key, std::string section) const
 	return (it!=properties.end());
 }
 
+void Config::moveSection(std::string org, std::string dest, const bool& overwrite)
+{
+	IOUtils::toUpper( org );
+	IOUtils::toUpper( dest );
+	std::map<string,string>::iterator it = properties.begin();
+
+	//delete all current keys in "dest" if overwrite==true
+	if (overwrite) {
+		while (it != properties.end()) {
+			const std::string::size_type pos = it->first.find("::");
+			if (pos!=std::string::npos) {
+				const std::string sectionname( IOUtils::strToUpper(it->first.substr(0, pos)) );
+				if (sectionname==dest) properties.erase( it++ ); // advance before iterator become invalid
+				else ++it;
+			} else {
+				++it;
+			}
+		}
+	}
+
+	//move the keys from org to dest
+	it = properties.begin();
+	while (it != properties.end()) {
+		const std::string::size_type pos = it->first.find("::");
+		if (pos!=std::string::npos) {
+			const std::string sectionname( IOUtils::strToUpper(it->first.substr(0, pos)) );
+			if (sectionname==org) {
+				const std::string key( it->first.substr(pos) );
+				properties[ dest+key ] = it->second;
+				properties.erase( it++ ); // advance before iterator become invalid
+			} else {
+				++it;
+			}
+		} else {
+			++it;
+		}
+	}
+}
+
 const std::string Config::toString() const {
 	std::ostringstream os;
 	os << "<Config>\n";

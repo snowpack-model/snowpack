@@ -531,21 +531,35 @@ std::vector< std::pair<Date, double> > ImisIO::computeAnetzPSUM(std::vector<Mete
 	std::vector< std::pair<Date, double> > vecPsum;
 	const size_t nr_meteo = vecMeteo.size();
 	for (size_t ii=0; ii<nr_meteo; ii++) {
-		//generate sum at XX:30
-		const double prev_psum = vecMeteo[ii](MeteoData::PSUM);
-		const Date datum_halfhour = Date::rnd(vecMeteo[ii].date, 1800, Date::DOWN);
-		if (prev_psum!=IOUtils::nodata)
-			vecPsum.push_back( std::make_pair(datum_halfhour, prev_psum*.5) ); //30 minute sum fully contained in the XX:40 sum
-		else
-			vecPsum.push_back( std::make_pair(datum_halfhour, IOUtils::nodata) );
+		int hour, minute;
+		vecMeteo[ii].date.getTime(hour, minute);
+		if (minute==0) { //normal hourly sampling at XX:00
+			const double prev_psum = vecMeteo[ii](MeteoData::PSUM);
+			const Date datum_halfhour( Date::rnd(vecMeteo[ii].date-0.25/24., 1800, Date::DOWN) );
+			if (prev_psum!=IOUtils::nodata) {
+				vecPsum.push_back( std::make_pair(datum_halfhour, prev_psum*.5) );
+				vecPsum.push_back( std::make_pair(vecMeteo[ii].date, prev_psum*.5) );
+			} else {
+				vecPsum.push_back( std::make_pair(datum_halfhour, IOUtils::nodata) );
+				vecPsum.push_back( std::make_pair(vecMeteo[ii].date, IOUtils::nodata) );
+			}
+		} else { //hourly sampling at XX:40
+			//generate sum at XX:30
+			const double prev_psum = vecMeteo[ii](MeteoData::PSUM);
+			const Date datum_halfhour( Date::rnd(vecMeteo[ii].date, 1800, Date::DOWN) );
+			if (prev_psum!=IOUtils::nodata)
+				vecPsum.push_back( std::make_pair(datum_halfhour, prev_psum*.5) ); //30 minute sum fully contained in the XX:40 sum
+			else
+				vecPsum.push_back( std::make_pair(datum_halfhour, IOUtils::nodata) );
 
-		//generate sum at (XX+1):00
-		const double next_psum = (ii<(nr_meteo-1))? vecMeteo[ii+1](MeteoData::PSUM) : IOUtils::nodata;
-		const Date datum = Date::rnd(vecMeteo[ii].date, 3600, Date::UP);
-		if (prev_psum!=IOUtils::nodata && next_psum!=IOUtils::nodata)
-			vecPsum.push_back( std::make_pair(datum, (prev_psum+next_psum*2.)/6.) );
-		else
-			vecPsum.push_back( std::make_pair(datum, IOUtils::nodata) );
+			//generate sum at (XX+1):00
+			const double next_psum = (ii<(nr_meteo-1))? vecMeteo[ii+1](MeteoData::PSUM) : IOUtils::nodata;
+			const Date datum( Date::rnd(vecMeteo[ii].date, 3600, Date::UP) );
+			if (prev_psum!=IOUtils::nodata && next_psum!=IOUtils::nodata)
+				vecPsum.push_back( std::make_pair(datum, (prev_psum+next_psum*2.)/6.) );
+			else
+				vecPsum.push_back( std::make_pair(datum, IOUtils::nodata) );
+		}
 	}
 	
 	return vecPsum;
@@ -593,7 +607,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	vecMeteo.at(stationindex).clear();
 
 	std::string stat_abk, stao_nr;
-	vector< vector<string> > vecResult;
+	std::vector< std::vector<std::string> > vecResult;
 
 	// Moving back to the IMIS timezone (UTC+1)
 	Date dateS(dateStart), dateE(dateEnd);
