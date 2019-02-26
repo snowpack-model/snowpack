@@ -2670,12 +2670,15 @@ void SnowStation::CheckMaxSimHS(const double& max_simulated_hs) {
 				if ( e+1 < nElems ) { //Check for the case where the top element L already exceeds max_simulated_hs, in case we skip element deletion.
 					size_t i_offset = e+1;				// The new indexing offset
 					size_t i = i_offset;
+					const double dH = Ndata[i].z;			// Height change of domain
 					for ( ; i < nElems; i++) {			// Go from the element above the one that was exceeding max_simulated_hs to the top element
 						Edata[i-i_offset] = Edata[i];		// Shift all the elements down
 						Ndata[i-i_offset] = Ndata[i];		// Shift the node down
+						Ndata[i-i_offset].z -= dH;		// Correct nodal position
 					}
 					Ndata[nElems-i_offset] = Ndata[nElems];		// Take care of the remaining top node
 					resize(i-i_offset);
+					cH -= dH;					// Correct calculated snow height
 				}
 				break;
 			}
