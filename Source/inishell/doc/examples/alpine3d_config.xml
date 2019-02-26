@@ -1555,4 +1555,25 @@
 		<reference name="METEOIOPARAMETERS" />
 	</parameter>
 
+	<!-- Alpine3D Parameters -->
+	<frame key="a3d_parameters_frame" label="Alpine3D settings">
+		<section name="Alpine3D"/>
+		<parameter key="SIMPLE_SNOW_DRIFT" type="alternative" default="FALSE">
+			<section name="Alpine3D" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Enable a simplified snow drift algorithm.</help>
+		</parameter>
+		<parameter key="LATERAL FLOW" type="alternative" default="FALSE">
+			<section name="Alpine3D" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>Enable lateral flow (requires WATERTRANSPORTMODEL_SNOW = RICHARDSEQUATION in [SnowpackAdvanced]).</help>
+		</parameter>
+		<parameter key="MAX_RUN_TIME" type="decimal" default="-1">
+			<section name="Alpine3D" />
+			<help>Maximum run time (i.e., wall clock time) in seconds for the Alpine3D model. The model will write restart files if SNOW_WRITE is set to true. A negative number (default) allows for an unlimited run time.</help>
+		</parameter>
+	</frame>
+
 </inishell_config>
