@@ -18,7 +18,7 @@
 #ifndef FILTERPOTENTIALSW_H
 #define FILTERPOTENTIALSW_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 
@@ -27,7 +27,7 @@ namespace mio {
 /**
  * @class FilterPotentialSW
  * @ingroup processing
- * @brief Checks for physically reallistic incoming short wave radiation (ISWR) values.
+ * @brief Checks for physically realistic incoming short wave radiation (ISWR) values.
  * @details
  * For each data point, the measured value must be:
  *     + more than the horizontal top of atmosphere potential radiation multiplied by the *min_coeff* coefficient;
@@ -46,7 +46,7 @@ namespace mio {
  * @endcode
  */
 
-class FilterPotentialSW : public FilterBlock {
+class FilterPotentialSW : public ProcessingBlock {
 	public:
 		FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 

@@ -42,8 +42,10 @@ class MeteoProcessor {
 		 *        The different stacks are created on the heap and pointers to the objects
 		 *        are stored in the map<string,ProcessingStack*> object processing_stack
 		 * @param[in] cfg Config object that holds the config of the filters in the [Filters] section
+		 * @param[in] rank in case of multiple TimeSeriesManager, rank in the stack? (default: 1)
+		 * @param[in] mode spatial resampling operation mode (see IOUtils::OperationMode), default IOUtils::STD
 		 */
-		MeteoProcessor(const Config& cfg);
+		MeteoProcessor(const Config& cfg, const char& rank=1, const IOUtils::OperationMode &mode=IOUtils::STD);
 
 		/**
 		 * @brief The destructor - It is necessary because the ProcessingStack objects referenced in

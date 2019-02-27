@@ -359,7 +359,7 @@ const std::string DBO::null_string = "null";
 DBO::DBO(const std::string& configfile)
       : cfg(configfile), vecStationName(), vecMeta(), vecTsMeta(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), default_timezone(1.),
+        endpoint(),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
 	initDBOConnection();
@@ -370,7 +370,7 @@ DBO::DBO(const std::string& configfile)
 DBO::DBO(const Config& cfgreader)
       : cfg(cfgreader), vecStationName(), vecMeta(), vecTsMeta(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), default_timezone(1.),
+        endpoint(),
         http_timeout(http_timeout_dflt), dbo_debug(false)
 {
 	initDBOConnection();
@@ -383,8 +383,6 @@ void DBO::initDBOConnection()
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	cfg.getValue("DBO_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
-	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
-
 	cfg.getValue("DBO_URL", "Input", endpoint);
 	if (*endpoint.rbegin() != '/') endpoint += "/";
 	cerr << "[i] Using DBO URL: " << endpoint << endl;

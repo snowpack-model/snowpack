@@ -119,7 +119,7 @@ double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double
 	return 0.;
 }
 
-//usefull static methods
+//useful static methods
 double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold)
 {// Project a horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
@@ -336,11 +336,11 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 	}
 }
 
-void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight) {
+void SunMeeus::getDaylight(double& sunrise, double& sunset, double& MeeusDaylight) {
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		sunrise = SunRise;
 		sunset = SunSet;
-		daylight = SunlightDuration/(60.*24.);
+		MeeusDaylight = SunlightDuration/(60.*24.);
 	} else {
 		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
 	}

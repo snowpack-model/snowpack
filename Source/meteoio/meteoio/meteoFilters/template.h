@@ -19,7 +19,7 @@
 #define TEMPLATE_H
 
 //#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
-#include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
+#include <meteoio/meteoFilters/ProcessingBlock.h> //use this one for all others
 
 #include <vector>
 #include <string>
@@ -39,8 +39,7 @@ namespace mio {
  * @endcode
  */
 
-class TEMPLATE : public FilterBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class TEMPLATE : public ProcessingBlock { //use this one for data corrections
+class TEMPLATE : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
 //class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
 		TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);

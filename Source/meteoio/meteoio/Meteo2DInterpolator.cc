@@ -93,9 +93,9 @@ void Meteo2DInterpolator::setAlgorithms()
 }
 
 //get a list of all meteoparameters referenced in the Interpolations2D section
-std::set<std::string> Meteo2DInterpolator::getParameters(const Config& cfg)
+std::set<std::string> Meteo2DInterpolator::getParameters(const Config& i_cfg)
 {
-	const std::vector<std::string> vec_keys( cfg.getKeys("::algorithms", "Interpolations2D", true) );
+	const std::vector<std::string> vec_keys( i_cfg.getKeys("::algorithms", "Interpolations2D", true) );
 
 	std::set<std::string> set_parameters;
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
@@ -148,31 +148,25 @@ std::vector< std::pair<std::string, std::string> > Meteo2DInterpolator::getArgum
 	return vecArgs;
 }
 
-void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                                      Grid2DObject& result)
-{
-	std::string InfoString;
-	interpolate(date, dem, meteoparam, result, InfoString);
-}
-
-void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                                      Grid2DObject& result, std::string& InfoString)
+std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                                      Grid2DObject& result, const bool& quiet)
 {
 	if (!algorithms_ready) setAlgorithms();
 	const std::string param_name( MeteoData::getParameterName(meteoparam) );
 	
-	interpolate(date, dem, param_name, result, InfoString);
+	return interpolate(date, dem, param_name, result, quiet);
 }
 
-void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
-                                      Grid2DObject& result, std::string& InfoString)
+std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
+                                      Grid2DObject& result, const bool& quiet)
 {
+	std::string InfoString;
 	if (!algorithms_ready) setAlgorithms();
 
 	//Get grid from buffer if it exists
 	std::ostringstream grid_hash;
 	grid_hash << dem.llcorner.toString(Coords::LATLON) << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << " " << date.toString(Date::ISO) << " " << param_name;
-	if (grid_buffer.get(result, grid_hash.str(), InfoString)) return;
+	if (grid_buffer.get(result, grid_hash.str(), InfoString)) return InfoString;
 
 	//Show algorithms to be used for this parameter
 	const std::map<string, vector<InterpolationAlgorithm*> >::iterator it = mapAlgorithms.find(param_name);
@@ -192,8 +186,15 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	}
 
 	//finally execute the algorithm with the best quality rating or throw an exception
-	if (maxQualityRating<=0.0)
-		throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+param_name+" on "+date.toString(Date::ISO_TZ), AT);
+	if (maxQualityRating<=0.0) {
+		const std::string msg( "No suitable interpolation algorithm for parameter "+param_name+" on "+date.toString(Date::ISO_TZ) );
+		if (quiet) {
+			std::cerr << "[E] " << msg << "\n";
+			result.set(dem, IOUtils::nodata);
+			grid_buffer.push(result, grid_hash.str(), msg); //HACK is it the proper way of doing this? Could we have a valid grid later on?
+			return msg;
+		} else throw IOException(msg, AT);
+	}
 	vecAlgs[bestalgorithm]->calculate(dem, result);
 	InfoString = vecAlgs[bestalgorithm]->getInfo();
 
@@ -210,17 +211,18 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 	//save grid in buffer
 	grid_buffer.push(result, grid_hash.str(), InfoString);
+	return InfoString;
 }
 
 //NOTE make sure that skip_virtual_stations = true before calling this method when using virtual stations!
-void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<Coords> vec_coords, std::vector<double>& result, std::string& info_string)
+std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<Coords> vec_coords, std::vector<double>& result, const bool& quiet)
 {
 	result.clear();
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;
-		interpolate(date, dem, meteoparam, result_grid, info_string);
+		const std::string InfoString( interpolate(date, dem, meteoparam, result_grid, quiet) );
 		const bool gridify_success = dem.gridify(vec_coords);
 		if (!gridify_success)
 			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
@@ -231,7 +233,9 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
 			result.push_back( result_grid(pt_i,pt_j) );
 		}
+		return InfoString;
 	} else {
+		std::string InfoString;
 		for (size_t ii=0; ii<vec_coords.size(); ii++) {
 			const bool gridify_success = dem.gridify(vec_coords[ii]);
 			if (!gridify_success)
@@ -253,21 +257,22 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			one_point_dem.max_curvature = dem.max_curvature;
 
 			Grid2DObject result_grid;
-			interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
+			InfoString = interpolate(date, one_point_dem, meteoparam, result_grid, quiet);
 			result.push_back(result_grid(0,0));
 		}
+		return InfoString;
 	}
 }
 
 //NOTE make sure that skip_virtual_stations = true before calling this method when using virtual stations!
-void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<StationData> vec_stations, std::vector<double>& result, std::string& info_string)
+std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<StationData> vec_stations, std::vector<double>& result, const bool& quiet)
 {
 	result.clear();
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;
-		interpolate(date, dem, meteoparam, result_grid, info_string);
+		const std::string InfoString( interpolate(date, dem, meteoparam, result_grid, quiet) );
 		const bool gridify_success = dem.gridify(vec_stations);
 		if (!gridify_success)
 			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
@@ -278,15 +283,18 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			const size_t pt_j = static_cast<size_t>( vec_stations[ii].position.getGridJ() );
 			result.push_back( result_grid(pt_i,pt_j) );
 		}
+		return InfoString;
 	} else {
+		std::string InfoString;
 		for (size_t ii=0; ii<vec_stations.size(); ii++) {
 			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
 			const DEMObject one_point_dem(1, 1, vec_stations[ii].position, vec_stations[ii].position.getAltitude());
 
 			Grid2DObject result_grid;
-			interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
+			InfoString = interpolate(date, one_point_dem, meteoparam, result_grid, quiet);
 			result.push_back( result_grid(0,0) );
 		}
+		return InfoString;
 	}
 }
 

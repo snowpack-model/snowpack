@@ -335,7 +335,7 @@ int DEMObject::getDefaultAlgorithm() const {
 
 /**
 * @brief Recomputes the min/max of altitude, slope and curvature
-* It return +/- std::numeric_limits\<double\>\:\:max() for a given parameter if its grid was empty/undefined
+* It returns +/- std::numeric_limits\<double\> \::max() for a given parameter if its grid was empty/undefined
 */
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
@@ -652,28 +652,28 @@ double DEMObject::getCurvature(double A[4][4])
 	return IOUtils::nodata;
 }
 
-double DEMObject::steepestGradient(const double& cellsize, double A[4][4]) 
+double DEMObject::steepestGradient(const double& i_cellsize, double A[4][4]) 
 { //best effort to calculate the local steepest gradient
 	double smax=-1.;		//maximum slope of all neighboring slopes
 	static const double sqrt2 = sqrt(2.);	//the weight of the 4 corner cells is increased by sqrt(2)
 
 	if (A[2][2]!=IOUtils::nodata) {
 		if (A[1][1]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[1][1])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[1][1])/(i_cellsize*sqrt2) );
 		if (A[1][2]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[1][2])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[1][2])/(i_cellsize) );
 		if (A[1][3]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[1][3])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[1][3])/(i_cellsize*sqrt2) );
 		if (A[2][1]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[2][1])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[2][1])/(i_cellsize) );
 		if (A[2][3]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[2][3])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[2][3])/(i_cellsize) );
 		if (A[3][1]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[3][1])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[3][1])/(i_cellsize*sqrt2) );
 		if (A[3][2]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[3][2])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[3][2])/(i_cellsize) );
 		if (A[3][3]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[3][3])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[3][3])/(i_cellsize*sqrt2) );
 	}
 
 	if (smax<0.)

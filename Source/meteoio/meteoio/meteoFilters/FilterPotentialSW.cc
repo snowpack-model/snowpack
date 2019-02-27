@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name), min_coeff(0.03), max_coeff(1.1)
+          : ProcessingBlock(vecArgs, name), min_coeff(0.03), max_coeff(1.1)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values

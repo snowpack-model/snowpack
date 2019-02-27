@@ -18,7 +18,7 @@
 #ifndef FilterDeGrass_H
 #define FilterDeGrass_H
 
-#include <meteoio/meteoFilters/FilterBlock.h> //use this one for all others
+#include <meteoio/meteoFilters/ProcessingBlock.h> //use this one for all others
 #include <vector>
 #include <string>
 
@@ -33,7 +33,7 @@ namespace mio {
  * The filter is based on total snow depth (HS), snow surface temperature (TSS), ground surface temperature (TSG)
  * and reflected shortwave radiation (RSWR). 
  * Different steps to do: 
- *    -# calculate possible offset of TSS (raison: at some stations in some springs the TSS increases 
+ *    -# calculate possible offset of TSS (reason: at some stations in some springs the TSS increases 
  * although snow is still on the ground) 
  *    -# calculate correlation of TSS and TSG in spring (normally both temperatures increase at the same 
  * time in spring which results in a high correlation; low correlation if TSS and TSG increase not parallel 
@@ -60,7 +60,7 @@ namespace mio {
  * @date   2015-12-16
  */
 
-class FilterDeGrass : public FilterBlock {
+class FilterDeGrass : public ProcessingBlock {
 	public:
 		FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
 
@@ -75,7 +75,7 @@ class FilterDeGrass : public FilterBlock {
 		static void findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t &tssWarmDay_idx, size_t &tsgWarmDay_idx);
 		static double getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec);
 		static bool getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc);
-		static void getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &TSS_daily_min, double &TSS_daily_max, double &TSS_daily_mean);
+		static void getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &o_TSS_daily_min, double &o_TSS_daily_max, double &o_TSS_daily_mean);
 		static double getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start);
 		static Date getDailyStart(const Date& resampling_date);
 		

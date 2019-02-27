@@ -89,10 +89,9 @@ double DEMAlgorithms::getSearchDistance(const DEMObject& dem)
 * @param[in] ix1 x index of the origin point
 * @param[in] iy1 y index of the origin point
 * @param[in] bearing direction given by a compass bearing
-* @param[in] offset optional height over the DEM cell (for a sensor on a mast, etc)
 * @return tangente of angle above the horizontal (in deg)
 */
-double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing, const double& offset)
+double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing)
 {
 	const double max_shade_distance = getSearchDistance(dem);
 	if (max_shade_distance==IOUtils::nodata) 
@@ -102,7 +101,7 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 	const int dimy = (signed)dem.grid2D.getNy();
 	if (ix1==0 || (signed)ix1==dimx-1 || iy1==0 || (signed)iy1==dimy-1) return 0.; //a border cell is not shadded
 	
-	const double cell_alt = dem.grid2D(ix1, iy1) + offset;
+	const double cell_alt = dem.grid2D(ix1, iy1);
 	double horizon_tan_angle = 0.;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
@@ -135,14 +134,13 @@ double DEMAlgorithms::getHorizon(const DEMObject& dem, const size_t& ix1, const 
 * @param[in] dem DEM to work with
 * @param[in] point the origin point
 * @param[in] bearing direction given by a compass bearing
-* @param[in] offset optional height over the DEM cell (for a sensor on a mast, etc)
 * @return tangente of angle above the horizontal (in deg)
 */
-double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& bearing, const double& offset)
+double DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const double& bearing)
 {
 	const int ix1 = (int)point.getGridI();
 	const int iy1 = (int)point.getGridJ();
-	return getHorizon(dem, ix1, iy1, bearing, offset);
+	return getHorizon(dem, ix1, iy1, bearing);
 }
 
 /**
@@ -163,7 +161,7 @@ void DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const 
 
 /**
  * @brief Compute the sky view factors for the terrain radiation based on the DEM.
- * This is based on Manners, J., S. B. Vosper, and N. Roberts, <i>"Radiative transfer over resolved
+ * This is inspired (ie with some changes) by Manners, J., S. B. Vosper, and N. Roberts, <i>"Radiative transfer over resolved
  * topographic features for high‐resolution weather prediction"</i>, Quarterly journal of the
  * royal meteorological society, <b>138.664</b>, pp720-733, 2012.
  *
@@ -172,6 +170,7 @@ void DEMAlgorithms::getHorizon(const DEMObject& dem, const Coords& point, const 
  * @param[in] jj y coordinate of the cell whose view factor should be computed
  * @return sky view factor
  */
+
 double DEMAlgorithms::getCellSkyViewFactor(const DEMObject& dem, const size_t& ii, const size_t& jj)
 {
 	const double tan_slope = tan( dem.slope(ii,jj)*Cst::to_rad );
@@ -182,20 +181,21 @@ double DEMAlgorithms::getCellSkyViewFactor(const DEMObject& dem, const size_t& i
 	double sum=0.;
 	for (unsigned int sector=0; sector<nSectors; sector++) {
 		const double bearing = 360. * (double)sector / (double)nSectors;
-		const double cos_azi_diff = cos( IOUtils::bearing_to_angle(bearing - azi) );
-		const double elev = atan( getTanMaxSlope(dem, tan_slope, max_shade_distance, bearing, ii, jj) );
-		
-		const double T_phi = (tan_slope*cos_azi_diff==0)? mio::Cst::PI2 : atan( 1. / (-tan_slope * cos_azi_diff) );
-		const double H_phi = ((mio::Cst::PI2 - elev)<=T_phi)? (mio::Cst::PI2 - elev) : T_phi; //self shadowing
-		
-		const double sector_vf = Optim::pow2( sin( H_phi + mio::Cst::PI2 - T_phi ) );
+		const double cos_azi_diff = cos((bearing - azi)*Cst::to_rad);
+		const double elev = atan( getTanMaxSlope(dem, max_shade_distance, bearing, ii, jj) );
+
+		const double correction_horizon =  atan((tan_slope*cos_azi_diff));
+		double new_horizon=elev +correction_horizon;
+		if (new_horizon<0) new_horizon=0;
+
+		const double sector_vf = Optim::pow2( sin(mio::Cst::PI2-new_horizon) );
 		sum += sector_vf;
 	}
 
 	return sum / nSectors;
 }
 
-double DEMAlgorithms::getTanMaxSlope(const DEMObject& dem, const double& tan_local_slope, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
+double DEMAlgorithms::getTanMaxSlope(const DEMObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
 	const double inv_dmax = 1./dmax;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
@@ -207,7 +207,7 @@ double DEMAlgorithms::getTanMaxSlope(const DEMObject& dem, const double& tan_loc
 
 	int ll=ii, mm=jj;
 
-	double max_tan_slope = tan_local_slope;
+	double max_tan_slope = -99999.;
 	size_t nb_cells = 0;
 	while ( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
 		const double altitude = dem.grid2D(ll, mm);

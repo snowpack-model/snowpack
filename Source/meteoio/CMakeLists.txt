@@ -4,7 +4,7 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 PROJECT(meteoio)
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
-SET(VERSION_MINOR 7 CACHE INTERNAL "")
+SET(VERSION_MINOR 8 CACHE INTERNAL "")
 SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
@@ -89,6 +89,7 @@ SET(PLUGIN_PSQLIO OFF CACHE BOOL "Compilation PSQLIO ON or OFF")
 SET(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
 SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PLUGIN_SASEIO OFF CACHE BOOL "Compilation SASEIO ON or OFF")
+SET(PLUGIN_ZRXPIO OFF CACHE BOOL "Compilation ZRXPIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 
 ###########################################################

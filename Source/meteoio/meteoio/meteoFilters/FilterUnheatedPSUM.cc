@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : FilterBlock(vecArgs, name), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
+                  : ProcessingBlock(vecArgs, name), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values

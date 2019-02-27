@@ -168,8 +168,21 @@ size_t count(const std::string &input, const std::string& search)
 		pos = input.find(search, pos+len);
 		count++;
 	}
-	
+
 	return count;
+}
+
+size_t FNV_hash(const std::string& text)
+{
+	static const size_t FNV_offset_basis = 2166136261U;
+	static const size_t FNV_prime = 16777619U;
+	size_t hash = FNV_offset_basis;
+
+	for (size_t ii=0; ii<text.size(); ii++){
+		hash = hash ^ (text[ii]); //XOR the lower 8 bits
+		hash *= FNV_prime;
+	}
+	return hash;
 }
 
 void toUpper(std::string& str) {
@@ -272,12 +285,12 @@ std::string getHostName() {
 std::string getDomainName() {
 	const std::string hostname( getHostName() );
 	if (hostname.empty()) return "";
-	
+
 	std::size_t tld_pos = hostname.find_last_of(".");
 	if (tld_pos==std::string::npos || tld_pos==0) return "";
 	std::size_t domain_pos = hostname.find_last_of(".", tld_pos-1);
 	if (domain_pos==std::string::npos) return "";
-	
+
 	return hostname.substr(domain_pos+1);
 }
 
@@ -576,7 +589,7 @@ bool convertString(Date& t, std::string str, const double& time_zone, std::ios_b
 		const size_t wrong_dash2 = str.find("Ð");
 		if (wrong_dash1!=std::string::npos || wrong_dash2!=std::string::npos)
 			throw InvalidFormatException("Invalid date '"+str+"', please use the '-' character as date delimiter", AT);
-		
+
 		//try to read purely numerical date, potentially surrounded by other chars
 		//and potentially containing an ISO time zone string
 		const size_t in_len = str.length();
@@ -646,7 +659,7 @@ template<> bool convertString<Coords>(Coords& t, std::string str, std::ios_base&
 
 
 void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
-                                      std::string& coordout, std::string& coordoutparam) 
+                                      std::string& coordout, std::string& coordoutparam)
 {
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
@@ -654,13 +667,13 @@ void getProjectionParameters(const Config& cfg, std::string& coordin, std::strin
 	cfg.getValue("COORDPARAM", "Output", coordoutparam, IOUtils::nothrow);
 }
 
-void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam) 
+void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam)
 {
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
 }
 
-void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) 
+void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out)
 {
 	cfg.getValue("TIME_ZONE", "Input", tz_in, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
@@ -679,7 +692,7 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	//should be and provide a much smaller search interval around it
 	const double start_date = vecM.front().date.getJulian(true);
 	const double end_date = vecM.back().date.getJulian(true);
-	if (start_date==end_date) return 0; //there is onyl one element
+	if (start_date==end_date) return 0; //there is only one element
 
 	const double curr_date = soughtdate.getJulian(true);
 	const double raw_pos = (curr_date-start_date) / (end_date-start_date) * static_cast<double>(max_idx); //always >=0
@@ -747,7 +760,7 @@ double unitsPrefix(const char& prefix)
 	}
 }
 
-//currently, only the most simple ase of units are handled. Composite units
+//currently, only the most simple units are handled. Composite units
 //such as 'W/m2 <-> mW/cm2' are NOT handled.
 double unitsConversion(const double& val, std::string unitIn, std::string unitOut)
 {

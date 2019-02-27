@@ -193,7 +193,7 @@ double PolynomialRegression::f(const double& x) const
 {
 	double fittedValue = Lambda.at(0);
 	for (size_t ii=1; ii<=degree; ii++){
-		fittedValue = fittedValue + Lambda.at(ii)*pow(x,ii);
+		fittedValue = fittedValue + Lambda.at(ii)*pow(x,(double)ii);
 	}
 	return fittedValue;
 }
@@ -211,7 +211,7 @@ bool PolynomialRegression::fit()
 	for (size_t i = 0; i < (2*n + 1); i++){
 		Xh[i] = 0;
 		for (size_t j = 0; j < N; j++){
-			Xh[i] += pow(X[j], i);
+			Xh[i] += pow(X[j], (double)i);
 		}
 	}
 
@@ -228,7 +228,7 @@ bool PolynomialRegression::fit()
 	for (size_t i = 0; i < (n+1); i++){
 		YM(i+1,1) = 0;
 		for (size_t j = 0; j < N; j++){
-			YM(i+1,1) += pow(X[j], i)*Y[j];
+			YM(i+1,1) += pow(X[j],(double)i)*Y[j];
 		}
 	}
 

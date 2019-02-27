@@ -39,7 +39,7 @@ namespace mio {
  * 
  * \note If non-ascii characters have been used and the file has been created under Windows, some of the strings might end up using the UTF-16 encoding.
  * This requires a recent version of libmatio (see <A HREF="https://github.com/tbeu/matio/issues/34">this issue</A>). Another option would be to 
- * add at the begining of the Matlab routine a call to *feature('DefaultCharacterSet', 'UTF8')* in order to switch from the current default (which can be read by the same call, 
+ * add at the beginning of the Matlab routine a call to *feature('DefaultCharacterSet', 'UTF8')* in order to switch from the current default (which can be read by the same call, 
  * ommitting the 'UTF8' option) to the (<A HREF="http://blog.omega-prime.co.uk/?p=150">partial</A>) UTF-8  encoding of Matlab.
  * 
  * @section oshd_data_structure Data structure
@@ -278,7 +278,7 @@ size_t OshdIO::getFileIdx(const std::vector< struct file_index >& cache, const D
 		}
 	}
 
-	//not found, we take the closest timestamp we have (ie very begining or very end)
+	//not found, we take the closest timestamp we have (ie very eginning or very end)
 	if (start_date<cache.front().date) return 0;
 	else return cache.size()-1;
 }

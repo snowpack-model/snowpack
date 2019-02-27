@@ -65,9 +65,9 @@ class InterpolationAlgorithm;
  * private member to it. It then computes the private member nrOfMeasurments that contains the number of
  * stations that have this meteorological parameter available by either calling getData(param, vecData, vecMeta), which
  * also fills the vectors vecData and vecMeta with the available data (as double) and metadata (as StationData) or
- * directly filling veMeteo and vecMeta. Custom data preparation can obviously be done in this method.
+ * directly filling vecMeteo and vecMeta. Custom data preparation can obviously be done in this method.
  *
- * The calculate method must properly erase and reste the grid that it receives before filling it. If necessary,
+ * The calculate method must properly erase and reset the grid that it receives before filling it. If necessary,
  * (as is the case for precipitation, relative humidity and snow height, for example) the grid can be checked for min/max by
  * calling checkMinMax() at the end of Meteo2DInterpolator::interpolate.It can also add extra information about the
  * interpolation process (such as a regression coefficient or error estimate) to the InterpolationAlgorithm::info
@@ -112,31 +112,20 @@ class Meteo2DInterpolator {
 		 * @param meteoparam Any MeteoData member variable as specified in the
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
+		 * @param quiet If TRUE, missing data will print a warning but will not throw an exception (default: false)
+		 * @return some information about the interpolation process (useful for GUIs)
 		 */
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result);
+		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+		                 Grid2DObject& result, const bool& quiet=false);
 
-		/**
-		 * @brief A generic function that can interpolate for any given MeteoData member variable
-		 *
-		 * @param date date for which to interpolate
-		 * @param dem Digital Elevation Model on which to perform the interpolation
-		 * @param meteoparam Any MeteoData member variable as specified in the
-		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
-		 * @param result A Grid2DObject that will be filled with the interpolated data
-		 * @param InfoString some information about the interpolation process (useful for GUIs)
-		 */
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result, std::string& InfoString);
+		std::string interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
+		                 Grid2DObject& result, const bool& quiet=false);
 
-		void interpolate(const Date& date, const DEMObject& dem, const std::string& param_name,
-		                 Grid2DObject& result, std::string& InfoString);
-
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<Coords> vec_coords, std::vector<double>& result, std::string& info_string);
+		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<Coords> vec_coords, std::vector<double>& result, const bool& quiet=false);
 		
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            std::vector<StationData> vec_stations, std::vector<double>& result, std::string& info_string);
+		std::string interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            std::vector<StationData> vec_stations, std::vector<double>& result, const bool& quiet=false);
 
 		/**
 		 * @brief Retrieve the arguments vector for a given interpolation algorithm
@@ -153,7 +142,7 @@ class Meteo2DInterpolator {
 	private:
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 		static void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
-		static std::set<std::string> getParameters(const Config& cfg);
+		static std::set<std::string> getParameters(const Config& i_cfg);
 		static std::vector<std::string> getAlgorithmsForParameter(const Config& i_cfg, const std::string& parname);
 
 		void setAlgorithms();

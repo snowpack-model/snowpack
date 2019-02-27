@@ -50,7 +50,7 @@ void ProcExpSmoothing::process(const unsigned int& param, const std::vector<Mete
 
 }
 
-double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& alpha)
+double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos, const double& i_alpha)
 {
 	const size_t max_len = max(pos-start, end-pos);
 	bool initCompleted = false;
@@ -75,7 +75,7 @@ double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, co
 		//add the contribution
 		if (val!=IOUtils::nodata) {
 			if (initCompleted){
-				expavg = alpha*val + (1.-alpha)*expavg;
+				expavg = i_alpha*val + (1.-i_alpha)*expavg;
 			} else {
 				expavg = val;
 				initCompleted = true;

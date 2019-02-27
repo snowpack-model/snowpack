@@ -1,4 +1,3 @@
-/***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
@@ -27,7 +26,7 @@ using namespace std;
 namespace mio {
 
 FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : FilterBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50)
+          : ProcessingBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -50,10 +49,6 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 	std::vector<double> timeVec( helperGetTimeVectorOutOfMeteoDataVector(ivec) );
 	//the signal (a vector of double-values) we will despike:
 	std::vector<double> doubleVec( helperGetDoubleVectorOutOfMeteoDataVector(ivec,param) );
-	//the original signal. we need it just for debugging, to visualize the changes:
-	//std::vector<double> doubleVecOrig( helperGetDoubleVectorOutOfMeteoDataVector(ivec,param) );
-	//a vector containing all detected spikes. only for debugging and visualization of the result:
-	std::vector<int> allSpikesVec(ivec.size(),0);
 
 	bool keepLookingForSpikes = true;
 	unsigned int nNewSpikes=0;
@@ -69,11 +64,8 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 		std::vector<int> spikesVec;
 		if (methodParam==MORI){
 			spikesVec = findSpikesMori(timeVec,doubleVec,nNewSpikes);
-		}else{
+		} else {
 			spikesVec = findSpikesGoring(timeVec,doubleVec,nNewSpikes);
-		}
-		for (size_t ii=0; ii<spikesVec.size();ii++){
-			allSpikesVec[ii] = allSpikesVec[ii] + spikesVec[ii];
 		}
 
 		//3. replace spikes
@@ -86,18 +78,10 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 		//1. we reached the maximum number of iterations
 		//2. no new spike was detected
 		//3. the standard deviation of the signal is not decreasing
-		if (nIterations >= maxIterations){
-			keepLookingForSpikes=false;
-			std::cout << "We finish the iteration for spike detection. The maximum number of iterations was reached... " << std::endl;
-		}
-		if (nNewSpikes==0){
-			keepLookingForSpikes=false;
-			std::cout << "We finish the iteration for spike detection. No more new spikes found...  " << std::endl;
-		}
-		if (stdDev0 <= stdDev1){
-			keepLookingForSpikes=false;
-			std::cout << "We finish the iteration for spike detection. The standard deviation is not decreasing anymore...  " << std::endl;
-		}
+		if (nIterations >= maxIterations) keepLookingForSpikes=false;
+		if (nNewSpikes==0) keepLookingForSpikes=false;
+		if (stdDev0 <= stdDev1) keepLookingForSpikes=false;
+		
 		//4. add mean back to signal again
 		for (size_t ii=0; ii<doubleVec.size(); ii++){
 			if (doubleVec[ii] != IOUtils::nodata)
@@ -110,19 +94,6 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 		double& value = ovec[ii](param);
 		value = doubleVec[ii];
 	}
-
-	//just for outputting some information about the despiking:
-	//count the number of spikes
-	unsigned int nSpikes=0;
-	for (size_t ii=0; ii<allSpikesVec.size(); ii++){
-		if (allSpikesVec[ii] != 0) nSpikes++;
-	}
-
-	std::string methodString("Goring (2D) method.");
-	if (methodParam==MORI) methodString="Mori (3D) method.";
-	std::cout << nSpikes << " spikes were found after " << nIterations << " iterations with a sensitivity parameter of "
-	                 << sensitivityParam << " using " << methodString << std::endl;
-	//helperWriteDebugFile4OriginalAndFinalSignal(doubleVecOrig,doubleVec,allSpikesVec);
 }
 
 /**
@@ -200,7 +171,7 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 			if (dt != 0 && ivec[i1] != IOUtils::nodata && ivec[i2] != IOUtils::nodata){
 				const double derivative = (ivec[i2]-ivec[i1]) / dt;
 				ovec.push_back(derivative);
-			} else{
+			} else {
 				ovec.push_back(IOUtils::nodata);
 			}
 		}
@@ -340,8 +311,6 @@ std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& 
 		nNewSpikes=nNewSpikes+spikesVec[ii];
 	}
 
-	//helperWriteDebugFile1DerivativesAndFittedEllipses(uVec,duVec,du2Vec,a1,b1,a2,b2,a3,b3,theta);
-
 	return spikesVec;
 }
 
@@ -416,7 +385,7 @@ std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& ti
 			X[ii] = uVec[ii]*cos(theta) + du2Vec[ii]*sin(theta);
 			Y[ii] = duVec[ii];
 			Z[ii] = uVec[ii]*(-sin(theta)) + du2Vec[ii]*cos(theta);
-		}else{
+		} else {
 			X[ii] = IOUtils::nodata;
 			Y[ii] = IOUtils::nodata;
 			Z[ii] = IOUtils::nodata;
@@ -440,8 +409,6 @@ std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& ti
 	for (size_t ii=0; ii<spikesVec.size(); ii++){
 		nNewSpikes=nNewSpikes+spikesVec[ii];
 	}
-
-	//helperWriteDebugFile1DerivativesAndFittedEllipses(X,Y,Z,a,b,b,c,a,c,theta);
 
 	return spikesVec;
 }
@@ -552,10 +519,8 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 					quadraticFit.fit();
 					double interpolatedValue = quadraticFit.f(0);
 					uVec[ii] = interpolatedValue;
-					//helperWriteDebugFile2Interpolation(uVec,spikesVec,xVec,yVec,quadraticFit,ii);
 				} catch (const std::exception &e) {
 					std::cout << "An exception occurred: " << e.what() << std::endl;
-					//helperWriteDebugFile3WindowForInterpolation(ii,xVec,yVec);
 				}
 			}
 		}
@@ -622,90 +587,6 @@ const std::vector<double> FilterDespikingPS::helperGetTimeVectorOutOfMeteoDataVe
 		ovec.push_back(time);
 	}
 	return ovec;
-}
-
-/**
- * @brief This function is just for debugging purposes...
- */
-void FilterDespikingPS::helperWriteDebugFile1DerivativesAndFittedEllipses(const std::vector<double>& uVec, const std::vector<double>& duVec,
-                                          const std::vector<double>& du2Vec,
-                                          double a1,double b1,double a2,double b2,double a3,double b3,double theta)
-{
-	ofstream myfile;
-	const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
-	const std::string filename( "debugOutputFiles/debugFilterDespikingPS_findSpike_iteration_"+itnr_str+".csv" );
-	myfile.open (filename.c_str());
-
-	myfile << "a1; b1; a2; b2; a3; b3; theta "<< std::endl;
-	myfile << a1 << ";" << b1 << ";" << a2 << ";" << b2 << ";" << a3 << ";" << b3 << ";" << theta << std::endl;
-	myfile << "uVec; duVec; du2Vec " << std::endl;
-	for (size_t ii=0; ii<uVec.size(); ii++) {
-		myfile << uVec[ii] << ";" << duVec[ii] << ";" << du2Vec[ii] << std::endl;
-	}
-	myfile.close();
-}
-
-/**
- * @brief This function is just for debugging purposes...
- */
-void FilterDespikingPS::helperWriteDebugFile2Interpolation(const std::vector<double>& uVec, const std::vector<int>& spikesVec,
-                                          const std::vector<double>& x, const std::vector<double>& y, const Fit1D& quadraticFit,unsigned int iiSpike)
-{
-	ofstream myfile;
-	const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
-	const std::string spikenr_str( static_cast<ostringstream*>( &(ostringstream() << iiSpike) )->str() );
-	std::string filename( "debugOutputFiles/debugFilterDespikingPS_replaceSpike_spike_at_"+spikenr_str
-						+"_iteration_"+itnr_str+".csv" );
-	myfile.open (filename.c_str());
-
-	myfile << "x; y; quadratic fit(x) " << std::endl;
-	for (size_t ii=0; ii<x.size(); ii++) {
-		myfile << x[ii] << ";" << y[ii] << ";" <<  quadraticFit.f(x[ii]) << std::endl;
-	}
-	myfile << iiSpike << ";" << uVec[iiSpike] << ";" <<  quadraticFit.f(iiSpike) << std::endl;
-
-	myfile << "ii; uVec; spikesVec; spikesVec*uVec " << std::endl;
-	for (size_t ii=0; ii<uVec.size(); ii++) {
-		myfile << ii << ";" << uVec[ii] << ";" <<  spikesVec[ii] << ";" <<  spikesVec[ii]*uVec[ii] << std::endl;
-	}
-	myfile.close();
-}
-
-/**
- * @brief This function is just for debugging purposes...
- */
-void FilterDespikingPS::helperWriteDebugFile3WindowForInterpolation(size_t iteration,std::vector<double>& x,std::vector<double>& y)
-{
-	ofstream myfile;
-
-	const std::string itnr_str( static_cast<ostringstream*>( &(ostringstream() << nIterations) )->str() );
-	const std::string iter_str( static_cast<ostringstream*>( &(ostringstream() << iteration) )->str() );
-	std::string filename( "debugOutputFiles/debugFilterDespikingPS_windowForInterpolation_at_"+iter_str
-						+"_iteration_"+itnr_str+".csv" );
-	myfile.open (filename.c_str());
-
-	myfile << "x; y" << std::endl;
-	for (size_t ii=0; ii<x.size(); ii++) {
-		myfile << x[ii] << ";" << y[ii] << std::endl;
-	}
-	myfile.close();
-}
-
-/**
- * @brief This function is just for debugging purposes...
- */
-void FilterDespikingPS::helperWriteDebugFile4OriginalAndFinalSignal(std::vector<double>& ivec, std::vector<double>& ovec,
-                                                                    std::vector<int>& allSpikesVec)
-{
-	ofstream myfile;
-	std::string filename("debugOutputFiles/debugFilterDespikingPS_OriginalAndFinalSignal.csv");
-	myfile.open (filename.c_str());
-
-	myfile << "i; original signal; filtered signal; spikes" << std::endl;
-	for (size_t ii=0; ii<ivec.size(); ii++) {
-		myfile << ii <<";"<< ivec[ii] <<";"<< ovec[ii] <<";"<< allSpikesVec[ii]<< std::endl;
-	}
-	myfile.close();
 }
 
 } //end namespace

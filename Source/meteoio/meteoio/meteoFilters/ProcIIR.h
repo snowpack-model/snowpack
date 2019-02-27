@@ -18,7 +18,7 @@
 #ifndef PROCIIR_H
 #define PROCIIR_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 

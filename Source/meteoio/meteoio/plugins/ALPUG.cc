@@ -319,7 +319,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 		if (fin.fail())
 			throw AccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
 
-		const char eoln = smet::SMETCommon::getEoln(fin); //get the end of line character for the file
+		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 		const size_t nr_of_data_fields = vecFields.size();
 		unsigned int nr_line = 0;
 		bool print_warning = true; //to only print 1 warning when a block of multiple lines is duplicated

@@ -38,9 +38,9 @@ class SalinityTransport {
 
 		bool VerifyCFL(const double dt);
 		bool VerifyImplicitDt(const double dt);
-		bool SolveSalinityTransportEquationImplicit(const double dt, std::vector <double>& DeltaSal, const double f);
+		bool SolveSalinityTransportEquationImplicit(const double dt, std::vector <double>& DeltaSal, const double f, const bool DonorCell = true);	// Donor cell or central differences?
 		bool SolveSalinityTransportEquationExplicit(const double dt, std::vector <double>& DeltaSal);
-		enum SalinityTransportSolvers{EXPLICIT, IMPLICIT, EXPLICITIMPLICIT};
+		enum SalinityTransportSolvers{EXPLICIT, IMPLICIT, IMPLICIT2};
 
 		std::vector<double> flux_up;		//Flux with element above (negative=upward, positive=downward)
 		std::vector<double> flux_down;		//Flux with element below (negative=upward, positive=downward)

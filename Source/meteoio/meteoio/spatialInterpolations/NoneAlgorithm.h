@@ -27,7 +27,7 @@ namespace mio {
  * @ingroup spatialization
  * @brief Returns a nodata filled grid
  * @details
- * This allows to tolerate missing data, which can be usefull if an alternate strategy could
+ * This allows to tolerate missing data, which can be useful if an alternate strategy could
  * later be used to generate the data (ie. a parametrization). This algorithm will only run
  * after all others failed.
  *

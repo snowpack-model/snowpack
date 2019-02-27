@@ -504,13 +504,15 @@ mio::Date SmetIO::read_snosmet_header(const smet::SMETReader& sno_reader, const 
 	SSdata.ErosionLevel = get_intval(sno_reader, "ErosionLevel");
 	SSdata.TimeCountDeltaHS = get_doubleval(sno_reader, "TimeCountDeltaHS");
 
-  SSdata.Canopy_int_cap_snow = get_doubleval_no_error(sno_reader, "CanopySnowIntCapacity");
-  SSdata.Canopy_alb_dry = get_doubleval_no_error(sno_reader, "CanopyAlbedoDry");
-  SSdata.Canopy_alb_wet = get_doubleval_no_error(sno_reader, "CanopyAlbedoWet");
-  SSdata.Canopy_alb_snow = get_doubleval_no_error(sno_reader, "CanopyAlbedoSnow");
-  SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
-  SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
-  SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
+	SSdata.Canopy_int_cap_snow = get_doubleval_no_error(sno_reader, "CanopySnowIntCapacity");
+	SSdata.Canopy_alb_dry = get_doubleval_no_error(sno_reader, "CanopyAlbedoDry");
+	SSdata.Canopy_alb_wet = get_doubleval_no_error(sno_reader, "CanopyAlbedoWet");
+	SSdata.Canopy_alb_snow = get_doubleval_no_error(sno_reader, "CanopyAlbedoSnow");
+	SSdata.Canopy_diameter = get_doubleval_no_error(sno_reader, "CanopyDiameter");
+	SSdata.Canopy_lai_frac_top_default = get_doubleval_no_error(sno_reader, "CanopyFracLAIUpperLayer");
+	SSdata.Canopy_BasalArea = get_doubleval_no_error(sno_reader, "CanopyBasalArea");
+	SSdata.Emissivity_soil = get_doubleval_no_error(sno_reader, "SoilEmissivity");
+
 
 	return SSdata.profileDate;
 }
@@ -777,6 +779,8 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	smet_writer.set_header_value("CanopyFracLAIUpperLayer", ss.str());
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.BasalArea;
 	smet_writer.set_header_value("CanopyBasalArea", ss.str());
+	ss.str(""); ss << fixed << setprecision(2) << Xdata.SoilEmissivity;
+	smet_writer.set_header_value("SoilEmissivity", ss.str());
 
 	// Additional parameters
 	ss.str(""); ss << fixed << setprecision(2) << Xdata.WindScalingFactor;
@@ -1025,11 +1029,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		os << " ";
 	}	*/
 	if (Xdata.Seaice != NULL) {
-		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  bulk_salinity  avg_bulk_salinity  brine_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
-		plot_units << "m m m m m m kg/m2 kg/m3 kg/m2 kg/m3 kg/m2 kg/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
+		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1167,10 +1171,9 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.Ndata[Xdata.getNumberOfNodes()-1].z - ReferenceLevel );
 		data.push_back( Xdata.Seaice->FreeBoard );
 		data.push_back( Xdata.Seaice->SeaLevel );
-		data.push_back( Xdata.Seaice->getBulkSalinity(Xdata) );
-		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBulkSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
-		data.push_back( Xdata.Seaice->getBrineSalinity(Xdata) );
-		data.push_back( (Xdata.cH - Xdata.Ground != 0.) ? (Xdata.Seaice->getBrineSalinity(Xdata) / (Xdata.cH - Xdata.Ground)) : (mio::IOUtils::nodata) );
+		data.push_back( Xdata.Seaice->getTotSalinity(Xdata) );
+		data.push_back( Xdata.Seaice->getAvgBulkSalinity(Xdata) );
+		data.push_back( Xdata.Seaice->getAvgBrineSalinity(Xdata) );
 		data.push_back( Xdata.Seaice->BottomSalFlux );
 		data.push_back( Xdata.Seaice->TopSalFlux );
 	}

@@ -176,7 +176,7 @@ class IOInterface {
 		* io1.writeMeteoData(vecMeteo)
 		* @endcode
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
-		* @param name        (optional string) Identifier usefull for the output plugin (it could become part
+		* @param name        (optional string) Identifier useful for the output plugin (it could become part
 		*                    of a file name, a db table, etc)
 		*/
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
@@ -208,7 +208,7 @@ class IOInterface {
 		* @brief Write a Grid2DObject
 		* The filename is specified relative to GRID2DPATH for most plugins
 		* @param grid_out (Grid2DObject) The grid to write
-		* @param options (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
+		* @param options (string) Identifier useful for the output plugin (it could become part of a file name, a db table, etc)
 		*/
 		virtual void write2DGrid(const Grid2DObject& grid_out, const std::string& options="");
 
@@ -225,7 +225,7 @@ class IOInterface {
 		* @brief Write a Grid3DObject
 		* The filename is specified relative to GRID3DPATH for most plugins
 		* @param grid_out (Grid3DObject) The grid to write
-		* @param options (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
+		* @param options (string) Identifier useful for the output plugin (it could become part of a file name, a db table, etc)
 		*/
 		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options="");
 		

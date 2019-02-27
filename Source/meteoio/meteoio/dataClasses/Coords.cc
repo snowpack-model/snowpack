@@ -215,7 +215,7 @@ void Coords::merge(const Coords& coord2) {
 }
 
 /**
-* @brief Print the content of the Coords object (usefull for debugging)
+* @brief Print the content of the Coords object (useful for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
 const std::string Coords::toString(const FORMATS& type) const 
@@ -376,6 +376,7 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
 * - latitude/longitude/altitude
 * - (latitude; longitude; altitude)
 * - (latitude, longitude, altitude)
+* 
 * Of course, for cartesian coordinates systems, the easting/northing/altitudes are provided instead of latitude/longitude/altitude.
 * Latitudes and longitudes can be in any format supported by CoordsAlgorithms::dms_to_decimal.
 *
@@ -434,8 +435,8 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 		}
 
 		double east, north, alt;
-		if (!IOUtils::convertString(east, alt_str)) throw InvalidFormatException("Can not parse the easting given in the coordinates: "+coord_spec,AT);
-		if (!IOUtils::convertString(north, alt_str)) throw InvalidFormatException("Can not parse the northing given in the coordinates: "+coord_spec,AT);
+		if (!IOUtils::convertString(east, easting_str)) throw InvalidFormatException("Can not parse the easting given in the coordinates: "+coord_spec,AT);
+		if (!IOUtils::convertString(north, northing_str)) throw InvalidFormatException("Can not parse the northing given in the coordinates: "+coord_spec,AT);
 		if (!IOUtils::convertString(alt, alt_str)) throw InvalidFormatException("Can not parse the altitude given in the coordinates: "+coord_spec,AT);
 		setXY( east, north, alt);
 	}

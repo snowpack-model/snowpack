@@ -21,12 +21,16 @@
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/IOExceptions.h>
 
 #include <algorithm>
 #include <netcdf.h>
+#include <fstream>
+#include <cstring>
+#include <errno.h>
 
 using namespace std;
 
@@ -48,7 +52,7 @@ std::vector<std::string> initDimensionNames()
 	
 	return tmp;
 }
-std::vector<std::string> dimnames( initDimensionNames() );
+const std::vector<std::string> dimnames( initDimensionNames() );
 
 void open_file(const std::string& filename, const int& omode, int& ncid)
 {
@@ -152,8 +156,14 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
 	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);
 	if (var.attributes.param!=ncpp::STATION && var.attributes.param!=ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "_FillValue", var.nodata, var.attributes.type);
-	
-	if (var.attributes.param==ncpp::TIME) ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+
+	if (var.attributes.param==ncpp::STATION) ncpp::add_attribute(ncid, var.varid, "cf_role", "timeseries_id");
+	if (var.attributes.param==ncpp::EASTING || var.attributes.param==ncpp::LONGITUDE) ncpp::add_attribute(ncid, var.varid, "axis", "X");
+	if (var.attributes.param==ncpp::NORTHING || var.attributes.param==ncpp::LATITUDE) ncpp::add_attribute(ncid, var.varid, "axis", "Y");
+	if (var.attributes.param==ncpp::TIME) {
+		ncpp::add_attribute(ncid, var.varid, "calendar", "gregorian");
+		ncpp::add_attribute(ncid, var.varid, "axis", "T");
+	}
 	if (var.attributes.param==mio::MeteoGrids::DEM) {
 		ncpp::add_attribute(ncid, var.varid, "positive", "up");
 		ncpp::add_attribute(ncid, var.varid, "axis", "Z");
@@ -279,12 +289,12 @@ void write_data(const int& ncid, const nc_variable& var, const size_t& pos, cons
 * @param[in] ncid file ID
 * @param[in] var variable to write out
 * @param[in] data vector that has to be written
-* @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension?
+* @param[in] isUnlimited Is the variable the associated variable of an unlimited dimension? (default: false)
 */
-void write_data(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
+void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited)
 {
 	if (!isUnlimited) {
-		const int status = nc_put_var_double(ncid, var.varid, &data[0]);
+		const int status = nc_put_var_double(ncid, var.varid, &data[0]); //this call seems to only work properly with 1D data
 		if (status != NC_NOERR) throw mio::IOException("Could not write data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	} else {
 		//because nc_put_var_double does not work for unlimited dimensions
@@ -302,7 +312,7 @@ void write_data(const int& ncid, const nc_variable& var, const std::vector<doubl
 * @param[in] data vector that has to be written
 * @param[in] strMaxLen maximum length of the strings in the vector (this MUST have been defined as a dimension before)
 */
-void write_data(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen)
+void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen)
 {
 	//the handling of arrays of strings is half broken in netcdf<4, therefore this hacky code below...
 	for (size_t ii=0; ii<data.size(); ii++) {
@@ -390,10 +400,10 @@ void getGlobalAttribute(const int& ncid, const std::string& attr_name, int& attr
 * and return the necessary offset and multiplier compared to julian date.
 * @param[in] time_units time specification string
 * @param[in] i_TZ timezone to use to interpret the reference date
-* @param[out] o_time_offset offset to apply to convert the read values to julian date
-* @param[out] o_time_multiplier multiplier to apply to convert the read values to julian date
+* @param[out] o_time_offset offset to apply to convert the packed values to julian date
+* @param[out] o_time_divisor multiplier to apply to convert the packed values to julian date
 */
-void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier)
+void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_divisor)
 {
 	static const double equinox_year = 365.242198781; //definition used by the NetCDF Udunits package
 	
@@ -401,12 +411,12 @@ void getTimeTransform(const std::string& time_units, const double& i_TZ, double 
 	const size_t nrWords = mio::IOUtils::readLineToVec(time_units, vecString);
 	if (nrWords<3 || nrWords>5) throw mio::InvalidArgumentException("Invalid format for time units: \'"+time_units+"\'", AT);
 	
-	if (vecString[0]=="years") o_time_multiplier = equinox_year;
-	else if (vecString[0]=="months") o_time_multiplier = equinox_year/12.;
-	else if (vecString[0]=="days") o_time_multiplier = 1.;
-	else if (vecString[0]=="hours") o_time_multiplier = 1./24.;
-	else if (vecString[0]=="minutes") o_time_multiplier = 1./(24.*60.);
-	else if (vecString[0]=="seconds") o_time_multiplier = 1./(24.*3600);
+	if (vecString[0]=="years") o_time_divisor = 1./equinox_year;
+	else if (vecString[0]=="months") o_time_divisor = 12./equinox_year;
+	else if (vecString[0]=="days") o_time_divisor = 1.;
+	else if (vecString[0]=="hours") o_time_divisor = 24.;
+	else if (vecString[0]=="minutes") o_time_divisor = (24.*60.);
+	else if (vecString[0]=="seconds") o_time_divisor = (24.*3600);
 	else throw mio::InvalidArgumentException("Unknown time unit \'"+vecString[0]+"\'", AT);
 	
 	std::string ref_date_str = (nrWords>3)? vecString[2]+"T"+vecString[3] : vecString[2];
@@ -439,7 +449,7 @@ void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_
 		const int status = nc_def_dim(ncid, dimension.name.c_str(), len, &dimension.dimid);
 		if (status != NC_NOERR) throw mio::IOException("Could not define dimension '" + dimension.name + "': " + nc_strerror(status), AT);
 	} else {
-		if (dimension.length != length)
+		if (!dimension.isUnlimited && dimension.length != length)
 			throw mio::InvalidArgumentException("Attempting to write an inconsistent lenght for dimension '" + dimension.name+"'", AT);
 	}
 }
@@ -453,9 +463,9 @@ double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<
 	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
 	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
 
-	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
 	} else {
@@ -471,9 +481,9 @@ double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vecto
 	const double distanceX = fabs(vecX.front() - vecX.back());
 	const double distanceY = fabs(vecY.front() - vecY.back());
 
-	//round to 1cm precision for numerical stability
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size())*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size())*100. )) / 100.;
+	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
 
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;
@@ -588,8 +598,33 @@ std::string generateHistoryAttribute()
 
 void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section)
 {
-	for (size_t ii=0; ii<name.size(); ii++)
+	for (size_t ii=0; ii<name.size(); ii++) {
 		cfg.getValue(cfg_key[ii], section, value[ii], mio::IOUtils::nothrow);
+
+		if (cfg_key[ii]=="NC_SUMMARY") { //overwrite with the content of summary_file if available
+			const std::string summary_file = cfg.get("NC_SUMMARY_FILE", section, "");
+			if (!summary_file.empty()) {
+				std::string buffer;
+				std::ifstream fin( summary_file.c_str() );
+				if (fin.fail())
+					throw mio::AccessException("Error opening NC_SUMMARY_FILE \""+summary_file+"\", possible reason: "+std::strerror(errno), AT);
+
+				const char eoln = mio::FileUtils::getEoln(fin); //get the end of line character for the file
+				try {
+					do {
+						std::string line;
+						getline(fin, line, eoln); //read complete line
+						buffer.append(line+"\n");
+					} while (!fin.eof());
+					fin.close();
+				} catch (const std::exception&){
+					if (fin.is_open()) fin.close();
+					throw;
+				}
+				value[ii] = buffer;
+			}
+		}
+	}
 }
 
 void ACDD::defaultInit()
@@ -605,13 +640,16 @@ void ACDD::defaultInit()
 	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "NC_KEYWORDS");
 	addAttribute("title", "", "NC_TITLE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "NC_INSTITUTION");
+	addAttribute("project", "", "NC_PROJECT");
 	addAttribute("id", "", "NC_ID");
 	addAttribute("naming_authority", "", "NC_NAMING_AUTHORITY");
 	addAttribute("processing_level", "", "NC_PROCESSING_LEVEL");
-	addAttribute("summary", "", "NC_SUMMARY");
+	addAttribute("summary", "", "NC_SUMMARY"); //special handling, see setUserConfig()
+	addAttribute("comment", "", "NC_COMMENT");
 	addAttribute("acknowledgement", "", "NC_ACKNOWLEDGEMENT");
 	addAttribute("metadata_link", "", "NC_METADATA_LINK");
 	addAttribute("license", "", "NC_LICENSE");
+	addAttribute("product_version", "1.0", "NC_PRODUCT_VERSION");
 }
 
 /**
@@ -839,6 +877,8 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_DOUBLE;
 	} else if (schema=="AMUNDSEN") {
 		dflt_type = NC_FLOAT;
+	} else if (schema=="METEOCH") {
+		dflt_type = NC_FLOAT;
 	} else
 		throw mio::InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
@@ -908,6 +948,18 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
 	results["WRF"] = tmp;
 	
+	//METEOCH schema
+	tmp.clear();
+	tmp.push_back( ncpp::nc_dimension(ncpp::TIME, "REFERENCE_TS") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::LATITUDE, "latitude") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "longitude") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "x") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "y") );
+	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "alt") );
+	results["METEOCH"] = tmp;
+	
 	return results;
 }
 
@@ -916,7 +968,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	std::map< std::string, std::vector<ncpp::var_attr> > results;
 	std::vector<ncpp::var_attr> tmp;
 
-	//CF-1.6 schema -> to be checked and improved from CF-1.6 documentation
+	//CF-1.6 schema
 	tmp.clear();
 	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "", "min", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "", "degree_north", mio::IOUtils::nodata, NC_FLOAT) );
@@ -951,7 +1003,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 
 	//CROCUS schema
 	tmp.clear();
-	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "s", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "min", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "LAT", "latitude", "latitude", "degrees_north", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "LON", "longitude", "longitude", "degrees_east", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", mio::IOUtils::nodata, NC_CHAR) );
@@ -1025,24 +1077,43 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	//WRF schema
 	tmp.clear();
 	tmp.push_back( ncpp::var_attr(ncpp::TIME, "Times", "Times", "Times", "h", mio::IOUtils::nodata, NC_CHAR) );
-	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "XLAT", "latitude", "latitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "XLONG", "longitude", "longitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "XLAT", "latitude", "LATITUDE, SOUTH IS NEGATIVE", "degree_north", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "XLONG", "longitude", "LONGITUDE, WEST IS NEGATIVE", "degree_east", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", mio::IOUtils::nodata, NC_CHAR) );
 	tmp.push_back( ncpp::var_attr(ncpp::EASTING, "easting", "easting", "", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "northing", "northing", "", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::DEM, "HGT", "Terrain Height", "Terrain Height", "m", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "PSFC", "Surface pressure", "Surface pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "T2", "2-meter temperature", "2-meter temperature", "K", 2., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::QI, "Q2", "2-meter specific humidity", "2-meter specific humidity", "kg/kg", 2, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "PSFC", "Surface pressure", "SFC PRESSURE", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "T2", "2-meter temperature", "TEMP at 2 M", "K", 2., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSG, "TSLB", "soil temperature", "SOIL TEMPERATURE", "K", 2., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::QI, "Q2", "2-meter specific humidity", "QV at 2 M", "kg/kg", 2, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff ", "Surface runoff ", "kg*m2/s", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::HS, "SNOWH", "Snow depth", "Snow depth", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "Surface skin temperature", "K", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "10 metre U wind component", "m/s", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "10 metre V wind component", "m/s", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "ACLWUPB", "Upwelling LW surface radiation", "Upwelling LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "ALBEDO", "surface albedo", "ALBEDO", "-", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff", "SURFACE RUNOFF", "kg*m2/s", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "SNOW", "snow water equivalent", "SNOW WATER EQUIVALENT", "kg/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM_PH, "SR", "", "fraction of frozen precipitation", "-", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM_L, "RAINNC", "", "ACCUMULATED TOTAL GRID SCALE PRECIPITATION", "kg/m2/s", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM_S, "SNOWNC", "", "ACCUMULATED TOTAL GRID SCALE SNOW AND ICE", "kg/m2/s", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::HS, "SNOWH", "Snow depth", "PHYSICAL SNOW DEPTH", "m", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "U at 10 M", "m/s", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "V at 10 M", "m/s", 10., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::W, "W10", "10-meter wind speed", "W at 10 M", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
+	
+	//METEOCH schema
+	tmp.clear();
+	tmp.push_back( ncpp::var_attr(ncpp::TIME, "REFERENCE_TS", "REFERENCE_TS", "REFERENCE_TS", "d", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "LAT", "latitude", "latitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::LONGITUDE, "LONG", "longitude", "longitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::STATION, "station", "timeseries_id", "", "", mio::IOUtils::nodata, NC_CHAR) );
+	tmp.push_back( ncpp::var_attr(ncpp::EASTING, "x", "projection_x_coordinate", "x coordinate of projection", "m", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(ncpp::NORTHING, "y", "projection_y_coordinate", "y coordinate of projection", "m", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "RhiresD", "", "", "mm", mio::IOUtils::nodata, NC_FLOAT) );
+	results["METEOCH"] = tmp;
 	
 	return results;
 }

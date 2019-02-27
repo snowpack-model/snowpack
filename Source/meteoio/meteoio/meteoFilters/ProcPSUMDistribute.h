@@ -18,7 +18,7 @@
 #ifndef PROCPSUMDISTIBUTE_H
 #define PROCPSUMDISTIBUTE_H
 
-#include <meteoio/meteoFilters/FilterBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 

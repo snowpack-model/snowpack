@@ -196,7 +196,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 * - latitude, associated with IOUtils::npos-1
 * - longitude, associated with IOUtils::npos-2
 * - easting, associated with IOUtils::npos-3
-* - norhting, associated with IOUtils::npos-4
+* - northing, associated with IOUtils::npos-4
 * - altitude, associated with IOUtils::npos-5
 * If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
 * @param[in] fields the fields coming from the SMET file

@@ -1,4 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+#in case the user has copied the examples directory, we fallback on to the local copy of FindMeteoIO
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../../tools/cmake/" "${CMAKE_SOURCE_DIR}/cmake")
 
 PROJECT(meteoio_examples)

@@ -55,7 +55,7 @@ class Runoff; // forward declaration, cyclic header include
  * @section gridded_outputs Gridded outputs
  * The gridded outputs are written out for all requested the parameters every GRIDS_DAYS_BETWEEN (in days), starting at GRIDS_START
  * (in days, <i>0</i> being noon). The available parameters are provided in SnGrids::Parameters and should be written as a space delimited
- * list of parameters as GRIDS_PARAMETERS key (in the [Output] section). 
+ * list of parameters as GRIDS_PARAMETERS key (in the [Output] section).
  *
  * It is possible to mask the glaciated areas (in order to keep a relevant scaling
  * on snow water equivalent or similar parameters) either statically (performed once and for all at the begining of the run) or dynamically
@@ -65,7 +65,7 @@ class Runoff; // forward declaration, cyclic header include
  *
  * Finally, the soil temperature at multiple given depths can be written out simply by setting the SOIL_TEMPERATURE_DEPTHS key in the [Output] section
  * to the chosen depths (in meters). In this case, there is no need to declare a TSOILx parameter for the GRIDS_PARAMETERS key (it is currently limited
- * to at most 5 different depths but could be increased in the future). It is possible to do the same in the snow at a given depth by setting 
+ * to at most 5 different depths but could be increased in the future). It is possible to do the same in the snow at a given depth by setting
  * the SNOW_TEMPERATURE_DEPTH key, or the average snow temperature from the surface until a given depth (SNOW_AVG_TEMPERATURE_DEPTH key) or the snow density from
  * the surface until a given depth (SNOW_AVG_DENSITY_DEPTH key). When averaging either temperature or density, if the snow height is less
  * than the requested depth, the average is performed on the whole snow pack.
@@ -217,6 +217,7 @@ class Runoff; // forward declaration, cyclic header include
 		SnowpackIO snowpackIO;
 
 		size_t dimx, dimy;
+    size_t mpi_offset, mpi_nx;
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;

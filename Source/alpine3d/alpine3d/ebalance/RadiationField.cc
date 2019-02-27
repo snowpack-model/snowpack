@@ -77,7 +77,7 @@ void RadiationField::setStations(const std::vector<mio::MeteoData>& vecMeteo, co
 	day = true;
 	night = true;
 	Sun.resetAltitude( dem_mean_altitude ); //it has been reset when computing the cells
-	Sun.setDate(vecMeteo.front().date.getJulian(true), vecMeteo.front().date.getTimeZone()); //we have at least one station
+	Sun.setDate(vecMeteo.front().date.getJulian(false), vecMeteo.front().date.getTimeZone()); //we have at least one station
 	
 	const double domain_alb = albedo.grid2D.getMean();
 	if (domain_alb==mio::IOUtils::nodata)

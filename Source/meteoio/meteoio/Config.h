@@ -103,7 +103,7 @@ class Config {
 		 * @brief Delete keys matching a specific pattern from the internal map object, key/section are case insensitive
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
-		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @code
 		 *  Config cfg("io.ini");
 		 *  cfg.deleteKeys("STATION", "Input");
@@ -132,7 +132,7 @@ class Config {
 		bool keyExists(std::string key, std::string section) const;
 
 		/**
-		 * @brief Print the content of the Config object (usefull for debugging)
+		 * @brief Print the content of the Config object (useful for debugging)
 		 * The Config is bound by "<Config>" and "</Config>" on separate lines
 		 */
 		const std::string toString() const;
@@ -325,13 +325,27 @@ class Config {
 		 *         it returns all the keys that match (partial matches are considered) into a vector\<string\>.
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
-		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
 		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
+		
+		/**
+		 * @brief Returns all the sections that are present in the config object
+		 * @return a set that holds all the sections names
+		 */
+		std::set<std::string> getSections() const {return sections;}
+
+		/**
+		 * @brief Move all keys of the \e org section to the \e dest section.
+		 * @param[in] org Section of origin
+		 * @param[in] dest Section of destination
+		 * @param[in] overwrite if true, all keys in the destination section are erased before creating the new keys
+		 */
+		void moveSection(std::string org, std::string dest, const bool& overwrite);
 
 	private:
 		void parseFile(const std::string& filename);
@@ -339,10 +353,11 @@ class Config {
 		static std::string extract_section(std::string key);
 		std::string clean_import_path(const std::string& in_path) const;
 
-		std::map<std::string, std::string> properties; //Save key value pairs
-		std::vector<std::string> imported; //list of files already imported (to avoid circular references)
-		std::string sourcename; //description of the data source for the key/value pair
-		std::string configRootDir; //directory of the root config file
+		std::map<std::string, std::string> properties; ///< Save key value pairs
+		std::vector<std::string> imported; ///< list of files already imported (to avoid circular references)
+ 		std::set<std::string> sections; ///< list of all the sections that have been found
+		std::string sourcename; ///< description of the data source for the key/value pair
+		std::string configRootDir; ///< directory of the root config file
 		static const char* defaultSection;
 }; //end class definition Config
 

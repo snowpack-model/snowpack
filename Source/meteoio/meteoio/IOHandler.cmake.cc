@@ -45,6 +45,7 @@
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_PSQLIO
 #cmakedefine PLUGIN_SASEIO
+#cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
 #include <meteoio/plugins/ARCIO.h>
@@ -101,6 +102,10 @@
 #include <meteoio/plugins/SASEIO.h>
 #endif
 
+#ifdef PLUGIN_ZRXPIO
+#include <meteoio/plugins/ZRXPIO.h>
+#endif
+
 using namespace std;
 
 namespace mio {
@@ -139,7 +144,7 @@ namespace mio {
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td>ARPS ascii formatted grids</td><td></td></tr>
  * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
- * <tr><td>\subpage csvio "CSV"</td><td>meteo,</td><td>flexible reading of CSV files</td><td></td></tr>
+ * <tr><td>\subpage csvio "CSV"</td><td>meteo</td><td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage geotop "GEOTOP"</td><td>meteo</td><td>GeoTop meteo files</td><td></td></tr>
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>Grass grid files</td><td></td></tr>
@@ -154,13 +159,16 @@ namespace mio {
  * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
+ * <tr><td>\subpage zrxpio "ZRXP"</td><td>meteo</td><td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
- * In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
+ * @note In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
  * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure \b BUFFER_SIZE
  * to the intended duration of the simulation (in days).
- *
- * @section data_manipulations Raw data editing
+ */
+ 
+ /**
+ * @page raw_data_editing Raw Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data:
  *     -# \ref data_move "rename certain parameters for all stations;"
  *     -# \ref data_exclusion "exclude/keep certain parameters on a per station basis;"
@@ -172,7 +180,7 @@ namespace mio {
  * then the KEEP directives, then the MERGE directives and finally the COPY directives. The CREATE directives only come after all the raw data
  * has been edited.
  *
- * @subsection data_move 1. Data renaming (MOVE)
+ * @section data_move 1. Data renaming (MOVE)
  * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take multiple source names that will be processed in the
  * order of declaration. The syntax is new_name::MOVE = {*space delimited list of original names*}. Original names that are not found in the current
  * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
@@ -181,7 +189,7 @@ namespace mio {
  * @endcode
  * This can be used to rename non-standard parameter names into standard ones.
  *
- * @subsection data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
+ * @section data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
  * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID (or the '*' wildcard)
  * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
  * Another possibility is to provide a file containing one station ID per line followed by a space delimited list of \ref meteoparam "meteorological parameters"
@@ -210,8 +218,8 @@ namespace mio {
  * WFJ2::KEEP = HS PSUM                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
  * @endcode
  *
- * @subsection data_merging 3. Data merging (MERGE)
- * @subsubsection stations_merging 3.1 Merging different stations (MERGE)
+ * @section data_merging 3. Data merging (MERGE)
+ * @subsection stations_merging 3.1 Merging different stations (MERGE)
  * It is possible to merge different data sets together, with a syntax similar to the Exclude/Keep syntax. This merging occurs <b>after</b> any
  * EXCLUDE/KEEP commands. This is useful, for example, to provide measurements from different stations that actually share the
  * same measurement location or to build "composite" station from multiple real stations (in this case, using EXCLUDE and/or KEEP
@@ -237,15 +245,15 @@ namespace mio {
  * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
  *
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
- * parameters must be known from the begining. So if station2 appears later in time with extra parameters, make sure that the buffer size
+ * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
  * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
  * the start of the first station to the start of the second station)
  *
- * @subsubsection automerge 3.2 Automerge
+ * @subsection automerge 3.2 Automerge
  * If the key \em AUTOMERGE is set to true in the Input section, all stations that have identical IDs will be merged together. The first station
  * to come (usually, the first that was defined in the plugin) has the priority over the next ones.
  *
- * @subsection data_copy 4. Data copy (COPY)
+ * @section data_copy 4. Data copy (COPY)
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
  * new_name::COPY = existing_parameter. For example:
  * @code
@@ -255,7 +263,7 @@ namespace mio {
  * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
  * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
  *
- * @subsection data_creation 5. Data creation (CREATE)
+ * @section data_creation 5. Data creation (CREATE)
  * Finally, it is possible to create new data based on some parametrizations. If the requested parameter does not exists, it will be created. Otherwise,
  * any pre-existing data is kept and only missing values in the original data set are filled with the generated values, keeping the original sampling rate. As
  * with all raw data editing, this takes place *before* any filtering/resampling/data generators. As the available algorithms are the same as for the
@@ -265,11 +273,6 @@ namespace mio {
  * P::create = STD_PRESS			#the pressure is filled with STD_PRESS if no measured values are available
  * ISWR_POT::create = clearSky_SW		#a new parameter "ISWR_POT" is created and filled with Clear Sky values
  * @endcode
- *
- * @section spatial_resampling_section Spatial resampling
- * It is possible to use spatially interpolated meteorological fields or time series of 2D grids to extract meteorological time series for a set of points.
- * This is handled as "spatial resampling" and is described in the \subpage spatial_resampling "spatial resampling" page.
- *
  */
 
 IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
@@ -336,6 +339,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_SASEIO
 	if (plugin_name == "SASE") return new SASEIO(cfg);
+#endif
+#ifdef PLUGIN_ZRXPIO
+	if (plugin_name == "ZRXP") return new ZRXPIO(cfg);
 #endif
 
 	return NULL; //no plugin found
@@ -759,7 +765,7 @@ void IOHandler::create_exclude_map()
 		for (it_station=excluded_params.begin(); it_station!=excluded_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
 
-			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+			for (std::set<std::string>::const_iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
 
 			excluded_params[ it_station->first ] = params;
@@ -835,7 +841,7 @@ void IOHandler::create_keep_map()
 		for (it_station=kept_params.begin(); it_station!=kept_params.end(); ++it_station) {
 			std::set<std::string> params( it_station->second );
 
-			for (std::set<std::string>::iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
+			for (std::set<std::string>::const_iterator it=wildcard.begin(); it!=wildcard.end(); ++it)
 				params.insert( *it ); //merging: keep in mind that a set can not contain duplicates
 
 			kept_params[ it_station->first ] = params;
