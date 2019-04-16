@@ -365,12 +365,11 @@ class MPIControl
 		 * @note Class T needs to have the serialize and deseralize operator << and >> implemented
 		 */
 		template <class T> void send(const std::vector<T*>& vec_local, const size_t& destination, const int& tag=0);
-    template <class T> void send(const std::vector<T>& vec_local, const size_t& destination, const int& tag=0);
-
+		template <class T> void send(const std::vector<T>& vec_local, const size_t& destination, const int& tag=0);
 		#else
 		template <class T> void send(const std::vector<T*>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
-    template <class T> void send(const std::vector<T>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
-    #endif
+		template <class T> void send(const std::vector<T>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
+		#endif
 
 		#ifdef ENABLE_MPI
 		/**
@@ -381,12 +380,10 @@ class MPIControl
 		 * @note Class T needs to have the serialize and deseralize operator << and >> implemented
 		 */
 		template <class T> void receive(std::vector<T*>& vec_local, const size_t& source, const int& tag=0);
-    template <class T> void receive(std::vector<T>& vec_local, const size_t& source, const int& tag=0);
-
+		template <class T> void receive(std::vector<T>& vec_local, const size_t& source, const int& tag=0);
 		#else
 		template <class T> void receive(std::vector<T*>& /*vec_local*/, const size_t& /*source*/, const int& tag=0) {(void)tag;}
-    template <class T> void receive(std::vector<T>& /*vec_local*/, const size_t& /*source*/, const int& tag=0) {(void)tag;}
-
+		template <class T> void receive(std::vector<T>& /*vec_local*/, const size_t& /*source*/, const int& tag=0) {(void)tag;}
 		#endif
 
 		#ifdef ENABLE_MPI
@@ -454,10 +451,10 @@ class MPIControl
 		void getArraySliceParams(const size_t& dimx, size_t& startx_sub, size_t& nx_sub) const {getArraySliceParams(dimx, size_, rank_, startx_sub, nx_sub);}
 		void getArraySliceParams(const size_t& dimx, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub) const {getArraySliceParams(dimx, size_, idx_wk, startx_sub, nx_sub);}
 
-    void getArraySliceParamsOptim(const size_t& dimx, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse)
-      {getArraySliceParamsOptim(dimx, rank_, startx_sub, nx_sub, dem, landuse);}
+		void getArraySliceParamsOptim(const size_t& dimx, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse)
+		     {getArraySliceParamsOptim(dimx, rank_, startx_sub, nx_sub, dem, landuse);}
 
-    void getArraySliceParamsOptim(const size_t& dimx, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse);
+		void getArraySliceParamsOptim(const size_t& dimx, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub,const mio::DEMObject& dem, const mio::Grid2DObject& landuse);
 
 		/**
 		* @brief Returns the parameters for splitting an array in several, balanced sub-arrays.

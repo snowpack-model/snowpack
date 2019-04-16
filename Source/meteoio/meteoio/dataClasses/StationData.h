@@ -24,6 +24,8 @@
 #include <iomanip>
 #include <vector>
 
+#include <map>
+
 namespace mio {
 
 /**
@@ -128,6 +130,7 @@ class StationData {
 		Coords position;
 		std::string stationID; ///<ID of the Station, typically a short string
 		std::string stationName; ///<Name of the Station, detailed description
+		std::map<std::string, std::string> extra; ///< Additional metadata, such as sensor types, etc. A better solution will be implemented at some point, so it WILL break
 
 	private:
 		double slope; ///<Local slope at the station, in degrees, between 0 and 90 degrees

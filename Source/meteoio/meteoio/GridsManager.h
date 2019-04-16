@@ -33,17 +33,21 @@ class GridsManager {
 		GridsManager(IOHandler& in_iohandler, const Config& in_cfg);
 
 		//Legacy support to support functionality of the IOInterface superclass:
-		void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
+		void read2DGrid(Grid2DObject& grid_out, const std::string& option="");
 		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
-		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		
+		//HACK buffer 3D grids!
+		void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="") {iohandler.read3DGrid(grid_out, i_filename);}
+		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {iohandler.read3DGrid(grid_out, parameter, date);}
+		
 		void readDEM(DEMObject& dem_out);
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		void readLanduse(Grid2DObject& landuse_out);
-		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
-		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
-		void write3DGrid(const Grid3DObject& grid_out, const std::string& options="");
-		void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		
+		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {iohandler.write2DGrid(grid_in, options);}
+		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {iohandler.write2DGrid(grid_in, parameter, date);}
+		void write3DGrid(const Grid3DObject& grid_out, const std::string& options="") {iohandler.write3DGrid(grid_out, options);}
+		void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {iohandler.write3DGrid(grid_out, parameter, date);}
 		//end legacy support
 
 		void setProcessingLevel(const unsigned int& i_level);
@@ -72,10 +76,11 @@ class GridsManager {
 
 	private:
 		bool isAvailable(const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date) const;
-		void getGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date);
-		bool read2DGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
 		bool setGrids2d_list(const Date& date);
 		bool setGrids2d_list(const Date& dateStart, const Date& dateEnd);
+		Grid2DObject getRawGrid(const MeteoGrids::Parameters& parameter, const Date& date);
+		Grid2DObject getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& enforce_cartesian=true);
+		bool generateGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		IOHandler& iohandler;
 		const Config& cfg;

@@ -22,6 +22,7 @@
 //#include <alpine3d/Alpine3D.h>
 #include <alpine3d/AlpineControl.h>
 #include <alpine3d/MPIControl.h>
+#include <alpine3d/OMPControl.h>
 //#include <alpine3d/MainPage.h>
 #include <alpine3d/MeteoObj.h>
 //#include <alpine3d/runoff/prevah_runoff/fortran_and_c.h>

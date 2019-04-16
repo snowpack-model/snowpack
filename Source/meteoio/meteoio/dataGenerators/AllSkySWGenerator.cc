@@ -84,7 +84,7 @@ bool AllSkySWGenerator::create(const size_t& param, std::vector<MeteoData>& vecM
 }
 
 double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, const double& ilwr)
-{// this is based on Kartsen cloudiness, Dilley clear sky emissivity and Unsworth ILWR
+{// this is based on Karsten cloudiness, Dilley clear sky emissivity and Unsworth ILWR
 //this means that this solar index is the ratio of iswr for clear sky on a horizontal
 //surface and the measured iswr
 	const double epsilon_clear = Atmosphere::Dilley_emissivity(rh, ta);

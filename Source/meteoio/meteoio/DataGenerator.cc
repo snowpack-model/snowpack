@@ -138,6 +138,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 						const std::string algo_name( vecGenerators[jj]->getAlgo() );
 						for (size_t kk=0; kk<old_val.size(); kk++) {
 							if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
+								vecVecMeteo[station][kk].setGenerated(true);
 								cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
 							}
 						}

@@ -220,6 +220,7 @@ class TimeSeriesManager {
 
 		
 	private:
+		static bool compare(std::pair<Date, METEO_SET> p1, std::pair<Date, METEO_SET> p2);
 		void setDfltBufferProperties();
 		void fill_filtered_cache();
 		void fillRawBuffer(const Date& date_start, const Date& date_end);

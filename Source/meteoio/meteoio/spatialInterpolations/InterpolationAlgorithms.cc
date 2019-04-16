@@ -106,7 +106,7 @@ namespace mio {
  * - AVG_LAPSE: constant value reprojected to the elevation of the cell (see AvgLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
- * - IDW_SLOPES: IDW_LAPSE with separate processing for each of the 4 aspects+flat before merging with weighted average (see IDW_SLOPES)
+ * - IDW_SLOPES: IDW_LAPSE with separate processing for each of the 4 aspects+flat before merging with weighted average (see IDWSlopesAlgorithm)
  * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - LISTON_RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHListonAlgorithm)
  * - ILWR_EPS: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWREpsAlgorithm)

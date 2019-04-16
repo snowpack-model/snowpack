@@ -238,6 +238,9 @@ class IOInterface {
 		*/
 		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		
+
+		static void set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon);
+		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
 };
 
 } //end namespace

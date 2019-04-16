@@ -35,13 +35,13 @@ IF(WIN32)
 	IF(MSVC)
 		FIND_LIBRARY(METEOIO_LIBRARY
 			NAMES libmeteoio.lib
-			PATHS ${SEARCH_PATH}
+			HINTS ${SEARCH_PATH}
 			DOC "Location of the libmeteoio, like c:/Program Files/MeteoIO-2.4.0/lib/libmeteoio.lib"
 			)
 	ELSE(MSVC)
 		FIND_LIBRARY(METEOIO_LIBRARY
 			NAMES libmeteoio.dll.a  libmeteoio.a
-			PATHS ${SEARCH_PATH}
+			HINTS ${SEARCH_PATH}
 			DOC "Location of the libmeteoio, like c:/Program Files/MeteoIO-2.4.0/lib/libmeteoio.dll.a"
 			)
 	ENDIF(MSVC)
@@ -49,7 +49,7 @@ ELSE(WIN32)
 	IF(APPLE)
 		FIND_LIBRARY(METEOIO_LIBRARY
 		NAMES meteoio
-		PATHS
+		HINTS
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
 			./lib
@@ -66,7 +66,7 @@ ELSE(WIN32)
 	ELSE(APPLE)
 		FIND_LIBRARY(METEOIO_LIBRARY
 		NAMES meteoio
-		PATHS
+		HINTS
 			ENV LD_LIBRARY_PATH
 			./lib
 			../../lib
@@ -98,8 +98,7 @@ ENDIF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
 # locate main header file
 FIND_PATH(METEOIO_INCLUDE_DIR
   NAMES meteoio/MeteoIO.h
-  #HINTS ${METEOIO_ROOT}/include
-  PATHS
+  HINTS
 	"${METEOIO_ROOT}/include"
 	"${METEOIO_ROOT}"
 	"~/usr/include"

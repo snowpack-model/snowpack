@@ -62,7 +62,7 @@ class vanGenuchten {
 		double dtheta_dh(const double h);
 
 		// Functions to initialize the van Genuchten model
-		void SetVGParamsSnow(VanGenuchten_ModelTypesSnow VGModelTypeSnow, K_Parameterizations K_PARAM, const bool& matrix);
+		void SetVGParamsSnow(VanGenuchten_ModelTypesSnow VGModelTypeSnow, K_Parameterizations K_PARAM, const bool& matrix, const bool& seaice);
 		void SetVGParamsSoil();
 
 		double theta_r;	//Soil property, residual water content.

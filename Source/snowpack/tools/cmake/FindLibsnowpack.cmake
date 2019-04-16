@@ -16,6 +16,18 @@ IF(WIN32)
 	GET_FILENAME_COMPONENT(METEOIO_ROOT4 "C:/Progra~1/Snowpack*" ABSOLUTE CACHE INTERNAL)
 	SET(SEARCH_PATH
 		ENV LIB
+		./lib ./bin
+		./lib/Debug ./bin/Debug
+		./lib/Release ./bin/Release
+		../../lib ../../bin
+		../../lib/Debug ../../bin/Debug
+		../../lib/Release ../../bin/Release
+		${SRC_DIR}/lib ${SRC_DIR}/bin
+		${SRC_DIR}/lib/Debug ${SRC_DIR}/bin/Debug
+		${SRC_DIR}/lib/Release ${SRC_DIR}/bin/Release
+		${SRC_DIR}/../../lib ${SRC_DIR}/../../bin
+		${SRC_DIR}/../../lib/Debug ${SRC_DIR}/../../bin/Debug
+		${SRC_DIR}/../../lib/Release ${SRC_DIR}/../../bin/Release
 		${SRC_DIR}/bin ${SRC_DIR}/lib
 		${LIBSNOWPACK_ROOT1}/bin ${LIBSNOWPACK_ROOT1}/lib
 		${LIBSNOWPACK_ROOT2}/bin ${LIBSNOWPACK_ROOT2}/lib
@@ -25,13 +37,13 @@ IF(WIN32)
 	IF(MSVC)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
 			NAMES libsnowpack.lib
-			PATHS ${SEARCH_PATH}
+			HINTS ${SEARCH_PATH}
 			DOC "Location of the libsnowpack, like c:/Program Files/Snowpack-2.0.0/lib/libsnowpack.lib"
 			)
 	ELSE(MSVC)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
 			NAMES libsnowpack.dll.a libsnowpack.a
-			PATHS ${SEARCH_PATH}
+			HINTS ${SEARCH_PATH}
 			DOC "Location of the libsnowpack, like c:/Program Files/Snowpack-2.0.0/lib/libsnowpack.dll.a"
 			)
 	ENDIF(MSVC)
@@ -39,9 +51,12 @@ ELSE(WIN32)
 	IF(APPLE)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
 		NAMES snowpack
-		PATHS
+		HINTS
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
+			./lib
+			../../lib
+			../../../lib
 			${SRC_DIR}/lib
 			"~/usr/lib"
 			"/Applications/Snowpack/lib"
@@ -53,8 +68,11 @@ ELSE(WIN32)
 	ELSE(APPLE)
 		FIND_LIBRARY(LIBSNOWPACK_LIBRARY
 		NAMES snowpack
-		PATHS
+		HINTS
 			ENV LD_LIBRARY_PATH
+			./lib
+			../../lib
+			../../../lib
 			${SRC_DIR}/lib
 			"~/usr/lib"
 			"/usr/local/lib"
@@ -66,19 +84,24 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 #build LIBSNOWPACK_ROOT so we can provide a hint for searching for the header file
-GET_FILENAME_COMPONENT(snowpack_libs_root ${LIBSNOWPACK_LIBRARY} PATH)
 IF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
-	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${snowpack_libs_root} DIRECTORY)
+	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${LIBSNOWPACK_LIBRARY} DIRECTORY) #get PATH
+	GET_FILENAME_COMPONENT(MSVC_TARGET ${LIBSNOWPACK_ROOT} NAME) #special directory name for some MSVC
+	IF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
+		GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${LIBSNOWPACK_ROOT} DIRECTORY) #go up one level
+	ENDIF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
+	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${LIBSNOWPACK_ROOT} DIRECTORY) #go up one level
 ELSE(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
+    GET_FILENAME_COMPONENT(snowpack_libs_root ${LIBSNOWPACK_LIBRARY} PATH)
 	SET(LIBSNOWPACK_ROOT "${snowpack_libs_root}/../")
 	STRING(REPLACE  " " "\\ " LIBSNOWPACK_ROOT ${LIBSNOWPACK_ROOT})
 ENDIF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
 
+
 # locate main header file
 FIND_PATH(LIBSNOWPACK_INCLUDE_DIR
   NAMES snowpack/libsnowpack.h
-  #HINTS ${LIBSNOWPACK_ROOT}/include
-  PATHS
+  HINTS
 	"${LIBSNOWPACK_ROOT}/include"
 	"${LIBSNOWPACK_ROOT}"
 	"~/usr/include"

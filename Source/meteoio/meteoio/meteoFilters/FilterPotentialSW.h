@@ -33,9 +33,14 @@ namespace mio {
  *     + more than the horizontal top of atmosphere potential radiation multiplied by the *min_coeff* coefficient;
  *     + less than the global horizontal potential radiation multiplied by the *max_coeff* coefficient.
  *
+ * Alternatively, you can set the MODE keyword to GROUND, in which case *min_coeff* is also multiplied with
+ * the global potential radiation for the minimum check.
+ *
  * It takes the following arguments:
  *  - MIN_COEFF: minimum coefficient (default: 0.03);
- *  - MAX_COEFF: maximum coefficient (default: 1.1).
+ *  - MAX_COEFF: maximum coefficient (default: 1.1);
+ *  - SOFT: if true, filtered values are set to the filter limits (coefficient * calculation) instead of nodata (optional);
+ *  - MODE: set to GROUND to disregard top of atmosphere calculation (optional).
  *
  * The default values come from Moradi, I., <i>"Quality control of global solar radiation using
  * sunshine duration hours"</i>, 2009, Energy 34, <b>no. 1</b>, 1-6.
@@ -44,6 +49,7 @@ namespace mio {
  * ISWR::arg1::MIN_COEFF = 0.03
  * ISWR::arg1::MAX_COEFF = 1.1
  * @endcode
+ *
  */
 
 class FilterPotentialSW : public ProcessingBlock {
@@ -57,6 +63,8 @@ class FilterPotentialSW : public ProcessingBlock {
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_coeff, max_coeff;
+		bool is_soft;
+		bool use_toa;
 };
 
 } //end namespace

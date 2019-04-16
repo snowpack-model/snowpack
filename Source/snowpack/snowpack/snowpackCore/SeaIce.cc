@@ -52,7 +52,7 @@ const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
 const double SeaIce::OceanSalinity = 35.;
 const double SeaIce::InitSeaIceSalinity = 5.;
-const double SeaIce::InitSnowSalinity = 1.;
+const double SeaIce::InitSnowSalinity = 0.;
 
 
 /************************************************************

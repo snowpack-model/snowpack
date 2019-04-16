@@ -132,6 +132,13 @@ class Config {
 		bool keyExists(std::string key, std::string section) const;
 
 		/**
+		 * @brief Return if a given section exists in the Config object
+		 * @param[in] section std::string representing a section name
+		 * @return true if the section exists
+		 */
+		bool sectionExists(std::string section) const;
+
+		/**
 		 * @brief Print the content of the Config object (useful for debugging)
 		 * The Config is bound by "<Config>" and "</Config>" on separate lines
 		 */
@@ -272,6 +279,38 @@ class Config {
 			} catch(const std::exception&){
 				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+section+"::"+key, AT);
 			}
+		}
+		
+		/**
+		 * @brief Function to retrieve a Date value for a certain key
+		 * @param[in] key std::string representing a KEY in the key/value file
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[out] t a variable of class Date into which the value for the corresponding key is saved 
+		 * @param[out] time_zone timezone for the date (if the date provides its own timezone, it will be ignored)
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
+		 */
+		void getValue(std::string key, std::string section, Date& t, const double& time_zone, 
+                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
+		{
+			t.setUndef(true);
+			IOUtils::toUpper(key);
+			IOUtils::toUpper(section);
+			std::string tmp;
+			
+			try {
+				IOUtils::getValueForKey<std::string>(properties, section + "::" + key, tmp, opt);
+			} catch(const std::exception&){
+				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+section+"::"+key, AT);
+			}
+			
+			bool parse_ok = false;
+			try {
+				parse_ok = IOUtils::convertString(t, tmp, time_zone);
+			} catch(const std::exception&){
+				parse_ok = false;
+			}
+			if (!parse_ok && opt==IOUtils::dothrow)
+				throw InvalidFormatException("Could not parse date '"+tmp+"' in "+sourcename+"for key "+section+"::"+key, AT);
 		}
 		
 		/**

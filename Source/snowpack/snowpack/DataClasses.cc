@@ -1363,7 +1363,7 @@ double ElementData::getYoungModule(const double& rho_slab, const Young_Modulus& 
  * @version 11.01
  * @return sum of volumetric contents (1)
  */
-bool ElementData::checkVolContent() const
+bool ElementData::checkVolContent()
 {
 	bool ret = true;
 	/*if(fabs(L*Rho - M) > 0.001) {
@@ -1375,7 +1375,7 @@ bool ElementData::checkVolContent() const
 	for (unsigned int i = 0; i < N_COMPONENTS; i++) {
 		sum += theta[i];
 	}
-	if (sum <= 0.99 || sum >= 1.01) {
+	if (sum <= 1. - Constants::eps || sum >= 1. + Constants::eps) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "SUM of volumetric contents = %1.4f", sum);
 		ret = false;
 	}
@@ -1394,6 +1394,24 @@ bool ElementData::checkVolContent() const
 	if(theta[AIR] < -Constants::eps) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Negative AIR volumetric content: %1.4f", theta[AIR]);
 		ret = false;
+	}
+
+	// Take care of small rounding errors, in case large rounding errors do not exist.
+	if (ret == true) {
+		theta[ICE] = std::min(1., std::max(0., theta[ICE]));
+		theta[WATER] = std::min(1., std::max(0., theta[WATER]));
+		theta[WATER_PREF] = std::min(1., std::max(0., theta[WATER_PREF]));
+		theta[AIR] = (1. - theta[ICE] - theta[WATER] - theta[WATER_PREF] - theta[SOIL]);
+		if (theta[AIR] < 0.) {
+			if (theta[ICE] > 1. - Constants::eps) {
+				theta[ICE] += theta[AIR];
+			} else if (theta[WATER] > 1. - Constants::eps) {
+				theta[WATER] += theta[AIR];
+			} else {
+				prn_msg(__FILE__, __LINE__, "wrn", Date(), "SUM of volumetric contents = %1.20f, theta[ICE] = %.20f, theta[WATER] = %.20f, theta[WATER_PREF] = %.20f, theta[SOIL] = %.20f, theta[AIR] = %.20f", sum, theta[ICE], theta[WATER], theta[WATER_PREF], theta[SOIL], theta[AIR]);
+			}
+			theta[AIR] = 0.;
+		}
 	}
 
 	return ret;
@@ -1798,10 +1816,11 @@ unsigned short int ElementData::snowType(const double& dendricity, const double&
 		case 7: case 8: case 17: case 18: case 27: case 28: // Glacier ice & IFil, that is, ice layers within the snowpack
 			a = 8; b = 8; c = 0;
 			break;
-    default: // do nothing sinc we take care of exceptions here
-      break;
-
-
+		case 9: // water layer
+			a = 0; b = 0; c = 0;
+			break;
+		default: // do nothing since we take care of exceptions here
+			break;
 	}
 
 	return static_cast<unsigned short int>(a*100 + b*10 + c);
@@ -2422,6 +2441,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].CDot = SSdata.Ldata[ll].CDot;
 			Edata[e].metamo = SSdata.Ldata[ll].metamo;
 			Edata[e].salinity = SSdata.Ldata[ll].salinity;
+			Edata[e].h = SSdata.Ldata[ll].h;
 #ifndef SNOWPACK_CORE
 			Edata[e].S_dr = INIT_STABILITY;
 #endif
@@ -2455,12 +2475,27 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	// Sea ice initializations
 	if (Seaice != NULL) {
 		Seaice->updateFreeboard(*this);
-		for(size_t e = nElems; e -->0; ) {
+		for (size_t e = nElems; e -->0; ) {
 			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
-			if(Edata[e].salinity > 0.) {
+			if (Edata[e].salinity > 0.) {
 				Edata[e].meltfreeze_tk = -SeaIce::mu * br_sal + Constants::meltfreeze_tk;
 			}
-			Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
+			if (Edata[e].h == Constants::undefined) {
+				Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
+			} else {
+				// Initialize 
+				if (e >= SoilNode) {		//Snow
+					Edata[e].VG.SetVGParamsSnow(vanGenuchten::YAMAGUCHI2012, vanGenuchten::CALONNE, /*matrix*/ true, /*seaice*/ true);
+				} else {			//Soil
+					Edata[e].VG.SetVGParamsSoil();
+				}
+				// If pressure head indicates full saturation, make sure no rounding errors exists from writing/reading sno files.
+				if (Edata[e].h >= Edata[e].VG.h_e) {
+					Edata[e].theta[WATER] = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water) - Edata[e].theta[WATER_PREF];
+					Edata[e].theta[AIR] = 1. - Edata[e].theta[ICE] - Edata[e].theta[WATER] - Edata[e].theta[WATER_PREF] - Edata[e].theta[SOIL];
+					Edata[e].updDensity();
+				}
+			}
 		}
 	}
 
@@ -2625,6 +2660,11 @@ void SnowStation::splitElement(const size_t& e)
 	Ndata[e+1].z=(Ndata[e+2].z+Ndata[e].z)/2.;
 	Ndata[e+2].u*=0.5;
 	Ndata[e+1].u*=0.5;
+	// Correct pressure head in case of saturation
+	if(Edata[e].h > Edata[e].VG.h_e) {
+		Edata[e].h+=.5*Edata[e].L;
+		Edata[e+1].h-=.5*Edata[e+1].L;
+	}
 }
 
 /**
@@ -3527,7 +3567,7 @@ LayerData::LayerData() : depositionDate(), hl(0.), ne(0), tl(0.),
                      phiSoil(0.), phiIce(0.), phiWater(0.), phiWaterPref(0.), phiVoids(0.),
                      cSoil(SnowStation::number_of_solutes), cIce(SnowStation::number_of_solutes), cWater(SnowStation::number_of_solutes), cVoids(SnowStation::number_of_solutes),
                      SoilRho(0.), SoilK(0.), SoilC(0.),
-                     rg(0.), sp(0.), dd(0.), rb(0.), mk(0), hr(0.), CDot(0.), metamo(0.), salinity(0.)
+                     rg(0.), sp(0.), dd(0.), rb(0.), mk(0), hr(0.), CDot(0.), metamo(0.), salinity(0.), h(Constants::undefined)
 {
 }
 
@@ -3572,6 +3612,7 @@ std::ostream& operator<<(std::ostream& os, const LayerData& data)
 	os.write(reinterpret_cast<const char*>(&data.CDot), sizeof(data.CDot));
 	os.write(reinterpret_cast<const char*>(&data.metamo), sizeof(data.metamo));
 	os.write(reinterpret_cast<const char*>(&data.salinity), sizeof(data.salinity));
+	os.write(reinterpret_cast<const char*>(&data.h), sizeof(data.h));
 	return os;
 }
 
@@ -3620,6 +3661,7 @@ std::istream& operator>>(std::istream& is, LayerData& data)
 	is.read(reinterpret_cast<char*>(&data.CDot), sizeof(data.CDot));
 	is.read(reinterpret_cast<char*>(&data.metamo), sizeof(data.metamo));
 	is.read(reinterpret_cast<char*>(&data.salinity), sizeof(data.salinity));
+	is.read(reinterpret_cast<char*>(&data.h), sizeof(data.h));
 	return is;
 }
 

@@ -49,15 +49,27 @@ class TechSnow
 			double min_height;
 		} condition;
 		
-		static void readSlopeConditions(const int& column, std::vector<condition>& slope_condition, const std::string& filename);
+		static std::vector<TechSnow::condition> readSlopeConditions(const int& column, const std::string& filename);
 		static short int getSlopeNumber(const double& dbl_code);
 		static short int findSlope(const int& numbers_of_slopes, const std::vector<condition>& slope_condition, const int& findSlope);
-		static double setPriority(const std::string& date, const std::string& season_opening, const std::string& start_prod, const std::string& end_prod, const double& start_aim, const double& end_aim, const double& gun_operation, const double& snow_height, const double& V_water, const double& slope_area, const double& nr_snowguns, const double& min_height, const int date_hour, const int slope_open, const int slope_closed);
-							 	  
+		double setPriority( const mio::Date& date, const mio::Date& start_prod, const mio::Date& end_prod, const double& start_aim, const double& end_aim, const double& gun_operation, const double& snow_height, const double& slope_area, const double& nr_snowguns, const double& min_height, const int date_hour) const;
+		
 		mio::Grid2DObject skiRunsMap; ///< All ski runs pixels are tagged by ski run and section number
 		mio::Grid2DObject grooming, psum_tech;
 		
-		const bool isMaster;
+		std::vector<condition> slope_condition;
+		mio::Date start_season, end_season;		///< [-] latest production date
+		mio::Date start_prod1, end_prod1;
+		mio::Date start_prod2, end_prod2;
+		mio::Date start_prod3, end_prod3;
+		double start_aim1, end_aim1, gun_operation1;
+		double start_aim2, end_aim2, gun_operation2;
+		double start_aim3, end_aim3, gun_operation3;
+		double wet_bulb_thresh;		//< [C] wet bulb temperature
+		double max_snowgun_water;	///< max l/s that a snogun can provide
+		const double mean_elevation;
+		int slope_open, slope_closed; ///< local hour for slope opening / closing
+		int number_of_slopes;
 };
 
 #endif

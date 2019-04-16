@@ -63,6 +63,7 @@ using namespace mio;
  *                            - mk < 10, mk=mk+10 : first complete wetting
  *                            - mk < 20, mk=mk+10 : first melt-freeze cycle completed
  *                            - mk / 100 >= 1     : tagged snow layer
+ *                            - mk / 1000 >= 9    : marked reference level to reference height of wind and meteo values, as well as measured snow height 
  *
  * SECONDARY micro-structure parameters computed by Metamorphism routine:
  * - N3   : coordination number (1)

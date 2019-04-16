@@ -1,3 +1,8 @@
+"""Coords.pxd: This file wraps the class Coords (from meteoio/dataClasses/Coords.h).
+   Author: Thiemo Theile
+   Date created: 4/1/2019
+"""
+
 from libcpp.string cimport string
 from libcpp cimport bool
 
