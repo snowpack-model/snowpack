@@ -122,7 +122,7 @@ DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const A
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slope_type& i_algorithm)
-           : Grid2DObject(i_dem.cellsize, i_dem.llcorner, i_dem.grid2D),
+           : Grid2DObject(i_dem),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),

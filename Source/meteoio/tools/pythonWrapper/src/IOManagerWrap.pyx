@@ -1,11 +1,15 @@
-# distutils: language = c++
+"""IOManagerWrap.pyx: This file wraps the c++-class IOManager (from meteoio/IOManager.h) to the python-class PyIOManager.
+   Author: Thiemo Theile
+   Date created: 4/1/2019
+"""
 
+# distutils: language = c++
 
 from IOManager cimport IOManager
 from MeteoData cimport METEO_SET
 from MeteoData cimport MeteoData
 
-#import ConfigWrap ###muss nicht importiert werden, kennt er schon durch cimport Config im pxd-file
+#import ConfigWrap
 #import CoordsWrap
 #import DateWrap
 
@@ -22,22 +26,17 @@ cdef class PyIOManager:
         del self.c_iomanager
         
     def getMeteoData(self, PyDate date):
-        print("collecting meteo data for this date: ")
-        print(date.toString())
         cdef METEO_SET vecMeteo
         #getMeteoData aufrufen, dann vecMeteo in liste umwandeln und zurueckgeben
         nData = self.c_iomanager.getMeteoData(date.c_date, vecMeteo)
-        #print(nData)
         results = []
         for item in vecMeteo:
-            #print (item.toString())
             itemPy = PyMeteoData()
             itemPy.c_meteodata = item
             results.append(itemPy)
         return results
 
     def getMeteoDataRange(self, PyDate dateStart, PyDate dateEnd):
-        print("collecting meteo data for a time range ")
         cdef vector[METEO_SET] vecVecMeteo
         #getMeteoData aufrufen, dann vecMeteo in liste umwandeln und zurueckgeben
         nData = self.c_iomanager.getMeteoData(dateStart.c_date, dateEnd.c_date, vecVecMeteo)

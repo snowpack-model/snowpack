@@ -26,6 +26,9 @@
 
 namespace mio {
 
+class IOInterface;
+class GridsManager;
+
 /**
  * @class Grid2DObject
  * @brief A class to represent 2D Grids. Typical application as DEM or Landuse Model.
@@ -36,6 +39,9 @@ namespace mio {
  */
 
 class Grid2DObject {
+	friend class IOInterface;
+	friend class GridsManager;
+	
 	public:
 		///structure to contain the grid coordinates of a point in a 2D grid
 		typedef struct GRID_POINT_2D {
@@ -215,6 +221,17 @@ class Grid2DObject {
 		* @return false if the given point was invalid (outside the grid or nodata and if possible sets (i,j) to closest values within the grid)
 		*/
 		bool grid_to_WGS84(Coords& point) const;
+		
+		bool isLatlon() const {return isLatLon;}
+		
+		void reproject();
+
+		static double calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
+		double calculate_cellsize(const double& i_ur_lat, const double& i_ur_lon) const;
+		void setLatLon(const double& i_ur_lat, const double& i_ur_lon) {ur_lat=i_ur_lat; ur_lon=i_ur_lon; isLatLon=true;}
+		
+		double ur_lat, ur_lon;
+		bool isLatLon;
 };
 } //end namespace
 

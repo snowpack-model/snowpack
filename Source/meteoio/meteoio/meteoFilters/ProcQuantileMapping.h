@@ -31,10 +31,10 @@ namespace mio {
  * @details The statistical distribution of the chosen parameter is computed and the multiplying factors provided as arguments
  * are used to correct each provided quantiles (see https://rcmes.jpl.nasa.gov/content/statistical-downscaling#download).The 
  * quantiles must be provided as increasing decimal numbers between 0 (0%) and 1 (100%) and the full range must be covered. 
- * Values gven for quantiles less than 0.5 (50%) are assumed to extend toward 0 while values above are assumed to extend toward 1 (100%).
+ * Values given for quantiles less than 0.5 (50%) are assumed to extend toward 0 while values above are assumed to extend toward 1 (100%).
  * 
  * It takes the following arguments:
- *  - TYPE: either ADD (add the correction coefficient) or MULT (multiply by the corection coefficient);
+ *  - TYPE: either ADD (add the correction coefficient) or MULT (multiply by the correction coefficient);
  *  - PERIOD: either YEARLY, MONTHLY or DAILY. This describes the period over which the quantiles were calculated. If no argument is 
  * given, it takes the whole dataset at once (optional);
  *  - CORRECTIONS: the file and path containing the corrections to apply.

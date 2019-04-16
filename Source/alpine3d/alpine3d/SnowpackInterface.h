@@ -217,7 +217,7 @@ class Runoff; // forward declaration, cyclic header include
 		SnowpackIO snowpackIO;
 
 		size_t dimx, dimy;
-    size_t mpi_offset, mpi_nx;
+		size_t mpi_offset, mpi_nx;
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;

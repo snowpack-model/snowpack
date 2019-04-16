@@ -394,6 +394,11 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
          grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata), validIndex(false), 
          coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
+	static const char format1[] = " %[0-9.,°d'\"-] %[0-9.,°d'\"-] %[0-9.,-]";
+	static const char format2[] = " %[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]/%[0-9.,- ]";
+	static const char format3[] = " (%[0-9.,°d'\"- ];%[0-9.,°d'\"- ];%[0-9.,- ])";
+	static const char format4[] = " (%[0-9.°d'\"- ],%[0-9.°d'\"- ],%[0-9.- ])";
+
 	static const size_t len=128;
 	if (coord_spec.size()>=len)
 			throw InvalidFormatException("Given coordinate string is too long! ",AT);
@@ -409,12 +414,15 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 		char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
 		char lon_str[len]="";
 
-		if     ((sscanf(coord_spec.c_str(), " %[0-9.,°d'\"-] %[0-9.,°d'\"-] %[0-9.,-]", lat_str, lon_str, alt_str) < 3) &&
-			(sscanf(coord_spec.c_str(), " %[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]/%[0-9.,- ]", lat_str, lon_str, alt_str) < 3) &&
-			(sscanf(coord_spec.c_str(), " (%[0-9.,°d'\"- ];%[0-9.,°d'\"- ];%[0-9.,- ])", lat_str, lon_str, alt_str) < 3) &&
-			(sscanf(coord_spec.c_str(), " (%[0-9.°d'\"- ],%[0-9.°d'\"- ],%[0-9.- ])", lat_str, lon_str, alt_str) < 3)) {
+		if     ((sscanf(coord_spec.c_str(), format1, lat_str, lon_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), format2, lat_str, lon_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), format3, lat_str, lon_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), format4, lat_str, lon_str, alt_str) < 3)) {
 				throw InvalidFormatException("Can not parse given coordinates: "+coord_spec,AT);
 		}
+	#if defined _WIN32 || defined __MINGW32__
+		if (alt_str[ strlen(alt_str)-1 ]==')') alt_str[ strlen(alt_str)-1 ] = '\0'; //for ms_scanf bug
+	#endif
 
 		double alt;
 		if (!IOUtils::convertString(alt, alt_str)) throw InvalidFormatException("Can not parse the altitude given in the coordinates: "+coord_spec,AT);
@@ -427,12 +435,15 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 		char easting_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
 		char northing_str[len]="";
 
-		if     ((sscanf(coord_spec.c_str(), " %[0-9.,°d'\"-] %[0-9.,°d'\"-] %[0-9.,-]", easting_str, northing_str, alt_str) < 3) &&
-			(sscanf(coord_spec.c_str(), " %[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]/%[0-9.,- ]", easting_str, northing_str, alt_str) < 3) &&
-			(sscanf(coord_spec.c_str(), " (%[0-9.,°d'\"- ];%[0-9.,°d'\"- ];%[0-9.,- ])", easting_str, northing_str, alt_str) < 3) &&
-			(sscanf(coord_spec.c_str(), " (%[0-9.°d'\"- ],%[0-9.°d'\"- ],%[0-9.- ])", easting_str, northing_str, alt_str) < 3)) {
+		if     ((sscanf(coord_spec.c_str(), format1, easting_str, northing_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), format2, easting_str, northing_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), format3, easting_str, northing_str, alt_str) < 3) &&
+			(sscanf(coord_spec.c_str(), format4, easting_str, northing_str, alt_str) < 3)) {
 				throw InvalidFormatException("Can not parse given coordinates: "+coord_spec,AT);
 		}
+	#if defined _WIN32 || defined __MINGW32__
+		if (alt_str[ strlen(alt_str)-1 ]==')') alt_str[ strlen(alt_str)-1 ] = '\0'; //for ms_scanf bug
+	#endif
 
 		double east, north, alt;
 		if (!IOUtils::convertString(east, easting_str)) throw InvalidFormatException("Can not parse the easting given in the coordinates: "+coord_spec,AT);

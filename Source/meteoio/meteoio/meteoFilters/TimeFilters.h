@@ -97,7 +97,7 @@ class TimeSuppr : public ProcessingBlock {
  * TIME::arg1::CORRECTIONS = ./input/meteo/dst.dat
  * @endcode
  * 
- * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE, whit or without the DST):
+ * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE, with or without the DST):
  * @code
  * 2016-03-27T02:00 -3600
  * 2016-10-30T03:00 0

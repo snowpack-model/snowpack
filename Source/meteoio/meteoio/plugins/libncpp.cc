@@ -454,47 +454,6 @@ void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_
 	}
 }
 
-double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY)
-{
-	//in order to handle swapped llcorner/urcorner, we use "fabs" everywhere
-	double alpha;
-	const double cntr_lat = .5*fabs(vecY.front()+vecY.back());
-	const double cntr_lon = .5*fabs(vecX.front()+vecX.back());
-	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
-	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
-
-	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		const double cellsize = std::min(cellsize_x, cellsize_y);
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-		return cellsize;
-	}
-}
-
-double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY)
-{
-	const double distanceX = fabs(vecX.front() - vecX.back());
-	const double distanceY = fabs(vecY.front() - vecY.back());
-
-	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
-
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		const double cellsize = std::min(cellsize_x, cellsize_y);
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-		return cellsize;
-	}
-}
-
 /**
 * @brief Fill a Grid2DObject with 2D gridded data as read from a NetCDF file
 * @details The provided Grid2DObject must have been properly initialized before (ie proper Nx, Ny). Grids whose llcorner/urcorner have been reversed
@@ -999,6 +958,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "ts", "surface_temperature", "", "K", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::VW_MAX, "ws_max", "wind_speed_of_gust", "", "m/s", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "surface_albedo", "surface_albedo", "", "1", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "ro", "surface_runoff_amount", "", "kg/m2", mio::IOUtils::nodata, NC_FLOAT) ); //proper variable name?
 	results["CF-1.6"] = tmp;
 
 	//CROCUS schema
@@ -1085,12 +1045,10 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::DEM, "HGT", "Terrain Height", "Terrain Height", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "PSFC", "Surface pressure", "SFC PRESSURE", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "T2", "2-meter temperature", "TEMP at 2 M", "K", 2., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSG, "TSLB", "soil temperature", "SOIL TEMPERATURE", "K", 2., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSG, "TSK", "surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", 2., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::QI, "Q2", "2-meter specific humidity", "QV at 2 M", "kg/kg", 2, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "ACLWUPB", "Upwelling LW surface radiation", "Upwelling LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "SWDOWN", "Downward Short Wave flux at ground surface", "Downward Short Wave Flux at ground surface", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "GLW", "Downward Long Wave flux at ground surface", "Downward Long Wave flux at ground surface", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "ALBEDO", "surface albedo", "ALBEDO", "-", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff", "SURFACE RUNOFF", "kg*m2/s", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "SNOW", "snow water equivalent", "SNOW WATER EQUIVALENT", "kg/m2", mio::IOUtils::nodata, NC_DOUBLE) );

@@ -25,11 +25,11 @@ using namespace std;
 namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-StationData::StationData() : position(), stationID(), stationName(),
+StationData::StationData() : position(), stationID(), stationName(), extra(), 
                              slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
 StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
-            : position(i_position), stationID(i_id), stationName(i_name), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
+            : position(i_position), stationID(i_id), stationName(i_name), extra(), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
 void StationData::setStationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
 {
@@ -72,11 +72,13 @@ StationData StationData::merge(StationData sd1, const StationData& sd2) {
 	return sd1;
 }
 
-void StationData::merge(const StationData& sd2) {
-	if (stationID.empty()) stationID=sd2.stationID;
-	if (stationName.empty()) stationName=sd2.stationName;
-	if (slope==IOUtils::nodata) slope=sd2.slope;
-	if (azi==IOUtils::nodata) azi=sd2.azi;
+void StationData::merge(const StationData& sd2) 
+{
+	if (stationID.empty()) stationID = sd2.stationID;
+	if (stationName.empty()) stationName = sd2.stationName;
+	if (slope==IOUtils::nodata) slope = sd2.slope;
+	if (azi==IOUtils::nodata) azi = sd2.azi;
+	if (extra.empty() && !sd2.extra.empty()) extra = sd2.extra;
 	position.merge(sd2.position);
 }
 
@@ -121,8 +123,16 @@ const std::string StationData::toString() const {
 	   << std::setprecision(10) << position.toString()
 	   << "ID:    " << getStationID() << "\n"
 	   << "Name:  " << getStationName() << "\n"
-	   << "Slope: " << getSlopeAngle() << " bearing: " << getAzimuth() << "\n"
-	   << "</station>" << endl;
+	   << "Slope: " << getSlopeAngle() << " bearing: " << getAzimuth() << "\n";
+
+	if (!extra.empty()) {
+		os << "Extra metadata: \n";
+		for (std::map<string,string>::const_iterator it = extra.begin(); it != extra.end(); ++it){
+			os << "\t" << (*it).first << " -> " << (*it).second << "\n";
+		}
+	}
+
+	os << "</station>" << endl;
 	return os.str();
 }
 
@@ -135,6 +145,20 @@ std::ostream& operator<<(std::ostream& os, const StationData& station) {
 	const size_t s_name = station.stationName.size();
 	os.write(reinterpret_cast<const char*>(&s_name), sizeof(size_t));
 	os.write(reinterpret_cast<const char*>(&station.stationName[0]), s_name*sizeof(station.stationName[0]));
+	
+	const size_t s_map = station.extra.size();
+	os.write(reinterpret_cast<const char*>(&s_map), sizeof(size_t));
+	for (map<string,string>::const_iterator it = station.extra.begin(); it != station.extra.end(); ++it){
+		const string& key = (*it).first;
+		const size_t s_key = key.size();
+		os.write(reinterpret_cast<const char*>(&s_key), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&key[0]), s_key*sizeof(key[0]));
+
+		const string& value = (*it).second;
+		const size_t s_value = value.size();
+		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
+	}
 
 	os.write(reinterpret_cast<const char*>(&station.slope), sizeof(station.slope));
 	os.write(reinterpret_cast<const char*>(&station.azi), sizeof(station.azi));
@@ -151,6 +175,24 @@ std::istream& operator>>(std::istream& is, StationData& station) {
 	is.read(reinterpret_cast<char*>(&s_name), sizeof(size_t));
 	station.stationName.resize(s_name);
 	is.read(reinterpret_cast<char*>(&station.stationName[0]), s_name*sizeof(station.stationName[0]));
+
+	station.extra.clear();
+	size_t s_map;
+	is.read(reinterpret_cast<char*>(&s_map), sizeof(size_t));
+	for (size_t ii=0; ii<s_map; ii++) {
+		size_t s_key, s_value;
+		is.read(reinterpret_cast<char*>(&s_key), sizeof(size_t));
+		string key;
+		key.resize(s_key);
+		is.read(reinterpret_cast<char*>(&key[0]), s_key*sizeof(key[0]));
+
+		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
+		string value;
+		value.resize(s_value);
+		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
+
+		station.extra[key] = value;
+	}
 
 	is.read(reinterpret_cast<char*>(&station.slope), sizeof(station.slope));
 	is.read(reinterpret_cast<char*>(&station.azi), sizeof(station.azi));

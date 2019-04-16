@@ -146,6 +146,18 @@ bool Config::keyExists(std::string key, std::string section) const
 	return (it!=properties.end());
 }
 
+bool Config::sectionExists(std::string section) const
+{
+	IOUtils::toUpper( section );
+	std::set<std::string>::const_iterator it = sections.begin();
+
+	for (; it!=sections.end(); ++it) {
+		if (*it==section) return true;
+	}
+
+	return false;
+}
+
 void Config::moveSection(std::string org, std::string dest, const bool& overwrite)
 {
 	IOUtils::toUpper( org );
@@ -296,7 +308,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
 			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
 		} else {
-			section = line.substr(1,endpos-1);
+			section = line.substr(1, endpos-1);
 			IOUtils::toUpper(section);
 			sections.insert( section );
 			return;

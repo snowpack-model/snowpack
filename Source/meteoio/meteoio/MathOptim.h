@@ -295,6 +295,10 @@ namespace Optim {
 		const double x2 = x*x;
 		return a1*x + a2*x2 + a3*x*x2 + a4*x2*x2;
 	}
+	
+	inline unsigned long int powerOfTwo(const unsigned int& n) {
+		return (1UL << n);
+	}
 
 }
 

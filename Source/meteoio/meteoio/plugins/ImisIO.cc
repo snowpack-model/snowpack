@@ -765,20 +765,22 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
  */
 void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md, const bool& fullStation)
 {
-	IOUtils::convertString(md.date, i_meteo.at(0), in_tz, dec);
-	IOUtils::convertString(md(MeteoData::TA),     i_meteo.at(1),  std::dec);
-	IOUtils::convertString(md(MeteoData::ISWR),   i_meteo.at(2),  std::dec);
-	IOUtils::convertString(md(MeteoData::VW),     i_meteo.at(3),  std::dec);
-	IOUtils::convertString(md(MeteoData::DW),     i_meteo.at(4),  std::dec);
-	IOUtils::convertString(md(MeteoData::VW_MAX), i_meteo.at(5),  std::dec);
-	IOUtils::convertString(md(MeteoData::RH),     i_meteo.at(6),  std::dec);
-	IOUtils::convertString(md(MeteoData::ILWR),   i_meteo.at(7),  std::dec);
-	IOUtils::convertString(md(MeteoData::PSUM),    i_meteo.at(8),  std::dec);
-	IOUtils::convertString(md(MeteoData::TSG),    i_meteo.at(9),  std::dec);
-	IOUtils::convertString(md(MeteoData::TSS),    i_meteo.at(10), std::dec);
-	IOUtils::convertString(md(MeteoData::HS),     i_meteo.at(11), std::dec);
-	IOUtils::convertString(md(MeteoData::RSWR),   i_meteo.at(12), std::dec);
-	IOUtils::convertString(md(MeteoData::P),   i_meteo.at(13), std::dec);
+	if (i_meteo.size()<14) throw InvalidFormatException("Wrong result vector received from the database", AT);
+	
+	IOUtils::convertString(md.date,               i_meteo[0], in_tz, dec);
+	IOUtils::convertString(md(MeteoData::TA),     i_meteo[1],  std::dec);
+	IOUtils::convertString(md(MeteoData::ISWR),   i_meteo[2],  std::dec);
+	IOUtils::convertString(md(MeteoData::VW),     i_meteo[3],  std::dec);
+	IOUtils::convertString(md(MeteoData::DW),     i_meteo[4],  std::dec);
+	IOUtils::convertString(md(MeteoData::VW_MAX), i_meteo[5],  std::dec);
+	IOUtils::convertString(md(MeteoData::RH),     i_meteo[6],  std::dec);
+	IOUtils::convertString(md(MeteoData::ILWR),   i_meteo[7],  std::dec);
+	IOUtils::convertString(md(MeteoData::PSUM),   i_meteo[8],  std::dec);
+	IOUtils::convertString(md(MeteoData::TSG),    i_meteo[9],  std::dec);
+	IOUtils::convertString(md(MeteoData::TSS),    i_meteo[10], std::dec);
+	IOUtils::convertString(md(MeteoData::HS),     i_meteo[11], std::dec);
+	IOUtils::convertString(md(MeteoData::RSWR),   i_meteo[12], std::dec);
+	IOUtils::convertString(md(MeteoData::P),      i_meteo[13], std::dec);
 
 	unsigned int ii = 14;
 	if (fullStation) {

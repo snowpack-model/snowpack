@@ -24,7 +24,7 @@ using namespace std;
 
 namespace mio {
 
-bool compare(std::pair<Date, METEO_SET> p1, pair<Date, METEO_SET> p2) {
+bool TimeSeriesManager::compare(std::pair<Date, METEO_SET> p1, std::pair<Date, METEO_SET> p2) {
 	return p1.first < p2.first;
 }
 

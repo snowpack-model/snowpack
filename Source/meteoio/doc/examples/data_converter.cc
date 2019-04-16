@@ -39,6 +39,7 @@ void real_main(int argc, char** argv)
 	for (Date d=d_start; d<=d_end; d+=Tstep) { //time loop
 		io.getMeteoData(d, Meteo); //read 1 timestep at once, forcing resampling to the timestep
 		for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
+			if (Meteo[ii].isNodata()) continue;
 			const std::string stationID( Meteo[ii].meta.stationID );
 			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
 				mapIDs[ stationID ] = insert_position++;

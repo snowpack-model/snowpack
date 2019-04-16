@@ -35,7 +35,7 @@ bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
-		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS);
+		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS), P=md(MeteoData::P);
 		double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 
 		const double lat = md.meta.position.getLat();
@@ -60,14 +60,11 @@ bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md)
 		sun.setLatLon(lat, lon, alt);
 		sun.setDate(md.date.getJulian(true), 0.);
 
-		const double P=md(MeteoData::P);
-		if (P==IOUtils::nodata)
-			sun.calculateRadiation(TA, RH, albedo);
-		else
-			sun.calculateRadiation(TA, RH, P, albedo);
+		sun.calculateRadiation(TA, RH, P, albedo);
 
 		double toa, direct, diffuse;
 		sun.getHorizontalRadiation(toa, direct, diffuse);
+
 		if (param!=MeteoData::RSWR)
 			value = (direct+diffuse); //ISWR
 		else

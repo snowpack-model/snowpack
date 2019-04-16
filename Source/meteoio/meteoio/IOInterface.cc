@@ -149,4 +149,16 @@ void IOInterface::write3DGrid(const Grid3DObject& /*grid_out*/, const MeteoGrids
 	throw IOException("Nothing implemented here", AT);
 }
 
+void IOInterface::set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon)
+{
+	grid.ur_lat = i_ur_lat;
+	grid.ur_lon = i_ur_lon;
+	grid.isLatLon = true;
+}
+
+double IOInterface::computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)
+{
+	return Grid2DObject::calculate_XYcellsize(vecX, vecY);
+}
+
 } //end namespace

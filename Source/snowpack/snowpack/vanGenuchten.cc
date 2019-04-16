@@ -382,7 +382,7 @@ double vanGenuchten::dtheta_dh(const double h) {
  * @param K_PARAM hydraulic conductivity parameterization to use
  * @param matrix true: set parameters for matrix domain. false: set parameters for preferential flow domain
  */
-void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelTypeSnow, const K_Parameterizations K_PARAM, const bool& matrix)
+void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelTypeSnow, const K_Parameterizations K_PARAM, const bool& matrix, const bool& seaice)
 {
 	if (EMS->theta[ICE] > 0.75) {
 		theta_r=0.;
@@ -424,7 +424,11 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			//Calculate ratio density/grain size (see Yamaguchi (2012)):
 			double tmp_rho_d=(EMS->theta[ICE]*Constants::density_ice)/( (2.*EMS->rg) / 1000.);
 			//Limit tmp_rho_d to reasonable values, so alpha and especially n remain in numerically stable bounds:
-			tmp_rho_d=std::max(2000., tmp_rho_d);
+			if(seaice) {
+				tmp_rho_d=std::max(100000., tmp_rho_d);
+			} else {
+				tmp_rho_d=std::max(2000., tmp_rho_d);
+			}
 			alpha=4.4E6*pow(tmp_rho_d, -0.98);	//See Eq. 6 in Yamaguchi (2012).
 			n=1.+2.7E-3*pow(tmp_rho_d, 0.61);	//See Eq. 7 in Yamaguchi (2012).
 			break;
@@ -495,13 +499,17 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			//See: Calonne et al., 3-D image-based numerical computations of snow permeability: links to specific surface area, density, and microstructural anisotropy, TC, 2012.
 			ksat=0.75 * (EMS->ogs / 1000.)*(EMS->ogs / 1000.) * exp(-0.013 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 			break;
+
 		default:
 			throw mio::UnknownValueException("Unknown hydraulic conductivity parameter", AT);
+
 		}
 	} else {									//For high density
 		// Eq. 5 in Golden, K. M., H. Eicken, A. L. Heaton, J. Miner, D. J. Pringle, and J. Zhu (2007), Thermal evolution of permeability and microstructure in sea ice, Geophys. Res. Lett., 34, L16501, doi:10.1029/2007GL030447:
 		ksat = 3E-8 * pow((1. - std::min(1., EMS->theta[ICE])), 3.) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 	}
+
+	if (seaice) ksat = std::min(ksat, 1E-3);
 
 	//Set air entry pressure
 	h_e=vanGenuchten::AirEntryPressureHead(0.005, 273.);

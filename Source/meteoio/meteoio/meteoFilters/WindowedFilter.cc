@@ -122,7 +122,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 
 /**
  * @brief A function that computes the start and end for a window for the 'index' element from ivec
- * The principle is too compute the first index that matches the minimum number of points criteria,
+ * The principle is to compute the first index that matches the minimum number of points criteria,
  * and the one that matches the minimum time window, then combine them (with the equivalent of OR: we take the MIN index).
  * Afterward, we compute the last index [...] for number of points and the last index [...] for the time window
  * and combine them (with the equivalent of OR: we take the MIN index) or vice versa for right centering.

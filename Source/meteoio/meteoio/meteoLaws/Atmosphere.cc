@@ -650,7 +650,7 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 		return IOUtils::nodata;
 	}
 
-	Date date(julian, TZ, 0.);
+	const Date date(julian, TZ);
 	int year, month, day;
 	date.getDate(year, month, day);
 

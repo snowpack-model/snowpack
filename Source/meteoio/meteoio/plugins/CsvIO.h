@@ -30,10 +30,11 @@ namespace mio {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), eoln('\n'), header_repeat_at_start(false), asc_order(true), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), date_col(0), time_col(0), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), header_repeat_at_start(false), asc_order(true), single_param_idx(IOUtils::npos), location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false) {}
 		
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
 		void setDelimiter(const std::string& delim);
+		void setHeaderDelimiter(const std::string& delim);
 		void setSkipFields(const std::vector<size_t>& vecSkipFields);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
@@ -50,15 +51,17 @@ class CsvParameters {
 		std::string nodata, header_repeat_mk;
 		size_t date_col, time_col;
 		size_t header_lines, columns_headers, units_headers;
-		char csv_delim;
+		char csv_delim, header_delim;
 		char eoln;
 		bool header_repeat_at_start, asc_order;
+		size_t single_param_idx;
 	private:
-		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon);
-		void parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon);
+		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon, double &easting, double &northing);
+		void parseFileName(std::string filename, const std::string& filename_spec, double &lat, double &lon, double &easting, double &northing);
 		void parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col);
 		static std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec);
-		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon);
+		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon, double &easting, double &northing);
+		static Date createDate(const float args[6], const double i_tz);
 		void parseUnits(const std::string& line);
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		

@@ -159,6 +159,47 @@ void replace_all(std::string &input, const std::string& search, const std::strin
 	}
 }
 
+//consider spaces and tabs to be whitespaces
+inline bool isWhitespace(const char& c) { if (c == 9 || c == 32) return true; return false; }
+inline bool isTwoSpaces(const char& a, const char& b) { return (a == b) && (a == ' '); }
+inline bool isTwoTabs(const char& a, const char& b) { return (a == b) && (a == '\t'); }
+inline bool isInvalidChar(const char& c) { return (c < 32 || c > 126); }
+inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false; }
+
+void removeDuplicateWhitespaces(std::string& line)
+{ //remove consecutive occurrences of either spaces or tabs
+	std::string::iterator close_str = std::unique(line.begin(), line.end(), &isTwoSpaces);
+	line.erase(close_str, line.end());
+	close_str = std::unique(line.begin(), line.end(), &isTwoTabs);
+	line.erase(close_str, line.end());
+}
+
+void replaceWhitespaces(std::string& line, const char& rep /* = '\0' */)
+{ //replace/remove tabs and spaces
+	std::replace_if(line.begin(), line.end(), &isWhitespace, rep);
+}
+
+void replaceInvalidChars(std::string& line, const char& rep /* = '\0' */)
+{ //replace/remove accentuated characters etc.
+	std::replace_if(line.begin(), line.end(), &isInvalidChar, rep);
+}
+
+void removeQuotes(std::string& line)
+{ //remove single and double quotation marks
+	const std::string::iterator close_str = std::remove_if(line.begin(), line.end(), &isQuote);
+	line.erase(close_str, line.end());
+}
+
+void cleanFieldName(std::string& field, const bool& clean_whitespaces, const char& rep)
+{ //combination of the methods above for something like parameter names
+	if (clean_whitespaces) { //lines are expected to already be trimmed when arriving here
+		removeDuplicateWhitespaces(field);
+		replaceWhitespaces(field, rep);
+	}
+	replaceInvalidChars(field, rep);
+	removeQuotes(field);
+}
+
 size_t count(const std::string &input, const std::string& search)
 {
 	const size_t len = search.length();
@@ -350,6 +391,11 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 
 	while (getline(iss, word, delim)){
 		vecString.push_back(word);
+	}
+
+	if (!line_in.empty()) {
+		const char lastChar = line_in[ line_in.length() - 1 ];
+		if (lastChar==delim) vecString.push_back( "" );
 	}
 
 	return vecString.size();

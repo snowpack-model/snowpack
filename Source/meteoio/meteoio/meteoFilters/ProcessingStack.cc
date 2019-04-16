@@ -127,6 +127,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 				const double orig = ivec[kk](param);
 				const double filtered = ovec[stat_idx][kk](param);
 				if (orig!=filtered) {
+					ovec[stat_idx][kk].setFiltered(true);
 					const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
 					const std::string stat = (!statID.empty())? statID : statName;
 					const std::string filtername( (*filter_stack[jj]).getName() );

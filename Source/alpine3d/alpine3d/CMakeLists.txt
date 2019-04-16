@@ -30,6 +30,7 @@ SET(a3d_sources
 	DataAssimilation.cc
 	MeteoObj.cc
 	MPIControl.cc
+	OMPControl.cc
 )
 
 #shared library.
@@ -84,7 +85,7 @@ IF(ALPINE3D_STANDALONE)
 		AlpineControl.cc
 		AlpineMain.cc
 	)
-	
+
 	#get the proper Snowpack library
 	IF(BUILD_SHARED_LIBS)
 		SET(LIBALPINE3D_LIBRARY ${PROJECT_NAME})
@@ -95,7 +96,7 @@ IF(ALPINE3D_STANDALONE)
 			MESSAGE(SEND_ERROR "Not building Alpine3D, the standalone application won't be able to build")
 		ENDIF(BUILD_STATIC_LIBS)
 	ENDIF(BUILD_SHARED_LIBS)
-	
+
 	#LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
 	SET(A3D_LINKS ${extra_libs} ${MPI_CXX_LIBRARIES} ${PETSC_LIBRARIES})
 	IF(APPLE)
@@ -105,7 +106,7 @@ IF(ALPINE3D_STANDALONE)
 	IF(UNIX)
 		LIST(APPEND A3D_LINKS "dl;pthread")
 	ENDIF(UNIX)
-	
+
 	#Prepare executable
 	SET(BINARY "alpine3d.app")
 	ADD_EXECUTABLE(${BINARY} ${a3d_main})

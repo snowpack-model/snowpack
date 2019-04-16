@@ -5,6 +5,7 @@ SET(meteoFilters_sources
 	meteoFilters/FilterMin.cc
 	meteoFilters/FilterMax.cc
 	meteoFilters/FilterMinMax.cc
+	meteoFilters/FilterMinMaxConditional.cc
 	meteoFilters/FilterMAD.cc
 	meteoFilters/FilterStdDev.cc
 	meteoFilters/FilterTukey.cc

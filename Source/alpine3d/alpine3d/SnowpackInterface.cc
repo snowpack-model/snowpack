@@ -619,11 +619,12 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 		ta = glaciers->correctTemperatures(cH, TSS, new_ta);
 	}
 
-	if (snow_preparation) {
+	if (snow_preparation) {		
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
 		techSnow->setMeteo(ta, rh, cH, timestamp);
 		psum_tech = techSnow->getGrid(SnGrids::PSUM_TECH);
 		grooming = techSnow->getGrid(SnGrids::GROOMING);
+
 	}
 
 	dataMeteo2D = true;
@@ -776,6 +777,7 @@ void SnowpackInterface::calcNextStep()
 			if (snow_preparation) {
 				const mio::Grid2DObject tmp_grooming(grooming, worker_startx[ii], 0, worker_deltax[ii], dimy);
 				workers[ii]->grooming( tmp_grooming );
+
 			}
 		} catch(const std::exception& e) {
 			++errCount;

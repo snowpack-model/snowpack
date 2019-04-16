@@ -211,25 +211,9 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 		}
 		Edata.theta[ICE] += dth_i;
 		Edata.theta[WATER] += dth_w;
-		Edata.theta[AIR] = std::max(0.0, 1.0 - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
-		// State when you have solid element
-		if ( Edata.theta[AIR] <= 0.0 ) {
-			Edata.theta[AIR] = 0.0;
-		}
-		// State when the ice content has disappeared (PERMAFROST)
-		if ( Edata.theta[ICE] <= 0.0 ) {
-			Edata.theta[ICE] = 0.0;
-		}
-		// State when the water content has disappeared (PERMAFROST)
-		if ( Edata.theta[WATER] <= 0.0 ) {
-			Edata.theta[WATER] = 0.0;
-		}
-		// State when the element is wet (PERMAFROST)
-		if ( Edata.theta[WATER] >= 1.0 ) {
-			Edata.theta[WATER] = 1.0;
-		}
+		Edata.theta[AIR] = (1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
 
-		// Make sure the sum of all volumetric contents is near 1 (Can make a 1% error)
+		// Make sure the sum of all volumetric contents is near 1, and take care of rounding errors
 		if (!Edata.checkVolContent()) {
 			prn_msg(__FILE__, __LINE__, "err", date_in, "Sum theta[I,W,A,S] > 1");
 			prn_msg(__FILE__, __LINE__, "msg-", Date(),
@@ -309,16 +293,11 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 				}
 			}
 		}
-		Edata.theta[WATER] += dth_w;
 		Edata.theta[ICE] += dth_i;
-		Edata.theta[AIR] = std::max(0., 1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
+		Edata.theta[WATER] += dth_w;
+		Edata.theta[AIR] = (1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
 
-		// State when the element is wet (PERMAFROST)
-		if (Edata.theta[WATER] >= 1.0) {
-			prn_msg(__FILE__, __LINE__, "msg+", Date(), "Wet Element! (dth_w=%e) (compSubSurfaceFrze)", dth_w);
-			Edata.theta[WATER] = 1.0;
-		}
-		// Make sure the sum of all volumetric contents is near 1 (Can make a 1% error)
+		// Make sure the sum of all volumetric contents is near 1, and take care of rounding errors
 		if (!Edata.checkVolContent()) {
 			prn_msg(__FILE__, __LINE__, "err", date_in, "Sum theta[I,W,A,S] > 1");
 			prn_msg(__FILE__, __LINE__, "msg-", Date(),

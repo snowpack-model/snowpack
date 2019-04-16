@@ -168,7 +168,7 @@ class Fit1D {
 			RATQUADVARIO, ///< rational quadratic variogram
 			LINEARLS, ///< linear, using least squares
 			QUADRATIC, ///< quadratic
-			POLYNOMIAL ///< polynomial regression. not implemented yet how to set the degree of the polynomial model
+			POLYNOMIAL ///< polynomial regression
 		} regression;
 
 		/**

@@ -1,5 +1,9 @@
-# distutils: language = c++
+"""ConfigWrap.pyx: This file wraps the c++-class Config (frommeteoio/Config.h) to the python-class PyConfig.
+   Author: Thiemo Theile
+   Date created: 4/1/2019
+"""
 
+# distutils: language = c++
 
 from Config cimport Config
 

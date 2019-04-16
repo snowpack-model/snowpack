@@ -26,6 +26,7 @@
 #include <meteoio/meteoFilters/FilterMin.h>
 #include <meteoio/meteoFilters/FilterMax.h>
 #include <meteoio/meteoFilters/FilterMinMax.h>
+#include <meteoio/meteoFilters/FilterMinMaxConditional.h>
 #include <meteoio/meteoFilters/FilterPotentialSW.h>
 #include <meteoio/meteoFilters/FilterStdDev.h>
 #include <meteoio/meteoFilters/FilterRate.h>
@@ -104,6 +105,7 @@ namespace mio {
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - MIN_MAX: range check filter, see FilterMinMax
+ * - MIN_MAX_CONDITIONAL: range check only if a different parameter holds true to a comparison, see FilterMinMaxConditional
  * - RATE: rate of change filter, see FilterRate
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
@@ -150,6 +152,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMax(vecArgs, blockname);
 	} else if (blockname == "MIN_MAX"){
 		return new FilterMinMax(vecArgs, blockname);
+	} else if (blockname == "MIN_MAX_CONDITIONAL"){
+		return new FilterMinMaxConditional(vecArgs, blockname);
 	} else if (blockname == "RATE"){
 		return new FilterRate(vecArgs, blockname);
 	} else if (blockname == "STD_DEV"){

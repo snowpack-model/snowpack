@@ -166,6 +166,27 @@ Date::Date(const int& in_year, const int& in_month, const int& in_day, const int
 	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
 }
 
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second, const double& in_timezone, const bool& in_dst)
+         : timezone(in_timezone), gmt_julian(0.),
+           dst(false), undef(true)
+{
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
+}
+
+/**
+* @brief Julian Day Number (JDN) constructor
+* @param year year to set
+* @param jdn Julian Day Number within the provided year
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
+*/
+Date::Date(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst)
+         : timezone(in_timezone), gmt_julian(0.),
+           dst(false), undef(true)
+{
+	setDate(year, jdn, in_timezone, in_dst);
+}
+
 // SETTERS
 void Date::setUndef(const bool& flag) {
 	undef = flag;
@@ -300,6 +321,21 @@ void Date::setDate(const double& julian_in, const double& in_timezone, const boo
 {
 	setTimeZone(in_timezone, in_dst);
 	gmt_julian = rnd( localToGMT(julian_in), epsilon_sec);
+	undef = false;
+}
+
+/**
+* @brief Set date from a year and Julian Day Number (JDN).
+* @param year year to set
+* @param jdn Julian Day Number within the provided year
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
+*/
+void Date::setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst)
+{
+	setTimeZone(in_timezone, in_dst);
+	const double local_julian = static_cast<double>( getJulianDayNumber(year, 1, 1) ) + jdn;
+	gmt_julian = rnd( localToGMT(local_julian), epsilon_sec);
 	undef = false;
 }
 
@@ -1162,7 +1198,8 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
-			<< setw(2) << setfill('0') << minute_out << " ("
+			<< setw(2) << setfill('0') << minute_out <<":"
+			<< setw(2) << setfill('0') << whole_sec << subsec_str << " ("
 			<< setprecision(10) << julian_out << ") GMT"
 			<< setw(2) << setfill('0') << showpos << timezone << noshowpos;
 			break;

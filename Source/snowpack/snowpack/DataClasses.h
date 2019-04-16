@@ -216,6 +216,7 @@ class LayerData {
 		double CDot;                ///< Stress rate (Pa s-1), that is the LAST overload change rate
 		double metamo;              ///< keep track of metamorphism
 		double salinity;            ///< salinity (kg/kg)
+		double h;                   ///< capillary pressure head (m)
 };
 
 /**
@@ -290,7 +291,7 @@ class ElementData {
 		ElementData(const unsigned short int& in_ID);
 		ElementData(const ElementData& cc); //required to get the correct back-reference in vanGenuchten object
 
-		bool checkVolContent() const;
+		bool checkVolContent();
 		void heatCapacity();
 		double coldContent() const;
 		void updDensity();
@@ -323,7 +324,7 @@ class ElementData {
 		double gradT;              ///< temperature gradient over element (K m-1)
 		double meltfreeze_tk;	   ///< melt/freeze temperature of layer (principally initialized as 0 degC, but enables possibility for freezing point depression)
 		std::vector<double> theta; ///< volumetric contents: SOIL, ICE, WATER, WATER_PREF, AIR (1)
-		double h;                  ///< pressure head (m)
+		double h;                  ///< capillary pressure head (m)
 		mio::Array2D<double> conc; ///< Concentration for chemical constituents in (kg m-3)
 		std::vector<double> k;     ///< For example, heat conductivity of TEMPERATURE field (W m-1 K-1)
 		//   Stored in order to visualize constitutive laws

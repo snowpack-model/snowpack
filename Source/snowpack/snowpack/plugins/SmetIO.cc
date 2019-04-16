@@ -361,7 +361,7 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 				   ll+1, SSdata.Ldata[ll].depositionDate.toString(Date::ISO).c_str(), SSdata.profileDate.toString(Date::ISO).c_str());
 			throw IOException("Cannot generate Xdata from file " + sno_reader.get_filename(), AT);
 		}
-		if (SSdata.Ldata[ll].depositionDate < prev_depositionDate && !read_salinity) {
+		if (SSdata.Ldata[ll].depositionDate < prev_depositionDate && !read_salinity) {		// Note: in sea ice it is possible that younger layers are below
 			prn_msg(__FILE__, __LINE__, "err", Date(),
 				   "Layer %d is younger (%s) than layer above (%s) !!!",
 				   ll, prev_depositionDate.toString(Date::ISO).c_str(), SSdata.Ldata[ll].depositionDate.toString(Date::ISO).c_str());
@@ -405,7 +405,10 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 		SSdata.Ldata[ll].CDot = vec_data[current_index++];
 		SSdata.Ldata[ll].metamo = vec_data[current_index++];
 
-		if (read_salinity) SSdata.Ldata[ll].salinity = vec_data[current_index++];
+		if (read_salinity) {
+			SSdata.Ldata[ll].salinity = vec_data[current_index++];
+			SSdata.Ldata[ll].h = vec_data[current_index++];
+		}
 
 		for (size_t ii=0; ii<SnowStation::number_of_solutes; ii++) {
 			SSdata.Ldata[ll].cIce[ii] = vec_data[current_index++];
@@ -654,7 +657,7 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
 	}
 	ss << " Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
-	if (Xdata.Seaice != NULL) ss << " Sal";
+	if (Xdata.Seaice != NULL) ss << " Sal h";
 	for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 		ss << " cIce cWater cAir  cSoil";
 	}
@@ -695,7 +698,10 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		vec_data.push_back(EMS[e].CDot);
 		vec_data.push_back(EMS[e].metamo);
 
-		if (Xdata.Seaice != NULL) vec_data.push_back(EMS[e].salinity);
+		if (Xdata.Seaice != NULL) {
+			vec_data.push_back(EMS[e].salinity);
+			vec_data.push_back(EMS[e].h);
+		}
 
 		for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 			vec_data.push_back(EMS[e].conc(ICE,ii));
@@ -828,6 +834,7 @@ void SmetIO::setFormatting(const size_t& nr_solutes,
 
 	if (write_sea_ice) {
 		vec_width.push_back(15); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].salinity
+		vec_width.push_back(16); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].h
 	}
 
 	for (size_t ii = 0; ii < nr_solutes; ii++) {
@@ -901,7 +908,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 		os << " ";*/
 
 	if (Xdata.Seaice != NULL)
-		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Brine_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
+		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
 
 	return os.str();
 }
