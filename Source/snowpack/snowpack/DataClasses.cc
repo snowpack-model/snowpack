@@ -2004,9 +2004,11 @@ void SnowStation::compSnowpackInternalEnergyChange(const double& sn_dt)
 		meltFreezeEnergy = 0.;
 		const double i_cold_content = ColdContent;
 		ColdContent = 0.;
+		meltMassTot = 0.;
+		refreezeMassTot = 0.;
 		for (size_t e=SoilNode; e<nElems; e++) {
-			meltMassTot += (Edata[e].Qmf > 0.) ? (Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
-			refreezeMassTot += (Edata[e].Qmf < 0.) ? (-Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
+			meltMassTot += (Edata[e].Qmf < 0.) ? (-Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
+			refreezeMassTot += (Edata[e].Qmf > 0.) ? (Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
 			meltFreezeEnergy -= Edata[e].Qmf * Edata[e].L * sn_dt;
 			ColdContent += Edata[e].coldContent();
 		}
