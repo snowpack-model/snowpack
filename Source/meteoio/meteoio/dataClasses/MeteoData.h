@@ -195,10 +195,13 @@ class MeteoData {
 
 		bool isResampled() const {return resampled;}
 		void setResampled(const bool& in_resampled) {resampled = in_resampled;}
-		bool isGenerated() const {return generated;} //if data_qa: is any parameter in this set generated?
-		void setGenerated(const bool& in_generated) {generated = in_generated;}
-		bool isFiltered() const {return filtered;} //if data_qa: is any parameter in this set filtered?
-		void setFiltered(const bool& in_filtered) {filtered = in_filtered;}
+
+		bool isFiltered(const size_t& param) const;
+		void setFiltered(const size_t& param, const bool& in_filtered = true);
+		bool isGenerated(const size_t& param) const;
+		void setGenerated(const size_t& param, const bool& in_generated = true);
+		bool isResampledParam(const size_t& param) const;
+		void setResampledParam(const size_t& param, const bool& in_resampled = true);
 
 		void standardizeNodata(const double& plugin_nodata);
 
@@ -317,6 +320,17 @@ class MeteoData {
 		const std::string getStationID() const {return meta.stationID;}
 
 	private:
+
+		struct flag_field { //object to hold all data quality / datapoint meta flags
+			bool filtered : 1;
+			bool resampled : 1;
+			bool generated : 1;
+			bool created : 1; //TODO: not yet filled in the creators!
+			bool : 1; //leave one empty for future flag
+			unsigned int extra_flag : 3; //rest of byte space could be any 3-bit-value
+			float offset; //an offset that has been applied to the data at this time step
+		};
+
 		//static methods
 		static std::vector<std::string> s_default_paramname; ///<Associate a name with meteo parameters in Parameters
 		static const double epsilon; ///<for comparing fields
@@ -326,10 +340,13 @@ class MeteoData {
 		//private data members, please keep the order consistent with declaration lists and logic!
 		std::vector<std::string> extra_param_name;
 		std::vector<double> data;
+
 		size_t nrOfAllParameters;
+
+		//data qa containers:
 		bool resampled; ///<set this to true if MeteoData is result of resampling
-		bool generated; ///<true if MeteoData comes from a generator (only used when data_qa is enabled)
-		bool filtered; ///<true if MeteoData has been filtered (only used when data_qa is enabled)
+		std::vector<flag_field> flags; ///<Per-parameter data quality flags
+		static flag_field zero_flag; //TODO: is there a way to make this const?
 };
 
 } //end namespace

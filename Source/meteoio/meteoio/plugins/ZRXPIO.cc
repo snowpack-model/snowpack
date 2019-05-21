@@ -84,18 +84,16 @@ namespace mio {
  * - ZRXP_WRITE_CNR: Outputs MeteoIO's internal parameter index (default: true);
  * - ZRXP_RINVAL: The value given to WISKI to interpret as missing data (default: MeteoIO's nodata, usually -999);
  * - ZRXP_REMARK: A remark that is passed through to each output line (default: empty);
+ * - ZRXP_NODATA_PARAMS: Parameters that are nodata throughout will be output if at least one nodata is the result of processing (default: true);
  * - ZRXP_STATUS_UNALTERED: Status to give for data that was checked and left unchanged (default: 41);
  * - ZRXP_STATUS_RESAMPLED: Status for temporally interpolated data (default: 42);
- * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 43);
- * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 44);
+ * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 43);
+ * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 44);
  * - ZRXP_STATUS_NODATA: Status for `nodata` values (default: disabled, has priority over all others).
  *
  * The last five status parameters are used to transport data quality assurance flags to the database.
- * At the moment, this has to be done on a per-timestamp basis, meaning that for a given timestamp if any value
- * at all was filtered / generated / resampled, then the flag will be set for all parameters. An exception is
- * `ZRXP_STATUS_NODATA`, which will be set only if the exact value is found to be `nodata` (e. g. -999), regardless
- * of whether this is an original gap or due to filtering. If `ZRXP_STATUS_NODATA` is not given a value, then this
- * check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
+ * `ZRXP_STATUS_NODATA` will be set only if the *filtered* value is found to be `nodata` (e. g. -999).
+ * If `ZRXP_STATUS_NODATA` is not given a value, then this check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
  *
  * @note In addition, you can separately set `ZRXP_RINVAL`. This is necessary for a use case where original and
  * potentially newer data is merged with filtered data. WISKI would fill data gaps with original data and
@@ -213,6 +211,9 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		cfg.getValue("ZRXP_RINVAL", "Output", zrxp_rinval);
 	}
 
+	bool output_nodata_params(true);
+	cfg.getValue("ZRXP_NODATA_PARAMS", "Output", output_nodata_params, IOUtils::nothrow);
+
 	//read remark and then construct layout string:
 	std::string zrxp_layout("(timestamp,value,status");
 	std::string zrxp_remark("");
@@ -241,7 +242,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		std::vector<bool> vecUsedParams; //will be filled with true or false for each param
 		bool data_exists(false);
 		const size_t nr_of_params = vecMeteo[ii].front().getNrOfParameters();
-		checkForUsedParameters(vecMeteo[ii], vecUsedParams, nr_of_params, data_exists);
+		checkForUsedParameters(vecMeteo[ii], vecUsedParams, nr_of_params, output_nodata_params, data_exists);
 
 		if (data_exists) { //don't open the file if there is no data at all
 
@@ -299,22 +300,23 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				outfile << "#LAYOUT" << zrxp_layout << sep << std::endl;
 
 				for (size_t jj = 0; jj < vecMeteo[ii].size(); ++jj) { //loop through datasets
-
 					//transport data qa flags (same for all parameters of a timestep, except qa_nodata):
+					//qa_unaltered(41), qa_resampled(42), qa_filtered(43), qa_generated(44), qa_nodata=190;
 					int qa_status(qa_unaltered);
-					if ((vecMeteo[ii][jj](pp) == IOUtils::nodata) && use_qa_nodata)
-						qa_status = qa_nodata; //this is set per timestep and parameter!
-					else if (vecMeteo[ii][jj].isFiltered())
-						qa_status = qa_filtered;
-					else if (vecMeteo[ii][jj].isResampled())
-						qa_status = qa_resampled;
-					else if (vecMeteo[ii][jj].isGenerated())
+					if (vecMeteo[ii][jj].isGenerated(pp)) {
 						qa_status = qa_generated;
-
+					} else if (vecMeteo[ii][jj].isResampledParam(pp)) {
+						qa_status = qa_resampled;
+					} else if (vecMeteo[ii][jj].isFiltered(pp)) {
+						if ((vecMeteo[ii][jj](pp) == IOUtils::nodata) && use_qa_nodata)
+							qa_status = qa_nodata;
+						else
+							qa_status = qa_filtered;
+					}
 					//print timestamp, value, status, and optional remark
 					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << vecMeteo[ii][jj](pp)
 								<< " " << qa_status << zrxp_remark << std::endl;
-				}
+				} //endfor jj
 
 			} //endfor params
 
@@ -330,13 +332,13 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
  * @param nr_of_params Number of parameters to check for
  */
 void ZRXPIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, std::vector<bool>& vecUsedParams,
-    const size_t& nr_of_params, bool& data_exists)
+    const size_t& nr_of_params, const bool& output_all_filtered, bool& data_exists)
 {
 	vecUsedParams.clear();
 	for (size_t pp = 0; pp < nr_of_params; ++pp) { //loop through parameters
 		vecUsedParams.push_back(false);
 		for (size_t ii = 0; ii < vecMeteo.size(); ++ii) {
-			if (vecMeteo[ii](pp) != IOUtils::nodata) { //at least one datapoint of this param is available
+			if ( (vecMeteo[ii](pp) != IOUtils::nodata) || (vecMeteo[ii].isFiltered(pp) && output_all_filtered) ) { //at least one datapoint of this param is available
 				vecUsedParams[pp] = true;
 				data_exists = true; //global check
 				break;

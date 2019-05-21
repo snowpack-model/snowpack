@@ -122,12 +122,12 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 			throw IndexOutOfBoundsException(ss.str(), AT);
 		}
 
-		if (data_qa_logs) {
-			for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
-				const double orig = ivec[kk](param);
-				const double filtered = ovec[stat_idx][kk](param);
-				if (orig!=filtered) {
-					ovec[stat_idx][kk].setFiltered(true);
+		for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
+			const double orig = ivec[kk](param);
+			const double filtered = ovec[stat_idx][kk](param);
+			if (orig!=filtered) {
+				ovec[stat_idx][kk].setFiltered(param);
+				if (data_qa_logs) {
 					const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
 					const std::string stat = (!statID.empty())? statID : statName;
 					const std::string filtername( (*filter_stack[jj]).getName() );
@@ -135,9 +135,11 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 				}
 			}
 		}
+
 		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
 			for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
 				ivec[kk](param) = ovec[stat_idx][kk](param);
+				ivec[kk].setFiltered(param, ovec[stat_idx][kk].isFiltered(param));
 			}
 		}
 	}

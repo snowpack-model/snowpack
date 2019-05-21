@@ -512,21 +512,21 @@ const std::string Grid2DObject::toString() const {
 
 std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid) {
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
+	os.write(reinterpret_cast<const char*>(&grid.ur_lat), sizeof(grid.ur_lat));
+	os.write(reinterpret_cast<const char*>(&grid.ur_lon), sizeof(grid.ur_lon));
+	os.write(reinterpret_cast<const char*>(&grid.isLatLon), sizeof(grid.isLatLon));
 	os << grid.llcorner;
 	os << grid.grid2D;
-	os << grid.ur_lat;
-	os << grid.ur_lon;
-	os << grid.isLatLon;
 	return os;
 }
 
 std::istream& operator>>(std::istream& is, Grid2DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
+	is.read(reinterpret_cast<char*>(&grid.ur_lat), sizeof(grid.ur_lat));
+	is.read(reinterpret_cast<char*>(&grid.ur_lon), sizeof(grid.ur_lon));
+	is.read(reinterpret_cast<char*>(&grid.isLatLon), sizeof(grid.isLatLon));
 	is >> grid.llcorner;
 	is >> grid.grid2D;
-	is >> grid.ur_lat;
-	is >> grid.ur_lon;
-	is >> grid.isLatLon;
 	return is;
 }
 

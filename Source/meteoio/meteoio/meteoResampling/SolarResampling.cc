@@ -82,12 +82,12 @@ double Solar::getPotentialH(const MeteoData& md)
 	return global_h;
 }
 
-bool Solar::computeLossFactor(const size_t& index, const size_t& paramindex,
+bool Solar::computeLossFactor(const std::string& stationHash, const size_t& index, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, const Date& resampling_date, Points &pts)
 {
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
-	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
+	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	if (!extrapolate && (!foundP1 || !foundP2)) return false;
 
@@ -121,7 +121,7 @@ double Solar::interpolateLossFactor(const double& resampling_jul, const Points &
 	return 1.;
 }
 
-void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+void Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -131,11 +131,11 @@ void Solar::resample(const size_t& index, const ResamplingPosition& /*position*/
 	if (pot_pt==IOUtils::nodata) return;
 
 	const double resampling_jul = md.date.getJulian();
-	Points pts( cache_losses[ vecM[0].meta.getHash() ] );
+	Points pts( cache_losses[ stationHash ] );
 	if (pts.jul1==0. || (resampling_jul<pts.jul1 || resampling_jul>pts.jul2)) {
-		const bool status = computeLossFactor(index, paramindex, vecM, md.date, pts);
+		const bool status = computeLossFactor(stationHash, index, paramindex, vecM, md.date, pts);
 		if (!status) return;
-		cache_losses[ vecM[0].meta.getHash() ] = pts;
+		cache_losses[ stationHash ] = pts;
 	}
 
 	const double loss = interpolateLossFactor(resampling_jul, pts);

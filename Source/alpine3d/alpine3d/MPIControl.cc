@@ -238,8 +238,7 @@ void MPIControl::barrier() const
 }
 
 #else
-std::string getHostName() 
-{
+std::string getHostName() {
 	static const size_t len = 4096;
 
 	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
@@ -301,7 +300,6 @@ template <class T> void MPIControl::send(const std::vector<T*>& vec_local, const
 		send(obj_string, destination, tag);
 	}
 }
-
 /**
  * @brief	Receive vector of objects from process \#source
  * @param[in] vec_local A vector of T* pointers to receive the object pointers
@@ -356,7 +354,6 @@ template <class T> void MPIControl::send(const std::vector<T>& vec_local, const 
 		send(obj_string, destination, tag);
 	}
 }
-
 /**
  * @brief	Receive vector of objects from process \#source
  * @param[in] vec_local A vector of T* pointers to receive the object pointers
@@ -482,18 +479,23 @@ void MPIControl::getArraySliceParamsOptim(const size_t& dimx, const size_t& idx_
 	for (size_t i=0; i<size_-1;++i) {
 		startx.at(i) = current_x;
 		current_num_cells = 0;
-		while(current_x < dimx && total_num_cells + cells_per_col.at(current_x) < (i+1.2)*mean_num_cells_per_mpi) {
+		//do-while ot force to always add one column
+		do {
 			current_num_cells += cells_per_col.at(current_x);
 			total_num_cells+=cells_per_col.at(current_x);
 			current_x++;
 		}
+		while(current_x < dimx
+					&& total_num_cells + cells_per_col.at(current_x) < (i+1.2)*mean_num_cells_per_mpi
+					&& (dimx-current_x) > (size_-i));
+		//The i+1.2 test is to allow to add a bit more, otherwise last column get all the remainders and is huge
+		//The last test is to be sure that at least 1 column per MPI remains
 		n_cells.at(i) = current_num_cells;
 		//No -1 required because curent_x already incremented once in the "while" loop
 		nx.at(i) = current_x-startx.at(i);
 	}
 	startx.at(size_-1) = current_x;
 	current_num_cells = 0;
-	
 	//Finish to fill the last slice with remaining cells
 	while( current_x < dimx) {
 		current_num_cells+=cells_per_col.at(current_x);

@@ -51,7 +51,7 @@ class Solar : public ResamplingAlgorithms {
 	public:
 		Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
-		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
@@ -61,7 +61,7 @@ class Solar : public ResamplingAlgorithms {
 		} Points;
 
 		static double getPotentialH(const MeteoData& md);
-		bool computeLossFactor(const size_t& index, const size_t& paramindex,
+		bool computeLossFactor(const std::string& stationHash, const size_t& index, const size_t& paramindex,
 		           const std::vector<MeteoData>& vecM, const Date& resampling_date, Points &pts);
 		static double interpolateLossFactor(const double& resampling_jul, const Points &pts);
 

@@ -917,7 +917,7 @@ void ncFiles::writeMeteoMetadataHeader(const int& ncid, const std::vector< std::
 		} else {
 			acdd.addAttribute("title", "Meteorological data timeseries for multiple stations");
 		}
-		acdd.setGeometry(vecMeteo);
+		acdd.setGeometry(vecMeteo, isLatLon);
 		acdd.setTimeCoverage(vecMeteo);
 	} else { //one station per file
 		const std::string stationName( vecMeteo[station_idx].front().meta.stationName );

@@ -32,21 +32,28 @@ namespace mio {
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), op_mode(CLEANUP)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 	const size_t nrArgs = vecArgs.size();
-
+	
 	if (nrArgs!=1)
 		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
 
-	if (vecArgs[0].first=="FRAC") {
+	if (vecArgs[0].first=="CLEANUP") {
+		bool cleanup = false;
+		if (!IOUtils::convertString(cleanup, vecArgs[0].second))
+			throw InvalidArgumentException("The \"cleanup\" key specified for "+where+" must be a boolean", AT);
+		op_mode = CLEANUP;
+	} else if (vecArgs[0].first=="FRAC") {
+		op_mode = FRAC;
 		if (!IOUtils::convertString(range, vecArgs[0].second))
 			throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
 		if (range<0. || range>1.)
 			throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
 	} else if (vecArgs[0].first=="SUPPR") {
+		op_mode = BYDATES;
 		const std::string in_filename( vecArgs[0].second );
 		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
@@ -65,10 +72,12 @@ void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	if (!suppr_dates.empty()) {
-		supprByDates(ovec);
-	} else { //only remove a given fraction
-		supprFrac(ovec);
+	switch(op_mode) {
+		case CLEANUP : supprInvalid(ovec); break;
+		case FRAC : supprFrac(ovec); break;
+		case BYDATES : supprByDates(ovec); break;
+		default :
+			throw InvalidArgumentException("The filter type has not been defined for the filter "+block_name, AT);
 	}
 }
 
@@ -117,6 +126,25 @@ void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
 }
 
+void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
+{
+	const std::string stationID( ovec.front().getStationID() );
+	Date previous_date( ovec.front().date );
+	
+	for (size_t ii=1; ii<ovec.size(); ++ii) {
+		const Date current_date( ovec[ii].date );
+		if (current_date<=previous_date) {
+			std::cerr << "[W] " << stationID << ", deleting duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+			ovec[ii].date.setUndef(true);
+		} else {
+			previous_date = current_date;
+		}
+	}
+	
+	//now really remove the points from the vector
+	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
+}
+
 
 TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
         : ProcessingBlock(vecArgs, name), dst_changes()
@@ -156,10 +184,11 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 	Date prev_date = ovec[0].date - 1.; //so we are sure to be < when checking if timestamps are increasing
 	size_t ii=0;
 
-	while (next_idx-- > 0) { //look for the latest relevant correction to start with
+	do { //look for the latest relevant correction to start with
+		next_idx--;
 		if (dst_changes[next_idx].date <= ovec.front().date)
 			break;
-	}
+	} while (next_idx > 0);
 
 	for (; ii<ovec.size(); ii++) {
 		bool apply_change = (ovec[ii].date>=dst_changes[next_idx].date);
@@ -236,7 +265,7 @@ void TimeProcStack::process(std::vector< std::vector<MeteoData> >& ivec, const b
  * @brief check that timestamps are unique and in increasing order
  * @param[in] vecVecMeteo all the data for all the stations
 */
-void TimeProcStack::checkUniqueTimestamps(const std::vector<METEO_SET>& vecVecMeteo)
+void TimeProcStack::checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo)
 {
 	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
 		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
@@ -247,10 +276,10 @@ void TimeProcStack::checkUniqueTimestamps(const std::vector<METEO_SET>& vecVecMe
 			const Date current_date( vecVecMeteo[stat_idx][ii].date );
 			if (current_date<=previous_date) {
 				const StationData& station( vecVecMeteo[stat_idx][ii].meta );
-				if (current_date==previous_date)
-					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique!", AT);
+				if (current_date==previous_date) 
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+") at time "+current_date.toString(Date::ISO)+": timestamps must be unique! (either correct your data or declare a time filter)", AT);
 				else
-					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO), AT);
+					throw IOException("Error for station \""+station.stationName+"\" ("+station.stationID+"): jumping from "+previous_date.toString(Date::ISO)+" to "+current_date.toString(Date::ISO)+"  (either correct your data or declare a time filter)", AT);
 			}
 			previous_date = current_date;
 		}

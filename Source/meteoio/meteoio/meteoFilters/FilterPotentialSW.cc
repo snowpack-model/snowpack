@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name), min_coeff(0.03), max_coeff(1.1), is_soft(false), use_toa(true)
+          : ProcessingBlock(vecArgs, name), min_coeff(0.03), max_coeff(1.1), mean_period(IOUtils::nodata), is_soft(false), use_toa(true)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -39,10 +39,6 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 	for (size_t ii=0; ii<ovec.size(); ii++) { //now correct all timesteps
 		double& value = ovec[ii](param);
 		if (value == IOUtils::nodata) continue; //preserve nodata values
-
-		const Coords position( ovec[ii].meta.position );
-		Sun.setLatLon(position.getLat(), position.getLon(), position.getAltitude()); //if they are constant, nothing will be recomputed
-		Sun.setDate(ovec[ii].date.getJulian(true), 0.); //quicker: we stick to gmt
 
 		double albedo = 1.; //needed if we are dealing with RSWR
 		if (param==MeteoData::RSWR) {
@@ -62,10 +58,24 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 			RH = 0.666;
 		}
 
-		Sun.calculateRadiation(TA, RH, P, albedo);
-
+		const Coords position( ovec[ii].meta.position );
+		Sun.setLatLon(position.getLat(), position.getLon(), position.getAltitude()); //if they are constant, nothing will be recomputed
+		Sun.setDate(ovec[ii].date.getJulian(true), 0.); //quicker: we stick to gmt
 		double toa_h, direct_h, diffuse_h;
+		Sun.calculateRadiation(TA, RH, P, albedo);
 		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+
+		if (mean_period != IOUtils::nodata) { //measurement is aggregated by the data logger over mean_period
+			static const double one_min = 1./24./60; //sample period at 1-min-intervals
+			double toa_tmp, direct_tmp, diffuse_tmp;
+			for (int mm = 1; mm <= mean_period; ++mm) {
+				Sun.setDate(ovec[ii].date.getJulian(true) - mm*one_min, 0.);
+				Sun.calculateRadiation(TA, RH, P, albedo); //atmospheric parameters are fixed to last step so far
+				Sun.getHorizontalRadiation(toa_tmp, direct_tmp, diffuse_tmp);
+				toa_h += toa_tmp; direct_h += direct_tmp; diffuse_h += diffuse_tmp;
+			}
+			toa_h /= (mean_period + 1); direct_h /= (mean_period + 1); diffuse_h /= (mean_period + 1); //mean
+		}
 
 		if (use_toa && (value/albedo<min_coeff*toa_h)) //top of atmosphere comparison
 			value = is_soft? min_coeff*toa_h*albedo : IOUtils::nodata;
@@ -92,6 +102,8 @@ void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std
 			IOUtils::parseArg(vecArgs[ii], where, run_mode);
 			if (run_mode=="GROUND")
 				use_toa = false;
+		} else if (vecArgs[ii].first=="MEAN_PERIOD") {
+			IOUtils::parseArg(vecArgs[ii], where, mean_period);
 		}
 	}
 

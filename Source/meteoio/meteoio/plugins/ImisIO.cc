@@ -53,7 +53,9 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - DBNAME: name of the database to use (exemple: sdbo)
+ * - DBNAME: the database to connect to. There are two possibilities:
+ *       - as a symbolic name as defined in the tnsnames.ora Network Configuration File provided by the Database administrator (exemple: sdbo);
+ *       - as //hostname:port/service_name (exemple: //sdbo.wd.op:1521/sdbo.slf.ch).
  * - DBUSER: user name to use when connecting to the database
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
