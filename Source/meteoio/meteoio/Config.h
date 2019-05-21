@@ -40,18 +40,38 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
+ * - special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
+ *       - environment variables are called by using the following syntax: ${env:my_env_var};
+ *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key}
+ *       - evaluating an arithmetic expression: ${{arithm. expression}}
  * 
- * @anchor config_import
+ * @note The arithemic expressions are evaluated thanks to the <A HREF="https://codeplea.com/tinyexpr">tinyexpr</A> math library (under the 
+ * <A HREF="https://opensource.org/licenses/Zlib">zlib license</A>) and can use standard operators (including "^"), 
+ * standard functions (such as "sin", "sqrt", "ln", "log", "exp", "floor"...) as well as the "pi" and "e" constants.
+ * 
+ * @section config_import Imports
  * It is possible to import another ini file, by specifying as many of the keys listed below as necessary.
- *   Please not that in order to prevent circular dependencies, it is not possible to import the same file several times.
+ *   Please note that there is a check to prevent circular dependencies.
  *      - IMPORT_BEFORE = {file and path to import}. This must take place before any non-import
  *        key or section header. This imports the specified file before processing the current file, allowing
  *        to overwrite the imported parameters in the current configuration file.
  *      - IMPORT_AFTER = {file and path to import}. This can occur anywhere and imports the specified file
  *        after processing the current file, allowing to overwrite the local parameters by the imported parameters.
  *
- * @author Thomas Egger & Mathias Bavay
- * @date   2008-11-30
+ * @section config_examples Exemples
+ * @code
+ * [Input]					; this defines a section
+ * InputFile = ./input/myfile.dat		; this defines a key "InputFile" with the associated value "./input/myfile.dat"
+ * #oldInput = ./test/test.dat		; this is commented out
+ * smart_read = false			; this defines the boolean key "smart_read"
+ * fast_read = T				; this defines another boolean key, "fast_read"
+ *
+ * user = ${env:LOGNAME}			; this uses the value of the environment variable "LOGNAME" for the key "user"
+ * output_log = ${env:LOGNAME}_output.log	; we can even concatenate environment variables with other elements
+ *
+ * ConfigBackup = ${user}_${smart_read}.bak	; using other keys to build a value
+ * Target_rate = ${{24*3600}}		; arithmetic expression that will be evaluated when reading the key
+ * @endcode
  */
 
 class ConfigProxy;
@@ -387,17 +407,10 @@ class Config {
 		void moveSection(std::string org, std::string dest, const bool& overwrite);
 
 	private:
-		void parseFile(const std::string& filename);
-		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
-		static std::string extract_section(std::string key);
-		std::string clean_import_path(const std::string& in_path) const;
-
 		std::map<std::string, std::string> properties; ///< Save key value pairs
-		std::vector<std::string> imported; ///< list of files already imported (to avoid circular references)
  		std::set<std::string> sections; ///< list of all the sections that have been found
 		std::string sourcename; ///< description of the data source for the key/value pair
 		std::string configRootDir; ///< directory of the root config file
-		static const char* defaultSection;
 }; //end class definition Config
 
 class ConfigProxy {
@@ -417,6 +430,29 @@ class ConfigProxy {
 		}
 
 		ConfigProxy& operator =(const ConfigProxy& /*i_cfg*/) {return *this;} //making VC++ happy...
+};
+
+class ConfigParser {
+	public:
+		ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections);
+		
+		static std::string extract_section(std::string key);
+	private:
+		void parseFile(const std::string& filename);
+		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
+		static void processEnvVars(std::string& value);
+		static void processExpr(std::string& value);
+		bool processVars(std::string& value, const std::string& section);
+		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
+		std::string clean_import_path(const std::string& in_path) const;
+		bool processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before);
+		void handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before);
+
+		std::map<std::string, std::string> properties; ///< Save key value pairs
+		std::set<std::string> imported; ///< list of files already imported (to avoid circular references)
+ 		std::set<std::string> sections; ///< list of all the sections that have been found
+ 		std::set<std::string> deferred_vars; ///< list of all the variables that have been found and will have to be resolved
+ 		std::string sourcename; ///< description of the data source for the key/value pair
 };
 
 } //end namespace mio

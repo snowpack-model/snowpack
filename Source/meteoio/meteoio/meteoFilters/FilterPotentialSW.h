@@ -50,6 +50,22 @@ namespace mio {
  * ISWR::arg1::MAX_COEFF = 1.1
  * @endcode
  *
+ * If your data logger aggregates measurements this can lead to troubles at the steeper parts of the potential radiation
+ * curve. For 10 minutes, the difference can be a couple of dozens W/m^2 which would be averaged and compared to the theoretical value
+ * at the end of the aggregation period. To remedy this, you can set MEAN_PERIOD. You must set it in *minutes*, because this
+ * is currently the (fixed) resolution the filter samples the potential radiation with.
+ * @code
+ * ISWR::filter1           = PotentialSW
+ * ISWR::arg1::min_coeff   = 0
+ * ISWR::arg1::max_coeff   = 1.05
+ * ISWR::arg1::soft        = true
+ * ISWR::arg1::mean_period = 10 ;minutes
+ * @endcode
+ *
+ * In the above example, if the filter meets a measurement at 10:15 it will compute the potential radiation for 10:15, 10:14, ...,
+ * 10:05 (i. e. 11 values), take the arithmetic mean, and compare that to the value at 10:15 as usual. Note that influential
+ * atmospheric parameters (TA, RH, P) are currently taken as constant from the measurement time step (at 10:15 in
+ * the example). The *min_coeff* in this case is essentially a minimum filter to 0.
  */
 
 class FilterPotentialSW : public ProcessingBlock {
@@ -63,6 +79,7 @@ class FilterPotentialSW : public ProcessingBlock {
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double min_coeff, max_coeff;
+		double mean_period; //in minutes
 		bool is_soft;
 		bool use_toa;
 };

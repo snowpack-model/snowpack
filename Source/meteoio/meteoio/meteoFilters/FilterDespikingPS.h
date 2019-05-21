@@ -50,7 +50,7 @@ namespace mio {
  *                                                            the outliers, while the Mori-implementation finds the outliers in 3D)
  *
  * - Replacement of the spikes:
- *  - find a cubic fit for 24 data points around the spike
+ *  - find a fit for data points around the spike
  *  - replace the spike with a fitted value
  *
  * Parameters:
@@ -60,11 +60,16 @@ namespace mio {
  *      the ellipsoid) and thus the more spikes will be detected.
  *  - The method parameter decides which implementation to use: "Mori" or "Goring". The differences are small between both implementations.
  *    According to Mori the "Mori"-version performs slightly better. However, we suggest to use the Goring-method, because it is better tested.
-
+ *  - The parameter interpol_deg sets the degree of the fit for the replacement. 1 is linear, 2 is quadratic, ..., 0 means "off"
+ *    (removed spikes will be nodata and can be resampled later via [Interpolations1D]). This is useful in rare cases where the cubic fit happens
+ *    to produce an unwanted peak by itself.
+ *    Default value is 3 (cubic fit) as proposed in the paper by Goring.
+ *  - The number of points used for the fitting (replacement) of the spikes can be set via interpol_pts. Default is 24 (just as proposed in the
+ *    paper by Goring).
+ *
  * - Hard-coded parameters:
  *    - the maximum number of iterations for the spike detection. This is set to 50.
- *    - the number of points used for the fitting (replacement) of the spikes. This is set to 24 (just as proposed in the paper by Goring).
- *    - the degree of the fit for the replacement. This is set to 3 (cubic fit) (as proposed in the paper by Goring).
+ *    - When fitting, extrapolation is set to false.
  *
  * \image html DespikingFilter_phaceSpacePlots.png "2D projections of the phase space plots. Points outside the ellipses are spikes."
  *
@@ -75,6 +80,12 @@ namespace mio {
  * VW::filter1	= despiking
  * VW::arg1::sensitivity = 1
  * VW::arg1::method = GORING
+ * @endcode
+ * @code
+ * HS::filter1            = despiking
+ * HS::arg1::sensitivity  = 1.4
+ * HS::arg1::method       = GORING
+ * HS::arg1::interpol_deg = 0 ;remove spikes
  * @endcode
  */
 
@@ -106,8 +117,7 @@ class FilterDespikingPS : public ProcessingBlock {
 		void findPointsOutsideEllipsoid(const std::vector<double>& xVec,const std::vector<double>& yVec, const std::vector<double>& zVec,
                                                 const double a,const double b,const double c, std::vector<int>& outsideVec);
 		void getWindowForInterpolation(const size_t index,const std::vector<double>& timeVec, const std::vector<double>& uVec,
-                                       const std::vector<int>& spikesVec, const unsigned int& windowWidth, std::vector<double>& xVec,
-                                       std::vector<double>& yVec);
+                                       const std::vector<int>& spikesVec, std::vector<double>& xVec, std::vector<double>& yVec);
 		bool checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,const unsigned int minPoints,
                                                        const bool avoidExtrapolation);
 		//helper functions:
@@ -119,6 +129,9 @@ class FilterDespikingPS : public ProcessingBlock {
 		implementation_type methodParam; //this parameter controls which implementation of the filter is used: according to Mori or Goring
 		int nIterations;   //this counts the iterations
 		int maxIterations; //this is a hard-coded parameter to stop the iteration
+
+		unsigned int degreeOfInterpolation; //1: linear fit, 2: quadratic fit, 3: cubic fit
+		unsigned int windowWidth; //wished width of the window for interpolation
 };
 
 } //end namespace

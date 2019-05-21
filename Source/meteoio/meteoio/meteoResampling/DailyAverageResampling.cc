@@ -89,7 +89,7 @@ double DailyAverage::getValue(const std::vector<MeteoData>& vecM, const size_t& 
 	return A * sin( 2.*Cst::PI * (frac_day-.25+phase) ) + avg;
 }
 
-void DailyAverage::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+void DailyAverage::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())

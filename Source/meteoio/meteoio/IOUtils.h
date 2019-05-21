@@ -195,7 +195,7 @@ namespace IOUtils {
 	 * @details This replaces all whitespaces (including consecutive ones) with a single
 	 * character or removes them, and removes invalid characters and quotes.
 	 * @param field The string to read and modify
-	 * @param[in] clean_whitespaces Should tabs and spaces be replaced? (default: false)
+	 * @param[in] clean_whitespaces Should tabs and spaces be replaced? (default: true)
 	 * @param[in] rep Substitute string (default: '-'). Set to empty ('\0') to remove.
 	 */
 	void cleanFieldName(std::string& field, const bool& clean_whitespaces = true, const char& rep = '-');

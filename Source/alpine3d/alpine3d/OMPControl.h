@@ -36,7 +36,7 @@ namespace OMPControl
 		*/
   void getArraySliceParams(const size_t& dimx, const size_t& nbworkers, const size_t& idx_wk, size_t& startx_sub, size_t& nx_sub);
   void getArraySliceParamsOptim(const size_t& nbworkers, const std::vector<SnowStation*>&, const mio::DEMObject& mpi_sub_dem,
-                                const mio::Grid2DObject& mpi_sub_landuse, std::vector< std::vector<size_t> >& omp_snow_stations_ind);
+                                const mio::Grid2DObject& mpi_sub_landuse, std::vector<std::vector<size_t> >& omp_snow_stations_ind);
 
 }
 #endif

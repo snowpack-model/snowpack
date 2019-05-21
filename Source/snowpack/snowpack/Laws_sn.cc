@@ -345,7 +345,8 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		const double Alb1 = Crho*Edata.Rho + Clwc*(Edata.theta[WATER]+Edata.theta[WATER_PREF]) + Cdd*Edata.dd + Csp*Edata.sp
 		+ Cmf*mf + Crb*Edata.rb +  Cta*Ta + Ctss*Tss
 		+ Cv*Mdata.vw+ Cswout*Mdata.rswr + Cta_tss*Ta*Tss;
-		Alb = av + log(1.0 + Alb1);
+		if (Alb1 >= -1.) Alb = av + log(1.0 + Alb1);
+		Alb = std::max(Constants::min_albedo, Alb);
 	}
 	else if (i_albedo_parameterization == "LEHNING_2") {
 		//TODO: this perfoms very badly (if not completly wrong) for (very?) wet snowpack

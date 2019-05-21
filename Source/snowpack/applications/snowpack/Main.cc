@@ -457,7 +457,7 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	if (md.param_exists("ADV_HEAT"))
 		Mdata.adv_heat = md("ADV_HEAT");
 
-	// Add massbal parameters (surface snow melt, snow drift, sublimation) 
+	// Add massbal parameters (surface snow melt, snow drift, sublimation), all mass fluxes in kg m-2 CALCULATION_STEP_LENGTH-1
 	if(md.param_exists("SMELT"))
 		Mdata.surf_melt = md("SMELT");
 	else
@@ -1154,11 +1154,6 @@ inline void real_main (int argc, char *argv[])
 				dataForCurrentTimeStep(Mdata, surfFluxes, vecXdata, slope, tmpcfg,
                                        sun, cumsum.precip, lw_in, hs_a3hl6,
                                        tot_mass_in, variant);
-
-				// Convert units of massbal parameters
-				if (Mdata.surf_melt != mio::IOUtils::nodata) Mdata.surf_melt *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-				if (Mdata.snowdrift != mio::IOUtils::nodata) Mdata.snowdrift *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-				if (Mdata.sublim != mio::IOUtils::nodata) Mdata.sublim *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
 
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;

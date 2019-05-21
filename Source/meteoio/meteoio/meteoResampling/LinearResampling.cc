@@ -50,7 +50,7 @@ std::string LinearResampling::toString() const
 	return ss.str();
 }
 
-void LinearResampling::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+void LinearResampling::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -71,7 +71,7 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 
 	const Date resampling_date = md.date;
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	//do nothing if we can't interpolate, and extrapolation is not explicitly activated

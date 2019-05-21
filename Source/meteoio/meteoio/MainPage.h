@@ -172,6 +172,14 @@ namespace mio {
  * @code
  * TA::algorithms = IDW_LAPSE CST_LAPSE
  * @endcode
+ * 
+ * A value can also be an environment variable, another key or an arithmetic expression (see the \ref Config "Config class documentation" for more details):
+ * @code
+ * USERNAME = ${env:LOGNAME}
+ * FIRST_NAME = John
+ * FULL_NAME = ${FIRST_NAME}_${USERNAME}
+ * AGE = ${{3*20-18+pi/18}}
+ * @endcode
  *
  * @section Config_structure Configuration file structure
  * MeteoIO imposes a minimum structure to the configuration %file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, and potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.

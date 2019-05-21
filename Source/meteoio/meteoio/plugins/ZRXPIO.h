@@ -45,7 +45,7 @@ class ZRXPIO : public IOInterface {
 		const Config cfg;
 
 		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, std::vector<bool>& vecUsedParams,
-		    const size_t& nr_of_params, bool& data_exists);
+		    const size_t& nr_of_params, const bool& output_nodata_params, bool& data_exists);
 };
 
 } //namespace

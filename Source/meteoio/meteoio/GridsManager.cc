@@ -453,7 +453,7 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 
 	 //reproject grid if it is lat/lon
 	if (enforce_cartesian && grid2D.isLatlon())
-		grid2D.reproject(); //this is currently very, very primitive
+		grid2D.reproject(); //HACK this is currently very, very primitive
 
 	return grid2D;
 }

@@ -26,7 +26,8 @@ using namespace std;
 namespace mio {
 
 FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50)
+          : ProcessingBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50),
+			degreeOfInterpolation(3), windowWidth(24)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -120,6 +121,10 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 			else if (type_str=="GORING") methodParam = GORING;
 			else throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for \""+where+"\". Please use \"MORI\" or \"GORING\".", AT);
 			hasMethodParam=true;
+		} else if (vecArgs[ii].first=="INTERPOL_DEG") {
+				IOUtils::parseArg(vecArgs[ii], where, degreeOfInterpolation);
+		} else if (vecArgs[ii].first=="INTERPOL_PTS") {
+				IOUtils::parseArg(vecArgs[ii], where, windowWidth);
 		}
 	}
 
@@ -379,7 +384,6 @@ std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& ti
 	std::vector<double> Y(uVec.size(),0);
 	std::vector<double> Z(uVec.size(),0);
 
-	std::cout << "Theta: " << theta << std::endl;
 	for (size_t ii=0; ii<uVec.size(); ii++) {
 		if (uVec[ii] != IOUtils::nodata && du2Vec[ii] != IOUtils::nodata){
 			X[ii] = uVec[ii]*cos(theta) + du2Vec[ii]*sin(theta);
@@ -427,8 +431,7 @@ std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& ti
  * @param yVec output: y-coordinates (=the values of the signal)
  */
 void FilterDespikingPS::getWindowForInterpolation(const size_t index,const std::vector<double>& timeVec, const std::vector<double>& uVec,
-                                                  const std::vector<int>& spikesVec, const unsigned int& windowWidth, std::vector<double>& xVec,
-                                                  std::vector<double>& yVec)
+                                                  const std::vector<int>& spikesVec, std::vector<double>& xVec, std::vector<double>& yVec)
 {
 	xVec.clear();
 	yVec.clear();
@@ -503,26 +506,28 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 {
 	std::vector<double> xVec;
 	std::vector<double> yVec;
-	static const unsigned int windowWidth = 24; //wished width of the window for interpolation
-	static const unsigned int degreeOfInterpolation = 3; //1: linear fit, 2: quadratic fit, 3: cubic fit
 	static const unsigned int minPointsForInterpolation = degreeOfInterpolation+1;
 	bool avoidExtrapolation = true; //to avoid extrapolation, we need data points left and right of the spike
 
 	for (size_t ii=0; ii<uVec.size(); ii++) {
 		if (spikesVec[ii]!=0){ //here we have a spike. replace its value:
-			getWindowForInterpolation(ii,timeVec,uVec,spikesVec,windowWidth,xVec,yVec);
-			if(checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)){
-				try{
-					//interpolate the spike data point:
-					Fit1D quadraticFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
-					quadraticFit.setDegree(degreeOfInterpolation);
-					quadraticFit.fit();
-					double interpolatedValue = quadraticFit.f(0);
-					uVec[ii] = interpolatedValue;
-				} catch (const std::exception &e) {
-					std::cout << "An exception occurred: " << e.what() << std::endl;
-				}
-			}
+			if (degreeOfInterpolation>0) {
+				getWindowForInterpolation(ii,timeVec,uVec,spikesVec,xVec,yVec);
+				if(checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)){
+					try{
+						//interpolate the spike data point:
+						Fit1D polyFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
+						polyFit.setDegree(degreeOfInterpolation);
+						polyFit.fit();
+						double interpolatedValue = polyFit.f(0);
+						uVec[ii] = interpolatedValue;
+					} catch (const std::exception &e) {
+						std::cerr << "An exception occurred: " << e.what() << std::endl;
+					}
+				} //endif getWindow
+			} else {
+				uVec[ii] = IOUtils::nodata;
+			} //endif degree
 		}
 	}
 }

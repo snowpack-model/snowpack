@@ -28,10 +28,8 @@ namespace OMPControl
   	}
   }
   void getArraySliceParamsOptim(const size_t& nbworkers, const std::vector<SnowStation*>& snow_station, const mio::DEMObject& dem,
-                                const mio::Grid2DObject& landuse, std::vector< std::vector<size_t> >& omp_snow_stations_ind)
+                                const mio::Grid2DObject& landuse, std::vector<std::vector<size_t> >& omp_snow_stations_ind)
   {
-    std::cout << "OMP "<< nbworkers << " has " << snow_station.size() << " stations"<< std::endl;
-
     size_t dimx = dem.getNx();
     size_t dimy = dem.getNy();
 
@@ -55,13 +53,6 @@ namespace OMPControl
     size_t n_snow_station_worker=n_snow_station_compute/nbworkers;
     size_t remainders = n_snow_station_compute%nbworkers;
 
-    std::cout << "Number of snow station : " << snow_station.size() << std::endl;
-    std::cout << "Number of snow to compute : " << n_snow_station_compute << std::endl;
-
-    std::cout << "Number of snow to compute raw : " << n_snow_station_worker_raw << std::endl;
-    std::cout << "Number of per worker : " << n_snow_station_worker << std::endl;
-    std::cout << "Number of remainders : " << remainders << std::endl;
-
     omp_snow_stations_ind.resize(nbworkers);
 
     size_t worker_i=0;
@@ -75,15 +66,13 @@ namespace OMPControl
       {
         worker_n++;
       }
-      if(worker_n > n_snow_station_worker+remain)
+      if(worker_n == n_snow_station_worker+remain)
       {
-        remain=remain>0?remain-1:0;
-        std::cout << "OMP "<< worker_i << " has stations range " << omp_snow_stations_ind.at(worker_i).front() << "  " << omp_snow_stations_ind.at(worker_i).back() << std::endl;
-        ++worker_i;
+        remainders=remainders>0?remainders-1:0;
+        remain=remainders>0?1:0;
+        worker_i=worker_i<(nbworkers-1)?worker_i+1:worker_i;
         worker_n=0;
-
       }
     }
-    std::cout << "OMP "<< worker_i << " has stations range " << omp_snow_stations_ind.at(worker_i).front() << "  " << omp_snow_stations_ind.at(worker_i).back() << std::endl;
   }
 }

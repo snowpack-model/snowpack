@@ -268,7 +268,7 @@ namespace mio {
  * @endcode
  * In order to avoid circular dependencies, a station can NOT receive data from a station AND contribute data to another station. Otherwise, a
  * station can be merged into multiple other stations. Moreover, the merging strategy can be controlled by setting the MERGE_STRATEGY key in
- * the [Input] section (by default it is "STRICT_MERGE", see MeteoData::Merge_Type).
+ * the [Input] section (by default it is "EXPAND_MERGE", see MeteoData::Merge_Type).
  *
  * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
  * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size

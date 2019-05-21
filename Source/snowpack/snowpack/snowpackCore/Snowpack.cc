@@ -827,7 +827,7 @@ double Snowpack::getModelAlbedo(const SnowStation& Xdata, CurrentMeteo& Mdata) c
 		exit(EXIT_FAILURE);
 	}
 
-	return pAlbedo; //we do not have a measured labedo -> use parametrized
+	return pAlbedo; //we do not have a measured albedo -> use parametrized
 }
 
 /**

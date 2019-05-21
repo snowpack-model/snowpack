@@ -23,7 +23,6 @@
 
 class SnowpackInterface;
 
-#include <alpine3d/MPIControl.h>
 #include <alpine3d/ebalance/RadiationField.h>
 #include <alpine3d/ebalance/TerrainRadiationAlgorithm.h>
 #include <alpine3d/SnowpackInterface.h>
@@ -31,15 +30,15 @@ class SnowpackInterface;
 /**
  * @page radiation_balance Radiation balance
  * First, the measured radiation (as provided by each station that measured both ISWR, TA and RH) is interpolated over the domain:
- *      -# At each station that provides radiation the splitting coefficient (into direct and diffuse components) 
+ *      -# At each station that provides radiation the splitting coefficient (into direct and diffuse components)
  *           and an atmospheric loss factor are computed by comparing the measured radiation with the potential radiation;
  *      -# The splitting coefficient Md and the atmospheric loss factor Corr are spatially interpolated with an Inverser Distance
  *           weighting algorithm;
  *      -# At each cell, the clear sky potential radiation is computed by (Iqbal, 1983), split into direct and diffuse components using its
  *           spatially interpolated value and corrected by the spatially interpolated atmopsheric loss factor. The direct component is
  *           also projected on the local slope.
- * 
- * Then the effects of the terrain on the radiation field are accounted for. These are twofold: first the topography can cast shade 
+ *
+ * Then the effects of the terrain on the radiation field are accounted for. These are twofold: first the topography can cast shade
  * on some parts of the domain and second some radiation can be reflected by the terrain on some other cells (see \ref principles_ebalance).
  *
  * @section topo_shading Topographical shading
@@ -47,7 +46,7 @@ class SnowpackInterface;
  * only receive the diffuse fraction of the global radiation while the cells with direct view of the sun receive both the direct and diffuse
  * components. Please keep in mind that when looking for the horizon (in order to compute shading), the search will <b>stop</b> at cells that are
  * set to nodata in the dem. This means that nodata cells on the border of the domain of interest will prevent searching for shading outside of the
- * domain while nodata cells \em within the domain should be as much as possible avoided. 
+ * domain while nodata cells \em within the domain should be as much as possible avoided.
  *
  * @section terrain_radiation Terrain radiation
  * The second effect is computed when the key Terrain_Radiation is set to true (by default it is set to false)
@@ -72,7 +71,7 @@ class EnergyBalance
 		EnergyBalance( const unsigned int& i_nbworkers, const mio::Config& cfg, const mio::DEMObject &dem_in);
 		EnergyBalance(const EnergyBalance&);
 		~EnergyBalance( );
-		
+
 		EnergyBalance& operator=(const EnergyBalance&); ///<Assignement operator, required because of pointer member
 
 		void setSnowPack(SnowpackInterface &mysnowpack );

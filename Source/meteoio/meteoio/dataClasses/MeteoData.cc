@@ -116,6 +116,7 @@ const double MeteoData::epsilon = 1e-5;
 const size_t MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
 std::vector<std::string> MeteoData::s_default_paramname;
 const bool MeteoData::__init = MeteoData::initStaticData();
+MeteoData::flag_field MeteoData::zero_flag; //for easy initialization
 
 bool MeteoData::initStaticData()
 {
@@ -135,6 +136,12 @@ bool MeteoData::initStaticData()
 	s_default_paramname.push_back("TAU_CLD");
 	s_default_paramname.push_back("PSUM");
 	s_default_paramname.push_back("PSUM_PH");
+
+	zero_flag.resampled = false; //init data qa flag that is initially set
+	zero_flag.generated = false;
+	zero_flag.filtered = false;
+	zero_flag.created = false;
+	zero_flag.offset = (float)IOUtils::nodata;
 
 	return true;
 }
@@ -195,6 +202,7 @@ size_t MeteoData::addParameter(const std::string& i_paramname)
 	//add parameter
 	extra_param_name.push_back(i_paramname);
 	data.push_back(IOUtils::nodata);
+	flags.push_back(zero_flag);
 
 	//Increase nrOfAllParameters
 	nrOfAllParameters++;
@@ -204,17 +212,17 @@ size_t MeteoData::addParameter(const std::string& i_paramname)
 
 MeteoData::MeteoData()
          : date(0.0, 0.), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
-           resampled(false), generated(false), filtered(false)
+           resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
 { }
 
 MeteoData::MeteoData(const Date& date_in)
          : date(date_in), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
-           resampled(false), generated(false), filtered(false)
+           resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
 { }
 
 MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
          : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
-           resampled(false), generated(false), filtered(false)
+           resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
 { }
 
 void MeteoData::reset()
@@ -310,6 +318,36 @@ bool MeteoData::isNodata() const
 	}
 	
 	return true;
+}
+
+void MeteoData::setFiltered(const size_t& param, const bool& in_filtered /* = true */)
+{
+	flags[param].filtered = in_filtered;
+}
+
+bool MeteoData::isFiltered(const size_t& param) const
+{
+	return flags[param].filtered;
+}
+
+void MeteoData::setGenerated(const size_t& param, const bool& in_generated /* = true */)
+{
+	flags[param].generated = in_generated;
+}
+
+bool MeteoData::isGenerated(const size_t& param) const
+{
+	return flags[param].generated;
+}
+
+void MeteoData::setResampledParam(const size_t& param, const bool& in_resampled /* = true */)
+{
+	flags[param].resampled = in_resampled;
+}
+
+bool MeteoData::isResampledParam(const size_t& param) const
+{
+	return flags[param].resampled;
 }
 
 const std::string MeteoData::toString() const {
@@ -571,7 +609,10 @@ void MeteoData::merge(const MeteoData& meteo2)
 
 	//merge standard parameters
 	for (size_t ii=0; ii<nrOfParameters; ii++) {
-		if (data[ii]==IOUtils::nodata) data[ii]=meteo2.data[ii];
+		if (data[ii]==IOUtils::nodata) {
+			data[ii]=meteo2.data[ii];
+			flags[ii]=meteo2.flags[ii];
+		}
 	}
 
 	//for each meteo2 extra parameter, check if a matching parameter exist
@@ -582,8 +623,10 @@ void MeteoData::merge(const MeteoData& meteo2)
 		if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
 			const size_t new_idx = addParameter( extra_name );
 			data[new_idx] = meteo2.data[nrOfParameters+ii];
+			flags[new_idx] = meteo2.flags[nrOfParameters+ii];
 		} else if (data[extra_param_idx]==IOUtils::nodata) {
 			data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
+			flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
 		}
 	}
 }

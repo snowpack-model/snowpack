@@ -34,7 +34,7 @@ class TimeProcStack {
 		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 		
 		void process(std::vector< std::vector<MeteoData> >& ivec, const bool& second_pass);
-		static void checkUniqueTimestamps(const std::vector<METEO_SET>& vecVecMeteo);
+		static void checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo);
 		static const std::string timeParamName;
 		
 	private:
@@ -48,13 +48,17 @@ class TimeProcStack {
  * @brief Timesteps suppression filter.
  * @details
  * This filter deletes some timesteps based on the provided arguments:
+ *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true;
  *  - SUPPR: provide a file that contains a list of station ID's and timesteps that should be suppressed;
  *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.
  *
  * @code
  * TIME::filter1     = suppr
- * TIME::arg1::suppr = ./input/meteo/suppr.dat
+ * TIME::arg1::cleanup = true
+ * 
+ * TIME::filter2     = suppr
+ * TIME::arg2::suppr = ./input/meteo/suppr.dat
  * @endcode
  * 
  * The file <i>suppr.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE):
@@ -76,11 +80,20 @@ class TimeSuppr : public ProcessingBlock {
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
 	private:
+		//possible modes of operation
+		typedef enum MODE {
+		            NONE,
+		            BYDATES,
+		            FRAC,
+		            CLEANUP
+		} Mode;
 		void supprByDates(std::vector<MeteoData>& ovec) const;
 		void supprFrac(std::vector<MeteoData>& ovec) const;
+		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
 		std::map< std::string, std::vector<dates_range> > suppr_dates;
 		double range;
+		Mode op_mode;
 };
 
 /**

@@ -172,7 +172,8 @@ class Runoff; // forward declaration, cyclic header include
 		bool do_grid_output(const mio::Date &date) const;
 		void calcNextStep();
 
-		std::vector<SnowStation*> readInitalSnowCover();
+		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
+                             std::vector<std::pair<size_t,size_t> >& snow_stations_coord);
 		void readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const bool& is_special_point,
 											 SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice);
 		void writeSnowCover(const mio::Date& date, const std::vector<SnowStation*>& snow_station);
@@ -229,7 +230,7 @@ class Runoff; // forward declaration, cyclic header include
 		std::vector<SnowpackInterfaceWorker*> workers;
 		std::vector<size_t> worker_startx; // stores offset for each workers slice
 		std::vector<size_t> worker_deltax; // stores size for each workers slize
-
+		std::vector<std::vector<std::pair<size_t,size_t> > > worker_stations_coord; // ttores te grid coordiante of each worker
 		// time relevant
 		mio::Timer timer; // used to mesure calc time of one step
 		mio::Date nextStepTimestamp;

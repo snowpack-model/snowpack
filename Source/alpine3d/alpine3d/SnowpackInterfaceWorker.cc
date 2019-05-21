@@ -128,15 +128,15 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const mio::Grid2DObject& landuse_in,
                                                  const std::vector< std::pair<size_t,size_t> >& pts_in,
                                                  const std::vector<SnowStation*>& snow_stations,
+                                                 const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
                                                  const size_t offset_in)
  : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), dem(dem_in),
-   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), isSpecialPoint(snow_stations.size(), false),
-   landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(), surface_flux(),
-   soil_temp_depths(), calculation_step_length(0.), height_of_wind_value(0.),
+   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), SnowStationsCoord(snow_stations_coord),
+   isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
+   surface_flux(), soil_temp_depths(), calculation_step_length(0.), height_of_wind_value(0.),
    snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
    enable_simple_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
 {
-	if (SnowStations.size() != (dimx*dimy)) throw IOException("Initial snow data does not match the provided grid size", AT);
 
 	sn_cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
 	sn_cfg.getValue("HEIGHT_OF_WIND_VALUE", "Snowpack", height_of_wind_value); //currently unused
@@ -161,7 +161,9 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	if (soil_temp_depths.size()>max_Tsoil)
 		throw InvalidArgumentException("Too many soil temperatures requested", AT);
 	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
-		const std::string ii_str( static_cast<ostringstream*>( &(ostringstream() << (ii+1)) )->str() );
+		std::stringstream ss;
+		ss << (ii+1);
+		const std::string ii_str(ss.str());
 		params.push_back( "TSOIL"+ii_str );
 	}
 	uniqueOutputGrids(params);
@@ -170,22 +172,22 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	const CurrentMeteo meteoPixel; //this is only necessary in order to have something for fillGrids()
 	const SurfaceFluxes surfaceFlux; //this is only necessary in order to have something for fillGrids()
 
-	for (size_t iy = 0; iy < dimy; iy++) {
-		for (size_t ix = 0; ix < dimx; ix++) {
-			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) { //skip nodata cells as well as water bodies, etc
-				if (!pts_in.empty() && is_special(pts_in, ix, iy))
-					std::cout << "[W] POI (" << ix+offset << "," << iy << ") will be skipped (nodatat, water body, etc)" << std::endl;
-				continue;
+	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+		size_t ix = SnowStationsCoord.at(i).first;
+		size_t iy = SnowStationsCoord.at(i).second;
+		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) { //skip nodata cells as well as water bodies, etc
+			if (!pts_in.empty() && is_special(pts_in, ix, iy)){
+				std::cout << "[W] POI (" << ix+offset << "," << iy << ") will be skipped (nodatat, water body, etc)" << std::endl;
 			}
+			continue;
+		}
 
-			const size_t index_SnowStation = ix + dimx*iy;
-			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skip cells initialized with NULL
-			const SnowStation &snowPixel = *SnowStations[index_SnowStation];
-			fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
-
-			if (!pts_in.empty()) { //is it a special point?
-				isSpecialPoint[index_SnowStation] = is_special(pts_in, ix, iy);
-			}
+		const size_t index_SnowStation = i;
+		if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skip cells initialized with NULL
+		const SnowStation &snowPixel = *SnowStations[index_SnowStation];
+		fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
+		if (!pts_in.empty()) { //is it a special point?
+			isSpecialPoint[index_SnowStation] = is_special(pts_in, ix, iy);
 		}
 	}
 }
@@ -209,9 +211,9 @@ void SnowpackInterfaceWorker::uniqueOutputGrids(std::vector<std::string>& output
 	for (size_t ii = 0; ii<output_grids.size(); ++ii)
 		IOUtils::toUpper(output_grids[ii]);
 
-	std::sort (output_grids.begin(), output_grids.end());
-	const std::vector<std::string>::iterator it = std::unique (output_grids.begin(), output_grids.end());
-	output_grids.resize( std::distance(output_grids.begin(),it) );
+	std::sort(output_grids.begin(), output_grids.end());
+	const std::vector<std::string>::iterator it = std::unique(output_grids.begin(), output_grids.end());
+	output_grids.resize(std::distance(output_grids.begin(),it));
 }
 
 /** @brief Initialize and add to the grid map the requested grids
@@ -258,15 +260,14 @@ void SnowpackInterfaceWorker::clearSpecialPointsData()
  */
 void SnowpackInterfaceWorker::getOutputSNO(std::vector<SnowStation*>& snow_station) const
 {
-	for (size_t iy=0;iy<dimy;iy++) {
-		for (size_t ix=0;ix<dimx;ix++) {
-			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			const size_t index_SnowStation = dimx*iy + ix;
-
-			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
-			#pragma omp critical (snow_station_lock)
-			snow_station.push_back( SnowStations[index_SnowStation] );
-		}
+	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+		size_t ix = SnowStationsCoord.at(i).first;
+		size_t iy = SnowStationsCoord.at(i).second;
+		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
+		const size_t index_SnowStation = i;
+		if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
+		#pragma omp critical (snow_station_lock)
+		snow_station.push_back( SnowStations[index_SnowStation] );
 	}
 }
 
@@ -404,11 +405,14 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = (!snowPixel.isGlacier(false))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			default:
 				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::lastparam) //dealing with soil temperatures
+				{
 					value = (soil_temp_depths.empty())? IOUtils::nodata : getSoilTemperature(snowPixel, soil_temp_depths[ it->first - SnGrids::TSOIL1 ]);
+				}
 				else
+				{
 					throw InvalidArgumentException("Invalid parameter requested", AT);
+				}
 		}
-
 		it->second(ii,jj) = value;
 	}
 }
@@ -459,189 +463,188 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	}
 
 	// make SN calculations....
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			const size_t index_SnowStation = ix + dimx*iy;
-			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
-			SnowStation &snowPixel = *SnowStations[index_SnowStation];
-			const bool isGlacier = snowPixel.isGlacier(false);
+	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+		size_t ix = SnowStationsCoord.at(i).first;
+		size_t iy = SnowStationsCoord.at(i).second;
+		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
+		const size_t index_SnowStation = i;
+		if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
+		SnowStation &snowPixel = *SnowStations[index_SnowStation];
+		const bool isGlacier = snowPixel.isGlacier(false);
 
-			//In case of ice and firn pixels, use BUCKET model for water transport:
-			const int land = (round_landuse(landuse(ix,iy)) - 10000) / 100;
-			if (land==13 || land==14) {
-				sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", "BUCKET");
-				sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", "BUCKET");
+		//In case of ice and firn pixels, use BUCKET model for water transport:
+		const int land = (round_landuse(landuse(ix,iy)) - 10000) / 100;
+		if (land==13 || land==14) {
+			sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", "BUCKET");
+			sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", "BUCKET");
+		}
+
+		// Set curent meteo variables from 2D fields to single pixel
+		const double previous_albedo = getGridPoint(SnGrids::TOP_ALB, ix, iy);
+		meteoPixel.rh = rh(ix,iy);
+		meteoPixel.ta = ta(ix,iy);
+		meteoPixel.vw = vw(ix,iy);
+		meteoPixel.vw_drift = (vw_drift(ix,iy) > 0.) ? (vw_drift(ix,iy)) : (0.);	//negative vw_drift is used by the Simple Snow Drift to store the positive sx values (sheltered pixels)
+		meteoPixel.dw = dw(ix,iy);
+		meteoPixel.iswr = shortwave(ix,iy);
+		meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
+		meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
+		meteoPixel.ts0 = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : meteoPixel.tss; //we use previous timestep value
+		meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
+		meteoPixel.psum_ph = psum_ph(ix,iy);
+		meteoPixel.psum_tech = psum_tech(ix, iy);
+		meteoPixel.hs = IOUtils::nodata;
+		if (meteoPixel.tss<=100 || meteoPixel.ts0<=100) {
+			cout << "[E] Pixel (" << ix+offset << "," << iy << ") too cold! tss=" << meteoPixel.tss << " ts0=" << meteoPixel.ts0 << std::endl;
+		}
+
+		// Now determine perpendicular to slope mass balance from drift or precip
+		// Note that psum must be in mm/h and SNOWPACK will converted it to mm/CALCULTION_STEP_LENGTH
+		if ( useDrift && mns(ix,iy)!=IOUtils::nodata ) {
+			double drift_mass = mns(ix,iy);
+			// For extreme terrain, the drift might go crazy: limit deposition / erosion
+			if (fabs(drift_mass)>37.) {
+				cout << "crazy drift at (" << ix+offset << "," << iy << ") = " << drift_mass << " mm/h\n";
+				drift_mass = (drift_mass>0.)? 37. : -37.; //set to deposition limit
 			}
 
-			// Set curent meteo variables from 2D fields to single pixel
-			const double previous_albedo = getGridPoint(SnGrids::TOP_ALB, ix, iy);
-			meteoPixel.rh = rh(ix,iy);
-			meteoPixel.ta = ta(ix,iy);
-			meteoPixel.vw = vw(ix,iy);
-			meteoPixel.vw_drift = (vw_drift(ix,iy) > 0.) ? (vw_drift(ix,iy)) : (0.);	//negative vw_drift is used by the Simple Snow Drift to store the positive sx values (sheltered pixels)
-			meteoPixel.dw = dw(ix,iy);
-			meteoPixel.iswr = shortwave(ix,iy);
-			meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
-			meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
-			meteoPixel.ts0 = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : meteoPixel.tss; //we use previous timestep value
-			meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
-			meteoPixel.psum_ph = psum_ph(ix,iy);
-			meteoPixel.psum_tech = psum_tech(ix, iy);
-			meteoPixel.hs = IOUtils::nodata;
-			if (meteoPixel.tss<=100 || meteoPixel.ts0<=100) {
-				cout << "[E] Pixel (" << ix+offset << "," << iy << ") too cold! tss=" << meteoPixel.tss << " ts0=" << meteoPixel.ts0 << std::endl;
-			}
+			meteoPixel.psum = drift_mass;
+		} else {
+			meteoPixel.psum= psum(ix,iy) * snowPixel.cos_sl; //horiz2slope
+		}
 
-			// Now determine perpendicular to slope mass balance from drift or precip
-			// Note that psum must be in mm/h and SNOWPACK will converted it to mm/CALCULTION_STEP_LENGTH
-			if ( useDrift && mns(ix,iy)!=IOUtils::nodata ) {
-				double drift_mass = mns(ix,iy);
-				// For extreme terrain, the drift might go crazy: limit deposition / erosion
-				if (fabs(drift_mass)>37.) {
-					cout << "crazy drift at (" << ix+offset << "," << iy << ") = " << drift_mass << " mm/h\n";
-					drift_mass = (drift_mass>0.)? 37. : -37.; //set to deposition limit
+		if (useEBalance) meteoPixel.diff = diffuse(ix,iy);
+		// Reset Canopy Surface Data to 0 before calling Meteo and Canopy module
+		if (useCanopy) snowPixel.Cdata->initializeSurfaceExchangeData();
+		//if the current pixel contains soil layers, then activate soil modeling in Snowpack
+		sn.setUseSoilLayers( snowPixel.hasSoilLayers() ); //TODO: when Snowpack runs, it should check it
+
+		// exposed glacier special case
+		if (isGlacier) {
+			//switch to glacier albedo
+			snowPixel.Albedo = Constants::glacier_albedo;
+			if (meteoPixel.ta>IOUtils::C_TO_K(5.)) {
+				//switch to STABLE atmosphere on glacier if TA>5°C
+				meteo.setStability(Meteo::MO_HOLTSLAG);
+			}
+		}
+
+		//compute ustar, psi_s, z0
+		meteo.compMeteo(meteoPixel, snowPixel, true);
+		SurfaceFluxes surfaceFlux;
+		// run snowpack model itself
+		double dIntEnergy = 0.; //accumulate the dIntEnergy over the snowsteps
+		const unsigned int nr_snowsteps = (unsigned int)(dt_main/M_TO_S(calculation_step_length));
+		for (unsigned int snowsteps = 0; snowsteps < nr_snowsteps; snowsteps++) {
+			/* Update the store variable */
+			/* david: why += ? isnt store reset every timestep ? */
+			/* Michi: This is exactly the point, store is only set to zero when enough precipitation
+			has accumulated to create at least one new (finite element) layer */
+
+			if (snowsteps == 0) meteoPixel.psum /= nr_snowsteps;
+			store(ix,iy) += meteoPixel.psum;
+
+			try {
+				BoundCond Bdata;
+				sn.runSnowpackModel(meteoPixel, snowPixel, store(ix,iy), Bdata, surfaceFlux);
+				surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);
+				dIntEnergy += snowPixel.dIntEnergy; //it is reset at every new call to runSnowpackModel
+				meteoPixel.hs = snowPixel.cH - snowPixel.Ground; //do not reproject here, otherwise Snowpack outputs would get messed up
+				if (enable_simple_snow_drift) erodedmass(ix,iy) += snowPixel.ErosionMass; //store the eroded mass
+			} catch (const std::bad_alloc&) { //don't try anything fancy when running low on memory
+				const int lus =(int)floor( landuse(ix,iy));
+				const double slope2horiz = (1. / snowPixel.cos_sl);
+				const double snow = (snowPixel.cH - snowPixel.Ground) * slope2horiz;
+				cout << "[E] Could not allocate memory in Snowpack for cell (" << ix+offset << "," << iy << ") LUS=" << lus << " ";
+				cout << "with " << std::fixed << std::setprecision(4) <<  snow << " m snow in " << snowPixel.getNumberOfElements()-snowPixel.SoilNode << "/" << snowPixel.getNumberOfElements() << " elements.\n";
+				fflush( stdout );
+				throw;
+			} catch (const std::exception& e) {
+				const int lus =(int)floor( landuse(ix,iy));
+				const double slope2horiz = (1. / snowPixel.cos_sl);
+				const double snow = (snowPixel.cH - snowPixel.Ground) * slope2horiz;
+				if (nr_snowsteps > 1) {
+					surfaceFlux.multiplyFluxes(1./nr_snowsteps);
+					if (useCanopy)
+						snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
+					meteoPixel.psum *= nr_snowsteps;
+					snowPixel.dIntEnergy = dIntEnergy;
 				}
 
-				meteoPixel.psum = drift_mass;
-			} else {
-				meteoPixel.psum= psum(ix,iy) * snowPixel.cos_sl; //horiz2slope
+				ostringstream ss;
+				ss << "[E] Snowpack exception: " << e.what() << "\n";
+				ss << "[E] at cell (" << ix+offset << "," << iy << ") LUS=" << lus << " ";
+				ss << "with " << std::fixed << std::setprecision(4) << snow << " m snow in " << snowPixel.getNumberOfElements()-snowPixel.SoilNode << "/" << snowPixel.getNumberOfElements() << " elements.\n";
+				if (isSpecialPoint[index_SnowStation])
+					gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux); //gather special point data, in order to get as much information as possible
+				throw IOException(ss.str(), AT);
 			}
 
-			if (useEBalance) meteoPixel.diff = diffuse(ix,iy);
-			// Reset Canopy Surface Data to 0 before calling Meteo and Canopy module
-			if (useCanopy) snowPixel.Cdata->initializeSurfaceExchangeData();
-			//if the current pixel contains soil layers, then activate soil modeling in Snowpack
-			sn.setUseSoilLayers( snowPixel.hasSoilLayers() ); //TODO: when Snowpack runs, it should check it
+			// Fill the surfaceFlux.mass variable for output
+			surfaceFlux.mass[SurfaceFluxes::MS_HNW] += meteoPixel.psum;
+		}
 
-			// exposed glacier special case
-			if (isGlacier) {
-				//switch to glacier albedo
-				snowPixel.Albedo = Constants::glacier_albedo;
-				if (meteoPixel.ta>IOUtils::C_TO_K(5.)) {
-					//switch to STABLE atmosphere on glacier if TA>5°C
-					meteo.setStability(Meteo::MO_HOLTSLAG);
-				}
-			}
+		//some variables are now wrong if we ran multiple Snowpack steps -> recompute them!
+		if (nr_snowsteps > 1) {
+			surfaceFlux.multiplyFluxes(1./nr_snowsteps);
+			if (useCanopy)
+				snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
+			meteoPixel.psum *= nr_snowsteps;
+			snowPixel.dIntEnergy = dIntEnergy;
+		}
 
-			//compute ustar, psi_s, z0
-			meteo.compMeteo(meteoPixel, snowPixel, true);
-			SurfaceFluxes surfaceFlux;
-			// run snowpack model itself
-			double dIntEnergy = 0.; //accumulate the dIntEnergy over the snowsteps
-			const unsigned int nr_snowsteps = (unsigned int)(dt_main/M_TO_S(calculation_step_length));
-			for (unsigned int snowsteps = 0; snowsteps < nr_snowsteps; snowsteps++) {
-				/* Update the store variable */
-				/* david: why += ? isnt store reset every timestep ? */
-				/* Michi: This is exactly the point, store is only set to zero when enough precipitation
-				has accumulated to create at least one new (finite element) layer */
+		//switch stability back to normal if it was changed
+		if (meteo.getStability()!=USER_STABILITY) meteo.setStability(USER_STABILITY);
+		//if the glacier is still exposed, force the albedo back to glacier albedo
+		if (isGlacier) {
+			snowPixel.Albedo = Constants::glacier_albedo;
+			surfaceFlux.pAlbedo = Constants::glacier_albedo;
+		}
+		if (!std::isfinite( getGridPoint(SnGrids::TOP_ALB, ix, iy) )) {
+			//if the albedo is nan, infinity, etc reset it to its previous
+			//value to try to rescue the pixel...
+			cerr << "[E] pixel (" << ix+offset << "," << iy << ") found with a nan/infinit albedo ["<<  getGridPoint(SnGrids::TOP_ALB, ix, iy) <<"]; reseting to " << previous_albedo << std::endl;
+			getGridPoint(SnGrids::TOP_ALB, ix, iy) = previous_albedo;
+		}
 
-				if (snowsteps == 0) meteoPixel.psum /= nr_snowsteps;
-				store(ix,iy) += meteoPixel.psum;
-
-				try {
-					BoundCond Bdata;
-					sn.runSnowpackModel(meteoPixel, snowPixel, store(ix,iy), Bdata, surfaceFlux);
-					surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);
-					dIntEnergy += snowPixel.dIntEnergy; //it is reset at every new call to runSnowpackModel
-					meteoPixel.hs = snowPixel.cH - snowPixel.Ground; //do not reproject here, otherwise Snowpack outputs would get messed up
-					if (enable_simple_snow_drift) erodedmass(ix,iy) += snowPixel.ErosionMass; //store the eroded mass
-				} catch (const std::bad_alloc&) { //don't try anything fancy when running low on memory
-					const int lus =(int)floor( landuse(ix,iy));
-					const double slope2horiz = (1. / snowPixel.cos_sl);
-					const double snow = (snowPixel.cH - snowPixel.Ground) * slope2horiz;
-					cout << "[E] Could not allocate memory in Snowpack for cell (" << ix+offset << "," << iy << ") LUS=" << lus << " ";
-					cout << "with " << std::fixed << std::setprecision(4) <<  snow << " m snow in " << snowPixel.getNumberOfElements()-snowPixel.SoilNode << "/" << snowPixel.getNumberOfElements() << " elements.\n";
-					fflush( stdout );
-					throw;
-				} catch (const std::exception& e) {
-					const int lus =(int)floor( landuse(ix,iy));
-					const double slope2horiz = (1. / snowPixel.cos_sl);
-					const double snow = (snowPixel.cH - snowPixel.Ground) * slope2horiz;
-					if (nr_snowsteps > 1) {
-						surfaceFlux.multiplyFluxes(1./nr_snowsteps);
-						if (useCanopy)
-							snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
-						meteoPixel.psum *= nr_snowsteps;
-						snowPixel.dIntEnergy = dIntEnergy;
-					}
-
-					ostringstream ss;
-					ss << "[E] Snowpack exception: " << e.what() << "\n";
-					ss << "[E] at cell (" << ix+offset << "," << iy << ") LUS=" << lus << " ";
-					ss << "with " << std::fixed << std::setprecision(4) << snow << " m snow in " << snowPixel.getNumberOfElements()-snowPixel.SoilNode << "/" << snowPixel.getNumberOfElements() << " elements.\n";
-					if (isSpecialPoint[index_SnowStation])
-						gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux); //gather special point data, in order to get as much information as possible
-					throw IOException(ss.str(), AT);
-				}
-
-				// Fill the surfaceFlux.mass variable for output
-				surfaceFlux.mass[SurfaceFluxes::MS_HNW] += meteoPixel.psum;
-			}
-
-			//some variables are now wrong if we ran multiple Snowpack steps -> recompute them!
-			if (nr_snowsteps > 1) {
-				surfaceFlux.multiplyFluxes(1./nr_snowsteps);
-				if (useCanopy)
-					snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
-				meteoPixel.psum *= nr_snowsteps;
-				snowPixel.dIntEnergy = dIntEnergy;
-			}
-
-			//switch stability back to normal if it was changed
-			if (meteo.getStability()!=USER_STABILITY) meteo.setStability(USER_STABILITY);
-			//if the glacier is still exposed, force the albedo back to glacier albedo
-			if (isGlacier) {
-				snowPixel.Albedo = Constants::glacier_albedo;
-				surfaceFlux.pAlbedo = Constants::glacier_albedo;
-			}
-			if (!std::isfinite( getGridPoint(SnGrids::TOP_ALB, ix, iy) )) {
-				//if the albedo is nan, infinity, etc reset it to its previous
-				//value to try to rescue the pixel...
-				cerr << "[E] pixel (" << ix+offset << "," << iy << ") found with a nan/infinit albedo ["<<  getGridPoint(SnGrids::TOP_ALB, ix, iy) <<"]; reseting to " << previous_albedo << std::endl;
-				getGridPoint(SnGrids::TOP_ALB, ix, iy) = previous_albedo;
-			}
-
-			try{
-				stability.checkStability(meteoPixel, snowPixel);
-			} catch(...) {
+		try{
+			stability.checkStability(meteoPixel, snowPixel);
+		} catch(...) {
 #ifndef SNOWPACK_CORE
-				snowPixel.S_4 = Stability::max_stability; //nothing else to do...
+			snowPixel.S_4 = Stability::max_stability; //nothing else to do...
 #endif
-			}
+		}
 
-			surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] = 0.0;
-			const std::vector<ElementData> EMS( snowPixel.Edata );
-			for (size_t e=0; e<EMS.size(); e++) {
-				if (EMS[e].theta[SOIL] <= 0.) {
-					surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] += EMS[e].M;
-				}
+		surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] = 0.0;
+		const std::vector<ElementData> EMS( snowPixel.Edata );
+		for (size_t e=0; e<EMS.size(); e++) {
+			if (EMS[e].theta[SOIL] <= 0.) {
+				surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] += EMS[e].M;
 			}
+		}
 
-			// Output special points and grids
-			if (isSpecialPoint[index_SnowStation]) gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux);
-			fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
+		// Output special points and grids
+		if (isSpecialPoint[index_SnowStation]) gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux);
+		fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
 
-			//Restore original water transport scheme that has been changed for ice & firn
-			if (land==13 || land==14) {
-				sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", bcu_watertransportmodel_snow);
-				sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", bcu_watertransportmodel_soil);
-			}
+		//Restore original water transport scheme that has been changed for ice & firn
+		if (land==13 || land==14) {
+			sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", bcu_watertransportmodel_snow);
+			sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", bcu_watertransportmodel_soil);
 		}
 	}
 }
 
 void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
 {
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
-			if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
-
-			const size_t index_SnowStation = ix + dimx*iy;
-			if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
-			Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
-		}
+	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+		size_t ix = SnowStationsCoord.at(i).first;
+		size_t iy = SnowStationsCoord.at(i).second;
+		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
+		if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
+		const size_t index_SnowStation = i;
+		if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
+		Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
 	}
 }
 
@@ -696,12 +699,9 @@ bool SnowpackInterfaceWorker::is_special(const std::vector< std::pair<size_t,siz
  */
 void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow_pixel)
 {
-	for (size_t iy=0;iy<dimy;iy++) {
-		for (size_t ix=0;ix<dimx;ix++) {
-			const size_t index_SnowStation = dimx*iy + ix;
-			#pragma omp critical (snow_station_lock)
-			ptr_snow_pixel.push_back( SnowStations[index_SnowStation] );
-		}
+	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+		#pragma omp critical (snow_station_lock)
+		ptr_snow_pixel.push_back( SnowStations[i] );
 	}
 }
 
@@ -711,13 +711,10 @@ void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow
  */
 void SnowpackInterfaceWorker::setLateralFlow(const std::vector<SnowStation*>& ptr_snow_pixel)
 {
-	for (size_t iy=0;iy<dimy;iy++) {
-		for (size_t ix=0;ix<dimx;ix++) {
-			const size_t index_SnowStation = dimx*iy + ix;
-			if (SnowStations[index_SnowStation]!=NULL) {
-				for(size_t n=0; n<SnowStations[index_SnowStation]->getNumberOfElements(); n++) {
-					SnowStations[index_SnowStation]->Edata[n].lwc_source = ptr_snow_pixel[index_SnowStation]->Edata[n].lwc_source;
-				}
+	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+		if (SnowStations[i]!=NULL) {
+			for(size_t n=0; n<SnowStations[i]->getNumberOfElements(); n++) {
+				SnowStations[i]->Edata[n].lwc_source = ptr_snow_pixel[i]->Edata[n].lwc_source;
 			}
 		}
 	}

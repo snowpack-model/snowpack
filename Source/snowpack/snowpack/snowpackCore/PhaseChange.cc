@@ -190,6 +190,12 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 				dth_i = - (Constants::density_water / Constants::density_ice) * dth_w;
 				dT = dth_i / A;
 			}
+			// Treat the case for MASSBAL forcing where the melt in the element exceeds the prescribed melt
+			if (forcing == "MASSBAL" && dth_i < -(mass_melt / (Constants::density_ice * Edata.L))) {
+				dth_i = -(mass_melt / (Constants::density_ice * Edata.L));
+				dth_w = - (Constants::density_ice / Constants::density_water) * dth_i;
+				dT = dth_i / A;
+			}
 			// Reset element properties
 			Edata.Te += dT;
 			if (Edata.Te <= T_melt) {

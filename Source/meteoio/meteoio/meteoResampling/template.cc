@@ -39,7 +39,7 @@ std::string TEMPLATE::toString() const
 	return ss.str();
 }
 
-void TEMPLATE::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+void TEMPLATE::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size()) throw IOException("The index of the element to be resampled is out of bounds", AT);

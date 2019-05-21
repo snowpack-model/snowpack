@@ -715,14 +715,32 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
 }
 
-void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
+void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
 {
 	if (vecMeteo.empty()) return;
 	
+	std::string multiPts;
+	short int epsg = -1;
 	double lat_min, lat_max, lon_min, lon_max;
 	bool found = false;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty()) continue;
+
+		//create the strings for the MultiPoint property
+		std::ostringstream ss;
+		if (isLatLon) {
+			ss  << std::fixed << std::setprecision(10) << "(" << vecMeteo[ii].front().meta.position.getLon() << " " << vecMeteo[ii].front().meta.position.getLat() << ")";
+		} else {
+			ss  << std::fixed << std::setprecision(0) << "(" << vecMeteo[ii].front().meta.position.getEasting() << " " << vecMeteo[ii].front().meta.position.getNorthing() << ")";
+		}
+		if (epsg==-1) { //first valid point
+			epsg = (isLatLon)? 4326 : vecMeteo[ii].front().meta.position.getEPSG();
+			multiPts = ss.str();
+		} else {
+			if (!isLatLon && epsg!=vecMeteo[ii].front().meta.position.getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
+			multiPts += ", "+ss.str();
+		}
+
 		const double curr_lat = vecMeteo[ii].front().meta.position.getLat();
 		const double curr_lon = vecMeteo[ii].front().meta.position.getLon();
 		
@@ -738,6 +756,12 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	}
 	if (!found) return;
 	
+	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
+		std::ostringstream os;
+		os << epsg;
+		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
+		addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
+	}
 	addAttribute("geospatial_lat_min", lat_min);
 	addAttribute("geospatial_lat_max", lat_max);
 	addAttribute("geospatial_lon_min", lon_min);
@@ -757,7 +781,7 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 		os << location.getEPSG();
 		epsg_str = os.str();
 		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(10) << location.getEasting() << " " << location.getNorthing();
+		ss << std::fixed << std::setprecision(0) << location.getEasting() << " " << location.getNorthing();
 	}
 	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
 	addAttribute("geospatial_bounds", "Point ("+geometry+")");

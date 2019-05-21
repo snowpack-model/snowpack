@@ -56,7 +56,8 @@
 namespace mio {
 /**
  * @page processing Processing overview
- * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage. Moreover, there is a special mode of operation where MeteoIO writes on the screen a line for each data point that gets modified 
+ * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters 
+ * and processing elements and their usage. Moreover, there is a special mode of operation where MeteoIO writes on the screen a line for each data point that gets modified 
  * (either filtered, resampled or generated). This is enabled by setting the DATA_QA_LOGS key to *true* in the [General] section. The outputs then look like the following:
  * @code
  * [DATA_QA] Filtering WFJ2::ILWR::MIN_MAX 2016-01-18T09:00:00+01:00 [2016-W03-01]
@@ -70,6 +71,8 @@ namespace mio {
  * options followed by a list of station IDs (see example below). This is supported automatically by all Processing Elements. Several Processing Elements
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
+ * 
+ * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
  *
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
@@ -137,7 +140,7 @@ namespace mio {
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
  *
  * A few filters can be applied to the timestamps themselves:
- * - SUPPR: delete whole timesteps, see TimeSuppr
+ * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
  */
 

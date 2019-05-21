@@ -105,7 +105,7 @@ size_t Daily_solar::getStationIndex(const std::string& key)
 	return nr_stations; //the new index is the old nr_stations
 }
 
-void Daily_solar::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+void Daily_solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -118,7 +118,7 @@ void Daily_solar::resample(const size_t& index, const ResamplingPosition& /*posi
 	const double HS = md(MeteoData::HS);
 
 	//get station index
-	const size_t stat_idx = getStationIndex(md.meta.stationID);
+	const size_t stat_idx = getStationIndex(stationHash);
 
 	//has the radiation already been calculated for this day and station?
 	if (md.date<dateStart[stat_idx] || md.date>=dateEnd[stat_idx]) {

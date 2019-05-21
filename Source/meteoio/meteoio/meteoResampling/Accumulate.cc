@@ -120,7 +120,7 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 }
 
 //index is the first element AFTER the resampling_date
-void Accumulate::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+void Accumulate::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                           const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
