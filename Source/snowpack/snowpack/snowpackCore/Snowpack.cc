@@ -2028,8 +2028,21 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// routine and later used to compute the Meteo Heat Fluxes
 		if (forcing=="ATMOS") {
 			if (!alpine3d) { //HACK: we need to set to 0 the external drift
-				double tmp=0.;
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+				double tmp = 0.;
+				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+				if (eroded > 0.) {
+					const bool tmp_force_add_snowfall = force_add_snowfall;
+					const std::string tmp_hn_density = hn_density;
+					double tmp_psum = eroded;
+					force_add_snowfall = true;
+					hn_density = "EVENT";
+					Mdata.psum = eroded; Mdata.psum_ph = 0.;
+					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
+					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+					force_add_snowfall = tmp_force_add_snowfall;
+					hn_density = tmp_hn_density;
+				}
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
 			}

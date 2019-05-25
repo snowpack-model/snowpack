@@ -210,6 +210,11 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 			event = event_wind;
 			event_wind_lowlim = 4.0;
 			event_wind_highlim = 7.0;
+		} else {
+			// For other variants, event_wind is used in conjunction with WIND_EROSION == REDEPOSIT, in which case there is no wind speed limit on redeposition.
+			event = event_wind;
+			event_wind_lowlim = 0.0;
+			event_wind_highlim = 100.0;
 		}
 	} else if (current_variant == "CALIBRATION") {
 		// actual calibration; see factors in Laws_sn.cc
@@ -1118,7 +1123,7 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
 		case event_wind: {
 			if ((Mdata.vw_avg >= event_wind_lowlim) && (Mdata.vw_avg <= event_wind_highlim)) {
 				static const double rho_0=361., rho_1=33.;
-				return (rho_0*log10(Mdata.vw_avg) + rho_1);
+				return (Mdata.vw_avg == 0.) ? (rho_1) : (std::max(0., rho_0*log10(Mdata.vw_avg)) + rho_1);
 			} else
 				return Constants::undefined;
 		}
