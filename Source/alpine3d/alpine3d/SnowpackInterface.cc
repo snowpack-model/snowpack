@@ -142,48 +142,68 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	//If MPI is active, every node gets a slice of the DEM to work on
 	mpicontrol.getArraySliceParamsOptim(dimx, mpi_offset, mpi_nx,dem,landuse);
-
-	//Cut DEM and landuse in MPI domain
+	std::cout << "[i] MPI inatance "<< mpicontrol.rank() <<" for solving snowpack : grid range = ["
+	<< mpi_offset << " to " << mpi_offset+mpi_nx-1 << "] " << mpi_nx << " columns\n";
+	//Cut DEM and landuse in MPI domain, MPI domain are computed
+	//by trying to havve the same number of cell to compute per domain
 	const DEMObject mpi_sub_dem(dem_in, mpi_offset, 0, mpi_nx, dimy, false);
 	const Grid2DObject mpi_sub_landuse(landuse_in, mpi_offset, 0, mpi_nx, dimy);
 	std::vector<std::vector<size_t> > omp_snow_stations_ind;
+	//The OMP slicing for snowpack computation is not based on rectangular domain.
+	//It return a table of pixel to compute and coordiantes to have the same
+	//number of pixel per slice.
 	OMPControl::getArraySliceParamsOptim(nbworkers,snow_stations,mpi_sub_dem, mpi_sub_landuse,omp_snow_stations_ind);
 	// construct slices and workers
 	#pragma omp parallel for schedule(static)
 	for (size_t ii=0; ii<nbworkers; ii++) {
-		// This call is now used only to handle special points
+		// Could be optimised, but not really big gain.
+		// Each worker will check again the point to be sure they belong
+		// to it, so no need to double check here
+		std::vector< std::pair<size_t,size_t> > sub_pts;
+		const size_t n_pts = pts.size();
+		for (size_t kk=0; kk<n_pts; kk++) { // could be optimised... but not really big gain
+			if (pts[kk].first>=mpi_offset && pts[kk].first<=mpi_nx) {
+				sub_pts.push_back( pts[kk] );
+				sub_pts.back().first -= mpi_offset;
+			}
+		}
+		// In this  implementation, all OMP workers see the whole MPI grid
+		// This could be change but with this when passing the meteo grids
+		// Only one slicing and copy is necessary per MPI, insetead of one per OMP
+		const DEMObject sub_dem(mpi_sub_dem);
+		const Grid2DObject sub_landuse(mpi_sub_landuse);
+
+		// Generate workers
+		std::vector<SnowStation*> thread_stations;
+		std::vector<std::pair<size_t,size_t> > thread_stations_coord;
+		for (std::vector<size_t>::iterator it = omp_snow_stations_ind.at(ii).begin(); it != omp_snow_stations_ind.at(ii).end(); ++it){
+			thread_stations.push_back (snow_stations.at(*it));
+			thread_stations_coord.push_back(snow_stations_coord.at(*it));
+		}
+
+		// The OMP slicing into rectangle is only used for post computation
+		// Over teh gird (i.e. laterla flow and snow preparation)
 		size_t omp_offset, omp_nx;
 		OMPControl::getArraySliceParams(mpi_nx, nbworkers, ii, omp_offset, omp_nx);
 		const size_t offset = mpi_offset + omp_offset;
-		std::vector< std::pair<size_t,size_t> > sub_pts;
-		const size_t endx = omp_nx+offset-1;
-		if (omp_nx>0) {
-			// handle special points
-			const size_t n_pts = pts.size();
-			for (size_t kk=0; kk<n_pts; kk++) { // could be optimised... but not really big gain
-				if (pts[kk].first>=offset && pts[kk].first<=endx) {
-					sub_pts.push_back( pts[kk] );
-					sub_pts.back().first -= offset;
-				}
-			}
+
+		workers[ii] = new SnowpackInterfaceWorker(sn_cfg, sub_dem, sub_landuse, sub_pts, thread_stations, thread_stations_coord, offset);
+
+		worker_startx[ii] = offset;
+		worker_deltax[ii] = omp_nx;
+		#pragma omp critical(snowpackWorkers_status)
+		{
+			const std::pair<size_t,size_t> coord_start(snow_stations_coord.at(omp_snow_stations_ind.at(ii).front()));
+			const std::pair<size_t,size_t> coord_end(snow_stations_coord.at(omp_snow_stations_ind.at(ii).back()));
+
+			std::cout << "[i] SnowpackInterface worker for solving snowpack " << ii
+								<< " on process " << mpicontrol.rank() << ": coord. x-y range = [" << coord_start.first + mpi_offset << "-"
+								<< coord_start.second << " to " << coord_end.first + mpi_offset << "-"
+								<< coord_end.second<<"] " << omp_snow_stations_ind.at(ii).size() << " cells\n";
+								std::cout << "[i] SnowpackInterface worker for grid computation " << ii
+								<< " on process " << mpicontrol.rank() << ": grid range = [" << offset
+								<< " to " << omp_nx+offset-1 << "]  " << omp_nx << " columns\n";
 		}
-			// In this new implementation, all OMP workers see the whole MPI grid
-			const DEMObject sub_dem(mpi_sub_dem);
-			const Grid2DObject sub_landuse(mpi_sub_landuse);
-
-			// generate workers
-			std::vector<SnowStation*> thread_stations;
-			std::vector<std::pair<size_t,size_t> > thread_stations_coord;
-			for (std::vector<size_t>::iterator it = omp_snow_stations_ind.at(ii).begin(); it != omp_snow_stations_ind.at(ii).end(); ++it){
-				thread_stations.push_back (snow_stations.at(*it));
-				thread_stations_coord.push_back(snow_stations_coord.at(*it));
-			}
-
-			workers[ii] = new SnowpackInterfaceWorker(sn_cfg, sub_dem, sub_landuse, sub_pts, thread_stations, thread_stations_coord, offset);
-			worker_startx[ii] = offset;
-			worker_deltax[ii] = omp_nx;
-			#pragma omp critical(snowpackWorkers_status)
-			std::cout << "[i] SnowpackInterface worker " << ii << " on process " << mpicontrol.rank() << ": X range = [" << offset << "-" << endx << "] \t " << omp_nx << " cells\n";
 	}
 
 	// init glacier map (after creating and init workers) for output

@@ -468,7 +468,6 @@ void MPIControl::getArraySliceParamsOptim(const size_t& dimx, const size_t& idx_
 
 	const size_t num_cells_to_compute = dimx*dimy - n_skip_cell;
 	const size_t mean_num_cells_per_mpi = num_cells_to_compute / size_;
-	const size_t mean_num_cell_per_col = num_cells_to_compute / dimx;
 
 	std::vector<size_t> startx(size_,0);
 	std::vector<size_t> nx(size_,0);

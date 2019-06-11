@@ -1506,7 +1506,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 		const size_t nrows = grid.getNy(), ncols = grid.getNx();
 		for (size_t kk=nrows-1; kk-- > 0; ) {
 			for (size_t ll=0; ll<ncols; ++ll) {
-				const size_t serial_idx = (nrows-kk-1)*ncols + ll;
+				const size_t serial_idx = kk*ncols + ll;
 				if (grid.grid2D(ll,kk)!=IOUtils::nodata) data[serial_idx] = grid.grid2D(ll,kk);
 			}
 		}
