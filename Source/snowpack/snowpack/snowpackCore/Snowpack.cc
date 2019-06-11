@@ -1726,8 +1726,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 		// We also adjust Xdata.mH to have it reflect deposited snow but not the canopy.
 		// This can only be done when SNOWPACK is snow height driven and there is a canopy.
 		if ((enforce_measured_snow_heights)
-			   && (Xdata.Cdata->height > 0.)
-			   && ((Xdata.Cdata->height < ThresholdSmallCanopy) || (useCanopyModel == false))
+			   && (Xdata.Cdata != NULL && Xdata.Cdata->height > 0.)
+			   && ((Xdata.Cdata != NULL && Xdata.Cdata->height < ThresholdSmallCanopy) || (useCanopyModel == false))
 			   && (Mdata.hs != mio::IOUtils::nodata)
 			   && (Xdata.mH != Constants::undefined)
 			   && (Xdata.meta.getSlopeAngle() < Constants::min_slope_angle)) {
@@ -1747,23 +1747,25 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			 * Then, in the next time step, the canopy height is reduced even more, even without increase in snow
 			 *   depth.
 			 */
-			if (Xdata.cH < (Xdata.mH - (Xdata.Cdata->height - (Xdata.mH - (Xdata.cH + Xdata.Cdata->height))))) {
-				Xdata.Cdata->height -= (Xdata.mH - (Xdata.cH + Xdata.Cdata->height));
-				// The above if-statement looks awkward, but it is just
-				//   (Xdata.cH < (Xdata.mH - (height_new_elem * cos_sl))
-				//   combined with the new value for Xdata.mH, given the change in Xdata.Cdata.height.
-			} else {
-				// If the increase is not large enough to start build up a snowpack yet,
-				//   assign Xdata.mH to Canopy height (as if snow_fall and snowed_in would have been false).
-				if (Xdata.getNumberOfNodes() == Xdata.SoilNode+1) {
-					Xdata.Cdata->height = Xdata.mH - Xdata.Ground;
+			if (Xdata.Cdata != NULL) {
+				if (Xdata.cH < (Xdata.mH - (Xdata.Cdata->height - (Xdata.mH - (Xdata.cH + Xdata.Cdata->height))))) {
+					Xdata.Cdata->height -= (Xdata.mH - (Xdata.cH + Xdata.Cdata->height));
+					// The above if-statement looks awkward, but it is just
+					//   (Xdata.cH < (Xdata.mH - (height_new_elem * cos_sl))
+					//   combined with the new value for Xdata.mH, given the change in Xdata.Cdata.height.
+				} else {
+					// If the increase is not large enough to start build up a snowpack yet,
+					//   assign Xdata.mH to Canopy height (as if snow_fall and snowed_in would have been false).
+					if (Xdata.getNumberOfNodes() == Xdata.SoilNode+1) {
+						Xdata.Cdata->height = Xdata.mH - Xdata.Ground;
+					}
 				}
+				if (Xdata.Cdata->height < 0.)    // Make sure canopy height doesn't get negative
+					Xdata.Cdata->height = 0.;
+				Xdata.mH -= Xdata.Cdata->height; // Adjust Xdata.mH to represent the "true" enforced snow depth
+				if (Xdata.mH < Xdata.Ground)    //   and make sure it doesn't get negative
+					Xdata.mH = Xdata.Ground;
 			}
-			if (Xdata.Cdata->height < 0.)    // Make sure canopy height doesn't get negative
-				Xdata.Cdata->height = 0.;
-			Xdata.mH -= Xdata.Cdata->height; // Adjust Xdata.mH to represent the "true" enforced snow depth
-			if (Xdata.mH < Xdata.Ground)    //   and make sure it doesn't get negative
-				Xdata.mH = Xdata.Ground;
 			delta_cH = Xdata.mH - Xdata.cH + ( (Xdata.findMarkedReferenceLayer() == Constants::undefined) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground) );
 		}
 
