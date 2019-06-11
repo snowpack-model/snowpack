@@ -49,7 +49,6 @@ namespace OMPControl
     }
 
     size_t n_snow_station_compute = (snow_station.size()-n_skip_cell);
-    size_t n_snow_station_worker_raw=snow_station.size()/nbworkers;
     size_t n_snow_station_worker=n_snow_station_compute/nbworkers;
     size_t remainders = n_snow_station_compute%nbworkers;
 

@@ -45,6 +45,8 @@ using namespace std;
 /************************************************************
  * static section                                           *
  ************************************************************/
+//Minimum allowed snowpack time step for solving the heat equation (automatic time stepping is applied when equation does not converge)
+const double Snowpack::min_allowed_sn_dt = 0.01;
 
 //Uses an empirically determined size of deposited hydrometeors as new snow grain size (mm)
 const bool Snowpack::hydrometeor = false;
@@ -2055,7 +2057,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		int ii = 0;				// Counter for sub-timesteps to match one SNOWPACK time step
 		bool LastTimeStep = false;		// Flag to indicate if it is the last sub-time step
 		double p_dt = 0.;			// Cumulative progress of time steps
-		if ((Mdata.psi_s >= 0. || t_surf > Mdata.ta) && atm_stability_model != Meteo::NEUTRAL && allow_adaptive_timestepping == true) {
+		if ((Mdata.psi_s >= 0. || t_surf > Mdata.ta) && atm_stability_model != Meteo::NEUTRAL && allow_adaptive_timestepping == true && sn_dt > 60.) {
 			// To reduce oscillations in TSS, reduce the time step prematurely when atmospheric stability is unstable.
 			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;					// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
 			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
@@ -2082,7 +2084,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 			// Compute the temperature profile in the snowpack and soil, if present
 			for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
-			if (compTemperatureProfile(Mdata, Xdata, Bdata, (allow_adaptive_timestepping == true)?(false):(true))) {
+			if (compTemperatureProfile(Mdata, Xdata, Bdata, (sn_dt < min_allowed_sn_dt))) {
 				// Entered after convergence
 				ii++;						// Update time step counter
 				p_dt += sn_dt;					// Update progress variable
@@ -2169,17 +2171,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
 				if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 
-				if (sn_dt < 0.01) {	// If time step gets too small, we are lost
-					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Temperature equation did not converge, even after reducing time step (azi=%.0lf, slope=%.0lf).", Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
-					for (size_t n = 0; n < Xdata.getNumberOfNodes(); n++) {
-						prn_msg(__FILE__, __LINE__, "msg-", Date(),
-						        "N[%03d]: %8.4lf K", n, Xdata.Ndata[n].T);
-					}
-					prn_msg(__FILE__, __LINE__, "msg", Date(),
-					        "Latent: %lf  Sensible: %lf  Rain: %lf  NetLong:%lf  NetShort: %lf",
-					        Bdata.ql, Bdata.qs, Bdata.qr, Bdata.lw_net, Mdata.iswr - Mdata.rswr);
-					throw IOException("Runtime error in runSnowpackModel", AT);
-				}
 				std::cout << "                            --> time step temporarily reduced to: " << sn_dt << "\n";
 			}
 		}

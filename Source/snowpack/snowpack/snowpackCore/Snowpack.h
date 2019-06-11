@@ -154,6 +154,7 @@ class Snowpack {
 		bool ageAlbedo; ///< use the age of snow in the albedo parametrizations? default: true
 		double soot_ppmv; ///< Impurity content in ppmv for albedo calculatoins
 
+		const static double min_allowed_sn_dt; ///< minimum allowed snowpack time step for solving the heat equation
 		const static bool hydrometeor;
 		const static double snowfall_warning;
 		const static unsigned int new_snow_marker;

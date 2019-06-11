@@ -908,7 +908,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 		os << " ";*/
 
 	if (Xdata.Seaice != NULL)
-		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
+		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux Total_Flooding_Bucket" << " ";
 
 	return os.str();
 }
@@ -1036,11 +1036,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		os << " ";
 	}	*/
 	if (Xdata.Seaice != NULL) {
-		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
-		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux  total_flooding_bucket_scheme" << " ";
+		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2 kg/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1183,6 +1183,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.Seaice->getAvgBrineSalinity(Xdata) );
 		data.push_back( Xdata.Seaice->BottomSalFlux );
 		data.push_back( Xdata.Seaice->TopSalFlux );
+		data.push_back( Sdata.mass[SurfaceFluxes::MS_FLOODING]/cos_sl );
 	}
 
 	smet_writer.write(timestamp, data);
