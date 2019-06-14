@@ -1109,7 +1109,9 @@ void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationDa
 					snowPixel.meta.position.setProj(coordsys, coordparam);
 					snowPixel.meta.position.setXY(refX+double(ix)*cellsize, refY+double(iy)*cellsize, dem.grid2D(ix,iy));
 					snowPixel.meta.position.setGridIndex((int)ix, (int)iy, 0, true);
-					snowPixel.meta.setSlope(dem.slope(ix,iy), dem.azi(ix,iy));
+					// Note that pixels without valid azimuth will be asigned azimuth = 0 and slope angle = 0.
+					snowPixel.meta.setSlope( (dem.azi(ix,iy) == mio::IOUtils::nodata) ? (0.) : (dem.slope(ix,iy)),
+							         (dem.azi(ix,iy) == mio::IOUtils::nodata) ? (0.) : (dem.azi(ix,iy)) );
 					snowPixel.cos_sl = cos( snowPixel.meta.getSlopeAngle()*mio::Cst::to_rad );
 
 					// Initialize the station name for the pixel
