@@ -65,9 +65,8 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
 
 	int _nx, _ny;
-	size_t ncols, nrows;
 	double north, east, south, west;
-	double tmp_val, xllcorner, yllcorner, cellsize;
+	double tmp_val;
 	vector<string> tmpvec;
 	std::string line;
 
@@ -104,11 +103,11 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		if ((_nx<0) || (_ny<0)) {
 			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
 		}
-		ncols = (size_t)_nx;
-		nrows = (size_t)_ny;
-		xllcorner = west;
-		yllcorner = south;
-		cellsize = (east - west) / (double)ncols;
+		const size_t ncols = (size_t)_nx;
+		const size_t nrows = (size_t)_ny;
+		const double xllcorner = west;
+		const double yllcorner = south;
+		const double cellsize = (east - west) / (double)ncols;
 
 		//compute WGS coordinates (considered as the true reference)
 		Coords coordinate(coordin, coordinparam);
@@ -178,8 +177,9 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	read2DGrid(da_out, ss.str());
 }
 
-void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
+void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 {
+	const std::string name( options ); //HACK this should append the default extension
 	if (!FileUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
 	std::ofstream fout;
 	fout.open(name.c_str(), ios::out);

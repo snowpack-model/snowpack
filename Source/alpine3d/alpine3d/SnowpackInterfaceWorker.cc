@@ -440,6 +440,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
                                        const mio::Grid2DObject &psum_tech,
                                        const mio::Grid2DObject &rh,
                                        const mio::Grid2DObject &ta,
+                                       const mio::Grid2DObject &tsg,
                                        const mio::Grid2DObject &vw,
                                        const mio::Grid2DObject &vw_drift,
                                        const mio::Grid2DObject &dw,
@@ -489,7 +490,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		meteoPixel.iswr = shortwave(ix,iy);
 		meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
 		meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
-		meteoPixel.ts0 = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : meteoPixel.tss; //we use previous timestep value
+		meteoPixel.ts0 = (snowPixel.SoilNode>0) ? snowPixel.Ndata[snowPixel.SoilNode].T : tsg(ix,iy); //we use previous timestep value
 		meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
 		meteoPixel.psum_ph = psum_ph(ix,iy);
 		meteoPixel.psum_tech = psum_tech(ix, iy);

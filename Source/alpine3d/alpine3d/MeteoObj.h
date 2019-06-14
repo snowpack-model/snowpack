@@ -91,6 +91,7 @@ class MeteoObj
 		void prepare(const mio::Date& in_date);
 		void get(const mio::Date& in_date,
 		         mio::Grid2DObject& ta,
+		         mio::Grid2DObject& tsg,
 		         mio::Grid2DObject& rh,
 		         mio::Grid2DObject& psum,
 		         mio::Grid2DObject& psum_ph,
@@ -107,7 +108,7 @@ class MeteoObj
 	private:
 		static void checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, const mio::MeteoData::Parameters& param);
 		static void checkGridRange(const mio::Date& calcDate, const mio::Grid2DObject& grid, const mio::MeteoData::Parameters& param);
-		static void checkInputsRequirements(std::vector<mio::MeteoData>& vecData);
+		static void checkInputsRequirements(std::vector<mio::MeteoData>& vecData, const bool& soil_flux);
 		void fillMeteoGrids(const mio::Date& calcDate);
 		void getMeteo(const mio::Date& calcDate);
 
@@ -115,13 +116,14 @@ class MeteoObj
 		const mio::Config &config;
 		mio::IOManager io;
 		const mio::DEMObject &dem;
-		mio::Grid2DObject ta, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr;
+		mio::Grid2DObject ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr;
 		mio::Grid2DObject sum_ta, sum_rh, sum_rh_psum, sum_psum, sum_psum_ph, sum_vw, sum_ilwr;
 		std::vector<mio::MeteoData> vecMeteo;
 		mio::Date date;
 		Glaciers *glaciers;
 		unsigned int count_sums, count_precip;
 		bool skipWind; ///<should the grids be filled or only the data vectors returned?
+		bool soil_flux;
 		bool enable_simple_snow_drift;
 };
 

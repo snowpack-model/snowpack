@@ -155,6 +155,7 @@ class Runoff; // forward declaration, cyclic header include
 		                const mio::Grid2DObject& new_dw,
 		                const mio::Grid2DObject& new_rh,
 		                const mio::Grid2DObject& new_ta,
+		                const mio::Grid2DObject& new_tsg,
 		                const mio::Date& timestamp);
 		void setVwDrift(const mio::Grid2DObject& new_vw_drift,
 				const mio::Date& timestamp);
@@ -222,7 +223,7 @@ class Runoff; // forward declaration, cyclic header include
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg;
 		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 

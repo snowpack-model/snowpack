@@ -320,7 +320,12 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	read2DGrid_internal(da_out, filepath+"/"+dateStr+".sca");
 }
 
-void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
+void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
+{
+	write2DGrid_internal(grid_in, options+grid2d_ext_out);
+}
+
+void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& name) const
 {
 	const std::string full_name( grid2dpath_out+"/"+name );
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
@@ -367,7 +372,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	//the path will be added by write2DGrid
+	//the path will be added by write2DGrid_internal
 	if (a3d_view_out) {
 		// the A3D grid viewer looks for the following extensions:
 		//sdp, tss, swr, lwr, swe, alb, wet
@@ -386,14 +391,14 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		}
 		std::string dateStr( date.toString(Date::NUM) );
 		dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
-		write2DGrid(grid_in, dateStr+"."+ext );
+		write2DGrid_internal(grid_in, dateStr+"."+ext );
 	} else {
 		if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
-			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
+			write2DGrid_internal(grid_in, MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		} else {
 			std::string date_str( date.toString(Date::ISO) );
 			std::replace( date_str.begin(), date_str.end(), ':', '.');
-			write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
+			write2DGrid_internal(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		}
 	}
 }

@@ -776,7 +776,6 @@ void IOHandler::automerge_stations(STATIONS_SET& vecStation) const
 	}
 }
 
-
 //merge stations that have identical IDs
 void IOHandler::automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 {
