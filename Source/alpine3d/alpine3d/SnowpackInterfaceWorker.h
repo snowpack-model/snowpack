@@ -53,6 +53,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &psum_tech,
 		              const mio::Grid2DObject &rh,
 		              const mio::Grid2DObject &ta,
+		              const mio::Grid2DObject &tsg,
 		              const mio::Grid2DObject &vw,
 		              const mio::Grid2DObject &vw_drift,
 		              const mio::Grid2DObject &dw,

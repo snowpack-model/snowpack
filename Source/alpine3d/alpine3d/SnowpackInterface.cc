@@ -89,7 +89,8 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
                   landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
                   psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
-                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
+                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata),
+                  ta(dem_in, IOUtils::nodata), tsg(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
                   solarElevation(0.), output_grids(), workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), worker_stations_coord(nbworkers),
                   timer(), nextStepTimestamp(startTime), timeStep(dt_main/86400.), dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
                   drift(NULL), eb(NULL), da(NULL), runoff(NULL), glaciers(NULL), techSnow(NULL)
@@ -241,6 +242,7 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		dw = source.dw;
 		rh = source.rh;
 		ta = source.ta;
+		tsg = source.tsg;
 		solarElevation = source.solarElevation;
 		output_grids = source.output_grids;
 		workers = source.workers;
@@ -620,7 +622,7 @@ void SnowpackInterface::setSnowMassChange(const mio::Grid2DObject& new_mns, cons
  * @param new_ta gives the new values for the Aire temperature
  * @param timestamp is the time of the calculation step from which this new values are comming
  */
-void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObject& new_psum_ph, const Grid2DObject& new_vw, const Grid2DObject& new_dw, const Grid2DObject& new_rh, const Grid2DObject& new_ta, const mio::Date& timestamp)
+void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObject& new_psum_ph, const Grid2DObject& new_vw, const Grid2DObject& new_dw, const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_tsg, const mio::Date& timestamp)
 {
 	if (nextStepTimestamp != timestamp) {
 		if (MPIControl::instance().master()) {
@@ -645,6 +647,7 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
 		ta = glaciers->correctTemperatures(cH, TSS, new_ta);
 	}
+	tsg = new_tsg;
 
 	if (snow_preparation) {
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
@@ -801,6 +804,7 @@ void SnowpackInterface::calcNextStep()
 	const mio::Grid2DObject tmp_psum_tech(psum_tech,  mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_rh(rh, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_ta(ta, mpi_offset, 0, mpi_nx, dimy);
+	const mio::Grid2DObject tmp_tsg(tsg, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_vw(vw, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_vw_drift(vw_drift, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_dw(dw, mpi_offset, 0, mpi_nx, dimy);
@@ -812,7 +816,7 @@ void SnowpackInterface::calcNextStep()
 	for (size_t ii = 0; ii < workers.size(); ii++) { // make slices
 		// run model, process exceptions in a way that is compatible with openmp
 		try {
-			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
+			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_tsg, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
 			if (snow_preparation) {
 				const mio::Grid2DObject tmp_grooming(grooming, worker_startx[ii], 0, worker_deltax[ii], dimy);
 				workers[ii]->grooming( tmp_grooming );
