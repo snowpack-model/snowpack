@@ -218,7 +218,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	//init snow preparation
 	if (snow_preparation) {
-		techSnow = new TechSnow(io_cfg, dem);
+		techSnow = new TechSnowA3D(io_cfg, dem);
 	}
 }
 
