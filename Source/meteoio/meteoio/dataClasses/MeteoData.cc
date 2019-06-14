@@ -350,20 +350,32 @@ bool MeteoData::isResampledParam(const size_t& param) const
 	return flags[param].resampled;
 }
 
-const std::string MeteoData::toString() const {
+const std::string MeteoData::toString(const FORMATS format) const {
 	std::ostringstream os;
-	os << "<meteo>\n";
-	os << meta.toString();
-	os << date.toString(Date::FULL) << "\n";
-	os << setw(8) << nrOfAllParameters << " parameters\n";
+	
+	if (format==DFLT) {
+		os << "<meteo>\n";
+		os << meta.toString();
+		os << date.toString(Date::FULL) << "\n";
+		os << setw(8) << nrOfAllParameters << " parameters\n";
 
-	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		const double& value = operator()(ii);
-		if (value != IOUtils::nodata)
-			os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << value << endl;
+		for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+			const double& value = operator()(ii);
+			if (value != IOUtils::nodata)
+				os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << value << endl;
+		}
+		os << "</meteo>\n";
+	} else if (format==COMPACT) {
+		os << "<meteo>\t";
+		os << meta.stationID << " @ " << date.toString(Date::ISO) << " -> ";
+		for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+			const double& value = operator()(ii);
+			if (value != IOUtils::nodata)
+				os <<  getNameForParameter(ii) << ":" << value << " ";
+		}
+		os << "</meteo>";
 	}
-
-	os << "</meteo>\n";
+	
 	return os.str();
 }
 
@@ -520,13 +532,13 @@ void MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<
 		}
 		vec1_end = idx2;
 	}
-
+	
 	//filling data after vec1
 	if (strategy!=STRICT_MERGE && vec1.back().date<vec2.back().date) {
 		if (vec1_end!=vec2.size()) {
 			MeteoData md_pattern( vec1.back() ); //This assumes that station1 is not moving!
 			md_pattern.reset(); //keep metadata and extra params
-			for (size_t ii=vec1_end; ii<vec2.size(); ii++) {
+			for (size_t ii=vec1_end+1; ii<vec2.size(); ii++) {
 				vec1.push_back( md_pattern );
 				vec1.back().date = vec2[ii].date;
 				vec1.back().merge( vec2[ii] );
