@@ -246,7 +246,7 @@ class Runoff; // forward declaration, cyclic header include
 		Runoff *runoff;
 
 		Glaciers *glaciers;
-		TechSnow *techSnow;
+		TechSnowA3D *techSnow;
 };
 
 #endif

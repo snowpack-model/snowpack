@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef TECHSNOW_H
-#define TECHSNOW_H
+#ifndef TECHSNOWA3D_H
+#define TECHSNOWA3D_H
 
 class SnowpackInterfaceWorker;
 
@@ -26,10 +26,10 @@ class SnowpackInterfaceWorker;
 /**
  * @page techsnow Technical Snow
  */
-class TechSnow
+class TechSnowA3D
 {
 	public:
-		TechSnow(const mio::Config& cfg, const mio::DEMObject& dem);
+		TechSnowA3D(const mio::Config& cfg, const mio::DEMObject& dem);
 
 		void setMeteo(const mio::Grid2DObject& ta,
 		              const mio::Grid2DObject& rh,
@@ -49,7 +49,7 @@ class TechSnow
 			double min_height;
 		} condition;
 		
-		static std::vector<TechSnow::condition> readSlopeConditions(const int& column, const std::string& filename);
+		static std::vector<TechSnowA3D::condition> readSlopeConditions(const int& column, const std::string& filename);
 		static short int getSlopeNumber(const double& dbl_code);
 		static short int findSlope(const int& numbers_of_slopes, const std::vector<condition>& slope_condition, const int& findSlope);
 		double setPriority( const mio::Date& date, const mio::Date& start_prod, const mio::Date& end_prod, const double& start_aim, const double& end_aim, const double& gun_operation, const double& snow_height, const double& slope_area, const double& nr_snowguns, const double& min_height, const int date_hour) const;

@@ -27,7 +27,7 @@
 using namespace std;
 using namespace mio;
 
-TechSnow::TechSnow(const mio::Config& cfg, const mio::DEMObject& dem) 
+TechSnowA3D::TechSnowA3D(const mio::Config& cfg, const mio::DEMObject& dem) 
               : skiRunsMap(), grooming(dem, IOUtils::nodata), psum_tech(dem, IOUtils::nodata), slope_condition(),
               start_season(), end_season(), start_prod1(), end_prod1(), start_prod2(), end_prod2(), start_prod3(), end_prod3(),
               start_aim1(), end_aim1(), gun_operation1(), start_aim2(), end_aim2(), gun_operation2(), start_aim3(), end_aim3(), gun_operation3(),
@@ -76,7 +76,7 @@ TechSnow::TechSnow(const mio::Config& cfg, const mio::DEMObject& dem)
 	tech_cfg.getValue("PRIO3::gun_operation", "Slope_Priority", gun_operation3);
 }
 
-std::vector<TechSnow::condition> TechSnow::readSlopeConditions(const int& numbers_of_slopes, const std::string& filename)
+std::vector<TechSnowA3D::condition> TechSnowA3D::readSlopeConditions(const int& numbers_of_slopes, const std::string& filename)
 {
 	std::ifstream fin( filename.c_str() );
 	if (fin.fail()) {
@@ -125,14 +125,14 @@ std::vector<TechSnow::condition> TechSnow::readSlopeConditions(const int& number
 }
 
 
-short int TechSnow::getSlopeNumber(const double& dbl_code)
+short int TechSnowA3D::getSlopeNumber(const double& dbl_code)
 {
 	static const double epsilon = 0.0001;
 	return static_cast<short int>( (dbl_code - 10000. + epsilon) );
 }
 
 
-short int TechSnow::findSlope(const int& numbers_of_slopes, const std::vector<condition>& slope_condition, 
+short int TechSnowA3D::findSlope(const int& numbers_of_slopes, const std::vector<condition>& slope_condition, 
                               const int& findSlope)
 {
 	static const double epsilon = 0.001;
@@ -151,7 +151,7 @@ short int TechSnow::findSlope(const int& numbers_of_slopes, const std::vector<co
 }	
 
 
-double TechSnow::setPriority(const mio::Date& date, 
+double TechSnowA3D::setPriority(const mio::Date& date, 
 							 const mio::Date& start_prod, 
 							 const mio::Date& end_prod, const double& start_aim, const double& end_aim,
 							 const double& gun_operation, const double& snow_height, 
@@ -182,7 +182,7 @@ double TechSnow::setPriority(const mio::Date& date,
 }
 
 
-void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh, const mio::Grid2DObject& hs, const mio::Date& date)
+void TechSnowA3D::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh, const mio::Grid2DObject& hs, const mio::Date& date)
 {
 	// Cleaning data from last timestep
 	grooming = IOUtils::nodata;
@@ -249,7 +249,7 @@ void TechSnow::setMeteo(const mio::Grid2DObject& ta, const mio::Grid2DObject& rh
 }
 
 
-mio::Grid2DObject TechSnow::getGrid(const SnGrids::Parameters& param) const
+mio::Grid2DObject TechSnowA3D::getGrid(const SnGrids::Parameters& param) const
 {
 	switch (param) {
 		case SnGrids::GROOMING:
