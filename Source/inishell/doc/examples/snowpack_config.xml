@@ -802,7 +802,7 @@
 			<section name="SnowpackAdvanced" />
 			<option value="TRUE" type="string"/>
 			<option value="FALSE" type="string"/>
-			<help>Set whether adaptive time stepping is allowed for solving the heat advection equation/phase changes when unstable atmospheric stratification is encountered (only for non-neutral atmospheric stability schemes). It then temporarily reduces the time step, in order to reduce oscillations in surface temperature.</help>
+			<help>Set whether adaptive time stepping is allowed for solving the heat advection equation/phase changes when unstable atmospheric stratification is encountered (only for non-neutral atmospheric stability schemes). It then temporarily reduces the time step, in order to reduce oscillations in surface temperature. This increases computation times. Note that independent of this flag, the time step can be temporarily reduced when the heat equation does not converge.</help>
 		</parameter>
 	</frame>
 

@@ -104,6 +104,12 @@ class MeteoGrids {
 
 class MeteoData {
 	public:
+		///Keywords for selecting the toString formats
+		typedef enum {
+			DFLT, ///< Shows detailed information, skipping nodata fields
+			COMPACT ///< output optimized to print the content of vector<MeteoData>
+		} FORMATS;
+		
 		/** @brief Available %MeteoData merging strategies.
 		* When the two stations both have data at a given time step, only the parameters that are *not* present
 		* in station1 will be taken from station2 (ie. station1 has priority).
@@ -301,7 +307,12 @@ class MeteoData {
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
 
-		const std::string toString() const;
+		/**
+		 * @brief Print the content of the current object
+		 * @param[in] format select the preferred output format
+		 * @return string containing a human-readable representation of the content of the object
+		 */
+		const std::string toString(const FORMATS format=DFLT) const;
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 		friend std::istream& operator>>(std::istream& is, MeteoData& data);
 

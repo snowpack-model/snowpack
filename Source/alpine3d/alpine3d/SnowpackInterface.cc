@@ -89,7 +89,8 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
                   landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
                   psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
-                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
+                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata),
+                  ta(dem_in, IOUtils::nodata), tsg(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
                   solarElevation(0.), output_grids(), workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), worker_stations_coord(nbworkers),
                   timer(), nextStepTimestamp(startTime), timeStep(dt_main/86400.), dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
                   drift(NULL), eb(NULL), da(NULL), runoff(NULL), glaciers(NULL), techSnow(NULL)
@@ -142,48 +143,68 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	//If MPI is active, every node gets a slice of the DEM to work on
 	mpicontrol.getArraySliceParamsOptim(dimx, mpi_offset, mpi_nx,dem,landuse);
-
-	//Cut DEM and landuse in MPI domain
+	std::cout << "[i] MPI inatance "<< mpicontrol.rank() <<" for solving snowpack : grid range = ["
+	<< mpi_offset << " to " << mpi_offset+mpi_nx-1 << "] " << mpi_nx << " columns\n";
+	//Cut DEM and landuse in MPI domain, MPI domain are computed
+	//by trying to havve the same number of cell to compute per domain
 	const DEMObject mpi_sub_dem(dem_in, mpi_offset, 0, mpi_nx, dimy, false);
 	const Grid2DObject mpi_sub_landuse(landuse_in, mpi_offset, 0, mpi_nx, dimy);
 	std::vector<std::vector<size_t> > omp_snow_stations_ind;
+	//The OMP slicing for snowpack computation is not based on rectangular domain.
+	//It return a table of pixel to compute and coordiantes to have the same
+	//number of pixel per slice.
 	OMPControl::getArraySliceParamsOptim(nbworkers,snow_stations,mpi_sub_dem, mpi_sub_landuse,omp_snow_stations_ind);
 	// construct slices and workers
 	#pragma omp parallel for schedule(static)
 	for (size_t ii=0; ii<nbworkers; ii++) {
-		// This call is now used only to handle special points
+		// Could be optimised, but not really big gain.
+		// Each worker will check again the point to be sure they belong
+		// to it, so no need to double check here
+		std::vector< std::pair<size_t,size_t> > sub_pts;
+		const size_t n_pts = pts.size();
+		for (size_t kk=0; kk<n_pts; kk++) { // could be optimised... but not really big gain
+			if (pts[kk].first>=mpi_offset && pts[kk].first<=mpi_nx) {
+				sub_pts.push_back( pts[kk] );
+				sub_pts.back().first -= mpi_offset;
+			}
+		}
+		// In this  implementation, all OMP workers see the whole MPI grid
+		// This could be change but with this when passing the meteo grids
+		// Only one slicing and copy is necessary per MPI, insetead of one per OMP
+		const DEMObject sub_dem(mpi_sub_dem);
+		const Grid2DObject sub_landuse(mpi_sub_landuse);
+
+		// Generate workers
+		std::vector<SnowStation*> thread_stations;
+		std::vector<std::pair<size_t,size_t> > thread_stations_coord;
+		for (std::vector<size_t>::iterator it = omp_snow_stations_ind.at(ii).begin(); it != omp_snow_stations_ind.at(ii).end(); ++it){
+			thread_stations.push_back (snow_stations.at(*it));
+			thread_stations_coord.push_back(snow_stations_coord.at(*it));
+		}
+
+		// The OMP slicing into rectangle is only used for post computation
+		// Over teh gird (i.e. laterla flow and snow preparation)
 		size_t omp_offset, omp_nx;
 		OMPControl::getArraySliceParams(mpi_nx, nbworkers, ii, omp_offset, omp_nx);
 		const size_t offset = mpi_offset + omp_offset;
-		std::vector< std::pair<size_t,size_t> > sub_pts;
-		const size_t endx = omp_nx+offset-1;
-		if (omp_nx>0) {
-			// handle special points
-			const size_t n_pts = pts.size();
-			for (size_t kk=0; kk<n_pts; kk++) { // could be optimised... but not really big gain
-				if (pts[kk].first>=offset && pts[kk].first<=endx) {
-					sub_pts.push_back( pts[kk] );
-					sub_pts.back().first -= offset;
-				}
-			}
+
+		workers[ii] = new SnowpackInterfaceWorker(sn_cfg, sub_dem, sub_landuse, sub_pts, thread_stations, thread_stations_coord, offset);
+
+		worker_startx[ii] = offset;
+		worker_deltax[ii] = omp_nx;
+		#pragma omp critical(snowpackWorkers_status)
+		{
+			const std::pair<size_t,size_t> coord_start(snow_stations_coord.at(omp_snow_stations_ind.at(ii).front()));
+			const std::pair<size_t,size_t> coord_end(snow_stations_coord.at(omp_snow_stations_ind.at(ii).back()));
+
+			std::cout << "[i] SnowpackInterface worker for solving snowpack " << ii
+								<< " on process " << mpicontrol.rank() << ": coord. x-y range = [" << coord_start.first + mpi_offset << "-"
+								<< coord_start.second << " to " << coord_end.first + mpi_offset << "-"
+								<< coord_end.second<<"] " << omp_snow_stations_ind.at(ii).size() << " cells\n";
+								std::cout << "[i] SnowpackInterface worker for grid computation " << ii
+								<< " on process " << mpicontrol.rank() << ": grid range = [" << offset
+								<< " to " << omp_nx+offset-1 << "]  " << omp_nx << " columns\n";
 		}
-			// In this new implementation, all OMP workers see the whole MPI grid
-			const DEMObject sub_dem(mpi_sub_dem);
-			const Grid2DObject sub_landuse(mpi_sub_landuse);
-
-			// generate workers
-			std::vector<SnowStation*> thread_stations;
-			std::vector<std::pair<size_t,size_t> > thread_stations_coord;
-			for (std::vector<size_t>::iterator it = omp_snow_stations_ind.at(ii).begin(); it != omp_snow_stations_ind.at(ii).end(); ++it){
-				thread_stations.push_back (snow_stations.at(*it));
-				thread_stations_coord.push_back(snow_stations_coord.at(*it));
-			}
-
-			workers[ii] = new SnowpackInterfaceWorker(sn_cfg, sub_dem, sub_landuse, sub_pts, thread_stations, thread_stations_coord, offset);
-			worker_startx[ii] = offset;
-			worker_deltax[ii] = omp_nx;
-			#pragma omp critical(snowpackWorkers_status)
-			std::cout << "[i] SnowpackInterface worker " << ii << " on process " << mpicontrol.rank() << ": X range = [" << offset << "-" << endx << "] \t " << omp_nx << " cells\n";
 	}
 
 	// init glacier map (after creating and init workers) for output
@@ -197,7 +218,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	//init snow preparation
 	if (snow_preparation) {
-		techSnow = new TechSnow(io_cfg, dem);
+		techSnow = new TechSnowA3D(io_cfg, dem);
 	}
 }
 
@@ -221,6 +242,7 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		dw = source.dw;
 		rh = source.rh;
 		ta = source.ta;
+		tsg = source.tsg;
 		solarElevation = source.solarElevation;
 		output_grids = source.output_grids;
 		workers = source.workers;
@@ -600,7 +622,7 @@ void SnowpackInterface::setSnowMassChange(const mio::Grid2DObject& new_mns, cons
  * @param new_ta gives the new values for the Aire temperature
  * @param timestamp is the time of the calculation step from which this new values are comming
  */
-void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObject& new_psum_ph, const Grid2DObject& new_vw, const Grid2DObject& new_dw, const Grid2DObject& new_rh, const Grid2DObject& new_ta, const mio::Date& timestamp)
+void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObject& new_psum_ph, const Grid2DObject& new_vw, const Grid2DObject& new_dw, const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_tsg, const mio::Date& timestamp)
 {
 	if (nextStepTimestamp != timestamp) {
 		if (MPIControl::instance().master()) {
@@ -625,6 +647,7 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
 		ta = glaciers->correctTemperatures(cH, TSS, new_ta);
 	}
+	tsg = new_tsg;
 
 	if (snow_preparation) {
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
@@ -781,6 +804,7 @@ void SnowpackInterface::calcNextStep()
 	const mio::Grid2DObject tmp_psum_tech(psum_tech,  mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_rh(rh, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_ta(ta, mpi_offset, 0, mpi_nx, dimy);
+	const mio::Grid2DObject tmp_tsg(tsg, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_vw(vw, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_vw_drift(vw_drift, mpi_offset, 0, mpi_nx, dimy);
 	const mio::Grid2DObject tmp_dw(dw, mpi_offset, 0, mpi_nx, dimy);
@@ -792,7 +816,7 @@ void SnowpackInterface::calcNextStep()
 	for (size_t ii = 0; ii < workers.size(); ii++) { // make slices
 		// run model, process exceptions in a way that is compatible with openmp
 		try {
-			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
+			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_tsg, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
 			if (snow_preparation) {
 				const mio::Grid2DObject tmp_grooming(grooming, worker_startx[ii], 0, worker_deltax[ii], dimy);
 				workers[ii]->grooming( tmp_grooming );
@@ -1089,7 +1113,9 @@ void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationDa
 					snowPixel.meta.position.setProj(coordsys, coordparam);
 					snowPixel.meta.position.setXY(refX+double(ix)*cellsize, refY+double(iy)*cellsize, dem.grid2D(ix,iy));
 					snowPixel.meta.position.setGridIndex((int)ix, (int)iy, 0, true);
-					snowPixel.meta.setSlope(dem.slope(ix,iy), dem.azi(ix,iy));
+					// Note that pixels without valid azimuth will be asigned azimuth = 0 and slope angle = 0.
+					snowPixel.meta.setSlope( (dem.azi(ix,iy) == mio::IOUtils::nodata) ? (0.) : (dem.slope(ix,iy)),
+							         (dem.azi(ix,iy) == mio::IOUtils::nodata) ? (0.) : (dem.azi(ix,iy)) );
 					snowPixel.cos_sl = cos( snowPixel.meta.getSlopeAngle()*mio::Cst::to_rad );
 
 					// Initialize the station name for the pixel

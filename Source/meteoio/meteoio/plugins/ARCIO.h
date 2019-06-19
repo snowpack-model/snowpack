@@ -47,12 +47,13 @@ class ARCIO : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
 		void getGridPaths();
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
+		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& options) const;
 		const Config cfg;
 
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters

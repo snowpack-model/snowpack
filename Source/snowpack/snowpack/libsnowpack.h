@@ -35,6 +35,7 @@
 #include <snowpack/SnowDrift.h>
 #include <snowpack/SnowpackConfig.h>
 #include <snowpack/Stability.h>
+#include <snowpack/TechnicalSnow.h>
 #include <snowpack/Utils.h>
 
 #include <snowpack/plugins/SnowpackIO.h>

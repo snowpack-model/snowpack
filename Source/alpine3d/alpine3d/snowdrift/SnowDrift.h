@@ -90,7 +90,7 @@ class SnowDriftA3D {
 		virtual void Compute(const mio::Date& calcDate);
 		bool isNewWindField(const unsigned int current_step) /*const*/;
 		void setMeteo (const unsigned int& steps, const mio::Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph, const mio::Grid2DObject& new_p, const mio::Grid2DObject& new_vw,
-		                     const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_ilwr, const mio::Date& calcDate,
+		                     const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_tsg, const mio::Grid2DObject& new_ilwr, const mio::Date& calcDate,
 		                     const std::vector<mio::MeteoData>& vecMeteo);
 
 		void GetTResults(double  outtime_v[15], double outtime_tau[15], double outtime_salt[15], double outtime_diff[15]);
@@ -309,7 +309,7 @@ class SnowDriftA3D {
 		mio::Array2D<double> saltation, c_salt, mns_subl, mns_nosubl,dif_mns_subl;
 
 		//Meteo 2D data
-		mio::Grid2DObject mns, vw, rh, ta, p, psum, psum_ph/*, iswr, ea*/; // TODO ISWR activate, TODO EA activate
+		mio::Grid2DObject mns, vw, rh, ta, tsg, p, psum, psum_ph/*, iswr, ea*/; // TODO ISWR activate, TODO EA activate
 
 		//Meteo 1D data
 		double ta_1D;

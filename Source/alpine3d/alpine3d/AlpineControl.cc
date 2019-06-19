@@ -57,7 +57,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	const double timeStep = dt_main/86400.;
 	Timer elapsed;
 	std::vector<MeteoData> vecMeteo; // to transfer meteo information
-	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, ilwr;
+	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, tsg, ilwr;
 	const bool isMaster = MPIControl::instance().master();
 
 	if (isMaster) {
@@ -98,7 +98,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		//get 1D and 2D meteo for the current time step
 		try {
 			meteo.get(calcDate, vecMeteo);
-			meteo.get(calcDate, ta, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
+			meteo.get(calcDate, ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
 		} catch (IOException&) {
 			//saving state files before bailing out
 			if (isMaster) {
@@ -117,14 +117,14 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		}
 
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
-			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, calcDate);
+			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
 		}
 		if (snowpack && enable_simple_snow_drift) snowpack->setVwDrift(vw_drift, calcDate);
 
 		try { //Snowdrift
 			if (snowdrift) {
 				//meteo1d(MeteoData::TA) : big TODO, see with Christine if we could get rid of it
-				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, rh, ta, ilwr, calcDate, vecMeteo);
+				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, rh, ta, tsg, ilwr, calcDate, vecMeteo);
 				snowdrift->Compute(calcDate);
 			}
 		} catch (std::exception& e) {

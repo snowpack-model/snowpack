@@ -47,7 +47,7 @@ class GrassIO : public IOInterface {
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		
 		using IOInterface::write2DGrid; //to call before overriding the method
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options);
 
 	private:
 		const Config cfg;

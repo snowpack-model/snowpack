@@ -270,18 +270,27 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 * @param[in] var variable to write out
 * @param[in] nrows number of rows
 * @param[in] ncols number of columns
-* @param[in] pos time index in the file
+* @param[in] pos time index in the file (IOUtils::npos for a variable that is not time dependent)
 * @param[in] data data to write to the file
 */
 void write_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols,
                 const double * const data)
 {
-	const size_t start[] = {pos, 0, 0};
-	const size_t count[] = {1, nrows, ncols};
+	if (pos==mio::IOUtils::npos) { //no time dependency
+		const size_t start[] = {0, 0};
+		const size_t count[] = {nrows, ncols};
 
-	const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
-	if (status != NC_NOERR)
-		throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+		const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
+		if (status != NC_NOERR)
+			throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+	} else { //time dependent variable
+		const size_t start[] = {pos, 0, 0};
+		const size_t count[] = {1, nrows, ncols};
+
+		const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
+		if (status != NC_NOERR)
+			throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+	}
 }
 
 /**
@@ -974,6 +983,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "rsus", "surface_upwelling_shortwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "rsus", "surface_upwelling_shortwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "rlds", "surface_downwelling_longwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "rlus", "surface_upwelling_longwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::HS, "snd", "surface_snow_thickness", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "snow_density", "snow_density", "", "kg/m3", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "swe", "lwe_thickness_of_surface_snow_amount", "", "m", mio::IOUtils::nodata, NC_FLOAT) );

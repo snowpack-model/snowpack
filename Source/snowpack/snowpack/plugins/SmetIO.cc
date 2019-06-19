@@ -904,11 +904,19 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	if (out_stab)
 		os << "Sclass1 Sclass2 zSd Sd zSn Sn zSs Ss zS4 S4 zS5 S5" << " "; //S5 is liquidWaterIndex
 
-	/*if (out_canopy)
-		os << " ";*/
+	if (out_canopy)
+	{
+		os << "Interception_storage Canopy_surface_temperature Canopy_albedo Wet_fraction Interception_capacity Net_shortwave_radiation_absorbed_by_canopy" << " "; //6
+		os << "Net_longwave_radiation_absorbed_by_canopy Net_radiation_to_canopy Sensible_heat_flux_to_canopy Latent_heat_flux_to_canopy" << " "; //4
+		os << "Biomass_heat_storage_flux_towards_Canopy Transpiration_of_the_canopy Evaporation_and_sublimation_of_interception_(liquid_and_frozen)" << " "; //3
+		os << "Interception_rate Throughfall Snow_unload Longwave_radiation_up_above_canopy Longwave_radiation_down_above_canopy" << " "; //5
+		os << "Shortwave_radiation_up_above_canopy Shortwave_radiation_down_above_canopy Total_land_surface_albedo" << " "; //3
+		os << "Total_net_radiation_to_the_surface_(ground_+_canopy) Surface_radiative_temperature_(ground_+_canopy)" << " "; //2
+		os << "Forest_floor_albedo Snowfall_rate_Above_Canopy Rainfall_rate_Above_Canopy Evapotranspiration_of_the_total_surface_(ground_+_canopy)" << " "; //4
+	}
 
 	if (Xdata.Seaice != NULL)
-		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux" << " ";
+		os << "Total_thickness Ice_thickness Snow_thickness Snow_thickness_wrt_reference Freeboard Sea_level Bulk_salinity Avg_bulk_salinity Avg_brine_salinity Bottom_salinity_flux Top_salinity_flux Total_Flooding_Bucket" << " ";
 
 	return os.str();
 }
@@ -1032,15 +1040,30 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
-	/*if (out_canopy) { //HACK
-		os << " ";
-	}	*/
+	if (out_canopy) { //HACK
+		plot_description << "Interception_storage Canopy_surface_temperature Canopy_albedo Wet_fraction Interception_capacity Net_shortwave_radiation_absorbed_by_canopy" << " "; //6
+		plot_description << "Net_longwave_radiation_absorbed_by_canopy Net_radiation_to_canopy Sensible_heat_flux_to_canopy Latent_heat_flux_to_canopy" << " "; //4
+		plot_description << "Biomass_heat_storage_flux_towards_Canopy Transpiration_of_the_canopy Evaporation_and_sublimation_of_interception_(liquid_and_frozen)" << " "; //3
+		plot_description << "Interception_rate Throughfall Snow_unload Longwave_radiation_up_above_canopy Longwave_radiation_down_above_canopy" << " "; //5
+		plot_description << "Shortwave_radiation_up_above_canopy Shortwave_radiation_down_above_canopy Total_land_surface_albedo" << " "; //3
+		plot_description << "Total_net_radiation_to_the_surface_(ground_+_canopy) Surface_radiative_temperature_(ground_+_canopy)" << " "; //2
+		plot_description << "Forest_floor_albedo Snowfall_rate_Above_Canopy Rainfall_rate_Above_Canopy Evapotranspiration_of_the_total_surface_(ground_+_canopy)" << " "; //4
+		plot_units << "kg/m2 degC  - - kg/m2 W/m2 W/m2 W/m2 W/m2 W/m2 W/m2 kg/m2/timestep kg/m2/timestep kg/m2/timestep kg/m2/timestep kg/m2/timestep W/m2" << " "; //17
+		plot_units << "W/m2 W/m2 W/m2 - W/m2 degC - kg/m2/timestep kg/m2/timestep kg/m2/timestep" << " "; //10
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_min << "" << " ";
+		plot_max << "" << " ";
+	}
 	if (Xdata.Seaice != NULL) {
-		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux" << " ";
-		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
+		plot_description << "total_thickness  ice_thickness  snow_thickness  snow_thickness_wrt_ref  freeboard  sea_level  tot_salinity  avg_bulk_salinity  avg_brine_salinity  bottom_sal_flux  top_sal_flux  total_flooding_bucket_scheme" << " ";
+		plot_units << "m m m m m m g/m2 g/kg g/kg g/m2 g/m2 kg/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1166,8 +1189,46 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.getLiquidWaterIndex() ); //Xdata.S_5 HACK
 	}
 
-	/*if (out_canopy)
-		os << " ";*/
+	if (out_canopy) {
+		// PRIMARY "STATE" VARIABLES
+		data.push_back(  Xdata.Cdata.storage/cos_sl );        // intercepted water (mm or kg m-2)
+		data.push_back( IOUtils::K_TO_C( Xdata.Cdata.temp) ); // temperature (degC)
+
+		// SECONDARY "STATE" VARIABLES
+		data.push_back(  Xdata.Cdata.canopyalb );             // albedo (1)
+		data.push_back(  Xdata.Cdata.wetfraction );           // wet fraction
+		data.push_back(  Xdata.Cdata.intcapacity/cos_sl );    // interception capacity (kg m-2)
+
+		// RADIATIVE FLUXES (W m-2)
+		data.push_back(  Xdata.Cdata.rsnet );                 // net shortwave radiation to canopy
+		data.push_back(  Xdata.Cdata.rlnet );                 // net longwave radiation to canopy
+		data.push_back(  Xdata.Cdata.rsnet+ Xdata.Cdata.rlnet );    // net radiation to canopy
+
+		// HEAT FLUXES CANOPY (W m-2)
+		data.push_back( - Xdata.Cdata.sensible );             // sensible heat flux to canopy (>0 towards canopy)
+		data.push_back( - Xdata.Cdata.latentcorr );           // latent heat flux to canopy (>0 towards canopy)
+		data.push_back(  Xdata.Cdata.CondFluxCanop );         // biomass heat storage flux towards Canopy
+
+		// WATER FLUXES CANOPY (kg m-2)
+		data.push_back(  Xdata.Cdata.transp/cos_sl );         // transpiration
+		data.push_back(  Xdata.Cdata.intevap/cos_sl );        // interception evaporation
+		data.push_back(  Xdata.Cdata.interception/cos_sl );   // interception
+		data.push_back(  Xdata.Cdata.throughfall/cos_sl );    // throughfall
+		data.push_back(  Xdata.Cdata.snowunload/cos_sl );     // unload of snow
+
+		// TOTAL SURFACE FLUXES,EVAPORATION; ETC
+		data.push_back(  Xdata.Cdata.rlwrac );                // upward longwave radiation ABOVE canopy
+		data.push_back(  Xdata.Cdata.ilwrac );                // upward longwave radiation ABOVE canopy
+		data.push_back(  Xdata.Cdata.rswrac );                // upward longwave radiation ABOVE canopy
+		data.push_back(  Xdata.Cdata.iswrac );                // upward longwave radiation ABOVE canopy
+		data.push_back(  Xdata.Cdata.totalalb );              // total albedo [-]
+		data.push_back(  Xdata.Cdata.rlnet+Sdata.lw_net+ Xdata.Cdata.rsnet+Sdata.qw ); // net radiation to the total surface
+		data.push_back( IOUtils::K_TO_C(pow( Xdata.Cdata.rlwrac/Constants::stefan_boltzmann, 0.25)) ); // surface (ground + canopy) temperature
+		data.push_back(  Xdata.Cdata.forestfloor_alb );       // albedo of the forest floor [-]
+		data.push_back(  Xdata.Cdata.snowfac/cos_sl );        // snowfall rate above canopy (mm per output timestep)
+		data.push_back(  Xdata.Cdata.rainfac/cos_sl );        // rainfall rate above canopy (mm per output timestep)
+		data.push_back(  (Xdata.Cdata.transp+ Xdata.Cdata.intevap-(Sdata.mass[SurfaceFluxes::MS_SUBLIMATION]+Sdata.mass[SurfaceFluxes::MS_EVAPORATION]))/cos_sl ); //evapotranspiration of total surface (mm h-1)
+}
 
 	if (Xdata.Seaice != NULL) {
 		data.push_back( Xdata.cH - Xdata.Ground );
@@ -1183,6 +1244,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Xdata.Seaice->getAvgBrineSalinity(Xdata) );
 		data.push_back( Xdata.Seaice->BottomSalFlux );
 		data.push_back( Xdata.Seaice->TopSalFlux );
+		data.push_back( Sdata.mass[SurfaceFluxes::MS_FLOODING]/cos_sl );
 	}
 
 	smet_writer.write(timestamp, data);

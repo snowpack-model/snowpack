@@ -778,7 +778,7 @@ void SnowDriftA3D::writeOutput(const std::string& fname)
 * @brief Sets the required meteo fields
 */
 void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph, const Grid2DObject& new_p, const Grid2DObject& /*new_vw*/,
-                          const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_ilwr,  const mio::Date& calcDate,
+                          const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_tsg, const Grid2DObject& new_ilwr, const mio::Date& calcDate,
                           const std::vector<mio::MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty())
@@ -803,7 +803,8 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 	psum_ph = new_psum_ph;
 	rh = new_rh;
 	ta = new_ta;
-	p =new_p;
+	tsg = new_tsg;
+	p = new_p;
 	new_wind_status = isNewWindField(steps);
 
 	if (new_wind_status) {
@@ -829,7 +830,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 	if (SUBLIMATION) 	initializeTRH();
 	
 	//TODO: feedback mecanism: make it more general!
-	if (snowpack!=NULL) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, calcDate);
+	if (snowpack!=NULL) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
 	if (eb!=NULL) eb->setMeteo(new_ilwr, ta, rh, p, calcDate);
 }
 

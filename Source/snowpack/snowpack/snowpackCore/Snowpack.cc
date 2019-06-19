@@ -32,6 +32,7 @@
 #include <snowpack/Laws_sn.h>
 #include <snowpack/snowpackCore/WaterTransport.h>
 #include <snowpack/snowpackCore/VapourTransport.h>
+#include <snowpack/TechnicalSnow.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/PhaseChange.h>
 
@@ -45,6 +46,8 @@ using namespace std;
 /************************************************************
  * static section                                           *
  ************************************************************/
+//Minimum allowed snowpack time step for solving the heat equation (automatic time stepping is applied when equation does not converge)
+const double Snowpack::min_allowed_sn_dt = 0.01;
 
 //Uses an empirically determined size of deposited hydrometeors as new snow grain size (mm)
 const bool Snowpack::hydrometeor = false;
@@ -1483,8 +1486,6 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	}
 }
 
-
-
 /**
  * @brief Introduce new snow elements as technical snow
  * @details When there is natural snow as well as man-made snow,
@@ -1498,21 +1499,9 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	const size_t nOldN = Xdata.getNumberOfNodes(); //Old number of nodes
 	const size_t nOldE = Xdata.getNumberOfElements(); //Old number of elements
 	const double cos_sl = Xdata.cos_sl; //slope cosinus
- 	const double Tw = (IOUtils::K_TO_C(Mdata.ta)) * atan(0.151977 * pow(Mdata.rh*100. + 8.313659, 0.5)) + atan(IOUtils::K_TO_C(Mdata.ta) + Mdata.rh*100.) - atan(Mdata.rh*100. - 1.676331) + 0.00391838 * pow(Mdata.rh*100, 1.5) * atan(0.023101 * Mdata.rh*100) - 4.686035; // (°C) Wet-bulb temperature
-	const double rho_hn = 1.7261 * Optim::pow2(Tw) + 37.484 * Tw + 605.05; // (kg/m3) density of technical snow (kg/m3) dependent from the wet-bulb temperature
-	const double rho_w = 999.9; 	// (kg/m3) Density water (kg/m3) @ 1-4°C
-	const double tech_lost = 0.2;	// (-) Water loss due to wind, evaporation, etc
-	const double T_water = 1.5;		// (C) Average water temperature for the technical snow production
-	const double v_wind = 1.5;		// (m/s) Average wind condition for snow production
-	const double V_water = 100.;	// (l/min) average water supply by the snow guns
-	double LWC_max = 29.76 - 11.71 * log(abs(Tw)) + 1.07*T_water - 1.6 * v_wind;	// (%vol) liquid water content at 55 l/min
-	if (LWC_max < 0.) LWC_max = 0.;
-	const double LWC = (0.004 * V_water + 0.52) * 100 * (rho_hn/917.) / 36.3 * LWC_max * 0.4;	// (%vol) liquid water content (average value multiply by 0.5)
-	const double psum_snow_tech = Mdata.psum_tech * rho_w / rho_hn * (1. - tech_lost); 	// Technical snow production (mm) dependent from water loss and amount of provided water
-	const double precip_snow = psum_snow_tech + cumu_precip * (1. -  Mdata.psum_ph);	// (mm)
-	const double precip_rain = (Mdata.psum) * Mdata.psum_ph;			// (mm)
-	const double delta_cH = (precip_snow / rho_hn); // Actual enforced snow depth		// (m4/kg)
-	const double th_w = precip_rain / (delta_cH * Constants::density_water) + LWC/100.; // (-) volume fraction of liquid water in each element
+ 	
+ 	double Tw, rho_hn, delta_cH, theta_w;
+	TechSnow::productionPpt(Mdata, cumu_precip, Tw, rho_hn, delta_cH, theta_w);
 
 	// Now determine whether the increase in snow depth is large enough.
 	double hn = 0.; //new snow amount
@@ -1539,11 +1528,11 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 
 	// Fill the nodal data
 	if (!useSoilLayers && (nOldN-1 == Xdata.SoilNode)) // New snow on bare ground w/o soil
-		NDS[nOldN-1].T = IOUtils::C_TO_K(Tw);	// 0.5*(t_surf + Mdata.ta);
+		NDS[nOldN-1].T = Tw;	// 0.5*(t_surf + Mdata.ta);
 	const double Ln = (hn / (double)nAddE);               // New snow element length
 	double z0 = NDS[nOldN-1].z + NDS[nOldN-1].u + Ln; // Position of lowest new node
 	for (size_t n = nOldN; n < nNewN; n++) { //loop over the nodes
-			NDS[n].T = IOUtils::C_TO_K(Tw);                  // t_surf Temperature of the new node
+			NDS[n].T = Tw;                  // t_surf Temperature of the new node
 			NDS[n].z = z0;                      // New nodal position
 			NDS[n].u = 0.0;                     // Initial displacement is 0
 			NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
@@ -1562,11 +1551,11 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 				// Now give specific properties for technical snow, consider liquid water
 				// Assume that the user does not specify unreasonably high liquid water contents.
 				// This depends also on the density of the solid fraction - print a warning if it looks bad
-				EMS[e].theta[WATER] += th_w;
+				EMS[e].theta[WATER] += theta_w;
 
 				if ( (EMS[e].theta[WATER] + EMS[e].theta[ICE]) > 0.7)
 					prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
-				          "Too much liquid water specified or density too high! Dry density =%.3f kg m-3  Water Content = %.3f %", rho_hn, th_w);
+				          "Too much liquid water specified or density too high! Dry density =%.3f kg m-3  Water Content = %.3f %", rho_hn, theta_w);
 
 				EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
 
@@ -1600,9 +1589,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	Xdata.cH = NDS[nNewN-1].z + NDS[nNewN-1].u;
 	Xdata.ErosionLevel = nNewE-1;
 
-} // End function technical snow
-
-
+}
 
 /**
  * @brief Determines whether new snow elements are added on top of the snowpack
@@ -2068,7 +2055,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		int ii = 0;				// Counter for sub-timesteps to match one SNOWPACK time step
 		bool LastTimeStep = false;		// Flag to indicate if it is the last sub-time step
 		double p_dt = 0.;			// Cumulative progress of time steps
-		if ((Mdata.psi_s >= 0. || t_surf > Mdata.ta) && atm_stability_model != Meteo::NEUTRAL && allow_adaptive_timestepping == true) {
+		if ((Mdata.psi_s >= 0. || t_surf > Mdata.ta) && atm_stability_model != Meteo::NEUTRAL && allow_adaptive_timestepping == true && sn_dt > 60.) {
 			// To reduce oscillations in TSS, reduce the time step prematurely when atmospheric stability is unstable.
 			if (Mdata.psum != mio::IOUtils::nodata) Mdata.psum /= sn_dt;					// psum is precipitation per time step, so first express it as rate with the old time step (necessary for rain only)...
 			if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim /= sn_dt;		// scale the mass balance components like the precipiation
@@ -2095,7 +2082,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 			// Compute the temperature profile in the snowpack and soil, if present
 			for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) Xdata.Edata[e].Qph_up = Xdata.Edata[e].Qph_down = 0.;
-			if (compTemperatureProfile(Mdata, Xdata, Bdata, (allow_adaptive_timestepping == true)?(false):(true))) {
+			if (compTemperatureProfile(Mdata, Xdata, Bdata, (sn_dt < min_allowed_sn_dt))) {
 				// Entered after convergence
 				ii++;						// Update time step counter
 				p_dt += sn_dt;					// Update progress variable
@@ -2182,17 +2169,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				if (forcing=="MASSBAL" && Mdata.sublim != mio::IOUtils::nodata)		Mdata.sublim *= sn_dt;		// scale the mass balance components like the precipiation
 				if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 
-				if (sn_dt < 0.01) {	// If time step gets too small, we are lost
-					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Temperature equation did not converge, even after reducing time step (azi=%.0lf, slope=%.0lf).", Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
-					for (size_t n = 0; n < Xdata.getNumberOfNodes(); n++) {
-						prn_msg(__FILE__, __LINE__, "msg-", Date(),
-						        "N[%03d]: %8.4lf K", n, Xdata.Ndata[n].T);
-					}
-					prn_msg(__FILE__, __LINE__, "msg", Date(),
-					        "Latent: %lf  Sensible: %lf  Rain: %lf  NetLong:%lf  NetShort: %lf",
-					        Bdata.ql, Bdata.qs, Bdata.qr, Bdata.lw_net, Mdata.iswr - Mdata.rswr);
-					throw IOException("Runtime error in runSnowpackModel", AT);
-				}
 				std::cout << "                            --> time step temporarily reduced to: " << sn_dt << "\n";
 			}
 		}
@@ -2257,40 +2233,5 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 void Snowpack::snowPreparation(SnowStation& Xdata)
 {
-	const size_t nE = Xdata.getNumberOfElements();
-	double depth = 0.;
-	double rho_groom ;	// Density of the groomed snow
-
-	vector<NodeData>& NDS = Xdata.Ndata;
-	vector<ElementData>& EMS = Xdata.Edata;
-	for (size_t e=nE; e-- > Xdata.SoilNode; ) {
-		if (EMS[e].Rho > 430.) rho_groom = 430.;
-		else rho_groom = 12.152 * pow(448.78 - EMS[e].Rho, 1./2.) + 0.9963 * EMS[e].Rho - 35.41;
-
-		const double L0 = EMS[e].L;
-		const double L1 = EMS[e].L * EMS[e].Rho / rho_groom;	// New lenght of the element after grooming
-		depth += L0;
-		if ( rho_groom <= 430. ) {
-			EMS[e].L0 = L1;
-			EMS[e].L = L1;
-			EMS[e].Rho = rho_groom;
-			EMS[e].theta[WATER] *= L0 / L1;
-			EMS[e].theta[WATER_PREF] *= L0 / L1;
-			EMS[e].theta[ICE]   *= L0 / L1;
-			EMS[e].dd = 0.;
-			EMS[e].sp = 1.;
-			EMS[e].rg = 0.2; // Have to adapt after some tests
-			EMS[e].rb = EMS[e].rg/3.;
-			NDS[e+1].z = NDS[e].z + EMS[e].L;
-			EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
-			if ( !(EMS[e].theta[AIR]>=0.1) ) {
-				prn_msg(__FILE__, __LINE__, "err", Date(),
-			          "Error in Slope Preparation (Densification) Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf air=%le",
-			            e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
-			throw IOException("Runtime Error in snowPreparation()", AT);
-			}
-			Xdata.cH = NDS[nE].z + NDS[nE].u;		// Update computed snow depth
-		if (depth > 0.4) break;		// Grooming has only an influence on the upper 40 cm
-		}
-	}
+	TechSnow::preparation(Xdata);
 }
