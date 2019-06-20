@@ -3010,7 +3010,7 @@ const std::string SnowStation::toString() const
 
 CurrentMeteo::CurrentMeteo()
         : date(), ta(0.), rh(0.), rh_avg(IOUtils::nodata), vw(0.), vw_avg(IOUtils::nodata), vw_max(0.), dw(0.),
-          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.),
+          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.), psi_m(0.),
           iswr(0.), rswr(0.), mAlbedo(0.), diff(0.), dir_h(0.), elev(0.), ea(0.), tss(0.), tss_a12h(0.), tss_a24h(0.), ts0(0.),
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
@@ -3022,7 +3022,7 @@ CurrentMeteo::CurrentMeteo()
 
 CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
         : date(), ta(0.), rh(0.), rh_avg(IOUtils::nodata), vw(0.), vw_avg(IOUtils::nodata), vw_max(0.), dw(0.),
-          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.),
+          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.), psi_m(0.),
           iswr(0.), rswr(0.), mAlbedo(0.), diff(0.), dir_h(0.), elev(0.), ea(0.), tss(0.), tss_a12h(0.), tss_a24h(0.), ts0(0.),
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
@@ -3180,6 +3180,7 @@ std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data)
 	os.write(reinterpret_cast<const char*>(&data.ustar), sizeof(data.ustar));
 	os.write(reinterpret_cast<const char*>(&data.z0), sizeof(data.z0));
 	os.write(reinterpret_cast<const char*>(&data.psi_s), sizeof(data.psi_s));
+	os.write(reinterpret_cast<const char*>(&data.psi_m), sizeof(data.psi_m));
 	os.write(reinterpret_cast<const char*>(&data.iswr), sizeof(data.iswr));
 	os.write(reinterpret_cast<const char*>(&data.rswr), sizeof(data.rswr));
 	os.write(reinterpret_cast<const char*>(&data.mAlbedo), sizeof(data.mAlbedo));
@@ -3245,6 +3246,7 @@ std::istream& operator>>(std::istream& is, CurrentMeteo& data)
 	is.read(reinterpret_cast<char*>(&data.ustar), sizeof(data.ustar));
 	is.read(reinterpret_cast<char*>(&data.z0), sizeof(data.z0));
 	is.read(reinterpret_cast<char*>(&data.psi_s), sizeof(data.psi_s));
+	is.read(reinterpret_cast<char*>(&data.psi_m), sizeof(data.psi_m));
 	is.read(reinterpret_cast<char*>(&data.iswr), sizeof(data.iswr));
 	is.read(reinterpret_cast<char*>(&data.rswr), sizeof(data.rswr));
 	is.read(reinterpret_cast<char*>(&data.mAlbedo), sizeof(data.mAlbedo));
@@ -3313,7 +3315,7 @@ const std::string CurrentMeteo::toString() const
 	os << setw(8) << "PSUM=" << psum << " PSUM_PH=" << psum_ph << " HS=" << hs << " rho_hn=" << rho_hn << " PSUM_TECH=" << psum_tech << "\n";
 	os << setw(8) << "VW=" << vw << " vw_avg=" << vw_avg << " vw_max=" << vw_max << " vw_drift=" << vw_drift << "\n";
 	os << setw(8) << "DW=" << dw << "\n";
-	os << setw(8) << "U*=" << ustar << " z0=" << z0 << " psi_s=" << psi_s << "\n";
+	os << setw(8) << "U*=" << ustar << " z0=" << z0 << " psi_s=" << psi_s << " psi_m=" << psi_m << "\n";
 
 	//os << std::setprecision(10);
 	if(!ts.empty()) os << "     ";

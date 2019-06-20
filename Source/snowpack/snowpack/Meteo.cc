@@ -121,6 +121,23 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 	hs *= cos_sl;
 }
 
+/**
+ * @brief Applies the logarithmic wind profile to adjust provided wind speed to another height above surface.
+ * Wind pumping is ignored. NOTE THAT THE FUNCTION IS DEACTIVATED AND WILL RETURN WIND SPEED FROM INPUT!!!
+ * @param Mdata
+ * @param target_z target height above surface (m) to translate the windspeed to.
+ * @param source_vw (optional) Wind speed to use to scale ustar(Mdata.vw). If omitted, Mdata.vw is taken.
+ * @return Wind speed (m/s) at target_z.
+ */
+double Meteo::windspeedProfile(const CurrentMeteo& Mdata, const double& target_z, const double& source_vw) {
+	const double d_pump = 0.;
+	const double z_ratio = log((target_z - d_pump) / Mdata.z0);
+	const double ustar_corr = (source_vw < 0. || Mdata.vw < 0.) ? (Mdata.ustar) : (Mdata.ustar * (source_vw / Mdata.vw));
+	const double vw_corr = (ustar_corr / Constants::karman) * (z_ratio - Mdata.psi_m);
+	return (source_vw >= 0.) ? (source_vw) : (Mdata.vw);	// THIS LINE RETURNS WIND SPEED FROM INPUT, AND DEACTIVATES THE WORKING OF THIS FUNCTION!!!
+	return vw_corr;						// TODO: THIS LINE NEEDS TO BE ACTIVATED IN THE FUTURE.
+}
+
 void Meteo::RichardsonStability(const double& ta_v, const double& t_surf_v, const double& zref, const double& vw, const double& z_ratio, double &ustar, double &psi_s)
 {
 	const double Ri = Constants::g / t_surf_v * (ta_v - t_surf_v) * zref / Optim::pow2(vw);
@@ -294,6 +311,7 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	Mdata.ustar = ustar;
 	Mdata.z0 = roughness_length;
 	Mdata.psi_s = psi_s;
+	Mdata.psi_m = psi_m;
 }
 
 /**

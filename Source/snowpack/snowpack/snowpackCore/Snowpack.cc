@@ -396,9 +396,11 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 		if (EMS[e].mk%100 != 3) { //ALL except SH
 			double wind_slab=1.;
 			const double dz = NDS[nE].z - NDS[e].z;
-			const double dv = Mdata.vw - Metamorphism::wind_slab_vw;
+			const double z_ref_vw = 3.;	// See p. 336 in Groot Zwaaftink et al. (doi: https://doi.org/10.5194/tc-7-333-2013)
+			const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
+			const double dv = vw_ref - Metamorphism::wind_slab_vw;
 			if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
-			      && (Mdata.vw > Metamorphism::wind_slab_vw)
+			      && (vw_ref > Metamorphism::wind_slab_vw)
 			        && ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
 				if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
 					// fits original parameterization at Metamorphism::wind_slab_vw + 0.6 m/s
@@ -2070,8 +2072,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 		Meteo M(cfg);
 		do {
-			// After the first sub-time step, update Meteo object to reflect on the new stability state
-			if (ii >= 1) M.compMeteo(Mdata, Xdata, false);
+			// Update Meteo object to reflect on the new stability state
+			M.compMeteo(Mdata, Xdata, false);
 			// Reinitialize and compute the initial meteo heat fluxes
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
