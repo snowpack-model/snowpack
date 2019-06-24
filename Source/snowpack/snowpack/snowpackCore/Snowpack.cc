@@ -99,7 +99,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
+            enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
             temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
@@ -270,6 +270,9 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		enhanced_wind_slab = false; //true; //
 	}
 
+	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
+	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
+
 	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
 	new_snow_bond_size = 0.25 * new_snow_grain_size;
 
@@ -399,16 +402,20 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 			const double z_ref_vw = 3.;	// See p. 336 in Groot Zwaaftink et al. (doi: https://doi.org/10.5194/tc-7-333-2013)
 			const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
 			const double dv = vw_ref - Metamorphism::wind_slab_vw;
-			if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
-			      && (vw_ref > Metamorphism::wind_slab_vw)
-			        && ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
-				if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
-					// fits original parameterization at Metamorphism::wind_slab_vw + 0.6 m/s
-					wind_slab += 2.7 * Metamorphism::wind_slab_enhance
-					                 * Optim::pow3(dv) * (1. - dz / (1.25 * Metamorphism::wind_slab_depth));
-				} else {
-					// original parameterization by Lehning
-					wind_slab += Metamorphism::wind_slab_enhance * dv;
+			if (snow_erosion == "REDEPOSIT") {
+				wind_slab = 1.;
+			} else {
+				if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
+				      && (vw_ref > Metamorphism::wind_slab_vw)
+					&& ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
+					if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
+						// fits original parameterization at Metamorphism::wind_slab_vw + 0.6 m/s
+						wind_slab += 2.7 * Metamorphism::wind_slab_enhance
+							         * Optim::pow3(dv) * (1. - dz / (1.25 * Metamorphism::wind_slab_depth));
+					} else {
+						// original parameterization by Lehning
+						wind_slab += Metamorphism::wind_slab_enhance * dv;
+					}
 				}
 			}
 			EMS[e].Eps_vDot = wind_slab * (EMS[e].C + Sig0) / eta;
