@@ -55,7 +55,7 @@ static std::string get_erosion(const SnowpackConfig& cfg)
 	std::string erosion = "NONE";
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", erosion);
 	std::transform(erosion.begin(), erosion.end(), erosion.begin(), ::toupper);	// Force upper case
-	if (erosion != "NONE" && erosion != "VIRTUAL" && erosion != "HS_DRIVEN" && erosion != "FREE") {
+	if (erosion != "NONE" && erosion != "VIRTUAL" && erosion != "HS_DRIVEN" && erosion != "FREE" && erosion != "REDEPOSIT") {
 		if (erosion == "TRUE") {
 			// SNOW_EROSION==TRUE is deprecated and now interpreted as HS_DRIVEN.
 			// TODO/HACK: remove this hack in the future.
@@ -66,7 +66,7 @@ static std::string get_erosion(const SnowpackConfig& cfg)
 			erosion="NONE";
 		} else {
 			std::stringstream msg;
-			msg << "Value provided for SNOW_EROSION (" << erosion << ") is not valid. Choose either NONE, VIRTUAL, HS_DRIVEN, FREE.";
+			msg << "Value provided for SNOW_EROSION (" << erosion << ") is not valid. Choose either NONE, VIRTUAL, HS_DRIVEN, FREE or REDEPOSIT.";
 			throw UnknownValueException(msg.str(), AT);
 		}
 	}
@@ -157,11 +157,12 @@ double SnowDrift::compMassFlux(const ElementData& Edata, const double& ustar, co
  * @param Sdata
  * @param forced_massErode if greater than 0, force the eroded mass to the given value (instead of computing it)
 */
-void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& forced_massErode) const
+double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& forced_massErode) const
 {
 	size_t nE = Xdata.getNumberOfElements();
 	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
+	double ret = 0.;
 
 	const bool no_snow = ((nE < Xdata.SoilNode+1) || (EMS[nE-1].theta[SOIL] > 0.));
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
@@ -172,7 +173,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 			Sdata.drift = 0.;
 		} else
 			Sdata.drift = Constants::undefined;
-		return;
+		return ret;
 	}
 
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
@@ -182,7 +183,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 #else
 	const bool windward = false;
 #endif
-	const bool erosion = (  (snow_erosion == "FREE") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
+	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
 	if (windward || alpine3d || erosion || (fabs(forced_massErode) > Constants::eps2) || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
 		if (forcing == "MASSBAL") {
@@ -204,40 +205,53 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 			}
 			massErode = Sdata.drift * sn_dt / Hazard::typical_slope_length; // Convert to eroded snow mass in kg m-2
 		}
+
 		unsigned int nErode=0; // number of eroded elements
-		if (massErode >= 0.95 * EMS[nE-1].M) {
-			// Erode at most one element with a maximal error of +- 5 % on mass ...
-			if (windward)
-				Xdata.rho_hn = EMS[nE-1].Rho;
-			nE--;
-			Xdata.cH -= EMS[nE].L;
-			NDS[nE].hoar = 0.;
-			Xdata.ErosionMass = EMS[nE].M;
-			Xdata.ErosionLevel = std::min(nE-1, Xdata.ErosionLevel);
-			nErode++;
-			massErode -= EMS[nE].M;
-			forced_massErode = -massErode;
-		} else if (massErode > Constants::eps) { // ... or take away massErode from top element - partial real erosion
-			if (fabs(EMS[nE-1].L * EMS[nE-1].Rho - EMS[nE-1].M) > 0.001) {
-				prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "Inconsistent Mass:%lf   L*Rho:%lf", EMS[nE-1].M,EMS[nE-1].L*EMS[nE-1].Rho);
-				EMS[nE-1].M = EMS[nE-1].L * EMS[nE-1].Rho;
-				assert(EMS[nE-1].M>=0.); //mass must be positive
+		for(size_t e = nE; e --> Xdata.SoilNode; ) {
+			if (massErode >= 0.95 * EMS[e].M) {
+				// Erode at most one element with a maximal error of +- 5 % on mass ...
+				if (windward)
+					Xdata.rho_hn = EMS[e].Rho;
+				nE--;
+				Xdata.cH -= EMS[e].L;
+				NDS[e].hoar = 0.;
+				Xdata.ErosionMass += EMS[e].M;
+				Xdata.ErosionLevel = std::min(e, Xdata.ErosionLevel);
+				nErode++;
+				massErode -= EMS[e].M;
+				if (snow_erosion == "REDEPOSIT") {
+					ret += EMS[e].M;
+				}
+				forced_massErode = -massErode;
+			} else if (massErode > Constants::eps) { // ... or take away massErode from top element - partial real erosion
+				if (fabs(EMS[e].L * EMS[e].Rho - EMS[e].M) > 0.001) {
+					prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "Inconsistent Mass:%lf   L*Rho:%lf", EMS[e].M,EMS[e].L*EMS[e].Rho);
+					EMS[e].M = EMS[e].L * EMS[e].Rho;
+					assert(EMS[e].M>=0.); //mass must be positive
+				}
+				if (windward)
+					Xdata.rho_hn = EMS[e].Rho; // Density of drifting snow on virtual luv slope
+				const double dL = -massErode / (EMS[e].Rho);
+				NDS[e+1].z += dL;
+				EMS[e].L0 = EMS[e].L = EMS[e].L + dL;
+				Xdata.cH += dL;
+				NDS[e+1].z += NDS[e+1].u;
+				NDS[e+1].u = 0.0;
+				NDS[e+1].hoar = 0.;
+				EMS[e].M -= massErode;
+				if (snow_erosion == "REDEPOSIT") {
+					ret += massErode;
+				}
+				assert(EMS[e].M>=0.); //mass must be positive
+				Xdata.ErosionMass += massErode;
+				massErode = 0.;
+				forced_massErode = 0.;
+				break;
+			} else {
+				Xdata.ErosionMass = 0.;
+				break;
 			}
-			if (windward)
-				Xdata.rho_hn = EMS[nE-1].Rho; // Density of drifting snow on virtual luv slope
-			const double dL = -massErode / (EMS[nE-1].Rho);
-			NDS[nE].z += dL;
-			EMS[nE-1].L0 = EMS[nE-1].L = EMS[nE-1].L + dL;
-			Xdata.cH += dL;
-			NDS[nE].z += NDS[nE].u;
-			NDS[nE].u = 0.0;
-			NDS[nE].hoar = 0.;
-			EMS[nE-1].M -= massErode;
-			assert(EMS[nE-1].M>=0.); //mass must be positive
-			Xdata.ErosionMass = massErode;
-			forced_massErode = 0.;
-		} else {
-			Xdata.ErosionMass = 0.;
+			if (snow_erosion == "HS_DRIVEN") break;	// To be consistent with legacy SNOWPACK where only one element at a time can erode.
 		}
 		if (nErode > 0)
 			Xdata.resize(nE);
@@ -277,4 +291,5 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	} else {
 		Xdata.ErosionMass = 0.;
 	}
+	return ret;
 }

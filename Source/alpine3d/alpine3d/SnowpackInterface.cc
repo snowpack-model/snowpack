@@ -738,10 +738,10 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 	size_t errCount = 0;
 	mio::Grid2DObject tmp_grid2D_(dem,mpi_offset, 0, mpi_nx, dimy);
 	mio::Grid2DObject tmp_grid2D(tmp_grid2D_,mio::IOUtils::nodata);
-  #pragma omp parallel for schedule(dynamic) reduction(+: errCount)
+	#pragma omp parallel for schedule(dynamic) reduction(+: errCount)
 	for (size_t ii = 0; ii < workers.size(); ii++) {
 		const mio::Grid2DObject tmp( workers[ii]->getGrid(param) );
-		if (!tmp.empty()){
+		if (!tmp.empty()) {
 			for (size_t i=0; i<tmp_grid2D.getNx(); ++i){
 				for (size_t j=0; j<tmp_grid2D.getNy(); ++j){
 					if (tmp(i,j)!=mio::IOUtils::nodata)
@@ -750,9 +750,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 					}
 				}
 			}
-		}
-		else
-		{
+		} else {
 			errCount++;
 		}
 	}

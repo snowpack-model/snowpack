@@ -81,7 +81,7 @@ void TechSnow::productionPpt(const CurrentMeteo& Mdata, const double& cumu_preci
 /**
  * @brief Perform technical snow preparation
  * @details The densification is done with a fit on the data found in Wolfsperger, F., H. Rhyner, and M. Schneebeli, 
- * <i><"Pistenpräparation und Pistenpflege. Das Handbuch für den Praktiker."</i>, Davos: WSL-Institut für Schnee-und Lawineforschung SLF, (2018).
+ * <i>"Pistenpräparation und Pistenpflege. Das Handbuch für den Praktiker."</i>, Davos: WSL-Institut für Schnee-und Lawineforschung SLF, (2018).
  * @param Xdata Snow profile to prepare (grooming, etc)
  */
 void TechSnow::preparation(SnowStation& Xdata)

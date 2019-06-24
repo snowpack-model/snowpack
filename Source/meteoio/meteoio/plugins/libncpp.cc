@@ -863,7 +863,7 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_FLOAT;
 		nodata =  -9999999.; //CNRM-GAME nodata value
 		force_station_dimension = true;
-	} else if (schema=="ECMWF") {
+	} else if (schema=="ERA-INTERIM" || schema=="ERA5") {
 		dflt_type = NC_DOUBLE;
 	} else if (schema=="WRF") {
 		dflt_type = NC_DOUBLE;
@@ -871,7 +871,9 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_FLOAT;
 	} else if (schema=="METEOCH") {
 		dflt_type = NC_FLOAT;
-	} else
+	} else if (schema=="ECMWF") {
+		throw mio::InvalidArgumentException("The ECMWF schema has been replaced by the ERA-INTERIM and the ERA5 schemas, please update your configuration file", AT);
+	} else 
 		throw mio::InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
 
@@ -916,7 +918,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "alt") );
 	results["AMUNDSEN"] = tmp;
 	
-	//ECMWF schema
+	//ERA-Interim and ERA5 schemas
 	tmp.clear();
 	tmp.push_back( ncpp::nc_dimension(ncpp::TIME, "time") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::LATITUDE, "latitude") );
@@ -926,7 +928,8 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "geopotential_height") );
-	results["ECMWF"] = tmp;
+	results["ERA-INTERIM"] = tmp;
+	results["ERA5"] = tmp;
 	
 	//WRF schema
 	tmp.clear();
@@ -1040,7 +1043,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "rsds", "", "surface_downwelling_shortwave_flux_in_air", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	results["AMUNDSEN"] = tmp;
 
-	//ECMWF schema
+	//ERA-INTERIM and ERA5 schemas
 	tmp.clear();
 	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "h", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "latitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
@@ -1053,9 +1056,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TD, "d2m", "", "2 metre dewpoint temperature", "K", 2., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "sp", "surface_air_pressure", "Surface pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P_SEA, "msl", "air_pressure_at_sea_level", "Mean sea level pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR_DIR, "fdir", "", "DIRect solar radiation at the surface", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "strd", "", "Surface thermal radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "tp", "", "Total precipitation", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "u10", "", "10 metre U wind component", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "v10", "", "10 metre V wind component", "m/s", 10., NC_DOUBLE) );
@@ -1066,7 +1066,16 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "fal", "", "Forecast albedo", "(0 - 1)", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "rsn", "", "Snow density", "kg/m3", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "ro", "", "Runoff", "m", mio::IOUtils::nodata, NC_DOUBLE) );
-	results["ECMWF"] = tmp;
+	results["ERA-INTERIM"] = tmp;
+	//ERA-INTERIM schema
+	results["ERA-INTERIM"].push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	results["ERA-INTERIM"].push_back( ncpp::var_attr(mio::MeteoGrids::ISWR_DIR, "fdir", "", "DIRect solar radiation at the surface", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	results["ERA-INTERIM"].push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "strd", "", "Surface thermal radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	//ERA5 schema
+	results["ERA5"] = tmp;
+	results["ERA5"].push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "msdwswrf", "", "Mean surface downward short-wave radiation flux", "W/m2", mio::IOUtils::nodata, NC_DOUBLE));
+	results["ERA5"].push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "msdwlwrf", "", "Mean surface downward long-wave radiation flux", "W/m2", mio::IOUtils::nodata, NC_DOUBLE));
+	
 
 	//WRF schema
 	tmp.clear();

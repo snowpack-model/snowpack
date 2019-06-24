@@ -51,6 +51,7 @@ class Meteo {
 		Meteo(const SnowpackConfig& i_cfg);
 
 		static void projectPrecipitations(const double& SlopeAngle, double& precips, double& hs);
+		static double windspeedProfile(const CurrentMeteo& Mdata, const double& target_z, const double& source_vw = -1.);
 		static bool compHSrate(CurrentMeteo& Mdata, const SnowStation& vecXdata, const double& hs_a3hl6);
 		void compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool& runCanopyModel);
 		static void compRadiation(const SnowStation &station, mio::SunObject &sun, SnowpackConfig &cfg, CurrentMeteo &Mdata);

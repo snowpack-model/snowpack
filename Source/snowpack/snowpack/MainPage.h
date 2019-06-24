@@ -483,6 +483,7 @@
  * </SnowStation>
  * @endcode
  *
+ * @note As a starting point, you can have a look at the SnowpackInterface and SnowpackInterfaceWorker classes of <a href="https://models.slf.ch/p/alpine3d/source/tree/HEAD/trunk">Alpine3D</A>.
  */
 
 /**

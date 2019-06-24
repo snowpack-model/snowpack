@@ -32,7 +32,7 @@
 namespace mio {
 
 const struct CoordsAlgorithms::ELLIPSOID CoordsAlgorithms::ellipsoids[12] = {
-	{ 6378137.,        6356752.3142 }, ///< E_WGS84
+	{ 6378137.,        6356752.31424 }, ///< E_WGS84
 	{ 6378135.,        6356750.52 }, /// E_WGS72
 	{ 6378137.,        6356752.3141 }, ///< E_GRS80
 	{ 6377563.396,  6356256.909 }, ///< E_AIRY
@@ -329,10 +329,10 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 		//UPS Zone
 		if (coordparam == "N") {
 			//northern hemisphere
-			return (32661);
+			return (5041);
 		} else {
 			//southern hemisphere
-			return (32761);
+			return (5042);
 		}
 	}
 	if (coordsystem=="PROJ4") {
@@ -404,9 +404,9 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		coordparam=osstream.str();
 		return;
 	}
-	if ((epsg==32761 || epsg==32661)) {
+	if ((epsg==5041 || epsg==5042)) {
 		coordsystem.assign("UPS");
-		coordparam = (epsg==32761)? "S" : "N";
+		coordparam = (epsg==5041)? "N" : "S";
 		return;
 	}
 	
@@ -696,8 +696,9 @@ void CoordsAlgorithms::WGS84_to_UPS(const double& lat_in, const double& long_in,
 
 	static const double e = sqrt(e2);
 	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
-	const double tan_Zz = pow( (1.+e*sin(lat_in*Cst::to_rad))/(1.-e*sin(lat_in*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_in*Cst::to_rad/2.);
-	const double R = k0*C0*tan_Zz;
+	const double lat_abs = fabs(lat_in); //since the computation assumes positive latitudes even for the Antarctis
+	const double tan_Z2 = pow( (1.+e*sin(lat_abs*Cst::to_rad))/(1.-e*sin(lat_abs*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_abs*Cst::to_rad/2.);
+	const double R = k0*C0*tan_Z2;
 
 	if (coordparam=="N") {
 		north_out = FN - R*cos(long_in*Cst::to_rad);

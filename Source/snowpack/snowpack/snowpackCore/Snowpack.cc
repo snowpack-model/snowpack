@@ -99,7 +99,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
+            enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
             temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
@@ -269,6 +269,9 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		enhanced_wind_slab = false; //true; //
 	}
 
+	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
+	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
+
 	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
 	new_snow_bond_size = 0.25 * new_snow_grain_size;
 
@@ -395,17 +398,23 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 		if (EMS[e].mk%100 != 3) { //ALL except SH
 			double wind_slab=1.;
 			const double dz = NDS[nE].z - NDS[e].z;
-			const double dv = Mdata.vw - Metamorphism::wind_slab_vw;
-			if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
-			      && (Mdata.vw > Metamorphism::wind_slab_vw)
-			        && ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
-				if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
-					// fits original parameterization at Metamorphism::wind_slab_vw + 0.6 m/s
-					wind_slab += 2.7 * Metamorphism::wind_slab_enhance
-					                 * Optim::pow3(dv) * (1. - dz / (1.25 * Metamorphism::wind_slab_depth));
-				} else {
-					// original parameterization by Lehning
-					wind_slab += Metamorphism::wind_slab_enhance * dv;
+			const double z_ref_vw = 3.;	// See p. 336 in Groot Zwaaftink et al. (doi: https://doi.org/10.5194/tc-7-333-2013)
+			const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
+			const double dv = vw_ref - Metamorphism::wind_slab_vw;
+			if (snow_erosion == "REDEPOSIT") {
+				wind_slab = 1.;
+			} else {
+				if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
+				      && (vw_ref > Metamorphism::wind_slab_vw)
+					&& ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
+					if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
+						// fits original parameterization at Metamorphism::wind_slab_vw + 0.6 m/s
+						wind_slab += 2.7 * Metamorphism::wind_slab_enhance
+							         * Optim::pow3(dv) * (1. - dz / (1.25 * Metamorphism::wind_slab_depth));
+					} else {
+						// original parameterization by Lehning
+						wind_slab += Metamorphism::wind_slab_enhance * dv;
+					}
 				}
 			}
 			EMS[e].Eps_vDot = wind_slab * (EMS[e].C + Sig0) / eta;
@@ -2024,8 +2033,21 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// routine and later used to compute the Meteo Heat Fluxes
 		if (forcing=="ATMOS") {
 			if (!alpine3d) { //HACK: we need to set to 0 the external drift
-				double tmp=0.;
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+				double tmp = 0.;
+				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+				if (eroded > 0.) {
+					const bool tmp_force_add_snowfall = force_add_snowfall;
+					const std::string tmp_hn_density = hn_density;
+					double tmp_psum = eroded;
+					force_add_snowfall = true;
+					hn_density = "EVENT";
+					Mdata.psum = eroded; Mdata.psum_ph = 0.;
+					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
+					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+					force_add_snowfall = tmp_force_add_snowfall;
+					hn_density = tmp_hn_density;
+				}
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
 			}
@@ -2066,8 +2088,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 		Meteo M(cfg);
 		do {
-			// After the first sub-time step, update Meteo object to reflect on the new stability state
-			if (ii >= 1) M.compMeteo(Mdata, Xdata, false);
+			// Update Meteo object to reflect on the new stability state
+			M.compMeteo(Mdata, Xdata, false);
 			// Reinitialize and compute the initial meteo heat fluxes
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);

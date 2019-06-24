@@ -86,6 +86,18 @@
  * <tr><td>\subpage prf_format "PRF"</td><td>tabular profile time series</td><td></td></tr>
  * <tr><td>\subpage profile_imis "IMIS"</td><td>write profile time series to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * </table></center>
+ * 
+ * When the snow grain shapes are provided as <b>Swiss Code</b>, it means the following: the code is made of three decimal numbers, noted as <i>F1F2F3</i>. Here <i>F1</i> 
+ * represents the primary grain shape and <i>F2</i> the secondary grain shape. The grain shapes can be any of the following:
+ * <center><table border="1">
+ * <tr><th>Code</th><th>Grain shape</th><th>Code</th><th>Grain shape</th></tr>
+ * <tr><td>1</td><td>Precipitation particules (PP)</td><td>6</td><td>Surface hoar (SH)</td></tr>
+ * <tr><td>2</td><td>Decomposing fragmented PP (DF)</td><td>7</td><td>Melt forms (MF)</td></tr>
+ * <tr><td>3</td><td>Rounded grains (RG)</td><td>8</td><td>Ice formations (IF)</td></tr>
+ * <tr><td>4</td><td>Faceted crystals (FC)</td><td>9</td><td>Rounding faceted particules (FCxr)</td></tr>
+ * <tr><td>5</td><td>Depth hoar (DH)</td><td></td><td></td></tr>
+ * </table></center>
+ * 
  *
  * @section available_met_ts Fluxes time series
  * %Snowpack computes various meteorological parameters as well as fluxes and can write them out as time series.

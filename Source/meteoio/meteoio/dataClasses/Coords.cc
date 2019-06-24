@@ -787,7 +787,7 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 		if (coordsystem=="UTM") CoordsAlgorithms::UTM_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
 		else if (coordsystem=="UPS") CoordsAlgorithms::UPS_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
 		else if (coordsystem=="CH1903") CoordsAlgorithms::CH1903_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
-		else if (coordsystem=="CH1903+") CoordsAlgorithms::CH1903_to_WGS84(i_easting-2e6, i_northing-1e6, o_latitude, o_longitude);
+		else if (coordsystem=="CH1903+") CoordsAlgorithms::CH1903_to_WGS84(i_easting-2.e6, i_northing-1.e6, o_latitude, o_longitude);
 		else if (coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if (coordsystem=="PROJ4") CoordsAlgorithms::PROJ4_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
 		else if (coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
@@ -813,8 +813,8 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 		else if (coordsystem=="CH1903") CoordsAlgorithms::WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
 		else if (coordsystem=="CH1903+") {
 			CoordsAlgorithms::WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
-			o_easting += 2e6;
-			o_northing += 1e6;
+			o_easting += 2.e6;
+			o_northing += 1.e6;
 		}
 		else if (coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
 		else if (coordsystem=="PROJ4") CoordsAlgorithms::WGS84_to_PROJ4(i_latitude, i_longitude, coordparam, o_easting, o_northing);
