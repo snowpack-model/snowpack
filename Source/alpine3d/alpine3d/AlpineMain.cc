@@ -150,7 +150,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 	//check that the minimum flags have been provided by the user
 	if (!((setStart && setSteps) || (setStart && setEnd)) && MPIControl::instance().master()) {
 		cout << "\nERROR: You must at least specify the 'startdate' and the 'steps' parameters"
-			<< "or the 'startdate' and the 'enddate' parameters\n\n";
+		     << " or the 'startdate' and the 'enddate' parameters\n\n";
 		Usage(argv[0]);
 	}
 

@@ -128,6 +128,7 @@ class NetCDFIO : public IOInterface {
 		std::vector< std::pair<std::pair<Date,Date>, ncFiles> > cache_grid_files; //cache of grid files in GRID2DPATH
 		std::map<std::string, ncFiles> cache_grids_out; //cache of output GRID2D files
 		std::vector< ncFiles > cache_inmeteo_files; //cache of meteo files in input METEOPATH
+		std::set<std::string> in_stations; ///< only the stations IDs listed here will be returned by a call to readMeteoData/readStationData
 		std::vector<MeteoGrids::Parameters> available_params;
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, out_meteo_file;

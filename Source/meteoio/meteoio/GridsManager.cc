@@ -225,9 +225,17 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 			}
 		} else { //pick the exact node
 			if (adjust_coordinates) { //adjust coordinates to match the chosen cell
-				const double easting = dem_easting + dem.cellsize*static_cast<double>(i);
-				const double northing = dem_northing + dem.cellsize*static_cast<double>(j);
-				curr_point.setXY(easting, northing, dem(i,j));
+				if (dem.isLatlon()) {
+					const double dem_lat = llcorner.getLat();
+					const double dem_lon = llcorner.getLon();
+					const double new_lat = dem_lat + static_cast<double>(j)*(dem.ur_lat - dem_lat)/static_cast<double>(dem.getNy()-1);
+					const double new_lon = dem_lon + static_cast<double>(i)*(dem.ur_lon - dem_lon)/static_cast<double>(dem.getNx()-1);
+					curr_point.setLatLon(new_lat, new_lon, dem(i,j));
+				} else {
+					const double easting = dem_easting + static_cast<double>(i)*dem.cellsize;
+					const double northing = dem_northing + static_cast<double>(j)*dem.cellsize;
+					curr_point.setXY(easting, northing, dem(i,j));
+				}
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 			}
 

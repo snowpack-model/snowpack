@@ -285,7 +285,7 @@ bool ALPUG::isDuplicate(const std::string& line)
 	return false;
 }
 
-void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, const Date& dateEnd,
+void ALPUG::readMeteoFile(const size_t& station_index, const Date& dateStart, const Date& dateEnd,
                                               std::vector<MeteoData>& vecM)
 {
 	vecM.clear();
@@ -299,7 +299,7 @@ void ALPUG::readMetoFile(const size_t& station_index, const Date& dateStart, con
 
 	const std::string station_id( vecIDs[station_index] );
 	Date prev_date(0., 0.);
-	std::list<std::string> dirlist( FileUtils::readDirectory( inpath, station_id+dflt_extension ) );
+	const std::list<std::string> dirlist( FileUtils::readDirectory( inpath, station_id+dflt_extension ) );
 	if (dirlist.empty()) {
 		const std::string msg = "No data file found for station "+station_id+" in \'"+inpath+"\'"+". Files should be named as {YY}{station_id}"+dflt_extension+" with {YY} the last two digits of the year.";
 		throw NoDataException(msg, AT);
@@ -357,7 +357,7 @@ void ALPUG::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	vecMeteo.clear();
 	for (size_t ii=0; ii<vecIDs.size(); ++ii) {
 		std::vector<MeteoData> vecM;
-		readMetoFile(ii, dateStart, dateEnd, vecM);
+		readMeteoFile(ii, dateStart, dateEnd, vecM);
 		vecMeteo.push_back( vecM );
 	}
 }

@@ -668,6 +668,7 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 		if (!processVars(value, section)) {
 			deferred_vars.insert( section+"::"+key );
 		}
+		if (key.find(' ')!=std::string::npos) throw InvalidFormatException("Invalid configuration key '"+section+"::"+key+"': keys can not contain spaces", AT);
 		properties[section+"::"+key] = value; //save the key/value pair
 		accept_import_before = false; //this is not an import, so no further import_before allowed
 	} else {
