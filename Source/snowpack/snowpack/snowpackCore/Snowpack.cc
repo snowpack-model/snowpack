@@ -2038,15 +2038,18 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				if (eroded > 0.) {
 					const bool tmp_force_add_snowfall = force_add_snowfall;
 					const std::string tmp_hn_density = hn_density;
+					const std::string tmp_variant = variant;
 					double tmp_psum = eroded;
 					force_add_snowfall = true;
 					hn_density = "EVENT";
+					variant = "REDEPOSIT";		// This is not really an existing variant, but ensures that the ANTARCTICA wind speed limits are *not* used.
 					Mdata.psum = eroded; Mdata.psum_ph = 0.;
 					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
 					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
 					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
 					force_add_snowfall = tmp_force_add_snowfall;
 					hn_density = tmp_hn_density;
+					variant = tmp_variant;
 				}
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
