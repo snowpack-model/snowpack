@@ -33,14 +33,15 @@ class TimeProcStack {
 		TimeProcStack(const Config& cfg);
 		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 		
-		void process(std::vector< std::vector<MeteoData> >& ivec, const bool& second_pass);
+		void process(std::vector< std::vector<MeteoData> >& ivec);
+		void process(Date &dateStart, Date &dateEnd);
+
 		static void checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo);
 		static const std::string timeParamName;
 		
 	private:
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 };
-
 
 /**
  * @class  TimeSuppr
@@ -126,6 +127,40 @@ class TimeUnDST : public ProcessingBlock {
 
 	private:
 		std::vector<offset_spec> dst_changes;
+};
+
+/**
+ * @class  TimeLoop
+ * @ingroup processing
+ * @brief Loops over a specific time period.
+ * @details
+ * This filter repeats a given time period over an over (for example, for simulation spin-up). It takes the following arguments (all dates are 
+ * ISO formatted date where the time can be ommitted to mean "00:00:00"):
+ *    - REF_START: start of the repeated period, mandatory argument;
+ *    - REF_END: end of the repeated period, mandatory argument;
+ *    - MATCH_DATE: date in the output data that matches the start date of the repeated period, mandatory argument;
+ *
+ * The MATCH_DATE argument is used to define a "synchronization point": from this point on, the reference data will be copied over and over 
+ * (please keep in mind that copying exactly a month of data will still lead to some drift over the years as not every month has the same
+ * number of days).
+ * 
+ * @code
+ * TIME::filter1     = TimeLoop
+ * TIME::arg1::ref_start = 2018-01-01	;this assumes 00:00:00
+ * TIME::arg1::ref_end = 2018-02-01
+ * TIME::arg1::match_date = 2019-03-01	;this assumes that the data from ref_start will be copied as data for 2019-03-01
+ * @endcode
+ */
+class TimeLoop : public ProcessingBlock {
+	public:
+		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ);
+
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(Date &dateStart, Date &dateEnd);
+
+	private:
+		Date req_start, req_end;
+		Date match_date, ref_start, ref_end;
 };
 
 } //end namespace

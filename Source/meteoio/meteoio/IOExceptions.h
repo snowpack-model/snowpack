@@ -111,7 +111,7 @@ class IndexOutOfBoundsException : public IOException {
 
 /**
  * @class ConversionFailedException
- * @brief thrown when an unsuccessful to convert data types/classes is made (e.g. attempt to convert a literal into a number)
+ * @brief thrown when an unsuccessful attempt to convert data types/classes is made (e.g. attempt to convert a literal into a number)
  *
  * @author Thomas Egger
  */

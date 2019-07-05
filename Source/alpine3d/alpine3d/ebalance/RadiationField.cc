@@ -170,9 +170,8 @@ void RadiationField::setMeteo(const mio::Grid2DObject& in_ta, const mio::Grid2DO
 					cell_direct = 0.;
 					cell_diffuse = global*Md(i_band, jj);
 				} else {
-					// Note that pixels without valid azimuth will be asigned azimuth = 0 and slope angle = 0.
-					const double slope_azi=(dem.azi(i_dem,jj) == mio::IOUtils::nodata) ? (0.) : (dem.azi(i_dem,jj));
-					const double slope_angle=(dem.azi(i_dem,jj) == mio::IOUtils::nodata) ? (0.) : (dem.slope(i_dem,jj));
+					const double slope_azi=dem.azi(i_dem,jj);
+					const double slope_angle=dem.slope(i_dem,jj);
 					cell_diffuse = global*Md(i_band, jj);
 					cell_direct = global*(1.-Md(i_band, jj));
 					cell_direct = mio::SunTrajectory::projectHorizontalToSlope( solarAzimuth, solarElevation, slope_azi, slope_angle, cell_direct );

@@ -143,7 +143,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	//If MPI is active, every node gets a slice of the DEM to work on
 	mpicontrol.getArraySliceParamsOptim(dimx, mpi_offset, mpi_nx,dem,landuse);
-	std::cout << "[i] MPI inatance "<< mpicontrol.rank() <<" for solving snowpack : grid range = ["
+	std::cout << "[i] MPI instance "<< mpicontrol.rank() <<" for solving snowpack : grid range = ["
 	<< mpi_offset << " to " << mpi_offset+mpi_nx-1 << "] " << mpi_nx << " columns\n";
 	//Cut DEM and landuse in MPI domain, MPI domain are computed
 	//by trying to havve the same number of cell to compute per domain

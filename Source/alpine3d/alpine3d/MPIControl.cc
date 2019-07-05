@@ -30,7 +30,7 @@
 using namespace std;
 using namespace mio;
 
-// Local oprators << and >> on pais, nedded to serialize pairs in MPI communication
+// Local oprators << and >> on pairs, nedded to serialize pairs in MPI communication
 std::istream& operator>>(std::istream& is, std::pair<size_t,size_t>& data)
 {
 	is.read(reinterpret_cast<char*>(&data.first), sizeof(data.first));

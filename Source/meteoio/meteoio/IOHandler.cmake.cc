@@ -558,16 +558,20 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
                               std::vector<METEO_SET>& vecMeteo)
 {
 	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
-	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);;
+	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);
+
+	//some time filters change the requested dates
+	Date fakeStart( dateStart ),fakeEnd( dateEnd );
+	timeproc.process(fakeStart, fakeEnd);
 
 	for (size_t ii=0; ii<sources.size(); ii++) {
 		IOInterface *plugin = getPlugin("METEO", sources[ii], "INPUT");
 
 		if (ii==0) {
-			plugin->readMeteoData(dateStart, dateEnd, vecMeteo);
+			plugin->readMeteoData(fakeStart, fakeEnd, vecMeteo);
 		} else  {
 			std::vector<METEO_SET> vectmp;
-			plugin->readMeteoData(dateStart, dateEnd, vectmp);
+			plugin->readMeteoData(fakeStart, fakeEnd, vectmp);
 			for (size_t jj=0; jj<vectmp.size(); jj++) vecMeteo.push_back( vectmp[jj] );
 		}
 	}
@@ -589,7 +593,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (!copy_ready) create_copy_map();
 	copy_params(vecMeteo);
 
-	timeproc.process(vecMeteo, false);
+	timeproc.process(vecMeteo);
 	TimeProcStack::checkUniqueTimestamps(vecMeteo);
 
 	dataCreator.createParameters(vecMeteo);

@@ -12,6 +12,7 @@ SET(meteoFilters_sources
 	meteoFilters/FilterPotentialSW.cc
 	meteoFilters/FilterRate.cc
 	meteoFilters/FilterUnheatedPSUM.cc
+	meteoFilters/FilterParticle.cc
 	meteoFilters/ProcAggregate.cc
 	meteoFilters/ProcIIR.cc
 	meteoFilters/ProcUnventilatedT.cc

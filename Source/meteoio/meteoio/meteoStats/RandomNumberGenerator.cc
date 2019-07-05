@@ -289,7 +289,7 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::getDistribution(std::vec
 	return rng_distribution;
 }
 
-//CUSTOM_DIST step 3/6: Add a case for your distribution here and set your functions from step 2, aswell as defaults
+//CUSTOM_DIST step 3/7: Add a case for your distribution here and set your functions from step 2, aswell as defaults
 //for all parameters the distribution needs via the vector DistributionParameters. Please make sure all mandatory ones
 //are described properly. Cf. notes in doc setDistribution().
 
@@ -459,7 +459,7 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 	} //end switch
 }
 
-//CUSTOM_DIST step 6/6: Convenience mapping of your distribution parameters to names (not mandatory if you have many) 
+//CUSTOM_DIST step 6/7: Convenience mapping of your distribution parameters to names (not mandatory if you have many)
 
 /**
  * @brief Retrieve single distribution parameter
@@ -610,12 +610,57 @@ std::string RandomNumberGenerator::toString()
 		ss << "Nu1: " << DistributionParameters.at(0)
 		   << ", nu2: " << DistributionParameters.at(1) << "\n";
 		break;
-//CUSTOM_DIST step 4/6: Give a small info string in this function. 
+//CUSTOM_DIST step 4/7: Give a small info string in this function.
 	default:
 		ss << "Distribution: Custom\n";
 	}
 
 	return ss.str();
+}
+
+/**
+ * @brief Get an RNG_TYPE from a string
+ * @return Corresponding enum variable
+ */
+RandomNumberGenerator::RNG_TYPE RandomNumberGenerator::strToRngtype(const std::string& str)
+{
+	std::vector<std::string> tv;
+	tv.push_back("XOR"); //order must match enum in RandomNumberGenerator.h!
+	tv.push_back("PCG");
+	tv.push_back("MTW");
+
+	for (size_t i = 0; i < tv.size(); ++i) //find string
+	{
+		if (tv[i] == IOUtils::strToUpper(str))
+			return (RNG_TYPE)i;
+	}
+	throw InvalidArgumentException("RNG: Algorithm '" + str + "' not found for string conversion.", AT);
+}
+
+//CUSTOM_DIST step 7/7: Convenience mapping from a string shorthand to the right enum index.
+
+/**
+ * @brief Get an RNG_DISTR from a string
+ * @return Corresponding enum variable
+ */
+RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::strToRngdistr(const std::string& str)
+{
+	std::vector<std::string> tv;
+	tv.push_back("UNIFORM"); //order must match enum in RandomNumberGenerator.h!
+	tv.push_back("GAUSS");
+	tv.push_back("NORMAL");
+	tv.push_back("GAMMA");
+	tv.push_back("CHISQUARED");
+	tv.push_back("STUDENTT");
+	tv.push_back("BETA");
+	tv.push_back("F");
+
+	for (size_t i = 0; i < tv.size(); ++i) //find string
+	{
+		if (tv[i] == IOUtils::strToUpper(str))
+			return (RNG_DISTR)i;
+	}
+	throw InvalidArgumentException("RNG: Distribution '" + str + "' not found for string conversion.", AT);
 }
 
 /* PRIVATE FUNCTIONS */
@@ -795,7 +840,7 @@ double RandomNumberGenerator::doubF()
 	return nu2 * xx / (nu1 * (1. - xx));
 }
 
-//CUSTOM_DIST step 5/6: Implement your 3 functions for the distribution, its pdf and cdf here, corresponding to,
+//CUSTOM_DIST step 5/7: Implement your 3 functions for the distribution, its pdf and cdf here, corresponding to,
 //for example, doubGauss(), pdfGauss() and cdfGauss() (or cdfNotImplemented). Please also properly document them
 //in the table at the beginning of this document.
 

@@ -1,4 +1,5 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
+INCLUDE_DIRECTORIES(SYSTEM "${PROJECT_SOURCE_DIR}/meteoio/Eigen/")
 
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataClasses/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")

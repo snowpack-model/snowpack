@@ -202,6 +202,8 @@ class Date {
 		const Date operator-(const double&) const;
 		const Date operator*(const double&) const;
 		const Date operator/(const double&) const;
+		
+		static const double epsilon;
 
 	protected:
 		double localToGMT(const double& in_julian) const;
@@ -216,7 +218,6 @@ class Date {
 		static bool initStaticData();///<initialize the static map TZAbbrev
 
 		static std::map< std::string, double> TZAbbrev;
-		static const double epsilon;
 		static const bool __init;
 		double timezone;
 		double gmt_julian;
