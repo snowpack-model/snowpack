@@ -52,6 +52,7 @@
 #include <meteoio/meteoFilters/FilterDeGrass.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <meteoio/meteoFilters/FilterDespikingPS.h>
+#include <meteoio/meteoFilters/FilterParticle.h>
 
 namespace mio {
 /**
@@ -177,6 +178,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterPotentialSW(vecArgs, blockname);
 	} else if (blockname == "DESPIKING"){
 		return new FilterDespikingPS(vecArgs, blockname);
+	} else if (blockname == "PARTICLE"){
+		return new FilterParticle(vecArgs, blockname);
 	}
 
 	//general data transformations
@@ -224,6 +227,8 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "UNDST"){
 		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else if (blockname == "LOOP"){
+		return new TimeLoop(vecArgs, blockname, cfg.get("TIME_ZONE", "Input"));
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
 	}

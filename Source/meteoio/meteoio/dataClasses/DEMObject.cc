@@ -401,27 +401,26 @@ void DEMObject::printFailures() {
 * When computing the slope and curvature, it is possible to get points where the elevation is known
 * but where no slope/azimuth/normals/curvature could be computed. This method sets the elevation to nodata for such points,
 * so that latter use of the DEM would be simpler (simply test the elevation in order to know if the point can be used
-* and it guarantees that all other informations are available).If the slope/azimuth/normals/curvature tables were manually updated, this method will NOT perform any work (it requires the count of slopes/curvature failures to be greater than zero)
+* and it guarantees that all other informations are available).
 *
-* IMPORTANT: calling this method DOES change the table of elevations!
+* @note The update flags are used in order to know which properties should be checked. So if update_flag==SLOPE
+* but there are curvatures and they are later used, they won't have been cleaned!
+*
+* @note IMPORTANT: calling this method DOES change the table of elevations!
 */
 void DEMObject::sanitize() {
-	if (slope_failures>0 || curvature_failures>0) {
-		const size_t ncols = getNx();
-		const size_t nrows = getNy();
+	const size_t ncols = getNx();
+	const size_t nrows = getNy();
 
-		for ( size_t j = 0; j < nrows; j++ ) {
-			for ( size_t i = 0; i < ncols; i++ ) {
-				if (update_flag&SLOPE) {
-					if ((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
-						grid2D(i,j) = IOUtils::nodata;
-					}
-				}
-				if (update_flag&CURVATURE) {
-					if ((curvature(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
-						grid2D(i,j) = IOUtils::nodata;
-					}
-				}
+	for ( size_t jj = 0; jj < nrows; jj++ ) {
+		for ( size_t ii = 0; ii < ncols; ii++ ) {
+			if (grid2D(ii,jj)==IOUtils::nodata) continue;
+
+			if (update_flag&SLOPE && slope(ii,jj)==IOUtils::nodata) {
+				grid2D(ii,jj) = IOUtils::nodata;
+			}
+			if (update_flag&CURVATURE && curvature(ii,jj)==IOUtils::nodata) {
+				grid2D(ii,jj) = IOUtils::nodata;
 			}
 		}
 	}
@@ -553,6 +552,7 @@ void DEMObject::CalculateHick(double A[4][4], double& o_slope, double& o_Nx, dou
 			double dx_sum, dy_sum;
 			surfaceGradient(dx_sum, dy_sum, A);
 			if (dx_sum==IOUtils::nodata || dy_sum==IOUtils::nodata) {
+				o_slope = IOUtils::nodata;
 				o_Nx = IOUtils::nodata;
 				o_Ny = IOUtils::nodata;
 				o_Nz = IOUtils::nodata;

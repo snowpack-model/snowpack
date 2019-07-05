@@ -227,24 +227,25 @@ namespace mio {
  * import cdsapi
  * c = cdsapi.Client()
  * 
- * c.retrieve('reanalysis-era5-single-levels', {
- *         'product_type':'reanalysis',
- *         'year':'2015/to/2019/by/1',
- *         'month':'01/to/12/by/1',
- *         'day':'01/to/31/by/1',
- *         'time':'00/to/23/by/1',
- *         'area': [42.2, -1.5, 51.7, 15.7], # North, West, South, East. Default: global
- *         'format':'netcdf',
- *         'variable':[
- *             '10m_u_component_of_wind','10m_v_component_of_wind','2m_dewpoint_temperature',
- *             '2m_temperature','near_ir_albedo_for_direct_radiation','skin_temperature',
- *             'snow_density','snow_depth','soil_temperature_level_1',
- *             'surface_pressure','mean_surface_downward_short_wave_radiation_flux','mean_surface_downward_long_wave_radiation_flux',
- *             'total_precipitation'
- *         ]
- *     },
- *     'download.nc'
- * )
+ * c.retrieve(
+ *             'reanalysis-era5-single-levels',{
+ *                 'product_type':'reanalysis',
+ *                 'variable':[
+ *                     '10m_u_component_of_wind','10m_v_component_of_wind','2m_dewpoint_temperature',
+ *                     '2m_temperature','forecast_albedo','skin_temperature',
+ *                     'snow_density','snow_depth','soil_temperature_level_1',
+ *                     'surface_pressure','mean_surface_downward_short_wave_radiation_flux',
+ *                     'mean_surface_downward_long_wave_radiation_flux',
+ *                     'total_precipitation'
+ *                 ],
+ *                 'year':['2018'],
+ *                 'month':['01','02','03','04','05','06','07','08','09','10','11','12'],
+ *                 'day':['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31'],
+ *                 'time':'00/to/23/by/1',
+ *                 'area':'42.2/-1.5/51.7/15.7', # North, West, South, East. Default: global
+ *                 'grid':'0.25/0.25',
+ *                 'format':'netcdf'
+ *           },'download.nc')
  * @endcode
  *
  * @section netcdf_tricks External tools and tricks to work with NetCDF

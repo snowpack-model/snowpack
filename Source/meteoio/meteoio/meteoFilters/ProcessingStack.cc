@@ -103,7 +103,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 
 	//Now call the filters one after another for the current station and parameter
 	for (size_t jj=0; jj<nr_of_filters; jj++) {
-		if ((*filter_stack[jj]).skipStation( statID ))
+		if (filter_stack[jj]->skipStation( statID ))
 			continue;
 
 		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
@@ -113,7 +113,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 			continue;
 
 		appliedFilter = true;
-		(*filter_stack[jj]).process(static_cast<unsigned int>(param), ivec, ovec[stat_idx]);
+		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec[stat_idx]);
 
 		if (ivec.size() != ovec[stat_idx].size()) {
 			ostringstream ss;
@@ -171,7 +171,7 @@ const std::string ProcessingStack::toString() const
 	os << setw(10) << param_name << "::";
 
 	for (size_t ii=0; ii<filter_stack.size(); ii++) {
-		os << setw(10) << (*filter_stack[ii]).toString();
+		os << setw(10) << filter_stack[ii]->toString();
 	}
 
 	//os << "</ProcessingStack>";

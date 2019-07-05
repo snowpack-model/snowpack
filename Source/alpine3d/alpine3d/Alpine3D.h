@@ -56,7 +56,7 @@
 //#include <alpine3d/snowdrift_par/SnowDrift.h>
 //#include <alpine3d/snowdrift_par/AziSlope.h>
 #include <alpine3d/Glaciers.h>
-#include <alpine3d/TechSnow.h>
+#include <alpine3d/TechSnowA3D.h>
 #include <alpine3d/SnowpackInterface.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/AlpineMain.h>

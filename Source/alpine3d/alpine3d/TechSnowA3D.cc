@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <alpine3d/TechSnow.h>
+#include <alpine3d/TechSnowA3D.h>
 #include <alpine3d/MPIControl.h>
 #include <alpine3d/AlpineMain.h>
 

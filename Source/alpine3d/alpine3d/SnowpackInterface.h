@@ -32,7 +32,7 @@ class Runoff; // forward declaration, cyclic header include
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/Glaciers.h>
-#include <alpine3d/TechSnow.h>
+#include <alpine3d/TechSnowA3D.h>
 
 /**
  * @page snowpack Snowpack

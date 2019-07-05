@@ -2377,6 +2377,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 				Edata[e].theta[WATER] *= porespace / tmp_sum;
 				Edata[e].theta[WATER_PREF] *= porespace / tmp_sum;
 			}
+			Edata[e].theta[AIR] = (1. - Edata[e].theta[ICE] - Edata[e].theta[WATER] - Edata[e].theta[WATER_PREF] - Edata[e].theta[SOIL]);
 		} // end of element layer for
 	} // end of layer for
 

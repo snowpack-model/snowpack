@@ -352,7 +352,7 @@ inline void start_message(int argc, char **argv)
 {
 	MPIControl& mpicontrol = MPIControl::instance();
 	
-	cout << argv[0] << " version " <<  A3D_VERSION << " compiled on " << __DATE__ << " " << __TIME__ << "\n";
+	cout << argv[0] << " " <<  A3D_VERSION << " compiled on " << __DATE__ << " " << __TIME__ << "\n";
 	cout << "\tLibsnowpack " << snowpack::getLibVersion() << "\n";
 	cout << "\tMeteoIO " << mio::getLibVersion() << "\n";
 	if (argc==1) Usage(argv[0]);

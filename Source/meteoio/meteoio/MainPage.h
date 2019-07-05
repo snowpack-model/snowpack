@@ -90,7 +90,7 @@ namespace mio {
  * description of its design goals and its architecture can be found in <br>
  * M. Bavay and T. Egger, <a href="http://www.geosci-model-dev.net/7/3135/2014/gmd-7-3135-2014.pdf"><i>"MeteoIO 2.4. 2: a preprocessing library for meteorological data."</i></a>, Geoscientific Model Development, <b>7.6</b>, 2014, pp 3135-3151.
  * <br>
- * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>.
+ * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>. Some modules make use of the <a href="https://eigen.tuxfamily.org">Eigen library</a> licensed under <a href="https://www.mozilla.org/en-US/MPL/2.0/">MPL2</a>.
  * </small></i></center></p>
  */
 
