@@ -47,6 +47,7 @@
 #include <meteoio/meteoFilters/ProcMult.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
+#include <meteoio/meteoFilters/ProcRHWaterToIce.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
@@ -216,6 +217,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcPSUMDistribute(vecArgs, blockname);
 	} else if (blockname == "SHADE"){
 		return new ProcShade(vecArgs, blockname, cfg);
+	} else if (blockname == "RHWATERTOICE"){
+		return new ProcRHWaterToIce(vecArgs, blockname);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}
