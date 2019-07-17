@@ -27,9 +27,19 @@ namespace mio {
  * @ingroup spatialization
  * @brief Scale and distribute the precipitation according to Airborn Laser Scans (ALS) grids.
  * @details
+ * This assumes that precipitation fields can be scaled according to
+ * snow heights grids in order to get improved precipitation patterns (see <i>"Scaling Precipitation Input to Spatially Distributed Hydrological Models 
+ * by Measured Snow Distribution"</i>, C. Vögeli, M. Lehning, N. Wever, M. Bavay, 2016, Front. Earth Sci. <b>4</b>: 108. 
+ * <a href="https://doi.org/10.3389/feart.2016.00108">doi: 10.3389/feart.2016.00108.</a>). 
+ * 
+ * In a first step, the precipitation are spatially distributed with a <i>base</i> method and in a second step the resulting grid is modified to reflect the
+ * spatial distribution of the provided snow height grid. Of course, these two steps happen automatically and transparently to the caller of this
+ * algorithm.
+ * 
  * It takes the following arguments:
  *  - BASE: the base method to fill the grid (for example, idw_lapse (default));
- *  - GRID: the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin);
+ *  - GRID: the name of the file (in GRID2DPATH) containing the gridded ALS data (relying on the GRID2D plugin). This must provide 
+ * a snow height map that will be used to scale the precipitation patterns.
  *  - TA_THRESH: an optional air temperature threshold (in K) below which such redistribution occurs
  * (so liquid precipitation is not redistributed)
  *

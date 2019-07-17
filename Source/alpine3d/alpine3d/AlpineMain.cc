@@ -150,7 +150,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 	//check that the minimum flags have been provided by the user
 	if (!((setStart && setSteps) || (setStart && setEnd)) && MPIControl::instance().master()) {
 		cout << "\nERROR: You must at least specify the 'startdate' and the 'steps' parameters"
-			<< "or the 'startdate' and the 'enddate' parameters\n\n";
+		     << " or the 'startdate' and the 'enddate' parameters\n\n";
 		Usage(argv[0]);
 	}
 
@@ -164,9 +164,11 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 	//now, we read the config file and set the start and end dates
 	//only the master requires the io.ini, the rest receives a the cfg object:
 	const bool isMaster = MPIControl::instance().master(); // Check if this process is the master (always true for non-parallel mode)
-	if (isMaster) cfg.addFile(iofile);
+	if (isMaster) {
+		cfg.addFile(iofile);
+	}
 	MPIControl::instance().broadcast(cfg);
-
+	
 	const double TZ = cfg.get("TIME_ZONE", "INPUT");
 	startdate.setTimeZone(TZ);
 	Date enddate;
@@ -350,7 +352,7 @@ inline void start_message(int argc, char **argv)
 {
 	MPIControl& mpicontrol = MPIControl::instance();
 	
-	cout << argv[0] << " version " <<  A3D_VERSION << " compiled on " << __DATE__ << " " << __TIME__ << "\n";
+	cout << argv[0] << " " <<  A3D_VERSION << " compiled on " << __DATE__ << " " << __TIME__ << "\n";
 	cout << "\tLibsnowpack " << snowpack::getLibVersion() << "\n";
 	cout << "\tMeteoIO " << mio::getLibVersion() << "\n";
 	if (argc==1) Usage(argv[0]);

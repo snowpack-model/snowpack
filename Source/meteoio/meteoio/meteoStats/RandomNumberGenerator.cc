@@ -16,13 +16,14 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <meteoio/IOUtils.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/meteoStats/RandomNumberGenerator.h>
+
 #include <cmath>
 #include <fstream> //for hardware seed
 #include <limits> //for numeric_limits
 #include <sstream> //for toString()
-
-#include <meteoio/IOUtils.h>
-#include <meteoio/meteoStats/RandomNumberGenerator.h>
 
 namespace mio { //the holy land
 
@@ -288,7 +289,7 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::getDistribution(std::vec
 	return rng_distribution;
 }
 
-//CUSTOM_DIST step 3/6: Add a case for your distribution here and set your functions from step 2, aswell as defaults
+//CUSTOM_DIST step 3/7: Add a case for your distribution here and set your functions from step 2, aswell as defaults
 //for all parameters the distribution needs via the vector DistributionParameters. Please make sure all mandatory ones
 //are described properly. Cf. notes in doc setDistribution().
 
@@ -458,7 +459,7 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 	} //end switch
 }
 
-//CUSTOM_DIST step 6/6: Convenience mapping of your distribution parameters to names (not mandatory if you have many) 
+//CUSTOM_DIST step 6/7: Convenience mapping of your distribution parameters to names (not mandatory if you have many)
 
 /**
  * @brief Retrieve single distribution parameter
@@ -609,12 +610,57 @@ std::string RandomNumberGenerator::toString()
 		ss << "Nu1: " << DistributionParameters.at(0)
 		   << ", nu2: " << DistributionParameters.at(1) << "\n";
 		break;
-//CUSTOM_DIST step 4/6: Give a small info string in this function. 
+//CUSTOM_DIST step 4/7: Give a small info string in this function.
 	default:
 		ss << "Distribution: Custom\n";
 	}
 
 	return ss.str();
+}
+
+/**
+ * @brief Get an RNG_TYPE from a string
+ * @return Corresponding enum variable
+ */
+RandomNumberGenerator::RNG_TYPE RandomNumberGenerator::strToRngtype(const std::string& str)
+{
+	std::vector<std::string> tv;
+	tv.push_back("XOR"); //order must match enum in RandomNumberGenerator.h!
+	tv.push_back("PCG");
+	tv.push_back("MTW");
+
+	for (size_t i = 0; i < tv.size(); ++i) //find string
+	{
+		if (tv[i] == IOUtils::strToUpper(str))
+			return (RNG_TYPE)i;
+	}
+	throw InvalidArgumentException("RNG: Algorithm '" + str + "' not found for string conversion.", AT);
+}
+
+//CUSTOM_DIST step 7/7: Convenience mapping from a string shorthand to the right enum index.
+
+/**
+ * @brief Get an RNG_DISTR from a string
+ * @return Corresponding enum variable
+ */
+RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::strToRngdistr(const std::string& str)
+{
+	std::vector<std::string> tv;
+	tv.push_back("UNIFORM"); //order must match enum in RandomNumberGenerator.h!
+	tv.push_back("GAUSS");
+	tv.push_back("NORMAL");
+	tv.push_back("GAMMA");
+	tv.push_back("CHISQUARED");
+	tv.push_back("STUDENTT");
+	tv.push_back("BETA");
+	tv.push_back("F");
+
+	for (size_t i = 0; i < tv.size(); ++i) //find string
+	{
+		if (tv[i] == IOUtils::strToUpper(str))
+			return (RNG_DISTR)i;
+	}
+	throw InvalidArgumentException("RNG: Distribution '" + str + "' not found for string conversion.", AT);
 }
 
 /* PRIVATE FUNCTIONS */
@@ -647,7 +693,7 @@ double RandomNumberGenerator::doubGauss() //Gauss double
  * stored in DistributionParameters) by other deviates, and for recursive calls for transformations. */
 double RandomNumberGenerator::doubGaussKernel(const double& mean, const double& sigma) //Box-Muller
 { //generate 2 uniform doubles and transform to 2 Gaussians
-	const double eps = std::numeric_limits<double>::min();
+	static const double eps = std::numeric_limits<double>::min();
 	
 	//2 independent numbers are generated at once -> new calculation every 2nd call
 	rng_muller_generate = !rng_muller_generate;
@@ -660,9 +706,8 @@ double RandomNumberGenerator::doubGaussKernel(const double& mean, const double& 
 		x2 = doubUniform();
 	} while (x1 <= eps);
 
-	double z0;
-	z0 = sqrt(-2. * log(x1)) * cos(2.*M_PI * x2); //TODO: make this a little faster
-	rng_muller_z1 = sqrt(-2. * log(x1)) * sin(2.*M_PI * x2);
+	const double z0 = sqrt(-2. * log(x1)) * cos(2.*Cst::PI * x2); //TODO: make this a little faster
+	rng_muller_z1 = sqrt(-2. * log(x1)) * sin(2.*Cst::PI * x2);
 	return z0 * sigma + mean;
 } //http://mathworld.wolfram.com/Box-MullerTransformation.html
 
@@ -671,8 +716,9 @@ double RandomNumberGenerator::pdfGauss(const double& xx) const
 { //Gauss curve around mean and with standard deviation at point xx (probability density function)
 	const double mean = DistributionParameters[0];
 	const double sigma = DistributionParameters[1];
+	static const double sqrt_2pi = sqrt(2. * Cst::PI);
 
-	return 1. / (sigma * sqrt(2. * M_PI)) * exp( -pow((xx-mean), 2.) / (2. * sigma*sigma) );
+	return 1. / (sigma * sqrt_2pi) * exp( -pow((xx-mean), 2.) / (2. * sigma*sigma) );
 }
 
 double RandomNumberGenerator::cdfGauss(const double& xx) const
@@ -681,20 +727,21 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 	const double sigma = DistributionParameters[1];
 	const double xabs = fabs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
 	
-	const double bb[5] = { //|error| < 7.5e-8
+	static const double bb[5] = { //|error| < 7.5e-8
 	    0.319381530, 
 	   -0.356563782,
 	    1.781477937,
 	   -1.821255978,
 	    1.330274429
 	};
-	const double pp = 0.2316419;
+	static const double pp = 0.2316419;
+	static const double sqrt_2pi = sqrt(2. * Cst::PI);
 
 	//Ref. [AS72] formula 26.2.17:
 	const double tt = 1. / (1. + pp * xabs);
 	//use the Gauss-pdf without mu and sigma as the transformation is nonlinear:
-	double yy = 1. - ( ((((bb[4]*tt + bb[3])*tt) + bb[2])*tt + bb[1])*tt + bb[0] )*tt *
-	    1. / (sqrt(2. * M_PI)) * exp(-(xabs*xabs) / 2.); //Horner's method to evaluate polynom
+	const double yy = 1. - ( ((((bb[4]*tt + bb[3])*tt) + bb[2])*tt + bb[1])*tt + bb[0] )*tt *
+	    1. / (sqrt_2pi) * exp(-(xabs*xabs) / 2.); //Horner's method to evaluate polynom
 
 	//formula is for mu=0 and x > 0, but it is symmetric around mu and can be shifted trivially:
 	const int sign = (xx > mean) - (xx < mean); 
@@ -733,7 +780,7 @@ double RandomNumberGenerator::doubGammaKernel(const double& alpha, const double&
 			vv = 1. + cc * rn;
 		} while (vv <= 0.);
 		vv = vv * vv * vv;
-		double uu = doubUniform(); //uniform double
+		const double uu = doubUniform(); //uniform double
 		if ( uu < 1. - 0.0331 * rn*rn * rn*rn )
 			break;
 		if ( log(uu) < 0.5 * rn * rn + dd * (1. - vv + log(vv)) )
@@ -793,7 +840,7 @@ double RandomNumberGenerator::doubF()
 	return nu2 * xx / (nu1 * (1. - xx));
 }
 
-//CUSTOM_DIST step 5/6: Implement your 3 functions for the distribution, its pdf and cdf here, corresponding to,
+//CUSTOM_DIST step 5/7: Implement your 3 functions for the distribution, its pdf and cdf here, corresponding to,
 //for example, doubGauss(), pdfGauss() and cdfGauss() (or cdfNotImplemented). Please also properly document them
 //in the table at the beginning of this document.
 
@@ -982,9 +1029,9 @@ void RngMtw::setState(const std::vector<uint64_t>& ivec_seed)
 //---------- The following code is adapted from copyrighted but completely free-to-use material by M. Matsumoto and T. Nishimura, Ref. [MN98]
 uint32_t RngMtw::int32() //[0, 2^32-1] 
 {
-	const uint32_t UPPER_MASK = 0x80000000UL; //most significant w-r bits
-	const uint32_t LOWER_MASK = 0x7fffffffUL; //least significant r bits
-	const uint32_t magic[2] = {0x0UL, 0x9908b0dfUL}; //Twister-matrix
+	static const uint32_t UPPER_MASK = 0x80000000UL; //most significant w-r bits
+	static const uint32_t LOWER_MASK = 0x7fffffffUL; //least significant r bits
+	static const uint32_t magic[2] = {0x0UL, 0x9908b0dfUL}; //Twister-matrix
 
 	uint32_t xx(0);
 
@@ -1030,7 +1077,7 @@ bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo"
 
 	//next, we generate a second seeding array independent of the first one:
 	std::vector<uint32_t> seed_states; //this vector could be user input at the cost of another seeding function
-	const unsigned int n_additional_seeds = 64; //our choice
+	static const unsigned int n_additional_seeds = 64; //our choice
 	for (size_t i = 0; i < n_additional_seeds; i+=2) {
 		const bool hw = getUniqueSeed(store);
 		if (!hw) hardware_success = false; //report failed hardware seed
@@ -1152,9 +1199,8 @@ bool RngCore::getEntropy(uint64_t& store) const
 	//this shouldn't be done too often but for isolated generator seeds it's quite suitable:
 	std::ifstream urandom("/dev/urandom", std::ios::in|std::ios::binary); //"should be safe too"
 	if (urandom) {
-		char *memblock;
-		const size_t sz = sizeof(uint64_t);
-		memblock = new char[sz];
+		static const size_t sz = sizeof(uint64_t);
+		char *memblock = new char[sz];
 		urandom.read(memblock, sz);
 		store = *reinterpret_cast<uint64_t*>(memblock);
 		delete[] memblock;
@@ -1200,7 +1246,7 @@ unsigned int RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor
 { //HACK: even without __builtin_clz there are much better ways to do this
 	unsigned int clz = 0;
 
-	const unsigned short bit_char = std::numeric_limits<unsigned char>::digits; //avoid CHAR_BIT
+	static const unsigned short bit_char = std::numeric_limits<unsigned char>::digits; //avoid CHAR_BIT
 	for (size_t i = 0; i < bit_char * sizeof(nn); ++i) 
 	{
 		if ((nn & (1 << i)) == 0)

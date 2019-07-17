@@ -24,7 +24,7 @@ using namespace std;
 
 namespace mio {
 
-bool compare(std::pair<Date, METEO_SET> p1, pair<Date, METEO_SET> p2) {
+bool TimeSeriesManager::compare(std::pair<Date, METEO_SET> p1, std::pair<Date, METEO_SET> p2) {
 	return p1.first < p2.first;
 }
 
@@ -287,6 +287,9 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	if ((IOUtils::filtered & processing_level) == IOUtils::filtered) {
 		const bool rebuffer_filtered = filtered_cache.empty() || (filtered_cache.getBufferStart() > buffer_start) || (filtered_cache.getBufferEnd() < buffer_end);
 		if (rebuffer_filtered) { //explicit caching, rebuffer if necessary
+			if (!filtered_cache.empty())  //invalidate cached values in the resampling algorithms if necessary
+				meteoprocessor.resetResampling();
+				
 			const bool rebuffer_raw = raw_buffer.empty() || (raw_buffer.getBufferStart() > buffer_start) || (raw_buffer.getBufferEnd() < buffer_end);
 			if (rebuffer_raw && (IOUtils::raw & processing_level) == IOUtils::raw) {
 				fillRawBuffer(buffer_start, buffer_end);
@@ -301,8 +304,10 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	if ((IOUtils::resampled & processing_level) == IOUtils::resampled) { //resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
+			if ((*data)[ii].empty()) continue;
+			const std::string stationHash( IOUtils::toString(ii)+"-"+(*data)[ii].front().meta.getHash() );
 			MeteoData md;
-			const bool success = meteoprocessor.resample(i_date, (*data)[ii], md);
+			const bool success = meteoprocessor.resample(i_date, stationHash, (*data)[ii], md);
 			if (success) vecMeteo.push_back( md );
 		}
 	} else { //no resampling required

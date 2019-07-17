@@ -408,7 +408,13 @@ void SurfaceFluxes::collectSurfaceFluxes(const BoundCond& Bdata,
 	mass[MS_TOTALMASS] = Xdata.mass_sum;
 	mass[MS_SWE] = Xdata.swe;
 	mass[MS_WATER] = Xdata.lwc_sum;
-	
+	if (Xdata.Seaice != NULL) {
+		mass[MS_FLOODING] += Xdata.Seaice->TotalFloodingBucket;
+		Xdata.Seaice->TotalFloodingBucket = 0.;
+	} else {
+		mass[MS_FLOODING] = Constants::undefined;
+	}
+
 	// 7) Melt and refreeze mass
 	meltMass += Xdata.meltMassTot;
 	refreezeMass += Xdata.refreezeMassTot;
@@ -1329,7 +1335,7 @@ double ElementData::getYoungModule(const double& rho_slab, const Young_Modulus& 
  * @version 11.01
  * @return sum of volumetric contents (1)
  */
-bool ElementData::checkVolContent() const
+bool ElementData::checkVolContent()
 {
 	bool ret = true;
 	/*if(fabs(L*Rho - M) > 0.001) {
@@ -1341,7 +1347,7 @@ bool ElementData::checkVolContent() const
 	for (unsigned int i = 0; i < N_COMPONENTS; i++) {
 		sum += theta[i];
 	}
-	if (sum <= 0.99 || sum >= 1.01) {
+	if (sum <= 1. - Constants::eps || sum >= 1. + Constants::eps) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "SUM of volumetric contents = %1.4f", sum);
 		ret = false;
 	}
@@ -1360,6 +1366,24 @@ bool ElementData::checkVolContent() const
 	if(theta[AIR] < -Constants::eps) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Negative AIR volumetric content: %1.4f", theta[AIR]);
 		ret = false;
+	}
+
+	// Take care of small rounding errors, in case large rounding errors do not exist.
+	if (ret == true) {
+		theta[ICE] = std::min(1., std::max(0., theta[ICE]));
+		theta[WATER] = std::min(1., std::max(0., theta[WATER]));
+		theta[WATER_PREF] = std::min(1., std::max(0., theta[WATER_PREF]));
+		theta[AIR] = (1. - theta[ICE] - theta[WATER] - theta[WATER_PREF] - theta[SOIL]);
+		if (theta[AIR] < 0.) {
+			if (theta[ICE] > 1. - Constants::eps) {
+				theta[ICE] += theta[AIR];
+			} else if (theta[WATER] > 1. - Constants::eps) {
+				theta[WATER] += theta[AIR];
+			} else {
+				prn_msg(__FILE__, __LINE__, "wrn", Date(), "SUM of volumetric contents = %1.20f, theta[ICE] = %.20f, theta[WATER] = %.20f, theta[WATER_PREF] = %.20f, theta[SOIL] = %.20f, theta[AIR] = %.20f", sum, theta[ICE], theta[WATER], theta[WATER_PREF], theta[SOIL], theta[AIR]);
+			}
+			theta[AIR] = 0.;
+		}
 	}
 
 	return ret;
@@ -1764,10 +1788,11 @@ unsigned short int ElementData::snowType(const double& dendricity, const double&
 		case 7: case 8: case 17: case 18: case 27: case 28: // Glacier ice & IFil, that is, ice layers within the snowpack
 			a = 8; b = 8; c = 0;
 			break;
-    default: // do nothing sinc we take care of exceptions here
-      break;
-
-
+		case 9: // water layer
+			a = 0; b = 0; c = 0;
+			break;
+		default: // do nothing since we take care of exceptions here
+			break;
 	}
 
 	return static_cast<unsigned short int>(a*100 + b*10 + c);
@@ -1985,9 +2010,11 @@ void SnowStation::compSnowpackInternalEnergyChange(const double& sn_dt)
 		meltFreezeEnergy = 0.;
 		const double i_cold_content = ColdContent;
 		ColdContent = 0.;
+		meltMassTot = 0.;
+		refreezeMassTot = 0.;
 		for (size_t e=SoilNode; e<nElems; e++) {
-			meltMassTot += (Edata[e].Qmf > 0.) ? (Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
-			refreezeMassTot += (Edata[e].Qmf < 0.) ? (-Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
+			meltMassTot += (Edata[e].Qmf < 0.) ? (-Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
+			refreezeMassTot += (Edata[e].Qmf > 0.) ? (Edata[e].Qmf * Edata[e].L * sn_dt / Constants::lh_fusion) : (0.);
 			meltFreezeEnergy -= Edata[e].Qmf * Edata[e].L * sn_dt;
 			ColdContent += Edata[e].coldContent();
 		}
@@ -2337,6 +2364,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].CDot = SSdata.Ldata[ll].CDot;
 			Edata[e].metamo = SSdata.Ldata[ll].metamo;
 			Edata[e].salinity = SSdata.Ldata[ll].salinity;
+			Edata[e].h = SSdata.Ldata[ll].h;
 			Edata[e].S_dr = INIT_STABILITY;
 			Edata[e].hard = IOUtils::nodata;
 			Edata[e].M = Edata[e].Rho * Edata[e].L0;
@@ -2349,6 +2377,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 				Edata[e].theta[WATER] *= porespace / tmp_sum;
 				Edata[e].theta[WATER_PREF] *= porespace / tmp_sum;
 			}
+			Edata[e].theta[AIR] = (1. - Edata[e].theta[ICE] - Edata[e].theta[WATER] - Edata[e].theta[WATER_PREF] - Edata[e].theta[SOIL]);
 		} // end of element layer for
 	} // end of layer for
 
@@ -2368,12 +2397,27 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	// Sea ice initializations
 	if (Seaice != NULL) {
 		Seaice->updateFreeboard(*this);
-		for(size_t e = nElems; e -->0; ) {
+		for (size_t e = nElems; e -->0; ) {
 			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
-			if(Edata[e].salinity > 0.) {
+			if (Edata[e].salinity > 0.) {
 				Edata[e].meltfreeze_tk = -SeaIce::mu * br_sal + Constants::meltfreeze_tk;
 			}
-			Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
+			if (Edata[e].h == Constants::undefined) {
+				Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
+			} else {
+				// Initialize 
+				if (e >= SoilNode) {		//Snow
+					Edata[e].VG.SetVGParamsSnow(vanGenuchten::YAMAGUCHI2012, vanGenuchten::CALONNE, /*matrix*/ true, /*seaice*/ true);
+				} else {			//Soil
+					Edata[e].VG.SetVGParamsSoil();
+				}
+				// If pressure head indicates full saturation, make sure no rounding errors exists from writing/reading sno files.
+				if (Edata[e].h >= Edata[e].VG.h_e) {
+					Edata[e].theta[WATER] = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water) - Edata[e].theta[WATER_PREF];
+					Edata[e].theta[AIR] = 1. - Edata[e].theta[ICE] - Edata[e].theta[WATER] - Edata[e].theta[WATER_PREF] - Edata[e].theta[SOIL];
+					Edata[e].updDensity();
+				}
+			}
 		}
 	}
 
@@ -2538,6 +2582,11 @@ void SnowStation::splitElement(const size_t& e)
 	Ndata[e+1].z=(Ndata[e+2].z+Ndata[e].z)/2.;
 	Ndata[e+2].u*=0.5;
 	Ndata[e+1].u*=0.5;
+	// Correct pressure head in case of saturation
+	if(Edata[e].h > Edata[e].VG.h_e) {
+		Edata[e].h+=.5*Edata[e].L;
+		Edata[e+1].h-=.5*Edata[e+1].L;
+	}
 }
 
 /**
@@ -2583,12 +2632,15 @@ void SnowStation::CheckMaxSimHS(const double& max_simulated_hs) {
 				if ( e+1 < nElems ) { //Check for the case where the top element L already exceeds max_simulated_hs, in case we skip element deletion.
 					size_t i_offset = e+1;				// The new indexing offset
 					size_t i = i_offset;
+					const double dH = Ndata[i].z;			// Height change of domain
 					for ( ; i < nElems; i++) {			// Go from the element above the one that was exceeding max_simulated_hs to the top element
 						Edata[i-i_offset] = Edata[i];		// Shift all the elements down
 						Ndata[i-i_offset] = Ndata[i];		// Shift the node down
+						Ndata[i-i_offset].z -= dH;		// Correct nodal position
 					}
 					Ndata[nElems-i_offset] = Ndata[nElems];		// Take care of the remaining top node
 					resize(i-i_offset);
+					cH -= dH;					// Correct calculated snow height
 				}
 				break;
 			}
@@ -2958,8 +3010,8 @@ const std::string SnowStation::toString() const
 }
 
 CurrentMeteo::CurrentMeteo()
-        : date(), ta(0.), rh(0.), rh_avg(0.), vw(0.), vw_avg(0.), vw_max(0.), dw(0.),
-          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.),
+        : date(), ta(0.), rh(0.), rh_avg(IOUtils::nodata), vw(0.), vw_avg(IOUtils::nodata), vw_max(0.), dw(0.),
+          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.), psi_m(0.),
           iswr(0.), rswr(0.), mAlbedo(0.), diff(0.), dir_h(0.), elev(0.), ea(0.), tss(0.), tss_a12h(0.), tss_a24h(0.), ts0(0.),
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
@@ -2970,8 +3022,8 @@ CurrentMeteo::CurrentMeteo()
 
 
 CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
-        : date(), ta(0.), rh(0.), rh_avg(0.), vw(0.), vw_avg(0.), vw_max(0.), dw(0.),
-          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.),
+        : date(), ta(0.), rh(0.), rh_avg(IOUtils::nodata), vw(0.), vw_avg(IOUtils::nodata), vw_max(0.), dw(0.),
+          vw_drift(0.), dw_drift(0.), ustar(0.), z0(0.), psi_s(0.), psi_m(0.),
           iswr(0.), rswr(0.), mAlbedo(0.), diff(0.), dir_h(0.), elev(0.), ea(0.), tss(0.), tss_a12h(0.), tss_a24h(0.), ts0(0.),
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
@@ -3129,6 +3181,7 @@ std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data)
 	os.write(reinterpret_cast<const char*>(&data.ustar), sizeof(data.ustar));
 	os.write(reinterpret_cast<const char*>(&data.z0), sizeof(data.z0));
 	os.write(reinterpret_cast<const char*>(&data.psi_s), sizeof(data.psi_s));
+	os.write(reinterpret_cast<const char*>(&data.psi_m), sizeof(data.psi_m));
 	os.write(reinterpret_cast<const char*>(&data.iswr), sizeof(data.iswr));
 	os.write(reinterpret_cast<const char*>(&data.rswr), sizeof(data.rswr));
 	os.write(reinterpret_cast<const char*>(&data.mAlbedo), sizeof(data.mAlbedo));
@@ -3194,6 +3247,7 @@ std::istream& operator>>(std::istream& is, CurrentMeteo& data)
 	is.read(reinterpret_cast<char*>(&data.ustar), sizeof(data.ustar));
 	is.read(reinterpret_cast<char*>(&data.z0), sizeof(data.z0));
 	is.read(reinterpret_cast<char*>(&data.psi_s), sizeof(data.psi_s));
+	is.read(reinterpret_cast<char*>(&data.psi_m), sizeof(data.psi_m));
 	is.read(reinterpret_cast<char*>(&data.iswr), sizeof(data.iswr));
 	is.read(reinterpret_cast<char*>(&data.rswr), sizeof(data.rswr));
 	is.read(reinterpret_cast<char*>(&data.mAlbedo), sizeof(data.mAlbedo));
@@ -3262,7 +3316,7 @@ const std::string CurrentMeteo::toString() const
 	os << setw(8) << "PSUM=" << psum << " PSUM_PH=" << psum_ph << " HS=" << hs << " rho_hn=" << rho_hn << " PSUM_TECH=" << psum_tech << "\n";
 	os << setw(8) << "VW=" << vw << " vw_avg=" << vw_avg << " vw_max=" << vw_max << " vw_drift=" << vw_drift << "\n";
 	os << setw(8) << "DW=" << dw << "\n";
-	os << setw(8) << "U*=" << ustar << " z0=" << z0 << " psi_s=" << psi_s << "\n";
+	os << setw(8) << "U*=" << ustar << " z0=" << z0 << " psi_s=" << psi_s << " psi_m=" << psi_m << "\n";
 
 	//os << std::setprecision(10);
 	if(!ts.empty()) os << "     ";
@@ -3415,7 +3469,7 @@ LayerData::LayerData() : depositionDate(), hl(0.), ne(0), tl(0.),
                      phiSoil(0.), phiIce(0.), phiWater(0.), phiWaterPref(0.), phiVoids(0.),
                      cSoil(SnowStation::number_of_solutes), cIce(SnowStation::number_of_solutes), cWater(SnowStation::number_of_solutes), cVoids(SnowStation::number_of_solutes),
                      SoilRho(0.), SoilK(0.), SoilC(0.),
-                     rg(0.), sp(0.), dd(0.), rb(0.), mk(0), hr(0.), CDot(0.), metamo(0.), salinity(0.)
+                     rg(0.), sp(0.), dd(0.), rb(0.), mk(0), hr(0.), CDot(0.), metamo(0.), salinity(0.), h(Constants::undefined)
 {
 }
 
@@ -3460,6 +3514,7 @@ std::ostream& operator<<(std::ostream& os, const LayerData& data)
 	os.write(reinterpret_cast<const char*>(&data.CDot), sizeof(data.CDot));
 	os.write(reinterpret_cast<const char*>(&data.metamo), sizeof(data.metamo));
 	os.write(reinterpret_cast<const char*>(&data.salinity), sizeof(data.salinity));
+	os.write(reinterpret_cast<const char*>(&data.h), sizeof(data.h));
 	return os;
 }
 
@@ -3508,6 +3563,7 @@ std::istream& operator>>(std::istream& is, LayerData& data)
 	is.read(reinterpret_cast<char*>(&data.CDot), sizeof(data.CDot));
 	is.read(reinterpret_cast<char*>(&data.metamo), sizeof(data.metamo));
 	is.read(reinterpret_cast<char*>(&data.salinity), sizeof(data.salinity));
+	is.read(reinterpret_cast<char*>(&data.h), sizeof(data.h));
 	return is;
 }
 

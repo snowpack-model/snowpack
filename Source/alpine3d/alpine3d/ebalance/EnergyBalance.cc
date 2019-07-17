@@ -16,6 +16,8 @@
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <alpine3d/ebalance/EnergyBalance.h>
+#include <alpine3d/MPIControl.h>
+#include <alpine3d/OMPControl.h>
 
 using namespace mio;
 using namespace std;
@@ -33,7 +35,7 @@ EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config&
 	#pragma omp parallel for schedule(static)
 	for (size_t ii=0; ii<nbworkers; ii++) {
 		size_t thread_startx, thread_nx;
-		MPIControl::getArraySliceParams(nx, nbworkers, ii, thread_startx, thread_nx);
+		OMPControl::getArraySliceParams(nx, nbworkers, ii, thread_startx, thread_nx);
 		const size_t offset = startx + thread_startx;
 
 		#pragma omp critical(ebWorkers_status)
@@ -48,6 +50,7 @@ EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config&
 	const bool enable_terrain_radiation = cfg.get("Terrain_Radiation", "EBalance");
 	if (enable_terrain_radiation) {
 		terrain_radiation = TerrainRadiationFactory::getAlgorithm(cfg, dem, nbworkers);
+
 		const std::string algo = terrain_radiation->algo;
 		if (instance.master())
 			std::cout << "[i] Using terrain radiation with model: " << algo << "\n";
@@ -124,7 +127,7 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 	timer.restart();
 	direct.resize(dimx, dimy);
 	diffuse.resize(dimx, dimy);
-	
+
 	#pragma omp parallel for schedule(dynamic)
 	for (size_t ii=0; ii<nbworkers; ii++) {
 		radfields[ii]->setStations(vecMeteo, albedo); //calculate the parameters at the radiation stations
@@ -134,7 +137,7 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 		                       mio::Grid2DObject(in_rh, startx, 0, nx, dimy),
 		                       mio::Grid2DObject(in_p, startx, 0, nx, dimy),
 		                       mio::Grid2DObject(albedo, startx, 0, nx, dimy));
-		
+
 		mio::Array2D<double> band_direct, band_diffuse;
 		radfields[ii]->getRadiation(band_direct, band_diffuse);
 		direct.fill(band_direct, startx, 0, nx, dimy);
@@ -155,12 +158,12 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 	if (snowpack) {
 		double solarAzimuth, solarElevation;
 		radfields[0]->getPositionSun(solarAzimuth, solarElevation); //we need it only for handing over to snowpack
-		
+
 		mio::Array2D<double> ilwr = in_ilwr.grid2D;
 		mio::Array2D<double> global = direct+diffuse; //otherwise the compiler does not match the types
 
 		if (!reflected.empty()) global += reflected;
-		
+
 		timer.stop();
 		try {
 			snowpack->setRadiationComponents(global, ilwr, diffuse, solarElevation, timestamp); //this triggers Snowpack calculation
@@ -177,4 +180,3 @@ double EnergyBalance::getTiming() const
 {
 	return timer.getElapsed();
 }
-

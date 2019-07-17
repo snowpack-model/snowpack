@@ -753,14 +753,16 @@
 		<parameter key="SNOW_EROSION" type="alternative" default="NONE" optional="true">
 			<section name="SnowpackAdvanced" />
 			<option value="NONE" type="string" />
-			<option value="VIRTUAL" type="string" />
 			<option value="HS_DRIVEN" type="string" />
 			<option value="FREE" type="string" />
+			<option value="REDEPOSIT" type="string" />
+			<option value="VIRTUAL" type="string" />
 			<help>Specifies if snow erosion is enabled for the main station. The following options are available:
 				&lt;dl&gt;
 				&lt;dt&gt;NONE&lt;/dt&gt; &lt;dd&gt;no snow erosion&lt;/dd&gt;
 				&lt;dt&gt;HS_DRIVEN&lt;/dt&gt; &lt;dd&gt;works only if measured heigths of snow are available at the main station, in which case a decrease of snow height may be interpreted as erosion (depending on wind speed and snow properties). Unless NUMBER_SLOPES is set to 1, this erosion will not contribute to the drifting snow index (compare with SNOW_REDISTRIBUTION)&lt;/dd&gt;
 				&lt;dt&gt;FREE&lt;/dt&gt; &lt;dd&gt;erosion determined only from wind speed and snow properties&lt;/dd&gt;
+				&lt;dt&gt;REDEPOSIT&lt;/dt&gt; &lt;dd&gt;as FREE, but eroded snow is immediately redeposited, with ANTARCTICA new snow density parameterization&lt;/dd&gt;
 				&lt;dt&gt;VIRTUAL&lt;/dt&gt; &lt;dd&gt;only virtual erosion is considered&lt;/dd&gt;
 			</help>
 		</parameter>
@@ -800,7 +802,7 @@
 			<section name="SnowpackAdvanced" />
 			<option value="TRUE" type="string"/>
 			<option value="FALSE" type="string"/>
-			<help>Set whether adaptive time stepping is allowed for solving the heat advection equation/phase changes when unstable atmospheric stratification is encountered (only for non-neutral atmospheric stability schemes). It then temporarily reduces the time step, in order to reduce oscillations in surface temperature.</help>
+			<help>Set whether adaptive time stepping is allowed for solving the heat advection equation/phase changes when unstable atmospheric stratification is encountered (only for non-neutral atmospheric stability schemes). It then temporarily reduces the time step, in order to reduce oscillations in surface temperature. This increases computation times. Note that independent of this flag, the time step can be temporarily reduced when the heat equation does not converge.</help>
 		</parameter>
 	</frame>
 

@@ -38,8 +38,8 @@ namespace mio {
  *     + when the requested data could not be provided as last resort as data generator.
  *
  * In the first case, the *GeneratorAlgorithm::create()* call will be used and the sampling rate will be the original sampling rate none of the data
- * (such as the other parameters) being filtered or resampled. In the second case, most fo the time the *GeneratorAlgorithm::generate()* call
- * will be used and all available data has already been filtered and resampled. In such a case, the goal is to provide reasonnable values
+ * (such as the other parameters) being filtered or resampled. In the second case, most of the time the *GeneratorAlgorithm::generate()* call
+ * will be used and all available data has already been filtered and resampled. In such a case, the goal is to provide reasonable values
  * for the data points that might still be missing. These are either a few isolated periods (a sensor was not functioning) that are too large for performing
  * a statistical temporal interpolation or that a meteorological parameter was not even measured. In such a case,
  * we generate data, generally relying on some parametrization using other meteorological parameters. Sometimes,
@@ -65,7 +65,7 @@ namespace mio {
  *
  * @section implementation_DataGenerator Implementation
  * It is therefore necessary to create a new class as two new files in the dataGenerators subdirectory (the implementation in the .cc
- * and the declaration in the .h), nammed after the generator that will be implemented and inheriting GeneratorAlgorithm. You can
+ * and the declaration in the .h), named after the generator that will be implemented and inheriting GeneratorAlgorithm. You can
  * start by making a copy of the dataGenerators/template.cc (or .h) that you rename according to your generator. Please make sure
  * to update the header guard (the line "#ifndef GENERATORTEMPLATE_H" in the header) to reflect your generator name.
  * Three methods need to be implemented:

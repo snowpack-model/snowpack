@@ -63,6 +63,7 @@ class SeaIce {
 		const static double InitRg;
 		const static double InitRb;
 		const static double InitOceanSalinity;
+		const static double InitSeaIceSalinity;
 		const static double InitSnowSalinity;
 
 		double SeaLevel;            ///< Sea level in domain (m)
@@ -73,6 +74,7 @@ class SeaIce {
 		double OceanSalinity;
 		double OceanBufferLayerDepth;
 		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
+		double TotalFloodingBucket;		//Total flooding with Bucket scheme (kg / m^2)
 
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
 		salinityprofiles salinityprofile;

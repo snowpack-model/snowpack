@@ -90,7 +90,7 @@ namespace mio {
  * description of its design goals and its architecture can be found in <br>
  * M. Bavay and T. Egger, <a href="http://www.geosci-model-dev.net/7/3135/2014/gmd-7-3135-2014.pdf"><i>"MeteoIO 2.4. 2: a preprocessing library for meteorological data."</i></a>, Geoscientific Model Development, <b>7.6</b>, 2014, pp 3135-3151.
  * <br>
- * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>.
+ * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>. Some modules make use of the <a href="https://eigen.tuxfamily.org">Eigen library</a> licensed under <a href="https://www.mozilla.org/en-US/MPL/2.0/">MPL2</a>.
  * </small></i></center></p>
  */
 
@@ -171,6 +171,14 @@ namespace mio {
  * A valid value can be an integer, a float, or string, a list of keywords, a mixed list of keywords and numbers...
  * @code
  * TA::algorithms = IDW_LAPSE CST_LAPSE
+ * @endcode
+ * 
+ * A value can also be an environment variable, another key or an arithmetic expression (see the \ref Config "Config class documentation" for more details):
+ * @code
+ * USERNAME = ${env:LOGNAME}
+ * FIRST_NAME = John
+ * FULL_NAME = ${FIRST_NAME}_${USERNAME}
+ * AGE = ${{3*20-18+pi/18}}
  * @endcode
  *
  * @section Config_structure Configuration file structure

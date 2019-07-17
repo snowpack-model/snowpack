@@ -55,7 +55,7 @@ class InterpolationAlgorithm;
  *
  * @section implementation_2Dinterpol Implementation
  * It is therefore necessary to create in InterpolationAlgorithms.cc (and declared in the .h) a new class,
- * nammed after the algorithm that will be implemented and inheriting InterpolationAlgorithm. Three methods need
+ * named after the algorithm that will be implemented and inheriting InterpolationAlgorithm. Three methods need
  * to be implemented:
  * - a constructor that does the arguments parsing (if any);
  * - double getQualityRating()

@@ -78,19 +78,19 @@ namespace ncpp {
 	
 	/** This structure contains the metadata associated with a NetCDF dimension */
 	typedef struct NC_DIMENSION {
-			NC_DIMENSION() : name(), length(0), dimid(-1), param(mio::IOUtils::npos), isUnlimited(false) {};
-			NC_DIMENSION(const size_t& i_param, const std::string& i_name)
-			                     : name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {};
-			NC_DIMENSION(const size_t& i_param, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
-			                     : name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {};
-			std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
-			
-			std::string name; ///< dimension name
-			size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")
-			int dimid; ///< dimension ID, set to -1 and then to a positive value after reading/writing to/from a file
-			size_t param; ///< parameter index (from Dimensions or MeteoGrids::Parameters)
-			bool isUnlimited; ///< at most, one dimension can be "unlimited"
-		} nc_dimension;
+		NC_DIMENSION() : name(), length(0), dimid(-1), param(mio::IOUtils::npos), isUnlimited(false) {};
+		NC_DIMENSION(const size_t& i_param, const std::string& i_name)
+					: name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {};
+		NC_DIMENSION(const size_t& i_param, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
+					: name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {};
+		std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
+
+		std::string name; ///< dimension name
+		size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")
+		int dimid; ///< dimension ID, set to -1 and then to a positive value after reading/writing to/from a file
+		size_t param; ///< parameter index (from Dimensions or MeteoGrids::Parameters)
+		bool isUnlimited; ///< at most, one dimension can be "unlimited"
+	} nc_dimension;
 	
 	void open_file(const std::string& filename, const int& omode, int& ncid);
 	void create_file(const std::string& filename, const int& cmode, int& ncid);
@@ -117,8 +117,6 @@ namespace ncpp {
 	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited=false);
 	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<std::string>& data, const int& strMaxLen);
 
-	double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
-	double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY);
 	void fill2DGrid(mio::Grid2DObject& grid, const double data[], const double& nodata, const bool& normal_Xorder=true, const bool& normal_Yorder=true);
 	void getTimeTransform(const std::string& time_units, const double& i_TZ, double &o_time_offset, double &o_time_multiplier);
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);
@@ -162,7 +160,7 @@ class ACDD {
 		void writeAttributes(const int& ncid) const;
 		
 		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
-		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
+		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon);
 		void setGeometry(const mio::Coords& location, const bool& isLatLon);
 		
 		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);

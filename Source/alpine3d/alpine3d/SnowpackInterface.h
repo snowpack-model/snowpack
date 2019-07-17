@@ -32,7 +32,7 @@ class Runoff; // forward declaration, cyclic header include
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/Glaciers.h>
-#include <alpine3d/TechSnow.h>
+#include <alpine3d/TechSnowA3D.h>
 
 /**
  * @page snowpack Snowpack
@@ -155,6 +155,7 @@ class Runoff; // forward declaration, cyclic header include
 		                const mio::Grid2DObject& new_dw,
 		                const mio::Grid2DObject& new_rh,
 		                const mio::Grid2DObject& new_ta,
+		                const mio::Grid2DObject& new_tsg,
 		                const mio::Date& timestamp);
 		void setVwDrift(const mio::Grid2DObject& new_vw_drift,
 				const mio::Date& timestamp);
@@ -172,7 +173,8 @@ class Runoff; // forward declaration, cyclic header include
 		bool do_grid_output(const mio::Date &date) const;
 		void calcNextStep();
 
-		std::vector<SnowStation*> readInitalSnowCover();
+		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
+                             std::vector<std::pair<size_t,size_t> >& snow_stations_coord);
 		void readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const bool& is_special_point,
 											 SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice);
 		void writeSnowCover(const mio::Date& date, const std::vector<SnowStation*>& snow_station);
@@ -217,11 +219,11 @@ class Runoff; // forward declaration, cyclic header include
 		SnowpackIO snowpackIO;
 
 		size_t dimx, dimy;
-    size_t mpi_offset, mpi_nx;
+		size_t mpi_offset, mpi_nx;
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg;
 		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 
@@ -229,7 +231,7 @@ class Runoff; // forward declaration, cyclic header include
 		std::vector<SnowpackInterfaceWorker*> workers;
 		std::vector<size_t> worker_startx; // stores offset for each workers slice
 		std::vector<size_t> worker_deltax; // stores size for each workers slize
-
+		std::vector<std::vector<std::pair<size_t,size_t> > > worker_stations_coord; // ttores te grid coordiante of each worker
 		// time relevant
 		mio::Timer timer; // used to mesure calc time of one step
 		mio::Date nextStepTimestamp;
@@ -244,7 +246,7 @@ class Runoff; // forward declaration, cyclic header include
 		Runoff *runoff;
 
 		Glaciers *glaciers;
-		TechSnow *techSnow;
+		TechSnowA3D *techSnow;
 };
 
 #endif

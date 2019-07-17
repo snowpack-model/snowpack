@@ -38,7 +38,7 @@ std::string NoResampling::toString() const
 	return ss.str();
 }
 
-void NoResampling::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+void NoResampling::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())

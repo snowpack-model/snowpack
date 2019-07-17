@@ -26,6 +26,7 @@
 #include <meteoio/meteoFilters/FilterMin.h>
 #include <meteoio/meteoFilters/FilterMax.h>
 #include <meteoio/meteoFilters/FilterMinMax.h>
+#include <meteoio/meteoFilters/FilterMinMaxConditional.h>
 #include <meteoio/meteoFilters/FilterPotentialSW.h>
 #include <meteoio/meteoFilters/FilterStdDev.h>
 #include <meteoio/meteoFilters/FilterRate.h>
@@ -46,16 +47,19 @@
 #include <meteoio/meteoFilters/ProcMult.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
+#include <meteoio/meteoFilters/ProcRHWaterToIce.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <meteoio/meteoFilters/FilterDespikingPS.h>
+#include <meteoio/meteoFilters/FilterParticle.h>
 
 namespace mio {
 /**
  * @page processing Processing overview
- * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters and processing elements and their usage. Moreover, there is a special mode of operation where MeteoIO writes on the screen a line for each data point that gets modified 
+ * The pre-processing infrastructure is described in ProcessingBlock (for its API). The goal of this page is to give an overview of the available filters 
+ * and processing elements and their usage. Moreover, there is a special mode of operation where MeteoIO writes on the screen a line for each data point that gets modified 
  * (either filtered, resampled or generated). This is enabled by setting the DATA_QA_LOGS key to *true* in the [General] section. The outputs then look like the following:
  * @code
  * [DATA_QA] Filtering WFJ2::ILWR::MIN_MAX 2016-01-18T09:00:00+01:00 [2016-W03-01]
@@ -69,6 +73,8 @@ namespace mio {
  * options followed by a list of station IDs (see example below). This is supported automatically by all Processing Elements. Several Processing Elements
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
+ * 
+ * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
  *
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
@@ -104,6 +110,7 @@ namespace mio {
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - MIN_MAX: range check filter, see FilterMinMax
+ * - MIN_MAX_CONDITIONAL: range check only if a different parameter holds true to a comparison, see FilterMinMaxConditional
  * - RATE: rate of change filter, see FilterRate
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
@@ -135,7 +142,7 @@ namespace mio {
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
  *
  * A few filters can be applied to the timestamps themselves:
- * - SUPPR: delete whole timesteps, see TimeSuppr
+ * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
  */
 
@@ -150,6 +157,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMax(vecArgs, blockname);
 	} else if (blockname == "MIN_MAX"){
 		return new FilterMinMax(vecArgs, blockname);
+	} else if (blockname == "MIN_MAX_CONDITIONAL"){
+		return new FilterMinMaxConditional(vecArgs, blockname);
 	} else if (blockname == "RATE"){
 		return new FilterRate(vecArgs, blockname);
 	} else if (blockname == "STD_DEV"){
@@ -170,6 +179,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterPotentialSW(vecArgs, blockname);
 	} else if (blockname == "DESPIKING"){
 		return new FilterDespikingPS(vecArgs, blockname);
+	} else if (blockname == "PARTICLE"){
+		return new FilterParticle(vecArgs, blockname);
 	}
 
 	//general data transformations
@@ -206,6 +217,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcPSUMDistribute(vecArgs, blockname);
 	} else if (blockname == "SHADE"){
 		return new ProcShade(vecArgs, blockname, cfg);
+	} else if (blockname == "RHWATERTOICE"){
+		return new ProcRHWaterToIce(vecArgs, blockname);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}
@@ -217,6 +230,8 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "UNDST"){
 		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+	} else if (blockname == "LOOP"){
+		return new TimeLoop(vecArgs, blockname, cfg.get("TIME_ZONE", "Input"));
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
 	}

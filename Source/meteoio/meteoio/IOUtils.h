@@ -165,6 +165,42 @@ namespace IOUtils {
 	void replace_all(std::string &input, const std::string& search, const std::string& format);
 
 	/**
+	* @brief Removes consecutive occurrences of spaces and tabs
+	* @param line The string to read and modify
+	*/
+	void removeDuplicateWhitespaces(std::string& line);
+
+	/**
+	* @brief Replaces spaces and tabs with a single character or removes them
+	* @param line The string to read and modify
+	* @param rep The character to replace with (default: empty)
+	*/
+	void replaceWhitespaces(std::string& line, const char& rep = '\0');
+
+	/**
+	* @brief Replaces invalid characters with a single character or removes them
+	* @param line The string to read and modify
+	* @param rep The character to replace with (default: empty)
+	*/
+	void replaceInvalidChars(std::string& line, const char& rep = '\0');
+
+	/**
+	* @brief Removes single and double quotation marks
+	* @param line The string to read and modify
+	*/
+	void removeQuotes(std::string& line);
+
+	/**
+	 * @brief Cleans up a string to be usable as, for example, a parameter name
+	 * @details This replaces all whitespaces (including consecutive ones) with a single
+	 * character or removes them, and removes invalid characters and quotes.
+	 * @param field The string to read and modify
+	 * @param[in] clean_whitespaces Should tabs and spaces be replaced? (default: true)
+	 * @param[in] rep Substitute string (default: '-'). Set to empty ('\0') to remove.
+	 */
+	void cleanFieldName(std::string& field, const bool& clean_whitespaces = true, const char& rep = '-');
+
+	/**
 	 * @brief count how many times a substring appears in a string
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param[in] input string to manipulate

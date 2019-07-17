@@ -1,5 +1,9 @@
-# distutils: language = c++
+"""CoordsWrap.pyx: This file wraps the c++-class Coords (frommeteoio/dataClasses/Coords.h) to the python-class PyCoords.
+   Author: Thiemo Theile
+   Date created: 4/1/2019
+"""
 
+# distutils: language = c++
 
 from Coords cimport Coords
 

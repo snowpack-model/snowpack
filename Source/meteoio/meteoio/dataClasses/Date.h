@@ -114,7 +114,9 @@ class Date {
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
 		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
 		Date(const time_t&, const bool& in_dst=false);
+		Date(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst=false);
 
 		void setFromSys();
 		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
@@ -126,6 +128,7 @@ class Date {
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const time_t& in_time, const bool& in_dst=false);
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setRFC868Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
@@ -199,6 +202,8 @@ class Date {
 		const Date operator-(const double&) const;
 		const Date operator*(const double&) const;
 		const Date operator/(const double&) const;
+		
+		static const double epsilon;
 
 	protected:
 		double localToGMT(const double& in_julian) const;
@@ -213,7 +218,6 @@ class Date {
 		static bool initStaticData();///<initialize the static map TZAbbrev
 
 		static std::map< std::string, double> TZAbbrev;
-		static const double epsilon;
 		static const bool __init;
 		double timezone;
 		double gmt_julian;

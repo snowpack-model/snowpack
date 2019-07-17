@@ -270,18 +270,27 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 * @param[in] var variable to write out
 * @param[in] nrows number of rows
 * @param[in] ncols number of columns
-* @param[in] pos time index in the file
+* @param[in] pos time index in the file (IOUtils::npos for a variable that is not time dependent)
 * @param[in] data data to write to the file
 */
 void write_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols,
                 const double * const data)
 {
-	const size_t start[] = {pos, 0, 0};
-	const size_t count[] = {1, nrows, ncols};
+	if (pos==mio::IOUtils::npos) { //no time dependency
+		const size_t start[] = {0, 0};
+		const size_t count[] = {nrows, ncols};
 
-	const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
-	if (status != NC_NOERR)
-		throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+		const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
+		if (status != NC_NOERR)
+			throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+	} else { //time dependent variable
+		const size_t start[] = {pos, 0, 0};
+		const size_t count[] = {1, nrows, ncols};
+
+		const int status = nc_put_vara_double(ncid, var.varid, start, count, data);
+		if (status != NC_NOERR)
+			throw mio::IOException("Could not write variable '" + var.attributes.name + "': " + string(nc_strerror(status)), AT);
+	}
 }
 
 /**
@@ -451,47 +460,6 @@ void createDimension(const int& ncid, ncpp::nc_dimension& dimension, const size_
 	} else {
 		if (!dimension.isUnlimited && dimension.length != length)
 			throw mio::InvalidArgumentException("Attempting to write an inconsistent lenght for dimension '" + dimension.name+"'", AT);
-	}
-}
-
-double calculate_cellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY)
-{
-	//in order to handle swapped llcorner/urcorner, we use "fabs" everywhere
-	double alpha;
-	const double cntr_lat = .5*fabs(vecY.front()+vecY.back());
-	const double cntr_lon = .5*fabs(vecX.front()+vecX.back());
-	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, vecX.front(), cntr_lat, vecX.back(), alpha);
-	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(vecY.front(), cntr_lon, vecY.back(), cntr_lon, alpha);
-
-	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		const double cellsize = std::min(cellsize_x, cellsize_y);
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-		return cellsize;
-	}
-}
-
-double calculate_XYcellsize(double& factor_x, double& factor_y, const std::vector<double>& vecX, const std::vector<double>& vecY)
-{
-	const double distanceX = fabs(vecX.front() - vecX.back());
-	const double distanceY = fabs(vecY.front() - vecY.back());
-
-	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
-	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
-	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
-
-	if (cellsize_x == cellsize_y) {
-		return cellsize_x;
-	} else {
-		const double cellsize = std::min(cellsize_x, cellsize_y);
-		factor_x =  cellsize_x / cellsize;
-		factor_y =  cellsize_y / cellsize;
-		return cellsize;
 	}
 }
 
@@ -756,14 +724,32 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
 }
 
-void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
+void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
 {
 	if (vecMeteo.empty()) return;
 	
+	std::string multiPts;
+	short int epsg = -1;
 	double lat_min, lat_max, lon_min, lon_max;
 	bool found = false;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty()) continue;
+
+		//create the strings for the MultiPoint property
+		std::ostringstream ss;
+		if (isLatLon) {
+			ss  << std::fixed << std::setprecision(10) << "(" << vecMeteo[ii].front().meta.position.getLon() << " " << vecMeteo[ii].front().meta.position.getLat() << ")";
+		} else {
+			ss  << std::fixed << std::setprecision(0) << "(" << vecMeteo[ii].front().meta.position.getEasting() << " " << vecMeteo[ii].front().meta.position.getNorthing() << ")";
+		}
+		if (epsg==-1) { //first valid point
+			epsg = (isLatLon)? 4326 : vecMeteo[ii].front().meta.position.getEPSG();
+			multiPts = ss.str();
+		} else {
+			if (!isLatLon && epsg!=vecMeteo[ii].front().meta.position.getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
+			multiPts += ", "+ss.str();
+		}
+
 		const double curr_lat = vecMeteo[ii].front().meta.position.getLat();
 		const double curr_lon = vecMeteo[ii].front().meta.position.getLon();
 		
@@ -779,6 +765,12 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	}
 	if (!found) return;
 	
+	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
+		std::ostringstream os;
+		os << epsg;
+		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
+		addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
+	}
 	addAttribute("geospatial_lat_min", lat_min);
 	addAttribute("geospatial_lat_max", lat_max);
 	addAttribute("geospatial_lon_min", lon_min);
@@ -798,7 +790,7 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 		os << location.getEPSG();
 		epsg_str = os.str();
 		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(10) << location.getEasting() << " " << location.getNorthing();
+		ss << std::fixed << std::setprecision(0) << location.getEasting() << " " << location.getNorthing();
 	}
 	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
 	addAttribute("geospatial_bounds", "Point ("+geometry+")");
@@ -871,7 +863,7 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_FLOAT;
 		nodata =  -9999999.; //CNRM-GAME nodata value
 		force_station_dimension = true;
-	} else if (schema=="ECMWF") {
+	} else if (schema=="ERA-INTERIM" || schema=="ERA5") {
 		dflt_type = NC_DOUBLE;
 	} else if (schema=="WRF") {
 		dflt_type = NC_DOUBLE;
@@ -879,7 +871,9 @@ void NC_SCHEMA::initSchemaCst(const std::string& schema)
 		dflt_type = NC_FLOAT;
 	} else if (schema=="METEOCH") {
 		dflt_type = NC_FLOAT;
-	} else
+	} else if (schema=="ECMWF") {
+		throw mio::InvalidArgumentException("The ECMWF schema has been replaced by the ERA-INTERIM and the ERA5 schemas, please update your configuration file", AT);
+	} else 
 		throw mio::InvalidArgumentException("Unsupported NetCDF schema "+schema, AT);
 }
 
@@ -924,7 +918,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "alt") );
 	results["AMUNDSEN"] = tmp;
 	
-	//ECMWF schema
+	//ERA-Interim and ERA5 schemas
 	tmp.clear();
 	tmp.push_back( ncpp::nc_dimension(ncpp::TIME, "time") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::LATITUDE, "latitude") );
@@ -934,7 +928,8 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "geopotential_height") );
-	results["ECMWF"] = tmp;
+	results["ERA-INTERIM"] = tmp;
+	results["ERA5"] = tmp;
 	
 	//WRF schema
 	tmp.clear();
@@ -991,6 +986,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "rsus", "surface_upwelling_shortwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "rsus", "surface_upwelling_shortwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "rlds", "surface_downwelling_longwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "rlus", "surface_upwelling_longwave_flux_in_air", "", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::HS, "snd", "surface_snow_thickness", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "snow_density", "snow_density", "", "kg/m3", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "swe", "lwe_thickness_of_surface_snow_amount", "", "m", mio::IOUtils::nodata, NC_FLOAT) );
@@ -999,6 +995,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "ts", "surface_temperature", "", "K", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::VW_MAX, "ws_max", "wind_speed_of_gust", "", "m/s", mio::IOUtils::nodata, NC_FLOAT) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "surface_albedo", "surface_albedo", "", "1", mio::IOUtils::nodata, NC_FLOAT) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "ro", "surface_runoff_amount", "", "kg/m2", mio::IOUtils::nodata, NC_FLOAT) ); //proper variable name?
 	results["CF-1.6"] = tmp;
 
 	//CROCUS schema
@@ -1046,7 +1043,7 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "rsds", "", "surface_downwelling_shortwave_flux_in_air", "W/m2", mio::IOUtils::nodata, NC_FLOAT) );
 	results["AMUNDSEN"] = tmp;
 
-	//ECMWF schema
+	//ERA-INTERIM and ERA5 schemas
 	tmp.clear();
 	tmp.push_back( ncpp::var_attr(ncpp::TIME, "time", "time", "time", "h", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(ncpp::LATITUDE, "latitude", "latitude", "latitude", "degrees", mio::IOUtils::nodata, NC_DOUBLE) );
@@ -1059,9 +1056,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TD, "d2m", "", "2 metre dewpoint temperature", "K", 2., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "sp", "surface_air_pressure", "Surface pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P_SEA, "msl", "air_pressure_at_sea_level", "Mean sea level pressure", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR_DIR, "fdir", "", "DIRect solar radiation at the surface", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "strd", "", "Surface thermal radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::PSUM, "tp", "", "Total precipitation", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "u10", "", "10 metre U wind component", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "v10", "", "10 metre V wind component", "m/s", 10., NC_DOUBLE) );
@@ -1072,7 +1066,16 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "fal", "", "Forecast albedo", "(0 - 1)", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSNO, "rsn", "", "Snow density", "kg/m3", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "ro", "", "Runoff", "m", mio::IOUtils::nodata, NC_DOUBLE) );
-	results["ECMWF"] = tmp;
+	results["ERA-INTERIM"] = tmp;
+	//ERA-INTERIM schema
+	results["ERA-INTERIM"].push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ssrd", "surface_downwelling_shortwave_flux_in_air", "Surface solar radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	results["ERA-INTERIM"].push_back( ncpp::var_attr(mio::MeteoGrids::ISWR_DIR, "fdir", "", "DIRect solar radiation at the surface", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	results["ERA-INTERIM"].push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "strd", "", "Surface thermal radiation downwards", "J/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	//ERA5 schema
+	results["ERA5"] = tmp;
+	results["ERA5"].push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "msdwswrf", "", "Mean surface downward short-wave radiation flux", "W/m2", mio::IOUtils::nodata, NC_DOUBLE));
+	results["ERA5"].push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "msdwlwrf", "", "Mean surface downward long-wave radiation flux", "W/m2", mio::IOUtils::nodata, NC_DOUBLE));
+	
 
 	//WRF schema
 	tmp.clear();
@@ -1085,12 +1088,10 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::DEM, "HGT", "Terrain Height", "Terrain Height", "m", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::P, "PSFC", "Surface pressure", "SFC PRESSURE", "Pa", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TA, "T2", "2-meter temperature", "TEMP at 2 M", "K", 2., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSG, "TSLB", "soil temperature", "SOIL TEMPERATURE", "K", 2., NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSG, "TSK", "surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", 2., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::QI, "Q2", "2-meter specific humidity", "QV at 2 M", "kg/kg", 2, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "ACSWDNB", "Downward SW surface radiation", "Downward SW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::RSWR, "ACSWUPB", "Upwelling Surface Shortwave Radiation", "Upwelling Surface Shortwave Radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "ACLWDNB", "Downward LW surface radiation", "Downward LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::OLWR, "ACLWUPB", "Upwelling LW surface radiation", "Upwelling LW surface radiation", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ISWR, "SWDOWN", "Downward Short Wave flux at ground surface", "Downward Short Wave Flux at ground surface", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
+	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ILWR, "GLW", "Downward Long Wave flux at ground surface", "Downward Long Wave flux at ground surface", "W/m2", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ALB, "ALBEDO", "surface albedo", "ALBEDO", "-", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::ROT, "SFROFF", "Surface runoff", "SURFACE RUNOFF", "kg*m2/s", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::SWE, "SNOW", "snow water equivalent", "SNOW WATER EQUIVALENT", "kg/m2", mio::IOUtils::nodata, NC_DOUBLE) );

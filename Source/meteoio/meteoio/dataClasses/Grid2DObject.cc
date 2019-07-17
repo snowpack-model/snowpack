@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
@@ -31,6 +32,9 @@ Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
 		grid2D = source.grid2D;
 		cellsize = source.cellsize;
 		llcorner = source.llcorner;
+		ur_lat = source.ur_lat;
+		ur_lon = source.ur_lon;
+		isLatLon = source.isLatLon;
 	}
 	return *this;
 }
@@ -156,27 +160,28 @@ bool Grid2DObject::operator!=(const Grid2DObject& in) const {
  * Default constructor.
  * grid2D attribute is initialized by Array2D default constructor.
  */
-Grid2DObject::Grid2DObject() : grid2D(), llcorner(), cellsize(0.) {}
+Grid2DObject::Grid2DObject() : grid2D(), llcorner(), cellsize(0.), ur_lat(IOUtils::nodata), ur_lon(IOUtils::nodata), isLatLon(false) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner)
               : grid2D(i_ncols, i_nrows, IOUtils::nodata), llcorner(i_llcorner),
-                cellsize(i_cellsize) {}
+                cellsize(i_cellsize), ur_lat(IOUtils::nodata), ur_lon(IOUtils::nodata), isLatLon(false) {}
 
 Grid2DObject::Grid2DObject(const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
-              : grid2D(i_grid2D), llcorner(i_llcorner), cellsize(i_cellsize) {}
+              : grid2D(i_grid2D), llcorner(i_llcorner), cellsize(i_cellsize), ur_lat(IOUtils::nodata), ur_lon(IOUtils::nodata), isLatLon(false) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner, const double& init)
-              : grid2D(i_ncols, i_nrows, init), llcorner(i_llcorner), cellsize(i_cellsize) {}
+              : grid2D(i_ncols, i_nrows, init), llcorner(i_llcorner), cellsize(i_cellsize), ur_lat(IOUtils::nodata), ur_lon(IOUtils::nodata), isLatLon(false) {}
 
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid, const double& init)
               : grid2D(i_grid.grid2D.getNx(), i_grid.grid2D.getNy(), init),
-                llcorner(i_grid.llcorner), cellsize(i_grid.cellsize) {}
+                llcorner(i_grid.llcorner), cellsize(i_grid.cellsize), ur_lat(i_grid.ur_lat), ur_lon(i_grid.ur_lon), isLatLon(i_grid.isLatLon) {}
 
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, const size_t& i_ny,
                            const size_t& i_ncols, const size_t& i_nrows)
-              : grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), llcorner(i_grid2Dobj.llcorner), cellsize(i_grid2Dobj.cellsize)
+              : grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), llcorner(i_grid2Dobj.llcorner), cellsize(i_grid2Dobj.cellsize),
+                ur_lat(i_grid2Dobj.ur_lat), ur_lon(i_grid2Dobj.ur_lon), isLatLon(i_grid2Dobj.isLatLon)
 {
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
@@ -221,7 +226,8 @@ bool Grid2DObject::gridify(std::vector<StationData>& vec_points, const bool& kee
 	return status;
 }
 
-bool Grid2DObject::gridify(Coords& point) const {
+bool Grid2DObject::gridify(Coords& point) const 
+{
 	std::string proj_type, proj_args;
 	point.getProj(proj_type, proj_args);
 	if (proj_type=="NULL") {
@@ -240,8 +246,8 @@ bool Grid2DObject::gridify(Coords& point) const {
 
 bool Grid2DObject::grid_to_WGS84(Coords& point) const
 {
-	int i = point.getGridI(), j = point.getGridJ();
-	if (i==IOUtils::inodata || j==IOUtils::inodata) {
+	int ii = point.getGridI(), jj = point.getGridJ();
+	if (ii==IOUtils::inodata || jj==IOUtils::inodata) {
 		//the point is invalid (outside the grid or contains nodata)
 		point.setGridIndex(IOUtils::inodata, IOUtils::inodata, IOUtils::inodata, false); //mark the point as invalid
 		return false;
@@ -250,34 +256,41 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const
 	const int ncols = (signed)getNx();
 	const int nrows = (signed)getNy();
 
-	if (i>ncols || i<0 || j>nrows || j<0) {
+	if (ii>ncols || ii<0 || jj>nrows || jj<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
-		if (i<0) i=0;
-		if (j<0) j=0;
-		if (i>ncols) i=ncols;
-		if (j>nrows) j=nrows;
-		point.setGridIndex(i, j, IOUtils::inodata, false); //mark the point as invalid
+		if (ii<0) ii=0;
+		if (jj<0) jj=0;
+		if (ii>ncols) ii=ncols;
+		if (jj>nrows) jj=nrows;
+		point.setGridIndex(ii, jj, IOUtils::inodata, false); //mark the point as invalid
 		return false;
 	}
-
-	//easting and northing in the grid's projection
-	const double easting = ((double)i) * cellsize + llcorner.getEasting();
-	const double northing = ((double)j) * cellsize + llcorner.getNorthing();
 	
-	if (point.isSameProj(llcorner)==true) {
-		//same projection between the grid and the point -> precise, simple and efficient arithmetics
-		point.setXY(easting, northing, IOUtils::nodata);
+	if (ur_lat!=IOUtils::nodata && ur_lon!=IOUtils::nodata) { //use lat/lon extraction if possible
+		//remember that cellsize = (ur_lon - llcorner.getLon()) / (getNx()-1.)
+		const double lon = point.getLon() + ii * (ur_lon - llcorner.getLon()) / static_cast<double>(getNx()-1);
+		const double lat = point.getLat() + jj * (ur_lat - llcorner.getLat()) / static_cast<double>(getNy()-1);
+		point.setLatLon(lat, lon, IOUtils::nodata);
 	} else {
-		//projections are different, so we have to do an intermediate step...
-		Coords tmp_proj;
-		tmp_proj.copyProj(point); //making a copy of the original projection
-		point.copyProj(llcorner); //taking the grid's projection
-		point.setXY(easting, northing, IOUtils::nodata);
-		point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
+		//easting and northing in the grid's projection
+		const double easting = ((double)ii) * cellsize + llcorner.getEasting();
+		const double northing = ((double)jj) * cellsize + llcorner.getNorthing();
+		
+		if (point.isSameProj(llcorner)==true) {
+			//same projection between the grid and the point -> precise, simple and efficient arithmetics
+			point.setXY(easting, northing, IOUtils::nodata);
+		} else {
+			//projections are different, so we have to do an intermediate step...
+			Coords tmp_proj;
+			tmp_proj.copyProj(point); //making a copy of the original projection
+			point.copyProj(llcorner); //taking the grid's projection
+			point.setXY(easting, northing, IOUtils::nodata);
+			point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
+		}
 	}
 
-	point.setGridIndex(i, j, IOUtils::inodata, true); //mark the point as valid
+	point.setGridIndex(ii, jj, IOUtils::inodata, true); //mark the point as valid
 	return true;
 }
 
@@ -290,40 +303,46 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const
 	}
 
 	bool status=true;
-	int i,j;
-
-	if (point.isSameProj(llcorner)==true) {
-		//same projection between the grid and the point -> precise, simple and efficient arithmetics
-		i = (int)floor( (point.getEasting()-llcorner.getEasting()) / cellsize );
-		j = (int)floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize );
+	int ii, jj;
+	
+	if (ur_lat!=IOUtils::nodata && ur_lon!=IOUtils::nodata) { //use lat/lon extraction if possible
+		//remember that cellsize = (ur_lon - llcorner.getLon()) / (getNx()-1.)
+		ii = (int)floor( (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1)); //round to lowest
+		jj = (int)floor( (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1));
 	} else {
-		//projections are different, so we have to do an intermediate step...
-		Coords tmp_point(point);
-		tmp_point.copyProj(llcorner); //getting the east/north coordinates in the grid's projection
-		i = (int)floor( (tmp_point.getEasting()-llcorner.getEasting()) / cellsize );
-		j = (int)floor( (tmp_point.getNorthing()-llcorner.getNorthing()) / cellsize );
+		if (point.isSameProj(llcorner)==true) {
+			//same projection between the grid and the point -> precise, simple and efficient arithmetics
+			ii = (int)floor( (point.getEasting()-llcorner.getEasting()) / cellsize); //round to lowest
+			jj = (int)floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize);
+		} else {
+			//projections are different, so we have to do an intermediate step...
+			Coords tmp_point(point);
+			tmp_point.copyProj(llcorner); //getting the east/north coordinates in the grid's projection
+			ii = (int)floor( (tmp_point.getEasting()-llcorner.getEasting()) / cellsize); //round to lowest
+			jj = (int)floor( (tmp_point.getNorthing()-llcorner.getNorthing()) / cellsize);
+		}
 	}
 
 	//checking that the calculated indices fit in the grid2D
 	//and giving them the closest value within the grid if not.
-	if (i<0) {
-		i=0;
+	if (ii<0) {
+		ii=0;
 		status=false;
 	}
-	if (i>=(signed)getNx()) {
-		i=(signed)getNx();
+	if (ii>=(signed)getNx()) {
+		ii=(signed)getNx();
 		status=false;
 	}
-	if (j<0) {
-		j=0;
+	if (jj<0) {
+		jj=0;
 		status=false;
 	}
-	if (j>=(signed)getNy()) {
-		j=(signed)getNy();
+	if (jj>=(signed)getNy()) {
+		jj=(signed)getNy();
 		status=false;
 	}
 
-	point.setGridIndex(i, j, IOUtils::inodata, status); //mark as valid or invalid according to status
+	point.setGridIndex(ii, jj, IOUtils::inodata, status); //mark as valid or invalid according to status
 	return status;
 }
 
@@ -351,6 +370,9 @@ void Grid2DObject::set(const Grid2DObject& i_grid, const double& init)
 {
 	setValues(i_grid.cellsize, i_grid.llcorner);
 	grid2D.resize(i_grid.grid2D.getNx(), i_grid.grid2D.getNy(), init);
+	isLatLon = i_grid.isLatLon;
+	ur_lat = i_grid.ur_lat;
+	ur_lon = i_grid.ur_lon;
 }
 
 void Grid2DObject::rescale(const double& i_cellsize)
@@ -398,14 +420,13 @@ void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 {
-	if ( grid2D.getNx()==target.grid2D.getNx() &&
-	    grid2D.getNy()==target.grid2D.getNy() &&
-	    llcorner==target.llcorner &&
-	    cellsize==target.cellsize) {
-		return true;
-	} else {
-		return false;
-	}
+	const bool isSameLoc = grid2D.getNx()==target.grid2D.getNx() &&
+	                     grid2D.getNy()==target.grid2D.getNy() &&
+	                     llcorner==target.llcorner &&
+	                     (cellsize==target.cellsize 
+	                     || (ur_lat==target.ur_lat && ur_lon==target.ur_lon));
+
+	return isSameLoc;
 }
 
 bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids)
@@ -430,6 +451,38 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	return true;
 }
 
+double Grid2DObject::calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)
+{
+	const double distanceX = fabs(vecX.front() - vecX.back());
+	const double distanceY = fabs(vecY.front() - vecY.back());
+
+	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(vecY.size()-1)*100. )) / 100.;
+
+	return std::min(cellsize_x, cellsize_y);
+}
+
+double Grid2DObject::calculate_cellsize(const double& i_ur_lat, const double& i_ur_lon) const
+{
+	double alpha;
+	const double cntr_lat = .5*(llcorner.getLat() + i_ur_lat);
+	const double cntr_lon = .5*(llcorner.getLon() + i_ur_lon);
+	const double distanceX = mio::CoordsAlgorithms::VincentyDistance(cntr_lat, llcorner.getLon(), cntr_lat, i_ur_lon, alpha);
+	const double distanceY = mio::CoordsAlgorithms::VincentyDistance(llcorner.getLat(), cntr_lon, i_ur_lat, cntr_lon, alpha);
+
+	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
+	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(getNx()-1)*100. )) / 100.;
+	const double cellsize_y = static_cast<double>(mio::Optim::round( distanceY / static_cast<double>(getNy()-1)*100. )) / 100.;
+	
+	return std::min(cellsize_x, cellsize_y);
+}
+
+void Grid2DObject::reproject()
+{
+	cellsize = calculate_cellsize(ur_lat, ur_lon);
+}
+
 double& Grid2DObject::operator()(const size_t& ix, const size_t& iy) {
 	return grid2D(ix,iy);
 }
@@ -451,6 +504,7 @@ const std::string Grid2DObject::toString() const {
 	os << "<Grid2DObject>\n";
 	os << llcorner.toString();
 	os << grid2D.getNx() << " x " << grid2D.getNy() << " @ " << cellsize << "m\n";
+	if (isLatLon) os << "isLatLon=true" << " ur_lat=" << ur_lat << " ur_lon=" << ur_lon << "\n";
 	os << grid2D.toString();
 	os << "</Grid2DObject>\n";
 	return os.str();
@@ -458,6 +512,9 @@ const std::string Grid2DObject::toString() const {
 
 std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid) {
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
+	os.write(reinterpret_cast<const char*>(&grid.ur_lat), sizeof(grid.ur_lat));
+	os.write(reinterpret_cast<const char*>(&grid.ur_lon), sizeof(grid.ur_lon));
+	os.write(reinterpret_cast<const char*>(&grid.isLatLon), sizeof(grid.isLatLon));
 	os << grid.llcorner;
 	os << grid.grid2D;
 	return os;
@@ -465,6 +522,9 @@ std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid) {
 
 std::istream& operator>>(std::istream& is, Grid2DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
+	is.read(reinterpret_cast<char*>(&grid.ur_lat), sizeof(grid.ur_lat));
+	is.read(reinterpret_cast<char*>(&grid.ur_lon), sizeof(grid.ur_lon));
+	is.read(reinterpret_cast<char*>(&grid.isLatLon), sizeof(grid.isLatLon));
 	is >> grid.llcorner;
 	is >> grid.grid2D;
 	return is;

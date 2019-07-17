@@ -286,6 +286,25 @@ double Atmosphere::vaporSaturationPressure(const double& T) {
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
 }
 
+
+/**
+* @brief Standard water vapor saturation pressure, assuming "over water" for the full temperature range.
+* See Murray, F. W., <i>"On the computation of saturation vapor pressure"</i>, 1966, J. Appl. Meteor., <b>6</b>, 203–204,
+* doi: 10.1175/1520-0450(1967)006<0203:OTCOSV>2.0.CO;2.
+* @param T air temperature (K)
+* @return standard water vapor saturation pressure, assuming water surface (Pa)
+*/
+double Atmosphere::vaporSaturationPressureWater(const double& T) {
+	double c2, c3; // varying constants
+
+	c2 = 17.27;
+	c3 = 35.86;
+
+	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
+
+	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
+}
+
 /**
 * @brief Virtual temperature multiplying factor.
 * In order to get a virtual temperature, multiply the original temperature by this factor. Note:
@@ -650,7 +669,7 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 		return IOUtils::nodata;
 	}
 
-	Date date(julian, TZ, 0.);
+	const Date date(julian, TZ);
 	int year, month, day;
 	date.getDate(year, month, day);
 

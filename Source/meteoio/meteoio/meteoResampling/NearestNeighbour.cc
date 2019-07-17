@@ -51,7 +51,7 @@ std::string NearestNeighbour::toString() const
 	return ss.str();
 }
 
-void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+void NearestNeighbour::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -72,7 +72,7 @@ void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& p
 
 	const Date resampling_date( md.date );
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean

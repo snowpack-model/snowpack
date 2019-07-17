@@ -210,6 +210,11 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 			event = event_wind;
 			event_wind_lowlim = 4.0;
 			event_wind_highlim = 7.0;
+		} else {
+			// For other variants, event_wind is used in conjunction with WIND_EROSION == REDEPOSIT, in which case there is no wind speed limit on redeposition.
+			event = event_wind;
+			event_wind_lowlim = 0.0;
+			event_wind_highlim = 100.0;
 		}
 	} else if (current_variant == "CALIBRATION") {
 		// actual calibration; see factors in Laws_sn.cc
@@ -345,7 +350,8 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		const double Alb1 = Crho*Edata.Rho + Clwc*(Edata.theta[WATER]+Edata.theta[WATER_PREF]) + Cdd*Edata.dd + Csp*Edata.sp
 		+ Cmf*mf + Crb*Edata.rb +  Cta*Ta + Ctss*Tss
 		+ Cv*Mdata.vw+ Cswout*Mdata.rswr + Cta_tss*Ta*Tss;
-		Alb = av + log(1.0 + Alb1);
+		if (Alb1 >= -1.) Alb = av + log(1.0 + Alb1);
+		Alb = std::max(Constants::min_albedo, Alb);
 	}
 	else if (i_albedo_parameterization == "LEHNING_2") {
 		//TODO: this perfoms very badly (if not completly wrong) for (very?) wet snowpack
@@ -1115,9 +1121,13 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
 
 	switch (i_event) {
 		case event_wind: {
-			if ((Mdata.vw_avg >= event_wind_lowlim) && (Mdata.vw_avg <= event_wind_highlim)) {
+			// Groot Zwaaftink et al.: Event-driven deposition of snow on the Antarctic Plateau: analyzing field measurements with SNOWPACK
+			// Cryosphere, 7, 333-347, https://doi.org/10.5194/tc-7-333-2013, 2013.
+			const double z_ref_vw = 3.;				// See p. 336 in Groot Zwaaftink et al.
+			const double vw_avg_ref = Meteo::windspeedProfile(Mdata, z_ref_vw, Mdata.vw_avg);
+			if ((vw_avg_ref >= event_wind_lowlim) && (vw_avg_ref <= event_wind_highlim)) {
 				static const double rho_0=361., rho_1=33.;
-				return (rho_0*log10(Mdata.vw_avg) + rho_1);
+				return (vw_avg_ref == 0.) ? (rho_1) : (std::max(0., rho_0*log10(vw_avg_ref)) + rho_1);
 			} else
 				return Constants::undefined;
 		}
@@ -1246,9 +1256,11 @@ double SnLaws::compNewSnowDensity(const std::string& i_hn_density, const std::st
 {
 	double rho;
 
+	const double z_ref_vw = 4.5;	//Assumed reference height for the wind speed used in the new snow density parameterizations
+	const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
 	if (i_hn_density == "PARAMETERIZED") {
 		rho = newSnowDensityPara(i_hn_density_parameterization,
-		                         Mdata.ta, tss, Mdata.rh, Mdata.vw,
+		                         Mdata.ta, tss, Mdata.rh, vw_ref,
 		                         Xdata.meta.position.getAltitude());
 	} else if (i_hn_density == "EVENT") {
 		rho = newSnowDensityEvent(variant, event, Mdata);
@@ -1260,7 +1272,7 @@ double SnLaws::compNewSnowDensity(const std::string& i_hn_density, const std::st
 				rho = Xdata.Edata[Xdata.getNumberOfElements()-1].Rho;
 			else
 				rho = newSnowDensityPara(i_hn_density_parameterization,
-				                         Mdata.ta, tss, Mdata.rh, Mdata.vw,
+				                         Mdata.ta, tss, Mdata.rh, vw_ref,
 				                         Xdata.meta.position.getAltitude());
 		} else {
 			rho = Constants::undefined;

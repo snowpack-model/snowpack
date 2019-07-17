@@ -44,7 +44,7 @@ class DailyAverage : public ResamplingAlgorithms {
 	public:
 		DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
-		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:

@@ -86,14 +86,15 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
 				if (!vecGenerators[jj]->skipStation( statID )) {
 					status = vecGenerators[jj]->generate(param, vecMeteo[station]);
-					if (data_qa_logs) {
-						if (vecMeteo[station](param) != old_val) {
+					if (vecMeteo[station](param) != old_val) {
+						vecMeteo[station].setGenerated(param);
+						if (data_qa_logs) {
 							const std::string parname( it->first );
 							const std::string algo_name( vecGenerators[jj]->getAlgo() );
 							const Date date( vecMeteo[station].date );
 							cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << date.toString(Date::ISO_TZ) << " [" << date.toString(Date::ISO_WEEK) << "]\n";
 						}
-					}
+					} //endif new=old
 				}
 				jj++;
 			}
@@ -133,11 +134,12 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
 				if (!vecGenerators[jj]->skipStation( statID )) {
 					status = vecGenerators[jj]->create(param, vecVecMeteo[station]);
-					if (data_qa_logs) {
-						const std::string parname( it->first );
-						const std::string algo_name( vecGenerators[jj]->getAlgo() );
-						for (size_t kk=0; kk<old_val.size(); kk++) {
-							if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
+					for (size_t kk=0; kk<old_val.size(); kk++) {
+						if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
+							vecVecMeteo[station][kk].setGenerated(param);
+							if (data_qa_logs) {
+								const std::string parname( it->first );
+								const std::string algo_name( vecGenerators[jj]->getAlgo() );
 								cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
 							}
 						}

@@ -35,7 +35,7 @@ using namespace std;
  */
 AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& dem)
               : meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda), runoff(myrunoff),
-                snow_days_between(0.), enable_simple_snow_drift(false), nocompute(false), out_snow(true)
+                snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), nocompute(false), out_snow(true)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
 	if (out_snow) {
@@ -45,6 +45,9 @@ AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnow
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
 	cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+
+	//check if maximum run time is specified
+	cfg.getValue("MAX_RUN_TIME", "Alpine3D", max_run_time, IOUtils::nothrow);
 }
 
 void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
@@ -54,7 +57,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	const double timeStep = dt_main/86400.;
 	Timer elapsed;
 	std::vector<MeteoData> vecMeteo; // to transfer meteo information
-	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, ilwr;
+	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, tsg, ilwr;
 	const bool isMaster = MPIControl::instance().master();
 
 	if (isMaster) {
@@ -95,7 +98,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		//get 1D and 2D meteo for the current time step
 		try {
 			meteo.get(calcDate, vecMeteo);
-			meteo.get(calcDate, ta, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
+			meteo.get(calcDate, ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
 		} catch (IOException&) {
 			//saving state files before bailing out
 			if (isMaster) {
@@ -114,14 +117,14 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		}
 
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
-			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, calcDate);
+			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
 		}
 		if (snowpack && enable_simple_snow_drift) snowpack->setVwDrift(vw_drift, calcDate);
 
 		try { //Snowdrift
 			if (snowdrift) {
 				//meteo1d(MeteoData::TA) : big TODO, see with Christine if we could get rid of it
-				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, rh, ta, ilwr, calcDate, vecMeteo);
+				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, rh, ta, tsg, ilwr, calcDate, vecMeteo);
 				snowdrift->Compute(calcDate);
 			}
 		} catch (std::exception& e) {
@@ -150,8 +153,19 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			throw;
 		}
 
-		try { //do some outputs
-			if ( snowpack && out_snow && (t_ind > 0)) {
+		// Check if elapsed time exceeds specified maximum run time
+		const double tmp_elapsed = elapsed.getElapsed();
+		const bool ForceStop = (max_run_time > 0. && tmp_elapsed > max_run_time);
+		if (!(max_run_time < 0.)) {
+			if (ForceStop) {
+				cout << std::fixed << "[W] !!! Elapsed time (" << setprecision(1) << tmp_elapsed << " seconds) exceeds specified maximum run time (" << setprecision(1) << max_run_time << " seconds) !!!\n        ---> Force writing restart files (if requested) and exiting...\n";
+			} else {
+				cout << std::fixed << "[i] Maximum run time set to: " << setprecision(1) << max_run_time << " seconds ---> time remaining: " << (max_run_time - tmp_elapsed)/3600. << " hours\n";
+			}
+		}
+
+		try { //do some outputs (note, if ForceStop == true, output will be done outside of the loop)
+			if ( snowpack && out_snow && (t_ind > 0) && !ForceStop ) {
 				const unsigned int output_step = static_cast<unsigned int>( Optim::round(snow_days_between*24.) );
 				if (snow_days_between>0 && (t_ind%output_step)==0)
 					snowpack->writeOutputSNO(calcDate);
@@ -174,6 +188,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			cout << "\n\ttotal=" << elapsed.getElapsed()-elapsed_start << endl;
 		}
 
+		if (ForceStop) break;
 		calcDate += timeStep; //move to next time step
 
 	} /* For all times max_steps */

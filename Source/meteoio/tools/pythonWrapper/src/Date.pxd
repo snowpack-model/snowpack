@@ -1,3 +1,8 @@
+"""Date.pxd: This file wraps the class Date (from meteoio/dataClasses/Date.h).
+   Author: Thiemo Theile
+   Date created: 4/1/2019
+"""
+
 from libcpp.string cimport string
 from libcpp cimport bool
 #from libcpp cimport exception

@@ -11,6 +11,10 @@ IF(PLUGIN_ARCIO)
 	SET(plugins_sources ${plugins_sources} plugins/ARCIO.cc)
 ENDIF(PLUGIN_ARCIO)
 
+IF(PLUGIN_ARGOSIO)
+	SET(plugins_sources ${plugins_sources} plugins/Argos.cc)
+ENDIF(PLUGIN_ARGOSIO)
+
 IF(PLUGIN_A3DIO)
 	SET(plugins_sources ${plugins_sources} plugins/A3DIO.cc)
 ENDIF(PLUGIN_A3DIO)
@@ -43,6 +47,10 @@ IF(PLUGIN_DBO)
 	SET(plugin_libs ${plugin_libs} ${CURL_LIBRARIES})
 	SET(plugins_sources ${plugins_sources} plugins/DBO.cc)
 ENDIF(PLUGIN_DBO)
+
+IF(PLUGIN_GOESIO)
+	SET(plugins_sources ${plugins_sources} plugins/Goes.cc)
+ENDIF(PLUGIN_GOESIO)
 
 IF(PLUGIN_GRASSIO)
 	SET(plugins_sources ${plugins_sources} plugins/GrassIO.cc)
@@ -83,6 +91,10 @@ ENDIF(PLUGIN_OSHDIO)
 IF(PLUGIN_PGMIO)
 	SET(plugins_sources ${plugins_sources} plugins/PGMIO.cc)
 ENDIF(PLUGIN_PGMIO)
+
+IF(PLUGIN_PMODIO)
+	SET(plugins_sources ${plugins_sources} plugins/PmodIO.cc)
+ENDIF(PLUGIN_PMODIO)
 
 IF(PLUGIN_PNGIO)
 	FIND_PACKAGE(PNG REQUIRED)

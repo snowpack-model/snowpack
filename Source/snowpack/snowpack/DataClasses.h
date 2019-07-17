@@ -112,6 +112,7 @@ class CurrentMeteo {
 		double ustar;    ///< The friction velocity (m s-1) computed in mt_MicroMet() and also used later for the MeteoHeat fluxes
 		double z0;       ///< The roughness length computed in SnowDrift and also used later for the MeteoHeat fluxes (m)
 		double psi_s;    ///< Stability correction for scalar heat fluxes
+		double psi_m;    ///< Stability correction for momentum
 		double iswr;     ///< Incoming SHORTWAVE radiation (W m-2)
 		double rswr;     ///< Reflected SHORTWAVE radiation (W m-2) divide this value by the ALBEDO to get iswr
 		double mAlbedo;  ///< Measured snow albedo
@@ -216,6 +217,7 @@ class LayerData {
 		double CDot;                ///< Stress rate (Pa s-1), that is the LAST overload change rate
 		double metamo;              ///< keep track of metamorphism
 		double salinity;            ///< salinity (kg/kg)
+		double h;                   ///< capillary pressure head (m)
 };
 
 /**
@@ -290,7 +292,7 @@ class ElementData {
 		ElementData(const unsigned short int& in_ID);
 		ElementData(const ElementData& cc); //required to get the correct back-reference in vanGenuchten object
 
-		bool checkVolContent() const;
+		bool checkVolContent();
 		void heatCapacity();
 		double coldContent() const;
 		void updDensity();
@@ -323,7 +325,7 @@ class ElementData {
 		double gradT;              ///< temperature gradient over element (K m-1)
 		double meltfreeze_tk;	   ///< melt/freeze temperature of layer (principally initialized as 0 degC, but enables possibility for freezing point depression)
 		std::vector<double> theta; ///< volumetric contents: SOIL, ICE, WATER, WATER_PREF, AIR (1)
-		double h;                  ///< pressure head (m)
+		double h;                  ///< capillary pressure head (m)
 		mio::Array2D<double> conc; ///< Concentration for chemical constituents in (kg m-3)
 		std::vector<double> k;     ///< For example, heat conductivity of TEMPERATURE field (W m-1 K-1)
 		//   Stored in order to visualize constitutive laws
@@ -723,6 +725,7 @@ class SurfaceFluxes {
 			MS_SUBLIMATION,    ///< The mass loss or gain of the top element due to snow (ice) sublimating
 			MS_SNOWPACK_RUNOFF,///< The total mass loss of snowpack due to water transport (virtual lysimeter)
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
+			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
 			N_MASS_CHANGES     ///< Total number of different mass change types
 		};
 

@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 Michael Reisecker and work cited in documentation and source    */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -307,7 +307,7 @@ namespace mio {
  *   size: 64 bit, period: ~3.138e57
  *
  * @subsection rng_pcg PCG
- * - Permuted linear congruential generator by Prof. Melissa O'Neill (Ref. [MO14])
+ * - Permuted linear congruential generator by Prof. Melissa O'Neill
  * - Range is overestimated, and this generator performs very well in statistical tests, i. e. it is less
  *   predictable than related generators. Even smaller versions with only 32 bit entropy pass SmallCrunch,
  *   which is only barely theoretically possible.
@@ -368,8 +368,8 @@ namespace mio {
  * @section rng_developer Developer's guide
  * For developers of statistical filters it may be important to be able to implement custom probability distributions,
  * for example for an empirical nonlinear sensor response. This class tries to be easy to expand in that regard.
- * There are comment markers in the header and source files leading with "CUSTOM_DIST step #: ..." in the 6 places
- * you need to register your custom distribution functions at. These 6 steps are:
+ * There are comment markers in the header and source files leading with "`CUSTOM_DIST step #`: ..." in the 7 places
+ * you need to register your custom distribution functions at. These 7 steps are:
  *  -# Give your distribution a name within MeteoIO
  *  -# Put your functions' prototypes in the header
  *  -# Point to your distribution function in the generic setDistribution() function,
@@ -377,6 +377,7 @@ namespace mio {
  *  -# Give a small output info string
  *  -# Write your distribution function, its pdf and cdf (if only to throw a not-implemented error)
  *  -# If you want, you can map your parameters to names in the get- and setDistributionParameter() functions.
+ *  -# Map a string shorthand to the name of your distribution.
  *
  * @section rng_bibliography Bibliography
  * - [AS73] Abramowitz, Stegun.
@@ -637,7 +638,7 @@ class RandomNumberGenerator : private RngCore {
 			RNG_MTW //!< Mersenne Twister generator
 		};
 		
-//CUSTOM_DIST step 1/6: Give your distribution a name in this enum
+//CUSTOM_DIST step 1/7: Give your distribution a name in this enum
 		enum RNG_DISTR //desired distribution, only used for doubles!
 		{
 			RNG_UNIFORM, //!< Uniform deviates
@@ -692,6 +693,9 @@ class RandomNumberGenerator : private RngCore {
 		bool getUniqueSeed(uint64_t& store) const; //allow for outside calls to the seeding function
 		std::string toString();
 
+		static RNG_TYPE strToRngtype(const std::string& str); //get an RNG_TYPE from a string shorthand
+		static RNG_DISTR strToRngdistr(const std::string& str); //get an RNG_DISTR from a string shorthand
+
 	private:
 		RngCore* rng_core; //generator algorithm
 		RNG_TYPE rng_type; //for output only so far
@@ -706,7 +710,7 @@ class RandomNumberGenerator : private RngCore {
 		double (RandomNumberGenerator::*pdfFunc)(const double& xx) const; //probability density function
 		double (RandomNumberGenerator::*cdfFunc)(const double& xx) const; //cumulative distribution function
 		
-//CUSTOM_DIST step 2/6: Add your distribution function, its pdf and cdf here, matching exactly this type: 
+//CUSTOM_DIST step 2/7: Add your distribution function, its pdf and cdf here, matching exactly this type:
 		double doubUniform();
 		double pdfUniform(const double& xx) const;
 		double cdfUniform(const double& xx) const;

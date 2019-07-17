@@ -68,6 +68,7 @@ class AlpineControl
 		DataAssimilation* da;
 		Runoff* runoff;
 		double snow_days_between;
+		double max_run_time;
 		bool enable_simple_snow_drift;
 		bool nocompute, out_snow; // no computation, only parse inputs (check mode)
 };

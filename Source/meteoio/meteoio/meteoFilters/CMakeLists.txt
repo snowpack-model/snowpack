@@ -5,12 +5,14 @@ SET(meteoFilters_sources
 	meteoFilters/FilterMin.cc
 	meteoFilters/FilterMax.cc
 	meteoFilters/FilterMinMax.cc
+	meteoFilters/FilterMinMaxConditional.cc
 	meteoFilters/FilterMAD.cc
 	meteoFilters/FilterStdDev.cc
 	meteoFilters/FilterTukey.cc
 	meteoFilters/FilterPotentialSW.cc
 	meteoFilters/FilterRate.cc
 	meteoFilters/FilterUnheatedPSUM.cc
+	meteoFilters/FilterParticle.cc
 	meteoFilters/ProcAggregate.cc
 	meteoFilters/ProcIIR.cc
 	meteoFilters/ProcUnventilatedT.cc
@@ -25,6 +27,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcMult.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
+	meteoFilters/ProcRHWaterToIce.cc
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
 	meteoFilters/FilterDeGrass.cc

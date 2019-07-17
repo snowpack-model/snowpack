@@ -450,7 +450,7 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	if (md.param_exists("ADV_HEAT"))
 		Mdata.adv_heat = md("ADV_HEAT");
 
-	// Add massbal parameters (surface snow melt, snow drift, sublimation) 
+	// Add massbal parameters (surface snow melt, snow drift, sublimation), all mass fluxes in kg m-2 CALCULATION_STEP_LENGTH-1
 	if(md.param_exists("SMELT"))
 		Mdata.surf_melt = md("SMELT");
 	else
@@ -993,7 +993,7 @@ inline void real_main (int argc, char *argv[])
 	const bool cumsum_mass = cfg.get("CUMSUM_MASS", "Output");
 	const double thresh_rain = cfg.get("THRESH_RAIN", "SnowpackAdvanced"); //Rain only for air temperatures warmer than threshold (degC)
 	const bool advective_heat = cfg.get("ADVECTIVE_HEAT", "SnowpackAdvanced");
-	const bool soil_flux =  (useSoilLayers)? cfg.get("SOIL_FLUX", "Snowpack") : false;
+	const bool soil_flux = (useSoilLayers || variant == "SEAICE") ? cfg.get("SOIL_FLUX", "Snowpack") : false;
 
 	//If the user provides the stationIDs - operational use case
 	if (!vecStationIDs.empty()) { //operational use case: stationIDs provided on the command line
@@ -1144,11 +1144,6 @@ inline void real_main (int argc, char *argv[])
                                        sun, cumsum.precip, lw_in, hs_a3hl6,
                                        tot_mass_in, variant);
 
-				// Convert units of massbal parameters
-				if (Mdata.surf_melt != mio::IOUtils::nodata) Mdata.surf_melt *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-				if (Mdata.snowdrift != mio::IOUtils::nodata) Mdata.snowdrift *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-				if (Mdata.sublim != mio::IOUtils::nodata) Mdata.sublim *= (sn_dt / 3600.); // mass flux in kg m-2 CALCULATION_STEP_LENGTH-1
-
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;
 				if ((mode == "RESEARCH") && (slope.sector == slope.mainStation)
@@ -1163,18 +1158,9 @@ inline void real_main (int argc, char *argv[])
 				Snowpack snowpack(tmpcfg); //the snowpack model to use
 				Stability stability(tmpcfg, classify_profile);
 				snowpack.runSnowpackModel(Mdata, vecXdata[slope.sector], cumsum.precip, sn_Bdata, surfFluxes);
+				if (TechSnow::prepare(snowPrep, current_date, vecXdata[slope.sector]))
+					snowpack.snowPreparation( vecXdata[slope.sector] );
 				
-				if (snowPrep) { //potentially do technical snow preparation
-					const unsigned short iso_week = current_date.getISOWeekNr();
-					if (iso_week<=17 || iso_week>=46) {	
-						int hour, minute;
-						current_date.getTime(hour, minute);
-						if (hour==20 && minute==30){
-							snowpack.snowPreparation( vecXdata[slope.sector] );
-						}
-					}
-				}
-
 				stability.checkStability(Mdata, vecXdata[slope.sector]);
 
 				/***** OUTPUT SECTION *****/

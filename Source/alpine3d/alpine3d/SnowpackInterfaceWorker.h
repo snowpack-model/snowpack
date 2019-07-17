@@ -32,16 +32,16 @@ class SnowpackInterfaceWorker
 		                        const mio::Grid2DObject& landuse_in,
 		                        const std::vector< std::pair<size_t,size_t> >& pts_in,
 		                        const std::vector<SnowStation*>& snow_stations,
+		                        const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
 		                        const size_t offset_in);
 
 		~SnowpackInterfaceWorker();
 
 		void setUseDrift(const bool useDrift_in) {useDrift = useDrift_in;}
 		void setUseEBalance(const bool useEBalance_in) {useEBalance = useEBalance_in;}
-
 		void getOutputSNO(std::vector<SnowStation*>& snow_station) const;
-		void getOutputSpecialPoints(std::vector<SnowStation*>& ptr_snow_pixel, std::vector<CurrentMeteo*>& ptr_meteo_pixel, 
-		                                                std::vector<SurfaceFluxes*>& ptr_surface_flux);
+		void getOutputSpecialPoints(std::vector<SnowStation*>& ptr_snow_pixel, std::vector<CurrentMeteo*>& ptr_meteo_pixel,
+		                            std::vector<SurfaceFluxes*>& ptr_surface_flux);
 		void clearSpecialPointsData();
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
@@ -53,6 +53,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &psum_tech,
 		              const mio::Grid2DObject &rh,
 		              const mio::Grid2DObject &ta,
+		              const mio::Grid2DObject &tsg,
 		              const mio::Grid2DObject &vw,
 		              const mio::Grid2DObject &vw_drift,
 		              const mio::Grid2DObject &dw,
@@ -61,7 +62,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &diffuse,
 		              const mio::Grid2DObject &longwave,
 		              const double solarElevation);
-		
+
 		void grooming(const mio::Grid2DObject &grooming_map);
 
 		static int round_landuse(const double& landuse_dbl);
@@ -85,6 +86,7 @@ class SnowpackInterfaceWorker
 		const mio::DEMObject dem;
 		const size_t dimx, dimy, offset;
 		std::vector<SnowStation*> SnowStations; // Save different Pixel values
+		std::vector<std::pair<size_t,size_t> > SnowStationsCoord;
 		std::vector<bool> isSpecialPoint;
 
 		const mio::Grid2DObject landuse;
@@ -97,7 +99,7 @@ class SnowpackInterfaceWorker
 		std::vector<CurrentMeteo> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
 		std::vector<double> soil_temp_depths;
-		
+
 		double calculation_step_length;
 		double height_of_wind_value;
 		double snow_temp_depth, snow_avg_temp_depth, snow_avg_rho_depth;

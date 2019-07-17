@@ -104,6 +104,12 @@ class MeteoGrids {
 
 class MeteoData {
 	public:
+		///Keywords for selecting the toString formats
+		typedef enum {
+			DFLT, ///< Shows detailed information, skipping nodata fields
+			COMPACT ///< output optimized to print the content of vector<MeteoData>
+		} FORMATS;
+		
 		/** @brief Available %MeteoData merging strategies.
 		* When the two stations both have data at a given time step, only the parameters that are *not* present
 		* in station1 will be taken from station2 (ie. station1 has priority).
@@ -186,9 +192,22 @@ class MeteoData {
 		 *        NOTE: member vars date and resampled are not affected
 		 */
 		void reset();
+		
+		/**
+		 * @brief Are all the fields set to nodata?
+		 * @return true if no meteo field has a value
+		 */
+		bool isNodata() const;
 
 		bool isResampled() const {return resampled;}
 		void setResampled(const bool& in_resampled) {resampled = in_resampled;}
+
+		bool isFiltered(const size_t& param) const;
+		void setFiltered(const size_t& param, const bool& in_filtered = true);
+		bool isGenerated(const size_t& param) const;
+		void setGenerated(const size_t& param, const bool& in_generated = true);
+		bool isResampledParam(const size_t& param) const;
+		void setResampledParam(const size_t& param, const bool& in_resampled = true);
 
 		void standardizeNodata(const double& plugin_nodata);
 
@@ -288,7 +307,12 @@ class MeteoData {
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
 
-		const std::string toString() const;
+		/**
+		 * @brief Print the content of the current object
+		 * @param[in] format select the preferred output format
+		 * @return string containing a human-readable representation of the content of the object
+		 */
+		const std::string toString(const FORMATS format=DFLT) const;
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 		friend std::istream& operator>>(std::istream& is, MeteoData& data);
 
@@ -307,6 +331,17 @@ class MeteoData {
 		const std::string getStationID() const {return meta.stationID;}
 
 	private:
+
+		struct flag_field { //object to hold all data quality / datapoint meta flags
+			bool filtered : 1;
+			bool resampled : 1;
+			bool generated : 1;
+			bool created : 1; //TODO: not yet filled in the creators!
+			bool : 1; //leave one empty for future flag
+			unsigned int extra_flag : 3; //rest of byte space could be any 3-bit-value
+			float offset; //an offset that has been applied to the data at this time step
+		};
+
 		//static methods
 		static std::vector<std::string> s_default_paramname; ///<Associate a name with meteo parameters in Parameters
 		static const double epsilon; ///<for comparing fields
@@ -316,8 +351,13 @@ class MeteoData {
 		//private data members, please keep the order consistent with declaration lists and logic!
 		std::vector<std::string> extra_param_name;
 		std::vector<double> data;
+
 		size_t nrOfAllParameters;
+
+		//data qa containers:
 		bool resampled; ///<set this to true if MeteoData is result of resampling
+		std::vector<flag_field> flags; ///<Per-parameter data quality flags
+		static flag_field zero_flag; //TODO: is there a way to make this const?
 };
 
 } //end namespace

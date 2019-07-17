@@ -52,6 +52,7 @@ const double SeaIce::ThicknessFirstIceLayer = 0.01;
 const double SeaIce::InitRg = 5.;
 const double SeaIce::InitRb = 2.5;
 const double SeaIce::InitOceanSalinity = 35.;
+const double SeaIce::InitSeaIceSalinity = 5.;
 const double SeaIce::InitSnowSalinity = 0.;
 
 
@@ -60,7 +61,7 @@ const double SeaIce::InitSnowSalinity = 0.;
  ************************************************************/
 
 SeaIce::SeaIce():
-	SeaLevel(0.), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), OceanSalinity(SeaIce::InitOceanSalinity), OceanBufferLayerDepth(0.), BottomSalFlux(0.), TopSalFlux(0.), salinityprofile(SINUSSAL) {}
+	SeaLevel(0.), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), OceanSalinity(SeaIce::InitOceanSalinity), OceanBufferLayerDepth(0.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), salinityprofile(SINUSSAL) {}
 
 SeaIce& SeaIce::operator=(const SeaIce& source) {
 	if(this != &source) {
@@ -300,6 +301,7 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 	size_t iN = 0;
 	while (iN < Xdata.getNumberOfElements() && Xdata.Ndata[iN].z + 0.5 * Xdata.Edata[iN].L < SeaLevel) {
 		const double dth_w = std::max(0., Xdata.Edata[iN].theta[AIR] * (Constants::density_ice / Constants::density_water) - Xdata.Edata[iN].theta[WATER] * (Constants::density_water / Constants::density_ice - 1.));
+		TotalFloodingBucket += dth_w * Xdata.Edata[iN].L;
 		Xdata.Edata[iN].theta[WATER] += dth_w;
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
 		Xdata.Edata[iN].salinity += OceanSalinity * dth_w;

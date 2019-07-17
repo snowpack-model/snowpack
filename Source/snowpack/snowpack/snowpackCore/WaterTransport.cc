@@ -447,7 +447,8 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 		return;
 	}
 
-	bool verify_top_element=false;
+	bool verify_top_element = false;
+	double removedMass = 0.;
 	size_t eUpper = nE; // Index of the upper element, the properties of which will be transferred to the lower adjacent one
 	while (eUpper-- > Xdata.SoilNode) {
 		bool enforce_merge = true;	// To enforce merging in special cases
@@ -485,6 +486,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 						RichardsEquationSolver1d_matrix.surfacefluxrate+=((EMS[eUpper].theta[WATER]+EMS[eUpper].theta[WATER_PREF])*EMS[eUpper].L)/(sn_dt);
 						// We remove water from the element, which is now in surfacefluxrate
 						EMS[eUpper].theta[AIR]+=(EMS[eUpper].theta[WATER]+EMS[eUpper].theta[WATER_PREF]);
+						removedMass += (EMS[eUpper].theta[WATER] + EMS[eUpper].theta[WATER_PREF]) * Constants::density_water * EMS[eUpper].L;
 						EMS[eUpper].theta[WATER]=0.;
 						EMS[eUpper].theta[WATER_PREF]=0.;
 						// Adjust density and mass accordingly
@@ -499,6 +501,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 				}
 
 				// After dealing with all possibilities, now finally do the merge:
+				if(!merged) removedMass += EMS[eUpper].M;
 				SnowStation::mergeElements(EMS[eUpper-1], EMS[eUpper], merged, (eUpper==rnE-1));
 
 				// The upper element may grow too much in length by subsequent element merging, limit this! Note that this has the desired effect of averaging the two top elements.
@@ -530,6 +533,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 					}
 
 					// route mass and solute load to runoff
+					removedMass += EMS[eUpper].M;
 					if (iwatertransportmodel_snow != RICHARDSEQUATION) {
 						// The mass from the snow element to be removed is snowpack runoff
 						Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] += EMS[eUpper].M;
@@ -607,6 +611,13 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 			if (.5 * (EMS[Xdata.getNumberOfElements()-1].L) > comb_thresh_l) {
 				Xdata.splitElement(Xdata.getNumberOfElements()-1);
 			}
+		}
+	}
+
+	if (removedMass > 0. && variant == "SEAICE" && iwatertransportmodel_snow == RICHARDSEQUATION) {
+		const double delta_h = (removedMass / (Constants::density_water + SeaIce::betaS * Xdata.Seaice->OceanSalinity));
+		for (size_t e=Xdata.SoilNode; e<rnE; e++) {
+			EMS[e].h -= delta_h;
 		}
 	}
 
@@ -1051,7 +1062,7 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 		const double meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
 		const bool isSurfaceMelting = !(NDS[nE].T < meltfreeze_tk);
 
-		RichardsEquationSolver1d_matrix.SolveRichardsEquation(Xdata, Sdata, (isTopLayerSolvedByREQ && isSurfaceMelting) ? (ql) : (dummy_ql));					
+		RichardsEquationSolver1d_matrix.SolveRichardsEquation(Xdata, Sdata, ((isTopLayerSolvedByREQ && isSurfaceMelting) || (variant == "SEAICE" && ql < 0.)) ? (ql) : (dummy_ql));					
 		if(Xdata.getNumberOfElements() > Xdata.SoilNode && enable_pref_flow) RichardsEquationSolver1d_pref.SolveRichardsEquation(Xdata, Sdata, dummy_ql);	// Matrix flow will take care of potential evaporation/condensation, provided by ql, so send dummy_ql for preferential flow
 	}
 

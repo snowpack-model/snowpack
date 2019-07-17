@@ -91,11 +91,15 @@ class ProcessingBlock {
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
+		
+		//this call is for some timefilters
+		virtual void process(Date &dateStart, Date &dateEnd) {(void)dateStart; (void)dateEnd; throw InvalidArgumentException("Invalid call for this kind of filter", AT);}
 
 		std::string getName() const {return block_name;}
 		const ProcessingProperties& getProperties() const {return properties;}
 		const std::string toString() const;
 		bool skipStation(const std::string& station_id) const;
+		bool noStationsRestrictions() const {return excluded_stations.empty() && kept_stations.empty();}
 
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y);
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2);

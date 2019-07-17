@@ -102,14 +102,15 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
  ************************************************************/
 MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
-                     ta(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata),
+                     ta(in_dem, IOUtils::nodata), tsg(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata),
                      psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
                      sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(), sum_vw(), sum_ilwr(),
-                     vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false), enable_simple_snow_drift(false)
+                     vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false), soil_flux(true), enable_simple_snow_drift(false)
 {
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
 	in_config.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+	in_config.getValue("SOIL_FLUX", "Snowpack", soil_flux, IOUtils::nothrow);
 }
 
 MeteoObj::~MeteoObj()
@@ -130,7 +131,7 @@ void MeteoObj::prepare(const mio::Date& in_date)
 	getMeteo(date);
 }
 
-void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Grid2DObject& out_rh, mio::Grid2DObject& out_psum,
+void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Grid2DObject& out_tsg, mio::Grid2DObject& out_rh, mio::Grid2DObject& out_psum,
                    mio::Grid2DObject& out_psum_ph, mio::Grid2DObject& out_vw, mio::Grid2DObject& out_vw_drift, mio::Grid2DObject& out_dw, mio::Grid2DObject& out_p, mio::Grid2DObject& out_ilwr)
 {
 	timer.restart(); //this method is called first, so we initiate the timing here
@@ -150,6 +151,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 
 	//this acts as a barrier and forces MPI synchronization
 	MPIControl::instance().broadcast(ta);
+	MPIControl::instance().broadcast(tsg);
 	MPIControl::instance().broadcast(rh);
 	MPIControl::instance().broadcast(psum);
 	MPIControl::instance().broadcast(psum_ph);
@@ -160,6 +162,7 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 	MPIControl::instance().broadcast(ilwr);
 
 	out_ta = ta;
+	out_tsg = tsg;
 	out_rh = rh;
 	out_psum = psum;
 	out_psum_ph = psum_ph;
@@ -200,10 +203,10 @@ double MeteoObj::getTiming() const
 	return timer.getElapsed();
 }
 
-void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
+void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData, const bool& soil_flux)
 {
 	//This function checks that the necessary input data are available for the current timestamp
-	unsigned int nb_ta=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
+	unsigned int nb_ta=0, nb_tsg=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
 	unsigned int nb_ilwr_ta=0;
 
 	if (vecData.empty())
@@ -211,6 +214,8 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 
 	for (size_t ii=0; ii<vecData.size(); ii++) {
 		if (vecData[ii](MeteoData::TA) != IOUtils::nodata) nb_ta++;
+
+		if (vecData[ii](MeteoData::TSG) != IOUtils::nodata) nb_tsg++;
 
 		if (vecData[ii](MeteoData::ISWR) != IOUtils::nodata) nb_iswr++;
 
@@ -225,6 +230,10 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 		}
 	}
 
+	if ( !soil_flux && nb_tsg == 0 ) {
+		printf("SOIL_FLUX in [SNOWPACK] is set to FALSE, but nb(tsg)=%d\n",nb_tsg);
+                throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
+	}
 	if ( nb_ta==0 || nb_iswr==0 || nb_rh==0 || nb_ilwr==0) {
 		printf("nb(ta)=%d nb(iswr)=%d nb(rh)=%d nb(ilwr)=%d\n",nb_ta, nb_iswr, nb_rh, nb_ilwr);
                 throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
@@ -243,6 +252,7 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 		io.getMeteoData(calcDate, dem, MeteoData::PSUM_PH, psum_ph);
 		io.getMeteoData(calcDate, dem, MeteoData::RH, rh);
 		io.getMeteoData(calcDate, dem, MeteoData::TA, ta);
+		if (!soil_flux) io.getMeteoData(calcDate, dem, MeteoData::TSG, tsg);
 		if (!skipWind) {
 			io.getMeteoData(calcDate, dem, MeteoData::VW, vw);
 			if (enable_simple_snow_drift) io.getMeteoData(calcDate, dem, "VW_DRIFT", vw_drift);
@@ -266,7 +276,7 @@ void MeteoObj::getMeteo(const Date& calcDate)
 
 	// Collect the Meteo values at each stations
 	io.getMeteoData(calcDate, vecMeteo);
-	checkInputsRequirements(vecMeteo);
+	checkInputsRequirements(vecMeteo, soil_flux);
 
 	// Now fill the 2D Meteo Fields. Keep in mind that snowdrift might edit these fields
 	fillMeteoGrids(calcDate);

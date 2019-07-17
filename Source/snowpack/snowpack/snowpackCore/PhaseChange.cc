@@ -190,6 +190,12 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 				dth_i = - (Constants::density_water / Constants::density_ice) * dth_w;
 				dT = dth_i / A;
 			}
+			// Treat the case for MASSBAL forcing where the melt in the element exceeds the prescribed melt
+			if (forcing == "MASSBAL" && dth_i < -(mass_melt / (Constants::density_ice * Edata.L))) {
+				dth_i = -(mass_melt / (Constants::density_ice * Edata.L));
+				dth_w = - (Constants::density_ice / Constants::density_water) * dth_i;
+				dT = dth_i / A;
+			}
 			// Reset element properties
 			Edata.Te += dT;
 			if (Edata.Te <= T_melt) {
@@ -211,25 +217,9 @@ void PhaseChange::compSubSurfaceMelt(ElementData& Edata, const unsigned int nSol
 		}
 		Edata.theta[ICE] += dth_i;
 		Edata.theta[WATER] += dth_w;
-		Edata.theta[AIR] = std::max(0.0, 1.0 - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
-		// State when you have solid element
-		if ( Edata.theta[AIR] <= 0.0 ) {
-			Edata.theta[AIR] = 0.0;
-		}
-		// State when the ice content has disappeared (PERMAFROST)
-		if ( Edata.theta[ICE] <= 0.0 ) {
-			Edata.theta[ICE] = 0.0;
-		}
-		// State when the water content has disappeared (PERMAFROST)
-		if ( Edata.theta[WATER] <= 0.0 ) {
-			Edata.theta[WATER] = 0.0;
-		}
-		// State when the element is wet (PERMAFROST)
-		if ( Edata.theta[WATER] >= 1.0 ) {
-			Edata.theta[WATER] = 1.0;
-		}
+		Edata.theta[AIR] = (1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
 
-		// Make sure the sum of all volumetric contents is near 1 (Can make a 1% error)
+		// Make sure the sum of all volumetric contents is near 1, and take care of rounding errors
 		if (!Edata.checkVolContent()) {
 			prn_msg(__FILE__, __LINE__, "err", date_in, "Sum theta[I,W,A,S] > 1");
 			prn_msg(__FILE__, __LINE__, "msg-", Date(),
@@ -309,16 +299,11 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 				}
 			}
 		}
-		Edata.theta[WATER] += dth_w;
 		Edata.theta[ICE] += dth_i;
-		Edata.theta[AIR] = std::max(0., 1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
+		Edata.theta[WATER] += dth_w;
+		Edata.theta[AIR] = (1. - Edata.theta[ICE] - Edata.theta[WATER] - Edata.theta[WATER_PREF] - Edata.theta[SOIL]);
 
-		// State when the element is wet (PERMAFROST)
-		if (Edata.theta[WATER] >= 1.0) {
-			prn_msg(__FILE__, __LINE__, "msg+", Date(), "Wet Element! (dth_w=%e) (compSubSurfaceFrze)", dth_w);
-			Edata.theta[WATER] = 1.0;
-		}
-		// Make sure the sum of all volumetric contents is near 1 (Can make a 1% error)
+		// Make sure the sum of all volumetric contents is near 1, and take care of rounding errors
 		if (!Edata.checkVolContent()) {
 			prn_msg(__FILE__, __LINE__, "err", date_in, "Sum theta[I,W,A,S] > 1");
 			prn_msg(__FILE__, __LINE__, "msg-", Date(),
@@ -388,10 +373,10 @@ void PhaseChange::finalize(const SurfaceFluxes& Sdata, SnowStation& Xdata, const
 			//Restructure temperature arrays
                         EMS[e].gradT = (NDS[e+1].T - NDS[e].T) / EMS[e].L;
 		        EMS[e].Te = (NDS[e].T + NDS[e+1].T) / 2.0;
-			if (((EMS[e].Te - EMS[e].meltfreeze_tk) > 0.2) && EMS[e].theta[ICE]>0.) //handle the case of soil layers above ice/snow layers
-				prn_msg(__FILE__, __LINE__, "wrn", date_in,
-				        "%s temperature Te=%f K is above melting point (%f K) in element %d (nE=%d; T0=%f K, T1=%f K, theta_ice=%f)",
-				        (e < Xdata.SoilNode) ? ("Soil") : ("Snow"), EMS[e].Te, EMS[e].meltfreeze_tk, e, nE, NDS[e].T, NDS[e+1].T, EMS[e].theta[ICE]);
+			//if (((EMS[e].Te - EMS[e].meltfreeze_tk) > 0.2) && EMS[e].theta[ICE]>0.) //handle the case of soil layers above ice/snow layers
+			//	prn_msg(__FILE__, __LINE__, "wrn", date_in,
+			//	        "%s temperature Te=%f K is above melting point (%f K) in element %d (nE=%d; T0=%f K, T1=%f K, theta_ice=%f)",
+			//	        (e < Xdata.SoilNode) ? ("Soil") : ("Snow"), EMS[e].Te, EMS[e].meltfreeze_tk, e, nE, NDS[e].T, NDS[e+1].T, EMS[e].theta[ICE]);
 			// Verify element state against maximum possible density: only water
 			if (!(EMS[e].Rho > Constants::eps && EMS[e].Rho <= (1.-EMS[e].theta[SOIL])*Constants::density_water + (EMS[e].theta[SOIL] * EMS[e].soil[SOIL_RHO]))) {
 				prn_msg(__FILE__, __LINE__, "err", date_in, "Phase Change End: volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le",
