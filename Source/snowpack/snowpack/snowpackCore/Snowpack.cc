@@ -2032,6 +2032,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					const std::string tmp_hn_density = hn_density;
 					const std::string tmp_variant = variant;
 					const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
+					const double tmp_Xdata_hn = Xdata.hn;
+					const double tmp_Xdata_rho_hn = Xdata.rho_hn;
 					// Deposition mode settings:
 					double tmp_psum = eroded;
 					force_add_snowfall = true;
@@ -2041,6 +2043,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					Mdata.psum = eroded; Mdata.psum_ph = 0.;
 					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
 					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+					Xdata.hn = 0.;
 					// Add eroded snow:
 					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
 					// Set back original settings:
@@ -2048,6 +2051,9 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					hn_density = tmp_hn_density;
 					variant = tmp_variant;
 					enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
+					// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
+					Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
+					Xdata.hn += tmp_Xdata_hn;
 				}
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
