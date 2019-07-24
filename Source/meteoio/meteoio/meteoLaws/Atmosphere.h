@@ -37,6 +37,7 @@ class Atmosphere {
 		static double reducedAirPressure(const double& pressure, const double& altitude, const double& latitude);
 		static double stdDryAirDensity(const double& altitude, const double& temperature);
 		static double vaporSaturationPressure(const double& T);
+		static double vaporSaturationPressureWater(const double& T);
 		static double virtualTemperatureFactor(const double& e, const double& p);
 		static double waterVaporDensity(const double& Temperature, const double& VaporPressure);
 		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);

@@ -27,6 +27,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcMult.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
+	meteoFilters/ProcRHWaterToIce.cc
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc
 	meteoFilters/FilterDeGrass.cc

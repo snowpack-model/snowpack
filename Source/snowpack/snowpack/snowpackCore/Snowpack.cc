@@ -2036,20 +2036,27 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				double tmp = 0.;
 				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
 				if (eroded > 0.) {
+					// Backup settings we are going to override:
 					const bool tmp_force_add_snowfall = force_add_snowfall;
 					const std::string tmp_hn_density = hn_density;
 					const std::string tmp_variant = variant;
+					const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
+					// Deposition mode settings:
 					double tmp_psum = eroded;
 					force_add_snowfall = true;
 					hn_density = "EVENT";
 					variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
+					enforce_measured_snow_heights = false;
 					Mdata.psum = eroded; Mdata.psum_ph = 0.;
 					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
 					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+					// Add eroded snow:
 					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+					// Set back original settings:
 					force_add_snowfall = tmp_force_add_snowfall;
 					hn_density = tmp_hn_density;
 					variant = tmp_variant;
+					enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
 				}
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
