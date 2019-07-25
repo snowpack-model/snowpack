@@ -1976,8 +1976,9 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 		}
 	}
 	if (out_mass) {
-		// 34-39: SWE, eroded mass, rain rate, runoff at bottom of snowpack, sublimation and evaporation, all in kg m-2 except rain as rate: kg m-2 h-1; see also 52 & 93
-		fout  << "," << Sdata.mass[SurfaceFluxes::MS_SWE]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_WIND]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_RAIN];
+		// 34-39: SWE (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), sublimation and evaporation (both in kg m-2); see also 52 & 93.
+		// Note: in operational mode, runoff at bottom of snowpack is expressed as kg m-2 h-1 when !cumsum_mass.
+		fout << "," << Sdata.mass[SurfaceFluxes::MS_SWE]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_WIND]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_RAIN];
 		fout << "," << Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_SUBLIMATION]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_EVAPORATION]/cos_sl;
 	} else {
 		fout << ",,,,,,";
