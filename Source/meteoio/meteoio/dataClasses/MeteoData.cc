@@ -124,6 +124,7 @@ bool MeteoData::initStaticData()
 	s_default_paramname.push_back("P");
 	s_default_paramname.push_back("TA");
 	s_default_paramname.push_back("RH");
+	s_default_paramname.push_back("QI");
 	s_default_paramname.push_back("TSG");
 	s_default_paramname.push_back("TSS");
 	s_default_paramname.push_back("HS");

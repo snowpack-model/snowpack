@@ -715,9 +715,9 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 	} else if (param == MeteoData::RH){
 		prec = 3;
 		width = 7;
-	} else {
-		prec = 3;
-		width = 8;
+	} else if (param == MeteoData::QI){
+		prec = 10;
+		width = 11;
 	}
 }
 

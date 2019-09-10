@@ -130,6 +130,7 @@ class MeteoData {
 		                 P=firstparam, ///< Air pressure
 		                 TA, ///< Air temperature
 		                 RH, ///< Relative humidity
+		                 QI, ///< Specific humidity
 		                 TSG, ///< Temperature of the ground surface
 		                 TSS, ///< Temperature of the snow surface
 		                 HS, ///< Height of snow
