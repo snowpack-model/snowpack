@@ -244,7 +244,7 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				forced_massErode = 0.;
 				break;
 			} else {
-				Xdata.ErosionMass = 0.;
+				Xdata.ErosionMass += 0.;
 				break;
 			}
 			if (snow_erosion == "HS_DRIVEN") break;	// To be consistent with legacy SNOWPACK where only one element at a time can erode.
