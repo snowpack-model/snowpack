@@ -92,7 +92,7 @@ class Snowpack {
 		static void EL_TEMP( const int Ie[], double Te0[], double Tei[], const std::vector<NodeData> &T0, const double Ti[] );
 		static void EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]);
 
-		void compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata);
+		void compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata);
 
 		bool sn_ElementKtMatrix(ElementData &Edata, double dt, const double dvdz, double T0[ N_OF_INCIDENCES ],
 		                        double Se[ N_OF_INCIDENCES ][ N_OF_INCIDENCES ], double Fe[ N_OF_INCIDENCES ],

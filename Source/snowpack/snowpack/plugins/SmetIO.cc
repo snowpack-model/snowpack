@@ -893,8 +893,8 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	if (out_soileb)
 		os << "dIntEnergySoil meltFreezeEnergySoil ColdContentSoil" << " ";
 	if (out_mass)
-		os << "SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap" << " "; // 34-39: SWE (kg m-2), LWC (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), runoff at bottom of soil (kg m-2), sublimation and evaporation (both in kg m-2); see also 52 & 93.
-														// Note: in operational mode, runoff at bottom of snowpack is expressed as kg m-2 h-1 when !cumsum_mass.
+		os << "SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap MS_Settling_dHS" << " "; // 34-39: SWE (kg m-2), LWC (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), runoff at bottom of soil (kg m-2), sublimation and evaporation (both in kg m-2); see also 52 & 93, snow height change from settling (mm).
+																// Note: in operational mode, runoff at bottom of snowpack is expressed as kg m-2 h-1 when !cumsum_mass.
 	if (out_load)
 		os << "load "; // 50: Solute load at ground surface
 	if (out_t && !fixedPositions.empty()) {
@@ -1001,11 +1001,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	}
 	if (out_mass) {
 		//"SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap"
-		plot_description << "snow_water_equivalent  total_amount_of_water  erosion_mass_loss  rain_rate  virtual_lysimeter  virtual_lysimeter_under_the_soil  sublimation_mass  evaporated_mass" << " ";
-		plot_units << "kg/m2 kg/m2 kg/m2/h kg/m2/h kg/m2 kg/m2 kg/m2 kg/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0x3300FF 0x0000FF 0x99CCCC 0x3333 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF" << " ";
+		plot_description << "snow_water_equivalent  total_amount_of_water  erosion_mass_loss  rain_rate  virtual_lysimeter  virtual_lysimeter_under_the_soil  sublimation_mass  evaporated_mass  snow_height_change_from_settling" << " ";
+		plot_units << "kg/m2 kg/m2 kg/m2/h kg/m2/h kg/m2 kg/m2 kg/m2 kg/m2 mm" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0x3300FF 0x0000FF 0x99CCCC 0x3333 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF 0x8282A3" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1154,6 +1154,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( (useSoilLayers? Sdata.mass[SurfaceFluxes::MS_SOIL_RUNOFF] / Xdata.cos_sl : IOUtils::nodata) );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_SUBLIMATION]/cos_sl );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_EVAPORATION]/cos_sl );
+		data.push_back( M_TO_MM(Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS])/cos_sl );
 	}
 
 	if (out_load) {

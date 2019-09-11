@@ -341,7 +341,7 @@ void Snowpack::setUseSoilLayers(const bool& value) { //NOTE is this really neede
  * @param Xdata
  * @param Mdata
  */
-void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
+void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata)
 {
 	const bool prn_WRN = false;
 	const size_t nN = Xdata.getNumberOfNodes();
@@ -457,6 +457,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 		NDS[e+1].z = NDS[e].z + EMS[e].L;
 		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
 		EMS[e].updDensity();
+		Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += dL;	// Update snow height change due to settling
 		if (EMS[e].Rho <= Constants::eps || EMS[e].theta[AIR] < 0.  ) {
 			prn_msg(__FILE__, __LINE__, "err", Date(),
 			          "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf air=%le",
@@ -2233,7 +2234,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// Find the settlement of the snowpack.
 		// HACK This routine was formerly placed here because the settlement solution MUST ALWAYS follow
 		// computeSnowTemperatures where the vectors U, dU and dUU are allocated.
-		compSnowCreep(Mdata, Xdata);
+		compSnowCreep(Mdata, Xdata, Sdata);
 
 	} catch(const exception&) {
 		prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Snowpack computation not completed");
