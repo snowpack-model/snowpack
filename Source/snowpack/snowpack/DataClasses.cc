@@ -1872,7 +1872,7 @@ const std::string NodeData::toString() const
 SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLayers, const bool& i_useSeaIceModule) :
 	meta(), cos_sl(1.), sector(0), Cdata(), Seaice(NULL), pAlbedo(0.), Albedo(0.),
 	SoilAlb(0.), SoilEmissivity(0.), BareSoil_z0(0.), SoilNode(0), Ground(0.),
-	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), hn(0.), rho_hn(0.), ErosionLevel(0), ErosionMass(0.),
+	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), hn(0.), rho_hn(0.), hn_redeposit(0.), rho_hn_redeposit(0.), ErosionLevel(0), ErosionMass(0.), ErosionLength(0.),
 	S_class1(0), S_class2(0), S_d(0.), z_S_d(0.), S_n(0.), z_S_n(0.),
 	S_s(0.), z_S_s(0.), S_4(0.), z_S_4(0.), S_5(0.), z_S_5(0.),
 	Ndata(), Edata(), Kt(NULL), ColdContent(0.), ColdContentSoil(0.), dIntEnergy(0.), dIntEnergySoil(0.), meltFreezeEnergy(0.), meltFreezeEnergySoil(0.), meltMassTot(0.), refreezeMassTot(0.),
@@ -1889,7 +1889,8 @@ SnowStation::SnowStation(const bool& i_useCanopyModel, const bool& i_useSoilLaye
 SnowStation::SnowStation(const SnowStation& c) :
 	meta(c.meta), cos_sl(c.cos_sl), sector(c.sector), Cdata(c.Cdata), Seaice(c.Seaice), pAlbedo(c.pAlbedo), Albedo(c.Albedo),
 	SoilAlb(c.SoilAlb), SoilEmissivity(c.SoilEmissivity), BareSoil_z0(c.BareSoil_z0), SoilNode(c.SoilNode), Ground(c.Ground),
-	cH(c.cH), mH(c.mH), mass_sum(c.mass_sum), swe(c.swe), lwc_sum(c.lwc_sum), hn(c.hn), rho_hn(c.rho_hn), ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass),
+	cH(c.cH), mH(c.mH), mass_sum(c.mass_sum), swe(c.swe), lwc_sum(c.lwc_sum), hn(c.hn), rho_hn(c.rho_hn), hn_redeposit(c.hn_redeposit), rho_hn_redeposit(c.rho_hn_redeposit),
+	ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass), ErosionLength(c.ErosionLength),
 	S_class1(c.S_class1), S_class2(c.S_class2), S_d(c.S_d), z_S_d(c.z_S_d), S_n(c.S_n), z_S_n(c.z_S_n),
 	S_s(c.S_s), z_S_s(c.z_S_s), S_4(c.S_4), z_S_4(c.z_S_4), S_5(c.S_5), z_S_5(c.z_S_5),
 	Ndata(c.Ndata), Edata(c.Edata), Kt(NULL), ColdContent(c.ColdContent), ColdContentSoil(c.ColdContentSoil), dIntEnergy(c.dIntEnergy), dIntEnergySoil(c.dIntEnergySoil), meltFreezeEnergy(c.meltFreezeEnergy), meltFreezeEnergySoil(c.meltFreezeEnergySoil), meltMassTot(c.meltMassTot), refreezeMassTot(c.refreezeMassTot),
@@ -1930,8 +1931,11 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		lwc_sum = source.lwc_sum;
 		hn = source.hn;
 		rho_hn = source.rho_hn;
+		hn_redeposit = source.hn_redeposit;
+		rho_hn_redeposit = source.rho_hn_redeposit;
 		ErosionLevel = source.ErosionLevel;
 		ErosionMass = source.ErosionMass;
+		ErosionLength = source.ErosionLength;
 		S_class1 = source.S_class1;
 		S_class2 = source.S_class2;
 		S_d = source.S_d;
@@ -2822,8 +2826,11 @@ std::ostream& operator<<(std::ostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.lwc_sum), sizeof(data.lwc_sum));
 	os.write(reinterpret_cast<const char*>(&data.hn), sizeof(data.hn));
 	os.write(reinterpret_cast<const char*>(&data.rho_hn), sizeof(data.rho_hn));
+	os.write(reinterpret_cast<const char*>(&data.hn_redeposit), sizeof(data.hn_redeposit));
+	os.write(reinterpret_cast<const char*>(&data.rho_hn_redeposit), sizeof(data.rho_hn_redeposit));
 	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	os.write(reinterpret_cast<const char*>(&data.ErosionMass), sizeof(data.ErosionMass));
+	os.write(reinterpret_cast<const char*>(&data.ErosionLength), sizeof(data.ErosionLength));
 	os.write(reinterpret_cast<const char*>(&data.S_class1), sizeof(data.S_class1));
 	os.write(reinterpret_cast<const char*>(&data.S_class2), sizeof(data.S_class2));
 	os.write(reinterpret_cast<const char*>(&data.S_d), sizeof(data.S_d));
@@ -2904,8 +2911,11 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.lwc_sum), sizeof(data.lwc_sum));
 	is.read(reinterpret_cast<char*>(&data.hn), sizeof(data.hn));
 	is.read(reinterpret_cast<char*>(&data.rho_hn), sizeof(data.rho_hn));
+	is.read(reinterpret_cast<char*>(&data.hn_redeposit), sizeof(data.hn_redeposit));
+	is.read(reinterpret_cast<char*>(&data.rho_hn_redeposit), sizeof(data.rho_hn_redeposit));
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	is.read(reinterpret_cast<char*>(&data.ErosionMass), sizeof(data.ErosionMass));
+	is.read(reinterpret_cast<char*>(&data.ErosionLength), sizeof(data.ErosionLength));
 	is.read(reinterpret_cast<char*>(&data.S_class1), sizeof(data.S_class1));
 	is.read(reinterpret_cast<char*>(&data.S_class2), sizeof(data.S_class2));
 	is.read(reinterpret_cast<char*>(&data.S_d), sizeof(data.S_d));

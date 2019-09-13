@@ -150,6 +150,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["OUT_LOAD"] = "false";
 	outputConfig["OUT_LW"] = "true";
 	outputConfig["OUT_MASS"] = "true";
+	outputConfig["OUT_DHS"] = "false";
 	outputConfig["OUT_METEO"] = "true";
 	outputConfig["OUT_SOILEB"] = "false";
 	outputConfig["OUT_STAB"] = "true";

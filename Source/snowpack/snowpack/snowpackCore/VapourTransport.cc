@@ -169,7 +169,7 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				EMS[nE-1].theta[WATER] = std::max(0., std::min(1., EMS[nE-1].theta[WATER]));
 				EMS[nE-1].theta[WATER_PREF] *= L_top/EMS[nE-1].L;
 				EMS[nE-1].theta[WATER_PREF] = std::max(0., std::min(1., EMS[nE-1].theta[WATER_PREF]));
-
+				Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] += dL;
 				for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 					EMS[nE-1].conc[ICE][ii] *= L_top*theta_i0/(EMS[nE-1].theta[ICE]*EMS[nE-1].L);
 				}
@@ -208,6 +208,7 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 
 				EMS[e].M += dM;
 				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dM;
+				Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] -= EMS[e].L;
 				ql -= dM*Constants::lh_sublimation/sn_dt;     // Update the energy used
 
 				// If present at surface, surface hoar is sublimated away
@@ -417,6 +418,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 				if (e == nE-1 && e >= Xdata.SoilNode) {
 					// The top layer will increase length due to deposition
 					const double dL = deltaM[e] / (Constants::density_ice * EMS[e].theta[ICE]);
+					Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] += dL;
 					const double L_old = EMS[e].L;
 					const double L_new = EMS[e].L + dL;
 					EMS[e].L = L_new;
