@@ -2053,6 +2053,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					variant = tmp_variant;
 					enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
 					// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
+					Xdata.hn_redeposit = Xdata.hn;
+					Xdata.rho_hn_redeposit = Xdata.rho_hn;
 					Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
 					Xdata.hn += tmp_Xdata_hn;
 				}

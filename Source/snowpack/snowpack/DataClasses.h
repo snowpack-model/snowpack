@@ -640,8 +640,11 @@ class SnowStation {
 		double lwc_sum;             ///< Total liquid water in snowpack
 		double hn;                  ///< Depth of new snow to be used on slopes
 		double rho_hn;              ///< Density of new snow to be used on slopes
+		double hn_redeposit;        ///< Depth of redeposited snow (REDEPOSIT mode)
+		double rho_hn_redeposit;    ///< Density of redeposited snow (REDEPOSIT mode)
 		size_t ErosionLevel;        ///< Element where snow erosion stopped previously for the drift index
 		double ErosionMass;         ///< Eroded mass either real or virtually (storage if less than one element)
+		double ErosionLength;       ///< Snow height change dueo to eroded mass (only real erosion)
 		char S_class1;               ///< Stability class based on hand hardness, grain class ...
 		char S_class2;               ///< Stability class based on hand hardness, grain class ...
 		double S_d;                 ///< Minimum Direct Action Stability Index  ...
@@ -727,6 +730,9 @@ class SurfaceFluxes {
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
 			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
 			MS_SETTLING_DHS,   ///< Snow height change due to settling (m)
+			MS_SUBL_DHS,       ///< Snow height change due to sublimation (m)
+			MS_REDEPOSIT_DHS,  ///< Snow height change due to wind compaction in REDEPOSIT mode (m)
+			MS_REDEPOSIT_DRHO, ///< Density change due to wind compaction in REDEPOSIT mode (m)
 			N_MASS_CHANGES     ///< Total number of different mass change types
 		};
 
