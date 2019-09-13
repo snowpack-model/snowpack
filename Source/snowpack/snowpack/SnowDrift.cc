@@ -167,6 +167,7 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 	const bool no_snow = ((nE < Xdata.SoilNode+1) || (EMS[nE-1].theta[SOIL] > 0.));
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
 	Xdata.ErosionMass = 0.;
+	Xdata.ErosionLength = 0.;
 	if (no_snow || no_wind_data) {
 		if (no_snow) {
 			Xdata.ErosionLevel = Xdata.SoilNode;
@@ -216,6 +217,7 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				Xdata.cH -= EMS[e].L;
 				NDS[e].hoar = 0.;
 				Xdata.ErosionMass += EMS[e].M;
+				Xdata.ErosionLength -= EMS[e].L;
 				Xdata.ErosionLevel = std::min(e, Xdata.ErosionLevel);
 				nErode++;
 				massErode -= EMS[e].M;
@@ -244,11 +246,13 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				}
 				assert(EMS[e].M>=0.); //mass must be positive
 				Xdata.ErosionMass += massErode;
+				Xdata.ErosionLength += dL;
 				massErode = 0.;
 				forced_massErode = 0.;
 				break;
 			} else {
 				Xdata.ErosionMass += 0.;
+				Xdata.ErosionLength += 0.;
 				break;
 			}
 			if (snow_erosion == "HS_DRIVEN") break;	// To be consistent with legacy SNOWPACK where only one element at a time can erode.
