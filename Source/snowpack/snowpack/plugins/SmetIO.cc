@@ -914,9 +914,10 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	os << "timestamp ";
 
 	if (out_heat)
-		os << "Qs Ql Qg TSG Qg0 Qr" << " "; // 1-2: Turbulent fluxes (W m-2)
+		os << "Qs Ql Qg TSG Qg0 Qr Qmf" << " "; // 1-2: Turbulent fluxes (W m-2)
 		// 14-17: Heat flux at lower boundary (W m-2), ground surface temperature (degC),
 		//        Heat flux at gound surface (W m-2), rain energy (W m-2)
+		//	  Melt freeze part of internal energy change
 	if (out_lw)
 		os << "OLWR ILWR LWR_net" << " "; // 3-5: Longwave radiation fluxes (W m-2)
 	if (out_sw)
@@ -978,11 +979,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 
 	if (out_heat) {
 		//"Qs Ql Qg TSG Qg0 Qr"
-		plot_description << "sensible_heat  latent_heat  ground_heat  ground_temperature  ground_heat_at_soil_interface  rain_energy" << " ";
-		plot_units << "W/m2 W/m2 W/m2 K W/m2 W/m2" << " ";
-		units_offset << "0 0 0 273.15 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1" << " ";
-		plot_color << "0x669933 0x66CC99 0xCC6600 0xDE22E2 0xFFCC00 0x6600FF" << " ";
+		plot_description << "sensible_heat  latent_heat  ground_heat  ground_temperature  ground_heat_at_soil_interface  rain_energy  melt_freeze_energy" << " ";
+		plot_units << "W/m2 W/m2 W/m2 K W/m2 W/m2 kJ/m2" << " ";
+		units_offset << "0 0 0 273.15 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1" << " ";
+		plot_color << "0x669933 0x66CC99 0xCC6600 0xDE22E2 0xFFCC00 0x6600FF 0xF2A31B" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1142,6 +1143,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( IOUtils::K_TO_C(NDS[Xdata.SoilNode].T) );
 		data.push_back( Sdata.qg0 );
 		data.push_back( Sdata.qr );
+		data.push_back( (Sdata.meltFreezeEnergy / 1000.) );
 	}
 
 	if (out_lw) {
