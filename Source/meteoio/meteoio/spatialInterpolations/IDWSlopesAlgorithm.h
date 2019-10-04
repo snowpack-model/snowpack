@@ -41,11 +41,16 @@ class IDWSlopesAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
-		std::vector<double> vecFlat, vecNorth, vecEast, vecSouth, vecWest;
-		std::vector<StationData> metaFlat, metaNorth, metaEast, metaSouth, metaWest;
+		enum Slopes {firstSlope=0, FLAT=firstSlope, NORTH, EAST, SOUTH, WEST, lastSlope=WEST};
+		
+		Grid2DObject computeAspect(const DEMObject& dem, const Slopes& curr_slope);
+		
+		std::vector< std::vector<double> > vecData;
+		std::vector< std::vector<StationData> > vecMeta;
 		Trend trend;
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		static const double min_slope, max_slope;
+		static const size_t nrSlopes;
 };
 
 } //end namespace mio

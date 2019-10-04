@@ -284,7 +284,7 @@ std::string InterpolationAlgorithm::getInfo() const
 *  - FRAC: if set to true, the user provided lapse rate will be interpreted as "fractional", that is a relative change
 * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
 * the fractional lapse from the data is made. The lapse rate that might be reported to the user will be computed as {data average}*{user-defined rate}
-* and is therefore NOT directly the suer-defined lapse rate.
+* and is therefore NOT directly the user-defined lapse rate.
 *  - TREND_MIN_ALT: all points at elevations less than this will be detrended/retrended as if at this provided elevation (optional);
 *  - TREND_MAX_ALT: all points at elevations more than this will be detrended/retrended as if at this provided elevation (optional);
 *

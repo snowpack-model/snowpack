@@ -219,6 +219,7 @@ std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& 
                             std::vector<Coords> vec_coords, std::vector<double>& result, const bool& quiet)
 {
 	result.clear();
+	result.resize( vec_coords.size() );
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;
@@ -231,7 +232,7 @@ std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& 
 			//we know the i,j are positive because of gridify_success
 			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
 			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
-			result.push_back( result_grid(pt_i,pt_j) );
+			result[ii] = result_grid(pt_i,pt_j);
 		}
 		return InfoString;
 	} else {
@@ -258,7 +259,7 @@ std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& 
 
 			Grid2DObject result_grid;
 			InfoString = interpolate(date, one_point_dem, meteoparam, result_grid, quiet);
-			result.push_back(result_grid(0,0));
+			result[ii] = result_grid(0,0);
 		}
 		return InfoString;
 	}
@@ -269,6 +270,7 @@ std::string Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& 
                             std::vector<StationData> vec_stations, std::vector<double>& result, const bool& quiet)
 {
 	result.clear();
+	result.reserve( vec_stations.size() );
 
 	if (use_full_dem) {
 		Grid2DObject result_grid;

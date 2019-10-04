@@ -293,8 +293,8 @@ void ArgosIO::readRaw(const std::string& file_and_path, const Date& dateStart, c
 	errno = 0;
 	std::ifstream fin(file_and_path.c_str(), ios::in);
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << file_and_path << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << file_and_path << "\" for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw AccessException(ss.str(), AT);
 	}

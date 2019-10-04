@@ -462,7 +462,7 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
 //CUSTOM_DIST step 6/7: Convenience mapping of your distribution parameters to names (not mandatory if you have many)
 
 /**
- * @brief Retrieve single distribution parameter
+ * @brief Set single distribution parameter
  * @param param_name Name of the parameter (see section \ref rng_distributionparams) to set
  * @param param_val Value to set
  * @return Current value of the distribution parameter
@@ -1000,6 +1000,7 @@ uint64_t RngMtw::int64()
 void RngMtw::getState(std::vector<uint64_t>& ovec_seed) const
 {
 	ovec_seed.clear();
+	ovec_seed.reserve( vec_states.size()+1 );
 	ovec_seed.push_back(current_mt_index); //1st element is the currently used index
 	for (size_t i = 0; i < vec_states.size(); ++i)
 		ovec_seed.push_back( (uint64_t)vec_states[i] );
@@ -1069,6 +1070,7 @@ bool RngMtw::initAllStates() //init all states with a mix of "true" and "pseudo"
 	bool hardware_success = getUniqueSeed(store);
 	uint32_t seed = (uint32_t)store; //keeps lower bits
 	vec_states.clear();
+	vec_states.reserve( MT_NN );
 	vec_states.push_back(seed);
 	for (size_t i = 1; i < MT_NN; ++i) { //Ref. [DK81] for multiplier
 		vec_states.push_back((uint32_t)( (1812433253UL * (vec_states[i-1] ^ (vec_states[i-1] >> 30)) + i) ));

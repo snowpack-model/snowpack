@@ -46,14 +46,12 @@ bool MeteoBuffer::get(const Date& date, METEO_SET &vecMeteo) const
 bool MeteoBuffer::get(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo) const
 {
 	vecMeteo.clear();
-	vecMeteo.reserve(ts_buffer.size());
 
 	if (empty() || (date_start < ts_start) || (date_end > ts_end)) //data is NOT fully in cache
 		return false;
 
+	vecMeteo.resize( ts_buffer.size() ); //reserve for the same number of stations as in the buffer
 	for (size_t ii=0; ii<ts_buffer.size(); ii++) { //loop over stations
-		vecMeteo.push_back( vector<MeteoData>() );  //insert one empty vector of MeteoData
-
 		if (ts_buffer[ii].empty()) continue; //no data in buffer for this station
 		if (ts_buffer[ii].front().date>date_end || ts_buffer[ii].back().date<date_start) continue; //no data in buffer for this station
 
@@ -65,7 +63,7 @@ bool MeteoBuffer::get(const Date& date_start, const Date& date_end, std::vector<
 		else
 			pos_end++; //because "insert" does not include the element pointed to by the last iterator
 
-		vecMeteo[ii].reserve(pos_end-pos_start);
+		vecMeteo[ii].reserve( pos_end-pos_start );
 		vecMeteo[ii].insert(vecMeteo[ii].begin(), ts_buffer[ii].begin()+pos_start, ts_buffer[ii].begin()+pos_end);
 	}
 
@@ -81,6 +79,7 @@ bool MeteoBuffer::empty() const
 void MeteoBuffer::clear()
 {
 	ts_buffer.clear();
+	//std::vector<METEO_SET>().swap(ts_buffer); //deallocate the memory allocated to the vector
 	ts_start.setUndef(true);
 	ts_end.setUndef(true);
 }
@@ -93,7 +92,7 @@ void MeteoBuffer::push(const Date& date_start, const Date& date_end, const std::
 	if (empty()) {
 		ts_start = date_start;
 		ts_end = date_end;
-		ts_buffer.resize(nrStationsPush); //allocate the memory
+		ts_buffer.resize( nrStationsPush ); //allocate the memory
 		for (size_t ii=0; ii<nrStationsPush; ii++)
 			ts_buffer[ii].push_back( vecMeteo[ii] );
 		return;

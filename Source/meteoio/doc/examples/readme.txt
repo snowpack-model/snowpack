@@ -21,6 +21,7 @@ The necessary data set for these examples lies in "input" directory. It contains
 	sun.cc : calculate solar radiation at a given place and time
 	time.cc : time handling example
 	random_numbers.cc : generating different kinds of random numbers
+	statistical_filters.cc : understanding Bayesian filters input (Kalman and particle filter)
 
 4) Available scripts
 Several useful scripts are given in the "tools" subdirectory of MeteoIO's root sources directory. These scripts allow to 

@@ -49,7 +49,7 @@ class TimeProcStack {
  * @brief Timesteps suppression filter.
  * @details
  * This filter deletes some timesteps based on the provided arguments:
- *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true;
+ *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true (a warning will be emitted anyway for each problematic timestamp);
  *  - SUPPR: provide a file that contains a list of station ID's and timesteps that should be suppressed;
  *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.
@@ -130,6 +130,26 @@ class TimeUnDST : public ProcessingBlock {
 };
 
 /**
+ * @class  TimeSort
+ * @ingroup processing
+ * @brief Sort out of order timesteps.
+ * @details This filter guarantees that the timestamps are sorted in increasing order. This is convenient to fix known problems, but
+ * please do not use this filter blindly: it is most probably a better idea to know that some timestamps are not in increasing
+ * order than to always resort them without knowing if there are underlying problems with the dataset...
+ * 
+ * @code
+ * TIME::filter1 = sort
+ * @endcode
+ * 
+ */
+class TimeSort : public ProcessingBlock {
+	public:
+		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+};
+
+/**
  * @class  TimeLoop
  * @ingroup processing
  * @brief Loops over a specific time period.
@@ -150,6 +170,10 @@ class TimeUnDST : public ProcessingBlock {
  * TIME::arg1::ref_end = 2018-02-01
  * TIME::arg1::match_date = 2019-03-01	;this assumes that the data from ref_start will be copied as data for 2019-03-01
  * @endcode
+ * 
+ * The example above copies over and over the timestamps from 2018-01-01T00:00:00 to 2018-02-01T00:00:00 while making sure that the timesteps 
+ * of 2018-01-01T00:00:00 are copied to 2019-03-01T00:00:00. To do a ten years simulation spin up, then run your simulation for example as
+ * "my_model 2000-01-01 2010-01-01". 
  */
 class TimeLoop : public ProcessingBlock {
 	public:

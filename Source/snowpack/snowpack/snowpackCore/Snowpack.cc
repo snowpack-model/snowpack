@@ -1080,6 +1080,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		}
 
 		// Assemble matrix
+		const double theta_rn = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
 		double maxd = 0.;		// Tracks max. change in ice contents in domain (convergence criterion)
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
@@ -1123,7 +1124,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 						dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
 					} else {
 						// Freeze: Only available liquid water can freeze, and not more than max_ice
-						dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_lim);
+						dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER] - theta_rn) * (Constants::density_water / Constants::density_ice))), dth_i_lim);
 					}
 					// Correct volumetric changes in upper and lower half of element proportional to limits
 					dth_i_down[e] = dth_i_up[e] = dth_i_lim;
@@ -1231,13 +1232,13 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		 * (see neumannBoundaryConditions)
 		 */
 		if (U[nE] + ddU[nE] > EMS[nE-1].meltfreeze_tk || EMS[nE-1].theta[WATER] > 0.) {
-			ControlTemp = 0.007;
+			ControlTemp = (variant == "SEAICE") ? (0.0001) : (0.007);
 			MaxItnTemp = std::max(MaxItnTemp, (unsigned)200); // NOTE originally 100;
 		}
 		if(useNewPhaseChange) {
 			// With new phase change, we want at least one iteration extra, to account for possible phase changes,
 			// and we want an additional constraint of maximum change in phase change amount
-			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > 0.0001);
+			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > ((variant == "SEAICE") ? (1.E-5) : (0.0001)));
 		} else {
 			NotConverged = (MaxTDiff > ControlTemp);
 		}
@@ -2145,7 +2146,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					else
 						phasechange.compPhaseChange(Xdata, Mdata.date, false, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
 				} else {
-					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
 					const double max_ice = ReSolver1d::max_theta_ice;
 					for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) {
 						// Net ice contents change:

@@ -53,7 +53,8 @@ namespace mio {
  * The NetCDF format does not impose a specific set of metadata and therefore in order to easily exchange data
  * within a given field, it is a good idea to standardize the metadata. Several such metadata schema can be used
  * by this plugin:
- * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata;
+ * - CF1 - the <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata (there is an 
+ * <a href="https://pumatest.nerc.ac.uk/cgi-bin/cf-checker.pl">online validator</a>);
  * - ECMWF - from the <A HREF="http://www.ecmwf.int/">European Centre for Medium-Range Weather Forecasts</A>, see the <A HREF="https://software.ecmwf.int/wiki/display/TIGGE/Soil+temperature">ECMWF Wiki</A> for a description of the available fields;
  * - CROCUS - from the <A HREF="http://www.cnrm.meteo.fr/">National Centre for Meteorological Research</A>;
  * - AMUNDSEN - from the <A HREF="https://geographie.uibk.ac.at/blog/ahc/models/">Alpine, Hydro, climatology</A> group in Innsbruck;
@@ -1041,10 +1042,11 @@ std::vector<StationData> ncFiles::readStationData() const
 		}
 
 		const std::vector<std::string> vecIDs( read_1Dstringvariable(ncid, ncpp::STATION) );
+		vecStation.resize( nrStations );
 		for (size_t ii=0; ii<nrStations; ii++) {
 			StationData sd(vecPosition[ii], vecIDs[ii], vecIDs[ii]);
 			if (hasSlope) sd.setSlope(vecSlope[ii], vecAzi[ii]);
-			vecStation.push_back( sd );
+			vecStation[ii] = sd;
 		}
 
 		ncpp::close_file(file_and_path, ncid);

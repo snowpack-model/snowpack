@@ -1,3 +1,4 @@
+/***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
@@ -89,7 +90,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 			free(real_path);
 			return tmp;
 		} else {
-			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << strerror(errno) << "\n";
+			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif

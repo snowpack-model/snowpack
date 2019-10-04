@@ -629,7 +629,7 @@ class SnowStation {
 		double pAlbedo;             ///< Parameterized snow albedo
 		double Albedo;              ///< Snow albedo used by the model
 		double SoilAlb;             ///< Soil albedo
-    double SoilEmissivity;      ///< Soil emissivity
+		double SoilEmissivity;      ///< Soil emissivity
 		double BareSoil_z0;         ///< Bare soil roughness in m
 		size_t SoilNode;            ///< The top soil node, 0 in case of SNP_SOIL == 0
 		double Ground;              ///< The ground height -- meaning the height of the top soil node

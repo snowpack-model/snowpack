@@ -24,6 +24,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 			SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
 		ENDIF(USE_OCCI)
 	ENDIF()
+	SET(EXTRA "-g ${EXTRA}") #add debug symbols
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 SET(CMAKE_CXX_FLAGS "${EXTRA}" CACHE STRING "" FORCE)
 
@@ -58,6 +59,9 @@ TARGET_LINK_LIBRARIES(time ${METEOIO_LIBRARIES})
 
 ADD_EXECUTABLE(random_numbers random_numbers.cc)
 TARGET_LINK_LIBRARIES(random_numbers ${METEOIO_LIBRARIES})
+
+ADD_EXECUTABLE(statistical_filters statistical_filters.cc)
+TARGET_LINK_LIBRARIES(statistical_filters ${METEOIO_LIBRARIES})
 
 #####################################################################
 # add a distclean target

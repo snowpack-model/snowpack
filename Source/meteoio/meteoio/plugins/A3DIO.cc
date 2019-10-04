@@ -190,12 +190,7 @@ void A3DIO::read1DStation(StationData& sd)
 		Coords location(coordin, coordinparam);
 		location.setXY(xcoord, ycoord, altitude, false);
 		location.setLatLon(latitude, longitude, altitude, false);
-		try {
-			location.check();
-		} catch(...) {
-			throw InvalidArgumentException("[E] Inconsistent geographic coordinates in file \"" + meteo1d + "\"", AT);
-		}
-
+		location.check("Inconsistent geographic coordinates in file \"" + meteo1d + "\": ");
 		sd.setStationData(location, "meteo1d", "Meteo1D station");
 	} catch(const std::exception& e) {
 		fin.close();

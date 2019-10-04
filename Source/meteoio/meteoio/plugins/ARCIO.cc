@@ -21,6 +21,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <errno.h>
+#include <cstring>
 #include <string.h>
 #include <algorithm>
 #include <limits>
@@ -40,7 +41,7 @@ namespace mio {
  * - float header data has 3 digits precision
  * - all grid data is written as float (which might cause some trouble for some softwares)
  *
- * These specifications should reflect commonly accepted practise. Finally, the naming scheme for meteo grids should be: 
+ * These specifications should reflect commonly accepted practise. Finally, the naming scheme for meteo grids should be:
  * YYYY-MM-DDTHH.mm_{MeteoGrids::Parameters}.asc
  *
  * @section arc_units Units
@@ -120,8 +121,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	errno = 0;
 	std::ifstream fin(full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << full_name << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 
@@ -199,7 +200,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.close();
 }
 
-void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) 
+void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
 	read2DGrid_internal(grid_out, grid2dpath_in+"/"+filename);
 }
@@ -210,7 +211,7 @@ bool ARCIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::
 	const double TZ = cfg.get("TIME_ZONE", "Input");
 	std::list<std::string> dirlist( FileUtils::readDirectory(grid2dpath_in) ); //read everything. Toggle it to recursive if this changes in the plugin!
 	dirlist.sort();
-	
+
 	if (a3d_view_in) {
 		static const char NUM[] = "0123456789";
 		static const size_t date_str_len = 12; //fix format for this plugin
@@ -311,6 +312,12 @@ void ARCIO::readLanduse(Grid2DObject& landuse_out)
 	read2DGrid_internal(landuse_out, filename);
 }
 
+void ARCIO::readGlacier(Grid2DObject& glacier_out)
+{
+	const std::string filename = cfg.get("GLACIERFILE", "Input");
+	read2DGrid_internal(glacier_out, filename);
+}
+
 void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	const std::string filepath = cfg.get("DAPATH", "Input");
@@ -332,8 +339,8 @@ void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string&
 	errno = 0;
 	std::ofstream fout(full_name.c_str(), ios::out);
 	if (fout.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << full_name << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 

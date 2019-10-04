@@ -83,7 +83,7 @@ class Config {
 		 */
 		Config();
 
-		virtual ~Config() {}
+		//virtual ~Config() {}
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created

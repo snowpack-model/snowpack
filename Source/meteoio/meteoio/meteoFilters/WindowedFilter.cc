@@ -92,7 +92,6 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 	size_t start, end;
 	if (!get_window_specs(index, ivec, start, end)) {
 		vec_window.clear();
-		vec_window.reserve(min_data_points*2); //to have enough margin for the time criteria
 		vec_window.push_back( &ivec[index] );
 	}
 

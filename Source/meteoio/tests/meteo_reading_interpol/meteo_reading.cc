@@ -3,9 +3,10 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
+
 // Static varibales containing the results
-const double res_Lat []		= {46.75239923,		46.66852716,		46.3382058,		46.99660709,		46.19133322,		46.53947302,		46.64704387};
-const double res_Lon []		= {9.946665632,		8.064570356,		8.85309869,		9.037581964,		6.827769776,		7.56182955,		8.740197547};
+const double res_Lat []		= {46.752399,		46.668527,		46.338206,		46.996607,		46.191333,		46.539473,		46.647044};
+const double res_Lon []		= {9.946666,		8.064570,		8.853099,		9.037582,		6.827770,		7.561830,		8.740198};
 const double res_Alt []		= {2390,		2110,			2100,			1630,			2020,			2020,			2220};
 const double res_X []		= {791600,		647900,			708900,			721610,			552840,			609450,			699639};
 const double res_Y []		= {180975,		168780,			132850,			206300,			115725,			154250,			167027};
@@ -39,15 +40,15 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 	// Coords content
 	Coords& dataCoord = datMeteo.meta.position;
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getAltitude(), res_Alt[i_results], epsilon)){
-		cerr << "error on Altitude"<< endl;
+		cerr << "error on Altitude on " << res_ID[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getLat(), res_Lat[i_results], epsilon)){
-		cerr << "error on Latitude"<< endl;
+		cerr << "error on Latitude on " << res_ID[i_results] << ": ref=" << dataCoord.getLat() << " got " << res_Lat[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getLon(), res_Lon[i_results], epsilon)){
-		cerr << "error on Longitude"<< endl;
+		cerr << "error on Longitude on " << res_ID[i_results] << ": ref=" << dataCoord.getLon() << " got " << res_Lon[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getEasting(), res_X[i_results], epsilon)){

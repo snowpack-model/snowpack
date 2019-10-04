@@ -44,6 +44,7 @@ namespace mio {
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
+ * - GLACIER: for interpreting the data as glacier height map
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
@@ -160,6 +161,13 @@ void GrassIO::readLanduse(Grid2DObject& landuse_out)
 	string filename;
 	cfg.getValue("LANDUSEFILE", "Input", filename);
 	read2DGrid(landuse_out, filename);
+}
+
+void GrassIO::readGlacier(Grid2DObject& glacier_out)
+{
+	string filename;
+	cfg.getValue("GLACIERFILE", "Input", filename);
+	read2DGrid(glacier_out, filename);
 }
 
 void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)

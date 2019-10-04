@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2018 Michael Reisecker                                               */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -16,6 +16,10 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+ * Showcase program for MeteoIO's random numbers generator.
+ */
+
 #include <ctime>
 #include <inttypes.h>
 #include <iomanip> //for std::setprecision()
@@ -24,7 +28,7 @@
 
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-int main(/*int argc, char** argv*/)
+int main(int /*argc*/, char** /*argv*/)
 {
 	////random integer:
 	//    mio::RandomNumberGenerator RNG;

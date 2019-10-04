@@ -72,37 +72,42 @@ bool IOInterface::list2DGrids(const Date& /*start*/, const Date& /*end*/, std::m
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*parameter=""*/) 
+void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*parameter=""*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/) 
+void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const std::string& /*parameter=""*/) 
+void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const std::string& /*parameter=""*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/) 
+void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::readDEM(DEMObject& /*dem_out*/) 
+void IOInterface::readDEM(DEMObject& /*dem_out*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::readLanduse(Grid2DObject& /*landuse_out*/) 
+void IOInterface::readLanduse(Grid2DObject& /*landuse_out*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::readStationData(const Date& /*date*/, std::vector<StationData>& /*vecStation*/) 
+void IOInterface::readGlacier(Grid2DObject& /*landuse_out*/) 
+{
+	throw IOException("Nothing implemented here", AT);
+}
+
+void IOInterface::readStationData(const Date& /*date*/, std::vector<StationData>& /*vecStation*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
@@ -114,37 +119,37 @@ void IOInterface::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd
 }
 
 void IOInterface::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-		                            const std::string& /*name=""*/) 
+		                            const std::string& /*name=""*/)
 {
 	 throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/) 
+void IOInterface::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::readPOI(std::vector<Coords>& /*pts*/) 
+void IOInterface::readPOI(std::vector<Coords>& /*pts*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::write2DGrid(const Grid2DObject& /*grid_out*/, const std::string& /*options=""*/) 
+void IOInterface::write2DGrid(const Grid2DObject& /*grid_out*/, const std::string& /*options=""*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::write2DGrid(const Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/) 
+void IOInterface::write2DGrid(const Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::write3DGrid(const Grid3DObject& /*grid_out*/, const std::string& /*options*/) 
+void IOInterface::write3DGrid(const Grid3DObject& /*grid_out*/, const std::string& /*options*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void IOInterface::write3DGrid(const Grid3DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/) 
+void IOInterface::write3DGrid(const Grid3DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
 {
 	throw IOException("Nothing implemented here", AT);
 }

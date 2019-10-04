@@ -89,23 +89,15 @@ void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, Proc
 		current.time_after = newprop.time_after;
 }
 
-void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
+void MeteoProcessor::process(std::vector< std::vector<MeteoData> >& ivec,
                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
-	if (processing_stack.empty()) {
-		ovec = ivec;
-		return;
-	}
+	std::swap(ivec, ovec);
+	if (processing_stack.empty()) return;
 	
-	//call the different processing stacks
-	std::vector< std::vector<MeteoData> > vec_tmp;
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
-		if (it==processing_stack.begin()){
-			(*(it->second)).process(ivec, ovec, second_pass);
-		} else {
-			vec_tmp = ovec;
-			(*(it->second)).process(vec_tmp, ovec, second_pass);
-		}
+	for (std::map<std::string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
+		std::swap(ovec, ivec);
+		(*(it->second)).process(ivec, ovec, second_pass);
 	}
 }
 

@@ -43,7 +43,7 @@ namespace mio {
 class IOInterface {
 	public:
 		virtual ~IOInterface() {}
-		
+
 		/**
 		* @brief Return the list of grids within a given time period that could be read by the plugin, if requested.
 		* @details This call should be implemented by all plugins reading grids, so the GridsManager can perform all kinds of
@@ -72,7 +72,7 @@ class IOInterface {
 		* @param date date of the data to read
 		*/
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		
+
 		/**
 		* @brief A generic function for parsing 3D grids into a Grid3DObject. The string parameter shall be used for addressing the
 		* specific 3D grid to be parsed into the Grid3DObject, relative to GRID3DPATH for most plugins.
@@ -80,7 +80,7 @@ class IOInterface {
 		* @param parameter A std::string representing some information for the function on what grid to retrieve
 		*/
 		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& parameter="");
-		
+
 		/**
 		* @brief Read the given meteo parameter into a Grid3DObject.
 		* Each plugin has its own logic for finding the requested meteo parameter grid relative to GRID3DPATH for most plugins
@@ -116,13 +116,26 @@ class IOInterface {
 		*/
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
+    /**
+		* @brief Parse the input glacier grid into the Grid2DObject
+		*
+		* Example Usage:
+		* @code
+		* Grid2DObject glacier;
+		* IOHandler io1("io.ini");
+		* io1.readGlacier(glacier);
+		* @endcode
+		* @param glacier_out A Grid2DObject that holds the glacier height
+		*/
+		virtual void readGlacier(Grid2DObject& glacier_out);
+
 		/**
 		* @brief Fill vecStation with StationData objects for a certain date of interest
 		*
 		* Example Usage:
 		* @code
 		* vector<StationData> vecStation;  //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readStationData(d1, vecStation);
 		* @endcode
@@ -144,8 +157,8 @@ class IOInterface {
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,0, 1);       //21.6.2008 11:00 UTC+1
+		* Date d2(2008,07,21,11,0, 1);       //21.7.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readMeteoData(d1, d2, vecMeteo);
 		* @endcode
@@ -169,8 +182,8 @@ class IOInterface {
 		* An example implementation (reading and writing):
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
+		* Date d2(2008,07,21,11,0, 1.);       //21.7.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readMeteoData(d1, d2, vecMeteo);
 		* io1.writeMeteoData(vecMeteo)
@@ -188,7 +201,7 @@ class IOInterface {
 		* Example Usage:
 		* @code
 		* Grid2DObject adata;
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
 		* IOHandler io1("io.ini");
 		* io1.readAssimilationData(d1, adata);
 		* @endcode
@@ -220,7 +233,7 @@ class IOInterface {
 		* @param date date of the data to write
 		*/
 		virtual void write2DGrid(const Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		
+
 		/**
 		* @brief Write a Grid3DObject
 		* The filename is specified relative to GRID3DPATH for most plugins
@@ -228,7 +241,7 @@ class IOInterface {
 		* @param options (string) Identifier useful for the output plugin (it could become part of a file name, a db table, etc)
 		*/
 		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options="");
-		
+
 		/**
 		* @brief Write a Grid3DObject comtaining a known meteorological parameter
 		* A filename is build relative to GRID3DPATH for most plugins.
@@ -237,7 +250,7 @@ class IOInterface {
 		* @param date date of the data to write
 		*/
 		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		
+
 
 		static void set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon);
 		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);

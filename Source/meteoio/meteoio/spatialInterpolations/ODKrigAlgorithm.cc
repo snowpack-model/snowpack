@@ -76,9 +76,9 @@ std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const
 
 		if (detrend_data) { //detrend data
 			//find trend
-			std::vector<double> vecDat;
+			std::vector<double> vecDat( nrStations );
 			for (size_t ii=0; ii<nrStations; ii++)
-				vecDat.push_back( Meteo[ii](param) );
+				vecDat[ii] = Meteo[ii](param);
 
 			Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
 			const bool status = trend.fit();
@@ -91,11 +91,11 @@ std::vector< std::vector<double> > OrdinaryKrigingAlgorithm::getTimeSeries(const
 				if (val!=IOUtils::nodata)
 					val -= trend( vecAltitudes[ii] );
 
-				vecVecData.at(ii).push_back( val );
+				vecVecData[ii].push_back( val );
 			}
 		} else { //do not detrend data
 			for (size_t ii=0; ii<nrStations; ii++)
-				vecVecData.at(ii).push_back( Meteo[ii](param) );
+				vecVecData[ii].push_back( Meteo[ii](param) );
 		}
 	}
 

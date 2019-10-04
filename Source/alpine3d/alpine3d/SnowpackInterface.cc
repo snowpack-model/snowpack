@@ -163,7 +163,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		std::vector< std::pair<size_t,size_t> > sub_pts;
 		const size_t n_pts = pts.size();
 		for (size_t kk=0; kk<n_pts; kk++) { // could be optimised... but not really big gain
-			if (pts[kk].first>=mpi_offset && pts[kk].first<=mpi_nx) {
+			if (pts[kk].first >= mpi_offset && pts[kk].first < mpi_offset + mpi_nx) {
 				sub_pts.push_back( pts[kk] );
 				sub_pts.back().first -= mpi_offset;
 			}
@@ -183,7 +183,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		}
 
 		// The OMP slicing into rectangle is only used for post computation
-		// Over teh gird (i.e. laterla flow and snow preparation)
+		// Over the grid (i.e. lateral flow and snow preparation)
 		size_t omp_offset, omp_nx;
 		OMPControl::getArraySliceParams(mpi_nx, nbworkers, ii, omp_offset, omp_nx);
 		const size_t offset = mpi_offset + omp_offset;
@@ -651,7 +651,7 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 
 	if (snow_preparation) {
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
-		techSnow->setMeteo(ta, rh, cH, timestamp);
+		techSnow->setMeteo(new_ta, new_rh, cH, timestamp);
 		psum_tech = techSnow->getGrid(SnGrids::PSUM_TECH);
 		grooming = techSnow->getGrid(SnGrids::GROOMING);
 	}
@@ -816,7 +816,7 @@ void SnowpackInterface::calcNextStep()
 		try {
 			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_tsg, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
 			if (snow_preparation) {
-				const mio::Grid2DObject tmp_grooming(grooming, worker_startx[ii], 0, worker_deltax[ii], dimy);
+				const mio::Grid2DObject tmp_grooming(grooming, mpi_offset, 0, mpi_nx, dimy);
 				workers[ii]->grooming( tmp_grooming );
 			}
 		} catch(const std::exception& e) {
