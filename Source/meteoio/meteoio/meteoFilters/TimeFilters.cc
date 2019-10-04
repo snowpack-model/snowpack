@@ -135,7 +135,10 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date<=previous_date) {
-			std::cerr << "[W] " << stationID << ", deleting duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+			if (ovec[ii].isNodata()) 
+				std::cerr << "[W] " << stationID << ", deleting empty duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
+			else
+				std::cerr << "[W] " << stationID << ", deleting duplicate/out-of-order timestamp " << ovec[ii].date.toString(Date::ISO) << "\n";
 			ovec[ii].date.setUndef(true);
 		} else {
 			previous_date = current_date;
@@ -220,6 +223,29 @@ void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
+TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
+        : ProcessingBlock(vecArgs, name)
+{
+	const std::string where( "Filters::"+block_name );
+	properties.stage = ProcessingProperties::second;
+	const size_t nrArgs = vecArgs.size();
+	
+	if (nrArgs!=0)
+		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+}
+
+void TimeSort::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
+{
+	if (param!=IOUtils::unodata)
+		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
+
+	ovec = ivec;
+	if (ovec.empty()) return;
+	
+	std::sort(ovec.begin(), ovec.end());
+}
+
+
 TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ)
         : ProcessingBlock(vecArgs, name), req_start(), req_end(), match_date(), ref_start(), ref_end()
 {
@@ -271,21 +297,24 @@ void TimeLoop::process(const unsigned int& param, const std::vector<MeteoData>& 
 		return;
 	}
 	
-	//elements to convert from a date in the reference period ivec to a date in the requested period ovec
-	const double offset = req_start.getJulian() - match_date.getJulian();
+	//to convert between reference and requested periods, we need the ref. range
 	const double ref_period_range = ref_end.getJulian() - ref_start.getJulian();
 	
 	//Which date in the reference period ivec matches with the requested start date?
+	const double offset_match_req = req_start.getJulian() - match_date.getJulian(); //offset to convert between matching and requested dates
+	const Date ref_start_date(fmod(offset_match_req, ref_period_range) +  ref_start.getJulian(), req_start.getTimeZone()); //req_start in ref period
+	//find the reference index for the requested start date
 	size_t ii=0;
-	const Date start_date(fmod(offset, ref_period_range) +  ref_start.getJulian(), req_start.getTimeZone());
-	for (; ii<ivec.size(); ii++) if (ivec[ii].date>=start_date) break; //get the ivec index matching req_start
+	for (; ii<ivec.size(); ii++) if (ivec[ii].date>=ref_start_date) break; //get the ivec index matching req_start
 	if (ii>=ivec.size()) throw IOException("Invalid index, please report it to the developers", AT);
 	
+	//offset to convert between reference and requested dates
+	const double offset_ref_req = req_start.getJulian() - ref_start_date.getJulian();
 	int loop_counter = -1; //the first loop starts already into the reference period at the precomputed ii
 	Date dt( req_start );
 	while (dt<=req_end) {
-		MeteoData md( ivec[ii] );
-		md.date += offset + loop_counter * ref_period_range; //shift the date in the reference period to the requested period
+		MeteoData md( ivec[ii] ); //in the reference period
+		md.date += offset_ref_req + loop_counter * ref_period_range; //shift the date in the reference period to the requested period
 		dt = md.date;
 		ovec.push_back( md );
 		
@@ -337,6 +366,7 @@ void TimeProcStack::process(std::vector< std::vector<MeteoData> >& ivec)
 	const size_t nr_stations = ivec.size();
 
 	std::vector<MeteoData> ovec;
+	ovec.reserve( ivec.size() );
 	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
 		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
 		

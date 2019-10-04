@@ -23,10 +23,11 @@
 #include <snowpack/Utils.h>
 #include <stdio.h>
 
-static const bool ZeroFluxLowerBoundary_diffusion = true;
+static const bool ZeroFluxLowerBoundary_diffusion = false;
 static const bool ZeroFluxUpperBoundary_diffusion = true;
 static const bool ZeroFluxLowerBoundary_advection = false;
-static const bool ZeroFluxUpperBoundary_advection = false;
+static const bool ZeroFluxUpperBoundary_advection_in = false;	// For incoming flux: set to false would reflect fresh water influx in case of rain or condensation
+static const bool ZeroFluxUpperBoundary_advection_out = true;	// For outgoing flux: set to true would reflect that evaporation would only consist of fresh water
 
 #ifdef CLAPACK
 	// Matching C data types with FORTRAN data types (taken from f2c.h):
@@ -116,6 +117,7 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 	if(NumberOfElements==0) return false;	// Nothing to do
 
 	const bool WriteDebugOutput = false;
+	const bool UpstreamBoundaries = true;
 	if(WriteDebugOutput) setvbuf(stdout, NULL, _IONBF, 0);
 
 	// Declare and initialize l.h.s. matrix and r.h.s. vector
@@ -124,7 +126,8 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 	std::vector<double> adl(NumberOfElements-1, 0.);	// Matrix lower diagonal
 	std::vector<double> b(NumberOfElements, 0.);		// Vector
 
-	if(ZeroFluxUpperBoundary_advection) flux_up[NumberOfElements-1] = 0.;
+	if((ZeroFluxUpperBoundary_advection_in && flux_up[NumberOfElements-1] > 0.)
+		|| (ZeroFluxUpperBoundary_advection_out && flux_up[NumberOfElements-1] < 0.)) flux_up[NumberOfElements-1] = 0.;
 	if(ZeroFluxLowerBoundary_advection) flux_down[0] = 0.;
 
 	// Fill matrix and r.h.s. vector
@@ -153,7 +156,10 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 				// The diffusion term from below is added to the r.h.s.
 			}
 
-			// the advection part from below is a constant flux and is added to the r.h.s.
+			// the advection part from below is a constant flux and is added to the r.h.s., except when UpstreamBoundaries are used
+			if (UpstreamBoundaries && flux_down[i] > 0.) {
+				ad[i] += f * flux_down[i] / (dz_up[i] + dz_down[i]);
+			}
 		} else if(i==NumberOfElements-1) {
 			// the diffusion part:
 			if(NumberOfElements>1) adl[i-1] += -f * 2. * D[i-1] * theta2[i-1] / (dz_down[i] * (dz_up[i] + dz_down[i]));
@@ -196,6 +202,9 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 			}
 
 			// the advection part from above is a constant flux and is added to the r.h.s.
+			if (UpstreamBoundaries && flux_up[i] < 0.) {
+				ad[i] += f * flux_up[i] / (dz_up[i] + dz_down[i]);
+			}
 		} else {
 			// the diffusion part:
 			adu[i] += -f * 2. * D[i+1] * theta2[i+1] / (dz_up[i] * (dz_up[i] + dz_down[i]));
@@ -218,21 +227,25 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 			// No flux upper boundary for diffusion (mirroring the i-1 node)
 			if(ZeroFluxUpperBoundary_diffusion) {
 				if(NumberOfElements>1) {
-					b[i] += + (1. - f) * (2. * D[i] * theta1[i] * BrineSal[i]) / (dz_down[i] * (dz_up[i] + dz_down[i]))
-					        - (1. - f) * (2. * D[i-1] * theta1[i-1] * BrineSal[i-1]) / (dz_down[i] * (dz_up[i] + dz_down[i]));
+					b[i] += - (1. - f) * (2. * D[i] * theta1[i] * BrineSal[i]) / (dz_down[i] * (dz_up[i] + dz_down[i]))
+					        + (1. - f) * (2. * D[i-1] * theta1[i-1] * BrineSal[i-1]) / (dz_down[i] * (dz_up[i] + dz_down[i]));
 				}
 			} else {
-				b[i] += (1. - f) * 2. * D[i] * theta1[i] * TopSalinity / (dz_up[i] * (dz_up[i] + dz_down[i]));
+				b[i] +=  (1. - f) * (2. * D[i-1] * theta1[i-1] * BrineSal[i-1]) / (dz_down[i] * (dz_up[i] + dz_down[i]))
+				     -   (1. - f) * (2. * D[i] * theta1[i] * BrineSal[i]) / (dz_up[i] * dz_down[i])
+				     +   (1. - f) * (2. * D[i] * theta1[i] * TopSalinity) / (dz_up[i] * (dz_up[i] + dz_down[i]));
 			}
 		} else if(i==0) {
 			// No flux lower boundary for diffusion (mirroring the i+1 node)
 			if(ZeroFluxLowerBoundary_diffusion) {
 				if(NumberOfElements>1) {
-					b[i] += + (1. - f) * (2. * D[i] * theta1[i] * BrineSal[i]) / (dz_up[i] * (dz_up[i] + dz_down[i]))
-					        - (1. - f) * (2. * D[i+1] * theta1[i+1] * BrineSal[i+1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
+					b[i] += - (1. - f) * (2. * D[i] * theta1[i] * BrineSal[i]) / (dz_up[i] * (dz_up[i] + dz_down[i]))
+					        + (1. - f) * (2. * D[i+1] * theta1[i+1] * BrineSal[i+1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
 				}
 			} else {
-				b[i] += (1. - f) * 2. * D[i] * theta1[i] * BottomSalinity / (dz_down[i] * (dz_up[i] + dz_down[i]));
+				b[i] += (1. - f) * 2. * D[i] * theta1[i] * BottomSalinity / (dz_down[i] * (dz_up[i] + dz_down[i]))
+				     -  (1. - f) * (2. * D[i] * theta1[i] * BrineSal[i]) / (dz_up[i] * dz_down[i])
+				     +  (1. - f) * (2. * D[i+1] * theta1[i+1] * BrineSal[i+1]) / (dz_up[i] * (dz_up[i] + dz_down[i]));
 			}
 		} else {
 			b[i] +=  (1. - f) * (2. * D[i-1] * theta1[i-1] * BrineSal[i-1]) / (dz_down[i] * (dz_up[i] + dz_down[i]))
@@ -247,9 +260,9 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 			std::cerr << "Only one snow/ice element present, which is not implemented.\n";
 			throw;
 		} else if (i==0) {
-			b[i] += (1. - f) * (flux_up[i] * ((!DonorCell || flux_up[i]>0.) ? (BrineSal[i+1]) : (BrineSal[i])) - flux_down[i] * ((!DonorCell || flux_down[i]<0.) ? (BottomSalinity) : (BrineSal[i]))) / (dz_up[i] + dz_down[i]) / ((DonorCell) ? (0.5) : (1.));
+			b[i] += (1. - f) * (flux_up[i] * ((!DonorCell || flux_up[i]>0.) ? (BrineSal[i+1]) : (BrineSal[i])) - flux_down[i] * (((!DonorCell && !UpstreamBoundaries) || flux_down[i]<0.) ? (BottomSalinity) : (BrineSal[i]))) / (dz_up[i] + dz_down[i]) / ((DonorCell) ? (0.5) : (1.));
 		} else if (i==NumberOfElements-1) {
-			b[i] += (1. - f) * (flux_up[i] * ((!DonorCell || flux_up[i]>0.) ? (TopSalinity) : (BrineSal[i])) - flux_down[i] * ((!DonorCell || flux_down[i]<0.) ? (BrineSal[i-1]) : (BrineSal[i]))) / (dz_up[i] + dz_down[i]) / ((DonorCell) ? (0.5) : (1.));
+			b[i] += (1. - f) * (flux_up[i] * (((!DonorCell && !UpstreamBoundaries) || flux_up[i]>0.) ? (TopSalinity) : (BrineSal[i])) - flux_down[i] * ((!DonorCell || flux_down[i]<0.) ? (BrineSal[i-1]) : (BrineSal[i]))) / (dz_up[i] + dz_down[i]) / ((DonorCell) ? (0.5) : (1.));
 		} else {
 			b[i] += (1. - f) * (flux_up[i] * ((!DonorCell || flux_up[i]>0.) ? (BrineSal[i+1]) : (BrineSal[i])) - flux_down[i] * ((!DonorCell || flux_down[i]<0.) ? (BrineSal[i-1]) : (BrineSal[i]))) / (dz_up[i] + dz_down[i]) / ((DonorCell) ? (0.5) : (1.));
 		}
@@ -268,8 +281,8 @@ bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, 
 
 
 	// Add the terms from "out of boundary" advection
-	b[0] += -f * (flux_down[0] * ((!DonorCell || flux_down[0]<0.) ? (BottomSalinity) : (0.*BrineSal[0]))) / (dz_up[0] + dz_down[0]) / ((DonorCell) ? (0.5) : (1.));
-	b[NumberOfElements-1] += f * (flux_up[NumberOfElements-1] * ((!DonorCell || flux_up[NumberOfElements-1]>0.) ? (TopSalinity) : (0.*BrineSal[NumberOfElements-1]))) / (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]) / ((DonorCell) ? (0.5) : (1.));
+	if(flux_down[0]<0 || !UpstreamBoundaries) b[0] += -f * (flux_down[0] * ((!DonorCell || flux_down[0]<0.) ? (BottomSalinity) : (0.*BrineSal[0]))) / (dz_up[0] + dz_down[0]) / ((DonorCell) ? (0.5) : (1.));
+	if(flux_up[NumberOfElements-1]>0 || !UpstreamBoundaries) b[NumberOfElements-1] += f * (flux_up[NumberOfElements-1] * ((!DonorCell || flux_up[NumberOfElements-1]>0.) ? (TopSalinity) : (0.*BrineSal[NumberOfElements-1]))) / (dz_up[NumberOfElements-1] + dz_down[NumberOfElements-1]) / ((DonorCell) ? (0.5) : (1.));
 
 
 	// Dump solver info on stdout
@@ -358,7 +371,8 @@ bool SalinityTransport::SolveSalinityTransportEquationExplicit(const double dt, 
 	// Declare vectors
 	std::vector<double> b(NumberOfElements, 0.);		// Solution vector
 
-	if(ZeroFluxUpperBoundary_advection) flux_up[NumberOfElements-1] = 0.;
+	if((ZeroFluxUpperBoundary_advection_in && flux_up[NumberOfElements-1] > 0.)
+		|| (ZeroFluxUpperBoundary_advection_out && flux_up[NumberOfElements-1] < 0.)) flux_up[NumberOfElements-1] = 0.;
 	if(ZeroFluxLowerBoundary_advection) flux_down[0] = 0.;
 
 	// Fill matrix and r.h.s. vector

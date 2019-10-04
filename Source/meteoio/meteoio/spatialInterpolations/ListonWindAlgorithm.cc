@@ -96,10 +96,10 @@ void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObje
 		throw InvalidArgumentException("VW and DW vectors should have the same size!", AT);
 
 	//compute U,v
-	std::vector<double> Ve, Vn;
+	std::vector<double> Ve(vecDataVW.size()), Vn(vecDataVW.size());
 	for (size_t ii=0; ii<vecDataVW.size(); ii++) {
-		Ve.push_back( vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad) );
-		Vn.push_back( vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad) );
+		Ve[ii] = vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad);
+		Vn[ii] = vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad);
 	}
 
 	//spatially interpolate U,V

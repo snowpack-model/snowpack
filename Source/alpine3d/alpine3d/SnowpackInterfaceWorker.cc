@@ -161,10 +161,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	if (soil_temp_depths.size()>max_Tsoil)
 		throw InvalidArgumentException("Too many soil temperatures requested", AT);
 	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
-		std::stringstream ss;
-		ss << (ii+1);
-		const std::string ii_str(ss.str());
-		params.push_back( "TSOIL"+ii_str );
+		params.push_back( "TSOIL"+mio::IOUtils::toString(ii+1) );
 	}
 	uniqueOutputGrids(params);
 	initGrids(params);
@@ -172,9 +169,9 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	const CurrentMeteo meteoPixel; //this is only necessary in order to have something for fillGrids()
 	const SurfaceFluxes surfaceFlux; //this is only necessary in order to have something for fillGrids()
 
-	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
-		size_t ix = SnowStationsCoord.at(i).first;
-		size_t iy = SnowStationsCoord.at(i).second;
+	for(size_t ii = 0; ii < SnowStationsCoord.size(); ++ii) {
+		size_t ix = SnowStationsCoord.at(ii).first;
+		size_t iy = SnowStationsCoord.at(ii).second;
 		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) { //skip nodata cells as well as water bodies, etc
 			if (!pts_in.empty() && is_special(pts_in, ix, iy)){
 				std::cout << "[W] POI (" << ix+offset << "," << iy << ") will be skipped (nodatat, water body, etc)" << std::endl;
@@ -182,12 +179,11 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 			continue;
 		}
 
-		const size_t index_SnowStation = i;
-		if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skip cells initialized with NULL
-		const SnowStation &snowPixel = *SnowStations[index_SnowStation];
+		if (SnowStations[ii]==NULL) continue; //for safety: skip cells initialized with NULL
+		const SnowStation &snowPixel = *SnowStations[ii];
 		fillGrids(ix, iy, meteoPixel, snowPixel, surfaceFlux);
 		if (!pts_in.empty()) { //is it a special point?
-			isSpecialPoint[index_SnowStation] = is_special(pts_in, ix, iy);
+			isSpecialPoint[ii] = is_special(pts_in, ix, iy);
 		}
 	}
 }
@@ -638,14 +634,15 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 
 void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
 {
-	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
-		size_t ix = SnowStationsCoord.at(i).first;
-		size_t iy = SnowStationsCoord.at(i).second;
+	for(size_t ii = 0; ii < SnowStationsCoord.size(); ++ii) {
+		const size_t ix = SnowStationsCoord.at(ii).first;
+		const size_t iy = SnowStationsCoord.at(ii).second;
 		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) continue; //skip nodata cells as well as water bodies, etc
+		if (SnowStations[ii]==NULL) continue; //for safety: skipped cells were initialized with NULL
+
 		if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
-		const size_t index_SnowStation = i;
-		if (SnowStations[index_SnowStation]==NULL) continue; //for safety: skipped cells were initialized with NULL
-		Snowpack::snowPreparation( *SnowStations[index_SnowStation] );
+		if (SnowStations[ii]==NULL) continue; //for safety: skipped cells were initialized with NULL
+		Snowpack::snowPreparation( *SnowStations[ii] );
 	}
 }
 
@@ -700,9 +697,9 @@ bool SnowpackInterfaceWorker::is_special(const std::vector< std::pair<size_t,siz
  */
 void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow_pixel)
 {
-	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
+	for(size_t ii = 0; ii < SnowStationsCoord.size(); ++ii) {
 		#pragma omp critical (snow_station_lock)
-		ptr_snow_pixel.push_back( SnowStations[i] );
+		ptr_snow_pixel.push_back( SnowStations[ii] );
 	}
 }
 
@@ -712,10 +709,10 @@ void SnowpackInterfaceWorker::getLateralFlow(std::vector<SnowStation*>& ptr_snow
  */
 void SnowpackInterfaceWorker::setLateralFlow(const std::vector<SnowStation*>& ptr_snow_pixel)
 {
-	for(size_t i = 0; i < SnowStationsCoord.size(); ++i) {
-		if (SnowStations[i]!=NULL) {
-			for(size_t n=0; n<SnowStations[i]->getNumberOfElements(); n++) {
-				SnowStations[i]->Edata[n].lwc_source = ptr_snow_pixel[i]->Edata[n].lwc_source;
+	for(size_t ii = 0; ii < SnowStationsCoord.size(); ++ii) {
+		if (SnowStations[ii]!=NULL) {
+			for(size_t n=0; n<SnowStations[ii]->getNumberOfElements(); n++) {
+				SnowStations[ii]->Edata[n].lwc_source = ptr_snow_pixel[ii]->Edata[n].lwc_source;
 			}
 		}
 	}

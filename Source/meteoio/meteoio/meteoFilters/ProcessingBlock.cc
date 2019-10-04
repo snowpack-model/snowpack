@@ -54,6 +54,8 @@
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <meteoio/meteoFilters/FilterDespikingPS.h>
 #include <meteoio/meteoFilters/FilterParticle.h>
+#include <meteoio/meteoFilters/FilterKalman.h>
+#include <meteoio/meteoFilters/FilterMaths.h>
 
 namespace mio {
 /**
@@ -79,7 +81,7 @@ namespace mio {
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
  * a list of the various meteo parameters (see MeteoData) with their associated choice of filtering algorithms and
- * optional parameters.The filters are applied serialy, in the order they are given in. An example of such section is given below:
+ * optional parameters.The filters are applied serially, in the order they are given in. An example of such section is given below:
  * @code
  * [Filters]
  * TA::filter1   = min_max
@@ -106,7 +108,7 @@ namespace mio {
  *
  * @section processing_available Available processing elements
  * New filters can easily be developed. The filters that are currently available are the following:
- * - NONE: this does nothing (this is useful in an \ref config_import "IMPORT" to overwritte previous filters);
+ * - NONE: this does nothing (this is useful in an \ref config_import "IMPORT" to overwrite previous filters);
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - MIN_MAX: range check filter, see FilterMinMax
@@ -118,9 +120,12 @@ namespace mio {
  * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
- * - TIME_CONSISTENCY: reject data that changes too much , see FilterTimeconsistency
+ * - TIME_CONSISTENCY: reject data that changes too much, see FilterTimeconsistency
  * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
  * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
+ * - MATHS: evaluating arithmetic expressions with access to meteo data, see FilterMaths
+ * - KALMAN: dynamic state likelihood estimation via Bayesian statistics (experimental), see FilterKalman
+ * - PARTICLE: Monte Carlo sampling method for dynamic state estimation (experimental), see FilterParticle
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete all or some data, see FilterSuppr
@@ -140,10 +145,13 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
+ * - RHWATERTOICE: correct relative humidity over water to over ice in case temperature is below freezing, see ProcRHWaterToIce
  *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
+ * - SORT: sort the timestamps in increasing order, see TimeSort
+ * - TIMELOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
  */
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
@@ -181,6 +189,10 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterDespikingPS(vecArgs, blockname);
 	} else if (blockname == "PARTICLE"){
 		return new FilterParticle(vecArgs, blockname);
+	} else if (blockname == "KALMAN"){
+		return new FilterKalman(vecArgs, blockname);
+	} else if (blockname == "MATHS"){
+		return new FilterMaths(vecArgs, blockname);
 	}
 
 	//general data transformations
@@ -230,7 +242,9 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
 	} else if (blockname == "UNDST"){
 		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
-	} else if (blockname == "LOOP"){
+	} else if (blockname == "SORT"){
+		return new TimeSort(vecArgs, blockname);
+	} else if (blockname == "TIMELOOP"){
 		return new TimeLoop(vecArgs, blockname, cfg.get("TIME_ZONE", "Input"));
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);

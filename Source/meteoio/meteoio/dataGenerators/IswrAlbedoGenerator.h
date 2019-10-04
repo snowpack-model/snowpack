@@ -28,7 +28,7 @@ namespace mio {
  * @brief Incoming or reflected short wave generator.
  * @details
  * Generate the incoming short wave radiation from the reflected short wave radiation or the opposite. The albedo
- * ie either a grassy soil albedo or a snow albedo depending on the snow height. It has the following optional arguments:
+ * is either a grassy soil albedo or a snow albedo depending on the snow height. It has the following optional arguments:
  *  - FORCE:  If no snow height is available, the generator will simply return unless the "FORCE" argument is set to TRUE
  *
  * @code

@@ -147,6 +147,13 @@ void trim(std::string& str)
 	}
 }
 
+std::string trim(const std::string &str_in)
+{
+	std::string str(str_in);
+	trim(str);
+	return str;
+}
+
 void replace_all(std::string &input, const std::string& search, const std::string& format)
 {
 	const size_t len = search.length();
@@ -202,6 +209,8 @@ void cleanFieldName(std::string& field, const bool& clean_whitespaces, const cha
 
 size_t count(const std::string &input, const std::string& search)
 {
+	if (search.empty() || input.empty()) return std::string::npos;
+	
 	const size_t len = search.length();
 	size_t pos = input.find(search);
 	size_t count = 0;
@@ -399,6 +408,23 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 	}
 
 	return vecString.size();
+}
+
+size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim)
+{ //split a line into strings, and extract a double vector from there
+	vecRet.clear();
+	std::istringstream iss(line_in);
+	std::string word;
+
+	double num;
+	while (getline(iss, word, delim)) {
+		std::istringstream tok(word);
+		tok >> num;
+		if (tok.fail())
+			throw InvalidFormatException("Can not read column in data line \"" + line_in + "\"", AT);
+		vecRet.push_back(num);
+	}
+	return vecRet.size();
 }
 
 // generic template function convertString must be defined in the header

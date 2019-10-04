@@ -23,13 +23,15 @@
 namespace mio {
 
 /**
- * @brief Generate daily variations of a given amplitude around a single daily average.
+ * @brief Generate daily variations around a single daily average.
  * @details
- * The paremeter to be interpolated is assumed to be a daily average and a sinusoidal variation of the
- * amplitude given as argument will be generated (it is also possible to provide the "phase" or the
- * fraction of the day when the minimum is reached). If data bearing the same name followed by "_MIN" or "_MAX"
- * exist, there is no need to provide an amplitude as they will be used instead (but if the amplitude is provided, it
- * will be used as a fallback when no min or max is available).
+ * The parameter to be interpolated is assumed to be a daily average and a sinusoidal variation of the
+ * data will be generated around this average.
+ *
+ * Either one or two additional parameters bearing the same name followed by "_MIN" and/or "_MAX"
+ * are provided or a fixed amplitude is provided as argument (it will also be used as a fallback if the _MIN and
+ * _MAX parameters are missing at some timesteps). Iit is also possible to provide the "phase" or the
+ * fraction of the day when the minimum is reached.
  *
  * @code
  * [Interpolations1D]

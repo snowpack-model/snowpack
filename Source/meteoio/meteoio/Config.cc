@@ -118,9 +118,9 @@ void Config::deleteKeys(std::string keymatch, std::string section, const bool& a
 	if (anywhere) {
 		std::map<std::string,std::string>::iterator it = properties.begin();
 		while (it != properties.end()) {
-			const size_t found_section = (it->first).find(section, 0);
+			const size_t section_start = (it->first).find(section, 0);
 
-			if ( found_section!=string::npos && (it->first).find(keymatch, section_len)!=string::npos )
+			if ( section_start==0 && (it->first).find(keymatch, section_len)!=string::npos )
 				properties.erase( it++ ); // advance before iterator become invalid
 			else //wrong section or no match
 				++it;
@@ -202,19 +202,19 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 {
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keymatch);
-	const size_t section_len = section.length();
 	std::vector< std::pair<std::string, std::string> > vecResult;
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t found_section = (it->first).find(section, 0);
-			if (found_section==string::npos) continue; //not in the right section
-
-			const size_t found_pos = (it->first).find(keymatch, section_len);
-			if (found_pos!=string::npos) { //found it!
-				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-				vecResult.push_back( make_pair(key, it->second));
+			const size_t section_start = (it->first).find(section, 0);
+			if (section_start==0) { //found the section!
+				const size_t section_len = section.length();
+				const size_t found_pos = (it->first).find(keymatch, section_len);
+				if (found_pos!=string::npos) { //found it!
+					const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
+					vecResult.push_back( make_pair(key, it->second));
+				}
 			}
 		}
 	} else {
@@ -222,6 +222,7 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(keymatch, 0);
 			if (found_pos==0) { //found it!
+				const size_t section_len = section.length();
 				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
 				vecResult.push_back( make_pair(key, it->second));
 			}
@@ -236,19 +237,19 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 {
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keymatch);
-	const size_t section_len = section.length();
 	std::vector<std::string> vecResult;
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t found_section = (it->first).find(section, 0);
-			if (found_section==string::npos) continue; //not in the right section
-
-			const size_t found_pos = (it->first).find(keymatch, section_len);
-			if (found_pos!=string::npos) { //found it!
-				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-				vecResult.push_back(key);
+			const size_t section_start = (it->first).find(section, 0);
+			if (section_start==0) { //found the section!
+				const size_t section_len = section.length();
+				const size_t found_pos = (it->first).find(keymatch, section_len);
+				if (found_pos!=string::npos) { //found it!
+					const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
+					vecResult.push_back(key);
+				}
 			}
 		}
 	} else {
@@ -257,6 +258,7 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(keymatch, 0);
 			if (found_pos==0) { //found it!
+				const size_t section_len = section.length();
 				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
 				vecResult.push_back(key);
 			}

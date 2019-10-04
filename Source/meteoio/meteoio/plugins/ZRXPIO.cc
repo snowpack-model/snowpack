@@ -68,19 +68,20 @@ namespace mio {
  * `MIO_SEEG2_TA` could be reserved for a MeteoIO-filtered temperature timeline of station `SEEG2`
  * and will then always contribute to this graph.
  *
- * @note `CUNIT` is not automatically set by MeteoIO, rather it is made available in a comment. This is because
- * if a unit is present, then WISKI is picky about the exact choice (e. g. `PSUM` would have to be mm instead of kg/m2,
- * or it would have to be mapped). If it is omitted however, it can simply be set in the WISKI timeline.
- * This is not a problem because MeteoIO always normalizes to SI.
- * You can make the plugin output the unit as a proper keyword by setting ZRXP_WRITE_UNITS (see below).
+ * @note `CUNIT` is automatically set by MeteoIO, but you can make it available as a comment only by setting ZRXP_WRITE_UNITS
+ * (see below). This is because if a unit is present, then WISKI is picky about the exact choice (a new unit has to be created in
+ * the database). If it is omitted however, it can be set in the WISKI timeline.
+ * @note WISKI demands Latin-1 as character encoding. Running on Windows, you can set ZRXP_CONVERT_LATIN to `true`
+ * to let the operating system encode the degrees symbol
+ * (or convert after the fact with e. g. `iconv -f UTF-8 -t ISO-8859-1 "$file" -o "$file".out`).
  *
  * @section zrxp_keywords Keywords
  * This plugin uses the following keywords in the [Output] section (all of which are optional):
  * - ZRXP_FILE_EXTENSION: The file extension to use for the output files (default: `zrxp`);
  * - ZRXP_SEPARATOR: The delimiter used to separate the header fields (default: `|`);
  * - ZRXP_WRITE_UNITS: Controls whether MeteoIO's stored units for the parameters are written out.
- * Can be `COMMENT` (default, not used in WISKI import), `KEYWORD` (respected by the
- * WISKI import), or `OFF`;
+ * Can be `KEYWORD` (default, respected by the WISKI import), `COMMENT` (not used in WISKI import), or `OFF`;
+ * - ZRXP_CONVERT_LATIN: Encode non-ASCII characters on the operating system running the program (default: false);
  * - ZRXP_WRITE_CNR: Outputs MeteoIO's internal parameter index (default: true);
  * - ZRXP_RINVAL: The value given to WISKI to interpret as missing data (default: MeteoIO's nodata, usually -999);
  * - ZRXP_REMARK: A remark that is passed through to each output line (default: empty);
@@ -90,10 +91,13 @@ namespace mio {
  * - ZRXP_STATUS_FILTERED: Status for filtered (changed) data (default: 43);
  * - ZRXP_STATUS_GENERATED: Status for data originating from a MeteoIO generator (default: 44);
  * - ZRXP_STATUS_NODATA: Status for `nodata` values (default: disabled, has priority over all others).
+ * - ZRXP_STATUS_UNALTERED_NODATA: Status for when `nodata` is already present in the input file and left untouched (default: 255).
  *
  * The last five status parameters are used to transport data quality assurance flags to the database.
  * `ZRXP_STATUS_NODATA` will be set only if the *filtered* value is found to be `nodata` (e. g. -999).
  * If `ZRXP_STATUS_NODATA` is not given a value, then this check is omitted and timesteps filtered to nodata will get the flag "qa_filtered".
+ * Furthermore, if there is a nodata value in the input file that is not altered at all by MeteoIO, then `ZRXP_STATUS_UNALTERED_NODATA`
+ * is set as flag, and the value is set to `ZRXP_RINVAL`.
  *
  * @note In addition, you can separately set `ZRXP_RINVAL`. This is necessary for a use case where original and
  * potentially newer data is merged with filtered data. WISKI would fill data gaps with original data and
@@ -144,11 +148,6 @@ namespace mio {
  * were printed the next header starting with \c \#\#Station... could follow below.
  * Here, more information about the <a href="https://www.tbbm.at/display/TBBMAT/ZRXP">ZRXP format specifications</a>
  * is available.
- *
- * @note WISKI demands Latin-1 as character encoding, which can be troublesome for some symbols. For example,
- * if you want to pass units (`ZRXP_WRITE_UNITS=KEYWORD`), the wind direction in ° might not be read. This is
- * why you can turn unit output off altogether (or convert after the fact with e. g.
- * `iconv -f UTF-8 -t ISO-8859-1 "$file" -o "$file".out`).
  */
 
 /**
@@ -186,20 +185,23 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	cfg.getValue("ZRXP_FILE_EXTENSION", "Output", zrxp_file_ext, IOUtils::nothrow);
 	if (zrxp_file_ext.substr(0, 1) == ".") zrxp_file_ext.erase(0, 1); //allow "rxp" and ".rxp"
 
-	std::string zrxp_write_units("COMMENT"); //optional since WISKI can be picky if the unit is fixed
+	std::string zrxp_write_units("KEYWORD"); //optional since WISKI can be picky if the unit is fixed
 	cfg.getValue("ZRXP_WRITE_UNITS", "Output", zrxp_write_units, IOUtils::nothrow);
 	IOUtils::toUpper(zrxp_write_units); //anything but "COMMENT" and "KEYWORD" means "OFF"
+	bool zrxp_convert_latin(false);
+	cfg.getValue("ZRXP_CONVERT_LATIN", "Output", zrxp_convert_latin, IOUtils::nothrow);
 
 	bool zrxp_write_cnr(true); //output parameter index
 	cfg.getValue("ZRXP_WRITE_CNR", "Output", zrxp_write_cnr, IOUtils::nothrow);
 
 	//read which quality flags should be set for filtered, resampled, generated, and nodata:
-	int qa_unaltered(41), qa_resampled(42), qa_generated(43), qa_filtered(44), qa_nodata;
+	int qa_unaltered(41), qa_resampled(42), qa_generated(43), qa_filtered(44), qa_nodata, qa_unaltered_nodata(255);
 	bool use_qa_nodata(false); //disabled by default
 	cfg.getValue("ZRXP_STATUS_UNALTERED", "Output", qa_unaltered, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_RESAMPLED", "Output", qa_resampled, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_GENERATED", "Output", qa_generated, IOUtils::nothrow);
 	cfg.getValue("ZRXP_STATUS_FILTERED", "Output", qa_filtered, IOUtils::nothrow);
+	cfg.getValue("ZRXP_STATUS_UNALTERED_NODATA", "Output", qa_unaltered_nodata, IOUtils::nothrow);
 	if (cfg.keyExists("ZRXP_STATUS_NODATA", "Output")) { //value is nodata before and/or after filtering
 		cfg.getValue("ZRXP_STATUS_NODATA", "Output", qa_nodata);
 		use_qa_nodata = true; //if not used, nodata is not treated differently
@@ -266,12 +268,19 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				if (!vecUsedParams[pp]) continue; //don't output all nodata params
 
 				const std::string param_name = vecMeteo[ii].front().getNameForParameter(pp);
-				const size_t param_idx = MeteoGrids::getParameterIndex(param_name);
 				//only the MeteoGrids class offers units, so get it from there, if available:
 				std::string param_unit("N/A"), param_description("N/A");
-				if (param_idx != IOUtils::npos) {
-					param_unit = MeteoGrids::getParameterUnits(MeteoGrids::getParameterIndex(param_name));
-					param_description = MeteoGrids::getParameterDescription(MeteoGrids::getParameterIndex(param_name));
+				if (param_name.substr(0, 3) == "TS.") { //there are no standard names for this; SNOWPACK expects TS1, TS2, ...
+						param_unit = "K";
+						param_description = "Snow temperature " + param_name.substr(3) + " cm above ground";
+				} else {
+					const size_t param_idx = MeteoGrids::getParameterIndex(param_name);
+					if (param_idx != IOUtils::npos) {
+						param_unit = MeteoGrids::getParameterUnits(MeteoGrids::getParameterIndex(param_name));
+						param_description = MeteoGrids::getParameterDescription(MeteoGrids::getParameterIndex(param_name));
+						if ( zrxp_convert_latin && (param_unit == "°") ) //WISKI needs ISO-8859-1 - this is the only troublesome standard unit
+							param_unit = static_cast<char>(0xb0); //let the OS encode it
+					}
 				}
 
 				//this should be a unique data exchange key
@@ -294,14 +303,15 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				outfile << std::endl;
 				outfile << "#TZUTC" << vecMeteo[ii].front().date.getTimeZone() << sep << std::endl;
 				outfile << "#CNAME" << param_name << sep;
-				if (zrxp_write_units == "KEYWORD")
+				if ( (zrxp_write_units == "KEYWORD") && (param_unit != "N/A") ) //"N/A" is put in the description but not as valid unit
 					outfile << "CUNIT" << param_unit << sep;
 				outfile << std::endl;
 				outfile << "#LAYOUT" << zrxp_layout << sep << std::endl;
 
 				for (size_t jj = 0; jj < vecMeteo[ii].size(); ++jj) { //loop through datasets
+					double out_value = vecMeteo[ii][jj](pp);
 					//transport data qa flags (same for all parameters of a timestep, except qa_nodata):
-					//qa_unaltered(41), qa_resampled(42), qa_filtered(43), qa_generated(44), qa_nodata=190;
+					//qa_unaltered(41), qa_resampled(42), qa_filtered(43), qa_generated(44), qa_nodata=190, qa_unaltered_nodata(255);
 					int qa_status(qa_unaltered);
 					if (vecMeteo[ii][jj].isGenerated(pp)) {
 						qa_status = qa_generated;
@@ -312,9 +322,12 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 							qa_status = qa_nodata;
 						else
 							qa_status = qa_filtered;
+					} else if (vecMeteo[ii][jj](pp) == IOUtils::nodata) { //transport nodata without touching it
+						qa_status = qa_unaltered_nodata;
+						out_value = zrxp_rinval;
 					}
 					//print timestamp, value, status, and optional remark
-					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << vecMeteo[ii][jj](pp)
+					outfile << vecMeteo[ii][jj].date.toString(Date::NUM) << " " << out_value
 								<< " " << qa_status << zrxp_remark << std::endl;
 				} //endfor jj
 

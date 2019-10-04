@@ -125,20 +125,32 @@ double Atmosphere::waterVaporDensity(const double& Temperature, const double& Va
 * @brief Standard atmosphere wet bulb temperature.
 * This gives the lowest temperature that could be reached by water evaporation. It is therefore linked to
 * relative humidity. This implementation assumes a standard atmosphere for pressure and saturation pressure.
-* @param T air temperature (K)
+* @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)
 * @param altitude altitude above sea level (m)
 * @return wet bulb temperature (K)
 */
-double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const double& altitude)
-{
-	static const double L = Cst::l_water_vaporization; //latent heat of vaporisation
-	static const double mixing_ratio = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
-	const double p = stdAirPressure(altitude);
-	const double Vp = vaporSaturationPressure(T);
+double Atmosphere::wetBulbTemperature(const double& TA, const double& RH, const double& altitude)
+{ //naive numerical approach by guessing T_wet in RH = f(TA, T_wet, P) until we are right
+	const double PP = stdAirPressure(altitude);
+	const double ed = vaporSaturationPressure(TA);
+	double TW = TA; //can't be higher
+	double hum = 1.;
+	while(hum > RH) { //calculate RH from TA and a guess for wet bulb temperature
+		TW = TW - 0.01; //new guess; TODO: bisection
+		const double AA = 0.00066 * (1. + 0.00115 * (TW - Cst::t_water_freezing_pt));
+		const double ew = vaporSaturationPressure(TW);
+		hum = (ew - AA * PP * (TA - TW)) / ed; //humidity given TA and T_wet
+	}
+	return TW;
 
-	return ( T - (RH*Vp - Vp) * mixing_ratio * L / p / Cst::specific_heat_air );
-}
+//	static const double L = Cst::l_water_vaporization; //latent heat of vaporisation
+//	static const double mixing_ratio = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
+//	const double p = stdAirPressure(altitude);
+//	const double Vp = vaporSaturationPressure(T);
+//	return ( T - (RH*Vp - Vp) * mixing_ratio * L / p / Cst::specific_heat_air );
+//
+} //cf. https://maxwellsci.com/print/rjaset/v6-2984-2987.pdf
 
 /**
 * @brief Black Globe Temperature.

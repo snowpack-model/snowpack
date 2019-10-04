@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/libsmet.h>
 #include <errno.h>
+#include <cstring>
 #include <string.h>
 #include <limits>
 #include <cmath>
@@ -553,7 +554,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 
-	ofstream fout;
+	bool write_headers = false;
+	ios_base::openmode mode_flags = ios::binary; //read as binary to avoid eol mess
 	if (append_mode) {
 		if (!append_possible) {
 			//check where to insert the new data
@@ -563,22 +565,21 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 				reader.truncate_file(vec_timestamp[0]);
 			append_possible = true;
 		}
-		fout.open(filename.c_str(), ios::binary | ofstream::app);
-		if (fout.fail())
-			throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
+		mode_flags = ios::binary | ofstream::app;
 	} else { //normal mode
 		if (!append_possible) { //first write -> overwrite potential previous content
-			fout.open(filename.c_str(), ios::binary);
-			if (fout.fail())
-				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
-			write_header(fout); //Write the header info, always in ASCII format
+			write_headers = true;
 			append_possible = true; //now all other calls to "open" will be in append mode
 		} else { //after the first write: append
-			fout.open(filename.c_str(), ios::binary | ofstream::app);
-			if (fout.fail())
-				throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(strerror(errno)), SMET_AT);
+			mode_flags = ios::binary | ofstream::app;
 		}
 	}
+	
+	std::ofstream fout(filename.c_str(), mode_flags);
+	if (fout.fail())
+		throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
+	if (write_headers) write_header(fout); //Write the header info, always in ASCII format
+	
 
 	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
 		fout.close();
@@ -627,11 +628,10 @@ void SMETWriter::write(const std::vector<double>& data)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
-	std::ofstream fout;
-	fout.open(filename.c_str(), ios::binary);
+	std::ofstream fout(filename.c_str(), ios::binary);
 	if (fout.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for writing, possible reason: " << std::strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -743,8 +743,8 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::of
 		errno = 0;
 		fout.open(filename.c_str(), ios::out | ios::app | ios::binary); //reopen as binary file
 		if (fout.fail()) {
-			ostringstream ss;
-			ss << "Error writing to file \"" << filename << "\", possible reason: " << strerror(errno);
+			std::ostringstream ss;
+			ss << "Error writing to file \"" << filename << "\", possible reason: " << std::strerror(errno);
 			throw SMETException(ss.str(), SMET_AT);
 		}
 
@@ -824,13 +824,12 @@ SMETReader::SMETReader(const std::string& in_fname)
               timestamp_present(false), julian_present(false), isAscii(true), mksa(true),
               timestamp_interval(false), julian_interval(false)
 {
-	std::ifstream fin; //Input file streams
 	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -1081,23 +1080,21 @@ void SMETReader::read_header(std::ifstream& fin)
 
 void SMETReader::truncate_file(const std::string& date_stop) const
 {
-	std::ifstream fin; //Input file streams
 	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
+	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
-	std::ofstream fout; //for the tmp file
 	const std::string filename_tmp( filename + ".tmp" );
-	fout.open(filename_tmp.c_str(), ios::out|ios::binary);
+	std::ofstream fout(filename_tmp.c_str(), ios::out|ios::binary); //for the tmp file
 	if (fout.fail()) {
-		ostringstream ss;
-		ss << "Error opening temporary file \"" << filename_tmp << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening temporary file \"" << filename_tmp << "\" for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -1112,8 +1109,8 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 
 	errno = 0;
 	if (remove(filename_tmp.c_str())!=0) { //delete temporary file
-		ostringstream ss;
-		ss << "Error deleting file \"" << filename << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error deleting file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 }
@@ -1193,10 +1190,10 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 
 	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
+	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -1239,15 +1236,13 @@ void SMETReader::read(std::vector<double>& vec_data)
 	if (timestamp_present)
 		throw SMETException("Requesting not to read timestamp when there is one present in \""+filename+"\"", SMET_AT);
 
-	ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
-
-	ifstream fin;
 	if (!SMETCommon::fileExists(filename)) throw SMETException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
-	fin.open (filename.c_str(), mode);
+	const ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
+	std::ifstream fin(filename.c_str(), mode);
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -1271,7 +1266,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 			fin.seekg(data_start_fpointer);
 
 		if (isAscii) {
-			vector<string> tmp_vec;
+			std::vector<std::string> tmp_vec;
 			read_data_ascii(fin, tmp_vec, vec_data);
 		} else {
 			read_data_binary(fin, vec_data);
@@ -1290,8 +1285,8 @@ std::string SMETReader::getLastTimestamp() const
 	errno = 0;
 	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -1365,13 +1360,13 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data)
 {
 	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
-	vector<string> tmp_vec;
-	string line;
+	std::vector<std::string> tmp_vec;
+	std::string line;
 	size_t linenr = 0;
 	streampos current_fpointer = static_cast<streampos>(-1);
 
 	while (!fin.eof()){
-		const streampos tmp_fpointer = fin.tellg();
+		const std::streampos tmp_fpointer = fin.tellg();
 		line.clear();
 		getline(fin, line, eoln);
 		linenr++;

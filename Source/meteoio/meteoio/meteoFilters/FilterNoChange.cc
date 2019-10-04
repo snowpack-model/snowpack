@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : WindowedFilter(vecArgs, name)
+          : WindowedFilter(vecArgs, name), max_variance(0.)
 {
 	properties.stage = ProcessingProperties::first;
 	
@@ -31,6 +31,7 @@ FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::st
 	properties.time_after  = min_time_span;
 	properties.points_before = min_data_points;
 	properties.points_after = min_data_points;
+	parse_args(vecArgs);
 }
 
 void FilterNoChange::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -47,9 +48,19 @@ void FilterNoChange::process(const unsigned int& param, const std::vector<MeteoD
 			for (size_t jj=start; jj<=end; jj++)
 				data[jj-start] = ivec[jj](param);
 			const double variance = Interpol1D::variance( data );
-			if (variance==0.)
+			if (variance<=max_variance)
 				value = IOUtils::nodata;
 		} else if (!is_soft) value = IOUtils::nodata;
+	}
+}
+
+void FilterNoChange::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	const std::string where( "Filters::"+block_name );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="MAX_VARIANCE") {
+			IOUtils::parseArg(vecArgs[ii], where, max_variance);
+		}
 	}
 }
 

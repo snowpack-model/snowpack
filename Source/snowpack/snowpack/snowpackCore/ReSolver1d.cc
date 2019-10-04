@@ -58,7 +58,7 @@ using namespace mio;
 const double ReSolver1d::max_theta_ice = 0.99;	//An ice pore space of around 5% is a reasonable value: K. M. Golden et al. The Percolation Phase Transition in Sea Ice, Science 282, 2238 (1998), doi: 10.1126/science.282.5397.2238
 
 //Setting convergence criteria and numerical limits
-const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-6;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion
+const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-5;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion
 const double ReSolver1d::REQUIRED_ACCURACY_THETA = 1E-5;	//Required accuracy for the Richard solver: this is for the delta theta convergence criterion. It is recommended to adjust PhaseChange::RE_theta_r in PhaseChanges.cc in case this value is changed.
 								//Huang et al. (1996) proposes 0.0001 here (=1E-4). 1E-4 causes some mass balance problems. Therefore, it is set to 1E-5.
 const double ReSolver1d::convergencecriterionthreshold = 0.8;	//Based on this value of theta_dim, either theta-based convergence is chosen, or h-based. Note we need to make this destinction, beacuse theta-based does not work close to saturation or with ponding.
@@ -811,7 +811,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	BoundaryConditions aTopBC;			//Actual applied top boundary condition (can only be either Dirichlet or Neumann, as all the others can be translated in an application of either one of those two.)
 	BoundaryConditions aBottomBC;			//Actual applied bottom boundary condition (can only be either Dirichlet or Neumann, as all the others can be translated in an application of either one of those two.)
 	double htop=0., TopFluxRate=0.;			//Dirichlet (constant head) and Neumann (constant flux) upper boundary values respectively.
-	double h_d_uppernode=0.;			//Used for LIMITEDFLUXEVAPORATION boundary condition.
+	double h_d_uppernode=h_d;			//Used for LIMITEDFLUXEVAPORATION boundary condition.
 	double hbottom=0., BottomFluxRate=0.;		//Dirichlet (constant head) and Neumann (constant flux) lower boundary values respectively.
 	double actualtopflux=0;				//Stores the actual applied flux through top (positive is inflow).
 	double refusedtopflux=0;			//Stores the difference in flux that was requested, but could not be applied
@@ -959,12 +959,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Now calculate the theta that should be considered "dry soil".
 		theta_d[i]=EMS[i].VG.fromHtoTHETAforICE(h_d, 0.);
 
-		//Now check if this case is not too extreme
-		const double fact=1000.;
-		if(theta_d[i]<EMS[i].VG.theta_r+(REQUIRED_ACCURACY_THETA/fact)) {
-			theta_d[i]=EMS[i].VG.theta_r+(REQUIRED_ACCURACY_THETA/fact);
-		}
-
 		//Now make sure that the water content in SNOWPACK's ElementData matches the soil settings (not too wet, not too dry):
 		// 1) Not too wet
 		if(EMS[i].theta[SOIL]>Constants::eps2) {		//For soil
@@ -1011,7 +1005,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Now copy the EMS water content into the working arrays to solve Richards-equation (so this is the important part were this function is coupled to the rest of SNOWPACK).
 		if(EMS[i].theta[SOIL]<Constants::eps2) {		//For snow
 			h_n[i]=EMS[i].VG.fromTHETAtoHforICE(EMS[i].theta[WATERINDEX], h_d, theta_i_n[i]);
-			if(variant=="SEAICE" && ((NDS[i].z < Xdata.Seaice->SeaLevel && fabs(EMS[i].theta[WATERINDEX]-EMS[i].VG.theta_s) < Constants::eps2) || (h_n[i]>EMS[i].VG.h_e-Constants::eps2 && EMS[i].h>EMS[i].VG.h_e-Constants::eps2)) && i>0 && h_n[i-1]>EMS[i].VG.h_e-Constants::eps2) {
+			if(variant=="SEAICE" && h_n[i]>EMS[i].VG.h_e-Constants::eps && EMS[i].h>EMS[i].VG.h_e-Constants::eps && NDS[i].z < Xdata.Seaice->SeaLevel) {
 				h_n[i]=EMS[i].h;
 			}
 		} else {
@@ -1303,9 +1297,6 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					if(flux_compare > TopFluxRate) {
 						TopFluxRate=std::min(0., flux_compare);
 					}
-				}
-				if(h_np1_m[uppernode]>EMS[uppernode].VG.h_e) {
-					TopFluxRate=std::min(0., TopFluxRate);
 				}
 			} else if (TopBC==WATERTABLE) {
 				std::cout << "ERROR in ReSolver1d.cc: WATERTABLE cannot be applied as top boundary condition (doesn't make sense)!\n";
@@ -1874,8 +1865,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							track_accuracy_h=fabs(delta_h[memstate%nmemstates][i]);
 						}
 						//Now check against convergence criterion:
-						//if(fabs(delta_h[memstate%nmemstates][i]/h_np1_m[i]) > REQUIRED_ACCURACY_H) {	//relative accuracy
-						if(fabs(delta_h[memstate%nmemstates][i])>REQUIRED_ACCURACY_H) {			//absolute accuracy
+						if(fabs(delta_h[memstate%nmemstates][i]/h_np1_m[i]) > REQUIRED_ACCURACY_H) {	//relative accuracy
+						//if(fabs(delta_h[memstate%nmemstates][i])>REQUIRED_ACCURACY_H) {		//absolute accuracy
 							accuracy=fabs(delta_h[memstate%nmemstates][i]);
 						}
 					}
@@ -1891,7 +1882,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							track_accuracy_theta=fabs(delta_theta[i]+delta_theta_i[i]*(Constants::density_ice/Constants::density_water));
 						}
 						//Now check against convergence criterion:
-						if (fabs(delta_theta[i]+delta_theta_i[i]*(Constants::density_ice/Constants::density_water)) > REQUIRED_ACCURACY_THETA ) {
+						if (fabs(delta_theta[i]+delta_theta_i[i]*(Constants::density_ice/Constants::density_water)) / (EMS[i].VG.theta_s - EMS[i].VG.theta_r) > REQUIRED_ACCURACY_THETA ) {
 							accuracy=fabs(delta_theta[i]+delta_theta_i[i]*(Constants::density_ice/Constants::density_water));
 						}
 					}
@@ -2142,20 +2133,14 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				}
 
 				// Apply and verify solution
-				const double tol = Constants::eps;
+				const double tol = 0.;
 				for (i = lowernode; i <= uppernode; i++) {
 					//EMS[i].salinity = Salinity.BrineSal[i] * theta_np1_mp1[i];
 					//EMS[i].salinity += DeltaSal[i] * (theta_np1_mp1[i]);
 
 					//Verify new salinity profile
 					if(EMS[i].salinity < 0. && TimeAdvance > 900. - Constants::eps2) {
-						if(EMS[i].salinity>-tol) {
-							EMS[i].salinity = tol;
-						} else {
-							std::cout << "[E] Salinity at e=" << i << ": " << std::setprecision(8) << EMS[i].salinity << "!\n";
-							EMS[i].salinity = tol;
-							//throw;
-						}
+						EMS[i].salinity = tol;
 					}
 					Xdata.Edata[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
 				}
@@ -2185,12 +2170,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					Salinity.sb[i] = 0.;
 					//Verify new salinity profile
 					if(EMS[i].salinity < 0. && TimeAdvance > 900. - Constants::eps2) {
-						if(EMS[i].salinity>-tol) {
-							EMS[i].salinity = tol;
-						} else {
-							std::cout << "[E] Salinity at e=" << i << ": " << std::setprecision(8) << EMS[i].salinity << "!\n";
-							EMS[i].salinity = tol;
-						}
+						EMS[i].salinity = tol;
 					}
 					EMS[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
 					EMS[i].updDensity();

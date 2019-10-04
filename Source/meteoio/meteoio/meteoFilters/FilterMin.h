@@ -18,8 +18,6 @@
 #ifndef FILTERMIN_H
 #define FILTERMIN_H
 
-//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>

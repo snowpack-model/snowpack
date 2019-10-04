@@ -55,14 +55,17 @@ if [ "${param}" = "time" ]; then
 						end=$2*24*3600; start=$1*24*3600; nr=$3
 					}
 					period=int( (end-start)/(nr-1) + 0.5); #round to the nearest second
-					if (period<299)
+					if (period<299 && period!=60 && period!=120 && period!=180 && period!=240)
 						sampling=sprintf("%3.0f s  ", period)
 					else if (period<60*60)
 						sampling=sprintf("%3.0f min", period/60)
 					else if (period<24*3600)
 						sampling=sprintf("%3.0f h  ", period/3600)
-					else
-						sampling=sprintf("%3.0f day", period/(3600*24))
+					else {
+						period_days=period/(3600*24)
+						if (period_days==1) sampling=sprintf("%3.0f days", period_days)
+						else sampling=sprintf("%3.0f days", period_days)
+					}
 					printf( "%04d m\t[ %s - %s ]\t~%s\t(%s)\n", "'"${ALT}"'", ISO_start, ISO_end, sampling, "'"${NAME}"'")
 				}'
 		

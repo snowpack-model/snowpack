@@ -481,8 +481,8 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 	if (debug) listFields(filename);
@@ -511,8 +511,8 @@ void GRIBIO::indexFile(const std::string& filename)
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
 	if (fp==NULL) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 	if (debug) listFields(filename);

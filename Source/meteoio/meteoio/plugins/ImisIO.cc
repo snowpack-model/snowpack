@@ -530,8 +530,9 @@ void ImisIO::assimilateAnetzData(const AnetzData& ad,
 //we compute PSUM at XX:30 and (XX+1):30 from the XX:40 sums from Anetz
 std::vector< std::pair<Date, double> > ImisIO::computeAnetzPSUM(std::vector<MeteoData> &vecMeteo)
 {
-	std::vector< std::pair<Date, double> > vecPsum;
 	const size_t nr_meteo = vecMeteo.size();
+	std::vector< std::pair<Date, double> > vecPsum;
+	vecPsum.reserve( nr_meteo*2 );
 	for (size_t ii=0; ii<nr_meteo; ii++) {
 		int hour, minute;
 		vecMeteo[ii].date.getTime(hour, minute);
@@ -624,6 +625,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
 	const bool reduce_pressure = (tmpmd.meta.stationID!="STB2")? true : false; //unfortunatelly, there is no metadata to know this...
+	vecMeteo[stationindex].resize( vecResult.size() );
 	for (size_t ii=0; ii<vecResult.size(); ii++) {
 		parseDataSet(vecResult[ii], tmpmd, fullStation);
 		convertUnits(tmpmd, reduce_pressure);
@@ -643,7 +645,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 			}
 		}
 
-		vecMeteo[stationindex].push_back(tmpmd); //Now insert tmpmd
+		vecMeteo[stationindex][ii] = tmpmd; //Now insert tmpmd
 	}
 }
 

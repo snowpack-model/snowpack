@@ -35,10 +35,19 @@ namespace mio {
  * 
  * It takes the following arguments:
  *  - TYPE: either ADD (add the correction coefficient) or MULT (multiply by the correction coefficient);
- *  - PERIOD: either YEARLY, MONTHLY or DAILY. This describes the period over which the quantiles were calculated. If no argument is 
- * given, it takes the whole dataset at once (optional);
- *  - CORRECTIONS: the file and path containing the corrections to apply.
+ *  - PERIOD: either YEARLY, MONTHLY, WEEKLY or DAILY. This describes the period over which the quantiles were calculated (and is currently 
+ * used as a sliding window). If no argument is given, it takes the whole dataset at once (optional);
+ *  - CORRECTIONS: the file and path containing the corrections to apply;
+ *  - WRITE_QUANTILES: write out the average value of each quantile (if no corrections file is provided, it will generate 10 quantiles).
  *
+ * This example write out the yearly deciles without performing any corrections to the data (so the corrections factor can be later computed):
+ * @code
+ * VW::filter1    = QM
+ * VW::arg1::period = yearly
+ * VW::arg1::write_quantiles = true
+ * @endcode
+ * 
+ * This example applies pre-computed correction factors (quantiles computed over the whole dataset):
  * @code
  * TA::filter1    = QM
  * TA::arg1::corrections = correctionsTA.dat
@@ -52,7 +61,6 @@ namespace mio {
  * 0.5 1.05
  * 0.8 0.95
  * 0.9 0.89
- * 1 0.89
  * @endcode
  */
 
@@ -65,7 +73,9 @@ class ProcQuantileMapping : public ProcessingBlock {
 
 	protected:
 		void correctPeriod(const unsigned int& param, const size_t& idx_start, const size_t& idx_end, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const;
+		void writeQuantiles(const std::vector<double>& thresholds, const std::vector<double>& vecX, const std::string& parameter, const std::string& station) const;
 		double getCorrection(const std::vector<double>& thresholds, const double& value) const;
+		static size_t getQuantile(const std::vector<double>& thresholds, const double& value);
 		std::vector< std::pair<size_t, size_t> > getStarts(const std::vector<MeteoData>& ivec) const;
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
@@ -73,6 +83,7 @@ class ProcQuantileMapping : public ProcessingBlock {
 		std::string root_path;
 		double period_duration;
 		char type;
+		bool write_quantiles;
 };
 
 } //end namespace

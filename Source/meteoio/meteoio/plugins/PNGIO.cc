@@ -273,7 +273,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL)
-		throw AccessException("Error opening file \""+filename+"\", possible reason: "+std::string(strerror(errno)), AT);
+		throw AccessException("Error opening file \""+filename+"\", possible reason: "+std::string(std::strerror(errno)), AT);
 
 	// Initialize write structure
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);

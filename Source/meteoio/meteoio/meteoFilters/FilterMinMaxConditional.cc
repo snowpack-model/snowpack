@@ -64,7 +64,8 @@ void FilterMinMaxConditional::process(const unsigned int& param, const std::vect
  * @param[in] condition_value Value of the 2nd parameter at current time step
  * @return `True` if the min/max filter should be applied
  */
-bool FilterMinMaxConditional::assert_condition(const double& condition_value) {
+bool FilterMinMaxConditional::assert_condition(const double& condition_value)
+{
 	const std::string where("Filters::" + block_name);
 	if (condition_operator == "LT") {
 		if (condition_value < condition_compare) return true;
@@ -92,7 +93,7 @@ void FilterMinMaxConditional::parse_args(const std::vector< std::pair<std::strin
 	bool has_min_reset(false), has_max_reset(false);
 	bool has_parameter(false), has_operator(false), has_compare(false);
 
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+	for (size_t ii=0; ii<vecArgs.size(); ++ii) {
 		if (vecArgs[ii].first == "SOFT") {
 			IOUtils::parseArg(vecArgs[ii], where, is_soft);
 		} else if (vecArgs[ii].first == "MIN") {

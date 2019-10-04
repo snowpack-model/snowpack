@@ -177,20 +177,20 @@ namespace mio {
  * @note In order to optimize the data retrieval, the raw data is buffered. This means that up to \b BUFFER_SIZE days of data will be read at once by the plugin
  * so subsequent reads will not have to get back to the data source (this key is in the [General] section). It is usually a good idea to configure \b BUFFER_SIZE
  * to the intended duration of the simulation (in days).
- * 
+ *
  * @subsection Multiple_input_plugins Multiple data sources
- * It is possible to use multiple plugins to read \b meteorological \b timeseries from multiple sources and combine them into one stream of data. This is 
- * achieved by declaring as many \em DATASOURCExxx sections as necessary (where xxx represent any number, to make sure that not two 
- * sections have the same name) and declaring \em METEO plugins in each of them. Please make sure that all required keys are defined within each 
+ * It is possible to use multiple plugins to read \b meteorological \b timeseries from multiple sources and combine them into one stream of data. This is
+ * achieved by declaring as many \em DATASOURCExxx sections as necessary (where xxx represent any number, to make sure that not two
+ * sections have the same name) and declaring \em METEO plugins in each of them. Please make sure that all required keys are defined within each
  * new such section (such as TIMEZONE) because the plugins created this way won't have access to the original \em INPUT section. The other
- * plugins (such as for reading grids, dem, etc) as well as the raw data editing will only be read from the standard \em INPUT section and 
+ * plugins (such as for reading grids, dem, etc) as well as the raw data editing will only be read from the standard \em INPUT section and
  * performed as usual after the data has been provided by the plugins.
- * 
- * If reading the same station from multiple sources (for example providing different time coverage), it might be useful to use 
+ *
+ * If reading the same station from multiple sources (for example providing different time coverage), it might be useful to use
  * the \ref automerge "automerge" feature to merge all streams belonging to a station into one single stream.
- * 
+ *
  */
- 
+
  /**
  * @page raw_data_editing Raw Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data (in the following order):
@@ -211,8 +211,8 @@ namespace mio {
  * @code
  * TA::MOVE = air_temp air_temperature temperature_air
  * @endcode
- * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep 
- * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in 
+ * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
+ * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in
  * the list to have a value has the priority).
  *
  * @section data_exclusion 2. Data exclusion (EXCLUDE/KEEP)
@@ -301,8 +301,9 @@ namespace mio {
  * @endcode
  */
 
-IOInterface* IOHandler::getPlugin(const std::string& plugin_name, const Config& i_cfg) const
+IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) const
 {
+	IOUtils::toUpper( plugin_name );
 #ifdef PLUGIN_ALPUG
 	if (plugin_name == "ALPUG") return new ALPUG(i_cfg);
 #endif
@@ -389,19 +390,19 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name, const Config& 
  * for the inputs and outputs will lead to different instances being cached.
  * @param[in] cfgkey Configuration key giving the plugin name (example: METEO);
  * @param[in] cfgsection Section where to find this configuration key (example: INPUT);
- * @param[in] sec_rename New section name if the section should be renamed before being passed to the plugin's constructor 
+ * @param[in] sec_rename New section name if the section should be renamed before being passed to the plugin's constructor
  * (default: empty string, so no renaming)
  * @return Pointer to the constructed plugin
- * 
+ *
  */
 IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection, const std::string& sec_rename)
 {
 	const std::string op_src = cfg.get(cfgkey, cfgsection);
 	const std::string plugin_key( cfgsection+"::"+cfgkey+"::"+op_src ); //otherwise, reading meteo+grids with the same plugin would rely on the same object
-	
+
 	if (mapPlugins.find(plugin_key) == mapPlugins.end()) { //the plugin has not already been constructed
 		IOInterface *ioPtr = NULL;
-		
+
 		if (sec_rename.empty() || sec_rename==cfgsection) {
 			ioPtr = getPlugin(op_src, cfg);
 		} else {
@@ -409,7 +410,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 			cfg2.moveSection(cfgsection, sec_rename, true);
 			ioPtr = getPlugin(op_src, cfg2);
 		}
-		
+
 		if (ioPtr==NULL)
 			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it declared in IOHandler::getPlugin?", AT);
 		else
@@ -475,16 +476,16 @@ std::vector<std::string> IOHandler::getListOfSources(const std::string& plugin_k
 {
 	const std::set<std::string> sections( cfg.getSections() );
 	std::vector<std::string> results;
-	
+
 	//the [Input] section should always be returned if available and should come first (for priority in case of a later merge)
 	if (cfg.keyExists(plugin_key, "INPUT")) results.push_back( "INPUT" );
-	
+
 	for (std::set<std::string>::const_iterator it = sections.begin(); it!=sections.end(); ++it) {
 		if (*it=="INPUT") continue; //the {input] section has already been processed
 		const size_t found_pos = it->find(sec_pattern, 0);
 		if (found_pos==0 && cfg.keyExists(plugin_key, *it)) results.push_back( *it );
 	}
-	
+
 	return results;
 }
 
@@ -531,6 +532,12 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 	plugin->readLanduse(landuse_out);
 }
 
+void IOHandler::readGlacier(Grid2DObject& glacier_out)
+{
+	IOInterface *plugin = getPlugin("GLACIER", "Input");
+	plugin->readGlacier(glacier_out);
+}
+
 void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
@@ -547,7 +554,7 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 			for (size_t jj=0; jj<vectmp.size(); jj++) vecStation.push_back( vectmp[jj] );
 		}
 	}
-	
+
 	if (automerge) automerge_stations(vecStation);
 
 	if (!merge_ready) create_merge_map();
@@ -1049,7 +1056,7 @@ void IOHandler::create_move_map()
 * TA::MOVE = air_temp air_temperature
 * means that TA will be the name of a new parameter in MeteoData with the copied value
 * of the original parameter air_temp or air_temperature
-* 
+*
 * If TA already had some values, it will keep those and only points not having a value will
 * be filled by either air_temp or air_temperature (the first one in the list to have a value
 * has the priority)

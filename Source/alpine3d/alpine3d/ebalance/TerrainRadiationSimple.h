@@ -45,6 +45,7 @@ class TerrainRadiationSimple : public TerrainRadiationAlgorithm {
 		void getSkyViewFactor(mio::Array2D<double> &o_sky_vf) const;
 
 	private:
+		double getAlbedo(const size_t& ii, const size_t& jj);
 		void initSkyViewFactors(const mio::DEMObject &dem);
 
 		mio::Array2D<double> albedo_grid, sky_vf;

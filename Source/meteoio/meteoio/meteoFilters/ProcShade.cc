@@ -144,7 +144,7 @@ std::vector< std::pair<double,double> > ProcShade::readMask(const std::string& f
 	std::ifstream fin(filename.c_str());
 	if (fin.fail()) {
 		std::ostringstream ss;
-		ss << "Filter " << filter << ": " << "error opening file \"" << filename << "\", possible reason: " << strerror(errno);
+		ss << "Filter " << filter << ": " << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 

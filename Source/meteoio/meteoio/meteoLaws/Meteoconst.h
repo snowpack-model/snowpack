@@ -52,7 +52,7 @@ namespace Cst {
 	const double l_water_vaporization = 2.504e6; // (J kg-1)
 	const double l_water_fusion = 3.34e5; // (J Kg-1)
 	const double water_molecular_mass = 18.0153e-3; // (kg)
-	const double dry_air_mol_mass =0.0289644 ; // (kg/mol)
+	const double dry_air_mol_mass = 0.0289644; // (kg/mol)
 
 	const double specific_heat_ice = 2100.0; // (J K-1), at 0C
 	const double specific_heat_water = 4190.0; // (J K-1) at 0C

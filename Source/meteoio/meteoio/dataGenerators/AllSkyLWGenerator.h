@@ -52,13 +52,20 @@ namespace mio {
  * is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
  * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
- * in order to compute ISWR from RSWR.
+ * in order to compute ISWR from RSWR (please be aware that this very significantly degrades the performance of the parametrization).
  * Finally, it is recommended to also use a clear sky generator (declared after this one)
  * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
  * ILWR::generators      = allsky_LW
  * ILWR::allsky_lw::type = Omstedt
  * @endcode
+ *
+ *
+ * The graph below shows the comparison between measured and modeled ILWR depending on the chosen parametrization. The measured data (ISWR, TA, RH and the reference ILWR)
+ * comes from the Weissfluhjoch *WFJ AWS (2691m, Davos, Switzerland) for the 2010-08-01 -- 2019-08-01 period with half-hourly resolution. The data has been binned every 5 W/m²,
+ * the black dots represent the average of the bin, the greay area contains every data point (ie it shows the minimum and maximum data) while the brown area is defined as average±σ.
+ * \image html all_sky_ilwr_cmp.png "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period"
+ * \image latex all_sky_ilwr_cmp.eps "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period" width=0.9\textwidth
  *
  */
 class AllSkyLWGenerator : public GeneratorAlgorithm {

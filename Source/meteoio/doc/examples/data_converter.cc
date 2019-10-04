@@ -44,11 +44,13 @@ void real_main(int argc, char** argv)
 			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
 				mapIDs[ stationID ] = insert_position++;
 				vecMeteo.push_back( std::vector<MeteoData>() ); //allocating the new station
+				const size_t nr_samples = static_cast<size_t>(Optim::ceil( (d_end.getJulian() - d.getJulian()) / Tstep ) + 1);
+				vecMeteo[ mapIDs[stationID] ].reserve( nr_samples ); //to avoid memory re-allocations with push_back()
 			}
 			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
 	}
-
+	
 	//io.getMeteoData(d_start, d_end, vecMeteo); //This would be the call that does NOT resample the data, instead of the above "for" loop
 
 	//In both case, we write the data out

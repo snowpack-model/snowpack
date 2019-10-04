@@ -88,12 +88,12 @@ void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 	* const double lat = point1.getLat();
 	* 
 	* //if we have lat/lon instead:
-	* point1.setLatLon(lat , lon., altitude);
+	* point1.setLatLon(lat , lon., altitude, true);
 	* 
 	* //to set a coodrinate system by EPSG code:
 	* point1.setEPSG(epsg);
 	* 
-	* //for more information: see the "Coords" class and the "coordinates.cc" example
+	* //for more information: see the "Coords" class and the "coordinates.cc" example and have a look at Coords::check()
 	*/
 	
 	

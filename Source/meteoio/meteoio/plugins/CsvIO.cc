@@ -72,7 +72,7 @@ namespace mio {
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
- *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them); optional
+ *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; optional
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
  * - <b>Date/Time parsing</b>. There are two possibilities: either the date/time is provided as one or two strings or each component as a separate column.
@@ -263,6 +263,31 @@ namespace mio {
  *
  * ID1::MERGE = ID2 ID3 ID4 ID5
  * @endcode
+ * 
+ * When reading a file containing the data from multiple stations, each line containing the station ID it applies to, it is necessary
+ * to provide the requested station ID for each new station as well as declare which is the ID field (if the headers declare an "ID" column or
+ * a "STATIONID" column, this will also work)
+ * @code
+ * METEO = CSV
+ * METEOPATH = ./input
+ * CSV_DELIMITER = ,   
+ * CSV_NR_HEADERS = 1
+ * CSV_COLUMNS_HEADERS = 1
+ * CSV_DATETIME_SPEC = YYYY-MM-DD HH24:MI:SS
+ * CSV_FIELDS = ID TIMESTAMP SKIP TA RH DW VW SKIP HS SKIP SKIP P SKIP SKIP SKIP ISWR SKIP SKIP SKIP TSG SKIP SKIP ISWR ILWR TSS
+ * CSV_UNITS_OFFSET = 0 0 0 273.15 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 273.15
+ * CSV_UNITS_MULTIPLIER = 1 1 1 1 0.01 1 1 1 0.01 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+ * 
+ * STATION1 = Extracted_data.csv
+ * POSITION1 = latlon (46.8, 9.81, 1511.826)
+ * CSV1_ID = 109
+ * CSV1_NAME = Station109
+ * 
+ * STATION2 = Extracted_data.csv
+ * POSITION2 = xy (45.8018, 9.82, 111.826)
+ * CSV2_ID = 105
+ * CSV2_NAME = Station105
+ * @endcode
  */
 
 //helper function to sort the static keys used for specifying the date/time formats
@@ -323,6 +348,23 @@ void CsvParameters::setHeaderDelimiter(const std::string& delim)
 	}
 }
 
+std::string CsvParameters::identifyField(const std::string& fieldname)
+{
+	if (fieldname.compare(0, 15, "TEMPERATURE_AIR")==0 || fieldname.compare(0, 7, "AIRTEMP")==0 || fieldname.compare(0, 16, "TEMPERATURA_ARIA")==0) return "TA";
+	else if (fieldname.compare(0, 16, "SOIL_TEMPERATURE")==0 || fieldname.compare(0, 8, "SOILTEMP")==0) return "TSG";
+	else if (fieldname.compare(0, 13, "PRECIPITATION")==0 || fieldname.compare(0, 14, "PRECIPITAZIONE")==0) return "PSUM";
+	else if (fieldname.compare(0, 19, "REFLECTED_RADIATION")==0 || fieldname.compare(0, 26, "RADIAZIONE_SOLARE_RIFLESSA")==0) return "RSWR";
+	else if (fieldname.compare(0, 18, "INCOMING_RADIATION")==0 || fieldname.compare(0, 26, "INCOMINGSHORTWAVERADIATION")==0 || fieldname.compare(0, 27, "RADIAZIONE_SOLARE_INCIDENTE")==0) return "RSWR";
+	else if (fieldname.compare(0, 14, "WIND_DIRECTION")==0 || fieldname.compare(0, 15, "DIREZIONE_VENTO")==0) return "DW";
+	else if (fieldname.compare(0, 17, "RELATIVE_HUMIDITY")==0 || fieldname.compare(0, 16, "RELATIVEHUMIDITY")==0 || fieldname.compare(0, 15, "UMIDIT_RELATIVA")==0) return "RH";
+	else if (fieldname.compare(0, 13, "WIND_VELOCITY")==0 || fieldname.compare(0, 13, "VELOCIT_VENTO")==0) return "VW";
+	else if (fieldname.compare(0, 8, "PRESSURE")==0 || fieldname.compare(0, 15, "STATIONPRESSURE")==0) return "P";
+	else if (fieldname.compare(0, 17, "INCOMING_LONGWAVE")==0 || fieldname.compare(0, 25, "INCOMINGLONGWAVERADIATION")==0) return "ILWR";
+	else if (fieldname.compare(0, 22, "SNOWSURFACETEMPERATURE")==0 ) return "TSS";
+	
+	return fieldname;
+}
+
 //Given a provided field_type, attribute the value to the proper metadata variable.
 void CsvParameters::assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon, double &easting, double &northing)
 {
@@ -342,14 +384,7 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 		}
 		
 		IOUtils::replaceInvalidChars(param); //remove accentuated characters, etc
-		//try to map non-standard names to mio's names
-		if (param.compare(0, 15, "TEMPERATURE_AIR")==0 || param.compare(0, 16, "TEMPERATURA_ARIA")==0) param="TA";
-		else if (param.compare(0, 13, "PRECIPITATION")==0 || param.compare(0, 14, "PRECIPITAZIONE")==0) param="PSUM";
-		else if (param.compare(0, 19, "REFLECTED_RADIATION")==0 || param.compare(0, 26, "RADIAZIONE_SOLARE_RIFLESSA")==0) param="RSWR";
-		else if (param.compare(0, 18, "INCOMING_RADIATION")==0 || param.compare(0, 27, "RADIAZIONE_SOLARE_INCIDENTE")==0) param="RSWR";
-		else if (param.compare(0, 14, "WIND_DIRECTION")==0 || param.compare(0, 15, "DIREZIONE_VENTO")==0) param="DW";
-		else if (param.compare(0, 17, "RELATIVE_HUMIDITY")==0 || param.compare(0, 15, "UMIDIT_RELATIVA")==0) param="RH";
-		else if (param.compare(0, 13, "WIND_VELOCITY")==0 || param.compare(0, 13, "VELOCIT_VENTO")==0) param="VW";
+		param = identifyField( param ); //try to map non-standard names to mio's names
 		
 		single_field = param;
 	} else {
@@ -480,7 +515,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	if (!user_provided_field_names) fieldNames = headerFields;
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
 		std::string &tmp = fieldNames[ii];
+		IOUtils::trim( tmp ); //there could still be leading/trailing whitespaces in the individual field name
 		IOUtils::toUpper( tmp );
+		IOUtils::removeDuplicateWhitespaces(tmp); //replace internal spaces by '-'
+		IOUtils::replaceWhitespaces(tmp, '-');
 		if (tmp.empty()) continue;
 		
 		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
@@ -503,7 +541,11 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			initDtComponents(4, ii);
 		} else if (tmp.compare("SECONDS")==0) {
 			initDtComponents(5, ii);
+		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
+			ID_col = ii;
 		}
+		
+		//tmp = identifyField( tmp ); //try to identify known fields
 	}
 	
 	//check for time handling consistency
@@ -526,6 +568,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	//the user wants to keep only one column, find the one he wants...
 	//if there is a parameter name from the filename or header it has priority:
 	if (!single_field.empty() && !user_provided_field_names) {
+		if (ID_col!=IOUtils::npos) throw InvalidArgumentException("It is not possible set CSV_SINGLE_PARAM_INDEX when multiple stations are present within one single file with an ID field", AT);
 		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
 			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change dt_col
 		} else if (dt_col == tm_col && fieldNames.size() == 2) { //no index given but unambiguous
@@ -589,10 +632,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	if (!filename_spec.empty()) parseFileName( file_and_path, filename_spec, lat, lon, easting, northing);
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file " << file_and_path << " for reading, possible reason: " << strerror(errno);
-		ss << " Please check file existence and permissions!";
-		throw AccessException(ss.str(), AT);
+		const std::string msg( "Error opening file " + file_and_path + " for reading, possible reason: " + std::strerror(errno) + " Please check file existence and permissions!" );
+		throw AccessException(msg, AT);
 	}
 	
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
@@ -628,7 +669,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				parseSpecialHeaders(line, linenr, meta_spec, lat, lon, easting, northing);
 			if (linenr==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				if (delimIsNoWS) { //even if header_delim is set, we expect the fields to be separated by csv_delim
-					IOUtils::cleanFieldName(line);
+					IOUtils::cleanFieldName(line, false); //we'll handle whitespaces when parsing
 					IOUtils::readLineToVec(line, headerFields, csv_delim);
 				} else {
 					IOUtils::cleanFieldName(line, false); //don't touch whitespaces
@@ -661,11 +702,13 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	
 	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
 		const double alt = location.getAltitude(); //so we don't change previously set altitude
-		location.setLatLon(lat, lon, alt); //we let Coords handle possible missing data / wrong values, etc
-	} else if (easting!=IOUtils::nodata || northing!=IOUtils::nodata) {
-		const double alt = location.getAltitude();
-		location.setXY(easting, northing, alt); //coord system was set on keyword parsing
+		location.setLatLon(lat, lon, alt, false); //we let Coords handle possible missing data / wrong values, etc
 	}
+	if (easting!=IOUtils::nodata || northing!=IOUtils::nodata) {
+		const double alt = location.getAltitude();
+		location.setXY(easting, northing, alt, false); //coord system was set on keyword parsing
+	}
+	location.check("Inconsistent geographic coordinates in file \"" + file_and_path + "\": ");
 	
 	parseFields(headerFields, csv_fields, date_col, time_col);
 	
@@ -830,7 +873,7 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 			double dbl_val;
 			if (!IOUtils::convertString(dbl_val, vecFields[ idx ])) return Date();
 			i_args[ii] = (int)dbl_val;
-			if ((float)i_args[ii]!=dbl_val) return Date();
+			if ((double)i_args[ii]!=dbl_val) return Date();
 		}
 		
 		double seconds = 0.;
@@ -918,7 +961,7 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
 		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
 		
-		std::string delim_spec;
+		std::string delim_spec(","); //default delimiter
 		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", delim_spec);
 		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
 		tmp_csv.setDelimiter(delim_spec);
@@ -932,13 +975,9 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"SINGLE_PARAM_INDEX", "Input")) {
 			cfg.getValue(pre+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
 			tmp_csv.single_param_idx = single_parameter_index - 1; //counting starts at 1 in ini file
-		}
-		else if (cfg.keyExists(dflt+"SINGLE_PARAM_INDEX", "Input")) {
+		} else if (cfg.keyExists(dflt+"SINGLE_PARAM_INDEX", "Input")) {
 			cfg.getValue(dflt+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
 			tmp_csv.single_param_idx = single_parameter_index - 1;
-		}
-		else {
-			tmp_csv.single_param_idx = IOUtils::npos;
 		}
 
 		std::string header_delim_spec;
@@ -1057,8 +1096,10 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
 	const bool use_offset = !params.units_offset.empty();
 	const bool use_multiplier = !params.units_multiplier.empty();
-	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields))
-		throw InvalidFormatException("The declared units_offset / units_multiplier must match the number of columns in the file!", AT);
+	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields)) {
+		const std::string msg( "The declared units_offset ("+IOUtils::toString(params.units_offset.size())+") / units_multiplier ("+IOUtils::toString(params.units_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
+		throw InvalidFormatException(msg, AT);
+	}
 
 	const MeteoData template_md( createTemplate(params) );
 
@@ -1068,8 +1109,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	errno = 0;
 	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		ostringstream ss;
-		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		std::ostringstream ss;
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << std::strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw AccessException(ss.str(), AT);
 	}
@@ -1094,6 +1135,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
 	const bool delimIsNoWS = (params.csv_delim!=' ');
 	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
+	const std::string filterID( template_md.getStationID() ); //necessary if filtering on stationID field
 	Date prev_dt;
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
@@ -1119,6 +1161,17 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 			} else throw InvalidFormatException(ss.str(), AT);
 		}
 
+		if (params.ID_col!=IOUtils::npos) {
+			if (tmp_vec.size()<=params.ID_col) { //we can not filter on the ID although it has been requested so we have to stop!
+				std::ostringstream ss;
+				ss << "File \'" << filename << "\' declares station ID in column " << params.ID_col << " but only has " << tmp_vec.size() << " columns at line ";
+				ss << linenr << " :\n'" << line << "'\n";
+				throw InvalidFormatException(ss.str(), AT);
+			}
+			
+			if (tmp_vec[params.ID_col]!=filterID) continue;
+		}
+		
 		const Date dt( getDate(params, tmp_vec, silent_errors, filename, linenr) );
 		if (dt.isUndef() && silent_errors) continue;
 
@@ -1138,7 +1191,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		md.setDate(dt);
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
-			if (ii==params.date_col || ii==params.time_col) continue;
+			if (ii==params.date_col || ii==params.time_col || ii==params.ID_col) continue;
 			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped
 			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
@@ -1170,8 +1223,9 @@ void CsvIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
+	vecMeteo.resize( csvparam.size() );
 	for (size_t ii=0; ii<csvparam.size(); ii++) {
-		vecMeteo.push_back( readCSVFile(csvparam[ii], dateStart, dateEnd) );
+		vecMeteo[ii] = readCSVFile(csvparam[ii], dateStart, dateEnd);
 	}
 }
 

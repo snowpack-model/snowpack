@@ -74,7 +74,7 @@ namespace IOUtils {
 	const int inodata = -999;
 	const short int snodata = -999;
 	const char cnodata = std::numeric_limits<char>::max();
-	const size_t npos    = static_cast<size_t>(-1);  ///<npos is the out-of-range value
+	const size_t npos = static_cast<size_t>(-1);  ///<npos is the out-of-range value
 
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
 	const double lon_epsilon = grid_epsilon / Cst::earth_R0 *  Cst::to_deg; ///<in degrees. Small angle for longitudes, so sin(x)=x
@@ -153,6 +153,13 @@ namespace IOUtils {
 	*/
 	void trim(std::string &s);
 
+	/**
+	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
+	* @param s The string to trim
+	* @return The trimmed string
+	*/
+	std::string trim(const std::string &s);
+
 	void stripComments(std::string& str);
 	
 	/**
@@ -205,7 +212,7 @@ namespace IOUtils {
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param[in] input string to manipulate
 	 * @param[in] search substring to be searched for 
-	 * @return number of non-overlapping matches 
+	 * @return number of non-overlapping matches or std::string::npos if nothing could be found (empty "search", etc)
 	 */
 	size_t count(const std::string &input, const std::string& search);
 	
@@ -240,6 +247,7 @@ namespace IOUtils {
 	size_t readLineToSet(const std::string& line_in, std::set<std::string>& setString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
+	size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim);
 	
 	template <class T> std::string toString(const T& t) {
 		std::ostringstream os;
@@ -345,13 +353,14 @@ namespace IOUtils {
 		//split value string
 		std::vector<std::string> vecUnconvertedValues;
 		const size_t counter = readLineToVec(value, vecUnconvertedValues);
+		vecT.resize( counter );
 		for (size_t ii=0; ii<counter; ii++){
 			T myvar;
 			if (!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec) && options!=IOUtils::nothrow){
 				std::cerr << "[E] When reading \"" << key << "\" = \"" << myvar << "\"\n";
 				throw ConversionFailedException(vecUnconvertedValues.at(ii), AT);
 			}
-			vecT.push_back(myvar);
+			vecT[ii] = myvar;
 		}
 	}
 

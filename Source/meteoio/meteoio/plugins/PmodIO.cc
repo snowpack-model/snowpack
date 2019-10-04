@@ -166,7 +166,7 @@ void PmodIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	errno = 0;
 	std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail())
-		throw AccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
+		throw AccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + std::strerror(errno) + "\n", AT);
 
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	size_t linenr=0;
