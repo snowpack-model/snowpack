@@ -7,6 +7,10 @@ INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
 BuildVersion()
 
 MACRO (SET_COMPILER_OPTIONS)
+	SET(USER_COMPILER_OPTIONS "" CACHE STRING "Provide some extra compiler options")
+	MARK_AS_ADVANCED(FORCE USER_COMPILER_OPTIONS)
+	SET(EXTRA "${EXTRA} ${USER_COMPILER_OPTIONS}")
+
 	###########################################################
 	IF(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 		SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)	#this is required for building libraries
@@ -115,8 +119,12 @@ MACRO (SET_COMPILER_OPTIONS)
 				FIND_PROGRAM(CMAKE_GCC_NM NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-nm HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
 				FIND_PROGRAM(CMAKE_GCC_RANLIB NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ranlib HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
 
-				IF( CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB )
-					SET(OPTIM "${OPTIM} -flto") 
+				IF(CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB)
+					SET(USE_LTO_OPTIMIZATIONS ON CACHE BOOL "Use Link Time Optmizations when compiling (memory heavy while compiling)")
+					MARK_AS_ADVANCED(FORCE USE_LTO_OPTIMIZATIONS)
+					IF(USE_LTO_OPTIMIZATIONS)
+						SET(OPTIM "${OPTIM} -flto") 
+					ENDIF()
 					SET( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -fno-fat-lto-objects" )
 					SET( CMAKE_AR "${CMAKE_GCC_AR}" )
 					SET( CMAKE_NM "${CMAKE_GCC_NM}" )
@@ -187,5 +195,5 @@ MACRO (SET_COMPILER_OPTIONS)
 
 	#show exception messages in a graphical message box
 	SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
-
+	
 ENDMACRO (SET_COMPILER_OPTIONS)

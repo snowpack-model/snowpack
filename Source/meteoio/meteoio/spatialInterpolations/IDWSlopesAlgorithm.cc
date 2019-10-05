@@ -22,11 +22,11 @@
 namespace mio {
 const double IDWSlopesAlgorithm::min_slope = 10.;
 const double IDWSlopesAlgorithm::max_slope = 38.;
+const size_t IDWSlopesAlgorithm::nrSlopes = 1+lastSlope; //ie flat + 4 expositions
 
 IDWSlopesAlgorithm::IDWSlopesAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), 
-                     vecFlat(), vecNorth(), vecEast(), vecSouth(), vecWest(),
-                     metaFlat(), metaNorth(), metaEast(), metaSouth(), metaWest(),
+                     vecData(nrSlopes), vecMeta(nrSlopes),
                      trend(vecArgs, i_algo, i_param), scale(1e3), alpha(1.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
@@ -41,6 +41,12 @@ IDWSlopesAlgorithm::IDWSlopesAlgorithm(const std::vector< std::pair<std::string,
 
 double IDWSlopesAlgorithm::getQualityRating(const Date& i_date)
 {
+	//delete the previous cached values
+	for (size_t curr_slope=firstSlope; curr_slope<=lastSlope; curr_slope++) {
+		vecData[curr_slope].clear();
+		vecMeta[curr_slope].clear();
+	}
+	
 	date = i_date;
 	tsmanager.getMeteoData(date, vecMeteo);
 	
@@ -50,64 +56,53 @@ double IDWSlopesAlgorithm::getQualityRating(const Date& i_date)
 
 		const double slope = vecMeteo[ii].meta.getSlopeAngle();
 		if (slope==IOUtils::nodata) continue;
-		if (slope<=min_slope) {
-			vecFlat.push_back( val );
-			metaFlat.push_back( vecMeteo[ii].meta );
-			continue;
+		
+		Slopes curr_slope = FLAT;
+		if (slope>min_slope) {
+			const double azimuth = vecMeteo[ii].meta.getAzimuth();
+			if (azimuth==IOUtils::nodata) continue;
+			
+			if (azimuth<45. || azimuth>315.) {
+				curr_slope = NORTH;
+			} else if (azimuth<135) {
+				curr_slope = EAST;
+			} else if (azimuth<225) {
+				curr_slope = SOUTH;
+			} else {
+				curr_slope = WEST;
+			}
 		}
-
-		const double azimuth = vecMeteo[ii].meta.getAzimuth();
-		if (azimuth==IOUtils::nodata) continue;
-		if (azimuth<45. || azimuth>315.) {
-			vecNorth.push_back( val );
-			metaNorth.push_back( vecMeteo[ii].meta );
-		} else if (azimuth<135) {
-			vecEast.push_back( val );
-			metaEast.push_back( vecMeteo[ii].meta );
-		} else if (azimuth<225) {
-			vecSouth.push_back( val );
-			metaSouth.push_back( vecMeteo[ii].meta );
-		} else {
-			vecWest.push_back( val );
-			metaWest.push_back( vecMeteo[ii].meta );
-		}
+		
+		vecData[curr_slope].push_back( val );
+		vecMeta[curr_slope].push_back( vecMeteo[ii].meta );
 	}
 
-	nrOfMeasurments = vecFlat.size();
+	nrOfMeasurments = vecData[FLAT].size();
 	static const size_t minNrStations = 3;
-	if (vecFlat.size()<minNrStations || vecNorth.size()<minNrStations || vecEast.size()<minNrStations || vecSouth.size()<minNrStations || vecWest.size()<minNrStations) return 0;
+	if (vecData[FLAT].size()<minNrStations || vecData[NORTH].size()<minNrStations || vecData[EAST].size()<minNrStations || vecData[SOUTH].size()<minNrStations || vecData[WEST].size()<minNrStations) return 0;
 
 	return 0.8;
+}
+
+Grid2DObject IDWSlopesAlgorithm::computeAspect(const DEMObject& dem, const Slopes& curr_slope)
+{
+	Grid2DObject grid;
+	trend.detrend(vecMeta[curr_slope], vecData[curr_slope]);
+	Interpol2D::IDW(vecData[curr_slope], vecMeta[curr_slope], dem, grid, scale, alpha);
+	trend.retrend(dem, grid);
+	return grid;
 }
 
 void IDWSlopesAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	info << vecNorth.size() << " north, " << vecEast.size() << " east, " << vecSouth.size() << " south, " << vecWest.size() << " west stations";
+	info << vecData[NORTH].size() << " north, " << vecData[EAST].size() << " east, " << vecData[SOUTH].size() << " south, " << vecData[WEST].size() << " west stations";
 
-	trend.detrend(metaFlat, vecFlat);
-	Interpol2D::IDW(vecFlat, metaFlat, dem, grid, scale, alpha);
-	trend.retrend(dem, grid);
-
-	Grid2DObject north;
-	trend.detrend(metaNorth, vecNorth);
-	Interpol2D::IDW(vecNorth, metaNorth, dem, north, scale, alpha);
-	trend.retrend(dem, north);
-
-	Grid2DObject east;
-	trend.detrend(metaEast, vecEast);
-	Interpol2D::IDW(vecEast, metaEast, dem, east, scale, alpha);
-	trend.retrend(dem, east);
-
-	Grid2DObject south;
-	trend.detrend(metaSouth, vecSouth);
-	Interpol2D::IDW(vecSouth, metaSouth, dem, south, scale, alpha);
-	trend.retrend(dem, south);
-
-	Grid2DObject west;
-	trend.detrend(metaWest, vecWest);
-	Interpol2D::IDW(vecWest, metaWest, dem, west, scale, alpha);
-	trend.retrend(dem, west);
+	grid = computeAspect(dem, FLAT);
+	const Grid2DObject north( computeAspect(dem, NORTH) );
+	const Grid2DObject east( computeAspect(dem, EAST) );
+	const Grid2DObject south( computeAspect(dem, SOUTH) );
+	const Grid2DObject west( computeAspect(dem, WEST) );
 
 	//now we merge the grids together as a weighted average of the aspects and slope angle
 	for (size_t ii=0; ii<dem.size(); ++ii) {

@@ -57,7 +57,7 @@ namespace mio {
  *
  * If no arguments are provided, then it will compute the mask from the Digital Elevation Model. In such as case, 
  * a DEM must be declared in the [Input] section and must contain the stations of interest as a mask will be computed for
- * each station. Please make sure that the extend of the DEM is appropriate to correctly compute the shading effects!
+ * each station. Please make sure that the extent of the DEM is appropriate to correctly compute the shading effects!
  */
 
 class ProcShade : public ProcessingBlock {

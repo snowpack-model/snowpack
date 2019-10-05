@@ -673,18 +673,19 @@ void Coords::setDistances(const geo_distances in_algo) {
 * a risk of inconsistency between these two sets of coordinates.
 * This method checks that enough information is available (ie: at least one set
 * of coordinates is present) and if more than one is present, that it is consistent (within 5 meters)
-* It throws and exception if something is not right.
+* It throws an exception if something is not right.
+* @param[in] pre_msg String to prepend to errors messages (for example, giving the file name that contains the error)
 */
-void Coords::check()
+void Coords::check(const std::string& pre_msg)
 {
 	//calculate/check coordinates if necessary
 	if (coordsystem=="LOCAL" && (ref_latitude==IOUtils::nodata || ref_longitude==IOUtils::nodata)) {
-		throw InvalidArgumentException("please define a reference point for LOCAL coordinate system", AT);
+		throw InvalidArgumentException(pre_msg+"please define a reference point for LOCAL coordinate system", AT);
 	}
 
 	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if (easting==IOUtils::nodata || northing==IOUtils::nodata) {
-			throw InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
+			throw InvalidArgumentException(pre_msg+"missing positional parameters (easting,northing) or (lat,long) for given coordinate", AT);
 		}
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	} else {
@@ -695,7 +696,7 @@ void Coords::check()
 			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
 
 			if (!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
-				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for coordinate", AT);
+				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate", AT);
 			}
 		}
 	}

@@ -48,6 +48,7 @@ class IOManager {
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write2DGrid(grid_in, parameter, date);}
 		void write3DGrid(const Grid3DObject& grid_in, const std::string& options="") {gdm1.write3DGrid(grid_in, options);}
 		void write3DGrid(const Grid3DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write3DGrid(grid_in, parameter, date);}
+		bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list){return iohandler.list2DGrids(start,end,list);}
 		//end legacy support
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
@@ -65,8 +66,8 @@ class IOManager {
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,0, 1.);       //21.6.2008 11:00 UTC+1
+		* Date d2(2008,07,21,11,0, 1.);       //21.7.2008 11:00 UTC+1
 		* IOManager iom("io.ini");
 		* unsigned int nstations = iom.getMeteoData(d1, d2, vecMeteo);
 		* @endcode
@@ -92,7 +93,7 @@ class IOManager {
 		 * @code
 		 * vector<MeteoData> vecMeteo;      //empty vector
 		 * IOManager iomanager("io.ini");
-		 * iomanager.getMeteoData(Date(2008,06,21,11,00), vecMeteo); //21.6.2008 11:00
+		 * iomanager.getMeteoData(Date(2008,06,21,11,0, 1.), vecMeteo); //21.6.2008 11:00 UTC+1
 		 * @endcode
 		 * @param i_date      A Date object representing the date/time for the sought MeteoData objects
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
@@ -129,7 +130,7 @@ class IOManager {
 		 * @code
 		 * Grid2DObject grid;      //empty grid
 		 * IOManager iomanager("io.ini");
-		 * iomanager.getMeteoData(Date(2008,06,21,11,00), MeteoData::TA, grid); //21.6.2008 11:00
+		 * iomanager.getMeteoData(Date(2008,06,21,11,0, 1.), MeteoData::TA, grid); //21.6.2008 11:00 UTC+1
 		 * @endcode
 		 * @param date A Date object representing the date/time for the sought MeteoData objects
 		 * @param dem Digital Elevation Model data
@@ -155,10 +156,10 @@ class IOManager {
 
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string);
-		
+
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<StationData>& in_stations, std::vector<double>& result, std::string& info_string);
-		
+
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
 		 *        The processing level affects the way meteo data is read and processed
@@ -219,14 +220,14 @@ class IOManager {
 		 * @brief Clear the all cache. All raw, filtered and resampled values are dismissed, will need to be re-read and/or recalculated.
 		 */
 		void clear_cache();
-		
+
 		/**
 		 * @brief Returns the mode to be used for the IOManager
 		 * @param i_cfg configuration object
 		 * @return mode as of IOUtils::OperationMode
 		 */
 		static IOUtils::OperationMode getIOManagerMode(const Config& i_cfg);
-		
+
 	private:
 		void initVirtualStations();
 		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);

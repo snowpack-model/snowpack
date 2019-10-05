@@ -341,7 +341,7 @@ void Snowpack::setUseSoilLayers(const bool& value) { //NOTE is this really neede
  * @param Xdata
  * @param Mdata
  */
-void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
+void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata)
 {
 	const bool prn_WRN = false;
 	const size_t nN = Xdata.getNumberOfNodes();
@@ -457,6 +457,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata)
 		NDS[e+1].z = NDS[e].z + EMS[e].L;
 		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
 		EMS[e].updDensity();
+		Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += dL;	// Update snow height change due to settling
 		if (EMS[e].Rho <= Constants::eps || EMS[e].theta[AIR] < 0.  ) {
 			prn_msg(__FILE__, __LINE__, "err", Date(),
 			          "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf air=%le",
@@ -1079,6 +1080,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		}
 
 		// Assemble matrix
+		const double theta_rn = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
 		double maxd = 0.;		// Tracks max. change in ice contents in domain (convergence criterion)
 		for(size_t e = nE; e -->0; ) {
 			if(useNewPhaseChange) {
@@ -1122,7 +1124,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 						dth_i_lim = std::max(-Xdata.Edata[e].theta[ICE], dth_i_lim);
 					} else {
 						// Freeze: Only available liquid water can freeze, and not more than max_ice
-						dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER]-theta_r) * (Constants::density_water / Constants::density_ice))), dth_i_lim);
+						dth_i_lim = std::min(std::max(0., std::min(max_ice - Xdata.Edata[e].theta[ICE], (Xdata.Edata[e].theta[WATER] - theta_rn) * (Constants::density_water / Constants::density_ice))), dth_i_lim);
 					}
 					// Correct volumetric changes in upper and lower half of element proportional to limits
 					dth_i_down[e] = dth_i_up[e] = dth_i_lim;
@@ -1230,13 +1232,13 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		 * (see neumannBoundaryConditions)
 		 */
 		if (U[nE] + ddU[nE] > EMS[nE-1].meltfreeze_tk || EMS[nE-1].theta[WATER] > 0.) {
-			ControlTemp = 0.007;
+			ControlTemp = (variant == "SEAICE") ? (0.0001) : (0.007);
 			MaxItnTemp = std::max(MaxItnTemp, (unsigned)200); // NOTE originally 100;
 		}
 		if(useNewPhaseChange) {
 			// With new phase change, we want at least one iteration extra, to account for possible phase changes,
 			// and we want an additional constraint of maximum change in phase change amount
-			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > 0.0001);
+			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > ((variant == "SEAICE") ? (1.E-5) : (0.0001)));
 		} else {
 			NotConverged = (MaxTDiff > ControlTemp);
 		}
@@ -2027,20 +2029,35 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				double tmp = 0.;
 				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
 				if (eroded > 0.) {
+					// Backup settings we are going to override:
 					const bool tmp_force_add_snowfall = force_add_snowfall;
 					const std::string tmp_hn_density = hn_density;
 					const std::string tmp_variant = variant;
+					const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
+					const double tmp_Xdata_hn = Xdata.hn;
+					const double tmp_Xdata_rho_hn = Xdata.rho_hn;
+					// Deposition mode settings:
 					double tmp_psum = eroded;
 					force_add_snowfall = true;
 					hn_density = "EVENT";
 					variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
+					enforce_measured_snow_heights = false;
 					Mdata.psum = eroded; Mdata.psum_ph = 0.;
 					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
 					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+					Xdata.hn = 0.;
+					// Add eroded snow:
 					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+					// Set back original settings:
 					force_add_snowfall = tmp_force_add_snowfall;
 					hn_density = tmp_hn_density;
 					variant = tmp_variant;
+					enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
+					// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
+					Xdata.hn_redeposit = Xdata.hn;
+					Xdata.rho_hn_redeposit = Xdata.rho_hn;
+					Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
+					Xdata.hn += tmp_Xdata_hn;
 				}
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
@@ -2129,7 +2146,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					else
 						phasechange.compPhaseChange(Xdata, Mdata.date, false, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
 				} else {
-					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
 					const double max_ice = ReSolver1d::max_theta_ice;
 					for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) {
 						// Net ice contents change:
@@ -2220,7 +2237,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// Find the settlement of the snowpack.
 		// HACK This routine was formerly placed here because the settlement solution MUST ALWAYS follow
 		// computeSnowTemperatures where the vectors U, dU and dUU are allocated.
-		compSnowCreep(Mdata, Xdata);
+		compSnowCreep(Mdata, Xdata, Sdata);
 
 	} catch(const exception&) {
 		prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Snowpack computation not completed");

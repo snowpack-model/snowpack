@@ -35,15 +35,16 @@ class GridsManager {
 		//Legacy support to support functionality of the IOInterface superclass:
 		void read2DGrid(Grid2DObject& grid_out, const std::string& option="");
 		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		
+
 		//HACK buffer 3D grids!
 		void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="") {iohandler.read3DGrid(grid_out, i_filename);}
 		void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) {iohandler.read3DGrid(grid_out, parameter, date);}
-		
+
 		void readDEM(DEMObject& dem_out);
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		void readLanduse(Grid2DObject& landuse_out);
-		
+		void readGlacier(Grid2DObject& landuse_out);
+
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {iohandler.write2DGrid(grid_in, options);}
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {iohandler.write2DGrid(grid_in, parameter, date);}
 		void write3DGrid(const Grid3DObject& grid_out, const std::string& options="") {iohandler.write3DGrid(grid_out, options);}
@@ -66,7 +67,7 @@ class GridsManager {
 		 * @return new IOHandler object as a copy of the internal IOHandler
 		 */
 		IOHandler& getIOHandler() const {return iohandler;}
-		
+
 		std::vector<StationData> initVirtualStationsAtAllGridPoints(const DEMObject& dem) const;
 		std::vector<StationData> initVirtualStations(const DEMObject& dem, const bool& adjust_coordinates, const bool& fourNeighbors) const;
 		METEO_SET getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date);

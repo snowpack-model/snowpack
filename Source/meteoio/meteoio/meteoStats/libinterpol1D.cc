@@ -323,13 +323,13 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
 }
 
 /**
- * @brief This function returns the weighted aritmetic mean of two numbers.
+ * @brief This function returns the weighted arithmetic mean of two numbers.
  * A weight of 0 returns d1, a weight of 1 returns d2, a weight of 0.5 returns a centered mean.
  * See https://secure.wikimedia.org/wikipedia/en/wiki/Weighted_mean for more...
  * @param d1 first value
  * @param d2 second value
  * @param weight weight to apply to the mean
- * @return weighted aritmetic mean
+ * @return weighted arithmetic mean
  */
 double Interpol1D::weightedMean(const double& d1, const double& d2, const double& weight)
 {
@@ -342,11 +342,11 @@ double Interpol1D::weightedMean(const double& d1, const double& d2, const double
 }
 
 /**
- * @brief This function returns the weighted aritmetic mean of a vector.
+ * @brief This function returns the weighted arithmetic mean of a vector.
  * See https://secure.wikimedia.org/wikipedia/en/wiki/Weighted_mean for more...
  * @param vecData vector of values
  * @param weight weights to apply to the mean
- * @return weighted aritmetic mean
+ * @return weighted arithmetic mean
  */
 double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::vector<double>& weight)
 {

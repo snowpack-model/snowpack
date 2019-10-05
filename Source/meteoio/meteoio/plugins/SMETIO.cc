@@ -17,6 +17,7 @@
 */
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/IOUtils.h>
+#include <cstdio>
 
 using namespace std;
 
@@ -52,6 +53,7 @@ namespace mio {
  * naming scheme will be used to derive the slope information (default: false).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
+ * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section  
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
@@ -89,23 +91,46 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile),
+        : cfg(configfile), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          plugin_nodata(IOUtils::nodata), 
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader),
+        : cfg(cfgreader), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), 
-          outputIsAscii(true), outputPlotHeaders(true), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          plugin_nodata(IOUtils::nodata), 
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
+}
+
+std::map<size_t, SMETIO::plot_attr> SMETIO::initPlotParams()
+{
+	std::map< size_t, plot_attr > results;
+	
+	results[ MeteoData::P ] 		= plot_attr("Pa", "local_air_pressure", "0xAEAEAE", 87000., 115650., MeteoData::P);
+	results[ MeteoData::TA ] 		= plot_attr("K", "air_temperature", "0x8324A4", 253.15, 283.15, MeteoData::TA);
+	results[ MeteoData::RH ] 		= plot_attr("-", "relative_humidity", "0x50CBDB", 0., 1., MeteoData::RH);
+	results[ MeteoData::TSG ] 		= plot_attr("K", "ground_surface_temperature", "0xDE22E2", 253.15, 283.15, MeteoData::TSG);
+	results[ MeteoData::TSS ] 		= plot_attr("K", "snow_surface_temperature", "0xFA72B7", 253.15, 283.15, MeteoData::TSS);
+	results[ MeteoData::HS ] 		= plot_attr("m", "height_of_snow", "0x000000", 0., 3., MeteoData::HS);
+	results[ MeteoData::VW ] 		= plot_attr("m/s", "wind_velocity", "0x297E24", 0., 30., MeteoData::VW);
+	results[ MeteoData::DW ] 		= plot_attr("°", "wind_direction", "0x64DD78", 0., 360., MeteoData::DW);
+	results[ MeteoData::VW_MAX ] 	= plot_attr("m/s", "max_wind_velocity", "0x244A22", 0., 30., MeteoData::VW_MAX);
+	results[ MeteoData::RSWR ] 		= plot_attr("W/m2", "outgoing_short_wave_radiation", "0x7D643A", 0., 1400., MeteoData::RSWR);
+	results[ MeteoData::ISWR ] 		= plot_attr("W/m2", "incoming_short_wave_radiation", "0xF9CA25", 0., 1400., MeteoData::ISWR);
+	results[ MeteoData::ILWR ] 		= plot_attr("W/m2", "incoming_long_wave_radiation", "0xD99521", 150., 400., MeteoData::ILWR);
+	results[ MeteoData::TAU_CLD ] 	= plot_attr("-", "cloud_transmissivity", "0xD9A48F", 0., 1., MeteoData::TAU_CLD);
+	results[ MeteoData::PSUM ] 		= plot_attr("kg/m2", "water_equivalent_precipitation_sum", "0x2431A4", 0., 20., MeteoData::PSUM);
+	results[ MeteoData::PSUM_PH ] 	= plot_attr("-", "precipitation_phase", "0x7E8EDF", 0., 1., MeteoData::PSUM_PH);
+	
+	return results;
 }
 
 void SMETIO::parseInputOutputSection()
@@ -153,6 +178,7 @@ void SMETIO::parseInputOutputSection()
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
 	cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
+	cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
 	cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
 	cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 
@@ -175,7 +201,7 @@ void SMETIO::parseInputOutputSection()
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {//HACK: It should support coordinates in the data, ie: it should use the given date! (and TZ)
 	vecStation.clear();
-	vecStation.reserve(nr_stations);
+	vecStation.resize( vecFiles.size() );
 
 	//Now loop through all requested stations, open the respective files and parse them
 	for (size_t ii=0; ii<vec_smet_reader.size(); ii++){
@@ -183,7 +209,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		smet::SMETReader& myreader = vec_smet_reader[ii];
 
 		read_meta_data(myreader, sd);
-		vecStation.push_back(sd);
+		vecStation[ii] = sd;
 	}
 }
 
@@ -277,25 +303,26 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 
 	meta.position.setProj(coordin, coordinparam); //set the default projection from config file
 	if (myreader.location_in_header(smet::WGS84)){
-		const double lat = myreader.get_header_doublevalue("latitude");
-		const double lon = myreader.get_header_doublevalue("longitude");
-		const double alt = myreader.get_header_doublevalue("altitude");
-		meta.position.setLatLon(lat, lon, alt);
+		const double lat = IOUtils::standardizeNodata( myreader.get_header_doublevalue("latitude"), nodata_value);
+		const double lon = IOUtils::standardizeNodata( myreader.get_header_doublevalue("longitude"), nodata_value);
+		const double alt = IOUtils::standardizeNodata( myreader.get_header_doublevalue("altitude"), nodata_value);
+		meta.position.setLatLon(lat, lon, alt, false);
 	}
-
 	if (myreader.location_in_header(smet::EPSG)){
-		const double east  = myreader.get_header_doublevalue("easting");
-		const double north = myreader.get_header_doublevalue("northing");
-		const double alt   = myreader.get_header_doublevalue("altitude");
+		const double east  = IOUtils::standardizeNodata( myreader.get_header_doublevalue("easting"), nodata_value);
+		const double north = IOUtils::standardizeNodata( myreader.get_header_doublevalue("northing"), nodata_value);
+		const double alt   = IOUtils::standardizeNodata( myreader.get_header_doublevalue("altitude"), nodata_value);
 		const short int epsg  = (short int)(floor(myreader.get_header_doublevalue("epsg") + 0.1));
 		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
-		meta.position.setXY(east, north, alt);
+		meta.position.setXY(east, north, alt, false);
 	}
+	if (!meta.position.isNodata())
+		meta.position.check( "Inconsistent geographic coordinates in file \""+myreader.get_filename()+"\": " ); //check coordinates consistency and compute the missing representation if necessary
 
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
-	const double slope_angle = myreader.get_header_doublevalue("slope_angle");
-	const double slope_azi = myreader.get_header_doublevalue("slope_azi");
+	const double slope_angle = IOUtils::standardizeNodata( myreader.get_header_doublevalue("slope_angle"), nodata_value);
+	const double slope_azi = IOUtils::standardizeNodata( myreader.get_header_doublevalue("slope_azi"), nodata_value);
 	if (slope_angle!=IOUtils::nodata && slope_azi!=IOUtils::nodata) {
 		meta.setSlope(slope_angle, slope_azi);
 	} else if (slope_angle==0.) {
@@ -316,15 +343,16 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	}
 }
 
-void SMETIO::copy_data(const smet::SMETReader& myreader,
+/*
+* This function parses the data read from a SMETReader object, a vector<double>,
+* and copies the values into their respective places in the MeteoData structure
+* Meta data, whether in header or in data is also handled
+*/
+void SMETIO::populateMeteo(const smet::SMETReader& myreader,
                        const std::vector<std::string>& timestamps,
                        const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
 {
-	/*
-	 * This function parses the data read from a SMETReader object, a vector<double>,
-	 * and copies the values into their respective places in the MeteoData structure
-	 * Meta data, whether in header or in data is also handled
-	 */
+	const std::string filename( myreader.get_filename() );
 	const std::string myfields( myreader.get_header_value("fields") );
 	std::vector<std::string> fields;
 	IOUtils::readLineToVec(myfields, fields);
@@ -354,8 +382,11 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
 	double previous_ts = IOUtils::nodata;
+	
+	if (timestamp_present) vecMeteo.reserve( timestamps.size() );
+	MeteoData tmp_md(md);
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
-		MeteoData tmp_md(md);
+		tmp_md.reset();
 
 		if (timestamp_present)
 			IOUtils::convertString(tmp_md.date, timestamps[ii], current_timezone);
@@ -386,14 +417,25 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 				else
 					tmp_md(indexes[jj]) = current_data;
 			}
-
-			if (data_epsg)
-				tmp_md.meta.position.setXY(east, north, alt);
-
-			if (data_wgs84)
-				tmp_md.meta.position.setXY(lat, lon, alt);
-
+			
 			current_index++;
+		}
+		
+		//process location in the data section
+		if (data_epsg || data_wgs84) {
+			if (data_epsg) {
+				tmp_md.meta.position.setXY(east, north, alt, false);
+				east = IOUtils::nodata;
+				north = IOUtils::nodata;
+			}
+			if (data_wgs84) {
+				tmp_md.meta.position.setXY(lat, lon, alt, false);
+				lat = IOUtils::nodata;
+				lon = IOUtils::nodata;
+			}
+			alt = IOUtils::nodata;
+			
+			tmp_md.meta.position.check("Inconsistent inline geographic coordinates in file \"" + filename + "\": ");
 		}
 
 		if ((pint_present) && (tmp_md(MeteoData::PSUM) == IOUtils::nodata)) {
@@ -415,12 +457,12 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
-	vecMeteo = vector< vector<MeteoData> >(vecFiles.size());
-	vecMeteo.reserve(nr_stations);
+	vecMeteo.resize( vecFiles.size() );
+	
 
 	//Loop through all requested stations, open the respective files and parse them
 	for (size_t ii=0; ii<vecFiles.size(); ii++){
-		const std::string& filename = vecFiles.at(ii); //filename of current station
+		const std::string filename( vecFiles.at(ii) ); //filename of current station
 
 		if (!FileUtils::fileExists(filename))
 			throw NotFoundException(filename, AT);
@@ -437,7 +479,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			myreader.read(dateStart.getJulian(), dateEnd.getJulian(), mydata);
 		}
 
-		copy_data(myreader, mytimestamps, mydata, vecMeteo[ii]);
+		populateMeteo(myreader, mytimestamps, mydata, vecMeteo[ii]);
 	}
 }
 
@@ -616,7 +658,9 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 			if (outputPlotHeaders) getPlotProperties(ll, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
-
+	
+	if (randomColors)
+		srand( static_cast<unsigned int>(time(NULL)) );
 
 	mywriter.set_header_value("fields", ss.str());
 	if (outputPlotHeaders) {
@@ -630,56 +674,29 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	mywriter.set_precision(myprecision);
 }
 
-void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max)
+void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
 {
-	if (param==MeteoData::P) {
-		plot_units << "Pa ";		plot_description << "local_air_pressure ";
-		plot_color << "0xAEAEAE ";	plot_min << "87000 "; plot_max << "115650 ";
-	} else if (param==MeteoData::TA) {
-		plot_units << "K ";			plot_description << "air_temperature ";
-		plot_color << "0x8324A4 ";	plot_min << "253.15 "; plot_max << "283.15 ";
-	} else if (param==MeteoData::RH) {
-		plot_units << "- ";			plot_description << "relative_humidity ";
-		plot_color << "0x50CBDB ";	plot_min << "0 "; plot_max << "1 ";
-	} else if (param==MeteoData::TSG) {
-		plot_units << "K ";			plot_description << "ground_surface_temperature ";
-		plot_color << "0xDE22E2 ";	plot_min << "253.15 "; plot_max << "283.15 ";
-	} else if (param==MeteoData::TSS) {
-		plot_units << "K ";			plot_description << "snow_surface_temperature ";
-		plot_color << "0xFA72B7 ";	plot_min << "253.15 "; plot_max << "283.15 ";
-	} else if (param==MeteoData::HS) {
-		plot_units << "m ";			plot_description << "height_of_snow ";
-		plot_color << "0x000000 ";	plot_min << "0 "; plot_max << "3 ";
-	} else if (param==MeteoData::VW) {
-		plot_units << "m/s ";		plot_description << "wind_velocity ";
-		plot_color << "0x297E24 ";	plot_min << "0 "; plot_max << "30 ";
-	} else if (param==MeteoData::DW) {
-		plot_units << "° ";			plot_description << "wind_direction ";
-		plot_color << "0x64DD78 ";	plot_min << "0 "; plot_max << "360 ";
-	} else if (param==MeteoData::VW_MAX) {
-		plot_units << "m/s ";		plot_description << "max_wind_velocity ";
-		plot_color << "0x244A22 ";	plot_min << "0 "; plot_max << "30 ";
-	} else if (param==MeteoData::RSWR) {
-		plot_units << "W/m2 ";		plot_description << "outgoing_short_wave_radiation ";
-		plot_color << "0x7D643A ";	plot_min << "0 "; plot_max << "1400 ";
-	} else if (param==MeteoData::ISWR) {
-		plot_units << "W/m2 ";		plot_description << "incoming_short_wave_radiation ";
-		plot_color << "0xF9CA25 ";	plot_min << "0 "; plot_max << "1400 ";
-	} else if (param==MeteoData::ILWR) {
-		plot_units << "W/m2 ";		plot_description << "incoming_long_wave_radiation ";
-		plot_color << "0xD99521 ";	plot_min << "150 "; plot_max << "400 ";
-	} else if (param==MeteoData::TAU_CLD) {
-		plot_units << "- ";			plot_description << "cloud_transmissivity ";
-		plot_color << "0xD9A48F ";	plot_min << "0 "; plot_max << "1 ";
-	} else if (param==MeteoData::PSUM) {
-		plot_units << "kg/m2 ";		plot_description << "water_equivalent_precipitation_sum ";
-		plot_color << "0x2431A4 ";	plot_min << "0 "; plot_max << "20 ";
-	} else if (param==MeteoData::PSUM_PH) {
-		plot_units << "- ";			plot_description << "precipitation_phase ";
-		plot_color << "0x7E8EDF ";	plot_min << "0 "; plot_max << "1 ";
+	std::map<size_t, plot_attr>::const_iterator it = plot_ppt.find( param );
+	if (it!=plot_ppt.end()) { //the parameter is a known one with some preset parameters
+		plot_units << it->second.units << " ";
+		plot_description << it->second.description << " ";
+		plot_color  << it->second.color << " ";
+		plot_min << it->second.min << " ";
+		plot_max << it->second.max << " ";
 	} else {
-		plot_units << "- ";			plot_description << "- ";
-		plot_color << "0xA0A0A0 ";	plot_min << IOUtils::nodata << " "; plot_max << IOUtils::nodata << " ";
+		plot_units << "- ";
+		plot_description << "- ";
+		
+		if (!randomColors) {
+			plot_color  << "0xA0A0A0 ";
+		} else {
+			char tmp[9];
+			static const int max_col = 256*256*256;
+			sprintf(tmp,"0x%x", rand() % max_col);
+			plot_color << tmp << " ";
+		}
+		plot_min << IOUtils::nodata << " ";
+		plot_max << IOUtils::nodata << " ";
 	}
 }
 
@@ -715,9 +732,9 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 	} else if (param == MeteoData::RH){
 		prec = 3;
 		width = 7;
-	} else {
-		prec = 3;
-		width = 8;
+	} else if (param == MeteoData::QI){
+		prec = 10;
+		width = 11;
 	}
 }
 
@@ -813,6 +830,7 @@ void SMETIO::readPOI(std::vector<Coords>& pts)
 	const int epsg = myreader.get_header_intvalue("epsg");
 	const double smet_nodata = myreader.get_header_doublevalue("nodata");
 
+	pts.clear();
 	if (myreader.location_in_data(smet::WGS84)==true) {
 		size_t lat_fd=IOUtils::unodata, lon_fd=IOUtils::unodata;
 		size_t alt_fd=IOUtils::unodata;

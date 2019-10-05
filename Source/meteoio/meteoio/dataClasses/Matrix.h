@@ -66,14 +66,23 @@ class Matrix {
 		Matrix(const size_t& n, const double& init);
 
 		/**
+		* @brief A constructor that takes a data vector to fill the matrix
+		* @param rows number of rows of the new matrix
+		* @param cols number of columns of the new matrix
+		* @param data data vector to init the matrix (must be of size rows*cols)
+		*/
+		Matrix(const size_t& rows, const size_t& cols, const std::vector<double> data) : vecData(data), ncols(cols), nrows(rows) {}
+
+		/**
 		* @brief Convert the current matrix to a identity matrix of size n
 		* @param n dimension of the new square matrix
-		* @param init initial value to fill the matrix with
+		* @param init initial value to fill the matrix diagonal with
 		*/
-		void identity(const size_t& n, const double& init);
+		void identity(const size_t& n, const double& init = 1.);
 
 		void resize(const size_t& rows, const size_t& cols);
 		void resize(const size_t& rows, const size_t& cols, const double& init);
+		void resize(const size_t& rows, const size_t& cols, const std::vector<double>& data);
 
 		/**
 		* @brief get the dimensions of the current object
@@ -131,6 +140,60 @@ class Matrix {
 		bool inv();
 
 		/**
+		* @brief Copy a matrix row to a new 1-row-matrix
+		* @param i Row index
+		* @return The row as a new matrix
+		*/
+		Matrix getRow(const size_t i) const;
+
+		/**
+		* @brief Set a matrix row from a 1-row-matrix
+		* @param i Row index
+		* @param row The new row
+		*/
+		void setRow(const size_t i, const Matrix& row);
+
+		/**
+		* @brief Copy a matrix column to a new 1-column-matrix
+		* @param j Column index
+		* @return The column as a new matrix
+		*/
+		Matrix getCol(const size_t j) const;
+
+		/**
+		* @brief Set a matrix column from a 1-column-matrix
+		* @param j Column index
+		* @param col The new column
+		*/
+		void setCol(const size_t j, const Matrix& col);
+
+		/**
+		* @brief Copy the matrix diagonal to a new 1-column-matrix
+		* @return The diagonal as a new matrix
+		*/
+		Matrix getDiagonal() const;
+
+		/**
+		* @brief Extract a submatrix to a new matrix.
+		* IOUtils::npos for an index means "from beginning" (i. e. 1) or "until end"
+		* (i. e. ncols resp. nrows).
+		* @param r_low Start from this row
+		* @param r_high End at this row
+		* @param c_low Start from this column 
+		* @param c_high End at this column
+		* @return The extracted submatrix
+		*/
+		Matrix extract(size_t r_low, size_t r_high, size_t c_low, size_t c_high) const;
+		
+		/**
+		* @brief Find the first maximum value in the matrix
+		* @param max_row Row index of the maximum
+		* @param max_col Column index of the maximum
+		* @return The maximum value
+		*/
+		double maxCoeff(size_t& max_row, size_t& max_col) const;
+
+		/**
 		* @brief matrix solving for A·X=B.
 		* It first performs LU decomposition and then solves A·X=B by
 		* backward and forward solving of LU * X = B
@@ -183,6 +246,74 @@ class Matrix {
 		double det() const;
 
 		/**
+		* @brief Gaussian elimimination with partial pivoting.
+		* This function performs row reduction with (virtual) row-swapping.
+		* Attention: The original matrix is destroyed!
+		* @author Michael Reisecker
+		* @param[in,out] M The matrix to reduce
+		* @param[out] p Used permutation vector (ignore p[0])
+		*/
+		static void gaussElimination(Matrix& M, std::vector<size_t>& p);
+
+		/**
+		* @brief Equation system solver via Gaussian elimination.
+		* This function solves a set of equations M·X=A via Gauss elimination with partial pivoting.
+		* Attention: The original matrices are destroyed!
+		* @author Michael Reisecker
+		* @param[in] M The matrix M in M·X=A
+		* @param[in] A The solution vector (or matrix for multiple equations) A in M·X=A
+		* @param[out] X The calculated solution X in M·X=A
+		* @return False if the equations are linearly dependent
+		*/
+		static bool gaussSolve(Matrix& M, Matrix& A, Matrix& X);
+
+		/**
+		* @brief Convenience call to the solver with input matrix preservation.
+		* This function makes a copy of the input matrices and invokes the solver on that, i. e. they
+		* are not changed in the process.
+		* @param[in] M The matrix M in M·X=A
+		* @param[in] A The solution vector (or matrix for multiple equations) A in M·X=A
+		* @param[out] X The calculated solution X in M·X=A
+		* @return False if the equations are linearly dependent
+		*/
+		static bool gaussSolve(const Matrix& M, const Matrix& A, Matrix& X);
+
+		/**
+		* @brief Matrix inversion via Gaussian elimination.
+		* Attention: The original matrix is destroyed!
+		* @author Michael Reisecker
+		* @param[in,out] M The matrix to invert
+		* @return False if the matrix is singular
+		*/
+		static bool gaussInverse(Matrix& M);
+
+		/**
+		* @brief Convenience call for matrix inversion with input matrix preservation.
+		* This function makes a copy of the input matrix, i. e. it is left unchanged by the solver.
+		* @param[in] M The matrix to invert
+		* @param[out] Inv The inverse matrix
+		* @return False if the matrix is singular
+		*/
+		static bool gaussInverse(const Matrix& M, Matrix& Inv);
+
+		/**
+		* @brief Get the matrix determinant via Gaussian elimination.
+		* Attention: The original matrix is destroyed!
+		* @author Michael Reisecker
+		* @param[in] M Matrix to calculate the determinant for
+		* @return The determinant
+		*/
+		static double gaussDet(Matrix& M);
+
+		/**
+		* @brief Calculate Euclidean norm (l2) for a vector.
+		* The matrix must either be a row or a column vector.
+		* @param[in] vv Vector to calculate norm for
+		* @return L2 norm
+		*/
+		static double normEuclid(const Matrix& vv);
+
+		/**
 		* @brief matrix LU decomposition.
 		* Perform LU decomposition by the Dolittle algorithm,
 		* (cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html)
@@ -210,7 +341,32 @@ class Matrix {
 		*/
 		//void bidiagonalize();
 
-		const std::string toString() const;
+		/**
+		* @brief Eigenvalue and eigenvector computation of symmetrical matrices.
+		* This function performs the iterative Jacobi method, cf. https://en.wikipedia.org/wiki/Jacobi_eigenvalue_algorithm
+		* Attention: The given matrix must be symmetrical on input!
+		* @author Michael Reisecker
+		* @param[in,out] AA The matrix to search eigenvalues for. They will be found on its diagonal after transformation (unsorted).
+		* @param[out] DD Eigenvectors
+		* @return Number of iterations that were needed
+		*/
+		static unsigned int eigenvaluesJacobi(Matrix& AA, Matrix& DD);
+		static double jacobiEpsilon(Matrix& AA);
+
+		/**
+		* @brief Singular Value Decomposition.
+		* This function calculates the SVD of a matrix. It uses an eigenvector search on M·M^T, which means problems may be squared.
+		* @author Michael Reisecker
+		* @param[in] MM The matrix to factorize.
+		* @param[out] UU Left singular vectors
+		* @param[out] SS Diagonal matrix with the singular values
+		* @param[out] VV Right singular vectors
+		*/
+		static void svdJacobi(const Matrix& MM, Matrix& UU, Matrix& SS, Matrix& VV);
+		static void sortEigenvalues(Matrix& EE, Matrix& VV);
+		void swapCols(const size_t &j1, const size_t &j2); //used by svd
+
+		const std::string toString(const int& precision=2, const bool& prettify=true) const;
 
 		Matrix& operator+=(const Matrix& rhs);
 		const Matrix operator+(const Matrix& rhs) const;
@@ -250,6 +406,7 @@ class Matrix {
 		size_t findMaxInCol(const size_t &col);
 		size_t findMaxInRow(const size_t &row);
 		void swapRows(const size_t &i1, const size_t &i2);
+
 };
 
 } //end namespace

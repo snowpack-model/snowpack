@@ -34,7 +34,7 @@ namespace mio {
  * After filling the initial grid, this method modifies the solid precipitation distribution according to the local slope and curvature:
  * all pixels whose slope is greater than 60° will not receive any snow at all. All pixels whose slope is less than 40° will receive full snow
  * and any pixel between 40° and 60° sees a linear correction between 100% and 0% snow. After this step, a curvature
- * correction is applied: pixels having the minimu curvature see 50% snow more, pixels having the maximum curvature see
+ * correction is applied: pixels having the minimum curvature see 50% snow more, pixels having the maximum curvature see
  * 50% snow less and pixels ate the middle of the curvature range are unaffected.
  *
  * For more, see <i>"Quantitative evaluation of different hydrological modelling approaches

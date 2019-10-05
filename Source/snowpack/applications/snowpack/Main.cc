@@ -90,6 +90,9 @@ class Cumsum {
 		double precip;
 		double drift, snow, runoff, rain;
 		vector<double> erosion; // Cumulated eroded mass; dumped to file as rate
+		vector<double> erosion_length; // Cumulated eroded length
+		vector<double> redeposition; // Cumulated eroded mass
+		vector<double> redeposition_length; // Cumulated redeposited length
 };
 
 /************************************************************
@@ -200,7 +203,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 Cumsum::Cumsum(const unsigned int nSlopes)
         : precip(0.),
           drift(0.), snow(0.), runoff(0.), rain(0.),
-          erosion(nSlopes, 0.)
+          erosion(nSlopes, 0.), erosion_length(nSlopes, 0.), redeposition(nSlopes, 0.), redeposition_length(nSlopes, 0.)
 {}
 
 inline void Version()
@@ -1191,10 +1194,13 @@ inline void real_main (int argc, char *argv[])
 						// NOTE cumsum.erosion[] will be positive in case of real erosion at any time during the output time step
 						if (vecXdata[slope.mainStation].ErosionMass > Constants::eps) {
 							// Real erosion
-							if (cumsum.erosion[slope.mainStation] > Constants::eps)
+							if (cumsum.erosion[slope.mainStation] > Constants::eps) {
 								cumsum.erosion[slope.mainStation] += vecXdata[slope.mainStation].ErosionMass;
-							else
+								cumsum.erosion_length[slope.mainStation] += vecXdata[slope.mainStation].ErosionLength;
+							} else {
 								cumsum.erosion[slope.mainStation] = vecXdata[slope.mainStation].ErosionMass;
+								cumsum.erosion_length[slope.mainStation] = vecXdata[slope.mainStation].ErosionLength;
+							}
 						} else {
 							// Potential erosion at main station only
 							if (cumsum.erosion[slope.mainStation] < -Constants::eps)
@@ -1202,6 +1208,8 @@ inline void real_main (int argc, char *argv[])
 							else if (!(cumsum.erosion[slope.mainStation] > Constants::eps))
 								cumsum.erosion[slope.mainStation] = -surfFluxes.mass[SurfaceFluxes::MS_WIND];
 						}
+						cumsum.redeposition[slope.mainStation] += vecXdata[slope.mainStation].hn_redeposit * vecXdata[slope.mainStation].rho_hn_redeposit;
+						cumsum.redeposition_length[slope.mainStation] += vecXdata[slope.mainStation].hn_redeposit;
 					}
 					const size_t i_hz = mn_ctrl.HzStep;
 					if (mode == "OPERATIONAL") {
@@ -1297,6 +1305,7 @@ inline void real_main (int argc, char *argv[])
 
 					// Update erosion mass from windward virtual slope
 					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;
+					cumsum.erosion_length[slope.sector] += vecXdata[slope.sector].ErosionLength;
 				}
 
 				// TIME SERIES (*.met)
@@ -1326,6 +1335,15 @@ inline void real_main (int argc, char *argv[])
 					surfFluxes.mass[SurfaceFluxes::MS_WIND] = cumsum.erosion[slope.sector];
 					surfFluxes.mass[SurfaceFluxes::MS_WIND] /= static_cast<double>(mn_ctrl.nAvg)*M_TO_H(calculation_step_length);
 
+					// REDEPOSIT mode variables:
+					if (cumsum.erosion_length[slope.sector] != 0. && cumsum.redeposition_length[slope.sector] != 0.) {
+						surfFluxes.mass[SurfaceFluxes::MS_REDEPOSIT_DRHO] = cumsum.redeposition[slope.sector]/cumsum.redeposition_length[slope.sector] + cumsum.erosion[slope.sector]/cumsum.erosion_length[slope.sector];
+						surfFluxes.mass[SurfaceFluxes::MS_REDEPOSIT_DHS] = cumsum.redeposition_length[slope.sector] + cumsum.erosion_length[slope.sector];
+					} else {
+						surfFluxes.mass[SurfaceFluxes::MS_REDEPOSIT_DRHO] = IOUtils::nodata;
+						surfFluxes.mass[SurfaceFluxes::MS_REDEPOSIT_DHS] = IOUtils::nodata;
+					}
+
 					// Dump
 					const size_t i_hz = (mn_ctrl.HzStep > 0) ? mn_ctrl.HzStep - 1 : 0;
 					size_t i_hz0 = (mn_ctrl.HzStep > 1) ? mn_ctrl.HzStep - 2 : 0;
@@ -1344,6 +1362,9 @@ inline void real_main (int argc, char *argv[])
 					// reset cumulative variables
 					if (slope_sequence == slope.nSlopes-1) {
 						cumsum.erosion.assign(cumsum.erosion.size(), 0.);
+						cumsum.erosion_length.assign(cumsum.erosion_length.size(), 0.);
+						cumsum.redeposition.assign(cumsum.redeposition.size(), 0.);
+						cumsum.redeposition_length.assign(cumsum.redeposition_length.size(), 0.);
 						cumsum.rain = cumsum.snow = 0.;
 						mn_ctrl.nAvg = 0;
 					}

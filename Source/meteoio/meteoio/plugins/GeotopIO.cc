@@ -204,14 +204,14 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector<std::vector<MeteoData> >& vecMeteo) {
 	vecMeteo.clear();
-	string line;
+	std::string line;
 
 	const string path = cfg.get("METEOPATH", "Input");
 	const string prefix = cfg.get("METEOPREFIX", "Input");
 
 	//read geotop.inpts to find out how many stations exist
 	//at what locations they are and what column headers to use
-	vector<StationData> myStations;
+	std::vector<StationData> myStations;
 	readStationData(dateStart, myStations);
 
 	if (vec_streampos.empty()) //the vec_streampos save file pointers for certain dates
@@ -222,15 +222,14 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	cerr << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
 
-	vector<std::string> tmpvec;
+	std::vector<std::string> tmpvec;
+	vecMeteo.resize( nr_of_stations );
 	for (size_t ii = 0; ii < nr_of_stations; ii++) {
-		vecMeteo.push_back(vector<MeteoData> ());
-
 		ostringstream ss;
 		ss.fill('0');
 		ss << path << "/" << prefix << setw(4) << (ii + 1) << ".txt";
 
-		const string filename = ss.str();
+		const std::string filename( ss.str() );
 		if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 		if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
@@ -254,7 +253,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			if (ncols == 0)
 				throw InvalidFormatException("No meta data found in " + filename, AT);
 
-			std::vector<double> tmpdata = std::vector<double>(ncols + 1); //one extra for nodata value
+			std::vector<double> tmpdata( ncols + 1); //one extra for nodata value
 
 			//The following 4 lines are an optimization to jump to the correct position in the file
 			streampos current_fpointer = -1; //the filepointer for the current date

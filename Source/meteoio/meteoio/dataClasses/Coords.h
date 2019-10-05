@@ -79,101 +79,101 @@ namespace mio {
 */
 
 class Coords {
-public:
-	///Keywords for selecting the algorithm for computing geodesic distances
-	typedef enum GEO_DISTANCES {
-		GEO_COSINE, ///< Spherical law of cosine (See http://www.movable-type.co.uk/scripts/latlong.html)
-		GEO_VINCENTY ///< Vincenty ellispoid formula (See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, or http://www.springerlink.com/content/y7108u6862473583 for more)
-	} geo_distances;
-	
-	///Keywords for selecting the toString formats
-	typedef enum {
-		DEBUG, ///< As much information as possible, useful for debugging
-		FULL, ///< Provide all the usually necessary information
-		LATLON, ///< Simplified, lat/lon only
-		XY, ///< Simplified cartesian, only easting/northing
-		CARTESIAN ///< Compact representation only containing the X/Y and I/J coordinates
-	} FORMATS;
+	public:
+		///Keywords for selecting the algorithm for computing geodesic distances
+		typedef enum GEO_DISTANCES {
+			GEO_COSINE, ///< Spherical law of cosine (See http://www.movable-type.co.uk/scripts/latlong.html)
+			GEO_VINCENTY ///< Vincenty ellispoid formula (See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, or http://www.springerlink.com/content/y7108u6862473583 for more)
+		} geo_distances;
+		
+		///Keywords for selecting the toString formats
+		typedef enum {
+			DEBUG, ///< As much information as possible, useful for debugging
+			FULL, ///< Provide all the usually necessary information
+			LATLON, ///< Simplified, lat/lon only
+			XY, ///< Simplified cartesian, only easting/northing
+			CARTESIAN ///< Compact representation only containing the X/Y and I/J coordinates
+		} FORMATS;
 
-	//Constructors
-	Coords();
-	Coords(const std::string& in_coordinatesystem, const std::string& in_parameters="");
-	Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec);
-	Coords(const double& in_lat_ref, const double& in_long_ref);
-	Coords(const Coords& c);
+		//Constructors
+		Coords();
+		Coords(const std::string& in_coordinatesystem, const std::string& in_parameters="");
+		Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec);
+		Coords(const double& in_lat_ref, const double& in_long_ref);
+		Coords(const Coords& c);
 
-	//Operators
-	Coords& operator=(const Coords&); ///<Assignement operator
-	bool operator==(const Coords&) const; ///<Operator that tests for equality
-	bool operator!=(const Coords&) const; ///<Operator that tests for inequality
-	bool isNodata() const;
-	void moveByXY(const double& x_displacement, const double& y_displacement);
-	void moveByBearing(const double& i_bearing, const double& i_distance);
+		//Operators
+		Coords& operator=(const Coords&); ///<Assignement operator
+		bool operator==(const Coords&) const; ///<Operator that tests for equality
+		bool operator!=(const Coords&) const; ///<Operator that tests for inequality
+		bool isNodata() const;
+		void moveByXY(const double& x_displacement, const double& y_displacement);
+		void moveByBearing(const double& i_bearing, const double& i_distance);
 
-	static Coords merge(const Coords& coord1, const Coords& coord2);
-	void merge(const Coords& coord2);
+		static Coords merge(const Coords& coord1, const Coords& coord2);
+		void merge(const Coords& coord2);
 
-	//Getter methods
-	double getEasting() const {return easting;}
-	double getNorthing() const {return northing;}
-	double getLat() const {return latitude;}
-	double getLon() const {return longitude;}
-	double getAltitude() const {return altitude;}
-	int getGridI() const {return grid_i;}
-	int getGridJ() const {return grid_j;}
-	int getGridK() const {return grid_k;}
-	bool indexIsValid() const {return validIndex;} ///< Returns true if the (i,j,k) index are valid
-	void getProj(std::string& proj_type, std::string& proj_args) const;
-	short int getEPSG() const;
+		//Getter methods
+		double getEasting() const {return easting;}
+		double getNorthing() const {return northing;}
+		double getLat() const {return latitude;}
+		double getLon() const {return longitude;}
+		double getAltitude() const {return altitude;}
+		int getGridI() const {return grid_i;}
+		int getGridJ() const {return grid_j;}
+		int getGridK() const {return grid_k;}
+		bool indexIsValid() const {return validIndex;} ///< Returns true if the (i,j,k) index are valid
+		void getProj(std::string& proj_type, std::string& proj_args) const;
+		short int getEPSG() const;
 
-	const std::string toString(const FORMATS& type = DEBUG) const;
-	friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
-	friend std::istream& operator>>(std::istream& is, Coords& coord);
+		const std::string toString(const FORMATS& type = DEBUG) const;
+		friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
+		friend std::istream& operator>>(std::istream& is, Coords& coord);
 
-	//Setter methods
-	void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);
-	void setLatLon(const std::string& in_coordinates, const double in_altitude, const bool in_update=true);
-	void setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update=true);
-	void setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool setValid=false);
-	void setAltitude(const double in_altitude, const bool in_update=true);
-	void setProj(const std::string& in_coordinatesystem, const std::string& in_parameters="");
-	void setLocalRef(const double in_ref_latitude, const double in_ref_longitude);
-	void setLocalRef(const std::string in_coordparam);
-	void setDistances(const geo_distances in_algo);
-	void setEPSG(const int& epsg);
+		//Setter methods
+		void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);
+		void setLatLon(const std::string& in_coordinates, const double in_altitude, const bool in_update=true);
+		void setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update=true);
+		void setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool setValid=false);
+		void setAltitude(const double in_altitude, const bool in_update=true);
+		void setProj(const std::string& in_coordinatesystem, const std::string& in_parameters="");
+		void setLocalRef(const double in_ref_latitude, const double in_ref_longitude);
+		void setLocalRef(const std::string in_coordparam);
+		void setDistances(const geo_distances in_algo);
+		void setEPSG(const int& epsg);
 
-	void check();
-	double distance(const Coords& destination) const;
-	bool isSameProj(const Coords& target) const;
-	void copyProj(const Coords& source, const bool i_update=true);
+		void check(const std::string& pre_msg="");
+		double distance(const Coords& destination) const;
+		bool isSameProj(const Coords& target) const;
+		void copyProj(const Coords& source, const bool i_update=true);
 
- private:
-	//Coordinates conversions
-	void convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const;
-	void convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const;
+	private:
+		//Coordinates conversions
+		void convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const;
+		void convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const;
 
-	void WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const;
-	void local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
-	void WGS84_to_NULL(double lat_in, double long_in, double& east_out, double& north_out) const;
-	void NULL_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
+		void WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const;
+		void local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
+		void WGS84_to_NULL(double lat_in, double long_in, double& east_out, double& north_out) const;
+		void NULL_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 
-	//Distances calculations
-	void distance(const Coords& destination, double& o_distance, double& o_bearing) const;
+		//Distances calculations
+		void distance(const Coords& destination, double& o_distance, double& o_bearing) const;
 
- private:
-	void clearCoordinates();
-	void setDefaultValues();
+	private:
+		void clearCoordinates();
+		void setDefaultValues();
 
- private:
-	double ref_latitude, ref_longitude;
-	double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)
-	double latitude, longitude; ///<latitude and longitude of the point
-	double easting, northing; ///<east and north coordinate of the point in a cartesian grid
-	int grid_i, grid_j, grid_k; ///<grid index i, j, k (please notice that this index is NOT automatically regenerated NOR checked)
-	bool validIndex; ///< are grid index invalid?
+	private:
+		double ref_latitude, ref_longitude;
+		double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)
+		double latitude, longitude; ///<latitude and longitude of the point
+		double easting, northing; ///<east and north coordinate of the point in a cartesian grid
+		int grid_i, grid_j, grid_k; ///<grid index i, j, k (please notice that this index is NOT automatically regenerated NOR checked)
+		bool validIndex; ///< are grid index invalid?
 
-	std::string coordsystem, coordparam;
-	geo_distances distance_algo;
+		std::string coordsystem, coordparam;
+		geo_distances distance_algo;
 };
 } //end namespace
 

@@ -29,19 +29,15 @@ DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_p
                  : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), range(IOUtils::nodata), phase(0.)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
-	bool has_range=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="RANGE") {
 			IOUtils::parseArg(vecArgs[ii], where, range);
-			has_range = true;
 		} else if (vecArgs[ii].first=="PHASE") {
 			IOUtils::parseArg(vecArgs[ii], where, phase);
 			phase *= -1; //shift the minimum *later* in the day
 		}
 	}
-
-	if (!has_range) throw InvalidArgumentException("Please provide a RANGE for "+where, AT);
 }
 
 std::string DailyAverage::toString() const

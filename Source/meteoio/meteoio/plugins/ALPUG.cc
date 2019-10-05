@@ -20,6 +20,7 @@
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <errno.h>
+#include <cstring>
 #include <string.h>
 #include <sstream>
 #include <fstream>
@@ -141,7 +142,7 @@ void ALPUG::readMetaData()
 	std::ifstream fin(metafile.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
-		ss << "File \'" << metafile << "\' could not be opened. Possible reason: " << strerror(errno) << "\n";
+		ss << "File \'" << metafile << "\' could not be opened. Possible reason: " << std::strerror(errno) << "\n";
 		throw AccessException(ss.str(), AT);
 	}
 
@@ -306,7 +307,7 @@ void ALPUG::readMeteoFile(const size_t& station_index, const Date& dateStart, co
 	}
 
 	for (int year=start_year; year<=end_year; ++year) {
-		ostringstream ss;
+		std::ostringstream ss;
 		ss << year;
 		const std::string filename( ss.str().substr(2,2) + station_id + dflt_extension );
 		if (std::find(dirlist.begin(), dirlist.end(), filename) == dirlist.end()) //this file does not exist
@@ -317,7 +318,7 @@ void ALPUG::readMeteoFile(const size_t& station_index, const Date& dateStart, co
 		errno = 0;
 		std::ifstream fin(file_and_path.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 		if (fin.fail())
-			throw AccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + strerror(errno) + "\n", AT);
+			throw AccessException("Could not open \'" + file_and_path +"\'. Possible reason: " + std::strerror(errno) + "\n", AT);
 
 		const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 		const size_t nr_of_data_fields = vecFields.size();
@@ -355,10 +356,11 @@ void ALPUG::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
+	vecMeteo.resize( vecIDs.size() );
 	for (size_t ii=0; ii<vecIDs.size(); ++ii) {
 		std::vector<MeteoData> vecM;
 		readMeteoFile(ii, dateStart, dateEnd, vecM);
-		vecMeteo.push_back( vecM );
+		vecMeteo[ii] = vecM;
 	}
 }
 

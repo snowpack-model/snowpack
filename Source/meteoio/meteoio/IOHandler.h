@@ -49,9 +49,11 @@ class IOHandler : public IOInterface {
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
 		virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		
+
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
+		virtual void readGlacier(Grid2DObject& glacier_out);
+
 		virtual void readStationData(const Date& date,
 		                             STATIONS_SET& vecStation);
 
@@ -70,7 +72,7 @@ class IOHandler : public IOInterface {
 		const std::string toString() const;
 
 	private:
-		IOInterface* getPlugin(const std::string& plugin_name, const Config& i_cfg) const;
+		IOInterface* getPlugin(std::string plugin_name, const Config& i_cfg) const;
 		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection, const std::string& sec_rename="");
 		std::vector<std::string> getListOfSources(const std::string& plugin_key, const std::string& sec_pattern) const;
 		void create_copy_map();
@@ -78,7 +80,7 @@ class IOHandler : public IOInterface {
 		void create_exclude_map();
 		void create_keep_map();
 		void create_merge_map();
-		
+
 		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
 		void move_params(std::vector< METEO_SET >& vecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;

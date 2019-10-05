@@ -44,8 +44,6 @@ namespace mio {
 	}
 #endif
 
-const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
-const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const double Date::DST_shift = 1.0; //in hours
 const double Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
 const double Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
@@ -54,8 +52,10 @@ const double Date::Excel_offset = 2415018.5;  ///<offset between julian date and
 const double Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
 const double Date::epsilon_sec = 0.01; //minimum difference between two dates, in seconds
-const double Date::epsilon = epsilon_sec / (24.*3600.025); ///< minimum difference between two dates in days. 3600.025 is intentional
+const double Date::epsilon = epsilon_sec / (24.*3600.025); ///< minimum difference between two dates in days. 3600.025 is intentional to support high sampling rates
 std::map< std::string, double> Date::TZAbbrev;
+const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
+const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const bool Date::__init = Date::initStaticData();
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
 
@@ -200,9 +200,9 @@ void Date::setFromSys() {
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
 	const time_t utc( mktime(&local) );// convert GMT tm to GMT time_t
 #ifndef __MINGW32__
-	double tz = - difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
+	double tz = - difftime(utc,curr) / 3600.; //time zone shift (sign so that if curr>utc, tz>0)
 #else //workaround for Mingw bug 2152
-	double tz = - mio::difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
+	double tz = - mio::difftime(utc,curr) / 3600.; //time zone shift (sign so that if curr>utc, tz>0)
 #endif
 	setDate( curr ); //Unix time_t setter, always in gmt
 	setTimeZone( tz );
@@ -700,6 +700,7 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, i
 * @brief Return the day of the week for the current date.
 * The day of the week is between 1 (Monday) and 7 (Sunday).
 * @param gmt convert returned value to GMT? (default: false)
+* @return day of the week in [1, 7]
 */
 unsigned short Date::getDayOfWeek(const bool& gmt) const {
 //principle: start from day julian=0 that is a Monday
@@ -720,6 +721,7 @@ unsigned short Date::getDayOfWeek(const bool& gmt) const {
 * year (See https://en.wikipedia.org/wiki/ISO_week_date).
 * @param[out] ISO_year get filled with the matching ISO year (since the fist/last few days might belong to the previous/next year)
 * @param gmt convert returned value to GMT? (default: false)
+* @return ISO 8601 week number in [1, 53]
 */
 unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 {
@@ -759,6 +761,14 @@ unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 	}
 }
 
+/**
+* @brief Return the ISO 8601 week number
+* The week number range from 1 to 53 for a leap year. The first week is the week that contains
+* the first Thursday of the year. Previous days are attributed to the last week of the previous
+* year (See https://en.wikipedia.org/wiki/ISO_week_date).
+* @param gmt convert returned value to GMT? (default: false)
+* @return ISO 8601 week number in [1, 53]
+*/
 unsigned short Date::getISOWeekNr(const bool& gmt) const
 {
 	int ISO_year;
@@ -831,6 +841,7 @@ unsigned int Date::mod(const Date& indate, const unsigned int& seconds)
  * @param julian date to round
  * @param precision round date to the given precision, in seconds
  * @param type rounding strategy (default: CLOSEST)
+ * @return rounded date
  */
 double Date::rnd(const double& julian, const double& precision, const RND& type)
 {

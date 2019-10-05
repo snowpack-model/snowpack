@@ -60,7 +60,7 @@ class MeteoProcessor {
 		 * @param[in] ovec The filtered output of MeteoData object for all stations
 		 * @param[in] second_pass Whether this is the second pass (check only filters)
 		 */
-		void process(const std::vector< std::vector<MeteoData> >& ivec,
+		void process(std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
 		bool resample(const Date& date, const std::string& stationHash, const std::vector<MeteoData>& ivec, MeteoData& md) {return mi1d.resampleData(date, stationHash, ivec, md);}

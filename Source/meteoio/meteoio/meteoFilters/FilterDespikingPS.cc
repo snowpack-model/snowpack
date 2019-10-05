@@ -145,6 +145,7 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec)
 {
 	std::vector<double> ovec;
+	ovec.reserve( ivec.size() );
 
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		if (ivec[ii]==IOUtils::nodata){
@@ -563,10 +564,10 @@ void FilterDespikingPS::solve2X2LinearEquations(const double* a, const double* b
 const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec,
                                                                                       const unsigned int& param)
 {
-	std::vector<double> ovec;
+	std::vector<double> ovec( ivec.size() );
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		const MeteoData meteoValue = ivec[ii];
-		ovec.push_back( meteoValue(param) );
+		ovec[ii] = meteoValue(param);
 	}
 	return ovec;
 }
@@ -579,7 +580,7 @@ const std::vector<double> FilterDespikingPS::helperGetDoubleVectorOutOfMeteoData
  */
 const std::vector<double> FilterDespikingPS::helperGetTimeVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec)
 {
-	std::vector<double> ovec;
+	std::vector<double> ovec( ivec.size() );
 	double time0 = 0;
 	double dt = 1;
 	if (ivec.size()>1){
@@ -589,7 +590,7 @@ const std::vector<double> FilterDespikingPS::helperGetTimeVectorOutOfMeteoDataVe
 	for (size_t ii=0; ii<ivec.size(); ii++) {
 		const MeteoData meteoValue = ivec[ii];
 		const double time = (meteoValue.date.getJulian()-time0)/dt;
-		ovec.push_back(time);
+		ovec[ii] = time;
 	}
 	return ovec;
 }

@@ -414,6 +414,7 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void DBO::fillStationMeta()
 {
 	vecMeta.clear();
+	vecMeta.resize( vecStationName.size() );
 	vecTsMeta.resize( vecStationName.size() );
 
 	for(size_t ii=0; ii<vecStationName.size(); ii++) {
@@ -443,7 +444,7 @@ void DBO::fillStationMeta()
 			Coords position(coordin, coordinparam);
 			position.setLatLon(coordinates[1], coordinates[0], coordinates[2]);
 			const StationData sd(position, getString("$.properties.name", v), getString("$.properties.locationName", v));
-			vecMeta.push_back( sd );
+			vecMeta[ii] = sd;
 
 			//parse and store the time series belonging to this station
 			vecTsMeta[ii] = getTsProperties(v);
@@ -640,12 +641,12 @@ void DBO::mergeTimeSeries(const MeteoData& md_pattern, const size_t& param, cons
 	if (vecData.empty()) return;
 
 	if (vecMeteo.empty()) { //easy case: the initial vector is empty
-		vecMeteo.reserve(vecData.size());
+		vecMeteo.resize( vecData.size() );
 		for (size_t ii=0; ii<vecData.size(); ii++) {
 			MeteoData md( md_pattern );
 			md.date = vecData[ii].date;
 			md(param) = vecData[ii].val;
-			vecMeteo.push_back( md );
+			vecMeteo[ii] = md;
 		}
 	} else {
 		size_t vecM_start = 0; //the index in vecRaw that matches the original start of vecMeteo
