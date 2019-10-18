@@ -18,6 +18,7 @@
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/IOUtils.h>
 #include <cstdio>
+#include <ctime>
 
 using namespace std;
 

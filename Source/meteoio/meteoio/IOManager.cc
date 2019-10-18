@@ -463,7 +463,7 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 	tsm1.clear_cache( TimeSeriesManager::ALL );
 	tsm1.setRawBufferProperties(buff_start, dateEnd);
 	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer (we know it will contain all the necessary data thanks to the setRawBufferProperties() call)
-	const Date dataEnd( tsm1.getDataEnd( TimeSeriesManager::RAW ) ); //we won't try to spatially interpolate after the end of data
+	const Date dataEnd( tsm1.getDataEnd( TimeSeriesManager::FILTERED ) ); //we won't try to spatially interpolate after the end of data
 	if (dataEnd.isUndef()) return vecvecMeteo;
 
 	for (Date date=buff_start; date<=std::min(dataEnd, dateEnd); date += date_inc) {
