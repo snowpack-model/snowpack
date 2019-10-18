@@ -83,17 +83,24 @@ namespace mio {
  * TA::algorithms      = IDW_LAPSE AVG_LAPSE
  * TA::avg_lapse::rate = -0.008
  *
- * RH::algorithms = RH IDW_LAPSE AVG_LAPSE AVG
+ * RH::algorithms = LISTON_RH IDW_LAPSE AVG_LAPSE AVG
  *
- * PSUM::algorithms      = PSUM_SNOW IDW_LAPSE AVG_LAPSE AVG CST
- * PSUM::psum_snow::base = avg_lapse
+ * PSUM::algorithms      = IDW_LAPSE AVG_LAPSE AVG CST
  * PSUM::avg_lapse::rate = 0.0005
  * PSUM::avg_lapse::frac = true
  * PSUM::cst::value      = 0
  *
  * VW::algorithms = IDW_LAPSE AVG_LAPSE
  *
- * P::algorithms  = STD_PRESS
+ * P::algorithms	= STD_PRESS
+ * P::std_press::USE_RESIDUALS = true
+ * 
+ * ILWR::algorithms = AVG_LAPSE
+ * ILWR::avg_lapse::rate = -0.03125
+ * 
+ * RSWR::algorithms = IDW AVG
+ * 
+ * ISWR::algorithms = SWRAD
  * @endcode
  *
  * @section interpol2D_keywords Available algorithms
