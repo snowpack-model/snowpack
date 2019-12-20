@@ -148,7 +148,7 @@ namespace mio {
  * - RHWATERTOICE: correct relative humidity over water to over ice in case temperature is below freezing, see ProcRHWaterToIce
  *
  * A few filters can be applied to the timestamps themselves:
- * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplictaes, etc), see TimeSuppr
+ * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplicates, etc), see TimeSuppr
  * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
  * - SORT: sort the timestamps in increasing order, see TimeSort
  * - TIMELOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop

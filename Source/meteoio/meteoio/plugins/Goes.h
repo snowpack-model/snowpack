@@ -40,7 +40,7 @@ class GoesStation {
 		MeteoData md_template;
 		double TZ;
 		float nodata;
-		size_t stationID_idx, year_idx, month_idx, hour_idx, jdn_idx;
+		size_t stationID_idx, year_idx, hour_idx, jdn_idx;
 		bool validStation;
 };
 

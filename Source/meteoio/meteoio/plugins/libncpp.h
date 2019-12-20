@@ -38,16 +38,16 @@ namespace ncpp {
 	
 	/** This structure contains the metadata associated with a NetCDF variable that are schema specific (for example, CF-1) */
 	typedef struct VAR_ATTR {
-		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(-1) {}; //please do NOT use this constructor!
-		VAR_ATTR(const int& i_type) : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {};
-		VAR_ATTR(const std::string& i_name, const int& i_type) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {};
+		VAR_ATTR() : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(-1) {} //please do NOT use this constructor!
+		VAR_ATTR(const int& i_type) : name(), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {}
+		VAR_ATTR(const std::string& i_name, const int& i_type) : name(i_name), standard_name(), long_name(), units(), height(mio::IOUtils::nodata), param(mio::IOUtils::npos), type(i_type) {}
 		VAR_ATTR(const size_t& prm, const std::string& i_name, const double& hgt, const int& i_type)
-								: name(i_name), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {};
+								: name(i_name), standard_name(), long_name(), units(), height(hgt), param(prm), type(i_type) {}
 		VAR_ATTR(const size_t& prm, const std::string& i_name, const std::string& std_name, const std::string& lg_name, const std::string& i_units, const double& hgt, const int& i_type)
-								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {};
+								: name(i_name), standard_name(std_name), long_name(lg_name), units(i_units), height(hgt), param(prm), type(i_type) {}
 		
-		bool isUndef() const {return (type==-1);};
-		std::string toString() const {std::ostringstream os; os << "["  << ((param<=ncpp::lastdimension)? getParameterName(param) : "Unknown") << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();};
+		bool isUndef() const {return (type==-1);}
+		std::string toString() const {std::ostringstream os; os << "["  << ((param<=ncpp::lastdimension)? getParameterName(param) : "Unknown") << " - " << name << " / " << standard_name << " / " << long_name << " , in " << units << " @ " << height << ", type=" << type << "]"; return os.str();}
 
 		std::string name; ///< variable name (it is possible to retrieve a variable by name)
 		std::string standard_name; ///< somehow human-friendly, standardized description of the name
@@ -60,15 +60,15 @@ namespace ncpp {
 
 	/** This structure contains the metadata associated with a NetCDF variable that are file specific as well as contains the schema specific metadata */
 	typedef struct NC_VARIABLE {
-		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}; //please do NOT use this constructor!
-		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {};
+		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {} //please do NOT use this constructor!
+		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}
 		NC_VARIABLE(const var_attr& attr, const double& i_nodata)
-							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {};
+							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {}
 		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
-							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {};
+							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {}
 		
-		bool isUndef() const {return (attributes.isUndef());};
-		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();};
+		bool isUndef() const {return (attributes.isUndef());}
+		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();}
 		
 		var_attr attributes; ///< metadata about the variable
 		std::vector<int> dimids;  ///< dimensions this variable depends on
@@ -78,12 +78,12 @@ namespace ncpp {
 	
 	/** This structure contains the metadata associated with a NetCDF dimension */
 	typedef struct NC_DIMENSION {
-		NC_DIMENSION() : name(), length(0), dimid(-1), param(mio::IOUtils::npos), isUnlimited(false) {};
+		NC_DIMENSION() : name(), length(0), dimid(-1), param(mio::IOUtils::npos), isUnlimited(false) {}
 		NC_DIMENSION(const size_t& i_param, const std::string& i_name)
-					: name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {};
+					: name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {}
 		NC_DIMENSION(const size_t& i_param, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
-					: name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {};
-		std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();};
+					: name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {}
+		std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();}
 
 		std::string name; ///< dimension name
 		size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")
@@ -112,6 +112,7 @@ namespace ncpp {
 	
 	void read_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, double* data);
 	void read_data(const int& ncid, const nc_variable& var, double* data);
+	void read_data(const int& ncid, const nc_variable& var, int* data);
 	void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform=false, const double& TZ=0.);
 	void write_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, const double * const data);
 	void write_1Ddata(const int& ncid, const nc_variable& var, const std::vector<double>& data, const bool& isUnlimited=false);

@@ -59,6 +59,7 @@ public:
 	static double lon_degree_lenght(const double& latitude);
 	
 	//EPSG helper methods
+	static bool isUTM(const int& epsg);
 	static short int str_to_EPSG(const std::string& coordsystem, const std::string& coordparam);
 	static void EPSG_to_str(const int& epsg, std::string& coordsystem, std::string& coordparam);
 
@@ -85,7 +86,6 @@ public:
 	static void WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
 	static void PROJ4_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out);
 
- private:
 	static int getUTMZone(const double& latitude, const double& longitude, std::string& zone_out);
 	static void parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber);
 

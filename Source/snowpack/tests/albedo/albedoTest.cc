@@ -892,10 +892,8 @@ inline void real_main(int argc, char *argv[]) {
 	double first_backup = 0.;
 	cfg.getValue("FIRST_BACKUP", "Output", first_backup, mio::IOUtils::nothrow);
 
-	const bool profwrite = cfg.get("PROF_WRITE", "Output");
 	const double profstart = cfg.get("PROF_START", "Output");
 	const double profdaysbetween = cfg.get("PROF_DAYS_BETWEEN", "Output");
-	const bool tswrite = cfg.get("TS_WRITE", "Output");
 	const double tsstart = cfg.get("TS_START", "Output");
 	const double tsdaysbetween = cfg.get("TS_DAYS_BETWEEN", "Output");
 

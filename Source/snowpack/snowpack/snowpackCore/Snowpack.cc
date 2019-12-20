@@ -100,7 +100,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
             enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
-            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
+            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 
@@ -114,6 +114,11 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("TEMP_INDEX_SWR_FACTOR", "SnowpackAdvanced", temp_index_swr_factor, IOUtils::nothrow);
 	cfg.getValue("HN_DENSITY_PARAMETERIZATION", "SnowpackAdvanced", hn_density_parameterization);
 	cfg.getValue("HN_DENSITY_FIXEDVALUE", "SnowpackAdvanced", hn_density_fixedValue);
+    
+	//Define keys for new snow information  
+	cfg.getValue("RIME_INDEX", "SnowpackAdvanced", rime_index); 
+	cfg.getValue("NEWSNOW_LWC", "SnowpackAdvanced", newsnow_lwc); 
+	cfg.getValue("READ_DSM", "SnowpackAdvanced", read_dsm); 
 
 	//Define keys for snow albedo computation
 	cfg.getValue("SNOW_ALBEDO", "SnowpackAdvanced", snow_albedo);

@@ -49,7 +49,7 @@ class TimeProcStack {
  * @brief Timesteps suppression filter.
  * @details
  * This filter deletes some timesteps based on the provided arguments:
- *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true (a warning will be emitted anyway for each problematic timestamp);
+ *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true (a warning will be emitted anyway for each problematic timestamp). Duplicated timestamps are merged to the first encountered one.
  *  - SUPPR: provide a file that contains a list of station ID's and timesteps that should be suppressed;
  *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.

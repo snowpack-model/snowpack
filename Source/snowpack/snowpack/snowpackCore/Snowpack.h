@@ -164,6 +164,7 @@ class Snowpack {
 		double heat_begin, heat_end;
 		double temp_index_degree_day, temp_index_swr_factor;
 		bool forestfloor_alb;
+		bool rime_index, newsnow_lwc, read_dsm;
 		soil_evap_model soil_evaporation;
 }; //end class Snowpack
 

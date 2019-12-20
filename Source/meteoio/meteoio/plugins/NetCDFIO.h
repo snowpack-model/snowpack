@@ -55,6 +55,7 @@ class ncFiles {
 		std::vector<Date> read_1Dvariable(const int& ncid) const;
 		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
 		std::vector<std::string> read_1Dstringvariable(const int& ncid, const size_t& param) const;
+		std::vector<std::string> read_stationIDs(const int& ncid) const;
 		std::vector< std::pair<size_t, std::string> > getTSParameters() const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
 		size_t readDimension(const int& dimid) const;
