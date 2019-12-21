@@ -496,7 +496,7 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 */
 void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) 
 {
-	if (fabs(in_latitude)>90. || fabs(in_longitude)>360.) {
+	if ((in_latitude!=IOUtils::nodata && fabs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && fabs(in_longitude)>360.)) {
 		std::ostringstream ss;
 		ss << "(" << in_latitude << "," << in_longitude << ")";
 		throw InvalidArgumentException("Invalid latitude/longitude: "+ss.str(), AT);
@@ -685,7 +685,7 @@ void Coords::check(const std::string& pre_msg)
 
 	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if (easting==IOUtils::nodata || northing==IOUtils::nodata) {
-			throw InvalidArgumentException(pre_msg+"missing positional parameters (easting,northing) or (lat,long) for given coordinate", AT);
+			throw InvalidArgumentException(pre_msg+"missing positional parameters (easting,northing) or (lat,long) for given coordinate "+toString(FULL), AT);
 		}
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	} else {
@@ -696,7 +696,15 @@ void Coords::check(const std::string& pre_msg)
 			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
 
 			if (!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
-				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate", AT);
+				std::string extra_info( toString(FULL) );
+				if (coordsystem=="UTM") {
+					std::string zone_out;
+					CoordsAlgorithms::getUTMZone(latitude, longitude, zone_out);
+					if (zone_out!=coordparam)
+						extra_info = "(UTM zone should probably be "+zone_out+" instead of "+coordparam;
+				}
+				
+				throw InvalidArgumentException(pre_msg+"Latitude/longitude and xllcorner/yllcorner don't match for given coordinate "+extra_info, AT);
 			}
 		}
 	}

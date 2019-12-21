@@ -76,7 +76,7 @@ class OshdIO : public IOInterface {
 		static size_t getFileIdx(const std::vector< struct file_index >& cache, const Date& start_date);
 		static std::vector< struct file_index > scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive);
 		static void checkFieldType(const MeteoData::Parameters& param, const std::string& type);
-		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param);
+		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param, const std::string& filename);
 		
 		const Config cfg;
 		std::vector< struct file_index > cache_meteo_files; //cache of meteo files in METEOPATH

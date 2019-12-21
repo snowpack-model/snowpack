@@ -40,7 +40,7 @@ namespace ncpp {
 * @brief Set the names of the dimensions
 * @return vector of names that should be in the same order as the enum
 */
-std::vector<std::string> initDimensionNames()
+inline std::vector<std::string> initDimensionNames()
 {
 	//the order must be the same as in the enum Dimensions
 	std::vector<std::string> tmp;
@@ -227,6 +227,19 @@ void read_data(const int& ncid, const nc_variable& var,
 void read_data(const int& ncid, const nc_variable& var, double* data)
 {
 	const int status = nc_get_var_double(ncid, var.varid, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
+ * @brief Read all the data for a specific variable
+ * @param[in] ncid file ID
+ * @param[in] var variable to read
+ * @param[out] data data extracted from the file
+ */
+void read_data(const int& ncid, const nc_variable& var, int* data)
+{
+	const int status = nc_get_var_int(ncid, var.varid, data);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }
@@ -730,7 +743,7 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	
 	std::string multiPts;
 	short int epsg = -1;
-	double lat_min, lat_max, lon_min, lon_max;
+	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
 	bool found = false;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty()) continue;
@@ -752,12 +765,8 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 
 		const double curr_lat = vecMeteo[ii].front().meta.position.getLat();
 		const double curr_lon = vecMeteo[ii].front().meta.position.getLon();
+		found = true;
 		
-		if (!found) {
-			found = true;
-			lat_min = lat_max = curr_lat;
-			lon_min = lon_max = curr_lon;
-		}
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;

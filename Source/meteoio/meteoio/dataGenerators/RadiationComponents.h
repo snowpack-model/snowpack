@@ -15,32 +15,29 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef WINDCOMPONENTS_H
-#define WINDCOMPONENTS_H
+#ifndef RADCOMPONENTS_H
+#define RADCOMPONENTS_H
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 
 namespace mio {
 
 /**
- * @class WindComponents
- * @brief Compute VW and/or DW from the U, V wind components
+ * @class RadiationComponents
+ * @brief Compute the global radiation (ISWR) from the direct and diffuse components.
  * @details
- * The U and V wind velocity components are expected to be in m/s and either called U or VW_U or WIND_U (respectively, V).
- * For example:
+ * The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
  * @code
- * VW::create = Windcomponents
+ * ISWR::create = RadComponents
  * @endcode
  */
-class WindComponents : public GeneratorAlgorithm {
+class RadiationComponents : public GeneratorAlgorithm {
 	public:
-		WindComponents(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
+		RadiationComponents(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), where("generators::"+algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		static std::string findUComponent(const MeteoData& md);
-		static std::string findVComponent(const MeteoData& md);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::string where;
 };

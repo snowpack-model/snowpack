@@ -26,6 +26,25 @@ void WindComponents::parse_args(const std::vector< std::pair<std::string, std::s
 	if (!vecArgs.empty()) throw InvalidArgumentException("The "+where+" generator does not take any arguments", AT);
 }
 
+std::string WindComponents::findUComponent(const MeteoData& md)
+{
+	if (md.param_exists("U")) return "U";
+	else if (md.param_exists("VW_U")) return "VW_U";
+	else if (md.param_exists("WIND_U")) return "WIND_U";
+	
+	return std::string();
+}
+
+std::string WindComponents::findVComponent(const MeteoData& md)
+{
+	if (md.param_exists("V")) return "V";
+	else if (md.param_exists("VW_V")) return "VW_V";
+	else if (md.param_exists("WIND_V")) return "WIND_V";
+	
+	return std::string();
+}
+
+
 bool WindComponents::generate(const size_t& param, MeteoData& md)
 {
 	if (param!=MeteoData::VW && param!=MeteoData::DW)
@@ -33,13 +52,8 @@ bool WindComponents::generate(const size_t& param, MeteoData& md)
 	
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
-		std::string U_param;
-		if (md.param_exists("U")) U_param = "U";
-		else if (md.param_exists("VW_U")) U_param = "VW_U";
-		
-		std::string V_param;
-		if (md.param_exists("V")) V_param = "V";
-		else if (md.param_exists("VW_V")) V_param = "VW_V";
+		const std::string U_param( findUComponent(md) );
+		const std::string V_param( findVComponent(md) );
 		
 		if (U_param.empty() || V_param.empty())
 			throw NotFoundException("No U and/or V wind components found", AT);
@@ -64,15 +78,8 @@ bool WindComponents::create(const size_t& param, std::vector<MeteoData>& vecMete
 	
 	if (vecMeteo.empty()) return true;
 
-	std::string U_param;
-	if (vecMeteo[0].param_exists("U")) U_param = "U";
-	else if (vecMeteo[0].param_exists("VW_U")) U_param = "VW_U";
-	else if (vecMeteo[0].param_exists("WIND_U")) U_param = "WIND_U";
-	
-	std::string V_param;
-	if (vecMeteo[0].param_exists("V")) V_param = "V";
-	else if (vecMeteo[0].param_exists("VW_V")) V_param = "VW_V";
-	else if (vecMeteo[0].param_exists("WIND_V")) U_param = "WIND_V";
+	const std::string U_param( findUComponent(vecMeteo[0]) );
+	const std::string V_param( findVComponent(vecMeteo[0]) );
 	
 	if (U_param.empty() || V_param.empty())
 		throw NotFoundException("No U and/or V wind components found", AT);

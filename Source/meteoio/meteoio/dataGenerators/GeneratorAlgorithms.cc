@@ -31,6 +31,7 @@
 #include <meteoio/dataGenerators/TauCLDGenerator.h>
 #include <meteoio/dataGenerators/TsGenerator.h>
 #include <meteoio/dataGenerators/WindComponents.h>
+#include <meteoio/dataGenerators/RadiationComponents.h>
 
 namespace mio {
 
@@ -98,6 +99,7 @@ namespace mio {
  * - TAU_CLD: generate the atmospheric transmissivity based on cloud cover fraction (see TauCLDGenerator)
  * - ESOLIP: generate precipitation from snow height changes (see ESOLIPGenerator)
  * - PRECSPLITTING: generate the precipitation phase and/or convert between amount / phase and split precipitation (see PrecSplitting)
+ * - RADCOMPONENTS: generate the global radiation ISWR from the direct and diffuse components (see RadiationComponents)
  * - WINDCOMPONENTS: generate the wind velocity and/or wind direction from the U and V wind components (see WindComponents)
  *
  * @section generators_biblio Bibliography
@@ -154,6 +156,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& /*cfg*
 		return new ClearSkySWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "WINDCOMPONENTS"){
 		return new WindComponents(vecArgs, i_algoname);
+	} else if (algoname == "RADCOMPONENTS"){ 
+		return new RadiationComponents(vecArgs, i_algoname);
 	} else if (algoname == "ESOLIP"){
 		return new ESOLIPGenerator(vecArgs, i_algoname);
 	} else if (algoname == "PRECSPLITTING"){

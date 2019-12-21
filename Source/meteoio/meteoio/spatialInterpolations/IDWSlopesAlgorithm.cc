@@ -26,7 +26,7 @@ const size_t IDWSlopesAlgorithm::nrSlopes = 1+lastSlope; //ie flat + 4 expositio
 
 IDWSlopesAlgorithm::IDWSlopesAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), 
-                     vecData(nrSlopes), vecMeta(nrSlopes),
+                     vecDataCache(nrSlopes), vecMetaCache(nrSlopes),
                      trend(vecArgs, i_algo, i_param), scale(1e3), alpha(1.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
@@ -43,8 +43,8 @@ double IDWSlopesAlgorithm::getQualityRating(const Date& i_date)
 {
 	//delete the previous cached values
 	for (size_t curr_slope=firstSlope; curr_slope<=lastSlope; curr_slope++) {
-		vecData[curr_slope].clear();
-		vecMeta[curr_slope].clear();
+		vecDataCache[curr_slope].clear();
+		vecMetaCache[curr_slope].clear();
 	}
 	
 	date = i_date;
@@ -73,13 +73,13 @@ double IDWSlopesAlgorithm::getQualityRating(const Date& i_date)
 			}
 		}
 		
-		vecData[curr_slope].push_back( val );
-		vecMeta[curr_slope].push_back( vecMeteo[ii].meta );
+		vecDataCache[curr_slope].push_back( val );
+		vecMetaCache[curr_slope].push_back( vecMeteo[ii].meta );
 	}
 
-	nrOfMeasurments = vecData[FLAT].size();
+	nrOfMeasurments = vecDataCache[FLAT].size();
 	static const size_t minNrStations = 3;
-	if (vecData[FLAT].size()<minNrStations || vecData[NORTH].size()<minNrStations || vecData[EAST].size()<minNrStations || vecData[SOUTH].size()<minNrStations || vecData[WEST].size()<minNrStations) return 0;
+	if (vecDataCache[FLAT].size()<minNrStations || vecDataCache[NORTH].size()<minNrStations || vecDataCache[EAST].size()<minNrStations || vecDataCache[SOUTH].size()<minNrStations || vecDataCache[WEST].size()<minNrStations) return 0;
 
 	return 0.8;
 }
@@ -87,8 +87,8 @@ double IDWSlopesAlgorithm::getQualityRating(const Date& i_date)
 Grid2DObject IDWSlopesAlgorithm::computeAspect(const DEMObject& dem, const Slopes& curr_slope)
 {
 	Grid2DObject grid;
-	trend.detrend(vecMeta[curr_slope], vecData[curr_slope]);
-	Interpol2D::IDW(vecData[curr_slope], vecMeta[curr_slope], dem, grid, scale, alpha);
+	trend.detrend(vecMetaCache[curr_slope], vecDataCache[curr_slope]);
+	Interpol2D::IDW(vecDataCache[curr_slope], vecMetaCache[curr_slope], dem, grid, scale, alpha);
 	trend.retrend(dem, grid);
 	return grid;
 }
@@ -96,7 +96,7 @@ Grid2DObject IDWSlopesAlgorithm::computeAspect(const DEMObject& dem, const Slope
 void IDWSlopesAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	info << vecData[NORTH].size() << " north, " << vecData[EAST].size() << " east, " << vecData[SOUTH].size() << " south, " << vecData[WEST].size() << " west stations";
+	info << vecDataCache[NORTH].size() << " north, " << vecDataCache[EAST].size() << " east, " << vecDataCache[SOUTH].size() << " south, " << vecDataCache[WEST].size() << " west stations";
 
 	grid = computeAspect(dem, FLAT);
 	const Grid2DObject north( computeAspect(dem, NORTH) );

@@ -81,7 +81,8 @@ class SmetIO : public SnowpackIOInterface {
 
 	private:
 		std::vector<double> fixedPositions;
-		std::string outpath, o_snowpath, experiment, inpath, i_snowpath, sw_mode;
+		std::string outpath, o_snowpath, experiment, inpath, i_snowpath;
+		std::string metamorphism_model, variant, sw_mode;
 		const RunInfo info;
 		std::map<std::string, smet::SMETWriter*> tsWriters; ///< for each filename, we keep an associated SMETWriter
 		double in_dflt_TZ;
@@ -91,6 +92,7 @@ class SmetIO : public SnowpackIOInterface {
 		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_dhs, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool enable_pref_flow;
+		bool read_dsm;
 };
 
 #endif

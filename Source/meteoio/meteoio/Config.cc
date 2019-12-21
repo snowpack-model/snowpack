@@ -438,8 +438,8 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 */
 void ConfigParser::parseFile(const std::string& filename)
 {
-	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
-	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException("Invalid configuration file name '"+filename+"'",AT);
+	if (!FileUtils::fileExists(filename)) throw NotFoundException("Configuration file '"+filename+"' not found", AT);
 
 	//Open file
 	std::ifstream fin(filename.c_str(), ifstream::in);

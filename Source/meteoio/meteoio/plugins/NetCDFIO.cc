@@ -79,6 +79,7 @@ namespace mio {
  *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ERA-INTERIM, ERA5 or WRF); [Input] and [Output] section (default: CF-1.6)
  *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
+ *     - NC_DEBUG : print some low level details about the file being read (default: false); [Input] section;
  * - Gridded data handling:
  *     - DEMFILE: The filename of the file containing the DEM; [Input] section
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
@@ -1041,7 +1042,7 @@ std::vector<StationData> ncFiles::readStationData() const
 			for (size_t ii=0; ii<nrStations; ii++) vecPosition[ii].setXY(vecEast[ii], vecNorth[ii], vecAlt[ii]);
 		}
 
-		const std::vector<std::string> vecIDs( read_1Dstringvariable(ncid, ncpp::STATION) );
+		const std::vector<std::string> vecIDs( read_stationIDs(ncid) );
 		vecStation.resize( nrStations );
 		for (size_t ii=0; ii<nrStations; ii++) {
 			StationData sd(vecPosition[ii], vecIDs[ii], vecIDs[ii]);
@@ -1556,7 +1557,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 			//are shifted (even if a little), which means that the center of lat/lon is != center of east./north..
 			//So, in order to find the center of the domain, we do a few iteration to converge toward a reasonable approximation
 			double alpha;
-			double lat_length, lon_length, cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
+			double lat_length=0., lon_length=0., cntr_lat=grid.llcorner.getLat(), cntr_lon=grid.llcorner.getLon();
 			for (size_t ii=0; ii<5; ii++) {
 				lat_length = CoordsAlgorithms::VincentyDistance(cntr_lat-.5, cntr_lon, cntr_lat+.5, cntr_lon, alpha);
 				lon_length = CoordsAlgorithms::VincentyDistance(cntr_lat, cntr_lon-.5, cntr_lat, cntr_lon+.5, alpha);
@@ -1821,6 +1822,32 @@ std::vector<std::string> ncFiles::read_1Dstringvariable(const int& ncid, const s
 	
 	free( data );
 	return results;
+}
+
+//This method handles the possibility of numeric station IDs by converting them to strings
+std::vector<std::string> ncFiles::read_stationIDs(const int& ncid) const
+{
+	static const size_t param = ncpp::STATION;
+	const std::map<size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
+	if (it==vars.end() || it->second.varid==-1) throw InvalidArgumentException("Could not find parameter \""+ncpp::getParameterName(param)+"\" in file \""+file_and_path+"\"", AT);
+
+	const int type = it->second.attributes.type;
+	if (type==NC_CHAR) {
+		return read_1Dstringvariable(ncid, param);
+	} else { //numeric station IDs
+		if (it->second.dimids.size()!=1)
+			throw InvalidFormatException("Trying to open variable '"+it->second.attributes.name+"' in file '"+file_and_path+"' as a 1D variable when it is "+IOUtils::toString(it->second.dimids.size())+"D", AT);
+
+		const size_t length = read_1DvariableLength(it->second);
+		std::vector<std::string> results(length);
+		int *data = new int[ length ];
+		ncpp::read_data(ncid, it->second, data);
+		for (size_t ii=0; ii<length; ii++)
+			results[ii] = IOUtils::toString( data[ii] );
+		delete[] data;
+
+		return results;
+	}
 }
 
 size_t ncFiles::read_1DvariableLength(const ncpp::nc_variable& var) const

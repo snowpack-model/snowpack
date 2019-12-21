@@ -945,6 +945,7 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
 // SNOWPACK MAIN **************************************************************
 inline void real_main (int argc, char *argv[])
 {
+	setbuf(stdout, NULL); //always flush stdout
 #ifdef DEBUG_ARITHM
 	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW ); //for halting the process at arithmetic exceptions, see also ReSolver1d
 #endif
@@ -1163,9 +1164,9 @@ inline void real_main (int argc, char *argv[])
 				if ((mode == "RESEARCH") && (slope.sector == slope.mainStation)
 				        && booleanTime(current_date.getJulian(), 15., notify_start, calculation_step_length)) {
 					prn_msg(__FILE__, __LINE__, "msg", current_date,
-					            "Station %s (%d slope(s)): advanced to %s (%f) station time",
+					            "Station %s (%d slope(s)): advanced to %s station time",
 					                vecSSdata[slope.mainStation].meta.stationID.c_str(), slope.nSlopes,
-					                    current_date.toString(mio::Date::DIN).c_str(), current_date.getJulian());
+					                    current_date.toString(mio::Date::DIN).c_str());
 				}
 
 				// SNOWPACK model (Temperature and Settlement computations)

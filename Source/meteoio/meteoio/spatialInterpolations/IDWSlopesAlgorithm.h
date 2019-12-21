@@ -45,8 +45,8 @@ class IDWSlopesAlgorithm : public InterpolationAlgorithm {
 		
 		Grid2DObject computeAspect(const DEMObject& dem, const Slopes& curr_slope);
 		
-		std::vector< std::vector<double> > vecData;
-		std::vector< std::vector<StationData> > vecMeta;
+		std::vector< std::vector<double> > vecDataCache;
+		std::vector< std::vector<StationData> > vecMetaCache;
 		Trend trend;
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		static const double min_slope, max_slope;

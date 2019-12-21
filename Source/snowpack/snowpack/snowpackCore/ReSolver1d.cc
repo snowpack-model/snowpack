@@ -959,6 +959,12 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Now calculate the theta that should be considered "dry soil".
 		theta_d[i]=EMS[i].VG.fromHtoTHETAforICE(h_d, 0.);
 
+		//Now check if this case is not too extreme for pressure head (important for numerical stability)
+		const double fact=1000.;
+		if(theta_d[i]<EMS[i].VG.theta_r+(REQUIRED_ACCURACY_THETA/fact)) {
+			theta_d[i]=EMS[i].VG.theta_r+(REQUIRED_ACCURACY_THETA/fact);
+		}
+
 		//Now make sure that the water content in SNOWPACK's ElementData matches the soil settings (not too wet, not too dry):
 		// 1) Not too wet
 		if(EMS[i].theta[SOIL]>Constants::eps2) {		//For soil
@@ -1993,7 +1999,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						std::cout << "[E] ERROR in Richards-Equation solver: no convergence! SafeMode was not able to continue simulation!\n";
 						DoThrow=true;
 					} else {
-						std::cout << "[W] WARNING in Richards-Equation solver: no convergence! SafeMode was used to continue simulation! [" << seq_safemode << "].\n";
+						std::cout << "[W] WARNING in Richards-Equation solver: no convergence! SafeMode was used to continue simulation! [" << seq_safemode << ", stn=" << Xdata.meta.stationID << "].\n";
 					}
 				}
 				std::cout << "    POSSIBLE SOLUTIONS:\n  ========================================================================================\n";
