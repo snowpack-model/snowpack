@@ -97,6 +97,13 @@ static double get_sn_dt(const SnowpackConfig& cfg)
 	return M_TO_S(calculation_step_length);
 }
 
+static double get_fetch_length(const SnowpackConfig& cfg)
+{
+	double fetch_length = Constants::undefined;
+	cfg.getValue("SNOW_EROSION_FETCH_LENGTH", "SnowpackAdvanced", fetch_length, IOUtils::nothrow);
+	return fetch_length;
+}
+
 double SnowDrift::get_tau_thresh(const ElementData& Edata)
 {
 	// Compute basic quantities that are needed: friction velocity, z0, threshold vw
@@ -119,7 +126,7 @@ double SnowDrift::get_ustar_thresh(const ElementData& Edata)
 
 SnowDrift::SnowDrift(const SnowpackConfig& cfg) : saltation(cfg),
                      enforce_measured_snow_heights( get_bool(cfg, "ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack") ), snow_redistribution( get_redistribution(cfg) ), snow_erosion( get_erosion(cfg) ), alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ),
-                     sn_dt( get_sn_dt(cfg) ), forcing("ATMOS")
+                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), forcing("ATMOS")
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 }
@@ -240,7 +247,7 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Cannot compute mass flux of drifting snow!");
 					throw;
 			}
-			massErode = Sdata.drift * sn_dt / Hazard::typical_slope_length; // Convert to eroded snow mass in kg m-2
+			massErode = Sdata.drift * sn_dt / ((fetch_length != Constants::undefined) ? (fetch_length) : (Hazard::typical_slope_length)); // Convert to eroded snow mass in kg m-2
 		}
 
 		unsigned int nErode=0; // number of eroded elements
