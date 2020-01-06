@@ -144,12 +144,12 @@ using namespace mio;
  * the profile date.
  */
 SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
-        : fixedPositions(), outpath(), o_snowpath(), experiment(), inpath(), i_snowpath(), sw_mode(),
-          info(run_info), tsWriters(),
+        : fixedPositions(), outpath(), o_snowpath(), experiment(), inpath(), i_snowpath(),
+          metamorphism_model(), variant(), sw_mode(), info(run_info), tsWriters(),
           in_dflt_TZ(0.), calculation_step_length(0.), ts_days_between(0.), min_depth_subsurf(0.),
           avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
           out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_dhs(false), out_t(false),
-          out_load(false), out_stab(false), out_canopy(false), out_soileb(false), enable_pref_flow(false)
+          out_load(false), out_stab(false), out_canopy(false), out_soileb(false), enable_pref_flow(false), read_dsm(false)
 {
 	cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ);
 	cfg.getValue("CANOPY", "Snowpack", useCanopyModel);
@@ -159,6 +159,10 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("PERP_TO_SLOPE", "SnowpackAdvanced", perp_to_slope);
 	cfg.getValue("AVGSUM_TIME_SERIES", "Output", avgsum_time_series, IOUtils::nothrow);
 	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
+	cfg.getValue("METAMORPHISM_MODEL", "SnowpackAdvanced", metamorphism_model, IOUtils::nothrow);
+	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
+	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
+	cfg.getValue("READ_DSM", "SnowpackAdvanced", read_dsm); 
 
 	cfg.getValue("EXPERIMENT", "Output", experiment);
 	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
@@ -184,7 +188,6 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
-	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
 }
 
 SmetIO::~SmetIO()
@@ -406,7 +409,10 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 
 		SSdata.Ldata[ll].CDot = vec_data[current_index++];
 		SSdata.Ldata[ll].metamo = vec_data[current_index++];
-
+        
+		if ((metamorphism_model == "NIED") && (read_dsm)) {
+			SSdata.Ldata[ll].dsm = vec_data[current_index++];
+		}
 		if (read_salinity) {
 			SSdata.Ldata[ll].salinity = vec_data[current_index++];
 			SSdata.Ldata[ll].h = vec_data[current_index++];
@@ -659,6 +665,10 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
 	}
 	ss << " Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
+	if (metamorphism_model == "NIED") {
+		ss << " dsm";
+	}
+
 	if (Xdata.Seaice != NULL) ss << " Sal h";
 	for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 		ss << " cIce cWater cAir  cSoil";
@@ -699,7 +709,9 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		vec_data.push_back(1.);
 		vec_data.push_back(EMS[e].CDot);
 		vec_data.push_back(EMS[e].metamo);
-
+		if (metamorphism_model == "NIED") {
+			vec_data.push_back(EMS[e].dsm);
+		}
 		if (Xdata.Seaice != NULL) {
 			vec_data.push_back(EMS[e].salinity);
 			vec_data.push_back(EMS[e].h);

@@ -273,12 +273,12 @@ void GoesIO::addStation(const std::string& goesID)
 
 GoesStation::GoesStation()
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), units_multiplier_neg(), md_template(), TZ(0.), nodata(0.),
-                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
+                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false)
 {}
 
 GoesStation::GoesStation(const std::string& goesID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam)
                     : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), units_multiplier_neg(), md_template(), TZ(in_TZ), nodata(in_nodata),
-                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
+                    stationID_idx(IOUtils::npos), year_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true)
 {
 	//construct the StationData for this station
 	const std::string station_id = metaCfg.get("ID", goesID, "Goes::"+goesID);

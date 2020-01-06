@@ -452,18 +452,24 @@ void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMete
 	tsm1.add_to_points_cache(i_date, vecMeteo);
 }
 
-//this is only called when mode==IOManager::VSTATIONS
+//this is only called when mode==IOUtils::VSTATIONS or mode==IOUtils::GRID_SMART
 std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd)
 {
 	std::vector<METEO_SET> vecvecMeteo(v_stations.size());
 	const Date buff_start( Date::rnd(dateStart-vstations_refresh_offset/(24.*3600.), vstations_refresh_rate, Date::DOWN) + vstations_refresh_offset/(24.*3600.) );	
 	const double date_inc = static_cast<double>(vstations_refresh_rate) / (24.*3600.);
 
-	METEO_SET vecMeteo;
-	tsm1.clear_cache( TimeSeriesManager::ALL );
+	if (mode==IOUtils::VSTATIONS) {
+		tsm1.clear_cache( TimeSeriesManager::ALL );
+	} else {
+		tsm1.clear_cache( TimeSeriesManager::FILTERED );
+		tsm1.clear_cache( TimeSeriesManager::POINTS );
+	}
 	tsm1.setRawBufferProperties(buff_start, dateEnd);
-	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the raw buffer (we know it will contain all the necessary data thanks to the setRawBufferProperties() call)
-	const Date dataEnd( tsm1.getDataEnd( TimeSeriesManager::RAW ) ); //we won't try to spatially interpolate after the end of data
+	
+	METEO_SET vecMeteo;
+	tsm1.getMeteoData(buff_start, vecMeteo); //force filling the filtered buffer (we know it will contain all the necessary data thanks to the setRawBufferProperties() call)
+	const Date dataEnd( tsm1.getDataEnd( TimeSeriesManager::FILTERED ) ); //we won't try to spatially interpolate after the end of data
 	if (dataEnd.isUndef()) return vecvecMeteo;
 
 	for (Date date=buff_start; date<=std::min(dataEnd, dateEnd); date += date_inc) {

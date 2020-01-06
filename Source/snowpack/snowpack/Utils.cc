@@ -60,7 +60,6 @@ std::string getLibVersion() {
 void prn_msg(const char *theFile, const int theLine, const char *msg_type, const mio::Date& date_in, const char *format, ...)
 {
 	va_list argptr; // get an arg ptr
-
 	int msg_ok = 0;
 
 	// Initialize argptr to point to the first argument after the format string

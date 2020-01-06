@@ -55,9 +55,9 @@ class SMETIO : public IOInterface {
 	private:
 		/** This structure contains the metadata associated with a SMET variable in order to plot it */
 		typedef struct PLOT_ATTR {
-			PLOT_ATTR() : units(), description(), color(), min(IOUtils::nodata), max(IOUtils::nodata), param(mio::IOUtils::npos) {}; //please do NOT use this constructor!
-			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color) : units(i_units), description(i_description), color(i_color), min(IOUtils::nodata), max(IOUtils::nodata), param(mio::IOUtils::npos) {};
-			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color, const double& i_min, const double& i_max, const size_t& i_param) : units(i_units), description(i_description), color(i_color), min(i_min), max(i_max), param(i_param) {};
+			PLOT_ATTR() : units(), description(), color(), min(IOUtils::nodata), max(IOUtils::nodata), param(mio::IOUtils::npos) {} //please do NOT use this constructor!
+			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color) : units(i_units), description(i_description), color(i_color), min(IOUtils::nodata), max(IOUtils::nodata), param(mio::IOUtils::npos) {}
+			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color, const double& i_min, const double& i_max, const size_t& i_param) : units(i_units), description(i_description), color(i_color), min(i_min), max(i_max), param(i_param) {}
 
 			std::string units; ///< unit string representation
 			std::string description; ///< plot label

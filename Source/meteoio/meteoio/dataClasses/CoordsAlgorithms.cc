@@ -350,13 +350,24 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 }
 
 /**
+* @brief Does a given epsg code describe UTM coordinates?
+* @param[in] epsg epsg code
+* @return true if this is for UTM coordinates, false otherwise
+*/
+bool CoordsAlgorithms::isUTM(const int& epsg)
+{
+	//return true for ERTS as well as WGC84 based UTM coordinates
+	return ((epsg>=25828 && epsg<=25837) || (epsg>=32601 && epsg<=32660) || (epsg>=32701 && epsg<=32760));
+}
+
+/**
 * @brief Build the string representation for a given EPSG code.
 * @note We assume that the ETRS datum is equal to the WGS84 (although there is a .5m difference and 
 * <A href="https://confluence.qps.nl/qinsy/en/how-to-deal-with-etrs89-datum-and-time-dependent-transformation-parameters-45353274.html">growing</A>). 
 * Therefore, all ETRS coordinates will be written out as WGS84 coordinates.
 * @param[in] epsg epsg code
 * @param[out] coordsystem string representation of the coordinate system
-*@param[out] coordparam string representation of the optional coordinate system parameters (such as zone for utm, etc) 
+* @param[out] coordparam string representation of the optional coordinate system parameters (such as zone for utm, etc) 
 */
 void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, std::string& coordparam)
 {

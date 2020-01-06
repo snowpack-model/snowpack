@@ -16,4 +16,5 @@ SET(dataGenerators_sources
 	dataGenerators/TauCLDGenerator.cc
 	dataGenerators/TsGenerator.cc
 	dataGenerators/WindComponents.cc
+	dataGenerators/RadiationComponents.cc
 )

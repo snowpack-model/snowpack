@@ -384,21 +384,21 @@ void FilterMaths::parse_args(const std::vector< std::pair<std::string, std::stri
 		} else if (vecArgs[ii].first.substr(0, 10) == "EXPRESSION") {
 			size_t eq_nr; //the number following EXPRESSION
 			const bool convert_success = IOUtils::convertString(eq_nr, vecArgs[ii].first.substr(10));
-			if (!convert_success || eq_nr == static_cast<size_t> (IOUtils::nodata)) //2nd test is for empty string
+			if (!convert_success || vecArgs[ii].first.length() == 10)
 				throw InvalidArgumentException("Could not enumerate \"" + vecArgs[ii].first + "\" in " + where + "; the format is \"EXPRESSION<nr>\".", AT);
 			logic_equations[eq_nr].expression = vecArgs[ii].second;
 		} else if (vecArgs[ii].first.substr(0, 8) == "OPERATOR") {
 			size_t eq_nr;
 			const bool convert_success = IOUtils::convertString(eq_nr, vecArgs[ii].first.substr(8));
-			if (!convert_success || eq_nr == static_cast<size_t> (IOUtils::nodata))
-				throw InvalidArgumentException("Could not enumerate \"" + vecArgs[ii].first + "\" in " + where + "; the format is \"EXPRESSION<nr>\".", AT);
+			if (!convert_success || vecArgs[ii].first.length() == 8)
+				throw InvalidArgumentException("Could not enumerate \"" + vecArgs[ii].first + "\" in " + where + "; the format is \"OPERATOR<nr>\".", AT);
 			checkOperator(vecArgs[ii].second); //throws if the operator is unknown
 			logic_equations[eq_nr].op = vecArgs[ii].second;
 		} else if (vecArgs[ii].first.substr(0, 7) == "COMPARE") {
 			size_t eq_nr;
 			const bool convert_success = IOUtils::convertString(eq_nr, vecArgs[ii].first.substr(7));
-			if (!convert_success || eq_nr == static_cast<size_t> (IOUtils::nodata))
-				throw InvalidArgumentException("Could not enumerate \"" + vecArgs[ii].first + "\" in " + where + "; the format is \"EXPRESSION<nr>\".", AT);
+			if (!convert_success || vecArgs[ii].first.length() == 7)
+				throw InvalidArgumentException("Could not enumerate \"" + vecArgs[ii].first + "\" in " + where + "; the format is \"COMPARE<nr>\".", AT);
 			logic_equations[eq_nr].compare = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "ASSIGN") {
 			assign_param = vecArgs[ii].second;

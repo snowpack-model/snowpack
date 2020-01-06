@@ -124,6 +124,12 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["MULTI_LAYER_SK38"] = "false";
 	advancedConfig["SSI_IS_RTA"] = "false";
 	advancedConfig["SNOW_PREPARATION"] = "false";
+    
+	// followings are for input
+	advancedConfig["RIME_INDEX"] = "false";
+	advancedConfig["NEWSNOW_LWC"] = "false";
+	advancedConfig["READ_DSM"] = "false";
+
 
 	//[Input] section
 	inputConfig["METEOPATH"] = "./input";

@@ -176,10 +176,8 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start) {
-		std::ostringstream ss;
-		ss << "Trying to push data set from " << date_start.toString(Date::ISO) << " to " << date_end.toString(Date::ISO) << ". ";
-		ss << " Obviously, date_start should be less than date_end!";
-		throw InvalidArgumentException(ss.str(), AT);
+		const std::string ss( "Trying to push data set from " + date_start.toString(Date::ISO) + " to " + date_end.toString(Date::ISO) + ". " + " Obviously, date_start should be less than date_end!");
+		throw InvalidArgumentException(ss, AT);
 	}
 
 	if (level == IOUtils::filtered) {
@@ -199,10 +197,8 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start) {
-		std::ostringstream ss;
-		ss << "Trying to push data set from " << date_start.toString(Date::ISO) << " to " << date_end.toString(Date::ISO) << ". ";
-		ss << " Obviously, date_start should be less than date_end!";
-		throw InvalidArgumentException(ss.str(), AT);
+		const std::string ss( "Trying to push data set from " + date_start.toString(Date::ISO) + " to " + date_end.toString(Date::ISO) + ". " + " Obviously, date_start should be less than date_end!");
+		throw InvalidArgumentException(ss, AT);
 	}
 
 	if (level == IOUtils::filtered) {
@@ -353,6 +349,7 @@ void TimeSeriesManager::fill_filtered_cache()
 		std::vector< std::vector<MeteoData> > ivec;
 		std::swap(ivec, raw_buffer.getBuffer()); //avoid one more copy of the whole dataset
 		raw_buffer.clear(); //invalidate the raw data buffer since it has been swapped with the temporary ivec for filtering
+		
 		
 		meteoprocessor.process(ivec, filtered_cache.getBuffer());
 		filtered_cache.setBufferStart( filtered_start );

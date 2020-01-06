@@ -1217,16 +1217,16 @@ uint64_t RngCore::timeMixer(const time_t& tt, const clock_t& cc) const
 { //mix time() and clock() together and hash that to get a 64 bit seed
 	static uint32_t diff = 0;
 	uint32_t ht = 0;
-	unsigned char *pt = (unsigned char*)& tt; //Mersenne Twister-hash
+	const unsigned char *pt = (const unsigned char*)& tt; //Mersenne Twister-hash
 	for (size_t i = 0; i < sizeof(tt); ++i) {
 		ht *= std::numeric_limits<unsigned char>::max() + 2U; //avoid UCHAR_MAX
 		ht += pt[i];
 	}
 	uint32_t hc = 0;
-	pt = (unsigned char*)& cc;
+	const unsigned char *pt2 = (const unsigned char*)& cc;
 	for (size_t i = 0; i < sizeof(cc); ++i) {
 		hc *= std::numeric_limits<unsigned char>::max() + 2U;
-		hc += pt[i];
+		hc += pt2[i];
 	}
 	ht += (++diff); //ensure different seeds for same time and all running generators
 	uint32_t res = 0xca01f9dd * ht - 0x4973f715 * hc; //PCG mixer
