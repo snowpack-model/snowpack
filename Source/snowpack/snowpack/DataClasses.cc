@@ -3238,7 +3238,7 @@ std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data)
 	for (size_t ii=0; ii<s_conc; ii++) os << "" << data.conc[ii];
 
 	os.write(reinterpret_cast<const char*>(&data.rho_hn), sizeof(data.rho_hn));
-	os.write(reinterpret_cast<const char*>(&data.rime_hn), sizeof(data.rime_hn)); 
+	os.write(reinterpret_cast<const char*>(&data.rime_hn), sizeof(data.rime_hn));
     
 	const size_t s_fixedPositions = data.fixedPositions.size();
 	os.write(reinterpret_cast<const char*>(&s_fixedPositions), sizeof(size_t));
@@ -3308,7 +3308,7 @@ std::istream& operator>>(std::istream& is, CurrentMeteo& data)
 	for (size_t ii=0; ii<s_conc; ii++) is >> data.conc[ii];
 
 	is.read(reinterpret_cast<char*>(&data.rho_hn), sizeof(data.rho_hn));
-	is.read(reinterpret_cast<char*>(&data.rime_hn), sizeof(data.rime_hn)); 
+	is.read(reinterpret_cast<char*>(&data.rime_hn), sizeof(data.rime_hn));
 
 	size_t s_fixedPositions;
 	is.read(reinterpret_cast<char*>(&s_fixedPositions), sizeof(size_t));
