@@ -766,6 +766,11 @@
 				&lt;dt&gt;VIRTUAL&lt;/dt&gt; &lt;dd&gt;only virtual erosion is considered&lt;/dd&gt;
 			</help>
 		</parameter>
+		<parameter key="SNOW_EROSION_FETCH_LENGTH" type="decimal" default="70" optional="true">
+			<section name="SnowpackAdvanced" />
+			<help>Specifies fetch length (in m) for calculating snow erosion. If not specified, Hazard::typical_slope_length is taken (defaults to 70 m).
+			</help>
+		</parameter>
 		<parameter key="WIND_SCALING_FACTOR" type="decimal" default="1.0" minimum="0" maximum="2">
 			<section name="SnowpackAdvanced" />
 			<help>Scaling factor to apply to wind values causing drifting snow</help>

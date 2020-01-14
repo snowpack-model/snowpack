@@ -53,6 +53,7 @@ class SnowDrift {
 		const std::string snow_erosion;
 		const bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)
 		const double sn_dt;        //Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
+		const double fetch_length;
 		static const bool msg_erosion;
 		static const double redeposit_avg_depth;
 		std::string forcing;

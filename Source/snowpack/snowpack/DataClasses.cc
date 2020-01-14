@@ -1007,17 +1007,17 @@ const std::string CanopyData::toString() const
 	os << "<CanopyData>" << "\n";
 	os << "\tstorage:                           " << storage << "\n";
 	os << "\ttemp:                              " << temp << "\n";
-	os << "\tsigf:                              " <<  sigf << "\n";
+	os << "\tsigf:                              " << sigf << "\n";
 	os << "\tec:                                " << ec << "\n";
 	os << "\theight:                            " << height << "\n";
 	os << "\tlai:                               " << lai << "\n";
  	os << "\tdirect_throughfall:                " << direct_throughfall << "\n";
 	os << "\tz0m:                               " << z0m <<  "\n";
-	os << "\tz0h:                               " <<  z0h << "\n";
+	os << "\tz0h:                               " << z0h << "\n";
 	os << "\tzdispl:                            " << zdispl << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\tra:                                " << ra << "\n";
-	os << "\trc:                                " <<  rc << "\n";
+	os << "\trc:                                " << rc << "\n";
 	os << "\tdrs:                               " << rs << "\n";
 	os << "\trstransp:                          " << rstransp << "\n";
 	os << "\tcanopyalb:                         " << canopyalb << "\n";
@@ -1026,7 +1026,7 @@ const std::string CanopyData::toString() const
 	os << "\tintcapacity:                       " << intcapacity << "\n";
 	os << "\trswrac:                            " << rswrac << "\n";
 	os << "\tiswrac:                            " << iswrac << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\tiswrbc:                            " << iswrbc << "\n";
 	os << "\tilwrac:                            " << ilwrac << "\n";
 	os << "\trlwrac:                            " << rlwrac << "\n";
@@ -1037,7 +1037,7 @@ const std::string CanopyData::toString() const
 	os << "\tsensible:                          " << sensible << "\n";
 	os << "\tlatent:                            " << latent << "\n";
 	os << "\tlatentcorr:                        " << latentcorr << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\ttransp:                            " << transp << "\n";
 	os << "\tintevap:                           " << intevap << "\n";
 	os << "\tinterception:                      " << interception << "\n";
@@ -1048,7 +1048,7 @@ const std::string CanopyData::toString() const
   	os << "\tinterception_timecoef:             " << interception_timecoef << "\n";
 	os << "\tcan_alb_dry:                       " << can_alb_dry << "\n";
 	os << "\tcan_alb_wet:                       " << can_alb_wet << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\tcan_alb_snow:                      " << can_alb_snow << "\n";
 	os << "\tkrnt_lai:                          " << krnt_lai << "\n";
 	os << "\tcan_diameter:                      " << can_diameter << "\n";
@@ -1059,7 +1059,7 @@ const std::string CanopyData::toString() const
 	os << "\ttrunkalb:                          " << trunkalb << "\n";
 	os << "\tet:                                " << et << "\n";
 	os << "\tcanopy_stabilitycorrection:        " << canopy_stabilitycorrection << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\troughmom_to_canopyheight_ratio:    " << roughmom_to_canopyheight_ratio << "\n";
 	os << "\tdispl_to_canopyheight_ratio:       " << displ_to_canopyheight_ratio << "\n";
 	os << "\traincrease_snow:                   " << raincrease_snow << "\n";
@@ -1070,7 +1070,7 @@ const std::string CanopyData::toString() const
 	os << "\trsmin:                             " << rsmin << "\n";
 	os << "\tf3_gd:                             " << f3_gd << "\n";
 	os << "\trootdepth:                         " << rootdepth << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\twp_fraction:                       " << wp_fraction << "\n";
 	os << "\th_wilt:                            " << h_wilt << "\n";
 	os << "\tsnowfac:                           " << snowfac << "\n";
@@ -1081,7 +1081,7 @@ const std::string CanopyData::toString() const
 	os << "\tCondFluxCanop:                     " << CondFluxCanop << "\n";
 	os << "\tCondFluxTrunks:                    " << CondFluxTrunks << "\n";
 	os << "\tLWnet_Trunks:                      " << LWnet_Trunks << "\n";
-	os << "_____________________________________" <<  "\n";
+	os << "_____________________________________" << "\n";
 	os << "\tSWnet_Trunks:                      " << SWnet_Trunks << "\n";
 	os << "\tQStrunks:                          " << QStrunks << "\n";
 	os << "\tforestfloor_alb:                   " << forestfloor_alb << "\n";
@@ -3163,6 +3163,9 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
           ts(), zv_ts(), conc(SnowStation::number_of_solutes, 0.), rho_hn(0.),
+#ifndef SNOWPACK_CORE
+          rime_hn(0.), lwc_hn(0.),
+#endif
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
@@ -3356,7 +3359,7 @@ std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data)
 
 	os.write(reinterpret_cast<const char*>(&data.rho_hn), sizeof(data.rho_hn));
 #ifndef SNOWPACK_CORE
-	os.write(reinterpret_cast<const char*>(&data.rime_hn), sizeof(data.rime_hn)); 
+	os.write(reinterpret_cast<const char*>(&data.rime_hn), sizeof(data.rime_hn));
 #endif
     
 	const size_t s_fixedPositions = data.fixedPositions.size();
@@ -3428,7 +3431,7 @@ std::istream& operator>>(std::istream& is, CurrentMeteo& data)
 
 	is.read(reinterpret_cast<char*>(&data.rho_hn), sizeof(data.rho_hn));
 #ifndef SNOWPACK_CORE
-	is.read(reinterpret_cast<char*>(&data.rime_hn), sizeof(data.rime_hn)); 
+	is.read(reinterpret_cast<char*>(&data.rime_hn), sizeof(data.rime_hn));
 #endif
 
 	size_t s_fixedPositions;
@@ -3549,6 +3552,7 @@ std::istream& operator>>(std::istream& is, SN_SNOWSOIL_DATA& data)
 #else
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 #endif
+
 	return is;
 }
 

@@ -158,7 +158,7 @@ class Runoff; // forward declaration, cyclic header include
 		                const mio::Grid2DObject& new_tsg,
 		                const mio::Date& timestamp);
 		void setVwDrift(const mio::Grid2DObject& new_vw_drift,
-				const mio::Date& timestamp);
+		                const mio::Date& timestamp);
 		void setRadiationComponents(const mio::Array2D<double>& shortw,
 		                            const mio::Array2D<double>& longwave,
 		                            const mio::Array2D<double>& diff,
