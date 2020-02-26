@@ -31,6 +31,7 @@ namespace mio {
  * are all measures of the atmospheric humidity, this generates any one of these from any other one (depending on
  * what is available).The parameter that should be generated is provided as argument (default: RH).
  * @code
+ * [Generators]
  * RH::generators = HUMIDITY
  * RH::humidity::type = RH
  * @endcode

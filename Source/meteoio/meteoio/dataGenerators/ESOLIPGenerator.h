@@ -39,6 +39,7 @@ namespace mio {
  * @note only identified precipitation events are written out, this means that it is recommended to run through a Cst=0 data generator afterward
  *
  * @code
+ * [Generators]
  * PSUM::generators = ESOLIP
  * @endcode
  */

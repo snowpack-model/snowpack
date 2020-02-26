@@ -237,6 +237,7 @@ std::vector<double> InterpolationAlgorithm::getData(const Date& i_date, const st
 
 	std::vector<double> o_vecData;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		if (!vecMeteo[ii].param_exists(i_param)) continue;
 		const double val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata) {
 			o_vecData.push_back( val );
@@ -253,6 +254,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const std::string& i_
 	o_vecData.clear();
 	o_vecMeta.clear();
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		if (!vecMeteo[ii].param_exists(i_param)) continue;
 		const double val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata){
 			o_vecData.push_back( val );

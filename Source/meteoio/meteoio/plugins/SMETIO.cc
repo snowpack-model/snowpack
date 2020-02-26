@@ -29,8 +29,9 @@ namespace mio {
  * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its
  * <a href="../SMET_specifications.pdf">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG,
  * RH, VW, DW, ISWR, OSWR, ILWR, OLWR, PINT, PSUM, HS). For PINT, it is assumed that the intensity (in mm/h) is valid for the whole period between the actual
- * time step and the previous one. You can also have a look at the following <A HREF="http://www.envidat.ch/dataset/10-16904-1">Weissfluhjoch dataset</A>
- * as (quite large) example SMET dataset.
+ * time step and the previous one so a PSUM signal can be reconstructed by multiplying PINT by the previous timestep duration (see ProcAggregate).
+ * 
+ * You can have a look at the following <A HREF="http://www.envidat.ch/dataset/10-16904-1">Weissfluhjoch dataset</A> as a (quite large) example SMET dataset.
  *
  * This plugin can also provide Points Of Interest, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter,
  * the header must contain the epsg code (see example below).
@@ -48,16 +49,16 @@ namespace mio {
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet";
- * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively;
+ * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively; [Input] section;
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
- * naming scheme will be used to derive the slope information (default: false).
- * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
+ * naming scheme will be used to derive the slope information (default: false, [Input] section).
+ * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section)
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section  
- * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs)
+ * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
  * Example:
  * @code
@@ -365,7 +366,6 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 
 	if ((timestamps.empty()) && (!julian_present)) return; //nothing to do
 
-	const bool pint_present = md.param_exists("PINT");
 	const bool data_wgs84 = myreader.location_in_data(smet::WGS84);
 	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 
@@ -382,7 +382,6 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
-	double previous_ts = IOUtils::nodata;
 	
 	if (timestamp_present) vecMeteo.reserve( timestamps.size() );
 	MeteoData tmp_md(md);
@@ -439,17 +438,6 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 			tmp_md.meta.position.check("Inconsistent inline geographic coordinates in file \"" + filename + "\": ");
 		}
 
-		if ((pint_present) && (tmp_md(MeteoData::PSUM) == IOUtils::nodata)) {
-			const double pint = tmp_md("PINT");
-			if (pint==0.) {
-				tmp_md(MeteoData::PSUM) = 0.;
-			} else if (previous_ts!=IOUtils::nodata) {
-				const double acc_period = (tmp_md.date.getJulian() - previous_ts) * 24.; //in hours
-				tmp_md(MeteoData::PSUM) = pint * acc_period;
-			}
-		}
-
-		previous_ts = tmp_md.date.getJulian();
 		vecMeteo.push_back( tmp_md );
 	}
 }

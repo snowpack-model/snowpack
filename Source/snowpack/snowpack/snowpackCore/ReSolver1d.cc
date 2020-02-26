@@ -1992,7 +1992,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//Print latest state for debugging:
 				bool DoThrow=false;
 				if(SafeMode==false) {
-					prn_msg(__FILE__, __LINE__, "err", Date(), "Richards-Equation solver did not converge: reached maximum number of iterations (500), with a time step: %G\n", dt);
+					prn_msg(__FILE__, __LINE__, "err", Date(), "Richards-Equation solver did not converge for %s: reached maximum number of iterations (500), with a time step: %G\n", Xdata.meta.stationID.c_str(), dt);
 					DoThrow=true;
 				} else {
 					if(seq_safemode>3) {

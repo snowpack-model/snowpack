@@ -18,7 +18,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <algorithm>
 #include <math.h>
 
@@ -33,35 +33,47 @@ namespace mio {
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), op_mode(CLEANUP)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), op_mode(NONE)
 {
 	const std::string where( "Filters::"+block_name );
-	properties.stage = ProcessingProperties::second;
-	const size_t nrArgs = vecArgs.size();
-	
-	if (nrArgs!=1)
-		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+	properties.stage = ProcessingProperties::second;	
+	bool has_type=false, has_frac=false, has_file=false;
 
-	if (vecArgs[0].first=="CLEANUP") {
-		bool cleanup = false;
-		if (!IOUtils::convertString(cleanup, vecArgs[0].second))
-			throw InvalidArgumentException("The \"cleanup\" key specified for "+where+" must be a boolean", AT);
-		op_mode = CLEANUP;
-	} else if (vecArgs[0].first=="FRAC") {
-		op_mode = FRAC;
-		if (!IOUtils::convertString(range, vecArgs[0].second))
-			throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
-		if (range<0. || range>1.)
-			throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
-	} else if (vecArgs[0].first=="SUPPR") {
-		op_mode = BYDATES;
-		const std::string in_filename( vecArgs[0].second );
-		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
-		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
-		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (type_str=="CLEANUP") {
+				op_mode = CLEANUP;
+			} else if (type_str=="FRAC") {
+				op_mode = FRAC;
+			} else if (type_str=="BYDATES") {
+				op_mode = BYDATES;
+			} else {
+				throw InvalidArgumentException("Unknown type '" + vecArgs[ii].second + "' for " + where, AT);
+			}
+			has_type = true;
+		} else if (vecArgs[ii].first=="FRAC") {
+			if (!IOUtils::convertString(range, vecArgs[0].second))
+				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
+			if (range<0. || range>1.)
+				throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
+			has_frac = true;
+		} else if (vecArgs[ii].first=="FILE") {
+			const std::string in_filename( vecArgs[0].second );
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-		suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+			has_file = true;
+		}
 	}
+	
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
+	if (op_mode==CLEANUP && (has_frac || has_file)) throw InvalidArgumentException("The CLEANUP type for " + where + " does not take extra arguments", AT);
+	if (has_frac && has_file) throw InvalidArgumentException("It is not possible tp provide both the FILE and FRAC arguments for " + where, AT);
+	if (op_mode==BYDATES && !has_file) throw InvalidArgumentException("Please provide the FILE argument for " + where, AT);
+	if (op_mode==FRAC && !has_frac) throw InvalidArgumentException("Please provide the FRAC argument for " + where, AT);
 }
 
 void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,

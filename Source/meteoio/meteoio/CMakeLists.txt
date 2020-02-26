@@ -1,5 +1,6 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/thirdParty/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataClasses/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
@@ -21,8 +22,8 @@ IF(PROJ4)
 ENDIF(PROJ4)
 
 SET(meteoio_sources
+	${thirdParty_sources}
 	${dataClasses_sources}
-	tinyexpr.c
 	Timer.cc
 	Config.cc
 	IOExceptions.cc

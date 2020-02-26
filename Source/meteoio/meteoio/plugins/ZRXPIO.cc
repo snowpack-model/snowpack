@@ -17,7 +17,7 @@
 */
 
 #include <fstream>
-#include <errno.h> //for file open errors
+#include <cerrno> //for file open errors
 #include <cstring> //for pretty file open errors
 
 #include <meteoio/dataClasses/Date.h>

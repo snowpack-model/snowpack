@@ -63,7 +63,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &longwave,
 		              const double solarElevation);
 
-		void grooming(const mio::Grid2DObject &grooming_map);
+		void grooming(const mio::Date &current_date, const mio::Grid2DObject &grooming_map);
 
 		static int round_landuse(const double& landuse_dbl);
 		static bool skipThisCell(const double& landuse_val, const double& dem_val);

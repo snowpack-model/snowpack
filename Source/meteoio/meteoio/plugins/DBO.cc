@@ -27,7 +27,7 @@
 #include <cstring>
 
 #include <curl/curl.h>
-#include <meteoio/plugins/picojson.h>
+#include <meteoio/thirdParty/picojson.h>
 
 using namespace std;
 

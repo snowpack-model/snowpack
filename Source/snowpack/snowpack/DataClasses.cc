@@ -2699,7 +2699,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 			EdataLower.rb = ( EdataLower.theta[ICE]*L_lower*EdataLower.rb + EdataUpper.theta[ICE]*L_upper*EdataUpper.rb ) / (EdataLower.theta[ICE]*L_lower + EdataUpper.theta[ICE]*L_upper);
 			EdataLower.CDot = ( EdataLower.theta[ICE]*L_lower*EdataLower.CDot + EdataUpper.theta[ICE]*L_upper*EdataUpper.CDot ) / (EdataLower.theta[ICE]*L_lower + EdataUpper.theta[ICE]*L_upper);
 		}
-		EdataLower.h = (EdataLower.h * L_lower + EdataUpper.h * L_upper) / (LNew);
+		EdataLower.h = ((EdataLower.h < EdataLower.VG.h_e && EdataUpper.h < EdataUpper.VG.h_e) || (EdataLower.h > EdataLower.VG.h_e && EdataUpper.h > EdataUpper.VG.h_e)) ? ((EdataLower.h * L_lower + EdataUpper.h * L_upper) / (LNew)) : (Constants::undefined);	// Only calculate average when both pressure heads are positive or negative.
 		EdataLower.opticalEquivalentGrainSize();
 		EdataLower.Eps = EdataLower.Eps_v; //HACK: why?
 		EdataLower.Eps_e = 0.0; // TODO (very old) Check whether not simply add the elastic

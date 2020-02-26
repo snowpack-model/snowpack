@@ -49,17 +49,21 @@ class TimeProcStack {
  * @brief Timesteps suppression filter.
  * @details
  * This filter deletes some timesteps based on the provided arguments:
- *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true (a warning will be emitted anyway for each problematic timestamp). Duplicated timestamps are merged to the first encountered one.
- *  - SUPPR: provide a file that contains a list of station ID's and timesteps that should be suppressed;
- *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
+ *  - TYPE: defines the strategy to delete timesteps. It is one of:
+ *       - CLEANUP: suppress duplicated and out-of-order timestamps (a warning will be emitted anyway for each problematic timestamp). Duplicated timestamps are merged to the first encountered one.
+ *       - BYDATES: delete specific timesteps
+ *       - FRAC: suppress a given fraction of the data at random
+ *  - FILE: when type=BYDATE, a file that contains a list of station ID's and timesteps that should be suppressed;
+ *  - FRAC: when type=FRAC, the fraction of data to suppress. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.
  *
  * @code
  * TIME::filter1     = suppr
- * TIME::arg1::cleanup = true
+ * TIME::arg1::type = cleanup
  * 
  * TIME::filter2     = suppr
- * TIME::arg2::suppr = ./input/meteo/suppr.dat
+ * TIME::arg2::type = bydates
+ * TIME::arg2::file = ./input/meteo/suppr.dat
  * @endcode
  * 
  * The file <i>suppr.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE):
@@ -82,19 +86,20 @@ class TimeSuppr : public ProcessingBlock {
 
 	private:
 		//possible modes of operation
-		typedef enum MODE {
+		typedef enum SUPPR_MODE {
 		            NONE,
 		            BYDATES,
 		            FRAC,
 		            CLEANUP
-		} Mode;
+		} suppr_mode;
+		
 		void supprByDates(std::vector<MeteoData>& ovec) const;
 		void supprFrac(std::vector<MeteoData>& ovec) const;
 		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
 		std::map< std::string, std::vector<dates_range> > suppr_dates;
 		double range;
-		Mode op_mode;
+		suppr_mode op_mode;
 };
 
 /**

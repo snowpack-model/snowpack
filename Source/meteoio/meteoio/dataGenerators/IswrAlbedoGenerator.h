@@ -32,6 +32,7 @@ namespace mio {
  *  - FORCE:  If no snow height is available, the generator will simply return unless the "FORCE" argument is set to TRUE
  *
  * @code
+ * [Generators]
  * ISWR::generators = ISWR_ALBEDO
  * @endcode
  */

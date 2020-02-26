@@ -30,7 +30,7 @@
 #include <netcdf.h>
 #include <fstream>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 
 using namespace std;
 

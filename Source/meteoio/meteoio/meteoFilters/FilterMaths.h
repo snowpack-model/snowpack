@@ -21,7 +21,7 @@
 
 #include <map>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
-#include <meteoio/tinyexpr.h>
+#include <meteoio/thirdParty/tinyexpr.h>
 
 namespace mio {
 

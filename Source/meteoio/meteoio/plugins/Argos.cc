@@ -23,7 +23,7 @@
 #include <sstream>
 #include <string>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <cstdlib>
 
 using namespace std;

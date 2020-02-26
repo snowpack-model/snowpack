@@ -20,7 +20,7 @@
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <algorithm>

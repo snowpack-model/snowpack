@@ -19,7 +19,7 @@
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
 
-#include <errno.h>
+#include <cerrno>
 #include <string.h>
 #include <fstream>
 

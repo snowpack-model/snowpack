@@ -104,6 +104,7 @@ void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std
 				use_toa = false;
 		} else if (vecArgs[ii].first=="MEAN_PERIOD") {
 			IOUtils::parseArg(vecArgs[ii], where, mean_period);
+			mean_period /= 60.;
 		}
 	}
 
