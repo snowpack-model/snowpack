@@ -9,7 +9,6 @@
 #include "DEMLoader.h"
 #include <meteoio/Config.h>
 #include <meteoio/plugins/ARCIO.h>
-//#include <meteoio/plugins/BormaIO.h>
 //#include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/IOInterface.h>
@@ -55,7 +54,6 @@ IOInterface* DEMLoader::generateIOInterface(
 
 		if (cInterfaceType == "ARCIO")
 			io = new ARCIO(cfg);
-		//else if (cInterfaceType ==  "BormaIO" ): io = new BormaIO(cfg);
 		/*else if (cInterfaceType == "GeotopIO" )
 			io = new GeotopIO(cfg);*/
 		else if (cInterfaceType == "GrassIO" )

@@ -80,6 +80,7 @@ class IOHandler : public IOInterface {
 		void create_exclude_map();
 		void create_keep_map();
 		void create_merge_map();
+		static void purgeNodata(std::vector<METEO_SET>& vecMeteo);
 
 		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
 		void move_params(std::vector< METEO_SET >& vecMeteo) const;

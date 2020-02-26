@@ -21,7 +21,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <algorithm>

@@ -27,14 +27,11 @@ using namespace mio;
 
 /**
  * @brief Returns true if snow should be prepared
- * @param[in] snowPrep Should the snow preparation module be enabled?
  * @param[in] current_date current date
- * @param[in] Xdata Snow cover data
  * @return true if the snow should be prepared, false otherwise
  */
-bool TechSnow::prepare(const bool& snowPrep, const mio::Date& current_date, const SnowStation& /*Xdata*/)
+bool TechSnow::prepare(const mio::Date& current_date)
 {
-	if (!snowPrep) return false;
 	const unsigned short iso_week = current_date.getISOWeekNr();
 	if (iso_week>17 && iso_week<46) return false;
 

@@ -23,7 +23,7 @@
 #include <sstream>
 #include <string>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <cstdlib>
 
 using namespace std;
@@ -55,7 +55,7 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords);
  * - TIMEZONE: timezone of the data;
  * - METEOPATH: directory where to read the data files from;
- * - FILE#: a filename to read the data from for each key; If no FILE# keywords are provided, all files with the right extension in METEOPATH will
+ * - METEOFILE#: a filename to read the data from for each key; If no FILE# keywords are provided, all files with the right extension in METEOPATH will
  * be read.
  *     - GOES_EXT: extension of Goes data files to use when no FILE# keyword has been provided;
  *     - METEOPATH_RECURSIVE: when no FILE# keyword has been defined, should all files under METEOPATH be searched recursively? (default: false)
@@ -108,7 +108,7 @@ void GoesIO::parseInputOutputSection(const Config& cfg)
 	metaCfg.addFile( metafile );
 	cfg.getValue("METEOPATH", "Input", meteopath);
 
-	cfg.getValues("FILE", "Input", vecFilenames);
+	cfg.getValues("METEOFILE", "Input", vecFilenames);
 	if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 		const std::string dflt_extension = cfg.get("GOES_EXT", "Input", "raw");
 		const bool is_recursive = cfg.get("METEOPATH_RECURSIVE", "Input", false);

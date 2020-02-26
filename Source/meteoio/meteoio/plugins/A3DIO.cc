@@ -686,7 +686,7 @@ bool A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 	for (size_t ii=0; ii<sta_nr; ii++) {
 		const size_t size = data[ii].size();
 		if (size>0) {
-			const std::string filename = tmp_path+"/meteo1D_"+data[ii][0].meta.getStationID()+".txt";
+			const std::string filename( tmp_path+"/meteo1D_"+data[ii][0].meta.getStationID()+".txt" );
 			if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
 			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
 			if (!file) {

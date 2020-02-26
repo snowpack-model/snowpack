@@ -26,7 +26,7 @@ class TechSnow {
 	public:
 		TechSnow(const SnowpackConfig& /*i_cfg*/) {}
 		
-		static bool prepare(const bool& snowPrep, const mio::Date& current_date, const SnowStation& Xdata);
+		static bool prepare(const mio::Date& current_date);
 		static void preparation(SnowStation& Xdata);
 		static void productionPpt(const CurrentMeteo& Mdata, const double& cumu_precip, double &Tw, double &rho_hn, double &delta_cH, double &theta_w);
 };

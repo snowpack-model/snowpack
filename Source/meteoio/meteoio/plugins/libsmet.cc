@@ -16,7 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/libsmet.h>
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <limits>

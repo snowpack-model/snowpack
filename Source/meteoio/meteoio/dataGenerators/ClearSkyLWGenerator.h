@@ -44,6 +44,7 @@ namespace mio {
  *
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
  * @code
+ * [Generators]
  * ILWR::generators        = clearsky_LW
  * ILWR::clearsky_lw::type = Dilley
  * @endcode

@@ -17,7 +17,7 @@
 */
 #include <fstream>
 #include <sstream>
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 
 #include <meteoio/FileUtils.h>
@@ -114,16 +114,16 @@ namespace mio {
  * - MIN_MAX: range check filter, see FilterMinMax
  * - MIN_MAX_CONDITIONAL: range check only if a different parameter holds true to a comparison, see FilterMinMaxConditional
  * - RATE: rate of change filter, see FilterRate
+ * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
+ * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
+ * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
+ * - MATHS: evaluating arithmetic expressions with access to meteo data, see FilterMaths
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
- * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedPSUM
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - TIME_CONSISTENCY: reject data that changes too much, see FilterTimeconsistency
- * - DETECT_GRASS: detection of grass growing under the snow height sensor, see FilterDeGrass
- * - POTENTIALSW: ensuring physically realistic incoming short wave radiation, see FilterPotentialSW
- * - MATHS: evaluating arithmetic expressions with access to meteo data, see FilterMaths
  * - KALMAN: dynamic state likelihood estimation via Bayesian statistics (experimental), see FilterKalman
  * - PARTICLE: Monte Carlo sampling method for dynamic state estimation (experimental), see FilterParticle
  *
@@ -134,11 +134,11 @@ namespace mio {
  * - QM: quantile mapping, see ProcQuantileMapping
  *
  * As well as more specific data transformations:
+ * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
+ * - DEACCUMULATE: recompute instantaneous values from accumulated values, see ProcDeAccumulate
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
  * - IIR: Low Pass or High Pass critically damped filter, see ProcIIR
- * - AGGREGATE: various data aggregation algorithms, see ProcAggregate
- * - DEACCUMULATE: recompute instantaneous values from accumulated values, see ProcDeAccumulate
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon

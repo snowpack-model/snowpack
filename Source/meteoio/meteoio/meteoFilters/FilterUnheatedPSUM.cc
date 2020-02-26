@@ -51,8 +51,8 @@ void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<Me
 				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
 				tmp = 0.;
-                        if (!is_soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
-                                tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
+			if (!is_soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
+					tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
 		}
 	}
 }

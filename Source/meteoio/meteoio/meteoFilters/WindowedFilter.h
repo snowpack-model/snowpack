@@ -43,7 +43,7 @@ class WindowedFilter : public ProcessingBlock {
 		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
-		WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const bool& skipWindowParams=false);
 
 		void setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::vector<const MeteoData*>& get_window(const size_t& index,

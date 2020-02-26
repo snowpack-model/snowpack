@@ -817,7 +817,7 @@ void SnowpackInterface::calcNextStep()
 			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_tsg, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
 			if (snow_preparation) {
 				const mio::Grid2DObject tmp_grooming(grooming, mpi_offset, 0, mpi_nx, dimy);
-				workers[ii]->grooming( tmp_grooming );
+				workers[ii]->grooming( nextStepTimestamp, tmp_grooming );
 			}
 		} catch(const std::exception& e) {
 			++errCount;
@@ -833,8 +833,7 @@ void SnowpackInterface::calcNextStep()
 	//Retrieve special points data and write files
 	if (!pts.empty()) write_special_points();
 
-	if (errCount>0)
-	{
+	if (errCount>0) {
 		//something wrong took place, quitting. At least we tried writing the special points out
 		std::abort(); //force core dump
 	}

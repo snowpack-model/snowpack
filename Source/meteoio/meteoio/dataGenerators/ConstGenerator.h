@@ -29,6 +29,7 @@ namespace mio {
  * @details
  * Generate a constant value for this parameter, as provided with the VALUE argument (please remember that it must be in SI units).
  * @code
+ * [Generators]
  * RH::generators = Cst
  * RH::Cst::value = .7
  * @endcode

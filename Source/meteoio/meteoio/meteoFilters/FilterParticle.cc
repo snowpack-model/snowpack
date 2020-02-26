@@ -22,7 +22,7 @@
 #include <fstream> //for the dump files
 #include <limits>
 #include <sstream> //for readLineToVec
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 
 namespace mio {

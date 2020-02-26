@@ -43,6 +43,7 @@ namespace mio {
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
  * @code
+ * [Generators]
  * TAU_CLD::generators = TAU_CLD
  * TAU_CLD::tau_cld::use_rswr = false
  * @endcode

@@ -30,10 +30,11 @@ namespace mio {
  * @brief Filters out snow melting in an unheated rain gauge.
  * @details
  * This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place
- * when the relative humidity is greater than 0.5 and (TA-TSS) < 3, otherwise they get reset to 0.
- * It can take two optional arguments overwriting these thresholds (THRESH_RH and THRESH_DT). If none of these conditions could be tested
- * (for lack of data), then the precipitation is reset to nodata. On the contrary, if the "soft" option is given,
- * the lack of validation data keeps the precipitation as it is.
+ * when the relative humidity is high enough and TA and TSS are close enough, otherwise they get reset to 0. It takes the following arguments:
+ *  - THRESH_RH: relative humidity threshold above which precipitation can occur (between 0 and 1);
+ *  - THRESH_DT: if (TA-TSS) < THRESH_DT, precipitation can occur (ie these are proper conditions for cloudy sky);
+ *  - SOFT: should the lack of validation data invalidate the precipitation? If RH, TA or TSS are nodata, 
+ * either the precipitation is reset to nodata (default) or kept (if soft is set)
  *
  * @code
  * PSUM::filter2 = unheated_raingauge

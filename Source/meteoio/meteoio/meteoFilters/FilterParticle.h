@@ -23,7 +23,7 @@
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-#include <meteoio/tinyexpr.h>
+#include <meteoio/thirdParty/tinyexpr.h>
 
 #include <inttypes.h> //for RNG int types
 #include <string>

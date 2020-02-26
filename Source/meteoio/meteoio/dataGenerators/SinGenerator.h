@@ -39,6 +39,7 @@ namespace mio {
  * The example below generates a yearly sinusoidal variation for the air temperature, the minimum being 268.26 K and occuring at 1/12
  * of the period (which practically means, at the end of the first month).
  * @code
+ * [Generators]
  * TA::generators = Sin
  * TA::Sin::type  = yearly
  * TA::Sin::min   = 268.26

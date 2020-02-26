@@ -48,26 +48,24 @@ namespace mio {
  *     by the standard deviations and the universal threshold (=sqrt(2*ln(number of data points))) (see figure below)
  *  - points outside this ellipsoid are designated as spikes (the Goring-implementation uses three 2D-projections of the ellipsoid to identify
  *                                                            the outliers, while the Mori-implementation finds the outliers in 3D)
- *
  * - Replacement of the spikes:
  *  - find a fit for data points around the spike
  *  - replace the spike with a fitted value
  *
- * Parameters:
- * - Adjustable parameters:
- *  - The sensitivity parameter was added to be able to control the sensitivity of the filter. The universal threshold is divided by
+ * It takes the following arguments
+ *  - METHOD: decide which implementation to use: "Mori" or "Goring". The differences are small between both implementations.
+ *    According to Mori the "Mori"-version performs slightly better. However, we suggest to use the Goring-method, because it is better tested.
+ *  - SENSITIVITY: control the sensitivity of the filter. The universal threshold is divided by
  *      this value. Thus a sensitivity of 1 is the default value. The larger the sensitivity the smaller the threshold (=the smaller
  *      the ellipsoid) and thus the more spikes will be detected.
- *  - The method parameter decides which implementation to use: "Mori" or "Goring". The differences are small between both implementations.
- *    According to Mori the "Mori"-version performs slightly better. However, we suggest to use the Goring-method, because it is better tested.
- *  - The parameter interpol_deg sets the degree of the fit for the replacement. 1 is linear, 2 is quadratic, ..., 0 means "off"
+ *  - INTERPOL_DEG: degree of the fit for the replacement. 1 is linear, 2 is quadratic, ..., 0 means "off"
  *    (removed spikes will be nodata and can be resampled later via [Interpolations1D]). This is useful in rare cases where the cubic fit happens
  *    to produce an unwanted peak by itself.
  *    Default value is 3 (cubic fit) as proposed in the paper by Goring.
- *  - The number of points used for the fitting (replacement) of the spikes can be set via interpol_pts. Default is 24 (just as proposed in the
+ *  - INTERPOL_PTS: number of points used for the fitting (replacement) of the spikes. Default is 24 (just as proposed in the
  *    paper by Goring).
  *
- * - Hard-coded parameters:
+ * There are also some hard-coded parameters:
  *    - the maximum number of iterations for the spike detection. This is set to 50.
  *    - When fitting, extrapolation is set to false.
  *

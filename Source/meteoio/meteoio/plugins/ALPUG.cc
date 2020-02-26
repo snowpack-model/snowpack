@@ -19,7 +19,7 @@
 #include <meteoio/plugins/libsmet.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <sstream>

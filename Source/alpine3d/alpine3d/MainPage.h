@@ -237,7 +237,6 @@
  * AVGSUM_TIME_SERIES = TRUE
  * CUMSUM_MASS        = FALSE
  * PRECIP_RATES       = FALSE
- *
  * @endcode
  *
  * Then the output smet files produced by Snowpack can be directly used as Alpine3D inputs, performing some on-the-fly renaming and conversions

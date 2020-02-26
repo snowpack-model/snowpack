@@ -37,6 +37,7 @@ namespace mio {
  *    + max: return the maximum value of the whole window;
  *    + mean: return the mean of the whole window;
  *    + median: return the median of the whole window;
+ *    + step_sum: return the sum over the last timestep (assuming that the value given at the end of the timestep is valid for the whole timestep);
  *    + wind_avg: Wind vector averaging. CURRENTLY, THIS FILTER DOES NOT WORK PROPERLY (the first parameter is correctly calculated but the second one uses the modified output of the first one and therefore is WRONG).
  *
  * Remarks: nodata values are excluded from the aggregation
@@ -48,6 +49,10 @@ namespace mio {
  * VW::arg3::centering = left
  * VW::arg3::MIN_PTS = 4
  * VW::arg3::MIN_SPAN = 14400 ;ie 14400 seconds time span, at least 4 points, for a left leaning window
+ * 
+ * ;Reconstruct a PSUM signal from PINT
+ * PINT::filter1 = AGGREGATE
+ * PINT::arg1::type = step_sum
  * @endcode
  */
 
@@ -64,10 +69,12 @@ class ProcAggregate : public WindowedFilter {
 			max_agg,
 			mean_agg,
 			median_agg,
+			step_sum,
 			wind_avg_agg
 		} aggregate_type;
 		
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static void sumOverLastStep(std::vector<MeteoData>& ovec, const unsigned int& param);
 		static double calc_min(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
 		static double calc_max(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
 		static double calc_mean(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);

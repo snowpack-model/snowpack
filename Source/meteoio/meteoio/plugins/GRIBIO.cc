@@ -27,7 +27,7 @@
 
 #include <cmath>
 #include <iostream>
-#include <errno.h>
+#include <cerrno>
 #include <algorithm>
 #include <grib_api.h>
 

@@ -632,7 +632,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	}
 }
 
-void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
+void SnowpackInterfaceWorker::grooming(const mio::Date &current_date, const mio::Grid2DObject &grooming_map)
 {
 	for(size_t ii = 0; ii < SnowStationsCoord.size(); ++ii) {
 		const size_t ix = SnowStationsCoord.at(ii).first;
@@ -642,7 +642,8 @@ void SnowpackInterfaceWorker::grooming(const mio::Grid2DObject &grooming_map)
 
 		if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
 		if (SnowStations[ii]==NULL) continue; //for safety: skipped cells were initialized with NULL
-		Snowpack::snowPreparation( *SnowStations[ii] );
+		
+		if (TechSnow::prepare(current_date)) Snowpack::snowPreparation( *SnowStations[ii] );
 	}
 }
 

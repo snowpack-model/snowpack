@@ -17,7 +17,7 @@
 */
 #include <fstream>
 #include <sstream>
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <algorithm>
 

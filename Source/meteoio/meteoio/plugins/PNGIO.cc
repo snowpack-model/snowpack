@@ -24,7 +24,7 @@
 #include <fstream>
 #include <cstring>
 #include <algorithm>
-#include <errno.h>
+#include <cerrno>
 #include <zlib.h>
 
 using namespace std;

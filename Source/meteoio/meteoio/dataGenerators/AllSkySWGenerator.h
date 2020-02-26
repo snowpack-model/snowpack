@@ -37,6 +37,7 @@ namespace mio {
  * If no TA or RH is available, average values will be used (in order to get an average value
  * for the precipitable water vapor).
  * @code
+ * [Generators]
  * ISWR::generators = allsky_SW
  * @endcode
  * @note This relies on SunObject to perform the heavy duty computation.

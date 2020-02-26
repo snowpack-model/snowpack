@@ -17,7 +17,7 @@
 */
 #include <meteoio/Config.h>
 #include <meteoio/FileUtils.h>
-#include <meteoio/tinyexpr.h>
+#include <meteoio/thirdParty/tinyexpr.h>
 
 #include <algorithm>
 #include <fstream>

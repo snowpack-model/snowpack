@@ -18,7 +18,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <algorithm>
 
 #include <meteoio/meteoFilters/FilterSuppr.h>
