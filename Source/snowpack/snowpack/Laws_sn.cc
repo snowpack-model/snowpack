@@ -1322,13 +1322,13 @@ double SnLaws::NewSnowViscosityLehning(const ElementData& Edata)
  */
 double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 {
-	const double Q = (current_variant == "POLAR") ? (16080.) : (67000.); // Activation energy for defects in ice (J mol-1)
+	const double Q = 67000.; // Activation energy for defects in ice (J mol-1)
 
 	switch (SnLaws::t_term) {
 	case t_term_arrhenius_critical:
 	{
-		const double Q_fac = (current_variant == "POLAR") ? (0.24) : (0.39); // Adjust Q to snow; from Schweizer et al. (2004): 0.24
-		const double criticalExp = (current_variant == "POLAR") ? (0.3) : (0.7); //0.5; //0.3; //
+		const double Q_fac = 0.39; // Adjust Q to snow; from Schweizer et al. (2004): 0.24
+		const double criticalExp = 0.7; //0.5; //0.3; //
 		const double T_r = 265.15; // Reference temperature (K), from Schweizer et al. (2004)
 		return ((1. / SnLaws::ArrheniusLaw(Q_fac * Q, Te, T_r))
 		             * (0.3 * pow((Constants::meltfreeze_tk - Te), criticalExp) + 0.4));
