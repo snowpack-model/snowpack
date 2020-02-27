@@ -39,7 +39,7 @@ const double SnowDrift::schmidt_drift_fudge = 1.0;
 const bool SnowDrift::msg_erosion = false;
 
 ///For REDEPOSIT mode: search depth for average threshold tau from the surface downward (in cm)
-const double SnowDrift::redeposit_avg_depth = 0.03;
+const double SnowDrift::redeposit_avg_depth = 0.0;
 
 
 /************************************************************
