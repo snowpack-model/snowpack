@@ -1,7 +1,7 @@
 <inishell_config application="Meteo IO">
 
 	<!-- General Parameters -->
-	<parameter key="BUFF_CHUNK_SIZE" type="integer" default="30">
+	<parameter key="BUFFER_SIZE" type="integer" default="30">
 		<section name="general" />
 		<help>Size in days of a chunk of data to read at once.</help>
 	</parameter>

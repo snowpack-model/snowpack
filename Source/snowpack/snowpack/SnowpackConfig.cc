@@ -36,7 +36,8 @@ const bool SnowpackConfig::__init = SnowpackConfig::initStaticData();
 bool SnowpackConfig::initStaticData()
 {
 	//[Snowpack] section
-	advancedConfig["SOIL_FLUX"] = "false";
+	snowpackConfig["FORCING"] = "ATMOS";
+	snowpackConfig["SOIL_FLUX"] = "false";
 
 	//[SnowpackAdvanced] section
 	advancedConfig["ADVECTIVE_HEAT"] = "false";
