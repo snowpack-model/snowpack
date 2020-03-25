@@ -34,14 +34,16 @@ namespace mio {
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
  * this offers the choice of several all-sky parametrizations, with the following arguments:
  *  - TYPE: specify which parametrization should be used, from the following:
+ *      - CARMONA -- from Carmona et al., <i>"Estimation of daytime downward 
+* longwave radiation under clear and cloudy skies conditions over a sub-humid region."</i> Theoretical and applied climatology <b>115.1-2</b> (2014): 281-295.
+ *      - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  *      - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
  * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
  *      - KONZELMANN -- from Konzelmann et al., <i>"Parameterization of global and longwave incoming radiation
  * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
  *      - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
- *      - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
- * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  *  - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
@@ -80,10 +82,11 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		typedef enum PARAMETRIZATION {
-			OMSTEDT,
+			CARMONA,
+			CRAWFORD,
 			KONZELMANN,
-			UNSWORTH,
-			CRAWFORD
+			OMSTEDT,
+			UNSWORTH
 		} parametrization;
 		parametrization model;
 

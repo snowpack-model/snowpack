@@ -24,16 +24,24 @@ namespace mio {
 
 FilterDeGrass::FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
           : ProcessingBlock(vecArgs, name), prev_day(), TSS_daily_max(IOUtils::nodata), TSS_daily_min(IOUtils::nodata),
-		    TSS_daily_mean(IOUtils::nodata), TSG_daily_var(IOUtils::nodata), month(7)
+		    TSS_daily_mean(IOUtils::nodata), TSG_daily_var(IOUtils::nodata), TSS_user_offset(IOUtils::nodata), month(7)
 {
 	properties.stage = ProcessingProperties::first;
+	const std::string where( "Filters::"+block_name );
+
+	//parse the arguments (the keys are all upper case)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TSS_OFFSET") {
+			IOUtils::parseArg(vecArgs[ii], where, TSS_user_offset);
+		}
+	}
 }
 
 void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
-	double TSS_offset = getTSSOffset(param, ovec);
+	double TSS_offset = (TSS_user_offset==IOUtils::nodata)? getTSSOffset(param, ovec) : TSS_user_offset;
 	if (TSS_offset==IOUtils::nodata) TSS_offset = 0.;
 	
 	//find first day of the Spring when min(TSS)>1C for 24 hours
@@ -49,7 +57,7 @@ void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoDa
 	//now perform the filtering, one point after another
 	for (size_t ii=0; ii<ovec.size(); ii++) {
 		const Date curr_date( ovec[ii].date );
-		const Date day_start = getDailyStart( curr_date );
+		const Date day_start( getDailyStart( curr_date ) );
 		if (day_start!=prev_day) {
 			int year, day;
 			curr_date.getDate(year, month, day);
@@ -64,7 +72,7 @@ void FilterDeGrass::process(const unsigned int& param, const std::vector<MeteoDa
 				if (curr_date>warmDayTSG || curr_date<warmDayTSS || warmDayTSG<warmDayTSS) {
 					filterOnTss(param, ii, 0., ovec);
 				} else {
-					if (TSS_offset>IOUtils::C_TO_K(1.5) || tss_tsg_correlation<0.2) {
+					if (TSS_offset>1.5 || tss_tsg_correlation<0.2) {
 						filterOnTsg(param, ii, ovec);
 					} else {
 						filterOnTss(param, ii, 0., ovec);
@@ -150,7 +158,7 @@ void FilterDeGrass::findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t 
 	tssWarmDay_idx = IOUtils::npos;
 	tsgWarmDay_idx = IOUtils::npos;
 	for (size_t ii=10; ii<ovec.size(); ii++) {
-		const Date current = ovec[ii].date;
+		const Date current( ovec[ii].date );
 		int curr_year, curr_month, curr_day;
 		current.getDate(curr_year, curr_month, curr_day);
 		if (curr_month>=9) continue; //HACK: this is location dependant...
@@ -174,7 +182,7 @@ void FilterDeGrass::findFirstWarmDay(const std::vector<MeteoData>& ovec, size_t 
 	}
 }
 
-//compute the TSS offset/correction
+//compute the TSS offset/correction, in Celsius
 double FilterDeGrass::getTSSOffset(const unsigned int& param, const std::vector<MeteoData>& ivec) 
 {
 	Date tmp_prev_day;
@@ -185,7 +193,7 @@ double FilterDeGrass::getTSSOffset(const unsigned int& param, const std::vector<
 	for (size_t ii=0; ii<ivec.size(); ii++){
 		if (ivec[ii](param)==IOUtils::nodata) continue;
 
-		const Date day_start = getDailyStart(ivec[ii].date);
+		const Date day_start( getDailyStart(ivec[ii].date) );
 		if (day_start!=tmp_prev_day) {
 			const bool status = getDailyParameters(ivec, day_start, HS_daily_median, TSS_daily_median, RSWR_daily_10pc);
 			if (!status || HS_daily_median==IOUtils::nodata || TSS_daily_median==IOUtils::nodata || RSWR_daily_10pc==IOUtils::nodata) 
@@ -197,13 +205,13 @@ double FilterDeGrass::getTSSOffset(const unsigned int& param, const std::vector<
 		if (high_tss_day) tss_dat.push_back( ivec[ii](MeteoData::TSS) );
 	}
 	
-	return Interpol1D::getMedian(tss_dat);
+	return IOUtils::K_TO_C( Interpol1D::getMedian(tss_dat) );
 }
 
 //daily values for TSS offset calc 
 bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const Date day_start, double &HS_daily_median, double &TSS_daily_median, double &RSWR_daily_10pc)
 {
-	const Date day_end = day_start + 1;
+	const Date day_end( day_start + 1 );
 	
 	//extract values for the day
 	std::vector<double> HS_dat, TSS_dat, RSWR_dat;
@@ -219,7 +227,7 @@ bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const
 	
 	std::vector<double> quantiles;
 	quantiles.push_back( 0.9 );
-	std::vector<double> rswr_quantiles = Interpol1D::quantiles(RSWR_dat, quantiles);
+	std::vector<double> rswr_quantiles( Interpol1D::quantiles(RSWR_dat, quantiles) );
 	
 	RSWR_daily_10pc = rswr_quantiles[0];
 	HS_daily_median = Interpol1D::getMedian(HS_dat);
@@ -230,7 +238,7 @@ bool FilterDeGrass::getDailyParameters(const std::vector<MeteoData>& ivec, const
 //daily values for TSS-based correction
 void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Date day_start, double &o_TSS_daily_min, double &o_TSS_daily_max, double &o_TSS_daily_mean)
 {
-	const Date day_end = day_start + 1;
+	const Date day_end( day_start + 1 );
 	
 	//extract values for the day
 	std::vector<double> TSS_dat;
@@ -249,7 +257,7 @@ void FilterDeGrass::getTSSDailyPpt(const std::vector<MeteoData>& ivec, const Dat
 //daily values for TSG-based correction
 double FilterDeGrass::getDailyTSGVariance(const std::vector<MeteoData>& ivec, const Date day_start)
 {
-	const Date day_end = day_start + 1;
+	const Date day_end( day_start + 1 );
 	
 	//extract values for the day
 	std::vector<double> TSG_dat;

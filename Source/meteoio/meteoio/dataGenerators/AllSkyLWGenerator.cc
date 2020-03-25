@@ -34,7 +34,8 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 		if (vecArgs[ii].first=="TYPE") {
 			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
 
-			if (user_algo=="OMSTEDT") model = OMSTEDT;
+			if (user_algo=="CARMONA") model = CARMONA;
+			else if (user_algo=="OMSTEDT") model = OMSTEDT;
 			else if (user_algo=="KONZELMANN") model = KONZELMANN;
 			else if (user_algo=="UNSWORTH") model = UNSWORTH;
 			else if (user_algo=="CRAWFORD") {
@@ -94,7 +95,9 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			last_cloudiness[station_hash] = std::pair<double,double>( julian_gmt, cloudiness );
 
 		//run the ILWR parametrization
-		if (model==OMSTEDT)
+		if (model==CARMONA)
+			value = Atmosphere::Carmona_ilwr(RH, TA, cloudiness);
+		else if (model==OMSTEDT)
 			value = Atmosphere::Omstedt_ilwr(RH, TA, cloudiness);
 		else if (model==KONZELMANN)
 			value = Atmosphere::Konzelmann_ilwr(RH, TA, cloudiness);

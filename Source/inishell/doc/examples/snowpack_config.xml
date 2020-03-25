@@ -15,7 +15,7 @@
 
 	<frame key="buffering_frame" label="Buffering">
 		<section name="general" />
-		<parameter key="BUFF_CHUNK_SIZE" type="integer" default="370" optional="false">
+		<parameter key="BUFFER_SIZE" type="integer" default="370" optional="false">
 			<section name="general" />
 			<help>Size in days of a chunk of data to read at once.</help>
 		</parameter>
