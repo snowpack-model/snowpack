@@ -578,6 +578,41 @@ double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const dou
 }
 
 /**
+* @brief Evaluate the atmosphere emissivity from RH, TA and cloudiness.
+* This is according to Carmona, Rivas, and Caselles. <i>"Estimation of daytime downward 
+* longwave radiation under clear and cloudy skies conditions over a sub-humid region."</i> Theoretical and applied climatology <b>115.1-2</b> (2014): 281-295.
+* Here the second variant (MLRM-2) is implemented.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness 1 - ratio of measured ISWR over potential ISWR (between 0 and 1, 0 being clear sky)
+* @return emissivity (between 0 and 1)
+*/
+double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+	static const double beta_0 = -0.34;
+	static const double beta_1 = 3.36e-3;
+	static const double beta_2 = 1.94e-3;
+	static const double beta_3 = 0.213;
+	
+	const double epsilon_cloudy = beta_0 + beta_1 * TA + beta_2 * (RH*100.) + beta_3 * cloudiness;
+	return epsilon_cloudy;
+}
+
+/**
+* @brief Evaluate the long wave radiation from RH, TA and cloudiness.
+* This is according to Carmona, Rivas, and Caselles. <i>"Estimation of daytime downward 
+* longwave radiation under clear and cloudy skies conditions over a sub-humid region."</i> Theoretical and applied climatology <b>115.1-2</b> (2014): 281-295.
+* Here the second variant (MLRM-2) is implemented.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness 1 - ratio of measured ISWR over potential ISWR (between 0 and 1, 0 being clear sky)
+* @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+	const double ea = Carmona_emissivity(RH, TA, cloudiness);
+	return blkBody_Radiation(ea, TA);
+}
+
+/**
  * @brief Evaluate the solar clearness index for a given cloudiness. 
  * This uses the formula from Kasten and Czeplak -- <i>"Solar and terrestrial radiation
  * dependent on the amount and type of cloud"</i>, Sol. Energy, <b>24</b>, 1980, pp 177-189.

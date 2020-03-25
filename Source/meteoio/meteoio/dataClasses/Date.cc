@@ -1144,6 +1144,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 {
 	if (undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
+		//return std::string("[Undef]"); //for debug purposes
 	
 	//the date are displayed in LOCAL timezone (more user friendly)
 	const double julian_out = (gmt || (type==ISO_Z))? gmt_julian : GMTToLocal(gmt_julian);
@@ -1244,7 +1245,7 @@ const std::string Date::toString() const {
 	std::ostringstream os;
 	os << "<date>\n";
 	if (undef==true)
-		os << "Date is undefined\n";
+		os << "Undefined\n";
 	else {
 		os << toString(Date::ISO) << "\n";
 		os << "TZ=GMT" << showpos << timezone << noshowpos << "\t\t" << "DST=" << dst << "\n";

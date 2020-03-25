@@ -67,6 +67,8 @@ class Atmosphere {
 		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness);
 		static double Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness);
+		static double Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness);
+		static double Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month, const double& cloudiness=IOUtils::nodata);
 		static double Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,

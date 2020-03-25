@@ -585,7 +585,7 @@ bool ds_Solve(const SD_MATRIX_WHAT& Code, SD_MATRIX_DATA *pMat, double *X)
 		Permute( DimTot, pMat->Mat.Block.pPerm, X );
 
 		// Check for NaN
-		success = !isnan(X[0]);
+		success = !std::isnan(X[0]);
 	}
 
 	// ResetMatrixData

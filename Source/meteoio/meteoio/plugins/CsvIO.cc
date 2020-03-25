@@ -352,15 +352,16 @@ std::string CsvParameters::identifyField(const std::string& fieldname)
 {
 	if (fieldname.compare(0, 15, "TEMPERATURE_AIR")==0 || fieldname.compare(0, 7, "AIRTEMP")==0 || fieldname.compare(0, 16, "TEMPERATURA_ARIA")==0) return "TA";
 	else if (fieldname.compare(0, 16, "SOIL_TEMPERATURE")==0 || fieldname.compare(0, 8, "SOILTEMP")==0) return "TSG";
-	else if (fieldname.compare(0, 13, "PRECIPITATION")==0 || fieldname.compare(0, 14, "PRECIPITAZIONE")==0) return "PSUM";
+	else if (fieldname.compare(0, 13, "PRECIPITATION")==0 || fieldname.compare(0, 4, "PREC")==0 || fieldname.compare(0, 14, "PRECIPITAZIONE")==0) return "PSUM";
 	else if (fieldname.compare(0, 19, "REFLECTED_RADIATION")==0 || fieldname.compare(0, 26, "RADIAZIONE_SOLARE_RIFLESSA")==0) return "RSWR";
 	else if (fieldname.compare(0, 18, "INCOMING_RADIATION")==0 || fieldname.compare(0, 26, "INCOMINGSHORTWAVERADIATION")==0 || fieldname.compare(0, 27, "RADIAZIONE_SOLARE_INCIDENTE")==0) return "RSWR";
-	else if (fieldname.compare(0, 14, "WIND_DIRECTION")==0 || fieldname.compare(0, 15, "DIREZIONE_VENTO")==0) return "DW";
+	else if (fieldname.compare(0, 14, "WIND_DIRECTION")==0 || fieldname.compare(0, 2, "WD")==0 || fieldname.compare(0, 15, "DIREZIONE_VENTO")==0) return "DW";
 	else if (fieldname.compare(0, 17, "RELATIVE_HUMIDITY")==0 || fieldname.compare(0, 16, "RELATIVEHUMIDITY")==0 || fieldname.compare(0, 15, "UMIDIT_RELATIVA")==0) return "RH";
-	else if (fieldname.compare(0, 13, "WIND_VELOCITY")==0 || fieldname.compare(0, 13, "VELOCIT_VENTO")==0) return "VW";
+	else if (fieldname.compare(0, 13, "WIND_VELOCITY")==0 || fieldname.compare(0, 2, "WS")==0 || fieldname.compare(0, 13, "VELOCIT_VENTO")==0) return "VW";
 	else if (fieldname.compare(0, 8, "PRESSURE")==0 || fieldname.compare(0, 15, "STATIONPRESSURE")==0) return "P";
 	else if (fieldname.compare(0, 17, "INCOMING_LONGWAVE")==0 || fieldname.compare(0, 25, "INCOMINGLONGWAVERADIATION")==0) return "ILWR";
 	else if (fieldname.compare(0, 22, "SNOWSURFACETEMPERATURE")==0 ) return "TSS";
+	else if (fieldname.compare(0, 6, "WS_MAX")==0) return "VW_MAX";
 	
 	return fieldname;
 }
@@ -588,7 +589,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 void CsvParameters::parseUnits(const std::string& line)
 {
 	static const std::string stdUnits[9] = {"TS", "RN", "W/M2", "M/S", "K", "M", "V", "VOLT", "DEG"};
-	static std::set<std::string> noConvUnits( stdUnits, stdUnits+9 );
+	static const std::set<std::string> noConvUnits( stdUnits, stdUnits+9 );
 	
 	std::vector<std::string> units;
 	IOUtils::readLineToVec(line, units, csv_delim);
@@ -599,18 +600,18 @@ void CsvParameters::parseUnits(const std::string& line)
 		std::string tmp( units[ii] );
 		IOUtils::toUpper( tmp );
 		IOUtils::removeQuotes(tmp);
-		if (tmp.empty()) continue; //empty unit
+		if (tmp.empty() || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1") continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
 		if (tmp=="%" || tmp=="CM") units_multiplier[ii] = 0.01;
-		else if (tmp=="C") units_offset[ii] = Cst::t_water_freezing_pt;
-		else if (tmp=="MM") units_multiplier[ii] = 1e-3;
+		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C") units_offset[ii] = Cst::t_water_freezing_pt;
+		else if (tmp=="MM" || tmp=="MV") units_multiplier[ii] = 1e-3;
 		else if (tmp=="IN") units_multiplier[ii] = 0.0254;
 		else if (tmp=="FT") units_multiplier[ii] = 0.3048;
 		else if (tmp=="F") { units_multiplier[ii] = 5./9.; units_offset[ii] = -32.*5./9.;}
 		else if (tmp=="KM/H") units_multiplier[ii] = 1./3.6;
-		else if (tmp=="MPH") units_multiplier[ii] = 0.44704;
-		else if (tmp=="KT") units_multiplier[ii] = 0.5144444444445;
+		else if (tmp=="MPH") units_multiplier[ii] = 1.60934 / 3.6;
+		else if (tmp=="KT") units_multiplier[ii] = 1.852 / 3.6;
 		else {
 			throw UnknownValueException("Can not parse unit '"+tmp+"', please inform the MeteoIO developers", AT);
 		}
@@ -1093,18 +1094,18 @@ Date CsvIO::getDate(const CsvParameters& params, const std::vector<std::string>&
 
 std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Date& dateStart, const Date& dateEnd)
 {
+	const std::string filename( params.getFilename() );
 	size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
 	const bool use_offset = !params.units_offset.empty();
 	const bool use_multiplier = !params.units_multiplier.empty();
 	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields)) {
-		const std::string msg( "The declared units_offset ("+IOUtils::toString(params.units_offset.size())+") / units_multiplier ("+IOUtils::toString(params.units_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
+		const std::string msg( "in file '"+filename+"', the declared units_offset ("+IOUtils::toString(params.units_offset.size())+") / units_multiplier ("+IOUtils::toString(params.units_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
 		throw InvalidFormatException(msg, AT);
 	}
 
 	const MeteoData template_md( createTemplate(params) );
 
 	//now open the file
-	const std::string filename( params.getFilename() );
 	if (!FileUtils::fileExists(filename)) throw AccessException("File '"+filename+"' does not exists", AT); //prevent invalid filenames
 	errno = 0;
 	std::ifstream fin(filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code

@@ -29,9 +29,17 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
                     user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false), dmax(300.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
+	synoptic_wind_type type = AUTO;
 	bool has_ref=false, has_synop=false;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="REF") {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_type( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (user_type=="FIXED") type = FIXED;
+			else if (user_type=="REF_STATION") type = REF_STATION;
+			else
+				throw InvalidArgumentException("Unknown algorithm \""+user_type+"\" supplied for "+where, AT);
+		} else if (vecArgs[ii].first=="REF_STATION") {
 			ref_station = vecArgs[ii].second;
 			has_ref = true;
 		} else if(vecArgs[ii].first=="BASE") {
@@ -44,7 +52,10 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
 		}
 	}
 
+	if (type==AUTO && (has_synop || has_ref)) throw InvalidArgumentException("No REF_STATION or DW_SYNOP arguments expected when TYPE=AUTO for "+where, AT);
 	if (has_synop && has_ref) throw InvalidArgumentException("It is not possible to provide both REF and DW_SYNOP for "+where, AT);
+	if (type==FIXED && !has_synop) throw InvalidArgumentException("Please provide DW_SYNOP for "+where, AT);
+	if (type==REF_STATION && !has_ref) throw InvalidArgumentException("Please provide REF_STATION for "+where, AT);
 }
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date)

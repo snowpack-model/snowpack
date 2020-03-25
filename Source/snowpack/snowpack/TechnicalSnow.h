@@ -1,3 +1,8 @@
+/*
+ *  SNOWPACK stand-alone
+ *
+ *  Copyright WSL Institute for Snow and Avalanche Research SLF, DAVOS, SWITZERLAND
+ */
 /*  This file is part of Snowpack.
     Snowpack is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

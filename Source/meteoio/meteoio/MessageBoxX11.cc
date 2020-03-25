@@ -33,16 +33,16 @@
  * text:  The contents of the message box. Use '\n' as a line terminator. *
  **************************************************************************/
 void MessageBoxX11( const char* title, const char* text ) {
-	const char* wmDeleteWindow = "WM_DELETE_WINDOW";
+	static const char* wmDeleteWindow = "WM_DELETE_WINDOW";
 
 	/* Open a display */
 	Display* dpy = XOpenDisplay(0);
 	if (!dpy) return;
 
 	/* Get us a white and black color */
-	const int black = BlackPixel( dpy, DefaultScreen(dpy) );
-	const int white = WhitePixel( dpy, DefaultScreen(dpy) );
-	char grey[] = "#dcdad5";
+	const unsigned long black = BlackPixel( dpy, DefaultScreen(dpy) );
+	const unsigned long white = WhitePixel( dpy, DefaultScreen(dpy) );
+	static const char grey[] = "#dcdad5";
 	Colormap colormap = DefaultColormap(dpy, 0);
 	XColor color;
 	XParseColor(dpy, colormap, grey, &color);
@@ -88,16 +88,16 @@ void MessageBoxX11( const char* title, const char* text ) {
 	int length=0, height=0, direction, ascent, descent;
 	XCharStruct overall;
 	for ( size_t i=0; i<strvec_size; ++i ) {
-		XTextExtents( font, strvec[ i ], strlen(strvec[ i ]), &direction, &ascent, &descent, &overall );
+		XTextExtents( font, strvec[ i ], static_cast<int>(strlen(strvec[ i ])), &direction, &ascent, &descent, &overall );
 		length =  overall.width  >length ? overall.width    : length;
 		height = (ascent+descent)>height ? (ascent+descent) : height;
 	}
 
 	/* Compute the shape of the window, needed to display the text and adjust the window accordingly */
 	const int X = DisplayWidth ( dpy, DefaultScreen(dpy) )/2 - length/2-10;
-	const int Y = DisplayHeight( dpy, DefaultScreen(dpy) )/2 - strvec_size*height/2 - height - 10;
+	const int Y = DisplayHeight( dpy, DefaultScreen(dpy) )/2 - static_cast<int>(height/2 - height - 10);
 	const int W = length + 20;
-	const int H = strvec_size*height + height + 40;
+	const int H = static_cast<int>(strvec_size*height + height + 40);
 	XMoveResizeWindow( dpy, w, X, Y, W, H );
 
 	/* Compute the shape of the OK button */
@@ -105,7 +105,7 @@ void MessageBoxX11( const char* title, const char* text ) {
 	const int okWidth = overall.width;
 	const int okHeight = ascent + descent;
 	const int okX1 = W/2 - okWidth/2 - 15;
-	const int okY1 = (strvec_size*height + 20) + 5;
+	const int okY1 = static_cast<int>(strvec_size*height + 20) + 5;
 	const int okX2 = W/2 + okWidth/2 + 15;
 	const int okY2 = okY1 + 4 + okHeight;
 	const int okBaseX = okX1 + 15;
@@ -161,7 +161,7 @@ void MessageBoxX11( const char* title, const char* text ) {
 
 				/* Draw text lines */
 				for ( size_t i=0; i<strvec_size; ++i )
-				XDrawString( dpy, w, gc, 10, 10+height + height*i, strvec[i], strlen(strvec[i]) );
+					XDrawString( dpy, w, gc, 10, static_cast<int>(10+height + height*i), strvec[i], static_cast<int>(strlen(strvec[i])) );
 
 				/* Draw OK button */
 				if ( buttonFocus ) {
