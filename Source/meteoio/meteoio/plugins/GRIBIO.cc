@@ -93,7 +93,7 @@ namespace mio {
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
- * - GRIB_DEBUG: output more information about the grib files in order to help fix potential problems.
+ * - GRIB_DEBUG: output more information about the grib files in order to help fix potential problems (default: false).
  *
  * @code
  * [Input]

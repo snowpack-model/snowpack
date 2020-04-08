@@ -580,6 +580,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 				}
 				if ((eUpper < nE-1) && (EMS[eUpper+1].Rho < 0.) && (EMS[eUpper+1].L > 0.)) {
 					// When upper+1 element is not marked to be removed, but we merge the upper element, we should remove the upper+1 element.
+					// Note that this starts to compound elements (see remark in SnowStation::reduceNumberOfElements(const size_t& rnE)):
 					EMS[eUpper+1].L *= -1.;
 				}
 			} else {
@@ -594,6 +595,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 						EMS[eUpper+1].L *= -1.;	// Mark element as "removed".
 					}
 					if ((eUpper+1 < nE-1) && (EMS[eUpper+2].Rho < 0.) && (EMS[eUpper+2].L > 0.)) {
+						// Note that this likely starts to compound elements (see remark in SnowStation::reduceNumberOfElements(const size_t& rnE)):
 						EMS[eUpper+2].L *= -1.;
 					}
 				}
