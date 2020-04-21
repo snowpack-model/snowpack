@@ -43,7 +43,7 @@ namespace mio {
  * - DBO_URL: The URL of the RESTful web service e.g.http://developwis.wsl.ch:8730
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
- * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected
+ * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
  *
  * @code
  * METEO	= DBO

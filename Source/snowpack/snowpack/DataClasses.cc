@@ -2304,7 +2304,9 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 				Ndata[eNew].S_n = Ndata[e+1].S_n;
 #endif
 			} else { // Removing elements for negative length L
-				dL += Edata[e].L;
+				// Under the condition of multiple element removals, Edata[e].L can occasionally represent a compounded element,
+				// such that it doesn't reflect the true height change. Better to use the nodal positions:
+				dL += (Ndata[e+1].z - Ndata[e].z);
 			}
 		} else {
 			if (eNew < e) {

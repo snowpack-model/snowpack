@@ -595,14 +595,20 @@ int SmetIO::get_intval(const smet::SMETReader& reader, const std::string& key)
  * @param forbackup dump Xdata on the go
  */
 void SmetIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-                            const ZwischenData& Zdata, const bool& forbackup)
+                            const ZwischenData& Zdata, const size_t& forbackup)
 {
 	std::string snofilename( getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + ".sno" );
 	std::string hazfilename( getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + ".haz" );
 
-	if (forbackup){
+	if (forbackup > 0){
 		std::stringstream ss;
-		ss << "" << (int)(date.getJulian() + 0.5);
+		if (forbackup == 1) {
+			// 1: No labeling
+			ss << "backup";
+		} else {
+			// >1: Label using timestamp
+			ss << "" << (int)(double(date.getUnixDate()) + double(0.5));
+		}
 		snofilename += ss.str();
 		hazfilename += ss.str();
 	}

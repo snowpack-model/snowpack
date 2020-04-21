@@ -177,7 +177,7 @@ void SnowpackIO::readSnowCover(const std::string& i_snowfile, const std::string&
 }
 
 void SnowpackIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-                                const ZwischenData& Zdata, const bool& forbackup)
+                                const ZwischenData& Zdata, const size_t& forbackup)
 {
 	if (output_snow_as_ascii) {
 		asciiio->writeSnowCover(date, Xdata, Zdata, forbackup);

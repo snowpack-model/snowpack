@@ -754,12 +754,18 @@ void AsciiIO::readSnowCover(const std::string& i_snowfile, const std::string& st
  * @param forbackup dump Xdata on the go
  */
 void AsciiIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-                             const ZwischenData& Zdata, const bool& forbackup)
+                             const ZwischenData& Zdata, const size_t& forbackup)
 {
 	string snofilename = getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + ".snoold";
-	if (forbackup){
-		stringstream ss;
-		ss << "" << (int)(date.getJulian() + 0.5);
+	if (forbackup > 0){
+		std::stringstream ss;
+		if (forbackup == 1) {
+			// 1: No labeling
+			ss << "backup";
+		} else {
+			// >1: Label using timestamp
+			ss << "" << (int)(double(date.getUnixDate()) + double(0.5));
+		}
 		snofilename += ss.str();
 	}
 

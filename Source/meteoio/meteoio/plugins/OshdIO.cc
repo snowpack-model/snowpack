@@ -92,7 +92,7 @@ namespace mio {
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: directory containing all the data files with the proper file naming schema; [Input] section
- * - METEOPATH_RECURSIVE: should *meteopath* be searched recursively for files? (default: no); [Input] section
+ * - METEOPATH_RECURSIVE: should *meteopath* be searched recursively for files? (default: false); [Input] section
  * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
  * - METAFILE: file containing the stations' IDs, names and location; [Input] section (either within METEOPATH if not path is 
  provided or within the provided path)

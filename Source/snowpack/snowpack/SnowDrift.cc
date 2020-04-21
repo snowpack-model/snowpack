@@ -227,7 +227,6 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 	const bool windward = false;
 #endif
 	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
-	double ustar = 0.;
 
 	if (windward || alpine3d || erosion || (fabs(forced_massErode) > Constants::eps2) || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
@@ -242,10 +241,8 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 			try {
 				if (enforce_measured_snow_heights && !windward) {
 					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
-					ustar = Mdata.ustar;
 				} else {
 					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
-					ustar = ustar_max;
 				}
 			} catch(const exception&) {
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Cannot compute mass flux of drifting snow!");
@@ -256,9 +253,6 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 
 		unsigned int nErode=0; // number of eroded elements
 		for(size_t e = nE; e --> Xdata.SoilNode; ) {
-			// In REDEPOSIT mode, don't erode elements which wouldn't erode based on the threshold friction velocity, even if massErode has not yet been satisfied:
-			if (snow_erosion == "REDEPOSIT" && SnowDrift::get_ustar_thresh(EMS[e]) > ustar) break;
-
 			// Continue with mass erosion:
 			if (massErode >= 0.95 * EMS[e].M) {
 				// Erode at most one element with a maximal error of +- 5 % on mass ...

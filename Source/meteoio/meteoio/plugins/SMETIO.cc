@@ -49,7 +49,7 @@ namespace mio {
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet";
- * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively; [Input] section;
+ * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false); [Input] section;
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).

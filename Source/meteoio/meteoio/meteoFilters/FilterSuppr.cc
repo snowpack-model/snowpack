@@ -29,30 +29,44 @@ using namespace std;
 namespace mio {
 
 FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), type(NONE)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
-	const size_t nrArgs = vecArgs.size();
+	bool has_type=false, has_range=false, has_file=false;
 
-	if (nrArgs>1)
-		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (type_str=="FRAC") type=FRAC_SUPPR;
+			else if (type_str=="FILE") type=FILE_SUPPR;
+			else if (type_str=="ALL") type=ALL_SUPPR;
+			else
+				throw InvalidArgumentException("Unknown type '"+type_str+"' for " + where, AT);
 
-	if (nrArgs==1) {
-		if (vecArgs[0].first=="FRAC") {
-			if (!IOUtils::convertString(range, vecArgs[0].second))
-				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
+			has_type = true;
+		}
+		if (vecArgs[ii].first=="FRAC") {
+			if (!IOUtils::convertString(range, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid range \""+vecArgs[ii].second+"\" specified for "+where, AT);
 			if (range<0. || range>1.)
 				throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
-		} else if (vecArgs[0].first=="SUPPR") {
-			const std::string in_filename( vecArgs[0].second );
+			has_range = true;
+		}
+		if (vecArgs[ii].first=="FILE") {
+			const std::string in_filename( vecArgs[ii].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
 			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+			has_file = true;
 		}
 	}
+	
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
+	if (type==FILE_SUPPR && (has_range || !has_file)) throw InvalidArgumentException("For "+where+" and type=FILE, please provide the FILE argument and no other", AT);
+	if (type==FRAC_SUPPR && (!has_range || has_file)) throw InvalidArgumentException("For "+where+" and type=FRAC, please provide the RANGE argument and no other", AT);
 }
 
 void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -61,9 +75,9 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	if (!suppr_dates.empty()) {
-		supprByDates(param, ovec);
-	} else if (range==IOUtils::nodata) { //remove all
+	if (type==FILE_SUPPR) { //remove periods provided in a file
+		if (!suppr_dates.empty()) supprByDates(param, ovec);
+	} else if (type==ALL_SUPPR) { //remove all
 		for (size_t ii=0; ii<ovec.size(); ii++)
 			ovec[ii](param) = IOUtils::nodata;
 	} else { //only remove a given fraction
