@@ -144,6 +144,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["AGGREGATE_PRF"] = "false";
 	outputConfig["AVGSUM_TIME_SERIES"] = "true";
 	outputConfig["BACKUP_DAYS_BETWEEN"] = "365.";
+	outputConfig["LABEL_BACKUP"] = "true";
 	outputConfig["CLASSIFY_PROFILE"] = "false";
 	outputConfig["CUMSUM_MASS"] = "false";
 	outputConfig["EXPERIMENT"] = "NO_EXP";

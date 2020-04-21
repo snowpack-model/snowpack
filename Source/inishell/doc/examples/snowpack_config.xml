@@ -416,6 +416,12 @@
 			<section name="output" />
 			<help>Dump hazard data every HAZARD_STEPS_BETWEEN days</help>
 		</parameter>-->
+		<parameter key="LABEL_BACKUP" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>If true, each backup file is individually labeled with a time stamp in the file name</help>
+		</parameter>
 	</frame>
 
 	<frame key="profiles_frame" label="Snow Profiles">

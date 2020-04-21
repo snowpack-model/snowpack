@@ -755,9 +755,15 @@ void CaaMLIO::writeSnowCover(const Date& date, const SnowStation& Xdata,
 	std::string snofilename( getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + ".caaml" );
 	std::string hazfilename( getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + ".haz" );
 
-	if (forbackup) {
+	if (forbackup > 0){
 		stringstream ss;
-		ss << (int)(date.getJulian() + 0.5); //HACK
+		if (forbackup == 1) {
+			// 1: No labeling
+			ss << "backup";
+		} else {
+			// >1: Label using timestamp
+			ss << "" << (int)(double(date.getUnixDate()) + double(0.5));
+		}
 		snofilename += ss.str();
 		hazfilename += ss.str();
 	}

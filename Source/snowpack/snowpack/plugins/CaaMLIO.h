@@ -53,7 +53,7 @@ class CaaMLIO : public SnowpackIOInterface {
 		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-		                            const ZwischenData& Zdata, const bool& forbackup=false);
+		                            const ZwischenData& Zdata, const size_t& forbackup=0);
 
 		virtual void writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata,
 		                             const ProcessDat& Hdata, const double wind_trans24);
