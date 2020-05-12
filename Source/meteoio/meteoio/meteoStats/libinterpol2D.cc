@@ -897,7 +897,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 * @param grid 2D array of wind speed to fill
 * @author Nander Wever
 */
-void Interpol2D::WinstralDrift(const DEMObject& dem, const Grid2DObject& VW, const Grid2DObject& DW, const double& dmax, Grid2DObject& grid)
+void Interpol2D::WinstralDrift(const DEMObject& dem, const Grid2DObject& DW, const Grid2DObject& VW, const double& dmax, Grid2DObject& grid)
 {
 	//compute wind exposure factor
 	Grid2DObject Sx;
