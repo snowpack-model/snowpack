@@ -1,9 +1,12 @@
 #!/bin/bash
 # This script extracts time series of average values for temperature, density, grain size, and volumetric ice, water and air content.
 #
-# Use extract_params.sh <pro-file> <depth>
+# Use extract_params.sh <pro-file> [d=<depth>]      - OR -      extract_params.sh <pro-file> [r=<density>]
 #  <pro file>: specify *.pro file
 #  <depth>   : specify depth from surface (m) over which calculations are done. If <depth> is negative, it calculates averages over the whole snow column.
+#  <density> : specify bulk density threshold (kg/m^3). Searching from bottom up, calculations start when the bulk density drops below this threshold.
+#              If <density> is negative, it calculates averages over the whole snow column.
+#  If neither depth nor density is specified, values for the whole column are calculated.
 #
 #  Output: writes time series of date, depth, avg. temperature (K), avg. density (kg/m^3), avg. grain size (mm), avg. theta_ice (m^3/m^3), avg. theta_water (m^3/m^3), avg. theta_air (m^3/m^3)"} to stdout
 #          Averages are determined as layer weighted averages.
@@ -11,32 +14,37 @@
 #  Usage examples:
 #  ===============
 #
-#  	bash extract_params.sh WFJ2.pro 1 > WFJ2_ts.txt
+#  	bash extract_params.sh WFJ2.pro d=1 > WFJ2_ts.txt	# Extract variables over uppermost 1 m.
+#  	bash extract_params.sh WFJ2.pro r=500 > WFJ2_ts.txt	# Extract variables over part where the bulk density is less than 500 kg/m^3.
 #
 #
 #  Integration example in python, read output in numpy array:
 #  ==========================================================
 #	import os;
 #	import numpy as np;
-#	numpy_array = np.array(os.popen('bash extract_params.sh WFJ2.pro 1').read())
+#	numpy_array = np.array(os.popen('bash extract_params.sh WFJ2.pro d=1').read())
 #
 #
-#  Integration in R, read output into data frame:
+#  Integration example in R, read output into data frame:
 #  ==============================================
-#	data_frame <- system("bash extract_params.sh WFJ2.pro 1", intern = TRUE)
+#	data_frame <- system("bash extract_params.sh WFJ2.pro d=1", intern = TRUE)
 #
 
 
-# Check if depth is specified as command line parameter
-if [ -n "$2" ]; then
-	d=$2
-else
-	echo "Specify depth on command line!" 1>&2;
-	exit
-fi
+# Set default values
+d=-1
+r=-1
 
 
-awk -F, -v depth=${d} '\
+# Read command line variables
+for var in "$@"; do
+	if [[ "$var" == *"="* ]]; then
+		eval ${var}
+	fi
+done
+
+
+awk -F, -v depth=${d} -v density=${r} '\
 BEGIN { \
 	meta=0; \
 	printheader=0; \
@@ -54,6 +62,7 @@ BEGIN { \
 		if(printheader==0) {printheader=1; print "# timestamp   depth_(m)   average_temperature_(K)   average_density_(kg/m^3)   average_grain_size_(mm)   average_theta_ice_(m^3/m^3)   average_theta_water_(m^3/m^3)   average_theta_air_(m^3/m^3)"} \
 		if($1==500) { \
 			datum=sprintf("%04d-%02d-%02dT%02d:%02d:%02d", substr($2,7,4), substr($2,4,2), substr($2,1,2), substr($2,12,2), substr($2,15,2), substr($2,18,2)); \
+			p=0; \
 		} else if($1==501) { \
 			if($2==1 && $3==0) {printf "%s -999 -999 -999 -999 -999 -999\n", datum;} \
 			if($3 > 0) { \
@@ -94,8 +103,10 @@ BEGIN { \
 			th_ice_sum=-999; \
 			th_water_sum=-999; \
 			th_air_sum=-999; \
-			for(i=nEsnow; i>=bottomsnowelement; i--) { \
-				if(H<=depth || depth<0) { \
+			for(i=bottomsnowelement; i<=nEsnow; i++) { \
+				if( ((z[nEsnow+1]-z[i+1])<=depth || depth<0) \
+				      && (p==1 || rho[i]<density || density<0)) { \
+					p=1; \
 					dH=(z[i+1]-z[i]); \
 					H+=dH; \
 					if(Te_sum       == -999) {Te_sum       = Te[i]*dH      } else {Te_sum       += Te[i]*dH      }; \
