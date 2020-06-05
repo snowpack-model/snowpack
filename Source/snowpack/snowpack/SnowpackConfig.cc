@@ -131,20 +131,19 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["NEWSNOW_LWC"] = "false";
 	advancedConfig["READ_DSM"] = "false";
 
-
 	//[Input] section
 	inputConfig["METEOPATH"] = "./input";
 	inputConfig["NUMBER_OF_SOLUTES"] = "0";
 	inputConfig["SNOW"] = "SMET";
 	inputConfig["SOLUTE_NAMES"] = "NITRATE";
-	inputConfig["ISWR_IS_NET"] = "false";
+
 
 	//[Output] section
 	outputConfig["AGGREGATE_PRO"] = "false";
 	outputConfig["AGGREGATE_PRF"] = "false";
 	outputConfig["AVGSUM_TIME_SERIES"] = "true";
-	outputConfig["BACKUP_DAYS_BETWEEN"] = "365.";
-	outputConfig["LABEL_BACKUP"] = "true";
+	outputConfig["SNOW_DAYS_BETWEEN"] = "365.";
+	outputConfig["LABEL_SNOW"] = "true";
 	outputConfig["CLASSIFY_PROFILE"] = "false";
 	outputConfig["CUMSUM_MASS"] = "false";
 	outputConfig["EXPERIMENT"] = "NO_EXP";

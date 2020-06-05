@@ -417,11 +417,11 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 			if (status) //the variable could be fully expanded
 				deferred_vars.erase( it++ );
 			else
-				++it;
+				it++;
 		}
 		const size_t new_deferred_count = deferred_vars.size();
 		if (new_deferred_count==deferred_count)
-			throw InvalidArgumentException("Circular dependencies between variables in file "+filename, AT);
+			throw InvalidArgumentException("Can not resolve some variables in file "+filename+" (circular dependency? invalid variable name?)", AT);
 		deferred_count = new_deferred_count;
 	}
 	
@@ -573,7 +573,12 @@ bool ConfigParser::processVars(std::string& value, const std::string& section)
 		const size_t len = pos_end - (pos_start+len_var_marker); //we have tested above that this is >=1
 		std::string var( value.substr(pos_start+len_var_marker, len ) );
 		IOUtils::toUpper( var );
-		if (var.find("::") == std::string::npos && !section.empty()) var = section+"::"+var;
+		
+		const std::string var_section( extract_section( var ) ); //extract the section name out of the variable name
+		//since sections' headers are declared before the variables, every extracted section should be available in our sections
+		//list, so we can validate that it is indeed a proper section. if not, prepend with the section given as argument
+		const bool extracted_section_exists = sections.find(var_section) != sections.end();
+		if (!extracted_section_exists && !section.empty()) var = section+"::"+var;
 		if (properties.count( var )!=0) {
 			const std::string replacement( properties[var] );
 			value.replace(pos_start, pos_end+1, replacement); //we also replace the closing "}"

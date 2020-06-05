@@ -36,6 +36,7 @@
  *        -# \subpage snowdrift "Snowdrift"
  *        -# \subpage runoff "Runoff"
  *        -# \subpage glaciers "Glaciers katabatic flows"
+ *        -# \subpage techsnowA3D "Technical snow production"
  *     -# \subpage running_simulations "Running a simulation"
  * -# Expanding Alpine3D
  *        -# \subpage coding_style "Coding style"

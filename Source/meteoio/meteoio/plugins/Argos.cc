@@ -45,7 +45,7 @@ namespace mio {
  * satellite transmission) that contain multiple timestamps. Each message starts some kind of a metadata line (for us, 
  * the deploy ID is the station ID:
  * @code
- * {program ID} {deploy ID} {number of lines in the message} {number of data fields} {satellite id?}
+ * {program ID} {deploy ID} {number of lines in the message} {number of data fields per message line} {satellite id?}
  * @endcode
  * 
  * The each timestamp is made of the date and time (as "yyyy-mm-dd hh24:min:ss") followed by an unknown integer and 
@@ -86,9 +86,26 @@ namespace mio {
  *  - UNITS_MULTIPLIER: factor to apply to each field to bring the value back to SI units (default: 1 for each field);
  *  - UNITS_OFFSET: offset to add to each field \b after applying the UNITS_MULTIPLIER, to bring the value back to SI units (default: 0 for each field);
  *  - FIELDS: the parameter name to use for each field;
+ *  - WSL_HACK: support reading multiple messages containing information for the same station (used by some WSL stations)? (default: false)
+ *  - if WSL_HACK has been set to \e true, there are also FIELDS2, UNITS_MULTIPLIER2, UNITS_OFFSET2 to describe a second, interlaced message.
  *
- * The FIELDS should take their names from MeteoData::meteoparam when possible, or be either of the following: "STATIONID", "YEAR", "JDN", "HOUR", "SKIP".
+ * The FIELDS should take their names from MeteoData::meteoparam when possible, or can be "SKIP" in order to skip the matching parameter in the output.
  * Any other name will be used as is but won't be automatically recognized within MeteoIO.
+ * 
+ * Example metafile:
+ * @code 
+ * [107282]
+ * fields = Station_nr SKIP SKIP SKIP ISWR RSWR SWR_Net TA RH VW
+ * units_offset = 0 0 0 0 0 0 0 273.15 0 0
+ * units_multiplier = 1 1 1 1 1 1 1 0.01 1 1
+ * wsl_hack = true
+ * 
+ * fields2 = Station_nr DW P HS ISWR_MAX RSWR_MAX TA VW_MAX Battery_Voltage
+ * units_offset2 = 0 0 0 0 0 0 273.15 0 0
+ * position = latlon (46.8, 9.80, 1700)
+ * id = ARG1
+ * name = Swiss Camp 2
+ * @endcode
  */
 
 ArgosIO::ArgosIO(const std::string& configfile)
@@ -171,6 +188,12 @@ void ArgosIO::addStation(const std::string& argosID)
 	}
 }
 
+/**
+ * @brief Read one line (terminated by \n) with a friendly fallback at the end of file
+ * @param[in] fin stream to read from
+ * @param[out] linenr current line number (for error messages)
+ * @return line that has been read or empty string
+ */
 std::string ArgosIO::readLine(std::ifstream &fin, size_t &linenr)
 {
 	std::string line;
@@ -181,6 +204,19 @@ std::string ArgosIO::readLine(std::ifstream &fin, size_t &linenr)
 	return line;
 }
 
+/**
+ * @brief Read one data line .
+ * @details This is from the point of view of Argos: it starts with a timestamps, spans multiple lines
+ * and end when all fields have been read (or it is not formatted as expected anymore)
+ * @param[in] fin stream to read from
+ * @param[out] linenr current line number (for error messages)
+ * @param[in] nFields expected number of fields
+ * @param[in] station argos station ID (for error messages)
+ * @param[in] dateStart expected start date
+ * @param[in] dateEnd expected end date
+ * @param[out] md read meteo data
+ * @return true if everything went alright and the read data is valid, false otherwise
+ */
 bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned int& nFields, const ArgosStation& station, const Date& dateStart, const Date& dateEnd, MeteoData &md) const
 {
 	static const size_t first_data_field = 3; //first data field on timestamp line is #4
@@ -191,7 +227,6 @@ bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned i
 	const std::string header( readLine(fin, linenr) );
 	if (header.empty()) return false;
 	if (!station.isValidMessage(nFields)) return false;
-
 	//parse the timestamp
 	if (header.substr(0,6)!="      ") return false; //the timestamp must be preceeded by 6 spaces
 	std::vector<std::string> vecTmp;
@@ -220,8 +255,6 @@ bool ArgosIO::readTimestamp(std::ifstream &fin, size_t &linenr, const unsigned i
 		for (size_t ii=0; ii<vecTmp.size(); ii++) 
 			if (!IOUtils::convertString( raw[ii+max_fields_per_line*jj], vecTmp[ii] )) return false;
 	}
-	
-	if (raw[1] == (unsigned)(dt.getYear() - 1)) raw[1]++; //WSL hack
 	
 	md = station.parseDataLine(dt, raw, msg_start_timestamp);
 	return true;
@@ -309,13 +342,15 @@ void ArgosIO::readRaw(const std::string& file_and_path, const Date& dateStart, c
 
 
 ArgosStation::ArgosStation()
-                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(0.), nodata(0.),
-                    year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(false), debug(false)
+                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), 
+                    fields_idx2(), units_offset2(), units_multiplier2(), md_template(), TZ(0.), nodata(0.),
+                    validStation(false), debug(false), wsl_hack(false)
 {}
 
 ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, const float& in_nodata, const double& in_TZ, const std::string& coordin, const std::string& coordinparam, const bool& isDebug)
-                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), md_template(), TZ(in_TZ), nodata(in_nodata),
-                    year_idx(IOUtils::npos), month_idx(IOUtils::npos), hour_idx(IOUtils::npos), jdn_idx(IOUtils::npos), validStation(true), debug(isDebug)
+                    : meteoIdx(IOUtils::npos), fields_idx(), units_offset(), units_multiplier(), 
+                    fields_idx2(), units_offset2(), units_multiplier2(), md_template(), TZ(in_TZ), nodata(in_nodata),
+                    validStation(true), debug(isDebug), wsl_hack(false)
 {
 	//construct the StationData for this station
 	const std::string station_id = metaCfg.get("ID", argosID, "Argos::"+argosID);
@@ -334,7 +369,7 @@ ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, co
 	//construct the units_offset
 	const std::string section_offsets = (metaCfg.keyExists("units_offset", argosID))? argosID : "default";
 	if (metaCfg.keyExists("UNITS_OFFSET", section_offsets)) {
-		units_offset = metaCfg.get("UNITS_OFFSET", section_offsets);
+		metaCfg.getValue("UNITS_OFFSET", section_offsets, units_offset);
 	} else {
 		units_offset = std::vector<double>(fields_idx.size(), 0.);
 	}
@@ -342,9 +377,25 @@ ArgosStation::ArgosStation(const std::string& argosID, const Config& metaCfg, co
 	//construct the section_multipliers
 	const std::string section_multipliers = (metaCfg.keyExists("units_multiplier", argosID))? argosID : "default";
 	if (metaCfg.keyExists("UNITS_MULTIPLIER", section_multipliers)) {
-		units_multiplier = metaCfg.get("UNITS_MULTIPLIER", section_multipliers);
+		metaCfg.getValue("UNITS_MULTIPLIER", section_multipliers, units_multiplier);
 	} else {
 		units_multiplier = std::vector<double>(fields_idx.size(), 1.);
+	}
+	
+	wsl_hack = metaCfg.get("wsl_hack", argosID, false);
+	if (wsl_hack) {
+		const std::vector<std::string> fields_str2 = metaCfg.get("FIELDS2", section_fields);
+		parseFieldsSpecs(fields_str2, md_template, fields_idx2);
+		if (metaCfg.keyExists("UNITS_OFFSET2", section_offsets)) {
+			metaCfg.getValue("UNITS_OFFSET2", section_offsets, units_offset2);
+		} else {
+			units_offset2 = std::vector<double>(fields_idx2.size(), 0.);
+		}
+		if (metaCfg.keyExists("UNITS_MULTIPLIER2", section_multipliers)) {
+			metaCfg.getValue("UNITS_MULTIPLIER2", section_multipliers, units_multiplier2);
+		} else {
+			units_multiplier2 = std::vector<double>(fields_idx2.size(), 1.);
+		}
 	}
 }
 
@@ -355,19 +406,6 @@ void ArgosStation::parseFieldsSpecs(const std::vector<std::string>& fieldsNames,
 	for (size_t ii=0; ii<fieldsNames.size(); ii++) {
 		const std::string parname( IOUtils::strToUpper(fieldsNames[ii]) );
 		if (parname=="SKIP") continue;
-
-		if (parname=="YEAR") {
-			year_idx=ii;
-			continue;
-		}
-		if (parname=="JDN") {
-			jdn_idx=ii;
-			continue;
-		}
-		if (parname=="HOUR") {
-			hour_idx=ii;
-			continue;
-		}
 
 		const size_t curr_idx = meteo_template.getParameterIndex(parname);
 		if (curr_idx!=IOUtils::npos) idx[ii] = curr_idx;
@@ -436,21 +474,35 @@ MeteoData ArgosStation::parseDataLine(const Date& dt, const std::vector<unsigned
 
 	MeteoData md( md_template );
 	md.date.setDate(dt);
+	
+	const bool wsl_second_row = (wsl_hack && (raw_data[1]!=(unsigned)(dt.getYear())));
 
 	const std::vector<float> decoded( decodeData( raw_data ) );
-	for (size_t ii=0; ii<nFields; ii++) {
-		const size_t idx = fields_idx[ii];
-		if (idx==IOUtils::npos) continue;
-		if (decoded[ii] == nodata) continue;
-		md( idx ) = static_cast<double>(decoded[ii]) * units_multiplier[ii] + units_offset[ii];
+	if (!wsl_second_row) {
+		for (size_t ii=0; ii<nFields; ii++) {
+			const size_t idx = fields_idx[ii];
+			if (idx==IOUtils::npos) continue;
+			if (decoded[ii] == nodata) continue;
+			md( idx ) = static_cast<double>(decoded[ii]) * units_multiplier[ii] + units_offset[ii];
+		}
+	} else {
+		for (size_t ii=0; ii<nFields; ii++) {
+			const size_t idx = fields_idx2[ii];
+			if (idx==IOUtils::npos) continue;
+			if (decoded[ii] == nodata) continue;
+			md( idx ) = static_cast<double>(decoded[ii]) * units_multiplier2[ii] + units_offset2[ii];
+		}
 	}
 	
 	if (debug) {
-		std::cout << "raw: " << dt.toString(Date::ISO);
-		for (size_t ii=0; ii<nFields; ii++) std::cout << " " << raw_data[ii];
-		std::cout << "\n";
-
-		std::cout << "decoded: " << dt.toString(Date::ISO);
+		if (wsl_hack) {
+			if (!wsl_second_row)
+				std::cout << "1st row decoded: " << dt.toString(Date::ISO);
+			else 
+				std::cout << "2nd row decoded: " << dt.toString(Date::ISO);
+		} else {
+			std::cout << "decoded: " << dt.toString(Date::ISO);
+		}
 		for (size_t ii=0; ii<nFields; ii++) std::cout << " " << decoded[ii];
 		std::cout << "\n";
 	}

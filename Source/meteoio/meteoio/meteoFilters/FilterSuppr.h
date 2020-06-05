@@ -36,7 +36,8 @@ namespace mio {
  *  - TYPE: either FILE (suppress periods provided in a separate file) or FRAC (suppress a given fraction of the data) or ALL (suppress all values for this parameter), mandatory;
  *  - FILE: provide a file that contains a list of station ID's and timesteps specifying where the parameter should be suppressed;
  *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
- * data set contains <i>nodata</i> for this parameter.
+ * data set contains <i>nodata</i> for this parameter. In this case, it is possible to either delete individual points at random or 
+ * time periods of a given width (given by the WIDTH argument, in seconds. There will always be at least one point between two consecutive periods).
  *
  * @code
  * ILWR::filter1     = suppr
@@ -49,6 +50,7 @@ namespace mio {
  * TA::filter1       = suppr
  * PSUM::arg1::type  = FRAC
  * TA::arg1::FRAC    = 0.5
+ * TA::arg1::WIDTH   = ${{24*3600}}	;delete full day at once. If not defined, individual points would be deleted
  * @endcode
  * 
  * In the second example (PSUM), the file <i>psum_suppr.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE):
@@ -83,7 +85,7 @@ class FilterSuppr : public ProcessingBlock {
 		void supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const;
 		
 		std::map< std::string, std::vector<dates_range> > suppr_dates;
-		double range;
+		double range, width;
 		filter_type type;
 };
 

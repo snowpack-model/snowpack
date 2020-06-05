@@ -985,12 +985,12 @@ inline void real_main (int argc, char *argv[])
 
 	//Interval between profile backups (*.sno\<JulianDate\>) (d)
 	double backup_days_between = 400.;
-	cfg.getValue("BACKUP_DAYS_BETWEEN", "Output", backup_days_between, mio::IOUtils::nothrow);
+	cfg.getValue("SNOW_DAYS_BETWEEN", "Output", backup_days_between, mio::IOUtils::nothrow);
 	//First additional profile backup (*.sno\<JulianDate\>) since start of simulation (d)
 	double first_backup = 0.;
 	cfg.getValue("FIRST_BACKUP", "Output", first_backup, mio::IOUtils::nothrow);
-	bool label_backup = true;	// Initialize to true to be compliant with legacy SNOWPACK
-	cfg.getValue("LABEL_BACKUP", "Output", label_backup, mio::IOUtils::nothrow);
+	bool label_snow = true;	// Initialize to true to be compliant with legacy SNOWPACK
+	cfg.getValue("LABEL_SNOW", "Output", label_snow, mio::IOUtils::nothrow);
 
 	const bool snowPrep = cfg.get("SNOW_PREPARATION", "SnowpackAdvanced");
 	const bool classify_profile = cfg.get("CLASSIFY_PROFILE", "Output");
@@ -1391,7 +1391,7 @@ inline void real_main (int argc, char *argv[])
 					std::stringstream ss;
 					ss << "" << vecStationIDs[i_stn];
 					if (slope.sector != slope.mainStation) ss << "" << slope.sector;
-					snowpackio.writeSnowCover(current_date, vecXdata[slope.sector], sn_Zdata, (label_backup)?(2):(1));
+					snowpackio.writeSnowCover(current_date, vecXdata[slope.sector], sn_Zdata, (label_snow)?(2):(1));
 					prn_msg(__FILE__, __LINE__, "msg", current_date,
 					        "Backup Xdata dumped for station %s [%.2f days, step %d]", ss.str().c_str(),
 					        (current_date.getJulian()

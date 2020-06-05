@@ -271,15 +271,13 @@ const std::string BoundCond::toString() const
 
 void BoundCond::reset()
 {
-  lw_out=0;  ///< outgoing longwave radiation
-  lw_net=0;  ///< net longwave radiation
-  qs=0;      ///< sensible heat
-  ql=0;      ///< latent heat
-  qr=0;      ///< rain energy
-  qg=0;
+	lw_out = 0.;   ///< outgoing longwave radiation
+	lw_net = 0.;   ///< net longwave radiation
+	qs = 0.;       ///< sensible heat
+	ql = 0.;       ///< latent heat
+	qr = 0.;       ///< rain energy
+	qg = 0.;       ///< heat flux at lower boundary
 }
-
-
 
 SurfaceFluxes::SurfaceFluxes()
   : lw_in(0.), lw_out(0.), lw_net(0.), qs(0.), ql(0.), hoar(0.), qr(0.), qg(0.), qg0(0.), sw_hor(0.),
@@ -1311,6 +1309,8 @@ std::istream& operator>>(std::istream& is, ElementData& data)
 
 double ElementData::getYoungModule(const double& rho_slab, const Young_Modulus& model)
 {
+	if (rho_slab<=0.) throw mio::InvalidArgumentException("Evaluating Young's module on an element with negative density", AT);
+		
 	switch (model) {
 		case Sigrist: {//This is the parametrization by Sigrist, 2006
 			static const double A = 968.e6; //in Pa

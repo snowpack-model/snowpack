@@ -42,7 +42,7 @@ namespace mio {
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
  * - special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
  *       - environment variables are called by using the following syntax: ${env:my_env_var};
- *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key}
+ *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key} (make sure to prefix the key with its section if it refers to another section!)
  *       - evaluating an arithmetic expression: ${{arithm. expression}}
  * 
  * @note The arithemic expressions are evaluated thanks to the <A HREF="https://codeplea.com/tinyexpr">tinyexpr</A> math library (under the 
@@ -69,7 +69,7 @@ namespace mio {
  * user = ${env:LOGNAME}			; this uses the value of the environment variable "LOGNAME" for the key "user"
  * output_log = ${env:LOGNAME}_output.log	; we can even concatenate environment variables with other elements
  *
- * ConfigBackup = ${user}_${smart_read}.bak	; using other keys to build a value
+ * ConfigBackup = ${Input::user}_${smart_read}.bak	; using other keys to build a value (the section reference can be omitted within the same section)
  * Target_rate = ${{24*3600}}		; arithmetic expression that will be evaluated when reading the key
  * @endcode
  */
@@ -387,7 +387,7 @@ class Config {
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
-		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
+		 *  const std::vector<std::string> myVec( cfg.findKeys("TA::", "Filters") );
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;

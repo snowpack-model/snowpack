@@ -33,11 +33,11 @@ namespace mio {
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), op_mode(NONE)
+          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), op_mode(NONE)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::second;	
-	bool has_type=false, has_frac=false, has_file=false;
+	bool has_type=false, has_frac=false, has_width=false, has_file=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
@@ -53,13 +53,19 @@ TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& v
 			}
 			has_type = true;
 		} else if (vecArgs[ii].first=="FRAC") {
-			if (!IOUtils::convertString(range, vecArgs[0].second))
-				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
+			if (!IOUtils::convertString(range, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid range \""+vecArgs[ii].second+"\" specified for "+where, AT);
 			if (range<0. || range>1.)
 				throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
 			has_frac = true;
+		} else if (vecArgs[ii].first=="WIDTH") {
+			if (!IOUtils::convertString(width, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid width \""+vecArgs[ii].second+"\" specified for "+where, AT);
+			if (width<=0.)
+				throw InvalidArgumentException("Wrong width for " + where + ", it should be > 0", AT);
+			has_width = true;
 		} else if (vecArgs[ii].first=="FILE") {
-			const std::string in_filename( vecArgs[0].second );
+			const std::string in_filename( vecArgs[ii].second );
 			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
@@ -74,6 +80,7 @@ TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& v
 	if (has_frac && has_file) throw InvalidArgumentException("It is not possible tp provide both the FILE and FRAC arguments for " + where, AT);
 	if (op_mode==BYDATES && !has_file) throw InvalidArgumentException("Please provide the FILE argument for " + where, AT);
 	if (op_mode==FRAC && !has_frac) throw InvalidArgumentException("Please provide the FRAC argument for " + where, AT);
+	if (op_mode!=FRAC && has_width) throw InvalidArgumentException("For "+where+" the WIDTH argument is only supported for type FRAC", AT);
 }
 
 void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -122,17 +129,48 @@ void TimeSuppr::supprByDates(std::vector<MeteoData>& ovec) const
 
 void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 {
+	static const double sec_to_days = 1. / (24. * 3600.);
 	const size_t set_size = ovec.size();
 	const size_t nrRemove = static_cast<size_t>( round( (double)set_size*range ) );
 
 	srand( static_cast<unsigned int>(time(NULL)) );
 	size_t ii=1;
-	while (ii<nrRemove) {
-		const size_t idx = (unsigned)rand() % set_size;
-		if (ovec[idx].date.isUndef()) continue; //the point was already removed
+	if (width==IOUtils::nodata) { //remove individual points
+		while (ii<nrRemove) {
+			const size_t idx = (unsigned)rand() % set_size;
+			if (ovec[idx].date.isUndef()) continue; //the point was already removed
 
-		ovec[idx].date.setUndef(true);
-		ii++;
+			ovec[idx].date.setUndef(true);
+			ii++;
+		}
+	} else {
+		//remove a full time periode, the width has been provided by the user
+		while (ii<nrRemove) {
+			const size_t last_idx = set_size-1;
+			const size_t idx = (unsigned)rand() % set_size;
+			if (ovec[idx].date.isUndef()) continue; //the point was already removed
+			if (idx==0 || idx==last_idx) continue; //first and last point must remain
+			
+			//get the start and end indices
+			const Date start_period( ovec[idx].date );
+			const Date end_period = start_period + width * sec_to_days;
+			size_t jj = idx + 1;
+			while (jj<last_idx) {
+				if (ovec[jj].date.isUndef()) { //coming into a previously marked period
+					jj=last_idx;
+					break; //aborting
+				}
+				if (ovec[jj].date > end_period) break; //so we will cut from idx to jj-1
+				jj++;
+			}
+			if (jj==last_idx) continue; //the period could not be fully contained before the end of data
+			if (ovec[jj].date.isUndef()) continue; //we want at least one point after the period
+			
+			//now delete the data within the period
+			for (size_t ll=idx; ll<jj; ll++) 
+				ovec[ll].date.setUndef(true);
+			ii += jj - idx + 1;
+		}
 	}
 	
 	//now really remove the points from the vector

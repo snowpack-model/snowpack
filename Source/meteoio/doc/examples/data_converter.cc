@@ -12,7 +12,7 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 
-void real_main(int argc, char** argv)
+static void real_main(int argc, char** argv)
 {
 	setbuf(stdout, NULL); //always flush stdout
 	const std::string config_filename = (argc==5)? argv[4] : "io.ini";

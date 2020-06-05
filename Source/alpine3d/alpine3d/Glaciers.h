@@ -26,7 +26,7 @@
  * The flows are computed automatically for each glaciated pixel following (Quinn, 1991) (see below).
  * Then the air temperature correction is computed according to (Greuell and Bohm, 1998) with the improvements 
  * by (Ayala, Pellicciotti and Shea, 2015) (see Glaciers::correctTemperatures).
- * This model is enabled by setting to ON the GLACIER_KATABATIC_FLOW key in the SNOWPACK section.
+ * This model is enabled by setting to TRUE the GLACIER_KATABATIC_FLOW key in the [ALPINE3D] section.
  * 
  * Then, two calibration parameters must be set: 
  *     - KATABATIC_LAYER_HEIGHT which represents the katabatic layer height in meters. It was around 17m in the original paper and 

@@ -40,7 +40,7 @@ namespace mio {
  *
  * @section dbo_keywords Keywords
  * This plugin uses the following keywords:
- * - DBO_URL: The URL of the RESTful web service e.g.http://developwis.wsl.ch:8730
+ * - DBO_URL: The URL of the RESTful web service e.g. http://developwis.wsl.ch:8730
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
@@ -319,7 +319,7 @@ std::vector<DBO::tsMeta> getTsProperties(picojson::value& v)
 		 if (results[ii].is<picojson::array>()){
 			const picojson::array& array = results[ii].get<picojson::array>();
 			for (size_t jj=0; jj<array.size(); jj++) {
-				if (! array[jj].is<picojson::null>()) {
+				if (!array[jj].is<picojson::null>()) {
 					std::string code, device_code, agg_type;
 					double id = -1.;
 					unsigned int interval = 0;

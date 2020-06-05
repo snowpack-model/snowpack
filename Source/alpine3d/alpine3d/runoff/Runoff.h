@@ -68,13 +68,13 @@ class SnowpackInterface; // forward declaration, cyclic header include
  *
  * On top of the runoff components, additional variables can optionally be averaged over each sub-catchment area and written in the output files
  * at each time step. These variables must be specified using key RUNOFF_FILES_EXTRA_DATA, which accepts the standard meteorological variables
- * (TA, RH, VW, ILWR, etc.) along with T_SOIL, which corresponds to the soil temperature at a certain depth. In case T_SOIL is present, the depth
- * (in meters) at which soil temperature should be returned must be specified using key SOIL_TEMPERATURE_DEPTH:
+ * (TA, RH, VW, ILWR, etc.) along with T_SOIL, which corresponds to the soil temperature at a certain depth. In case T_SOIL is present, the depths
+ * (in meters) at which soil temperature should be returned must be specified using key SOIL_TEMPERATURE_DEPTHS:
  *
  * @code
  * [Output]
  * RUNOFF_FILES_EXTRA_DATA = TA RH ISWR T_SOIL
- * SOIL_TEMPERATURE_DEPTH  = 5 ; meters
+ * SOIL_TEMPERATURE_DEPTHS  = 5 7.5 ; meters
  * @endcode
  *
  */
