@@ -56,11 +56,13 @@ class MeteoGrids {
 				ISWR_DIR, ///< Incoming short wave, direct
 				ILWR, ///< Incoming long wave radiation
 				OLWR, ///< Outgoing long wave radiation
+				LWR_NET, ///< Net long wave radiation
 				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 				HS, ///< Height of snow
 				PSUM, ///< Water equivalent of precipitations, either solid or liquid
 				PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
 				PSUM_L, ///< Water equivalent of liquid precipitation
+				PSUM_LC, ///< Water equivalent of liquid convective precipitation
 				PSUM_S, ///< Water equivalent of solid precipitation
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
@@ -137,13 +139,20 @@ class MeteoData {
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
 		                 VW_MAX, ///< Maximum wind velocity
+		                 U, ///< Wind velocity (west-east component)
+		                 V, ///< Wind velocity (sout-north component)
 		                 RSWR, ///< Reflected short wave radiation
 		                 ISWR, ///< Incoming short wave radiation
 		                 ILWR, ///< Incoming long wave radiation (downwelling)
+		                 OLWR, ///< Outgoing long wave radiation
+		                 LWR_NET, ///< Net long wave radiation
 		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 PSUM, ///< Water equivalent of precipitations, either solid or liquid
 		                 PSUM_PH, ///< Precipitation phase: between 0 (fully solid) and 1(fully liquid)
-		                 lastparam=PSUM_PH};
+		                 PSUM_L, ///< Water equivalent of liquid precipitation
+		                 PSUM_LC, ///< Water equivalent of liquid convective precipitation
+		                 PSUM_S, ///< Water equivalent of solid precipitation
+		                 lastparam=PSUM_S};
 
 		static const std::string& getParameterName(const size_t& parindex);
 

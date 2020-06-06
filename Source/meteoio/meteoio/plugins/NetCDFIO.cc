@@ -638,7 +638,7 @@ ncFiles::ncFiles(const ncFiles& c) :
 	strict_schema(c.strict_schema), lax_schema(c.lax_schema), debug(c.debug), isLatLon(c.isLatLon), nc_filename(c.nc_filename), ncid(-1),
 	keep_input_files_open(c.keep_input_files_open), keep_output_files_open(c.keep_output_files_open)
 {
-        // The copy constructor ensures that the copy doesn't inherit the ncid from an opened file, to prevent trying to close the same file twice.
+	// The copy constructor ensures that the copy doesn't inherit the ncid from an opened file, to prevent trying to close the same file twice.
 }
 
 ncFiles& ncFiles::operator=(const ncFiles& source) {

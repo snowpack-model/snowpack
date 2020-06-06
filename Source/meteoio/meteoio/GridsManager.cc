@@ -618,6 +618,19 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 		return true;
 	}
 
+	if (parameter==MeteoGrids::ILWR) {
+		const bool hasOLWR = isAvailable(available_params, MeteoGrids::OLWR, date);
+		const bool hasLWR_NET = isAvailable(available_params, MeteoGrids::LWR_NET, date);
+
+		if (hasOLWR && hasLWR_NET) {
+			const Grid2DObject lwr_net( getRawGrid(MeteoGrids::LWR_NET, date) );
+			grid2D = getRawGrid(MeteoGrids::OLWR, date);
+			grid2D += lwr_net;
+			buffer.push(grid2D, MeteoGrids::ILWR, date);
+			return true;
+		}
+	}
+
 	if (parameter==MeteoGrids::HS) {
 		const bool hasRSNO = isAvailable(available_params, MeteoGrids::RSNO, date);
 		const bool hasSWE = isAvailable(available_params, MeteoGrids::SWE, date);
@@ -636,6 +649,17 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 	if (parameter==MeteoGrids::PSUM) {
 		const bool hasPSUM_S = isAvailable(available_params, MeteoGrids::PSUM_S, date);
 		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
+		const bool hasPSUM_LC = isAvailable(available_params, MeteoGrids::PSUM_LC, date);
+
+		if (hasPSUM_S && hasPSUM_L && hasPSUM_LC) {
+			const Grid2DObject psum_l( getRawGrid(MeteoGrids::PSUM_L, date) );
+			const Grid2DObject psum_lc( getRawGrid(MeteoGrids::PSUM_LC, date) );
+			grid2D = getRawGrid(MeteoGrids::PSUM_S, date);
+			grid2D += psum_l;
+			grid2D += psum_lc;
+			buffer.push(grid2D, MeteoGrids::PSUM, date);
+			return true;
+		}
 
 		if (hasPSUM_S && hasPSUM_L) {
 			const Grid2DObject psum_l( getRawGrid(MeteoGrids::PSUM_L, date) );
