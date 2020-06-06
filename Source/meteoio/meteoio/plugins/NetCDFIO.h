@@ -30,48 +30,49 @@ class ncFiles {
 		enum Mode {READ, WRITE};
 
 		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug=false);
+		~ncFiles();
 
 		std::pair<Date, Date> getDateRange() const;
 		std::set<size_t> getParams() const;
 		std::vector<Date> getTimestamps() const {return vecTime;}
-		Grid2DObject read2DGrid(const size_t& param, const Date& date) const;
-		Grid2DObject read2DGrid(const std::string& varname) const;
+		Grid2DObject read2DGrid(const size_t& param, const Date& date);
+		Grid2DObject read2DGrid(const std::string& varname);
 
 		void write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, const Date& date);
 		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
 
 		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx=IOUtils::npos);
 
-		std::vector<StationData> readStationData() const;
+		std::vector<StationData> readStationData();
 		std::vector< std::vector<MeteoData> > readMeteoData(const Date& dateStart, const Date& dateEnd);
 
 	private:
 		void initFromFile(const std::string& filename);
-		void initVariablesFromFile(const int& ncid);
-		void initDimensionsFromFile(const int& ncid);
+		void initVariablesFromFile();
+		void initDimensionsFromFile();
 
-		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false) const;
-		double read_0Dvariable(const int& ncid, const size_t& param) const;
-		std::vector<Date> read_1Dvariable(const int& ncid) const;
-		std::vector<double> read_1Dvariable(const int& ncid, const size_t& param) const;
-		std::vector<std::string> read_1Dstringvariable(const int& ncid, const size_t& param) const;
-		std::vector<std::string> read_stationIDs(const int& ncid) const;
+		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false);
+		double read_0Dvariable(const size_t& param) const;
+		std::vector<Date> read_1Dvariable() const;
+		std::vector<double> read_1Dvariable(const size_t& param) const;
+		std::vector<std::string> read_1Dstringvariable(const size_t& param) const;
+		std::vector<std::string> read_stationIDs() const;
 		std::vector< std::pair<size_t, std::string> > getTSParameters() const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
 		size_t readDimension(const int& dimid) const;
 		bool hasDimension(const size_t& dim) const;
 		bool hasVariable(const size_t& var) const;
 
-		void writeGridMetadataHeader(const int& ncid, const Grid2DObject& grid_in);
-		void writeMeteoMetadataHeader(const int& ncid, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
+		void writeGridMetadataHeader(const Grid2DObject& grid_in);
+		void writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static std::vector<Date> createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
 		size_t addToVars(const size_t& param);
 		size_t addToVars(const std::string& name);
 		void appendVariablesList(std::vector<size_t> &nc_variables, const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
-		bool setAssociatedVariable(const int& ncid, const size_t& param, const Date& ref_date);
-		size_t addTimestamp(const int& ncid, const Date& date);
+		bool setAssociatedVariable(const size_t& param, const Date& ref_date);
+		size_t addTimestamp(const Date& date);
 		const std::vector<double> fillBufferForAssociatedVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const;
 		const std::vector<double> fillBufferForVar(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx, const ncpp::nc_variable& var) const;
 		static const std::vector<double> fillBufferForVar(const Grid2DObject& grid, ncpp::nc_variable& var);
@@ -92,6 +93,9 @@ class ncFiles {
 		double dflt_slope, dflt_azi; ///< default slope and azimuth
 		size_t max_unknown_param_idx; ///< when writing non-standard parameters, we have to manually assign them a parameter index
 		bool strict_schema, lax_schema, debug, isLatLon;
+		std::string nc_filename;
+		int ncid;
+		bool keep_input_files_open, keep_output_files_open;
 };
 
 /**
