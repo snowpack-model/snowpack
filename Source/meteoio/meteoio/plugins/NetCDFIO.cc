@@ -763,11 +763,10 @@ Grid2DObject ncFiles::read2DGrid(const size_t& param, const Date& date)
 	}
 
 	const bool isPrecip = (param==MeteoGrids::PSUM || param==MeteoGrids::PSUM_L || param==MeteoGrids::PSUM_S);
-	const bool isRad = (param==MeteoGrids::ISWR || param==MeteoGrids::RSWR || param==MeteoGrids::ISWR_DIFF || param==MeteoGrids::ISWR_DIR);
-	return read2DGrid(it->second, time_pos, isPrecip, (isPrecip || isRad));
+	return read2DGrid(it->second, time_pos, isPrecip);
 }
 
-Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm, const bool& reZero)
+Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm)
 {
 	if (isLatLon && (!hasDimension(ncpp::LATITUDE) || !hasDimension(ncpp::LONGITUDE))) throw IOException("No latitude / longitude could be identified in file "+file_and_path, AT);
 	if (!isLatLon && (!hasDimension(ncpp::EASTING) || !hasDimension(ncpp::NORTHING))) throw IOException("No easting / northing could be identified in file "+file_and_path, AT);
@@ -807,10 +806,6 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	if (var.scale!=1.) grid *= var.scale;
 	if (var.offset!=0.) grid += var.offset;
 	applyUnits(grid, var.attributes.units, time_pos, m2mm);
-	if (reZero) {//reset very low values to zero
-		for (size_t ii=0; ii<grid.size(); ii++)
-			if (grid(ii)<1e-6 && grid(ii)!=mio::IOUtils::nodata) grid(ii)=0.;
-	}
 
 	return grid;
 }

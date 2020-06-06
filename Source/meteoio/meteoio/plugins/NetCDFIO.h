@@ -51,7 +51,7 @@ class ncFiles {
 		void initVariablesFromFile();
 		void initDimensionsFromFile();
 
-		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false, const bool& reZero=false);
+		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false);
 		double read_0Dvariable(const size_t& param) const;
 		std::vector<Date> read_1Dvariable() const;
 		std::vector<double> read_1Dvariable(const size_t& param) const;
