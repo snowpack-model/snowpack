@@ -48,6 +48,7 @@
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
 #include <meteoio/meteoFilters/ProcRHWaterToIce.h>
+#include <meteoio/meteoFilters/ProcTransformWindVector.h>
 #include <meteoio/meteoFilters/FilterNoChange.h>
 #include <meteoio/meteoFilters/FilterTimeconsistency.h>
 #include <meteoio/meteoFilters/FilterDeGrass.h>
@@ -146,6 +147,7 @@ namespace mio {
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
  * - RHWATERTOICE: correct relative humidity over water to over ice in case temperature is below freezing, see ProcRHWaterToIce
+ * - TRANSFORMWINDVECTOR: transform wind direction and/or wind speed components, see ProcTransformWindVector
  *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplicates, etc), see TimeSuppr
@@ -231,6 +233,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcShade(vecArgs, blockname, cfg);
 	} else if (blockname == "RHWATERTOICE"){
 		return new ProcRHWaterToIce(vecArgs, blockname);
+	} else if (blockname == "TRANSFORMWINDVECTOR"){
+		return new ProcTransformWindVector(vecArgs, blockname, cfg);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}

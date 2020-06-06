@@ -1,6 +1,4 @@
 /***********************************************************************************/
-/*  Copyright 2009-2015 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
-/***********************************************************************************/
 /* This file is part of Alpine3D.
     Alpine3D is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -23,6 +21,7 @@
 #include <alpine3d/ebalance/EnergyBalance.h>
 #include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/MeteoObj.h> //for the SnGrids
+#include <snowpack/libsnowpack.h> //for TechSnow
 
 class SnowpackInterfaceWorker
 {
@@ -82,6 +81,7 @@ class SnowpackInterfaceWorker
 		Snowpack sn;
 		Meteo meteo;
 		Stability stability;
+		TechSnow sn_techsnow;
 
 		const mio::DEMObject dem;
 		const size_t dimx, dimy, offset;

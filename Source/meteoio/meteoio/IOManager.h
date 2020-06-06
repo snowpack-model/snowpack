@@ -221,20 +221,27 @@ class IOManager {
 		 */
 		void clear_cache();
 
+	private:
 		/**
-		 * @brief Returns the mode to be used for the IOManager
+		 * @brief Returns the mode to be used for the IOManager for TimeSeries
 		 * @param i_cfg configuration object
 		 * @return mode as of IOUtils::OperationMode
 		 */
-		static IOUtils::OperationMode getIOManagerMode(const Config& i_cfg);
-
-	private:
+		static IOUtils::OperationMode getIOManagerTSMode(const Config& i_cfg);
+		
+		/**
+		 * @brief Returns the mode to be used for the IOManager for Grids
+		 * @param i_cfg configuration object
+		 * @return mode as of IOUtils::OperationMode
+		 */
+		static IOUtils::OperationMode getIOManagerGridMode(const Config& i_cfg);
+		
 		void initVirtualStations();
 		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);
 		void initIOManager();
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
-		const IOUtils::OperationMode mode;
+		const IOUtils::OperationMode ts_mode;
 		IOHandler iohandler;
 		TimeSeriesManager tsm1, tsm2;
 		GridsManager gdm1;

@@ -121,6 +121,7 @@ inline double getAvgAtDepth(const SnowStation& pixel, const double& depth, const
  * @param landuse_in gives the landuse Data. Also tetermines size and position of the landuse for slice
  * @param pts_in gives the spezial points. For this points more output is done then for the others. Calcualtion is the same.
  * @param snow_stations gives a vector of pointers to the SnowStation objects relevant for this thread
+ * @param snow_stations_coord provide the (ii,jj) coordinates of each snow station. This is necessary because the slices might be irregular
  * @param offset_in gives the offsett on X for this slice (needed to read data and error messages)
  */
 SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
@@ -130,7 +131,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const std::vector<SnowStation*>& snow_stations,
                                                  const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
                                                  const size_t offset_in)
- : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), dem(dem_in),
+ : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), sn_techsnow(sn_cfg), dem(dem_in),
    dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), SnowStationsCoord(snow_stations_coord),
    isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
    surface_flux(), soil_temp_depths(), calculation_step_length(0.), height_of_wind_value(0.),
@@ -341,6 +342,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = meteoPixel.psum; break;
 			case SnGrids::PSUM_PH:
 				value = meteoPixel.psum_ph; break;
+			case SnGrids::PSUM_TECH:
+				value = meteoPixel.psum_tech; break;
 			case SnGrids::TSS:
 				if (!useCanopy || snowPixel.Cdata->zdispl < 0.) {
 					value = snowPixel.Ndata.back().T;
@@ -641,9 +644,8 @@ void SnowpackInterfaceWorker::grooming(const mio::Date &current_date, const mio:
 		if (SnowStations[ii]==NULL) continue; //for safety: skipped cells were initialized with NULL
 
 		if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
-		if (SnowStations[ii]==NULL) continue; //for safety: skipped cells were initialized with NULL
 		
-		if (TechSnow::prepare(current_date)) Snowpack::snowPreparation( *SnowStations[ii] );
+		if (sn_techsnow.prepare(current_date)) sn_techsnow.preparation(*SnowStations[ii]);
 	}
 }
 

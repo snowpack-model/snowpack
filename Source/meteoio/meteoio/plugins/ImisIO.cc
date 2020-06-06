@@ -437,7 +437,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//read Anetz Data, convert it to PSUMs at XX:00 and XX:30
 			std::vector< std::vector< std::pair<Date, double> > > vecPsum( vecAnetzStation.size() );
-			vector< vector<MeteoData> > vecMeteoAnetz( vecAnetzStation.size() ); //holds the meteo data of the ANETZ stations
+			std::vector< std::vector<MeteoData> > vecMeteoAnetz( vecAnetzStation.size() ); //holds the meteo data of the ANETZ stations
 			const Date AnetzStart( dateStart-1./24. ); //to be sure that we can resample the ANETZ data
 			const Date AnetzEnd( dateEnd+1./24. );
 			for (size_t ii=0; ii<vecAnetzStation.size(); ii++) {

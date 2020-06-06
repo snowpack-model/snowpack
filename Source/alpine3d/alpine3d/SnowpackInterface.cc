@@ -82,11 +82,11 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                                      const bool is_restart_in)
                 : run_info(), io(io_cfg), pts(prepare_pts(vec_pts)),dem(dem_in),
                   is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
-                  do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_preparation(false),
+                  do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_production(false), snow_grooming(false),
                   Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false),
                   meteo_outpath(), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(), tz_out(0.),
-                  sn_cfg(readAndTweakConfig(io_cfg,!pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
+                  sn_cfg(readAndTweakConfig(io_cfg, !pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
                   landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
                   psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
                   vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata),
@@ -138,8 +138,8 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	//check if lateral flow is enabled
 	sn_cfg.getValue("LATERAL_FLOW", "Alpine3D", enable_lateral_flow, IOUtils::nothrow);
 
-	//check if A3D viez should be used for grids
-	sn_cfg.getValue("A3d_VIEW", "Output", a3d_view, IOUtils::nothrow);
+	//check if A3D view should be used for grids
+	sn_cfg.getValue("A3D_VIEW", "Output", a3d_view, IOUtils::nothrow);
 
 	//If MPI is active, every node gets a slice of the DEM to work on
 	mpicontrol.getArraySliceParamsOptim(dimx, mpi_offset, mpi_nx,dem,landuse);
@@ -217,7 +217,9 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	}
 
 	//init snow preparation
-	if (snow_preparation) {
+	sn_cfg.getValue("SNOW_GROOMING", "TechSnow", snow_grooming);
+	sn_cfg.getValue("SNOW_PRODUCTION", "TechSnow", snow_production);
+	if (snow_production || snow_grooming) {
 		techSnow = new TechSnowA3D(io_cfg, dem);
 	}
 }
@@ -269,7 +271,7 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		maskGlacier = source.maskGlacier;
 
 		glacier_katabatic_flow = source.glacier_katabatic_flow;
-		snow_preparation = source.snow_preparation;
+		snow_production = source.snow_production;
 		glaciers = source.glaciers;
 		techSnow = source.techSnow;
 		enable_lateral_flow = source.enable_lateral_flow;
@@ -325,12 +327,14 @@ mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, con
 	tmp_cfg.addKey("ALPINE3D", "SnowpackAdvanced", "true");
 	tmp_cfg.addKey("ALPINE3D_PTS", "SnowpackAdvanced",have_pts?"true":"false");
 	tmp_cfg.addKey("PERP_TO_SLOPE", "SnowpackAdvanced", "true");
+
 	tmp_cfg.getValue("LOCAL_IO", "General", do_io_locally, IOUtils::nothrow);
 	tmp_cfg.getValue("GRID2DPATH", "Output", outpath);
 	tmp_cfg.getValue("MASK_GLACIERS", "Output", mask_glaciers, IOUtils::nothrow);
 	tmp_cfg.getValue("MASK_DYNAMIC", "Output", mask_dynamic, IOUtils::nothrow);
-	tmp_cfg.getValue("GLACIER_KATABATIC_FLOW", "Snowpack", glacier_katabatic_flow, IOUtils::nothrow);
-	tmp_cfg.getValue("SNOW_PREPARATION", "Input", snow_preparation, IOUtils::nothrow);
+	tmp_cfg.getValue("GLACIER_KATABATIC_FLOW", "Alpine3D", glacier_katabatic_flow, IOUtils::nothrow);
+	tmp_cfg.getValue("SNOW_PRODUCTION", "TechSnow", snow_production, IOUtils::nothrow);
+	tmp_cfg.getValue("SNOW_GROOMING", "TechSnow", snow_grooming, IOUtils::nothrow);
 	tmp_cfg.getValue("GRIDS_WRITE", "Output", grids_write);
 	tmp_cfg.getValue("GRIDS_START", "Output", grids_start);
 	tmp_cfg.getValue("GRIDS_DAYS_BETWEEN", "Output", grids_days_between);
@@ -649,7 +653,7 @@ void SnowpackInterface::setMeteo(const Grid2DObject& new_psum, const Grid2DObjec
 	}
 	tsg = new_tsg;
 
-	if (snow_preparation) {
+	if (snow_production || snow_grooming) {
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
 		techSnow->setMeteo(new_ta, new_rh, cH, timestamp);
 		psum_tech = techSnow->getGrid(SnGrids::PSUM_TECH);
@@ -815,7 +819,7 @@ void SnowpackInterface::calcNextStep()
 		// run model, process exceptions in a way that is compatible with openmp
 		try {
 			workers[ii]->runModel(nextStepTimestamp, tmp_psum, tmp_psum_ph, tmp_psum_tech, tmp_rh, tmp_ta, tmp_tsg, tmp_vw, tmp_vw_drift, tmp_dw, tmp_mns, tmp_shortwave, tmp_diffuse, tmp_longwave, solarElevation);
-			if (snow_preparation) {
+			if (snow_grooming) {
 				const mio::Grid2DObject tmp_grooming(grooming, mpi_offset, 0, mpi_nx, dimy);
 				workers[ii]->grooming( nextStepTimestamp, tmp_grooming );
 			}
@@ -978,6 +982,7 @@ void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const do
 		smet_out << " TSOIL" << Tsoil_idx[ii];
 
 	if (useCanopy) smet_out << " ISWR_can RSWR_can";
+	if (snow_production) smet_out << " PSUM_TECH";
 	smet_out << "\n[DATA]\n";
 
 	smet_out.close();
@@ -1021,6 +1026,9 @@ void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationDa
 	if (useCanopy) {
 		smet_out << std::setw(6) << std::setprecision(0) << surf.sw_in << " ";
 		smet_out << std::setw(6) << std::setprecision(0) << surf.sw_out << " ";
+	}
+	if (snow_production) {
+		smet_out << std::setw(6) << std::setprecision(3) << met.psum_tech << " ";
 	}
 	smet_out << "\n";
 

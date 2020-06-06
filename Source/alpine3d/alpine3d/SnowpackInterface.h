@@ -47,7 +47,7 @@ class Runoff; // forward declaration, cyclic header include
  *
  * Several corrections are applied on glaciated pixels: the albedo of such pixels is reset to a fixed glacier albedo when no snow is present
  * and when the air temperature is higher than 5°C the atmospheric stability is forced to MONIN_OBUKHOV. It is also possible to apply an air
- * temperature correction simulating the effect of katabatic flows by setting GLACIER_KATABATIC_FLOW to true in the [Snowpack] section (this is
+ * temperature correction simulating the effect of katabatic flows by setting GLACIER_KATABATIC_FLOW to true in the [ALPINE3D] section (this is
  * still an experimental feature).
  *
  * Several types of outputs are supported: gridded outputs and full snowpack stratigraphy.
@@ -200,7 +200,7 @@ class Runoff; // forward declaration, cyclic header include
 		bool is_restart, useCanopy, enable_simple_snow_drift, enable_lateral_flow, a3d_view;
 		bool do_io_locally; // if false all I/O will only be done on the master process
 		std::string station_name; // value for the key OUTPUT::EXPERIMENT
-		bool glacier_katabatic_flow, snow_preparation;
+		bool glacier_katabatic_flow, snow_production, snow_grooming;
 		// Output
 		std::vector<std::string> Tsoil_idx; //TSOIL names in order to build the "field" header of the smet output
 		double grids_start, grids_days_between; //gridded outputs

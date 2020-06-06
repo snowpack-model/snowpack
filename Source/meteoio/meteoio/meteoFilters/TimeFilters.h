@@ -56,6 +56,7 @@ class TimeProcStack {
  *  - FILE: when type=BYDATE, a file that contains a list of station ID's and timesteps that should be suppressed;
  *  - FRAC: when type=FRAC, the fraction of data to suppress. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.
+ *  - WIDTH: when type=FRAC, the width of data gaps to create (in seconds). If not set, individual data points are deleted.
  *
  * @code
  * TIME::filter1     = suppr
@@ -98,7 +99,7 @@ class TimeSuppr : public ProcessingBlock {
 		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
 		std::map< std::string, std::vector<dates_range> > suppr_dates;
-		double range;
+		double range, width;
 		suppr_mode op_mode;
 };
 

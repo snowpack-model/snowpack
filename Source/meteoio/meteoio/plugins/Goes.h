@@ -29,6 +29,7 @@ class GoesStation {
 		Date parseDate(const std::vector<float>& raw_data) const;
 		MeteoData parseDataLine(const Date& dt, const std::vector<float>& raw_data) const;
 		StationData getStationData() const {return md_template.meta;}
+		size_t getNElems() const {return nElems;}
 		bool isValid() const {return validStation;}
 
 		size_t meteoIdx; ///< index within vecMeteo
@@ -40,7 +41,7 @@ class GoesStation {
 		MeteoData md_template;
 		double TZ;
 		float nodata;
-		size_t stationID_idx, year_idx, hour_idx, jdn_idx;
+		size_t stationID_idx, year_idx, hour_idx, jdn_idx, nElems;
 		bool validStation;
 };
 
@@ -79,7 +80,7 @@ class GoesIO : public IOInterface {
 		std::string coordin, coordinparam; //projection parameters
 		double in_TZ;
 		float in_nodata;
-		bool debug;
+		bool debug, OnlyFromPast;
 };
 
 } //namespace

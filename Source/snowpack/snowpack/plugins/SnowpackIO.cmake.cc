@@ -45,6 +45,14 @@ SnowpackIO::SnowpackIO(const SnowpackConfig& cfg):
 	output_ts_as_ascii(false), output_ts_as_smet(false), output_haz_as_imis(false)
 
 {
+	//enforce UTF8 output globally (ie also for cout, cerr)
+	std::locale utf8;
+	try {
+		utf8.global(std::locale(std::locale(), std::locale("C.UTF-8"), std::locale::ctype));
+	} catch (std::runtime_error&) {
+		//std::cerr << "[W] Could not force the output to be UTF8, some special characters might not be shown properly in output files.\n";
+	}
+	
 	//Format of initial snow profile:
 	const std::string in_snow = cfg.get("SNOW", "Input", "SMET");
 	if (in_snow == "SNOOLD") {

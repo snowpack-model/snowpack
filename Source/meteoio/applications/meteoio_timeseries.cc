@@ -146,7 +146,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 	}
 }
 
-void real_main(int argc, char* argv[])
+static void real_main(int argc, char* argv[])
 {
 	std::string begin_date_str, end_date_str;
 	parseCmdLine(argc, argv, begin_date_str, end_date_str);

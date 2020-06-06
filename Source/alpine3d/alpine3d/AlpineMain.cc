@@ -290,7 +290,7 @@ inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, c
 	}
 
 	//SNOWPACK
-	const bool glacier_katabatic_flow = cfg.get("GLACIER_KATABATIC_FLOW", "Snowpack", false);
+	const bool glacier_katabatic_flow = cfg.get("GLACIER_KATABATIC_FLOW", "Alpine3D", false);
 	if (!nocompute || glacier_katabatic_flow){
 		try {
 			std::string grids_requirements;
