@@ -391,12 +391,6 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 		it++;
 	}
 	std::sort(meteo_files.begin(), meteo_files.end(), &sort_cache_grids);
-
-	//now handle overlaping files: truncate the end date of the file starting earlier
-	for (size_t ii=0; ii<(meteo_files.size()-1); ii++) {
-		if (meteo_files[ii].first.second > meteo_files[ii+1].first.first)
-			meteo_files[ii].first.second = meteo_files[ii+1].first.first;
-	}
 }
 
 bool NetCDFIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list)
@@ -418,7 +412,7 @@ bool NetCDFIO::list2DGrids(const Date& start, const Date& end, std::map<Date, st
 		for (size_t jj=0; jj<ts.size(); jj++) {
 			if (ts[jj]>end) break; //no more timestamps in the right range
 			if (ts[jj]<start) continue;
-			list[ ts[jj] ] = params_set;
+			list[ ts[jj] ].insert( params_set.begin(), params_set.end() );
 		}
 	}
 
@@ -449,8 +443,11 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 		for (size_t ii=0; ii<cache_grid_files.size(); ii++) {
 			const Date file_start( cache_grid_files[ii].first.first );
 			const Date file_end( cache_grid_files[ii].first.second );
-			if (file_start > date) return;
+			const std::set<size_t> params_set( cache_grid_files[ii].second.getParams() );
+			if (file_start > date) continue;
 			if (file_end < date) continue;
+
+			if (params_set.find(parameter) == params_set.end()) continue;
 
 			if (date>=file_start && date<=file_end) {
 				grid_out = cache_grid_files[ii].second.read2DGrid(parameter, date);
