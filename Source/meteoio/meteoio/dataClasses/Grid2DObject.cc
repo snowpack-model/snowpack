@@ -307,8 +307,8 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const
 	
 	if (ur_lat!=IOUtils::nodata && ur_lon!=IOUtils::nodata) { //use lat/lon extraction if possible
 		//remember that cellsize = (ur_lon - llcorner.getLon()) / (getNx()-1.)
-		ii = (int)floor( (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1)); //round to lowest
-		jj = (int)floor( (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1));
+		ii = (int)( 0.5 + (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1)); //round to lowest
+		jj = (int)( 0.5 + (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1));
 	} else {
 		if (point.isSameProj(llcorner)==true) {
 			//same projection between the grid and the point -> precise, simple and efficient arithmetics
