@@ -30,6 +30,8 @@ class ncFiles {
 		enum Mode {READ, WRITE};
 
 		ncFiles(const std::string& filename, const Mode& mode, const Config& cfg, const std::string& schema_name, const bool& i_debug=false);
+		ncFiles(const ncFiles& c);
+		ncFiles& operator = (const ncFiles& c);
 		~ncFiles();
 
 		std::pair<Date, Date> getDateRange() const;

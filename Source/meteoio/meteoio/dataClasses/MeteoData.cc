@@ -50,11 +50,13 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("ISWR_DIR");		description.push_back("Incoming Direct Short Wave Radiation");	units.push_back("W/m2");
 	paramname.push_back("ILWR");				description.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
 	paramname.push_back("OLWR");			description.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("LWR_NET");                 description.push_back("Net Long Wave Radiation");                               units.push_back("W/m2");
 	paramname.push_back("TAU_CLD");		description.push_back("Atmospheric Transmissivity");					units.push_back("-");
 	paramname.push_back("HS");					description.push_back("Snow Height");							units.push_back("m");
 	paramname.push_back("PSUM");			description.push_back("Precipitation Sum");					units.push_back("kg/m2");
 	paramname.push_back("PSUM_PH");		description.push_back("Precipitation Phase");					units.push_back("-");
 	paramname.push_back("PSUM_L");			description.push_back("Precipitation Sum of the Liquid Phase");	units.push_back("kg/m2");
+	paramname.push_back("PSUM_LC");                  description.push_back("Precipitation Sum of the Liquid Convection"); units.push_back("kg/m2");
 	paramname.push_back("PSUM_S");			description.push_back("Precipitation Sum of the Solid Phase");		units.push_back("kg/m2");
 	paramname.push_back("TSG");				description.push_back("Ground Surface Temperature");					units.push_back("K");
 	paramname.push_back("TSS");				description.push_back("Surface Temperature");				units.push_back("K");
@@ -131,12 +133,19 @@ bool MeteoData::initStaticData()
 	s_default_paramname.push_back("VW");
 	s_default_paramname.push_back("DW");
 	s_default_paramname.push_back("VW_MAX");
+	s_default_paramname.push_back("U");
+	s_default_paramname.push_back("V");
 	s_default_paramname.push_back("RSWR");
 	s_default_paramname.push_back("ISWR");
 	s_default_paramname.push_back("ILWR");
+	s_default_paramname.push_back("OLWR");
+	s_default_paramname.push_back("LWR_NET");
 	s_default_paramname.push_back("TAU_CLD");
 	s_default_paramname.push_back("PSUM");
 	s_default_paramname.push_back("PSUM_PH");
+	s_default_paramname.push_back("PSUM_L");
+	s_default_paramname.push_back("PSUM_LC");
+	s_default_paramname.push_back("PSUM_S");
 
 	zero_flag.resampled = false; //init data qa flag that is initially set
 	zero_flag.generated = false;

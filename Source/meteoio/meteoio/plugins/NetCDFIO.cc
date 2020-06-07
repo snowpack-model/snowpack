@@ -631,6 +631,48 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 	if (!hasLatLon || !hasEastNorth || !hasTime) throw IOException("Error in the schema definition, some basic quantities are not defined!", AT);
 }
 
+ncFiles::ncFiles(const ncFiles& c) :
+	acdd(c.acdd), schema(c.schema), vars(c.vars), unknown_vars(c.unknown_vars), vecTime(c.vecTime), vecX(c.vecX), vecY(c.vecY),
+	dimensions_map(c.dimensions_map), file_and_path(c.file_and_path), coord_sys(c.coord_sys), coord_param(c.coord_param), TZ(c.TZ),
+	dflt_zref(c.dflt_zref), dflt_uref(c.dflt_uref), dflt_slope(c.dflt_slope), dflt_azi(c.dflt_azi), max_unknown_param_idx(c.max_unknown_param_idx),
+	strict_schema(c.strict_schema), lax_schema(c.lax_schema), debug(c.debug), isLatLon(c.isLatLon), nc_filename(c.nc_filename), ncid(-1),
+	keep_input_files_open(c.keep_input_files_open), keep_output_files_open(c.keep_output_files_open)
+{
+	// The copy constructor ensures that the copy doesn't inherit the ncid from an opened file, to prevent trying to close the same file twice.
+}
+
+ncFiles& ncFiles::operator=(const ncFiles& source) {
+	// The assignment constructor ensures that the assignment doesn't inherit the ncid from an opened file, to prevent trying to close the same file twice.
+	if (this != &source) {
+		acdd = source.acdd;
+		schema = source.schema;
+		vars = source.vars;
+		unknown_vars = source.unknown_vars;
+		vecTime = source.vecTime;
+		vecX = source.vecX;
+		vecY = source.vecY;
+		dimensions_map = source.dimensions_map;
+		file_and_path  = source.file_and_path;
+		coord_sys = source.coord_sys;
+		coord_param = source.coord_param;
+		TZ = source.TZ;
+		dflt_zref = source.dflt_zref;
+		dflt_uref = source.dflt_uref;
+		dflt_slope = source.dflt_slope;
+		dflt_azi = source.dflt_azi;
+		max_unknown_param_idx = source.max_unknown_param_idx;
+		strict_schema = source.strict_schema;
+		lax_schema = source.lax_schema;
+		debug = source.debug;
+		isLatLon = source.isLatLon;
+		nc_filename = source.nc_filename;
+		ncid = -1;
+		keep_input_files_open = source.keep_input_files_open;
+		keep_output_files_open = source.keep_output_files_open;
+	}
+	return *this;
+}
+
 ncFiles::~ncFiles()
 {
 	if (ncid!=-1) {
