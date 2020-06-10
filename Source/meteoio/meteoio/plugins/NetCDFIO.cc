@@ -441,21 +441,24 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 
 	if (!cache_grid_files.empty()) {
 		for (size_t ii=0; ii<cache_grid_files.size(); ii++) {
+			// Get available time period for file
 			const Date file_start( cache_grid_files[ii].first.first );
 			const Date file_end( cache_grid_files[ii].first.second );
+			// Get available params for file
 			const std::set<size_t> params_set( cache_grid_files[ii].second.getParams() );
+
+			// Check for time period
 			if (file_start > date) continue;
 			if (file_end < date) continue;
 
+			// Check for param
 			if (params_set.find(parameter) == params_set.end()) continue;
 
-			if (date>=file_start && date<=file_end) {
-				grid_out = cache_grid_files[ii].second.read2DGrid(parameter, date);
-				return;
-			}
+			grid_out = cache_grid_files[ii].second.read2DGrid(parameter, date);
+			return;
 		}
-		//the date was not found
-		throw InvalidArgumentException("No Gridded data found for "+date.toString(Date::ISO)+" in '"+in_grid2d_path+"'", AT);
+		//the date/param was not found
+		throw InvalidArgumentException("No Gridded data found for "+MeteoGrids::getParameterName( parameter )+" at "+date.toString(Date::ISO)+" in '"+in_grid2d_path+"'", AT);
 	} else {
 		const std::string filename = cfg.get("GRID2DFILE", "Input");
 		if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT); //prevent invalid filenames
