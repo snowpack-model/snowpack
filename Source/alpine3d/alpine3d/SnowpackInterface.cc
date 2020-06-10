@@ -217,8 +217,8 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	}
 
 	//init snow preparation
-	sn_cfg.getValue("SNOW_GROOMING", "TechSnow", snow_grooming);
-	sn_cfg.getValue("SNOW_PRODUCTION", "TechSnow", snow_production);
+	sn_cfg.getValue("SNOW_GROOMING", "TechSnow", snow_grooming, IOUtils::nothrow);
+	sn_cfg.getValue("SNOW_PRODUCTION", "TechSnow", snow_production, IOUtils::nothrow);
 	if (snow_production || snow_grooming) {
 		techSnow = new TechSnowA3D(io_cfg, dem);
 	}
