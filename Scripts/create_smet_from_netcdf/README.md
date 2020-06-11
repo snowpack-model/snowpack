@@ -10,7 +10,7 @@ This workflow currently digests MERRA-2 atmospheric reanalysis, CESM or RACMO-2 
 ```
 bash setup.sh
 ```
-3. Runtime: Submit workflow as Slurm job by executing `job.sbatch`. Make sure to edit appropriate Slurm settings! We will soon add an example using the PBS job scheduler, but for now we only support Slurm.
+3. Runtime: Submit workflow as a Slurm or PBS job by executing `job.sbatch`. Make sure to edit appropriate Slurm/PBS settings!
 ```
 sbatch job.sbatch
 ```
@@ -18,6 +18,3 @@ sbatch job.sbatch
 ```
 bash postprocess.sh MERRA-2
 ```
-
-## To do list
-1. Update workflow to provide CESM support. 

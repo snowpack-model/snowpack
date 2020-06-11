@@ -8,7 +8,7 @@ output_res_in_minutes=$(echo ${output_res_in_seconds} / 60 | bc)	# In minutes
 
 # Print Statements
 echo "Working on model: ${model}"
-echo "	Output Temporal Resolution: ${output_res} seconds"
+echo "	Output Temporal Resolution: ${output_res_in_minutes} minutes"
 echo "	Year ${yr}"
 
 # Module loading and basic setup
@@ -25,10 +25,9 @@ mkdir -p output/${model}_${yr}
 cd io_files
 
 # Create new ini file for each year
-sed 's/VSTATIONS_REFRESH_RATE=3600/VSTATIONS_REFRESH_RATE='${output_res_in_seconds}'/' ${model}.ini > ${model}_${yr}.ini
-sed -i 's/VSTATIONS_REFRESH_OFFSET=3600/VSTATIONS_REFRESH_OFFSET='${output_res_in_seconds}'/' ${model}_${yr}.ini
-sed -i 's/PSUM::arg1::cst=3600/PSUM::arg1::cst='${output_res_in_seconds}'/' ${model}_${yr}.ini
-sed -i 's/METEOPATH=..\/output\//METEOPATH=..\/output\/'${model}'_'${yr}'\//' ${model}_${yr}.ini
+sed 's/3600/'${output_res_in_seconds}'/' ${model}.ini > ${model}_${yr}.ini # For MERRA-2
+sed 's/10800/'${output_res_in_seconds}'/' ${model}.ini > ${model}_${yr}.ini # For RACMO2 and CESM
+sed -i 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}_${yr}.ini
 
 # Create .smet files for each year
 if [ ${model} == "MERRA-2" ]; then
