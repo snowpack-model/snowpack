@@ -25,9 +25,7 @@ mkdir -p output/${model}_${yr}
 cd io_files
 
 # Create new ini file for each year
-sed 's/3600/'${output_res_in_seconds}'/' ${model}.ini > ${model}_${yr}.ini # For MERRA-2
-sed 's/10800/'${output_res_in_seconds}'/' ${model}.ini > ${model}_${yr}.ini # For RACMO2 and CESM
-sed -i 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}_${yr}.ini
+sed 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}.ini > ${model}_${yr}.ini
 
 # Create .smet files for each year
 if [ ${model} == "MERRA-2" ]; then
