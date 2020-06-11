@@ -11,3 +11,5 @@ io_files/*
 !sbatch_out_files/.gitkeep
 !io_files/base.ini
 !io_files/MERRA-2.ini
+!io_files/CESM.ini
+!io_files/RACMO2.ini
