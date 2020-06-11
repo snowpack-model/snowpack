@@ -3,7 +3,7 @@
 # Retrieve script variables
 model=$1
 
-# Concactenate yearly files into a single timeseries
+# Concatenate yearly files into a single timeseries
 g=$(ls -d output/${model}_[0-9][0-9][0-9][0-9] | tail -1)
 for f in ${g}/*smet
 do

@@ -39,6 +39,8 @@ if [ -n "${SLURM_ARRAY_TASK_ID}" ]; then
 	command1=$(sed -n ${SLURM_ARRAY_TASK_ID}p to_exec.lst)
 elif [ -n "${PBS_ARRAY_INDEX}" ]; then
 	command1=$(sed -n ${PBS_ARRAY_INDEX}p to_exec.lst)
+else
+	command1=""
 fi
 
 #
