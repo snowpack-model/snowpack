@@ -3,12 +3,14 @@
 # Retrieve script variables
 model=$1
 yr=$2
-output_res_in_seconds=$3						# In seconds
-output_res_in_minutes=$(echo ${output_res_in_seconds} / 60 | bc)	# In minutes
+
+if [ -z "${model}" ] && [ -z "${year}" ]; then
+	echo "Provide model and year as first and second command line parameter, respectively."
+	exit
+fi
 
 # Print Statements
 echo "Working on model: ${model}"
-echo "	Output Temporal Resolution: ${output_res_in_minutes} minutes"
 echo "	Year ${yr}"
 
 # Module loading and basic setup
@@ -25,7 +27,16 @@ mkdir -p output/${model}_${yr}
 cd io_files
 
 # Create new ini file for each year
-sed 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}.ini > ${model}_${yr}.ini
+inifile=${model}_${yr}.ini
+sed 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}.ini > ${inifile}
+
+# Retrieve temporal resolution from ini file:
+output_res_in_seconds=$(fgrep VSTATIONS_REFRESH_RATE ${inifile} | awk -F\= '{i=$NF; gsub(/[ \t]/, "", i); print i}')	# In seconds
+if [ -z "${output_res_in_seconds}" ]; then
+	echo "Unable to determine temporal resolution. Is VSTATIONS_REFRESH_RATE defined in *.ini file?"
+	exit
+fi
+output_res_in_minutes=$(echo ${output_res_in_seconds} / 60 | bc)							# In minutes
 
 # Create .smet files for each year
 if [ ${model} == "MERRA-2" ]; then
