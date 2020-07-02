@@ -39,6 +39,14 @@
 /// @brief The number of element incidences
 #define N_OF_INCIDENCES 2
 
+#ifdef SNOWPACK_OPTIM
+class WaterTransport;
+class VapourTransport;
+class Metamorphism;
+class SnowDrift;
+class PhaseChange;
+#endif
+
 class Snowpack {
 
  public:
@@ -123,6 +131,14 @@ class Snowpack {
 		                  SurfaceFluxes& Sdata);
 
 		const SnowpackConfig& cfg;
+
+#ifdef SNOWPACK_OPTIM
+		WaterTransport* watertransport;
+		VapourTransport* vapourtransport;
+		Metamorphism* metamorphism;
+		SnowDrift* snowdrift;
+		PhaseChange* phasechange;
+#endif
 
 		std::string variant, forcing, viscosity_model, watertransportmodel_snow, watertransportmodel_soil;
 		std::string hn_density, hn_density_parameterization;

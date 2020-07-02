@@ -88,6 +88,9 @@ void Snowpack::EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]) {
 
 Snowpack::Snowpack(const SnowpackConfig& i_cfg)
           : surfaceCode(), cfg(i_cfg),
+#ifdef SNOWPACK_OPTIM
+            watertransport(NULL), vapourtransport(NULL), metamorphism(NULL), snowdrift(NULL), phasechange(NULL),
+#endif
             variant(), forcing(), viscosity_model(), watertransportmodel_snow("BUCKET"), watertransportmodel_soil("BUCKET"),
             hn_density(), hn_density_parameterization(), sw_mode(), snow_albedo(), albedo_parameterization(), albedo_average_schmucki(), sw_absorption_scheme(),
             atm_stability_model(), albedo_NIED_av(0.75), albedo_fixedValue(Constants::glacier_albedo), hn_density_fixedValue(SnLaws::min_hn_density),
@@ -1998,12 +2001,20 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
                                 BoundCond& Bdata, SurfaceFluxes& Sdata)
 {
+#ifdef SNOWPACK_OPTIM
+	if (watertransport == NULL) watertransport = new WaterTransport(cfg);
+	if (vapourtransport == NULL) vapourtransport = new VapourTransport(cfg);
+	if (metamorphism == NULL) metamorphism = new Metamorphism(cfg);
+	if (snowdrift == NULL) snowdrift = new SnowDrift(cfg);
+	if (phasechange == NULL) phasechange = new PhaseChange(cfg);
+#else
 	// HACK -> couldn't the following objects be created once in init ?? (with only a reset method ??)
 	WaterTransport watertransport(cfg);
 	VapourTransport vapourtransport(cfg);
 	Metamorphism metamorphism(cfg);
 	SnowDrift snowdrift(cfg);
 	PhaseChange phasechange(cfg);
+#endif
 	if (Xdata.Seaice != NULL) Xdata.Seaice->ConfigSeaIce(cfg);
 
 	try {
@@ -2041,7 +2052,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		if (forcing=="ATMOS") {
 			if (!alpine3d) { //HACK: we need to set to 0 the external drift
 				double tmp = 0.;
+#ifdef SNOWPACK_OPTIM
+				const double eroded = snowdrift->compSnowDrift(Mdata, Xdata, Sdata, tmp);
+#else
 				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+#endif
 				if (eroded > 0.) {
 					// Backup settings we are going to override:
 					const bool tmp_force_add_snowfall = force_add_snowfall;
@@ -2074,10 +2089,18 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 					Xdata.hn += tmp_Xdata_hn;
 				}
 			} else {
+#ifdef SNOWPACK_OPTIM
+				snowdrift->compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
+#else
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
+#endif
 			}
 		} else { // MASSBAL forcing
+#ifdef SNOWPACK_OPTIM
+				snowdrift->compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
+#else
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
+#endif
 		}
 
 		if (Xdata.Seaice != NULL) {
@@ -2151,14 +2174,26 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 				if (LastTimeStep) Sdata.compSnowSoilHeatFlux(Xdata);
 
 				// Inialize PhaseChange at the first sub-time step
+#ifdef SNOWPACK_OPTIM
+				if (ii == 1) phasechange->initialize(Xdata);
+#else
 				if (ii == 1) phasechange.initialize(Xdata);
+#endif
 
 				// See if any SUBSURFACE phase changes are occuring due to updated temperature profile
 				if(!useNewPhaseChange) {
 					if (!alpine3d)
+#ifdef SNOWPACK_OPTIM
+						phasechange->compPhaseChange(Xdata, Mdata.date, true, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
+#else
 						phasechange.compPhaseChange(Xdata, Mdata.date, true, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
+#endif
 					else
+#ifdef SNOWPACK_OPTIM
+						phasechange->compPhaseChange(Xdata, Mdata.date, false, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
+#else
 						phasechange.compPhaseChange(Xdata, Mdata.date, false, ((Mdata.surf_melt != IOUtils::nodata) ? (Mdata.surf_melt) : (0.)));
+#endif
 				} else {
 					const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_r) : (PhaseChange::theta_r);
 					const double max_ice = ReSolver1d::max_theta_ice;
@@ -2230,18 +2265,35 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// The water transport routines must be placed here, otherwise the temperature
 		// and creep solution routines will not pick up the new mesh boolean.
 		double ql = Bdata.ql;	// Variable to keep track of how latent heat is used
+#ifdef SNOWPACK_OPTIM
+		watertransport->compTransportMass(Mdata, Xdata, Sdata, ql);
+		vapourtransport->compTransportMass(Mdata, ql, Xdata, Sdata);
+#else
 		watertransport.compTransportMass(Mdata, Xdata, Sdata, ql);
 		vapourtransport.compTransportMass(Mdata, ql, Xdata, Sdata);
+#endif
 
 		// See if any SUBSURFACE phase changes are occuring due to updated water content (infiltrating rain/melt water in cold snow layers)
 		if(!useNewPhaseChange) {
 			if(!alpine3d)
+#ifdef SNOWPACK_OPTIM
+				phasechange->compPhaseChange(Xdata, Mdata.date, true);
+#else
 				phasechange.compPhaseChange(Xdata, Mdata.date, true);
+#endif
 			else
+#ifdef SNOWPACK_OPTIM
+				phasechange->compPhaseChange(Xdata, Mdata.date, false);
+#else
 				phasechange.compPhaseChange(Xdata, Mdata.date, false);
+#endif
 
 			// Finalize PhaseChange
+#ifdef SNOWPACK_OPTIM
+			phasechange->finalize(Sdata, Xdata, Mdata.date);
+#else
 			phasechange.finalize(Sdata, Xdata, Mdata.date);
+#endif
 		}
 
 		// Compute change of internal energy during last time step (J m-2)
@@ -2258,7 +2310,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		throw;
 	}
 
+#ifdef SNOWPACK_OPTIM
+	metamorphism->runMetamorphismModel(Mdata, Xdata);
+#else
 	metamorphism.runMetamorphismModel(Mdata, Xdata);
+#endif
 
 	if (combine_elements) {
 		// Check for combining elements

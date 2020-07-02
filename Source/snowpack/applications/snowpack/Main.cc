@@ -1121,6 +1121,20 @@ inline void real_main (int argc, char *argv[])
 			write_forcing = false; //no need to call it again for the other stations
 		}
 		
+#ifdef SNOWPACK_OPTIM
+		// Get meteo data
+		vector<mio::MeteoData> vecMyMeteo;
+		meteoRead_timer.start();
+		io.getMeteoData(current_date + calculation_step_length/1440, vecMyMeteo);
+		if(meteo_step_length<0.) {
+			std::stringstream ss2;
+			meteo_step_length = io.getAvgSamplingRate();
+			ss2 << "" << meteo_step_length;
+			cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss2.str());
+		}
+		SnowpackConfig tmpcfg(cfg);
+		Snowpack snowpack(tmpcfg); //the snowpack model to use
+#endif
 		// START TIME INTEGRATION LOOP
 		do {
 			current_date += calculation_step_length/1440;
@@ -1157,7 +1171,9 @@ inline void real_main (int argc, char *argv[])
 			// START LOOP OVER ASPECTS
 			for (unsigned int slope_sequence=0; slope_sequence<slope.nSlopes; slope_sequence++) {
 				double tot_mass_in = 0.; // To check mass balance over one CALCULATION_STEP_LENGTH if MASS_BALANCE is set
+#ifndef SNOWPACK_OPTIM
 				SnowpackConfig tmpcfg(cfg);
+#endif
 
 				//fill Snowpack internal structure with forcing data
 				bool iswr_is_net = false;
@@ -1180,7 +1196,9 @@ inline void real_main (int argc, char *argv[])
 				}
 
 				// SNOWPACK model (Temperature and Settlement computations)
+#ifndef SNOWPACK_OPTIM
 				Snowpack snowpack(tmpcfg); //the snowpack model to use
+#endif
 #ifndef SNOWPACK_CORE
 				Stability stability(tmpcfg, classify_profile);
 #endif
