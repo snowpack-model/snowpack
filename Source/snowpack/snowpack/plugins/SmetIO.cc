@@ -899,10 +899,11 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	os << "timestamp ";
 
 	if (out_heat)
-		os << "Qs Ql Qg TSG Qg0 Qr Qmf" << " "; // 1-2: Turbulent fluxes (W m-2)
+		os << "Qs Ql Qg TSG Qg0 Qr Qmf CCsnow" << " "; // 1-2: Turbulent fluxes (W m-2)
 		// 14-17: Heat flux at lower boundary (W m-2), ground surface temperature (degC),
 		//        Heat flux at gound surface (W m-2), rain energy (W m-2)
 		//	  Melt freeze part of internal energy change
+		//	  Cold content of snow (kJ/kg)
 	if (out_lw)
 		os << "OLWR ILWR LWR_net" << " "; // 3-5: Longwave radiation fluxes (W m-2)
 	if (out_sw)
@@ -914,7 +915,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	if (out_soileb)
 		os << "dIntEnergySoil meltFreezeEnergySoil ColdContentSoil" << " ";
 	if (out_mass)
-		os << "SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap" << " ";	// 34-39: SWE (kg m-2), LWC (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), runoff at bottom of soil (kg m-2), sublimation and evaporation (both in kg m-2); see also 52 & 93.
+		os << "SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap MS_melt MS_freeze" << " ";	// 34-39: SWE (kg m-2), LWC (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), runoff at bottom of soil (kg m-2), sublimation and evaporation (both in kg m-2), mass melt, mass freeze (kg m^2); see also 52 & 93.
 														// Note: in operational mode, runoff at bottom of snowpack is expressed as kg m-2 h-1 when !cumsum_mass.
 	if (out_dhs)
 		os << "MS_Sublimation_dHS MS_Settling_dHS MS_Redeposit_dHS MS_Redeposit_dRHO" << " "; // snow height change from sublimation (mm), snow height change from settling (mm), snow height change from redeposition mode (mm), density change from redeposition mode (kg/m^3).
@@ -964,11 +965,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 
 	if (out_heat) {
 		//"Qs Ql Qg TSG Qg0 Qr"
-		plot_description << "sensible_heat  latent_heat  ground_heat  ground_temperature  ground_heat_at_soil_interface  rain_energy  melt_freeze_energy" << " ";
-		plot_units << "W/m2 W/m2 W/m2 K W/m2 W/m2 kJ/m2" << " ";
-		units_offset << "0 0 0 273.15 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1" << " ";
-		plot_color << "0x669933 0x66CC99 0xCC6600 0xDE22E2 0xFFCC00 0x6600FF 0xF2A31B" << " ";
+		plot_description << "sensible_heat  latent_heat  ground_heat  ground_temperature  ground_heat_at_soil_interface  rain_energy  melt_freeze_energy  cold_content_snow" << " ";
+		plot_units << "W/m2 W/m2 W/m2 K W/m2 W/m2 kJ/m2 kJ/m2" << " ";
+		units_offset << "0 0 0 273.15 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0x669933 0x66CC99 0xCC6600 0xDE22E2 0xFFCC00 0x6600FF 0xF2A31B 0xFF0000" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1024,11 +1025,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	}
 	if (out_mass) {
 		//"SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap"
-		plot_description << "snow_water_equivalent  total_amount_of_water  erosion_mass_loss  rain_rate  virtual_lysimeter  virtual_lysimeter_under_the_soil  sublimation_mass  evaporated_mass" << " ";
-		plot_units << "kg/m2 kg/m2 kg/m2/h kg/m2/h kg/m2 kg/m2 kg/m2 kg/m2" << " ";
-		units_offset << "0 0 0 0 0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1 1 1 1 1" << " ";
-		plot_color << "0x3300FF 0x0000FF 0x99CCCC 0x3333 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF" << " ";
+		plot_description << "snow_water_equivalent  total_amount_of_water  erosion_mass_loss  rain_rate  virtual_lysimeter  virtual_lysimeter_under_the_soil  sublimation_mass  evaporated_mass  mass_melt  mass_refreeze" << " ";
+		plot_units << "kg/m2 kg/m2 kg/m2/h kg/m2/h kg/m2 kg/m2 kg/m2 kg/m2 kg/m2 kg/m2" << " ";
+		units_offset << "0 0 0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1 1 1 1 1" << " ";
+		plot_color << "0x3300FF 0x0000FF 0x99CCCC 0x3333 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF 0xFF0000 0x0000FF" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1129,6 +1130,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Sdata.qg0 );
 		data.push_back( Sdata.qr );
 		data.push_back( (Sdata.meltFreezeEnergy / 1000.) );
+		data.push_back( (Xdata.ColdContent / 1000.) );	// From J/m2 to kJ/m2
 	}
 
 	if (out_lw) {
@@ -1188,6 +1190,8 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( (useSoilLayers? Sdata.mass[SurfaceFluxes::MS_SOIL_RUNOFF] / Xdata.cos_sl : IOUtils::nodata) );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_SUBLIMATION]/cos_sl );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_EVAPORATION]/cos_sl );
+		data.push_back( Sdata.meltMass/cos_sl );
+		data.push_back( Sdata.refreezeMass/cos_sl );
 	}
 
 	if (out_dhs) {
