@@ -402,6 +402,11 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:
 				value = (!snowPixel.isGlacier(false))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
+			case SnGrids::ET:
+					value = -(surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION]+surfaceFlux.mass[SurfaceFluxes::MS_EVAPORATION])/snowPixel.cos_sl; //slope2horiz
+					// Add part from Canopy
+					value += useCanopy?(snowPixel.Cdata.transp+snowPixel.Cdata.intevap)/snowPixel.cos_sl:0; //slope2horiz
+					break;
 			default:
 				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::lastparam) //dealing with soil temperatures
 				{
@@ -452,6 +457,9 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	const Meteo::ATM_STABILITY USER_STABILITY = meteo.getStability();
 	const std::string bcu_watertransportmodel_snow = sn_cfg.get("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced");
 	const std::string bcu_watertransportmodel_soil = sn_cfg.get("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced");
+	const std::string bcu_reduce_n_elements = sn_cfg.get("REDUCE_N_ELEMENTS", "SnowpackAdvanced");
+	const std::string bcu_adjust_height_of_meteo= sn_cfg.get("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced");
+	const std::string bcu_adjust_height_of_wind = sn_cfg.get("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced");
 
 	CurrentMeteo meteoPixel(sn_cfg);
 	meteoPixel.date = date;
@@ -478,7 +486,12 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", "BUCKET");
 			sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", "BUCKET");
 		}
-
+		// In case of glacier pixel, remove meteo height correction and try to merge elemnts
+		if (land==14) {
+			sn_cfg.addKey("REDUCE_N_ELEMENTS", "SnowpackAdvanced", "TRUE");
+			sn_cfg.addKey("ADJUST_HEIGHT_OF_METEO_VALUES","SnowpackAdvanced","FALSE");
+			sn_cfg.addKey("ADJUST_HEIGHT_OF_WIND_VALUE","SnowpackAdvanced","FALSE");
+		}
 		// Set curent meteo variables from 2D fields to single pixel
 		const double previous_albedo = getGridPoint(SnGrids::TOP_ALB, ix, iy);
 		meteoPixel.rh = rh(ix,iy);
@@ -630,6 +643,12 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			sn_cfg.addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", bcu_watertransportmodel_snow);
 			sn_cfg.addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", bcu_watertransportmodel_soil);
 		}
+		//Restore original keys that were modified for glacier pixels
+		if (land==14) {
+			sn_cfg.addKey("REDUCE_N_ELEMENTS", "SnowpackAdvanced", bcu_reduce_n_elements);
+			sn_cfg.addKey("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", bcu_adjust_height_of_meteo);
+			sn_cfg.addKey("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", bcu_adjust_height_of_wind);
+		}
 	}
 }
 
@@ -642,7 +661,7 @@ void SnowpackInterfaceWorker::grooming(const mio::Date &current_date, const mio:
 		if (SnowStations[ii]==NULL) continue; //for safety: skipped cells were initialized with NULL
 
 		if (grooming_map(ix, iy)==IOUtils::nodata || grooming_map(ix, iy)==0) continue;
-		
+
 		if (sn_techsnow.prepare(current_date)) sn_techsnow.preparation(*SnowStations[ii]);
 	}
 }

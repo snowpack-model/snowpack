@@ -53,7 +53,7 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 		double TA = ovec[ii](MeteoData::TA);
 		double RH = ovec[ii](MeteoData::RH);
 		const double P = ovec[ii](MeteoData::P);
-		if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		if (TA==IOUtils::nodata || TA<180. || TA>330. || RH==IOUtils::nodata || RH<0.01 || RH>1.) {
 			TA = 274.98;
 			RH = 0.666;
 		}

@@ -169,6 +169,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["PROF_START"] = "0";
 	outputConfig["SNOW_WRITE"] = "true";
 	outputConfig["SNOW"] = "SMET";
+	outputConfig["HAZ_WRITE"] = "true";
 	outputConfig["TS_FORMAT"] = "MET";
 	outputConfig["TS_DAYS_BETWEEN"] = "1";
 	outputConfig["TS_START"] = "0";

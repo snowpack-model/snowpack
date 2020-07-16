@@ -111,7 +111,7 @@ const std::string CaaMLIO::SnowData_xpath = "/caaml:SnowProfile/caaml:snowProfil
 CaaMLIO::CaaMLIO(const SnowpackConfig& cfg, const RunInfo& run_info)
            : info(run_info),
              i_snowpath(), sw_mode(), o_snowpath(), experiment(),
-             useSoilLayers(false), perp_to_slope(false), aggregate_caaml(false), in_tz(),
+             useSoilLayers(false), perp_to_slope(false), aggregate_caaml(false), haz_write(true), in_tz(),
              snow_prefix(), snow_ext(".caaml"), caaml_nodata(-999.),
              in_doc(NULL), in_xpathCtx(NULL), in_encoding(XML_CHAR_ENCODING_NONE)
 {
@@ -142,6 +142,7 @@ void CaaMLIO::init(const SnowpackConfig& cfg)
 	cfg.getValue("SNOWPATH", "Output", o_snowpath, IOUtils::nothrow);
 	if (o_snowpath.empty())
 		o_snowpath = tmpstr;
+	cfg.getValue("HAZ_WRITE", "Output", haz_write, IOUtils::nothrow);
 
 	//input encoding forcing, inherited from CosmoXMLIO
 	tmpstr.clear();
@@ -769,7 +770,7 @@ void CaaMLIO::writeSnowCover(const Date& date, const SnowStation& Xdata,
 	}
 
 	writeSnowFile(snofilename, date, Xdata, aggregate_caaml);
-	SmetIO::writeHazFile(hazfilename, date, Xdata, Zdata);
+	if (haz_write) SmetIO::writeHazFile(hazfilename, date, Xdata, Zdata);
 }
 
 void CaaMLIO::writeSnowFile(const std::string& snofilename, const Date& date, const SnowStation& Xdata,

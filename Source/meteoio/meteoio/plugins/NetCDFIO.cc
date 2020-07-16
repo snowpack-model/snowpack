@@ -80,9 +80,10 @@ namespace mio {
  *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
  *     - NC_DEBUG : print some low level details about the file being read (default: false); [Input] section;
- *     - NC_KEEP_FILES_OPEN: keep files open for efficient access (default: true). Reading from or writing to many NetCDF files may cause the plugin to exceed the maximum allowed
- *       concurrent open files determined by system limits. For those cases, setting NC_KEEP_FILES_OPEN = FALSE forces the plugin to open only one file at a time for reading
- *	 (when in [Input] section), or writing (when in [Output] section).
+ *     - NC_KEEP_FILES_OPEN: keep files open for efficient access (default for input: true, default for output: false). Reading from or writing to many NetCDF files may cause the
+ *       plugin to exceed the maximum allowed concurrent open files determined by system limits. Also, when multiple modules write to the same output file, file corruption may occur.
+ *       For those cases, NC_KEEP_FILES_OPEN = FALSE forces the plugin to open only one file at a time for reading (when in [Input] section), or writing (when in [Output] section,
+ *       default behavior).
  * - Gridded data handling:
  *     - DEMFILE: The filename of the file containing the DEM; [Input] section
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
@@ -589,7 +590,7 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
                file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata),
                dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
                max_unknown_param_idx(ncpp::lastdimension),
-               strict_schema(false), lax_schema(false), debug(i_debug), isLatLon(false), nc_filename(std::string()), ncid(-1), keep_input_files_open(true), keep_output_files_open(true)
+               strict_schema(false), lax_schema(false), debug(i_debug), isLatLon(false), nc_filename(std::string()), ncid(-1), keep_input_files_open(true), keep_output_files_open(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
 
@@ -1041,7 +1042,7 @@ void ncFiles::writeGridMetadataHeader(const Grid2DObject& grid_in)
 	acdd.addAttribute("title", "Gridded data for various parameters and timesteps");
 	acdd.setGeometry(grid_in, isLatLon);
 
-	acdd.writeAttributes(ncid);
+	ncpp::writeACDDAttributes(ncid, acdd);
 }
 
 void ncFiles::writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
@@ -1077,7 +1078,7 @@ void ncFiles::writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData>
 		acdd.setTimeCoverage(vecMeteo[station_idx]);
 	}
 
-	acdd.writeAttributes(ncid);
+	ncpp::writeACDDAttributes(ncid, acdd);
 }
 
 std::vector<StationData> ncFiles::readStationData()

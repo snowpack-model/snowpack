@@ -80,7 +80,7 @@ namespace mio {
  * These particles are assigned a weight that is essentially (derived from) the _Bayesian statistics formula_
  * \f$P(A|B) = P(B|A) * P(A) / P(B)\f$ expressing a degree of belief in the estimated state.
  *
- * Contrary to a Kalman filter (FilterKalman), a particle filter is able to emulate truly _nonlinear model functions_ aswell as _arbitrary
+ * Contrary to a Kalman filter (FilterKalman), a particle filter is able to emulate truly _nonlinear model functions_ as well as _arbitrary
  * probability density functions_.
  *
  * The syntax follows Ref. [AM+02] and all remarks here can be investigated further therein.

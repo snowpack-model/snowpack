@@ -48,7 +48,7 @@ namespace mio {
  * class that is inherited by every algorithm.
  *
  * @section implementation_1Dinterpol Implementation
- * Using the template.cc and template.h files, build your own algorithm:
+ * Using the template.cc and template.h files in meteoio/meteoResampling, build your own algorithm:
  *  - rename template.cc and template.h into a proper name for your algorithm as well as all mentions of "TEMPLATE" in the files;
  *  - declare your cc file in meteoio/meteoResampling/CMakeLists.txt;
  *  - declare your class in meteoio/meteoResampling/ResamplingAlgorithms.cc (both as \#include and in the object factory

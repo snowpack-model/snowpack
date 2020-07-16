@@ -422,6 +422,12 @@
 			<option value="FALSE" type="string" />
 			<help>If true, each backup file is individually labeled with a time stamp in the file name</help>
 		</parameter>
+		<parameter key="HAZ_WRITE" type="alternative" default="TRUE" optional="true">
+			<section name="output" />
+			<option value="TRUE" type="string" />
+			<option value="FALSE" type="string" />
+			<help>If true, write *.haz files along with *.sno files. *.haz files are necessary during restarts to keep track of variables: SurfaceHoarIndex, DriftIndex, ThreeHourNewSnow, and TwentyFourHourNewSnow.</help>
+		</parameter>
 	</frame>
 
 	<frame key="profiles_frame" label="Snow Profiles">

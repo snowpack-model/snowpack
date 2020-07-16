@@ -31,7 +31,7 @@ namespace mio {
  * @brief This filter removes periods showing insufficient changes. 
  * @details
  * It searches for time periods in which the value of the certain variable doesn't change by looking at the variance. 
- * It takes as arguments all the window parameters as defined in WindowedFilter::setWindowFParams();
+ * It takes as arguments all the window parameters as defined in WindowedFilter::setWindowFParams().
  * Additionally, you can set the maximum variance that is allowed with MAX_VARIANCE. If not set, this value is 0.
  * 
  * For example:

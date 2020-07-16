@@ -67,11 +67,13 @@ bool SnGrids::initStaticData()
 	paramname.push_back("WINDEROSIONDEPOSITION");
 	paramname.push_back("GLACIER");
 	paramname.push_back("GLACIER_EXPOSED");
+	paramname.push_back("ET");
 	paramname.push_back("TSOIL1");
 	paramname.push_back("TSOIL2");
 	paramname.push_back("TSOIL3");
 	paramname.push_back("TSOIL4");
 	paramname.push_back("TSOIL5");
+
 
 	if (paramname.size()!=(SnGrids::lastparam+1))
 		throw IOException("Wrong number of string representations for the SnGrids parameters! You forgot to update the \"paramname\" vector.", AT);

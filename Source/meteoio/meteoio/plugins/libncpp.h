@@ -18,6 +18,7 @@
 #ifndef LIBNCPP_H
 #define LIBNCPP_H
 
+#include <meteoio/plugins/libacdd.h>
 #include <meteoio/dataClasses/Grid2DObject.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Config.h>
@@ -104,6 +105,7 @@ namespace ncpp {
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
+	void writeACDDAttributes(const int& ncid, const ACDD& acdd);
 	bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name);
 	void getGlobalAttribute(const int& ncid, const std::string& attr_name, std::string& attr_value);
 	void getGlobalAttribute(const int& ncid, const std::string& attr_name, int& attr_value);
@@ -123,56 +125,6 @@ namespace ncpp {
 	void createDimension(const int& ncid, nc_dimension& dimension, const size_t& length);
 	std::string generateHistoryAttribute();
 } // end namespace
-
-/**
- * @class ACDD
- * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see 
- * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A>).
- * @details A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
- * the whole process as simple as possible. It is however possible to provide some of these attributes from the configuration file, using the
- * following keys:
- *  - NC_CREATOR: the name of the creator of the data set (default: login name);
- *  - NC_EMAIL: the email of the creator;
- *  - NC_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
- *  - NC_TITLE: a short title for the data set;
- *  - NC_INSTITUTION: the institution providing the data set (default: domain name);
- *  - NC_PROJECT: the scientific project that created the data;
- *  - NC_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
- *  - NC_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
- *  - NC_PROCESSING_LEVEL: a textual description of the processing level
- *  - NC_SUMMARY: a paragraph describing the dataset;
- *  - NC_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of NC_SUMMARY if present;
- *  - NC_COMMENT: miscellaneous informartion about the dataset;
- *  - NC_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
- *  - NC_METADATA_LINK: A URL/DOI that gives more complete metadata;
- *  - NC_LICENSE: describes the license applicable to the dataset;
- *  - NC_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0).
-*/
-class ACDD {
-	public:
-		enum Mode {MERGE, REPLACE, APPEND};
-		
-		ACDD() : name(), cfg_key(), value() {defaultInit();}
-		
-		void setUserConfig(const mio::Config& cfg, const std::string& section);
-		
-		void addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key="", Mode mode=MERGE);
-		void addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key="", const Mode& mode=MERGE);
-		void writeAttributes(const int& ncid) const;
-		
-		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
-		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon);
-		void setGeometry(const mio::Coords& location, const bool& isLatLon);
-		
-		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
-		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
-		
-	private:
-		void defaultInit();
-		size_t find(const std::string& search_name) const;
-		
-		std::vector<std::string> name, cfg_key, value;
-};
 
 /**
  * @class NC_SCHEMA

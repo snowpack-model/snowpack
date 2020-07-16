@@ -39,6 +39,7 @@ SET(meteoio_sources
 	Meteo2DInterpolator.cc
 	DataCreator.cc
 	DataGenerator.cc
+	plugins/libacdd.cc
 	plugins/libsmet.cc
 	IOInterface.cc
 	${meteoResampling_sources}

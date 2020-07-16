@@ -171,7 +171,7 @@ namespace mio {
  * It is possible to use multiple plugins to read \b meteorological \b timeseries from multiple sources and combine them into one stream of data. This is
  * achieved by declaring as many \em DATASOURCExxx sections as necessary (where xxx represent any number, to make sure that not two
  * sections have the same name) and declaring \em METEO plugins in each of them. Please make sure that all required keys are defined within each
- * new such section (such as TIMEZONE) because the plugins created this way won't have access to the original \em INPUT section. The other
+ * new such section (such as TIME_ZONE) because the plugins created this way won't have access to the original \em INPUT section. The other
  * plugins (such as for reading grids, dem, etc) as well as the raw data editing will only be read from the standard \em INPUT section and
  * performed as usual after the data has been provided by the plugins.
  *

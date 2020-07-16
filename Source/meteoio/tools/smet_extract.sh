@@ -8,6 +8,8 @@ if [ $# -lt 1 ]; then
 	printf "\t$me {smet_file} {parameter}\n\t\t to extract the given parameter out of the given file\n"
 	printf "\t$me {smet_file} {parameter} {aggregation}\n\t\t to extract the monthly aggregated given parameter out of the given file\n"
 	printf "\t\t where {aggregation} is any of (AVG, MIN, MAX)\n"
+	printf "\t$me {smet_file} gaps\n\t\t to extract the data gaps bigger than the average sampling rate\n"
+	printf "\t$me {smet_file} gaps {sampling_rate}\n\t\t to extract the data gaps bigger than the given sampling rate in minutes\n"
 	exit 0
 fi
 
@@ -65,7 +67,98 @@ if [ $# -eq 1 ]; then
 		exit 0
 	fi
 
-	head -50 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s '  \t' ' ' | xargs -i echo "Available fields: {}"
+	head -50 ${INPUT} | grep --binary-files=text "fields" | cut -d'=' -f2 | tr -s '  \t' ' ' | xargs -i echo "Available fields: {}"
+	exit 0
+fi
+
+#special case: gaps detection
+if [ "$2" = "gaps" ]; then
+	#on osX, it is necessary to force using gawk, if available
+	local_awk="awk"
+	if [ `command -v gawk` ]; then
+		local_awk="gawk"
+	fi
+	
+	#get data for sampling rate
+	start=`head -100 "${INPUT}" | grep --binary-files=text -E "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T" | head -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+	end=`tail -5 "${INPUT}" | grep --binary-files=text -E "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T" | tail -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+	nr_lines=`grep --binary-files=text -c '^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T' "${INPUT}"`
+	if [ $# -eq 3 ]; then
+		USER_SAMPLING_RATE=$3
+	fi
+	
+	${local_awk} '
+		function getISO(ts){
+			return sprintf("%s", strftime("%FT%H:%m", ts))
+		}
+		function getSec(ts){
+			gsub(/\-|\:|T/," ", ts); split(ts,d," ");
+			date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
+			return mktime(date)
+		}
+		function prettyPrintDuration(ts){
+			if (ts<299 && ts!=60 && ts!=120 && ts!=180 && ts!=240)
+				return sprintf("%3.0f s", ts)
+			else if (ts<60*60)
+				return sprintf("%3.0f min", ts/60)
+			else if (ts<2*24*3600) {
+				if (ts>23.5*3600 && ts<24.5*3600) 
+					return sprintf("%3.0f day", 1)
+				ts_h=ts/3600
+				if (ts_h==int(ts_h))
+					return sprintf("%3.0f h", ts/3600)
+				return sprintf("~%3.0f h", ts/3600)
+			} else {
+				period_days=ts/(3600*24)
+				if (period_days==int(period_days))
+					return sprintf("%3.0f days", period_days)
+				return sprintf("~%3.0f days", period_days)
+			}
+		}
+		BEGIN {
+			if("'"${USER_SAMPLING_RATE}"'"!="") {
+				period=int("'"${USER_SAMPLING_RATE}"'" * 60)
+			} else {
+				start=getSec("'"${start}"'")
+				end=getSec("'"${end}"'")
+				nr="'"${nr_lines}"'"
+				if(nr<=1) exit
+				period=int( (end-start)/(nr-1) + 0.5); #round to the nearest second
+			}
+		}
+		/nodata/ {
+			nodata=$3
+		}
+		/fields/ {
+			for(ii=1; ii<=NF; ii++) {
+				fields[ii]=$(ii)
+			}
+		}
+		/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T/ {
+			curr_ts=getSec($1)
+			if(prev_ts==0) {
+				prev_ts=curr_ts
+				prev_ts_str=$1
+			}
+			
+			all_nodata=1
+			for(ii=2; ii<=NF; ii++) {
+				if ($(ii)!=nodata) {
+					all_nodata=0
+					break
+				}
+			}
+			if(all_nodata==1) next;
+			if(curr_ts-prev_ts>period) {
+				gap_size_s=(curr_ts-prev_ts)
+				printf("%s - %s\t(%s)\n", prev_ts_str, $1, prettyPrintDuration(gap_size_s))
+			}
+			
+			prev_ts=curr_ts
+			prev_ts_str=$1
+		}
+	' ${INPUT}
+	
 	exit 0
 fi
 
@@ -77,25 +170,25 @@ fi
 #create data sets metadata
 field_nr=$(head -50 ${INPUT} | grep "fields" | awk '
 	/fields/ {
-		found=3
-		for(i=1; i<=NF; i++) {
-			if($(i)=="'${FIELD}'") found=i
+		found=2
+		for(ii=1; ii<=NF; ii++) {
+			if($(ii)=="'${FIELD}'") found=ii
 		}
 		printf("%d\n", found-2)
 	}
 ')
 
-if [ ${field_nr} -eq 1 ]; then
+if [ ${field_nr} -eq 0 ]; then
 	exit
 fi
 
 #get generic info
-stat_id=`head -50 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-stat_name=`head -50 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lat=`head -50 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lon=`head -50 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-alt=`head -50 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-JULIAN=`head -50 "${INPUT}" | grep fields | grep julian`
+stat_id=`head -50 ${INPUT} | grep --binary-files=text "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_name=`head -50 ${INPUT} | grep --binary-files=text "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lat=`head -50 ${INPUT} | grep --binary-files=text "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lon=`head -50 ${INPUT} | grep --binary-files=text "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+alt=`head -50 ${INPUT} | grep --binary-files=text "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+JULIAN=`head -50 "${INPUT}" | grep --binary-files=text fields | grep julian`
 
 awk '
 	BEGIN {

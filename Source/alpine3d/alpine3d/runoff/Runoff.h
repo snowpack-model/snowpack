@@ -85,14 +85,14 @@ class Runoff
 		Runoff(const mio::Config& in_cfg, const mio::DEMObject& in_dem,
 				const double& in_thresh_rain);
 		Runoff(const Runoff& copy);
-		
+
 		// Methods to set other modules
 		void setSnowPack(SnowpackInterface &sn_interface);
-		
+
 		virtual void output(const mio::Date& i_date, const mio::Grid2DObject& psum,
-				const mio::Grid2DObject& ta);
+				const mio::Grid2DObject& ta, mio::IOManager& io_in);
 		virtual ~Runoff();
-		
+
 		std::string getGridsRequirements() const;
 		double getTiming() const;
 
@@ -118,7 +118,9 @@ class Runoff
 		std::vector<SnGrids::Parameters> extra_meteo_variables;
 		size_t n_extra_meteo_variables;
 		std::map<size_t, mio::Grid2DObject> catchment_masks;
-
+		bool use_external_iomanager_for_grids; // To know if the same io manager than
+																					 // for the other grids must be used
+																					 // (to avoid having multiple netcdf files open)
 		static const double MIN_CELL_SIZE; //< [m] two points closer to each other than this value will be assumed to overlap
 		static const double DISTANCE_ABSOLUTE_PRECISION; //< [m] minimum size of a grid cell
 

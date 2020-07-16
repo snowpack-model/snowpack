@@ -327,14 +327,15 @@ void Date::setDate(const double& julian_in, const double& in_timezone, const boo
 /**
 * @brief Set date from a year and Julian Day Number (JDN).
 * @param year year to set
-* @param jdn Julian Day Number within the provided year
+* @param jdn Julian Day Number within the provided year (1 to 365/366), starting at 00:00
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
 void Date::setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst)
 {
 	setTimeZone(in_timezone, in_dst);
-	const double local_julian = static_cast<double>( getJulianDayNumber(year, 1, 1) ) + jdn;
+	//jdn starts at 1, so we need to remove 1 day. Julian_date starts at noon, so we need to remove 0.5 day
+	const double local_julian = static_cast<double>( getJulianDayNumber(year, 1, 1) ) + jdn-1.5;
 	gmt_julian = rnd( localToGMT(local_julian), epsilon_sec);
 	undef = false;
 }
@@ -1355,7 +1356,7 @@ bool Date::isLeapYear(const int& i_year) {
 }
 
 long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day)
-{ //given year, month, day, calculate the matching julian day
+{ //given year, month, day, calculate the matching julian day. Watch out: Julian Dates start at noon, not at midnight!!
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	const long lmonth = (long) i_month, lday = (long) i_day;
 	long lyear = (long) i_year;

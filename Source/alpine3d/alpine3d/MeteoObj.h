@@ -59,7 +59,7 @@ class SnGrids {
                                           RG, ///< grain radius
                                           N3, ///< grain Coordination number
                                           MS_SNOWPACK_RUNOFF, ///< runoff on the surface of the soil (vitual lysimeter)
-                                          MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column	
+                                          MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
                                           MS_WATER, ///< The total amount of water in the snowpack at the present time
                                           SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
@@ -67,6 +67,7 @@ class SnGrids {
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
+                                          ET, ///< Evapotranspiration
                                           TSOIL1, TSOIL2, TSOIL3, TSOIL4, TSOIL5, ///< Temperature within the soil, at a given depth
                                           lastparam=TSOIL5};
 

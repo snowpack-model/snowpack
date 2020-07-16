@@ -60,7 +60,7 @@ namespace mio {
  *     - GOES_EXT: extension of Goes data files to use when no FILE# keyword has been provided;
  *     - METEOPATH_RECURSIVE: when no FILE# keyword has been defined, should all files under METEOPATH be searched recursively? (default: false)
  * - GOES_NODATA: value used to represent nodata (default: -8190);
- * - GOES_ONLYFROMPAST: if set to true, data point beyond the current date and time will be rejected as invalid and reading will continue (default: true);
+ * - GOES_ONLYFROMPAST: if set to true, data points beyond the current date and time will be rejected as invalid and reading will continue (default: true);
  * - GOES_DEBUG: should extra (ie very verbose) information be displayed? (default: false)
  * - METAFILE: an ini file that contains all the metadata, for each station that has to be read;
  *

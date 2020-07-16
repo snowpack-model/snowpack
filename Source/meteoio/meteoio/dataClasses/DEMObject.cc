@@ -401,7 +401,7 @@ void DEMObject::printFailures() {
 * When computing the slope and curvature, it is possible to get points where the elevation is known
 * but where no slope/azimuth/normals/curvature could be computed. This method sets the elevation to nodata for such points,
 * so that latter use of the DEM would be simpler (simply test the elevation in order to know if the point can be used
-* and it guarantees that all other informations are available).
+* and it guarantees that all other information is available).
 *
 * @note The update flags are used in order to know which properties should be checked. So if update_flag==SLOPE
 * but there are curvatures and they are later used, they won't have been cleaned!
