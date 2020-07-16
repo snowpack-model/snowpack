@@ -43,6 +43,7 @@ class IOManager {
 		void readDEM(DEMObject& dem_out) {gdm1.readDEM(dem_out);}
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out) {gdm1.readAssimilationData(date_in, da_out);}
 		void readLanduse(Grid2DObject& landuse_out) {gdm1.readLanduse(landuse_out);}
+		void readGlacier(Grid2DObject& glacier_out) {gdm1.readGlacier(glacier_out);}
 		void readPOI(std::vector<Coords>& pts) {iohandler.readPOI(pts);}
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {gdm1.write2DGrid(grid_in, options);}
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write2DGrid(grid_in, parameter, date);}
@@ -228,14 +229,14 @@ class IOManager {
 		 * @return mode as of IOUtils::OperationMode
 		 */
 		static IOUtils::OperationMode getIOManagerTSMode(const Config& i_cfg);
-		
+
 		/**
 		 * @brief Returns the mode to be used for the IOManager for Grids
 		 * @param i_cfg configuration object
 		 * @return mode as of IOUtils::OperationMode
 		 */
 		static IOUtils::OperationMode getIOManagerGridMode(const Config& i_cfg);
-		
+
 		void initVirtualStations();
 		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);
 		void initIOManager();

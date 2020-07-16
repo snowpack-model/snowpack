@@ -289,7 +289,7 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::getDistribution(std::vec
 	return rng_distribution;
 }
 
-//CUSTOM_DIST step 3/7: Add a case for your distribution here and set your functions from step 2, aswell as defaults
+//CUSTOM_DIST step 3/7: Add a case for your distribution here and set your functions from step 2, as well as defaults
 //for all parameters the distribution needs via the vector DistributionParameters. Please make sure all mandatory ones
 //are described properly. Cf. notes in doc setDistribution().
 

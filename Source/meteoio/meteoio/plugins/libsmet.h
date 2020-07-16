@@ -19,6 +19,7 @@
 #define LIBSMET_H
 
 #include <meteoio/FileUtils.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <string>
 #include <iostream>
@@ -130,15 +131,19 @@ class SMETWriter {
 		 *            is aligned sequentially, not per line; Total size of the vector:
 		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields
 		 *            (timestamp is not counted as field)
+		 * @param[in] acdd ACDD object that contains acdd metadata
+		 * @param[in] write_acdd should the acdd metadata be written out? (default: false)
 		 */
-		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data);
+		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const ACDD& acdd, const bool& write_acdd=false);
 
 		/**
 		 * @brief Write a SMET file, providing a vector of doubles
 		 * @param[in] data All the data to be written sequentially into the columns, the data
 		 *            is aligned sequentially, not per line;
+		 * @param[in] acdd ACDD object that contains acdd metadata
+		 * @param[in] write_acdd should the acdd metadata be written out? (default: false)
 		 */
-		void write(const std::vector<double>& data);
+		void write(const std::vector<double>& data, const ACDD& acdd, const bool& write_acdd=false);
 
 		/**
 		 * @brief Set precision for each field (except timestamp), otherwise a default
@@ -155,13 +160,23 @@ class SMETWriter {
 		 *            (timestamp is not counted if present)
 		 */
 		void set_width(const std::vector<int>& vec_width);
+		
+		/**
+		 * @brief For some special cases (import into DB), the white space separator
+		 *        should be replaced by another one (typically, comma). In this case,
+		 *        each field will be delimited by a single separator but the headers
+		 *        will remain space-delimited.
+		 * @param[in] i_separator field separator to use instead of spaces
+		 */
+		void set_separator(const char& i_separator) {separator = i_separator;}
 
 		const std::string toString() const;
 		
 	private:
 		void setAppendMode(std::vector<std::string> vecFields);
 		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
-		void write_header(std::ofstream& fout); //only writes when all necessary header values are set
+		void printACDD(std::ofstream& fout, const ACDD& acdd) const;
+		void write_header(std::ofstream& fout, const ACDD& acdd, const bool& write_acdd=false); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
 		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
 		bool check_fields(const std::string& key, const std::string& value);
@@ -180,6 +195,7 @@ class SMETWriter {
 		double nodata_value;
 		size_t nr_of_fields, julian_field, timestamp_field;
 		char location_wgs84, location_epsg;
+		char separator;
 		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
 		bool timestamp_present, julian_present;
 		bool file_is_binary, append_mode, append_possible;

@@ -57,7 +57,10 @@ namespace mio {
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
- * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section  
+ * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
+ * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
+ * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
+ * - SMET_SEPARATOR: set a different output field separator as required by some import software. But this <b>makes the smet files non-conformant</b>! [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
  * Example:
@@ -93,21 +96,21 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile), plot_ppt( initPlotParams() ), 
+        : cfg(configfile), acdd(), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), 
-          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          plugin_nodata(IOUtils::nodata), output_separator(' '),
+          write_acdd(false), outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader), plot_ppt( initPlotParams() ), 
+        : cfg(cfgreader), acdd(), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), 
-          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          plugin_nodata(IOUtils::nodata), output_separator(' '),
+          write_acdd(false), outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
@@ -172,32 +175,40 @@ void SMETIO::parseInputOutputSection()
 		}
 	}
 
-	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
+	//Parse output section: extract info on whether to write ASCII or BINARY, gzipped or not, acdd...
 	outpath.clear();
-	outputIsAscii = true;
-
-	std::vector<std::string> vecArgs;
-	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
-	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
-	cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
-	cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
-	cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
-	cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
-
-	if (outpath.empty()) return;
-
-	if (vecArgs.empty())
-		vecArgs.push_back("ASCII");
-
-	if (vecArgs.size() > 1)
-		throw InvalidFormatException("Too many values for key METEOPARAM", AT);
-
-	if (vecArgs[0] == "BINARY")
-		outputIsAscii = false;
-	else if (vecArgs[0] == "ASCII")
+	std::string out_meteo;
+	cfg.getValue("METEO", "Output", out_meteo, IOUtils::nothrow);
+	if (out_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		outputIsAscii = true;
-	else
-		throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
+		
+		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
+		if (write_acdd) {
+			acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
+		}
+
+		std::vector<std::string> vecArgs;
+		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
+		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
+		cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
+		cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
+		cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
+		cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
+		cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
+		
+		if (vecArgs.empty())
+			vecArgs.push_back("ASCII");
+
+		if (vecArgs.size() > 1)
+			throw InvalidFormatException("Too many values for key METEOPARAM", AT);
+
+		if (vecArgs[0] == "BINARY")
+			outputIsAscii = false;
+		else if (vecArgs[0] == "ASCII")
+			outputIsAscii = true;
+		else
+			throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
+	}
 }
 
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
@@ -509,18 +520,23 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				for (size_t jj=0; jj<vecParamInUse.size(); jj++) {
 					if (vecParamInUse[jj]) fields = fields + " " + vecColumnName[jj];
 				}
+				if (output_separator!=' ') 
+					throw InvalidArgumentException("It is not possible to set the field separator when appending data to a smet file", AT);
 				mywriter = new smet::SMETWriter(filename, fields, IOUtils::nodata); //set to append mode
 			} else {
 				if (fileExists && !allowOverwrite)
 					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
 				
 				mywriter = new smet::SMETWriter(filename, type);
+				mywriter->set_separator( output_separator );
 				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
 
 			std::vector<std::string> vec_timestamp;
 			std::vector<double> vec_data;
+			std::vector<mio::Coords> vecLocation;
+			if (!vecMeteo[ii].empty()) vecLocation.push_back( vecMeteo[ii].front().meta.position );
 			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 				if (outputIsAscii){
 					if (out_dflt_TZ != IOUtils::nodata) { //user-specified time zone
@@ -543,6 +559,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 
 				if (!isConsistent) { //Meta data changes
+					if (vecMeteo[ii][jj].meta.position != vecLocation.back())
+						vecLocation.push_back( vecMeteo[ii][jj].meta.position );
+					
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLat());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLon());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getAltitude());
@@ -554,8 +573,12 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 			}
 
-			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data);
-			else mywriter->write(vec_data);
+			if (write_acdd) {
+				acdd.setTimeCoverage( vec_timestamp );
+				acdd.setGeometry(vecLocation, true);
+			}
+			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd, write_acdd);
+			else mywriter->write(vec_data, acdd, write_acdd);
 
 			delete mywriter;
 		} catch(exception&) {

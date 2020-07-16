@@ -92,6 +92,7 @@ class SMETIO : public IOInterface {
 		static const char* dflt_extension;
 		static const double snVirtualSlopeAngle;
 		const Config cfg;
+		ACDD acdd;
 		std::map<size_t, plot_attr> plot_ppt; ///< properties for plotting the SMET parameters
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;
@@ -99,7 +100,8 @@ class SMETIO : public IOInterface {
 		std::string outpath;                //read from the Config [Output] section
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
-		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
+		char output_separator;         //output field separator
+		bool write_acdd, outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 
 } //namespace

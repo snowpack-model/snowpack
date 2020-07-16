@@ -36,7 +36,8 @@ Runoff::Runoff(const mio::Config& in_cfg, const mio::DEMObject& in_dem, const do
 		is_glacier_mask_dynamic(getIsGlacierDynamic(in_cfg)),
 		is_glacier_mask_set(false), total_runoff(), glacier_mask(),
 		extra_meteo_variables(getExtraMeteoVariables(in_cfg)),
-		n_extra_meteo_variables(extra_meteo_variables.size()), catchment_masks()
+		n_extra_meteo_variables(extra_meteo_variables.size()), catchment_masks(),
+		use_external_iomanager_for_grids(false)
 {
 	in_cfg.getValue("WRITE_RUNOFF_GRIDS", "OUTPUT", output_grids, mio::IOUtils::nothrow);
 
@@ -47,6 +48,42 @@ Runoff::Runoff(const mio::Config& in_cfg, const mio::DEMObject& in_dem, const do
 	if (output_grids || output_sums) {
 		io = getIOManager(in_cfg, output_grids);
 		total_runoff.set(in_dem, mio::IOUtils::nodata);
+	}
+
+	// Set the value of use_external_io_grids if plugin is netcdf and output files
+	// are the same
+	bool keep_output_files_open = false;
+	in_cfg.getValue("NC_KEEP_FILES_OPEN", "Output", keep_output_files_open, mio::IOUtils::nothrow);
+	if(keep_output_files_open){
+		std::string runoff_grid2d("ARC");
+		in_cfg.getValue("RUNOFF_GRID2D", "Output", runoff_grid2d, mio::IOUtils::nothrow);
+		mio::IOUtils::toUpper(runoff_grid2d);
+		std::string grid2d("ARC");
+		in_cfg.getValue("GRID2D", "Output", grid2d, mio::IOUtils::nothrow);
+		mio::IOUtils::toUpper(grid2d);
+
+		if(runoff_grid2d == "NETCDF" && grid2d == "NETCDF") {
+
+			std::string runoff_grid2d_file("NULL");
+			in_cfg.getValue("RUNOFF_GRID2DFILE", "Output", runoff_grid2d_file, mio::IOUtils::nothrow);
+			mio::IOUtils::toUpper(runoff_grid2d_file);
+
+			std::string grid2d_file("NULL");
+			in_cfg.getValue("GRID2DFILE", "Output", grid2d_file, mio::IOUtils::nothrow);
+			mio::IOUtils::toUpper(grid2d_file);
+
+			std::string runoff_grid2d_path("NULL");
+			in_cfg.getValue("RUNOFF_GRID2DPATH", "Output", runoff_grid2d_path, mio::IOUtils::nothrow);
+			mio::IOUtils::toUpper(runoff_grid2d_path);
+
+			std::string grid2d_path("NULL");
+			in_cfg.getValue("GRID2DPATH", "Output", grid2d_path, mio::IOUtils::nothrow);
+			mio::IOUtils::toUpper(grid2d_path);
+
+			if(runoff_grid2d_file == grid2d_file && runoff_grid2d_path == grid2d_path) {
+				use_external_iomanager_for_grids=true;
+			}
+		}
 	}
 
 	if (output_sums) {
@@ -108,15 +145,22 @@ void Runoff::setSnowPack(SnowpackInterface &sn_interface) {
  * @param psum grid of precipitation in mm/h
  * @param ta grid of air temperature
  */
-void Runoff::output(const mio::Date& i_date, const mio::Grid2DObject& psum, const mio::Grid2DObject& ta)
+void Runoff::output(const mio::Date& i_date, const mio::Grid2DObject& psum,
+	const mio::Grid2DObject& ta, mio::IOManager& io_in)
 {
 	if (!output_grids && !output_sums) return;
 
 	timer.restart();
 	updateTotalRunoffGrid();
 
-	if(MPIControl::instance().master() && output_grids)
-		io->write2DGrid(total_runoff, mio::MeteoGrids::ROT, i_date);
+	if(MPIControl::instance().master() && output_grids){
+		if(use_external_iomanager_for_grids){
+			io_in.write2DGrid(total_runoff, mio::MeteoGrids::ROT, i_date);
+		}
+		else{
+			io->write2DGrid(total_runoff, mio::MeteoGrids::ROT, i_date);
+		}
+	}
 
 	if (output_sums) {
 		if(!is_glacier_mask_set || is_glacier_mask_dynamic) {

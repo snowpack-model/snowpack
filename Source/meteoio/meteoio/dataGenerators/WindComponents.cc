@@ -56,7 +56,7 @@ bool WindComponents::generate(const size_t& param, MeteoData& md)
 		const std::string V_param( findVComponent(md) );
 		
 		if (U_param.empty() || V_param.empty())
-			throw NotFoundException("No U and/or V wind components found", AT);
+			return false;
 		
 		const double u = md(U_param);
 		const double v = md(V_param);
@@ -82,7 +82,7 @@ bool WindComponents::create(const size_t& param, std::vector<MeteoData>& vecMete
 	const std::string V_param( findVComponent(vecMeteo[0]) );
 	
 	if (U_param.empty() || V_param.empty())
-		throw NotFoundException("No U and/or V wind components found", AT);
+		return false;
 	
 	bool all_filled = true;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {

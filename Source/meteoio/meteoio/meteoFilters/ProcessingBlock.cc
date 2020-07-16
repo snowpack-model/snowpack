@@ -125,8 +125,8 @@ namespace mio {
  * - DESPIKING: despiking in phase space according to Goring and Nikora (2002), see FilterDespikingPS
  * - NO_CHANGE: reject data that changes too little (low variance), see FilterNoChange
  * - TIME_CONSISTENCY: reject data that changes too much, see FilterTimeconsistency
- * - KALMAN: dynamic state likelihood estimation via Bayesian statistics (experimental), see FilterKalman
- * - PARTICLE: Monte Carlo sampling method for dynamic state estimation (experimental), see FilterParticle
+ * - KALMAN: dynamic state likelihood estimation via Bayesian statistics, see FilterKalman
+ * - PARTICLE: Monte Carlo sampling method for dynamic state estimation, see FilterParticle
  *
  * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
  * - SUPPR: delete all or some data, see FilterSuppr

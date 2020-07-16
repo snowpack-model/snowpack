@@ -172,11 +172,12 @@ class Runoff; // forward declaration, cyclic header include
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
 		void calcNextStep();
-
+		void setInitGlacierHeight();
+		SN_SNOWSOIL_DATA getIcePixel(const double glacier_height, const std::stringstream& GRID_sno, const bool seaIce);
 		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
                              std::vector<std::pair<size_t,size_t> >& snow_stations_coord);
 		void readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const bool& is_special_point,
-											 SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice);
+                             SN_SNOWSOIL_DATA &sno, ZwischenData &zwischenData, const bool& read_seaice);
 		void writeSnowCover(const mio::Date& date, const std::vector<SnowStation*>& snow_station);
 
 		void write_SMET_header(const mio::StationData& meta, const double& landuse_code) const;
@@ -206,7 +207,7 @@ class Runoff; // forward declaration, cyclic header include
 		double grids_start, grids_days_between; //gridded outputs
 		double ts_start, ts_days_between; //time series outputs
 		double prof_start, prof_days_between; //profiles outputs
-		bool grids_write, ts_write, prof_write, snow_write, snow_poi_written;
+		bool grids_write, ts_write, prof_write, snow_write, snow_poi_written, glacier_from_grid;
 		std::string meteo_outpath;
 		std::string outpath;
 		bool mask_glaciers; //mask glaciers in outputs?
@@ -223,7 +224,7 @@ class Runoff; // forward declaration, cyclic header include
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
 		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 

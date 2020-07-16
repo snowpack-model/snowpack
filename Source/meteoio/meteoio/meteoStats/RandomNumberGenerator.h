@@ -46,7 +46,7 @@ namespace mio {
  *
  * @section rng_purpose Purpose of this class
  * We offer two inherently 32 bit generators, and an inherently 64 bit generator
- * (although all three need 64 bits space), aswell as some convenience methods.
+ * (although all three need 64 bits space), as well as some convenience methods.
  *
  * The goal is to have a generator suite that satisfies all needs for statistical filters / Monte Carlo methods (and not
  * more), especially when working within MeteoIO. In a way, statistical filters are what ultimately justify this class,

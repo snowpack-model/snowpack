@@ -287,7 +287,7 @@ inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, cons
 }
 
 /**
- * @brief This function sort the X and Y vectors by increasing X.
+ * @brief This function sorts the X and Y vectors by increasing X.
  * The nodata values (both in X and Y) are removed, meaning that the vector length might not
  * be kept.
  * @param X vector of abscissae

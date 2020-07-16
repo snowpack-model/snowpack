@@ -23,7 +23,7 @@ namespace mio {
 /**
  * @page template TEMPLATE
  * @section template_format Format
- * *Put here the informations about the standard format that is implemented*
+ * *Put here the information about the standard format that is implemented*
  *
  * @section template_units Units
  *
