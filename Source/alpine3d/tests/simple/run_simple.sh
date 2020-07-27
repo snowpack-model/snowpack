@@ -42,16 +42,17 @@ sed -i '10d' output_ref/5_2_dischma.pro; sed -i '10d' output/5_2_dischma.pro
 numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.pro output/5_2_dischma.pro | grep "+++"
 rm -f output_ref/5_2_dischma.pro
 
-rm -f output_ref/5_2_dischma.smet
-bunzip2 -k output_ref/5_2_dischma.smet.bz2
-sed -i '16,17d' output_ref/5_2_dischma.smet; sed -i '16,17d' output/5_2_dischma_meteo.smet
-numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.smet output/5_2_dischma_meteo.smet | grep "+++"
-rm -f output_ref/5_2_dischma.smet
+rm -f output_ref/5_2_dischma_meteo.smet
+bunzip2 -k output_ref/5_2_dischma_meteo.smet.bz2
+sed -i '16,17d' output_ref/5_2_dischma_meteo.smet; sed -i '16,17d' output/5_2_dischma_meteo.smet
+numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma_meteo.smet output/5_2_dischma_meteo.smet | grep "+++"
+rm -f output_ref/5_2_dischma_meteo.smet
 
 for fichier in $(ls output_ref/grids/2014*); do
 	name=$(basename ${fichier})
 	numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/grids/${name} output/grids/${name} | grep "+++"
 done
 
-#cleanup, but keep the POI for further testing
-rm -f output/grids/20*; rm -f output/snowfiles/*
+#cleanup, but keep the POI and one timestep of grids for further testing
+rm -f output/snowfiles/*
+ls output/grids/2014* | grep -v "201412231200" | xargs -i rm {}

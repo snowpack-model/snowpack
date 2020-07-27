@@ -176,7 +176,8 @@ namespace mio {
  * performed as usual after the data has been provided by the plugins.
  *
  * If reading the same station from multiple sources (for example providing different time coverage), it might be useful to use
- * the \ref automerge "automerge" feature to merge all streams belonging to a station into one single stream.
+ * the \ref automerge "automerge" feature to merge all streams belonging to a station into one single stream. In this case, the data coming from [Input]
+ * has priority over the various [DataSourcexxx] data sources.
  *
  */
 

@@ -73,6 +73,7 @@ namespace mio {
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; optional
+ *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
  * - <b>Date/Time parsing</b>. There are two possibilities: either the date/time is provided as one or two strings or each component as a separate column.
@@ -586,13 +587,14 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary
 //offset and multiplier to convert the values back to SI
-void CsvParameters::parseUnits(const std::string& line)
+void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const std::string stdUnits[9] = {"TS", "RN", "W/M2", "M/S", "K", "M", "V", "VOLT", "DEG"};
-	static const std::set<std::string> noConvUnits( stdUnits, stdUnits+9 );
-	
+	static const size_t nrStdUnits = 12; //NOTE: do not forget to update this index when editing stdUnits!!
+	static const std::string stdUnits[nrStdUnits] = {"TS", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2"};
+	static const std::set<std::string> noConvUnits( stdUnits, stdUnits+nrStdUnits );
+
 	std::vector<std::string> units;
-	IOUtils::readLineToVec(line, units, csv_delim);
+	IOUtils::readLineToVec(csv_units, units, delim);
 	units_offset.resize(units.size(), 0.);
 	units_multiplier.resize(units.size(), 1.);
 	
@@ -600,12 +602,13 @@ void CsvParameters::parseUnits(const std::string& line)
 		std::string tmp( units[ii] );
 		IOUtils::toUpper( tmp );
 		IOUtils::removeQuotes(tmp);
-		if (tmp.empty() || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1") continue; //empty unit
+		if (tmp.empty() || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1" || tmp=="1" || tmp=="??") continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
-		if (tmp=="%" || tmp=="CM") units_multiplier[ii] = 0.01;
-		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C") units_offset[ii] = Cst::t_water_freezing_pt;
-		else if (tmp=="MM" || tmp=="MV") units_multiplier[ii] = 1e-3;
+		if (tmp=="%" || tmp=="pc" || tmp=="CM") units_multiplier[ii] = 0.01;
+		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C" || tmp=="°C") units_offset[ii] = Cst::t_water_freezing_pt;
+		else if (tmp=="HPA") units_multiplier[ii] = 1e2;
+		else if (tmp=="MM" || tmp=="MV" || tmp=="MA") units_multiplier[ii] = 1e-3;
 		else if (tmp=="IN") units_multiplier[ii] = 0.0254;
 		else if (tmp=="FT") units_multiplier[ii] = 0.3048;
 		else if (tmp=="F") { units_multiplier[ii] = 5./9.; units_offset[ii] = -32.*5./9.;}
@@ -613,7 +616,7 @@ void CsvParameters::parseUnits(const std::string& line)
 		else if (tmp=="MPH") units_multiplier[ii] = 1.60934 / 3.6;
 		else if (tmp=="KT") units_multiplier[ii] = 1.852 / 3.6;
 		else {
-			throw UnknownValueException("Can not parse unit '"+tmp+"', please inform the MeteoIO developers", AT);
+			std::cerr << "CsvIO: Can not parse unit '" << tmp << "', please inform the MeteoIO developers\n";
 		}
 	}
 }
@@ -678,7 +681,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				}
 			}
 			if (read_units && linenr==units_headers)
-				parseUnits(line);
+				setUnits(line, csv_delim);
 
 			if (linenr<=header_lines) continue; //we are still parsing the header
 
@@ -1020,6 +1023,15 @@ void CsvIO::parseInputOutputSection()
 		
 		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier);
 		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
+		
+		std::string csv_units;
+		if (cfg.keyExists(pre+"UNITS", "Input")) cfg.getValue(pre+"UNITS", "Input", csv_units);
+		else cfg.getValue(dflt+"UNITS", "Input", csv_units, IOUtils::nothrow);
+		if (!csv_units.empty()) {
+			if (!tmp_csv.units_multiplier.empty() || !tmp_csv.units_offset.empty())
+				throw InvalidArgumentException("It is not possible to define both CSV_UNITS and CSV_UNITS_OFFSET or CSV_UNITS_MULTIPLIER", AT);
+			tmp_csv.setUnits( csv_units, ' ' );
+		}
 		
 		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
 		std::string datetime_spec, date_spec, time_spec;

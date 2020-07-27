@@ -125,7 +125,7 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 * @param[in] ncid file ID
 * @param[in] acdd ACDD object containing all ACDD attributes (only those that have a value will be written)
 */
-void writeACDDAttributes(const int& ncid, const ACDD& acdd)
+void writeACDDAttributes(const int& ncid, const mio::ACDD& acdd)
 {
 	const size_t nr = acdd.getNrAttributes();
 	std::string name, value;
@@ -154,6 +154,31 @@ bool check_attribute(const int& ncid, const int& varid, const std::string& attr_
 }
 
 /**
+* @brief Add attributes to non-standard variables
+* @param[in,out] var variable whose attributes should be set.
+*/
+inline void overload_attributes(ncpp::nc_variable& var)
+{
+	if (var.attributes.name == "MS_SNOWPACK_RUNOFF" ) {
+		var.attributes.standard_name = "Snowpack_runoff";
+		var.attributes.long_name = "Runoff at bottom of snowpack (positive = downward flux)";
+		var.attributes.units = "kg/m2";
+	} else if (var.attributes.name == "MS_SOIL_RUNOFF" ) {
+		var.attributes.standard_name = "Soil_runoff";
+		var.attributes.long_name = "Runoff at bottom of soil (positive = downward flux)";
+		var.attributes.units = "kg/m2";
+	} else if (var.attributes.name == "RSNO") {
+		var.attributes.standard_name = "Mean_snow_density";
+		var.attributes.long_name = "Mean snow density";
+		var.attributes.units = "kg/m3";
+	} else if (var.attributes.name == "SFC_SUBL") {
+		var.attributes.standard_name = "Surface_evaporation_sublimation";
+		var.attributes.long_name = "Evaporation and sublimated mass from surface (positive = downward flux)";
+		var.attributes.units = "kg/m2";
+	}
+}
+
+/**
 * @brief Write a pre-defined set of attributes for the given variable.
 * @details Please note that during this call, a variable will be created, therefore the nc_variable structure will get a positive varid.
 * If the variable already exists, it will return without doing anything.
@@ -168,6 +193,7 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	const int status = nc_def_var(ncid, var.attributes.name.c_str(), var.attributes.type, ndims, &var.dimids[0], &var.varid);
 	if (status != NC_NOERR) throw mio::IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	
+	if (var.attributes.standard_name.empty()) overload_attributes(var);		// If no attributes, check if variable is defined in function overload_attributes.
 	if (!var.attributes.standard_name.empty()) ncpp::add_attribute(ncid, var.varid, "standard_name", var.attributes.standard_name);
 	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
 	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);

@@ -414,6 +414,20 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 		} else {		// Mass gain: add water in case temperature at or above melting point, ice otherwise
 			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
+				EMS[e].theta[AIR] = std::max((EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice - 1.), (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]));	// theta[AIR] should keep room for expanding freezing water
+				const double theta_sum = EMS[e].theta[AIR] + EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF] + EMS[e].theta[ICE] + EMS[e].theta[SOIL];
+				if (e == nE-1 && e >= Xdata.SoilNode && theta_sum > 1.) {	// Verify sum and change length of top layer if possible
+					const double dL = theta_sum * EMS[e].L - EMS[e].L;
+					Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] += dL;
+					const double L_old = EMS[e].L;
+					const double L_new = EMS[e].L + dL;
+					EMS[e].L = L_new;
+					EMS[e].theta[WATER] *= L_old / L_new;
+					EMS[e].theta[WATER_PREF] *= L_old / L_new;
+					EMS[e].theta[ICE] *= L_old / L_new;
+					NDS[e+1].z = NDS[e].z + EMS[e].L;
+					Xdata.cH = NDS[e+1].z + NDS[e+1].u;
+				}
 			} else {
 				if (e == nE-1 && e >= Xdata.SoilNode) {
 					// The top layer will increase length due to deposition
@@ -428,6 +442,13 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 					Xdata.cH = NDS[e+1].z + NDS[e+1].u;
 				} else {
 					EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+					EMS[e].theta[AIR] = std::max((EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice - 1.), (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]));	// theta[AIR] should keep room for expanding freezing water
+					const double theta_sum = EMS[e].theta[AIR] + EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF] + EMS[e].theta[ICE] + EMS[e].theta[SOIL];
+					if (theta_sum > 1.) {
+						prn_msg(__FILE__, __LINE__, "wrn", Date(),
+						    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].theta[SOIL]);
+						EMS[e].theta[ICE] = (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[AIR] - EMS[e].theta[SOIL]);
+					}
 				}
 			}
 		}
@@ -445,7 +466,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 				EMS[e].theta[AIR] = 0.;
 			} else {
 				prn_msg(__FILE__, __LINE__, "err", Date(),
-				    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].salinity);
+				    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].theta[SOIL]);
 				throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
 			}
 		}

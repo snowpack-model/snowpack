@@ -30,6 +30,8 @@
 
 using namespace std;
 
+namespace mio {
+
 /**
 * @brief Read all config keys from the selected section and apply some special processing for some keys.
 * @details This is used as some sort of caching, only keeping the section of interest.
@@ -84,6 +86,7 @@ void ACDD::defaultInit()
 	addAttribute("title", "", "ACDD_TITLE");
 	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
 	addAttribute("project", "", "ACDD_PROJECT");
+	addAttribute("program", "", "ACDD_PROGRAM");
 	addAttribute("id", "", "ACDD_ID");
 	addAttribute("naming_authority", "", "ACDD_NAMING_AUTHORITY");
 	addAttribute("processing_level", "", "ACDD_PROCESSING_LEVEL");
@@ -391,3 +394,6 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp)
 		addAttribute("time_coverage_resolution", os.str());
 	}
 }
+
+} //namespace
+

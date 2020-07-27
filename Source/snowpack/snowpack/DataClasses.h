@@ -869,6 +869,7 @@ class RunInfo {
 		const mio::Date computation_date; ///< Date of computation
 		const std::string compilation_date; ///< Date of compilation
 		const std::string user; ///< logname of the user running the simulation
+		const std::string hostname; ///< hostname of the computer running the simulation
 
 	private:
 		static mio::Date getRunDate();

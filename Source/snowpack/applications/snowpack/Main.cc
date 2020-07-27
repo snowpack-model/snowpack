@@ -1011,6 +1011,7 @@ inline void real_main (int argc, char *argv[])
 	const bool tswrite = cfg.get("TS_WRITE", "Output");
 	const double tsstart = cfg.get("TS_START", "Output");
 	const double tsdaysbetween = cfg.get("TS_DAYS_BETWEEN", "Output");
+	const bool snow_write = cfg.get("SNOW_WRITE", "Output");
 
 	const bool precip_rates = cfg.get("PRECIP_RATES", "Output");
 	const bool avgsum_time_series = cfg.get("AVGSUM_TIME_SERIES", "Output");
@@ -1447,7 +1448,7 @@ inline void real_main (int argc, char *argv[])
 
 		// If the simulation run for at least one time step,
 		//   dump the PROFILEs (Xdata) for every station referred to as sector where sector 0 corresponds to the main station
-		if (computed_one_timestep) {
+		if (computed_one_timestep && snow_write) {
 			for (size_t sector=slope.mainStation; sector<slope.nSlopes; sector++) {
 #ifndef SNOWPACK_CORE
 				if ((mode == "OPERATIONAL") && (sector == slope.mainStation)) {

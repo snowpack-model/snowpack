@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/plugins/libsmet.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <string>
 #include <vector>
@@ -55,19 +56,19 @@ class SMETIO : public IOInterface {
 	private:
 		/** This structure contains the metadata associated with a SMET variable in order to plot it */
 		typedef struct PLOT_ATTR {
-			PLOT_ATTR() : units(), description(), color(), min(IOUtils::nodata), max(IOUtils::nodata), param(mio::IOUtils::npos) {} //please do NOT use this constructor!
-			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color) : units(i_units), description(i_description), color(i_color), min(IOUtils::nodata), max(IOUtils::nodata), param(mio::IOUtils::npos) {}
-			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color, const double& i_min, const double& i_max, const size_t& i_param) : units(i_units), description(i_description), color(i_color), min(i_min), max(i_max), param(i_param) {}
+			PLOT_ATTR() : units(), description(), color(), min(IOUtils::nodata), max(IOUtils::nodata) {} //please do NOT use this constructor!
+			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color) : units(i_units), description(i_description), color(i_color), min(IOUtils::nodata), max(IOUtils::nodata) {}
+			PLOT_ATTR(const std::string& i_units, const std::string& i_description, const std::string& i_color, const double& i_min, const double& i_max) : units(i_units), description(i_description), color(i_color), min(i_min), max(i_max) {}
+			PLOT_ATTR(const size_t& parindex, const std::string& i_color, const double& i_min, const double& i_max) : units(MeteoGrids::getParameterUnits(parindex)), description(MeteoGrids::getParameterDescription(parindex, false)), color(i_color), min(i_min), max(i_max) {}
 
 			std::string units; ///< unit string representation
 			std::string description; ///< plot label
 			std::string color; ///< plot color (hex. rgb)
 			double min; ///< axis minimum
 			double max; ///< axis maximum
-			size_t param; ///< parameter index
 		} plot_attr;
 		
-		static std::map<size_t, plot_attr> initPlotParams();
+		static std::map<std::string, plot_attr> initPlotParams();
 		static double getSnowpackSlope(const std::string& id);
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
 		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
@@ -80,7 +81,7 @@ class SMETIO : public IOInterface {
 		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
 		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& smet_timezone,
 		                            std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
-		void getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const;
+		void getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const;
 		static void getFormatting(const size_t& param, int& prec, int& width);
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
@@ -93,7 +94,7 @@ class SMETIO : public IOInterface {
 		static const double snVirtualSlopeAngle;
 		const Config cfg;
 		ACDD acdd;
-		std::map<size_t, plot_attr> plot_ppt; ///< properties for plotting the SMET parameters
+		std::map<std::string, plot_attr> plot_ppt; ///< properties for plotting the SMET parameters
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
@@ -101,7 +102,7 @@ class SMETIO : public IOInterface {
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		char output_separator;         //output field separator
-		bool write_acdd, outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
+		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
 };
 
 } //namespace

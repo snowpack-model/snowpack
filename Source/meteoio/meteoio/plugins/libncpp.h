@@ -105,7 +105,7 @@ namespace ncpp {
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const int& attr_value);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value, const int& data_type);
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
-	void writeACDDAttributes(const int& ncid, const ACDD& acdd);
+	void writeACDDAttributes(const int& ncid, const mio::ACDD& acdd);
 	bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name);
 	void getGlobalAttribute(const int& ncid, const std::string& attr_name, std::string& attr_value);
 	void getGlobalAttribute(const int& ncid, const std::string& attr_name, int& attr_value);

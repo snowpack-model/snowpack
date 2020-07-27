@@ -85,6 +85,7 @@ class SmetIO : public SnowpackIOInterface {
 		std::string metamorphism_model, variant, sw_mode;
 		const RunInfo info;
 		std::map<std::string, smet::SMETWriter*> tsWriters; ///< for each filename, we keep an associated SMETWriter
+		mio::ACDD acdd;
 		double in_dflt_TZ;
 		double calculation_step_length, ts_days_between;
 		double min_depth_subsurf;
