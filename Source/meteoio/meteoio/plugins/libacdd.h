@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+namespace mio {
 /**
  * @class ACDD
  * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see 
@@ -39,6 +40,7 @@
  *  - ACDD_TITLE: a short title for the data set;
  *  - ACDD_INSTITUTION: the institution providing the data set (default: domain name);
  *  - ACDD_PROJECT: the scientific project that created the data;
+ *  - ACDD_PROGRAM: The overarching program(s) of which the dataset is a part;
  *  - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
  *  - ACDD_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
  *  - ACDD_PROCESSING_LEVEL: a textual description of the processing level
@@ -54,15 +56,29 @@ class ACDD {
 	public:
 		enum Mode {MERGE, REPLACE, APPEND};
 		
-		ACDD() : name(), cfg_key(), value() {defaultInit();}
+		/**
+		* @brief Constructor, the argument allows the object to know if the acdd metadata should be written out or not
+		* @param[in] i_enable enable ACDD support?
+		*/
+		ACDD(const bool& set_enable) : name(), cfg_key(), value(), enabled(set_enable) {defaultInit();}
 		
+		/**
+		* @brief Set an internal boolean as a helper for the caller to know if ACDD support should be enabled or not
+		* @param[in] i_enable enable ACDD support?
+		*/
+		void setEnabled(const bool& i_enable)  {enabled=i_enable;}
 		void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line=true);
 		
 		void addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key="", Mode mode=MERGE);
 		void addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key="", const Mode& mode=MERGE);
 
+		/**
+		* @brief Get an internal boolean as a helper for the caller to know if ACDD support should be enabled or not
+		* @return enable ACDD support from the caller side?
+		*/
+		bool isEnabled() const {return enabled;}
 		void getAttribute(const size_t ii, std::string &att_name, std::string & att_value) const;
-		size_t getNrAttributes() const {return name.size();}
+		size_t getNrAttributes() const {if(enabled) return name.size(); else return 0;}
 		
 		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
 		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon);
@@ -78,6 +94,8 @@ class ACDD {
 		size_t find(const std::string& search_name) const;
 		
 		std::vector<std::string> name, cfg_key, value;
+		bool enabled; //helper boolean for callers to know if this object should be used or not
 };
 
+} //namespace
 #endif

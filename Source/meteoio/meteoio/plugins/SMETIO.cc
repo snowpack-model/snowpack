@@ -96,44 +96,44 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile), acdd(), plot_ppt( initPlotParams() ), 
+        : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
-          write_acdd(false), outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader), acdd(), plot_ppt( initPlotParams() ), 
+        : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), output_separator(' '),
-          write_acdd(false), outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
+          outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
 }
 
-std::map<size_t, SMETIO::plot_attr> SMETIO::initPlotParams()
+std::map<std::string, SMETIO::plot_attr> SMETIO::initPlotParams()
 {
-	std::map< size_t, plot_attr > results;
+	std::map< std::string, plot_attr > results;
 	
-	results[ MeteoData::P ] 		= plot_attr("Pa", "local_air_pressure", "0xAEAEAE", 87000., 115650., MeteoData::P);
-	results[ MeteoData::TA ] 		= plot_attr("K", "air_temperature", "0x8324A4", 253.15, 283.15, MeteoData::TA);
-	results[ MeteoData::RH ] 		= plot_attr("-", "relative_humidity", "0x50CBDB", 0., 1., MeteoData::RH);
-	results[ MeteoData::TSG ] 		= plot_attr("K", "ground_surface_temperature", "0xDE22E2", 253.15, 283.15, MeteoData::TSG);
-	results[ MeteoData::TSS ] 		= plot_attr("K", "snow_surface_temperature", "0xFA72B7", 253.15, 283.15, MeteoData::TSS);
-	results[ MeteoData::HS ] 		= plot_attr("m", "height_of_snow", "0x000000", 0., 3., MeteoData::HS);
-	results[ MeteoData::VW ] 		= plot_attr("m/s", "wind_velocity", "0x297E24", 0., 30., MeteoData::VW);
-	results[ MeteoData::DW ] 		= plot_attr("°", "wind_direction", "0x64DD78", 0., 360., MeteoData::DW);
-	results[ MeteoData::VW_MAX ] 	= plot_attr("m/s", "max_wind_velocity", "0x244A22", 0., 30., MeteoData::VW_MAX);
-	results[ MeteoData::RSWR ] 		= plot_attr("W/m2", "outgoing_short_wave_radiation", "0x7D643A", 0., 1400., MeteoData::RSWR);
-	results[ MeteoData::ISWR ] 		= plot_attr("W/m2", "incoming_short_wave_radiation", "0xF9CA25", 0., 1400., MeteoData::ISWR);
-	results[ MeteoData::ILWR ] 		= plot_attr("W/m2", "incoming_long_wave_radiation", "0xD99521", 150., 400., MeteoData::ILWR);
-	results[ MeteoData::TAU_CLD ] 	= plot_attr("-", "cloud_transmissivity", "0xD9A48F", 0., 1., MeteoData::TAU_CLD);
-	results[ MeteoData::PSUM ] 		= plot_attr("kg/m2", "water_equivalent_precipitation_sum", "0x2431A4", 0., 20., MeteoData::PSUM);
-	results[ MeteoData::PSUM_PH ] 	= plot_attr("-", "precipitation_phase", "0x7E8EDF", 0., 1., MeteoData::PSUM_PH);
+	results[ MeteoGrids::getParameterName(MeteoGrids::P) ] 		= plot_attr(MeteoGrids::P, "0xAEAEAE", 87000., 115650.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::TA) ] 	= plot_attr(MeteoGrids::TA, "0x8324A4", 253.15, 283.15);
+	results[ MeteoGrids::getParameterName(MeteoGrids::RH) ] 	= plot_attr(MeteoGrids::RH, "0x50CBDB", 0., 1.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::TSG) ] 	= plot_attr(MeteoGrids::TSG, "0xDE22E2", 253.15, 283.15);
+	results[ MeteoGrids::getParameterName(MeteoGrids::TSS) ] 	= plot_attr(MeteoGrids::TSS, "0xFA72B7", 253.15, 283.15);
+	results[ MeteoGrids::getParameterName(MeteoGrids::HS) ] 	= plot_attr(MeteoGrids::HS, "0x000000", 0., 3.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::VW) ] 	= plot_attr(MeteoGrids::VW, "0x297E24", 0., 30.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::DW) ] 	= plot_attr(MeteoGrids::DW, "0x64DD78", 0., 360.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::VW_MAX) ] = plot_attr(MeteoGrids::VW_MAX, "0x244A22", 0., 30.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::RSWR) ] 	= plot_attr(MeteoGrids::RSWR, "0x7D643A", 0., 1400.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::ISWR) ] 	= plot_attr(MeteoGrids::ISWR, "0xF9CA25", 0., 1400.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::ILWR) ] 	= plot_attr(MeteoGrids::ILWR, "0xD99521", 150., 400.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::TAU_CLD) ] = plot_attr(MeteoGrids::TAU_CLD, "0xD9A48F", 0., 1.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::PSUM) ] 	= plot_attr(MeteoGrids::PSUM, "0x2431A4", 0., 20.);
+	results[ MeteoGrids::getParameterName(MeteoGrids::PSUM_PH) ]	= plot_attr(MeteoGrids::PSUM_PH, "0x7E8EDF", 0., 1.);
 	
 	return results;
 }
@@ -182,8 +182,10 @@ void SMETIO::parseInputOutputSection()
 	if (out_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		outputIsAscii = true;
 		
+		bool write_acdd = false;
 		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
 		if (write_acdd) {
+			acdd.setEnabled( true );
 			acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
 		}
 
@@ -573,12 +575,12 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 			}
 
-			if (write_acdd) {
+			if (acdd.isEnabled()) {
 				acdd.setTimeCoverage( vec_timestamp );
 				acdd.setGeometry(vecLocation, true);
 			}
-			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd, write_acdd);
-			else mywriter->write(vec_data, acdd, write_acdd);
+			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd);
+			else mywriter->write(vec_data, acdd);
 
 			delete mywriter;
 		} catch(exception&) {
@@ -659,15 +661,15 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	int tmpwidth, tmpprecision;
 	for (size_t ll=0; ll<nr_of_parameters; ll++) {
 		if (vecParamInUse[ll]) {
-			std::string column( vecColumnName.at(ll) );
-			if (column == "RSWR") column = "OSWR";
-			ss << " " << column;
+			std::string param( vecColumnName.at(ll) );
+			if (param == "RSWR") param = "OSWR";
+			ss << " " << param;
 
 			getFormatting(ll, tmpprecision, tmpwidth);
 			myprecision.push_back(tmpprecision);
 			mywidth.push_back(tmpwidth);
 
-			if (outputPlotHeaders) getPlotProperties(ll, plot_units, plot_description, plot_color, plot_min, plot_max);
+			if (outputPlotHeaders) getPlotProperties(param, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
 	
@@ -686,9 +688,16 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	mywriter.set_precision(myprecision);
 }
 
-void SMETIO::getPlotProperties(const size_t& param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
+void SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
 {
-	std::map<size_t, plot_attr>::const_iterator it = plot_ppt.find( param );
+	//handling different versions of the same parameter, ex TA_1 and TA_2
+	const size_t numbering_start = param.find_last_of( '_' );
+	if (numbering_start!=std::string::npos) {
+		const size_t pos_non_num = param.find_first_not_of("0123456789", numbering_start+1);
+		if (pos_non_num==std::string::npos) param.erase( numbering_start );
+	}
+	
+	std::map<std::string, plot_attr>::const_iterator it = plot_ppt.find( param );
 	if (it!=plot_ppt.end()) { //the parameter is a known one with some preset parameters
 		plot_units << it->second.units << " ";
 		plot_description << it->second.description << " ";

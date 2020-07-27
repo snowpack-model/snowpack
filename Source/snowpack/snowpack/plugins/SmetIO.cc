@@ -145,7 +145,7 @@ using namespace mio;
  */
 SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
         : fixedPositions(), outpath(), o_snowpath(), experiment(), inpath(), i_snowpath(),
-          metamorphism_model(), variant(), sw_mode(), info(run_info), tsWriters(),
+          metamorphism_model(), variant(), sw_mode(), info(run_info), tsWriters(), acdd(false),
           in_dflt_TZ(0.), calculation_step_length(0.), ts_days_between(0.), min_depth_subsurf(0.),
           avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), haz_write(true), useReferenceLayer(false),
           out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_dhs(false), out_t(false),
@@ -189,6 +189,18 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
+	
+	bool write_acdd = false;
+	cfg.getValue("ACDD_WRITE", "Output", write_acdd);
+	if (write_acdd) {
+		acdd.setEnabled(true);
+		acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
+		if (out_haz) { // HACK To avoid troubles in A3D
+			mio::Date now; 
+			now.setFromSys();
+			acdd.addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + info.user + "@" + info.hostname + ", Snowpack-" + info.version);
+		}
+	}
 }
 
 SmetIO::~SmetIO()
@@ -212,6 +224,7 @@ SmetIO& SmetIO::operator=(const SmetIO& source) {
 		sw_mode = source.sw_mode;
 		//info = source.info;
 		tsWriters = std::map<std::string, smet::SMETWriter*>(); //it will have to be re-allocated for thread safety
+		acdd = source.acdd;
 
 		in_dflt_TZ = source.in_dflt_TZ;
 		calculation_step_length = source.calculation_step_length;
@@ -651,8 +664,7 @@ void SmetIO::writeHazFile(const std::string& hazfilename, const mio::Date& date,
 		vec_data.push_back( Zdata.hn3[143-ii] );  //Print out the 3 hour new snowfall hazard data info
 		vec_data.push_back( Zdata.hn24[143-ii] ); //Print out the 24 hour new snowfall hazard data info
 	}
-	ACDD acdd;
-	haz_writer.write(vec_timestamp, vec_data, acdd);
+	haz_writer.write(vec_timestamp, vec_data, mio::ACDD(false));
 }
 
 /*
@@ -733,8 +745,7 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		}
 	}
 
-	ACDD acdd;
-	sno_writer.write(vec_timestamp, vec_data, acdd);
+	sno_writer.write(vec_timestamp, vec_data, mio::ACDD(false));
 }
 
 void SmetIO::setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer)
@@ -954,11 +965,6 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	const std::string fields( getFieldsHeader(Xdata) );
 	setBasicHeader(Xdata, fields, smet_writer);
 	smet_writer.set_header_value("tz", tz);
-	if (out_haz) { // HACK To avoid troubles in A3D
-		ostringstream ss;
-		ss << "Snowpack " << info.version << " run by \"" << info.user << "\"";
-		smet_writer.set_header_value("creator", ss.str());
-	}
 
 	std::ostringstream units_offset, units_multiplier;
 	units_offset << "0 "; units_multiplier << "1 ";
@@ -1296,7 +1302,6 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_FLOODING]/cos_sl );
 	}
 
-	ACDD acdd;
 	smet_writer.write(timestamp, data, acdd);
 }
 

@@ -173,6 +173,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["TS_FORMAT"] = "MET";
 	outputConfig["TS_DAYS_BETWEEN"] = "1";
 	outputConfig["TS_START"] = "0";
+	outputConfig["ACDD_WRITE"] = "false";
 	outputConfig["WRITE_PROCESSED_METEO"] = "false";
 
 	return true;

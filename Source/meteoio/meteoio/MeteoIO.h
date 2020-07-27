@@ -86,6 +86,7 @@
 
 //skip all plugins' implementations header files
 #include <meteoio/plugins/libsmet.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>

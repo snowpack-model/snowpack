@@ -37,6 +37,7 @@ class CsvParameters {
 		void setDelimiter(const std::string& delim);
 		void setHeaderDelimiter(const std::string& delim);
 		void setSkipFields(const std::vector<size_t>& vecSkipFields);
+		void setUnits(const std::string& csv_units,  const char& delim);
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
@@ -66,7 +67,6 @@ class CsvParameters {
 		static Date createDate(const float args[6], const double i_tz);
 		void initDtComponents(const size_t& pos, const size_t& idx);
 		Date parseDate(const std::string& date_str, const std::string& time_str) const;
-		void parseUnits(const std::string& line);
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
 		Coords location;

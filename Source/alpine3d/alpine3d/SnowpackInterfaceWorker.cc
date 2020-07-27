@@ -175,7 +175,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 		size_t iy = SnowStationsCoord.at(ii).second;
 		if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy))) { //skip nodata cells as well as water bodies, etc
 			if (!pts_in.empty() && is_special(pts_in, ix, iy)){
-				std::cout << "[W] POI (" << ix+offset << "," << iy << ") will be skipped (nodatat, water body, etc)" << std::endl;
+				std::cout << "[W] POI (" << ix << "," << iy << ") will be skipped (nodata, water body, etc)" << std::endl;
 			}
 			continue;
 		}
@@ -508,7 +508,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		meteoPixel.psum_tech = psum_tech(ix, iy);
 		meteoPixel.hs = IOUtils::nodata;
 		if (meteoPixel.tss<=100 || meteoPixel.ts0<=100) {
-			cout << "[E] Pixel (" << ix+offset << "," << iy << ") too cold! tss=" << meteoPixel.tss << " ts0=" << meteoPixel.ts0 << std::endl;
+			cout << "[E] Pixel (" << ix << "," << iy << ") too cold! tss=" << meteoPixel.tss << " ts0=" << meteoPixel.ts0 << std::endl;
 		}
 
 		// Now determine perpendicular to slope mass balance from drift or precip
@@ -517,7 +517,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			double drift_mass = mns(ix,iy);
 			// For extreme terrain, the drift might go crazy: limit deposition / erosion
 			if (fabs(drift_mass)>37.) {
-				cout << "crazy drift at (" << ix+offset << "," << iy << ") = " << drift_mass << " mm/h\n";
+				cout << "crazy drift at (" << ix << "," << iy << ") = " << drift_mass << " mm/h\n";
 				drift_mass = (drift_mass>0.)? 37. : -37.; //set to deposition limit
 			}
 
@@ -568,7 +568,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				const int lus =(int)floor( landuse(ix,iy));
 				const double slope2horiz = (1. / snowPixel.cos_sl);
 				const double snow = (snowPixel.cH - snowPixel.Ground) * slope2horiz;
-				cout << "[E] Could not allocate memory in Snowpack for cell (" << ix+offset << "," << iy << ") LUS=" << lus << " ";
+				cout << "[E] Could not allocate memory in Snowpack for cell (" << ix << "," << iy << ") LUS=" << lus << " ";
 				cout << "with " << std::fixed << std::setprecision(4) <<  snow << " m snow in " << snowPixel.getNumberOfElements()-snowPixel.SoilNode << "/" << snowPixel.getNumberOfElements() << " elements.\n";
 				fflush( stdout );
 				throw;
@@ -586,7 +586,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 
 				ostringstream ss;
 				ss << "[E] Snowpack exception: " << e.what() << "\n";
-				ss << "[E] at cell (" << ix+offset << "," << iy << ") LUS=" << lus << " ";
+				ss << "[E] at cell (" << ix << "," << iy << ") LUS=" << lus << " ";
 				ss << "with " << std::fixed << std::setprecision(4) << snow << " m snow in " << snowPixel.getNumberOfElements()-snowPixel.SoilNode << "/" << snowPixel.getNumberOfElements() << " elements.\n";
 				if (isSpecialPoint[index_SnowStation])
 					gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux); //gather special point data, in order to get as much information as possible
@@ -616,7 +616,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		if (!std::isfinite( getGridPoint(SnGrids::TOP_ALB, ix, iy) )) {
 			//if the albedo is nan, infinity, etc reset it to its previous
 			//value to try to rescue the pixel...
-			cerr << "[E] pixel (" << ix+offset << "," << iy << ") found with a nan/infinit albedo ["<<  getGridPoint(SnGrids::TOP_ALB, ix, iy) <<"]; reseting to " << previous_albedo << std::endl;
+			cerr << "[E] pixel (" << ix << "," << iy << ") found with a nan/infinit albedo ["<<  getGridPoint(SnGrids::TOP_ALB, ix, iy) <<"]; reseting to " << previous_albedo << std::endl;
 			getGridPoint(SnGrids::TOP_ALB, ix, iy) = previous_albedo;
 		}
 
