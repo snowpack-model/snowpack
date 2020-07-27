@@ -328,6 +328,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = meteoPixel.vw_drift; break;
 			case SnGrids::DW:
 				value = meteoPixel.dw; break;
+                        case SnGrids::USTAR:
+                                value = meteoPixel.ustar; break;
 			case SnGrids::ISWR:
 				value = meteoPixel.iswr; break;
 			case SnGrids::ISWR_DIFF:

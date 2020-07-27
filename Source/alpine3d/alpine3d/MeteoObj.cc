@@ -35,6 +35,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("VW");
 	paramname.push_back("VW_DRIFT");
 	paramname.push_back("DW");
+	paramname.push_back("USTAR");
 	paramname.push_back("ISWR");
 	paramname.push_back("ISWR_DIFF");
 	paramname.push_back("ISWR_DIR");

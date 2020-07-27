@@ -35,6 +35,7 @@ class SnGrids {
                                           VW, ///< Wind velocity
                                           VW_DRIFT, ///< Wind velocity
                                           DW, ///< Wind direction (deg)
+					  USTAR, ///< Friction velocity (m/s)
                                           ISWR, ///< Incoming short wave radiation
                                           ISWR_DIFF, ///< Incoming short wave, diffuse
                                           ISWR_DIR, ///< Incoming short wave, direct
