@@ -59,6 +59,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("RB");
 	paramname.push_back("RG");
 	paramname.push_back("N3");
+	paramname.push_back("SMB");
 	paramname.push_back("MS_SNOWPACK_RUNOFF");
 	paramname.push_back("MS_SOIL_RUNOFF");
 	paramname.push_back("MS_WATER");

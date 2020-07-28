@@ -35,7 +35,7 @@ class SnGrids {
                                           VW, ///< Wind velocity
                                           VW_DRIFT, ///< Wind velocity
                                           DW, ///< Wind direction (deg)
-					  USTAR, ///< Friction velocity (m/s)
+                                          USTAR, ///< Friction velocity (m/s)
                                           ISWR, ///< Incoming short wave radiation
                                           ISWR_DIFF, ///< Incoming short wave, diffuse
                                           ISWR_DIR, ///< Incoming short wave, direct
@@ -59,6 +59,7 @@ class SnGrids {
                                           RB, ///< bond radius
                                           RG, ///< grain radius
                                           N3, ///< grain Coordination number
+                                          SMB, ///< Surface mass balance
                                           MS_SNOWPACK_RUNOFF, ///< runoff on the surface of the soil (vitual lysimeter)
                                           MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
                                           MS_WATER, ///< The total amount of water in the snowpack at the present time

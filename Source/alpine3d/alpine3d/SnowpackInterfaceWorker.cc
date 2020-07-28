@@ -328,8 +328,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = meteoPixel.vw_drift; break;
 			case SnGrids::DW:
 				value = meteoPixel.dw; break;
-                        case SnGrids::USTAR:
-                                value = meteoPixel.ustar; break;
+			case SnGrids::USTAR:
+				value = meteoPixel.ustar; break;
 			case SnGrids::ISWR:
 				value = meteoPixel.iswr; break;
 			case SnGrids::ISWR_DIFF:
@@ -386,6 +386,13 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = (!snowPixel.Edata.empty())? snowPixel.Edata.back().rg : IOUtils::nodata; break;
 			case SnGrids::N3:
 				value = (!snowPixel.Edata.empty())? snowPixel.Edata.back().N3 : IOUtils::nodata; break;
+			case SnGrids::SMB:
+				value = Sdata.mass[SurfaceFluxes::MS_HNW]
+					+ Sdata.mass[SurfaceFluxes::MS_RAIN]
+					- (Sdata.mass[SurfaceFluxes::MS_WIND]/ snowPixel.cos_sl)
+					- (surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION] / snowPixel.cos_sl)
+					- (surfaceFlux.mass[SurfaceFluxes::MS_EVAPORATION] / snowPixel.cos_sl)
+					- surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]; break; 
 			case SnGrids::MS_SNOWPACK_RUNOFF:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]; break;
 			case SnGrids::MS_SOIL_RUNOFF:
