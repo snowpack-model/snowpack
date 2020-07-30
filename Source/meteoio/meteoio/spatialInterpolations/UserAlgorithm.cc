@@ -30,6 +30,8 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 			subdir = vecArgs[ii].second;
 		} else if (vecArgs[ii].first=="EXT") {
 			file_ext = vecArgs[ii].second;
+		  else if (vecArgs[ii].first=="TIME_CONSTANT") {
+			time_constant = vecArgs[ii].second;
 		}
 	}
 
@@ -41,8 +43,14 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 
 double USERInterpolation::getQualityRating(const Date& i_date)
 {
-	date = i_date;
-	filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
+
+	if (time_constant.empty()) {
+		date = i_date;
+		filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
+	} else {
+		filename = subdir + param + file_ext;
+	}
+
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";

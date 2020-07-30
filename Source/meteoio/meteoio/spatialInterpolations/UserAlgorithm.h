@@ -31,8 +31,9 @@ namespace mio {
  * be ".asc". But the following arguments allow overriding it:
  *  - SUBDIR: look for grids in the provided subdirectory of GRID2DPATH;
  *  - EXT: use another file extension.
- *
- * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc
+ * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc.
+ * But the following arugment allows overriding this. 
+ *  - TIME_CONSTANT: use the same grid for all timesteps.
  * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
  * @code
  * TA::algorithms = USER	# read grids from GRID2DPATH using the GRID2D plugin
@@ -43,6 +44,10 @@ namespace mio {
  * PSUM::algorithms   = USER	# read grids from GRID2DPATH/precip with the ".dat" extension
  * PSUM::user::subdir = precip
  * PSUM::user::ext    = .dat
+
+ * TSG::algorithms  = USER     # read grids from GRID2DPATH using the GRD2D plugin
+ * TSG::time_constant  = TRUE  # use the same grid for all timesteps.
+
  * @endcode
  *
  * If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
@@ -59,7 +64,7 @@ class USERInterpolation : public InterpolationAlgorithm {
 		std::string getGridFileName() const;
 		GridsManager& gdm;
 		std::string filename, grid2d_path;
-		std::string subdir, file_ext;
+		std::string subdir, file_ext, time_constant;
 };
 
 } //end namespace mio
