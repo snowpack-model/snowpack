@@ -44,11 +44,11 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 double USERInterpolation::getQualityRating(const Date& i_date)
 {
 
-	if (time_constant.empty()) {
+	if (time_constant) {
+		filename = subdir + param + file_ext;
+	} else {
 		date = i_date;
 		filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
-	} else {
-		filename = subdir + param + file_ext;
 	}
 
 

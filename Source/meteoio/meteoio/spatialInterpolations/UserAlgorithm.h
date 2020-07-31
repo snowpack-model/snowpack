@@ -32,7 +32,7 @@ namespace mio {
  *  - SUBDIR: look for grids in the provided subdirectory of GRID2DPATH;
  *  - EXT: use another file extension.
  * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc.
- * But the following arugment allows overriding this. 
+ * But the following argument allows overriding this.
  *  - TIME_CONSTANT: use the same grid for all timesteps.
  * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
  * @code
@@ -64,7 +64,8 @@ class USERInterpolation : public InterpolationAlgorithm {
 		std::string getGridFileName() const;
 		GridsManager& gdm;
 		std::string filename, grid2d_path;
-		std::string subdir, file_ext, time_constant;
+		std::string subdir, file_ext;
+		bool time_constant;
 };
 
 } //end namespace mio
