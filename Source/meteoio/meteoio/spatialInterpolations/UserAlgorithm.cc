@@ -30,8 +30,8 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 			subdir = vecArgs[ii].second;
 		} else if (vecArgs[ii].first=="EXT") {
 			file_ext = vecArgs[ii].second;
-		  else if (vecArgs[ii].first=="TIME_CONSTANT") {
-			time_constant = TRUE;
+		} else if (vecArgs[ii].first=="TIME_CONSTANT") {
+			time_constant = true;
 		}
 	}
 
