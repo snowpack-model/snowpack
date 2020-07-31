@@ -46,7 +46,8 @@ namespace mio {
  * PSUM::user::ext    = .dat
 
  * TSG::algorithms  = USER     # read grids from GRID2DPATH using the GRD2D plugin
- * TSG::time_constant  = TRUE  # use the same grid for all timesteps.
+ * TSG::user::ext    = .asc
+ * TSG::user::time_constant  = TRUE  # use the same grid for all timesteps.
 
  * @endcode
  *
