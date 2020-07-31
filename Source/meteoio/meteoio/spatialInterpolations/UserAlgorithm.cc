@@ -37,7 +37,7 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 	}
 
 	if (!subdir.empty()) subdir += "/";
-	if (file_ext.empty()) file_ext = ".dat";
+	if (file_ext.empty()) file_ext = ".asc";
 
 	gdm.getConfig().getValue("GRID2DPATH", "Input", grid2d_path);
 }

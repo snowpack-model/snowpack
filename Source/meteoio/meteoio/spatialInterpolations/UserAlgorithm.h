@@ -46,11 +46,10 @@ namespace mio {
  * PSUM::algorithms   = USER	# read grids from GRID2DPATH/precip with the ".dat" extension
  * PSUM::user::subdir = precip
  * PSUM::user::ext    = .dat
-
+ *
  * TSG::algorithms    = USER     # read grids from GRID2DPATH using the GRD2D plugin
  * TSG::user::ext     = .asc
  * TSG::user::time_constant  = TRUE  # use the same grid for all timesteps.
-
  * @endcode
  *
  * If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
