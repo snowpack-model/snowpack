@@ -23,7 +23,7 @@ namespace mio {
 
 USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
                                                                  GridsManager& i_gdm)
-                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext()
+                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext(), time_constant(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SUBDIR") {
@@ -31,7 +31,7 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 		} else if (vecArgs[ii].first=="EXT") {
 			file_ext = vecArgs[ii].second;
 		  else if (vecArgs[ii].first=="TIME_CONSTANT") {
-			time_constant = vecArgs[ii].second;
+			time_constant = TRUE;
 		}
 	}
 
