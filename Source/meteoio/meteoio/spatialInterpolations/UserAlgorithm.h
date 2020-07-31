@@ -33,8 +33,10 @@ namespace mio {
  *  - EXT: use another file extension.
  * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc.
  * But the following argument allows overriding this.
- *  - TIME_CONSTANT: use the same grid for all timesteps.
- * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
+ *  - TIME_CONSTANT: if true, use the same grid for all timesteps (default: false). If TIME_CONSTANT is set to true, files must be named according to:
+ *    <b>{capitalized meteo parameter}.{ext}</b>, for example TA.asc.
+ *
+ * The meteo parameters can be found in \ref meteoparam "MeteoData". Examples of use:
  * @code
  * TA::algorithms = USER	# read grids from GRID2DPATH using the GRID2D plugin
  *
@@ -45,8 +47,8 @@ namespace mio {
  * PSUM::user::subdir = precip
  * PSUM::user::ext    = .dat
 
- * TSG::algorithms  = USER     # read grids from GRID2DPATH using the GRD2D plugin
- * TSG::user::ext    = .asc
+ * TSG::algorithms    = USER     # read grids from GRID2DPATH using the GRD2D plugin
+ * TSG::user::ext     = .asc
  * TSG::user::time_constant  = TRUE  # use the same grid for all timesteps.
 
  * @endcode

@@ -44,7 +44,6 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 
 double USERInterpolation::getQualityRating(const Date& i_date)
 {
-
 	if (time_constant) {
 		filename = subdir + param + file_ext;
 	} else {
@@ -52,11 +51,11 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 		filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
 	}
 
-
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
 		return 0.0;
 	}
+
 	return (FileUtils::fileExists(grid2d_path+"/"+filename))? 1. : 0.;
 }
 
