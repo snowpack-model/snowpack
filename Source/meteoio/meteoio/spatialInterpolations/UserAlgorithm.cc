@@ -23,13 +23,16 @@ namespace mio {
 
 USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
                                                                  GridsManager& i_gdm)
-                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext()
+                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext(), time_constant(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SUBDIR") {
 			subdir = vecArgs[ii].second;
 		} else if (vecArgs[ii].first=="EXT") {
 			file_ext = vecArgs[ii].second;
+		} else if (vecArgs[ii].first=="TIME_CONSTANT") {
+			const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
+			IOUtils::parseArg(vecArgs[ii], where, time_constant);
 		}
 	}
 
@@ -41,8 +44,12 @@ USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, s
 
 double USERInterpolation::getQualityRating(const Date& i_date)
 {
-	date = i_date;
-	filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
+	if (time_constant) {
+		filename = subdir + param + file_ext;
+	} else {
+		date = i_date;
+		filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
+	}
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
