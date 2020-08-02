@@ -103,7 +103,6 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
-
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 	if (variant=="SEAICE") useNewPhaseChange = true;	// to better deal with variable freezing point due to salinity
@@ -1935,6 +1934,45 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 }
 
 /**
+ * @brief Add snow layers that originate from wind-transported snow being deposited, using the event-driven deposition scheme.
+ * @param Mdata Meteorological data
+ * @param Xdata Snow cover data
+ * @param redeposit_mass cumulated amount of snow deposition (kg m-2)
+ */
+void Snowpack::RedepositSnow(CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass)
+{
+	// Backup settings we are going to override:
+	const bool tmp_force_add_snowfall = force_add_snowfall;
+	const std::string tmp_hn_density = hn_density;
+	const std::string tmp_variant = variant;
+	const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
+	const double tmp_Xdata_hn = Xdata.hn;
+	const double tmp_Xdata_rho_hn = Xdata.rho_hn;
+	// Deposition mode settings:
+	double tmp_psum = redeposit_mass;
+	force_add_snowfall = true;
+	hn_density = "EVENT";
+	variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
+	enforce_measured_snow_heights = false;
+	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
+	if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
+	if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+	Xdata.hn = 0.;
+	// Add eroded snow:
+	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+	// Set back original settings:
+	force_add_snowfall = tmp_force_add_snowfall;
+	hn_density = tmp_hn_density;
+	variant = tmp_variant;
+	enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
+	// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
+	Xdata.hn_redeposit = Xdata.hn;
+	Xdata.rho_hn_redeposit = Xdata.rho_hn;
+	Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
+	Xdata.hn += tmp_Xdata_hn;
+}
+
+/**
  * @brief The near future (s. below) has arrived on Wednesday Feb. 6, when it was finally snowing
  * in Davos and Sergey, Michael and Perry were working furiously on SNOWPACK again. Michael
  * prepared the coupling of the model to the energy balance model of Olivia and his own snow
@@ -2022,6 +2060,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = t_surf;
 		}
 
+		// If there is DEPOSITING of snow:
+		if (Mdata.snowdrift > 0. && snow_erosion == "REDEPOSIT") {
+			RedepositSnow(Mdata, Xdata, Sdata, Mdata.snowdrift);
+			Mdata.snowdrift = 0.;
+		}
 
 		// If it is SNOWING, find out how much, prepare for new FEM data. If raining, cumu_precip is set back to 0
 		compSnowFall(Mdata, Xdata, cumu_precip, Sdata);
@@ -2032,43 +2075,13 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		if (forcing=="ATMOS") {
 			if (!alpine3d) { //HACK: we need to set to 0 the external drift
 				double tmp = 0.;
-				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
-				if (eroded > 0.) {
-					// Backup settings we are going to override:
-					const bool tmp_force_add_snowfall = force_add_snowfall;
-					const std::string tmp_hn_density = hn_density;
-					const std::string tmp_variant = variant;
-					const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
-					const double tmp_Xdata_hn = Xdata.hn;
-					const double tmp_Xdata_rho_hn = Xdata.rho_hn;
-					// Deposition mode settings:
-					double tmp_psum = eroded;
-					force_add_snowfall = true;
-					hn_density = "EVENT";
-					variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
-					enforce_measured_snow_heights = false;
-					Mdata.psum = eroded; Mdata.psum_ph = 0.;
-					if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
-					if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
-					Xdata.hn = 0.;
-					// Add eroded snow:
-					compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
-					// Set back original settings:
-					force_add_snowfall = tmp_force_add_snowfall;
-					hn_density = tmp_hn_density;
-					variant = tmp_variant;
-					enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
-					// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
-					Xdata.hn_redeposit = Xdata.hn;
-					Xdata.rho_hn_redeposit = Xdata.rho_hn;
-					Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
-					Xdata.hn += tmp_Xdata_hn;
-				}
+				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+				if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT") RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
 			} else {
 				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
 			}
 		} else { // MASSBAL forcing
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
+			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
 		}
 
 		if (Xdata.Seaice != NULL) {
