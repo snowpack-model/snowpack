@@ -927,7 +927,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		if ((Mdata.ts0 > Constants::meltfreeze_tk) && ((Mdata.ts0 - Mdata.ta) > 10.))
 			NDS[0].T = (Mdata.ts0 + Mdata.ta) / 2.;
 		else
-			NDS[0].T = Mdata.ts0;
+			NDS[0].T = (Mdata.ts0 == IOUtils::nodata) ? (Mdata.ta) : (Mdata.ts0);
 		return true;
 	}
 

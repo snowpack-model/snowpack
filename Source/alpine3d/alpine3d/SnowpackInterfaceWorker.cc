@@ -507,7 +507,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		meteoPixel.psum_ph = psum_ph(ix,iy);
 		meteoPixel.psum_tech = psum_tech(ix, iy);
 		meteoPixel.hs = IOUtils::nodata;
-		if (meteoPixel.tss<=100 || meteoPixel.ts0<=100) {
+		if ( (meteoPixel.tss != IOUtils::nodata && meteoPixel.tss<=100) || (meteoPixel.ts0 != IOUtils::nodata && meteoPixel.ts0<=100) ) {
 			cout << "[E] Pixel (" << ix << "," << iy << ") too cold! tss=" << meteoPixel.tss << " ts0=" << meteoPixel.ts0 << std::endl;
 		}
 
