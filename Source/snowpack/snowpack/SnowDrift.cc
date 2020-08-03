@@ -199,12 +199,11 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
  * @param Sdata
  * @param forced_massErode if greater than 0, force the eroded mass to the given value (instead of computing it)
 */
-double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& forced_massErode) const
+void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& forced_massErode) const
 {
 	size_t nE = Xdata.getNumberOfElements();
 	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
-	double ret = 0.;
 
 	const bool no_snow = ((nE < Xdata.SoilNode+1) || (EMS[nE-1].theta[SOIL] > 0.));
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
@@ -216,7 +215,6 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 			Sdata.drift = 0.;
 		} else
 			Sdata.drift = Constants::undefined;
-		return ret;
 	}
 
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
@@ -266,9 +264,6 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				Xdata.ErosionLevel = std::min(e, Xdata.ErosionLevel);
 				nErode++;
 				massErode -= EMS[e].M;
-				if (snow_erosion == "REDEPOSIT") {
-					ret += EMS[e].M;
-				}
 				forced_massErode = -massErode;
 			} else if (massErode > Constants::eps) { // ... or take away massErode from top element - partial real erosion
 				if (fabs(EMS[e].L * EMS[e].Rho - EMS[e].M) > 0.001) {
@@ -286,9 +281,6 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				NDS[e+1].u = 0.0;
 				NDS[e+1].hoar = 0.;
 				EMS[e].M -= massErode;
-				if (snow_erosion == "REDEPOSIT") {
-					ret += massErode;
-				}
 				assert(EMS[e].M>=0.); //mass must be positive
 				Xdata.ErosionMass += massErode;
 				Xdata.ErosionLength += dL;
@@ -341,5 +333,5 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 	} else {
 		Xdata.ErosionMass = 0.;
 	}
-	return ret;
+	return;
 }

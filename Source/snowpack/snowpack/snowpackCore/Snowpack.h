@@ -130,6 +130,8 @@ class Snowpack {
 		void compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                  SurfaceFluxes& Sdata);
 
+		void RedepositSnow(CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass);
+
 		const SnowpackConfig& cfg;
 
 #ifdef SNOWPACK_OPTIM

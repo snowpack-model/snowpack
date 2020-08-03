@@ -34,6 +34,10 @@ ListonWindAlgorithm::ListonWindAlgorithm(const std::vector< std::pair<std::strin
 			IOUtils::parseArg(vecArgs[ii], where, alpha);
 		}
 	}
+
+	if (param != "VW" && param != "VW_MAX" && param != "VW_DRIFT" && param != "DW") {
+		throw InvalidArgumentException("Trying to use "+i_algo+" interpolation on " + i_param + " but it can only be applied to VW, VW_MAX, VW_DRIFT or DW!!", AT);
+	}
 }
 
 double ListonWindAlgorithm::getQualityRating(const Date& i_date)
@@ -45,8 +49,10 @@ double ListonWindAlgorithm::getQualityRating(const Date& i_date)
 	tsmanager.getMeteoData(date, vecMeteo);
 	if (!vecMeteo.empty()) param_idx = vecMeteo[0].getParameterIndex( param );
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
-			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
+		size_t VW = MeteoData::VW;	// first guess for the wind speed parameter. In case of interpolating DW, use VW.
+		if (param == "VW_DRIFT" || param == "VW_MAX") VW = vecMeteo[ii].getParameterIndex(param);	// override VW when other wind speed parameter is requested
+		if ((vecMeteo[ii](VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
+			vecDataVW.push_back(vecMeteo[ii](VW));
 			vecDataDW.push_back(vecMeteo[ii](MeteoData::DW));
 			vecMeta.push_back(vecMeteo[ii].meta);
 		}
@@ -77,15 +83,16 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		return;
 	}
 
-	if (param_idx==MeteoData::VW) {
-		Grid2DObject DW;
-		simpleWindInterpolate(dem, grid, DW);
-		Interpol2D::ListonWind(dem, grid, DW);
-	}
 	if (param_idx==MeteoData::DW) {
+		// Direction
 		Grid2DObject VW;
 		simpleWindInterpolate(dem, VW, grid);
 		Interpol2D::ListonWind(dem, VW, grid);
+	} else {
+		// If not direction, it must be a type of wind speed
+		Grid2DObject DW;
+		simpleWindInterpolate(dem, grid, DW);
+		Interpol2D::ListonWind(dem, grid, DW);
 	}
 }
 
