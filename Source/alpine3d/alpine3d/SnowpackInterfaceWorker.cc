@@ -136,7 +136,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
    isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
    surface_flux(), soil_temp_depths(), calculation_step_length(0.), height_of_wind_value(0.),
    snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
-   enable_simple_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
+   enable_simple_snow_drift(false), enable_explicit_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
 {
 
 	sn_cfg.getValue("CALCULATION_STEP_LENGTH", "Snowpack", calculation_step_length);
@@ -149,6 +149,8 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
 	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+	enable_explicit_snow_drift = false;
+	sn_cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
 
 	//create the vector of output grids
 	std::vector<std::string> params = sn_cfg.get("GRIDS_PARAMETERS", "output");
@@ -432,7 +434,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
  * @param ta air temperature grid (K)
  * @param vw wind velocity grid (m s-1)
  * @param dw wind direction grid (degrees north)
- * @param mns map of the Precipitation (mm/h) HACK get this map only if per pull from Master if Drift is used !!
+ * @param mns map of the Precipitation (mm/h) HACK get this map only if: (1) per pull from Master if Drift is used or (2) with enable_explicit_snow_drift !!
  * @param shortwave incoming shortwave radiation grid (W m-2)
  * @param diffuse diffuse radiation from the sky grid (W m-2)
  * @param longwave incoming longwave grid (W m-2)
@@ -465,7 +467,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 	meteoPixel.date = date;
 	meteoPixel.elev = solarElevation*Cst::to_rad; //HACK: Snowpack uses RAD !!!!!
 
-	if (enable_simple_snow_drift) {
+	if (enable_simple_snow_drift || enable_explicit_snow_drift) {
 		// reset eroded mass grid
 		erodedmass.set(erodedmass, 0.);
 	}
@@ -523,6 +525,9 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 
 			meteoPixel.psum = drift_mass;
 		} else {
+			if ( enable_explicit_snow_drift && mns(ix,iy)!=IOUtils::nodata ) {
+				meteoPixel.snowdrift = mns(ix,iy);
+			}
 			meteoPixel.psum= psum(ix,iy) * snowPixel.cos_sl; //horiz2slope
 		}
 
@@ -554,7 +559,10 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			/* Michi: This is exactly the point, store is only set to zero when enough precipitation
 			has accumulated to create at least one new (finite element) layer */
 
-			if (snowsteps == 0) meteoPixel.psum /= nr_snowsteps;
+			if (snowsteps == 0) {
+				meteoPixel.psum /= nr_snowsteps;
+				meteoPixel.snowdrift /= nr_snowsteps;
+			}
 			store(ix,iy) += meteoPixel.psum;
 
 			try {
@@ -563,7 +571,9 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);
 				dIntEnergy += snowPixel.dIntEnergy; //it is reset at every new call to runSnowpackModel
 				meteoPixel.hs = snowPixel.cH - snowPixel.Ground; //do not reproject here, otherwise Snowpack outputs would get messed up
-				if (enable_simple_snow_drift) erodedmass(ix,iy) += snowPixel.ErosionMass; //store the eroded mass
+				if (enable_simple_snow_drift || enable_explicit_snow_drift) {
+					erodedmass(ix,iy) += snowPixel.ErosionMass; //store the eroded mass
+				}
 			} catch (const std::bad_alloc&) { //don't try anything fancy when running low on memory
 				const int lus =(int)floor( landuse(ix,iy));
 				const double slope2horiz = (1. / snowPixel.cos_sl);
@@ -581,6 +591,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 					if (useCanopy)
 						snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
 					meteoPixel.psum *= nr_snowsteps;
+					meteoPixel.snowdrift *= nr_snowsteps;
 					snowPixel.dIntEnergy = dIntEnergy;
 				}
 
@@ -603,6 +614,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			if (useCanopy)
 				snowPixel.Cdata->multiplyFluxes(1./nr_snowsteps);
 			meteoPixel.psum *= nr_snowsteps;
+			meteoPixel.snowdrift *= nr_snowsteps;
 			snowPixel.dIntEnergy = dIntEnergy;
 		}
 

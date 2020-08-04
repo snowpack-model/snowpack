@@ -103,7 +103,7 @@ class SnowpackInterfaceWorker
 		double calculation_step_length;
 		double height_of_wind_value;
 		double snow_temp_depth, snow_avg_temp_depth, snow_avg_rho_depth;
-		bool enable_simple_snow_drift;
+		bool enable_simple_snow_drift, enable_explicit_snow_drift;
 		bool useDrift, useEBalance, useCanopy;
 };
 

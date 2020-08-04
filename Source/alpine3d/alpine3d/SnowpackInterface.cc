@@ -81,7 +81,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                                      const std::string& grids_requirements,
                                      const bool is_restart_in)
                 : run_info(), io(io_cfg), pts(prepare_pts(vec_pts)),dem(dem_in),
-                  is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
+                  is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_explicit_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
                   do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_production(false), snow_grooming(false),
                   Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false), glacier_from_grid(false),
@@ -128,6 +128,8 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	//check if simple snow drift is enabled (needs to be determined before grid requirements check!)
 	enable_simple_snow_drift = false;
 	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+	enable_explicit_snow_drift = false;
+	sn_cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
 
 	//create and prepare  the vector of output grids
 	if (grids_write) {
@@ -324,7 +326,7 @@ std::string SnowpackInterface::getGridsRequirements() const
 	if (glacier_katabatic_flow) {
 		ret += " GLACIER TSS HS";
 	}
-	if (enable_simple_snow_drift) {
+	if (enable_simple_snow_drift || enable_explicit_snow_drift) {
 		 ret += " ERODEDMASS";
 	}
 	return ret;
@@ -811,7 +813,10 @@ void SnowpackInterface::calcNextStep()
 	// timing
 	timer.restart();
 
-	if (enable_simple_snow_drift) {
+	if (enable_explicit_snow_drift) {
+		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
+		mns = calcExplicitSnowDrift(erodedmass);
+	} else if (enable_simple_snow_drift) {
 		// calc simple snow drift, by using eroded snow from previous time step
 		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
 		calcSimpleSnowDrift(erodedmass, psum);
@@ -1437,3 +1442,99 @@ void SnowpackInterface::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedM
 	}
 	return;
 }
+
+
+/**
+ * @brief Calculates explicit drifting snow
+ * @author Nander Wever
+ */
+mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass)
+{
+	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) );
+	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) );
+	mio::Grid2DObject dM( ErodedMass, 0. );
+	mio::Grid2DObject tmp_ErodedMass( ErodedMass );
+	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass;
+	grid_snowdrift_out(0.);
+	const double dx = dem.cellsize;		// Cell size in m, assuming equal in x and y.
+	const double dt = timeStep * 86400;	// From time steps in days to seconds.
+	const double sub_dt = 1.;		// Sub time step, HACK: should be made dynamic based on CFL criterion.
+	const int nsub = int(dt / sub_dt);	// Number of sub timesteps: HACK: should be made dynamic based on CFL criterion.
+
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
+			if (tmp_ErodedMass(ix, iy) == IOUtils::nodata || tmp_ErodedMass(ix, iy) < 0.) {
+				tmp_ErodedMass(ix, iy) = 0.;
+			}
+			winderosiondeposition(ix, iy) = tmp_ErodedMass(ix, iy);
+			mns(ix, iy) = 0.;		// Reset mass deposition field
+		}
+	}
+
+	// Fill grid_snowdrift_out
+	for (size_t n=0; n<nsub; n++) {
+		for (size_t iy=0; iy<dimy; iy++) {
+			for (size_t ix=0; ix<dimx; ix++) {
+				if (grid_VW(ix, iy) != IOUtils::nodata && grid_DW(ix, iy) != IOUtils::nodata) {
+					const double u = -1.*grid_VW(ix, iy)*sin(grid_DW(ix, iy)*Cst::to_rad);
+					const double v = -1.*cos(grid_DW(ix, iy)*Cst::to_rad);
+					//if(tmp_ErodedMass(ix, iy)!=0. && tmp_ErodedMass(ix, iy)!=IOUtils::nodata) printf("YYY: %d %d %f %f %f\n", ix, iy, u, v, tmp_ErodedMass(ix, iy));
+
+					// What is advected
+					if(ix>0 && u>0) {
+						dM(ix, iy) += tmp_ErodedMass(ix-1, iy) * fabs(u) * (sub_dt / dx);
+						dM(ix-1, iy) -= tmp_ErodedMass(ix-1, iy) * fabs(u) * (sub_dt / dx);
+
+						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
+						if (ix < dimx-1) dM(ix+1, iy) += tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
+					} else if (ix < dimx-1 && u<0) {
+						dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(u) * (sub_dt / dx);
+						dM(ix+1, iy) -= tmp_ErodedMass(ix+1, iy) * fabs(u) * (sub_dt / dx);
+
+						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
+						if (ix > 0) dM(ix-1, iy) += tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
+					}
+
+					// What is advected
+					if(iy>0 && v>0) {
+						dM(ix, iy) += tmp_ErodedMass(ix, iy-1) * fabs(v) * (sub_dt / dx);
+						dM(ix, iy-1) -= tmp_ErodedMass(ix, iy-1) * fabs(v) * (sub_dt / dx);
+
+						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
+						if (iy > 0) dM(ix, iy-1) += tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
+					} else if (iy < dimy-1 && v<0) {
+						dM(ix, iy) += tmp_ErodedMass(ix, iy+1) * fabs(v) * (sub_dt / dx);
+						dM(ix, iy+1) -= tmp_ErodedMass(ix, iy+1) * fabs(v) * (sub_dt / dx);
+
+						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
+						if (iy < dimy-1) dM(ix, iy+1) += tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
+					}
+				}
+			}
+		}
+		for (size_t iy=0; iy<dimy; iy++) {
+			for (size_t ix=0; ix<dimx; ix++) {
+				if (ErodedMass(ix, iy) != IOUtils::nodata) {
+					tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
+					if (tmp_ErodedMass(ix, iy) < 0.) tmp_ErodedMass(ix, iy) = 0.;
+				}
+			}
+		}
+	}
+
+
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
+			if (ErodedMass(ix, iy) != IOUtils::nodata) {
+				if (dM(ix, iy) < -ErodedMass(ix, iy)) dM(ix, iy) = -ErodedMass(ix, iy);
+				winderosiondeposition(ix, iy) = dM(ix, iy);
+				grid_snowdrift_out(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
+				if(grid_snowdrift_out(ix, iy) < Constants::eps) grid_snowdrift_out(ix, iy) = 0.;
+				//printf("FF: %d %d %f %f %f\n", ix, iy, ErodedMass(ix,iy), dM(ix,iy), grid_snowdrift_out(ix,iy));
+			}
+		}
+	}
+
+	return grid_snowdrift_out;
+}
+
