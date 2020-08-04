@@ -1622,6 +1622,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 			//perform some units corrections, if necessary
 			if (var.attributes.units=="%") for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 100.;
 			if (var.attributes.units=="kilometer") for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 1e-3;
+			if ( (var.attributes.param==MeteoGrids::SWE && (var.attributes.units=="m" || var.attributes.units=="m of water equivalent")) ) for (size_t ii=0; ii<data.size(); ii++) if (data[ii]!=var.nodata) data[ii] *= 1e-3;
 		}
 
 		return data;
@@ -1669,12 +1670,16 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 			throw UnknownValueException("Unsupported dimension '"+ncpp::getParameterName(param)+"' found when trying to write out netcdf file", AT);
 		return data;
 	} else { //normal grid variable
+		//perform units corrections, if necessary
+		double units_multiplier = 1.;
+		if ( (var.attributes.param==MeteoGrids::SWE && (var.attributes.units=="m" || var.attributes.units=="m of water equivalent")) ) units_multiplier = 1e-3;
+
 		std::vector<double> data( grid.size(), var.nodata );
 		const size_t nrows = grid.getNy(), ncols = grid.getNx();
 		for (size_t kk=nrows-1; kk-- > 0; ) {
 			for (size_t ll=0; ll<ncols; ++ll) {
 				const size_t serial_idx = kk*ncols + ll;
-				if (grid.grid2D(ll,kk)!=IOUtils::nodata) data[serial_idx] = grid.grid2D(ll,kk);
+				if (grid.grid2D(ll,kk)!=IOUtils::nodata) data[serial_idx] = grid.grid2D(ll,kk) * units_multiplier;
 			}
 		}
 		return data;
