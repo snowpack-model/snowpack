@@ -1779,18 +1779,14 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			cumu_precip = 0.0; // we use the mass through delta_cH
 			//double hn = 0.; //new snow amount
 
-			if (Xdata.hn > 0. && (Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)) {
+			if (!alpine3d && Xdata.hn > 0. && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle) {
 				hn = Xdata.hn;
 				rho_hn = Xdata.rho_hn;
 			} else { // in case of flat field or PERP_TO_SLOPE
 				hn = delta_cH;
 				// Store new snow depth and density
-				if (!alpine3d) {
-					//in snowpack, we compute first hn on flat field,
-					//then we copy this value to the slopes
-					Xdata.hn = hn;
-					Xdata.rho_hn = rho_hn;
-				}
+				Xdata.hn = hn;
+				Xdata.rho_hn = rho_hn;
 			}
 			if (hn > Snowpack::snowfall_warning)
 				prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
@@ -1801,8 +1797,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 
 			if (nAddE < 1) {
 				// Always add snow on virtual slope (as there is no storage variable available) and some other cases
-				if (!alpine3d && ((Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
-				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps))) { //no virtual slopes in Alpine3D
+				if ((!alpine3d && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
+				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps)) { //no virtual slopes in Alpine3D
 					nAddE = 1;
 				} else {
 					Xdata.hn = 0.;
