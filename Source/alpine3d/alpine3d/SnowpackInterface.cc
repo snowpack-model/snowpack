@@ -1459,7 +1459,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	const double dx = dem.cellsize;		// Cell size in m, assuming equal in x and y.
 	const double dt = timeStep * 86400;	// From time steps in days to seconds.
 	const double sub_dt = 1.;		// Sub time step, HACK: should be made dynamic based on CFL criterion.
-	const int nsub = int(dt / sub_dt);	// Number of sub timesteps: HACK: should be made dynamic based on CFL criterion.
+	const size_t nsub = size_t(dt / sub_dt);// Number of sub timesteps: HACK: should be made dynamic based on CFL criterion.
 
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
