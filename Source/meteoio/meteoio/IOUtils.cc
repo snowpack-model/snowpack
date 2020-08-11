@@ -395,9 +395,9 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
-	std::string word;
 	std::istringstream iss(line_in);
 
+	std::string word;
 	while (getline(iss, word, delim)){
 		vecString.push_back(word);
 	}

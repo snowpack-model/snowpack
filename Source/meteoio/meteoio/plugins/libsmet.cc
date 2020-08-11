@@ -69,6 +69,7 @@ bool SMETCommon::initStaticData()
 
 	all_optional_header_keys.insert("station_name");
 	all_optional_header_keys.insert("tz");
+	all_optional_header_keys.insert("column_delimiter");
 	all_optional_header_keys.insert("creation");
 	all_optional_header_keys.insert("source");
 	all_optional_header_keys.insert("units_offset");
@@ -168,6 +169,15 @@ int SMETCommon::convert_to_int(const std::string& in_string)
 	istringstream ss(in_string);
 	int value;
 	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to int", SMET_AT);
+
+	return value;
+}
+
+char SMETCommon::convert_to_char(const std::string& in_string)
+{
+	istringstream ss(in_string);
+	char value;
+	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to char", SMET_AT);
 
 	return value;
 }
@@ -279,19 +289,36 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 	vec_string.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
 
-	std::string tmp_string;
+	std::string word;
 	while (!iss.eof()) {
-		iss >> std::skipws >> tmp_string;
+		iss >> std::skipws >> word;
 
-		if (!tmp_string.empty()) {
-			vec_string.push_back( tmp_string );
+		if (!word.empty()) {
+			vec_string.push_back( word );
 		}
-		tmp_string.clear();
+		word.clear();
 	}
 
 	return vec_string.size();
 }
 
+size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
+{
+	vecString.clear();
+	std::istringstream iss(line_in); //construct inputstream with the string line as input
+
+	std::string word;
+	while (getline(iss, word, delim)){
+		vecString.push_back(word);
+	}
+
+	if (!line_in.empty()) {
+		const char lastChar = line_in[ line_in.length() - 1 ];
+		if (lastChar==delim) vecString.push_back( "" );
+	}
+
+	return vecString.size();
+}
 
 ////////////////////////////////////////////////////////////
 //// SMETWriter class
@@ -714,6 +741,7 @@ void SMETWriter::write_header(std::ofstream& fout, const mio::ACDD& acdd)
 	fout << "[HEADER]" << "\n";
 	print_if_exists("station_id", fout);
 	print_if_exists("station_name", fout);
+	print_if_exists("column_delimiter", fout);
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
@@ -821,6 +849,16 @@ void SMETWriter::set_width(const std::vector<int>& vec_width)
 	ascii_width = vec_width;
 }
 
+void SMETWriter::set_separator(const char& i_separator)
+{
+	separator = i_separator;
+	if (i_separator==' ') {
+		set_header_value( "column_delimiter", "[:space:]" );
+	} else {
+		set_header_value( "column_delimiter", std::string(1,separator) );
+	}
+}
+
 void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 {
 	ascii_precision = vec_precision;
@@ -839,7 +877,7 @@ SMETReader::SMETReader(const std::string& in_fname)
               julian_start(0.), julian_end(5373483.5),
               nr_of_fields(0), timestamp_field(0), julian_field(0),
               location_wgs84(0), location_epsg(0), location_data_wgs84(0), location_data_epsg(0),
-              eoln('\n'),
+              eoln('\n'), separator(' '),
               timestamp_present(false), julian_present(false), isAscii(true), mksa(true),
               timestamp_interval(false), julian_interval(false)
 {
@@ -922,15 +960,15 @@ bool SMETReader::location_in_data(const LocationType& type) const
 
 void SMETReader::process_header()
 {
-	vector<string> tmp_vec;
-	set<string> obligatory_keys;
-	for (map<string,string>::iterator it = header.begin(); it != header.end(); ++it){
+	std::vector<string> tmp_vec;
+	std::set<string> obligatory_keys;
+	for (std::map<string,string>::iterator it = header.begin(); it != header.end(); ++it){
 		if (SMETCommon::all_mandatory_header_keys.find(it->first) != SMETCommon::all_mandatory_header_keys.end())
 			obligatory_keys.insert(it->first);
 
 		if (it->first == "fields"){
 			SMETCommon::readLineToVec(it->second, tmp_vec);
-			string newfields;
+			std::string newfields;
 			if (!tmp_vec.empty()){
 				for (size_t ii=0; ii<tmp_vec.size(); ii++){
 					if (tmp_vec[ii] == "timestamp"){
@@ -964,6 +1002,11 @@ void SMETReader::process_header()
 
 		if (it->first == "nodata")
 			nodata_value = SMETCommon::convert_to_double(it->second);
+		
+		if (it->first == "column_delimiter") {
+			if (it->second=="[:space:]") separator=' ';
+			else separator = SMETCommon::convert_to_char(it->second);
+		}
 
 		//Using WGS_84 coordinate system
 		if (it->first == "latitude")  location_wgs84 |= 1;
@@ -1054,7 +1097,7 @@ void SMETReader::read_header(std::ifstream& fin)
 {
 	//1. Read signature
 	std::string line;
-	vector<string> tmpvec;
+	std::vector<string> tmpvec;
 	getline(fin, line, eoln); //read complete signature line
 	SMETCommon::stripComments(line);
 	SMETCommon::readLineToVec(line, tmpvec);
@@ -1314,7 +1357,7 @@ std::string SMETReader::getLastTimestamp() const
 
 	fin.seekg(0, std::ifstream::end);
 	const std::streamoff length = fin.tellg();
-	const int buff_size = 1024; //a better approach would be to loop over this buff_size in order to accomodate very different line lengths
+	static const int buff_size = 1024; //a better approach would be to loop over this buff_size in order to accomodate very different line lengths
 	if (buff_size<length)
 		fin.seekg(0-buff_size, fin.end);
 	else
@@ -1360,7 +1403,8 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 		SMETCommon::trim(line);
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 
-		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields) {
+		const size_t nr_fields_read = (separator==' ')? SMETCommon::readLineToVec(line, tmp_vec) : SMETCommon::readLineToVec(line, tmp_vec, separator);
+		if (nr_fields_read == nr_of_data_fields) {
 			const string& current_timestamp = tmp_vec[timestamp_field];
 			const size_t cmp_len = min(date_stop_len, current_timestamp.length());
 
@@ -1368,7 +1412,9 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 		} else {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
-			ss << "but this does not match the following line:\n" << line << "\n";
+			ss << "but this does not match the following line";
+			if (separator!=' ') ss << " (column delimiter: '" << separator << "')";
+			ss << ":\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);
 		}
 
@@ -1393,7 +1439,8 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		SMETCommon::trim(line);
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 
-		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields){
+		const size_t nr_fields_read = (separator==' ')? SMETCommon::readLineToVec(line, tmp_vec) : SMETCommon::readLineToVec(line, tmp_vec, separator);
+		if (nr_fields_read == nr_of_data_fields){
 			try {
 				size_t shift = 0;
 				if (julian_interval && julian_present){
@@ -1437,7 +1484,9 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		} else {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
-			ss << "but this does not match the following line:\n" << line << "\n";
+			ss << "but this does not match the following line";
+			if (separator!=' ') ss << " (column delimiter: '" << separator << "')";
+			ss << ":\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);
 		}
 	}
