@@ -63,13 +63,15 @@ class SMETCommon {
 		static bool fileExists(const std::string& filename);
 		static double convert_to_double(const std::string& in_string);
 		static int convert_to_int(const std::string& in_string);
+		static char convert_to_char(const std::string& in_string);
 		static void stripComments(std::string& str);
 		static char getEoln(std::istream& fin);
 		static void trim(std::string& str);
 		static void toUpper(std::string& str);
 		static bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
 		                             std::map<std::string,std::string>& out_map);
-		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vec_string);
+		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
+		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 		static bool is_decimal(const std::string& value);
 
 	public:
@@ -166,7 +168,7 @@ class SMETWriter {
 		 *        will remain space-delimited.
 		 * @param[in] i_separator field separator to use instead of spaces
 		 */
-		void set_separator(const char& i_separator) {separator = i_separator;}
+		void set_separator(const char& i_separator);
 
 		const std::string toString() const;
 		
@@ -357,6 +359,7 @@ class SMETReader {
 		size_t timestamp_field, julian_field; //index of the timestamp and julian column, if present
 		char location_wgs84, location_epsg, location_data_wgs84, location_data_epsg;
 		char eoln; //end of line character for this file
+		char separator; //column separator
 		bool timestamp_present, julian_present;
 		bool isAscii; //true if the file is in SMET ASCII format, false if it is in binary format
 		bool mksa; //true if MKSA converted values have to be returned

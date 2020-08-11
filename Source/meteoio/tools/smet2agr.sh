@@ -15,15 +15,28 @@ printf "@timestamp def \"${datum}\"\n"
 #print the color table and generate the table of indices
 plot_colors=`head -100 ${INPUT} | grep "plot_color" | tr -s '\t' ' ' | cut -d'=' -f2 | tr ' ' '\n'`
 if [ "x$plot_colors" != "x" ]; then
-	sorted_plot_colors=`echo "${plot_colors}" | sort -u | tr '\n' ' ' `
+	sorted_plot_colors=`echo "${plot_colors}" | sort -u | grep -v "0x000000" | grep -v "-" | grep -v "0xFFFFFF" | tr '\n' ' ' | awk '{printf("white black grey %s", $0)}' `
 	color_table=`echo "${plot_colors}" | awk '
 		BEGIN {
 			split("'"${sorted_plot_colors}"'", sorted, " ")
 		}
 		!/^$/{
 			for (color_idx in sorted) {
+				if ($1=="0xFFFFFF") { #white is always at position 0
+					printf("0 ")
+					next
+				}
+				if ($1=="0x000000") { #black is always at position 1
+					printf("1 ")
+					next
+				}
+				if ($1=="-") { #undef is always at position 2
+					printf("2 ")
+					next
+				}
+				
 				if ($1==sorted[color_idx]) {
-					printf("%d ", color_idx)
+					printf("%d ", color_idx-1)	#we must start with white=0
 					next
 				}
 			}
@@ -33,16 +46,19 @@ if [ "x$plot_colors" != "x" ]; then
 	echo "${sorted_plot_colors}" | tr ' ' '\n' | awk --non-decimal-data '
 		BEGIN {
 			printf("@map color 0 to (255, 255, 255), \"white\"\n")
+			printf("@map color 1 to (0, 0, 0), \"black\"\n")
+			printf("@map color 2 to (160, 160, 160), \"grey\"\n")
+			col_count=2
 		}
 		!/^$/{
-			col_count++
+			if (substr($1,1,2)!="0x") next	#color names are handled differently
 			r=int( sprintf("%f", "0x" substr($1,3,2)) )
 			g=int( sprintf("%f", "0x" substr($1,5,2)) )
 			b=int( sprintf("%f", "0x" substr($1,7,2)) )
 			color_name=$1
-			if (r==0 && g==0 && b==0)
-				color_name="black"
+			if (r==0 && g==0 && b==0) next
 
+			col_count++
 			printf("@map color %d to (%d, %d, %d), \"%s\"\n", col_count, r,g,b, color_name)
 		}
 	'
