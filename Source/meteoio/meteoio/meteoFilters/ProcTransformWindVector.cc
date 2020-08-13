@@ -49,7 +49,7 @@ ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<st
 	//filters that do not depend on past data can safely use "both" (such as min/max filters) while
 	//corrections should only use "first" (such as undercatch correction) in order to avoid double-correcting the data
 	//filters relying on past data (through variance or other statistical parameters) usually should use "first"
-	properties.stage = ProcessingProperties::second;
+	properties.stage = ProcessingProperties::first;
 }
 
 std::string ProcTransformWindVector::findUComponent(const MeteoData& md)
@@ -189,7 +189,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 		}
 
 		// Calculate new wind direction
-		const double dw_new = fmod(270. - atan2(v_new, u_new)*Cst::to_deg, 360.);
+		const double dw_new = fmod(atan2(u_new, v_new) * Cst::to_deg + 180., 360.);
 
 		// Assign transformed wind direction and wind speed components
 		ovec[ii](MeteoData::DW) = dw_new;
