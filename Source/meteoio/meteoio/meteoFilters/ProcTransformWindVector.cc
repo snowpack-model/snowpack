@@ -189,7 +189,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 		}
 
 		// Calculate new wind direction
-		const double dw_new = fmod(atan2(u_new, v_new) * Cst::to_deg + 180., 360.);
+		const double dw_new = IOUtils::UV_TO_DW(u_new, v_new);
 
 		// Assign transformed wind direction and wind speed components
 		ovec[ii](MeteoData::DW) = dw_new;

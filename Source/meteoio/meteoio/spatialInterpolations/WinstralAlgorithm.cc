@@ -168,8 +168,8 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vec
 		const double VW = i_vecMeteo[ii](MeteoData::VW);
 		const double DW = i_vecMeteo[ii](MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
-			ve += VW * sin(DW*Cst::to_rad);
-			vn += VW * cos(DW*Cst::to_rad);
+			ve += - VW * sin(DW*Cst::to_rad);
+			vn += - VW * cos(DW*Cst::to_rad);
 			count++;
 		}
 	}
@@ -179,7 +179,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vec
 		vn /= static_cast<double>(count);
 
 		//const double meanspeed = sqrt(ve*ve + vn*vn);
-		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+		const double meandirection = IOUtils::UV_TO_DW(ve, vn);
 		return static_cast<double>(Optim::round(meandirection/10.))*10.; //round to nearest 10 deg
 	}
 

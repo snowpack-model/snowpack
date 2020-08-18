@@ -556,7 +556,7 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 		for (size_t jj=0; jj<VW.getNy(); jj++) {
 			for (size_t ii=0; ii<VW.getNx(); ii++) {
 				VW(ii,jj) = sqrt( Optim::pow2(U(ii,jj)) + Optim::pow2(V(ii,jj)) );
-				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+				DW(ii,jj) = fmod( IOUtils::UV_TO_DW(U(ii,jj), V(ii,jj)) + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}
@@ -651,7 +651,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		readWind(filename, date);
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
-				grid_out(ii,jj) = VW(ii,jj)*sin(DW(ii,jj)*Cst::to_rad);
+				grid_out(ii,jj) = -VW(ii,jj)*sin(DW(ii,jj)*Cst::to_rad);
 			}
 		}
 	}
@@ -659,7 +659,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		readWind(filename, date);
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
-				grid_out(ii,jj) = VW(ii,jj)*cos(DW(ii,jj)*Cst::to_rad);
+				grid_out(ii,jj) = -VW(ii,jj)*cos(DW(ii,jj)*Cst::to_rad);
 			}
 		}
 	}
@@ -1032,7 +1032,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 		if (readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
 		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
 			for (size_t ii=0; ii<npoints; ii++) {
-				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+				Meteo[ii](MeteoData::DW) = fmod( IOUtils::UV_TO_DW(values2[ii], values[ii]) + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}
