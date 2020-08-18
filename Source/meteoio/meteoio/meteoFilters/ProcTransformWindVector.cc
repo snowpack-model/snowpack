@@ -115,8 +115,8 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 		bool NotAtPoles = (lat > -90.+eps && lat < 90.-eps);
 		if (param == MeteoData::DW && ivec[ii](MeteoData::DW) != IOUtils::nodata && NotAtPoles) {
 			// If filter is applied on DW and DW is not nodata
-			u = -1.*sin(ivec[ii](MeteoData::DW)*Cst::to_rad);
-			v = -1.*cos(ivec[ii](MeteoData::DW)*Cst::to_rad);
+			u = -sin(ivec[ii](MeteoData::DW)*Cst::to_rad);
+			v = -cos(ivec[ii](MeteoData::DW)*Cst::to_rad);
 			if (ivec[ii](MeteoData::VW) != IOUtils::nodata) {
 				if (ivec[ii](MeteoData::VW) != 0.) {
 					u *= ivec[ii](MeteoData::VW);
