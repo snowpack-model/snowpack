@@ -535,7 +535,7 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 				grid2D(ii) = sqrt( Optim::pow2(U(ii)) + Optim::pow2(V(ii)) );
 		} else {
 			for (size_t ii=0; ii<grid2D.size(); ii++)
-				grid2D(ii) =  fmod( atan2( U(ii), V(ii) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
+				grid2D(ii) = IOUtils::UV_TO_DW(U(ii), V(ii)); // turn into degrees [0;360)
 		}
 
 		buffer.push(grid2D, parameter, date);

@@ -65,7 +65,7 @@ bool WindComponents::generate(const size_t& param, MeteoData& md)
 		if (param==MeteoData::VW)
 			value = Optim::fastSqrt_Q3( u*u + v*v );
 		else
-			value = fmod(atan2(u, v)*Cst::to_deg + 360., 360.);
+			value = IOUtils::UV_TO_DW(u, v);
 	}
 
 	return true;
@@ -98,7 +98,7 @@ bool WindComponents::create(const size_t& param, std::vector<MeteoData>& vecMete
 		if (param==MeteoData::VW)
 			vecMeteo[ii](param) = Optim::fastSqrt_Q3( u*u + v*v );
 		else
-			vecMeteo[ii](param) = 270. - fmod(atan2(v, u)*Cst::to_deg, 360.);
+			vecMeteo[ii](param) = IOUtils::UV_TO_DW(u, v);
 	}
 	
 	return all_filled;

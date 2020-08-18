@@ -149,8 +149,8 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 		const double VW = ivec[ii](MeteoData::VW);
 		const double DW = ivec[ii](MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
-			ve += VW * sin(DW*Cst::to_rad);
-			vn += VW * cos(DW*Cst::to_rad);
+			ve += - VW * sin(DW*Cst::to_rad);
+			vn += - VW * cos(DW*Cst::to_rad);
 			count++;
 		}
 	}
@@ -164,7 +164,7 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 		const double meanspeed = sqrt(ve*ve + vn*vn);
 		return meanspeed;
 	} else {
-		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360. , 360.); // turn into degrees [0;360)
+		const double meandirection = IOUtils::UV_TO_DW(ve, vn); // turn into degrees [0;360)
 		return meandirection;
 	}
 }
