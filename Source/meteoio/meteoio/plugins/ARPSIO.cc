@@ -248,7 +248,7 @@ void ARPSIO::read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2D
 		readGridLayer(fin, filename, "v", 2, V);
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
-				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
+				grid_out(ii,jj) = IOUtils::UV_TO_DW(grid_out(ii,jj), V(ii,jj)); // turn into degrees [0;360)
 			}
 		}
 	}
