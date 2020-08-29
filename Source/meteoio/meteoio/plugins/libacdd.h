@@ -58,7 +58,7 @@ class ACDD {
 		
 		/**
 		* @brief Constructor, the argument allows the object to know if the acdd metadata should be written out or not
-		* @param[in] i_enable enable ACDD support?
+		* @param[in] set_enable enable ACDD support?
 		*/
 		ACDD(const bool& set_enable) : name(), cfg_key(), value(), enabled(set_enable) {defaultInit();}
 		

@@ -19,9 +19,10 @@
 #ifndef FILTERMATHS_H
 #define FILTERMATHS_H
 
-#include <map>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
+
 #include <meteoio/thirdParty/tinyexpr.h>
+#include <map>
 
 namespace mio {
 
@@ -29,7 +30,7 @@ namespace mio {
  * @class FilterMaths
  * @ingroup processing
  * @author Michael Reisecker
- * @date   2019-09-01
+ * @date 2019-09-01
  * @brief A filter that evaluates formulas dependent on conditions.
  * @details
  *

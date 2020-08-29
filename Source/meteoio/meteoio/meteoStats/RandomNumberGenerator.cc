@@ -629,10 +629,10 @@ RandomNumberGenerator::RNG_TYPE RandomNumberGenerator::strToRngtype(const std::s
 	tv.push_back("PCG");
 	tv.push_back("MTW");
 
-	for (size_t i = 0; i < tv.size(); ++i) //find string
+	for (size_t ii = 0; ii < tv.size(); ++ii) //find string
 	{
-		if (tv[i] == IOUtils::strToUpper(str))
-			return (RNG_TYPE)i;
+		if (tv[ii] == IOUtils::strToUpper(str))
+			return (RNG_TYPE)ii;
 	}
 	throw InvalidArgumentException("RNG: Algorithm '" + str + "' not found for string conversion.", AT);
 }
@@ -655,10 +655,10 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::strToRngdistr(const std:
 	tv.push_back("BETA");
 	tv.push_back("F");
 
-	for (size_t i = 0; i < tv.size(); ++i) //find string
+	for (size_t ii = 0; ii < tv.size(); ++ii) //find string
 	{
-		if (tv[i] == IOUtils::strToUpper(str))
-			return (RNG_DISTR)i;
+		if (tv[ii] == IOUtils::strToUpper(str))
+			return (RNG_DISTR)ii;
 	}
 	throw InvalidArgumentException("RNG: Distribution '" + str + "' not found for string conversion.", AT);
 }

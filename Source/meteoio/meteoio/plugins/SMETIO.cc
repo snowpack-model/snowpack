@@ -53,16 +53,19 @@ namespace mio {
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
- * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section)
+ * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
  * - SMET_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
  * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
  * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
- * - SMET_SEPARATOR: set a different output field separator as required by some import software (the header key "column_delimiter" will be set to the character that has been used as a delimiter). But this <b>makes the smet files non-conformant</b>! [Output] section
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
+ * In order to be able to use this plugin for some software that require less structured text files (ie more like classical CSV files, for example for databases imports), the following options exist, but please keep in mind that these make the produced SMET file <b>non-conformant</b>:
+ * - SMET_SEPARATOR: set a different output field separator (the header key "column_delimiter" will be set to the character that has been used as a delimiter so this plugin can re-read such files); [Output] section
+ * - SMET_COMMENTED_HEADERS: prefix all header lines with a '#' sign to comment them out (currently this plugin won't be able to re-read such files); [Output] section
+ * 
  * Example:
  * @code
  * [Input]
@@ -99,7 +102,7 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), output_separator(' '),
+          plugin_nodata(IOUtils::nodata), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -109,7 +112,7 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), output_separator(' '),
+          plugin_nodata(IOUtils::nodata), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -197,6 +200,7 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
 		cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 		cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
+		cfg.getValue("SMET_COMMENTED_HEADERS", "Output", outputCommentedHeaders, IOUtils::nothrow); //allow prefixing headers by a '#' character for easy import into Dbs, etc
 		
 		if (vecArgs.empty())
 			vecArgs.push_back("ASCII");
@@ -531,6 +535,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				
 				mywriter = new smet::SMETWriter(filename, type);
 				if (output_separator!=' ') mywriter->set_separator( output_separator );
+				mywriter->set_commented_headers( outputCommentedHeaders );
 				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone,
                                nr_of_parameters, vecParamInUse, vecColumnName, *mywriter);
 			}
@@ -658,6 +663,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	}
 
 	//Add all other used parameters
+	bool some_params_identified = false;
 	int tmpwidth, tmpprecision;
 	for (size_t ll=0; ll<nr_of_parameters; ll++) {
 		if (vecParamInUse[ll]) {
@@ -669,15 +675,15 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 			myprecision.push_back(tmpprecision);
 			mywidth.push_back(tmpwidth);
 
-			if (outputPlotHeaders) getPlotProperties(param, plot_units, plot_description, plot_color, plot_min, plot_max);
+			if (outputPlotHeaders) some_params_identified |= getPlotProperties(param, plot_units, plot_description, plot_color, plot_min, plot_max);
 		}
 	}
-	
+
 	if (randomColors)
 		srand( static_cast<unsigned int>(time(NULL)) );
 
 	mywriter.set_header_value("fields", ss.str());
-	if (outputPlotHeaders) {
+	if (outputPlotHeaders && some_params_identified) {
 		mywriter.set_header_value("plot_unit", plot_units.str());
 		mywriter.set_header_value("plot_description", plot_description.str());
 		mywriter.set_header_value("plot_color", plot_color.str());
@@ -688,7 +694,8 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	mywriter.set_precision(myprecision);
 }
 
-void SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
+//return true if the plot could be identified and therefore received special properties, false otherwise
+bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const
 {
 	//handling different versions of the same parameter, ex TA_1 and TA_2
 	const size_t numbering_start = param.find_last_of( '_' );
@@ -704,20 +711,23 @@ void SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 		plot_color  << it->second.color << " ";
 		plot_min << it->second.min << " ";
 		plot_max << it->second.max << " ";
+		return true;
 	} else {
 		plot_units << "- ";
 		plot_description << "- ";
+		plot_min << IOUtils::nodata << " ";
+		plot_max << IOUtils::nodata << " ";
 		
 		if (!randomColors) {
 			plot_color  << "- ";
+			return false;
 		} else {
 			char tmp[9];
 			static const int max_col = 256*256*256;
 			sprintf(tmp,"0x%x", rand() % max_col);
 			plot_color << tmp << " ";
+			return true;
 		}
-		plot_min << IOUtils::nodata << " ";
-		plot_max << IOUtils::nodata << " ";
 	}
 }
 
@@ -756,6 +766,9 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 	} else if (param == MeteoData::QI){
 		prec = 10;
 		width = 11;
+	} else {
+		prec = 3;
+		width = 8;
 	}
 }
 

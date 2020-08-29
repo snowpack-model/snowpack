@@ -72,7 +72,8 @@ namespace mio {
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
- *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; optional
+ *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below; optional
+ *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
@@ -81,7 +82,7 @@ namespace mio {
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
- *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, MONTH, DAY, HOUR, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
+ *    - Date/Time as separate components: then the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero).
  * - <b>Metadata</b>
  *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
  *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
@@ -498,17 +499,9 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 
 }
 
-void CsvParameters::initDtComponents(const size_t& pos, const size_t& idx)
-{
-	if (datetime_idx.size()!=6) datetime_idx.resize(6, IOUtils::npos);
-	
-	datetime_idx[ pos ] = idx;
-	dt_as_components = true;
-}
-
 //user provided field names are in fieldNames, header field names are in headerFields
 //and user provided fields have priority.
-void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames, size_t &dt_col, size_t &tm_col)
+void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames)
 {
 	const bool user_provided_field_names = (!fieldNames.empty());
 	if (headerFields.empty() && !user_provided_field_names)
@@ -523,47 +516,71 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		IOUtils::replaceWhitespaces(tmp, '-');
 		if (tmp.empty()) continue;
 		
-		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("DATETIME")==0) {
-			dt_col = tm_col = ii;
+		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
+			date_cols.date_str = date_cols.time_str = ii;
+			skip_fields[ ii ] = true; //all special fields are marked as SKIP since they are read in a special way
 		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0 || tmp.compare("FECHA")==0) {
-			dt_col = ii;
+			date_cols.date_str = ii;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0 || tmp.compare("HORA")==0) {
-			tm_col = ii;
+			date_cols.time_str = ii;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("SKIP")==0) {
 			skip_fields[ ii ] = true;
 		} else if (tmp.compare("YEAR")==0) {
-			initDtComponents(0, ii);
+			date_cols.year = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0) {
+			date_cols.jdn = ii;
+			skip_fields[ ii ] = true;
+			dt_as_year_and_jdn = true;
 		} else if (tmp.compare("MONTH")==0) {
-			initDtComponents(1, ii);
+			date_cols.month = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("DAY")==0) {
-			initDtComponents(2, ii);
-		} else if (tmp.compare("HOUR")==0) {
-			initDtComponents(3, ii);
-		} else if (tmp.compare("MINUTES")==0) {
-			initDtComponents(4, ii);
-		} else if (tmp.compare("SECONDS")==0) {
-			initDtComponents(5, ii);
+			date_cols.day = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("NTIME")==0) {
+			date_cols.time = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("HOUR")==0 || tmp.compare("HOURS")==0) {
+			date_cols.hours = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("MINUTE")==0 || tmp.compare("MINUTES")==0) {
+			date_cols.minutes = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
+		} else if (tmp.compare("SECOND")==0 || tmp.compare("SECONDS")==0) {
+			date_cols.seconds = ii;
+			dt_as_components = true;
+			skip_fields[ ii ] = true;
 		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
 			ID_col = ii;
+			skip_fields[ ii ] = true;
 		}
 		
 		//tmp = identifyField( tmp ); //try to identify known fields
 	}
+	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (dt_as_components && dt_col!=0)
-		throw InvalidArgumentException("It is not possible to provide both date/time as individual components columns and as date/time columns", AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings or components). Identified fields: "+date_cols.toString(), AT);
 	if (dt_as_components && !single_field.empty())
 		throw InvalidArgumentException("It is not possible to provide date/time as individual components and declare CSV_SINGLE_PARAM_INDEX", AT);
 
 	//if necessary, set the format to the appropriate defaults
-	if (dt_col==tm_col) {
+	if (date_cols.date_str==date_cols.time_str) {
 		if (datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
 	} else {
-		if (datetime_idx.empty())
+		if (date_cols.date_str!=IOUtils::npos && datetime_idx.empty())
 			setDateTimeSpec("YYYY-MM-DD");
-		if (time_idx.empty())
+		if (date_cols.time_str!=IOUtils::npos && time_idx.empty())
 			setTimeSpec("HH24:MI:SS");
 	}
 
@@ -572,14 +589,14 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	if (!single_field.empty() && !user_provided_field_names) {
 		if (ID_col!=IOUtils::npos) throw InvalidArgumentException("It is not possible set CSV_SINGLE_PARAM_INDEX when multiple stations are present within one single file with an ID field", AT);
 		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
-			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change dt_col
-		} else if (dt_col == tm_col && fieldNames.size() == 2) { //no index given but unambiguous
-			const size_t pidx = (dt_col == 0)? 1 : 0; //field that is not datetime
+			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change date_cols.date_str
+		} else if (date_cols.date_str == date_cols.time_str && fieldNames.size() == 2) { //no index given but unambiguous
+			const size_t pidx = (date_cols.date_str == 0)? 1 : 0; //field that is not datetime
 			fieldNames[pidx] = single_field;
-		} else if (dt_col != tm_col && fieldNames.size() == 3) {
+		} else if (date_cols.date_str != date_cols.time_str && fieldNames.size() == 3) {
 			size_t pidx;
 			for (pidx = 0; pidx < 3; ++pidx) //look for 3rd field that is neither date nor time
-				if (pidx != dt_col && pidx != tm_col) break;
+				if (pidx != date_cols.date_str && pidx != date_cols.time_str) break;
 			fieldNames[pidx] = single_field;
 		}
 	}
@@ -648,7 +665,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	Date prev_dt;
 	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
 	const bool delimIsNoWS = (csv_delim!=' ');
-	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty()); 
+	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty());
+	bool fields_ready = false;
 	try {
 		eoln = FileUtils::getEoln(fin);
 		for (size_t ii=0; ii<(header_lines+10); ii++) {
@@ -684,9 +702,14 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				setUnits(line, csv_delim);
 
 			if (linenr<=header_lines) continue; //we are still parsing the header
-
+			if (!fields_ready) { //we should now have all the information from the headers, so build what we need for data parsing
+				parseFields(headerFields, csv_fields);
+				fields_ready=true;
+				continue;
+			}
+			
 			const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
-			if (nr_curr_data_fields>date_col && nr_curr_data_fields>time_col) {
+			if (nr_curr_data_fields>date_cols.max_dt_col) {
 				const Date dt( parseDate(tmp_vec) );
 				if (dt.isUndef()) continue;
 				if (!prev_dt.isUndef()) {
@@ -713,8 +736,6 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setXY(easting, northing, alt, false); //coord system was set on keyword parsing
 	}
 	location.check("Inconsistent geographic coordinates in file \"" + file_and_path + "\": ");
-	
-	parseFields(headerFields, csv_fields, date_col, time_col);
 	
 	if (name.empty()) name = FileUtils::removeExtension( FileUtils::getFilename(i_file_and_path) ); //fallback if nothing else could be find
 	if (id.empty()) {
@@ -822,9 +843,10 @@ Date CsvParameters::createDate(const float args[6], const double i_tz)
 	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
 }
 
+
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
-	float args[6] = {0, 0, 0, 0, 0, 0};
+	float args[6] = {0., 0., 0., 0., 0., 0.};
 	char rest[32] = "";
 	bool status = false;
 	switch( datetime_idx.size() ) {
@@ -867,27 +889,117 @@ Date CsvParameters::parseDate(const std::string& date_str, const std::string& ti
 	return createDate(args, tz);
 }
 
+Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields) const
+{
+	//year + integer jdn + time string
+	if (!time_idx.empty()) {
+		int year=0;
+		double jdn=0.;
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		
+		//parse the timer information and compute the decimal jdn
+		const std::string time_str( vecFields[ date_cols.time_str ] );
+		float args[3] = {0., 0., 0.};
+		char rest[32] = "";
+		bool status = false;
+		switch( time_idx.size() ) {
+			case 3:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], &args[ time_idx[2] ], rest)>=3);
+				break;
+			case 2:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], &args[ time_idx[1] ], rest)>=2);
+				break;
+			case 1:
+				status = (sscanf(time_str.c_str(), time_format.c_str(), &args[ time_idx[0] ], rest)>=1);
+				break;
+			default: // do nothing;
+				break;
+		}
+		if (!status) return Date();
+		
+		jdn += (args[0]*3600. + args[1]*60. + args[2]) / (24.*3600.);
+		const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
+		return Date(year, jdn, tz);
+	}
+	
+	//year + integer jdn + time numerical time, for example "952" for 09:52
+	if (date_cols.time!=IOUtils::npos) {
+		int year=0, jdn=0, time=0;
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.time, time)) return Date();
+		const int hours = time / 100;
+		const int minutes = time - hours*100;
+		
+		return Date(year, static_cast<double>(jdn)+(hours*60.+minutes)/(24.*60.), csv_tz);
+	}
+	
+	//year + integer jdn + hours + minutes, etc
+	if (date_cols.hours!=IOUtils::npos) {
+		int year=0, jdn=0, hours=0, minutes=0;
+		double seconds=0;
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.hours, hours)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.minutes, minutes)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
+		
+		return Date(year, static_cast<double>(jdn)+(hours*3600. + minutes*60. + seconds) / (24.*3600.), csv_tz);
+	}
+	
+	//year + decimal jdn
+	{
+		int year=0;
+		double jdn = 0.;
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.jdn, jdn)) return Date();
+		
+		return Date(year, jdn, csv_tz);
+	}
+}
+
+bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value)
+{
+	if (idx==IOUtils::npos) {
+		value=0;
+		return true;
+	}
+	
+	return IOUtils::convertString(value, vecFields[ idx ]);
+}
+
+bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value)
+{
+	if (idx==IOUtils::npos) {
+		value=0.;
+		return true;
+	}
+	
+	return IOUtils::convertString(value, vecFields[ idx ]);
+}
+
 Date CsvParameters::parseDate(const std::vector<std::string>& vecFields) const
 {
-	if (dt_as_components) { //date and time components split as columns. We enforce when parsing user configuration that year, month, day are provided
-		int i_args[5] = {0, 0, 0, 0, 0};
-		for (size_t ii=0; ii<5; ii++) {
-			const size_t idx = datetime_idx[ii];
-			if (idx==IOUtils::npos) continue;
-			double dbl_val;
-			if (!IOUtils::convertString(dbl_val, vecFields[ idx ])) return Date();
-			i_args[ii] = (int)dbl_val;
-			if ((double)i_args[ii]!=dbl_val) return Date();
-		}
+	//TODO: one of the strings + components
+	if (dt_as_components) { //date and time components split as columns.
+		//As year + jdn + time as string or components
+		if (dt_as_year_and_jdn) return parseJdnDate(vecFields);
 		
+		//As pure components: year, month, day, 
+		int year=0, month=0, day=0, hour=0, minute=0;
 		double seconds = 0.;
-		if (datetime_idx[5]!=IOUtils::npos) {
-			if (!IOUtils::convertString(seconds, vecFields[ 5 ])) return Date();
-		}
 		
-		return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], seconds, csv_tz);
+		if (!parseDateComponent(vecFields, date_cols.year, year)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.month, month)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.day, day)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.hours, hour)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.minutes, minute)) return Date();
+		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
+		
+		return Date(year, month, day, hour, minute, seconds, csv_tz);
 	} else {
-		return parseDate(vecFields[date_col], vecFields[time_col]);
+		return parseDate(vecFields[ date_cols.date_str ], vecFields[ date_cols.time_str ]);
 	}
 }
 
@@ -1003,12 +1115,16 @@ void CsvIO::parseInputOutputSection()
 		
 		if (cfg.keyExists(pre+"COLUMNS_HEADERS", "Input")) cfg.getValue(pre+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers);
 		else cfg.getValue(dflt+"COLUMNS_HEADERS", "Input", tmp_csv.columns_headers, IOUtils::nothrow);
+		if (tmp_csv.columns_headers>tmp_csv.header_lines) tmp_csv.columns_headers = IOUtils::npos;
 		
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
 		
 		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
-			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS (make sure it is <= CSV_NR_HEADERS) or CSV_FIELDS", AT);
+		
+		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
+		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);
 		
 		std::vector<size_t> vecSkipFields;
 		if (cfg.keyExists(pre+"SKIP_FIELDS", "Input")) cfg.getValue(pre+"SKIP_FIELDS", "Input", vecSkipFields);
@@ -1148,7 +1264,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
 	const bool delimIsNoWS = (params.csv_delim!=' ');
 	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
-	const std::string filterID( template_md.getStationID() ); //necessary if filtering on stationID field
+	const std::string filterID = (params.filter_ID.empty())? template_md.getStationID() : params.filter_ID; //necessary if filtering on stationID field
 	Date prev_dt;
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
@@ -1164,16 +1280,8 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		
 		const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, params.csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 		if (nr_of_data_fields==0) nr_of_data_fields = nr_curr_data_fields;
-		if (nr_curr_data_fields!=nr_of_data_fields) {
-			std::ostringstream ss;
-			ss << "File \'" << filename << "\' declares (either as first data line or columns headers or units offset/multiplier) " << nr_of_data_fields << " columns ";
-			ss << "but this does not match line " << linenr << " with " << nr_curr_data_fields << " fields :\n'" << line << "'\n";
-			if (silent_errors) {
-				std::cerr << ss.str();
-				continue;
-			} else throw InvalidFormatException(ss.str(), AT);
-		}
-
+		
+		//filter on ID
 		if (params.ID_col!=IOUtils::npos) {
 			if (tmp_vec.size()<=params.ID_col) { //we can not filter on the ID although it has been requested so we have to stop!
 				std::ostringstream ss;
@@ -1183,6 +1291,17 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 			}
 			
 			if (tmp_vec[params.ID_col]!=filterID) continue;
+		}
+		
+		//check that we have the expected number of fields
+		if (nr_curr_data_fields!=nr_of_data_fields) {
+			std::ostringstream ss;
+			ss << "File \'" << filename << "\' declares (either as first data line or columns headers or units offset/multiplier) " << nr_of_data_fields << " columns ";
+			ss << "but this does not match line " << linenr << " with " << nr_curr_data_fields << " fields :\n'" << line << "'\n";
+			if (silent_errors) {
+				std::cerr << ss.str();
+				continue;
+			} else throw InvalidFormatException(ss.str(), AT);
 		}
 		
 		const Date dt( getDate(params, tmp_vec, silent_errors, filename, linenr) );
@@ -1204,8 +1323,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(const CsvParameters& params, const Dat
 		md.setDate(dt);
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
-			if (ii==params.date_col || ii==params.time_col || ii==params.ID_col) continue;
-			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped
+			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped or this is a special field
 			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
 				continue;
 			

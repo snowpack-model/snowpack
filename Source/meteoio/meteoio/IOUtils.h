@@ -93,6 +93,22 @@ namespace IOUtils {
 	inline double UV_TO_DW(const double& U, const double& V) {return ((U==nodata || V==nodata)? nodata : fmod(atan2(U, V) * Cst::to_deg + 180., 360.));}
 
 	/**
+	* @brief From wind speed and direction to u component (west-to-east)
+	* @param VW (wind speed)
+	* @param DW (wind direction)
+	* @return U component of wind.
+	*/
+	inline double VWDW_TO_U(const double& VW, const double& DW) {return ((VW==nodata || DW==nodata)? nodata : (- VW * sin(DW*Cst::to_rad)));}
+
+	/**
+	* @brief From wind speed and direction to v component (south-to-north)
+	* @param VW (wind speed)
+	* @param DW (wind direction)
+	* @return V component of wind.
+	*/
+	inline double VWDW_TO_V(const double& VW, const double& DW) {return ((VW==nodata || DW==nodata)? nodata : (- VW * cos(DW*Cst::to_rad)));}
+
+	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
 	* @param val1
 	* @param val2

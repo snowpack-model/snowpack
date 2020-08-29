@@ -168,8 +168,8 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vec
 		const double VW = i_vecMeteo[ii](MeteoData::VW);
 		const double DW = i_vecMeteo[ii](MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
-			ve += - VW * sin(DW*Cst::to_rad);
-			vn += - VW * cos(DW*Cst::to_rad);
+			ve += IOUtils::VWDW_TO_U(VW, DW);
+			vn += IOUtils::VWDW_TO_V(VW, DW);
 			count++;
 		}
 	}

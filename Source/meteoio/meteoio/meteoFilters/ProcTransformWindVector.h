@@ -29,7 +29,7 @@ namespace mio {
 /**
  * @class ProcTransformWindVector
  * @brief This filter projects wind direction, and/or wind speed components, from WGS84 to a PROJ4 supported coordinate system,
- * defined by an EPSG code.
+ * defined by an EPSG code (requires PROJ4).
  * @details
  * The filter assumes the wind direction and/or the U and V wind speed components are defined in WGS84 (i.e, north/south is parallel
  * to longitude, and east/west is parallel to latitude). After transformation to a PROJ4 supported coordinate system defined by an

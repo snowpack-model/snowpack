@@ -72,13 +72,14 @@ inline void Usage(const std::string& programname)
 		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
 		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
 		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (e.g. 60)\n"
+		<< "\t[-p, --progress] Show progress\n"
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
 
 	std::cout << "Example: " << programname << " -c io.ini -b 1996-06-17T00:00 -e NOW\n\n";
 }
 
-inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std::string& end_date_str)
+inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std::string& end_date_str, bool& showProgress)
 {
 	int longindex=0, opt=-1;
 	bool setEnd = false;
@@ -89,6 +90,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		{"enddate", required_argument, 0, 'e'},
 		{"config", required_argument, 0, 'c'},
 		{"sampling-rate", required_argument, 0, 's'},
+		{"progress", no_argument, 0, 'p'},
 		{"version", no_argument, 0, 'v'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -99,7 +101,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		exit(1);
 	}
 
-	while ((opt=getopt_long( argc, argv, ":b:e:c:s:vh", long_options, &longindex)) != -1) {
+	while ((opt=getopt_long( argc, argv, ":b:e:c:s:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 0:
 			break;
@@ -122,6 +124,9 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 			std::cerr << std::endl << "[E] Command line option '-" << char(opt) << "' requires an operand\n";
 			Usage(std::string(argv[0]));
 			exit(1);
+		case 'p':
+			showProgress = true;
+			break;
 		case 'v':
 			Version();
 			exit(0);
@@ -148,8 +153,9 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 
 static void real_main(int argc, char* argv[])
 {
+	bool showProgress = false;
 	std::string begin_date_str, end_date_str;
-	parseCmdLine(argc, argv, begin_date_str, end_date_str);
+	parseCmdLine(argc, argv, begin_date_str, end_date_str, showProgress);
 	
 	Config cfg(cfgfile);
 	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
@@ -179,6 +185,7 @@ static void real_main(int argc, char* argv[])
 
 	size_t insert_position = 0;
 	for (Date d=dateBegin; d<=dateEnd; d+=samplingRate) { //time loop
+		if(showProgress) std::cout << d.toString(Date::ISO) << "\n";
 		io.getMeteoData(d, Meteo); //read 1 timestep at once, forcing resampling to the timestep
 		for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
 			if (Meteo[ii].isNodata()) continue;
