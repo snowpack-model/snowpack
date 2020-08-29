@@ -169,13 +169,20 @@ class SMETWriter {
 		 * @param[in] i_separator field separator to use instead of spaces
 		 */
 		void set_separator(const char& i_separator);
+		
+		/**
+		 * @brief For some special cases (import into DB), the headers should be
+		 * commented out (please note that this breaks SMET conformance)
+		 * @param[in] flag should headers be commented out?
+		 */
+		void set_commented_headers(const bool& flag) {comment_headers=flag;}
 
 		const std::string toString() const;
 		
 	private:
 		void setAppendMode(std::vector<std::string> vecFields);
-		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
-		void printACDD(std::ofstream& fout, const mio::ACDD& acdd) const;
+		void print_if_exists(const std::string& header_field, const std::string& prefix, std::ofstream& fout) const;
+		void printACDD(std::ofstream& fout, const std::string& prefix, const mio::ACDD& acdd) const;
 		void write_header(std::ofstream& fout, const mio::ACDD& acdd); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
 		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
@@ -198,7 +205,7 @@ class SMETWriter {
 		char separator;
 		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
 		bool timestamp_present, julian_present;
-		bool file_is_binary, append_mode, append_possible;
+		bool file_is_binary, append_mode, append_possible, comment_headers;
 };
 
 /**

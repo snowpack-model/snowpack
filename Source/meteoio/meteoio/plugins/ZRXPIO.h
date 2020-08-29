@@ -31,7 +31,7 @@ namespace mio {
  *
  * @ingroup plugins
  * @author Michael Reisecker
- * @date   2018-12
+ * @date 2018-12
  */
 class ZRXPIO : public IOInterface {
 	public:

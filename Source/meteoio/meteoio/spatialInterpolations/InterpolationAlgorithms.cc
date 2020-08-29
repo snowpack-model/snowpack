@@ -36,6 +36,7 @@
 #include <meteoio/spatialInterpolations/PPhaseAlgorithm.h>
 #include <meteoio/spatialInterpolations/RHListonAlgorithm.h>
 #include <meteoio/spatialInterpolations/RyanWindAlgorithm.h>
+#include <meteoio/spatialInterpolations/SnowlineAlgorithm.h>
 #include <meteoio/spatialInterpolations/SnowPsumAlgorithm.h>
 #include <meteoio/spatialInterpolations/StdPressAlgorithm.h>
 #include <meteoio/spatialInterpolations/SwRadAlgorithm.h>
@@ -226,6 +227,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(std::string algoname,
 		return new SnowPSUMInterpolation(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "SWRAD") {// terrain shadding interpolation
 		return new SWRadInterpolation(vecArgs, algoname, param, tsm, mi);
+	} else if (algoname == "SNOWLINE") {// Snowline elevation assimilation
+		return new SnowlineAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -386,7 +389,7 @@ bool Trend::multilinearDetrend(const std::vector<StationData>& vecMeta, std::vec
 
 /**
  * @brief Compute the trend according to the provided data and detrend vecDat
- * @param[in] vecMeta Location informations sorted similarly as the data in vecDat
+ * @param[in] vecMeta Location information sorted similarly as the data in vecDat
  * @param vecDat data for the interpolated parameter
 */
 void Trend::detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat)

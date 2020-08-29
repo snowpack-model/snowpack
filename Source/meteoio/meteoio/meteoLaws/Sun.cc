@@ -315,7 +315,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 	position.getHorizontalCoordinates(azimuth, elevation);
 
 	if ( elevation < elevation_threshold ) {
-		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
+		// when the Sun is low above the horizon, Mt is getting abnormally too large pretending
 		// this is a clear sky day when almost all the radiation should be diffuse
 		// no matter how the sky is
 		splitting_coef = 1.0;

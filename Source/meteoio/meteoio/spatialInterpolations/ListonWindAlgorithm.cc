@@ -105,8 +105,8 @@ void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObje
 	//compute U,V
 	std::vector<double> Ve(vecDataVW.size()), Vn(vecDataVW.size());
 	for (size_t ii=0; ii<vecDataVW.size(); ii++) {
-		Ve[ii] = -vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad);
-		Vn[ii] = -vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad);
+		Ve[ii] = IOUtils::VWDW_TO_U(vecDataVW[ii], vecDataDW[ii]);
+		Vn[ii] = IOUtils::VWDW_TO_V(vecDataVW[ii], vecDataDW[ii]);
 	}
 
 	//spatially interpolate U,V

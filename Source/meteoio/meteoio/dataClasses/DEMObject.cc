@@ -498,7 +498,7 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 		}
 	}
 
-	//Inform the user is some points have unexpectidly not been computed
+	//Inform the user is some points have unexpectedly not been computed
 	//(ie: there was an altitude but some parameters could not be computed)
 	if (slope_failures>0 || curvature_failures>0) {
 		cerr << "[W] DEMObject: " << slope_failures << " point(s) have an elevation but no slope, " << curvature_failures << " point(s) have an elevation but no curvature." << std::endl;
