@@ -327,14 +327,16 @@ SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type)
              filename(in_filename), nodata_string(), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), separator(' '),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(false), append_possible(false) {}
+             timestamp_present(false), julian_present(false), file_is_binary(false), 
+             append_mode(false), append_possible(false), comment_headers(false) {}
 
 SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(ASCII), nodata_value(in_nodata), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), separator(' '),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(true), append_possible(false)
+             timestamp_present(false), julian_present(false), file_is_binary(false), 
+             append_mode(true), append_possible(false), comment_headers(false)
 {
 	std::vector<std::string> vecFields;
 	SMETCommon::readLineToVec(in_fields, vecFields);
@@ -697,7 +699,7 @@ void SMETWriter::write(const std::vector<double>& data, const mio::ACDD& acdd)
 	fout.close();
 }
 
-void SMETWriter::printACDD(std::ofstream& fout, const mio::ACDD& acdd) const
+void SMETWriter::printACDD(std::ofstream& fout, const std::string& prefix, const mio::ACDD& acdd) const
 {
 	//print ACDD headers
 	const size_t nr = acdd.getNrAttributes();
@@ -706,6 +708,7 @@ void SMETWriter::printACDD(std::ofstream& fout, const mio::ACDD& acdd) const
 		acdd.getAttribute(ii, header_field, value);
 		if (header_field.empty() || value.empty()) continue;
 		
+		if (!prefix.empty()) fout << prefix;
 		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
 		const std::streamsize width = fout.width(16);
 		fout << header_field << " = " << value << "\n";
@@ -714,10 +717,11 @@ void SMETWriter::printACDD(std::ofstream& fout, const mio::ACDD& acdd) const
 	}
 }
 
-void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream& fout) const
+void SMETWriter::print_if_exists(const std::string& header_field, const std::string& prefix, std::ofstream& fout) const
 {
 	const std::map<string,string>::const_iterator it = header.find(header_field);
 	if (it != header.end()) {
+		if (!prefix.empty()) fout << prefix;
 		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
 		const std::streamsize width = fout.width(16);
 		fout << header_field << " = " << it->second << "\n";
@@ -732,52 +736,54 @@ void SMETWriter::write_header(std::ofstream& fout, const mio::ACDD& acdd)
 		fout.close();
 		throw SMETException("The header data you supplied is not valid, file \""+filename+"\" cannot be written", SMET_AT);
 	}
+	
+	const std::string prefix = (comment_headers)? "#" : "";
 
 	//write signature
-	fout << "SMET " << SMETCommon::smet_version << " ";
+	fout << prefix << "SMET " << SMETCommon::smet_version << " ";
 	if (smet_type == ASCII) fout << "ASCII" << "\n";
 	else fout << "BINARY" << "\n";
 
-	fout << "[HEADER]" << "\n";
-	print_if_exists("station_id", fout);
-	print_if_exists("station_name", fout);
-	print_if_exists("column_delimiter", fout);
+	fout << prefix << "[HEADER]" << "\n";
+	print_if_exists("station_id", prefix, fout);
+	print_if_exists("station_name", prefix, fout);
+	print_if_exists("column_delimiter", prefix, fout);
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
-			print_if_exists("latitude", fout);
-			print_if_exists("longitude", fout);
-			print_if_exists("altitude", fout);
+			print_if_exists("latitude", prefix, fout);
+			print_if_exists("longitude", prefix, fout);
+			print_if_exists("altitude", prefix, fout);
 		}
 
 		if (location_epsg == 15){
-			print_if_exists("easting", fout);
-			print_if_exists("northing", fout);
+			print_if_exists("easting", prefix, fout);
+			print_if_exists("northing", prefix, fout);
 			if (location_wgs84 != 7)
-				print_if_exists("altitude", fout);
-			print_if_exists("epsg", fout);
+				print_if_exists("altitude", prefix, fout);
+			print_if_exists("epsg", prefix, fout);
 		}
 	} else {
 		if (location_in_data_epsg)
-			print_if_exists("epsg", fout);
+			print_if_exists("epsg", prefix, fout);
 	}
 
-	print_if_exists("nodata", fout);
+	print_if_exists("nodata", prefix, fout);
 
-	print_if_exists("tz", fout);
-	print_if_exists("creation", fout);
-	print_if_exists("source", fout);
-	print_if_exists("units_offset", fout);
-	print_if_exists("units_multiplier", fout);
-	print_if_exists("comment", fout);
+	print_if_exists("tz", prefix, fout);
+	print_if_exists("creation", prefix, fout);
+	print_if_exists("source", prefix, fout);
+	print_if_exists("units_offset", prefix, fout);
+	print_if_exists("units_multiplier", prefix, fout);
+	print_if_exists("comment", prefix, fout);
 
 	for (size_t ii=0; ii<other_header_keys.size(); ii++){
-		fout << std::left << std::setw(16) << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
+		fout << prefix << std::left << std::setw(16) << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
 	}
 
-	print_if_exists("fields", fout);
-	if (acdd.isEnabled()) printACDD(fout, acdd);
-	fout << "[DATA]" << endl;
+	print_if_exists("fields", prefix, fout);
+	if (acdd.isEnabled()) printACDD(fout, prefix, acdd);
+	fout << prefix << "[DATA]" << endl;
 }
 
 void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::ofstream& fout)

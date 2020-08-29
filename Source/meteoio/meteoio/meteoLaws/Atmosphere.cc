@@ -143,13 +143,6 @@ double Atmosphere::wetBulbTemperature(const double& TA, const double& RH, const 
 		hum = (ew - AA * PP * (TA - TW)) / ed; //humidity given TA and T_wet
 	}
 	return TW;
-
-//	static const double L = Cst::l_water_vaporization; //latent heat of vaporisation
-//	static const double mixing_ratio = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
-//	const double p = stdAirPressure(altitude);
-//	const double Vp = vaporSaturationPressure(T);
-//	return ( T - (RH*Vp - Vp) * mixing_ratio * L / p / Cst::specific_heat_air );
-//
 } //cf. https://maxwellsci.com/print/rjaset/v6-2984-2987.pdf
 
 /**
@@ -908,7 +901,7 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 	static const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
 	static const double Tfreeze = 0.;                          //freezing temperature
 	static const double Tnucl = -16.0;                         //nucleation temperature
-	double Es, E, Rhi, Rhw;                         //saturation and current water vapro pressure
+	double Es, E, Rhi, Rhw;                         //saturation and current water vapor pressure
 
 	if (TA >= Tfreeze || force_water==true) {
 		//above freezing point, water

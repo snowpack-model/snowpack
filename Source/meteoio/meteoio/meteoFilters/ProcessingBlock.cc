@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include <cerrno>
 #include <cstring>

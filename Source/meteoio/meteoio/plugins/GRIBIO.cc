@@ -651,7 +651,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		readWind(filename, date);
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
-				grid_out(ii,jj) = -VW(ii,jj)*sin(DW(ii,jj)*Cst::to_rad);
+				grid_out(ii,jj) = IOUtils::VWDW_TO_U(VW(ii,jj), DW(ii,jj));
 			}
 		}
 	}
@@ -659,7 +659,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		readWind(filename, date);
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
-				grid_out(ii,jj) = -VW(ii,jj)*cos(DW(ii,jj)*Cst::to_rad);
+				grid_out(ii,jj) = IOUtils::VWDW_TO_V(VW(ii,jj), DW(ii,jj));
 			}
 		}
 	}
