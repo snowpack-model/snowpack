@@ -1486,8 +1486,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		for (size_t iy=0; iy<dimy; iy++) {
 			for (size_t ix=0; ix<dimx; ix++) {
 				if (grid_VW(ix, iy) != IOUtils::nodata && grid_DW(ix, iy) != IOUtils::nodata) {
-					const double u = -1.*grid_VW(ix, iy)*sin(grid_DW(ix, iy)*Cst::to_rad);
-					const double v = -1.*grid_VW(ix, iy)*cos(grid_DW(ix, iy)*Cst::to_rad);
+					const double u = IOUtils::VWDW_TO_U(grid_VW(ix, iy), grid_DW(ix, iy));
+					const double v = IOUtils::VWDW_TO_V(grid_VW(ix, iy), grid_DW(ix, iy));
 					//if(tmp_ErodedMass(ix, iy)!=0. && tmp_ErodedMass(ix, iy)!=IOUtils::nodata) printf("YYY: %d %d %f %f %f\n", ix, iy, u, v, tmp_ErodedMass(ix, iy));
 
 					// What is advected
