@@ -1445,16 +1445,19 @@ void SnowpackInterface::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedM
 
 
 /**
- * @brief Calculates explicit drifting snow
- * @author Nander Wever
+ * @brief Calculates explicit drifting snow by solving the 2-D advection equation using a first-order upwind finite difference scheme.
+ * @author Nander Wever and Eric Keenan
  */
 mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass)
 {
-	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) );
-	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) );
-	mio::Grid2DObject dM( ErodedMass, 0. );
-	mio::Grid2DObject tmp_ErodedMass( ErodedMass );
-	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass;
+	// Retrieve and initialize grids
+	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) ); // Wind speed
+	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) ); // Wind direction
+	mio::Grid2DObject U( grid_VW, 0. );
+	mio::Grid2DObject V( grid_VW, 0. );
+	mio::Grid2DObject dM( ErodedMass, 0. ); // Local mass perturbation due to drifting snow redistribution.
+	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass.
+	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass; // Output mass
 	grid_snowdrift_out(0.);
 
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
@@ -1462,19 +1465,27 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		return ErodedMass;
 	}
 
+	// Calculate largest possible drifting snow sub time step such that the scheme is still stable and satisfies
+	// the CFL criterion.
 	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
 	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
 	const double C_max = 0.999;				// Courant number used to calculate sub time step.
 	double sub_dt = std::min(C_max * dx / (sqrt(2.) * grid_VW.grid2D.getMax()), dt); // Sub time step
 	std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
 
+	// Eroded mass must be greater than or equal to zero.
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
 			if (tmp_ErodedMass(ix, iy) == IOUtils::nodata || tmp_ErodedMass(ix, iy) < 0.) {
 				tmp_ErodedMass(ix, iy) = 0.;
 			}
+
 			winderosiondeposition(ix, iy) = tmp_ErodedMass(ix, iy);
 			mns(ix, iy) = 0.;		// Reset mass deposition field
+
+			// Add a determination of u and v componets for each grid cell.
+			U(ix, iy) =  IOUtils::VWDW_TO_U(grid_VW(ix, iy), grid_DW(ix, iy));
+			V(ix, iy) =  IOUtils::VWDW_TO_V(grid_VW(ix, iy), grid_DW(ix, iy));
 		}
 	}
 
@@ -1486,44 +1497,30 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		for (size_t iy=0; iy<dimy; iy++) {
 			for (size_t ix=0; ix<dimx; ix++) {
 				if (grid_VW(ix, iy) != IOUtils::nodata && grid_DW(ix, iy) != IOUtils::nodata) {
-					const double u = IOUtils::VWDW_TO_U(grid_VW(ix, iy), grid_DW(ix, iy));
-					const double v = IOUtils::VWDW_TO_V(grid_VW(ix, iy), grid_DW(ix, iy));
 					//if(tmp_ErodedMass(ix, iy)!=0. && tmp_ErodedMass(ix, iy)!=IOUtils::nodata) printf("YYY: %d %d %f %f %f\n", ix, iy, u, v, tmp_ErodedMass(ix, iy));
 
 					// What is advected
-					if(ix>0 && u>0) {
-						dM(ix, iy) += tmp_ErodedMass(ix-1, iy) * fabs(u) * (sub_dt / dx);
-						dM(ix-1, iy) -= tmp_ErodedMass(ix-1, iy) * fabs(u) * (sub_dt / dx);
-
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
-						if (ix < dimx-1) dM(ix+1, iy) += tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
-					} else if (ix < dimx-1 && u<0) {
-						dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(u) * (sub_dt / dx);
-						dM(ix+1, iy) -= tmp_ErodedMass(ix+1, iy) * fabs(u) * (sub_dt / dx);
-
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
-						if (ix > 0) dM(ix-1, iy) += tmp_ErodedMass(ix, iy) * fabs(u) * (sub_dt / dx);
-					}
-
-					// What is advected
-					if(iy>0 && v>0) {
-						dM(ix, iy) += tmp_ErodedMass(ix, iy-1) * fabs(v) * (sub_dt / dx);
-						dM(ix, iy-1) -= tmp_ErodedMass(ix, iy-1) * fabs(v) * (sub_dt / dx);
-
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
-						if (iy > 0) dM(ix, iy-1) += tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
-					} else if (iy < dimy-1 && v<0) {
-						dM(ix, iy) += tmp_ErodedMass(ix, iy+1) * fabs(v) * (sub_dt / dx);
-						dM(ix, iy+1) -= tmp_ErodedMass(ix, iy+1) * fabs(v) * (sub_dt / dx);
-
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
-						if (iy < dimy-1) dM(ix, iy+1) += tmp_ErodedMass(ix, iy) * fabs(v) * (sub_dt / dx);
+					if(ix>0 && iy>0 && ix < dimx-1 && iy < dimy-1) { // Grid cell is not at the edge. 
+						if(U(ix, iy)>0) {
+							dM(ix, iy) += tmp_ErodedMass(ix-1, iy) * fabs(U(ix-1, iy)) * (sub_dt / dx);
+							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
+						}
+						if(U(ix, iy)<0) {
+							dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(U(ix+1, iy)) * (sub_dt / dx);
+							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
+						}
+						if(V(ix, iy)>0) {
+							dM(ix, iy) += tmp_ErodedMass(ix, iy-1) * fabs(V(ix, iy-1)) * (sub_dt / dx);
+							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
+						}
+						if(V(ix, iy)<0) {
+							dM(ix, iy) += tmp_ErodedMass(ix, iy+1) * fabs(V(ix, iy+1)) * (sub_dt / dx);
+							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
+						}
 					}
 				}
-			}
-		}
-		for (size_t iy=0; iy<dimy; iy++) {
-			for (size_t ix=0; ix<dimx; ix++) {
+
+				// Negative suspended mass (tmp_ErodedMass) is impossible. If this field becomes negative, set it to zero.
 				if (ErodedMass(ix, iy) != IOUtils::nodata) {
 					tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
 					// This if statement could introduce a mass balance error.
@@ -1543,6 +1540,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		for (size_t ix=0; ix<dimx; ix++) {
 			if (ErodedMass(ix, iy) != IOUtils::nodata) {
 				// This line could introduce a mass balance error.
+				// The change in mass cannot be more than was originally eroded!
 				if (dM(ix, iy) < -ErodedMass(ix, iy)) {
 					std::cout << "Explicity Snow Drift: Potential mass balance violation #2 ";
 					std::cout << ix << " " << iy;
