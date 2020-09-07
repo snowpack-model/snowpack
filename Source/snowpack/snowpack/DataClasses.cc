@@ -2775,8 +2775,8 @@ bool SnowStation::isGlacier(const bool& hydro) const
 		static const size_t check_depth=5;
 		const size_t top_index = nElems-1;
 		const size_t top_index_toCheck = top_index - check_depth;
-		const size_t soil_index = SoilNode-1;
-		const size_t end_index = (top_index_toCheck>soil_index)? top_index_toCheck : soil_index;
+		const size_t soil_index = SoilNode;
+		const size_t end_index = (top_index_toCheck>=soil_index)? top_index_toCheck : soil_index;
 
 		if (nElems==0 || top_index==soil_index) return false; //there are only soil layers or none
 
