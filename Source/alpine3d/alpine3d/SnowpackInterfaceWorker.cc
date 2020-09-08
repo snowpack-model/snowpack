@@ -536,7 +536,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		if (isGlacier) {
 			const std::string tmp_sw_mode = sn_cfg.get("SW_MODE", "Snowpack");
 			if (tmp_sw_mode == "BOTH") {
-				//switch to glacier albedo
+				//switch to glacier albedo (when sw_mode != BOTH, the calculation internally relies on SnLaws and should not be overwritten here!)
 				const std::string tmp_variant = sn_cfg.get("VARIANT", "SnowpackAdvanced");
 				snowPixel.Albedo = ((tmp_variant == "POLAR" || tmp_variant == "ANTARCTICA") ? (Constants::blueice_albedo) : (Constants::glacier_albedo));
 			}
@@ -616,6 +616,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		if (isGlacier) {
 			const std::string tmp_sw_mode = sn_cfg.get("SW_MODE", "Snowpack");
 			if (tmp_sw_mode == "BOTH") {
+				//switch to glacier albedo (when sw_mode != BOTH, the calculation internally relies on SnLaws and should not be overwritten here!)
 				const std::string tmp_variant = sn_cfg.get("VARIANT", "SnowpackAdvanced");
 				surfaceFlux.pAlbedo = snowPixel.Albedo = ((tmp_variant == "POLAR" || tmp_variant == "ANTARCTICA") ? (Constants::blueice_albedo) : (Constants::glacier_albedo));
 			}
