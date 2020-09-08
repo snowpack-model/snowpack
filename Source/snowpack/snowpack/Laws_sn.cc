@@ -319,8 +319,8 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 
 	if (i_snow_albedo == "FIXED") {
 		Alb = i_albedo_fixedValue;
-	} else if ((ageAlbedo && (age > 365.)) || (Edata.mk % 10 == 7)) {
-		Alb = Constants::glacier_albedo;
+	} else if ((ageAlbedo && (age > 365.)) || Xdata.isGlacier(false)) {
+		Alb = ((current_variant == "POLAR" || current_variant == "ANTARCTICA" ) ? (Constants::blueice_albedo) : (Constants::glacier_albedo));
 	}
 	else if (i_albedo_parameterization == "LEHNING_0") {
 		static const double weight=0.1;
