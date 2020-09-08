@@ -539,8 +539,12 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 
 		// exposed glacier special case
 		if (isGlacier) {
-			//switch to glacier albedo
-			snowPixel.Albedo = Constants::glacier_albedo;
+			const std::string tmp_sw_mode = sn_cfg.get("SW_MODE", "Snowpack");
+			if (tmp_sw_mode == "BOTH") {
+				//switch to glacier albedo (when sw_mode != BOTH, the calculation internally relies on SnLaws and should not be overwritten here!)
+				const std::string tmp_variant = sn_cfg.get("VARIANT", "SnowpackAdvanced");
+				snowPixel.Albedo = ((tmp_variant == "POLAR" || tmp_variant == "ANTARCTICA") ? (Constants::blueice_albedo) : (Constants::glacier_albedo));
+			}
 			if (meteoPixel.ta>IOUtils::C_TO_K(5.)) {
 				//switch to STABLE atmosphere on glacier if TA>5°C
 				meteo.setStability(Meteo::MO_HOLTSLAG);
@@ -622,8 +626,12 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		if (meteo.getStability()!=USER_STABILITY) meteo.setStability(USER_STABILITY);
 		//if the glacier is still exposed, force the albedo back to glacier albedo
 		if (isGlacier) {
-			snowPixel.Albedo = Constants::glacier_albedo;
-			surfaceFlux.pAlbedo = Constants::glacier_albedo;
+			const std::string tmp_sw_mode = sn_cfg.get("SW_MODE", "Snowpack");
+			if (tmp_sw_mode == "BOTH") {
+				//switch to glacier albedo (when sw_mode != BOTH, the calculation internally relies on SnLaws and should not be overwritten here!)
+				const std::string tmp_variant = sn_cfg.get("VARIANT", "SnowpackAdvanced");
+				surfaceFlux.pAlbedo = snowPixel.Albedo = ((tmp_variant == "POLAR" || tmp_variant == "ANTARCTICA") ? (Constants::blueice_albedo) : (Constants::glacier_albedo));
+			}
 		}
 		if (!std::isfinite( getGridPoint(SnGrids::TOP_ALB, ix, iy) )) {
 			//if the albedo is nan, infinity, etc reset it to its previous
