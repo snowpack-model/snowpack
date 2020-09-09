@@ -60,6 +60,9 @@ class SnGrids {
                                           N3, ///< grain Coordination number
                                           MS_SNOWPACK_RUNOFF, ///< runoff on the surface of the soil (vitual lysimeter)
                                           MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
+                                          MS_RAIN, ///< Rainfall (kg m-2 h-1)
+                                          MS_HNW, ///< Snowfall (kg m-2 h-1)
+                                          MS_WIND, ///< Mass loss rate due to wind erosion (kg m-2 h-1)
                                           MS_WATER, ///< The total amount of water in the snowpack at the present time
                                           SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)

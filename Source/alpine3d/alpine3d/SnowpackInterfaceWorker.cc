@@ -390,6 +390,12 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]; break;
 			case SnGrids::MS_SOIL_RUNOFF:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_SOIL_RUNOFF]; break;
+			case SnGrids::MS_RAIN:
+				value = surfaceFlux.mass[SurfaceFluxes::MS_RAIN]; break;
+			case SnGrids::MS_HNW:
+				value = surfaceFlux.mass[SurfaceFluxes::MS_HNW]; break;
+			case SnGrids::MS_WIND:
+				value = surfaceFlux.mass[SurfaceFluxes::MS_WIND] / snowPixel.cos_sl; break;
 			case SnGrids::MS_WATER:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_WATER] / snowPixel.cos_sl; break;
 			case SnGrids::SFC_SUBL:
@@ -573,6 +579,8 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				BoundCond Bdata;
 				sn.runSnowpackModel(meteoPixel, snowPixel, store(ix,iy), Bdata, surfaceFlux);
 				surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);
+				surfaceFlux.mass[SurfaceFluxes::MS_HNW] += (snowPixel.hn * snowPixel.rho_hn) / snowPixel.cos_sl;
+				surfaceFlux.mass[SurfaceFluxes::MS_WIND] += snowPixel.ErosionMass;
 				dIntEnergy += snowPixel.dIntEnergy; //it is reset at every new call to runSnowpackModel
 				meteoPixel.hs = snowPixel.cH - snowPixel.Ground; //do not reproject here, otherwise Snowpack outputs would get messed up
 				if (enable_simple_snow_drift || enable_explicit_snow_drift) {
@@ -607,9 +615,6 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 					gatherSpecialPoints(meteoPixel, snowPixel, surfaceFlux); //gather special point data, in order to get as much information as possible
 				throw IOException(ss.str(), AT);
 			}
-
-			// Fill the surfaceFlux.mass variable for output
-			surfaceFlux.mass[SurfaceFluxes::MS_HNW] += meteoPixel.psum;
 		}
 
 		//some variables are now wrong if we ran multiple Snowpack steps -> recompute them!

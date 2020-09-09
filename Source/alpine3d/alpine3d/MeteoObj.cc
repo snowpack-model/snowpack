@@ -60,6 +60,9 @@ bool SnGrids::initStaticData()
 	paramname.push_back("N3");
 	paramname.push_back("MS_SNOWPACK_RUNOFF");
 	paramname.push_back("MS_SOIL_RUNOFF");
+	paramname.push_back("MS_RAIN");
+	paramname.push_back("MS_HNW");
+	paramname.push_back("MS_WIND");
 	paramname.push_back("MS_WATER");
 	paramname.push_back("SFC_SUBL");
 	paramname.push_back("STORE");
@@ -234,10 +237,6 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData, const bo
 		}
 	}
 
-	if ( !soil_flux && nb_tsg == 0 ) {
-		printf("SOIL_FLUX in [SNOWPACK] is set to FALSE, but nb(tsg)=%d\n",nb_tsg);
-                throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
-	}
 	if ( nb_ta==0 || nb_iswr==0 || nb_rh==0 || nb_ilwr==0) {
 		printf("nb(ta)=%d nb(iswr)=%d nb(rh)=%d nb(ilwr)=%d\n",nb_ta, nb_iswr, nb_rh, nb_ilwr);
                 throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
