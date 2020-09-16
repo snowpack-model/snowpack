@@ -575,6 +575,11 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			}
 			store(ix,iy) += meteoPixel.psum;
 
+			// Reset fluxes, etc.
+			snowPixel.ErosionMass = 0.;
+			snowPixel.hn = 0.;
+			snowPixel.rho_hn = 0.;
+
 			try {
 				BoundCond Bdata;
 				sn.runSnowpackModel(meteoPixel, snowPixel, store(ix,iy), Bdata, surfaceFlux);
