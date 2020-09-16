@@ -2088,7 +2088,17 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		}
 
 		// If it is SNOWING, find out how much, prepare for new FEM data. If raining, cumu_precip is set back to 0
+		const double tmp_Xdata_hn = Xdata.hn;		// Store initial hn
+		const double tmp_Xdata_rho_hn = Xdata.rho_hn;	// Store initial rho_hn
 		compSnowFall(Mdata, Xdata, cumu_precip, Sdata);
+		if (Xdata.hn > 0.) {
+			// If new snow was added, recalculate rho_hn as a weighted average
+			Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
+		} else {
+			// Otherwise keep previous rho_hn
+			Xdata.rho_hn = tmp_Xdata_rho_hn;
+		}
+		Xdata.hn += tmp_Xdata_hn;
 
 		// Check to see if snow is DRIFTING, compute a simple snowdrift index and erode layers if
 		// neccessary. Note that also the very important friction velocity is computed in this
