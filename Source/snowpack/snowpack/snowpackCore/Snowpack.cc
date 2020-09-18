@@ -1935,11 +1935,11 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 
 /**
  * @brief Add snow layers that originate from wind-transported snow being deposited, using the event-driven deposition scheme.
- * @param Mdata Meteorological data
+ * @param Mdata Meteorological data (pass by value, since we modify it)
  * @param Xdata Snow cover data
  * @param redeposit_mass cumulated amount of snow deposition (kg m-2)
  */
-void Snowpack::RedepositSnow(CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass)
+void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass)
 {
 	// Backup settings we are going to override:
 	const bool tmp_force_add_snowfall = force_add_snowfall;
@@ -2069,6 +2069,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// If it is SNOWING, find out how much, prepare for new FEM data. If raining, cumu_precip is set back to 0
 		const double tmp_Xdata_hn = Xdata.hn;		// Store initial hn
 		const double tmp_Xdata_rho_hn = Xdata.rho_hn;	// Store initial rho_hn
+		Xdata.hn = 0.;
 		compSnowFall(Mdata, Xdata, cumu_precip, Sdata);
 		if (Xdata.hn > 0.) {
 			// If new snow was added, recalculate rho_hn as a weighted average
