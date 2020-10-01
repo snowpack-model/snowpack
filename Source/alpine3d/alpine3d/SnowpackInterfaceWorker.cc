@@ -532,17 +532,9 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			meteoPixel.psum = drift_mass;
 		} else {
 			if (enable_explicit_snow_drift && mns(ix,iy) != IOUtils::nodata) {
-				const bool consider_precipitation_as_driftingsnow = false;	// if true, add precipitation to drifting snow, when drifting snow is present
-				if (consider_precipitation_as_driftingsnow && mns(ix,iy) > 0.) {
-					meteoPixel.snowdrift = (meteoPixel.psum + mns(ix,iy)) * snowPixel.cos_sl;
-					meteoPixel.psum = 0.;
-				} else {
-					meteoPixel.snowdrift = mns(ix,iy) * snowPixel.cos_sl;
-					meteoPixel.psum = psum(ix,iy) * snowPixel.cos_sl; //horiz2slope
-				}
-			} else {
-				meteoPixel.psum = psum(ix,iy) * snowPixel.cos_sl; //horiz2slope
+				meteoPixel.snowdrift = mns(ix,iy) * snowPixel.cos_sl;
 			}
+			meteoPixel.psum = psum(ix,iy) * snowPixel.cos_sl; //horiz2slope
 		}
 
 		if (useEBalance) meteoPixel.diff = diffuse(ix,iy);
