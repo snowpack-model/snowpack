@@ -1521,71 +1521,115 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 				}
 			}
 		}
+	}
 
-		for (size_t iy=0; iy<dimy; iy++) {
-			for (size_t ix=0; ix<dimx; ix++) {
-				if (grid_VW(ix, iy) != IOUtils::nodata && grid_DW(ix, iy) != IOUtils::nodata) {
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
+			if (grid_VW(ix, iy) != IOUtils::nodata && grid_DW(ix, iy) != IOUtils::nodata) {
 
-					// // Boundary Conditions:
+				// Boundary Conditions:
 
-					// 1. Zero Gradient Boundary Conditions:
-					// Still need to impliment these.
+				// 1. Zero boundary conditions: Set dM equal to zero on the boundaries
+				// To impliment these, simply comment out boundary conditions options #2 and #3
 
-					// 2. Zero Flux Boundary Conditions: No blowing snow entering or leaving the domain.
-					// What is advected (boundaries grid cells that arent corners)
+				// 2. Zero Gradient Boundary Conditions: Set the edge grid cells dM equal to the adjacent interior grid cell
+				// These make the most physical sense but do not guarantee that there is no net blowing snow erosion or deposition.
 
-					// Left edge, positive U wind
-					if (ix == 0 && U(ix, iy) > 0) {
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-					}
-
-					// Left edge, negative U wind
-					if (ix == 0 && U(ix, iy) < 0) {
-						dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(U(ix+1, iy)) * (sub_dt / dx);
-					}
-
-					// Right edge, positive U wind
-					if (ix == dimx-1 && U(ix, iy) > 0) {
-						dM(ix, iy) += tmp_ErodedMass(ix-1, iy) * fabs(U(ix-1, iy)) * (sub_dt / dx);
-					}
-
-					// Right edge, negative U wind
-					if (ix == dimx-1 && U(ix, iy) < 0) {
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-					}
-
-					// Bottom edge, positive V wind
-					if (iy == 0 && V(ix, iy) > 0) {
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-					}
-
-					// Bottom edge, negative V wind
-					if (iy == 0 && V(ix, iy) < 0) {
-						dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(V(ix+1, iy)) * (sub_dt / dx);
-					}
-
-					// Top edge, positive V wind
-					if (iy == dimy-1 && V(ix, iy) > 0) {
-						dM(ix, iy) += tmp_ErodedMass(ix, iy-1) * fabs(V(ix, iy-1)) * (sub_dt / dx);
-					}
-
-					// Top edge, negative V wind
-					if (iy == dimy-1 && V(ix, iy) < 0) {
-						dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-					}
-
+				// Left edge
+				if (ix == 0 and iy > 0 and iy < dimy-1) {
+					dM(ix, iy) = dM(ix+1, iy);
 				}
 
-				// Negative suspended mass (tmp_ErodedMass) is impossible. If this field becomes negative, set it to zero.
-				if (ErodedMass(ix, iy) != IOUtils::nodata) {
-					tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
-					// This if statement could introduce a mass balance error.
-					if (tmp_ErodedMass(ix, iy) < 0.) {
-						std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #1 ";
-						std::cout << ix << " " << iy;
-						std::cout << tmp_ErodedMass(ix, iy) << "\n";
-						tmp_ErodedMass(ix, iy) = 0.;
-					}
+				// Right edge
+				if (ix == dimx-1 and iy > 0 and iy < dimy-1) {
+					dM(ix, iy) = dM(ix-1, iy);
+				}
+
+				// Bottom edge
+				if (iy == 0 and ix > 0 and ix < dimx-1) {
+					dM(ix, iy) = dM(ix, iy+1);
+				}
+
+				// Top edge
+				if (iy == dimy-1 and ix > 0 and ix < dimx-1) {
+					dM(ix, iy) = dM(ix, iy-1);
+				}
+
+				// Bottom left
+				if (ix == 0 and iy == 0) {
+					dM(ix, iy) = dM(ix+1, iy+1);
+				}
+
+				// Bottom right
+				if (ix == dimx-1 and iy == 0) {
+					dM(ix, iy) = dM(ix-1, iy+1);
+				}
+
+				// Top left
+				if (ix == 0 and iy == dimy-1) {
+					dM(ix, iy) = dM(ix+1, iy-1);
+				}
+
+				// Top right
+				if (ix == dimx-1 and iy == dimy-1) {
+					dM(ix, iy) = dM(ix-1, iy-1);
+				}
+
+				// 3. Zero Flux Boundary Conditions: In theory no blowing snow entering or leaving the domain, but practically this is only close to the case.
+				// What is advected (boundaries grid cells that arent corners)
+				// Note that we currently do not currently account for exchange betwee boundary grid cells parallel to the boundary.
+
+				// // Left edge, positive U wind
+				// if (ix == 0 && U(ix, iy) > 0) {
+				// 	dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
+				// }
+
+				// // Left edge, negative U wind
+				// if (ix == 0 && U(ix, iy) < 0) {
+				// 	dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(U(ix+1, iy)) * (sub_dt / dx);
+				// }
+
+				// // Right edge, positive U wind
+				// if (ix == dimx-1 && U(ix, iy) > 0) {
+				// 	dM(ix, iy) += tmp_ErodedMass(ix-1, iy) * fabs(U(ix-1, iy)) * (sub_dt / dx);
+				// }
+
+				// // Right edge, negative U wind
+				// if (ix == dimx-1 && U(ix, iy) < 0) {
+				// 	dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
+				// }
+
+				// // Bottom edge, positive V wind
+				// if (iy == 0 && V(ix, iy) > 0) {
+				// 	dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
+				// }
+
+				// // Bottom edge, negative V wind
+				// if (iy == 0 && V(ix, iy) < 0) {
+				// 	dM(ix, iy) += tmp_ErodedMass(ix, iy+1) * fabs(V(ix, iy+1)) * (sub_dt / dx);
+				// }
+
+				// // Top edge, positive V wind
+				// if (iy == dimy-1 && V(ix, iy) > 0) {
+				// 	dM(ix, iy) += tmp_ErodedMass(ix, iy-1) * fabs(V(ix, iy-1)) * (sub_dt / dx);
+				// }
+
+				// // Top edge, negative V wind
+				// if (iy == dimy-1 && V(ix, iy) < 0) {
+				// 	dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
+				// }
+
+			}
+
+			// Negative suspended mass (tmp_ErodedMass) is impossible. If this field becomes negative, set it to zero.
+			if (ErodedMass(ix, iy) != IOUtils::nodata) {
+				tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
+				// This if statement could introduce a mass balance error.
+				if (tmp_ErodedMass(ix, iy) < 0.) {
+					// std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #1 ";
+					// std::cout << ix << " " << iy;
+					// std::cout << tmp_ErodedMass(ix, iy) << "\n";
+					tmp_ErodedMass(ix, iy) = 0.;
 				}
 			}
 		}
@@ -1598,9 +1642,9 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 				// This line could introduce a mass balance error.
 				// The change in mass cannot be more than was originally eroded!
 				if (dM(ix, iy) < -ErodedMass(ix, iy)) {
-					std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-					std::cout << ix << " " << iy;
-					std::cout << dM(ix, iy) << -ErodedMass(ix, iy) << "\n";
+					// std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
+					// std::cout << ix << " " << iy;
+					// std::cout << dM(ix, iy) << -ErodedMass(ix, iy) << "\n";
 					dM(ix, iy) = -ErodedMass(ix, iy);
 				}
 				winderosiondeposition(ix, iy) = dM(ix, iy);
