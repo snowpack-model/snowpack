@@ -109,7 +109,7 @@ using namespace std;
 
 namespace mio {
  /**
- * @page data_sources Data input overview
+ * @page data_sources Data input/output overview
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they
  * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
@@ -796,16 +796,20 @@ void IOHandler::automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const
 	for (size_t ii=0; ii<vecVecMeteo.size(); ii++) { //loop over the stations
 		if (vecVecMeteo[ii].empty())  continue;
 		const std::string toStationID( IOUtils::strToUpper(vecVecMeteo[ii][0].meta.stationID) );
+		size_t nr_conflicts = 0;
+		
 		for (size_t jj=ii+1; jj<vecVecMeteo.size(); jj++) { //loop over the stations
 			if (vecVecMeteo[jj].empty())  continue;
 			const std::string fromStationID( IOUtils::strToUpper(vecVecMeteo[jj][0].meta.stationID) );
 			if (fromStationID==toStationID) {
-				MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj], static_cast<MeteoData::Merge_Type>(merge_strategy)); //merge timeseries for the two stations
+				nr_conflicts += MeteoData::mergeTimeSeries(vecVecMeteo[ii], vecVecMeteo[jj], static_cast<MeteoData::Merge_Type>(merge_strategy), MeteoData::CONFLICTS_AVERAGE); //merge timeseries for the two stations
 				std::swap( vecVecMeteo[jj], vecVecMeteo.back() );
 				vecVecMeteo.pop_back();
 				jj--; //we need to redo the current jj, because it contains another station
 			}
 		}
+		
+		if (nr_conflicts>0) std::cerr << "[E] " << nr_conflicts << " automerge conflicts on station " <<  toStationID << "\n";
 	}
 }
 

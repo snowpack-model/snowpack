@@ -38,7 +38,7 @@ namespace mio { //the holy land
  * @param type Random number generator algorithm
  * @param distribution Distribution of double random numbers
  * @param distribution_params Parameters to shape the distribution functions
- * @return RNG object with defaults or if supplied the desired distribution properties
+ * This builds an RNG object with defaults or if supplied the desired distribution properties
  */
 RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DISTR& distribution,
     const std::vector<double>& distribution_params) :
@@ -58,7 +58,7 @@ RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DIS
 /**
  * @brief Copy-constructor
  * @param source RNG to copy from
- * @return RNG object that is in an identical state as the given RNG
+ * This builds an RNG object that is in an identical state as the given RNG
  */
 RandomNumberGenerator::RandomNumberGenerator(const RandomNumberGenerator& source) : 
     rng_core(RngFactory::getCore(source.rng_type)),
@@ -465,7 +465,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
  * @brief Set single distribution parameter
  * @param param_name Name of the parameter (see section \ref rng_distributionparams) to set
  * @param param_val Value to set
- * @return Current value of the distribution parameter
  */
 void RandomNumberGenerator::setDistributionParameter(const std::string& param_name, const double& param_val)
 { //convenience
@@ -1249,9 +1248,8 @@ unsigned int RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor
 	unsigned int clz = 0;
 
 	static const unsigned short bit_char = std::numeric_limits<unsigned char>::digits; //avoid CHAR_BIT
-	for (size_t i = 0; i < bit_char * sizeof(nn); ++i) 
-	{
-		if ((nn & (1 << i)) == 0)
+	for (size_t ii = 0; ii < bit_char * sizeof(nn); ++ii) {
+		if ((nn & (uint64_t(1) << ii)) == 0)
 			clz++;
 		else //first non-zero character hit
 			break;

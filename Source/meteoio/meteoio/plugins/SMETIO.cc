@@ -54,6 +54,8 @@ namespace mio {
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
+ * - SMET_DEFAULT_PREC: default number of decimals for parameters that don't already define it (default: 3); [Output] section
+ * - SMET_DEFAULT_WIDTH: default number of characters for parameters that don't already define it (default: 8); [Output] section
  * - SMET_PLOT_HEADERS: should the plotting headers (to help make more meaningful plots) be included in the outputs (default: true)? [Output] section
  * - SMET_RANDOM_COLORS: for variables where no predefined colors are available, either specify grey or random colors (default: false); [Output] section
  * - SMET_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
@@ -102,7 +104,7 @@ SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), output_separator(' '), outputCommentedHeaders(false),
+          plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -112,7 +114,7 @@ SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ), 
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), output_separator(' '), outputCommentedHeaders(false),
+          plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
 	parseInputOutputSection();
@@ -195,6 +197,8 @@ void SMETIO::parseInputOutputSection()
 		std::vector<std::string> vecArgs;
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
 		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
+		cfg.getValue("SMET_DEFAULT_PREC", "Output", default_prec, IOUtils::nothrow); //for fields that don't have any other settings
+		cfg.getValue("SMET_DEFAULT_WIDTH", "Output", default_width, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
 		cfg.getValue("SMET_RANDOM_COLORS", "Output", randomColors, IOUtils::nothrow); //should plot colors be all grey for unknown parameters or randome?
 		cfg.getValue("SMET_APPEND", "Output", allowAppend, IOUtils::nothrow);
@@ -731,7 +735,7 @@ bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 	}
 }
 
-void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
+void SMETIO::getFormatting(const size_t& param, int& prec, int& width) const
 {
 	/**
 	 * When writing a SMET file, different meteo parameters require a different
@@ -767,8 +771,8 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 		prec = 10;
 		width = 11;
 	} else {
-		prec = 3;
-		width = 8;
+		prec = default_prec;
+		width = default_width;
 	}
 }
 

@@ -429,26 +429,23 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 	return isSameLoc;
 }
 
-bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids)
+void Grid2DObject::binning(const std::vector<double>& thresholds, const std::vector<double>& ids)
 {
-	if (thresholds.empty()==0) {
-		throw IOException("Can't start clusterization, cluster definition list is empty", AT);
-	}
-	if ((thresholds.size()+1) != ids.size()) {
-		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
-	}
-	const size_t nscl = thresholds.size();
-	for (size_t jj = 0; jj< grid2D.size(); jj++){
+	if (thresholds.empty())
+		throw IOException("Can't start binning, thresholds definition list is empty", AT);
+	if ((thresholds.size()+1) != ids.size())
+		throw IOException("Can't start binning, thresholds definition list doesn't fit id definition list", AT);
+
+	for (size_t jj = 0; jj < grid2D.size(); jj++) {
 		const double& val = grid2D(jj);
 		if (val!=IOUtils::nodata){
-			size_t i = 0;
-			for ( ;i<nscl; i++)
-				if (thresholds[i] >= val)
+			size_t ii = 0;
+			for ( ;ii < thresholds.size(); ii++)
+				if (thresholds[ii] > val)
 					break;
-			grid2D(jj) = ids[i];
+			grid2D(jj) = ids[ii];
 		}
 	}
-	return true;
 }
 
 double Grid2DObject::calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)

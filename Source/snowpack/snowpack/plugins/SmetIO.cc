@@ -149,7 +149,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
           in_dflt_TZ(0.), calculation_step_length(0.), ts_days_between(0.), min_depth_subsurf(0.),
           avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), haz_write(true), useReferenceLayer(false),
           out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_dhs(false), out_t(false),
-          out_load(false), out_stab(false), out_canopy(false), out_soileb(false), enable_pref_flow(false), read_dsm(false)
+          out_load(false), out_stab(false), out_canopy(false), out_soileb(false), enable_pref_flow(false), enable_ice_reservoir(false), read_dsm(false)
 {
 	cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ);
 	cfg.getValue("CANOPY", "Snowpack", useCanopyModel);
@@ -162,6 +162,9 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("METAMORPHISM_MODEL", "SnowpackAdvanced", metamorphism_model, IOUtils::nothrow);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
+#ifndef SNOWPACK_CORE
+	cfg.getValue("ICE_RESERVOIR", "SnowpackAdvanced", enable_ice_reservoir);
+#endif
 	cfg.getValue("READ_DSM", "SnowpackAdvanced", read_dsm); 
 
 	cfg.getValue("EXPERIMENT", "Output", experiment);
@@ -248,6 +251,7 @@ SmetIO& SmetIO::operator=(const SmetIO& source) {
 		out_canopy = source.out_canopy;
 		out_soileb = source.out_soileb;
 		enable_pref_flow = source.enable_pref_flow;
+		enable_ice_reservoir = source.enable_ice_reservoir;
 	}
 	return *this;
 }
@@ -392,6 +396,15 @@ mio::Date SmetIO::read_snosmet(const std::string& snofilename, const std::string
 		SSdata.Ldata[ll].hl = vec_data[current_index++];
 		SSdata.Ldata[ll].tl = vec_data[current_index++];
 		SSdata.Ldata[ll].phiIce = vec_data[current_index++];
+#ifndef SNOWPACK_CORE
+		if (enable_ice_reservoir) {
+			SSdata.Ldata[ll].phiIceReservoir = vec_data[current_index++];
+			SSdata.Ldata[ll].phiIceReservoirCumul = vec_data[current_index++];
+		} else {
+			SSdata.Ldata[ll].phiIceReservoir = 0.;
+			SSdata.Ldata[ll].phiIceReservoirCumul = 0.;
+		}
+#endif
 		SSdata.Ldata[ll].phiWater = vec_data[current_index++];
 		if (enable_pref_flow) {
 			SSdata.Ldata[ll].phiWaterPref = vec_data[current_index++];
@@ -627,7 +640,7 @@ void SmetIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 		hazfilename += ss.str();
 	}
 
-	writeSnoFile(snofilename, date, Xdata, Zdata, enable_pref_flow);
+	writeSnoFile(snofilename, date, Xdata, Zdata, enable_pref_flow, enable_ice_reservoir);
 	if (haz_write) writeHazFile(hazfilename, date, Xdata, Zdata);
 }
 
@@ -677,13 +690,18 @@ void SmetIO::writeHazFile(const std::string& hazfilename, const mio::Date& date,
 * The SMETWriter object finally writes out the SNO SMET file
 */
 void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date, const SnowStation& Xdata,
-                          const ZwischenData& /*Zdata*/, const bool& write_pref_flow) const
+                          const ZwischenData& /*Zdata*/, const bool& write_pref_flow, const bool& write_ice_reservoir) const
 {
 	smet::SMETWriter sno_writer(snofilename);
 	stringstream ss;
 	if (write_pref_flow) {
 		// Header in case preferential flow is used
-		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
+		if (write_ice_reservoir) {
+			// Header in case ice reservoir is used
+			ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_IR  Vol_Frac_CIR  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S";
+		} else {
+			ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
+		}
 	} else {
 		// Default header
 		ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
@@ -704,7 +722,7 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 	vector<string> vec_timestamp;
 	vector<double> vec_data;
 	vector<int> vec_width, vec_precision;
-	setFormatting(Xdata.number_of_solutes, vec_width, vec_precision, write_pref_flow, (Xdata.Seaice!=NULL));
+	setFormatting(Xdata.number_of_solutes, vec_width, vec_precision, write_pref_flow, write_ice_reservoir, (Xdata.Seaice!=NULL));
 	sno_writer.set_width(vec_width);
 	sno_writer.set_precision(vec_precision);
 
@@ -716,6 +734,10 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		vec_data.push_back(EMS[e].L);
 		vec_data.push_back(Xdata.Ndata[e+1].T);
 		vec_data.push_back(EMS[e].theta[ICE]);
+#ifndef SNOWPACK_CORE
+		if (write_ice_reservoir) vec_data.push_back(EMS[e].theta_i_reservoir);
+		if (write_ice_reservoir) vec_data.push_back(EMS[e].theta_i_reservoir_cumul);
+#endif
 		vec_data.push_back(EMS[e].theta[WATER]);
 		if (write_pref_flow) vec_data.push_back(EMS[e].theta[WATER_PREF]);
 		vec_data.push_back(EMS[e].theta[AIR]);
@@ -870,7 +892,7 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 }
 
 void SmetIO::setFormatting(const size_t& nr_solutes,
-                           std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_sea_ice)
+                           std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_ice_reservoir, const bool& write_sea_ice)
 {
 	/*
 	 * When writing a SNOW SMET file each written parameter may have a different
@@ -885,6 +907,14 @@ void SmetIO::setFormatting(const size_t& nr_solutes,
 	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].L
 	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //Xdata.Ndata[e+1].T
 	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[ICE]
+#ifndef SNOWPACK_CORE
+	if (write_ice_reservoir) {
+		vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta_i_reservoir
+	}
+	if (write_ice_reservoir) {
+		vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta_i_reservoir_cumul
+	}
+#endif
 	vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[WATER]
 	if (write_pref_flow) {
 		vec_width.push_back(12); vec_precision.push_back(OUTPUT_PRECISION_SNO_FILE); //EMS[e].theta[WATER_PREF]

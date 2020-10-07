@@ -131,7 +131,7 @@ class DEMObject : public Grid2DObject {
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);
-		static double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);
+		static double CalculateAzimuth(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double& no_slope=0.);
 		double getCurvature(double A[4][4]);
 		void CalculateHick(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void CalculateFleming(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);

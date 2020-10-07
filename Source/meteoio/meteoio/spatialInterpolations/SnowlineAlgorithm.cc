@@ -29,43 +29,56 @@ namespace mio {
 SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs,
     const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
     GridsManager& i_gdm, Meteo2DInterpolator& i_mi) : 
-    InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), mi(i_mi), base_alg("IDW_LAPSE"),
-    snowline(IOUtils::nodata), assim_method(CUTOFF), snowline_file(), where("Interpolations2D::" + algo),
-    cutoff_val(0.), band_height(10.), band_no(10), formula(std::string()),
-    verbose(true)
+    InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm_(i_gdm), mi_(i_mi), base_alg_("IDW_LAPSE"),
+    input_args_(vecArgs), where_("Interpolations2D::" + algo),
+    assimilateFunction_(&SnowlineAlgorithm::assimilateCutoff), smoothing_(false),
+    snowlines_(), snowlines_file_(),
+    enforce_positive_rate_(false), calc_base_rate_(false), fallback_rate_(IOUtils::nodata),
+    cutoff_val_(0.), band_height_(10.), band_no_(10), formula_(std::string()),
+    verbose_(true)
 {
 	std::string algo_info( "CUTOFF" );
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
 		if (vecArgs[ii].first == "BASE") {
-			base_alg = IOUtils::strToUpper(vecArgs[ii].second);
+			base_alg_ = IOUtils::strToUpper(vecArgs[ii].second);
 		} else if (vecArgs[ii].first == "SNOWLINE") {
-			IOUtils::parseArg(vecArgs[ii], where, snowline);
+			aspect sl_aspect;
+			IOUtils::parseArg(vecArgs[ii], where_, sl_aspect.sl_elevation);
+			snowlines_.push_back(sl_aspect);
 		} else if (vecArgs[ii].first == "SNOWLINEFILE") {
-			snowline_file = vecArgs[ii].second;
+			snowlines_file_ = vecArgs[ii].second;
 		} else if (vecArgs[ii].first == "METHOD") {
 			const std::string mode( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (mode == "CUTOFF")
-				assim_method = CUTOFF;
+				assimilateFunction_ = &SnowlineAlgorithm::assimilateCutoff;
 			else if (mode == "BANDS")
-				assim_method = BANDS;
+				assimilateFunction_ = &SnowlineAlgorithm::assimilateBands;
 			else if (mode == "FORMULA")
-				assim_method = FORMULA;
+				assimilateFunction_ = &SnowlineAlgorithm::assimilateFormula;
 			else
 				throw InvalidArgumentException("Snowline assimilation mode \"" + mode +
-				    "\" supplied for " + where + " not known.", AT);
+				    "\" supplied for " + where_ + " not known.", AT);
 			algo_info = mode;
+		} else if (vecArgs[ii].first == "SMOOTHING") {
+			IOUtils::parseArg(vecArgs[ii], where_, smoothing_);
 		} else if (vecArgs[ii].first == "VERBOSE") {
-			IOUtils::parseArg(vecArgs[ii], where, verbose);
+			IOUtils::parseArg(vecArgs[ii], where_, verbose_);
 		} else if (vecArgs[ii].first == "SET") {
-			IOUtils::parseArg(vecArgs[ii], where, cutoff_val);
+			IOUtils::parseArg(vecArgs[ii], where_, cutoff_val_);
+		} else if (vecArgs[ii].first == "ENFORCE_POSITIVE_RATE") {
+			IOUtils::parseArg(vecArgs[ii], where_, enforce_positive_rate_);
+		} else if (vecArgs[ii].first == "CALC_BASE_RATE") {
+			IOUtils::parseArg(vecArgs[ii], where_, calc_base_rate_);
+		} else if (vecArgs[ii].first == "FALLBACK_RATE") {
+			IOUtils::parseArg(vecArgs[ii], where_, fallback_rate_);
 		/* args of method BANDS */
 		} else if (vecArgs[ii].first == "BAND_HEIGHT") {
-			IOUtils::parseArg(vecArgs[ii], where, band_height);
+			IOUtils::parseArg(vecArgs[ii], where_, band_height_);
 		} else if (vecArgs[ii].first == "BAND_NO") {
-			IOUtils::parseArg(vecArgs[ii], where, band_no);
+			IOUtils::parseArg(vecArgs[ii], where_, band_no_);
 		/* args of method FORMULA */
 		} else if (vecArgs[ii].first == "FORMULA") {
-			formula = vecArgs[ii].second;
+			formula_ = vecArgs[ii].second;
 		}
 	}
 	info << "method: " << algo_info << ", ";
@@ -77,7 +90,7 @@ double SnowlineAlgorithm::getQualityRating(const Date& i_date)
 	nrOfMeasurments = getData(date, param, vecData, vecMeta); //more initialization
 	if (nrOfMeasurments == 0)
 		return 0.0;
-	if (snowline != IOUtils::nodata) //TODO: possible to propagate from base alg?
+	if (!snowlines_.empty()) //TODO: possible to propagate from base alg?
 		return 0.8;
 	else
 		return 0.7;
@@ -85,33 +98,37 @@ double SnowlineAlgorithm::getQualityRating(const Date& i_date)
 
 void SnowlineAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
-	getSnowline();
-	baseInterpol(dem, grid);
-	
-	if (snowline == IOUtils::nodata) //we already gave notice for this
+	getSnowlines();
+	if (snowlines_.empty()) { //we already gave notice for this
+		baseInterpol(IOUtils::nodata, dem, grid);
 		return; 
+	}
 
-	if (assim_method == CUTOFF)
-		assimilateCutoff(dem, grid);
-	else if (assim_method == BANDS)
-		assimilateBands(dem, grid);
-	else if (assim_method == FORMULA)
-		assimilateFormula(dem, grid);
+	std::vector<Grid2DObject> azi_grids;
+	for (size_t ii = 0; ii < snowlines_.size(); ++ii) {
+		Grid2DObject grid_copy(grid, IOUtils::nodata); //copy geo metadata
+		const double snowline = snowlines_[ii].sl_elevation;
+		baseInterpol(snowline, dem, grid_copy);
+		(this->*assimilateFunction_)(snowline, dem, grid_copy);
+		azi_grids.push_back(grid_copy);
+	}
+	grid = mergeSlopes(dem, azi_grids);
 }
 
-void SnowlineAlgorithm::baseInterpol(const DEMObject& dem, Grid2DObject& grid)
+void SnowlineAlgorithm::baseInterpol(const double& snowline, const DEMObject& dem, Grid2DObject& grid)
 {
-	std::string base_alg_fallback( base_alg ); //fallback algorithm if only 1 station is used
+	std::string base_alg_fallback( base_alg_ ); //fallback algorithm if only 1 station is used
 	if (nrOfMeasurments == 1) {
 		base_alg_fallback = "AVG";
-		msg("[W] Falling back to \"AVG\" for " + where + " (insufficient number of stations on " +
+		msg("[W] Falling back to \"AVG\" for " + where_ + " (insufficient number of stations on " +
 		    date.toString(Date::ISO_DATE) + ").");
 	}
-	//flexibly read parameters for base algorithm:
-	const std::vector< std::pair<std::string, std::string> >
-	    vecArgs( mi.getArgumentsForAlgorithm(param, base_alg_fallback, "Interpolations2D") );
+
+	//read and adjust parameters for base algorithm:
+	std::vector< std::pair<std::string, std::string> > vecArgs( prepareBaseArgs(snowline, base_alg_fallback) );
+	
 	InterpolationAlgorithm* algorithm(
-	    AlgorithmFactory::getAlgorithm(base_alg_fallback, mi, vecArgs, tsmanager, gdm, param) );
+	    AlgorithmFactory::getAlgorithm(base_alg_fallback, mi_, vecArgs, tsmanager, gdm_, param) );
 	//apply base interpolation algorithm to whole grid:
 	algorithm->getQualityRating(date); //set date
 	algorithm->calculate(dem, grid);
@@ -119,39 +136,39 @@ void SnowlineAlgorithm::baseInterpol(const DEMObject& dem, Grid2DObject& grid)
 	delete algorithm;
 }
 
-void SnowlineAlgorithm::assimilateCutoff(const DEMObject& dem, Grid2DObject& grid)
+void SnowlineAlgorithm::assimilateCutoff(const double& snowline, const DEMObject& dem, Grid2DObject& grid)
 { //set everything below snowline elevation to fixed value
 	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
 		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
 			if (dem(ii, jj) == IOUtils::nodata)
 				continue;
 			if (dem(ii, jj) < snowline)
-				grid(ii, jj) = cutoff_val;
+				grid(ii, jj) = cutoff_val_;
 		}
 	}
 }
 
-void SnowlineAlgorithm::assimilateBands(const DEMObject& dem, Grid2DObject& grid)
+void SnowlineAlgorithm::assimilateBands(const double& snowline, const DEMObject& dem, Grid2DObject& grid)
 { //multiply elevation bands above snowline with factors from 0 to 1
 	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
 		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
 			if (dem(ii, jj) == IOUtils::nodata) {
 				continue;
-			} else if (dem(ii, jj) > snowline + band_no * band_height) {
+			} else if (dem(ii, jj) > snowline + band_no_ * band_height_) {
 				continue;
 			} else if (dem(ii, jj) < snowline) {
-				grid(ii, jj) = cutoff_val;
+				grid(ii, jj) = cutoff_val_;
 				continue;
 			}
-			for (unsigned int bb = 0; bb < band_no; ++bb) { //bin DEM into bands
-				if ( (dem(ii, jj) >= snowline + bb * band_height) && (dem(ii, jj) < snowline + (bb + 1.) * band_height) )
-					grid(ii, jj) = grid(ii, jj) * bb / band_no;
+			for (unsigned int bb = 0; bb < band_no_; ++bb) { //bin DEM into bands
+				if ( (dem(ii, jj) >= snowline + bb * band_height_) && (dem(ii, jj) < snowline + (bb + 1.) * band_height_) )
+					grid(ii, jj) = grid(ii, jj) * bb / band_no_;
 			}
-		}
-	}
+		} //endfor jj
+	} //endfor ii
 }
 
-void SnowlineAlgorithm::assimilateFormula(const DEMObject& dem, Grid2DObject& grid)
+void SnowlineAlgorithm::assimilateFormula(const double& snowline, const DEMObject& dem, Grid2DObject& grid)
 { //set to result of formula evaluated at grid points
 	std::vector< std::pair<std::string, double> > substitutions; //fixed memory for tinyexpr
 
@@ -165,14 +182,14 @@ void SnowlineAlgorithm::assimilateFormula(const DEMObject& dem, Grid2DObject& gr
 
 	te_variable *te_vars = new te_variable[substitutions.size()];
 	initExpressionVars(substitutions, te_vars); //build te_variables from substitution vector
-	te_expr *expr_formula = compileExpression(formula, te_vars, nr_sub);
+	te_expr *expr_formula = compileExpression(formula_, te_vars, nr_sub);
 
 	for (size_t ii = 0; ii < grid.getNx(); ++ii) {
 		for (size_t jj = 0; jj < grid.getNy(); ++jj) {
 			if (dem(ii, jj) == IOUtils::nodata)
 				continue;
 			if (dem(ii, jj) < snowline) {
-				grid(ii, jj) = cutoff_val;
+				grid(ii, jj) = cutoff_val_;
 				continue;
 			}
 
@@ -186,6 +203,45 @@ void SnowlineAlgorithm::assimilateFormula(const DEMObject& dem, Grid2DObject& gr
 	delete[] te_vars;
 }
 
+Grid2DObject SnowlineAlgorithm::mergeSlopes(const DEMObject& dem, const std::vector<Grid2DObject>& azi_grids)
+{ //merge separate slope aspects back together
+
+	DEMObject dem_copy(dem);
+	dem_copy.setUpdatePpt(DEMObject::SLOPE);
+	dem_copy.update(DEMObject::HORN);
+	dem_copy.sanitize(); //set DEM to nodata at points where we have no slope/curvature
+	Grid2DObject outgrid(dem_copy, IOUtils::nodata); //copy geo metadata
+	Grid2DObject azi_classes(dem_copy); //for external visualization we would need the cellsize
+	azi_classes.grid2D = dem_copy.azi; //container for binned azimuth classification
+
+	std::vector<double> azi_thresholds;
+	std::vector<double> azi_ids;
+	azi_ids.push_back(static_cast<double>(snowlines_.size()) - 1.); //wrap back around North (0)
+	for (size_t ii = 0; ii < snowlines_.size(); ++ii) {
+		azi_thresholds.push_back(snowlines_[ii].deg_beg);
+		azi_ids.push_back(static_cast<double>(ii));
+	}
+	azi_classes.binning(azi_thresholds, azi_ids);
+
+	/*
+	 * Now we have a matrix containing indices which correspond to a single slope aspect.
+	 * Thus, this is a lookup table for which slope aspect matrix to choose the points from.
+	 */
+
+	for (size_t ii = 0; ii < outgrid.getNx(); ++ii) {
+		for (size_t jj = 0; jj < outgrid.getNy(); ++jj) {
+			if (dem_copy(ii, jj) != IOUtils::nodata) {
+				const size_t idx = static_cast<size_t>(azi_classes(ii, jj));
+				outgrid(ii, jj) = azi_grids.at(idx)(ii, jj);
+			}
+		}
+	} //endfor ii
+
+	if (smoothing_)
+		throw InvalidArgumentException("Border smoothing not implemented yet in " + where_, AT);
+
+	return outgrid;
+}
 
 void SnowlineAlgorithm::initExpressionVars(const std::vector< std::pair<std::string, double> >& substitutions, te_variable* vars) const
 { //build a substitutions expression for tinyexpr
@@ -206,63 +262,162 @@ te_expr* SnowlineAlgorithm::compileExpression(const std::string& expression, con
 	te_expr *expr = te_compile(expression.c_str(), te_vars, static_cast<int>(sz), &te_err);
 	if (!expr)
 		throw InvalidFormatException("Arithmetic expression \"" + expression +
-		        "\" could not be evaluated for " + where + "; parse error at " + IOUtils::toString(te_err), AT);
+		        "\" could not be evaluated for " + where_ + "; parse error at " + IOUtils::toString(te_err), AT);
 	return expr;
 }
 
-double SnowlineAlgorithm::readSnowlineFile()
-{
-	std::ifstream fin( snowline_file.c_str() );
+std::vector<SnowlineAlgorithm::aspect> SnowlineAlgorithm::readSnowlineFile()
+{ //parse text file with snowine elevation(s) information
+	std::ifstream fin( snowlines_file_.c_str() );
 	if (fin.fail())
-		return IOUtils::nodata;
+		return std::vector<SnowlineAlgorithm::aspect>();
 	
-	double snowline_elevation;
+	std::vector<SnowlineAlgorithm::aspect> snowline_elevations;
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	try {
 		do {
+			aspect sl_aspect;
 			std::string line;
 			getline(fin, line, eoln);
 			IOUtils::stripComments(line);
 			IOUtils::trim(line);
-			if (line.empty()) continue; //skip comments
+			if (line.empty())
+				continue; //skip comments
 
 			std::istringstream iss( line );
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10);
-			iss >> std::skipws >> snowline_elevation;
-			if (!iss) 
-				return IOUtils::nodata;
+			iss >> std::skipws >> sl_aspect.deg_beg;
+			if (!iss)
+				return std::vector<aspect>();
+			iss >> std::skipws >> sl_aspect.deg_end;
+			iss >> std::skipws >> sl_aspect.sl_elevation;
+			if (!iss) { //could not read 3 values --> assume it is a single slope aspect
+				if (snowline_elevations.empty()) { //1st time reading line
+					sl_aspect.sl_elevation = sl_aspect.deg_end; //in this case shift arg around
+					sl_aspect.deg_beg = sl_aspect.deg_end = 0.; //full circle
+					snowline_elevations.push_back(sl_aspect);
+					break;
+				} else {
+					throw InvalidFormatException(
+					    "The snowline elevations file is ill-formatted (encountered line with fewer columns than a previous one).", AT);
+				}
+
+			}
+			snowline_elevations.push_back(sl_aspect);
 		} while (!fin.eof());
 		fin.close();
-	} catch (const std::exception&){
-		if (fin.is_open()) fin.close();
+	} catch (const std::exception&) {
+		if (fin.is_open())
+			fin.close();
 		throw;
 	}
-	return snowline_elevation;
+	return snowline_elevations;
 }
 
-void SnowlineAlgorithm::getSnowline() 
-{
-	if (!snowline_file.empty()) {
-		if (snowline != IOUtils::nodata) {
-			msg("[i] Ignoring additional SNOWLINE argument since SNOWFILE is given for " + where + ".");
-		}
-		snowline = readSnowlineFile();
-		if (snowline == IOUtils::nodata) {
-			msg("[W] No valid snowline elevation can be read from SNOWFILE for " +
-			    where + ". Continuing without...");
+void SnowlineAlgorithm::getSnowlines()
+{ //read snowline information according to input method and validate it
+	if (!snowlines_file_.empty()) {
+		if (!snowlines_.empty())
+			msg("[i] Ignoring additional SNOWLINE argument since SNOWFILE is given for " + where_ + ".");
+		snowlines_ = readSnowlineFile();
+		if (snowlines_.empty()) {
+			msg("[W] No valid snowline elevation can be read from SNOWFILE \"" + snowlines_file_ + "\" for " +
+			    where_ + ". Continuing without...");
+			return;
 		}
 	} else {
-		if (snowline == IOUtils::nodata) {
+		if (snowlines_.empty()) {
 			msg("[W] No numeric value found for SNOWLINE, no SNOWFILE provided either for " +
-			    where + ". Continuing without...");
+			    where_ + ". Continuing without...");
+			return;
 		}
 	}
+
+	if (!isSorted(snowlines_))
+		throw InvalidFormatException("The snowline elevations file is ill-formatted (azimuth values must be in ascending order).", AT);
+	if (snowlines_.at(0).deg_beg != snowlines_.at(snowlines_.size() - 1).deg_end)
+		throw InvalidFormatException("The snowline elevations file is ill-formatted (the start azimuth must be the end azimuth).", AT);
+	for (std::vector<SnowlineAlgorithm::aspect>::iterator it = snowlines_.begin(); it != snowlines_.end(); ++it) {
+		    if ((*it).deg_beg > 360. || (*it).deg_end > 360. || (*it).deg_beg < 0. || (*it).deg_end < 0.)
+			throw InvalidArgumentException("The snowline elevations file is ill-formatted (degree value out of range).", AT);
+	}
+}
+
+double SnowlineAlgorithm::probeTrend()
+{
+	//calculate model parameters - we don't want to change data yet:
+	Trend trend(input_args_, algo, param);
+	std::vector<double> vecData_copy( vecData );
+	std::vector<StationData> vecMeta_copy( vecMeta );
+	trend.detrend(vecMeta_copy, vecData_copy);
+	
+	/*
+	 * Regression parameters are available only in low-level function calls when
+	 * trending/detrending is being performed.
+	 * But: they are propagated in the info string, so we parse this here.
+	 */
+	const std::string str_tag( "Model parameters:" );
+	std::string fit_info( trend.toString() );
+	const size_t beg = fit_info.find(str_tag) + str_tag.length();
+	const size_t end = fit_info.find("\n", beg);
+	fit_info = IOUtils::trim(fit_info.substr(beg, end - beg));
+	const size_t space = fit_info.find(" ");
+	double slope;
+	const bool success = IOUtils::convertString(slope, fit_info.substr(space + 1));
+	if (!success)
+		throw ConversionFailedException(where_ + " could not extract internal fit parameters of " + fit_info, AT);
+	return slope;
+}
+
+double SnowlineAlgorithm::calculateRate(const double& snowline)
+{ //calculate lapse rate from snowline elevation and highest available station
+	double max_alt = -999.;
+	double HS = IOUtils::nodata;
+
+	for (size_t ii = 0.; ii < vecData.size(); ++ii) {
+		if (vecMeta[ii].position.getAltitude() > max_alt) {
+			max_alt = vecMeta[ii].position.getAltitude();
+			HS = vecData[ii];
+		}
+	}
+	return HS / (max_alt - snowline);
+}
+
+std::vector< std::pair<std::string, std::string> > SnowlineAlgorithm::prepareBaseArgs(const double& snowline, const std::string& base_alg_fallback)
+{ //inject calculated lapse rate into base algorithm arguments
+	std::vector< std::pair<std::string, std::string> > vecArgs( mi_.getArgumentsForAlgorithm(param, base_alg_fallback, "Interpolations2D") );
+	if (enforce_positive_rate_ || calc_base_rate_) {
+		const double fit_slope = probeTrend();
+		if (snowline != IOUtils::nodata && (fit_slope > 0. || calc_base_rate_)) {
+			const std::string reason( (fit_slope > 0.? "Reverse trend" : "Trend") );
+			msg("[i] " + reason + " in data is being substituted with rate deduced from snowline elevation.");
+			if (snowline != IOUtils::nodata) {
+				for(std::vector< std::pair<std::string, std::string> >::iterator it = vecArgs.begin(); it != vecArgs.end(); ++it) {
+					if ((*it).first == "RATE" || (*it).first == "FRAC")
+						vecArgs.erase(it);
+				}
+				const double snowline_rate = calculateRate(snowline);
+				vecArgs.push_back(std::pair<std::string, std::string>( "RATE", IOUtils::toString(snowline_rate) ));
+				vecArgs.push_back(std::pair<std::string, std::string>( "FRAC", "FALSE" ));
+			}
+		} else if (snowline == IOUtils::nodata && fit_slope > 0. && fallback_rate_ != IOUtils::nodata) {
+			//reversed lapse rate but no snowline: switch to fixed fallback rate
+			for(std::vector< std::pair<std::string, std::string> >::iterator it = vecArgs.begin(); it != vecArgs.end(); ++it) {
+				if ((*it).first == "RATE" || (*it).first == "FRAC")
+					vecArgs.erase(it);
+			}
+			vecArgs.push_back(std::pair<std::string, std::string>( "RATE", IOUtils::toString(fallback_rate_) ));
+			vecArgs.push_back(std::pair<std::string, std::string>( "FRAC", "FALSE" ));
+			msg("[i] Reverse trend in data is being substituted with a fixed fallback rate.");
+		}
+	}
+	return(vecArgs);
 }
 
 void SnowlineAlgorithm::msg(const std::string& message)
 {
-	if (verbose)
+	if (verbose_)
 		std::cerr << message << std::endl;
 }
 

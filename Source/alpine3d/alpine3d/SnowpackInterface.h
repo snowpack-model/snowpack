@@ -88,7 +88,7 @@ class Runoff; // forward declaration, cyclic header include
  * @subsection output_new_grids Writing new grids out
  * If the parameters you want to write out do not already exist in  SnGrids::Parameters, then you have a few extra steps to perform:
  *     -# add the parameter in SnGrids::Parameters as well as its string representation in SnGrids::initStaticData()
- *     -# add the proper code (similarly as for the already existing parameters) in SnowpackInterfaceWorker::fillGrids();
+ *     -# add the proper code (similarly as for the already existing parameters) in SnowpackInterfaceWorker::fillGrids() (in some rare cases, this must be done in SnowpackInterface::getGrid() ie for parameters that only exist in SnowpackInterface);
  *     -# after recompiling, it will be possible to specify the newly created grid as explained in \ref gridded_outputs.
  *
  * Several Snowpack objects are available for the current point (and documented in Snowpack itself in the Dataclasses.h file):

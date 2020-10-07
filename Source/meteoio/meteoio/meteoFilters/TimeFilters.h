@@ -50,7 +50,7 @@ class TimeProcStack {
  * @details
  * This filter deletes some timesteps based on the provided arguments:
  *  - TYPE: defines the strategy to delete timesteps. It is one of:
- *       - CLEANUP: suppress duplicated and out-of-order timestamps (a warning will be emitted anyway for each problematic timestamp). Duplicated timestamps are merged to the first encountered one.
+ *       - CLEANUP: merge duplicated and out-of-order timestamps (a warning will be emitted anyway for the problematic timestamp). Merge are only performed when they don't conflict (two identical fields with different, non-nodata value is a conflict)
  *       - BYDATES: delete specific timesteps
  *       - FRAC: suppress a given fraction of the data at random
  *  - FILE: when type=BYDATE, a file that contains a list of station ID's and timesteps that should be suppressed;
@@ -81,7 +81,7 @@ class TimeProcStack {
  */
 class TimeSuppr : public ProcessingBlock {
 	public:
-		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
@@ -127,7 +127,7 @@ class TimeSuppr : public ProcessingBlock {
  */
 class TimeUnDST : public ProcessingBlock {
 	public:
-		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
@@ -150,7 +150,7 @@ class TimeUnDST : public ProcessingBlock {
  */
 class TimeSort : public ProcessingBlock {
 	public:
-		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 };
@@ -183,7 +183,7 @@ class TimeSort : public ProcessingBlock {
  */
 class TimeLoop : public ProcessingBlock {
 	public:
-		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ);
+		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 		void process(Date &dateStart, Date &dateEnd);

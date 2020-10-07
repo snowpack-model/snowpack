@@ -32,13 +32,13 @@ fi
 PREC="1e-3"
 rm -f output_ref/5_2_dischma.met
 bunzip2 -k output_ref/5_2_dischma.met.bz2
-sed -i '11d' output_ref/5_2_dischma.met; sed -i '11d' output/5_2_dischma.met
+#sed -i '11d' output_ref/5_2_dischma.met; sed -i '11d' output/5_2_dischma.met
 numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.met output/5_2_dischma.met | grep "+++"
 rm -f output_ref/5_2_dischma.met
 
 rm -f output_ref/5_2_dischma.pro
 bunzip2 -k output_ref/5_2_dischma.pro.bz2
-sed -i '10d' output_ref/5_2_dischma.pro; sed -i '10d' output/5_2_dischma.pro
+#sed -i '10d' output_ref/5_2_dischma.pro; sed -i '10d' output/5_2_dischma.pro
 numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.pro output/5_2_dischma.pro | grep "+++"
 rm -f output_ref/5_2_dischma.pro
 

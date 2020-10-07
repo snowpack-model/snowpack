@@ -468,7 +468,7 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 				getNeighbours(i, j, A);
 				double new_slope, new_Nx, new_Ny, new_Nz;
 				(this->*CalculateSlope)(A, new_slope, new_Nx, new_Ny, new_Nz);
-				const double new_azi = CalculateAspect(new_Nx, new_Ny, new_Nz, new_slope);
+				const double new_azi = CalculateAzimuth(new_Nx, new_Ny, new_Nz, new_slope);
 				const double new_curvature = getCurvature(A);
 				if (update_flag&SLOPE) {
 					slope(i,j) = new_slope;
@@ -506,7 +506,7 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 
 } // end of CalculateAziSlope
 
-double DEMObject::CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope) {
+double DEMObject::CalculateAzimuth(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double& no_slope) {
 //Calculates the aspect at a given point knowing its normal vector and slope
 //(direction of the normal pointing out of the surface, clockwise from north)
 //This azimuth calculation is similar to Hodgson (1998)
@@ -527,7 +527,7 @@ double DEMObject::CalculateAspect(const double& o_Nx, const double& o_Ny, const 
 			return aspect;
 		}
 	} else { // if slope = 0
-		return (no_slope);          // undefined or plain surface
+		return no_slope;          // undefined or flat surface
 	}
 }
 

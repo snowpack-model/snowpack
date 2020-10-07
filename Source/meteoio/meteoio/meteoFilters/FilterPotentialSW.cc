@@ -22,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name), min_coeff(0.03), max_coeff(1.1), mean_period(IOUtils::nodata), is_soft(false), use_toa(true)
+FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), min_coeff(0.03), max_coeff(1.1), mean_period(IOUtils::nodata), is_soft(false), use_toa(true)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values

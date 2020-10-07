@@ -13,11 +13,9 @@ tmp=`dirname $0`
 tmp="${tmp}/../"
 cd ${tmp}
 MIO_ROOT=`pwd`
-cd -
 
 #run the tests
 log_echo "Starting MeteoIO testing"
-cd ${MIO_ROOT}
 
 make distclean
 /usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptCoverage.cmake -V > ${MIO_ROOT}/tests/startScriptCoverage.log 2>&1

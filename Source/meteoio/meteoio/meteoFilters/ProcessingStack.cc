@@ -58,6 +58,7 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 	
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
+	filter_stack.reserve( vecFilters.size() );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
@@ -88,15 +89,61 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 	}
 }
 
+bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
+{
+	const std::vector<ProcessingBlock::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
+	
+	if (time_restrictions.empty()) {
+		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);
+		return true;
+	} else {
+		//we know there is at least 1 element
+		const Date start( ivec.front().date ), end( ivec.back().date );
+		bool filterApplied = false;
+		
+		//filter for all time restrictions that fit into ivec
+		for (size_t ii=0; ii<time_restrictions.size(); ii++) {
+			if (time_restrictions[ii].end<start) continue; //sub-range before our data
+			if (time_restrictions[ii].start>end) break; //sub-range after our data
+			
+			const Date sub_start( std::max(time_restrictions[ii].start, start) );
+			const Date sub_end( std::min(time_restrictions[ii].end, end) );
+			
+			//now cut a buffer to this sub-range and filter it
+			size_t ivec_start_idx=0; //position of the first sub-range within the full ivec/ovec
+			while (ivec[ivec_start_idx].date<sub_start) ivec_start_idx++;
+			
+			//prepare the sub-range input data from the original ivec
+			std::vector<MeteoData> tmp_ivec, tmp_ovec;
+			tmp_ivec.reserve( ivec.size()-ivec_start_idx ); //worst case scenario
+			for (size_t kk=ivec_start_idx; kk<ivec.size(); kk++) {
+				if (ivec[kk].date>sub_end) break;
+				tmp_ivec.push_back( ivec[kk] );
+			}
+			
+			filter_stack[jj]->process(static_cast<unsigned int>(param), tmp_ivec, tmp_ovec);
+			
+			//put back the sub-range filtered data into the full ovec
+			for (size_t kk=0; kk<tmp_ovec.size(); kk++) {
+				ovec[kk+ivec_start_idx] = tmp_ovec[kk];
+			}
+			
+			filterApplied = true;
+		}
+		
+		return filterApplied;
+	}
+}
+
 //ivec is passed by value, so it makes an efficient copy
 bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx)
 {
-	bool appliedFilter = false;
+	bool filterApplied = false;
 	
 	//pick one element and check whether the param_name parameter exists
 	const size_t param = ivec.front().getParameterIndex(param_name);
-	if (param == IOUtils::npos) return appliedFilter;
+	if (param == IOUtils::npos) return filterApplied;
 	
 	const size_t nr_of_filters = filter_stack.size();
 	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
@@ -112,17 +159,20 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
 			continue;
 
-		appliedFilter = true;
-		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec[stat_idx]);
+		//if the filter has not been applied (ie time restriction), move to the next one directly
+		if (!applyFilter(param, jj, ivec, ovec[stat_idx])) continue;
+		
+		filterApplied = true; //at least one filter has been applied in the whole stack
+		const size_t output_size = ovec[stat_idx].size();
 
-		if (ivec.size() != ovec[stat_idx].size()) {
+		if (ivec.size() != output_size) {
 			ostringstream ss;
 			ss << "The filter \"" << (*filter_stack[jj]).getName() << "\" received " << ivec.size();
-			ss << " timestamps and returned " << ovec[stat_idx].size() << " timestamps!";
+			ss << " timestamps and returned " << output_size << " timestamps!";
 			throw IndexOutOfBoundsException(ss.str(), AT);
 		}
 
-		for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
+		for (size_t kk=0; kk<output_size; kk++) {
 			const double orig = ivec[kk](param);
 			const double filtered = ovec[stat_idx][kk](param);
 			if (orig!=filtered) {
@@ -137,14 +187,11 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		}
 
 		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
-			for (size_t kk=0; kk<ovec[stat_idx].size(); kk++) {
-				ivec[kk](param) = ovec[stat_idx][kk](param);
-				ivec[kk].setFiltered(param, ovec[stat_idx][kk].isFiltered(param));
-			}
+			ivec = ovec[stat_idx];
 		}
 	}
 
-	return appliedFilter;
+	return filterApplied;
 }
 
 //this method applies the whole processing stack for all the stations, all the data points for one meteo param
@@ -158,9 +205,9 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	for (size_t ii=0; ii<nr_stations; ii++) { //for every station
 		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
 		
-		const bool appliedFilter = filterStation(ivec[ii], ovec, second_pass, ii);
+		const bool filterApplied = filterStation(ivec[ii], ovec, second_pass, ii);
 		//if not even a single filter was applied, just copy input to output
-		if (!appliedFilter) ovec[ii] = ivec[ii];
+		if (!filterApplied) ovec[ii] = ivec[ii];
 	}
 }
 

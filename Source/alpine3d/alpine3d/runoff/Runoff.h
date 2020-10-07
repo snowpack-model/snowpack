@@ -83,14 +83,14 @@ class Runoff
 {
 	public:
 		Runoff(const mio::Config& in_cfg, const mio::DEMObject& in_dem,
-				const double& in_thresh_rain);
+		       const double& in_thresh_rain);
 		Runoff(const Runoff& copy);
 
 		// Methods to set other modules
 		void setSnowPack(SnowpackInterface &sn_interface);
 
 		virtual void output(const mio::Date& i_date, const mio::Grid2DObject& psum,
-				const mio::Grid2DObject& ta, mio::IOManager& io_in);
+		                    const mio::Grid2DObject& ta, mio::IOManager& io_in);
 		virtual ~Runoff();
 
 		std::string getGridsRequirements() const;
@@ -105,7 +105,7 @@ class Runoff
 		bool output_grids; //< output grid of runoff data? (for taking it over with an external hydro model)
 		bool output_sums;  //< output total runoff per subcatchment?
 		std::string catchment_out_path; //< folder in which the extracted catchment sums should be written
-		double resampling_cell_size; //< [m] cell size to which the runoff grids should be resampled
+		double resampling_cell_size; //< cell size [m] to which the runoff grids should be resampled
 		double grid_size_factor;
 		const size_t n_grid_cells;
 		enum NumberingType {Alpine3DOld, TauDEM} const catchment_numbering;
@@ -118,34 +118,30 @@ class Runoff
 		std::vector<SnGrids::Parameters> extra_meteo_variables;
 		size_t n_extra_meteo_variables;
 		std::map<size_t, mio::Grid2DObject> catchment_masks;
-		bool use_external_iomanager_for_grids; // To know if the same io manager than
-																					 // for the other grids must be used
-																					 // (to avoid having multiple netcdf files open)
+		bool use_external_iomanager_for_grids; // To know if the same io manager than for the other grids must be used
+		                                       // (to avoid having multiple netcdf files open)
 		static const double MIN_CELL_SIZE; //< [m] two points closer to each other than this value will be assumed to overlap
 		static const double DISTANCE_ABSOLUTE_PRECISION; //< [m] minimum size of a grid cell
 
 		virtual void constructCatchmentMasks(mio::Grid2DObject catchmentGrid);
 		virtual void updateTotalRunoffGrid();
 		virtual void updateGlacierMask();
-		virtual mio::Grid2DObject computePrecipRunoff(const mio::Grid2DObject& psum,
-				const mio::Grid2DObject& ta) const;
+		virtual mio::Grid2DObject computePrecipRunoff(const mio::Grid2DObject& psum, const mio::Grid2DObject& ta) const;
 		virtual void getExtraMeteoGrids(std::vector<mio::Grid2DObject>& grids) const;
 		virtual void initializeOutputFiles(const mio::Grid2DObject& dem) const;
 		virtual void updateOutputFile(const size_t& catchId, const mio::Date& currTime,
-				const double& totalRunoff, const double& precipRunoff,
-				const double& snowRunoff, const double& glacierRunoff,
-				const std::vector<double>& meteoVars) const;
+		                              const double& totalRunoff, const double& precipRunoff,
+		                              const double& snowRunoff, const double& glacierRunoff,
+		                              const std::vector<double>& meteoVars) const;
 
 		static mio::IOManager* getIOManager(mio::Config in_cfg, const bool& outputGrids);
 		static mio::Grid2DObject getSlopeCorrection(const mio::DEMObject& dem);
 		static NumberingType getCatchmentNumberingScheme(const mio::Config& in_cfg);
 		static bool getIsGlacierDynamic(const mio::Config& cfg);
 		static std::vector<SnGrids::Parameters> getExtraMeteoVariables(const mio::Config& cfg);
-		static double getResamplingCellSize(const mio::DEMObject& in_dem,
-				const mio::Grid2DObject& catchments);
+		static double getResamplingCellSize(const mio::DEMObject& in_dem, const mio::Grid2DObject& catchments);
 		static bool isMultiple(const double& a, const double& b);
-		static double estimateResamplingCellSize(const double& llOffset,
-				const double& currSizeEstimate);
+		static double estimateResamplingCellSize(const double& llOffset, const double& currSizeEstimate);
 		static std::vector<size_t> factorizeCatchmentNumber(longuint value);
 		static void cropMask(mio::Grid2DObject& mask);
 		static double sumOverMask(const mio::Grid2DObject& grid, const mio::Grid2DObject& mask);
