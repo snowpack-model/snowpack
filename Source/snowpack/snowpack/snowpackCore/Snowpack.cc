@@ -2100,7 +2100,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// If there is DEPOSITING of snow:
 		if (Mdata.snowdrift > 0. && snow_erosion == "REDEPOSIT") {
 			const bool consider_precipitation_as_driftingsnow = false;	// if true, add precipitation to drifting snow, when drifting snow is present
-			if (consider_precipitation_as_driftingsnow) {
+			if (consider_precipitation_as_driftingsnow && cumu_precip > Constants::eps) {
 				Mdata.snowdrift += cumu_precip;
 				cumu_precip = 0.;
 			}
