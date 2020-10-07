@@ -26,8 +26,8 @@ using namespace std;
 namespace mio {
 
 #ifndef PROJ4
-ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg)
-          : ProcessingBlock(vecArgs, name), cfg(i_cfg), t_coordparam(std::string()) //this has to match the class you are inheriting from! ie ProcessingBlock or WindowedFilter
+ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), t_coordparam()
 {
 	throw IOException("ProcTransformWindVector requires PROJ4 library. Please compile MeteoIO with PROJ4 support.", AT);
 }
@@ -40,10 +40,10 @@ void ProcTransformWindVector::process(const unsigned int&, const std::vector<Met
 
 #else
 
-ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg)
-          : ProcessingBlock(vecArgs, name), cfg(i_cfg), t_coordparam(std::string()) //this has to match the class you are inheriting from! ie ProcessingBlock or WindowedFilter
+ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), t_coordparam()
 {
-	parse_args(vecArgs);
+	parse_args(vecArgs, cfg);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)
 	//or after the temporal resampling (second stage, ProcessingProperties::second) or both (ProcessingProperties::both)
 	//filters that do not depend on past data can safely use "both" (such as min/max filters) while
@@ -85,7 +85,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 	}
 
 	// Accuracy (length scale of projected vectors to determine wind direction)
-	const double eps = 1E-6;
+	static const double eps = 1E-6;
 
 	ovec = ivec;
 	for (size_t ii=0; ii<ivec.size(); ii++){
@@ -102,7 +102,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 		const std::string U_param( findUComponent(ivec[ii]) );
 		const std::string V_param( findVComponent(ivec[ii]) );
 
-		bool has_components = !(U_param.empty() || V_param.empty());
+		const bool has_components = !(U_param.empty() || V_param.empty());
 		if (has_components) {
 			if (ivec[ii](U_param) != IOUtils::nodata && ivec[ii](V_param) != IOUtils::nodata) {
 				uc = ivec[ii](U_param);
@@ -112,7 +112,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 
 		bool VWisZero = false;	// We use this flag to make sure that when DW is present and not nodata, but the wind speed is zero,
 					// we can still transform, but not propagate an erroneous wind speed.
-		bool NotAtPoles = (lat > -90.+eps && lat < 90.-eps);
+		const bool NotAtPoles = (lat > -90.+eps && lat < 90.-eps);
 		if (param == MeteoData::DW && ivec[ii](MeteoData::DW) != IOUtils::nodata && NotAtPoles) {
 			// If filter is applied on DW and DW is not nodata
 			u = IOUtils::VWDW_TO_U(1., ivec[ii](MeteoData::DW));	// The filter may want to transform DW for VW == 0, so we calculate (u,v) assuming unity wind speed.
@@ -204,7 +204,7 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 }
 
 
-void ProcTransformWindVector::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+void ProcTransformWindVector::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg)
 {
 	const std::string where( "Filters::"+block_name );
 	bool has_t_coordparam=false;

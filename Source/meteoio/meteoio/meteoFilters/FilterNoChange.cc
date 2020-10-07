@@ -22,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : WindowedFilter(vecArgs, name), max_variance(0.)
+FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : WindowedFilter(vecArgs, name, cfg), max_variance(0.)
 {
 	properties.stage = ProcessingProperties::first;
 	

@@ -27,8 +27,8 @@
 
 namespace mio {
 
-FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-        : ProcessingBlock(vecArgs, name), filter_alg(PF_SIR), resample_alg(PF_SYSTEMATIC), NN(500), path_resampling(true),
+FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg), filter_alg(PF_SIR), resample_alg(PF_SYSTEMATIC), NN(500), path_resampling(true),
           model_expression(""), obs_model_expression(""), fit_expression(""), fit_param(""), fit_degree(3), model_x0(IOUtils::nodata),
 		  resample_percentile(0.5), estim_measure(PF_MEAN), rng_model(), rng_obs(), rng_prior(), resample_seed(),
           be_verbose(true), unrecognized_keys(""), dump_particles_file(""), dump_states_file(""), input_states_file("")

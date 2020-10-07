@@ -1,0 +1,1699 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:set_locale_var
+   fun:set_default_lang
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:xrealloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:yyparse
+   fun:parse_command
+   fun:read_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   fun:adjust_shell_level
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   fun:array_insert
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:itos
+   fun:set_pipestatus_array
+   obj:/bin/bash
+   fun:wait_for
+   fun:execute_command_internal
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   fun:array_insert
+   fun:set_pipestatus_array
+   obj:/bin/bash
+   fun:wait_for
+   fun:execute_command_internal
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_ppid
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_ppid
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   fun:set_ppid
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:make_new_array_variable
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:make_new_array_variable
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:strvec_create
+   fun:tilde_initialize
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_locale_var
+   fun:set_default_lang
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   obj:/bin/bash
+   fun:yyparse
+   fun:parse_command
+   fun:read_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:make_new_array_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:make_new_array_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_bashopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_bashopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:make_new_assoc_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:make_new_assoc_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_shellopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_shellopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xrealloc
+   obj:/bin/bash
+   fun:yyparse
+   fun:parse_command
+   fun:read_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:update_export_env_inplace
+   fun:put_command_name_into_env
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:make_new_array_variable
+   fun:set_pipestatus_array
+   fun:set_pipestatus_from_exit
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:make_new_array_variable
+   fun:set_pipestatus_array
+   fun:set_pipestatus_from_exit
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:do_assignment_no_expand
+   fun:set_or_show_attributes
+   fun:export_builtin
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_create
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_create
+   fun:make_new_assoc_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:set_lang
+   fun:set_default_lang
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_create
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:execute_command_internal
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:xrealloc
+   obj:/bin/bash
+   fun:wait_for
+   fun:execute_command_internal
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   fun:make_simple_command
+   fun:yyparse
+   fun:parse_command
+   fun:read_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   fun:copy_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   fun:copy_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   fun:make_word
+   fun:list_string
+   fun:word_split
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   fun:list_string
+   fun:word_split
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_ppid
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   fun:make_new_array_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create
+   fun:make_new_array_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   fun:array_create
+   fun:make_new_array_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   fun:make_new_array_variable
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create
+   fun:make_new_array_variable
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   fun:array_create
+   fun:make_new_array_variable
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   fun:make_new_assoc_variable
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_shellopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:set_bashopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:begin_unwind_frame
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:add_unwind_protect
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:begin_unwind_frame
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:add_unwind_protect
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   fun:make_new_array_variable
+   fun:set_pipestatus_array
+   fun:set_pipestatus_from_exit
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   fun:add_unwind_protect
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:do_assignment_no_expand
+   fun:set_or_show_attributes
+   fun:export_builtin
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:unwind_protect_mem
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   fun:array_insert
+   fun:set_pipestatus_array
+   obj:/bin/bash
+   fun:wait_for
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:unwind_protect_mem
+   obj:/bin/bash
+   fun:parse_string
+   fun:xparse_dolparen
+   fun:extract_command_subst
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create
+   fun:array_copy
+   fun:save_pipestatus_array
+   fun:save_parser_state
+   fun:xparse_dolparen
+   fun:extract_command_subst
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:expand_string_assignment
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:array_create_element
+   fun:array_create
+   fun:array_copy
+   fun:save_pipestatus_array
+   fun:save_parser_state
+   fun:xparse_dolparen
+   fun:extract_command_subst
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:new_var_context
+   obj:/bin/bash
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:fd_to_buffered_stream
+   fun:with_input_from_buffered_stream
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   fun:copy_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   fun:copy_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:alloc_word_desc
+   fun:make_bare_word
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_word_list
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:do_assignment_no_expand
+   fun:set_or_show_attributes
+   fun:export_builtin
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:do_assignment_no_expand
+   fun:set_or_show_attributes
+   fun:export_builtin
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:stop_pipeline
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   fun:phash_insert
+   fun:search_for_command
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   fun:set_shellopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:set_working_directory
+   fun:set_pwd
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:unwind_protect_mem
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:init_yy_io
+   fun:pop_stream
+   obj:/bin/bash
+   fun:run_unwind_frame
+   fun:parse_string
+   fun:xparse_dolparen
+   fun:extract_command_subst
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:hash_insert
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:make_variable_value
+   obj:/bin/bash
+   fun:set_bashopts
+   obj:/bin/bash
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:unwind_protect_mem
+   obj:/bin/bash
+   fun:parse_string
+   fun:xparse_dolparen
+   fun:extract_command_subst
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:expand_string_assignment
+   obj:/bin/bash
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xrealloc
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:yyparse
+   fun:parse_command
+   fun:read_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:xrealloc
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:xmalloc
+   fun:set_default_locale
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:xrealloc
+   fun:strvec_resize
+   obj:/bin/bash
+   obj:/bin/bash
+   fun:execute_command_internal
+   fun:execute_command
+   fun:reader_loop
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:cmd_init
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:uwp_init
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xrealloc
+   obj:/bin/bash
+   fun:fd_to_buffered_stream
+   fun:with_input_from_buffered_stream
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:xmalloc
+   fun:initialize_shell_variables
+   obj:/bin/bash
+   fun:main
+}

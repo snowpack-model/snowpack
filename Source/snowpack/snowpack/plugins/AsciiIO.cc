@@ -319,7 +319,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
            info(run_info), vecProfileFmt(), aggregate_prf(false),
            fixedPositions(), numberMeasTemperatures(0), maxNumberMeasTemperatures(0), numberTags(0), numberFixedSensors(0),
            totNumberSensors(0), time_zone(0.), calculation_step_length(0.), hazard_steps_between(0.), ts_days_between(0.),
-           min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), enable_pref_flow(false),
+           min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), enable_pref_flow(false), enable_ice_reservoir(false),
            avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
            out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_t(false),
            out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false)
@@ -368,6 +368,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
+	cfg.getValue("ICE_RESERVOIR", "SnowpackAdvanced", enable_ice_reservoir);
 
 	i_snowpath = (in_snowpath.empty())? inpath : in_snowpath;
 	o_snowpath = (out_snowpath.empty())? outpath : out_snowpath;
@@ -1114,6 +1115,20 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 			fout << "," << std::fixed << std::setprecision(1) << 1.e6*EMS[e].Eps_vDot;
 	}
 #ifndef SNOWPACK_CORE
+	// 0524: ice reservoir content by volume (%)
+	if(enable_ice_reservoir) {
+		fout << "\n0524," << nE + Noffset;
+		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta_i_reservoir;
+	}
+	// 0525: cumulated ice reservoir content by volume (%)
+	if(enable_ice_reservoir) {
+		fout << "\n0525," << nE + Noffset;
+		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta_i_reservoir_cumul;
+	}
 	// 0530: position (cm) and minimum stability indices
 	fout << "\n0530,8";
 	fout << "," << std::fixed << +Xdata.S_class1 << "," << +Xdata.S_class2; //force printing type char as numerica value
@@ -2452,6 +2467,8 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0521,nElems,thermal conductivity (W K-1 m-1)";
 	fout << "\n0522,nElems,absorbed shortwave radiation (W m-2)";
 	fout << "\n0523,nElems,viscous deformation rate (1.e-6 s-1)";
+	if(enable_ice_reservoir) fout << "\n0524,nElems, ice reservoir volume fraction (%)";
+	if(enable_ice_reservoir) fout << "\n0525,nElems, cumulated ice reservoir volume fraction (%)";
 	fout << "\n0530,8,position (cm) and minimum stability indices:";
 	fout << "\n       profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38";
 	fout << "\n0531,nElems,deformation rate stability index Sdef";

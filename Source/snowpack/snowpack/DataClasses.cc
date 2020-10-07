@@ -1151,7 +1151,11 @@ ElementData::ElementData(const unsigned short int& in_ID) : depositionDate(), L0
 #ifndef SNOWPACK_CORE
                              S_dr(0.), crit_cut_length(Constants::undefined),
 #endif
-                             soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.), SlopeParFlux(0.), Qph_up(0.), Qph_down(0.),
+                             soot_ppmv(0.), VG(*this), lwc_source(0.), PrefFlowArea(0.),
+#ifndef SNOWPACK_CORE
+                             theta_w_transfer(0.), theta_i_reservoir(0.), theta_i_reservoir_cumul(0.),
+#endif
+                             SlopeParFlux(0.), Qph_up(0.), Qph_down(0.),
 #ifndef SNOWPACK_CORE
                              dsm(0.), rime(0.),
 #endif
@@ -1173,7 +1177,11 @@ ElementData::ElementData(const ElementData& cc) :
 #ifndef SNOWPACK_CORE
                              S_dr(cc.S_dr), crit_cut_length(cc.crit_cut_length),
 #endif
-                             soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea), SlopeParFlux(cc.SlopeParFlux), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down),
+                             soot_ppmv(cc.soot_ppmv), VG(*this), lwc_source(cc.lwc_source), PrefFlowArea(cc.PrefFlowArea),
+#ifndef SNOWPACK_CORE
+                             theta_w_transfer(cc.theta_w_transfer), theta_i_reservoir(cc.theta_i_reservoir), theta_i_reservoir_cumul(cc.theta_i_reservoir_cumul),
+#endif
+                             SlopeParFlux(cc.SlopeParFlux), Qph_up(cc.Qph_up), Qph_down(cc.Qph_down),
 #ifndef SNOWPACK_CORE
                              dsm(cc.dsm), rime(cc.rime),
 #endif
@@ -1205,6 +1213,12 @@ std::ostream& operator<<(std::ostream& os, const ElementData& data)
 	const size_t s_soil = data.soil.size();
 	os.write(reinterpret_cast<const char*>(&s_soil), sizeof(size_t));
 	os.write(reinterpret_cast<const char*>(&data.soil[0]), static_cast<streamsize>(s_soil*sizeof(data.soil[0])));
+
+#ifndef SNOWPACK_CORE
+	os.write(reinterpret_cast<const char*>(&data.theta_i_reservoir), sizeof(data.theta_i_reservoir));
+	os.write(reinterpret_cast<const char*>(&data.theta_i_reservoir_cumul), sizeof(data.theta_i_reservoir_cumul));
+	os.write(reinterpret_cast<const char*>(&data.theta_w_transfer), sizeof(data.theta_w_transfer));
+#endif
 
 	os.write(reinterpret_cast<const char*>(&data.Rho), sizeof(data.Rho));
 	os.write(reinterpret_cast<const char*>(&data.M), sizeof(data.M));
@@ -1288,6 +1302,12 @@ std::istream& operator>>(std::istream& is, ElementData& data)
 	is.read(reinterpret_cast<char*>(&s_soil), sizeof(size_t));
 	data.soil.resize(s_soil);
 	is.read(reinterpret_cast<char*>(&data.soil[0]), static_cast<streamsize>(s_soil*sizeof(data.soil[0])));
+
+#ifndef SNOWPACK_CORE
+	is.read(reinterpret_cast<char*>(&data.theta_i_reservoir), sizeof(data.theta_i_reservoir));
+	is.read(reinterpret_cast<char*>(&data.theta_i_reservoir_cumul), sizeof(data.theta_i_reservoir_cumul));
+	is.read(reinterpret_cast<char*>(&data.theta_w_transfer), sizeof(data.theta_w_transfer));
+#endif
 
 	is.read(reinterpret_cast<char*>(&data.Rho), sizeof(data.Rho));
 	is.read(reinterpret_cast<char*>(&data.M), sizeof(data.M));
@@ -1492,6 +1512,11 @@ double ElementData::extinction() const
 	//return(Edata->Rho/7.  + 75. - 0.0*Edata->theta[WATER]);
 }
 
+void ElementData::snowResidualWaterContent()
+{
+	res_wat_cont = snowResidualWaterContent(theta[ICE]);
+}
+
 /**
  * @brief Estimate the residual water content RWC by Vol \n
  * From work by Coleou and Lesaffre, 1998, Ann. Glaciol., 26, 64-68. \n
@@ -1501,13 +1526,9 @@ double ElementData::extinction() const
  * - RWC by Mass 0.049 to 0.029
  * @note That function will limit range to 0.0264 to 0.08 RWC by Vol
  * @version 11.01
+ * @param[in] theta_i ice volumetric fraction
  * @return residual water content of snow element (1)
  */
-void ElementData::snowResidualWaterContent()
-{
-	res_wat_cont = snowResidualWaterContent(theta[ICE]);
-}
-
 double ElementData::snowResidualWaterContent(const double& theta_i)
 {
 	double resWatCont;
@@ -1665,6 +1686,11 @@ double ElementData::neck2VolumetricStrain() const
 	return (Ln / (2. * rg + Ln));
 }
 
+void ElementData::snowType()
+{
+	type = snowType(dd, sp, 2.*rg, static_cast<unsigned short int>(mk%100), theta[WATER], res_wat_cont);
+}
+
 /**
  * @brief Determine the type of snow \n
  * First revisited by Fierz and Bellaire 2006 and 2007
@@ -1672,12 +1698,6 @@ double ElementData::neck2VolumetricStrain() const
  * @version 11.11
  * @return snow type code according to old-fashioned Swiss tradition
  */
-
-void ElementData::snowType()
-{
-	type = snowType(dd, sp, 2.*rg, static_cast<unsigned short int>(mk%100), theta[WATER], res_wat_cont);
-}
-
 unsigned short int ElementData::getSnowType() const
 {
 	return snowType(dd, sp, 2.*rg, static_cast<unsigned short int>(mk%100), theta[WATER], res_wat_cont);
@@ -2428,6 +2448,10 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].theta[SOIL]  = SSdata.Ldata[ll].phiSoil;
 			Edata[e].theta[AIR]   = SSdata.Ldata[ll].phiVoids;
 			Edata[e].theta[ICE]   = SSdata.Ldata[ll].phiIce;
+#ifndef SNOWPACK_CORE
+			Edata[e].theta_i_reservoir = SSdata.Ldata[ll].phiIceReservoir;
+			Edata[e].theta_i_reservoir_cumul = SSdata.Ldata[ll].phiIceReservoirCumul;
+#endif
 			Edata[e].theta[WATER] = SSdata.Ldata[ll].phiWater;
 			Edata[e].theta[WATER_PREF] = SSdata.Ldata[ll].phiWaterPref;
 			Edata[e].soil[SOIL_RHO] = SSdata.Ldata[ll].SoilRho;
@@ -2809,6 +2833,10 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 	EdataLower.L0 = EdataLower.L = LNew;
 	EdataLower.M += EdataUpper.M;
 	EdataLower.theta[ICE] = (L_upper*EdataUpper.theta[ICE] + L_lower*EdataLower.theta[ICE]) / LNew;
+#ifndef SNOWPACK_CORE
+	EdataLower.theta_i_reservoir = (L_upper*EdataUpper.theta_i_reservoir + L_lower*EdataLower.theta_i_reservoir) / LNew; // Also merge the ice reservoirs
+	EdataLower.theta_i_reservoir_cumul = (L_upper*EdataUpper.theta_i_reservoir_cumul + L_lower*EdataLower.theta_i_reservoir_cumul) / LNew; // Also merge the cumulated ice reservoirs
+#endif
 	EdataLower.theta[WATER] = (L_upper*EdataUpper.theta[WATER] + L_lower*EdataLower.theta[WATER]) / LNew;
 	EdataLower.theta[WATER_PREF] = (L_upper*EdataUpper.theta[WATER_PREF] + L_lower*EdataLower.theta[WATER_PREF]) / LNew;
 	EdataLower.theta[AIR] = 1.0 - EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF] - EdataLower.theta[ICE] - EdataLower.theta[SOIL];
@@ -2818,12 +2846,16 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 		// Note: we can only do this for the uppermost snow element, as otherwise it is not possible to adapt the element length.
 		// If there is not enough space, adjust element length:
 		EdataLower.theta[AIR] = (EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*((Constants::density_water/Constants::density_ice)-1.);
-		const double tmpsum = EdataLower.theta[AIR]+EdataLower.theta[ICE]+EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF];
+		const double tmpsum = EdataLower.theta[AIR]+EdataLower.theta[ICE]+EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF]; // Not adding ice reservoirs here
 		// Ensure that the element does not become larger than the sum of lengths of the original ones (no absolute element "growth")!
 		LNew = std::min(LNew * tmpsum, L_lower + L_upper);
 		EdataLower.L0 = EdataLower.L = LNew;
 		EdataLower.theta[AIR] /= tmpsum;
 		EdataLower.theta[ICE] /= tmpsum;
+#ifndef SNOWPACK_CORE
+		EdataLower.theta_i_reservoir /= tmpsum; // Recalculate ice reservoir
+		EdataLower.theta_i_reservoir_cumul /= tmpsum; // Recalculate cumulated ice reservoir
+#endif
 		EdataLower.theta[WATER] /= tmpsum;
 		EdataLower.theta[WATER_PREF] /= tmpsum;
 	}
@@ -3623,7 +3655,11 @@ const std::string SurfaceFluxes::toString() const
 }
 
 LayerData::LayerData() : depositionDate(), hl(0.), ne(0), tl(0.),
-                     phiSoil(0.), phiIce(0.), phiWater(0.), phiWaterPref(0.), phiVoids(0.),
+                     phiSoil(0.), phiIce(0.),
+#ifndef SNOWPACK_CORE
+                     phiIceReservoir(0.), phiIceReservoirCumul(0.),
+#endif
+                     phiWater(0.), phiWaterPref(0.), phiVoids(0.),
                      cSoil(SnowStation::number_of_solutes), cIce(SnowStation::number_of_solutes), cWater(SnowStation::number_of_solutes), cVoids(SnowStation::number_of_solutes),
                      SoilRho(0.), SoilK(0.), SoilC(0.),
                      rg(0.), sp(0.), dd(0.), rb(0.), mk(0), hr(0.), CDot(0.), metamo(0.), salinity(0.), h(Constants::undefined), dsm(0.)
@@ -3638,6 +3674,10 @@ std::ostream& operator<<(std::ostream& os, const LayerData& data)
 	os.write(reinterpret_cast<const char*>(&data.tl), sizeof(data.tl));
 	os.write(reinterpret_cast<const char*>(&data.phiSoil), sizeof(data.phiSoil));
 	os.write(reinterpret_cast<const char*>(&data.phiIce), sizeof(data.phiIce));
+#ifndef SNOWPACK_CORE
+	os.write(reinterpret_cast<const char*>(&data.phiIceReservoir), sizeof(data.phiIceReservoir));
+	os.write(reinterpret_cast<const char*>(&data.phiIceReservoirCumul), sizeof(data.phiIceReservoirCumul));
+#endif
 	os.write(reinterpret_cast<const char*>(&data.phiWater), sizeof(data.phiWater));
 	os.write(reinterpret_cast<const char*>(&data.phiWaterPref), sizeof(data.phiWaterPref));
 	os.write(reinterpret_cast<const char*>(&data.phiVoids), sizeof(data.phiVoids));
@@ -3684,6 +3724,10 @@ std::istream& operator>>(std::istream& is, LayerData& data)
 	is.read(reinterpret_cast<char*>(&data.tl), sizeof(data.tl));
 	is.read(reinterpret_cast<char*>(&data.phiSoil), sizeof(data.phiSoil));
 	is.read(reinterpret_cast<char*>(&data.phiIce), sizeof(data.phiIce));
+#ifndef SNOWPACK_CORE
+	is.read(reinterpret_cast<char*>(&data.phiIceReservoir), sizeof(data.phiIceReservoir));
+	is.read(reinterpret_cast<char*>(&data.phiIceReservoirCumul), sizeof(data.phiIceReservoirCumul));
+#endif
 	is.read(reinterpret_cast<char*>(&data.phiWater), sizeof(data.phiWater));
 	is.read(reinterpret_cast<char*>(&data.phiWaterPref), sizeof(data.phiWaterPref));
 	is.read(reinterpret_cast<char*>(&data.phiVoids), sizeof(data.phiVoids));

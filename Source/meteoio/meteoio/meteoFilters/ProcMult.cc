@@ -26,8 +26,8 @@ using namespace std;
 
 namespace mio {
 
-ProcMult::ProcMult(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
-         : ProcAdd(vecArgs, name, i_root_path)
+ProcMult::ProcMult(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+         : ProcAdd(vecArgs, name, cfg)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

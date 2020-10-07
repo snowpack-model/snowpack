@@ -82,10 +82,10 @@ void SnowDriftA3D::buildWindFieldsTable(const std::string& wind_field_string)
 {//parses the given string containing the wind fields and number of steps, for example: "NW 3 SE 5 N 6"
 //the result is written into a vector of wind_field structures, wind_fields
 	int previous_time_step = 0, steps, fields_count=0;
-	std::string word;
 	std::istringstream iss(wind_field_string, std::istringstream::in);
 	struct WIND_FIELD curr_field;
 
+	std::string word;
 	while ( iss >> word ) {
 		curr_field.wind = word;
 		if (!(iss>>word)) {
@@ -105,9 +105,8 @@ bool SnowDriftA3D::isNewWindField(const unsigned int current_step)
 {//this function returns true if a new wind field should be read
 	const unsigned int next_index = wind_field_index+1;
 
-	if (wind_field_index==-1) {
-		return true;
-	}
+	if (wind_field_index==-1) return true;
+	
 	if ((next_index<wind_fields.size()) && (current_step >= wind_fields[next_index].start_step)) {
 		return true;
 	} else {
@@ -264,6 +263,7 @@ void SnowDriftA3D::InitializeNodes(const mio::Grid3DObject& z_readMatr)
 	}
 
 	DEMObject curr_layer(ta, false, DEMObject::CORR); //take the geolocalization from ta
+	curr_layer.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE | DEMObject::NORMAL));
 	for (unsigned int kk=0; kk<4; kk++){
 		nodes_z.extractLayer(kk, curr_layer);
 		curr_layer.update(); //compute the slopes, normals, min/max, etc only for the bottom 3 layers
@@ -669,8 +669,10 @@ void SnowDriftA3D::Compute(const Date& calcDate)
 	}
 
 	/* Calculate the Saltation Fluxes */
-	cout<<"[i] SnowDrift starting Saltation\n";
-	if (SALTATION) compSaltation(true);
+	if (SALTATION) {
+		cout<<"[i] SnowDrift starting Saltation\n";
+		compSaltation(true);
+	}
 
 	/* Calculate the suspension drift for the wind field until stationary */
 	cout<<"[i] SnowDrift starting Suspension\n";
@@ -697,7 +699,7 @@ void SnowDriftA3D::Compute(const Date& calcDate)
 
 void SnowDriftA3D::GetTResults(double  outtime_v[15], double outtime_tau[15], double outtime_salt[15], double outtime_diff[15])
 {
-	const size_t sz=15*sizeof(double);
+	const size_t sz = 15*sizeof(double);
 	memcpy(outtime_v, time_v, sz);
 	memcpy(outtime_tau, time_tau, sz);
 	memcpy(outtime_salt, time_salt, sz);
@@ -727,7 +729,7 @@ void SnowDriftA3D::setSnowSurfaceData(const mio::Grid2DObject& cH_in, const mio:
 void SnowDriftA3D::debugOutputs(const Date& calcDate, const std::string& outpath, const DRIFT_OUTPUT& output_type)
 {
 	const std::string ext = (output_type==OUT_CONC)? ".ctn" : ".sub"; 
-	const std::string fname = outpath + calcDate.toString(Date::NUM) + ext;
+	const std::string fname( outpath + calcDate.toString(Date::NUM) + ext );
 	
 	writeOutput(fname); //write output file of snowdrift
 }
@@ -827,7 +829,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 	}
 	
 	CompleteNodes();
-	if (SUBLIMATION) 	initializeTRH();
+	if (SUBLIMATION) initializeTRH();
 	
 	//TODO: feedback mecanism: make it more general!
 	if (snowpack!=NULL) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);

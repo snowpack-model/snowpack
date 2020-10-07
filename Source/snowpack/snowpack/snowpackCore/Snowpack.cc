@@ -87,7 +87,7 @@ void Snowpack::EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]) {
  ************************************************************/
 
 Snowpack::Snowpack(const SnowpackConfig& i_cfg)
-          : surfaceCode(), cfg(i_cfg),
+          : surfaceCode(), cfg(i_cfg), techsnow(i_cfg), 
 #ifdef SNOWPACK_OPTIM
             watertransport(NULL), vapourtransport(NULL), metamorphism(NULL), snowdrift(NULL), phasechange(NULL),
 #endif
@@ -460,6 +460,10 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 		EMS[e].theta[WATER] *= L0 / (L0 + dL);
 		EMS[e].theta[WATER_PREF] *= L0 / (L0 + dL);
 		EMS[e].theta[ICE]   *= L0 / (L0 + dL);
+#ifndef SNOWPACK_CORE
+		EMS[e].theta_i_reservoir   *= L0 / (L0 + dL);
+		EMS[e].theta_i_reservoir_cumul   *= L0 / (L0 + dL);
+#endif
 		EMS[e].L0 = EMS[e].L = (L0 + dL);
 		NDS[e+1].z = NDS[e].z + EMS[e].L;
 		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
@@ -595,7 +599,9 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 	if (forcing == "ATMOS") {
 		// For atmospheric forcing
 		Bdata.qs = alpha * (Tair - Tss);
+
 		Bdata.ql = SnLaws::compLatentHeat_Rh(soil_evaporation, Mdata, Xdata, actual_height_of_meteo_values);
+
 		if (Xdata.getNumberOfElements() > 0) {
 		  	// Limit fluxes in case of explicit treatment of boundary conditions
 			const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
@@ -1383,6 +1389,10 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 		// Because density and volumetric contents are already defined, redo it here
 		elem.Rho = 110.;
 		elem.theta[ICE] = elem.Rho / Constants::density_ice;  // ice content
+#ifndef SNOWPACK_CORE
+		elem.theta_i_reservoir = 0.0;
+		elem.theta_i_reservoir_cumul = 0.0;
+#endif
 		elem.theta[AIR] = 1. - elem.theta[ICE];  // void content
 	} else { // no Graupel
 		elem.mk = Snowpack::new_snow_marker;
@@ -1454,6 +1464,10 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	// Volumetric components
 	elem.theta[SOIL]  = 0.0;
 	elem.theta[ICE]   = elem.Rho/Constants::density_ice;
+#ifndef SNOWPACK_CORE
+	elem.theta_i_reservoir = 0.0;
+	elem.theta_i_reservoir_cumul = 0.0;
+#endif
 	elem.theta[WATER] = 0.0;
 	elem.theta[WATER_PREF] = 0.0;
 	elem.theta[AIR]   = 1. - elem.theta[ICE];
@@ -1848,6 +1862,10 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				EMS[nOldE-1].theta[ICE] *= L0/EMS[nOldE-1].L;
 				EMS[nOldE-1].theta[ICE] += -hoar/(Constants::density_ice*EMS[nOldE-1].L);
 				EMS[nOldE-1].theta[ICE] = std::max(EMS[nOldE-1].theta[ICE],0.);
+#ifndef SNOWPACK_CORE
+				EMS[nOldE-1].theta_i_reservoir = 0.0;
+				EMS[nOldE-1].theta_i_reservoir_cumul = 0.0;
+#endif
 				EMS[nOldE-1].theta[WATER] *= L0/EMS[nOldE-1].L;
 				EMS[nOldE-1].theta[WATER_PREF] *= L0/EMS[nOldE-1].L;
 				for (unsigned int ii = 0; ii < Xdata.number_of_solutes; ii++)
@@ -1977,7 +1995,9 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
 	Xdata.hn_redeposit = Xdata.hn;
 	Xdata.rho_hn_redeposit = Xdata.rho_hn;
-	Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
+	if ((tmp_Xdata_hn + Xdata.hn) > 0.) {
+		Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
+	}
 	Xdata.hn += tmp_Xdata_hn;
 }
 
@@ -2356,7 +2376,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 	}
 }
 
-void Snowpack::snowPreparation(SnowStation& Xdata)
+void Snowpack::snowPreparation(const mio::Date& currentDate, SnowStation& Xdata) const
 {
-	TechSnow::preparation(Xdata);
+	if (techsnow.prepare(currentDate))
+		techsnow.preparation(Xdata);
 }

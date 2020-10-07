@@ -28,8 +28,8 @@ using namespace std;
 
 namespace mio {
 
-FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), type(NONE)
+FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), type(NONE)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -62,11 +62,11 @@ FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> 
 		}
 		if (vecArgs[ii].first=="FILE") {
 			const std::string in_filename( vecArgs[ii].second );
-			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : cfg.getConfigRootDir()+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+			suppr_dates = ProcessingBlock::readDates(block_name, filename, cfg.get("TIME_ZONE", "Input"));
 			has_file = true;
 		}
 	}

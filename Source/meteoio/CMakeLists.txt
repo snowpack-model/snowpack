@@ -4,8 +4,8 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 PROJECT(meteoio)
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
-SET(VERSION_MINOR 8 CACHE INTERNAL "")
-SET(VERSION_PATCH 1 CACHE INTERNAL "")
+SET(VERSION_MINOR 9 CACHE INTERNAL "")
+SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
@@ -38,7 +38,12 @@ IF(UNIX)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 	# add the directory of the binary to the rpath
 	#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN'")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+	IF(APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+	ELSE(APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+	ENDIF(APPLE)
+	
 	# add the automatically determined parts of the RPATH
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 	#SET(CMAKE_INSTALL_RPATH $ORIGIN)
@@ -224,12 +229,52 @@ IF(INSTALL_DOC)
 	ENDIF (DOXYGEN_FOUND)
 
 	INSTALL(FILES ${DOC_FILES} DESTINATION ${DOC_PATH} COMPONENT documentation)
-	INSTALL(DIRECTORY "doc/examples" DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
+	INSTALL(DIRECTORY "doc/examples" USE_SOURCE_PERMISSIONS DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
 ENDIF(INSTALL_DOC)
 
 ###########################################################
 ## CPACK section
 ###########################################################
+SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
+IF(CPACK_BUNDLE_ALL)
+	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
+	
+	#standard libraries must be installed for gcc on Windows
+	IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+		SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
+		IF(CPACK_BUNDLE_STDLIBS)
+			FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
+			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
+			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
+			IF("${stdlibs}" STREQUAL "")
+ 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+			ENDIF("${stdlibs}" STREQUAL "")
+			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		ENDIF(CPACK_BUNDLE_STDLIBS)
+	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+	
+	#bundle inishell
+# 	IF(APPLE)
+# 		MESSAGE("Inishell can currently not be bundled on Mac!")
+# 		#FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/../inishell-ng/build/inishell.app")
+# 		#IF("${inishell}" STREQUAL "")
+# 		#        MESSAGE("Inishell not found! Please make sure it is in ${CMAKE_SOURCE_DIR}/../inishell-ng and has been built")
+# 		#ENDIF("${inishell}" STREQUAL "")
+# 		#INSTALL(DIRECTORY ${inishell} DESTINATION .)
+# 	ELSE(APPLE)
+# 		FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/../inishell-ng/build/inishel*")
+# 		IF("${inishell}" STREQUAL "")
+# 				MESSAGE("Inishell not found! Please make sure it is in ${CMAKE_SOURCE_DIR}/../inishell-ng and has been built")
+# 		ENDIF("${inishell}" STREQUAL "")
+# 		FILE(GLOB_RECURSE inishell-dll "${CMAKE_SOURCE_DIR}/../inishell-ng/build/*.${DLL_EXT}")
+# 		FILE(GLOB inishell-xml "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.xml")
+# 		FILE(GLOB inishell-png "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.png")
+# 		INSTALL(FILES ${inishell} ${inishell-dll} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+# 		INSTALL(FILES ${inishell-xml} ${inishell-png} DESTINATION share/inishell-apps PERMISSIONS ${ALL_RO_PERM} COMPONENT resources)
+# 	ENDIF(APPLE)
+ENDIF(CPACK_BUNDLE_ALL)
+
 SET(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
@@ -251,7 +296,9 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}-${CPACK_ARCH}")
 
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
-SET(CPACK_COMPONENTS_ALL libraries headers documentation examples)
+SET(CPACK_COMPONENTS_ALL libraries headers documentation examples exe resources)
+SET(CPACK_COMPONENT_RESOURCES_DISPLAY_NAME "Inishell resources")
+SET(CPACK_COMPONENT_RESOURCES_DESCRIPTION "Additional files to use Inishell")
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "MeteoIO library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The MeteoIO library itself")
 SET(CPACK_COMPONENT_LIBRARIES_GROUP Runtime)
@@ -259,6 +306,11 @@ SET(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Header files")
 SET(CPACK_COMPONENT_HEADERS_DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO")
 SET(CPACK_COMPONENT_HEADERS_GROUP Development)
 SET(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
+SET(CPACK_COMPONENT_EXE_DISPLAY_NAME "MeteoIO's applications")
+SET(CPACK_COMPONENT_EXE_DESCRIPTION "MeteoIO's standalone applications")
+SET(CPACK_COMPONENT_EXE_GROUP Runtime)
+SET(CPACK_COMPONENT_RUNTIME_GROUP "Runtime")
+SET(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "What you need to run an application based on MeteoIO")
 IF(INSTALL_DOC)
 	SET(CPACK_COMPONENT_DOCUMENTATION_DISPLAY_NAME "Documentation")
 	SET(CPACK_COMPONENT_DOCUMENTATION_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
@@ -320,15 +372,28 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
+		
+		#Main links (they can get overwritten later)
+		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
+		SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
 		IF(INSTALL_DOC)
-			SET(CPACK_NSIS_MENU_LINKS
-				"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
-				"${DOC_PATH}/examples" "MeteoIO examples"
-				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
-		ELSEIF(INSTALL_DOC)
-			SET(CPACK_NSIS_MENU_LINKS
-				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
+			LIST(APPEND MENU_LINKS_METEOIO
+			"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
+			"${DOC_PATH}/examples" "MeteoIO examples"
+			)
 		ENDIF(INSTALL_DOC)
+		#SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries' 'c:\\\\Program Files\\\\MeteoIO\\\\bin\\\\meteoio_timeseries.exe'
+		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries\\\\path' 'c:\\\\Program Files\\\\MeteoIO\\\\lib'
+		#	")
+		
+		#all other links: inishell
+		IF(CPACK_BUNDLE_ALL)
+# 			SET(MENU_LINKS_INISHELL "bin/inishell.exe" "MeteoIO's Inishell")
+		ENDIF(CPACK_BUNDLE_ALL)
+		
+		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_METEOIO} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ})
+		
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")

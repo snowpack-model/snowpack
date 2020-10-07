@@ -216,7 +216,7 @@ namespace mio {
 class FilterMaths : public ProcessingBlock {
 	public:
 		FilterMaths(const std::vector< std::pair<std::string, std::string> >& vecArgs,
-		    const std::string& name);
+		    const std::string& name, const Config& cfg);
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		    std::vector<MeteoData>& ovec);
 

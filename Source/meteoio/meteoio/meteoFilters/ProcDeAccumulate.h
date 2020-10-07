@@ -51,7 +51,7 @@ namespace mio {
 
 class ProcDeAccumulate : public ProcessingBlock {
 	public:
-		ProcDeAccumulate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		ProcDeAccumulate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

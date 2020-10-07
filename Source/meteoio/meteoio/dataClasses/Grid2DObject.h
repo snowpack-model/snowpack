@@ -165,15 +165,17 @@ class Grid2DObject {
 		bool isSameGeolocalization(const Grid2DObject& target) const;
 
 		/**
-		* @brief Partitional algorithm to classify each point of the grid.
-		* The classification is given by a list of growing thresholds, the 'clusters' are then a simple
-		* range of values. Each cluster comes with an 'id' that replaces the values of the points.
-		*
-		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a cluster
+		* @brief Partitional algorithm to classify each point of the grid into a 'bin'.
+		* The classification is given by a list of growing thresholds, the 'bins' are then a simple
+		* range of values. Threshold values will be put into the next higher bin.
+		* Each bin comes with an 'id' that replaces the values of the points.
+		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a bin.
 		* @param ids (const std::vector<double>&) clusters Ids to be used. clustersId.size()=thresholds.size()+1
-		* @return true if clusturization was succesfull
+		* The first id will replace all values between 0 and the first threshold, and the last id will replace all
+		* values greater than the last threshold. Hence, you need one more id than threshold values.
+		* @return true if binning was succesful
 		*/
-		bool clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids);
+		void binning(const std::vector<double>& thresholds, const std::vector<double>& ids);
 
 		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 		Grid2DObject& operator=(const double& value); ///<Assignement operator

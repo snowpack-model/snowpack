@@ -66,7 +66,7 @@ namespace mio {
 class ProcTransformWindVector : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
 //class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
-		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg);
+		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -75,9 +75,8 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 #ifdef PROJ4
 		static std::string findUComponent(const MeteoData& md);
 		static std::string findVComponent(const MeteoData& md);
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg);
 #endif
-		const Config &cfg;
 		std::string t_coordparam;
 };
 

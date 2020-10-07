@@ -68,6 +68,8 @@ class PhaseChange {
 		double max_theta_ice;		///< maximum ice content of a layer, above which the presence of liquid water is allowed with sub-freezing temperatures
 
 		static const double theta_s;	///< Saturated Water Content, for now we say  1.0
+
+		bool enable_ice_reservoir;          ///< Ice reservoir
 };
 
 #endif

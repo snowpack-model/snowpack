@@ -84,7 +84,7 @@ namespace mio {
 
 class ProcAdd : public ProcessingBlock {
 	public:
-		ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path);
+		ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

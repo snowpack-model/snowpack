@@ -23,8 +23,8 @@ using namespace std;
 namespace mio {
 
 FilterMinMaxConditional::FilterMinMaxConditional(const std::vector< std::pair<std::string,
-    std::string> >& vecArgs, const std::string& name) :
-    ProcessingBlock(vecArgs, name), min_val(IOUtils::nodata), max_val(IOUtils::nodata), min_soft(0.), max_soft(0.),
+    std::string> >& vecArgs, const std::string& name, const Config& cfg) :
+    ProcessingBlock(vecArgs, name, cfg), min_val(IOUtils::nodata), max_val(IOUtils::nodata), min_soft(0.), max_soft(0.),
     nodata_reset(IOUtils::nodata), is_soft(false), condition_param(""), condition_operator(""), condition_compare(0.),
     ignore_missing_param(false)
 {

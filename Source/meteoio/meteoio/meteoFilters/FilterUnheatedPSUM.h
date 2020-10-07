@@ -46,7 +46,7 @@ namespace mio {
 
 class FilterUnheatedPSUM : public ProcessingBlock {
 	public:
-		FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

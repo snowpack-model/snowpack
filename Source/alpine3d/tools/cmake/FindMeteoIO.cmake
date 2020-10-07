@@ -1,7 +1,7 @@
 INCLUDE(LibFindMacros)
 
 # Where can we find something that looks like a MeteoIO source tree?
-FILE(GLOB mio_local_src LIST_DIRECTORIES TRUE  ../../../[mM]eteo[iI][oO] ../[mM]eteo[iI][oO] ../../../[mM]eteo[iI][oO]-[0-9]* ../[mM]eteo[iI][oO]-[0-9]*)
+FILE(GLOB mio_local_src LIST_DIRECTORIES TRUE  ../[mM]eteo[iI][oO] ../../../[mM]eteo[iI][oO] ../[mM]eteo[iI][oO]-[0-9]* ../../../[mM]eteo[iI][oO]-[0-9]*)
 LIST(LENGTH mio_local_src n)
 IF("${n}" EQUAL "0")
 	SET(SRC_DIR ".")
@@ -16,22 +16,23 @@ IF(WIN32)
 	GET_FILENAME_COMPONENT(METEOIO_ROOT4 "C:/Progra~1/MeteoI*" ABSOLUTE CACHE INTERNAL)
 	SET(SEARCH_PATH
 		ENV LIB
-		./lib
-		./lib/Debug
-		./lib/Release
-		../../lib
-		../../lib/Debug
-		../../lib/Release
-		${SRC_DIR}/lib
-		${SRC_DIR}/lib/Debug
-		${SRC_DIR}/lib/Release
-		${SRC_DIR}/../../lib
-		${SRC_DIR}/../../lib/Debug
-		${SRC_DIR}/../../lib/Release
-		${METEOIO_ROOT1}/lib
-		${METEOIO_ROOT2}/lib
-		${METEOIO_ROOT3}/lib
-		${METEOIO_ROOT4}/lib)
+		./lib ./bin
+		./lib/Debug ./bin/Debug
+		./lib/Release ./bin/Release
+		../../lib ../../bin
+		../../lib/Debug ../../bin/Debug
+		../../lib/Release ../../bin/Release
+		${SRC_DIR}/lib ${SRC_DIR}/bin
+		${SRC_DIR}/lib/Debug ${SRC_DIR}/bin/Debug
+		${SRC_DIR}/lib/Release ${SRC_DIR}/bin/Release
+		${SRC_DIR}/../../lib ${SRC_DIR}/../../bin
+		${SRC_DIR}/../../lib/Debug ${SRC_DIR}/../../bin/Debug
+		${SRC_DIR}/../../lib/Release ${SRC_DIR}/../../bin/Release
+		${SRC_DIR}/bin ${SRC_DIR}/lib
+		${METEOIO_ROOT1}/bin ${METEOIO_ROOT1}/lib
+		${METEOIO_ROOT2}/bin ${METEOIO_ROOT2}/lib
+		${METEOIO_ROOT3}/bin ${METEOIO_ROOT3}/lib
+		${METEOIO_ROOT4}/bin ${METEOIO_ROOT4}/lib)
 	IF(MSVC)
 		FIND_LIBRARY(METEOIO_LIBRARY
 			NAMES libmeteoio.lib
@@ -81,32 +82,34 @@ ELSE(WIN32)
 	ENDIF(APPLE)
 ENDIF(WIN32)
 
-#build METEOIO_ROOT so we can provide a hint for searching for the header file
-IF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
-	GET_FILENAME_COMPONENT(METEOIO_ROOT ${METEOIO_LIBRARY} DIRECTORY) #get PATH
-	GET_FILENAME_COMPONENT(MSVC_TARGET ${METEOIO_ROOT} NAME) #special directory name for some MSVC
-	IF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
+IF(METEOIO_LIBRARY)
+	#build METEOIO_ROOT so we can provide a hint for searching for the header file
+	IF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
+		GET_FILENAME_COMPONENT(METEOIO_ROOT ${METEOIO_LIBRARY} DIRECTORY) #get PATH
+		GET_FILENAME_COMPONENT(MSVC_TARGET ${METEOIO_ROOT} NAME) #special directory name for some MSVC
+		IF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
+			GET_FILENAME_COMPONENT(METEOIO_ROOT ${METEOIO_ROOT} DIRECTORY) #go up one level
+		ENDIF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
 		GET_FILENAME_COMPONENT(METEOIO_ROOT ${METEOIO_ROOT} DIRECTORY) #go up one level
-	ENDIF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
-	GET_FILENAME_COMPONENT(METEOIO_ROOT ${METEOIO_ROOT} DIRECTORY) #go up one level
-ELSE(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
-    GET_FILENAME_COMPONENT(meteoio_libs_root ${METEOIO_LIBRARY} PATH)
-	SET(METEOIO_ROOT "${meteoio_libs_root}/../")
-	STRING(REPLACE  " " "\\ " METEOIO_ROOT ${METEOIO_ROOT})
-ENDIF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
+	ELSE(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
+		GET_FILENAME_COMPONENT(meteoio_libs_root ${METEOIO_LIBRARY} PATH)
+		SET(METEOIO_ROOT "${meteoio_libs_root}/../")
+		STRING(REPLACE  " " "\\ " METEOIO_ROOT ${METEOIO_ROOT})
+	ENDIF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
 
-# locate main header file
-FIND_PATH(METEOIO_INCLUDE_DIR
-  NAMES meteoio/MeteoIO.h
-  HINTS
-	"${METEOIO_ROOT}/include"
-	"${METEOIO_ROOT}"
-	"~/usr/include"
-	"/usr/local/include"
-	"/usr/include"
-	"/opt/include"
-  DOC "Location of the meteoio headers, like /usr/include"
-)
+	# locate main header file
+	FIND_PATH(METEOIO_INCLUDE_DIR
+	NAMES meteoio/MeteoIO.h
+	HINTS
+		"${METEOIO_ROOT}/include"
+		"${METEOIO_ROOT}"
+		"~/usr/include"
+		"/usr/local/include"
+		"/usr/include"
+		"/opt/include"
+	DOC "Location of the meteoio headers, like /usr/include"
+	)
+ENDIF(METEOIO_LIBRARY)
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.

@@ -43,7 +43,7 @@ namespace mio {
 
 class FilterMin : public ProcessingBlock {
 	public:
-		FilterMin(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		FilterMin(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

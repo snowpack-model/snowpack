@@ -29,6 +29,7 @@
 class SnGrids {
 	public:
 		/// \anchor SnGrids this enum provides names for possible Snowpack grids
+		//Make sure you also put the parameters in the same order in SnGrids::initStaticData()!!
 		enum Parameters {firstparam=0,
                                           TA=firstparam, ///< Air temperature
                                           RH, ///< Relative humidity
@@ -65,6 +66,7 @@ class SnGrids {
                                           MS_WIND, ///< Mass loss rate due to wind erosion (kg m-2 h-1)
                                           MS_WATER, ///< The total amount of water in the snowpack at the present time
                                           SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
+                                          MNS, ///< drifted mass (when snowdrift is enabled)
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
                                           ERODEDMASS, ///< wind eroded mass (kg/m2)
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
