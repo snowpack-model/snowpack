@@ -4,8 +4,8 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 PROJECT(snowpack)
 # Version of library
 SET(VERSION_MAJOR 3 CACHE INTERNAL "")
-SET(VERSION_MINOR 4 CACHE INTERNAL "")
-SET(VERSION_PATCH 5 CACHE INTERNAL "")
+SET(VERSION_MINOR 6 CACHE INTERNAL "")
+SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
@@ -29,8 +29,15 @@ SET_COMPILER_OPTIONS()
 IF(UNIX)
 	SET(LIB_DEST "lib")
 	#set a full rpath for both build & install tree
-	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+	SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	# add the directory of the binary to the rpath
+	IF(APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+	ELSE(APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+	ENDIF(APPLE)
+	
 	# add the automatically determined parts of the RPATH
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 	# the RPATH to be used when installing, but only if it's not a system directory
@@ -168,6 +175,8 @@ ENDIF(INSTALL_DOC)
 ###########################################################
 SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
 IF(CPACK_BUNDLE_ALL)
+	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
 	#bundle MeteoIO
 	FIND_PACKAGE(MeteoIO REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
@@ -177,6 +186,8 @@ IF(CPACK_BUNDLE_ALL)
 		ELSE(WIN32)
 			INSTALL(FILES ${meteoio_libs} DESTINATION lib COMPONENT exe)
 		ENDIF(WIN32)
+		FILE(GLOB meteoio_bins "${METEOIO_ROOT}/bin/meteoio_timeserie*")
+		INSTALL(FILES ${meteoio_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
 	ENDIF(BUILD_SHARED_LIBS)
 	IF(INSTALL_DOC)
 		IF(WIN32)
@@ -195,23 +206,17 @@ IF(CPACK_BUNDLE_ALL)
 	ENDIF(INSTALL_DOC)
 
 	#bundle inishell
-	FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/tools/inish*.jar")
-	IF("${inishell}" STREQUAL "")
-		MESSAGE("Inishell not found! Please copy inishell.jar into the tools directory")
-	ENDIF("${inishell}" STREQUAL "")
-	INSTALL(FILES ${inishell} DESTINATION bin COMPONENT exe)
-	
-	#bundle niViz
-	SET(CPACK_BUNDLE_NIVIZ ON CACHE BOOL "Should niViz also be bundled?")
-	IF(CPACK_BUNDLE_NIVIZ)
-		SET(NIVIZ_DIST_PATH "../niviz" CACHE PATH "Path to NIVIZ 'dist' subdirectory")
-		FILE(GLOB niviz_html "${NIVIZ_DIST_PATH}/*.html")
-		IF("${niviz_html}" STREQUAL "")
-			MESSAGE("niViz not found! Please provide a proper path to niViz 'dist' and don't forget to run 'make dist'")
-		ENDIF("${niviz_html}" STREQUAL "")
-		INSTALL(DIRECTORY "${NIVIZ_DIST_PATH}/assets" "${NIVIZ_DIST_PATH}/doc" "${NIVIZ_DIST_PATH}/img" "${NIVIZ_DIST_PATH}/lib" DESTINATION bin/niviz COMPONENT exe)
-		INSTALL(FILES ${niviz_html} DESTINATION bin/niviz COMPONENT exe)
-	ENDIF(CPACK_BUNDLE_NIVIZ)
+# 	IF(NOT APPLE)
+# 		FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/../inishell-ng/build/inishel*")
+# 		IF("${inishell}" STREQUAL "")
+# 				MESSAGE("Inishell not found! Please make sure it is in ${CMAKE_SOURCE_DIR}/../inishell-ng and has been built")
+# 		ENDIF("${inishell}" STREQUAL "")
+# 		FILE(GLOB_RECURSE inishell-dll "${CMAKE_SOURCE_DIR}/../inishell-ng/build/*.${DLL_EXT}")
+# 		FILE(GLOB inishell-xml "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.xml")
+# 		FILE(GLOB inishell-png "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.png")
+# 		INSTALL(FILES ${inishell} ${inishell-dll} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+# 		INSTALL(FILES ${inishell-xml} ${inishell-png} DESTINATION share/inishell-apps PERMISSIONS ${ALL_RO_PERM} COMPONENT resources)
+# 	ENDIF(NOT APPLE)
 ENDIF(CPACK_BUNDLE_ALL)
 
 SET(CPACK_PACKAGE_DESCRIPTION "Snowpack Model")
@@ -236,7 +241,9 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${VERSION}-${
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
 SET(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-SET(CPACK_COMPONENTS_ALL documentation examples exe)
+SET(CPACK_COMPONENTS_ALL documentation examples exe resources)
+SET(CPACK_COMPONENT_RESOURCES_DISPLAY_NAME "Inishell resources")
+SET(CPACK_COMPONENT_RESOURCES_DESCRIPTION "Additional files to use Inishell")
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Snowpack library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The SNOWPACK library")
 SET(CPACK_COMPONENT_EXE_DISPLAY_NAME "Snowpack application")
@@ -311,7 +318,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MODIFY_PATH ON)
 		
 		#Main links (they can get overwritten later)
-		SET(MENU_LINKS_NIVIZ "https://niviz.org" "NIVIZ online visualization" )
+		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
 		SET(MENU_LINKS_SNOWPACK "https://models.slf.ch/p/snowpack/" "SNOWPACK Home page")
 		IF(INSTALL_DOC)
 			LIST(APPEND MENU_LINKS_SNOWPACK
@@ -320,12 +327,9 @@ ELSE(UNIX)
 			)
 		ENDIF(INSTALL_DOC)
 		
-		#all other links: inishell, local niviz, meteoio
+		#all other links: inishell, meteoio
 		IF(CPACK_BUNDLE_ALL)
-			SET(MENU_LINKS_INISHELL "bin/inishell.jar" "SNOWPACK inishell")
-			IF(CPACK_BUNDLE_NIVIZ)
-				SET(MENU_LINKS_NIVIZ "bin/niviz/index.html" "niViz visualization")
-			ENDIF(CPACK_BUNDLE_NIVIZ)
+# 			SET(MENU_LINKS_INISHELL "bin/inishell.exe" "SNOWPACK's Inishell")
 			SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				SET(MENU_LINKS_METEOIO

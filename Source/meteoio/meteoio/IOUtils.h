@@ -292,7 +292,7 @@ namespace IOUtils {
 	template <class T> bool convertString(T& t, std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
 		trim(str); //delete trailing and leading whitespaces and tabs
 		if (str.empty()) {
-			t = static_cast<T> (nodata);
+			t = static_cast<T>(nodata);
 			return true;
 		} else {
 			std::istringstream iss(str);

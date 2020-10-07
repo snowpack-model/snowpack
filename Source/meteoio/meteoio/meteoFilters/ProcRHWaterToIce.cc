@@ -25,8 +25,8 @@ using namespace std;
 
 namespace mio {
 
-ProcRHWaterToIce::ProcRHWaterToIce(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                       : ProcessingBlock(vecArgs, name)
+ProcRHWaterToIce::ProcRHWaterToIce(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                       : ProcessingBlock(vecArgs, name, cfg)
 {
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }

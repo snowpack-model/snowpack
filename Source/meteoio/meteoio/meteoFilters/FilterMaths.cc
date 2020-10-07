@@ -24,8 +24,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMaths::FilterMaths(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) :
-        ProcessingBlock(vecArgs, name), logic_equations(), substitutions(),
+FilterMaths::FilterMaths(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg) :
+        ProcessingBlock(vecArgs, name, cfg), logic_equations(), substitutions(),
         formula(""), formula_else(""), connective("AND"), assign_param(""), skip_nodata(false)
 {
 	parse_args(vecArgs);

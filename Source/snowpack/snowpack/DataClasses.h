@@ -200,6 +200,8 @@ class LayerData {
 		double tl;                  ///< Temperature at the top of the layer in K
 		double phiSoil;             ///< Volumetric soil content in %
 		double phiIce;              ///< Volumetric ice content in %
+		double phiIceReservoir;     ///< Volumetric ice reservoir content in %
+		double phiIceReservoirCumul;///< Volumetric cumulated ice reservoir content in %
 		double phiWater;            ///< Volumetric water content in %
 		double phiWaterPref;        ///< Volumetric preferential water content in %
 		double phiVoids;            ///< Volumetric void content in %
@@ -369,6 +371,9 @@ class ElementData {
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
 		double lwc_source;         ///< Source/sink term for Richards equation (m^3/m^3 / timestep)
 		double PrefFlowArea;       ///< Preferential flow path relative area (-)
+		double theta_w_transfer;   ///< Volumetric content of water transferred from preferential flow to matrix domain (1) 
+		double theta_i_reservoir;  ///< Volumetric ice content in ice reservoir (1)
+		double theta_i_reservoir_cumul;  ///< Volumetric ice content in cumulated ice reservoir (1)
 		double SlopeParFlux;       ///< Slope parallel flux (m^3/m^3 * m / timestep)
 		double Qph_up;             ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the upper node of the element
 		double Qph_down;           ///< Heat source/sink due to phase changes for the heat equation (W/m^3), at the lower node of the element

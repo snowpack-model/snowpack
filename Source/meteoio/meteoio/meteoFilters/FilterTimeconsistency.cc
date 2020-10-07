@@ -22,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-FilterTimeconsistency::FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : WindowedFilter(vecArgs, name)
+FilterTimeconsistency::FilterTimeconsistency(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : WindowedFilter(vecArgs, name, cfg)
 {
 	properties.stage = ProcessingProperties::first;
 }

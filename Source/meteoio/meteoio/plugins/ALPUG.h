@@ -60,7 +60,7 @@ class ALPUG : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string inpath, outpath;
 		double in_dflt_TZ, out_dflt_TZ;
-		unsigned short wrap_month;
+		int wrap_month;
 
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const size_t max_buffered_lines; //how many lines to keep in buffer to check for duplicates?

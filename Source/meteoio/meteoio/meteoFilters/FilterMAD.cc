@@ -24,8 +24,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : WindowedFilter(vecArgs, name), min_sigma(0.)
+FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                  : WindowedFilter(vecArgs, name, cfg), min_sigma(0.)
 {
 	const std::string where( "Filters::"+block_name );
 	//parse the arguments that have not been already parsed by WindowedFilter

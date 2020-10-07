@@ -29,6 +29,7 @@
 #include <snowpack/Meteo.h>
 #include <snowpack/DataClasses.h>
 #include <snowpack/SnowDrift.h>
+#include <snowpack/TechnicalSnow.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/PhaseChange.h>
 
@@ -49,9 +50,10 @@ class Snowpack {
 
 		/**
 		 * @brief Perform snow preparation (grooming, etc) on a given snowpack
+		 * @param currentDate the current date, to determine if grooming should be performed
 		 * @param Xdata snowpack to work on
 		 */
-		static void snowPreparation(SnowStation& Xdata);
+		void snowPreparation(const mio::Date& currentDate, SnowStation& Xdata) const;
 
 		void setUseSoilLayers(const bool& value);
 		const static double new_snow_albedo, min_ice_content;
@@ -126,6 +128,7 @@ class Snowpack {
 
 		const SnowpackConfig& cfg;
 
+		TechSnow techsnow;
 		std::string variant, forcing, viscosity_model, watertransportmodel_snow, watertransportmodel_soil;
 		std::string hn_density, hn_density_parameterization;
 		std::string sw_mode, snow_albedo, albedo_parameterization, albedo_average_schmucki, sw_absorption_scheme;

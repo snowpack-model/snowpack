@@ -22,6 +22,7 @@
 
 #include <snowpack/plugins/SmetIO.h>
 #include <snowpack/plugins/AsciiIO.h>
+#include <stdexcept>
 
 #cmakedefine PLUGIN_IMISIO
 #cmakedefine PLUGIN_CAAMLIO

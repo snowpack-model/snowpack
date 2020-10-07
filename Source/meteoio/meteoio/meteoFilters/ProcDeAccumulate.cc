@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-ProcDeAccumulate::ProcDeAccumulate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-              : ProcessingBlock(vecArgs, name)
+ProcDeAccumulate::ProcDeAccumulate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+              : ProcessingBlock(vecArgs, name, cfg)
 {
 	properties.stage = ProcessingProperties::first;
 }

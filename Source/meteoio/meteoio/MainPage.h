@@ -64,7 +64,7 @@ namespace mio {
  *               -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
  *               -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
  * -# Processing steps documentation
- *    -# \subpage data_sources "Data input and sources"
+ *    -# \subpage data_sources "Data sources, input/output"
  *    -# \subpage raw_data_editing "Raw Data Editing"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage

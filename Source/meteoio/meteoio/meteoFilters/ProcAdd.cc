@@ -26,8 +26,8 @@ using namespace std;
 
 namespace mio {
 
-ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
-        : ProcessingBlock(vecArgs, name), vecCorrections(), root_path(i_root_path), correction(0.), range(0.), type('N'), distribution('N'), period('N')
+ProcAdd::ProcAdd(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg), vecCorrections(), root_path(cfg.getConfigRootDir()), correction(0.), range(0.), type('N'), distribution('N'), period('N')
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

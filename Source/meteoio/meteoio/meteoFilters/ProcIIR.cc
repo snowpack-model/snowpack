@@ -23,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(vecArgs, name), cutoff(0.), g(0.), p(0.), c(0.), type(CRITICALLY_DAMPED), bidirectional(true), low_pass(true)
+ProcIIR::ProcIIR(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                  : ProcessingBlock(vecArgs, name, cfg), cutoff(0.), g(0.), p(0.), c(0.), type(CRITICALLY_DAMPED), bidirectional(true), low_pass(true)
 {
 	parse_args(vecArgs);
 

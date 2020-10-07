@@ -49,6 +49,7 @@ class ProcessingStack {
 		static const std::string filter_key;
 		
 	private:
+		virtual bool applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec);
 		virtual bool filterStation(std::vector<MeteoData> ivec, std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass, const size_t& stat_idx);
 		
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks

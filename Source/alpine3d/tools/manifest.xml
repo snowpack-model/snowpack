@@ -1,60 +1,60 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <manifest>
 	<file>
-		<name>Alpine3D-3.1.0-x86_64.tar.gz</name>
+		<name>Alpine3d-3.2.0-x86_64.tar.gz</name>
 		<summary>Linux binary tarball</summary>
-		<description>Binary package: Alpine3D bundled with MeteoIO, compiled for x86_64 with OpenMP. Compiled on Ubuntu 14.04</description>
-		<replaces>Alpine3D-3.0.0-i386.tar.gz</replaces>
+		<description>Binary package: Alpine3D bundled with MeteoIO, compiled for x86_64 with OpenMP. Compiled on Ubuntu 18.04. It is highly recommended to use &lt;a href="https://models.slf.ch/p/inishell-ng/downloads/"&gt;Inishell&lt;/a&gt; to configure your simulations!</description>
+		<replaces>Alpine3D-3.1.0-x86_64.tar.gz</replaces>
 		<labels>
 			<label>Type:Archive</label>
 			<label>OpSys:Linux</label>
 		</labels>
 	</file>
 	<file>
-		<name>Alpine3D-3.1.0-x86_64.deb</name>
+		<name>Alpine3d-3.2.0-x86_64.deb</name>
 		<summary>Linux DEB binary package</summary>
-		<description>Binary package: Alpine3D bundled with MeteoIO, compiled for x86_64 with OpenMP. Compiled on Ubuntu 14.04</description>
-		<replaces>Alpine3D-3.0.0-i386.deb</replaces>
+		<description>Binary package: Alpine3D bundled with MeteoIO, compiled for x86_64 with OpenMP. Compiled on Ubuntu 18.04. It is highly recommended to use &lt;a href="https://models.slf.ch/p/inishell-ng/downloads/"&gt;Inishell&lt;/a&gt; to configure your simulations!</description>
+		<replaces>Alpine3D-3.1.0-x86_64.deb</replaces>
 		<labels>
 			<label>Type:Package</label>
 			<label>OpSys:Linux</label>
 		</labels>
 	</file>
 	<file>
-		<name>Alpine3D-3.1.0-x86_64.rpm</name>
+		<name>Alpine3d-3.2.0-x86_64.rpm</name>
 		<summary>Linux RPM binary package</summary>
-		<description>Binary package: Alpine3D bundled with MeteoIO, compiled for x86_64 with OpenMP. Compiled on Ubuntu 14.04</description>
-		<replaces>Alpine3D-3.0.0-i386.rpm</replaces>
+		<description>Binary package: Alpine3D bundled with MeteoIO, compiled for x86_64 with OpenMP. Compiled on Ubuntu 18.04. It is highly recommended to use &lt;a href="https://models.slf.ch/p/inishell-ng/downloads/"&gt;Inishell&lt;/a&gt; to configure your simulations!</description>
+		<replaces>Alpine3D-3.1.0-x86_64.rpm</replaces>
 		<labels>
 			<label>Type:Package</label>
 			<label>OpSys:Linux</label>
 		</labels>
 	</file>
 	<file>
-		<name>Alpine3D-3.1.0-x86_64.dmg</name>
+		<name>Alpine3d-3.2.0-x86_64.dmg</name>
 		<summary>OsX Installer</summary>
-		<description>OsX binary package: Alpine3D bundled with MeteoIO, compiled with XCode on Intel.</description>
-		<replaces>Alpine3D-3.0.0-i386.dmg</replaces>
+		<description>OsX binary package: Alpine3D bundled with MeteoIO, compiled with XCode on Intel. It is highly recommended to use &lt;a href="https://models.slf.ch/p/inishell-ng/downloads/"&gt;Inishell&lt;/a&gt; to configure your simulations!</description>
+		<replaces>Alpine3D-3.1.0-x86_64.dmg</replaces>
 		<labels>
 			<label>Type:Installer</label>
 			<label>OpSys:OSX</label>
 		</labels>
 	</file>
 	<file>
-		<name>Alpine3D-3.1.0-x86_64.exe</name>
+		<name>Alpine3d-3.2.0-x86_64.exe</name>
 		<summary>Windows Installer</summary>
-		<description>Windows installer: Alpine3D bundled with MeteoIO, compiled for x86_64 with gcc4.9</description>
-		<replaces>Alpine3D-3.0.0-i386-gcc4.7.exe</replaces>
+		<description>Windows installer: Alpine3D bundled with MeteoIO, compiled for x86_64 with gcc8.1. It is highly recommended to use &lt;a href="https://models.slf.ch/p/inishell-ng/downloads/"&gt;Inishell&lt;/a&gt; to configure your simulations!</description>
+		<replaces>Alpine3D-3.1.0-x86_64-gcc4.7.exe</replaces>
 		<labels>
 			<label>Type:Installer</label>
 			<label>OpSys:Windows</label>
 		</labels>
 	</file>
 	<file>
-		<name>Alpine3D-3.1.0-doc.tar.gz</name>
+		<name>Alpine3d-3.2.0-doc.tar.gz</name>
 		<summary>Documentation only package</summary>
 		<description>Documentation only package</description>
-		<replaces>Alpine3D-3.0.0-doc.tgz</replaces>
+		<replaces>Alpine3D-3.1.0-doc.tgz</replaces>
 		<labels>
 			<label>Type:Docs</label>
 			<label>Other:Featured</label>
@@ -62,11 +62,10 @@
 		</labels>
 	</file>
 	<file>
-		<name>Alpine3D-3.1.0-src.tar.gz</name>
+		<name>Alpine3d-3.2.0-src.tar.gz</name>
 		<summary>Source package</summary>
-		<description>Please have a look at <a href="http://models.slf.ch/p/alpine3d/page/Getting-started/">Getting-started</a> for instructions. <b>Please use cmake for building Alpine3D!</b>
-        </description>
-		<replaces>Alpine3D-3.0.0.tar.gz</replaces>
+		<description>Please have a look at &lt;a href="http://models.slf.ch/p/alpine3d/page/Getting-started/"&gt;Getting-started&lt;/a&gt; for instructions. It is highly recommended to use &lt;a href="https://models.slf.ch/p/inishell-ng/downloads/"&gt;Inishell&lt;/a&gt; to configure your simulations!</description>
+		<replaces>Alpine3D-3.1.0.tar.gz</replaces>
 		<labels>
 			<label>Type:Source</label>
 			<label>OpSys:All</label>

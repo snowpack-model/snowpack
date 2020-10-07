@@ -50,11 +50,11 @@ class SnowpackInterfaceWorker;
  * 
  * For each snow production priority, the following keys are defined (unlimited number of priorities 
  * but please, no gaps in the numbering!):
- *  - PRIO#::start_prod: snow production starting date
- *  - PRIO#::end_prod: date of the end of snow production
- *  - PRIO#::start_aim: Snow production aim in snow height [m] until ski resort opening (factor x snow_prod_min)
- *  - PRIO#::end_aim: Snow production aim in snow height [m] until ski resort ending (factor x snow_prod_min)
- *  - PRIO#::gun_operation: Percentage of snow gun operation [%]
+ *  - PRIO\#\::start_prod: snow production starting date
+ *  - PRIO\#\::end_prod: date of the end of snow production
+ *  - PRIO\#\::start_aim: Snow production aim in snow height [m] until ski resort opening (factor x snow_prod_min)
+ *  - PRIO\#\::end_aim: Snow production aim in snow height [m] until ski resort ending (factor x snow_prod_min)
+ *  - PRIO\#\::gun_operation: Percentage of snow gun operation [%]
  *
  * The *slope conditions* file is a CSV file (the '#' or ';' characters are used to comment a line or part of it) that
  * contains the following: the slope number, the slope area, the number of snow guns, its priority, the minimum snow

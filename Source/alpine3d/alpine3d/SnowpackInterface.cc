@@ -746,6 +746,8 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 			return psum_ph;
 		case SnGrids::PSUM_TECH:
 			return psum_tech;
+		case SnGrids::MNS:
+			return mns;
 		case SnGrids::ISWR:
 			return shortwave;
 		case SnGrids::ILWR:

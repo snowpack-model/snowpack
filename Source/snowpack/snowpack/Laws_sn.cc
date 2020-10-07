@@ -691,8 +691,9 @@ double SnLaws::compWindGradientSnow(const ElementData& Edata, double& v_pump)
  * Kersten in <i>"Geotechnical Engeneering for Cold Regions"</i> article by Harlan and Nixon,
  * the water influence deduced from deVries and Afgan in <i>"Heat and Mass Transfer in the Biosphere"</i>.
  * @version 11.03: thermal conductivity made temperature dependent.
- * @param Edata
- * @param dvdz Wind velocity gradient (s-1)
+ * @param[in] Edata
+ * @param[in] dvdz Wind velocity gradient (s-1)
+ * @param[in] soil_thermal_conductivity Thermal conductivity model to use (either "FITTED" or any other string)
  * @return Soil thermal conductivity (W K-1 m-1)
  */
 double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const double& dvdz)

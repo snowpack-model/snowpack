@@ -26,7 +26,8 @@ namespace mio {
 
 const double FilterStdDev::sigma = 2.; ///<How many times the stddev allowed for valid points
 
-FilterStdDev::FilterStdDev(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
+FilterStdDev::FilterStdDev(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg) 
+             : WindowedFilter(vecArgs, name, cfg)
 {
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;

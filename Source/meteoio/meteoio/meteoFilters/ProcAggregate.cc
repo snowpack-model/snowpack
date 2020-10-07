@@ -23,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-              : WindowedFilter(vecArgs, name, true), type(mean_agg)
+ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+              : WindowedFilter(vecArgs, name, cfg, true), type(mean_agg)
 {
 	parse_args(vecArgs);
 

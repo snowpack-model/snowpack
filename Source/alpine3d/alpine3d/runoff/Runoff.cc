@@ -141,9 +141,10 @@ void Runoff::setSnowPack(SnowpackInterface &sn_interface) {
 
 /**
  * @brief Writes the results for a specific day
- * @param i_date the date at which the results should be written
- * @param psum grid of precipitation in mm/h
- * @param ta grid of air temperature
+ * @param[in] i_date the date at which the results should be written
+ * @param[in] psum grid of precipitation in mm/h
+ * @param[in] ta grid of air temperature
+ * @param io_in External IOManager that can be used to write all outputs into the same file (if GRID2DFILE=RUNOFF_GRID2DFILE)
  */
 void Runoff::output(const mio::Date& i_date, const mio::Grid2DObject& psum,
 	const mio::Grid2DObject& ta, mio::IOManager& io_in)
@@ -318,8 +319,7 @@ mio::Grid2DObject Runoff::computePrecipRunoff(const mio::Grid2DObject& psum, con
 	     (psum.getNy()            != slope_correction.getNy()) ||
 	     (ta.getNy()              != slope_correction.getNy()) ||
 	     (surfRunoff.getNy()      != slope_correction.getNy()) )
-		throw mio::InvalidArgumentException("DEM and input grids have incompatible "
-				"dimensions!", AT);
+		throw mio::InvalidArgumentException("DEM and input grids have incompatible dimensions!", AT);
 
 	mio::Grid2DObject precipRunoff(total_runoff, mio::IOUtils::nodata);
 	for (size_t iCell = 0; iCell < n_grid_cells; ++iCell) {
@@ -663,9 +663,9 @@ void Runoff::cropMask(mio::Grid2DObject& mask)
 		for (size_t ix = 0; ix < mask.getNx(); ++ix) {
 			if (mask(ix,iy) != mio::IOUtils::nodata) {
 				if (ix < min_ix) min_ix = ix;
-				if (ix > max_ix)	max_ix = ix;
+				if (ix > max_ix) max_ix = ix;
 				if (iy < min_iy) min_iy = iy;
-				if (iy > max_iy)	max_iy = iy;
+				if (iy > max_iy) max_iy = iy;
 			}
 		}
 	}
@@ -687,7 +687,7 @@ double Runoff::sumOverMask(const mio::Grid2DObject& grid, const mio::Grid2DObjec
 	mio::Grid2DObject subgrid;
 	try {
 		mio::Grid2DObject tmp(grid, llCorner.getGridI(), llCorner.getGridJ(),
-				mask.getNx(), mask.getNy());
+		                      mask.getNx(), mask.getNy());
 		subgrid = tmp;
 	} catch (...) {
 		throw mio::InvalidFormatException("Catchment mask extends beyond the DEM boundaries", AT);

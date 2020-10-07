@@ -78,6 +78,9 @@ namespace mio {
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
  * 
+ * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** options followed by a comma delimited list of
+ * date intervals (represented by two ISO formatted dates seperated by ' - ').
+ * 
  * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
  *
  * @section processing_section Filtering section
@@ -106,6 +109,12 @@ namespace mio {
  * PSUM::filter3    = undercatch_wmo
  * PSUM::arg3::type = Hellmannsh
  * PSUM::arg3::exclude = DAV3 WFJ2
+ * 
+ * #Correct a wrongly mounted wind sensor for two time periods
+ * DW::filter1   = add
+ * DW::arg1::type = Cst
+ * DW::arg1::cst = 45
+ * DW::arg1::when = 2020-07-01 - 2020-07-10, 2020-07-20T12:00 - 2020-08-01
  * @endcode
  *
  * @section processing_available Available processing elements
@@ -163,77 +172,77 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 
 	//normal filters
 	if (blockname == "MIN"){
-		return new FilterMin(vecArgs, blockname);
+		return new FilterMin(vecArgs, blockname, cfg);
 	} else if (blockname == "MAX"){
-		return new FilterMax(vecArgs, blockname);
+		return new FilterMax(vecArgs, blockname, cfg);
 	} else if (blockname == "MIN_MAX"){
-		return new FilterMinMax(vecArgs, blockname);
+		return new FilterMinMax(vecArgs, blockname, cfg);
 	} else if (blockname == "MIN_MAX_CONDITIONAL"){
-		return new FilterMinMaxConditional(vecArgs, blockname);
+		return new FilterMinMaxConditional(vecArgs, blockname, cfg);
 	} else if (blockname == "RATE"){
-		return new FilterRate(vecArgs, blockname);
+		return new FilterRate(vecArgs, blockname, cfg);
 	} else if (blockname == "STD_DEV"){
-		return new FilterStdDev(vecArgs, blockname);
+		return new FilterStdDev(vecArgs, blockname, cfg);
 	} else if (blockname == "MAD"){
-		return new FilterMAD(vecArgs, blockname);
+		return new FilterMAD(vecArgs, blockname, cfg);
 	} else if (blockname == "TUKEY"){
-		return new FilterTukey(vecArgs, blockname);
+		return new FilterTukey(vecArgs, blockname, cfg);
 	} else if (blockname == "UNHEATED_RAINGAUGE"){
-		return new FilterUnheatedPSUM(vecArgs, blockname);
+		return new FilterUnheatedPSUM(vecArgs, blockname, cfg);
 	} else if (blockname == "NO_CHANGE"){
-		return new FilterNoChange(vecArgs, blockname);
+		return new FilterNoChange(vecArgs, blockname, cfg);
 	} else if (blockname == "TIME_CONSISTENCY"){
-		return new FilterTimeconsistency(vecArgs, blockname);
+		return new FilterTimeconsistency(vecArgs, blockname, cfg);
 	} else if (blockname == "DETECT_GRASS"){
-		return new FilterDeGrass(vecArgs, blockname);
+		return new FilterDeGrass(vecArgs, blockname, cfg);
 	} else if (blockname == "POTENTIALSW"){
-		return new FilterPotentialSW(vecArgs, blockname);
+		return new FilterPotentialSW(vecArgs, blockname, cfg);
 	} else if (blockname == "DESPIKING"){
-		return new FilterDespikingPS(vecArgs, blockname);
+		return new FilterDespikingPS(vecArgs, blockname, cfg);
 	} else if (blockname == "PARTICLE"){
-		return new FilterParticle(vecArgs, blockname);
+		return new FilterParticle(vecArgs, blockname, cfg);
 	} else if (blockname == "KALMAN"){
-		return new FilterKalman(vecArgs, blockname);
+		return new FilterKalman(vecArgs, blockname, cfg);
 	} else if (blockname == "MATHS"){
-		return new FilterMaths(vecArgs, blockname);
+		return new FilterMaths(vecArgs, blockname, cfg);
 	}
 
 	//general data transformations
 	else if (blockname == "SUPPR"){
-		return new FilterSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+		return new FilterSuppr(vecArgs, blockname, cfg);
 	} else if (blockname == "ADD"){
-		return new ProcAdd(vecArgs, blockname, cfg.getConfigRootDir());
+		return new ProcAdd(vecArgs, blockname, cfg);
 	} else if (blockname == "MULT"){
-		return new ProcMult(vecArgs, blockname, cfg.getConfigRootDir());
+		return new ProcMult(vecArgs, blockname, cfg);
 	} else if (blockname == "QM"){
-		return new ProcQuantileMapping(vecArgs, blockname, cfg.getConfigRootDir());
+		return new ProcQuantileMapping(vecArgs, blockname, cfg);
 	} 
 
 	//more specific data transformations
 	else if (blockname == "EXP_SMOOTHING"){
-		return new ProcExpSmoothing(vecArgs, blockname);
+		return new ProcExpSmoothing(vecArgs, blockname, cfg);
 	} else if (blockname == "WMA_SMOOTHING"){
-		return new ProcWMASmoothing(vecArgs, blockname);
+		return new ProcWMASmoothing(vecArgs, blockname, cfg);
 	} else if (blockname == "IIR"){
-		return new ProcIIR(vecArgs, blockname);
+		return new ProcIIR(vecArgs, blockname, cfg);
 	} else if (blockname == "AGGREGATE"){
-		return new ProcAggregate(vecArgs, blockname);
+		return new ProcAggregate(vecArgs, blockname, cfg);
 	} else if (blockname == "DEACCUMULATE"){
-		return new ProcDeAccumulate(vecArgs, blockname);
+		return new ProcDeAccumulate(vecArgs, blockname, cfg);
 	} else if (blockname == "UNDERCATCH_WMO"){
-		return new ProcUndercatch_WMO(vecArgs, blockname);
+		return new ProcUndercatch_WMO(vecArgs, blockname, cfg);
 	} else if (blockname == "UNDERCATCH_FORLAND"){
-		return new ProcUndercatch_Forland(vecArgs, blockname);
+		return new ProcUndercatch_Forland(vecArgs, blockname, cfg);
 	} else if (blockname == "UNDERCATCH_HAMON"){
-		return new ProcUndercatch_Hamon(vecArgs, blockname);
+		return new ProcUndercatch_Hamon(vecArgs, blockname, cfg);
 	} else if (blockname == "UNVENTILATED_T"){
-		return new ProcUnventilatedT(vecArgs, blockname);
+		return new ProcUnventilatedT(vecArgs, blockname, cfg);
 	} else if (blockname == "PSUM_DISTRIBUTE"){
-		return new ProcPSUMDistribute(vecArgs, blockname);
+		return new ProcPSUMDistribute(vecArgs, blockname, cfg);
 	} else if (blockname == "SHADE"){
 		return new ProcShade(vecArgs, blockname, cfg);
 	} else if (blockname == "RHWATERTOICE"){
-		return new ProcRHWaterToIce(vecArgs, blockname);
+		return new ProcRHWaterToIce(vecArgs, blockname, cfg);
 	} else if (blockname == "TRANSFORMWINDVECTOR"){
 		return new ProcTransformWindVector(vecArgs, blockname, cfg);
 	} else {
@@ -244,13 +253,13 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
 	if (blockname == "SUPPR"){
-		return new TimeSuppr(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+		return new TimeSuppr(vecArgs, blockname, cfg);
 	} else if (blockname == "UNDST"){
-		return new TimeUnDST(vecArgs, blockname, cfg.getConfigRootDir(), cfg.get("TIME_ZONE", "Input"));
+		return new TimeUnDST(vecArgs, blockname, cfg);
 	} else if (blockname == "SORT"){
-		return new TimeSort(vecArgs, blockname);
+		return new TimeSort(vecArgs, blockname, cfg);
 	} else if (blockname == "TIMELOOP"){
-		return new TimeLoop(vecArgs, blockname, cfg.get("TIME_ZONE", "Input"));
+		return new TimeLoop(vecArgs, blockname, cfg);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
 	}
@@ -260,8 +269,9 @@ const double ProcessingBlock::soil_albedo = .23; //grass
 const double ProcessingBlock::snow_albedo = .85; //snow
 const double ProcessingBlock::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                            : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), properties(), block_name(name) {}
+ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                            : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), 
+                              time_restrictions( initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), properties(), block_name(name) {}
 
 std::set<std::string> ProcessingBlock::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
 {
@@ -277,6 +287,49 @@ std::set<std::string> ProcessingBlock::initStationSet(const std::vector< std::pa
 	}
 
 	return results;
+}
+
+std::vector<ProcessingBlock::dates_range> ProcessingBlock::initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ)
+{
+	std::vector<dates_range> dates_specs;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first==keyword) {
+			std::vector<std::string> vecString;
+			const size_t nrElems = IOUtils::readLineToVec(vecArgs[ii].second, vecString, ',');
+			
+			for (size_t jj=0; jj<nrElems; jj++) {
+				const size_t delim_pos = vecString[jj].find(" - ");
+				if (delim_pos==std::string::npos)
+					throw InvalidFormatException("Invalid time restriction syntax for " + where + ": the two dates must be separated by ' - '", AT);
+				
+				Date d1, d2;
+				if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
+					throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+				if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
+					throw InvalidFormatException("Could not process date "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+				dates_specs.push_back( dates_range(d1, d2) );
+			}
+		}
+	}
+	
+	if (dates_specs.empty()) return dates_specs;
+	
+	//now sort the vector and merge overlapping ranges
+	std::sort(dates_specs.begin(), dates_specs.end()); //in case of identical start dates, the oldest end date comes first
+	for (size_t ii=0; ii<(dates_specs.size()-1); ii++) {
+		if (dates_specs[ii]==dates_specs[ii+1]) {
+			//remove identical ranges
+			dates_specs.erase(dates_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
+			ii--; //we must redo the current element
+		} else if (dates_specs[ii].start==dates_specs[ii+1].start || dates_specs[ii].end >= dates_specs[ii+1].start) {
+			//remove overlapping ranges
+			dates_specs[ii].end = dates_specs[ii+1].end;
+			dates_specs.erase(dates_specs.begin()+ii+1);
+			ii--; //we must redo the current element
+		}
+	}
+
+	return dates_specs;
 }
 
 bool ProcessingBlock::skipStation(const std::string& station_id) const

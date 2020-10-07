@@ -23,7 +23,8 @@ using namespace std;
 
 namespace mio {
 
-ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
+ProcWMASmoothing::ProcWMASmoothing(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg) 
+                 : WindowedFilter(vecArgs, name, cfg)
 {
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;

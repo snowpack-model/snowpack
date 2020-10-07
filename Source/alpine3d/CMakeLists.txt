@@ -4,7 +4,7 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 PROJECT(alpine3d)
 # Version of library
 SET(VERSION_MAJOR 3 CACHE INTERNAL "")
-SET(VERSION_MINOR 1 CACHE INTERNAL "")
+SET(VERSION_MINOR 2 CACHE INTERNAL "")
 SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
@@ -29,12 +29,17 @@ SET_COMPILER_OPTIONS()
 IF(UNIX)
 	SET(LIB_DEST "lib")
 	#set a full rpath for both build & install tree
-        SET(CMAKE_SKIP_BUILD_RPATH FALSE)
-        SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-        # add the directory of the binary to the rpath
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
-        # add the automatically determined parts of the RPATH
-        SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+	SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	# add the directory of the binary to the rpath
+	IF(APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+	ELSE(APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+	ENDIF(APPLE)
+	
+	# add the automatically determined parts of the RPATH
+	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 	# the RPATH to be used when installing, but only if it's not a system directory
 	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 	IF("${isSystemDir}" STREQUAL "-1")
@@ -89,7 +94,7 @@ ENDIF(OPENMP)
 
 ###########################################################
 #finally, SET compile flags
-SET(CMAKE_CXX_FLAGS "${PETSC_FLAGS} ${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${ARCH} ${CFLAGS} ${EXTRA}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS "${PETSC_FLAGS} ${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
@@ -183,6 +188,23 @@ ENDIF(INSTALL_DOC)
 ###########################################################
 SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
 IF(CPACK_BUNDLE_ALL)
+	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
+	
+	#standard libraries must be installed for gcc on Windows
+	IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+		SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
+		IF(CPACK_BUNDLE_STDLIBS)
+			FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
+			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
+			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
+			IF("${stdlibs}" STREQUAL "")
+ 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+			ENDIF("${stdlibs}" STREQUAL "")
+			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		ENDIF(CPACK_BUNDLE_STDLIBS)
+	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+	
 	#bundle MeteoIO
 	FIND_PACKAGE(MeteoIO REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
@@ -192,8 +214,10 @@ IF(CPACK_BUNDLE_ALL)
 		ELSE(WIN32)
 			INSTALL(FILES ${meteoio_libs} DESTINATION lib COMPONENT exe)
 		ENDIF(WIN32)
+		FILE(GLOB meteoio_bins "${METEOIO_ROOT}/bin/meteoio_timeserie*")
+		INSTALL(FILES ${meteoio_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
 	ENDIF(BUILD_SHARED_LIBS)
-	#bundle Snwpack
+	#bundle Snowpack
 	FIND_PACKAGE(Libsnowpack REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
 		FILE(GLOB snowpack_libs "${LIBSNOWPACK_ROOT}/${LIB_DEST}/libsnowpack*.${DLL_EXT}")
@@ -202,6 +226,8 @@ IF(CPACK_BUNDLE_ALL)
 		ELSE(WIN32)
 			INSTALL(FILES ${snowpack_libs} DESTINATION lib COMPONENT exe)
 		ENDIF(WIN32)
+		FILE(GLOB snowpack_bins "${LIBSNOWPACK_ROOT}/bin/snowpac*")
+		INSTALL(FILES ${snowpack_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
 	ENDIF(BUILD_SHARED_LIBS)
 	IF(INSTALL_DOC)
 		#meteoio's documentation
@@ -235,11 +261,17 @@ IF(CPACK_BUNDLE_ALL)
 	ENDIF(INSTALL_DOC)
 
 	#bundle inishell
-	FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/tools/inish*.jar")
-	IF("${inishell}" STREQUAL "")
-		MESSAGE("Inishell not found! Please copy inishell.jar into the tools directory")
-	ENDIF("${inishell}" STREQUAL "")
-	INSTALL(FILES ${inishell} DESTINATION bin COMPONENT exe)
+# 	IF(NOT APPLE)
+# 		FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/../inishell-ng/build/inishel*")
+# 		IF("${inishell}" STREQUAL "")
+# 				MESSAGE("Inishell not found! Please make sure it is in ${CMAKE_SOURCE_DIR}/../inishell-ng and has been built")
+# 		ENDIF("${inishell}" STREQUAL "")
+# 		FILE(GLOB_RECURSE inishell-dll "${CMAKE_SOURCE_DIR}/../inishell-ng/build/*.${DLL_EXT}")
+# 		FILE(GLOB inishell-xml "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.xml")
+# 		FILE(GLOB inishell-png "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.png")
+# 		INSTALL(FILES ${inishell} ${inishell-dll} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+# 		INSTALL(FILES ${inishell-xml} ${inishell-png} DESTINATION share/inishell-apps PERMISSIONS ${ALL_RO_PERM} COMPONENT resources)
+# 	ENDIF(NOT APPLE)
 	
 	#bundle the grid viewer
 	FILE(GLOB grid_view "${CMAKE_SOURCE_DIR}/tools/Interface/view.*")
@@ -247,25 +279,13 @@ IF(CPACK_BUNDLE_ALL)
 		MESSAGE("View not found! Please copy view.jar into the tools directory")
 	ENDIF("${grid_view}" STREQUAL "")
 	INSTALL(FILES ${grid_view} DESTINATION bin COMPONENT exe)
-
-	#bundle niViz
-	SET(CPACK_BUNDLE_NIVIZ ON CACHE BOOL "Should niViz also be bundled?")
-	IF(CPACK_BUNDLE_NIVIZ)
-		SET(NIVIZ_DIST_PATH "../niViz" CACHE PATH "Path to niViz 'dist' subdirectory")
-		FILE(GLOB niviz_html "${NIVIZ_DIST_PATH}/*.html")
-		IF("${niviz_html}" STREQUAL "")
-			MESSAGE("niViz not found! Please provide a proper path to niViz 'dist' and don't forget to run 'make dist'")
-		ENDIF("${niviz_html}" STREQUAL "")
-		INSTALL(DIRECTORY "${NIVIZ_DIST_PATH}/assets" DESTINATION bin/niviz COMPONENT exe)
-		INSTALL(FILES ${niviz_html} DESTINATION bin/niviz COMPONENT exe)
-	ENDIF(CPACK_BUNDLE_NIVIZ)
 ENDIF(CPACK_BUNDLE_ALL)
 
-SET(CPACK_PACKAGE_DESCRIPTION "Alpine3D")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is the Alpine3D model distributed physical modeling of snow pack.")
+SET(CPACK_PACKAGE_DESCRIPTION "Alpine3d Model")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is the Alpine3D distributed alpine surface processes model.")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
-SET(CPACK_PACKAGE_NAME "Alpine3D")
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Alpine3D")
+SET(CPACK_PACKAGE_NAME "Alpine3d")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Alpine3d")
 SET(CPACK_PACKAGE_CONTACT "Mathias Bavay <Mathias.Bavay@wsl.ch>")
 SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
 SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/alpine3d/icons\\\\icon.ico")
@@ -359,31 +379,35 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MODIFY_PATH ON)
 
 		#Main links (they can get overwritten later)
-		SET(MENU_LINKS_NIVIZ "http://niviz.org" "niViz online visualization" )
+		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "niViz online visualization" )
 		SET(MENU_LINKS_ALPINE3D "https://models.slf.ch/p/alpine3d/" "Alpine3D Home page")
 		IF(INSTALL_DOC)
-			LIST(APPEND MENU_LINKS_ALPINE3D
+			SET(MENU_LINKS_ALPINE3D
 			"${DOC_PATH}/Alpine3D_doc.html" "Alpine3D documentation"
 			"${DOC_PATH}/examples" "Alpine3D examples"
+			"https://models.slf.ch/p/alpine3d/" "Alpine3D Home page"
 			)
 		ENDIF(INSTALL_DOC)
 
-		#all other links: inishell, local niviz, meteoio
+		#all other links: inishell, Snowpack, meteoio
 		IF(CPACK_BUNDLE_ALL)
-			SET(MENU_LINKS_INISHELL "bin/inishell.jar" "Inishell")
-			IF(CPACK_BUNDLE_NIVIZ)
-				SET(MENU_LINKS_NIVIZ "bin/niviz/index.html" "NIVIZ visualization")
-			ENDIF(CPACK_BUNDLE_NIVIZ)
+			#SET(MENU_LINKS_INISHELL "bin/inishell.exe" "Alpine3D's Inishell")
+			SET(MENU_LINKS_SNOWPACK "https://models.slf.ch/p/snowpack/" "SNOWPACK Home page")
 			SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				SET(MENU_LINKS_METEOIO
 				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
 				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page"
 				)
+				SET(MENU_LINKS_SNOWPACK
+				"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
+				"${DOC_PATH}/examples" "SNOWPACK examples"
+				"https://models.slf.ch/p/snowpack/" "SNOWPACK Home page"
+				)
 			ENDIF(INSTALL_DOC)
 		ENDIF(CPACK_BUNDLE_ALL)
 
-		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_ALPINE3D} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ} ${MENU_LINKS_METEOIO})
+		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_ALPINE3D} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ} ${MENU_LINKS_SNOWPACK} ${MENU_LINKS_METEOIO})
 
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")

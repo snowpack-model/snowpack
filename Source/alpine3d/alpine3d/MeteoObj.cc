@@ -65,6 +65,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("MS_WIND");
 	paramname.push_back("MS_WATER");
 	paramname.push_back("SFC_SUBL");
+	paramname.push_back("MNS");
 	paramname.push_back("STORE");
 	paramname.push_back("ERODEDMASS");
 	paramname.push_back("WINDEROSIONDEPOSITION");

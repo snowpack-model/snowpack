@@ -21,8 +21,8 @@
 
 namespace mio {
 
-FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-        : ProcessingBlock(vecArgs, name),
+FilterKalman::FilterKalman(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg),
 		  mat_in_xx(""), mat_in_AA(""), mat_in_HH(""), mat_in_PP("1"), mat_in_QQ("0"), mat_in_RR(""), mat_in_BB("0"), mat_in_uu("0"),
           meas_params(), error_params(), QQ_params(), RR_params(),
           filter_all_params(false), out_error_stddev(false), be_verbose(true), unrecognized_keys("")

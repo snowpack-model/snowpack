@@ -77,7 +77,7 @@ ReSolver1d::ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part)
            : surfacefluxrate(0.), soilsurfacesourceflux(0.), variant(),
              iwatertransportmodel_snow(BUCKET), iwatertransportmodel_soil(BUCKET),
              watertransportmodel_snow("BUCKET"), watertransportmodel_soil("BUCKET"), BottomBC(FREEDRAINAGE), K_AverageType(ARITHMETICMEAN),
-             enable_pref_flow(false), pref_flow_param_th(0.), pref_flow_param_N(0.), pref_flow_param_heterogeneity_factor(1.),
+             enable_pref_flow(false), pref_flow_param_th(0.), pref_flow_param_N(0.), pref_flow_param_heterogeneity_factor(1.), enable_ice_reservoir(false),
              sn_dt(IOUtils::nodata), allow_surface_ponding(false), lateral_flow(false), matrix(false), SalinityTransportSolver(SalinityTransport::IMPLICIT),
              dz(), z(), dz_up(), dz_down(), dz_()
 {
@@ -134,6 +134,9 @@ ReSolver1d::ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part)
 	cfg.getValue("PREF_FLOW_PARAM_TH", "SnowpackAdvanced", pref_flow_param_th);
 	cfg.getValue("PREF_FLOW_PARAM_N", "SnowpackAdvanced", pref_flow_param_N);
 	cfg.getValue("PREF_FLOW_PARAM_HETEROGENEITY_FACTOR", "SnowpackAdvanced", pref_flow_param_heterogeneity_factor);
+
+	// Check for ice reservoir
+	cfg.getValue("ICE_RESERVOIR", "SnowpackAdvanced", enable_ice_reservoir);
 
 	//Set averaging method for hydraulic conductivity at the layer interfaces
 	std::string tmp_avg_method_K;
@@ -2440,6 +2443,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					}
 				} else {
 					// Now from preferential to matrix flow
+					// Reinitialize the PF->matrix transfer variable
+					EMS[i].theta_w_transfer = 0.;
 					if(i==Xdata.SoilNode) {
 						//For the snow layer just above the soil, we equalize the saturation in the matrix and preferential flow domain
 						//This leads to more realistic snowpack runoff behavior, as with the approach for the other snow layers, spiky behavior arises from whether or not pref_threshold is exceeded
@@ -2449,6 +2454,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						//const double dtheta_w2 = std::min(EMS[i].theta[WATER_PREF], std::max(0., EMS[i].theta[WATER_PREF] + ( (EMS[i].VG.theta_r - tmp_theta_water_tot) * (1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water)*(EMS[i].PrefFlowArea) ) / ((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water) - EMS[i].VG.theta_r)));
 						EMS[i].theta[WATER_PREF] -= dtheta_w2;
 						EMS[i].theta[WATER] += dtheta_w2;
+						// Increment the PF->matrix transfer variable
+						EMS[i].theta_w_transfer += dtheta_w2;
 					} else {
 						// For other snow layers than the lowest snow layer above the soil
 						if(EMS[i].theta[WATER_PREF]/((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water)*(EMS[i].PrefFlowArea)) > pref_flow_param_th) {
@@ -2467,6 +2474,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 							EMS[i].theta[WATER]+=dtheta_w1;
 							EMS[i].theta[WATER_PREF]-=dtheta_w1;
+							// Increment the PF->matrix transfer variable
+							EMS[i].theta_w_transfer += dtheta_w1;
 
 							if(EMS[i].theta[WATER_PREF]/((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water)*(EMS[i].PrefFlowArea)) > pref_flow_param_th) {
 								// This approach is equalizing both domains in case we still exceed the threshold:
@@ -2474,6 +2483,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 								const double dtheta_w2 = std::max(0., EMS[i].theta[WATER_PREF] + ( (EMS[i].VG.theta_r - tmp_theta_water_tot) * (1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water)*(EMS[i].PrefFlowArea) ) / ((1.-EMS[i].theta[ICE])*(Constants::density_ice/Constants::density_water) - EMS[i].VG.theta_r));
 								EMS[i].theta[WATER_PREF] -= dtheta_w2;
 								EMS[i].theta[WATER] += dtheta_w2;
+								// Increment the PF->matrix transfer variable
+								EMS[i].theta_w_transfer += dtheta_w2;
 							}
 						}
 						const double dx = sqrt((1. + EMS[i].PrefFlowArea)/(2. * Constants::pi)) - sqrt(EMS[i].PrefFlowArea/Constants::pi);	// Estimate of the typical length scale that determines the gradients
@@ -2486,10 +2497,15 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						const double dtheta_w3 = std::max(0., std::min(std::min(EMS[i].theta[WATER_PREF]-theta_d[i], 0.999*(1.-EMS[i-1].theta[ICE])*(Constants::density_ice/Constants::density_water)*(1.-EMS[i-1].PrefFlowArea)-EMS[i].theta[WATER]), theta_move));
 						EMS[i].theta[WATER]+=dtheta_w3;
 						EMS[i].theta[WATER_PREF]-=dtheta_w3;
+						// Increment the PF->matrix transfer variable
+						EMS[i].theta_w_transfer += dtheta_w3;
 					}
-					// Check for first wetting to set microstructural marker correctly
-					if ((EMS[i].theta[WATER] > 5E-6 * sn_dt) && (EMS[i].mk%100 < 10)) {
-						EMS[i].mk += 10;
+					// Check for first wetting to set microstructural marker correctly only if not ice reservoir
+					if (!enable_ice_reservoir) {
+						// Check for first wetting to set microstructural marker correctly
+						if ((EMS[i].theta[WATER] > 5e-6 * sn_dt) && (EMS[i].mk%100 < 10)) {
+							EMS[i].mk += 10;
+						}
 					}
 				}
 			} else {	// For soil, we suppress preferential flow

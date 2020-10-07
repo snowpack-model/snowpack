@@ -73,6 +73,7 @@ class ReSolver1d {
 		double pref_flow_param_th;			//Tuning parameter: saturation threshold in preferential flow
 		double pref_flow_param_N;			//Tuning parameter: number of preferential flow paths for heat exchange
 		double pref_flow_param_heterogeneity_factor;	//Tuning parameter: heterogeneity factor for grain size
+		bool enable_ice_reservoir;			// Ice reservoir or not
 
 		double sn_dt;					//SNOWPACK time step
 		bool allow_surface_ponding;			//boolean to switch on/off the formation of surface ponds in case prescribed infiltration flux exceeds matrix capacity

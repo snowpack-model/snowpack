@@ -3,7 +3,7 @@
 # "ctest -S startScriptValgrind.cmake"
 
 # Set Information for build
-SET(CTEST_SITE "olmenhorn")
+SET(CTEST_SITE "srv7")
 SET(CTEST_BUILD_NAME "Linux_Standart_Valgrind")
 SET(CTEST_BUILD_CONFIGURATION "debug")
 
