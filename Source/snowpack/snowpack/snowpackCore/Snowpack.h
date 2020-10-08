@@ -52,6 +52,11 @@ class Snowpack {
 
  public:
 		Snowpack(const SnowpackConfig& i_cfg);
+#ifdef SNOWPACK_OPTIM
+		Snowpack(const Snowpack& c);			///< Copy constructor
+		Snowpack& operator=(const Snowpack& source);	///< Assignment operator
+		~Snowpack();					///< Class destructor
+#endif
 
 		void runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
 		                      BoundCond& Bdata, SurfaceFluxes& Sdata);
@@ -138,11 +143,11 @@ class Snowpack {
 		TechSnow techsnow;
 
 #ifdef SNOWPACK_OPTIM
-		WaterTransport* watertransport;
-		VapourTransport* vapourtransport;
-		Metamorphism* metamorphism;
-		SnowDrift* snowdrift;
-		PhaseChange* phasechange;
+		WaterTransport *watertransport;
+		VapourTransport *vapourtransport;
+		Metamorphism *metamorphism;
+		SnowDrift *snowdrift;
+		PhaseChange *phasechange;
 #endif
 
 		std::string variant, forcing, viscosity_model, watertransportmodel_snow, watertransportmodel_soil;
