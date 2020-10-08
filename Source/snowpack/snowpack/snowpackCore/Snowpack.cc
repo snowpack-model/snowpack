@@ -85,6 +85,124 @@ void Snowpack::EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]) {
 /************************************************************
  * non-static section                                       *
  ************************************************************/
+#ifdef SNOWPACK_OPTIM
+Snowpack::Snowpack(const Snowpack& c) :					///< Copy constructor
+            surfaceCode(c.surfaceCode), cfg(c.cfg), techsnow(c.techsnow),
+            watertransport(NULL), vapourtransport(NULL), metamorphism(NULL), snowdrift(NULL), phasechange(NULL),
+            variant(c.variant), forcing(c.forcing), viscosity_model(c.viscosity_model), watertransportmodel_snow(c.watertransportmodel_snow), watertransportmodel_soil(c.watertransportmodel_soil),
+            hn_density(c.hn_density), hn_density_parameterization(c.hn_density_parameterization), sw_mode(c.sw_mode), snow_albedo(c.snow_albedo), albedo_parameterization(c.albedo_parameterization), albedo_average_schmucki(c.albedo_average_schmucki), sw_absorption_scheme(c.sw_absorption_scheme),
+            atm_stability_model(c.atm_stability_model), albedo_NIED_av(c.albedo_NIED_av), albedo_fixedValue(c.albedo_fixedValue), hn_density_fixedValue(c.hn_density_fixedValue),
+            meteo_step_length(c.meteo_step_length), thresh_change_bc(c.thresh_change_bc), geo_heat(c.geo_heat), height_of_meteo_values(c.height_of_meteo_values),
+            height_new_elem(c.height_new_elem), sn_dt(c.sn_dt), t_crazy_min(c.t_crazy_min), t_crazy_max(c.t_crazy_max), thresh_rh(c.thresh_rh), thresh_dtempAirSnow(c.thresh_dtempAirSnow),
+            new_snow_dd(c.new_snow_dd), new_snow_sp(c.new_snow_sp), new_snow_dd_wind(c.new_snow_dd_wind), new_snow_sp_wind(c.new_snow_sp_wind), rh_lowlim(c.rh_lowlim), bond_factor_rh(c.bond_factor_rh),
+            new_snow_grain_size(c.new_snow_grain_size), new_snow_bond_size(c.new_snow_bond_size), hoar_density_buried(c.hoar_density_buried), hoar_density_surf(c.hoar_density_surf), hoar_min_size_buried(c.hoar_min_size_buried),
+            minimum_l_element(c.minimum_l_element), comb_thresh_l(c.comb_thresh_l), t_surf(c.t_surf),
+            allow_adaptive_timestepping(c.allow_adaptive_timestepping), research_mode(c.research_mode), useCanopyModel(c.useCanopyModel), enforce_measured_snow_heights(c.enforce_measured_snow_heights), detect_grass(c.detect_grass),
+            soil_flux(c.soil_flux), useSoilLayers(c.useSoilLayers), useNewPhaseChange(c.useNewPhaseChange), combine_elements(c.combine_elements), reduce_n_elements(c.reduce_n_elements), force_add_snowfall(c.force_add_snowfall), max_simulated_hs(c.max_simulated_hs),
+            change_bc(c.change_bc), meas_tss(c.meas_tss), vw_dendricity(c.vw_dendricity),
+            enhanced_wind_slab(c.enhanced_wind_slab), snow_erosion(c.snow_erosion), alpine3d(c.alpine3d), ageAlbedo(c.ageAlbedo), soot_ppmv(c.soot_ppmv), adjust_height_of_meteo_values(c.adjust_height_of_meteo_values), advective_heat(c.advective_heat), heat_begin(c.heat_begin), heat_end(c.heat_end),
+            temp_index_degree_day(c.temp_index_degree_day), temp_index_swr_factor(c.temp_index_swr_factor), forestfloor_alb(c.forestfloor_alb), rime_index(c.rime_index), newsnow_lwc(c.newsnow_lwc), read_dsm(c.read_dsm), soil_evaporation(c.soil_evaporation) {
+	watertransport = NULL;
+	vapourtransport = NULL;
+	metamorphism = NULL;
+	snowdrift = NULL;
+	phasechange = NULL;
+}
+
+Snowpack& Snowpack::operator=(const Snowpack& source) {			///< Assignment operator
+	if(this != &source) {
+		surfaceCode = source.surfaceCode;
+		//cfg = source.cfg;	// Since cfg is defined const, it cannot be copied. But there is no class constructor that does NOT set cfg, so we can safely assume cfg doesn't need to be copied. 
+		techsnow = source.techsnow;
+		watertransport = NULL;
+		vapourtransport = NULL;
+		metamorphism = NULL;
+		snowdrift = NULL;
+		phasechange = NULL;
+		variant = source.variant;
+		forcing = source.forcing;
+		viscosity_model = source.viscosity_model;
+		watertransportmodel_snow = source.watertransportmodel_snow;
+		watertransportmodel_soil = source.watertransportmodel_soil;
+		hn_density = source.hn_density;
+		hn_density_parameterization = source.hn_density_parameterization;
+		sw_mode = source.sw_mode;
+		snow_albedo = source.snow_albedo;
+		albedo_parameterization = source.albedo_parameterization;
+		albedo_average_schmucki = source.albedo_average_schmucki;
+		sw_absorption_scheme = source.sw_absorption_scheme;
+		atm_stability_model = source.atm_stability_model;
+		albedo_NIED_av = source.albedo_NIED_av;
+		albedo_fixedValue = source.albedo_fixedValue;
+		hn_density_fixedValue = source.hn_density_fixedValue;
+		meteo_step_length = source.meteo_step_length;
+		thresh_change_bc = source.thresh_change_bc;
+		geo_heat = source.geo_heat;
+		height_of_meteo_values = source.height_of_meteo_values;
+		height_new_elem = source.height_new_elem;
+		sn_dt = source.sn_dt;
+		t_crazy_min = source.t_crazy_min;
+		t_crazy_max = source.t_crazy_max;
+		thresh_rh = source.thresh_rh;
+		thresh_dtempAirSnow = source.thresh_dtempAirSnow;
+		new_snow_dd = source.new_snow_dd;
+		new_snow_sp = source.new_snow_sp;
+		new_snow_dd_wind = source.new_snow_dd_wind;
+		new_snow_sp_wind = source.new_snow_sp_wind;
+		rh_lowlim = source.rh_lowlim;
+		bond_factor_rh = source.bond_factor_rh;
+		new_snow_grain_size = source.new_snow_grain_size;
+		new_snow_bond_size = source.new_snow_bond_size;
+		hoar_density_buried = source.hoar_density_buried;
+		hoar_density_surf = source.hoar_density_surf;
+		hoar_min_size_buried = source.hoar_min_size_buried;
+		minimum_l_element = source.minimum_l_element;
+		comb_thresh_l = source.comb_thresh_l;
+		t_surf = source.t_surf;
+		allow_adaptive_timestepping = source.allow_adaptive_timestepping;
+		research_mode = source.research_mode;
+		useCanopyModel = source.useCanopyModel;
+		enforce_measured_snow_heights = source.enforce_measured_snow_heights;
+		detect_grass = source.detect_grass;
+		soil_flux = source.soil_flux;
+		useSoilLayers = source.useSoilLayers;
+		useNewPhaseChange = source.useNewPhaseChange;
+		combine_elements = source.combine_elements;
+		reduce_n_elements = source.reduce_n_elements;
+		force_add_snowfall = source.force_add_snowfall;
+		max_simulated_hs = source.max_simulated_hs;
+		change_bc = source.change_bc;
+		meas_tss = source.meas_tss;
+		vw_dendricity = source.vw_dendricity;
+		enhanced_wind_slab = source.enhanced_wind_slab;
+		snow_erosion = source.snow_erosion;
+		alpine3d = source.alpine3d;
+		ageAlbedo = source.ageAlbedo;
+		soot_ppmv = source.soot_ppmv;
+		adjust_height_of_meteo_values = source.adjust_height_of_meteo_values;
+		advective_heat = source.advective_heat;
+		heat_begin = source.heat_begin;
+		heat_end = source.heat_end;
+		temp_index_degree_day = source.temp_index_degree_day;
+		temp_index_swr_factor = source.temp_index_swr_factor;
+		forestfloor_alb = source.forestfloor_alb;
+		rime_index = source.rime_index;
+		newsnow_lwc = source.newsnow_lwc;
+		read_dsm = source.read_dsm;
+		soil_evaporation = source.soil_evaporation;
+	}
+	return *this;
+}
+
+Snowpack::~Snowpack(void)	///< Class destructor
+{
+	if (watertransport != NULL) delete watertransport, watertransport = NULL;
+	if (vapourtransport != NULL) delete vapourtransport, vapourtransport = NULL;
+	if (metamorphism != NULL) delete metamorphism, metamorphism = NULL;
+	if (snowdrift != NULL) delete snowdrift, snowdrift = NULL;
+	if (phasechange != NULL) delete phasechange, phasechange = NULL;
+}
+#endif
 
 Snowpack::Snowpack(const SnowpackConfig& i_cfg)
           : surfaceCode(), cfg(i_cfg), techsnow(i_cfg), 

@@ -79,7 +79,8 @@ SET(ALPINE3D_STANDALONE ON CACHE BOOL "Compilation Alpine3D standalone ON or OFF
 SET(MPI OFF CACHE BOOL "Compile with MPI support ON or OFF")
 SET(OPENMP OFF CACHE BOOL "Compile with OPENMP support ON or OFF")
 SET(PETSC OFF CACHE BOOL "Compile with PETSc support ON or OFF")
-SET(SNOWPACK_CORE OFF CACHE BOOL "SNOWPACK was compiled with core functionality only ON or OFF")
+SET(SNOWPACK_CORE OFF CACHE BOOL "SNOWPACK was compiled with CORE functionality only ON or OFF")
+SET(SNOWPACK_OPTIM OFF CACHE BOOL "SNOWPACK was compiled with OPTIM functionality only ON or OFF")
 
 IF(PETSC)
 	SET(PETSC_FLAGS "-DENABLE_PETSC")
