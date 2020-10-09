@@ -64,8 +64,8 @@ if [ ! -e "$f" ]; then
 fi
 
 
-# Now to the cutting:
-mawk -F, -v bt=${bt} -v et=${et} -v red=${r} '\
+# Now do the cutting:
+awk -F, -v bt=${bt} -v et=${et} -v red=${r} '\
 BEGIN { \
 	header=1; \
 	n=0; \
