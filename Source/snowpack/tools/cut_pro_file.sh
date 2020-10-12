@@ -91,7 +91,9 @@ BEGIN { \
 			n++; \
 		} \
 	}; \
-	if(header==1 || printdata==1) { \
+	if(header==1) { \
+		print; \
+	} else if (printdata==1) { \
 		if(m>0) {printf("\n")}; m++;	# Deal with the fact that *.pro files have no EOL at last line.
 		printf("%s", $0) \
 	} \
