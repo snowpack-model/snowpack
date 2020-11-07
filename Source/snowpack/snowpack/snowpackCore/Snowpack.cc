@@ -1778,18 +1778,14 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			cumu_precip = 0.0; // we use the mass through delta_cH
 			//double hn = 0.; //new snow amount
 
-			if (Xdata.hn > 0. && (Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)) {
+			if (!alpine3d && Xdata.hn > 0. && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle) {
 				hn = Xdata.hn;
 				rho_hn = Xdata.rho_hn;
 			} else { // in case of flat field or PERP_TO_SLOPE
 				hn = delta_cH;
 				// Store new snow depth and density
-				if (!alpine3d) {
-					//in snowpack, we compute first hn on flat field,
-					//then we copy this value to the slopes
-					Xdata.hn = hn;
-					Xdata.rho_hn = rho_hn;
-				}
+				Xdata.hn = hn;
+				Xdata.rho_hn = rho_hn;
 			}
 			if (hn > Snowpack::snowfall_warning)
 				prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
@@ -1800,8 +1796,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 
 			if (nAddE < 1) {
 				// Always add snow on virtual slope (as there is no storage variable available) and some other cases
-				if (!alpine3d && ((Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
-				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps))) { //no virtual slopes in Alpine3D
+				if ((!alpine3d && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
+				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps)) { //no virtual slopes in Alpine3D
 					nAddE = 1;
 				} else {
 					Xdata.hn = 0.;
@@ -2096,13 +2092,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// neccessary. Note that also the very important friction velocity is computed in this
 		// routine and later used to compute the Meteo Heat Fluxes
 		if (forcing=="ATMOS") {
-			if (!alpine3d) { //HACK: we need to set to 0 the external drift
-				double tmp = 0.;
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
-				if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT") RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
-			} else {
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
+			double tmp = 0.;
+			if (alpine3d && cumu_precip < 0.) { //HACK: we need to set to 0 the external drift
+				// With alpine3d, negative cumu_precip becomes forced_massErode
+				tmp = cumu_precip;
+				cumu_precip = 0.;
 			}
+			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d) RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
 		} else { // MASSBAL forcing
 			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
 		}
