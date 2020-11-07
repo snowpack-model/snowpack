@@ -124,7 +124,8 @@ class MeteoData {
 		typedef enum MERGE_TYPE {
 				STRICT_MERGE=0, ///< Station1 receives data from station2 only for common timestamps
 				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
-				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+				FULL_MERGE=2, ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+				WINDOW_MERGE=3 ///< Similar to a full merge but within the time range of station1
 		} Merge_Type;
 		
 		/** @brief Available %MeteoData conflict resolution strategies.
@@ -338,6 +339,13 @@ class MeteoData {
 		 * @return Merge_Type
 		 */
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
+		
+		/**
+		 * @brief Parse a string containing a merge conflcits type and return the proper enum member for it.
+		 * @param[in] merge_conflicts
+		 * @return Merge_Conflicts
+		 */
+		static MeteoData::Merge_Conflicts getMergeConflicts(std::string merge_conflicts);
 
 		/**
 		 * @brief List the parameters that have a least one valid value in a vector of MeteoData.

@@ -19,6 +19,7 @@
 #define PROCESSINGBLOCK_H
 
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/Config.h>
 #include <vector>
 #include <string>
@@ -64,19 +65,6 @@ class ProcessingProperties {
  */
 class ProcessingBlock {
 	public:
-		typedef struct DATES_RANGE {
-			DATES_RANGE() : start(), end() {}
-			DATES_RANGE(const Date& d1, const Date& d2) : start(d1), end(d2) {}
-			bool operator<(const DATES_RANGE& a) const { //needed for "sort"
-				if (start==a.start) return end < a.end;
-				return start < a.start;
-			}
-			bool operator==(const DATES_RANGE& a) const { //needed to check for uniqueness
-				return (start==a.start) && (end==a.end);
-			}
-
-			Date start, end;
-		} dates_range;
 		
 		typedef struct OFFSET_SPEC {
 			OFFSET_SPEC() : date(), offset(0.) {}
@@ -102,15 +90,13 @@ class ProcessingBlock {
 		const std::string toString() const;
 		bool skipStation(const std::string& station_id) const;
 		bool noStationsRestrictions() const {return excluded_stations.empty() && kept_stations.empty();}
-		const std::vector<dates_range> getTimeRestrictions() const {return time_restrictions;}
+		const std::vector<DateRange> getTimeRestrictions() const {return time_restrictions;}
 
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y);
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2);
 		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
 		static std::vector<offset_spec> readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx=2);
-		static std::map< std::string, std::vector<dates_range> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
-		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
-		static std::vector<ProcessingBlock::dates_range> initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ);
+		static std::map< std::string, std::vector<DateRange> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
 
 	protected:
 		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg); ///< protected constructor only to be called by children
@@ -121,7 +107,7 @@ class ProcessingBlock {
                                                std::vector<double>& ovec);
 		
 		const std::set<std::string> excluded_stations, kept_stations;
-		const std::vector<dates_range> time_restrictions;
+		const std::vector<DateRange> time_restrictions;
 		ProcessingProperties properties;
 		const std::string block_name;
 

@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <cstring>
 
+#include <meteoio/MeteoProcessor.h>		//required for some generic initializations static methods
 #include <meteoio/FileUtils.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoFilters/FilterSuppr.h>
@@ -78,7 +79,7 @@ namespace mio {
  * take arguments describing a processing window (for example, FilterStdDev). In such a case, they take the window parameters arguments as
  * defined in WindowedFilter::setWindowFParams().
  * 
- * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** options followed by a comma delimited list of
+ * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** option followed by a comma delimited list of
  * date intervals (represented by two ISO formatted dates seperated by ' - ').
  * 
  * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
@@ -270,67 +271,8 @@ const double ProcessingBlock::snow_albedo = .85; //snow
 const double ProcessingBlock::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-                            : excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), 
-                              time_restrictions( initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), properties(), block_name(name) {}
-
-std::set<std::string> ProcessingBlock::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
-{
-	std::set<std::string> results;
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first==keyword) {
-			std::istringstream iss(vecArgs[ii].second);
-			std::string word;
-			while (iss >> word){
-				results.insert(word);
-			}
-		}
-	}
-
-	return results;
-}
-
-std::vector<ProcessingBlock::dates_range> ProcessingBlock::initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ)
-{
-	std::vector<dates_range> dates_specs;
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first==keyword) {
-			std::vector<std::string> vecString;
-			const size_t nrElems = IOUtils::readLineToVec(vecArgs[ii].second, vecString, ',');
-			
-			for (size_t jj=0; jj<nrElems; jj++) {
-				const size_t delim_pos = vecString[jj].find(" - ");
-				if (delim_pos==std::string::npos)
-					throw InvalidFormatException("Invalid time restriction syntax for " + where + ": the two dates must be separated by ' - '", AT);
-				
-				Date d1, d2;
-				if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
-					throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
-				if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
-					throw InvalidFormatException("Could not process date "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
-				dates_specs.push_back( dates_range(d1, d2) );
-			}
-		}
-	}
-	
-	if (dates_specs.empty()) return dates_specs;
-	
-	//now sort the vector and merge overlapping ranges
-	std::sort(dates_specs.begin(), dates_specs.end()); //in case of identical start dates, the oldest end date comes first
-	for (size_t ii=0; ii<(dates_specs.size()-1); ii++) {
-		if (dates_specs[ii]==dates_specs[ii+1]) {
-			//remove identical ranges
-			dates_specs.erase(dates_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
-			ii--; //we must redo the current element
-		} else if (dates_specs[ii].start==dates_specs[ii+1].start || dates_specs[ii].end >= dates_specs[ii+1].start) {
-			//remove overlapping ranges
-			dates_specs[ii].end = dates_specs[ii+1].end;
-			dates_specs.erase(dates_specs.begin()+ii+1);
-			ii--; //we must redo the current element
-		}
-	}
-
-	return dates_specs;
-}
+                            : excluded_stations( MeteoProcessor::initStationSet(vecArgs, "EXCLUDE") ), kept_stations( MeteoProcessor::initStationSet(vecArgs, "ONLY") ), 
+                              time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), properties(), block_name(name) {}
 
 bool ProcessingBlock::skipStation(const std::string& station_id) const
 {
@@ -577,7 +519,7 @@ std::vector<ProcessingBlock::offset_spec> ProcessingBlock::readCorrections(const
 	return corrections;
 }
 
-std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlock::readDates(const std::string& filter, const std::string& filename, const double& TZ)
+std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const std::string& filter, const std::string& filename, const double& TZ)
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
@@ -590,7 +532,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 		throw AccessException(ss.str(), AT);
 	}
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-	std::map< std::string, std::vector<dates_range> > dates_specs;
+	std::map< std::string, std::vector<DateRange> > dates_specs;
 
 	Date d1, d2;
 	try {
@@ -612,21 +554,21 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 			if (nrElems==2) {
 				if (!IOUtils::convertString(d1, vecString[1], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
-				const dates_range range(d1, d1);
+				const DateRange range(d1, d1);
 				dates_specs[ station_ID ].push_back( range );
 			} else if (nrElems==3) {
 				if (!IOUtils::convertString(d1, vecString[1], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
 				if (!IOUtils::convertString(d2, vecString[2], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[2]+" in file \""+filename+"\"", AT);
-				const dates_range range(d1, d2);
+				const DateRange range(d1, d2);
 				dates_specs[ station_ID ].push_back( range );
 			} else if (nrElems==4 && vecString[2]=="-") {
 				if (!IOUtils::convertString(d1, vecString[1], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
 				if (!IOUtils::convertString(d2, vecString[3], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[3]+" in file \""+filename+"\"", AT);
-				const dates_range range(d1, d2);
+				const DateRange range(d1, d2);
 				dates_specs[ station_ID ].push_back( range );
 			} else
 				throw InvalidFormatException("Unrecognized syntax in file \""+filename+"\": '"+line+"'\n", AT);
@@ -638,7 +580,7 @@ std::map< std::string, std::vector<ProcessingBlock::dates_range> > ProcessingBlo
 	}
 
 	//sort all the suppr_specs
-	std::map< std::string, std::vector<dates_range> >::iterator station_it( dates_specs.begin() );
+	std::map< std::string, std::vector<DateRange> >::iterator station_it( dates_specs.begin() );
 	for (; station_it!=dates_specs.end(); ++station_it) {
 		std::sort(station_it->second.begin(), station_it->second.end());
 	}

@@ -25,7 +25,7 @@ namespace mio {
 DataCreator::DataCreator(const Config& cfg)
               : mapAlgorithms()
 {
-	static const std::string section( "Input" );
+	static const std::string section( "InputEditing" );
 	static const std::string key_pattern( "::create" );
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg, key_pattern, section) );
 
@@ -88,7 +88,7 @@ void DataCreator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
 			for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
 				vecVecMeteo[station][ii].addParameter( it->first );
 			}
-			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
+			const size_t param = vecVecMeteo[station][0].getParameterIndex( it->first );
 			const std::string statID( vecVecMeteo[station][0].meta.getStationID() );
 
 			//fill the new parameter

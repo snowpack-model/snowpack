@@ -91,7 +91,7 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 
 bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
 {
-	const std::vector<ProcessingBlock::dates_range> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
+	const std::vector<DateRange> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
 	
 	if (time_restrictions.empty()) {
 		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);

@@ -18,6 +18,7 @@
 #ifndef TIMEFILTERS_H
 #define TIMEFILTERS_H
 
+#include <meteoio/IOUtils.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
@@ -98,7 +99,7 @@ class TimeSuppr : public ProcessingBlock {
 		void supprFrac(std::vector<MeteoData>& ovec) const;
 		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
-		std::map< std::string, std::vector<dates_range> > suppr_dates;
+		std::map< std::string, std::vector<DateRange> > suppr_dates;
 		double range, width;
 		suppr_mode op_mode;
 };

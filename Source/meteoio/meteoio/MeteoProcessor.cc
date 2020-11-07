@@ -101,6 +101,65 @@ void MeteoProcessor::process(std::vector< std::vector<MeteoData> >& ivec,
 	}
 }
 
+std::set<std::string> MeteoProcessor::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
+{
+	std::set<std::string> results;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first==keyword) {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results.insert(word);
+			}
+		}
+	}
+
+	return results;
+}
+
+std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ)
+{
+	std::vector<DateRange> dates_specs;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first==keyword) {
+			std::vector<std::string> vecString;
+			const size_t nrElems = IOUtils::readLineToVec(vecArgs[ii].second, vecString, ',');
+			
+			for (size_t jj=0; jj<nrElems; jj++) {
+				const size_t delim_pos = vecString[jj].find(" - ");
+				if (delim_pos==std::string::npos)
+					throw InvalidFormatException("Invalid time restriction syntax for " + where + ": the two dates must be separated by ' - '", AT);
+				
+				Date d1, d2;
+				if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
+					throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+				if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
+					throw InvalidFormatException("Could not process date "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+				dates_specs.push_back( DateRange(d1, d2) );
+			}
+		}
+	}
+	
+	if (dates_specs.empty()) return dates_specs;
+	
+	//now sort the vector and merge overlapping ranges
+	std::sort(dates_specs.begin(), dates_specs.end()); //in case of identical start dates, the oldest end date comes first
+	for (size_t ii=0; ii<(dates_specs.size()-1); ii++) {
+		if (dates_specs[ii]==dates_specs[ii+1]) {
+			//remove identical ranges
+			dates_specs.erase(dates_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
+			ii--; //we must redo the current element
+		} else if (dates_specs[ii].start==dates_specs[ii+1].start || dates_specs[ii].end >= dates_specs[ii+1].start) {
+			//remove overlapping ranges
+			dates_specs[ii].end = dates_specs[ii+1].end;
+			dates_specs.erase(dates_specs.begin()+ii+1);
+			ii--; //we must redo the current element
+		}
+	}
+
+	return dates_specs;
+}
+
 const std::string MeteoProcessor::toString() const {
 	std::ostringstream os;
 	os << "<MeteoProcessor>\n";

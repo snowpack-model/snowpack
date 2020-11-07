@@ -35,7 +35,7 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
     snowlines_(), snowlines_file_(),
     enforce_positive_rate_(false), calc_base_rate_(false), fallback_rate_(IOUtils::nodata),
     cutoff_val_(0.), band_height_(10.), band_no_(10), formula_(std::string()),
-    verbose_(true)
+    has_warned_deduced_trend_(false), has_warned_fixed_trend_(false), verbose_(true)
 {
 	std::string algo_info( "CUTOFF" );
 	for (size_t ii = 0; ii < vecArgs.size(); ii++) {
@@ -113,6 +113,10 @@ void SnowlineAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		azi_grids.push_back(grid_copy);
 	}
 	grid = mergeSlopes(dem, azi_grids);
+
+
+	has_warned_deduced_trend_ = false; //reset warning flags in case Algorithm lives on
+	has_warned_fixed_trend_ = false;
 }
 
 void SnowlineAlgorithm::baseInterpol(const double& snowline, const DEMObject& dem, Grid2DObject& grid)
@@ -266,8 +270,22 @@ te_expr* SnowlineAlgorithm::compileExpression(const std::string& expression, con
 	return expr;
 }
 
+/**
+ * @brief Read in snowline elevation information from a textfile.
+ * @details Example file:
+ * #Snowline elevation estimated from satellite data split up into slope aspects.
+ * #Format: aspect_#,beg_azimuth end_azimuth snowline
+ * #Snowline in meters, cloud coverage in percent, azimuth in degrees.
+ * image_dates,2020-10-08T10:20:31
+ * cloud_coverage,46.3
+ * aspect_1,45 135 2130
+ * aspect_2,135 225 2230
+ * aspect_3,225 315 2130
+ * aspect_4,315 45 2130
+ * @return Vector with all parsed aspects.
+ */
 std::vector<SnowlineAlgorithm::aspect> SnowlineAlgorithm::readSnowlineFile()
-{ //parse text file with snowine elevation(s) information
+{
 	std::ifstream fin( snowlines_file_.c_str() );
 	if (fin.fail())
 		return std::vector<SnowlineAlgorithm::aspect>();
@@ -283,28 +301,32 @@ std::vector<SnowlineAlgorithm::aspect> SnowlineAlgorithm::readSnowlineFile()
 			IOUtils::trim(line);
 			if (line.empty())
 				continue; //skip comments
-
 			std::istringstream iss( line );
-			iss.setf(std::ios::fixed);
-			iss.precision(std::numeric_limits<double>::digits10);
-			iss >> std::skipws >> sl_aspect.deg_beg;
-			if (!iss)
-				return std::vector<aspect>();
-			iss >> std::skipws >> sl_aspect.deg_end;
-			iss >> std::skipws >> sl_aspect.sl_elevation;
-			if (!iss) { //could not read 3 values --> assume it is a single slope aspect
-				if (snowline_elevations.empty()) { //1st time reading line
-					sl_aspect.sl_elevation = sl_aspect.deg_end; //in this case shift arg around
-					sl_aspect.deg_beg = sl_aspect.deg_end = 0.; //full circle
-					snowline_elevations.push_back(sl_aspect);
-					break;
-				} else {
-					throw InvalidFormatException(
-					    "The snowline elevations file is ill-formatted (encountered line with fewer columns than a previous one).", AT);
-				}
 
+			std::string field_name; //each line has a field name followed by a comma...
+			std::string field_value; //... and then an arbitrary number of value fields.
+			if (std::getline(iss, field_name, ','))
+				std::getline(iss, field_value, ',');
+			else
+				throw InvalidFormatException(
+				    "The snowline elevations file is ill-formatted (no field/value separator in line).", AT);
+
+			if (field_name == "image_dates") {
+				//nothing yet
+			} else if (field_name == "cloud_coverage") {
+				//nothing yet
+			} else if (field_name.substr(0, 7) == "aspect_") { //aspect_#,azi1 azi2 snowline
+				std::istringstream ias( field_value );
+				ias.setf(std::ios::fixed);
+				ias.precision(std::numeric_limits<double>::digits10);
+				ias >> std::skipws >> sl_aspect.deg_beg;
+				ias >> std::skipws >> sl_aspect.deg_end;
+				ias >> std::skipws >> sl_aspect.sl_elevation;
+				if (!ias)
+					throw InvalidFormatException(
+					    "The snowline elevations file is ill-formatted (could not parse all 3 aspect parameters).", AT);
+				snowline_elevations.push_back(sl_aspect);
 			}
-			snowline_elevations.push_back(sl_aspect);
 		} while (!fin.eof());
 		fin.close();
 	} catch (const std::exception&) {
@@ -391,7 +413,10 @@ std::vector< std::pair<std::string, std::string> > SnowlineAlgorithm::prepareBas
 		const double fit_slope = probeTrend();
 		if (snowline != IOUtils::nodata && (fit_slope > 0. || calc_base_rate_)) {
 			const std::string reason( (fit_slope > 0.? "Reverse trend" : "Trend") );
-			msg("[i] " + reason + " in data is being substituted with rate deduced from snowline elevation.");
+			if (!has_warned_deduced_trend_) {
+				msg("[i] " + reason + " in data is being substituted with rate deduced from snowline elevation.");
+				has_warned_deduced_trend_ = true;
+			}
 			if (snowline != IOUtils::nodata) {
 				for(std::vector< std::pair<std::string, std::string> >::iterator it = vecArgs.begin(); it != vecArgs.end(); ++it) {
 					if ((*it).first == "RATE" || (*it).first == "FRAC")
@@ -409,7 +434,10 @@ std::vector< std::pair<std::string, std::string> > SnowlineAlgorithm::prepareBas
 			}
 			vecArgs.push_back(std::pair<std::string, std::string>( "RATE", IOUtils::toString(fallback_rate_) ));
 			vecArgs.push_back(std::pair<std::string, std::string>( "FRAC", "FALSE" ));
-			msg("[i] Reverse trend in data is being substituted with a fixed fallback rate.");
+			if (!has_warned_fixed_trend_) {
+				msg("[i] Reverse trend in data is being substituted with a fixed fallback rate.");
+				has_warned_fixed_trend_ = true;
+			}
 		}
 	}
 	return(vecArgs);

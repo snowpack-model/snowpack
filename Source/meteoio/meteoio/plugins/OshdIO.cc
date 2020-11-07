@@ -138,7 +138,7 @@ void OshdIO::parseInputOutputSection()
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
 	
-	const std::string meteo_in = cfg.get("METEO", "Input", "");
+	const std::string meteo_in = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (meteo_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValues("STATION", "INPUT", vecIDs);
 		cfg.getValue("METEOPATH", "Input", in_meteopath);
@@ -155,7 +155,7 @@ void OshdIO::parseInputOutputSection()
 		}
 	}
 
-	const std::string grid_in = cfg.get("GRID2D", "Input", "");
+	const std::string grid_in = IOUtils::strToUpper( cfg.get("GRID2D", "Input", "") );
 	if (grid_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
 		grid2dpath_in.clear();
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
