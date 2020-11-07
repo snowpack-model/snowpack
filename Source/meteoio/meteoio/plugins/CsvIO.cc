@@ -103,8 +103,8 @@ namespace mio {
  * column of the file, including the date and time.
  * 
  * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names". 
- * This is done either by using the CSV_FIELDS key or using the \ref data_move "data renaming" feature of the 
- * \ref raw_data_editing "Raw Data Editing" stage.
+ * This is done either by using the CSV_FIELDS key or using the EditingMove feature of the 
+ * \ref data_editing "Input Data Editing" stage.
  * 
  * @section csvio_date_specs Date and time specification
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
@@ -172,7 +172,7 @@ namespace mio {
  * 
  * If the CSV_FIELDS key is also present, it will have priority. Therefore, it is possible to define one CSV_FILENAME_SPEC for several files and 
  * only define CSV\#_FIELDS for the files that would require a different handling (for example because their parameter would not be recognized).
- * Moreover, it is possible to set \em "AUTOMERGE" to "true" in the input section, so all files leading to the same station ID will be merged together
+ * Moreover, it is possible to set \em "AUTOMERGE" to "true" in the [InputEditing] section, so all files leading to the same station ID will be merged together
  * into one single station.
  * 
  * @note Obviously, the {PARAM} metadata field type can only be used for files that contain the time information (either as datetime or seperate date and time) and one
@@ -214,9 +214,10 @@ namespace mio {
  * CSV1_ID = DIS4
  * @endcode
  *
- * In order to read a set of files each containing only one parameter and merge them together (see \ref raw_data_editing "raw data editing" for more
+ * In order to read a set of files each containing only one parameter and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature), extracting the station ID, name and meteorological parameter from the filename:
  *@code
+ * [Input]
  * METEO = CSV
  * METEOPATH = ./input/meteo
  * CSV_DELIMITER = ;
@@ -237,12 +238,14 @@ namespace mio {
  * STATION4 = H0118_Generoso_-_Calmasino_relative_humidity.csv
  * STATION5 = H0118_Generoso_-_Calmasino_wind_velocity.csv
  *
+ * [InputEditing]
  * AUTOMERGE = true
  * @endcode
  * 
- * In order to read a set of files and merge them together (see \ref raw_data_editing "raw data editing" for more
+ * In order to read a set of files and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature):
  *@code
+ * [Input]
  * METEO = CSV
  * METEOPATH = ./input/meteo
  * CSV_DELIMITER = ;
@@ -269,6 +272,7 @@ namespace mio {
  * CSV5_FIELDS = DATE TIME VW
  * STATION5 = H0118_wind_velocity.csv
  *
+ * [InputEditing]
  * ID1::MERGE = ID2 ID3 ID4 ID5
  * @endcode
  * 
@@ -936,7 +940,7 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 		}
 		if (!status) return Date();
 		
-		jdn += (args[0]*3600. + args[1]*60. + args[2]) / (24.*3600.);
+		jdn += (static_cast<double>(args[0])*3600. + static_cast<double>(args[1])*60. + static_cast<double>(args[2])) / (24.*3600.);
 		const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
 		return Date(year, jdn, tz);
 	}

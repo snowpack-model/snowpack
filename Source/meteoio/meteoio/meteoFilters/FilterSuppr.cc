@@ -97,10 +97,10 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 void FilterSuppr::supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const
 {
 	const std::string station_ID( ovec[0].meta.stationID ); //we know it is not empty
-	const std::map< std::string, std::vector<dates_range> >::const_iterator station_it( suppr_dates.find( station_ID ) );
+	const std::map< std::string, std::vector<DateRange> >::const_iterator station_it( suppr_dates.find( station_ID ) );
 	if (station_it==suppr_dates.end()) return;
 
-	const std::vector<dates_range> &suppr_specs = station_it->second;
+	const std::vector<DateRange> &suppr_specs = station_it->second;
 	const size_t Nset = suppr_specs.size();
 	size_t curr_idx = 0; //we know there is at least one
 	for (size_t ii=0; ii<ovec.size(); ii++) {

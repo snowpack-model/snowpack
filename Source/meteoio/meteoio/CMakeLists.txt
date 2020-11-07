@@ -33,6 +33,8 @@ SET(meteoio_sources
 	GridsManager.cc
 	TimeSeriesManager.cc
 	IOManager.cc
+	DataEditing.cc
+	DataEditingAlgorithms.cc
 	IOHandler.cc
 	MeteoProcessor.cc
 	Meteo1DInterpolator.cc

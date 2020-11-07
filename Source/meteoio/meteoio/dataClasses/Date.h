@@ -225,6 +225,45 @@ class Date {
 		bool undef;
 };
 
+/**
+ * @class DateRange
+ * @brief A class to represent and handle date ranges. They can be sorted, 
+ * checked for uniqueness and a date can be compared to the range (is it 
+ * before or after?).
+ *
+ * @author Mathias Bavay
+ */
+class DateRange {
+	public:
+		DateRange() : start(), end() {}
+		DateRange(const Date& d1, const Date& d2) : start(d1), end(d2) {}
+		
+		bool in(const Date& a) const {
+			return (a >= start && a <= end);
+		}
+		
+		bool operator<(const Date& a) const {
+			return a < start;
+		}
+		
+		bool operator>(const Date& a) const {
+			return a > end;
+		}
+		
+		bool operator<(const DateRange& a) const { //needed for "sort"
+			if (start==a.start) return end < a.end;
+			return start < a.start;
+		}
+		
+		bool operator==(const DateRange& a) const { //needed to check for uniqueness
+			return (start==a.start) && (end==a.end);
+		}
+		
+		const std::string toString() const {std::ostringstream os; os << "[" << start.toString(Date::ISO) << " - " << end.toString(Date::ISO) << "]"; return os.str();}
+		
+		Date start, end;
+};
+
 typedef Date Duration; //so that later, we can implement a true Interval/Duration class
 
 } //end namespace

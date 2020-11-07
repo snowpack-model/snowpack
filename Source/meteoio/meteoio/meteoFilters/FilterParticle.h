@@ -243,7 +243,7 @@ namespace mio {
  * Let's use a MeteoIO internal model for the global radiation:
  *
  * @code
- * [INPUT]
+ * [InputEditing]
  * ISWR_MODEL::CREATE = CLEARSKY_SW ;depends on TA, RH
  * @endcode
  *

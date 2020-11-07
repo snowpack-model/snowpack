@@ -55,7 +55,7 @@ namespace mio {
  * To generate the liquid and solid amounts from the precipitation sum, relying on a simple temperature threshold for the splitting
  * (if the precipitation phase is available, it will be used instead of calling the splitting model):
  * @code
- * [Input]
+ * [InputEditing]
  * PSUM_L::create     = PRECSPLITTING
  * PSUM_L::PRECSPLITTING::type   = THRESH
  * PSUM_L::PRECSPLITTING::snow   = 274.35

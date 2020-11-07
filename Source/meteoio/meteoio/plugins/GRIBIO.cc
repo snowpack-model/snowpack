@@ -183,7 +183,7 @@ void GRIBIO::setOptions()
 	std::string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
-	const std::string tmp = cfg.get("GRID2D", "Input", "");
+	const std::string tmp = IOUtils::strToUpper( cfg.get("GRID2D", "Input", "") );
 	if (tmp == "GRIB") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
