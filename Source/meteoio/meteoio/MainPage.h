@@ -65,7 +65,7 @@ namespace mio {
  *               -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
  * -# Processing steps documentation
  *    -# \subpage data_sources "Data sources, input/output"
- *    -# \subpage raw_data_editing "Raw Data Editing"
+ *    -# \subpage data_editing "Input Data Editing"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage generators "Available data creators and generators" and usage
@@ -119,7 +119,7 @@ namespace mio {
  * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
- * - a set of \ref raw_data_editing "raw data editing" methods to select/merge/convert the raw data
+ * - a set of \ref data_editing "input data editing" methods to select/merge/convert the raw data
  * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
  * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
  * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
@@ -246,7 +246,7 @@ namespace mio {
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
  *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
- *             possible to perform some editing on the raw data, see \ref raw_data_editing.
+ *             possible to perform some editing on the input data, see \ref data_editing.
  *
  * - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *

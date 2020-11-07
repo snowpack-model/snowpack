@@ -2244,21 +2244,18 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// neccessary. Note that also the very important friction velocity is computed in this
 		// routine and later used to compute the Meteo Heat Fluxes
 		if (forcing=="ATMOS") {
-			if (!alpine3d) { //HACK: we need to set to 0 the external drift
-				double tmp = 0.;
-#ifdef SNOWPACK_OPTIM
-				snowdrift->compSnowDrift(Mdata, Xdata, Sdata, tmp);
-#else
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
-#endif
-				if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT") RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
-			} else {
-#ifdef SNOWPACK_OPTIM
-				snowdrift->compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
-#else
-				snowdrift.compSnowDrift(Mdata, Xdata, Sdata, cumu_precip);
-#endif
+			double tmp = 0.;
+			if (alpine3d && cumu_precip < 0.) { //HACK: we need to set to 0 the external drift
+				// With alpine3d, negative cumu_precip becomes forced_massErode
+				tmp = cumu_precip;
+				cumu_precip = 0.;
 			}
+#ifdef SNOWPACK_OPTIM
+			snowdrift->compSnowDrift(Mdata, Xdata, Sdata, tmp);
+#else
+			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
+#endif
+			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d) RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
 		} else { // MASSBAL forcing
 #ifdef SNOWPACK_OPTIM
 			snowdrift->compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)

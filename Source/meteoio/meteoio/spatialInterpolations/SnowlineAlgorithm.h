@@ -93,6 +93,8 @@ class SnowlineAlgorithm : public InterpolationAlgorithm {
 		double band_height_;
 		unsigned int band_no_;
 		std::string formula_;
+		bool has_warned_deduced_trend_;
+		bool has_warned_fixed_trend_;
 		bool verbose_; //suppress warnings?
 };
 

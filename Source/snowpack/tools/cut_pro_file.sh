@@ -64,8 +64,8 @@ if [ ! -e "$f" ]; then
 fi
 
 
-# Now to the cutting:
-mawk -F, -v bt=${bt} -v et=${et} -v red=${r} '\
+# Now do the cutting:
+awk -F, -v bt=${bt} -v et=${et} -v red=${r} '\
 BEGIN { \
 	header=1; \
 	n=0; \
@@ -91,7 +91,9 @@ BEGIN { \
 			n++; \
 		} \
 	}; \
-	if(header==1 || printdata==1) { \
+	if(header==1) { \
+		print; \
+	} else if (printdata==1) { \
 		if(m>0) {printf("\n")}; m++;	# Deal with the fact that *.pro files have no EOL at last line.
 		printf("%s", $0) \
 	} \

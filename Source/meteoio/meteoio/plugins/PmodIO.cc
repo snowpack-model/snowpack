@@ -98,7 +98,7 @@ void PmodIO::parseInputOutputSection()
 	cfg.getValue("TIME_ZONE","Input", in_TZ);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	const std::string in_meteo = cfg.get("METEO", "Input", "");
+	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo == "PMOD") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		cfg.getValue("STATION1", "Input", filename);

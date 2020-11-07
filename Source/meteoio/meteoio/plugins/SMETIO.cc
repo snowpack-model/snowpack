@@ -152,11 +152,10 @@ void SMETIO::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	std::string inpath, in_meteo;
-	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
+	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
-		cfg.getValue("METEOPATH", "Input", inpath);
+		const std::string inpath = cfg.get("METEOPATH", "Input");
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
@@ -182,8 +181,7 @@ void SMETIO::parseInputOutputSection()
 
 	//Parse output section: extract info on whether to write ASCII or BINARY, gzipped or not, acdd...
 	outpath.clear();
-	std::string out_meteo;
-	cfg.getValue("METEO", "Output", out_meteo, IOUtils::nothrow);
+	const std::string out_meteo = IOUtils::strToUpper( cfg.get("METEO", "Output", "") );
 	if (out_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		outputIsAscii = true;
 		

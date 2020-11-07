@@ -70,6 +70,24 @@ class MeteoProcessor {
 		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
+		
+		/**
+		 * @brief built the set of station IDs that a filter should be applied to or excluded from
+		 * @param[in] vecArgs All filter arguments
+		 * @param[in] keyword Argument keyword (ex. EXCLUDE or ONLY)
+		 * @return set of station IDs provided in argument by the provided keyword
+		 */
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		
+		/**
+		 * @brief built the set of time ranges to apply a certain processing to
+		 * @param[in] vecArgs All filter arguments
+		 * @param[in] keyword Argument keyword (ex. WHEN)
+		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "Filter Min")
+		 * @param[in] TZ time zone to use when building Date objects
+		 * @return set of time ranges to apply the processing to
+		 */
+		static std::vector<DateRange> initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ);
 
  	private:
 		static std::set<std::string> getParameters(const Config& cfg);

@@ -364,7 +364,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::RHOSNOW_AVG:
 				value = getAvgAtDepth(snowPixel, snow_temp_depth, false); break;
 			case SnGrids::SWE:
-				value = surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] /  snowPixel.cos_sl; break; //slope2horiz
+				value = surfaceFlux.mass[SurfaceFluxes::MS_TOTALMASS] / snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::RSNO: {
 				const double hs = (snowPixel.cH - snowPixel.Ground);
 				value = (hs>0.)? snowPixel.mass_sum / hs : IOUtils::nodata;
@@ -387,9 +387,9 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::N3:
 				value = (!snowPixel.Edata.empty())? snowPixel.Edata.back().N3 : IOUtils::nodata; break;
 			case SnGrids::MS_SNOWPACK_RUNOFF:
-				value = surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]; break;
+				value = surfaceFlux.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] / snowPixel.cos_sl; break;
 			case SnGrids::MS_SOIL_RUNOFF:
-				value = surfaceFlux.mass[SurfaceFluxes::MS_SOIL_RUNOFF]; break;
+				value = surfaceFlux.mass[SurfaceFluxes::MS_SOIL_RUNOFF] / snowPixel.cos_sl; break;
 			case SnGrids::MS_RAIN:
 				value = surfaceFlux.mass[SurfaceFluxes::MS_RAIN]; break;
 			case SnGrids::MS_HNW:
@@ -403,7 +403,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::STORE:
 				value = store(ii,jj); break;
 			case SnGrids::ERODEDMASS:
-				value = erodedmass(ii,jj); break;
+				value = erodedmass(ii,jj) / snowPixel.cos_sl; break;
 			case SnGrids::WINDEROSIONDEPOSITION: // This grid does not exist on the workers, but may be requested, so return IOUtils::nodata in such cases.
 				value = IOUtils::nodata; break;
 			case SnGrids::GLACIER:

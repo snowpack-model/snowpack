@@ -39,7 +39,6 @@ namespace mio {
  * @ingroup meteoLaws
  * @author Mathias Bavay
  */
-
 class DataCreator {
 	public:
 		DataCreator(const Config& cfg);

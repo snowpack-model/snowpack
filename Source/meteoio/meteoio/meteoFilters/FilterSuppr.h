@@ -41,7 +41,7 @@ namespace mio {
  *
  * @code
  * ILWR::filter1     = suppr
- * ILWR::arg1::suppr = ALL
+ * ILWR::arg1::type = ALL
  * 
  * PSUM::filter1     = suppr
  * PSUM::arg1::type  = FILE
@@ -84,7 +84,7 @@ class FilterSuppr : public ProcessingBlock {
 		void supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const;
 		
-		std::map< std::string, std::vector<dates_range> > suppr_dates;
+		std::map< std::string, std::vector<DateRange> > suppr_dates;
 		double range, width;
 		filter_type type;
 };

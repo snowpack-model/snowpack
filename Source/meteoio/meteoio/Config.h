@@ -83,7 +83,11 @@ class Config {
 		 */
 		Config();
 
-		//virtual ~Config() {}
+		 /**
+                 * @brief Empty virtual destructor. This should exists to allow other classes to inherit from
+		 * Config class as mother class.
+                 */
+		virtual ~Config() {}
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created

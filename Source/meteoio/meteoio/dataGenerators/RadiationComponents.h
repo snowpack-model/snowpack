@@ -28,7 +28,7 @@ namespace mio {
  * @details
  * The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
  * @code
- * [Input]
+ * [InputEditing]
  * ISWR::create = RadComponents
  * @endcode
  */
