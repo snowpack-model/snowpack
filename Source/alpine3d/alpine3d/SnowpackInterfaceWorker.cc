@@ -585,11 +585,11 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				sn.runSnowpackModel(meteoPixel, snowPixel, store(ix,iy), Bdata, surfaceFlux);
 				surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);
 				surfaceFlux.mass[SurfaceFluxes::MS_HNW] += (snowPixel.hn * snowPixel.rho_hn) / snowPixel.cos_sl;
-				surfaceFlux.mass[SurfaceFluxes::MS_WIND] += snowPixel.ErosionMass / snowPixel.cos_sl;
+				surfaceFlux.mass[SurfaceFluxes::MS_WIND] += snowPixel.ErosionMass;
 				dIntEnergy += snowPixel.dIntEnergy; //it is reset at every new call to runSnowpackModel
 				meteoPixel.hs = snowPixel.cH - snowPixel.Ground; //do not reproject here, otherwise Snowpack outputs would get messed up
 				if (enable_simple_snow_drift || enable_explicit_snow_drift) {
-					erodedmass(ix,iy) += snowPixel.ErosionMass / snowPixel.cos_sl; //store the eroded mass
+					erodedmass(ix,iy) += snowPixel.ErosionMass; //store the eroded mass
 				}
 			} catch (const std::bad_alloc&) { //don't try anything fancy when running low on memory
 				const int lus =(int)floor( landuse(ix,iy));
