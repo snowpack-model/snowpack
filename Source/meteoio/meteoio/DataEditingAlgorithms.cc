@@ -33,9 +33,8 @@ namespace mio {
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data. There are several
  * edition commands that can be stacked at will, per station ID. This is similar to the way that filters (\ref processing "processing elements") are
  * also stacked together. In order to rectrict any editing to a specific set of time ranges, use the **when** option followed by a comma 
- * delimited list of date intervals (represented by two ISO formatted dates seperated by ' - '), similarly to the 
- * \ref processing "Filters" (but right now, the automerge and merge commands don't support these time restrictions). The general 
- * syntax is ('#' represent a number, so each key remains unique):
+ * delimited list of date intervals (represented by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), 
+ * similarly to the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
  * @code
  * {stationID}::edit# = {command}
  * {stationID}::arg#::{argument name} = {values}
@@ -47,10 +46,12 @@ namespace mio {
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
- * (in such a case, the wildcard stack will be applied before any other stack). Currently, the data creation is applied 
- * after all stacks have been processed but this will change in the near future...
+ * (in such a case, the wildcard stack will be applied before any other stack). Please note that all station IDs are
+ * handled case insensitive while all meteo parameter are case sensitive. Currently, the data creation is 
+ * applied after all stacks have been processed but this will change in the near future...
  * 
  * The following Input Data Editing commands are available:
+ *     - NONE: this is used when importing another ini file to overwrite a command with an empty one
  *     - SWAP: swap two parameters, see EditingSwap
  *     - MOVE: rename one or more parameters into a new name, see EditingMove
  *     - EXCLUDE: delete a list of parameters, see EditingExclude
@@ -72,7 +73,7 @@ namespace mio {
  */
 
 EditingBlock::EditingBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg) 
-             : time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "InputEditing::"+name+" for station "+i_stationID, cfg.get("TIME_ZONE", "Input")) ), stationID(i_stationID), block_name(name) {}
+             : time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "InputEditing::"+name+" for station "+i_stationID, cfg.get("TIME_ZONE", "Input")) ), stationID( IOUtils::strToUpper(i_stationID) ), block_name(name) {}
              
 const std::string EditingBlock::toString() const 
 {
@@ -212,11 +213,11 @@ void EditingSwap::parse_args(const std::vector< std::pair<std::string, std::stri
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="DEST") {
 			IOUtils::parseArg(vecArgs[ii], where, dest_param);
-			IOUtils::toUpper( dest_param );
+			//IOUtils::toUpper( dest_param );
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::parseArg(vecArgs[ii], where, src_param);
-			IOUtils::toUpper( src_param ),
+			//IOUtils::toUpper( src_param ),
 			has_src = true;
 		}
 	}
@@ -263,10 +264,11 @@ void EditingMove::parse_args(const std::vector< std::pair<std::string, std::stri
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="DEST") {
 			IOUtils::parseArg(vecArgs[ii], where, dest_param);
-			IOUtils::toUpper( dest_param );
+			//IOUtils::toUpper( dest_param );
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
-			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), src_params);
+			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), src_params);
+			IOUtils::readLineToSet( vecArgs[ii].second, src_params);
 			has_src = true;
 		}
 	}
@@ -315,7 +317,8 @@ void EditingExclude::parse_args(const std::vector< std::pair<std::string, std::s
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="EXCLUDE") {
-			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), exclude_params);
+			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), exclude_params);
+			IOUtils::readLineToSet( vecArgs[ii].second, exclude_params);
 			has_excludes = true;
 		}
 	}
@@ -362,7 +365,8 @@ void EditingKeep::parse_args(const std::vector< std::pair<std::string, std::stri
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="KEEP") {
-			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), keep_params);
+			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), keep_params);
+			IOUtils::readLineToSet( vecArgs[ii].second, keep_params);
 			has_excludes = true;
 		}
 	}
@@ -424,7 +428,7 @@ void EditingAutoMerge::parse_args(const std::vector< std::pair<std::string, std:
 
 void EditingAutoMerge::mergeStations(const size_t& toStationIdx, STATIONS_SET& vecStation)
 {
-	const std::string toStationID( vecStation[toStationIdx].stationID );
+	const std::string toStationID( IOUtils::strToUpper(vecStation[toStationIdx].stationID) );
 	
 	//stations before toStationIdx are not == stationID both for the "*" station and for any specific stationID
 	for (size_t jj=toStationIdx+1; jj<vecStation.size(); jj++) { //loop over the stations
@@ -448,7 +452,7 @@ void EditingAutoMerge::editTimeSeries(STATIONS_SET& vecStation)
 		//find our current station in vecStation
 		size_t toStationIdx=IOUtils::npos;
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-			if (vecStation[ii].stationID==stationID) {
+			if (IOUtils::strToUpper(vecStation[ii].stationID)==stationID) {
 				toStationIdx = ii;
 				break;
 			}
@@ -461,7 +465,7 @@ void EditingAutoMerge::editTimeSeries(STATIONS_SET& vecStation)
 
 void EditingAutoMerge::mergeMeteo(const size_t& toStationIdx, std::vector<METEO_SET>& vecMeteo) const
 {
-	const std::string toStationID( vecMeteo[toStationIdx].front().getStationID() );
+	const std::string toStationID( IOUtils::strToUpper(vecMeteo[toStationIdx].front().getStationID()) );
 	size_t nr_conflicts = 0;
 	
 	for (size_t jj=toStationIdx+1; jj<vecMeteo.size(); jj++) { //loop over the stations
@@ -495,7 +499,7 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		size_t toStationIdx=IOUtils::npos;
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
-			if (vecMeteo[ii].front().getStationID()==stationID) {
+			if (IOUtils::strToUpper(vecMeteo[ii].front().getStationID())==stationID) {
 				toStationIdx = ii;
 				break;
 			}
@@ -526,7 +530,8 @@ void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::str
 		if (vecArgs[ii].first=="MERGE") {
 			IOUtils::readLineToVec( IOUtils::strToUpper(vecArgs[ii].second), merged_stations);
 		} else if (vecArgs[ii].first=="PARAMS") {
-			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), merged_params);
+			//IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), merged_params);
+			IOUtils::readLineToSet( vecArgs[ii].second, merged_params);
 		} else if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );
 		} else if (vecArgs[ii].first=="MERGE_CONFLICTS") {
@@ -551,7 +556,7 @@ void EditingMerge::editTimeSeries(STATIONS_SET& vecStation)
 	//find our current station in vecStation
 	size_t toStationIdx=IOUtils::npos;
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-		if (vecStation[ii].stationID==stationID) {
+		if (IOUtils::strToUpper(vecStation[ii].stationID)==stationID) {
 			toStationIdx = ii;
 			break;
 		}
@@ -563,7 +568,7 @@ void EditingMerge::editTimeSeries(STATIONS_SET& vecStation)
 		const std::string fromStationID( IOUtils::strToUpper( merged_stations[jj] ) );
 		
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-			if (vecStation[ii].stationID==fromStationID)
+			if (IOUtils::strToUpper(vecStation[ii].stationID)==fromStationID)
 				vecStation[toStationIdx].merge( vecStation[ii] );
 		}
 	}
@@ -575,7 +580,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	size_t toStationIdx = IOUtils::npos;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty()) continue;
-		if (vecMeteo[ii].front().getStationID() == stationID) {
+		if (IOUtils::strToUpper(vecMeteo[ii].front().getStationID()) == stationID) {
 			toStationIdx = ii;
 			break;
 		}
@@ -589,7 +594,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
-			if (vecMeteo[ii].front().getStationID() != fromStationID) continue;
+			if (IOUtils::strToUpper(vecMeteo[ii].front().getStationID()) != fromStationID) continue;
 			
 			if (merged_params.empty()) { //merge all parameters
 				if (time_restrictions.empty()) {
@@ -633,11 +638,11 @@ void EditingCopy::parse_args(const std::vector< std::pair<std::string, std::stri
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="DEST") {
 			IOUtils::parseArg(vecArgs[ii], where, dest_param);
-			IOUtils::toUpper( dest_param ); //HACK not needed if vecArgs is prepared upper case
+			//IOUtils::toUpper( dest_param );
 			has_dest = true;
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::parseArg(vecArgs[ii], where, src_param);
-			IOUtils::toUpper( src_param ),
+			//IOUtils::toUpper( src_param ),
 			has_src = true;
 		}
 	}
