@@ -102,6 +102,31 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 	}
 }
 
+/**
+ * @brief Prepare a station that will be merged in case of time restrictions
+ * @details In order to apply time restrictions for merges, the easiest is to filter
+ * the "from" stations, one by one, to only contain data within the time restrictions periods. 
+ * Then any merge type works as intented and the process is not too expensive. 
+ * 
+ * @note this method is only supposed to be called when !time_restrictions.empty()
+ * @param[in] vecMeteo timeseries of the station that provides the data on the from side of merge
+ * @return timeseries of the "from" station only containing data in the time restrictions periods
+ */
+METEO_SET EditingBlock::timeFilterFromStation(const METEO_SET& vecMeteo) const
+{
+	if (time_restrictions.empty()) return vecMeteo;
+	METEO_SET vecResults;
+	
+	//the next two lines are required to offer time restrictions
+	for (RestrictionsIdx editPeriod(vecMeteo, time_restrictions); editPeriod.isValid(); ++editPeriod) {
+		for (size_t jj = editPeriod.getStart(); jj < editPeriod.getEnd(); ++jj) { //loop over the timesteps
+			vecResults.push_back( vecMeteo[jj] );
+		}
+	}
+	
+	return vecResults;
+}
+
 
 RestrictionsIdx::RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions)
                 : start(), end(), index(0)
@@ -443,7 +468,12 @@ void EditingAutoMerge::mergeMeteo(const size_t& toStationIdx, std::vector<METEO_
 		if (vecMeteo[jj].empty())  continue;
 		const std::string fromStationID( IOUtils::strToUpper(vecMeteo[jj].front().getStationID()) );
 		if (fromStationID==toStationID) {
-			nr_conflicts += MeteoData::mergeTimeSeries(vecMeteo[toStationIdx], vecMeteo[jj], merge_strategy, merge_conflicts); //merge timeseries for the two stations
+			if (time_restrictions.empty()) {
+				nr_conflicts += MeteoData::mergeTimeSeries(vecMeteo[toStationIdx], vecMeteo[jj], merge_strategy, merge_conflicts); //merge timeseries for the two stations
+			} else {
+				std::vector<MeteoData> tmp_meteo( timeFilterFromStation(vecMeteo[jj]) );
+				nr_conflicts += MeteoData::mergeTimeSeries(vecMeteo[toStationIdx], tmp_meteo, merge_strategy, merge_conflicts); //merge timeseries for the two stations
+			}
 			std::swap( vecMeteo[jj], vecMeteo.back() );
 			vecMeteo.pop_back();
 			jj--; //we need to redo the current jj, because it contains another station
@@ -562,10 +592,17 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			if (vecMeteo[ii].front().getStationID() != fromStationID) continue;
 			
 			if (merged_params.empty()) { //merge all parameters
-				MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], vecMeteo[ii], merge_strategy, merge_conflicts );
+				if (time_restrictions.empty()) {
+					MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], vecMeteo[ii], merge_strategy, merge_conflicts );
+				} else {
+					std::vector<MeteoData> tmp_meteo( timeFilterFromStation(vecMeteo[ii]) );
+					MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], tmp_meteo, merge_strategy, merge_conflicts );
+				}
 			} else { //only merge some specific parameters
+				std::vector<MeteoData> tmp_meteo = (time_restrictions.empty())? vecMeteo[ii] : timeFilterFromStation(vecMeteo[ii]);
+				
 				//apply a KEEP to a temporary copy of the vector to merge from
-				std::vector<MeteoData> tmp_meteo( vecMeteo[ii] );
+				//std::vector<MeteoData> tmp_meteo( vecMeteo[ii] );
 				EditingKeep::processStation(tmp_meteo, 0, tmp_meteo.size(), merged_params);
 				
 				MeteoData::mergeTimeSeries( vecMeteo[toStationIdx], tmp_meteo, merge_strategy, merge_conflicts );
