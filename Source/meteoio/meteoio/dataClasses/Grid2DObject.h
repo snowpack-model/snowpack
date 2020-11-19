@@ -173,7 +173,6 @@ class Grid2DObject {
 		* @param ids (const std::vector<double>&) clusters Ids to be used. clustersId.size()=thresholds.size()+1
 		* The first id will replace all values between 0 and the first threshold, and the last id will replace all
 		* values greater than the last threshold. Hence, you need one more id than threshold values.
-		* @return true if binning was succesful
 		*/
 		void binning(const std::vector<double>& thresholds, const std::vector<double>& ids);
 

@@ -636,6 +636,7 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C" || tmp=="°C") units_offset[ii] = Cst::t_water_freezing_pt;
 		else if (tmp=="HPA") units_multiplier[ii] = 1e2;
 		else if (tmp=="MM" || tmp=="MV" || tmp=="MA") units_multiplier[ii] = 1e-3;
+		else if (tmp=="MIN") units_multiplier[ii] = 60.;
 		else if (tmp=="IN") units_multiplier[ii] = 0.0254;
 		else if (tmp=="FT") units_multiplier[ii] = 0.3048;
 		else if (tmp=="F") { units_multiplier[ii] = 5./9.; units_offset[ii] = -32.*5./9.;}
