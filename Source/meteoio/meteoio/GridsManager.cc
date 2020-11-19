@@ -176,7 +176,8 @@ std::vector<StationData> GridsManager::initVirtualStationsAtAllGridPoints(const 
 			//extract vstation number, build the station name and station ID
 			stat_id++;
 			const std::string id_str( IOUtils::toString(stat_id) );
-			StationData sd(curr_point, "VIR"+id_str, "Virtual_Station_"+id_str);
+			const std::string id_grid( IOUtils::toString(ii)+"-"+IOUtils::toString(jj) );
+			StationData sd(curr_point, "GRID_"+id_grid, "Virtual_Station_"+id_str);
 			sd.setSlope(dem.slope(ii,jj), dem.azi(ii,jj));
 			v_stations.push_back( sd );
 		}
@@ -204,7 +205,8 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 
 	//read the provided coordinates, remove duplicates and generate metadata
 	std::vector<StationData> v_stations;
-	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "INPUT") );
+	const std::vector< std::pair<std::string, std::string> > vecStation( cfg.getValues("Vstation", "InputEditing") );
+	
 	for (size_t ii=0; ii<vecStation.size(); ii++) {
 		if (vecStation[ii].first.find('_') != std::string::npos) continue; //so we skip the other vstations_xxx parameters
 
@@ -217,6 +219,8 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 
 		//extract vstation number, used to build the station name and station ID
 		const std::string id_num( vecStation[ii].first.substr(std::string("Vstation").length()) );
+		const bool has_id = cfg.keyExists("Vid"+id_num, "InputEditing");
+		const std::string vir_id = (has_id)? cfg.get("Vid"+id_num, "InputEditing"): "VIR"+id_num;
 
 		size_t i = curr_point.getGridI(), j = curr_point.getGridJ();
 		if (fourNeighbors) { //pick the surrounding four nodes
@@ -231,7 +235,7 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 					curr_point.setGridIndex(static_cast<int>(mm), static_cast<int>(nn), IOUtils::inodata, true);
 					const std::string sub_id( IOUtils::toString((mm-i)*2+(nn-j)+1) );
 					const std::string grid_pos( IOUtils::toString(mm) + "-" + IOUtils::toString(nn) );
-					StationData sd(curr_point, "VIR"+id_num+"_"+sub_id, "Virtual_Station_"+grid_pos);
+					StationData sd(curr_point, vir_id+"_"+sub_id, "Virtual_Station_"+grid_pos);
 					sd.setSlope(dem.slope(mm,nn), dem.azi(mm,nn));
 					v_stations.push_back( sd );
 				}
@@ -252,7 +256,7 @@ std::vector<StationData> GridsManager::initVirtualStations(const DEMObject& dem,
 				curr_point.setGridIndex(static_cast<int>(i), static_cast<int>(j), IOUtils::inodata, true);
 			}
 
-			StationData sd(curr_point, "VIR"+id_num, "Virtual_Station_"+id_num);
+			StationData sd(curr_point, vir_id, "Virtual_Station_"+id_num);
 			sd.setSlope(dem.slope(i,j), dem.azi(i,j));
 			v_stations.push_back( sd );
 		}

@@ -1280,6 +1280,11 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		}
 		for (size_t n = 0; n < nN; n++) {
 			U[n] += ddU[ n ];
+			// If the solver converged, but we are seeing crazy nodes, and the function is not requested to throw at no convergence
+			// we set the flag TempEqConverged to false, such that the solver can try with a smaller time step
+			if ( ! ((U[n] > t_crazy_min) && (U[n] < t_crazy_max)) ) {
+				if ( !NotConverged && !ThrowAtNoConvergence ) TempEqConverged = false;
+			}
 		}
 	} while ( NotConverged ); // end Convergence Loop
 

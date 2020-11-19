@@ -45,9 +45,10 @@ namespace mio {
  * @subsection vstations Virtual stations
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
  * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive
- * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [Input] section):
+ * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [InputEditing] section):
  *    + RESAMPLING_STRATEGY set to VSTATIONS;
  *    + VSTATION# : provide the lat, lon and altitude or easting, northing and altitude for a virtual station (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
+ *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#);
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds (default: 0);
@@ -77,10 +78,12 @@ namespace mio {
  * STATION3	= WFJ2
  * STATION4	= *DAV
  * 
+ * [InputEditing]
  * #here the locations where the data will be generated. The caller will only see these stations!
  * RESAMPLING_STRATEGY = VSTATIONS
  * VSTATION1 = latlon 46.793029 9.821343 1987
- * VSTATION2 = latlon 46.793031 9.831572 2300
+ * VSTATION2 = latlon 46.793031 9.831572 1577
+ * VID2 = Mattenwald
  * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
  * VSTATIONS_REFRESH_RATE = 21600
  * VSTATIONS_REFRESH_OFFSET = 3600
@@ -88,9 +91,10 @@ namespace mio {
  * 
  * @subsection grids_extract From gridded data
  * The meteorological time series are extracted from time series of user-provided grids. Therefore a plugin for 2D grids must have been defined (with the GRID2D key in
- * the [Input] section). The following keys control this downscaling process:
+ * the [Input] section). The following keys (in the [InputEditing] section) control this downscaling process:
  *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT* or *GRID_ALL*;
  *    + VSTATION# : provide the lat, lon and altitude for the virtual station (only required for GRID_EXTRACT);
+ *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#, unused for GRID_ALL);
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
@@ -103,6 +107,7 @@ namespace mio {
  * GRID2DFILE = ./input/grids/era-interim.nc
  * NETCDF_SCHEMA = ECMWF
  * 
+ * [InputEditing]
  * RESAMPLING_STRATEGY = GRID_EXTRACT
  * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
  * 
@@ -115,9 +120,10 @@ namespace mio {
  * @subsubsection grids_smart From gridded data, with spatial interpolations
  * This is a combination between \ref grids_extract "gridded data extraction" and \ref vstations "Vstations": the meteorological time series are extracted 
  * from time series of user-provided grids at 4 points around each provided location and then spatially interpolated at the said locations. 
- * Therefore, the following additional keys are required:
+ * Therefore, the following additional keys are required, in the [InputEditing] section:
  *    + RESAMPLING_STRATEGY set to *GRID_SMART*;
  *    + VSTATION# : provide the lat, lon and altitude for the virtual station;
+ *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#);
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
@@ -132,6 +138,7 @@ namespace mio {
  * GRID2DFILE = ./input/grids/era-interim.nc
  * NETCDF_SCHEMA = ECMWF
  * 
+ * [InputEditing]
  * RESAMPLING_STRATEGY = GRID_SMART
  * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
  * 
@@ -150,7 +157,7 @@ namespace mio {
  * The process is very similar to what has been laid out for the \ref sp_resampling "spatial resampling". The meteorological time series are extracted 
  * as described out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
  * Meteo2DInterpolator to be spatially interpolated over the provided DEM. This therefore performs grid resampling and accounts for elevation gradients, etc
- * as configured in the [2DInterpolations] section. The following keys control this downscaling process:
+ * as configured in the [2DInterpolations] section. The following keys control this downscaling process (in the [InputEditing] section):
  *    + REGRIDDING_STRATEGY set to *GRID_RESAMPLE*;
  *    + SOURCE_DEM : filename of the DEM to be read by the GRID2D plugin. This DEM provides the elevations, slopes, etc for the source grids.
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
@@ -162,10 +169,11 @@ namespace mio {
  * 
  * GRID2D    = NETCDF
  * GRID2DFILE = ./input/grids/era-interim.nc
- * SOURCE_DEM = ./input/grids/era-interim-dem.nc
  * NETCDF_SCHEMA = ECMWF
  * 
+ * [InputEditing]
  * REGRIDDING_STRATEGY = GRID_RESAMPLE
+ * SOURCE_DEM = ./input/grids/era-interim-dem.nc
  * Virtual_parameters = TA RH PSUM ILWR P VW ISWR
  * @endcode
  * @note The resampled grids won't be provided by the read2DGrid() call but by the getMeteoData() call since they are considered as spatial interpolations.
@@ -175,8 +183,8 @@ namespace mio {
 IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
 {
 	//HACK for now, we consider that EITHER Resampling_strategy or Regridding_strategy is provided
-	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "Input", "");
-	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "Input", "");
+	const std::string resampling_strategy_str = i_cfg.get("Resampling_strategy", "InputEditing", "");
+	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "InputEditing", "");
 	if (!resampling_strategy_str.empty() && !regridding_strategy_str.empty())
 		throw InvalidArgumentException("Currently, it is not posible to use both resampling_strategy and regridding_strategy", AT);
 	
@@ -197,7 +205,7 @@ IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
 
 IOUtils::OperationMode IOManager::getIOManagerGridMode(const Config& i_cfg)
 {
-	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "Input", "");
+	const std::string regridding_strategy_str = i_cfg.get("Regridding_strategy", "InputEditing", "");
 	if (regridding_strategy_str.empty())
 		return IOUtils::STD;
 	if (regridding_strategy_str=="GRID_RESAMPLE")
@@ -226,7 +234,7 @@ void IOManager::initIOManager()
 	//TODO support extra parameters by getting the param index from vecTrueMeteo[0]
 	if (ts_mode>=IOUtils::GRID_EXTRACT) {
 		std::vector<std::string> vecStr;
-		cfg.getValue("Virtual_parameters", "Input", vecStr);
+		cfg.getValue("Virtual_parameters", "InputEditing", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
 			const size_t param_idx = MeteoGrids::getParameterIndex( vecStr[ii] );
 			if (param_idx==IOUtils::npos)
@@ -237,7 +245,7 @@ void IOManager::initIOManager()
 	
 	if (ts_mode==IOUtils::VSTATIONS || ts_mode==IOUtils::GRID_SMART) {
 		std::vector<std::string> vecStr;
-		cfg.getValue("Virtual_parameters", "Input", vecStr);
+		cfg.getValue("Virtual_parameters", "InputEditing", vecStr);
 		for (size_t ii=0; ii<vecStr.size(); ii++) {
 			const size_t param_idx = MeteoData::getStaticParameterIndex( vecStr[ii] );
 			if (param_idx==IOUtils::npos)
@@ -254,7 +262,7 @@ void IOManager::initVirtualStations()
 {
 	if (ts_mode==IOUtils::GRID_RESAMPLE) {
 		source_dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE));
-		const std::string source_dem_str = cfg.get("Source_dem", "Input");
+		const std::string source_dem_str = cfg.get("Source_dem", "InputEditing");
 		gdm1.read2DGrid(source_dem, source_dem_str);
 		source_dem.update();
 	} else {
@@ -270,8 +278,8 @@ void IOManager::initVirtualStations()
 		}
 		
 		if (ts_mode==IOUtils::VSTATIONS || ts_mode==IOUtils::GRID_SMART) {
-			cfg.getValue("VSTATIONS_REFRESH_RATE", "Input", vstations_refresh_rate);
-			cfg.getValue("VSTATIONS_REFRESH_OFFSET", "Input", vstations_refresh_offset, IOUtils::nothrow);
+			cfg.getValue("VSTATIONS_REFRESH_RATE", "InputEditing", vstations_refresh_rate);
+			cfg.getValue("VSTATIONS_REFRESH_OFFSET", "InputEditing", vstations_refresh_offset, IOUtils::nothrow);
 			v_stations = gdm1.initVirtualStations(source_dem, false, false);
 		}
 	}

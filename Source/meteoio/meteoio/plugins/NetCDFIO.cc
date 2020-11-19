@@ -131,6 +131,7 @@ namespace mio {
  * DEMFILE = /data/meteo_reanalysis/ECMWF_Europe_20150101-20150701.nc
  *
  * #The lines below have nothing to do with this plugin
+ * [InputEditing]
  * Downscaling = true
  * VSTATION1 = 46.793029 9.821343 ;this is Davos
  * Virtual_parameters = TA RH PSUM ISWR ILWR P VW DW TSS HS RSWR TSG ;this has to fit the parameter set in the data files
@@ -148,6 +149,7 @@ namespace mio {
  * NETCDF_VAR::PSUM = RhiresD               ;overwrite the PSUM parameter with "RhiresD", for example for MeteoCH reanalysis
  *
  * #The lines below have nothing to do with this plugin
+ * [InputEditing]
  * Downscaling = true
  * VSTATION1 = 46.793029 9.821343 ;this is Davos
  * Virtual_parameters = PSUM ;this has to fit the parameter set in the data files
@@ -376,9 +378,9 @@ void NetCDFIO::parseInputOutputSection()
 	}
 }
 
-void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &meteo_files)
+void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &nc_files)
 {
-	meteo_files.clear();
+	nc_files.clear();
 	std::list<std::string> dirlist( FileUtils::readDirectory(in_path, nc_ext) );
 	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	dirlist.sort();
@@ -389,10 +391,10 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 		const std::string filename( in_path + "/" + *it );
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
-		meteo_files.push_back( make_pair(file.getDateRange(), file) );
-		it++;
+		nc_files.push_back( make_pair(file.getDateRange(), file) );
+		++it;
 	}
-	std::sort(meteo_files.begin(), meteo_files.end(), &sort_cache_grids);
+	std::sort(nc_files.begin(), nc_files.end(), &sort_cache_grids);
 }
 
 bool NetCDFIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list)
@@ -620,13 +622,17 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 		std::cout << "\tDimensions:\n";
 		for (std::map<size_t, ncpp::nc_dimension>::const_iterator it = dimensions_map.begin(); it!=dimensions_map.end(); ++it)
 			std::cout << "\t\t" << it->second.toString() << "\n";
-		if (!vecTime.empty()) std::cout << "\ttime range: [" << vecTime.front().toString(Date::ISO) << " - " << vecTime.back().toString(Date::ISO) << "]\n";
-		std::cout << "\tVariables:\n";
-		for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it)
-			std::cout << "\t\t" << ncpp::getParameterName( it->first ) << " -> " << it->second.toString() << "\n";
-		std::cout << "\tUnrecognized variables:\n";
-		for (std::map<std::string, ncpp::nc_variable>::const_iterator it=unknown_vars.begin(); it!=unknown_vars.end(); ++it)
-			std::cout << "\t\t" << it->first << " -> " << it->second.toString() << "\n";
+		if (!vecTime.empty()) std::cout << "\ttime range: [" << vecTime.front().first.toString(Date::ISO) << " - " << vecTime.back().first.toString(Date::ISO) << "]\n";
+		if (!vars.empty()) {
+			std::cout << "\tVariables:\n";
+			for (std::map<size_t, ncpp::nc_variable>::const_iterator it=vars.begin(); it!=vars.end(); ++it)
+				std::cout << "\t\t" << ncpp::getParameterName( it->first ) << " -> " << it->second.toString() << "\n";
+		}
+		if (!unknown_vars.empty()) {
+			std::cout << "\tUnrecognized variables:\n";
+			for (std::map<std::string, ncpp::nc_variable>::const_iterator it=unknown_vars.begin(); it!=unknown_vars.end(); ++it)
+				std::cout << "\t\t" << it->first << " -> " << it->second.toString() << "\n";
+		}
 	}
 
 	//check that the used schema has declared the minimum required dimensions and potentially, associated variables (if based on schema)
@@ -700,8 +706,8 @@ void ncFiles::initFromFile(const std::string& filename)
 	initDimensionsFromFile();
 	initVariablesFromFile();
 
-	isLatLon = hasDimension(ncpp::LATITUDE) && hasDimension(ncpp::LONGITUDE);
-	const bool isXY = hasDimension(ncpp::EASTING) && hasDimension(ncpp::NORTHING);
+	isLatLon = ( hasDimension(ncpp::LATITUDE) && hasDimension(ncpp::LONGITUDE) );
+	const bool isXY = ( hasDimension(ncpp::EASTING) && hasDimension(ncpp::NORTHING) );
 	if (isLatLon) {
 		vecY = read_1Dvariable(ncpp::LATITUDE);
 		vecX = read_1Dvariable(ncpp::LONGITUDE);
@@ -709,7 +715,12 @@ void ncFiles::initFromFile(const std::string& filename)
 		vecX = read_1Dvariable(ncpp::EASTING);
 		vecY = read_1Dvariable(ncpp::NORTHING);
 	}
-	if (hasDimension(ncpp::TIME)) vecTime = read_1Dvariable();
+	if (hasDimension(ncpp::TIME)) {
+		const std::vector<Date> tmp( read_1Dvariable() ); //watch out: this might be unsorted
+		vecTime.resize( tmp.size() );
+		for (size_t ii=0; ii<tmp.size(); ii++) vecTime[ii] = std::make_pair( tmp[ii], ii);
+		std::sort( vecTime.begin(), vecTime.end()); //by default sorts on the first element
+	}
 
 	int epsg = IOUtils::inodata;
 	ncpp::getGlobalAttribute(ncid, "epsg", epsg);
@@ -724,7 +735,7 @@ void ncFiles::initFromFile(const std::string& filename)
 std::pair<Date, Date> ncFiles::getDateRange() const
 {
 	if (vecTime.empty()) return make_pair( Date(), Date() );
-	return make_pair( vecTime.front(), vecTime.back() );
+	return make_pair( vecTime.front().first, vecTime.back().first );
 }
 
 std::set<size_t> ncFiles::getParams() const
@@ -735,6 +746,14 @@ std::set<size_t> ncFiles::getParams() const
 	}
 
 	return available_params;
+}
+
+std::vector<Date> ncFiles::getTimestamps() const 
+{
+	std::vector<Date> results( vecTime.size() );
+	for (size_t ii=0; ii<vecTime.size(); ii++) results[ii] = vecTime[ii].first;
+	return results;
+	
 }
 
 Grid2DObject ncFiles::read2DGrid(const std::string& varname)
@@ -797,9 +816,11 @@ Grid2DObject ncFiles::read2DGrid(const size_t& param, const Date& date)
 
 	size_t time_pos = IOUtils::npos;
 	if (!date.isUndef()) {
-		const std::vector<Date>::iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), date);
-		if (*low!=date) throw NoDataException("No data at "+date.toString(Date::ISO)+" in file "+file_and_path, AT);
-		time_pos = static_cast<size_t>( std::distance(vecTime.begin(), low) );
+		const std::vector< std::pair<Date,size_t> >::iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), std::make_pair(date,(size_t)0));
+		if (low->first!=date)
+			throw NoDataException("No "+MeteoGrids::getParameterName( param )+" data at "+date.toString(Date::ISO)+" in file "+file_and_path, AT);
+		
+		time_pos = low->second;
 	} else {
 		//no date has been provided, check if this parameter depends on time
 		const std::map<size_t, ncpp::nc_dimension>::const_iterator it2 = dimensions_map.find(ncpp::TIME);
@@ -1237,9 +1258,9 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 	//the time has been read in the constructor, but we must find the section of interest for the current call
 	size_t start_idx=0, end_idx=0;
 	for (size_t ii=0; ii<vecTime.size(); ii++) {
-		if (vecTime[ii]<dateStart) start_idx++;
+		if (vecTime[ii].first<dateStart) start_idx++;
 		end_idx++;
-		if (vecTime[ii]>dateEnd) break;
+		if (vecTime[ii].first>dateEnd) break;
 	}
 	if (start_idx==vecTime.size() || end_idx==0) { //the data is either after or before the requested period
 		if (!keep_input_files_open) {
@@ -1265,7 +1286,7 @@ std::vector< std::vector<MeteoData> > ncFiles::readMeteoData(const Date& dateSta
 	for (size_t st=0; st<nrStations; st++) {
 		for (size_t ii=start_idx; ii<end_idx; ii++) {
 			vecMeteo[st][ii-start_idx].meta = vecStation[st];
-			vecMeteo[st][ii-start_idx].date = vecTime[ii];
+			vecMeteo[st][ii-start_idx].date = vecTime[ii].first;
 		}
 	}
 
@@ -1343,7 +1364,7 @@ Date ncFiles::getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 	}
 }
 
-std::vector<Date> ncFiles::createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
+std::vector< std::pair<Date,size_t> > ncFiles::createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx)
 {
 	if (station_idx==IOUtils::npos) { //all stations into one file
 		std::set<Date> tmp; //a set is sorted and contains unique values
@@ -1352,11 +1373,16 @@ std::vector<Date> ncFiles::createCommonTimeBase(const std::vector< std::vector<M
 				tmp.insert( vecMeteo[st][ii].date );
 		}
 
-		const std::vector<Date> result(tmp.begin(), tmp.end());
+		std::vector< std::pair<Date,size_t> > result( tmp.size() );
+		size_t ii=0;
+		for (std::set<Date>::const_iterator it=tmp.begin(); it!=tmp.end(); ++it) {
+			std::make_pair(vecMeteo[station_idx][ii].date, ii);
+			ii++;
+		}
 		return result;
 	} else { //one file per station
-		std::vector<Date> result(vecMeteo[station_idx].size());
-		for (size_t ii=0; ii<vecMeteo[station_idx].size(); ii++) result[ii] = vecMeteo[station_idx][ii].date;
+		std::vector< std::pair<Date,size_t> > result( vecMeteo[station_idx].size() );
+		for (size_t ii=0; ii<vecMeteo[station_idx].size(); ii++) result[ii] = std::make_pair(vecMeteo[station_idx][ii].date, ii);
 		return result;
 	}
 }
@@ -1502,7 +1528,7 @@ const std::vector<double> ncFiles::fillBufferForAssociatedVar(const std::vector<
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
 				//we pre-round the data so when libnetcdf will cast, it will fall on what we want
 					//note: the scale parameter is used as a divisor for TIME
-				data[ll] = static_cast<double>( Optim::round( (vecTime[ll].getJulian(true) - var.offset) * var.scale) );
+				data[ll] = static_cast<double>( Optim::round( (vecTime[ll].first.getJulian(true) - var.offset) * var.scale) );
 				if (prev!=IOUtils::nodata && data[ll]==prev)
 					throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 				prev = data[ll];
@@ -1512,7 +1538,7 @@ const std::vector<double> ncFiles::fillBufferForAssociatedVar(const std::vector<
 			double prev = IOUtils::nodata;
 			for (size_t ll=0; ll<nrTimeSteps; ll++) {
 				//for better numerical consistency, we round the data to Date::epsilon_sec in NetCDF internal representation
-				data[ll] = transformTime(vecTime[ll].getJulian(true), var.offset, var.scale, time_precision);
+				data[ll] = transformTime(vecTime[ll].first.getJulian(true), var.offset, var.scale, time_precision);
 				if (prev!=IOUtils::nodata && data[ll]==prev)
 					throw InvalidArgumentException("When writing time as INT or in seconds, some timesteps are rounded to identical values. Please change your sampling rate!", AT);
 				prev = data[ll];
@@ -1592,7 +1618,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 					if (ii>=vecMeteo[st].size()) continue; //this station does not have data anymore
 
 					const MeteoData md( vecMeteo[st][ii] );
-					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
+					if (md.date != vecTime[ll].first) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
 
 					const double curr_julian = md.date.getJulian(true);
 					//trick: in order to get an accumulation period at start, we take the one from the next timestep and assume they are the same
@@ -1612,7 +1638,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const std::vector< std::vect
 					if (ii>=vecMeteo[st].size()) continue; //this station does not have data anymore
 
 					const MeteoData md( vecMeteo[st][ii] );
-					if (md.date != vecTime[ll]) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
+					if (md.date != vecTime[ll].first) continue; //every time step is in vecTime but each station does not necessarily have all timesteps
 
 					if (md( meteodata_param ) != IOUtils::nodata)
 						data[ll*nrStations + (st-st_start)] = md( meteodata_param );
@@ -1696,7 +1722,7 @@ void ncFiles::applyUnits(Grid2DObject& grid, const std::string& units, const siz
 	else if (units=="%") grid /= 100.;
 	else if (units=="J/m2" || units=="J m**-2") {
 		if (vecTime.size()>1 && time_pos!=IOUtils::npos) {
-			const Date integration_period = (time_pos>0)? (vecTime[time_pos] - vecTime[time_pos-1]) : (vecTime[time_pos+1] - vecTime[time_pos]);
+			const Date integration_period = (time_pos>0)? (vecTime[time_pos].first - vecTime[time_pos-1].first) : (vecTime[time_pos+1].first - vecTime[time_pos].first);
 			grid /= (integration_period.getJulian()*24.*3600.); //converting back to W/m2
 		}
 	}
@@ -1728,13 +1754,13 @@ size_t ncFiles::addTimestamp(const Date& date)
 	//search for the proper insertion position
 	if (time_pos>0) {
 		//we keep vecTime in sync with the file, so we can do the searches into vecTime
-		if (date==vecTime.back()) {
+		if (date==vecTime.back().first) {
 			create_timestamp = false;
 			time_pos--;
-		} else if (date<vecTime.back()) {
-			const std::vector<Date>::const_iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), date);
-			if (*low==date) create_timestamp = false;
-			time_pos = static_cast<size_t>( std::distance<std::vector<Date>::const_iterator>(vecTime.begin(), low) ); //weird syntax to take the proper template
+		} else if (date<vecTime.back().first) {
+			const std::vector< std::pair<Date,size_t> >::const_iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), std::make_pair(date,(size_t)0));
+			if (low->first==date) create_timestamp = false;
+			time_pos = low->second;
 		}
 	}
 
@@ -1745,9 +1771,9 @@ size_t ncFiles::addTimestamp(const Date& date)
 		const int status = nc_put_vara_double(ncid, vars[ncpp::TIME].varid, start, count, &packed_dt);
 		if (status != NC_NOERR) throw IOException("Could not write data for record variable '" + vars[ncpp::TIME].attributes.name + "': " + nc_strerror(status), AT);
 		if (time_pos==vecTime.size())
-			vecTime.push_back( date );
+			vecTime.push_back( std::make_pair(date,vecTime.size()) );
 		else
-			vecTime.insert(vecTime.begin()+time_pos, date);
+			vecTime.insert(vecTime.begin()+time_pos, std::make_pair(date,time_pos) );
 	}
 
 	return time_pos;

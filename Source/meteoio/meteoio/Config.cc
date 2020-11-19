@@ -236,6 +236,7 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
                         std::string section, const bool& anywhere) const
 {
 	IOUtils::toUpper(section);
+	section = section + "::"; //include the delimiter
 	IOUtils::toUpper(keymatch);
 	std::vector<std::string> vecResult;
 
@@ -247,20 +248,20 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 				const size_t section_len = section.length();
 				const size_t found_pos = (it->first).find(keymatch, section_len);
 				if (found_pos!=string::npos) { //found it!
-					const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-					vecResult.push_back(key);
+					const std::string key( (it->first).substr(section_len) ); //from pos to the end
+					vecResult.push_back( key );
 				}
 			}
 		}
 	} else {
-		keymatch = section + "::" + keymatch;
+		keymatch = section + keymatch;
 
 		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
 			const size_t found_pos = (it->first).find(keymatch, 0);
 			if (found_pos==0) { //found it!
 				const size_t section_len = section.length();
-				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-				vecResult.push_back(key);
+				const std::string key( (it->first).substr(section_len) ); //from pos to the end
+				vecResult.push_back( key );
 			}
 		}
 	}

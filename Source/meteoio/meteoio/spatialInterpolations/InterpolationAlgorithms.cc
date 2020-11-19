@@ -128,6 +128,7 @@ namespace mio {
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  * - ALS_SCALING: scaling from Airborn Laser Scan data (see ALS_Interpolation)
+ * - SNOWLINE: assimilation of snowline elevation information from external data sources (see SnowlineAlgorithm)
  *
  * @section interpol2D_trends Altitudinal trends
  * Several algorithms use elevation trends, all of them relying on the same principles: the lapse rates are recomputed at each time steps

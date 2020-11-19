@@ -169,15 +169,15 @@ namespace mio {
  *
  * @subsection Multiple_input_plugins Multiple data sources
  * It is possible to use multiple plugins to read \b meteorological \b timeseries from multiple sources and combine them into one stream of data. This is
- * achieved by declaring as many \em DATASOURCExxx sections as necessary (where xxx represent any number, to make sure that not two
+ * achieved by declaring as many \em [Input#] sections as necessary (where # represent any number, to make sure that not two
  * sections have the same name) and declaring \em METEO plugins in each of them. Please make sure that all required keys are defined within each
- * new such section (such as TIME_ZONE) because the plugins created this way won't have access to the original \em INPUT section. The other
- * plugins (such as for reading grids, dem, etc) as well as the raw data editing will only be read from the standard \em INPUT section and
+ * new such section (such as TIME_ZONE) because the plugins created this way won't have access to the other \em [Input] sections. The other
+ * plugins (such as for reading grids, dem, etc) will only be read from the standard \em [Input] section and
  * performed as usual after the data has been provided by the plugins.
  *
  * If reading the same station from multiple sources (for example providing different time coverage), it might be useful to use
  * the EditingAutoMerge feature to merge all streams belonging to a station into one single stream. In this case, the data coming from [Input]
- * has priority over the various [DataSourcexxx] data sources.
+ * has priority over the various [Input#] data sources.
  *
  */
 
@@ -327,11 +327,7 @@ std::vector<std::string> IOHandler::getListOfSources(const std::string& plugin_k
 	const std::set<std::string> sections( cfg.getSections() );
 	std::vector<std::string> results;
 
-	//the [Input] section should always be returned if available and should come first (for priority in case of a later merge)
-	if (cfg.keyExists(plugin_key, "INPUT")) results.push_back( "INPUT" );
-
 	for (std::set<std::string>::const_iterator it = sections.begin(); it!=sections.end(); ++it) {
-		if (*it=="INPUT") continue; //the {input] section has already been processed
 		const size_t found_pos = it->find(sec_pattern, 0);
 		if (found_pos==0 && cfg.keyExists(plugin_key, *it)) results.push_back( *it );
 	}
@@ -390,7 +386,7 @@ void IOHandler::readGlacier(Grid2DObject& glacier_out)
 
 void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
-	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
+	const std::vector<std::string> sources( getListOfSources("METEO", "INPUT") ); //[INPUT] is included anyway
 	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);;
 
 	for (size_t ii=0; ii<sources.size(); ii++) {
@@ -411,7 +407,7 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
                               std::vector<METEO_SET>& vecMeteo)
 {
-	const std::vector<std::string> sources( getListOfSources("METEO", "DATASOURCE") ); //[INPUT] is included anyway
+	const std::vector<std::string> sources( getListOfSources("METEO", "INPUT") ); //[INPUT] is included anyway
 	if (sources.empty()) throw UnknownValueException("No plugin defined for METEO", AT);
 
 	//some time filters change the requested dates (for example, time loop)
