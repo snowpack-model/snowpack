@@ -41,8 +41,8 @@ output_res_in_minutes=$(echo ${output_res_in_seconds} / 60 | bc)							# In minu
 # Create .smet files for each year
 if [ ${model} == "MERRA-2" ]; then
 	# MERRA-2 has output each :30
-	../meteoio_timeseries -b ${yr}-01-01T00:30:00 -e ${yr}-12-31T23:30:00 -c ${model}_${yr}.ini -s ${output_res_in_minutes} > ../log/${model}_${yr}.log 2>&1
+	../meteoio_timeseries -b ${yr}-01-01T00:30:00 -e ${yr}-12-31T23:30:00 -c ${model}_${yr}.ini -s ${output_res_in_minutes} -p > ../log/${model}_${yr}.log 2>&1
 else
 	# Other models have output each :00, and the following line assumes the last time step is 21:00 (i.e., 3-hourly output)
-	../meteoio_timeseries -b ${yr}-01-01T00:00:00 -e ${yr}-12-31T21:00:00 -c ${model}_${yr}.ini -s ${output_res_in_minutes} > ../log/${model}_${yr}.log 2>&1
+	../meteoio_timeseries -b ${yr}-01-01T00:00:00 -e ${yr}-12-31T21:00:00 -c ${model}_${yr}.ini -s ${output_res_in_minutes} -p > ../log/${model}_${yr}.log 2>&1
 fi

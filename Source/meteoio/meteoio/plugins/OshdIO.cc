@@ -446,8 +446,10 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 		if (param==MeteoData::PSUM) return val;
 		else return val/1000.;
 	}
+	if (units=="\x3F\x43") return val+Cst::t_water_freezing_pt; //unknown encoding hex for '°C'
 	if (units=="\xB0\x43") return val+Cst::t_water_freezing_pt; //ISO-8859-1 hex for '°C'
 	if (units=="\xB0" && param==MeteoData::TA) return val+Cst::t_water_freezing_pt; //ISO-8859-1 hex for '°'
+	if (units=="\x3F" && param==MeteoData::DW) return val; //unknown encoding hex for '°'
 	if (units=="\xB0" && param==MeteoData::DW) return val; //ISO-8859-1 hex for '°'
 	if (units.empty()) return val;
 	if (units=="Pa") return val;

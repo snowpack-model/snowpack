@@ -65,9 +65,9 @@ SnowlineAlgorithm::SnowlineAlgorithm(const std::vector< std::pair<std::string, s
 			IOUtils::parseArg(vecArgs[ii], where_, verbose_);
 		} else if (vecArgs[ii].first == "SET") {
 			IOUtils::parseArg(vecArgs[ii], where_, cutoff_val_);
-		} else if (vecArgs[ii].first == "ENFORCE_POSITIVE_RATE") {
+		} else if (vecArgs[ii].first == "ENFORCE_POSITIVE_RATE") { //control rate if it is "reversed"
 			IOUtils::parseArg(vecArgs[ii], where_, enforce_positive_rate_);
-		} else if (vecArgs[ii].first == "CALC_BASE_RATE") {
+		} else if (vecArgs[ii].first == "CALC_BASE_RATE") { //control rate in any case
 			IOUtils::parseArg(vecArgs[ii], where_, calc_base_rate_);
 		} else if (vecArgs[ii].first == "FALLBACK_RATE") {
 			IOUtils::parseArg(vecArgs[ii], where_, fallback_rate_);
@@ -97,7 +97,7 @@ double SnowlineAlgorithm::getQualityRating(const Date& i_date)
 }
 
 void SnowlineAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
-{
+{ //perform the interpolation
 	getSnowlines();
 	if (snowlines_.empty()) { //we already gave notice for this
 		baseInterpol(IOUtils::nodata, dem, grid);
@@ -120,7 +120,7 @@ void SnowlineAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 }
 
 void SnowlineAlgorithm::baseInterpol(const double& snowline, const DEMObject& dem, Grid2DObject& grid)
-{
+{ //perform interpolation with the base algorithm
 	std::string base_alg_fallback( base_alg_ ); //fallback algorithm if only 1 station is used
 	if (nrOfMeasurments == 1) {
 		base_alg_fallback = "AVG";
@@ -367,7 +367,7 @@ void SnowlineAlgorithm::getSnowlines()
 }
 
 double SnowlineAlgorithm::probeTrend()
-{
+{ //check the base algorithm's lapse rate
 	//calculate model parameters - we don't want to change data yet:
 	Trend trend(input_args_, algo, param);
 	std::vector<double> vecData_copy( vecData );
@@ -444,7 +444,7 @@ std::vector< std::pair<std::string, std::string> > SnowlineAlgorithm::prepareBas
 }
 
 void SnowlineAlgorithm::msg(const std::string& message)
-{
+{ //print info messages if verbosity is enabled
 	if (verbose_)
 		std::cerr << message << std::endl;
 }

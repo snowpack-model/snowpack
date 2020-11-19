@@ -157,9 +157,9 @@ std::map< std::string, std::set<std::string> > DataEditing::getDependencies() co
 	//build the list of stations that are merged to and merged from
 	std::map< std::string, std::vector< EditingBlock* > >::const_iterator it_blocks;
 	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
-		const std::string stat_id( it_blocks->first );
+		const std::string stat_id( IOUtils::strToUpper(it_blocks->first) );
 		for (size_t jj=0; jj<it_blocks->second.size(); jj++) {
-			const std::set<std::string> tmp_set( it_blocks->second[jj]->getDependencies() );
+			const std::set<std::string> tmp_set( it_blocks->second[jj]->getDependencies() ); //they should be uppercase already
 			if (!tmp_set.empty()) {
 				dependencies[ stat_id ].insert(tmp_set.begin(), tmp_set.end());
 			} else {
@@ -258,7 +258,7 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 		const std::string current_ID( processing_order[ll] );
 		
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-			if (vecStation[ii].getStationID() == current_ID) {
+			if (IOUtils::strToUpper(vecStation[ii].getStationID()) == current_ID) {
 				if (editingStack.count(current_ID) > 0) {
 					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
 						editingStack[current_ID][jj]->editTimeSeries(vecStation);
@@ -298,7 +298,7 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
-			if (vecMeteo[ii].front().getStationID() == current_ID) {
+			if (IOUtils::strToUpper(vecMeteo[ii].front().getStationID()) == current_ID) {
 				if (editingStack.count(current_ID) > 0) {
 					for (size_t jj=0; jj<editingStack[current_ID].size(); jj++) {
 						editingStack[current_ID][jj]->editTimeSeries(vecMeteo);

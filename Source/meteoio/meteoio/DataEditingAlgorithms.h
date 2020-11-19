@@ -89,6 +89,7 @@ class EditingBlock {
 		
 	protected:
 		std::string getName() const {return block_name;}
+		METEO_SET timeFilterFromStation(const METEO_SET& vecMeteo) const; //merge and automerge need this method
 		
 		const std::vector<DateRange> time_restrictions;
 		const std::string stationID, block_name;
@@ -268,7 +269,6 @@ class EditingMerge : public EditingBlock {
 		virtual void editTimeSeries(STATIONS_SET& vecStation);
 		
 		std::set<std::string> getDependencies() const;
-		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::vector< std::string > merged_stations;

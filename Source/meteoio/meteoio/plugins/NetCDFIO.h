@@ -36,7 +36,7 @@ class ncFiles {
 
 		std::pair<Date, Date> getDateRange() const;
 		std::set<size_t> getParams() const;
-		std::vector<Date> getTimestamps() const {return vecTime;}
+		std::vector<Date> getTimestamps() const;
 		Grid2DObject read2DGrid(const size_t& param, const Date& date);
 		Grid2DObject read2DGrid(const std::string& varname);
 
@@ -68,7 +68,7 @@ class ncFiles {
 		void writeGridMetadataHeader(const Grid2DObject& grid_in);
 		void writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static Date getRefDate(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
-		static std::vector<Date> createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
+		static std::vector< std::pair<Date,size_t> > createCommonTimeBase(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx);
 		static void pushVar(std::vector<size_t> &nc_variables, const size_t& param);
 		size_t addToVars(const size_t& param);
 		size_t addToVars(const std::string& name);
@@ -86,7 +86,7 @@ class ncFiles {
 		NC_SCHEMA schema; ///<Object that contain all the schema information
 		std::map<size_t, ncpp::nc_variable> vars; ///< all the recognized variables for the selected schema_name and current file
 		std::map<std::string, ncpp::nc_variable> unknown_vars; ///< all the unrecognized variables for the current file, as map< name, nc_variable>
-		std::vector<Date> vecTime;
+		std::vector< std::pair<Date,size_t> > vecTime; //date and index in the NetCDF time vector to accomodate unsorted time base
 		std::vector<double> vecX, vecY; ///< caching the lats/lons or eastings/northings to deal with grids
 		std::map<size_t, ncpp::nc_dimension> dimensions_map; ///< all the dimensions for the current schema, as found in the current file
 		std::string file_and_path, coord_sys, coord_param;
@@ -128,7 +128,7 @@ class NetCDFIO : public IOInterface {
 
 	private:
 		void parseInputOutputSection();
-		void scanPath(const std::string& in_path, const std::string& nc_ext, std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &meteo_files);
+		void scanPath(const std::string& in_path, const std::string& nc_ext, std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &nc_files);
 		void cleanMeteoCache(std::vector< std::pair<std::pair<Date,Date>, ncFiles> > &meteo_files);
 
 		const Config cfg;

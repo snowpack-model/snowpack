@@ -1,30 +1,30 @@
 #!/bin/bash
-# Usage: cut_pro_file.sh -r <n> -b <startdate> -e <enddate> <*.pro file>
+# Usage: cut_smet_file.sh -r <n> -b <startdate> -e <enddate> <*.smet file>
 # This reduces the output to every <n>-th data frame on or after timestamp <startdate> up to and including timestamp <enddate>.
 # <n> is optional and should be an integer larger than 0.
 # <startdate> and <enddate> are optional and should be formatted as: yyyy-mm-ddThh:mm, or, if only part of the string is provided, it will be padded with zeros (i.e., 2000-02 becomes 2000-02-00T00:00).
-# The modified *.pro file is written to stdout.
+# The modified *.smet file is written to stdout.
 #
-# Example 1: bash cut_pro_file.sh -r 4 output/output.pro > output/cut_output.pro
-#            this reduces the output to every 4th data frame, writing output to file: output/cut_output.pro.
-# Example 2: bash cut_pro_file.sh -r 4 -b 1980-01-01T00:00 output/output.pro
+# Example 1: bash cut_smet_file.sh -r 4 output/output.smet > output/cut_output.smet
+#            this reduces the output to every 4th data frame, writing output to file: output/cut_output.smet.
+# Example 2: bash cut_smet_file.sh -r 4 -b 1980-01-01T00:00 output/output.smet
 #            this reduces the output to every 4th data frame on and after 1980-01-01T00:00, writing output to stdout.
-# Example 3: bash cut_pro_file.sh -r 4 -e 1990-01-01T00:00 output/output.pro
+# Example 3: bash cut_smet_file.sh -r 4 -e 1990-01-01T00:00 output/output.smet
 #            this reduces the output to every 4th data frame up to and including 1990-01-01T00:00, writing output to stdout.
 
 function printHelp {
-	echo "Usage: cut_pro_file.sh -r <n> -b <startdate> -e <enddate> <*.pro file>" > /dev/stderr
+	echo "Usage: cut_smet_file.sh -r <n> -b <startdate> -e <enddate> <*.smet file>" > /dev/stderr
 	echo "" > /dev/stderr
-	echo "This script reduces the *pro file to every <n>-th data frame on or after timestamp <startdate> up to and including timestamp <enddate>." > /dev/stderr
+	echo "This script reduces the *smet file to every <n>-th data frame on or after timestamp <startdate> up to and including timestamp <enddate>." > /dev/stderr
 	echo "<n> is optional and should be an integer larger than 0." > /dev/stderr
 	echo "<startdate> and <enddate> are optional and should be formatted as: yyyy-mm-ddThh:mm, or, if only part of the string is provided, it will be padded with zeros (i.e., 2000-02 becomes 2000-02-00T00:00)." > /dev/stderr
-	echo "The modified *.pro file is written to stdout." > /dev/stderr
+	echo "The modified *.smet file is written to stdout." > /dev/stderr
 	echo "" > /dev/stderr
-	echo "Example 1: bash cut_pro_file.sh -r 4 output/output.pro > output/cut_output.pro" > /dev/stderr
-	echo "           this reduces the output to every 4th data frame, writing output to file: output/cut_output.pro." > /dev/stderr
-	echo "Example 2: bash cut_pro_file.sh -r 4 -b 1980-01-01T00:00 output/output.pro" > /dev/stderr
+	echo "Example 1: bash cut_smet_file.sh -r 4 output/output.smet > output/cut_output.smet" > /dev/stderr
+	echo "           this reduces the output to every 4th data frame, writing output to file: output/cut_output.smet." > /dev/stderr
+	echo "Example 2: bash cut_smet_file.sh -r 4 -b 1980-01-01T00:00 output/output.smet" > /dev/stderr
 	echo "           this reduces the output to every 4th data frame on and after 1980-01-01T00:00, writing output to stdout." > /dev/stderr
-	echo "Example 3: bash cut_pro_file.sh -r 4 -e 1990-01-01T00:00 output/output.pro" > /dev/stderr
+	echo "Example 3: bash cut_smet_file.sh -r 4 -e 1990-01-01T00:00 output/output.smet" > /dev/stderr
 	echo "           this reduces the output to every 4th data frame up to and including 1990-01-01T00:00, writing output to stdout." > /dev/stderr
 }
 
@@ -78,9 +78,9 @@ BEGIN { \
 	if(/\[DATA\]/) { \
 		print; \
 		header=0; \
-	}; \
-	if(int(substr($1,1,4))==500 && header==0) { \
-		datum=sprintf("%04d-%02d-%02dT%02d:%02d:%02d", substr($2,7,4), substr($2,4,2), substr($2,1,2), substr($2,12,2), substr($2,15,2), substr($2,18,2)); \
+		printdata=0; \
+	} else { \
+		datum=sprintf("%04d-%02d-%02dT%02d:%02d:%02d", substr($1,1,4), substr($1,6,2), substr($1,9,2), substr($1,12,2), substr($1,15,2), substr($1,18,2)); \
 		if(substr(datum,1,16) > substr(et,1,16)) exit; \
 		if(substr(datum,1,16) >= substr(bt,1,16)) { \
 			if(n%red==0) { \
@@ -94,7 +94,6 @@ BEGIN { \
 	if(header==1) { \
 		print; \
 	} else if (printdata==1) { \
-		if(m>0) {printf("\n")}; m++;	# Deal with the fact that *.pro files have no EOL at last line.
-		printf("%s", $0) \
+		print; \
 	} \
 }' $f

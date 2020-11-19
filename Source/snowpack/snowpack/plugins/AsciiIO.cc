@@ -161,6 +161,8 @@ const bool AsciiIO::t_gnd = false;
  * 0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)
  * 0502,nElems,element density (kg m-3)
  * 0503,nElems,element temperature (degC)
+ * 0504,nElems,element ID
+ * 0505,nElems,element age (days)
  * 0506,nElems,liquid water content by volume (%)
  * 0507,nElems,liquid preferential flow water content by volume (%)
  * 0508,nElems,dendricity (1)
@@ -988,6 +990,10 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	fout << "\n0504," << nE;
 	for (size_t e = 0; e < nE; e++)
 		fout << "," << std::fixed << std::setprecision(0) << EMS[e].ID;
+	// 0505: element age
+	fout << "\n0505," << nE;
+	for (size_t e = 0; e < nE; e++)
+		fout << "," << std::fixed << std::setprecision(2) << i_date.getJulian() - EMS[e].depositionDate.getJulian();
 	// 0506: liquid water content by volume (%)
 	fout << "\n0506," << nE + Noffset;
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
@@ -2449,6 +2455,7 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0502,nElems,element density (kg m-3)";
 	fout << "\n0503,nElems,element temperature (degC)";
 	fout << "\n0504,nElems,element ID (1)";
+	fout << "\n0505,nElems,element age (days)";
 	fout << "\n0506,nElems,liquid water content by volume (%)";
 	if(enable_pref_flow) fout << "\n0507,nElems,liquid preferential flow water content by volume (%)";
 	fout << "\n0508,nElems,dendricity (1)";
