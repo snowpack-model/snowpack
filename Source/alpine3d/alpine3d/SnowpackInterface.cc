@@ -1457,10 +1457,15 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) ); // Wind direction
 	mio::Grid2DObject U( grid_VW, 0. );
 	mio::Grid2DObject V( grid_VW, 0. );
+	mio::Grid2DObject Um( grid_VW, 0. );
+	mio::Grid2DObject Vm( grid_VW, 0. );
 	mio::Grid2DObject dM( ErodedMass, 0. ); // Local mass perturbation due to drifting snow redistribution.
 	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass.
 	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass; // Output mass
 	grid_snowdrift_out(0.);
+
+	// Boundary condtion:
+	const bool ZeroFluxBC = false;
 
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
@@ -1491,46 +1496,78 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		}
 	}
 
+	// Calculate wind speed on "staggered" grid
+	for (size_t iy=1; iy<dimy; iy++) {
+		for (size_t ix=1; ix<dimx; ix++) {
+			// U-component
+			if (U(ix, iy) == IOUtils::nodata && U(ix-1, iy) == IOUtils::nodata) {
+				Um(ix, iy) = IOUtils::nodata;
+			} else if (U(ix-1, iy) == IOUtils::nodata) {
+				Um(ix, iy) = U(ix, iy);
+			} else if (U(ix, iy) == IOUtils::nodata) {
+				Um(ix, iy) = U(ix-1, iy);
+			} else {
+				Um(ix, iy) = 0.5 * (U(ix-1, iy) + U(ix, iy));
+			}
+
+			// V-component
+			if (V(ix, iy) == IOUtils::nodata && V(ix, iy-1) == IOUtils::nodata) {
+				Vm(ix, iy) = IOUtils::nodata;
+			} else if (V(ix, iy-1) == IOUtils::nodata) {
+				Vm(ix, iy) = V(ix, iy);
+			} else if (V(ix, iy) == IOUtils::nodata) {
+				Vm(ix, iy) = V(ix, iy-1);
+			} else {
+				Vm(ix, iy) = 0.5 * (V(ix, iy-1) + V(ix, iy));
+			}
+		}
+	}
+
 	// Fill grid_snowdrift_out
 	for (double time_advance = 0.; time_advance < dt; time_advance += sub_dt) {
 		if (time_advance + sub_dt > dt) {
 			sub_dt = dt - time_advance;
 		}
-		for (size_t iy=0; iy<dimy; iy++) {
-			for (size_t ix=0; ix<dimx; ix++) {
-				if (grid_VW(ix, iy) != IOUtils::nodata && grid_DW(ix, iy) != IOUtils::nodata) {
-					//if(tmp_ErodedMass(ix, iy)!=0. && tmp_ErodedMass(ix, iy)!=IOUtils::nodata) printf("YYY: %d %d %f %f %f\n", ix, iy, u, v, tmp_ErodedMass(ix, iy));
-
-					// What is advected (interior grid cels)
-					if (ix>0 && iy>0 && ix < dimx-1 && iy < dimy-1) { // Grid cell is not at the edge.
-						if(U(ix, iy)>0) {
-							dM(ix, iy) += tmp_ErodedMass(ix-1, iy) * fabs(U(ix-1, iy)) * (sub_dt / dx);
-							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-						}
-						if(U(ix, iy)<0) {
-							dM(ix, iy) += tmp_ErodedMass(ix+1, iy) * fabs(U(ix+1, iy)) * (sub_dt / dx);
-							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-						}
-						if(V(ix, iy)>0) {
-							dM(ix, iy) += tmp_ErodedMass(ix, iy-1) * fabs(V(ix, iy-1)) * (sub_dt / dx);
-							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-						}
-						if(V(ix, iy)<0) {
-							dM(ix, iy) += tmp_ErodedMass(ix, iy+1) * fabs(V(ix, iy+1)) * (sub_dt / dx);
-							dM(ix, iy) -= tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-						}
+		for (size_t iy=1; iy<dimy; iy++) {
+			for (size_t ix=1; ix<dimx; ix++) {
+				if (Um(ix, iy) != IOUtils::nodata && Vm(ix, iy) != IOUtils::nodata) {
+					if(Um(ix, iy)>0) {
+						const double deltaM = tmp_ErodedMass(ix-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+						dM(ix-1, iy) -= deltaM;
+						dM(ix, iy)   += deltaM;
+					} else {
+						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+						dM(ix-1, iy) += deltaM;
+						dM(ix, iy)   -= deltaM;
 					}
-
+					if(Vm(ix, iy)>0) {
+						const double deltaM = tmp_ErodedMass(ix, iy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+						dM(ix, iy-1) -= deltaM;
+						dM(ix, iy)   += deltaM;
+					} else {
+						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+						dM(ix, iy-1) += deltaM;
+						dM(ix, iy)   -= deltaM;
+					}
 				}
-				
+
+				// Set boundary condition
+				if (!ZeroFluxBC) {
+					// If not zero-flux, then we set constant-flux (i.e., dM at boundaries == 0):
+					dM(0,iy) = 0.;
+					dM(dimx-1,iy) = 0.;
+					dM(ix,0) = 0.;
+					dM(ix,dimy-1) = 0.;
+				}
+
 				// Negative suspended mass (tmp_ErodedMass) is impossible. If this field becomes negative, set it to zero.
 				if (ErodedMass(ix, iy) != IOUtils::nodata) {
 					tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
 					// This if statement could introduce a mass balance error.
 					if (tmp_ErodedMass(ix, iy) < 0.) {
-						// std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #1 ";
-						// std::cout << ix << " " << iy;
-						// std::cout << tmp_ErodedMass(ix, iy) << "\n";
+						//std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #1 ";
+						//std::cout << ix << " " << iy << " ";
+						//std::cout << tmp_ErodedMass(ix, iy) << "\n";
 						tmp_ErodedMass(ix, iy) = 0.;
 					}
 				}
@@ -1538,7 +1575,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		}
 	}
 
-	double s1 = 0, s2 = 0.;
+	double s1 = 0, s2 = 0., s3 = 0.;
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
 			if (dM(ix, iy) > 0.) {s1 += dM(ix, iy);}
@@ -1548,17 +1585,20 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 				//    -95        - 10               -100
 				if (dM(ix, iy) - Constants::eps < -ErodedMass(ix, iy)) {
 					// std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-					// std::cout << ix << " " << iy;
+					// std::cout << ix << " " << iy << " ";
 					// std::cout << dM(ix, iy) << -ErodedMass(ix, iy) << "\n";
 					s2 += -ErodedMass(ix, iy) - dM(ix, iy);
 					dM(ix, iy) = -ErodedMass(ix, iy);
 				}
 			}
+			s3+=dM(ix, iy);
 		}
 	}
-	if(s2!=0.) {
+	if(s2!=0. || s3!=0.) {
 		std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-		printf("%.10f %.10f\n", s2, s1);
+		printf("%.10f (total pos: %.10f). Sum dM==%.10f\n", s2, s1, s3);
+		//s2+=s3;
+		s3=0.;
 	}
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
@@ -1567,7 +1607,6 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 				winderosiondeposition(ix, iy) = dM(ix, iy);
 				grid_snowdrift_out(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
 				if(grid_snowdrift_out(ix, iy) < Constants::eps) grid_snowdrift_out(ix, iy) = 0.;
-				//printf("FF: %d %d %f %f %f\n", ix, iy, ErodedMass(ix,iy), dM(ix,iy), grid_snowdrift_out(ix,iy));
 			}
 		}
 	}
