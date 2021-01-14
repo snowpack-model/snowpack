@@ -2499,13 +2499,13 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	if ( (Edata0.L > max_elem_l) || (Edata1.L > max_elem_l) )
 		return false;
 
-	if ( (Edata0.mk%100 != Edata1.mk%100) && (depth < 10. || reduce_n_elements == 1) )
+	if ( (reduce_n_elements <= 2 || depth < 1.) && (Edata0.mk%100 != Edata1.mk%100) )
 		return false;
 
 	double comb_thresh_sp_flex;
 	if (reduce_n_elements <= 1) {
 		comb_thresh_sp_flex = comb_thresh_sp;
-	} else {
+	} else if (reduce_n_elements == 2) {
 		if (depth <= 10.) {
 			comb_thresh_sp_flex = comb_thresh_sp;
 		} else if (depth >= 20.) {
@@ -2513,6 +2513,8 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 		} else {
 			comb_thresh_sp_flex = (((1.01 - comb_thresh_sp) / 10.) * depth) + (2. * comb_thresh_sp - 1.01);
 		}
+	} else {
+		comb_thresh_sp_flex = (std::max(0., (depth - 1.)) * comb_thresh_sp * 10.) + comb_thresh_sp;
 	}
 
 	if ( fabs(Edata0.sp - Edata1.sp) > comb_thresh_sp_flex )
@@ -2521,10 +2523,10 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	if ( Edata0.theta[SOIL] > 0. || Edata1.theta[SOIL] > 0. )
 		return false;
 
-	if ( (Edata0.mk >= 100 && int(Edata0.mk/1000)!=9) || (Edata1.mk >= 100 && int(Edata0.mk/1000)!=9) )
+	if ( (reduce_n_elements <= 2 || depth < 1.) && ((Edata0.mk >= 100 && int(Edata0.mk/1000)!=9) || (Edata1.mk >= 100 && int(Edata0.mk/1000)!=9)) )
 		return false;
 
-	if ( (Edata0.mk%100 == 3) || (Edata1.mk%100 == 3) )
+	if ( (reduce_n_elements <= 2 || depth < 1.) && ((Edata0.mk%100 == 3) || (Edata1.mk%100 == 3)) )
 		return false;
 
 	if ( (Edata0.dd > comb_thresh_dd || Edata1.dd > comb_thresh_dd) &&
@@ -2537,7 +2539,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	double comb_thresh_ice_flex;
 	if (reduce_n_elements <= 1) {
 		comb_thresh_ice_flex = comb_thresh_ice;
-	} else {
+	} else if (reduce_n_elements == 2) {
 		if (depth <= 50.) {
 			comb_thresh_ice_flex = comb_thresh_ice;
 		} else if (depth >= 150.) {
@@ -2545,6 +2547,8 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 		} else {
 			comb_thresh_ice_flex = (((4. * comb_thresh_ice) / 100.) * depth) - comb_thresh_ice;
 		}
+	} else {
+		comb_thresh_ice_flex = (std::max(0., (depth - 1.)) * comb_thresh_ice) + comb_thresh_ice;
 	}
 
 	if ( fabs(Edata0.theta[ICE] - Edata1.theta[ICE]) > comb_thresh_ice_flex )
@@ -2556,7 +2560,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	double comb_thresh_rg_flex;
 	if (reduce_n_elements <= 1) {
 		comb_thresh_rg_flex = comb_thresh_rg;
-	} else {
+	} else if (reduce_n_elements == 2) {
 		if (depth <= 10.) {
 			comb_thresh_rg_flex = comb_thresh_rg;
 		} else if ((depth > 10.) && (depth <= 50.)) {
@@ -2566,6 +2570,8 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 		} else {
 			comb_thresh_rg_flex = comb_thresh_rg * 50.;
 		}
+	} else {
+		comb_thresh_rg_flex = (std::max(0., (depth - 1.)) * comb_thresh_rg) + comb_thresh_rg;
 	}
 
 	if ( fabs(Edata0.rg - Edata1.rg) > comb_thresh_rg_flex )
