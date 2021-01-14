@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013-2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -47,34 +48,39 @@ namespace mio {
  * threshold for doing the splitting:
  * @code
  * [Generators]
- * PSUM_PH::generators     = PRECSPLITTING
- * PSUM_PH::PRECSPLITTING::type   = THRESH
- * PSUM_PH::PRECSPLITTING::snow   = 274.35
+ * PSUM_PH::generator1 = PRECSPLITTING
+ * PSUM_PH::arg1::type = THRESH
+ * PSUM_PH::arg1::snow = 274.35
  * @endcode
  * 
  * To generate the liquid and solid amounts from the precipitation sum, relying on a simple temperature threshold for the splitting
  * (if the precipitation phase is available, it will be used instead of calling the splitting model):
  * @code
  * [InputEditing]
- * PSUM_L::create     = PRECSPLITTING
- * PSUM_L::PRECSPLITTING::type   = THRESH
- * PSUM_L::PRECSPLITTING::snow   = 274.35
+ * ;using the '*' station ID, this will apply to all stations
+ * *::edit1           = CREATE
+ * *::arg1::algorithm = PRECSPLITTING
+ * *::arg1::param     = PSUM_L
+ * *::arg1::type      = THRESH
+ * *::arg1::snow      = 274.35
  * 
- * PSUM_S::create     = PRECSPLITTING
- * PSUM_S::PRECSPLITTING::type   = THRESH
- * PSUM_S::PRECSPLITTING::snow   = 274.35
+ * *::edit2           = CREATE
+ * *::arg2::algorithm = PRECSPLITTING
+ * *::arg2::param     = PSUM_S
+ * *::arg2::type      = THRESH
+ * *::arg2::snow      = 274.35
  * @endcode
  * 
  * @note When generating PSUM_L / PSUM_S, you most probably also need to set their resampling to "accumulate", like for PSUM...
  */
 class PrecSplitting : public GeneratorAlgorithm {
 	public:
-		PrecSplitting(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), model(THRESH), where("generators::"+algo), fixed_thresh(IOUtils::nodata),
+		PrecSplitting(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(THRESH), where( section+"::"+algo ), fixed_thresh(IOUtils::nodata),
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
 
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -72,8 +73,6 @@ class Grid2DObject {
 		Grid2DObject(const Grid2DObject& i_grid, const double& init);
 
 		Grid2DObject(const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
-
-		virtual ~Grid2DObject() {}
 
 		/**
 		* @brief constructs an object as a subset of another grid object
@@ -176,7 +175,6 @@ class Grid2DObject {
 		*/
 		void binning(const std::vector<double>& thresholds, const std::vector<double>& ids);
 
-		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 		Grid2DObject& operator=(const double& value); ///<Assignement operator
 
 		Grid2DObject& operator+=(const double& rhs);

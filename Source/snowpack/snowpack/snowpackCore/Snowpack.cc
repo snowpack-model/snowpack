@@ -56,8 +56,6 @@ const bool Snowpack::hydrometeor = false;
 const double Snowpack::snowfall_warning = 0.5;
 
 const unsigned int Snowpack::new_snow_marker = 0;
-const double Snowpack::new_snow_albedo = 0.9;
-const double Snowpack::min_snow_albedo = 0.3;
 
 /// Min volumetric ice content allowed
 const double Snowpack::min_ice_content = SnLaws::min_hn_density / Constants::density_ice;
@@ -632,9 +630,9 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 		Bdata.qr = 0.;
 	}
 
-  const double emmisivity = (Xdata.getNumberOfElements() > Xdata.SoilNode) ? Constants::emissivity_snow : Xdata.SoilEmissivity;
+	const double emmisivity = (Xdata.getNumberOfElements() > Xdata.SoilNode) ? Constants::emissivity_snow : Xdata.SoilEmissivity;
 
-	const double lw_in  = emmisivity * Constants::stefan_boltzmann * Mdata.ea * Optim::pow4(Tair);
+	const double lw_in  = emmisivity * Atmosphere::blkBody_Radiation(Mdata.ea, Tair);
 	Bdata.lw_out = emmisivity * Constants::stefan_boltzmann * Optim::pow4(Tss);
 	Bdata.lw_net = lw_in - Bdata.lw_out;
 
@@ -780,7 +778,7 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 		size_t eAlbedo = nE-1;
 		size_t marker = EMS[eAlbedo].mk % 10;
 
-		while ((marker==8 || marker==9) && eAlbedo > Xdata.SoilNode){ //If Water or ice layer, go one layer down
+		while ((marker==8 || marker==9) && eAlbedo > Xdata.SoilNode && !Xdata.isGlacier(false)){ //If Water or ice layer (but not glacier), go one layer down
 			eAlbedo--;
 			marker = EMS[eAlbedo].mk % 10;
 		}
@@ -813,7 +811,7 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 
 		if (nE > Xdata.SoilNode) {
 			// For snow
-			Albedo = std::max(min_snow_albedo, std::min(new_snow_albedo, Albedo));
+			Albedo = std::max(Constants::min_albedo, std::min(Constants::max_albedo, Albedo));
 		} else {
 			// For soil
 			Albedo = std::max(0.05, std::min(0.95, Albedo));
@@ -1546,7 +1544,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 
 	if (nAddE < 1) return;
 
-	Xdata.Albedo = Snowpack::new_snow_albedo;
+	Xdata.Albedo = Constants::max_albedo;
 
 	const size_t nNewN = nOldN + nAddE;
 	const size_t nNewE = nOldE + nAddE;
@@ -1830,7 +1828,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				Xdata.Ndata[nOldN-1].hoar = 0.;
 			}
 
-			Xdata.Albedo = Snowpack::new_snow_albedo;
+			Xdata.Albedo = Constants::max_albedo;
 
 			const size_t nNewN = nOldN + nAddE + nHoarE;
 			const size_t nNewE = nOldE + nAddE + nHoarE;

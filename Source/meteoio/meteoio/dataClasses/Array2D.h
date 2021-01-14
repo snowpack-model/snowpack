@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -80,8 +81,6 @@ template<class T> class Array2D {
 		*/
 		Array2D(const size_t& anx, const size_t& any, const T& init);
 
-		virtual ~Array2D();
-
 		/**
 		* A constructor that can be used to create an Array2D object that is contained in the
 		* one passed as i_array2D argument. The resulting Array2D object is a by value copy of
@@ -143,9 +142,9 @@ template<class T> class Array2D {
 		*/
 		bool getKeepNodata() const;
 
-		void resize(const size_t& nx, const size_t& ny);
-		void resize(const size_t& nx, const size_t& ny, const T& init);
-		void size(size_t& nx, size_t& ny) const;
+		void resize(const size_t& anx, const size_t& any);
+		void resize(const size_t& anx, const size_t& any, const T& init);
+		void size(size_t& anx, size_t& any) const;
 		size_t size() const;
 		size_t getNx() const;
 		size_t getNy() const;
@@ -195,7 +194,6 @@ template<class T> class Array2D {
 		const T operator ()(const size_t& i) const;
 		Array2DProxy<T> operator[](const size_t& i);
 
-		Array2D<T>& operator =(const Array2D<T>&);
 		Array2D<T>& operator =(const T& value);
 
 		Array2D<T>& operator+=(const T& rhs);
@@ -275,8 +273,6 @@ template<class T> Array2DProxy<T> Array2D<T>::operator[](const size_t& i) {
 template<class T> Array2D<T>::Array2D() : vecData(), nx(0), ny(0), keep_nodata(true)
 {
 }
-
-template<class T> Array2D<T>::~Array2D() { }
 
 template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const size_t& i_nx, const size_t& i_ny,
                                       const size_t& i_ncols, const size_t& i_nrows) :
@@ -546,16 +542,6 @@ template<class T> bool Array2D<T>::checkEpsilonEquality(const Array2D<double>& r
 
 template<class T> bool Array2D<T>::checkEpsilonEquality(const Array2D<double>& rhs1, const Array2D<double>& rhs2, const double& epsilon) { //static
 	return rhs1.checkEpsilonEquality(rhs2, epsilon);
-}
-
-template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
-	if (this != &source) {
-		keep_nodata = source.keep_nodata;
-		nx = source.nx;
-		ny = source.ny;
-		vecData = source.vecData;
-	}
-	return *this;
 }
 
 template<class T> Array2D<T>& Array2D<T>::operator=(const T& value) {

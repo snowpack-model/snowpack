@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  *  meteoio_timeseries
  *
@@ -86,14 +87,14 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 
 	struct option long_options[] =
 	{
-		{"begindate", required_argument, 0, 'b'},
-		{"enddate", required_argument, 0, 'e'},
-		{"config", required_argument, 0, 'c'},
-		{"sampling-rate", required_argument, 0, 's'},
-		{"progress", no_argument, 0, 'p'},
-		{"version", no_argument, 0, 'v'},
-		{"help", no_argument, 0, 'h'},
-		{0, 0, 0, 0}
+		{"begindate", required_argument, nullptr, 'b'},
+		{"enddate", required_argument, nullptr, 'e'},
+		{"config", required_argument, nullptr, 'c'},
+		{"sampling-rate", required_argument, nullptr, 's'},
+		{"progress", no_argument, nullptr, 'p'},
+		{"version", no_argument, nullptr, 'v'},
+		{"help", no_argument, nullptr, 'h'},
+		{nullptr, 0, nullptr, 0}
 	};
 
 	if (argc==1) { //no arguments provided
@@ -210,8 +211,8 @@ static void real_main(int argc, char* argv[])
 
 int main(int argc, char** argv)
 {
-	setbuf(stdout, NULL); //always flush stdout
-	setbuf(stderr, NULL); //always flush stderr
+	setbuf(stdout, nullptr); //always flush stdout
+	setbuf(stderr, nullptr); //always flush stderr
 #ifdef DEBUG_ARITHM
 	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW ); //for halting the process at arithmetic exceptions, see also ReSolver1d
 #endif

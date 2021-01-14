@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2020 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -87,7 +88,7 @@ class ACDD {
 		
 		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
 		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
-		void setTimeCoverage(const std::vector<std::string>& vec_timestamp);
+		void setTimeCoverage(const std::vector<std::string>& vec_timestamp, const double& TZ);
 		
 	private:
 		void defaultInit();

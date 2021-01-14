@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -196,7 +197,7 @@ void Date::setUndef(const bool& flag) {
 * @brief Set internal gmt time from system time as well as system time zone.
 */
 void Date::setFromSys() {
-	const time_t curr( time(NULL) );// current time in UTC
+	const time_t curr( time(nullptr) );// current time in UTC
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
 	const time_t utc( mktime(&local) );// convert GMT tm to GMT time_t
 #ifndef __MINGW32__

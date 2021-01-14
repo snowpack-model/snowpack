@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -40,15 +41,15 @@ namespace mio {
  *
  * @code
  * [Generators]
- * PSUM::generators = ESOLIP
+ * PSUM::generator1 = ESOLIP
  * @endcode
  */
 class ESOLIPGenerator : public GeneratorAlgorithm {
 	public:
-		ESOLIPGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		ESOLIPGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 
 	private:
 		static double newSnowDensity(const MeteoData& md);

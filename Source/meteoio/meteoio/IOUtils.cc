@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -127,6 +128,14 @@ std::string bearing(double bearing)
 void stripComments(std::string& str)
 {
 	const size_t found = str.find_first_of("#;");
+	if (found != std::string::npos){
+		str.erase(found); //rest of line disregarded
+	}
+}
+
+void stripComments(std::string& str, const char& comment_mk)
+{
+	const size_t found = str.find_first_of(comment_mk);
 	if (found != std::string::npos){
 		str.erase(found); //rest of line disregarded
 	}
@@ -301,13 +310,13 @@ std::string getLogName()
 {
 	char *tmp;
 
-	if ((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
-		if ((tmp=getenv("LOGNAME"))==NULL) { //Unix
+	if ((tmp=getenv("USERNAME"))==nullptr) { //Windows & Unix
+		if ((tmp=getenv("LOGNAME"))==nullptr) { //Unix
 			tmp=getenv("USER"); //Windows & Unix
 		}
 	}
 
-	if (tmp==NULL) return std::string("");
+	if (tmp==nullptr) return std::string("");
 	return std::string(tmp);
 }
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -38,7 +39,7 @@ class GRIBIO : public IOInterface {
 		GRIBIO(const std::string& configfile);
 		GRIBIO(const GRIBIO&);
 		GRIBIO(const Config& cfgreader);
-		~GRIBIO() throw();
+		~GRIBIO() noexcept;
 
 		GRIBIO& operator=(const GRIBIO&); ///<Assignement operator, required because of pointer member
 
@@ -63,7 +64,7 @@ class GRIBIO : public IOInterface {
 		void listFields(const std::string& filename);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
-		void cleanup() throw();
+		void cleanup() noexcept;
 
 		bool removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats, double *lons);
 		bool readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationData> &stations, double *lats, double *lons);

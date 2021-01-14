@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,10 +23,10 @@
 
 namespace mio {
 
-TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-                              : GeneratorAlgorithm(vecArgs, i_algo), last_cloudiness(), use_rswr(false)
+TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), use_rswr(false)
 {
-	const std::string where( "generators::"+algo );
+	const std::string where( section+"::"+algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="USE_RSWR") {
 			IOUtils::parseArg(vecArgs[ii], where, use_rswr);
@@ -158,12 +159,12 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool TauCLDGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool TauCLDGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
 	bool status = true;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		if (!generate(param, vecMeteo[ii]))
 			status = false;
 	}

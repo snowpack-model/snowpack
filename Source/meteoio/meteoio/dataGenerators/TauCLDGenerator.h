@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -44,8 +45,8 @@ namespace mio {
  *
  * @code
  * [Generators]
- * TAU_CLD::generators = TAU_CLD
- * TAU_CLD::tau_cld::use_rswr = false
+ * TAU_CLD::generator1     = TAU_CLD
+ * TAU_CLD::arg1::use_rswr = false
  * @endcode
  */
 class TauCLDGenerator : public GeneratorAlgorithm {
@@ -55,9 +56,9 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 			CLF_CRAWFORD
 		} clf_parametrization;
 
-		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo);
+		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ);
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, SunObject& sun, bool &is_night);
 	private:
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >

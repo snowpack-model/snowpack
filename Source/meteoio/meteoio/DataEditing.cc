@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS        */
 /***********************************************************************************/
@@ -28,15 +29,14 @@ using namespace std;
 
 namespace mio {
 
-const char DataEditing::NUM[] = "0123456789";
-const std::string DataEditing::command_key( "::EDIT" );
-const std::string DataEditing::arg_key( "::ARG" );
+const std::string DataEditing::cmd_section( "INPUTEDITING" );
+const std::string DataEditing::cmd_pattern( "::EDIT" );
+const std::string DataEditing::arg_pattern( "::ARG" );
 
 DataEditing::DataEditing(const Config& cfgreader)
-           : timeproc(cfgreader), dataCreator(cfgreader), editingStack()
+           : timeproc(cfgreader), editingStack()
 {
 	const std::set<std::string> editableStations( getEditableStations(cfgreader) );
-	
 	for (std::set<std::string>::const_iterator it = editableStations.begin(); it != editableStations.end(); ++it) {
 		editingStack[ *it ] = buildStack(cfgreader, *it);
 	}
@@ -55,7 +55,6 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 {
 	if (this != &source) {
 		timeproc = source.timeproc;
-		dataCreator = source.dataCreator;
 		editingStack = source.editingStack;
 	}
 	
@@ -69,7 +68,7 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
  */
 std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 {
-	const std::vector<std::string> vec_keys( cfg.getKeys(command_key, "INPUTEDITING", true) );
+	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, cmd_section, true) );
 
 	std::set<std::string> set_stations;
 	for (size_t ii=0; ii<vec_keys.size(); ++ii){
@@ -89,40 +88,6 @@ std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 }
 
 /**
- * @brief Extract the arguments for a given station ID and Input Data Editing command and store them into a 
- * vector of key / value pairs.
- * @param[in] cfg Config object to read the configuration from
- * @param[in] cmd_key the base command key, such as "SLF2::EDIT1" that will be used to extract the command number
- * @param[in] stationID the station ID to process
- * @return All arguments for this command and this station, as vector of key / value pairs
- */
-std::vector< std::pair<std::string, std::string> > DataEditing::parseArgs(const Config& cfg, const std::string& cmd_key, const std::string& stationID)
-{
-	//extract the cmd number and perform basic checks on the syntax
-	const size_t end_cmd = cmd_key.find(command_key); //we know this will be found since it has been matched in cfg.getValues()
-	const size_t start_cmd_nr = cmd_key.find_first_of(NUM, end_cmd+command_key.length());
-	const size_t end_cmd_nr = cmd_key.find_first_not_of(NUM, end_cmd+command_key.length());
-	if (start_cmd_nr==std::string::npos || end_cmd_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+cmd_key, AT);
-
-	unsigned int cmd_nr;
-	const std::string cmd_nr_str( cmd_key.substr(start_cmd_nr) );
-	if ( !IOUtils::convertString(cmd_nr, cmd_nr_str) ) InvalidArgumentException("Can not parse command number in "+cmd_key, AT);
-
-	//read the arguments and clean them up (ie remove the {stationID}::{args##}:: in front of the argument cmd_key itself)
-	std::ostringstream arg_str;
-	arg_str << stationID << arg_key << cmd_nr;
-	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "INPUTEDITING") );
-	for (size_t jj=0; jj<vecArgs.size(); jj++) {
-		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
-		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
-	}
-	
-	return vecArgs;
-}
-
-/**
  * @brief For a given station ID, build the stack of EditingBlock
  * @param[in] cfg Config object to read the configuration from
  * @param[in] stationID the station ID to process
@@ -131,7 +96,7 @@ std::vector< std::pair<std::string, std::string> > DataEditing::parseArgs(const 
 std::vector< EditingBlock* > DataEditing::buildStack(const Config& cfg, const std::string& station_ID)
 {
 	//extract each filter and its arguments, then build the filter stack
-	const std::vector< std::pair<std::string, std::string> > vecCommands( cfg.getValues(station_ID+command_key, "INPUTEDITING") );
+	const std::vector< std::pair<std::string, std::string> > vecCommands( cfg.getValues(station_ID+cmd_pattern, cmd_section) );
 	std::vector< EditingBlock* > cmd_stack;
 	cmd_stack.reserve( vecCommands.size() );
 	
@@ -139,7 +104,8 @@ std::vector< EditingBlock* > DataEditing::buildStack(const Config& cfg, const st
 		const std::string cmd_name( IOUtils::strToUpper( vecCommands[ii].second ) );
 		if (cmd_name=="NONE") continue;
 		
-		const std::vector< std::pair<std::string, std::string> > vecArgs( parseArgs(cfg, vecCommands[ii].first, station_ID) );
+		const unsigned int cmd_nr = Config::getCommandNr(cmd_section, station_ID+cmd_pattern, vecCommands[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(cmd_section, station_ID, cmd_nr, arg_pattern) );
 		cmd_stack.push_back( EditingBlockFactory::getBlock(station_ID, vecArgs, cmd_name, cfg) );
 	}
 	
@@ -159,12 +125,25 @@ std::map< std::string, std::set<std::string> > DataEditing::getDependencies() co
 	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
 		const std::string stat_id( IOUtils::strToUpper(it_blocks->first) );
 		for (size_t jj=0; jj<it_blocks->second.size(); jj++) {
-			const std::set<std::string> tmp_set( it_blocks->second[jj]->getDependencies() ); //they should be uppercase already
+			const std::set<std::string> tmp_set( it_blocks->second[jj]->requiredIDs() ); //they should be uppercase already
 			if (!tmp_set.empty()) {
 				dependencies[ stat_id ].insert(tmp_set.begin(), tmp_set.end());
 			} else {
 				if (dependencies.count(stat_id)==0) 
 					dependencies[stat_id] = std::set<std::string>();
+			}
+		}
+	}
+	
+	//build the list of stations that are generated by another one
+	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
+		const std::string stat_id( IOUtils::strToUpper(it_blocks->first) );
+		for (size_t jj=0; jj<it_blocks->second.size(); jj++) {
+			const std::set<std::string> tmp_set( it_blocks->second[jj]->providedIDs() ); //they should be uppercase already
+			if (!tmp_set.empty()) {
+				//dependencies[ stat_id ].insert(tmp_set.begin(), tmp_set.end());
+				for (std::set<std::string>::const_iterator it_set=tmp_set.begin(); it_set!=tmp_set.end(); ++it_set)
+					dependencies[ *it_set ].insert( stat_id );
 			}
 		}
 	}
@@ -177,14 +156,18 @@ std::map< std::string, std::set<std::string> > DataEditing::getDependencies() co
  * @param[in] dependencies the map of which station ID depends on which ones
  * @return All station IDs that should be purged
  */
-std::set<std::string> DataEditing::getMergedFromIDs(const std::map< std::string, std::set<std::string> >& dependencies)
+std::set<std::string> DataEditing::getMergedFromIDs() const
 {
 	std::set<std::string> mergedFromIDs;
 	
-	std::map< std::string, std::set<std::string> >::const_iterator it_deps;
-	for (it_deps = dependencies.begin(); it_deps != dependencies.end(); ++it_deps) {
-		if (it_deps->second.empty()) continue;
-		mergedFromIDs.insert( it_deps->second.begin(), it_deps->second.end() );
+	//build the list of stations that are merged from
+	std::map< std::string, std::vector< EditingBlock* > >::const_iterator it_blocks;
+	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
+		for (size_t jj=0; jj<it_blocks->second.size(); jj++) {
+			const std::set<std::string> tmp_set( it_blocks->second[jj]->purgeIDs() ); //they should be uppercase already
+			if (!tmp_set.empty())
+				mergedFromIDs.insert(tmp_set.begin(), tmp_set.end());
+		}
 	}
 	
 	return mergedFromIDs;
@@ -201,7 +184,7 @@ std::set<std::string> DataEditing::getMergedFromIDs(const std::map< std::string,
  * Each dependency element in a dependency set that does not have dependencies itself is removed from the set of dependencies of
  * any station that has it (as it does not block processing anymore).
  * Ex: station A -> B ; station B -> nothing ; processing_order = [C, E]
- * Then we redo the whole logic until the dependency map is empty (if nothing gets rmeoved in a round, this means we have a circular dependency)
+ * Then we redo the whole logic until the dependency map is empty (if nothing gets removed in a round, this means we have a circular dependency)
  * Ex: station A -> nothing ; processing_order = [C, E, B]
  * Then empty dependency map ; processing_order = [C, E, B, A]
  * 
@@ -245,7 +228,7 @@ std::vector<std::string> DataEditing::getProcessingOrder(std::map< std::string, 
 void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 {
 	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
-	const std::set<std::string> mergedFromIDs( getMergedFromIDs(dependencies) );
+	const std::set<std::string> mergedFromIDs( getMergedFromIDs() );
 	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
 	
 	//process widlcard commands first, knowing that '*' merges are prohibited
@@ -281,11 +264,10 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 
 void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
-	//TODO handle CREATE command
 	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
 	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
 	
-	//process widlcard commands first, knowing that '*' merges are prohibited
+	//process widlcard commands first, knowing that '*' merges are prohibited, so there are no dependencies
 	if (editingStack.count("*")>0) {
 		for (size_t jj=0; jj<editingStack["*"].size(); jj++) {
 			editingStack["*"][jj]->editTimeSeries(vecMeteo);
@@ -309,7 +291,7 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 	
 	//remove the stations that have been merged into other ones, if necessary
-	const std::set<std::string> mergedFromIDs( getMergedFromIDs(dependencies) );
+	const std::set<std::string> mergedFromIDs( getMergedFromIDs() );
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty())  continue;
 		const std::string stationID( IOUtils::strToUpper(vecMeteo[ii][0].meta.stationID) );
@@ -321,12 +303,10 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 	
 	//remove trailing pure nodata MeteoData elements (if any)
-	purgeTrailingNodata(vecMeteo);
+	purgeTrailingNodata(vecMeteo); //HACK using "create" might fill pure nodata elements with something...
 
 	timeproc.process(vecMeteo);
 	TimeProcStack::checkUniqueTimestamps(vecMeteo);
-
-	dataCreator.createParameters(vecMeteo);
 }
 
 //some vector of MeteoData might have trailing elements that are purely nodata
@@ -347,9 +327,14 @@ const std::string DataEditing::toString() const
 {
 	std::ostringstream os;
 	os << "<DataEditing>\n";
-
-	os << dataCreator.toString();
-
+	
+	std::map< std::string, std::vector< EditingBlock* > >::const_iterator it_blocks;
+	for (it_blocks = editingStack.begin(); it_blocks != editingStack.end(); ++it_blocks) {
+		os << "\t";
+		for (size_t ii=0; ii<it_blocks->second.size(); ii++) os << " " << it_blocks->second[ii]->toString();
+		os << "\n";
+	}
+	
 	os << "</DataEditing>\n";
 	return os.str();
 }

@@ -39,7 +39,6 @@ SET(meteoio_sources
 	MeteoProcessor.cc
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
-	DataCreator.cc
 	DataGenerator.cc
 	plugins/libacdd.cc
 	plugins/libsmet.cc

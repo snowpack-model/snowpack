@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -521,7 +522,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		try {
 			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
-			smet::SMETWriter *mywriter = NULL;
+			smet::SMETWriter *mywriter = nullptr;
 			const bool fileExists = FileUtils::fileExists(filename);
 			if (fileExists && allowAppend) {
 				std::string fields = (outputIsAscii)? "timestamp" : "julian"; //we force the first field to have the time
@@ -583,7 +584,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			}
 
 			if (acdd.isEnabled()) {
-				acdd.setTimeCoverage( vec_timestamp );
+				acdd.setTimeCoverage( vecMeteo[ii] );
 				acdd.setGeometry(vecLocation, true);
 			}
 			if (outputIsAscii) mywriter->write(vec_timestamp, vec_data, acdd);
@@ -682,7 +683,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	}
 
 	if (randomColors)
-		srand( static_cast<unsigned int>(time(NULL)) );
+		srand( static_cast<unsigned int>(time(nullptr)) );
 
 	mywriter.set_header_value("fields", ss.str());
 	if (outputPlotHeaders && some_params_identified) {
@@ -797,7 +798,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 			//There is an inconsistency in the fields, print out a warning and proceed
 			cerr << "[W] While writing SMET file: Inconsistency in number of meteo "
 				<< "parameters for station " << stationname << " at " << vecMeteo[ii].date.toString(Date::ISO) << endl;
-				std::cout << "before: " << vecMeteo[ii-1].toString() << "\nAfter: " << vecMeteo[ii].toString() << "\n";
+				std::cout << "before: " << vecMeteo[ii-1].toString(MeteoData::FULL) << "\nAfter: " << vecMeteo[ii].toString(MeteoData::FULL) << "\n";
 			return MeteoData::nrOfParameters;
 		}
 	}

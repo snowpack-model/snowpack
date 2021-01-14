@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -38,7 +39,7 @@ class PNGIO : public IOInterface {
 		PNGIO(const std::string& configfile);
 		PNGIO(const PNGIO&);
 		PNGIO(const Config& cfgreader);
-		~PNGIO() throw();
+		~PNGIO() noexcept;
 
 		PNGIO& operator=(const PNGIO&); ///<Assignement operator, required because of pointer member
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -150,6 +151,7 @@ double Atmosphere::wetBulbTemperature(const double& TA, const double& RH, const 
 * This is an estimation of the black globe temperature based on physical modeling as in
 * V. E. Dimiceli, S. F. Piltz and S. A. Amburn, <i>"Estimation of Black Globe Temperature for Calculation of the 
 * Wet Bulb Globe Temperature Index"</i> in World Congress on Engineering and Computer Science, <b>2</b>, 2011.
+* @note the \em h parameter is implemented with a fixed value and this has a very large influence...
 * @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)
 * @param VW wind velocity (m/s)
@@ -161,14 +163,20 @@ double Atmosphere::wetBulbTemperature(const double& TA, const double& RH, const 
 double Atmosphere::blackGlobeTemperature(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z)
 {
 	const double S = iswr_dir + iswr_diff;
-	//const double a=1, b=1, c=1; // get real values!
-	//const double h = a * pow(S, b) * pow(cos_Z, c);
+	const double fdif = iswr_diff / S;
+	const double fdb = iswr_dir / S;
 	static const double h = 0.315; //personnal communication from S. Amburn
-	const double emissivity = 0.575 * pow(RH*vaporSaturationPressure(TA), 1./7.);
-	const double B = S * (iswr_dir/(4.*Cst::stefan_boltzmann*cos_Z) + 1.2/Cst::stefan_boltzmann*iswr_diff) + emissivity*Optim::pow4(TA);
-	const double C = h * pow(VW, 0.58) / 5.3865e-8;
+	const double Td = RhtoDewPoint(RH, TA, false) - Cst::t_water_freezing_pt;
+	const double ta = TA - Cst::t_water_freezing_pt;
+	const double vw = VW * 3600.;
+	static const double P = Cst::std_press / 100.; //in mb
+	const double ea = exp(17.67*(Td-ta)/(Td+243.5)) * (1.0007+0.00000346*P) * 6.112*exp(17.502*ta/(240.97+ta));
+	const double emissivity = 0.575 * pow(ea, 1./7.);
+	const double B = S * (fdb/(4.*Cst::stefan_boltzmann*cos_Z) + 1.2/Cst::stefan_boltzmann*fdif) + emissivity*Optim::pow4(ta);
+	const double C = h * pow(vw, 0.58) / 5.3865e-8;
 
-	const double Tg = (B + C*TA + 7680000.) / (C + 256000.);
+	const double Tg = (B + C*ta + 7680000.) / (C + 256000.);
+
 	return Tg;
 }
 

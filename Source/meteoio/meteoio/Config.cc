@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -28,6 +29,7 @@ using namespace std;
 namespace mio {
 
 static const char* defaultSection = "GENERAL";
+static const char NUM[] = "0123456789";
 
 //Constructors
 Config::Config() : properties(), sections(), sourcename(), configRootDir() {}
@@ -400,6 +402,40 @@ std::istream& operator>>(std::istream& is, Config& cfg) {
 	return is;
 }
 
+unsigned int Config::getCommandNr(const std::string& section, const std::string& cmd_pattern, const std::string& cmd_key)
+{
+	//extract the cmd number and perform basic checks on the syntax
+	const size_t end_cmd = cmd_key.find(cmd_pattern);
+	if (end_cmd==std::string::npos) 
+		throw InvalidArgumentException("Can not parse command number in "+section+"::"+cmd_key, AT);
+
+	const size_t start_cmd_nr = cmd_key.find_first_of(NUM, end_cmd+cmd_pattern.length());
+	const size_t end_cmd_nr = cmd_key.find_first_not_of(NUM, end_cmd+cmd_pattern.length());
+	if (start_cmd_nr==std::string::npos || end_cmd_nr!=std::string::npos) 
+		throw InvalidArgumentException("Can not parse command number in "+section+"::"+cmd_key, AT);
+
+	unsigned int cmd_nr;
+	const std::string cmd_nr_str( cmd_key.substr(start_cmd_nr) );
+	if ( !IOUtils::convertString(cmd_nr, cmd_nr_str) ) InvalidArgumentException("Can not parse command number in "+cmd_key, AT);
+	return cmd_nr;
+}
+
+std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const
+{
+	//read the arguments and clean them up (ie get all key/values matching {cmd_id}::{arg_pattern}#:: and remove this prefix)
+	std::ostringstream arg_str;
+	arg_str << cmd_id << arg_pattern << cmd_nr;
+	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(arg_str.str(), section) );
+	for (size_t jj=0; jj<vecArgs.size(); jj++) {
+		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
+		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+	}
+	
+	return vecArgs;
+}
+
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
 
 ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(), imported(), sections(), deferred_vars(), sourcename(filename)
@@ -515,7 +551,7 @@ void ConfigParser::processEnvVars(std::string& value)
 		const size_t len = pos_end - (pos_start+len_env_var_marker); //we have tested above that this is >=1
 		const std::string envVar( value.substr(pos_start+len_env_var_marker, len ) );
 		char *tmp = getenv( envVar.c_str() );
-		if (tmp==NULL) 
+		if (tmp==nullptr) 
 			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
 		
 		value.replace(pos_start, pos_end+1, std::string(tmp)); //we also replace the closing "}"

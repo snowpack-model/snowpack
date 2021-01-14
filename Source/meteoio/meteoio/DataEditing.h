@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2020 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,7 +20,6 @@
 #define DATAEDITING_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/DataCreator.h>
 #include <meteoio/DataEditingAlgorithms.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 
@@ -61,15 +61,13 @@ class DataEditing {
 		
 	private:
 		static std::set<std::string> getEditableStations(const Config& cfg);
-		static std::vector< std::pair<std::string, std::string> > parseArgs(const Config& cfg, const std::string& cmd_key, const std::string& stationID);
 		static std::vector< EditingBlock* > buildStack(const Config& cfg, const std::string& station_ID);
 		std::map< std::string, std::set<std::string> > getDependencies() const;
-		static std::set<std::string> getMergedFromIDs(const std::map< std::string, std::set<std::string> >& dependencies);
+		std::set<std::string> getMergedFromIDs() const;
 		static std::vector<std::string> getProcessingOrder(std::map< std::string, std::set<std::string> > dependencies);
 		
-		DataCreator dataCreator;
 		std::map< std::string, std::vector< EditingBlock* > > editingStack;
-		static const std::string command_key, arg_key;
+		static const std::string cmd_section, cmd_pattern, arg_pattern;
 		static const char NUM[];
 };
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2015 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -38,7 +39,6 @@ class ALPUG : public IOInterface {
 		ALPUG(const std::string& configfile);
 		ALPUG(const ALPUG&);
 		ALPUG(const Config& cfgreader);
-		~ALPUG() throw() {}
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -122,7 +123,7 @@ void FilterSuppr::supprFrac(const unsigned int& param, const std::vector<MeteoDa
 	const size_t set_size = ovec.size();
 	const size_t nrRemove = static_cast<size_t>( round( (double)set_size*range ) );
 
-	srand( static_cast<unsigned int>(time(NULL)) );
+	srand( static_cast<unsigned int>(time(nullptr)) );
 	size_t ii=1;
 	if (width==IOUtils::nodata) { //remove individual points
 		while (ii<nrRemove) {

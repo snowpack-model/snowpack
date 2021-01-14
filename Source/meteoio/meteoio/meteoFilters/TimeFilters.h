@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2017 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -31,12 +32,14 @@ namespace mio {
  */
 class TimeProcStack {
 	public:
-		TimeProcStack(const Config& cfg);
+		TimeProcStack(const Config& i_cfg);
+		TimeProcStack(const TimeProcStack& source);
 		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 		
 		void process(std::vector< std::vector<MeteoData> >& ivec);
 		void process(Date &dateStart, Date &dateEnd);
 
+		TimeProcStack& operator=(const TimeProcStack& source);
 		static void checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo);
 		static const std::string timeParamName;
 		
@@ -105,30 +108,38 @@ class TimeSuppr : public ProcessingBlock {
 };
 
 /**
- * @class  TimeUnDST
+ * @class  TimeShift
  * @ingroup processing
- * @brief Timesteps Daylight Saving Time correction.
+ * @brief Time corrections.
  * @details
- * This filter removes the <A HREF="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight Saving Time</A> in order to bring the timestamps back to Winter time only (or "Standard Time", as it should always be!). In order to
- * do so, a correction file has to be provided that contains on each line an ISO formatted timestamp as well as an offset (in seconds) to apply
- * to the timestamps starting at the provided time. 
+ * This filter add offsets to the time at specified timestamps. This is for example usefull to remove the 
+ * <A HREF="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight Saving Time</A> in order to bring 
+ * the timestamps back to Winter time only (or "Standard Time", as it should always be!) or to correct 
+ * a clock that has drifted in a data logger. 
+ * 
+ * In order to do so, a correction file has to be provided that contains on each line an ISO formatted 
+ * timestamp as well as an offset (in seconds) to apply to the timestamps starting at the provided time
+ * (always assumed to be in the input timezone + a potential previous offset).
  *
  * @code
- * TIME::filter1     = UnDST
+ * TIME::filter1     = SHIFT
  * TIME::arg1::CORRECTIONS = ./input/meteo/dst.dat
  * @endcode
  * 
- * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE, with or without the DST):
+ * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in 
+ * Input::TIME_ZONE, first without offset and with -3600s offset for the second one):
  * @code
  * 2016-03-27T02:00 -3600
  * 2016-10-30T03:00 0
  * @endcode
- * Where the first change point is in Winter time while the second one is in Summer time.
  * 
+ * @note The current implementation does not handle data conflicts if a shifted timestep conflicts with another timestep. In
+ * such a case, an error message "[E] timestamp error for station..." will be returned and you will have to manually decide 
+ * in your input data which timestep to keep.
  */
-class TimeUnDST : public ProcessingBlock {
+class TimeShift : public ProcessingBlock {
 	public:
-		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
+		TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 

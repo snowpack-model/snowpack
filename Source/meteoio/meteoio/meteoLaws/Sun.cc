@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -32,7 +33,7 @@ namespace mio {
 const double SunObject::elevation_dftlThreshold = 5.; //in degrees
 const double SunObject::rad_threshold = 4.; //if radiation is below this threshold, it is assumed to be night
 
-SunObject::SunObject(SunObject::position_algo /*alg*/)
+SunObject::SunObject(const SunObject::position_algo& /*alg*/)
            : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
              elevation_threshold(elevation_dftlThreshold),
              beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata) {}

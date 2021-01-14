@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -38,7 +39,7 @@ class IOHandler : public IOInterface {
 		IOHandler(const IOHandler&);
 		IOHandler(const Config&);
 
-		virtual ~IOHandler() throw();
+		virtual ~IOHandler() noexcept;
 
 		IOHandler& operator=(const IOHandler&); ///<Assignement operator
 

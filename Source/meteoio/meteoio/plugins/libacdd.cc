@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2020 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -337,8 +338,8 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 	int sampling_period = -1;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) { //we must redo station 0 in order to get sampling_period
 		if (vecMeteo[ii].empty()) continue;
-		const mio::Date curr_start = vecMeteo[ii].front().date;
-		const mio::Date curr_end = vecMeteo[ii].back().date;
+		const mio::Date curr_start( vecMeteo[ii].front().date );
+		const mio::Date curr_end( vecMeteo[ii].back().date );
 		if (set_start>curr_start) set_start = curr_start;
 		if (set_end<curr_end) set_end = curr_end;
 		
@@ -362,8 +363,8 @@ void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return;
 	
-	const mio::Date set_start = vecMeteo.front().date;
-	const mio::Date set_end = vecMeteo.back().date;
+	const mio::Date set_start( vecMeteo.front().date );
+	const mio::Date set_end( vecMeteo.back().date );
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
 	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
 	
@@ -376,13 +377,13 @@ void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 	}
 }
 
-void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp)
+void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const double& TZ)
 {
 	if (vec_timestamp.empty()) return;
 	
 	mio::Date set_start, set_end;
-	mio::IOUtils::convertString(set_start, vec_timestamp.front(), 0.); //in GMT
-	mio::IOUtils::convertString(set_end, vec_timestamp.back(), 0.); //in GMT
+	mio::IOUtils::convertString(set_start, vec_timestamp.front(), TZ);
+	mio::IOUtils::convertString(set_end, vec_timestamp.back(), TZ);
 	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
 	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
 	

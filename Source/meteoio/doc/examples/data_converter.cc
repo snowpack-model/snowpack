@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*This example takes two ISO-formatted dates and a sampling rate (in minutes) on the command line
 * for example ./data_converter 2008-12-01T00:00:00 2008-12-31T23:00 60
 * It will retrieve the data for this time interval and write it out once per 60 minutes as specified

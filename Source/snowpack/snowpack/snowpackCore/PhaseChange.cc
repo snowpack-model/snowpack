@@ -675,9 +675,9 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 		}
 		e = 0; // Initialize e at the bottom
 		bool CIR_to_fill = false;
-		int e_CIR = 0;
+		size_t e_CIR = 0;
 		double reservoir_residual_ice = 0.;
-		int e_loc = 0;
+		size_t e_loc = 0;
 		while (e < nE) { // Until the top of the snowpack
 			if (CIR_to_fill) { // If there is a cumulated reservoir currently available to fill
 				if (EMS[e].theta_i_reservoir > 0.) { // If there is ice in the reservoir
@@ -688,7 +688,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 					if ( (EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]+EMS[e_CIR].theta_i_reservoir_cumul >= 0.763) and (EMS[e_CIR].theta_i_reservoir_cumul>0.) ) { // If the cumulated ice reservoir is full respectively to the void available in the matrix, leave a little bit of space
 						reservoir_residual_ice = EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]+EMS[e_CIR].theta_i_reservoir_cumul - 0.99; // Residual ice that stays in the reservoir in order not to oversaturate the matrix
 						e_loc = e_CIR;
-						while (e_loc < e-1) {
+						while (e_loc+1 < e) {
 							e_loc++;
 							EMS[e_loc].theta_i_reservoir = 0.; // Empty ice reservoirs
 						}

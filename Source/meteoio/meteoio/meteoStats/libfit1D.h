@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -173,9 +174,9 @@ class Fit1D {
 
 		/**
 		* @brief Empty Constructor. The model must be set afterwards.
-		* If the model has not been set before calling other methods, a NULL pointer exception will be thrown.
+		* If the model has not been set before calling other methods, a nullptr pointer exception will be thrown.
 		*/
-		Fit1D() : model(NULL) {}
+		Fit1D() : model(nullptr) {}
 
 		/**
 		* @brief Constructor.

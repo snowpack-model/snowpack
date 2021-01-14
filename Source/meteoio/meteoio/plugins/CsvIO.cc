@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -62,6 +63,7 @@ namespace mio {
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
  * - CSV\#_NODATA: a value that should be interpreted as \em nodata (default: NAN);
+ * - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
  * - CSV\#_DEQUOTE: if set to true, all single and double quotes will be purged from each line \em before parsing (default: false);
  * - <b>Headers handling</b>
  *    - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
@@ -696,6 +698,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				continue; //the line count it not incremented so the special headers still keep logical indices
 			}
 			linenr++;
+			if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 			if (line.empty()) continue;
 			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
 			
@@ -1126,6 +1129,11 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"DEQUOTE", "Input", purgeQuotes, IOUtils::nothrow);
 		tmp_csv.setPurgeQuotes(purgeQuotes);
 		
+		char comments_mk='\n';
+		if (cfg.keyExists(pre+"COMMENTS_MK", "Input")) cfg.getValue(pre+"COMMENTS_MK", "Input", comments_mk);
+		else cfg.getValue(dflt+"COMMENTS_MK", "Input", comments_mk, IOUtils::nothrow);
+		if (comments_mk!='\n') tmp_csv.comments_mk = comments_mk;
+		
 		size_t single_parameter_index;
 		if (cfg.keyExists(pre+"SINGLE_PARAM_INDEX", "Input")) {
 			cfg.getValue(pre+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
@@ -1248,8 +1256,10 @@ MeteoData CsvIO::createTemplate(const CsvParameters& params)
 	
 	//build MeteoData template
 	MeteoData template_md( Date(0., 0.), params.getStation() );
-	for (size_t ii=0; ii<nr_of_data_fields; ii++)
+	for (size_t ii=0; ii<nr_of_data_fields; ii++) {
+		if (params.skip_fields.count(ii)>0) continue;
 		template_md.addParameter( params.csv_fields[ii] );
+	}
 
 	return template_md;
 }
@@ -1312,10 +1322,12 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	const bool delimIsNoWS = (params.csv_delim!=' ');
 	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
 	const std::string filterID = (params.filter_ID.empty())? template_md.getStationID() : params.filter_ID; //necessary if filtering on stationID field
+	const char comments_mk = params.comments_mk;
 	Date prev_dt;
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
+		if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 		if (params.purgeQuotes) IOUtils::removeQuotes(line);
 		IOUtils::trim( line );
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored

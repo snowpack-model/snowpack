@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -38,16 +39,16 @@ namespace mio {
  * for the precipitable water vapor).
  * @code
  * [Generators]
- * ISWR::generators = allsky_SW
+ * ISWR::generator1 = allsky_SW
  * @endcode
  * @note This relies on SunObject to perform the heavy duty computation.
  */
 class AllSkySWGenerator : public GeneratorAlgorithm {
 	public:
-		AllSkySWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
+		AllSkySWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		static double getSolarIndex(const double& ta, const double& rh, const double& ilwr);
 		SunObject sun;

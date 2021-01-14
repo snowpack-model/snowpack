@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -71,7 +72,7 @@ bool WindComponents::generate(const size_t& param, MeteoData& md)
 	return true;
 }
 
-bool WindComponents::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool WindComponents::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (param!=MeteoData::VW && param!=MeteoData::DW)
 		throw InvalidArgumentException("The "+where+" generator can only be applied to VW and/or DW", AT);
@@ -85,7 +86,7 @@ bool WindComponents::create(const size_t& param, std::vector<MeteoData>& vecMete
 		return false;
 	
 	bool all_filled = true;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		if (vecMeteo[ii](param)!=IOUtils::nodata) continue;
 		
 		const double u = vecMeteo[ii](U_param);
