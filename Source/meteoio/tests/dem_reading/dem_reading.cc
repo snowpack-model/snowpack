@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <stdio.h>
 #include <fstream>
 #include <meteoio/dataClasses/MeteoData.h>

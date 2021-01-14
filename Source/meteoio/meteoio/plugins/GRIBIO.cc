@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -121,7 +122,7 @@ const std::string GRIBIO::default_ext=".grb"; //filename extension
 GRIBIO::GRIBIO(const std::string& configfile)
         : cfg(configfile), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), idx_filename(), coordin(), coordinparam(),
-          VW(), DW(), wind_date(), llcorner(), fp(NULL), idx(NULL),
+          VW(), DW(), wind_date(), llcorner(), fp(nullptr), idx(nullptr),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
           cellsize(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata),
           indexed(false), meteo_initialized(false), llcorner_initialized(false), update_dem(false), debug(false)
@@ -132,7 +133,7 @@ GRIBIO::GRIBIO(const std::string& configfile)
 GRIBIO::GRIBIO(const Config& cfgreader)
         : cfg(cfgreader), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), idx_filename(), coordin(), coordinparam(),
-          VW(), DW(), wind_date(), llcorner(), fp(NULL), idx(NULL),
+          VW(), DW(), wind_date(), llcorner(), fp(nullptr), idx(nullptr),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
           cellsize(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata),
           indexed(false), meteo_initialized(false), llcorner_initialized(false), update_dem(false), debug(false)
@@ -142,8 +143,8 @@ GRIBIO::GRIBIO(const Config& cfgreader)
 
 GRIBIO& GRIBIO::operator=(const GRIBIO& source) {
 	if (this != &source) {
-		fp = NULL;
-		idx = NULL;
+		fp = nullptr;
+		idx = nullptr;
 		grid2dpath_in = source.grid2dpath_in;
 		meteopath_in = source.meteopath_in;
 		vecPts = source.vecPts;
@@ -173,7 +174,7 @@ GRIBIO& GRIBIO::operator=(const GRIBIO& source) {
 	return *this;
 }
 
-GRIBIO::~GRIBIO() throw()
+GRIBIO::~GRIBIO() noexcept
 {
 	cleanup();
 }
@@ -219,7 +220,7 @@ void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 {
 	static const unsigned int MAX_VAL_LEN = 1024; //max value string length in GRIB
 	unsigned long key_iterator_filter_flags = GRIB_KEYS_ITERATOR_ALL_KEYS;
-	char* name_space = NULL;
+	char* name_space = nullptr;
 	grib_keys_iterator* kiter = grib_keys_iterator_new(*h,key_iterator_filter_flags,name_space);
 
 	if (!kiter) {
@@ -243,7 +244,7 @@ void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 //this lists all parameters
 void  GRIBIO::listFields(const std::string& filename)
 {
-	grib_handle* h=NULL;
+	grib_handle* h=nullptr;
 	int err=0;
 	fpos_t pos;
 	if (fgetpos(fp,&pos) != 0)
@@ -251,7 +252,7 @@ void  GRIBIO::listFields(const std::string& filename)
 
 	std::cerr << "Fields found in " << filename << "\n";
 	//loop over the messages
-	while ((h = grib_handle_new_from_file(0,fp,&err)) != NULL) {
+	while ((h = grib_handle_new_from_file(0,fp,&err)) != nullptr) {
 		if (!h) {
 			cleanup();
 			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
@@ -433,9 +434,9 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 	GRIB_CHECK(grib_index_select_double(idx,"marsParam",in_marsParam),0);
 	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", i_levelType),0);
 
-	grib_handle* h=NULL;
+	grib_handle* h=nullptr;
 	int err=0;
-	while ((h = grib_handle_new_from_index(idx,&err)) != NULL) {
+	while ((h = grib_handle_new_from_index(idx,&err)) != nullptr) {
 		if (!h) {
 			cleanup();
 			throw IOException("Unable to create grib handle from index", AT);
@@ -480,16 +481,16 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
-	if (fp==NULL) {
+	if (fp==nullptr) {
 		std::ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
 	}
 	if (debug) listFields(filename);
 
-	grib_handle* h=NULL;
+	grib_handle* h=nullptr;
 	int err=0;
-	if ((h = grib_handle_new_from_file(0,fp,&err)) != NULL) {
+	if ((h = grib_handle_new_from_file(0,fp,&err)) != nullptr) {
 		if (!h) {
 			cleanup();
 			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
@@ -510,7 +511,7 @@ void GRIBIO::indexFile(const std::string& filename)
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 	errno = 0;
 	fp = fopen(filename.c_str(),"r");
-	if (fp==NULL) {
+	if (fp==nullptr) {
 		std::ostringstream ss;
 		ss << "Error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
 		throw AccessException(ss.str(), AT);
@@ -850,7 +851,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 
 	int err=0;
 	grib_handle* h = grib_handle_new_from_index(idx,&err);
-	if (h==NULL) {
+	if (h==nullptr) {
 		cleanup();
 		throw IOException("Can not find DEM grid in GRIB file!", AT);
 	}
@@ -913,9 +914,9 @@ bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, con
 	GRIB_CHECK(grib_index_select_double(idx,"marsParam",marsParam),0);
 	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", levelType),0);
 
-	grib_handle* h=NULL;
+	grib_handle* h=nullptr;
 	int err=0;
-	while ((h = grib_handle_new_from_index(idx,&err)) != NULL) {
+	while ((h = grib_handle_new_from_index(idx,&err)) != nullptr) {
 		if (!h) {
 			cleanup();
 			throw IOException("Unable to create grib handle from index", AT);
@@ -1049,10 +1050,10 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	free(values); free(values2);
 }
 
-void GRIBIO::cleanup() throw()
+void GRIBIO::cleanup() noexcept
 {
-	if (fp!=NULL) fclose(fp); fp=NULL;
-	if (idx!=NULL) grib_index_delete(idx); idx=NULL;
+	if (fp!=nullptr) fclose(fp); fp=nullptr;
+	if (idx!=nullptr) grib_index_delete(idx); idx=nullptr;
 	idx_filename.clear();
 }
 

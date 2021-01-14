@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009-2012 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   */
 /***********************************************************************************/
@@ -254,7 +255,7 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 	if (plugin_name == "ZRXP") return new ZRXPIO(i_cfg);
 #endif
 
-	return NULL; //no plugin found
+	return nullptr; //no plugin found
 }
 
 /**
@@ -275,7 +276,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	const std::string plugin_key( cfgsection+"::"+cfgkey+"::"+op_src ); //otherwise, reading meteo+grids with the same plugin would rely on the same object
 
 	if (mapPlugins.find(plugin_key) == mapPlugins.end()) { //the plugin has not already been constructed
-		IOInterface *ioPtr = NULL;
+		IOInterface *ioPtr = nullptr;
 
 		if (sec_rename.empty() || sec_rename==cfgsection) {
 			ioPtr = getPlugin(op_src, cfg);
@@ -285,7 +286,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 			ioPtr = getPlugin(op_src, cfg2);
 		}
 
-		if (ioPtr==NULL)
+		if (ioPtr==nullptr)
 			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it declared in IOHandler::getPlugin?", AT);
 		else
 			mapPlugins[plugin_key] = ioPtr;
@@ -303,7 +304,7 @@ IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), preProcessor(cfgreader), mapPlugins()
 {}
 
-IOHandler::~IOHandler() throw()
+IOHandler::~IOHandler() noexcept
 {
 	// Get rid of the objects
 	std::map<std::string, IOInterface*>::iterator mapit( mapPlugins.begin() );

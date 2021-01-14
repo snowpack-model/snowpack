@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -32,16 +33,16 @@ namespace mio {
  * what is available).The parameter that should be generated is provided as argument (default: RH).
  * @code
  * [Generators]
- * RH::generators = HUMIDITY
- * RH::humidity::type = RH
+ * RH::generator1 = HUMIDITY
+ * RH::arg1::type = RH
  * @endcode
  */
 class HumidityGenerator : public GeneratorAlgorithm {
 	public:
-		HumidityGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), type(GEN_RH) { parse_args(vecArgs); }
+		HumidityGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), type(GEN_RH) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -21,7 +22,6 @@
 
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/MeteoData.h>
-#include <meteoio/DataCreator.h>
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 
 #include <vector>
@@ -40,10 +40,11 @@ namespace mio {
  * @ingroup meteoLaws
  * @author Mathias Bavay
  */
-
-class DataGenerator : public DataCreator {
+class DataGenerator {
 	public:
 		DataGenerator(const Config& cfg);
+		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), data_qa_logs(c.data_qa_logs)  {}
+		virtual ~DataGenerator();
 
 		void fillMissing(METEO_SET& vecMeteo) const;
 		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
@@ -52,6 +53,11 @@ class DataGenerator : public DataCreator {
 
 		const std::string toString() const;
 	private:
+		static std::set<std::string> getParameters(const Config& cfg);
+		static std::vector< GeneratorAlgorithm* > buildStack(const Config& cfg, const std::string& parname);
+		
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data creators algorithms
+		static const std::string cmd_section, cmd_pattern, arg_pattern;
 		bool data_qa_logs;
 };
 

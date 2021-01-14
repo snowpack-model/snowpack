@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 Michael Reisecker and work cited in documentation and source    */
 /***********************************************************************************/
@@ -1144,13 +1145,13 @@ bool RngCore::getUniqueSeed(uint64_t& store) const
 		uint64_t entropy; //TODO: confirm it's there on Android
 		const bool success = getEntropy(entropy);
 		if (!success) {
-			entropy = timeMixer(time(NULL), clock()); //clock() prevents static
+			entropy = timeMixer(time(nullptr), clock()); //clock() prevents static
 		}
 		store = entropy;
 		return success;
 	#else
 		//in the future, there could be a case for the Windows crypto box
-		store = timeMixer(time(NULL), clock());
+		store = timeMixer(time(nullptr), clock());
 		return false;
 	#endif
 }

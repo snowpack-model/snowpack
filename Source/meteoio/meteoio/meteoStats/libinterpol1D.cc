@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -610,7 +611,7 @@ double Interpol1D::NashSuttcliffe(const std::vector<double>& obs, const std::vec
 * @details This generate a normally distributed signal of mean=0 and std_dev=1.
 * For numerical reasons, the extremes will always be less than 7 * std_dev from the mean.
 * See https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
-* @note Do not forget to initialize the (pseudo) random number generator! Something like "srand( static_cast<unsigned int>(time(NULL)) );"
+* @note Do not forget to initialize the (pseudo) random number generator! Something like "srand( static_cast<unsigned int>(time(nullptr)) );"
 * @return normally distributed number
 */
 double Interpol1D::getBoxMuller()

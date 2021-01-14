@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009-2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -237,16 +238,20 @@ namespace mio {
  * \ref general documentation page before starting!
  *
  * You first need to create the various sections:
- * - [General] : The documentation about this section is found in \ref Config. It currently contains the PLUGIN_PATH key that
- *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler).
+ * - [General] : The documentation about this section is found in \ref Config. It currently contains 
+ *               some buffering keys (see BufferedIOHandler).
  *
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
  *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for the Points Of Interest
  *             (key=POI), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
- *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
- *             possible to perform some editing on the input data, see \ref data_editing.
+ *             system should often be specified, as explained in \ref coords as well as a fallback time zone (so if some
+ *             time information comes without a time zone, it will use the one declared in this section).
+ * 
+ * - [InputEditing] : Through keys configured in this section, it is possible to perform some editing on the input 
+ *                    meteorological timeseries, see \ref data_editing as well as various kind of 
+ *                    spatial resampling (see \ref spatial_resampling).
  *
  * - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *

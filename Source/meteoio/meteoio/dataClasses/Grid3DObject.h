@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -157,7 +158,6 @@ class Grid3DObject{
 		*/
 		void extractLayer(const size_t& i_z, Grid2DObject& layer);
 
-		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
 		Grid3DObject& operator=(const double& value); ///<Assignement operator
 
 		Grid3DObject& operator+=(const double& rhs);

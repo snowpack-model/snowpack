@@ -69,7 +69,7 @@ class Snowpack {
 		void snowPreparation(const mio::Date& currentDate, SnowStation& Xdata) const;
 
 		void setUseSoilLayers(const bool& value);
-		const static double new_snow_albedo, min_ice_content;
+		const static double min_ice_content;
 
 		double getSnDt() const { return sn_dt;}
 
@@ -164,7 +164,6 @@ class Snowpack {
 		double hoar_density_buried, hoar_density_surf, hoar_min_size_buried;
 		double minimum_l_element, comb_thresh_l;
 		double t_surf;
-		static const double min_snow_albedo;
 		bool allow_adaptive_timestepping;
 		bool research_mode, useCanopyModel, enforce_measured_snow_heights, detect_grass;
 		bool soil_flux, useSoilLayers;

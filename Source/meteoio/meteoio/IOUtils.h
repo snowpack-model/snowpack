@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -186,6 +187,8 @@ namespace IOUtils {
 	std::string trim(const std::string &s);
 
 	void stripComments(std::string& str);
+	
+	void stripComments(std::string& str, const char& comment_mk);
 	
 	/**
 	 * @brief Replace a substring within a given string by another one.

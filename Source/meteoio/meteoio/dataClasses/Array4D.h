@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -172,7 +173,6 @@ template<class T> class Array4D {
 		T& operator ()(const size_t& w, const size_t& x, const size_t& y, const size_t& z);
 		const T operator ()(const size_t& w, const size_t& x, const size_t& y, const size_t& z) const;
 
-		Array4D<T>& operator =(const Array4D<T>&);
 		Array4D<T>& operator =(const T& value);
 
 		Array4D<T>& operator+=(const T& rhs);
@@ -562,20 +562,6 @@ template<class T> bool Array4D<T>::checkEpsilonEquality(const Array4D<double>& r
 
 template<class T> bool Array4D<T>::checkEpsilonEquality(const Array4D<double>& rhs1, const Array4D<double>& rhs2, const double& epsilon) {
 	return rhs1.checkEpsilonEquality(rhs2, epsilon);
-}
-
-template<class T> Array4D<T>& Array4D<T>::operator=(const Array4D<T>& source) {
-	if (this != &source) {
-		keep_nodata = source.keep_nodata;
-		nw = source.nw;
-		nx = source.nx;
-		ny = source.ny;
-		nz = source.nz;
-		nwnx = source.nwnx;
-		nwnxny = source.nwnxny;
-		vecData = source.vecData;
-	}
-	return *this;
 }
 
 template<class T> Array4D<T>& Array4D<T>::operator=(const T& value) {

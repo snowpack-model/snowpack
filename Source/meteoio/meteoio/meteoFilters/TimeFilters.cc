@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -133,7 +134,7 @@ void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 	const size_t set_size = ovec.size();
 	const size_t nrRemove = static_cast<size_t>( round( (double)set_size*range ) );
 
-	srand( static_cast<unsigned int>(time(NULL)) );
+	srand( static_cast<unsigned int>(time(nullptr)) );
 	size_t ii=1;
 	if (width==IOUtils::nodata) { //remove individual points
 		while (ii<nrRemove) {
@@ -248,7 +249,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 }
 
 
-TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+TimeShift::TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), dst_changes()
 {
 	const std::string where( "Filters::"+block_name );
@@ -266,12 +267,12 @@ TimeUnDST::TimeUnDST(const std::vector< std::pair<std::string, std::string> >& v
 
 		dst_changes = ProcessingBlock::readCorrections(block_name, filename, cfg.get("TIME_ZONE", "Input"), 2);
 		if (dst_changes.empty())
-			throw InvalidArgumentException("Please provide at least one DST correction for " + where, AT);
+			throw InvalidArgumentException("Please provide at least one time shift for " + where, AT);
 	} else
 		throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
 }
 
-void TimeUnDST::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
+void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 	if (param!=IOUtils::unodata)
 		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
@@ -432,14 +433,33 @@ const std::string TimeProcStack::timeParamName( "TIME" );
 TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack()
 {
 	//extract each filter and its arguments, then build the filter stack
-	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(timeParamName+ProcessingStack::filter_key, "FILTERS") );
+	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(timeParamName+ProcessingStack::filter_pattern, ProcessingStack::filter_section) );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
 		
-		const std::vector< std::pair<std::string, std::string> > vecArgs( ProcessingStack::parseArgs(cfg, vecFilters[ii].first, timeParamName) );
+		const unsigned int cmd_nr = Config::getCommandNr(ProcessingStack::filter_section, timeParamName+ProcessingStack::filter_pattern, vecFilters[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(ProcessingStack::filter_section, timeParamName, cmd_nr, ProcessingStack::arg_pattern) );
 		filter_stack.push_back( BlockFactory::getTimeBlock(block_name, vecArgs, cfg) );
 	}
+}
+
+TimeProcStack::TimeProcStack(const TimeProcStack& source) : filter_stack()
+{
+	const size_t nFilters = source.filter_stack.size();
+	filter_stack.resize( nFilters, nullptr );
+	for(size_t ii=0; ii<nFilters; ii++) filter_stack[ii] = source.filter_stack[ii];
+}
+
+TimeProcStack& TimeProcStack::operator=(const TimeProcStack& source)
+{
+	if (this != &source) {
+		const size_t nFilters = source.filter_stack.size();
+		filter_stack.resize( nFilters, nullptr );
+		for(size_t ii=0; ii<nFilters; ii++) filter_stack[ii] = source.filter_stack[ii];
+	}
+	
+	return *this;
 }
 
 void TimeProcStack::process(Date &dateStart, Date &dateEnd)

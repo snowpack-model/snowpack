@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2020 ALPsolut.eu                                                     */
 /***********************************************************************************/
@@ -255,7 +256,7 @@ void SnowlineAlgorithm::initExpressionVars(const std::vector< std::pair<std::str
 		vars[cc].name = it->first.c_str();
 		vars[cc].address = &it->second;
 		vars[cc].type = 0;
-		vars[cc].context = 0;
+		vars[cc].context = nullptr;
 		cc++;
 	}
 }

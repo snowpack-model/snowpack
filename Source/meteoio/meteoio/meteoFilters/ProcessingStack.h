@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -40,13 +41,12 @@ class ProcessingStack {
 		ProcessingStack(const Config& cfg, const std::string& param_name);
 		virtual ~ProcessingStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 
-		static std::vector< std::pair<std::string, std::string> > parseArgs(const Config& cfg, const std::string& key, const std::string& parname);
 		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 		void getWindowSize(ProcessingProperties& o_properties) const;
 		const std::string toString() const;
 		
-		static const std::string filter_key;
+		static const std::string filter_section, filter_pattern, arg_pattern;
 		
 	private:
 		virtual bool applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec);
@@ -54,8 +54,6 @@ class ProcessingStack {
 		
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 		const std::string param_name;
-		static const std::string arg_key;
-		static const char NUM[];
 		bool data_qa_logs;
 };
 

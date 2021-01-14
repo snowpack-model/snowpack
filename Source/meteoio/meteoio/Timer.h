@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*                   Copyright GridGroup, EIA-FR 2010                              */
 /*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */

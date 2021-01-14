@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -39,8 +40,7 @@ namespace mio {
 class IOException : public std::exception {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
-		~IOException() throw() {}
-		virtual const char* what() const throw();
+		virtual const char* what() const noexcept;
 
 	protected:
 	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)

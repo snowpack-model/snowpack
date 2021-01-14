@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -112,7 +113,7 @@ void Matrix::clear()
 
 void Matrix::random(const double& range)
 {
-	srand( static_cast<unsigned>(time(NULL)) );
+	srand( static_cast<unsigned>(time(nullptr)) );
 
 	for (size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] = (double)rand()/(double)RAND_MAX*range;

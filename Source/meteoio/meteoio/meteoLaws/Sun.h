@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -39,7 +40,7 @@ class SunObject {
 			MEEUS ///<Jean Meeus' algorithm (Meeus, j. "Astronomical Algorithms", second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA)
 		} position_algo;
 
-		SunObject(const position_algo alg=MEEUS);
+		SunObject(const SunObject::position_algo& alg=MEEUS);
 		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& i_TZ=0.);
 

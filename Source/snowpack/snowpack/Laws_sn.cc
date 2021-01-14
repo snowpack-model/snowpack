@@ -334,7 +334,7 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		+ g*sqrt_age*Optim::pow2(Ta) + h*sqrt_age*Tss + i*sqrt_age*lwi
 		+ j*Optim::pow2(Ta)*Tss + k*Optim::pow2(Ta)*lwi + l*Tss*Mdata.rswr
 		+ m*Tss*lwi + n*Tss*Mdata.rh + o*Mdata.vw*Mdata.rh);
-		Alb = weight * Edata.dd * Snowpack::new_snow_albedo + (1. - weight * Edata.dd) * Alb1;
+		Alb = weight * Edata.dd * Constants::max_albedo + (1. - weight * Edata.dd) * Alb1;
 	}
 	else if (i_albedo_parameterization == "LEHNING_1") {
 		double mf = 0.;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -40,19 +41,19 @@ namespace mio {
  * of the period (which practically means, at the end of the first month).
  * @code
  * [Generators]
- * TA::generators = Sin
- * TA::Sin::type  = yearly
- * TA::Sin::min   = 268.26
- * TA::Sin::max   = 285.56
- * TA::Sin::phase = 0.0833
+ * TA::generator1  = Sin
+ * TA::arg1::type  = yearly
+ * TA::arg1::min   = 268.26
+ * TA::arg1::max   = 285.56
+ * TA::arg1::phase = 0.0833
  * @endcode
  */
 class SinGenerator : public GeneratorAlgorithm {
 	public:
-		SinGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), amplitude(IOUtils::nodata), offset(IOUtils::nodata), phase(0.), type(' ') { parse_args(vecArgs); }
+		SinGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), amplitude(IOUtils::nodata), offset(IOUtils::nodata), phase(0.), type(' ') { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double amplitude, offset, phase;

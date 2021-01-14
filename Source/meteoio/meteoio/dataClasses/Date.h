@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -243,11 +244,11 @@ class DateRange {
 		}
 		
 		bool operator<(const Date& a) const {
-			return a < start;
+			return end < a;
 		}
 		
 		bool operator>(const Date& a) const {
-			return a > end;
+			return start > a;
 		}
 		
 		bool operator<(const DateRange& a) const { //needed for "sort"

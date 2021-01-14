@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * ch_slf_gin_jnative_MeteoIOJNIInterface.h
  *

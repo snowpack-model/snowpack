@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -375,11 +376,11 @@ std::vector<double> OshdIO::readFromFile(const std::string& filename, const Mete
 {
 	if (debug) matWrap::printFileStructure(filename, in_dflt_TZ);
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
-	if ( NULL == matfp ) throw AccessException(filename, AT);
+	if ( nullptr == matfp ) throw AccessException(filename, AT);
 
 	//open the file and read some metadata
 	matvar_t *matvar = Mat_VarReadInfo(matfp, "stat");
-	if (matvar==NULL) throw NotFoundException("structure 'stat' not found in file '"+filename+"'", AT);
+	if (matvar==nullptr) throw NotFoundException("structure 'stat' not found in file '"+filename+"'", AT);
 	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
 	
 	const std::string type( matWrap::readString(filename, "type", matfp, matvar) );
@@ -470,10 +471,10 @@ void OshdIO::fillStationMeta()
 	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
 	vecMeta.resize( vecIDs.size(), StationData() );
 	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
-	if ( NULL == matfp ) throw AccessException(in_metafile, AT);
+	if ( nullptr == matfp ) throw AccessException(in_metafile, AT);
 
 	matvar_t *matvar = Mat_VarReadInfo(matfp, "statlist");
-	if (matvar==NULL) throw NotFoundException("structure 'statlist' not found in file '"+in_metafile+"'", AT);
+	if (matvar==nullptr) throw NotFoundException("structure 'statlist' not found in file '"+in_metafile+"'", AT);
 	
 	const std::vector<std::string> vecAcro( matWrap::readStringVector(in_metafile, "acro", matfp, matvar) );
 	const std::vector<std::string> vecNames( matWrap::readStringVector(in_metafile, "name", matfp, matvar) );
@@ -531,10 +532,10 @@ void OshdIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
 	if (debug) matWrap::printFileStructure(filename, in_dflt_TZ);
 	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
-	if ( NULL == matfp ) throw AccessException(filename, AT);
+	if ( nullptr == matfp ) throw AccessException(filename, AT);
 
 	matvar_t *matvar = Mat_VarReadInfo(matfp, "grid");
-	if (matvar==NULL) throw NotFoundException("structure 'grid' not found in file '"+filename+"'", AT);
+	if (matvar==nullptr) throw NotFoundException("structure 'grid' not found in file '"+filename+"'", AT);
 	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
 
 	const double xllcorner( matWrap::readDouble(filename, "xllcorner", matfp, matvar) );

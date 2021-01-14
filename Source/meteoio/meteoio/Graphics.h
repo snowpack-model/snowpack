@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -200,7 +201,7 @@ class Gradient {
 		* @brief Default Constructor.
 		* This should be followed by a call to set() before calling getColor
 		*/
-		Gradient() : min(0.), max(0.), delta(0.), type(none), model(NULL), nr_unique_cols(0), autoscale(true) {}
+		Gradient() : min(0.), max(0.), delta(0.), type(none), model(nullptr), nr_unique_cols(0), autoscale(true) {}
 
 		/**
 		* @brief Constructor.

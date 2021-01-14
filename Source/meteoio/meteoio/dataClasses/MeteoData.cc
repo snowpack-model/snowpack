@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -380,6 +381,16 @@ const std::string MeteoData::toString(const FORMATS format) const {
 			const double& value = operator()(ii);
 			if (value != IOUtils::nodata)
 				os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << value << endl;
+		}
+		os << "</meteo>\n";
+	} else if (format==FULL) {
+		os << "<meteo>\n";
+		os << meta.toString();
+		os << date.toString(Date::FULL) << "\n";
+		os << setw(8) << nrOfAllParameters << " parameters\n";
+
+		for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+			os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << operator()(ii) << endl;
 		}
 		os << "</meteo>\n";
 	} else if (format==COMPACT) {

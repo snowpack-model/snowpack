@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -46,9 +47,7 @@ set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 SMETException::SMETException(const std::string& message, const std::string& position)
               : msg( (position.empty())? "At unknown position: " + message : position + ": " + message + "\n") {}
 
-SMETException::~SMETException() throw() {}
-
-const char* SMETException::what() const throw()
+const char* SMETException::what() const noexcept
 {
 	return msg.c_str();
 }
@@ -154,7 +153,7 @@ void SMETCommon::copy_file(const std::string& src, const std::string& dest)
 
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
-	char* conversion_end = NULL;
+	char* conversion_end = nullptr;
 	const double conversion_value = strtod(in_string.c_str(), &conversion_end);
 
 	if (*conversion_end == '\0') {
@@ -908,7 +907,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	cleanup(fin); //closes file
 }
 
-void SMETReader::cleanup(std::ifstream& fin) throw()
+void SMETReader::cleanup(std::ifstream& fin) noexcept
 {
 	if (fin.is_open()) //close fin if open
 		fin.close();

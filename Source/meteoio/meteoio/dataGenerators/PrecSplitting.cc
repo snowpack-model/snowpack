@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013-2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -60,7 +61,7 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 	}
 }
 
-bool PrecSplitting::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool PrecSplitting::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 	const std::string parname( vecMeteo.front().getNameForParameter( param ) );
@@ -70,28 +71,28 @@ bool PrecSplitting::create(const size_t& param, std::vector<MeteoData>& vecMeteo
 	
 	bool all_filled = true;
 	if (param==MeteoData::PSUM_PH) {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM_PH(value, vecMeteo[ii]))
 				all_filled = false;
 		}
 	} else if (param==MeteoData::PSUM) {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM(value, vecMeteo[ii]))
 				all_filled = false;
 		}
 	} else if (parname=="PSUM_L") {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM_L(value, vecMeteo[ii]))
 				all_filled = false;
 		}
 	} else if (parname=="PSUM_S") {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM_S(value, vecMeteo[ii]))

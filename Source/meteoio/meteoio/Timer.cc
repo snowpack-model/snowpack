@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*                   Copyright GridGroup, EIA-FR 2010                              */
 /*  Copyright 2010-2013 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   */
@@ -109,7 +110,7 @@ long double Timer::getCurrentTime() {
 #else
 long double Timer::getCurrentTime() {
 	timeval tp;
-	gettimeofday(&tp,NULL);
+	gettimeofday(&tp,nullptr);
 	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6L;
 	return t;
 }

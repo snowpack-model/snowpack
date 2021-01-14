@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -434,7 +435,7 @@ void ARPSIO::initializeTrueARPS(FILE* &fin, const std::string& filename, const s
 void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 {
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
-	if ((fin=fopen(filename.c_str(),"r")) == NULL) {
+	if ((fin=fopen(filename.c_str(),"r")) == nullptr) {
 		throw AccessException("Can not open file "+filename, AT);
 	}
 
@@ -442,7 +443,7 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	for (unsigned char j=0; j<5; j++) {
 		//the first easy difference in the structure happens at line 5
-		if (fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==NULL) {
+		if (fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==nullptr) {
 			fclose(fin);
 			throw InvalidFormatException("Fail to read header lines of file "+filename, AT);
 		}

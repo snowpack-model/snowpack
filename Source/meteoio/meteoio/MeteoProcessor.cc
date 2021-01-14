@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -173,5 +174,75 @@ const std::string MeteoProcessor::toString() const {
 	os << "</MeteoProcessor>\n";
 	return os.str();
 }
+
+
+RestrictionsIdx::RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions)
+                : start(), end(), index(0)
+{
+	if (time_restrictions.empty()) {
+		start.push_back( 0 );
+		end.push_back( vecMeteo.size() );
+	} else {
+		const Date start_dt( vecMeteo.front().date ), end_dt( vecMeteo.back().date );
+		
+		size_t ts_idx = 0;
+		while (ts_idx < time_restrictions.size()) {
+			if (time_restrictions[ts_idx].end < start_dt) { //this time_restrictions is before vecMeteo, look for the next one!
+				ts_idx++;
+				continue;
+			}
+			if (time_restrictions[ts_idx].start > end_dt) break; //no more time_restrictions applicable to vecMeteo
+			
+			size_t jj=0;
+			//look for time_restriction start
+			while (jj<vecMeteo.size() && vecMeteo[jj].date < time_restrictions[ts_idx].start) jj++;
+			start.push_back( jj );
+			
+			//look for time_restriction end
+			while (jj<vecMeteo.size() && vecMeteo[jj].date <= time_restrictions[ts_idx].end) jj++;
+			end.push_back( jj );
+			
+			//move to next time restriction period
+			ts_idx++;
+		}
+		
+		//no applicable time_restrictions found for vecMeteo
+		if (start.empty()) index = IOUtils::npos;
+	}
+}
+
+size_t RestrictionsIdx::getStart() const
+{
+	if (index == IOUtils::npos) return IOUtils::npos;
+	return start[ index ];
+}
+
+size_t RestrictionsIdx::getEnd() const
+{
+	if (index == IOUtils::npos) return IOUtils::npos;
+	return end[ index ];
+}
+
+RestrictionsIdx& RestrictionsIdx::operator++()
+{
+	if (index!=IOUtils::npos) {
+		index++;
+		if (index >= start.size()) index=IOUtils::npos;
+	}
+	
+	return *this;
+}
+
+const std::string RestrictionsIdx::toString() const
+{
+	std::ostringstream os;
+	os << "[ ";
+	for (size_t ii=0; ii<start.size(); ii++)
+		os << "(" << start[ii] << "," << end[ii] << ") ";
+	
+	os << "]";
+	return os.str();
+}
+
 
 } //namespace

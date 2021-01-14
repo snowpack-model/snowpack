@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -303,7 +304,7 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 
 	int status = nc_inq_varid (ncid, var.attributes.name.c_str(), &var.varid);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
-	status = nc_inq_var(ncid, var.varid, NULL, NULL, &nrdims, dimids, NULL);
+	status = nc_inq_var(ncid, var.varid, nullptr, nullptr, &nrdims, dimids, nullptr);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	var.dimids.assign(dimids, dimids+nrdims);
 	

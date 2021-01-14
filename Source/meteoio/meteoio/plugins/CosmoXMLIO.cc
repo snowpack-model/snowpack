@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -120,7 +121,7 @@ const char* CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-table
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_ctxt(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(nullptr), in_ctxt(nullptr), in_xpathCtx(nullptr),
              in_encoding(XML_CHAR_ENCODING_NONE), coordin(), coordinparam()
 {
 	Config cfg(configfile);
@@ -129,7 +130,7 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_ctxt(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(nullptr), in_ctxt(nullptr), in_xpathCtx(nullptr),
              in_encoding(XML_CHAR_ENCODING_NONE), coordin(), coordinparam()
 {
 	init(cfg);
@@ -196,16 +197,16 @@ CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
 		xml_stations_id = source.xml_stations_id;
 		input_id = source.input_id;
 		plugin_nodata = source.plugin_nodata;
-		in_doc = NULL;
-		in_ctxt = NULL;
-		in_xpathCtx = NULL;
+		in_doc = nullptr;
+		in_ctxt = nullptr;
+		in_xpathCtx = nullptr;
 		coordin = source.coordin;
 		coordinparam = source.coordinparam;
 	}
 	return *this;
 }
 
-CosmoXMLIO::~CosmoXMLIO() throw()
+CosmoXMLIO::~CosmoXMLIO() noexcept
 {
 	closeIn_XML();
 }
@@ -239,7 +240,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 
 void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 {
-	if (in_doc!=NULL) return; //the file has already been read
+	if (in_doc!=nullptr) return; //the file has already been read
 
 	xmlInitParser();
 	xmlKeepBlanksDefault(0);
@@ -255,13 +256,13 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 		in_doc = in_ctxt->myDoc;
 	}
 
-	if (in_doc == NULL) {
+	if (in_doc == nullptr) {
 		throw NotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
 	}
 
-	if (in_xpathCtx != NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
+	if (in_xpathCtx != nullptr) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
 	in_xpathCtx = xmlXPathNewContext(in_doc);
-	if (in_xpathCtx == NULL) {
+	if (in_xpathCtx == nullptr) {
 		closeIn_XML();
 		throw IOException("Unable to create new XPath context", AT);
 	}
@@ -271,19 +272,19 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 	}
 }
 
-void CosmoXMLIO::closeIn_XML() throw()
+void CosmoXMLIO::closeIn_XML() noexcept
 {
-	if (in_xpathCtx!=NULL) {
+	if (in_xpathCtx!=nullptr) {
 		xmlXPathFreeContext(in_xpathCtx);
-		in_xpathCtx = NULL;
+		in_xpathCtx = nullptr;
 	}
-	if (in_doc!=NULL) {
+	if (in_doc!=nullptr) {
 		xmlFreeDoc(in_doc);
-		in_doc = NULL;
+		in_doc = nullptr;
 	}
-	if (in_ctxt!=NULL) {
+	if (in_ctxt!=nullptr) {
 		xmlFreeParserCtxt(in_ctxt);
-		in_ctxt = NULL;
+		in_ctxt = nullptr;
 	}
 	xmlCleanupParser();
 }
@@ -296,7 +297,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	const std::string xpath( std::string(StationData_xpath)+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.." ); //and we take the parent node <row>
 
 	xmlXPathObjectPtr xpathObj( xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx) );
-	if (xpathObj == NULL) return false;
+	if (xpathObj == nullptr) return false;
 
 	//check the number of matches
 	const xmlNodeSetPtr &metadata = xpathObj->nodesetval;
@@ -449,7 +450,7 @@ bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, cons
 	const std::string xpath( std::string(MeteoData_xpath)+"[@id='identifier' and text()='"+station_id+"']" );
 
 	xmlXPathObjectPtr xpathObj( xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx) );
-	if (xpathObj == NULL) return false;
+	if (xpathObj == nullptr) return false;
 
 	//check the number of matches
 	const xmlNodeSetPtr &data = xpathObj->nodesetval;

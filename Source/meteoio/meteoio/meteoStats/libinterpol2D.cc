@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -349,7 +350,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 
 	//make sure dem has the curvature that we need
 	const bool recomputeDEM = i_dem.curvature.empty();
-	DEMObject *intern_dem = NULL;
+	DEMObject *intern_dem = nullptr;
 	if (recomputeDEM) {
 		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Computing it...\n";
 		intern_dem = new DEMObject(i_dem);
@@ -399,7 +400,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 		DW(ii) = fmod(dw+theta_t + 360., 360.);
 	}
 
-	if (intern_dem!=NULL) delete (intern_dem);
+	if (intern_dem!=nullptr) delete (intern_dem);
 }
 
 /**
