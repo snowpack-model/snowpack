@@ -38,14 +38,20 @@ using namespace mio;
 ************************************************************/
 
 Meteo::Meteo(const SnowpackConfig& cfg)
-       : canopy(cfg), roughness_length(0.), height_of_wind_value(0.), adjust_height_of_wind_value(true), stability(MO_MICHLMAYR),
+       : canopy(cfg), roughness_length_parametrization("CONST"), roughness_length(0.), height_of_wind_value(0.), adjust_height_of_wind_value(true), stability(MO_MICHLMAYR),
          research_mode(false), useCanopyModel(false)
 {
 	const std::string stability_model = cfg.get("ATMOSPHERIC_STABILITY", "Snowpack");
 	stability = getStability(stability_model);
-	
-	//Initial estimate of the roughness length for the site; will be adjusted iteratively, default value and operational mode: 0.002 m
-	cfg.getValue("ROUGHNESS_LENGTH", "Snowpack", roughness_length);
+
+	// Check if we use ROUGHNESS_LENGTH parametrization
+	const std::string tmp_z0_string = "";
+	cfg.getValue("ROUGHNESS_LENGTH", "Snowpack", roughness_length_parametrization);
+	if (roughness_length_parametrization != "AMORY2017") {
+		roughness_length_parametrization = "CONST";
+		//Initial estimate of the roughness length for the site; will be adjusted iteratively, default value and operational mode: 0.002 m
+		cfg.getValue("ROUGHNESS_LENGTH", "Snowpack", roughness_length);
+	}
 
 	//Defines whether the canopy model is used. OUT_CANOPY must also be set to dump canopy parameters to file; see Constants_local.h
 	cfg.getValue("CANOPY", "Snowpack", useCanopyModel);
@@ -242,6 +248,24 @@ void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, 
 	}
 }
 
+double Meteo::compZ0(const std::string& model, const CurrentMeteo& Mdata) {
+	if (model == "AMORY2017") {
+		if (Mdata.ta == IOUtils::nodata || Mdata.ta < IOUtils::C_TO_K(-20.)) {
+			return 0.0002;	// See L267-268 in Amory et al. (2020), https://doi.org/10.5194/gmd-2020-368
+		} else {
+			// See Eq. 7 in Amory et al. (2017), https://doi.org/10.1007/s10546-017-0242-5
+			const double a=0.0027;
+			const double b=0.00009;
+			const double c=0.0000015;
+			const double Tc = IOUtils::K_TO_C(std::min(Constants::meltfreeze_tk, Mdata.ta));
+			const double CDN10 = a + b * Tc + c * Tc * Tc;
+			return exp(-((Constants::karman / sqrt(CDN10)) - log(10.)));
+		}
+	} else {
+		throw InvalidArgumentException("Unsupported roughness length parametrization", AT);
+	}
+}
+
 /**
  * @brief Atmospheric stability correction for wind values.
  * This makes an iteration to find z0 and ustar at the same time
@@ -250,7 +274,7 @@ void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, 
  * @param adjust_VW_height if set to false, assumes a constant measurement height for wind values (default: true, ie.
  * take into account the snow height decreasing the sensor height above the surface)
  */
-void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& adjust_VW_height) const
+void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& adjust_VW_height)
 {
 	static const unsigned int max_iter = 100;
 
@@ -263,6 +287,14 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	const double t_surf = Xdata.Ndata[Xdata.getNumberOfElements()].T;
 	const double ta_v = Mdata.ta * (1. + 0.377 * sat_vap / p0);
 	const double t_surf_v = t_surf * (1. + 0.377 * sat_vap / p0);
+
+	if (roughness_length_parametrization == "CONST") {
+		// Nothing to do here, roughness_length is read from config
+	} else if (roughness_length_parametrization == "AMORY2017") {
+		roughness_length = compZ0("AMORY2017", Mdata);
+	} else {
+		throw InvalidArgumentException("Unsupported roughness length parametrization", AT);
+	}
 
 	// Adjust for snow height if fixed_height_of_wind=false
 	const double zref = (adjust_VW_height)
