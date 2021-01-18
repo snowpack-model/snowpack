@@ -1997,6 +1997,7 @@ SnowStation::~SnowStation()
 			ReleaseBlockMatrix(&pMat->Mat.Block);
 		}
 		free(pMat);
+		pMat = NULL;
 	}
 
 	if (Seaice != NULL) {
