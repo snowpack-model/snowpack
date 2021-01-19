@@ -465,6 +465,10 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 					enforce_merge = true;
 				}
 			}
+			if (nE==1 && EMS[eUpper].L > 0.1 * minimum_l_element) {
+				// If we only have 1 element, we try to keep it for longer to build up a snow/firn layer in low accumulation areas (Antarctica)
+				enforce_merge = false;
+			}
 		} else {
 			enforce_merge = false;
 		}

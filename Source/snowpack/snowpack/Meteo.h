@@ -61,15 +61,17 @@ class Meteo {
 		ATM_STABILITY getStability() const;
 
  	private:
-		void MicroMet(const SnowStation& Xdata, CurrentMeteo& Mdata, const bool& adjust_VW_height=true) const;
+		void MicroMet(const SnowStation& Xdata, CurrentMeteo& Mdata, const bool& adjust_VW_height=true);
 		static double getParameterAverage(mio::IOManager& io, const mio::MeteoData::Parameters& param,
 		                                  const mio::Date& current_date, const int& time_span, const int& increment);
 		static void RichardsonStability(const double& ta_v, const double& t_surf_v, const double& zref,
 		                                const double& vw, const double& z_ratio, double &ustar, double &psi_s);
 		static void MOStability(const ATM_STABILITY& use_stability, const double& ta_v, const double& t_surf_v, const double& t_surf, 
 		                                       const double& zref, const double& vw, const double& z_ratio, double &ustar, double &psi_s, double &psi_m);
+		static double compZ0(const std::string& model, const CurrentMeteo& Mdata);
 		
 		Canopy canopy;
+		std::string roughness_length_parametrization;
 		double roughness_length, height_of_wind_value;
 		bool adjust_height_of_wind_value;
 		ATM_STABILITY stability;
