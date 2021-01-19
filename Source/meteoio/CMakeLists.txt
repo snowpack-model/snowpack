@@ -22,6 +22,7 @@ ENDIF(WIN32)
 
 ###########################################################
 #set compiler flags according to the detected compiler and user options
+SET(CMAKE_CXX_STANDARD 11)
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
 SET_COMPILER_OPTIONS()
 

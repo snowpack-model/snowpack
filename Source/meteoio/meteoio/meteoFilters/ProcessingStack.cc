@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,48 +23,23 @@
 using namespace std;
 
 namespace mio {
-const char ProcessingStack::NUM[] = "0123456789";
-const std::string ProcessingStack::filter_key( "::FILTER" );
-const std::string ProcessingStack::arg_key( "::ARG" );
-
-std::vector< std::pair<std::string, std::string> > ProcessingStack::parseArgs(const Config& cfg, const std::string& key, const std::string& parname)
-{
-	//extract the filter number and perform basic checks on the syntax
-	const size_t end_filter = key.find(filter_key); //we know this will be found since it has been matched in cfg.getValues()
-	const size_t start_filter_nr = key.find_first_of(NUM, end_filter+filter_key.length());
-	const size_t end_filter_nr = key.find_first_not_of(NUM, end_filter+filter_key.length());
-	if (start_filter_nr==std::string::npos || end_filter_nr!=std::string::npos) throw InvalidArgumentException("Syntax error: "+key, AT);
-
-	unsigned int filter_nr;
-	const std::string filter_nr_str( key.substr(start_filter_nr) );
-	if ( !IOUtils::convertString(filter_nr, filter_nr_str) ) InvalidArgumentException("Can not parse filter number in "+key, AT);
-
-	//read the arguments and clean them up (ie remove the {Param}::{args##}:: in front of the argument key itself)
-	std::ostringstream arg_str;
-	arg_str << parname << arg_key << filter_nr;
-	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(arg_str.str(), "FILTERS") );
-	for (size_t jj=0; jj<vecArgs.size(); jj++) {
-		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
-		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
-	}
-	
-	return vecArgs;
-}
+const std::string ProcessingStack::filter_section( "FILTERS" );
+const std::string ProcessingStack::filter_pattern( "::FILTER" );
+const std::string ProcessingStack::arg_pattern( "::ARG" );
 
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname), data_qa_logs(false)
 {
 	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 	
 	//extract each filter and its arguments, then build the filter stack
-	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_key, "FILTERS") );
+	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(parname+filter_pattern, filter_section) );
 	filter_stack.reserve( vecFilters.size() );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
 		const std::string block_name( IOUtils::strToUpper( vecFilters[ii].second ) );
 		if (block_name=="NONE") continue;
 		
-		const std::vector< std::pair<std::string, std::string> > vecArgs( parseArgs(cfg, vecFilters[ii].first, parname) );
+		const unsigned int cmd_nr = Config::getCommandNr(filter_section, parname+filter_pattern, vecFilters[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(filter_section, parname, cmd_nr, arg_pattern) );
 		filter_stack.push_back( BlockFactory::getBlock(block_name, vecArgs, cfg) );
 	}
 }

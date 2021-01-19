@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -28,21 +29,21 @@ using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL)
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(nullptr)
 {
 	const bool status = setModel(regType, in_X, in_Y, updatefit);
 	if (updatefit && status==false)
 		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL)
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(nullptr)
 {
 	const bool status = setModel(regType, in_X, in_Y, updatefit);
 	if (updatefit && status==false)
 		throw NoDataException("The provided data was insufficient when constructing the regression model '"+model->getName()+"'", AT);
 }
 
-Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) {
+Fit1D::Fit1D(const Fit1D& i_fit) : model(nullptr) {
 	*this = i_fit;
 }
 
@@ -76,7 +77,7 @@ bool Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 
 bool Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
 {//HACK: if model is already the right type, do not delete but reset
-	if (model!=NULL) delete model;
+	if (model!=nullptr) delete model;
 
 	if (regType==ZERO) model=new Zero;
 	if (regType==SIMPLE_LINEAR) model=new SimpleLinear;

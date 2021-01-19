@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -29,13 +30,13 @@ bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 
 //when we can not guarantee PSUM=0, we leave it at nodata. Therefore, it is highly recommended to
 //run through a Cst=0 data generator afterward
-bool ESOLIPGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ESOLIPGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
 	//Find first point that is not IOUtils::nodata
 	size_t last_good = IOUtils::npos;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=ii_min; ii<ii_max; ii++){
 		if (vecMeteo[ii](MeteoData::HS) != IOUtils::nodata){
 			last_good = ii;
 			break;
@@ -46,7 +47,7 @@ bool ESOLIPGenerator::create(const size_t& param, std::vector<MeteoData>& vecMet
 		return false;
 
 	bool all_filled = (last_good>0)? false : true;
-	for (size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=last_good+1; ii<ii_max; ii++) {
 		const double HS_curr = vecMeteo[ii](MeteoData::HS);
 		if (HS_curr==IOUtils::nodata) continue;
 

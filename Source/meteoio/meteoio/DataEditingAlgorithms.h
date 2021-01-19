@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2020 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,7 +20,6 @@
 #define DATAEDITINGALGS_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/DataCreator.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 
 #include <map>
@@ -27,31 +27,6 @@
 #include <string>
 
 namespace mio {
-
-/** 
- * @class RestrictionsIdx
- * @brief Convenience class for processing data with time restriction periods.
- * @details Given a vector of DateRange and a vector of MeteoData, compute which start/end indices
- * fit within the time restriction periods. Then repeatedly calling getStart() / getEnd() will provide
- * these indices while calling the \b ++ operator increment the time restriction period. 
- * Once isValid() returns false, there are no time restriction periods left.
- * @author Mathias Bavay
- */
-class RestrictionsIdx {
-	public:
-		RestrictionsIdx() : start(), end(), index(IOUtils::npos) {}
-		RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions);
-		
-		bool isValid() const {return (index != IOUtils::npos);}
-		size_t getStart() const;
-		size_t getEnd() const;
-		RestrictionsIdx& operator++();
-		const std::string toString() const;
-		
-	private:
-		std::vector<size_t> start, end;
-		size_t index;
-};
 
 /** 
  * @class EditingBlock
@@ -81,16 +56,31 @@ class EditingBlock {
 		
 		/**
 		 * @brief Get the station IDs this editing block depends on for this station
-		 * @return a set station IDs it depends on
+		 * @return a set of station IDs it depends on
 		 */
-		virtual std::set<std::string> getDependencies() const {return std::set<std::string>();}
+		virtual std::set<std::string> requiredIDs() const {return std::set<std::string>();}
+		
+		/**
+		 * @brief Get the station IDs this editing block provides based on this station
+		 * @return a set of station IDs it provides
+		 */
+		virtual std::set<std::string> providedIDs() const {return std::set<std::string>();}
+		
+		/**
+		 * @brief Get the station IDs to purge after using them for this station ID
+		 * @return a set of station IDs to purge after processing
+		 */
+		virtual std::set<std::string> purgeIDs() const {return requiredIDs();}
 		
 		const std::string toString() const;
 		
 	protected:
 		std::string getName() const {return block_name;}
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		bool skipStation(const std::vector<MeteoData>& vecMeteo) const;
 		METEO_SET timeFilterFromStation(const METEO_SET& vecMeteo) const; //merge and automerge need this method
 		
+		const std::set<std::string> excluded_stations, kept_stations;
 		const std::vector<DateRange> time_restrictions;
 		const std::string stationID, block_name;
 };
@@ -105,9 +95,9 @@ class EditingBlock {
  * 
  * @code
  * [InputEditing]
- * FLU2::edit2 = SWAP
+ * FLU2::edit2      = SWAP
  * FLU2::arg2::dest = ISWR
- * FLU2::arg2::src = RSWR
+ * FLU2::arg2::src  = RSWR
  * @endcode
  */
 class EditingSwap : public EditingBlock {
@@ -133,9 +123,9 @@ class EditingSwap : public EditingBlock {
  * 
  * @code
  * [InputEditing]
- * SLF2::edit1 = MOVE
+ * SLF2::edit1      = MOVE
  * SLF2::arg1::dest = TA
- * SLF2::arg1::src = air_temp air_temperature temperature_air
+ * SLF2::arg1::src  = air_temp air_temperature temperature_air
  * @endcode
  * 
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
@@ -160,14 +150,17 @@ class EditingMove : public EditingBlock {
  * @brief EXCLUDE input editing command
  * @details
  * It is possible to exclude specific parameters with the "exclude" command. This is done by providing a space delimited list of 
- * \ref meteoparam "meteorological parameters" to exclude for the station with the EXCLUDE argument. The exact opposite can also be done, excluding 
- * ALL parameters except the ones declared with the "keep" command. If such a command has been used for the wildcard station ID '*', the parameters
- * are additive with the ones declared for a specific station ID.
+ * \ref meteoparam "meteorological parameters" to exclude for the station with the EXCLUDE argument (the exact opposite can also be done, excluding 
+ * ALL parameters except the ones declared with the "keep" command). Giving as parameters the wildcard character \em * deletes the whole timestamp.
  *
  * @code
  * [InputEditing]
- * FLU2::edit3 = EXCLUDE
- * FLU2::arg3::exclude = TA RH TSS TSG
+ * FLU2::edit3         = EXCLUDE
+ * FLU2::arg3::params  = TA RH TSS TSG
+ * 
+ * SLF2::edit1         = EXCLUDE
+ * SLF2::arg3::params  = *
+ * SLF2::arg3::when    = 2020-09-01 - 2020-09-03
  * @endcode
  */
 class EditingExclude : public EditingBlock {
@@ -178,8 +171,9 @@ class EditingExclude : public EditingBlock {
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		static void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params);
+		void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params) const;
 		std::set< std::string > exclude_params;
+		bool wildcard;
 };
 
 /** 
@@ -188,16 +182,16 @@ class EditingExclude : public EditingBlock {
  * @brief KEEP input editing command
  * @details
  * It is possible to exclude ALL parameters except the ones declared with the "keep" command (it is the exact opposite of the
- * EditingExclude command). If such a command has been used for the wildcard station ID '*', the parameters
- * are additive with the ones declared for a specific station ID. Here below an example 
- * relying on wildcards:
+ * EditingExclude command). If such a command has been used for the wildcard station ID '*', it will be applied first so 
+ * it is not possible to "keep" some parameters that have already been excluded with the wildcard station ID. 
+ * Here below an example relying on wildcards:
  * @code
  * [InputEditing]
- * *::edit1 = KEEP                               ;all stations will keep TA and RH and reject the other parameters
- * *::arg1::keep = TA RH
+ * *::edit1        = KEEP           ;all stations will keep TA, RH and HS and reject the other parameters
+ * *::arg1::params = TA RH HS
  * 
- * WFJ2::edit1 = KEEP                          ;WFJ2 will keep TA and RH as defined above but also HS and PSUM
- * WFJ2::arg1::keep = HS PSUM
+ * WFJ2::edit1        = KEEP        ;WFJ2 will only keep HS since ISWR has been removed by the '*' station above
+ * WFJ2::arg1::params = HS ISWR
  * @endcode
  */
 class EditingKeep : public EditingBlock {
@@ -234,25 +228,25 @@ class EditingKeep : public EditingBlock {
  * [Input]
  * METEO = SMET
  * METEOPATH = ./input
- * STATION1 = STB
- * STATION2 = WFJ2
- * STATION3 = WFJ1
- * STATION4 = DAV1
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
  * [...]
  *
  * [InputEditing]
- * STB::edit1 = EXCLUDE
- * STB::arg1::exclude = ILWR PSUM
+ * STB::edit1        = EXCLUDE
+ * STB::arg1::params = ILWR PSUM
  * 
- * WFJ2::edit1 = KEEP
- * WFJ2::arg1::keep = PSUM ILWR RSWR
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
  *
- * STB::edit2 = MERGE
+ * STB::edit2       = MERGE
  * STB::arg2::merge = WFJ2 WFJ1
  * STB::arg2::merge_strategy = FULL_MERGE
  * 
- * DAV1::edit1 = MERGE
- * DAV1::arg1::merge = WFJ2
+ * DAV1::edit1        = MERGE
+ * DAV1::arg1::merge  = WFJ2
  * DAV1::arg1::params = HS RSWR PSUM
  * @endcode
  * 
@@ -268,7 +262,7 @@ class EditingMerge : public EditingBlock {
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		virtual void editTimeSeries(STATIONS_SET& vecStation);
 		
-		std::set<std::string> getDependencies() const;
+		std::set<std::string> requiredIDs() const;
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::vector< std::string > merged_stations;
@@ -319,9 +313,9 @@ class EditingAutoMerge : public EditingBlock {
  * 
  * @code
  * [InputEditing]
- * DAV::edit1 = COPY
+ * DAV::edit1      = COPY
  * DAV::arg1::dest = TA_copy
- * DAV::arg1::src = TA
+ * DAV::arg1::src  = TA
  * @endcode
  * 
  * This creates a new parameter TA_copy that starts as an exact copy of the raw data of TA, for the DAV station. This newly created parameter is
@@ -336,6 +330,108 @@ class EditingCopy : public EditingBlock {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::string dest_param, src_param;
+};
+
+/** 
+ * @class EditingCreate
+ * @ingroup processing
+ * @brief CREATE input editing command
+ * @details
+ * By calling a choice of algorithms, it is possible to convert a parameter into another one (for example, a dew point
+ * temperature to a relative humidity), to generate a parameter thanks to a parametrization based on other parameters
+ * (for example ILWR based on TA, RH and ISWR) or to generate synthetic values (for example, a purely yearly sinusoidal
+ * variation for TA). This input editing command takes two fixed options as well as an undefined number of options 
+ * depending on the \ref generators "generator algorithm" that has been chosen:
+ *     - ALGORITHM: specify which \ref generators "generator algorithm" to use;
+ *     - PARAM: provides the meteorological parameter to generate values for 
+ * (either a MeteoData::Parameters or any other, non-standard name).
+ * 
+ * Then the arguments of the chosen data generator algorithm must also be provided (according to its documentation).
+ * 
+ * If the destination parameter does not exists, it will be created. Otherwise, any pre-existing data is kept and only 
+ * missing values in the original data set are filled with the generated values, keeping the original sampling rate. As the 
+ * available algorithms are the same as for the data generators, they are listed in the 
+ * \ref generators_keywords "data generators section" (but the data creators must be declared here in the [InputEditing] section
+ * as part of the Input Data Editing stack).
+ * 
+ * @code
+ * [InputEditing]
+ * DAV::edit1           = CREATE
+ * DAV::arg1::algorithm = CST	;use a constant data generator
+ * DAV::arg1::param     = RH	;generate data for the Relative Humidity (RH)
+ * DAV::arg1::value     = 0.7	;generate a constant value of 0.7 whenever there is no other data for RH
+ * @endcode
+ */
+class EditingCreate : public EditingBlock {
+	public:
+		EditingCreate(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+	private:
+		static const std::vector< std::pair<std::string, std::string> > cleanGeneratorArgs(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		
+		const Config &cfg_copy;
+		const std::vector< std::pair<std::string, std::string> > vecArgs_copy;
+		std::string algorithm, dest_param;
+};
+
+/** 
+ * @class EditingMetadata
+ * @ingroup processing
+ * @brief METADATA input editing command
+ * @details
+ * This Input Data Editing algorithm allows to manipulate the metadata of a given station. it takes the following arguments:
+ *     - NAME: set a new station name;
+ *     - ID: set a new station ID;
+ *     - LATITUDE: set a new latitude (then the longitude argument MUST also be provided);
+ *     - LONGITUDE: set a new longitude (then the latitude argument MUST also be provided);
+ *     - ALTITUDE: set a new altitude;
+ *     - SLOPE: set a new slope (then the aziumth argument MUST also be provided);
+ *     - AZIMUTH: set a new azimuth (then the slope argument MUST also be provided).
+ * 
+ * Please note that setting a new ID in effect creates a new station. If there are no time restrictions, the old station will
+ * disappear and be replaced by the new one. If there are time restrictions, both stations will remain side by side, although with
+ * an obviously different time coverage. Since there is a dependency resolution, you can declare some Input Data Editing on the
+ * new station ID, it will be applied properly and any editing declared *after* the ID editing command will only apply for data
+ * outside of time restrictions (if any) for the renaming command. When creating a new station, it makes sense to also provide the
+ * geographic coordinates for it...
+ * 
+ * @code
+ * SLF2::edit1 = METADATA
+ * SLF2::arg1::altitude = 1560     ;set the altitude to 1560m
+ * 
+ * 
+ * FLU2::edit1 = METADATA
+ * FLU2::arg1::id = TST2
+ * FLU2::arg1::WHEN = 2020-01-01 - 2020-02-01	;all data in this time range will move to the new TST2 station
+ * 
+ * FLU2::edit2 = EXCLUDE            ;this will only be applied to data outside the above-defined range
+ * FLU2::arg2::params = TA
+ * 
+ * TST2::edit1 = SWAP               ; data in the above-defined range will come to this new station
+ * TST2::arg1::dest = TA1           ; and then this SWAP will be applied
+ * TST2::arg1::src = TA2
+ * @endcode
+ */
+class EditingMetadata : public EditingBlock {
+	public:
+		EditingMetadata(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+		virtual void editTimeSeries(STATIONS_SET& vecStation);
+		
+		std::set<std::string> providedIDs() const;
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void mergeMigratedData(std::vector<METEO_SET>& vecMeteo, const std::vector<METEO_SET>& vecTmp) const;
+		
+		std::string new_name, new_id;
+		double lat, lon, alt, slope, azi;
+		bool edit_in_place;
 };
 
 class EditingBlockFactory {

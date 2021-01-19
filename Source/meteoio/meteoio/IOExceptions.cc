@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -49,18 +50,18 @@ void inline messageBox(const std::string& msg) {
 	#endif
 	#if defined _WIN32 || defined __MINGW32__
 		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
-		MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+		MessageBox( nullptr, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 	#endif
 	#if defined(__APPLE__)
 		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
 		const void* keys[] = { kCFUserNotificationAlertHeaderKey,
 				kCFUserNotificationAlertMessageKey };
 		const void* values[] = { CFSTR("Oops, something went wrong!"),
-					CFStringCreateWithCString(NULL, box_msg.c_str(), kCFStringEncodingMacRoman) };
+					CFStringCreateWithCString(nullptr, box_msg.c_str(), kCFStringEncodingMacRoman) };
 		CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
 				sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		SInt32 error = 0;
-		CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
+		CFUserNotificationCreate(nullptr, 0, kCFUserNotificationStopAlertLevel, &error, dict);
 	#endif
 }
 #endif
@@ -137,7 +138,7 @@ IOException::IOException(const std::string& message, const std::string& position
 #endif
 }
 
-const char* IOException::what() const throw()
+const char* IOException::what() const noexcept
 {
 #if defined(MSG_BOX)
 	messageBox(msg);

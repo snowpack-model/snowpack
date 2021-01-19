@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -82,12 +83,6 @@ class Config {
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
 		 */
 		Config();
-
-		 /**
-                 * @brief Empty virtual destructor. This should exists to allow other classes to inherit from
-		 * Config class as mother class.
-                 */
-		virtual ~Config() {}
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
@@ -409,6 +404,37 @@ class Config {
 		 * @param[in] overwrite if true, all keys in the destination section are erased before creating the new keys
 		 */
 		void moveSection(std::string org, std::string dest, const bool& overwrite);
+		
+		/**
+		 * @brief Extract the command number from a given command string, given the command pattern
+		 * @details Each new command is defined as {cmd_id}::{cmd_pattern}# = {value} and this call
+		 * extracts the command number out of a given "{cmd_id}::{cmd_pattern}#" string.
+		 * 
+		 * For example, a filter command will have as command pattern "TA::FILTER", as command key
+		 * "TA::FILTER3" and this call will return *3*.
+		 * @param[in] section The section this command belongs to (for error messages)
+		 * @param[in] cmd_pattern Pattern used to build the stack of commands, such as "TA::FILTER" or even just "::FILTER"
+		 * @param[in] cmd_key the base command key, such as "TA::FILTER3" that will be parsed as {cmd_id}::{cmd_pattern}# to extract the command number
+		 * @return the key index contained in the cmd_key or IOUtils::unodata if a number could not be extracted
+		 */
+		static unsigned int getCommandNr(const std::string& section, const std::string& cmd_pattern, const std::string& cmd_key);
+		
+		/**
+		* @brief Extract the arguments for a given command and store them into a vector of key / value pairs.
+		* @details The goal of this call is to provide an algorithm with easy to parse arguments, independent
+		* of the entry syntax. The syntax that is supported here is the following:
+		*    - each new command is defined as {cmd_id}::{cmd_pattern}# = {value}
+		*    - each argument for this command is defined as {cmd_id}::{arg_pattern}#::{argument_name} = {value}
+		* From the command definition, the command number will be retrieved by a call to getCommandNr(). Then all its arguments 
+		* will be extracted by the current call and saved into a vector of pairs {argument_name} / {value}.
+		* 
+		* @param[in] section The section where to look for this command
+		* @param[in] cmd_id the command ID to process
+		* @param[in] cmd_nr the command number to process (most probably provided by a call to getCommandNr())
+		* @param[in] arg_pattern as part of the argument definition
+		* @return All arguments for this command, as vector of key / value pairs, {argument_name} / {value}
+		*/
+		std::vector< std::pair<std::string, std::string> > parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const;
 
 	private:
 		std::map<std::string, std::string> properties; ///< Save key value pairs
@@ -432,8 +458,6 @@ class ConfigProxy {
 			proxycfg.getValue(key, section, tmp, IOUtils::dothrow);
 			return tmp;
 		}
-
-		ConfigProxy& operator =(const ConfigProxy& /*i_cfg*/) {return *this;} //making VC++ happy...
 };
 
 class ConfigParser {

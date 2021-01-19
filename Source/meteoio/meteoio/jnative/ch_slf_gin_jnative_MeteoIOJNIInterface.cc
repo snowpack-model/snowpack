@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * ch_slf_gin_jnative_MeteoIOJNIInterface.cc
  *
@@ -101,9 +102,9 @@ jdoubleArray __internalWrapper
 	jboolean isCopyClusterThresholds;
 	jboolean isCopyClusterIds;
 	jboolean isCopyOptions;
-	double *cClusterThresholds = NULL;
-	double *cClusterIds = NULL;
-	double *cOptions = NULL;
+	double *cClusterThresholds = nullptr;
+	double *cClusterIds = nullptr;
+	double *cOptions = nullptr;
 	std::vector<double> vecClusterThresholds;
 	std::vector<double> vecClusterIds;
 	if (bClusterization || bPolygonize){
@@ -224,7 +225,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
 			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
-			false, NULL, NULL, false, NULL);
+			false, nullptr, nullptr, false, nullptr);
 }
 
 
@@ -238,7 +239,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
 			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
-			false, NULL, NULL, false, NULL);
+			false, nullptr, nullptr, false, nullptr);
 }
 
 
@@ -252,7 +253,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
 			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
-			true, jClusterThresholds, jClusterIds, false, NULL);
+			true, jClusterThresholds, jClusterIds, false, nullptr);
 }
 
 

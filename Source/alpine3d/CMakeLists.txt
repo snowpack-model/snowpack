@@ -10,6 +10,7 @@ SET(VERSION_PATCH 1 CACHE INTERNAL "")
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+#cmake_policy(SET CMP0074 NEW)
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
@@ -101,6 +102,7 @@ SET(CMAKE_CXX_FLAGS "${PETSC_FLAGS} ${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${A
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_STANDARD 11)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
 #Add subdirectory, so they can inherit all variables defined above

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 Mountain-eering Srl, Trento/Bolzano, Italy                      */
 /***********************************************************************************/
@@ -87,7 +88,7 @@ const std::string PSQLIO::sqlInsertMeasurement = "INSERT INTO FIXED_MEASUREMENT 
 PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
                                                 in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                                 out_userid(), out_passwd(), input_configured(false), output_configured(false),
-                                                psql(NULL), default_timezone(1.), vecMeta(), vecFixedStationID(),
+                                                psql(nullptr), default_timezone(1.), vecMeta(), vecFixedStationID(),
                                                 vecMobileStationID(), sql_meta(), sql_data()
 {
 	Config cfg(configfile);
@@ -98,7 +99,7 @@ PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coord
 PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
                                     in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                     out_userid(), out_passwd(), input_configured(false), output_configured(false),
-                                    psql(NULL), default_timezone(1.), vecMeta(), vecFixedStationID(),
+                                    psql(nullptr), default_timezone(1.), vecMeta(), vecFixedStationID(),
                                     vecMobileStationID(), sql_meta(), sql_data()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -110,7 +111,7 @@ PSQLIO::PSQLIO(const PSQLIO& in) : coordin(in.coordin), coordinparam(in.coordinp
                                    in_dbname(in.in_dbname), in_userid(in.in_userid), in_passwd(in.in_passwd),
                                    out_endpoint(in.out_endpoint), out_port(in.out_port), out_dbname(in.out_dbname),
                                    out_userid(in.out_userid), out_passwd(in.out_passwd), input_configured(false),
-                                   output_configured(false), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta),
+                                   output_configured(false), psql(nullptr), default_timezone(1.), vecMeta(in.vecMeta),
                                    vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
                                    sql_meta(in.sql_meta), sql_data(in.sql_data) {}
 
@@ -777,7 +778,7 @@ PGresult *PSQLIO::sql_exec(const string& sql_command, const bool& input)
 		cout << "ERROR while executing the following sql statement: " << sql_command << endl;
 		//cout << "BAD SELECT: " << PQresStatus(status) << endl;
 		PQclear(result);
-		return NULL;
+		return nullptr;
 	}
 
 	close_connection(psql);

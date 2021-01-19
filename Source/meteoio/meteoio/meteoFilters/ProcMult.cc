@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -73,7 +74,7 @@ void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& 
 			}
 		}
 	} else if (type=='n') { //noise
-		srand( static_cast<unsigned int>(time(NULL)) );
+		srand( static_cast<unsigned int>(time(nullptr)) );
 		if (distribution=='u') {
 			uniform_noise(param, ovec);
 		} else if (distribution=='n') {

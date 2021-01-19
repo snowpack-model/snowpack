@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -96,6 +97,32 @@ class MeteoProcessor {
 		Meteo1DInterpolator mi1d;
 		std::map<std::string, ProcessingStack*> processing_stack;
 };
+
+/** 
+ * @class RestrictionsIdx
+ * @brief Convenience class for processing data with time restriction periods.
+ * @details Given a vector of DateRange and a vector of MeteoData, compute which start/end indices
+ * fit within the time restriction periods. Then repeatedly calling getStart() / getEnd() will provide
+ * these indices while calling the \b ++ operator increment the time restriction period. 
+ * Once isValid() returns false, there are no time restriction periods left.
+ * @author Mathias Bavay
+ */
+class RestrictionsIdx {
+	public:
+		RestrictionsIdx() : start(), end(), index(IOUtils::npos) {}
+		RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions);
+		
+		bool isValid() const {return (index != IOUtils::npos);}
+		size_t getStart() const;
+		size_t getEnd() const;
+		RestrictionsIdx& operator++();
+		const std::string toString() const;
+		
+	private:
+		std::vector<size_t> start, end;
+		size_t index;
+};
+
 } //end namespace
 
 #endif

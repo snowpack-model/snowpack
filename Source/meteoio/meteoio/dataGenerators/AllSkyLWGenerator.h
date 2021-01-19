@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -59,8 +60,8 @@ namespace mio {
  * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
  * [Generators]
- * ILWR::generators      = allsky_LW
- * ILWR::allsky_lw::type = Omstedt
+ * ILWR::generator1 = allsky_LW
+ * ILWR::arg1::type = Omstedt
  * @endcode
  *
  *
@@ -73,11 +74,11 @@ namespace mio {
  */
 class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
-		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), sun(), clf_model(TauCLDGenerator::KASTEN),
-		                 last_cloudiness(), use_rswr(false) { parse_args(vecArgs); }
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(),
+		                 last_cloudiness(), model(OMSTEDT), clf_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
@@ -88,11 +89,11 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 			OMSTEDT,
 			UNSWORTH
 		} parametrization;
-		parametrization model;
 
 		SunObject sun;
-		TauCLDGenerator::clf_parametrization clf_model;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		parametrization model;
+		TauCLDGenerator::clf_parametrization clf_model;
 		bool use_rswr;
 };
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -33,14 +34,14 @@ bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool StandardPressureGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool StandardPressureGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
 	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
 	if (altitude==IOUtils::nodata) return false;
 
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		double &value = vecMeteo[ii](param);
 		if (value == IOUtils::nodata)
 			value = Atmosphere::stdAirPressure(altitude);

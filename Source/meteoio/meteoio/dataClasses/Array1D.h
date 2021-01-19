@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -117,7 +118,6 @@ template<class T> class Array1D {
 		T& operator ()(const size_t& index);
 		const T operator ()(const size_t& index) const;
 
-		Array1D<T>& operator =(const Array1D<T>&);
 		Array1D<T>& operator =(const T& value);
 
 		Array1D<T>& operator+=(const T& rhs);
@@ -393,15 +393,6 @@ template<class T> bool Array1D<T>::checkEpsilonEquality(const Array1D<double>& r
 
 template<class T> bool Array1D<T>::checkEpsilonEquality(const Array1D<double>& rhs1, const Array1D<double>& rhs2, const double& epsilon) {
 	return rhs1.checkEpsilonEquality(rhs2, epsilon);
-}
-
-template<class T> Array1D<T>& Array1D<T>::operator=(const Array1D<T>& source) {
-	if (this != &source) {
-		vecData = source.vecData;
-		nx = source.nx;
-		keep_nodata = source.keep_nodata;
-	}
-	return *this;
 }
 
 template<class T> Array1D<T>& Array1D<T>::operator=(const T& value) {

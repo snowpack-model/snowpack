@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -52,7 +53,7 @@ bool RadiationComponents::generate(const size_t& param, MeteoData& md)
 	return true;
 }
 
-bool RadiationComponents::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool RadiationComponents::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (param!=MeteoData::ISWR)
 		throw InvalidArgumentException("The "+where+" generator can only be applied to ISWR_DIR and/or ISWR_DIFF", AT);
@@ -69,7 +70,7 @@ bool RadiationComponents::create(const size_t& param, std::vector<MeteoData>& ve
 		throw NotFoundException("No ISWR_DIR and/or ISWR_DIFF radiation components found", AT);
 	
 	bool all_filled = true;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		if (vecMeteo[ii](param)!=IOUtils::nodata) continue;
 		
 		const double dir = vecMeteo[ii](iswr_dir);

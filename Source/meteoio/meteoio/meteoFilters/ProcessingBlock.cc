@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -115,7 +116,7 @@ namespace mio {
  * DW::filter1   = add
  * DW::arg1::type = Cst
  * DW::arg1::cst = 45
- * DW::arg1::when = 2020-07-01 - 2020-07-10, 2020-07-20T12:00 - 2020-08-01
+ * DW::arg1::when = 2020-07-01 - 2020-07-10 , 2020-07-20T12:00 - 2020-08-01
  * @endcode
  *
  * @section processing_available Available processing elements
@@ -162,7 +163,7 @@ namespace mio {
  *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplicates, etc), see TimeSuppr
- * - UNDST: correct timestamps that contain Daylight Saving Time back to Winter time, see TimeUnDST
+ * - SHIFT: add offsets at specific times, for example to bring timestamps that contain Daylight Saving Time back to Winter time, see TimeShift
  * - SORT: sort the timestamps in increasing order, see TimeSort
  * - TIMELOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
  */
@@ -255,13 +256,14 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 {
 	if (blockname == "SUPPR"){
 		return new TimeSuppr(vecArgs, blockname, cfg);
-	} else if (blockname == "UNDST"){
-		return new TimeUnDST(vecArgs, blockname, cfg);
+	} else if (blockname == "SHIFT"){
+		return new TimeShift(vecArgs, blockname, cfg);
 	} else if (blockname == "SORT"){
 		return new TimeSort(vecArgs, blockname, cfg);
 	} else if (blockname == "TIMELOOP"){
 		return new TimeLoop(vecArgs, blockname, cfg);
 	} else {
+		if (blockname == "UNDST") std::cerr << "[E] time filter UnDST has been renamed into Shift\n";
 		throw IOException("The processing block '"+blockname+"' does not exist for the TIME parameter! " , AT);
 	}
 }

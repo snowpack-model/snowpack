@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -72,7 +73,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 	} else {
 	#if defined _WIN32 || defined __MINGW32__
 		//if this would not suffice, see http://pdh11.blogspot.ch/2009/05/pathcanonicalize-versus-what-it-says-on.html
-		char **ptr = NULL;
+		char **ptr = nullptr;
 		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
 		const DWORD status = GetFullPathName(in_path.c_str(), MAX_PATH, out_buff, ptr);
 		if (status!=0 && status<=MAX_PATH) in_path = out_buff;
@@ -84,8 +85,8 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 		
 		errno = 0;
-		char *real_path = realpath(in_path.c_str(), NULL); //POSIX 2008
-		if (real_path!=NULL) {
+		char *real_path = realpath(in_path.c_str(), nullptr); //POSIX 2008
+		if (real_path!=nullptr) {
 			const std::string tmp( real_path );
 			free(real_path);
 			return tmp;
@@ -249,7 +250,7 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 std::string getCWD()
 {
 	char buffer[1024];
-	if ( getcwd(buffer,sizeof(buffer))==NULL )
+	if ( getcwd(buffer,sizeof(buffer))==nullptr )
 		throw IOException("Can not get current working directory", AT);
 
 	return std::string( buffer );
@@ -273,11 +274,11 @@ bool fileExists(const std::string& filename)
 void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
 	DIR *dp = opendir(path.c_str());
-	if (dp == NULL) 
+	if (dp == nullptr) 
 		throw AccessException("Error opening directory " + path, AT);
 
 	struct dirent *dirp;
-	while ((dirp = readdir(dp)) != NULL) {
+	while ((dirp = readdir(dp)) != nullptr) {
 		const std::string filename( dirp->d_name );
 		const std::string full_path( path+"/"+filename );
 		if ( filename.compare(".")==0 || filename.compare("..")==0 )

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * synchronized.h
  *
@@ -61,7 +62,7 @@ public:
 #ifdef WIN32
         InitializeCriticalSection(&m_criticalSection);
 #else
-        pthread_mutex_init(&m_criticalSection, NULL);
+        pthread_mutex_init(&m_criticalSection, nullptr);
 #endif
     }
 
