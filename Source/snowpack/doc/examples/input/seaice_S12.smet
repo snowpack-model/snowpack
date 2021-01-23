@@ -5,7 +5,6 @@ station_name  = S12
 latitude      = -76.292
 longitude     = -43.49
 altitude      = 0
-epsg          = 21781
 nodata        = -999
 tz            = 1
 source        = SLF-AWI
