@@ -35,7 +35,6 @@ class SnowpackConfig : public mio::Config {
 		 */
 		SnowpackConfig(const std::string& i_filename);
 		SnowpackConfig(const mio::Config& i_cfg);
-		~SnowpackConfig() {}
 
 	private:
 		void setDefaults();
