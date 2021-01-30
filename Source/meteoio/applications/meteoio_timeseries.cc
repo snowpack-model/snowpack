@@ -53,6 +53,7 @@ using namespace mio; //The MeteoIO namespace is called mio
 static std::string cfgfile( "io.ini" );
 static mio::Date dateBegin, dateEnd;
 static double samplingRate = 60.;
+static size_t outputBufferSize = 0;
 
 inline void Version()
 {
@@ -73,6 +74,7 @@ inline void Usage(const std::string& programname)
 		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
 		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
 		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (e.g. 60)\n"
+		<< "\t[-o, --output-buffer=<output buffer size in number of timesteps>] (e.g. 24, requires APPEND mode enabled in output plugin)\n"
 		<< "\t[-p, --progress] Show progress\n"
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
@@ -91,6 +93,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		{"enddate", required_argument, nullptr, 'e'},
 		{"config", required_argument, nullptr, 'c'},
 		{"sampling-rate", required_argument, nullptr, 's'},
+		{"output-buffer", required_argument, nullptr, 's'},
 		{"progress", no_argument, nullptr, 'p'},
 		{"version", no_argument, nullptr, 'v'},
 		{"help", no_argument, nullptr, 'h'},
@@ -102,7 +105,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		exit(1);
 	}
 
-	while ((opt=getopt_long( argc, argv, ":b:e:c:s:pvh", long_options, &longindex)) != -1) {
+	while ((opt=getopt_long( argc, argv, ":b:e:c:s:o:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 0:
 			break;
@@ -120,6 +123,9 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 			break;
 		case 's':
 			mio::IOUtils::convertString(samplingRate, std::string(optarg));
+			break;
+		case 'o':
+			mio::IOUtils::convertString(outputBufferSize, std::string(optarg));
 			break;
 		case ':': //operand missing
 			std::cerr << std::endl << "[E] Command line option '-" << char(opt) << "' requires an operand\n";
@@ -185,8 +191,10 @@ static void real_main(int argc, char* argv[])
 	std::vector< std::vector<MeteoData> > vecMeteo; //so we can keep and output the data that has been read
 
 	size_t insert_position = 0;
+	size_t count = 0;
 	for (Date d=dateBegin; d<=dateEnd; d+=samplingRate) { //time loop
 		if(showProgress) std::cout << d.toString(Date::ISO) << "\n";
+		count++;
 		io.getMeteoData(d, Meteo); //read 1 timestep at once, forcing resampling to the timestep
 		for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
 			if (Meteo[ii].isNodata()) continue;
@@ -198,6 +206,14 @@ static void real_main(int argc, char* argv[])
 				vecMeteo[ mapIDs[stationID] ].reserve( nr_samples ); //to avoid memory re-allocations with push_back()
 			}
 			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
+		}
+		if (outputBufferSize > 0 && count%outputBufferSize == 0) {	// Check for buffered output
+			std::cout << "Writing output data and clearing buffer" << std::endl;
+			io.writeMeteoData(vecMeteo);
+			for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
+				const std::string stationID( Meteo[ii].meta.stationID );
+				vecMeteo[ mapIDs[stationID] ].clear();
+			}
 		}
 	}
 
