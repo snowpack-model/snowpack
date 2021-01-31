@@ -9,6 +9,11 @@ if [ -z "${model}" ] && [ -z "${year}" ]; then
 	exit
 fi
 
+if [ ${model} != "MERRA-2" ] && [ ${model} != "CESM" ] && [ ${model} != "RACMO2" ]; then
+	echo "Only MERRA-2, CESM or RACMO2 supported as model."
+	exit
+fi
+
 # Print Statements
 echo "Working on model: ${model}"
 echo "	Year ${yr}"
