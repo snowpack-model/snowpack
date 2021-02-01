@@ -43,6 +43,7 @@ class ncFiles {
 
 		void write2DGrid(const Grid2DObject& grid_in, ncpp::nc_variable& var, const Date& date);
 		void write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date);
+		std::vector< double > readPointsInGrid(const size_t& param, const std::vector< std::pair<size_t, size_t> >& Pts, const Date& date);
 
 		void writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& station_idx=IOUtils::npos);
 
@@ -55,6 +56,7 @@ class ncFiles {
 		void initDimensionsFromFile();
 
 		Grid2DObject read2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const bool& m2mm=false);
+		std::vector< double > readPointsInGrid(const ncpp::nc_variable& var, const size_t& time_pos, const std::vector< std::pair<size_t, size_t> >& Pts, const bool& m2mm=false);
 		double read_0Dvariable(const size_t& param) const;
 		std::vector<Date> read_1Dvariable() const;
 		std::vector<double> read_1Dvariable(const size_t& param) const;

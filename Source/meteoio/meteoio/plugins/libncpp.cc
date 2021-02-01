@@ -262,6 +262,25 @@ void read_data(const int& ncid, const nc_variable& var,
 }
 
 /**
+* @brief Read grid point in 2D gridded data at the provided time position for a specific variable
+* @param[in] ncid file ID
+* @param[in] var variable to read
+* @param[in] pos time index in the file
+* @param[in] row
+* @param[in] col
+* @param[out] data data extracted from the file
+*/
+void read_data_point(const int& ncid, const nc_variable& var,
+               const size_t& pos, const size_t& row, const size_t& col, double* data)
+{
+	const size_t c[] = {pos, row, col};
+
+	const int status = nc_get_var1(ncid, var.varid, c, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
 * @brief Read all the data for a specific variable
 * @param[in] ncid file ID
 * @param[in] var variable to read

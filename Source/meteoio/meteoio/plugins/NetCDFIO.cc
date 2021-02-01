@@ -879,6 +879,84 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	return grid;
 }
 
+std::vector< double > ncFiles::readPointsInGrid(const size_t& param, const std::vector< std::pair<size_t, size_t> >& Pts, const Date& date)
+{
+	const std::map <size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
+	if (it==vars.end() || it->second.varid==-1)
+		NoDataException("No "+MeteoGrids::getParameterName( param )+" grid in file "+file_and_path, AT);
+
+	size_t time_pos = IOUtils::npos;
+	if (!date.isUndef()) {
+		const std::vector< std::pair<Date,size_t> >::iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), std::make_pair(date,(size_t)0));
+		if (low->first!=date)
+			throw NoDataException("No "+MeteoGrids::getParameterName( param )+" data at "+date.toString(Date::ISO)+" in file "+file_and_path, AT);
+
+		time_pos = low->second;
+	} else {
+		//no date has been provided, check if this parameter depends on time
+		const std::map<size_t, ncpp::nc_dimension>::const_iterator it2 = dimensions_map.find(ncpp::TIME);
+		const int time_id = (it2!=dimensions_map.end())? it2->second.dimid : -1;
+		const bool depend_on_time = (std::find(it->second.dimids.begin(), it->second.dimids.end(), time_id) != it->second.dimids.end());
+		if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it, otherwise we throw
+			throw InvalidFormatException("No time requirement has been provided for a file that contains multiple timestamps", AT);
+	}
+
+	const bool isPrecip = (param==MeteoGrids::PSUM || param==MeteoGrids::PSUM_L || param==MeteoGrids::PSUM_S);
+	return readPointsInGrid(it->second, time_pos, Pts, isPrecip);
+}
+
+std::vector< double > ncFiles::readPointsInGrid(const ncpp::nc_variable& var, const size_t& time_pos, const std::vector< std::pair<size_t, size_t> >& Pts, const bool& m2mm)
+{
+	if (isLatLon && (!hasDimension(ncpp::LATITUDE) || !hasDimension(ncpp::LONGITUDE))) throw IOException("No latitude / longitude could be identified in file "+file_and_path, AT);
+	if (!isLatLon && (!hasDimension(ncpp::EASTING) || !hasDimension(ncpp::NORTHING))) throw IOException("No easting / northing could be identified in file "+file_and_path, AT);
+
+	//make sure file is open for reading
+	if (ncid==-1) {
+		ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
+		nc_filename = file_and_path;
+	}
+
+	//define return vector
+	std::vector < double > retVec;
+
+	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
+		double *data = new double;
+		if (time_pos!=IOUtils::npos)
+			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, data);	// Note: swapped <x, y> to translate to <row, column> in function call
+		else
+			throw InvalidFormatException("Not implemented.", AT); //ncpp::read_data_point(ncid, var, data);
+		retVec.push_back(*data);
+		delete[] data;
+	}
+
+	if (!keep_input_files_open) {
+		ncpp::close_file(file_and_path, ncid);
+		ncid = -1;
+	}
+
+	return retVec;
+
+	//handle data packing and units, if necessary
+	//if (var.scale!=1.) grid *= var.scale;
+	//if (var.offset!=0.) grid += var.offset;
+	//applyUnits(grid, var.attributes.units, time_pos, m2mm);
+
+
+	//define the results grid
+	Grid2DObject grid;
+	if (isLatLon) { //the reprojection (if necessary) will be handled by GridsManager
+		mio::Coords llcorner(coord_sys, coord_param);
+		llcorner.setLatLon( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
+		grid.set(vecX.size(), vecY.size(), IOUtils::nodata, llcorner);
+		IOInterface::set2DGridLatLon(grid, std::max(vecY.front(), vecY.back()), std::max(vecX.front(), vecX.back()));
+	} else {
+		mio::Coords llcorner(coord_sys, coord_param);
+		llcorner.setXY( std::min(vecX.front(), vecX.back()), std::min(vecY.front(), vecY.back()), IOUtils::nodata);
+		const double cellsize = IOInterface::computeGridXYCellsize(vecX, vecY);
+		grid.set(vecX.size(), vecY.size(), cellsize, llcorner);
+	}
+}
+
 //this should be most often used as wrapper, to select the proper parameters for a given param or param_name
 //If both are provided, param has the priority
 void ncFiles::write2DGrid(const Grid2DObject& grid_in, size_t param, std::string param_name, const Date& date)

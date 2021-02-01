@@ -354,6 +354,12 @@ void IOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters&
 	plugin->read2DGrid(grid_out, parameter, date);
 }
 
+/*void IOHandler::readPointsIn2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	IOInterface *plugin = getPlugin("GRID2D", "Input");
+	plugin->readPointsIn2DGrid(grid_out, parameter, date);
+}*/
+
 void IOHandler::read3DGrid(Grid3DObject& grid_out, const std::string& i_filename)
 {
 	IOInterface *plugin = getPlugin("GRID3D", "Input");

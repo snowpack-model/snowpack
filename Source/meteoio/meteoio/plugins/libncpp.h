@@ -114,6 +114,7 @@ namespace ncpp {
 	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, double& attr_value);
 	
 	void read_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, double* data);
+	void read_data_point(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& row, const size_t& col, double* data);
 	void read_data(const int& ncid, const nc_variable& var, double* data);
 	void read_data(const int& ncid, const nc_variable& var, int* data);
 	void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform=false, const double& TZ=0.);

@@ -351,7 +351,80 @@ std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid(const DEMObject&
 	return vecvecMeteo;
 }
 
+/**
+* @brief Extract time series from grids at the specified points (virtual stations).
+* @param[in] dem the Digital Elevation Model to use to check the geolocalization of the grids
+* @param[in] v_params the MeteoGrids parameter index that have to be extracted
+* @param[in] v_stations a vector of StationData where to provide the meteorological data
+* @param[in] date when to extract the virtual stations
+* @return a vector of meteodata for the configured virtual stations at the provided date, for the provided parameters
+*/
+METEO_SET GridsManager::getVirtualStationsFromGrid2(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date)
+{
+	//HACK handle extra parameters when possible
+	const size_t nrStations = v_stations.size();
+	METEO_SET vecMeteo( nrStations );
 
+	//create stations without measurements
+	std::vector< std::pair <size_t, size_t> > Pts;
+	for (size_t ii=0; ii<nrStations; ii++) {
+		MeteoData md(date, v_stations[ii]);
+		vecMeteo[ii] = md;
+		Pts.push_back(std::pair <size_t, size_t> (v_stations[ii].position.getGridI(), v_stations[ii].position.getGridJ())); //this should work since invalid stations have been removed in init
+	}
+
+	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters
+		const MeteoGrids::Parameters grid_param = static_cast<MeteoGrids::Parameters>( v_params[param] );
+		const vector <double> retVec = std::vector <double> (0.);// = getPtsFromGrid(grid_param, date, Pts);
+
+		for (size_t ii=0; ii<nrStations; ii++) { //loop over all virtual stations
+			//check if this is a standard MeteoData parameter
+			const size_t meteo_param = vecMeteo[ii].getParameterIndex( MeteoGrids::getParameterName(grid_param) ); //is this name also a meteoparameter?
+			if (meteo_param!=IOUtils::npos)
+				vecMeteo[ii]( static_cast<MeteoData::Parameters>(meteo_param) ) = retVec[ii];
+		}
+	}
+
+	return vecMeteo;
+}
+
+/**
+* @brief Extract time series from grids at the specified points (virtual stations).
+* @param[in] dem the Digital Elevation Model to use to check the geolocalization of the grids
+* @param[in] v_params the MeteoGrids parameter index that have to be extracted
+* @param[in] v_stations a vector of StationData where to provide the meteorological data
+* @param[in] dateStart when to start extracting the virtual stations
+* @param[in] dateEnd when to stop extracting the virtual stations
+* @return a vector of meteodata for the configured virtual stations at the provided date, for the provided parameters
+*/
+std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid2(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd)
+{
+	const size_t nrStations = v_stations.size();
+	std::vector<METEO_SET> vecvecMeteo( nrStations );
+
+	const bool status = setGrids2d_list(dateStart, dateEnd);
+	if (!status)
+		throw InvalidArgumentException("The chosen plugin seems not to support the list2DGrids call that is required for gridded data extraction", AT);
+
+	//look for the last date in grids2d_list just before dateStart
+	std::map<Date, std::set<size_t> >::const_iterator it;
+	for (it=grids2d_list.begin(); it!=grids2d_list.end(); ++it) {
+		if (it->first>=dateStart) break;
+	}
+	if (it==grids2d_list.end()) return std::vector<METEO_SET>();
+	if (it!=grids2d_list.begin() && it->first!=dateStart) --it; //we want to ensure the range contains the start date (for interpolations)
+
+	//now, we read the data for each available timestep
+	for (; it!=grids2d_list.end(); ++it) {
+		const METEO_SET vecMeteo( getVirtualStationsFromGrid(dem, v_params, v_stations, it->first) ); //the number of stations can not change
+		for (size_t ii=0; ii<nrStations; ii++)
+			vecvecMeteo[ii].push_back( vecMeteo[ii] );
+
+		if (it->first>=dateEnd) break;
+	}
+
+	return vecvecMeteo;
+}
 
 ////////////////////////////////////////////////////// Private members //////////////////////////////////////////
 

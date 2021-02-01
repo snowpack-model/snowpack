@@ -72,7 +72,9 @@ class GridsManager {
 		std::vector<StationData> initVirtualStationsAtAllGridPoints(const DEMObject& dem) const;
 		std::vector<StationData> initVirtualStations(const DEMObject& dem, const bool& adjust_coordinates, const bool& fourNeighbors) const;
 		METEO_SET getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date);
+		METEO_SET getVirtualStationsFromGrid2(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date);
 		std::vector<METEO_SET> getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd);
+		std::vector<METEO_SET> getVirtualStationsFromGrid2(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd);
 
 		const std::string toString() const;
 
