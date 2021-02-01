@@ -114,7 +114,9 @@ double SnowDrift::get_tau_thresh(const ElementData& Edata)
 	const double binding = 0.0015 * sig * Edata.N3 * Optim::pow2(Edata.rb/Edata.rg);
 	const double tau_thresh = SnowDrift::schmidt_drift_fudge * (weight + binding);  // Original value for fudge: 1. (Schmidt)
 	//const double ustar_thresh = sqrt(tau_thresh / Constants::density_air);
-	return tau_thresh;
+	unsigned int wet_marker = (int(Edata.mk/10)%10);
+	const double fudge = (wet_marker==1 || wet_marker==2) ? (10.) : (1.);            // For wet/crusted snow, a pragmatic fudge factor makes the snow not easily erodible.
+	return fudge * tau_thresh;
 }
 
 double SnowDrift::get_ustar_thresh(const ElementData& Edata)
