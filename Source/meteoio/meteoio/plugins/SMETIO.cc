@@ -526,12 +526,21 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			const bool fileExists = FileUtils::fileExists(filename);
 			if (fileExists && allowAppend) {
 				std::string fields = (outputIsAscii)? "timestamp" : "julian"; //we force the first field to have the time
-				for (size_t jj=0; jj<vecParamInUse.size(); jj++) {
-					if (vecParamInUse[jj]) fields = fields + " " + vecColumnName[jj];
+				int tmpwidth, tmpprecision;
+				std::vector<int> myprecision, mywidth; //set meaningful precision/width for each column
+				for (size_t ll=0; ll<nr_of_parameters; ll++) {
+					if (vecParamInUse[ll]) {
+						fields = fields + " " + vecColumnName[ll];
+						getFormatting(ll, tmpprecision, tmpwidth);
+						myprecision.push_back(tmpprecision);
+						mywidth.push_back(tmpwidth);
+					}
 				}
 				if (output_separator!=' ') 
 					throw InvalidArgumentException("It is not possible to set the field separator when appending data to a smet file", AT);
 				mywriter = new smet::SMETWriter(filename, fields, IOUtils::nodata); //set to append mode
+				mywriter->set_width(mywidth);
+				mywriter->set_precision(myprecision);
 			} else {
 				if (fileExists && !allowOverwrite)
 					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
