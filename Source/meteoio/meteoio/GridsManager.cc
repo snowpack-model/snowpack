@@ -785,28 +785,22 @@ std::vector < double > GridsManager::getPtsfromGrid(const MeteoGrids::Parameters
 {
 	std::vector<double> retVec;
 
-	// HACK to test it out:
-	iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
-	return retVec;
-
-	// TODO: check the below scenarios
 	if (processing_level == IOUtils::raw){
 		iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
 	} else {
-		//if (!buffer.get(grid2D, parameter, date)) {
+		Grid2DObject grid2D;
+		if (!buffer.get(grid2D, parameter, date)) {
 			const bool status = setGrids2d_list( date ); //rebuffer the grid list if necessary
 			if (!status) { //this means that the list2DGrids call is not implemeted in the plugin, we try to save the day...
 				iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
-				//buffer.push(grid2D, parameter, date);
 			} else { //the list2DGrids call is implemented in the plugin
 				const std::map<Date, std::set<size_t> >::const_iterator it = grids2d_list.find(date);
 				if (it!=grids2d_list.end()) {
 					if ( it->second.find(parameter) != it->second.end() ) {
 						iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
-						//buffer.push(grid2D, parameter, date);
 					} else { //the right parameter could not be found, can we generate it?
-						//if (!generateGrid(grid2D, it->second, parameter, date))
-						//	throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
+						if (!getPtsfromgenerateGrid(retVec, it->second, parameter, date, Pts))
+							throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
 					}
 				} else {
 					const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
@@ -814,7 +808,10 @@ std::vector < double > GridsManager::getPtsfromGrid(const MeteoGrids::Parameters
 					throw NoDataException(msg1 + msg2, AT);
 				}
 			}
-		//}
+		} else {
+			// If grid exists in buffer
+			retVec = grid2D.extractPoints(Pts);
+		}
 	}
 
 	return retVec;
