@@ -326,7 +326,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 		const Date bufferEnd( tsm1.getBufferEnd(  TimeSeriesManager::RAW  ) );
 		
 		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
-			vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
+			vecVecMeteo = gdm1.getVirtualStationsFromGrid2(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
 		}
 		
@@ -376,7 +376,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			
 			const Date dateStart = i_date - buffer_before;
 			const Date dateEnd( i_date - buffer_before + buffer_size + 1 );
-			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
+			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid2(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 		return tsm1.getMeteoData(i_date, vecMeteo);
 	}

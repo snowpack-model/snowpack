@@ -83,6 +83,12 @@ void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Param
 	throw IOException("Nothing implemented here", AT);
 }
 
+void IOInterface::readPointsIn2DGrid(std::vector<double>& /*data*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/, const std::vector< std::pair<size_t, size_t> >& /*Pts*/)
+{
+	// TODO: implement general class, that calls read2DGrid and read the points.
+	throw IOException("Nothing implemented here", AT);
+}
+
 void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const std::string& /*parameter=""*/)
 {
 	throw IOException("Nothing implemented here", AT);

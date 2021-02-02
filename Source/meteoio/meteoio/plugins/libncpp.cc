@@ -275,7 +275,7 @@ void read_data_point(const int& ncid, const nc_variable& var,
 {
 	const size_t c[] = {pos, row, col};
 
-	const int status = nc_get_var1(ncid, var.varid, c, data);
+	const int status = nc_get_var1_double(ncid, var.varid, c, data);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }

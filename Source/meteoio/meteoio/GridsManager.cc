@@ -375,7 +375,7 @@ METEO_SET GridsManager::getVirtualStationsFromGrid2(const DEMObject& dem, const 
 
 	for (size_t param=0; param<v_params.size(); param++) { //loop over required parameters
 		const MeteoGrids::Parameters grid_param = static_cast<MeteoGrids::Parameters>( v_params[param] );
-		const vector <double> retVec = std::vector <double> (0.);// = getPtsFromGrid(grid_param, date, Pts);
+		const vector <double> retVec = getPtsfromGrid(grid_param, date, Pts);
 
 		for (size_t ii=0; ii<nrStations; ii++) { //loop over all virtual stations
 			//check if this is a standard MeteoData parameter
@@ -416,7 +416,7 @@ std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid2(const DEMObject
 
 	//now, we read the data for each available timestep
 	for (; it!=grids2d_list.end(); ++it) {
-		const METEO_SET vecMeteo( getVirtualStationsFromGrid(dem, v_params, v_stations, it->first) ); //the number of stations can not change
+		const METEO_SET vecMeteo( getVirtualStationsFromGrid2(dem, v_params, v_stations, it->first) ); //the number of stations can not change
 		for (size_t ii=0; ii<nrStations; ii++)
 			vecvecMeteo[ii].push_back( vecMeteo[ii] );
 
@@ -770,6 +770,54 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 	}
 
 	return false;
+}
+
+/**
+* @brief Get the requested grid, according to the configured processing level
+* @details If the grid has been buffered, it will be returned from the buffer. If it is not available but can be generated, it will
+* be generated transparently. If everything fails, it will thrown an exception.
+* @param[in] parameter the parameter to get
+* @param[in] date the timestamp that we would like to have
+* @param[in] enforce_cartesian set to true to garantee a cartesian grid (it will be reprojected if necessary)
+* @return a grid filled with the requested parameter
+*/
+std::vector < double > GridsManager::getPtsfromGrid(const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	std::vector<double> retVec;
+
+	// HACK to test it out:
+	iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
+	return retVec;
+
+	// TODO: check the below scenarios
+	if (processing_level == IOUtils::raw){
+		iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
+	} else {
+		//if (!buffer.get(grid2D, parameter, date)) {
+			const bool status = setGrids2d_list( date ); //rebuffer the grid list if necessary
+			if (!status) { //this means that the list2DGrids call is not implemeted in the plugin, we try to save the day...
+				iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
+				//buffer.push(grid2D, parameter, date);
+			} else { //the list2DGrids call is implemented in the plugin
+				const std::map<Date, std::set<size_t> >::const_iterator it = grids2d_list.find(date);
+				if (it!=grids2d_list.end()) {
+					if ( it->second.find(parameter) != it->second.end() ) {
+						iohandler.readPointsIn2DGrid(retVec, parameter, date, Pts);
+						//buffer.push(grid2D, parameter, date);
+					} else { //the right parameter could not be found, can we generate it?
+						//if (!generateGrid(grid2D, it->second, parameter, date))
+						//	throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
+					}
+				} else {
+					const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
+					const std::string msg2("There are grids from " + grids2d_list.begin()->first.toString(Date::ISO) + " until " + grids2d_list.rbegin()->first.toString(Date::ISO));
+					throw NoDataException(msg1 + msg2, AT);
+				}
+			}
+		//}
+	}
+
+	return retVec;
 }
 
 const std::string GridsManager::toString() const {
