@@ -86,6 +86,7 @@ class GridsManager {
 		Grid2DObject getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& enforce_cartesian=true);
 		bool generateGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
 		std::vector < double > getPtsfromGrid(const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
+		bool getPtsfromgenerateGrid(std::vector<double>& Vec, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 
 		IOHandler& iohandler;
 		const Config& cfg;

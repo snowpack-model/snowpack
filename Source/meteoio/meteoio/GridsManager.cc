@@ -820,6 +820,50 @@ std::vector < double > GridsManager::getPtsfromGrid(const MeteoGrids::Parameters
 	return retVec;
 }
 
+/**
+* @brief Generate point data from a grid that could be generated for a given parameter, based on the available parameters
+* @details Even if a given parameter is not available, it might be possible to generate it
+* on the fly based on the available data (for example, U and V wind components can be used to generate
+* the VW and DW vector wind components).
+*
+* It is assumed that the meteo parameters are coming out of models, so the available_params are
+* all available at all the timesteps, so we don't need to search a combination of parameters and timesteps
+*
+* @param[out] Vec a vector of doubles filled with the requested parameter or empty if it could not be generated
+* @param available_params list of parameters available by a direct (=raw) read from the plugin
+* @param parameter the parameter to get
+* @param date the data associated with the parameter
+* @return true if the requested grid could be generated
+*
+* @note HACK missing: checking that all grids used together have the same geolocalization
+*/
+bool GridsManager::getPtsfromgenerateGrid(std::vector<double>& Vec, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	if (parameter==MeteoGrids::VW || parameter==MeteoGrids::DW) {
+		const bool hasU = isAvailable(available_params, MeteoGrids::U, date);
+		const bool hasV = isAvailable(available_params, MeteoGrids::V, date);
+		if (!hasU || !hasV) return false;
+
+		std::vector<double> U;
+		std::vector<double> V;
+		iohandler.readPointsIn2DGrid(U, parameter, date, Pts);
+		iohandler.readPointsIn2DGrid(V, parameter, date, Pts);
+
+		if (parameter==MeteoGrids::VW) {
+			for (size_t ii=0; ii<U.size(); ii++)
+				Vec.push_back((U[ii]!=IOUtils::nodata && V[ii]!=IOUtils::nodata) ? (sqrt( Optim::pow2(U[ii]) + Optim::pow2(V[ii]) )) : (IOUtils::nodata));
+		} else {
+			for (size_t ii=0; ii<U.size(); ii++)
+				Vec.push_back((U[ii]!=IOUtils::nodata && V[ii]!=IOUtils::nodata) ? (IOUtils::UV_TO_DW(U[ii], V[ii])) : (IOUtils::nodata)); // turn into degrees [0;360)
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+
 const std::string GridsManager::toString() const {
 	ostringstream os;
 	os << "<GridsManager>\n";
