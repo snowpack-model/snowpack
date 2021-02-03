@@ -180,7 +180,7 @@ class Grid2DObject {
 		* @param Pts (const std::vector< std::pair<size_t, size_t> >) vector if pairs consisting of column, row to read
 		* @return vector of doubles holding the values of the points provided in Pts.
 		*/
-		std::vector< double > extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts);
+		std::vector< double > extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const;
 
 		Grid2DObject& operator=(const double& value); ///<Assignement operator
 

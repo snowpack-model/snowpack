@@ -437,7 +437,7 @@ void Grid2DObject::binning(const std::vector<double>& thresholds, const std::vec
 	}
 }
 
-std::vector< double > Grid2DObject::extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts)
+std::vector< double > Grid2DObject::extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const
 {
 	size_t nx = getNx();
 	size_t ny = getNy();
