@@ -64,10 +64,17 @@ namespace mio {
  * @endcode
  */
 
+#ifdef PROJ4
+	#include <proj_api.h>
+#endif
+
 class ProcTransformWindVector : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
 //class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
 		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		~ProcTransformWindVector();
+		ProcTransformWindVector(const ProcTransformWindVector& c);			// HACK: needs to be implemented
+		ProcTransformWindVector& operator = (const ProcTransformWindVector& c);	// HACK: needs to be implemented
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -77,6 +84,15 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 		static std::string findUComponent(const MeteoData& md);
 		static std::string findVComponent(const MeteoData& md);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg);
+		void initPROJ4(void);
+		void WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
+
+		projPJ pj_latlong, pj_dest;
+
+		// The declarations below are needed when the copy constructor is called.
+		std::vector< std::pair<std::string, std::string> > vecArgs_i;
+		std::string name_i;
+		Config cfg_i;
 #endif
 		std::string t_coordparam;
 };
