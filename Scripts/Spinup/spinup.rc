@@ -1,0 +1,28 @@
+#
+# Settings for spinup
+#
+# Notes:
+# - all these settings can be specified individually by adding them as command line parameter:
+#   bash spinup.sh "<snowpack command to execute>" min_sim_depth=150
+#
+# - be aware: no spaces adjacent to "="!
+
+
+# Specify the miminum simulated snow/firn depth before considering a spinup procedure finished
+min_sim_depth=150
+
+
+# Specify the spinup start date (YYYY-MM-DDTHH:mm) or keep empty ("") to have the start date determined from the *.sno file.
+spinup_start=""
+
+
+# Specify the spinup end date (YYYY-MM-DDTHH:mm) or keep empty ("") for the period data is available.
+spinup_end=""
+
+
+# Specify location of the timeshift_sno_files.sh script. Point to timeshift_sno_files_oldawk.sh when error message appear about the date being out of range.
+time_shift_script="../../Source/snowpack/tools/timeshift_sno_files.sh"
+
+
+# Specify if you want to do a spinup and refresh spinup, where first the spinup is run to achieve min_sim_depth, after which the same amount of spinups is repeated to refresh the firn
+dospinup2=0	# 1 is YES, 0 is NO

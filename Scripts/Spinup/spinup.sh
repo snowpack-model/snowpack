@@ -1,9 +1,39 @@
-min_sim_depth=150
-time_shift_script="../../../../src/polarsnowpack_core/snowpack/Source/snowpack/tools/timeshift_sno_files.sh"
+# Load settings
+source ./spinup.rc
 
 
-# Parse string to execute to get relevant information
-to_exec="$@"
+function PrintUseMessage {
+	echo "Usage example:" >> /dev/stderr
+	echo "  bash spinup.sh \"<snowpack command to execute>\" min_sim_depth=150" >> /dev/stderr
+}
+
+
+# Parse command line arguments
+i=0
+for p in "$@"
+do
+	let i=${i}+1
+	if (( $i == 1 )); then
+		# The first argument must be the SNOWPACK command to execute
+		to_exec=${p}
+	else
+		# All other arguments may overwrite settings
+		if [[ "$p" == *"="* ]]; then
+			eval ${p}
+		else
+			echo "WARNING: invalid command line parameter \"${p}\" ignored"
+		fi
+	fi
+done
+
+# If no command line argument provided, print usage message and exit
+if (( $i == 0 )); then
+	PrintUseMessage
+	exit
+fi
+
+
+# Parse command to execute to get relevant information
 to_exec_spinup=$(echo "${to_exec}" | mawk '{for(i=1; i<=NF; i++) {if(i>1) {printf " "}; printf "%s", ($(i-1)=="-e")?("NOW"):($i)}; printf "\n"}')
 cfgfile=$(echo ${to_exec} | mawk '{for(i=1; i<=NF; i++) {if($i ~ /-c/) {print $(i+1)}}}')
 snofile=$(fgrep SNOWFILE1 ${cfgfile} | mawk '{print $NF}')
@@ -18,10 +48,11 @@ i=0		# Counting first spinups
 j=0		# Counting second spinups
 n_spinup=0	# To later store the number of first spinups
 
+
 # Initialize spinup flags, assuming we start with a first spinup
 spinup=1
-dospinup2=1	# Should we do a 2nd spinup (yes/no)?
 spinup2=0
+
 
 while :
 do
