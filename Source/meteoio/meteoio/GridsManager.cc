@@ -836,6 +836,33 @@ std::vector < double > GridsManager::getPtsfromGrid(const MeteoGrids::Parameters
 */
 bool GridsManager::getPtsfromgenerateGrid(std::vector<double>& Vec, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
 {
+	if (parameter==MeteoGrids::DEM) {
+		if (!dem_altimeter) return false;
+		const bool hasTA = isAvailable(available_params, MeteoGrids::TA, date);
+		const bool hasP = isAvailable(available_params, MeteoGrids::P, date);
+		const bool hasP_sea = isAvailable(available_params, MeteoGrids::P_SEA, date);
+		if (!hasTA || !hasP || !hasP_sea) return false;
+
+		std::vector<double> ta;
+		iohandler.readPointsIn2DGrid(ta, MeteoGrids::TA, date, Pts);
+		std::vector<double> p;
+		iohandler.readPointsIn2DGrid(p, MeteoGrids::P, date, Pts);
+		std::vector<double> p_sea;
+		iohandler.readPointsIn2DGrid(p_sea, MeteoGrids::P_SEA, date, Pts);
+
+		static const double k = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
+		static const double k_inv = 1./k;
+		for (size_t ii=0; ii<ta.size(); ii++) {
+			if (p[ii]==IOUtils::nodata || ta[ii]==IOUtils::nodata || p_sea[ii]==IOUtils::nodata) {
+				Vec.push_back(IOUtils::nodata);
+			} else {
+				const double K = pow(p[ii]/p_sea[ii], k_inv);
+				Vec.push_back(ta[ii]*Cst::earth_R0*(1.-K) / (Cst::mean_adiabatique_lapse_rate * Cst::earth_R0 - ta[ii]*(1.-K)));
+			}
+		}
+		return true;
+	}
+
 	if (parameter==MeteoGrids::VW || parameter==MeteoGrids::DW) {
 		const bool hasU = isAvailable(available_params, MeteoGrids::U, date);
 		const bool hasV = isAvailable(available_params, MeteoGrids::V, date);
@@ -843,8 +870,8 @@ bool GridsManager::getPtsfromgenerateGrid(std::vector<double>& Vec, const std::s
 
 		std::vector<double> U;
 		std::vector<double> V;
-		iohandler.readPointsIn2DGrid(U, parameter, date, Pts);
-		iohandler.readPointsIn2DGrid(V, parameter, date, Pts);
+		iohandler.readPointsIn2DGrid(U, MeteoGrids::U, date, Pts);
+		iohandler.readPointsIn2DGrid(V, MeteoGrids::V, date, Pts);
 
 		if (parameter==MeteoGrids::VW) {
 			for (size_t ii=0; ii<U.size(); ii++)
@@ -855,6 +882,174 @@ bool GridsManager::getPtsfromgenerateGrid(std::vector<double>& Vec, const std::s
 		}
 
 		return true;
+	}
+
+	if (parameter==MeteoGrids::RH) {
+		const bool hasTA = isAvailable(available_params, MeteoGrids::TA, date);
+		if (!hasTA) return false;
+		std::vector<double> TA;
+		iohandler.readPointsIn2DGrid(TA, MeteoGrids::TA, date, Pts);
+
+		const bool hasDEM = isAvailable(available_params, MeteoGrids::DEM, date);
+		const bool hasQI = isAvailable(available_params, MeteoGrids::QI, date);
+		const bool hasTD = isAvailable(available_params, MeteoGrids::TD, date);
+
+		if (hasTA && hasTD) {
+			std::vector<double> TD;
+			iohandler.readPointsIn2DGrid(TD, MeteoGrids::TD, date, Pts);
+
+			for (size_t ii=0; ii<TD.size(); ii++)
+				Vec.push_back(Atmosphere::DewPointtoRh(TD[ii], TA[ii], false));
+			return true;
+		} else if (hasQI && hasDEM && hasTA) {
+			std::vector<double> dem_pts;
+			const Grid2DObject dem( getRawGrid(MeteoGrids::DEM, date) ); //HACK use readDEM instead?
+			dem_pts = dem.extractPoints(Pts);
+			std::vector<double> QI;
+			iohandler.readPointsIn2DGrid(QI, MeteoGrids::QI, date, Pts);
+			for (size_t ii=0; ii<QI.size(); ii++)
+				Vec.push_back(Atmosphere::specToRelHumidity(dem_pts[ii], TA[ii], QI[ii]));
+			return true;
+		}
+
+		return false;
+	}
+
+	if (parameter==MeteoGrids::ISWR) {
+		const bool hasISWR_DIFF = isAvailable(available_params, MeteoGrids::ISWR_DIFF, date);
+		const bool hasISWR_DIR = isAvailable(available_params, MeteoGrids::ISWR_DIR, date);
+
+		if (hasISWR_DIFF && hasISWR_DIR) {
+			std::vector<double> iswr_diff;
+			iohandler.readPointsIn2DGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date, Pts);
+			std::vector<double> iswr_dir;
+			iohandler.readPointsIn2DGrid(iswr_dir, MeteoGrids::ISWR_DIR, date, Pts);
+			for (size_t ii=0; ii<iswr_diff.size(); ii++)
+				Vec.push_back((iswr_diff[ii]!=IOUtils::nodata && iswr_dir[ii]!=IOUtils::nodata) ? (iswr_diff[ii] + iswr_dir[ii]) : (IOUtils::nodata));
+			return true;
+		}
+
+		const bool hasALB = isAvailable(available_params, MeteoGrids::ALB, date);
+		const bool hasRSWR = isAvailable(available_params, MeteoGrids::ISWR, date);
+		if (hasRSWR && hasALB) {
+			std::vector<double> rswr;
+			iohandler.readPointsIn2DGrid(rswr, MeteoGrids::RSWR, date, Pts);
+			std::vector<double> alb;
+			iohandler.readPointsIn2DGrid(alb, MeteoGrids::ALB, date, Pts);
+			for (size_t ii=0; ii<rswr.size(); ii++)
+				Vec.push_back((rswr[ii]!=IOUtils::nodata && alb[ii]!=IOUtils::nodata) ? (rswr[ii] / alb[ii]) : (IOUtils::nodata));
+			return true;
+		}
+
+		return false;
+	}
+
+	if (parameter==MeteoGrids::RSWR) {
+		const bool hasALB = isAvailable(available_params, MeteoGrids::ALB, date);
+		if (!hasALB) return false;
+		const bool hasISWR = isAvailable(available_params, MeteoGrids::ISWR, date);
+
+		std::vector<double> iswr;
+		if (!hasISWR) {
+			const bool hasISWR_DIFF = isAvailable(available_params, MeteoGrids::ISWR_DIFF, date);
+			const bool hasISWR_DIR = isAvailable(available_params, MeteoGrids::ISWR_DIR, date);
+			if (!hasISWR_DIFF || !hasISWR_DIR) return false;
+
+			std::vector<double> iswr_diff;
+			iohandler.readPointsIn2DGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date, Pts);
+			std::vector<double> iswr_dir;
+			iohandler.readPointsIn2DGrid(iswr_dir, MeteoGrids::ISWR_DIR, date, Pts);
+			for (size_t ii=0; ii<iswr_diff.size(); ii++)
+				iswr.push_back((iswr_diff[ii]!=IOUtils::nodata && iswr_dir[ii]!=IOUtils::nodata) ? (iswr_diff[ii] + iswr_dir[ii]) : (IOUtils::nodata));
+		} else {
+			iohandler.readPointsIn2DGrid(iswr, MeteoGrids::ISWR, date, Pts);
+		}
+
+		std::vector<double> alb;
+		iohandler.readPointsIn2DGrid(alb, MeteoGrids::ALB, date, Pts);
+		for (size_t ii=0; ii<iswr.size(); ii++)
+			Vec.push_back((iswr[ii]!=IOUtils::nodata && alb[ii]!=IOUtils::nodata) ? (iswr[ii] * alb[ii]) : (IOUtils::nodata));
+
+		return true;
+	}
+
+	if (parameter==MeteoGrids::ILWR) {
+		const bool hasOLWR = isAvailable(available_params, MeteoGrids::OLWR, date);
+		const bool hasLWR_NET = isAvailable(available_params, MeteoGrids::LWR_NET, date);
+
+		if (hasOLWR && hasLWR_NET) {
+			std::vector<double> lwr_net;
+			iohandler.readPointsIn2DGrid(lwr_net, MeteoGrids::LWR_NET, date, Pts);
+			std::vector<double> olwr;
+			iohandler.readPointsIn2DGrid(olwr, MeteoGrids::OLWR, date, Pts);
+			for (size_t ii=0; ii<lwr_net.size(); ii++)
+				Vec.push_back((lwr_net[ii]!=IOUtils::nodata && olwr[ii]!=IOUtils::nodata) ? (lwr_net[ii] + olwr[ii]) : (IOUtils::nodata));
+			return true;
+		}
+	}
+
+	if (parameter==MeteoGrids::HS) {
+		const bool hasRSNO = isAvailable(available_params, MeteoGrids::RSNO, date);
+		const bool hasSWE = isAvailable(available_params, MeteoGrids::SWE, date);
+
+		if (hasRSNO && hasSWE) {
+			std::vector<double> rsno;
+			iohandler.readPointsIn2DGrid(rsno, MeteoGrids::RSNO, date, Pts);
+			std::vector<double> swe;
+			iohandler.readPointsIn2DGrid(swe, MeteoGrids::SWE, date, Pts);
+			for (size_t ii=0; ii<rsno.size(); ii++)
+				Vec.push_back((rsno[ii]!=IOUtils::nodata && swe[ii]!=IOUtils::nodata) ? ((1000.*swe[ii])/rsno[ii]) : (IOUtils::nodata));  //convert mm=kg/m^3 into kg
+			return true;
+		}
+		return false;
+	}
+
+	if (parameter==MeteoGrids::PSUM) {
+		const bool hasPSUM_S = isAvailable(available_params, MeteoGrids::PSUM_S, date);
+		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
+		const bool hasPSUM_LC = isAvailable(available_params, MeteoGrids::PSUM_LC, date);
+
+		if (hasPSUM_S && hasPSUM_L && hasPSUM_LC) {
+			std::vector<double> psum_l;
+			iohandler.readPointsIn2DGrid(psum_l, MeteoGrids::PSUM_L, date, Pts);
+			std::vector<double> psum_lc;
+			iohandler.readPointsIn2DGrid(psum_lc, MeteoGrids::PSUM_LC, date, Pts);
+			std::vector<double> psum_s;
+			iohandler.readPointsIn2DGrid(psum_s, MeteoGrids::PSUM_S, date, Pts);
+			for (size_t ii=0; ii<psum_l.size(); ii++)
+				Vec.push_back((psum_l[ii]!=IOUtils::nodata && psum_lc[ii]!=IOUtils::nodata && psum_s[ii]!=IOUtils::nodata) ? (psum_l[ii] + psum_lc[ii] + psum_s[ii]) : (IOUtils::nodata));
+			return true;
+		}
+
+		if (hasPSUM_S && hasPSUM_L) {
+			std::vector<double> psum_l;
+			iohandler.readPointsIn2DGrid(psum_l, MeteoGrids::PSUM_L, date, Pts);
+			std::vector<double> psum_s;
+			iohandler.readPointsIn2DGrid(psum_s, MeteoGrids::PSUM_S, date, Pts);
+			for (size_t ii=0; ii<psum_l.size(); ii++)
+				Vec.push_back((psum_l[ii]!=IOUtils::nodata && psum_s[ii]!=IOUtils::nodata) ? (psum_l[ii] + psum_s[ii]) : (IOUtils::nodata));
+			return true;
+		}
+	}
+
+	if (parameter==MeteoGrids::PSUM_PH) {
+		const bool hasPSUM_S = isAvailable(available_params, MeteoGrids::PSUM_S, date);
+		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
+
+		if (hasPSUM_S && hasPSUM_L) {
+			std::vector<double> psum_l;
+			iohandler.readPointsIn2DGrid(psum_l, MeteoGrids::PSUM_L, date, Pts);
+			std::vector<double> psum_s;
+			iohandler.readPointsIn2DGrid(psum_s, MeteoGrids::PSUM_S, date, Pts);
+			for (size_t ii=0; ii<psum_l.size(); ii++) {
+				const double psum = ((psum_l[ii]!=IOUtils::nodata && psum_s[ii]!=IOUtils::nodata) ? (psum_l[ii] + psum_s[ii]) : (IOUtils::nodata));
+				Vec.push_back((psum != IOUtils::nodata && psum > 0.) ? (psum_l[ii]/psum) : (IOUtils::nodata));
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 	return false;
