@@ -30,6 +30,8 @@ namespace mio {
  * comes at the cost of much higher run times. Several strategies are available (with the *RESAMPLING_STRATEGY* keyword):
  *     + VSTATIONS: points measurements are spatially interpolated at the chosen locations;
  *     + GRID_EXTRACT: gridded values are extracted for the cells containing the given locations;
+ *     + GRID_EXTRACT_PTS: as GRID_EXTRACT, except that the plugin is queried to retrieve only data for the virtual stations grid points, not full grids. The
+ *       method is faster when grids are large compared to the number of virtual stations;
  *     + GRID_SMART: the four nodes surrounding each given locations are extracted and potential duplicates are removed, then the meteo fields are 
  *       spatially interpolated at the chosen locations;
  *     + GRID_ALL: all grid points are extracted;
@@ -93,8 +95,8 @@ namespace mio {
  * @subsection grids_extract From gridded data
  * The meteorological time series are extracted from time series of user-provided grids. Therefore a plugin for 2D grids must have been defined (with the GRID2D key in
  * the [Input] section). The following keys (in the [InputEditing] section) control this downscaling process:
- *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT* or *GRID_ALL*;
- *    + VSTATION# : provide the lat, lon and altitude for the virtual station (only required for GRID_EXTRACT);
+ *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT*, *GRID_EXTRACT_PTS* or *GRID_ALL*;
+ *    + VSTATION# : provide the lat, lon and altitude for the virtual station (only required for GRID_EXTRACT and GRID_EXTRACT_PTS);
  *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#, unused for GRID_ALL);
  *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
@@ -195,6 +197,8 @@ IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
 		return IOUtils::VSTATIONS;
 	if (resampling_strategy_str=="GRID_EXTRACT")
 		return IOUtils::GRID_EXTRACT;
+	if (resampling_strategy_str=="GRID_EXTRACT_PTS")
+		return IOUtils::GRID_EXTRACT_PTS;
 	if (resampling_strategy_str=="GRID_ALL")
 		return IOUtils::GRID_ALL;
 	if (resampling_strategy_str=="GRID_SMART")
@@ -273,7 +277,7 @@ void IOManager::initVirtualStations()
 	if (ts_mode==IOUtils::GRID_ALL || ts_mode==IOUtils::GRID_RESAMPLE) {
 		v_gridstations = gdm1.initVirtualStationsAtAllGridPoints(source_dem);
 	} else {
-		if (ts_mode==IOUtils::GRID_EXTRACT || ts_mode==IOUtils::GRID_SMART) {
+		if (ts_mode==IOUtils::GRID_EXTRACT || ts_mode==IOUtils::GRID_EXTRACT_PTS || ts_mode==IOUtils::GRID_SMART) {
 			const bool fourNeighbors = (ts_mode==IOUtils::GRID_SMART);
 			v_gridstations = gdm1.initVirtualStations(source_dem, true, fourNeighbors);
 		}
@@ -326,7 +330,10 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 		const Date bufferEnd( tsm1.getBufferEnd(  TimeSeriesManager::RAW  ) );
 		
 		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
-			vecVecMeteo = gdm1.getVirtualStationsFromGrid2(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
+			if (ts_mode==IOUtils::GRID_EXTRACT_PTS)
+				vecVecMeteo = gdm1.getVirtualStationsFromGrid2(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
+			else
+				vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd);
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
 		}
 		
@@ -376,7 +383,10 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			
 			const Date dateStart = i_date - buffer_before;
 			const Date dateEnd( i_date - buffer_before + buffer_size + 1 );
-			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid2(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
+			if (ts_mode==IOUtils::GRID_EXTRACT_PTS)
+				tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid2(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
+			else
+				tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 		return tsm1.getMeteoData(i_date, vecMeteo);
 	}
