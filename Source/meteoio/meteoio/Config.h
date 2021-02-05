@@ -266,6 +266,7 @@ class Config {
 		 */
 		std::string get(const std::string& key, const std::string& section, const std::string& dflt) const;
 		std::string get(const std::string& key, const std::string& section, const char dflt[]) const;
+		double get(const std::string& key, const std::string& section, const double& dflt) const; //surprisingly, in c++11 with gcc 9.3.0 this is needed...
 		bool get(const std::string& key, const std::string& section, const bool& dflt) const;
 
 

@@ -298,7 +298,7 @@ void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_e
  * see
  * D. G. Erbs, S.A. Klein, J.A. Duffie, <i>"Estimation of the diffuse radiation fraction for hourly, daily and monthly-average global radiation"</i>, Solar Energy, <b>28</b>, 4, 1982, Pages 293-302 and
  * M. Iqbal, <i>"An introduction to solar radiation"</i>, 1983, Academic Press,  ISBN: 0-12-373750-8 and
- * D. T. Reindl, W. A. Beckman, J. A. Duffle, <i>"Diffuse fraction correlations</i>, Solar Energy, <b>45</b>, 1990, pp 1-7.
+ * D. T. Reindl, W. A. Beckman, J. A. Duffle, <i>"Diffuse fraction correlations"</i>, Solar Energy, <b>45</b>, 1990, pp 1-7.
  * @param iswr_modeled modelled radiation, it should be horizontal Top Of %Atmosphere Radiation (W/m²)
  * @param iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
  * @return splitting coefficient (between 0 and 1, 1 being 100% diffuse radiation)

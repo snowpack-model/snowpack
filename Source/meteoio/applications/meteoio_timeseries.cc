@@ -52,7 +52,7 @@ using namespace mio; //The MeteoIO namespace is called mio
 //Global variables in this file:
 static std::string cfgfile( "io.ini" );
 static mio::Date dateBegin, dateEnd;
-static double samplingRate = 60.;
+static double samplingRate = IOUtils::nodata;
 static size_t outputBufferSize = 0;
 
 inline void Version()
@@ -177,6 +177,9 @@ static void real_main(int argc, char* argv[])
 		mio::IOUtils::convertString(dateEnd, end_date_str, TZ);
 	}
 
+	//we don't overwrite command line options is set
+	if (samplingRate==IOUtils::nodata)
+		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
 	samplingRate /= 24.*60; //convert to sampling rate in days
 	
 	IOManager io(cfg);

@@ -77,6 +77,17 @@ std::string Config::get(const std::string& key, const std::string& section, cons
 	}
 }
 
+double Config::get(const std::string& key, const std::string& section, const double& dflt) const
+{
+	if (keyExists(key, section)) {
+		double tmp;
+		getValue(key, section, tmp);
+		return tmp;
+	} else {
+		return dflt;
+	}
+}
+
 bool Config::get(const std::string& key, const std::string& section, const bool& dflt) const
 {
 	if (keyExists(key, section)) {
