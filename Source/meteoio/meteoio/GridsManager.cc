@@ -359,7 +359,7 @@ std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid(const DEMObject&
 * @param[in] date when to extract the virtual stations
 * @return a vector of meteodata for the configured virtual stations at the provided date, for the provided parameters
 */
-METEO_SET GridsManager::getVirtualStationsFromGrid2(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date)
+METEO_SET GridsManager::getVirtualStationsFromGrid2(const DEMObject& /*dem*/, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date)
 {
 	//HACK handle extra parameters when possible
 	const size_t nrStations = v_stations.size();
