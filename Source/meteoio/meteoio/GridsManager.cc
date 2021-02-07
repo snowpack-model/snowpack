@@ -353,7 +353,7 @@ std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid(const DEMObject&
 
 /**
 * @brief Extract time series from grids at the specified points (virtual stations).
-* @param[in] dem the Digital Elevation Model to use to check the geolocalization of the grids
+* @param[in] dem the Digital Elevation Model to use to check the geolocalization of the grids (check not implemented yet)
 * @param[in] v_params the MeteoGrids parameter index that have to be extracted
 * @param[in] v_stations a vector of StationData where to provide the meteorological data
 * @param[in] date when to extract the virtual stations
@@ -773,7 +773,7 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 }
 
 /**
-* @brief Get the requested grid, according to the configured processing level
+* @brief Get the requested grid points from the grid, according to the configured processing level
 * @details If the grid has been buffered, it will be returned from the buffer. If it is not available but can be generated, it will
 * be generated transparently. If everything fails, it will thrown an exception.
 * @param[in] parameter the parameter to get

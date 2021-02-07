@@ -472,22 +472,6 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 	}
 }
 
-/*void NetCDFIO::readPointsIn2DGrid(Grid2DObject& grid_out, const std::string& arguments)
-{
-	std::vector<std::string> vec_argument;
-	IOUtils::readLineToVec(arguments, vec_argument, ':');
-
-	if (vec_argument.size() == 2) {
-		ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema, debug);
-		grid_out = file.read2DGrid(vec_argument[1]);
-	} else if (vec_argument.size() == 1) {
-		ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema, debug);
-		grid_out = file.read2DGrid("");
-	} else {
-		throw InvalidArgumentException("The format for the arguments to NetCDFIO::read2DGrid is filename:varname", AT);
-	}
-}*/
-
 void NetCDFIO::readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
 {
 	if (cache_grid_files.empty()) scanPath(in_grid2d_path, in_nc_ext, cache_grid_files);
