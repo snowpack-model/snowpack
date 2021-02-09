@@ -2598,6 +2598,8 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 	// Default max_elem_l
 	double max_elem_l = comb_thresh_l;
 
+	const double scale = (reduce_n_elements == 3) ? (30.) : (1.);
+
 	// When aggressive combining is activated, override max_elem_l when necessary
 	if (reduce_n_elements > 0) {
 		max_elem_l = flexibleMaxElemLength(depth, comb_thresh_l);
@@ -2621,7 +2623,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 			comb_thresh_sp_flex = (((1.01 - comb_thresh_sp) / 10.) * depth) + (2. * comb_thresh_sp - 1.01);
 		}
 	} else {
-		comb_thresh_sp_flex = (std::max(0., (depth - 1.)) * comb_thresh_sp * 10.) + comb_thresh_sp;
+		comb_thresh_sp_flex = (std::max(0., (depth - 1.) / scale) * comb_thresh_sp * 10.) + comb_thresh_sp;
 	}
 
 	if ( fabs(Edata0.sp - Edata1.sp) > comb_thresh_sp_flex )
@@ -2655,7 +2657,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 			comb_thresh_ice_flex = (((4. * comb_thresh_ice) / 100.) * depth) - comb_thresh_ice;
 		}
 	} else {
-		comb_thresh_ice_flex = (std::max(0., (depth - 1.)) * comb_thresh_ice) + comb_thresh_ice;
+		comb_thresh_ice_flex = (std::max(0., (depth - 1.) / scale) * comb_thresh_ice) + comb_thresh_ice;
 	}
 
 	if ( fabs(Edata0.theta[ICE] - Edata1.theta[ICE]) > comb_thresh_ice_flex )
@@ -2678,7 +2680,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 			comb_thresh_rg_flex = comb_thresh_rg * 50.;
 		}
 	} else {
-		comb_thresh_rg_flex = (std::max(0., (depth - 1.)) * comb_thresh_rg) + comb_thresh_rg;
+		comb_thresh_rg_flex = (std::max(0., (depth - 1.) / scale) * comb_thresh_rg) + comb_thresh_rg;
 	}
 
 	if ( fabs(Edata0.rg - Edata1.rg) > comb_thresh_rg_flex )

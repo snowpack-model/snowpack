@@ -73,8 +73,8 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 	public:
 		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		~ProcTransformWindVector();
-		ProcTransformWindVector(const ProcTransformWindVector& c);			// HACK: needs to be implemented
-		ProcTransformWindVector& operator = (const ProcTransformWindVector& c);	// HACK: needs to be implemented
+		ProcTransformWindVector(const ProcTransformWindVector& c);
+		ProcTransformWindVector& operator = (const ProcTransformWindVector& c);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

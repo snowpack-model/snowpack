@@ -195,7 +195,7 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 	if (current_variant == "ANTARCTICA" || current_variant == "POLAR") {
 		t_term = t_term_arrhenius_critical;
 		visc = visc_dflt;
-		visc_ice_fudge = 9.45;
+		visc_ice_fudge = 12.;		// Updated from 9.45 on 2021-02-09
 		visc_sp_fudge = 16.5;
 		//visc_water_fudge is set to zero by default
 		setfix = false;
@@ -1329,7 +1329,7 @@ double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 	case t_term_arrhenius_critical:
 	{
 		const double Q_fac = 0.39; // Adjust Q to snow; from Schweizer et al. (2004): 0.24
-		const double criticalExp = 0.7; //0.5; //0.3; //
+		const double criticalExp = (current_variant == "POLAR" || current_variant == "ANTARCTICA") ? (0.95) : (0.7); //0.5; //0.3;	// POLAR and ANTARCTICA variant updated from 0.7 on 2021-02-09
 		const double T_r = 265.15; // Reference temperature (K), from Schweizer et al. (2004)
 		return ((1. / SnLaws::ArrheniusLaw(Q_fac * Q, Te, T_r))
 		             * (0.3 * pow((Constants::meltfreeze_tk - Te), criticalExp) + 0.4));
@@ -1424,8 +1424,17 @@ double SnLaws::loadingRateStressCALIBRATION(ElementData& Edata, const mio::Date&
 double SnLaws::snowViscosityFudgeDEFAULT(const ElementData& Edata)
 {
 	double ice_fudge = SnLaws::visc_ice_fudge / Edata.theta[ICE];
-	ice_fudge *= (1. - logisticFunction(Edata.theta[ICE], 0.019, 0.15))
-	                 * pow(Edata.theta[ICE], 0.77);
+
+	const double cutoff = 0.6;	// Threshold of theta[ICE] above which the default function is replaced with a special function for POLAR and ANTARCTICA
+	if ( (current_variant == "POLAR" || current_variant == "ANTARCTICA") && Edata.theta[ICE] > cutoff ) {
+		const double a1 = (1. - logisticFunction(cutoff, 0.019, 0.15)) // 0.039, 0.16
+			         * pow(cutoff, 0.77);
+		const double a2 = 0.333 * a1;
+		ice_fudge *= a1 + ( (a2 - a1) / (1. - cutoff) ) * (Edata.theta[ICE] - cutoff) ;
+	} else {
+		ice_fudge *= (1. - logisticFunction(Edata.theta[ICE], 0.019, 0.15))
+		                 * pow(Edata.theta[ICE], 0.77);
+	}
 
 	double sp_fudge;
 	if (Edata.mk%100 >= 20 && Edata.theta[WATER] < SnowStation::thresh_moist_snow)
