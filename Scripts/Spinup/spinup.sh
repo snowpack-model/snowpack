@@ -47,6 +47,10 @@ else
 fi
 to_exec_spinup=$(echo "${to_exec}" | mawk -v ed=${enddate} '{for(i=1; i<=NF; i++) {if(i>1) {printf " "}; printf "%s", ($(i-1)=="-e")?(ed):($i)}; printf "\n"}')
 cfgfile=$(echo ${to_exec} | mawk '{for(i=1; i<=NF; i++) {if($i ~ /-c/) {print $(i+1)}}}')
+if [ ! -e "${cfgfile}" ]; then
+	echo "ERROR: spinup not started since ini file: ${cfgfile} could not be found or opened!"
+	exit
+fi
 cfgfile_dir=$(dirname ${cfgfile})
 # Check for nested ini files:
 cfgfile_before=$(fgrep -i IMPORT_BEFORE ${cfgfile} | mawk -F= '{gsub(/^[ \t]+/,"",$NF); gsub(/[ \t]+$/,"",$NF); print $NF}')	# Use gsub to remove trailing and leading white spaces
@@ -54,17 +58,25 @@ cfgfile_after=$(fgrep -i IMPORT_AFTER ${cfgfile} | mawk -F= '{gsub(/^[ \t]+/,"",
 # Construct array containing ini files in the sequence they should be parsed
 cfgfiles=()
 if [ -n "${cfgfile_before}" ]; then
+	if [ ! -e "${cfgfile_dir}/${cfgfile_before}" ]; then
+		echo "ERROR: spinup not started since ini file: ${cfgfile_dir}/${cfgfile_before} could not be found or opened!"
+		exit
+	fi
 	cfgfiles+=("${cfgfile_dir}/${cfgfile_before}")
 fi
 if [ -n "${cfgfile}" ]; then
 	cfgfiles+=("${cfgfile}")
 fi
 if [ -n "${cfgfile_after}" ]; then
+	if [ ! -e "${cfgfile_dir}/${cfgfile_after}" ]; then
+		echo "ERROR: spinup not started since ini file: ${cfgfile_dir}/${cfgfile_after} could not be found or opened!"
+		exit
+	fi
 	cfgfiles+=("${cfgfile_dir}/${cfgfile_after}")
 fi
 max_sim_hs=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[SNOWPACKADVANCED\]/) {read=1} else {read=0}}; if(read) {if(/MAX_SIMULATED_HS/) {val=$NF}}} END {print val}')
 if [ -n "${max_sim_hs}" ]; then
-	if (( $(echo "${max_sim_hs} + 2 < ${min_sim_depth}" | bc -l) )); then
+	if (( $(echo "${max_sim_hs} > 0" | bc -l) )) && (( $(echo "${max_sim_hs} + 2 < ${min_sim_depth}" | bc -l) )); then
 		echo "ERROR: spinup not started since MAX_SIMULATED_HS == ${max_sim_hs} and min_sim_depth == ${min_sim_depth}!"
 		echo "       --> MAX_SIMULATED_HS should be at least 2 m larger than min_sim_depth to prevent infinite spinup."
 		exit
