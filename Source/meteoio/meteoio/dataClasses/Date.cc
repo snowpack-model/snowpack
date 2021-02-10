@@ -362,7 +362,7 @@ void Date::setModifiedJulianDate(const double& julian_in, const double& i_timezo
 }
 
 /**
-* @brief Set date from an RFC868 date (time since 1900-01-01T00:00 GMT).
+* @brief Set date from an RFC868 date (time since 1900-01-01T00:00 GMT, valid until 2036).
 * @param julian_in julian date to set
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
 * @param i_dst is it DST? (default: no)

@@ -48,6 +48,7 @@ namespace mio {
  * - julian date, see Date::getJulian
  * - modified julian date, see Date::getModifiedJulianDate
  * - truncated julian date, see Date::getTruncatedJulianDate
+ * - RFC868, see Date::getRFC868Date
  * - Unix date, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
  *
