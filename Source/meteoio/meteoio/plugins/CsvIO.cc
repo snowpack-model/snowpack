@@ -307,6 +307,74 @@ namespace mio {
 //helper function to sort the static keys used for specifying the date/time formats
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
 
+void CsvDateTime::updateMaxCol() 
+{
+	if (date_str!=IOUtils::npos && date_str>max_dt_col) max_dt_col=date_str;
+	if (time_str!=IOUtils::npos && time_str>max_dt_col) max_dt_col=time_str;
+	if (year!=IOUtils::npos && year>max_dt_col) max_dt_col=year;
+	if (jdn!=IOUtils::npos && jdn>max_dt_col) max_dt_col=jdn;
+	if (month!=IOUtils::npos && month>max_dt_col) max_dt_col=month;
+	if (day!=IOUtils::npos && day>max_dt_col) max_dt_col=day;
+	if (time!=IOUtils::npos && time>max_dt_col) max_dt_col=time;
+	if (hours!=IOUtils::npos && hours>max_dt_col) max_dt_col=hours;
+	if (minutes!=IOUtils::npos && minutes>max_dt_col) max_dt_col=minutes;
+	if (seconds!=IOUtils::npos && seconds>max_dt_col) max_dt_col=seconds;
+}
+
+int CsvDateTime::getFixedYear(const double& i_jdn)
+{
+	if (i_jdn<273.) auto_wrap = false;
+	if (auto_wrap) return year_cst - 1;
+	return year_cst;
+}
+
+int CsvDateTime::getFixedYear(const int& i_month)
+{
+	if (i_month<10) auto_wrap = false;
+	if (auto_wrap) return year_cst - 1;
+	return year_cst;
+}
+
+bool CsvDateTime::isSet() const 
+{
+	//date and time strings
+	if (date_str!=IOUtils::npos && time_str!=IOUtils::npos) return true;
+	const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
+	const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
+	
+	//date string and components time
+	//if (date_str!=IOUtils::npos && components_time) return true;
+	
+	//components date and time string
+	//if (components_date && time_str!=IOUtils::npos) return true;
+	
+	//pure components
+	if (components_date && components_time) return true;
+	return false;
+}
+
+std::string CsvDateTime::toString() const 
+{
+	std::ostringstream os;
+	os << "[";
+	if (date_str!=IOUtils::npos) os << "date_str→" << date_str << " ";
+	if (time_str!=IOUtils::npos) os << "time_str→" << time_str << " ";
+	if (year!=IOUtils::npos) os << "year→" << year << " ";
+	if (year_cst!=IOUtils::nodata) os << "year_cst→" << year << " ";
+	if (jdn!=IOUtils::npos) os << "jdn→" << jdn << " ";
+	if (month!=IOUtils::npos) os << "month→" << month << " ";
+	if (day!=IOUtils::npos) os << "day→" << day << " ";
+	if (time!=IOUtils::npos) os << "time_num→" << time << " ";
+	if (hours!=IOUtils::npos) os << "hours→" << hours << " ";
+	if (minutes!=IOUtils::npos) os << "minutes→" << minutes << " ";
+	if (seconds!=IOUtils::npos) os << "seconds→" << seconds << " ";
+	if (auto_wrap) os << "auto_wrap";
+	os << "]";
+	return os.str();
+}
+
+///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
+
 //parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
 //(since there can be multiple keys on the same line)
 std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec)

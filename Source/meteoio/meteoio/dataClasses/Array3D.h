@@ -506,6 +506,7 @@ template<class P> std::istream& operator>>(std::istream& is, Array3D<P>& array) 
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
 	is.read(reinterpret_cast<char*>(&array.nz), sizeof(array.nz));
+	array.nxny = array.nx * array.ny;
 	array.vecData.resize(array.nx*array.ny*array.nz);
 	is.read(reinterpret_cast<char*>(&array.vecData[0]), static_cast<std::streamsize>(array.nx*array.ny*array.nz*sizeof(P))); //30 times faster than assign() or copy()
 	return is;
