@@ -139,10 +139,10 @@ class Grid2DObject {
 		void rescale(const double& i_cellsize);
 
 		/**
-		 @brief Compute spatial mean
-		 @param radius for the mean to be computed
+		 @brief Spatially average the grid over a given radius
+		 @param[in] radius radius in meters over which to spatially average
 		*/
-		void compute_spatial_mean(const double radius);
+		void compute_spatial_mean(const double& radius);
 	
 		void size(size_t& o_ncols, size_t& o_nrows) const;
 		size_t size() const;
