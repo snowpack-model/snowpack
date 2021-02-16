@@ -141,6 +141,7 @@ class NetCDFIO : public IOInterface {
 		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, out_meteo_file;
 		bool debug, out_single_file;
+		bool split_by_year, split_by_var;
 };
 
 } //namespace
