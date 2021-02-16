@@ -294,14 +294,14 @@ inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncFiles> &left
 
 NetCDFIO::NetCDFIO(const std::string& configfile)
          : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
-         out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false)
+         out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
 {
 	parseInputOutputSection();
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader)
          : cfg(cfgreader), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
-         out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false)
+         out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
 {
 	parseInputOutputSection();
 }
@@ -329,6 +329,8 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
 		cfg.getValue("GRID2DPATH", "Output", out_grid2d_path);
 		cfg.getValue("GRID2DFILE", "Output", grid2d_out_file);
+		cfg.getValue("NETCDF_SPLIT_BY_YEAR", "Output", split_by_year, IOUtils::nothrow);
+		cfg.getValue("NETCDF_SPLIT_BY_VAR", "Output", split_by_var, IOUtils::nothrow);
 	}
 
 	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
@@ -490,14 +492,24 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 	if (IOUtils::readLineToVec(arguments, vec_argument, '@')  != 2)
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is varname@Date, received instead '"+arguments+"'", AT);
 
-	const std::string file_and_path( out_grid2d_path + "/" + grid2d_out_file );
-	if (!FileUtils::validFileAndPath(file_and_path)) {
-		throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
-	}
-
 	mio::Date date;
 	if(!mio::IOUtils::convertString(date, vec_argument[1], cfg.get("TIME_ZONE","input"))) {
 		throw InvalidArgumentException("Unable to convert date '"+vec_argument[1]+"'", AT);
+	}
+
+	std::string file_and_path;
+	if (!split_by_year && !split_by_var) {
+		file_and_path = out_grid2d_path + "/" + grid2d_out_file;
+	} else {
+		const std::string prefix = FileUtils::removeExtension(grid2d_out_file);
+		const std::string suffix = FileUtils::getExtension(grid2d_out_file);
+		file_and_path = out_grid2d_path + "/" + prefix;
+		if (split_by_var) file_and_path = file_and_path + "_" + vec_argument[0];
+		if (split_by_year) file_and_path = file_and_path + "_" + std::to_string(date.getYear());
+		if (!suffix.empty()) file_and_path = file_and_path + "." + suffix;
+	}
+	if (!FileUtils::validFileAndPath(file_and_path)) {
+		throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
 	}
 
 	if (cache_grids_out.find(file_and_path) == cache_grids_out.end()) {
@@ -509,7 +521,17 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	const std::string file_and_path( out_grid2d_path + "/" + grid2d_out_file );
+	std::string file_and_path;
+	if (!split_by_year && !split_by_var) {
+		file_and_path = out_grid2d_path + "/" + grid2d_out_file;
+	} else {
+		const std::string prefix = FileUtils::removeExtension(grid2d_out_file);
+		const std::string suffix = FileUtils::getExtension(grid2d_out_file);
+		file_and_path = out_grid2d_path + "/" + prefix;
+		if (split_by_var) file_and_path = file_and_path + "_" + MeteoGrids::getParameterName( parameter );
+		if (split_by_year) file_and_path = file_and_path + "_" + std::to_string(date.getYear());
+		if (!suffix.empty()) file_and_path = file_and_path + "." + suffix;
+	}
 	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
 
 	if (cache_grids_out.find(file_and_path) == cache_grids_out.end()) {
