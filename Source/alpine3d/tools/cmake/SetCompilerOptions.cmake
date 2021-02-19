@@ -98,7 +98,9 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
 		
-		SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
+		IF(PROFILING)
+			SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
+		ENDIF()
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wunsafe-loop-optimizations -Wwrite-strings")
 		IF(NOT ANDROID)
 			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
@@ -177,7 +179,9 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
 		
-		SET(PROFILING "-pg") #add ${PROFILING} to the CFLAGS when necessary
+		IF(PROFILING)
+			SET(PROFILING "-pg") #add ${PROFILING} to the CFLAGS when necessary
+		ENDIF()
 		SET(EXTRA "${EXTRA} -fcolor-diagnostics") #-fapple-pragma-pack does not seems necessary; -ftrapv should be replaced by sanitize=integer
 		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
 			IF (LEAKS_CHECK)

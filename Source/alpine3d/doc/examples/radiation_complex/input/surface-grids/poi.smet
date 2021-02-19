@@ -1,0 +1,8 @@
+SMET 1.1 ASCII
+[HEADER]
+station_id = my_pts
+epsg = 21781
+nodata = -999
+fields = easting northing altitude
+[DATA]
+781184 190108 2460

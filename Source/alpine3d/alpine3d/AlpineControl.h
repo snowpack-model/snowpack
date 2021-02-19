@@ -34,15 +34,15 @@
  * @page restarts Restarts
  * It is possible to regularly dump the exact status of each simulated pixel and then restart from a previously saved such backup.
  * In order to do so, it is necessary to enable writting out these status files, to copy them at the required timestep and then tell the model
- * to reread them when starting. These files are just regular SMET ".sno" files such as produced and used by Snowpack but for each simulated pixel. 
- * 
+ * to reread them when starting. These files are just regular SMET ".sno" files such as produced and used by Snowpack but for each simulated pixel.
+ *
  * The following keys control this process, in the [Output] section:
  * 	+ SNOW_WRITE: is set to TRUE, enable writing these files;
  * 	+ SNOW_DAYS_BETWEEN: how many days between two updates to these files;
  *
  * On the command line, the switch "--restart" tells Alpine3D to read one file for each pixel instead of one file per land use class. Of course, all
  * the usual configuration keys for the "sno" files apply (see \ref reading_snow_files "reading snow files").
- * 
+ *
  * @note You MUST set the key "EXPERIMENT_NAME" in the [Output] section since this is used to name the files necessary for restarts
  */
 
@@ -55,13 +55,14 @@ class AlpineControl
 		              DataAssimilation *myda,
 		              Runoff *myrunoff,
 		              const mio::Config& cfg,
-		              const mio::DEMObject& dem);
+		              const mio::DEMObject& in_dem);
 		void Run(mio::Date i_startdate, const unsigned int max_steps);
 		void setNoCompute(bool i_nocompute) {nocompute = i_nocompute;}
 
 	private:
 		MeteoObj meteo;
-		
+		const mio::DEMObject& dem;
+
 		SnowpackInterface *snowpack;
 		SnowDriftA3D *snowdrift;
 		EnergyBalance *eb;
@@ -70,7 +71,7 @@ class AlpineControl
 		double snow_days_between;
 		double max_run_time;
 		bool enable_simple_snow_drift;
-		bool nocompute, out_snow; // no computation, only parse inputs (check mode)
+		bool nocompute, out_snow, correct_meteo_grids_HS; // no computation, only parse inputs (check mode)
 };
 
 #endif
