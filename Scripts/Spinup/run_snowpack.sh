@@ -1,4 +1,12 @@
+shopt -s expand_aliases		# Make sure aliases work in non-interactive shells
+
 which_snowpack="./src/usr/bin/snowpack"
+
+# Check if mawk exist, otherwise create alias
+if ! command -v mawk &> /dev/null
+then
+	alias mawk="awk"
+fi
 
 for f in ./smet/*smet
 do
@@ -41,7 +49,7 @@ do
 	echo "[OUTPUT]" >> ${cfgfile}
 	echo "PROF_WRITE		=       TRUE" >> ${cfgfile}
 	echo "TS_WRITE		=       TRUE" >> ${cfgfile}
-	
+
 	exp=$(fgrep EXPERIMENT base.ini | mawk '{print $NF}')
 	if [ -z "${exp}" ]; then exp="NOEXP"; fi
 	echo "EXPERIMENT		=	${exp}" >> ${cfgfile}
