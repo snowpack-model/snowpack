@@ -130,7 +130,8 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const std::vector< std::pair<size_t,size_t> >& pts_in,
                                                  const std::vector<SnowStation*>& snow_stations,
                                                  const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
-                                                 const size_t offset_in)
+                                                 const size_t offset_in,
+                                                 const std::vector<std::string>& grids_not_computed_in_worker)
  : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), sn_techsnow(sn_cfg), dem(dem_in),
    dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), SnowStationsCoord(snow_stations_coord),
    isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
@@ -167,7 +168,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 		params.push_back( "TSOIL"+mio::IOUtils::toString(ii+1) );
 	}
 	uniqueOutputGrids(params);
-	initGrids(params);
+	initGrids(params, grids_not_computed_in_worker);
 
 	const CurrentMeteo meteoPixel; //this is only necessary in order to have something for fillGrids()
 	const SurfaceFluxes surfaceFlux; //this is only necessary in order to have something for fillGrids()
@@ -218,12 +219,19 @@ void SnowpackInterfaceWorker::uniqueOutputGrids(std::vector<std::string>& output
 /** @brief Initialize and add to the grid map the requested grids
  * @param params string representation of the grids to add
  */
-void SnowpackInterfaceWorker::initGrids(std::vector<std::string>& params)
+void SnowpackInterfaceWorker::initGrids(std::vector<std::string>& params,
+                                        const std::vector<std::string>& grids_not_computed_in_worker)
 {
 	for (size_t ii = 0; ii<params.size(); ++ii) {
 		IOUtils::toUpper(params[ii]); //make sure all parameters are upper case
 
 		const size_t param_idx = SnGrids::getParameterIndex( params[ii] );
+    const auto position = std::find(grids_not_computed_in_worker.begin(),
+                         grids_not_computed_in_worker.end(),
+                         params[ii]);
+    if(position<grids_not_computed_in_worker.end()) {
+      continue;
+    }
 		if (param_idx==IOUtils::npos)
 			throw UnknownValueException("Unknow meteo grid '"+params[ii]+"' selected for gridded output", AT);
 
@@ -320,32 +328,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 	for (it=grids.begin(); it!=grids.end(); ++it) {
 		double value = IOUtils::nodata;
 		switch (it->first) {
-			case SnGrids::TA:
-				value = meteoPixel.ta; break;
-			case SnGrids::RH:
-				value = meteoPixel.rh; break;
-			case SnGrids::VW:
-				value = meteoPixel.vw; break;
-			case SnGrids::VW_DRIFT:
-				value = meteoPixel.vw_drift; break;
-			case SnGrids::DW:
-				value = meteoPixel.dw; break;
-			case SnGrids::ISWR:
-				value = meteoPixel.iswr; break;
-			case SnGrids::ISWR_DIFF:
-				value = (useEBalance)? meteoPixel.diff : IOUtils::nodata; break;
-			case SnGrids::ISWR_DIR:
-				value = (useEBalance)? meteoPixel.iswr - meteoPixel.diff : IOUtils::nodata; break;
-			case SnGrids::ILWR:
-				value = Atmosphere::blkBody_Radiation(meteoPixel.ea, meteoPixel.ta); break;
 			case SnGrids::HS:
 				value = (snowPixel.cH - snowPixel.Ground) /  snowPixel.cos_sl; break; //slope2horiz
-			case SnGrids::PSUM:
-				value = meteoPixel.psum; break;
-			case SnGrids::PSUM_PH:
-				value = meteoPixel.psum_ph; break;
-			case SnGrids::PSUM_TECH:
-				value = meteoPixel.psum_tech; break;
 			case SnGrids::TSS:
 				if (!useCanopy || snowPixel.Cdata->zdispl < 0.) {
 					value = snowPixel.Ndata.back().T;
@@ -422,6 +406,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				}
 				else
 				{
+          std::cout << it->first << std::endl;
 					throw InvalidArgumentException("Invalid parameter requested", AT);
 				}
 		}

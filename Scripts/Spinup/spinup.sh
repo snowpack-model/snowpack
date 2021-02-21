@@ -1,3 +1,6 @@
+shopt -s expand_aliases		# Make sure aliases work in non-interactive shells
+
+
 # Load settings
 source ./spinup.rc
 default_spinup_end="2500-01-01T00:00"
@@ -34,6 +37,13 @@ done
 if (( $i == 0 )); then
 	PrintUseMessage
 	exit
+fi
+
+
+# Check if mawk exist, otherwise create alias
+if ! command -v mawk &> /dev/null
+then
+	alias mawk='awk'
 fi
 
 

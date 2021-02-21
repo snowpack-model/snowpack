@@ -168,7 +168,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 		cfg.addFile(iofile);
 	}
 	MPIControl::instance().broadcast(cfg);
-	
+
 	const double TZ = cfg.get("TIME_ZONE", "INPUT");
 	startdate.setTimeZone(TZ);
 	Date enddate;
@@ -189,7 +189,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 		  throw InvalidArgumentException("startdate="+startdate.toString(Date::ISO)+" > enddate="+enddate.toString(Date::ISO),AT);
 		}
 	}
-	
+
 	//SNOWPARAM: Check for time step consistency
 	const double sp_dt = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
 	if ( dt_main != M_TO_S(sp_dt) ) {
@@ -229,8 +229,8 @@ inline void setStaticData(const Config &cfg, IOManager& io, DEMObject &dem, Grid
 			io.readPOI(vec_pts);
 			if (!dem.gridify(vec_pts, true)) { //keep invalid points
 				if (isMaster) cerr << "[E] Some POI are invalid or outside the DEM:\n";
-				for (size_t ii=0; ii<vec_pts.size(); ii++) 
-					if (!vec_pts[ii].indexIsValid() && isMaster) 
+				for (size_t ii=0; ii<vec_pts.size(); ii++)
+					if (!vec_pts[ii].indexIsValid() && isMaster)
 						std::cout  << "[E] Point " << ii << "\t" << vec_pts[ii].toString(Coords::CARTESIAN) << "\n";
 				throw InvalidArgumentException("Invalid POI, please check in the logs", AT);
 			} else if (isMaster)
@@ -254,7 +254,7 @@ inline void setStaticData(const Config &cfg, IOManager& io, DEMObject &dem, Grid
 inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, const Grid2DObject &landuse, const std::vector<Coords> &vec_pts, SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack, DataAssimilation*& da, Runoff*& runoff)
 {
 	const bool isMaster = MPIControl::instance().master(); // Check if this process is the master (always true for non-parallel mode)
-	
+
 	//EBALANCE
 	if (enable_eb && !nocompute) {
 		try {
@@ -265,7 +265,7 @@ inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, c
 			throw;
 		}
 	}
-	
+
 	//SNOWDRIFT
 	if (enable_drift && !nocompute && isMaster) {
 		try {
@@ -281,7 +281,7 @@ inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, c
 	if (enable_da && !nocompute && isMaster) {
 		da = new DataAssimilation(io);
 	}
-	
+
 	//RUNOFF
 	if (enable_runoff) {
 		SnowpackConfig sn_cfg( cfg ); //so we also get the default value of "THRESH_RAIN"
@@ -326,7 +326,7 @@ inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, c
 			da->setSnowPack(*snowpack);
 			if (isMaster) cout << "[i] Snowpack and Ebalance interfaces exchanged\n";
 		}
-		
+
 		if (runoff) {
 			snowpack->setRunoff(*runoff);
 			runoff->setSnowPack(*snowpack);
@@ -340,7 +340,7 @@ inline void cleanDestroyAll(SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackIn
 	if (da) da->Destroy();
 	if (eb) eb->Destroy();
 	if (drift) drift->Destroy();
-	
+
 	if (da) delete da;
 	if (eb) delete eb;
 	if (drift) delete drift;
@@ -348,15 +348,15 @@ inline void cleanDestroyAll(SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackIn
 	if (snowpack) delete snowpack;
 }
 
-inline void start_message(int argc, char **argv) 
+inline void start_message(int argc, char **argv)
 {
 	MPIControl& mpicontrol = MPIControl::instance();
-	
+
 	cout << argv[0] << " " <<  A3D_VERSION << " compiled on " << __DATE__ << " " << __TIME__ << "\n";
 	cout << "\tLibsnowpack " << snowpack::getLibVersion() << "\n";
 	cout << "\tMeteoIO " << mio::getLibVersion() << "\n";
 	if (argc==1) Usage(argv[0]);
-	
+
 	const size_t n_process = mpicontrol.size();
 	const size_t n_threads = mpicontrol.max_threads();
 	cout << "\nRunning as " << n_process << " process";
@@ -364,7 +364,7 @@ inline void start_message(int argc, char **argv)
 	cout << " and " << n_threads << " thread";
 	if (n_threads>1)  cout << "s";
 	cout << " with command line:";
-	for (int args=0; args<argc; args++) 
+	for (int args=0; args<argc; args++)
 		cout << " " << argv[args];
 	cout << endl;
 
@@ -396,7 +396,7 @@ inline void real_main(int argc, char **argv)
 	DEMObject dem;
 	Grid2DObject landuse;
 	std::vector<Coords> vec_pts;
-	
+
 	//make sure that if the sno files are not written out, they will still be available for the POI
 	const std::string meteo_outpath = cfg.get("METEOPATH", "Output");
 	const bool snow_write = cfg.get("SNOW_WRITE", "Output");
@@ -406,6 +406,8 @@ inline void real_main(int argc, char **argv)
 	cfg.write(meteo_outpath + "/io.ini"); //backup the ini file
 
 	try { //main integration loop
+		//setStaticData(cfg, io, dem, landuse, vec_pts);
+		//FELIX:
 		setStaticData(cfg, io, dem, landuse, vec_pts);
 		setModules(cfg, io, dem, landuse, vec_pts, drift, eb, snowpack, da, runoff);
 		AlpineControl control(snowpack, drift, eb, da, runoff, cfg, dem);
@@ -414,11 +416,11 @@ inline void real_main(int argc, char **argv)
 	} catch (std::exception& e) {
 		cerr << "[E] exception thrown: " << e.what() << endl;
 		cleanDestroyAll(drift, eb, snowpack, da, runoff);
-		exit(1);
+		throw;
 	} catch (...) {
 		cout << "[E] exception thrown!" << endl;
 		cleanDestroyAll(drift, eb, snowpack, da, runoff);
-		exit(1);
+		throw;
 	}
 
 	cleanDestroyAll(drift, eb, snowpack, da, runoff);
@@ -437,7 +439,7 @@ int main(int argc, char *argv[]) {
 		real_main(argc, argv);
 	} catch (const std::exception &e) {
 		std::cerr << e.what() << endl;
-		exit(1);
+		throw;
 	}
 
 	return 0;

@@ -33,14 +33,15 @@ using namespace std;
  * @param cfg User configuration keys
  * @param dem DEM defining the simulation
  */
-AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& dem)
-              : meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda), runoff(myrunoff),
-                snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), enable_explicit_snow_drift(false), nocompute(false), out_snow(true)
+AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& in_dem)
+              : dem(in_dem), meteo(cfg, in_dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda),
+                runoff(myrunoff), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), enable_explicit_snow_drift(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
 	if (out_snow) {
 		cfg.getValue("SNOW_DAYS_BETWEEN", "Output", snow_days_between);
 	}
+	cfg.getValue("ADD_HS_TO_DEM_FOR_METEO", "input", correct_meteo_grids_HS,IOUtils::nothrow);
 
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
@@ -65,12 +66,12 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	if (isMaster) {
 		cout << "\n**** Done initializing\n";
 		cout << "**** Starting Calculation on date: " << calcDate.toString(Date::ISO) << " using Alpine3D version " << A3D_VERSION << "\n";
-		if (nocompute) 
+		if (nocompute)
 			cout << "**** Performing dry run (--no-compute option)\n";
 		cout << "\n";
-		
+
 		if (nocompute) {
-			const Grid2DObject maskGlacier( snowpack->getGrid(SnGrids::GLACIER) );
+			const Grid2DObject maskGlacier{snowpack->getGrid(SnGrids::GLACIER)};
 			meteo.setGlacierMask(maskGlacier);
 		}
 	}
@@ -78,7 +79,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	//if the meteo data would need to be resampled, we try to fill the buffer with a date a little bit before
 	if (snowdrift) meteo.setSkipWind(true); //do not fill grids if met3D
 	meteo.prepare(i_startdate);
-	
+
 	elapsed.start();
 	for (unsigned int t_ind=0; t_ind<max_steps; t_ind++) { //main computational loop
 		const double elapsed_start = elapsed.getElapsed();
@@ -88,7 +89,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			cout << "\nSimulation step " << t_ind+1 << "/" << max_steps << " at time step " << calcDate.toString(mio::Date::ISO_TZ) << "\n";
 			cout << std::fixed << "Elapsed time: " << setprecision(1) << elapsed_start << " seconds\nEstimated completion in " << est_completion/3600. << " hours\n";
 		}
-		
+
 		//for --no-compute, simply check the data and move on
 		if (nocompute) {
 			meteo.prepare(calcDate); //prepare the current timestep (because it could not be prepared before)
@@ -100,11 +101,14 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		//get 1D and 2D meteo for the current time step
 		try {
 			meteo.get(calcDate, vecMeteo);
+			if(correct_meteo_grids_HS){
+				meteo.setDEM(dem+snowpack->getGrid(SnGrids::HS));
+			}
 			meteo.get(calcDate, ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
 		} catch (IOException&) {
 			//saving state files before bailing out
 			if (isMaster) {
-				if (out_snow && t_ind>0 && snowpack) 
+				if (out_snow && t_ind>0 && snowpack)
 					snowpack->writeOutputSNO(calcDate-1./24.); //output for last hour
 				throw;
 			}
@@ -196,9 +200,9 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	} /* For all times max_steps */
 
 	//Finish the program: Write SNO Files and put final output on the screen
+	if (eb && eb->hasSP()) eb->writeSP(max_steps);
 	if (snowpack && out_snow && !nocompute){
 		if (isMaster) cout << "[i] Simulation finished, writing output files...\n";
 		snowpack->writeOutputSNO(calcDate);
 	 }
 }
-

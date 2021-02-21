@@ -72,6 +72,9 @@ bool SnGrids::initStaticData()
 	paramname.push_back("GLACIER");
 	paramname.push_back("GLACIER_EXPOSED");
 	paramname.push_back("ET");
+  paramname.push_back("ISWR_TERRAIN");
+  paramname.push_back("ILWR_TERRAIN");
+  paramname.push_back("ISWR_BELOW_CAN");
 	paramname.push_back("TSOIL1");
 	paramname.push_back("TSOIL2");
 	paramname.push_back("TSOIL3");
@@ -343,6 +346,11 @@ void MeteoObj::setGlacierMask(const Grid2DObject& glacierMask)
 		glaciers = new Glaciers(config, dem);
 		glaciers->setGlacierMap( glacierMask );
 	}
+}
+
+void MeteoObj::setDEM(const mio::DEMObject& in_dem)
+{
+	dem=in_dem;
 }
 
 //this should only be called when "--nocompute" was set. So we consider that
