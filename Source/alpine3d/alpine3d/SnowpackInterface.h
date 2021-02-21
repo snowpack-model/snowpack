@@ -130,7 +130,8 @@ class Runoff; // forward declaration, cyclic header include
 		// Methods for accessing Snopack Interface Manager
 		SnowpackInterface(const mio::Config &io_cfg, const size_t& nbworkers,
 		                  const mio::DEMObject& dem_in,
-		                  const mio::Grid2DObject& landuse_in, const std::vector<mio::Coords>& vec_pts, const mio::Date& startTime, const std::string& grids_requirements, const bool is_restart_in);
+		                  const mio::Grid2DObject& landuse_in, const std::vector<mio::Coords>& vec_pts,
+                      const mio::Date& startTime, const std::string& grids_requirements, const bool is_restart_in);
 		SnowpackInterface(const SnowpackInterface&);
 		~SnowpackInterface();
 
@@ -162,12 +163,15 @@ class Runoff; // forward declaration, cyclic header include
 		void setRadiationComponents(const mio::Array2D<double>& shortw,
 		                            const mio::Array2D<double>& longwave,
 		                            const mio::Array2D<double>& diff,
+                                const mio::Array2D<double>& terrain_shortwave_in,
+                                const mio::Array2D<double>& terrain_longwave_in,
 		                            const double& solarElevation,
 		                            const mio::Date& timestamp);
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
 
 	private:
+    static const std::vector<std::string> grids_not_computed_in_worker;
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
@@ -223,7 +227,7 @@ class Runoff; // forward declaration, cyclic header include
 		size_t mpi_offset, mpi_nx;
 		mio::Grid2DObject landuse;
 		// meteo forcing variables
-		mio::Grid2DObject mns, shortwave, longwave, diffuse;
+		mio::Grid2DObject mns, shortwave, longwave, diffuse, terrain_shortwave, terrain_longwave;
 		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
 		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
