@@ -68,7 +68,7 @@ class Meteo {
 		                                const double& vw, const double& z_ratio, double &ustar, double &psi_s);
 		static void MOStability(const ATM_STABILITY& use_stability, const double& ta_v, const double& t_surf_v, const double& t_surf, 
 		                                       const double& zref, const double& vw, const double& z_ratio, double &ustar, double &psi_s, double &psi_m);
-		static double compZ0(const std::string& model, const CurrentMeteo& Mdata);
+		double compZ0(const std::string& model, const CurrentMeteo& Mdata);
 		
 		Canopy canopy;
 		std::string roughness_length_parametrization;
