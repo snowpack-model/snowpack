@@ -43,11 +43,13 @@ namespace mio {
  * Internally, the date is stored as true julian date in GMT.
  * The maximal precision is 1 second (however with the limitation that leap seconds are currently not handled).
  *
+ * \anchor decimal_date_representation
  * Please see Date::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
  * the various date representation definitions. The following date representation are currently supported:
  * - julian date, see Date::getJulian
  * - modified julian date, see Date::getModifiedJulianDate
  * - truncated julian date, see Date::getTruncatedJulianDate
+ * - RFC868, see Date::getRFC868Date
  * - Unix date, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
  *

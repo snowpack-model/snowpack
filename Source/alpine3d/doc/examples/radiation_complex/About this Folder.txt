@@ -1,0 +1,12 @@
+################################################################
+How Forward Scattering by Snow Changes the Alpine Energy Balance
+###            	   Simulation Example  			     ###
+################################################################
+
+This folder shows an example of a simulation setup. In particular, 
+the flags in the setup configuration and the folder with the 
+snow BRDF are required to successfully run an Alpine3d simulation. 
+
+!!!! IMPORTANT !!!
+
+Directory ../output/PVP needs to exist before running the simulation (relative to cwd when running the simulation, e.g. ./setup). See SolarPanel::setPVP

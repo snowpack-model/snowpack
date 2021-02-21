@@ -18,36 +18,27 @@
 #include <alpine3d/ebalance/TerrainRadiationAlgorithm.h>
 #include <alpine3d/ebalance/TerrainRadiationSimple.h>
 #include <alpine3d/ebalance/TerrainRadiationHelbig.h>
-#include <alpine3d/ebalance/TerrainRadiation.h>
-
-#ifdef ENABLE_PETSC
-	#include <alpine3d/ebalance/TerrainRadiationPETSc.h>
-#endif
+#include <alpine3d/ebalance/TerrainRadiationComplex.h>
 
 using namespace std;
 using namespace mio;
 
 TerrainRadiationAlgorithm::~TerrainRadiationAlgorithm() {}
-
+// FELIX: const RadiationField* radfield
 //please document these keywords in EnergyBalance.h
-TerrainRadiationAlgorithm* TerrainRadiationFactory::getAlgorithm(const Config& cfg, const DEMObject &dem, const int& nbworkers)
+TerrainRadiationAlgorithm* TerrainRadiationFactory::getAlgorithm(const Config& cfg, const DEMObject &dem,
+                                                                 const int& nbworkers)
 {
 	string method = "SIMPLE";
 	cfg.getValue("Terrain_Radiation_Method", "EBalance", method, IOUtils::nothrow);
 	IOUtils::toUpper(method);
 
 	if (method == "SIMPLE") {
-		return new TerrainRadiationSimple(dem, method);
+		return new TerrainRadiationSimple(cfg, dem, method);
 	} else if (method == "HELBIG") {
 		return new TerrainRadiationHelbig(cfg, dem, nbworkers, method);
-	} else if (method == "FULL") {
-		return new TerrainRadiation(cfg, dem, nbworkers, method);
-	} else if (method == "PETSC") {
-	#ifdef ENABLE_PETSC
-		return new TerrainRadiationPETSc(cfg, dem, nbworkers, method);
-	#else
-		throw IOException("To use terrain radiation method '"+method+"' activate PETSc compilation option" , AT);
-	#endif
+	} else if (method == "COMPLEX") {
+		return new TerrainRadiationComplex(cfg, dem, method);
 	} else {
 		throw IOException("The terrain radiation method '"+method+"' is not implemented/activated" , AT);
 	}

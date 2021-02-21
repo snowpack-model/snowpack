@@ -44,7 +44,6 @@
 #include <alpine3d/ebalance/ViewFactorsHelbig.h>
 #include <alpine3d/ebalance/ViewFactors.h>
 #include <alpine3d/ebalance/ViewFactorsCluster.h>
-#include <alpine3d/ebalance/TerrainRadiation.h>
 #include <alpine3d/ebalance/ViewFactorsSectors.h>
 #include <alpine3d/ebalance/ViewFactorsAlgorithm.h>
 #include <alpine3d/ebalance/TerrainRadiationAlgorithm.h>

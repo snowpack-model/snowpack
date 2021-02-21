@@ -375,6 +375,64 @@ void Grid2DObject::rescale(const double& i_cellsize)
 	cellsize = i_cellsize;
 }
 
+/*This is a first implementation by A.Michel
+ A better implementation can be achieved using e.g.:
+ https://github.com/bfraboni/FastGaussianBlur
+ */
+void Grid2DObject::compute_spatial_mean(const double& radius)
+{
+	if (radius<=0)
+		throw InvalidArgumentException("Provided radius should be > 0", AT);
+	if (radius>static_cast<double>(getNx())*cellsize && radius>static_cast<double>(getNy())*cellsize) {
+		grid2D = grid2D.getMean();
+		return;
+	}
+	const size_t num_cell = static_cast<size_t>(std::ceil(radius/cellsize));
+	if(num_cell==1) return;
+
+	const size_t num_cell_sq = num_cell * num_cell;
+	const size_t kernel_size = num_cell*2+1;
+	Array2D<char> kernel(kernel_size, kernel_size, 1); //it will only contain 0s or 1s
+	for (size_t kk=0; kk<kernel_size; ++kk) {
+		for (size_t ll=0; ll<kernel_size; ++ll) {
+			const size_t dx = num_cell > kk ? num_cell - kk : kk - num_cell;
+			const size_t dy = num_cell > ll ? num_cell - ll : ll - num_cell;
+			if (dx*dx+dy*dy > num_cell_sq)
+				kernel(kk,ll) = 0;
+		}
+	}
+
+	Array2D<double> grid2D_tmp( grid2D );
+	const size_t nx = getNx();
+	const size_t ny = getNy();
+
+	for (size_t ii=0; ii<nx; ++ii) {
+		for (size_t jj=0; jj<ny; ++jj) {
+			double sum = 0;
+			size_t count = 0;
+			for (size_t kk=0; kk<kernel_size; ++kk) {
+				const size_t i_k = ii - num_cell + kk;
+				if (i_k >= nx) continue;
+				
+				for (size_t ll=0; ll<kernel_size; ++ll) {
+					const size_t j_l = jj - num_cell + ll;
+					if (j_l >= ny || kernel(kk,ll)==0 || grid2D(i_k,j_l)==mio::IOUtils::nodata )
+						continue;
+					sum += grid2D(i_k,j_l);
+					++count;
+				}
+			}
+			if (count==0)
+				grid2D_tmp(ii,jj) = mio::IOUtils::nodata;
+			else
+				grid2D_tmp(ii,jj) = sum/static_cast<double>(count);
+		}
+	}
+	
+	grid2D = grid2D_tmp;
+}
+
+
 void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
 	o_ncols = getNx();
 	o_nrows = getNy();

@@ -57,8 +57,8 @@ class SunObject {
 		void getSlopeRadiation(const double& slope_azi, const double& slope_elev, double& R_toa, double& R_direct, double& R_diffuse) const;
 		double getElevationThresh() const {return elevation_threshold;}
 
-		double getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const;
-		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
+		double getSplittingBoland(const double& toa_h, const double& iswr_measured, const double& t) const;
+		double getSplitting(const double& toa_h, const double& iswr_measured) const;
 		double getSplitting(const double& iswr_measured) const;
 		double getCorrectionFactor(const double& iswr_measured, double &Md, bool &day, bool &night) const;
 		double getCorrectionFactor(const double& iswr_measured) const;

@@ -249,7 +249,9 @@ void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, 
 }
 
 double Meteo::compZ0(const std::string& model, const CurrentMeteo& Mdata) {
-	if (model == "AMORY2017") {
+	if (model == "CONST") {
+		return roughness_length;
+	} else if (model == "AMORY2017") {
 		if (Mdata.ta == IOUtils::nodata || Mdata.ta < IOUtils::C_TO_K(-20.)) {
 			return 0.0002;	// See L267-268 in Amory et al. (2020), https://doi.org/10.5194/gmd-2020-368
 		} else {
@@ -287,14 +289,7 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	const double t_surf = Xdata.Ndata[Xdata.getNumberOfElements()].T;
 	const double ta_v = Mdata.ta * (1. + 0.377 * sat_vap / p0);
 	const double t_surf_v = t_surf * (1. + 0.377 * sat_vap / p0);
-
-	if (roughness_length_parametrization == "CONST") {
-		// Nothing to do here, roughness_length is read from config
-	} else if (roughness_length_parametrization == "AMORY2017") {
-		roughness_length = compZ0("AMORY2017", Mdata);
-	} else {
-		throw InvalidArgumentException("Unsupported roughness length parametrization", AT);
-	}
+	roughness_length = compZ0(roughness_length_parametrization, Mdata);
 
 	// Adjust for snow height if fixed_height_of_wind=false
 	const double zref = (adjust_VW_height)
@@ -400,6 +395,7 @@ void Meteo::compMeteo(CurrentMeteo &Mdata, SnowStation &Xdata, const bool& runCa
 {
 	bool canopy_status = true;
 	if (useCanopyModel && runCanopyModel) {	// The canopy model should not necessarily be called at every call to compMeteo
+		Mdata.z0 = compZ0(roughness_length_parametrization, Mdata);
 		canopy_status = canopy.runCanopyModel(Mdata, Xdata, roughness_length, height_of_wind_value, adjust_height_of_wind_value);
 	}
 

@@ -32,7 +32,8 @@ class SnowpackInterfaceWorker
 		                        const std::vector< std::pair<size_t,size_t> >& pts_in,
 		                        const std::vector<SnowStation*>& snow_stations,
 		                        const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
-		                        const size_t offset_in);
+		                        const size_t offset_in,
+                            const std::vector<std::string>& grids_not_computed_in_worker);
 
 		~SnowpackInterfaceWorker();
 
@@ -44,7 +45,6 @@ class SnowpackInterfaceWorker
 		void clearSpecialPointsData();
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
-		double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
 
 		void runModel(const mio::Date& julian,
 		              const mio::Grid2DObject &psum,
@@ -72,9 +72,10 @@ class SnowpackInterfaceWorker
 		void setLateralFlow(const std::vector<SnowStation*>& snow_station);
 
 	private:
-		void initGrids(std::vector<std::string>& params);
+		void initGrids(std::vector<std::string>& params, const std::vector<std::string>& grids_not_computed_in_worker);
 		void gatherSpecialPoints(const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
 		void fillGrids(const size_t& ii, const size_t& jj, const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
+    double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
 
 	private:
 		SnowpackConfig sn_cfg; // created on element

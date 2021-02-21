@@ -73,19 +73,21 @@ namespace mio {
  *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
  * - <b>Fields parsing</b>
- *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1);
- *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below; optional
+ *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1, see also \ref csvio_special_fields "special field names");
+ *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below (see also the \ref csvio_special_fields "special field names" for more); optional
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
- * - <b>Date/Time parsing</b>. There are two possibilities: either the date/time is provided as one or two strings or each component as a separate column.
+ * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
+ *    - Date/Time decimal representation:
+ *       - CSV\#_DECIMALDATE_TYPE: the numerical representation that is used, one of EXCEL, JULIAN, MJULIAN, MATLAB, RFC868 or UNIX (see \ref decimal_date_representation "decimal date representations");
  *    - Date/Time as separate components: 
- *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero);
+ *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero). See \ref csvio_special_fields "special field names" for accepted synonyms;
  *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key;
  *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
@@ -103,6 +105,15 @@ namespace mio {
  * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling, 
  * it is only performed through either the CSV_UNITS_OFFSET key or the CSV_UNITS_OFFSET / CSV_UNITS_MULTIPLIER keys. These keys expect a value for each
  * column of the file, including the date and time.
+ * 
+ * @subsection csvio_special_fields Special field names
+ * When reading the field names, either from a file header or as provided in the configuration file with the CSV\#_FIELDS key, the fields will be attributed to 
+ * variables bearing the same names. But some field names will be recognized and automatically interpreted as either known internal 
+ * parameter names (see \ref meteoparam "this list") or date/time parameters or stationID the data belongs to. Besides MeteoIO's internal parameter names, the 
+ * following field names are also automatically recognized (synonyms are separated by ',' while different parameters are separated by ';'):
+ *    - TIMESTAMP, TS, DATETIME; DATE; TIME; YEAR; JDAY, JDN, YDAY, DAY_OF_YEAR, DOY; MONTH; DAY; NTIME; HOUR, HOURS; MINUTE, MINUTES; SECOND, SECONDS; ID, STATIONID;
+ *    - TEMPERATURE_AIR, AIRTEMP; SOIL_TEMPERATURE, SOILTEMP; PRECIPITATION, PREC; REFLECTED_RADIATION; INCOMING_RADIATION, INCOMINGSHORTWAVERADIATION; WIND_DIRE
+CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STATIONPRESSURE; INCOMING_LONGWAVE, INCOMINGLONGWAVERADIATION; SNOWSURFACETEMPERATURE; WS_MAX;
  * 
  * @note Since most parameter won't have names that are recognized by MeteoIO, it is advised to map them to \ref meteoparam "MeteoIO's internal names". 
  * This is done either by using the CSV_FIELDS key or using the EditingMove feature of the 
@@ -306,6 +317,77 @@ namespace mio {
 
 //helper function to sort the static keys used for specifying the date/time formats
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
+
+void CsvDateTime::updateMaxCol() 
+{
+	if (decimal_date!=IOUtils::npos && decimal_date>max_dt_col) max_dt_col=decimal_date;
+	if (date_str!=IOUtils::npos && date_str>max_dt_col) max_dt_col=date_str;
+	if (time_str!=IOUtils::npos && time_str>max_dt_col) max_dt_col=time_str;
+	if (year!=IOUtils::npos && year>max_dt_col) max_dt_col=year;
+	if (jdn!=IOUtils::npos && jdn>max_dt_col) max_dt_col=jdn;
+	if (month!=IOUtils::npos && month>max_dt_col) max_dt_col=month;
+	if (day!=IOUtils::npos && day>max_dt_col) max_dt_col=day;
+	if (time!=IOUtils::npos && time>max_dt_col) max_dt_col=time;
+	if (hours!=IOUtils::npos && hours>max_dt_col) max_dt_col=hours;
+	if (minutes!=IOUtils::npos && minutes>max_dt_col) max_dt_col=minutes;
+	if (seconds!=IOUtils::npos && seconds>max_dt_col) max_dt_col=seconds;
+}
+
+int CsvDateTime::getFixedYear(const double& i_jdn)
+{
+	if (i_jdn<273.) auto_wrap = false;
+	if (auto_wrap) return year_cst - 1;
+	return year_cst;
+}
+
+int CsvDateTime::getFixedYear(const int& i_month)
+{
+	if (i_month<10) auto_wrap = false;
+	if (auto_wrap) return year_cst - 1;
+	return year_cst;
+}
+
+bool CsvDateTime::isSet() const 
+{
+	//date and time strings
+	if (date_str!=IOUtils::npos && time_str!=IOUtils::npos) return true;
+	if (decimal_date!=IOUtils::npos) return true;
+	
+	const bool components_time = (time!=IOUtils::npos || hours!=IOUtils::npos);
+	const bool components_date = ((year!=IOUtils::npos || year_cst!=IOUtils::inodata) && (jdn!=IOUtils::npos || (month!=IOUtils::npos && day!=IOUtils::npos)));
+	
+	//date string and components time
+	//if (date_str!=IOUtils::npos && components_time) return true;
+	
+	//components date and time string
+	//if (components_date && time_str!=IOUtils::npos) return true;
+	
+	if (components_date && components_time) return true;
+	return false;
+}
+
+std::string CsvDateTime::toString() const 
+{
+	std::ostringstream os;
+	os << "[";
+	if (decimal_date!=IOUtils::npos) os << "decimal_date→" << decimal_date << " ";
+	if (date_str!=IOUtils::npos) os << "date_str→" << date_str << " ";
+	if (time_str!=IOUtils::npos) os << "time_str→" << time_str << " ";
+	if (year!=IOUtils::npos) os << "year→" << year << " ";
+	if (year_cst!=IOUtils::nodata) os << "year_cst→" << year << " ";
+	if (jdn!=IOUtils::npos) os << "jdn→" << jdn << " ";
+	if (month!=IOUtils::npos) os << "month→" << month << " ";
+	if (day!=IOUtils::npos) os << "day→" << day << " ";
+	if (time!=IOUtils::npos) os << "time_num→" << time << " ";
+	if (hours!=IOUtils::npos) os << "hours→" << hours << " ";
+	if (minutes!=IOUtils::npos) os << "minutes→" << minutes << " ";
+	if (seconds!=IOUtils::npos) os << "seconds→" << seconds << " ";
+	if (auto_wrap) os << "auto_wrap";
+	os << "]";
+	return os.str();
+}
+
+///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
 //parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
 //(since there can be multiple keys on the same line)
@@ -524,12 +606,15 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		std::string &tmp = fieldNames[ii];
 		IOUtils::trim( tmp ); //there could still be leading/trailing whitespaces in the individual field name
 		IOUtils::toUpper( tmp );
-		IOUtils::removeDuplicateWhitespaces(tmp); //replace internal spaces by '-'
-		IOUtils::replaceWhitespaces(tmp, '-');
+		IOUtils::removeDuplicateWhitespaces(tmp); //replace internal spaces by '_'
+		IOUtils::replaceWhitespaces(tmp, '_');
 		if (tmp.empty()) continue;
 		
 		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
-			date_cols.date_str = date_cols.time_str = ii;
+			if (dt_as_decimal) 
+				date_cols.decimal_date = ii;
+			else 
+				date_cols.date_str = date_cols.time_str = ii;
 			skip_fields[ ii ] = true; //all special fields are marked as SKIP since they are read in a special way
 		} else if (tmp.compare("DATE")==0 || tmp.compare("GIORNO")==0 || tmp.compare("FECHA")==0) {
 			date_cols.date_str = ii;
@@ -543,7 +628,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			date_cols.year = ii;
 			dt_as_components = true;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0 || tmp.compare("DAY_OF_YEAR")==0) {
+		} else if (tmp.compare("JDAY")==0 || tmp.compare("JDN")==0 || tmp.compare("YDAY")==0 || tmp.compare("DAY_OF_YEAR")==0 || tmp.compare("DOY")==0) {
 			date_cols.jdn = ii;
 			skip_fields[ ii ] = true;
 			dt_as_year_and_jdn = true;
@@ -581,19 +666,21 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings or components). Identified fields: "+date_cols.toString(), AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components). Identified fields: "+date_cols.toString(), AT);
 	if (dt_as_components && !single_field.empty())
 		throw InvalidArgumentException("It is not possible to provide date/time as individual components and declare CSV_SINGLE_PARAM_INDEX", AT);
 
 	//if necessary, set the format to the appropriate defaults
-	if (date_cols.date_str==date_cols.time_str) {
-		if (datetime_idx.empty())
-			setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
-	} else {
-		if (date_cols.date_str!=IOUtils::npos && datetime_idx.empty())
-			setDateTimeSpec("YYYY-MM-DD");
-		if (date_cols.time_str!=IOUtils::npos && time_idx.empty())
-			setTimeSpec("HH24:MI:SS");
+	if (!dt_as_decimal) {
+		if (date_cols.date_str==date_cols.time_str) {
+			if (datetime_idx.empty())
+				setDateTimeSpec("YYYY-MM-DDTHH24:MI:SS");
+		} else {
+			if (date_cols.date_str!=IOUtils::npos && datetime_idx.empty())
+				setDateTimeSpec("YYYY-MM-DD");
+			if (date_cols.time_str!=IOUtils::npos && time_idx.empty())
+				setTimeSpec("HH24:MI:SS");
+		}
 	}
 
 	//the user wants to keep only one column, find the one he wants...
@@ -850,6 +937,27 @@ void CsvParameters::setTimeSpec(const std::string& time_spec)
 	checkSpecString(time_format, nr_params_check);
 }
 
+void CsvParameters::setDecimalDateType(std::string decimaldate_type)
+{
+	IOUtils::toUpper( decimaldate_type );
+	if (decimaldate_type=="EXCEL") {
+		date_cols.decimal_date_type = CsvDateTime::EXCEL;
+	} else if (decimaldate_type=="JULIAN") {
+		date_cols.decimal_date_type = CsvDateTime::JULIAN;
+	} else if (decimaldate_type=="MJULIAN") {
+		date_cols.decimal_date_type = CsvDateTime::MJULIAN;
+	} else if (decimaldate_type=="MATLAB") {
+		date_cols.decimal_date_type = CsvDateTime::MATLAB;
+	} else if (decimaldate_type=="RFC868") {
+		date_cols.decimal_date_type = CsvDateTime::RFC868;
+	} else if (decimaldate_type=="UNIX") {
+		date_cols.decimal_date_type = CsvDateTime::UNIX;
+	} else
+		throw InvalidArgumentException("Unknown decimal date type '"+decimaldate_type+"'", AT);
+	
+	dt_as_decimal = true;
+}
+
 void CsvParameters::setFixedYear(const int& i_year, const bool& auto_wrap)
 {
 	date_cols.year_cst = i_year;
@@ -867,7 +975,6 @@ Date CsvParameters::createDate(const float args[6], const double i_tz)
 	
 	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
 }
-
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
 {
@@ -988,6 +1095,35 @@ Date CsvParameters::parseJdnDate(const std::vector<std::string>& vecFields)
 	}
 }
 
+Date CsvParameters::parseDate(const std::string& value_str, const CsvDateTime::decimal_date_formats& format) const
+{
+	Date dt;
+	
+	if (format==CsvDateTime::UNIX) {
+		time_t value;
+		if (!IOUtils::convertString(value, value_str)) return dt;
+		dt.setUnixDate(value, csv_tz);
+		return dt;
+	} else {
+		double value=0.;
+		if (!IOUtils::convertString(value, value_str)) return dt;
+		
+		if (format==CsvDateTime::EXCEL) {
+			dt.setExcelDate(value, csv_tz);
+		} else if (format==CsvDateTime::JULIAN) {
+			dt.setDate(value, csv_tz);
+		} else if (format==CsvDateTime::MJULIAN) {
+			dt.setModifiedJulianDate(value, csv_tz);
+		} else if (format==CsvDateTime::MATLAB) {
+			dt.setMatlabDate(value, csv_tz);
+		} else if (format==CsvDateTime::RFC868) {
+			dt.setRFC868Date(value, csv_tz);
+		} 
+	}
+	
+	return dt;
+}
+
 bool CsvParameters::parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value)
 {
 	if (idx==IOUtils::npos) {
@@ -1028,6 +1164,8 @@ Date CsvParameters::parseDate(const std::vector<std::string>& vecFields)
 		if (!parseDateComponent(vecFields, date_cols.seconds, seconds)) return Date();
 		
 		return Date(year, month, day, hour, minute, seconds, csv_tz);
+	} else if (dt_as_decimal) {
+		return parseDate(vecFields[ date_cols.decimal_date ], date_cols.decimal_date_type);
 	} else {
 		return parseDate(vecFields[ date_cols.date_str ], vecFields[ date_cols.time_str ]);
 	}
@@ -1197,24 +1335,30 @@ void CsvIO::parseInputOutputSection()
 		}
 		
 		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
-		std::string datetime_spec, date_spec, time_spec;
+		std::string datetime_spec, date_spec, time_spec, decimaldate_type;
+		if (cfg.keyExists(pre+"DECIMALDATE_TYPE", "Input")) cfg.getValue(pre+"DECIMALDATE_TYPE", "Input", decimaldate_type);
 		if (cfg.keyExists(pre+"DATETIME_SPEC", "Input")) cfg.getValue(pre+"DATETIME_SPEC", "Input", datetime_spec);
 		if (cfg.keyExists(pre+"DATE_SPEC", "Input")) cfg.getValue(pre+"DATE_SPEC", "Input", date_spec);
 		if (cfg.keyExists(pre+"TIME_SPEC", "Input")) cfg.getValue(pre+"TIME_SPEC", "Input", time_spec);
-		if (datetime_spec.empty() && date_spec.empty() && time_spec.empty()) {
+		if (decimaldate_type.empty() && datetime_spec.empty() && date_spec.empty() && time_spec.empty() && datetime_spec.empty()) {
+			cfg.getValue(dflt+"DECIMALDATE_TYPE", "Input", decimaldate_type, IOUtils::nothrow);
 			cfg.getValue(dflt+"DATETIME_SPEC", "Input", datetime_spec, IOUtils::nothrow);
 			cfg.getValue(dflt+"DATE_SPEC", "Input", date_spec, IOUtils::nothrow);
 			cfg.getValue(dflt+"TIME_SPEC", "Input", time_spec, IOUtils::nothrow);
 		}
 
+		if (!decimaldate_type.empty() && (!datetime_spec.empty() || !date_spec.empty() || !time_spec.empty() ))
+			throw InvalidArgumentException("It is not possible to define both decimaldate_type and other date / time specifications", AT);
 		if (!datetime_spec.empty() && (!date_spec.empty() || !time_spec.empty()) )
 			throw InvalidArgumentException("It is not possible to define both datetime_spec and date_spec or time_spec", AT);
 		if ((!date_spec.empty() && time_spec.empty()) || (date_spec.empty() && !time_spec.empty()))
 			throw InvalidArgumentException("Please define both date_spec and time_spec, ", AT);
 		
-		if (!datetime_spec.empty())
+		if (!decimaldate_type.empty()) {
+			tmp_csv.setDecimalDateType(decimaldate_type);
+		} else if (!datetime_spec.empty()) {
 			tmp_csv.setDateTimeSpec(datetime_spec);
-		else {
+		} else {
 			if (!date_spec.empty())
 				tmp_csv.setDateTimeSpec(date_spec);
 			if (!time_spec.empty()) 
