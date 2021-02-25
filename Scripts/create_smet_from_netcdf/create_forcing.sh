@@ -57,8 +57,10 @@ sed 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}.ini > ${inifile}
 
 # Set paths correctly in case we linked the netcdf files
 if (( ${flag_netcdf_files_are_linked} )); then
-	sed -i 's/.*METEOPATH.*/METEOPATH = ..\/input\/'${model}'_'${yr}'\//' ${inifile}
-	sed -i 's/.*GRID2DPATH.*/GRID2DPATH = ..\/input\/'${model}'_'${yr}'\//' ${inifile}
+	cp ${inifile} ${inifile}.tmp
+	# Replace the paths in the [Input] section only:
+	mawk -v model=${model} -v yr=${yr} '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {input=1} else {input=0}}; if(input==1 && /^METEOPATH/) {print "METEOPATH = ../input/" model  "_" yr "/"} else if(input==1 && /^GRID2DPATH/) {print "GRID2DPATH = ../input/" model  "_" yr "/"} else {print $0}}' ${inifile}.tmp > ${inifile}
+	rm ${inifile}.tmp
 fi
 
 # Retrieve temporal resolution from ini file:
