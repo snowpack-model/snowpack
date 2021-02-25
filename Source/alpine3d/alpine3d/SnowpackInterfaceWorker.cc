@@ -326,6 +326,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 	for (it=grids.begin(); it!=grids.end(); ++it) {
 		double value = IOUtils::nodata;
 		switch (it->first) {
+			case SnGrids::ISWR_BELOW_CAN:
+				value = (useEBalance && useCanopy)? meteoPixel.iswr : IOUtils::nodata; break;
 			case SnGrids::HS:
 				value = (snowPixel.cH - snowPixel.Ground) /  snowPixel.cos_sl; break; //slope2horiz
 			case SnGrids::TSS:

@@ -444,7 +444,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 					EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
 					EMS[e].theta[AIR] = std::max((EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice - 1.), (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]));	// theta[AIR] should keep room for expanding freezing water
 					const double theta_sum = EMS[e].theta[AIR] + EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF] + EMS[e].theta[ICE] + EMS[e].theta[SOIL];
-					if (theta_sum > 1.) {
+					if (theta_sum < 1. - Constants::eps2 || theta_sum > 1. + Constants::eps2) {
 						prn_msg(__FILE__, __LINE__, "wrn", Date(),
 						    "Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%le air=%le  soil=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR], EMS[e].theta[SOIL]);
 						EMS[e].theta[ICE] = (1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[AIR] - EMS[e].theta[SOIL]);
