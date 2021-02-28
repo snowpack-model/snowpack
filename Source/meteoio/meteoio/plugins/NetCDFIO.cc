@@ -915,7 +915,7 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	}
 	double *data = new double[vecY.size()*vecX.size()];
 	if (time_pos!=IOUtils::npos)
-		ncpp::read_data(ncid, var, time_pos, vecY.size(), vecX.size(), data);
+		ncpp::read_data(ncid, var, time_pos, vecY.size(), vecX.size(), var.dimid_time, var.dimid_Y, var.dimid_X, data);
 	else
 		ncpp::read_data(ncid, var, data);
 	ncpp::fill2DGrid(grid, data, var.nodata, (vecX.front()<=vecX.back()), (vecY.front()<=vecY.back()) );
@@ -972,11 +972,10 @@ std::vector< double > ncFiles::readPointsIn2DGrid(const ncpp::nc_variable& var, 
 
 	//define return vector
 	std::vector < double > retVec;
-
 	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
 		double *data = new double;
 		if (time_pos!=IOUtils::npos)
-			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, data);	// Note: swapped <x, y> to translate to <row, column> in function call
+			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, var.dimid_time, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
 		else
 			throw InvalidFormatException("Not implemented.", AT); //ncpp::read_data_point(ncid, var, data);
 		//handle data packing and units, if necessary
@@ -2007,6 +2006,17 @@ void ncFiles::initVariablesFromFile()
 		ncpp::nc_variable tmp_var( tmp_attr, schema.nodata );
 		const bool readTimeTransform = (tmp_var.attributes.param==ncpp::TIME && tmp_var.attributes.type!=NC_CHAR);
 		ncpp::readVariableMetadata(ncid, tmp_var, readTimeTransform, TZ);
+
+		// Map the dimensions
+		for (size_t i = 0; i < tmp_var.dimids.size(); i++) {
+			if (tmp_var.dimids[i] == dimensions_map[ncpp::TIME].dimid) {
+				tmp_var.dimid_time = i;
+			} else if (tmp_var.dimids[i] == dimensions_map[ncpp::LONGITUDE].dimid || tmp_var.dimids[i] == dimensions_map[ncpp::EASTING].dimid) {
+				tmp_var.dimid_X = i;
+			} else if (tmp_var.dimids[i] == dimensions_map[ncpp::LATITUDE].dimid || tmp_var.dimids[i] == dimensions_map[ncpp::NORTHING].dimid) {
+				tmp_var.dimid_Y = i;
+			}
+		}
 
 		if (tmp_var.attributes.param!=IOUtils::npos) {
 			vars[ tmp_var.attributes.param ] = tmp_var;
