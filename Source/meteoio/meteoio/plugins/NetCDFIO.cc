@@ -394,7 +394,8 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 		const std::string filename( in_path + "/" + *it );
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
-		nc_files.push_back( make_pair(file.getDateRange(), file) );
+		if (file.hasDimension(ncpp::TIME))
+			nc_files.push_back( make_pair(file.getDateRange(), file) );
 		++it;
 	}
 	std::sort(nc_files.begin(), nc_files.end(), &sort_cache_grids);

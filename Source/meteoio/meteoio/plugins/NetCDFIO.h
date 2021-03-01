@@ -50,6 +50,8 @@ class ncFiles {
 		std::vector<StationData> readStationData();
 		std::vector< std::vector<MeteoData> > readMeteoData(const Date& dateStart, const Date& dateEnd);
 
+		bool hasDimension(const size_t& dim) const;
+
 	private:
 		void initFromFile(const std::string& filename);
 		void initVariablesFromFile();
@@ -65,7 +67,6 @@ class ncFiles {
 		std::vector< std::pair<size_t, std::string> > getTSParameters() const;
 		size_t read_1DvariableLength(const ncpp::nc_variable& var) const;
 		size_t readDimension(const int& dimid) const;
-		bool hasDimension(const size_t& dim) const;
 		bool hasVariable(const size_t& var) const;
 
 		void writeGridMetadataHeader(const Grid2DObject& grid_in);
