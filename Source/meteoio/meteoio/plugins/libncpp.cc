@@ -260,7 +260,8 @@ void read_data(const int& ncid, const nc_variable& var,
 	start[row_i] = 0;
 
 	//map dimensions for variable (count)
-	size_t count[NC_MAX_VAR_DIMS] = { 0 };
+	size_t count[NC_MAX_VAR_DIMS];
+	std::fill(count, count + NC_MAX_VAR_DIMS, 1);
 	count[pos_i] = 1;		// read only one pos
 	count[col_i] = ncols;
 	count[row_i] = nrows;
