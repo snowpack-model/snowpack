@@ -24,8 +24,11 @@ using namespace std;
 
 namespace mio {
 
-MeteoProcessor::MeteoProcessor(const Config& cfg, const char& rank, const IOUtils::OperationMode &mode) : mi1d(cfg, rank, mode), processing_stack()
+MeteoProcessor::MeteoProcessor(const Config& cfg, const char& rank, const IOUtils::OperationMode &mode) : mi1d(cfg, rank, mode), processing_stack(), enable_meteo_filtering(true)
 {
+	//ENABLE_METEO_FILTERING is documented in meteoFilters/ProcessingBlock.cc
+	cfg.getValue("ENABLE_METEO_FILTERING", "Filters", enable_meteo_filtering, IOUtils::nothrow);
+	
 	//Parse [Filters] section, create processing stack for each configured parameter
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
@@ -94,7 +97,7 @@ void MeteoProcessor::process(std::vector< std::vector<MeteoData> >& ivec,
                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	std::swap(ivec, ovec);
-	if (processing_stack.empty()) return;
+	if (processing_stack.empty() || !enable_meteo_filtering) return;
 	
 	for (std::map<std::string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
 		std::swap(ovec, ivec);

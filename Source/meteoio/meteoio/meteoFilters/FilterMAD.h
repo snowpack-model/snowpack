@@ -35,7 +35,8 @@ namespace mio {
  * See http://en.wikipedia.org/wiki/Median_absolute_deviation for more information about the Mean Absolute Deviation.
  * It takes the following arguments:
  *  - MIN_SIGMA: to avoid rejecting all points after a period of constant signal (which brings sigma to zero),
- * you can set a minimum value for sigma (optional);
+ * you can set a minimum value for sigma (optional, default: 1.0);
+ *  - STRICT: if a window can not be defined, set the current point to nodata (optional, default: false);
  *  - all the window parameters as defined in WindowedFilter::setWindowFParams().
  *
  * Examples for the io.ini file:
@@ -44,7 +45,7 @@ namespace mio {
  * TA::arg1::soft      = TRUE
  * TA::arg1::centering = left
  * TA::arg1::MIN_PTS   = 1
- * TA::arg1::MIN_SPAN  = 1800 ;ie 1800 seconds time span for the left leaning window
+ * TA::arg1::MIN_SPAN  = 1800 ;ie 1800 seconds time span for the left leaning window and at least 1 point
  *
  * RH::filter1        = mad
  * RH::arg1::MIN_PTS  = 10
@@ -62,7 +63,8 @@ class FilterMAD : public WindowedFilter {
 	private:
 		void MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value) const;
 
-		double min_sigma; //to avoid rejecting all points after a period of constant signal
+		double min_sigma; //< to avoid rejecting all points after a period of constant signal
+		bool is_strict; ///< if a window can not be defined, set all points to nodata
 };
 
 } //end namespace

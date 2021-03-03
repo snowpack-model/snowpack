@@ -336,8 +336,8 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 	//1D and 2D data must correspond, that means that if there is 1D data
 	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc),
 	//otherwise throw NotFoundException
-	const Date startDate(vecMeteo[0].front().date.getJulian(), in_tz, false); //so that the correct filenames for the TZ will be constructed
-	const Date endDate(vecMeteo[0].back().date.getJulian(), in_tz, false);
+	const Date startDate(vecMeteo[0].front().date.getJulian(), in_tz); //so that the correct filenames for the TZ will be constructed
+	const Date endDate(vecMeteo[0].back().date.getJulian(), in_tz);
 
 	std::vector<std::string> filenames;
 	constructMeteo2DFilenames(startDate, endDate, filenames);//get all files for all years

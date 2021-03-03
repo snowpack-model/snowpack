@@ -45,6 +45,7 @@ class TimeProcStack {
 		
 	private:
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
+		bool enable_time_filtering;
 };
 
 /**

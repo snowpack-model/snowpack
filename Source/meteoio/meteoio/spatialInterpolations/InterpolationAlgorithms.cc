@@ -52,7 +52,6 @@
 #include <algorithm>
 
 namespace mio {
-
 /**
  * @page interpol2d Spatial interpolations
  * Using the vectors of MeteoData and StationData as filled by the IOInterface::readMeteoData call

@@ -430,8 +430,11 @@ void TimeLoop::process(const unsigned int& param, const std::vector<MeteoData>& 
 
 ////////////////////////////////////////////////////////////// Time Processing Stack //////////////////////////////////////
 const std::string TimeProcStack::timeParamName( "TIME" );
-TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack()
+TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack(), enable_time_filtering(true)
 {
+	//ENABLE_TIME_FILTERING is documented in meteoFilters/ProcessingBlock.cc
+	cfg.getValue("ENABLE_TIME_FILTERING", "Filters", enable_time_filtering, IOUtils::nothrow);
+	
 	//extract each filter and its arguments, then build the filter stack
 	const std::vector< std::pair<std::string, std::string> > vecFilters( cfg.getValues(timeParamName+ProcessingStack::filter_pattern, ProcessingStack::filter_section) );
 	for (size_t ii=0; ii<vecFilters.size(); ii++) {
@@ -444,8 +447,10 @@ TimeProcStack::TimeProcStack(const Config& cfg) : filter_stack()
 	}
 }
 
-TimeProcStack::TimeProcStack(const TimeProcStack& source) : filter_stack()
+TimeProcStack::TimeProcStack(const TimeProcStack& source) : filter_stack(), enable_time_filtering(true)
 {
+	enable_time_filtering = source.enable_time_filtering;
+	
 	const size_t nFilters = source.filter_stack.size();
 	filter_stack.resize( nFilters, nullptr );
 	for(size_t ii=0; ii<nFilters; ii++) filter_stack[ii] = source.filter_stack[ii];
@@ -478,9 +483,10 @@ void TimeProcStack::process(Date &dateStart, Date &dateEnd)
 	}
 }
 
-//ivec is passed by value, so it makes an efficient copy
 void TimeProcStack::process(std::vector< std::vector<MeteoData> >& ivec)
 {
+	if (!enable_time_filtering) return;
+	
 	const size_t nr_of_filters = filter_stack.size();
 	const size_t nr_stations = ivec.size();
 
