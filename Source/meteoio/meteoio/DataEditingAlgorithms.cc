@@ -33,15 +33,17 @@ namespace mio {
 /**
  * @page data_editing Input Data Editing
  * Before any filters, resampling algorithms or data generators are applied, it is possible to edit the original data. There are several
- * edition commands that can be stacked at will, per station ID. This is similar to the way that filters (\ref processing "processing elements") are
- * also stacked together. In order to rectrict any editing to a specific set of time ranges, use the **when** option followed by a comma 
- * delimited list of date intervals (represented by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), 
- * similarly to the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
+ * edition commands in the [InputEditing] section that can be stacked at will, per station ID. This is similar to the way that 
+ * filters (\ref processing "processing elements") are also stacked together. In order to rectrict any editing to a 
+ * specific set of time ranges, use the **when** option followed by a comma delimited list of date intervals (represented 
+ * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), similarly to 
+ * the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
  * @code
  * {stationID}::edit#            = {command}
  * {stationID}::arg#::{argument} = {values}
  * 
  * #here is an example
+ * [InputEditing]
  * WFJ2::edit1         = EXCLUDE
  * WFJ2::arg1::params  = VW DW ISWR RSWR
  * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
@@ -66,6 +68,8 @@ namespace mio {
  *     - CREATE: fill missing values or create new parameters based on basic transformations or parametrizations, see EditingCreate
  *     - METADATA: edit station's metadata, see EditingMetadata
  *
+ * @note It is possible to turn off all input editing for timeseries by setting the *Enable_Timeseries_Editing* key to 
+ * false in the [InputEditing] section.
  */
 
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }

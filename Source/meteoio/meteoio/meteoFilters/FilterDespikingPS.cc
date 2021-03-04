@@ -55,7 +55,7 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 	bool keepLookingForSpikes = true;
 	unsigned int nNewSpikes=0;
 	nIterations=0;
-	while(keepLookingForSpikes == true) {
+	while (keepLookingForSpikes == true) {
 		//1. subtract mean from signal
 		const double mean = Interpol1D::arithmeticMean(doubleVec);
 		for (size_t ii=0; ii<doubleVec.size(); ii++) {
@@ -80,9 +80,9 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 		//1. we reached the maximum number of iterations
 		//2. no new spike was detected
 		//3. the standard deviation of the signal is not decreasing
-		if (nIterations >= maxIterations) keepLookingForSpikes=false;
-		if (nNewSpikes==0) keepLookingForSpikes=false;
-		if (stdDev0 <= stdDev1) keepLookingForSpikes=false;
+		if (nIterations >= maxIterations) keepLookingForSpikes = false;
+		if (nNewSpikes==0) keepLookingForSpikes = false;
+		if (stdDev0 <= stdDev1) keepLookingForSpikes = false;
 		
 		//4. add mean back to signal again
 		for (size_t ii=0; ii<doubleVec.size(); ii++) {
@@ -108,14 +108,12 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 	//if the filter is based on WindowedFilter, its constructor will automatically read the window parameters as well as the "soft" argument
 
 	//to perform syntax checks (see after the "for" loop)
-	bool hasSensitivityParam=false;
-	bool hasMethodParam=false;
+	bool hasMethodParam = false;
 
 	//parse the arguments (the keys are all upper case)
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SENSITIVITY") {
 			IOUtils::parseArg(vecArgs[ii], where, sensitivityParam);
-			hasSensitivityParam=true;
 		} else if (vecArgs[ii].first=="METHOD") {
 			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (type_str=="MORI") methodParam = MORI;
@@ -130,7 +128,6 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 	}
 
 	//second part of the syntax check
-	if (!hasSensitivityParam) throw InvalidArgumentException("Please provide a sensitivity-argument "+where, AT);
 	if (!hasMethodParam) throw InvalidArgumentException("Please provide a method-argument "+where, AT);
 }
 
@@ -145,6 +142,7 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
  */
 std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec)
 {
+	static const int maxSteps = 100;
 	std::vector<double> ovec;
 	ovec.reserve( ivec.size() );
 
@@ -155,7 +153,6 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 			int i1 = static_cast<int>(ii);
 			int i2 = static_cast<int>(ii);
 			bool stop = false;
-			const int maxSteps = 100;
 			while (stop==false){
 				i1 = i1-1;
 				i2 = i2+1;
@@ -199,8 +196,8 @@ double FilterDespikingPS::calculateCrossCorrelation(const std::vector<double>& a
 	if (aVec.size() != bVec.size())
 		return IOUtils::nodata;
 
-	double ab=0;
-	double bb=0;
+	double ab = 0;
+	double bb = 0;
 	for (size_t ii=0; ii<aVec.size(); ii++) {
 		if (aVec[ii]!=IOUtils::nodata && bVec[ii]!=IOUtils::nodata){
 			ab = ab + (aVec[ii]*bVec[ii]);
@@ -224,7 +221,7 @@ double FilterDespikingPS::calculateCrossCorrelation(const std::vector<double>& a
  */
 unsigned int FilterDespikingPS::nNodataElements(const std::vector<double>& iVec)
 {
-	unsigned int nNodata=0;
+	unsigned int nNodata = 0;
 	for (size_t ii=0; ii<iVec.size(); ii++) {
 		if (iVec[ii]==IOUtils::nodata)
 			nNodata++;
@@ -248,7 +245,7 @@ unsigned int FilterDespikingPS::nNodataElements(const std::vector<double>& iVec)
 void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec,const std::vector<double>& yVec,
                                                 const double a,const double b,const double theta, std::vector<int>& outsideVec)
 {
-	if(xVec.size() != yVec.size()) return;
+	if (xVec.size() != yVec.size()) return;
 
 	for (size_t ii=0; ii<xVec.size(); ii++) {
 		const double x = xVec[ii];
@@ -271,7 +268,7 @@ void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec
  */
 std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes)
 {
-	std::vector<int> spikesVec(uVec.size(),0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
+	std::vector<int> spikesVec(uVec.size(), 0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
 
 	//step 1: calculate the first and second derivatives:
 	const std::vector<double> duVec( calculateDerivatives(uVec,timeVec) );
@@ -479,15 +476,15 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index,const std::
 bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,
                                                                   const unsigned int minPoints, const bool avoidExtrapolation)
 {
-	if(xVec.size()==0) return false;
+	if (xVec.size()==0) return false;
 
-	if(avoidExtrapolation){
+	if (avoidExtrapolation) {
 		if (xVec[0]>=time || xVec[xVec.size()-1]<=time) {
 			return false;
 		}
 	}
 	bool sufficient = false;
-	if(xVec.size() >= minPoints) {
+	if (xVec.size() >= minPoints) {
 		sufficient = true;
 	}
 	return sufficient;
@@ -515,7 +512,7 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 		if (spikesVec[ii]!=0) { //here we have a spike. replace its value:
 			if (degreeOfInterpolation>0) {
 				getWindowForInterpolation(ii,timeVec,uVec,spikesVec,xVec,yVec);
-				if(checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)){
+				if (checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)) {
 					try{
 						//interpolate the spike data point:
 						Fit1D polyFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
@@ -548,7 +545,7 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 void FilterDespikingPS::solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x)
 {
 	const double denominator = a[0]*b[1]-b[0]*a[1];
-	if(denominator==0){                     //todo: check if denominator is close to zero!???
+	if (denominator==0){                     //todo: check if denominator is close to zero!???
 		x[0] = IOUtils::nodata;
 		x[1] = IOUtils::nodata;
 	}else{

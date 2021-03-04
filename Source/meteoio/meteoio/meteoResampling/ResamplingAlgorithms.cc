@@ -71,7 +71,7 @@ namespace mio {
  * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
  * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
  *
- * By default a linear resampling will be performed. It is possible to turn off all resampling by setting the *Enable_Resampling* key
+ * @note By default a linear resampling will be performed. It is possible to turn off all resampling by setting the *Enable_Resampling* key
  * to *false* in the [Interpolations1D] section.
  */
 

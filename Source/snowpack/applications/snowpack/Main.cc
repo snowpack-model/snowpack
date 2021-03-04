@@ -1024,7 +1024,7 @@ inline void real_main (int argc, char *argv[])
 	const bool cumsum_mass = cfg.get("CUMSUM_MASS", "Output");
 	const double thresh_rain = cfg.get("THRESH_RAIN", "SnowpackAdvanced"); //Rain only for air temperatures warmer than threshold (degC)
 	const bool advective_heat = cfg.get("ADVECTIVE_HEAT", "SnowpackAdvanced");
-	const bool soil_flux = (useSoilLayers || variant == "SEAICE") ? cfg.get("SOIL_FLUX", "Snowpack") : false;
+	const bool soil_flux = cfg.get("SOIL_FLUX", "Snowpack");
 
 	//If the user provides the stationIDs - operational use case
 	if (!vecStationIDs.empty()) { //operational use case: stationIDs provided on the command line

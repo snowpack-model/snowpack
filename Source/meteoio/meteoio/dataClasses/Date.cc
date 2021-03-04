@@ -112,8 +112,7 @@ bool Date::initStaticData()
 /**
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
 */
-Date::Date() : timezone(0.), gmt_julian(0.),
-               dst(false), undef(true)
+Date::Date() : timezone(0.), gmt_julian(0.), undef(true)
 {
 }
 
@@ -121,25 +120,21 @@ Date::Date() : timezone(0.), gmt_julian(0.),
 * @brief Julian date constructor.
 * @param julian_in julian date to set
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
-* @param in_dst is it DST? (default: no)
 */
-Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst)
-         : timezone(0.), gmt_julian(0.),
-           dst(false), undef(true)
+Date::Date(const double& julian_in, const double& in_timezone)
+         : timezone(0.), gmt_julian(0.), undef(true)
 {
-	setDate(julian_in, in_timezone, in_dst);
+	setDate(julian_in, in_timezone);
 }
 
 /**
 * @brief Unix date constructor.
 * @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
-* @param in_dst is it DST? (default: no)
 */
-Date::Date(const time_t& in_time, const bool& in_dst)
-         : timezone(in_dst), gmt_julian(0.),
-           dst(false), undef(true)
+Date::Date(const time_t& in_time)
+         : timezone(0.), gmt_julian(0.), undef(true)
 {
-	setDate(in_time, in_dst);
+	setDate(in_time);
 }
 
 /**
@@ -151,27 +146,23 @@ Date::Date(const time_t& in_time, const bool& in_dst)
 * @param in_hour
 * @param in_minute
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
-* @param in_dst is it DST? (default: no)
 */
-Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst)
-         : timezone(in_timezone), gmt_julian(0.),
-           dst(false), undef(true)
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone)
+         : timezone(in_timezone), gmt_julian(0.), undef(true)
 {
-	setDate(in_year, in_month, in_day, in_hour, in_minute, in_timezone, in_dst);
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_timezone);
 }
 
-Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const int& in_second, const double& in_timezone, const bool& in_dst)
-         : timezone(in_timezone), gmt_julian(0.),
-           dst(false), undef(true)
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const int& in_second, const double& in_timezone)
+         : timezone(in_timezone), gmt_julian(0.), undef(true)
 {
-	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone);
 }
 
-Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second, const double& in_timezone, const bool& in_dst)
-         : timezone(in_timezone), gmt_julian(0.),
-           dst(false), undef(true)
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second, const double& in_timezone)
+         : timezone(in_timezone), gmt_julian(0.), undef(true)
 {
-	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone, in_dst);
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_second, in_timezone);
 }
 
 /**
@@ -179,13 +170,11 @@ Date::Date(const int& in_year, const int& in_month, const int& in_day, const int
 * @param year year to set
 * @param jdn Julian Day Number within the provided year
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
-* @param in_dst is it DST? (default: no)
 */
-Date::Date(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst)
-         : timezone(in_timezone), gmt_julian(0.),
-           dst(false), undef(true)
+Date::Date(const int& year, const double& jdn, const double& in_timezone)
+         : timezone(in_timezone), gmt_julian(0.), undef(true)
 {
-	setDate(year, jdn, in_timezone, in_dst);
+	setDate(year, jdn, in_timezone);
 }
 
 // SETTERS
@@ -214,14 +203,13 @@ void Date::setFromSys() {
 * @param in_timezone timezone as an offset to GMT (in hours)
 * @param in_dst is it DST?
 */
-void Date::setTimeZone(const double& in_timezone, const bool& in_dst) {
+void Date::setTimeZone(const double& in_timezone) {
 //please keep in mind that timezone might be fractional (ie: 15 minutes, etc)
 	if (abs(in_timezone) > 12) {
 		throw InvalidArgumentException("[E] Time zone can NOT be greater than +/-12!!", AT);
 	}
 
 	timezone = in_timezone;
-	dst = in_dst;
 }
 
 /**
@@ -231,10 +219,9 @@ void Date::setTimeZone(const double& in_timezone, const bool& in_dst) {
 void Date::setDate(const Date& in_date)
 {
 	if (in_date.isUndef()) {
-		dst = false;
 		undef = true;
 	} else {
-		setDate(in_date.getJulian(), in_date.getTimeZone(), in_date.getDST());
+		setDate(in_date.getJulian(), in_date.getTimeZone());
 	}
 }
 
@@ -248,13 +235,12 @@ void Date::setDate(const Date& in_date)
 * @param i_minute
 * @param i_second
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second, const double& i_timezone, const bool& i_dst)
+void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_second, const double& i_timezone)
 {
 	plausibilityCheck(i_year, i_month, i_day, i_hour, i_minute, i_second); //also checks leap years
-	setTimeZone(i_timezone, i_dst);
-	if (timezone==0 && dst==false) { //data is GMT and no DST
+	setTimeZone(i_timezone);
+	if (timezone==0) { //data is GMT
 		gmt_julian = rnd( calculateJulianDate(i_year, i_month, i_day, i_hour, i_minute, i_second), epsilon_sec);
 	} else {
 		//computing local julian date
@@ -264,9 +250,9 @@ void Date::setDate(const int& i_year, const int& i_month, const int& i_day, cons
 	undef = false;
 }
 
-void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone, const bool& in_dst)
+void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone)
 {
-	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, second, in_timezone, in_dst);
+	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, second, in_timezone);
 }
 
 /**
@@ -279,16 +265,15 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 * @param i_minute
 * @param i_second
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const int& i_second, const double& i_timezone, const bool& i_dst)
+void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const int& i_second, const double& i_timezone)
 {
-	setDate(i_year, i_month, i_day, i_hour, i_minute, static_cast<double>(i_second), i_timezone, i_dst);
+	setDate(i_year, i_month, i_day, i_hour, i_minute, static_cast<double>(i_second), i_timezone);
 }
 
-void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone, const bool& in_dst)
+void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone)
 {
-	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, static_cast<double>(second), in_timezone, in_dst);
+	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, static_cast<double>(second), in_timezone);
 }
 
 /**
@@ -300,27 +285,25 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 * @param i_hour
 * @param i_minute
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_timezone, const bool& i_dst)
+void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_timezone)
 {
-	setDate(i_year, i_month, i_day, i_hour, i_minute, 0., i_timezone, i_dst);
+	setDate(i_year, i_month, i_day, i_hour, i_minute, 0., i_timezone);
 }
 
-void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst)
+void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone)
 {
-	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, 0., in_timezone, in_dst);
+	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, 0., in_timezone);
 }
 
 /**
 * @brief Set date from a julian date (JD).
 * @param julian_in julian date to set
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
-* @param in_dst is it DST? (default: no)
 */
-void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst)
+void Date::setDate(const double& julian_in, const double& in_timezone)
 {
-	setTimeZone(in_timezone, in_dst);
+	setTimeZone(in_timezone);
 	gmt_julian = rnd( localToGMT(julian_in), epsilon_sec);
 	undef = false;
 }
@@ -330,11 +313,10 @@ void Date::setDate(const double& julian_in, const double& in_timezone, const boo
 * @param year year to set
 * @param jdn Julian Day Number within the provided year (1 to 365/366), starting at 00:00
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
-* @param in_dst is it DST? (default: no)
 */
-void Date::setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst)
+void Date::setDate(const int& year, const double& jdn, const double& in_timezone)
 {
-	setTimeZone(in_timezone, in_dst);
+	setTimeZone(in_timezone);
 	//jdn starts at 1, so we need to remove 1 day. Julian_date starts at noon, so we need to remove 0.5 day
 	const double local_julian = static_cast<double>( getJulianDayNumber(year, 1, 1) ) + jdn-1.5;
 	gmt_julian = rnd( localToGMT(local_julian), epsilon_sec);
@@ -343,67 +325,61 @@ void Date::setDate(const int& year, const double& jdn, const double& in_timezone
 
 /**
 * @brief Set date from a Unix date.
-* @param i_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
-* @param i_dst is it DST? (default: no)
+* @param i_time unix time (ie: as number of seconds since Unix Epoch, assumed to always be UTC+0)
 */
-void Date::setDate(const time_t& i_time, const bool& i_dst) {
-	setUnixDate(i_time, i_dst);
+void Date::setDate(const time_t& i_time) {
+	setUnixDate(i_time);
 }
 
 /**
 * @brief Set date from a modified julian date (MJD).
 * @param julian_in julian date to set
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setModifiedJulianDate(const double& julian_in, const double& i_timezone, const bool& i_dst) {
+void Date::setModifiedJulianDate(const double& julian_in, const double& i_timezone) {
 	const double tmp_julian = julian_in + MJD_offset;
-	setDate(tmp_julian, i_timezone, i_dst);
+	setDate(tmp_julian, i_timezone);
 }
 
 /**
 * @brief Set date from an RFC868 date (time since 1900-01-01T00:00 GMT, valid until 2036).
 * @param julian_in julian date to set
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setRFC868Date(const double& julian_in, const double& i_timezone, const bool& i_dst) {
+void Date::setRFC868Date(const double& julian_in, const double& i_timezone) {
 	const double tmp_julian = julian_in + RFC868_offset;
-	setDate(tmp_julian, i_timezone, i_dst);
+	setDate(tmp_julian, i_timezone);
 }
 
 /**
 * @brief Set date from a Unix date.
 * @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
-* @param in_dst is it DST? (default: no)
 */
-void Date::setUnixDate(const time_t& in_time, const bool& in_dst) {
+void Date::setUnixDate(const time_t& in_time) {
 	const double in_julian = (double)(in_time)/(24.*3600.) + Unix_offset;
-	setDate(in_julian, 0., in_dst);
+	setDate(in_julian, 0.);
 }
 
 /**
 * @brief Set date from an Excel date.
 * @param excel_in Excel date to set
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setExcelDate(const double excel_in, const double& i_timezone, const bool& i_dst) {
+void Date::setExcelDate(const double excel_in, const double& i_timezone) {
 	//TODO: handle date < 1900-01-00 and date before 1900-03-01
 	//see http://www.mathworks.com/help/toolbox/finance/x2mdate.html
 	const double tmp_julian = excel_in + Excel_offset;
-	setDate(tmp_julian, i_timezone, i_dst);
+	setDate(tmp_julian, i_timezone);
 }
 
 /**
 * @brief Set date from an Matlab date.
 * @param matlab_in Matlab date to set
 * @param i_timezone timezone as an offset to GMT (in hours, optional)
-* @param i_dst is it DST? (default: no)
 */
-void Date::setMatlabDate(const double matlab_in, const double& i_timezone, const bool& i_dst) {
+void Date::setMatlabDate(const double matlab_in, const double& i_timezone) {
 	const double tmp_julian = matlab_in + Matlab_offset;
-	setDate(tmp_julian, i_timezone, i_dst);
+	setDate(tmp_julian, i_timezone);
 }
 
 
@@ -417,17 +393,6 @@ double Date::getTimeZone() const {
 		throw UnknownValueException("Date object is undefined!", AT);
 
 	return timezone;
-}
-
-/**
-* @brief Returns Daylight Saving Time flag.
-* @return dst enabled?
-*/
-bool Date::getDST() const {
-	if (undef==true)
-		throw UnknownValueException("Date object is undefined!", AT);
-
-	return dst;
 }
 
 /**
@@ -872,7 +837,7 @@ double Date::rnd(const double& julian, const double& precision, const RND& type)
 void Date::rnd(const double& precision, const RND& type) {
 	if (!undef) {
 		const double rnd_julian = rnd( getJulian(false), precision, type ); //round local time
-		setDate(rnd_julian, timezone, dst);
+		setDate(rnd_julian, timezone);
 	}
 }
 
@@ -880,7 +845,7 @@ const Date Date::rnd(const Date& indate, const double& precision, const RND& typ
 	Date tmp(indate);
 	if (!tmp.undef) {
 		const double rnd_julian = rnd( tmp.getJulian(false), precision, type ); //round local time
-		tmp.setDate(rnd_julian, tmp.getTimeZone(), tmp.getDST());
+		tmp.setDate(rnd_julian, tmp.getTimeZone());
 	}
 
 	return tmp;
@@ -1250,7 +1215,7 @@ const std::string Date::toString() const {
 		os << "Undefined\n";
 	else {
 		os << toString(Date::ISO) << "\n";
-		os << "TZ=GMT" << showpos << timezone << noshowpos << "\t\t" << "DST=" << dst << "\n";
+		os << "TZ=GMT" << showpos << timezone << noshowpos << "\n";
 		os << "julian:\t\t\t" << setprecision(10) << getJulian() << "\t(GMT=" << getJulian(true) << ")\n";
 		os << "ModifiedJulian:\t\t" << getModifiedJulianDate() << "\n";
 		//os << "TruncatedJulian:\t" << getTruncatedJulianDate() << "\n";
@@ -1269,8 +1234,6 @@ const std::string Date::toString() const {
 std::ostream& operator<<(std::ostream& os, const Date& date) {
 	os.write(reinterpret_cast<const char*>(&date.timezone), sizeof(date.timezone));
 	os.write(reinterpret_cast<const char*>(&date.gmt_julian), sizeof(date.gmt_julian));
-
-	os.write(reinterpret_cast<const char*>(&date.dst), sizeof(date.dst));
 	os.write(reinterpret_cast<const char*>(&date.undef), sizeof(date.undef));
 	return os;
 }
@@ -1278,8 +1241,6 @@ std::ostream& operator<<(std::ostream& os, const Date& date) {
 std::istream& operator>>(std::istream& is, Date& date) {
 	is.read(reinterpret_cast<char*>(&date.timezone), sizeof(date.timezone));
 	is.read(reinterpret_cast<char*>(&date.gmt_julian), sizeof(date.gmt_julian));
-
-	is.read(reinterpret_cast<char*>(&date.dst), sizeof(date.dst));
 	is.read(reinterpret_cast<char*>(&date.undef), sizeof(date.undef));
 	return is;
 }
@@ -1405,20 +1366,14 @@ void Date::plausibilityCheck(const int& in_year, const int& in_month, const int&
 	}
 }
 
-double Date::localToGMT(const double& i_julian) const {
-	if (dst) {
-		return (i_julian - timezone/24. - DST_shift/24.);
-	} else {
-		return (i_julian - timezone/24.);
-	}
+double Date::localToGMT(const double& i_julian) const 
+{
+	return (i_julian - timezone/24.);
 }
 
-double Date::GMTToLocal(const double& i_gmt_julian) const {
-	if (dst) {
-		return (i_gmt_julian + timezone/24. + DST_shift/24.);
-	} else {
-		return (i_gmt_julian + timezone/24.);
-	}
+double Date::GMTToLocal(const double& i_gmt_julian) const 
+{
+	return (i_gmt_julian + timezone/24.);
 }
 
 } //namespace

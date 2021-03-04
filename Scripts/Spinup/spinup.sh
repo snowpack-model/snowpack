@@ -50,12 +50,6 @@ fi
 #
 # Parse command to execute to get relevant information
 #
-if [ -z "${spinup_end}" ]; then
-	enddate=${default_spinup_end}
-else
-	enddate=${spinup_end}
-fi
-to_exec_spinup=$(echo "${to_exec}" | mawk -v ed=${enddate} '{for(i=1; i<=NF; i++) {if(i>1) {printf " "}; printf "%s", ($(i-1)=="-e")?(ed):($i)}; printf "\n"}')
 cfgfile=$(echo ${to_exec} | mawk '{for(i=1; i<=NF; i++) {if($i ~ /-c/) {print $(i+1)}}}')
 if [ ! -e "${cfgfile}" ]; then
 	echo "ERROR: spinup not started since ini file: ${cfgfile} could not be found or opened!"
@@ -96,16 +90,33 @@ fi
 
 # Parse ini files to get relevant information
 snofile=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {read=1} else {read=0}}; if(read) {if(/SNOWFILE1/) {val=$NF}}} END {print val}')
+meteopath=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {read=1} else {read=0}}; if(read) {if(/METEOPATH/) {val=$NF}}} END {print val}')
 snopath=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {read=1} else {read=0}}; if(read) {if(/SNOWPATH/) {val=$NF}}} END {print val}')
 if [ -z "${snopath}" ]; then
 	# If no SNOWPATH found, try METEOPATH
-	snopath=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {read=1} else {read=0}}; if(read) {if(/METEOPATH/) {val=$NF}}} END {print val}')
+	snopath="${meteopath}"
 fi
 outpath=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[OUTPUT\]/) {read=1} else {read=0}}; if(read) {if(/METEOPATH/) {val=$NF}}} END {print val}')
 experiment=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[OUTPUT\]/) {read=1} else {read=0}}; if(read) {if(/EXPERIMENT/) {val=$NF}}} END {print val}')
 if [ -z "${experiment}" ]; then
 	# Default experiment suffix:
 	experiment="NO_EXP"
+fi
+if [ -z "${spinup_end}" ]; then
+	# If no spinup_end determined, try to derive from *.smet file
+	meteofile=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {read=1} else {read=0}}; if(read) {if(/STATION/) {val=$NF}}} END {print val}')
+	if [[ "${meteofile}" != *.smet ]]; then
+		# Add .smet file extension when no extension is provided
+		meteofile="${meteofile}.smet"
+	fi
+	if [ ! -e "${meteopath}/${meteofile}" ]; then
+		echo "WARNING: ${meteopath}/${meteofile} could not be found or openend, so no realistic end date of the simulation could be determined. Trying to continue ..."
+		enddate=${default_spinup_end}
+	else
+		enddate=$(tail -1 ${meteopath}/${meteofile} | mawk '{print $1}')
+	fi
+else
+	enddate=${spinup_end}
 fi
 
 
@@ -127,6 +138,7 @@ snofile_out=${outpath}/${stn}_${experiment}.sno
 #	THE READING OF SETTINGS IS NOW COMPLETE, DO THE SPINUPs
 #
 #
+to_exec_spinup=$(echo "${to_exec}" | mawk -v ed=${enddate} '{for(i=1; i<=NF; i++) {if(i>1) {printf " "}; printf "%s", ($(i-1)=="-e")?(ed):($i)}; printf "\n"}')
 
 
 

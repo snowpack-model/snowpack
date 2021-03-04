@@ -96,6 +96,7 @@ class MeteoProcessor {
 
 		Meteo1DInterpolator mi1d;
 		std::map<std::string, ProcessingStack*> processing_stack;
+		bool enable_meteo_filtering;
 };
 
 /** 
