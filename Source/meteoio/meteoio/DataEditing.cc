@@ -34,8 +34,11 @@ const std::string DataEditing::cmd_pattern( "::EDIT" );
 const std::string DataEditing::arg_pattern( "::ARG" );
 
 DataEditing::DataEditing(const Config& cfgreader)
-           : timeproc(cfgreader), editingStack()
+           : timeproc(cfgreader), editingStack(), enable_ts_editing(true)
 {
+	//ENABLE_TIMESERIES_EDITING is documented in DataEditingAlgorithms.cc
+	cfgreader.getValue("ENABLE_TIMESERIES_EDITING", cmd_section, enable_ts_editing, IOUtils::nothrow);
+	
 	const std::set<std::string> editableStations( getEditableStations(cfgreader) );
 	for (std::set<std::string>::const_iterator it = editableStations.begin(); it != editableStations.end(); ++it) {
 		editingStack[ *it ] = buildStack(cfgreader, *it);
@@ -56,6 +59,7 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
 	if (this != &source) {
 		timeproc = source.timeproc;
 		editingStack = source.editingStack;
+		enable_ts_editing = source.enable_ts_editing;
 	}
 	
 	return *this;
@@ -227,6 +231,8 @@ std::vector<std::string> DataEditing::getProcessingOrder(std::map< std::string, 
 
 void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 {
+	if (!enable_ts_editing) return;
+	
 	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
 	const std::set<std::string> mergedFromIDs( getMergedFromIDs() );
 	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
@@ -264,6 +270,8 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 
 void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
+	if (!enable_ts_editing) return;
+	
 	const std::map< std::string, std::set<std::string> > dependencies( getDependencies() );
 	const std::vector<std::string> processing_order( getProcessingOrder(dependencies) );
 	

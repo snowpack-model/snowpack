@@ -69,6 +69,7 @@ class DataEditing {
 		std::map< std::string, std::vector< EditingBlock* > > editingStack;
 		static const std::string cmd_section, cmd_pattern, arg_pattern;
 		static const char NUM[];
+		bool enable_ts_editing;
 };
 
 } //namespace

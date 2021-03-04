@@ -55,16 +55,14 @@ namespace mio {
  *
  * It takes the following arguments
  *  - METHOD: decide which implementation to use: "Mori" or "Goring". The differences are small between both implementations.
- *    According to Mori the "Mori"-version performs slightly better. However, we suggest to use the Goring-method, because it is better tested.
+ *    According to Mori the "Mori"-version performs slightly better. However, we suggest to use the Goring-method, because it is better tested (mandatory parameter).
  *  - SENSITIVITY: control the sensitivity of the filter. The universal threshold is divided by
- *      this value. Thus a sensitivity of 1 is the default value. The larger the sensitivity the smaller the threshold (=the smaller
- *      the ellipsoid) and thus the more spikes will be detected.
+ *      this value. The larger the sensitivity the smaller the threshold (=the smaller
+ *      the ellipsoid) and thus the more spikes will be detected (optional, default=1).
  *  - INTERPOL_DEG: degree of the fit for the replacement. 1 is linear, 2 is quadratic, ..., 0 means "off"
  *    (removed spikes will be nodata and can be resampled later via [Interpolations1D]). This is useful in rare cases where the cubic fit happens
- *    to produce an unwanted peak by itself.
- *    Default value is 3 (cubic fit) as proposed in the paper by Goring.
- *  - INTERPOL_PTS: number of points used for the fitting (replacement) of the spikes. Default is 24 (just as proposed in the
- *    paper by Goring).
+ *    to produce an unwanted peak by itself (optional, default=3 meaning cubic fit as proposed in the paper by Goring).
+ *  - INTERPOL_PTS: number of points used for the fitting (replacement) of the spikes (optional, default=24 as in Goring's paper).
  *
  * There are also some hard-coded parameters:
  *    - the maximum number of iterations for the spike detection. This is set to 50.

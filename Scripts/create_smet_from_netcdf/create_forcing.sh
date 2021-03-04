@@ -34,22 +34,22 @@ ml intel; ml proj; ml netcdf
 rm -r output/${model}_${yr}
 mkdir -p output/${model}_${yr}
 
+# Move into io_files dir, where computation will be peformed
+cd io_files
+
 # Retrieve directory with netCDF and create file links, if netCDF files are split by year
 flag_netcdf_files_are_linked=0
-grid2dpath=$(fgrep GRID2DPATH ./io_files/MERRA-2.ini | mawk -F= '{gsub(/^[ \t]+/,"",$NF); gsub(/[ \t]+$/,"",$NF); print $NF}')	# Use gsub to remove trailing and leading white spaces
+grid2dpath=$(fgrep GRID2DPATH ./${model}.ini | mawk -F= '{gsub(/^[ \t]+/,"",$NF); gsub(/[ \t]+$/,"",$NF); print $NF}')	# Use gsub to remove trailing and leading white spaces
 list_of_nc_files=$(find ${grid2dpath} -name "*${yr}*")
 if [ ! -z "${list_of_nc_files}" ]; then
 	# Create dir to link the NetCDF files
 	flag_netcdf_files_are_linked=1
-	rm -r input/${model}_${yr}
-	mkdir -p input/${model}_${yr}
+	rm -r ../input/${model}_${yr}
+	mkdir -p ../input/${model}_${yr}
 	for ncf in ${list_of_nc_files}; do
-		ln -s ${ncf} input/${model}_${yr}/
+		ln -s ${ncf} ../input/${model}_${yr}/
 	done
 fi
-
-# Move into io_files dir, where computation will be peformed
-cd io_files
 
 # Create new ini file for each year
 inifile=${model}_${yr}.ini
@@ -57,8 +57,10 @@ sed 's/..\/output\//..\/output\/'${model}'_'${yr}'\//' ${model}.ini > ${inifile}
 
 # Set paths correctly in case we linked the netcdf files
 if (( ${flag_netcdf_files_are_linked} )); then
-	sed -i 's/.*METEOPATH.*/METEOPATH = ..\/input\/'${model}'_'${yr}'\//' ${inifile}
-	sed -i 's/.*GRID2DPATH.*/GRID2DPATH = ..\/input\/'${model}'_'${yr}'\//' ${inifile}
+	cp ${inifile} ${inifile}.tmp
+	# Replace the paths in the [Input] section only:
+	mawk -v model=${model} -v yr=${yr} '{if(/^\[/) {$0=toupper($0); if(/\[INPUT\]/) {input=1} else {input=0}}; if(input==1 && /^METEOPATH/) {print "METEOPATH = ../input/" model  "_" yr "/"} else if(input==1 && /^GRID2DPATH/) {print "GRID2DPATH = ../input/" model  "_" yr "/"} else {print $0}}' ${inifile}.tmp > ${inifile}
+	rm ${inifile}.tmp
 fi
 
 # Retrieve temporal resolution from ini file:

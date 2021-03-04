@@ -50,7 +50,7 @@ namespace mio {
  * - modified julian date, see Date::getModifiedJulianDate
  * - truncated julian date, see Date::getTruncatedJulianDate
  * - RFC868, see Date::getRFC868Date
- * - Unix date, see Date::getUnixDate
+ * - Unix date, assumed to always be UTC+0, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
  *
  * \anchor date_formats
@@ -112,35 +112,34 @@ class Date {
 		static const double epsilon_sec;
 
 		Date();
-		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
-		Date(const time_t&, const bool& in_dst=false);
-		Date(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst=false);
+		Date(const double& julian_in, const double& in_timezone);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone);
+		Date(const time_t&);
+		Date(const int& year, const double& jdn, const double& in_timezone);
 
 		void setFromSys();
-		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
+		void setTimeZone(const double& in_timezone);
 		void setDate(const Date& in_date);
-		void setDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const time_t& in_time, const bool& in_dst=false);
-		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		void setRFC868Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		void setUnixDate(const time_t& in_time, const bool& in_dst=false);
-		void setExcelDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
-		void setMatlabDate(const double matlab_in, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const double& julian_in, const double& in_timezone);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone);
+		void setDate(const int& year, const double& jdn, const double& in_timezone);
+		void setDate(const time_t& in_time);
+		void setModifiedJulianDate(const double& julian_in, const double& in_timezone);
+		void setRFC868Date(const double& julian_in, const double& in_timezone);
+		void setUnixDate(const time_t& in_time);
+		void setExcelDate(const double excel_in, const double& in_timezone);
+		void setMatlabDate(const double matlab_in, const double& in_timezone);
 		void setUndef(const bool& flag);
 
 		bool isUndef() const {return undef;}
 		double getTimeZone() const;
-		bool getDST() const;
 		double getJulian(const bool& gmt=false) const;
 		double getModifiedJulianDate(const bool& gmt=false) const;
 		double getTruncatedJulianDate(const bool& gmt=false) const;
@@ -224,7 +223,6 @@ class Date {
 		static const bool __init;
 		double timezone;
 		double gmt_julian;
-		bool dst;
 		bool undef;
 };
 

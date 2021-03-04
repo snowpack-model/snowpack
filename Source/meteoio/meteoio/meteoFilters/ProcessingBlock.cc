@@ -118,6 +118,9 @@ namespace mio {
  * DW::arg1::cst = 45
  * DW::arg1::when = 2020-07-01 - 2020-07-10 , 2020-07-20T12:00 - 2020-08-01
  * @endcode
+ * 
+ * @note It is possible to turn off all meteo filtering by setting the *Enable_Meteo_Filtering* key to false in the [Filters] section; 
+ * the same can be done for timestamps filtering with the *Enable_Time_Filtering* key.
  *
  * @section processing_available Available processing elements
  * New filters can easily be developed. The filters that are currently available are the following:
