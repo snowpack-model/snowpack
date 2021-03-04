@@ -26,13 +26,15 @@ using namespace std;
 namespace mio {
 
 FilterMAD::FilterMAD(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-                  : WindowedFilter(vecArgs, name, cfg), min_sigma(0.)
+                  : WindowedFilter(vecArgs, name, cfg), min_sigma(0.), is_strict(false)
 {
 	const std::string where( "Filters::"+block_name );
 	//parse the arguments that have not been already parsed by WindowedFilter
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MIN_SIGMA") {
 			IOUtils::parseArg(vecArgs[ii], where, min_sigma);
+		} else if (vecArgs[ii].first=="STRICT") {
+			IOUtils::parseArg(vecArgs[ii], where, is_strict);
 		}
 	}
 
@@ -54,7 +56,7 @@ void FilterMAD::process(const unsigned int& param, const std::vector<MeteoData>&
 		size_t start, end;
 		if ( get_window_specs(ii, ivec, start, end) ) {
 			MAD_filter_point(ivec, param, start, end, value);
-		} else if (!is_soft) value = IOUtils::nodata;
+		} else if (is_strict) value = IOUtils::nodata;
 	}
 }
 

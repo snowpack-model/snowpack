@@ -1102,7 +1102,7 @@ Date CsvParameters::parseDate(const std::string& value_str, const CsvDateTime::d
 	if (format==CsvDateTime::UNIX) {
 		time_t value;
 		if (!IOUtils::convertString(value, value_str)) return dt;
-		dt.setUnixDate(value, csv_tz);
+		dt.setUnixDate(value);
 		return dt;
 	} else {
 		double value=0.;
