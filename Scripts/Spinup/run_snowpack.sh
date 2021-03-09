@@ -57,6 +57,7 @@ done
 
 
 > to_exec.lst
+i=0
 for f in ./smet/*smet
 do
 	echo ${stn}
@@ -66,6 +67,13 @@ do
 	if [ ! -e "./current_snow/${stn}.sno" ]; then
 		cp ./snow_init/${stn}.sno ./current_snow/${stn}.sno
 	fi
+	let i=${i}+1
 	echo "bash spinup.sh \"${which_snowpack} -c cfgfiles/${stn}.ini -e ${enddate} > log/${stn}_${exp}.log 2>&1\"" >> to_exec.lst
 done
 
+
+# Modify sbatch script
+# First, modify the SLURM part:
+sed -i "s/--array=.*/--array=1-${i}/" job.sbatch
+# Second, modify the PBS part:
+sed -i "s/-J.*/-J 1-${i}/" job.sbatch
