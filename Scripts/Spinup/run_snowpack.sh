@@ -64,9 +64,6 @@ do
 	stn=$(basename ${f} .smet)
 	lat_lon=$(echo ${stn} | mawk -F_ '{print $2 "_" $3}')
 	enddate=$(find ./profiles/* | fgrep -- ${lat_lon} | mawk -F\/ '{print substr($NF,1,4) "-" substr($NF,5,2) "-" ((substr($NF,7,2)==32)?(31):(substr($NF,7,2)))}')
-	if [ ! -e "./current_snow/${stn}.sno" ]; then
-		cp ./snow_init/${stn}.sno ./current_snow/${stn}.sno
-	fi
 	let i=${i}+1
 	echo "bash spinup.sh \"${which_snowpack} -c cfgfiles/${stn}.ini -e ${enddate} > log/${stn}_${exp}.log 2>&1\"" >> to_exec.lst
 done
