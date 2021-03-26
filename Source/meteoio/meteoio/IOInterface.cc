@@ -83,6 +83,14 @@ void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Param
 	throw IOException("Nothing implemented here", AT);
 }
 
+void IOInterface::readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	// If plugins do not implement their own readPointsIn2DGrid, use generic version (i.e., get full grid and extract points).
+	Grid2DObject grid2D;
+	read2DGrid(grid2D, parameter, date);
+	data = grid2D.extractPoints(Pts);
+}
+
 void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const std::string& /*parameter=""*/)
 {
 	throw IOException("Nothing implemented here", AT);

@@ -71,8 +71,8 @@ class GridsManager {
 
 		std::vector<StationData> initVirtualStationsAtAllGridPoints(const DEMObject& dem) const;
 		std::vector<StationData> initVirtualStations(const DEMObject& dem, const bool& adjust_coordinates, const bool& fourNeighbors) const;
-		METEO_SET getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date);
-		std::vector<METEO_SET> getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd);
+		METEO_SET getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& date, const bool& PtsExtract=false);
+		std::vector<METEO_SET> getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd, const bool& PtsExtract=false);
 
 		const std::string toString() const;
 
@@ -83,6 +83,8 @@ class GridsManager {
 		Grid2DObject getRawGrid(const MeteoGrids::Parameters& parameter, const Date& date);
 		Grid2DObject getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& enforce_cartesian=true);
 		bool generateGrid(Grid2DObject& grid2D, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date);
+		std::vector < double > getPtsfromGrid(const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
+		bool getPtsfromgenerateGrid(std::vector<double>& Vec, const std::set<size_t>& available_params, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 
 		IOHandler& iohandler;
 		const Config& cfg;

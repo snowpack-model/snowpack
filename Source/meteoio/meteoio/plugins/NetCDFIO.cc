@@ -394,7 +394,8 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 		const std::string filename( in_path + "/" + *it );
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
 		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
-		nc_files.push_back( make_pair(file.getDateRange(), file) );
+		if (file.hasDimension(ncpp::TIME))
+			nc_files.push_back( make_pair(file.getDateRange(), file) );
 		++it;
 	}
 	std::sort(nc_files.begin(), nc_files.end(), &sort_cache_grids);
@@ -471,6 +472,38 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 		if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT); //prevent invalid filenames
 		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
 		grid_out = file.read2DGrid(parameter, date);
+	}
+}
+
+void NetCDFIO::readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	if (cache_grid_files.empty()) scanPath(in_grid2d_path, in_nc_ext, cache_grid_files);
+
+	if (!cache_grid_files.empty()) {
+		for (size_t ii=0; ii<cache_grid_files.size(); ii++) {
+			// Get available time period for file
+			const Date file_start( cache_grid_files[ii].first.first );
+			const Date file_end( cache_grid_files[ii].first.second );
+			// Get available params for file
+			const std::set<size_t> params_set( cache_grid_files[ii].second.getParams() );
+
+			// Check for time period
+			if (file_start > date) continue;
+			if (file_end < date) continue;
+
+			// Check for param
+			if (params_set.find(parameter) == params_set.end()) continue;
+
+			data = cache_grid_files[ii].second.readPointsIn2DGrid(parameter, date, Pts);
+			return;
+		}
+		//the date/param was not found
+		throw InvalidArgumentException("No Gridded data found for "+MeteoGrids::getParameterName( parameter )+" at "+date.toString(Date::ISO)+" in '"+in_grid2d_path+"'", AT);
+	} else {
+		const std::string filename = cfg.get("GRID2DFILE", "Input");
+		if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT); //prevent invalid filenames
+		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
+		data = file.readPointsIn2DGrid(parameter, date, Pts);
 	}
 }
 
@@ -883,7 +916,7 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	}
 	double *data = new double[vecY.size()*vecX.size()];
 	if (time_pos!=IOUtils::npos)
-		ncpp::read_data(ncid, var, time_pos, vecY.size(), vecX.size(), data);
+		ncpp::read_data(ncid, var, time_pos, vecY.size(), vecX.size(), var.dimid_time, var.dimid_Y, var.dimid_X, data);
 	else
 		ncpp::read_data(ncid, var, data);
 	ncpp::fill2DGrid(grid, data, var.nodata, (vecX.front()<=vecX.back()), (vecY.front()<=vecY.back()) );
@@ -899,6 +932,69 @@ Grid2DObject ncFiles::read2DGrid(const ncpp::nc_variable& var, const size_t& tim
 	applyUnits(grid, var.attributes.units, time_pos, m2mm);
 
 	return grid;
+}
+
+std::vector< double > ncFiles::readPointsIn2DGrid(const size_t& param, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	const std::map <size_t, ncpp::nc_variable>::const_iterator it = vars.find( param );
+	if (it==vars.end() || it->second.varid==-1)
+		NoDataException("No "+MeteoGrids::getParameterName( param )+" grid in file "+file_and_path, AT);
+
+	size_t time_pos = IOUtils::npos;
+	if (!date.isUndef()) {
+		const std::vector< std::pair<Date,size_t> >::iterator low = std::lower_bound(vecTime.begin(), vecTime.end(), std::make_pair(date,(size_t)0));
+		if (low->first!=date)
+			throw NoDataException("No "+MeteoGrids::getParameterName( param )+" data at "+date.toString(Date::ISO)+" in file "+file_and_path, AT);
+
+		time_pos = low->second;
+	} else {
+		//no date has been provided, check if this parameter depends on time
+		const std::map<size_t, ncpp::nc_dimension>::const_iterator it2 = dimensions_map.find(ncpp::TIME);
+		const int time_id = (it2!=dimensions_map.end())? it2->second.dimid : -1;
+		const bool depend_on_time = (std::find(it->second.dimids.begin(), it->second.dimids.end(), time_id) != it->second.dimids.end());
+		if (depend_on_time && vecTime.size()>1) //if only one timestep is present, we take it, otherwise we throw
+			throw InvalidFormatException("No time requirement has been provided for a file that contains multiple timestamps", AT);
+	}
+
+	const bool isPrecip = (param==MeteoGrids::PSUM || param==MeteoGrids::PSUM_L || param==MeteoGrids::PSUM_S);
+	return readPointsIn2DGrid(it->second, time_pos, Pts, isPrecip);
+}
+
+std::vector< double > ncFiles::readPointsIn2DGrid(const ncpp::nc_variable& var, const size_t& time_pos, const std::vector< std::pair<size_t, size_t> >& Pts, const bool& m2mm)
+{
+	if (isLatLon && (!hasDimension(ncpp::LATITUDE) || !hasDimension(ncpp::LONGITUDE))) throw IOException("No latitude / longitude could be identified in file "+file_and_path, AT);
+	if (!isLatLon && (!hasDimension(ncpp::EASTING) || !hasDimension(ncpp::NORTHING))) throw IOException("No easting / northing could be identified in file "+file_and_path, AT);
+
+	//make sure file is open for reading
+	if (ncid==-1) {
+		ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
+		nc_filename = file_and_path;
+	}
+
+	//define return vector
+	std::vector < double > retVec;
+
+	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
+		double *data = new double;
+		if (time_pos!=IOUtils::npos)
+			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, var.dimid_time, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
+		else
+			ncpp::read_data_point(ncid, var, it->second, it->first, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
+		//handle data packing and units, if necessary
+		if (var.scale!=1.) *data *= var.scale;
+		if (var.offset!=0.) *data += var.offset;
+		applyUnits(*data, var.attributes.units, time_pos, m2mm);
+
+		retVec.push_back(*data);
+		delete[] data;
+	}
+
+	if (!keep_input_files_open) {
+		ncpp::close_file(file_and_path, ncid);
+		ncid = -1;
+	}
+
+	return retVec;
 }
 
 //this should be most often used as wrapper, to select the proper parameters for a given param or param_name
@@ -1752,6 +1848,21 @@ void ncFiles::applyUnits(Grid2DObject& grid, const std::string& units, const siz
 	else if (m2mm && units=="m") grid *= 1000.;
 }
 
+void ncFiles::applyUnits(double& val, const std::string& units, const size_t& time_pos, const bool& m2mm) const
+{
+	if (units.empty()) return;
+
+	if (units=="m2/s2" || units=="m**2 s**-2") val /= Cst::gravity;
+	else if (units=="%") val /= 100.;
+	else if (units=="J/m2" || units=="J m**-2") {
+		if (vecTime.size()>1 && time_pos!=IOUtils::npos) {
+			const Date integration_period = (time_pos>0)? (vecTime[time_pos].first - vecTime[time_pos-1].first) : (vecTime[time_pos+1].first - vecTime[time_pos].first);
+			val /= (integration_period.getJulian()*24.*3600.); //converting back to W/m2
+		}
+	}
+	else if (m2mm && units=="m") val *= 1000.;
+}
+
 void ncFiles::applyUnits(std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& nrStations, const size_t& nrSteps, const std::string& units, const std::string& parname)
 {
 	if (units.empty()) return;
@@ -1883,6 +1994,17 @@ void ncFiles::initVariablesFromFile()
 		ncpp::nc_variable tmp_var( tmp_attr, schema.nodata );
 		const bool readTimeTransform = (tmp_var.attributes.param==ncpp::TIME && tmp_var.attributes.type!=NC_CHAR);
 		ncpp::readVariableMetadata(ncid, tmp_var, readTimeTransform, TZ);
+
+		// Map the dimensions
+		for (size_t i = 0; i < tmp_var.dimids.size(); i++) {
+			if (tmp_var.dimids[i] == dimensions_map[ncpp::TIME].dimid) {
+				tmp_var.dimid_time = i;
+			} else if (tmp_var.dimids[i] == dimensions_map[ncpp::LONGITUDE].dimid || tmp_var.dimids[i] == dimensions_map[ncpp::EASTING].dimid) {
+				tmp_var.dimid_X = i;
+			} else if (tmp_var.dimids[i] == dimensions_map[ncpp::LATITUDE].dimid || tmp_var.dimids[i] == dimensions_map[ncpp::NORTHING].dimid) {
+				tmp_var.dimid_Y = i;
+			}
+		}
 
 		if (tmp_var.attributes.param!=IOUtils::npos) {
 			vars[ tmp_var.attributes.param ] = tmp_var;
