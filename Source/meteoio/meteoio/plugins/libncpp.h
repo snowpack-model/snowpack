@@ -118,6 +118,7 @@ namespace ncpp {
 	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, double& attr_value);
 	
 	void read_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data);
+	void read_data_point(const int& ncid, const nc_variable& var, const size_t& row, const size_t& col, const size_t& row_i, const size_t& col_i, double* data);
 	void read_data_point(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& row, const size_t& col, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data);
 	void read_data(const int& ncid, const nc_variable& var, double* data);
 	void read_data(const int& ncid, const nc_variable& var, int* data);

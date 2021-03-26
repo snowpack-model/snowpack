@@ -973,12 +973,13 @@ std::vector< double > ncFiles::readPointsIn2DGrid(const ncpp::nc_variable& var, 
 
 	//define return vector
 	std::vector < double > retVec;
+
 	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
 		double *data = new double;
 		if (time_pos!=IOUtils::npos)
 			ncpp::read_data_point(ncid, var, time_pos, it->second, it->first, var.dimid_time, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
 		else
-			throw InvalidFormatException("Not implemented.", AT); //ncpp::read_data_point(ncid, var, data);
+			ncpp::read_data_point(ncid, var, it->second, it->first, var.dimid_Y, var.dimid_X, data);	// Note: swapped <x, y> to translate to <row, column> in function call
 		//handle data packing and units, if necessary
 		if (var.scale!=1.) *data *= var.scale;
 		if (var.offset!=0.) *data += var.offset;
@@ -994,20 +995,6 @@ std::vector< double > ncFiles::readPointsIn2DGrid(const ncpp::nc_variable& var, 
 	}
 
 	return retVec;
-
-	//define the results grid
-	Grid2DObject grid;
-	if (isLatLon) { //the reprojection (if necessary) will be handled by GridsManager
-		mio::Coords llcorner(coord_sys, coord_param);
-		llcorner.setLatLon( std::min(vecY.front(), vecY.back()), std::min(vecX.front(), vecX.back()), IOUtils::nodata);
-		grid.set(vecX.size(), vecY.size(), IOUtils::nodata, llcorner);
-		IOInterface::set2DGridLatLon(grid, std::max(vecY.front(), vecY.back()), std::max(vecX.front(), vecX.back()));
-	} else {
-		mio::Coords llcorner(coord_sys, coord_param);
-		llcorner.setXY( std::min(vecX.front(), vecX.back()), std::min(vecY.front(), vecY.back()), IOUtils::nodata);
-		const double cellsize = IOInterface::computeGridXYCellsize(vecX, vecY);
-		grid.set(vecX.size(), vecY.size(), cellsize, llcorner);
-	}
 }
 
 //this should be most often used as wrapper, to select the proper parameters for a given param or param_name
