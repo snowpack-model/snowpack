@@ -1164,7 +1164,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			break;
 		case(NUM):
 			tmpstr
-			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << "-"
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out)
 			<< setw(2) << setfill('0') << month_out
 			<< setw(2) << setfill('0') << day_out
 			<< setw(2) << setfill('0') << hour_out
@@ -1186,7 +1186,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			tmpstr
 			<< setw(2) << setfill('0') << day_out << "."
 			<< setw(2) << setfill('0') << month_out << "."
-			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << "-"
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << " "
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out << ":"
 			<< setw(2) << setfill('0') << whole_sec << subsec_str;
