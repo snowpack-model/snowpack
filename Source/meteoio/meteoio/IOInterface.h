@@ -75,6 +75,16 @@ class IOInterface {
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		/**
+		* @brief Read the given meteo parameter into a vector for a list of points.
+		* Each plugin has its own logic for finding the requested meteo parameter grid relative to GRID2DPATH for most plugins
+		* @param data A double vector to hold the data
+		* @param parameter The meteo parameter grid type to return (ie: air temperature, wind component, etc)
+		* @param date date of the data to read
+		* @param Pts vector of points to read from the grid
+		*/
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
+
+		/**
 		* @brief A generic function for parsing 3D grids into a Grid3DObject. The string parameter shall be used for addressing the
 		* specific 3D grid to be parsed into the Grid3DObject, relative to GRID3DPATH for most plugins.
 		* @param grid_out A Grid3DObject instance

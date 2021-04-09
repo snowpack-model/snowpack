@@ -388,8 +388,6 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = store(ii,jj); break;
 			case SnGrids::ERODEDMASS:
 				value = erodedmass(ii,jj) / snowPixel.cos_sl; break;
-			case SnGrids::WINDEROSIONDEPOSITION: // This grid does not exist on the workers, but may be requested, so return IOUtils::nodata in such cases.
-				value = IOUtils::nodata; break;
 			case SnGrids::GLACIER:
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:

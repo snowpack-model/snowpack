@@ -495,6 +495,22 @@ void Grid2DObject::binning(const std::vector<double>& thresholds, const std::vec
 	}
 }
 
+std::vector< double > Grid2DObject::extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const
+{
+	size_t nx = getNx();
+	size_t ny = getNy();
+
+	//define return vector
+	std::vector < double > retVec;
+	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
+		double val = IOUtils::nodata;
+		if(it->first < nx && it->second < ny)
+			val=grid2D(it->first, it->second);
+		retVec.push_back(val);
+	}
+	return retVec;
+}
+
 double Grid2DObject::calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)
 {
 	const double distanceX = fabs(vecX.front() - vecX.back());

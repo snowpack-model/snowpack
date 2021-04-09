@@ -30,6 +30,7 @@ const std::vector<std::string> SnowpackInterface::grids_not_computed_in_worker{
 "TA",
 "RH",
 "VW",
+"VW_DRIFT",
 "DW",
 "PSUM",
 "PSUM_PH",
@@ -40,7 +41,8 @@ const std::vector<std::string> SnowpackInterface::grids_not_computed_in_worker{
 "ISWR_TERRAIN",
 "ILWR_TERRAIN",
 "ISWR_DIFF",
-"ISWR_DIR"};
+"ISWR_DIR",
+"WINDEROSIONDEPOSITION"};
 
 //sort the by increasing y and increasing x as a second key
 inline bool pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r)
