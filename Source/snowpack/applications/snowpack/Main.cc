@@ -605,9 +605,10 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 			meteo.projectPrecipitations(currentSector.meta.getSlopeAngle(), Mdata.psum, Mdata.hs);
 		}
 	}
-
+	bool adjust_height_of_wind_value;
+	cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
 	// Find the Wind Profile Parameters, w/ or w/o canopy; take care of canopy
-	meteo.compMeteo(Mdata, currentSector, true);
+	meteo.compMeteo(Mdata, currentSector, true, adjust_height_of_wind_value);
 
 #ifndef SNOWPACK_CORE
 	if (isMainStation) {
@@ -1074,7 +1075,7 @@ inline void real_main (int argc, char *argv[])
 		vector<SN_SNOWSOIL_DATA> vecSSdata(slope.nSlopes, SN_SNOWSOIL_DATA(/*number_of_solutes*/));
 		vector<SnowStation> vecXdata;
 		for (size_t ii=0; ii<slope.nSlopes; ii++) //fill vecXdata with *different* SnowStation objects
-			vecXdata.push_back( SnowStation(useCanopyModel, useSoilLayers, (variant=="SEAICE")/*, number_of_solutes*/) );
+			vecXdata.push_back( SnowStation(useCanopyModel, useSoilLayers, false /*Is A3d?*/, (variant=="SEAICE") ) );
 
 		// Create meteo data object to hold interpolated current time steps
 		CurrentMeteo Mdata(cfg);
@@ -1211,7 +1212,7 @@ inline void real_main (int argc, char *argv[])
 				Stability stability(tmpcfg, classify_profile);
 #endif
 				snowpack.runSnowpackModel(Mdata, vecXdata[slope.sector], cumsum.precip, sn_Bdata, surfFluxes);
-				
+
 #ifndef SNOWPACK_CORE
 				if (grooming)
 					snowpack.snowPreparation(current_date, vecXdata[slope.sector] );

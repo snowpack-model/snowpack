@@ -65,6 +65,7 @@ class SeaIce {
 		const static double InitSnowSalinity;
 
 		double SeaLevel;            ///< Sea level in domain (m)
+		double ForcedSeaLevel;      ///< Force sea level externally (Alpine3D)
 		double FreeBoard;           ///< Freeboard of sea ice (m)
 		double IceSurface;          ///< Interface sea ice/snow (m)
 		size_t IceSurfaceNode;      ///< Interface node sea ice/snow (m)

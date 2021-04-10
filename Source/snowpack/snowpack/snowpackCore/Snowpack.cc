@@ -203,7 +203,7 @@ Snowpack::~Snowpack(void)	///< Class destructor
 #endif
 
 Snowpack::Snowpack(const SnowpackConfig& i_cfg)
-          : surfaceCode(), cfg(i_cfg), techsnow(i_cfg), 
+          : surfaceCode(), cfg(i_cfg), techsnow(i_cfg),
 #ifdef SNOWPACK_OPTIM
             watertransport(NULL), vapourtransport(NULL), metamorphism(NULL), snowdrift(NULL), phasechange(NULL),
 #endif
@@ -218,8 +218,9 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), useNewPhaseChange(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true), advective_heat(false), heat_begin(0.), heat_end(0.),
-            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(EVAP_RELATIVE_HUMIDITY)
+            enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true),
+            adjust_height_of_wind_value(false), advective_heat(false), heat_begin(0.), heat_end(0.),
+            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(), soil_thermal_conductivity()
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
@@ -232,11 +233,11 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("TEMP_INDEX_SWR_FACTOR", "SnowpackAdvanced", temp_index_swr_factor, IOUtils::nothrow);
 	cfg.getValue("HN_DENSITY_PARAMETERIZATION", "SnowpackAdvanced", hn_density_parameterization);
 	cfg.getValue("HN_DENSITY_FIXEDVALUE", "SnowpackAdvanced", hn_density_fixedValue);
-    
-	//Define keys for new snow information  
-	cfg.getValue("RIME_INDEX", "SnowpackAdvanced", rime_index); 
-	cfg.getValue("NEWSNOW_LWC", "SnowpackAdvanced", newsnow_lwc); 
-	cfg.getValue("READ_DSM", "SnowpackAdvanced", read_dsm); 
+
+	//Define keys for new snow information
+	cfg.getValue("RIME_INDEX", "SnowpackAdvanced", rime_index);
+	cfg.getValue("NEWSNOW_LWC", "SnowpackAdvanced", newsnow_lwc);
+	cfg.getValue("READ_DSM", "SnowpackAdvanced", read_dsm);
 
 	//Define keys for snow albedo computation
 	cfg.getValue("SNOW_ALBEDO", "SnowpackAdvanced", snow_albedo);
@@ -418,31 +419,23 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 
 	//Indicate if the meteo values can be considered at constant height above the snow surface (e.g., Col de Porte measurement method)
 	cfg.getValue("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", adjust_height_of_meteo_values);
+	cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
 
 	// Allow for the effect of a known advective heat flux
 	cfg.getValue("ADVECTIVE_HEAT", "SnowpackAdvanced", advective_heat, IOUtils::nothrow);
 	cfg.getValue("HEAT_BEGIN", "SnowpackAdvanced", heat_begin, IOUtils::nothrow);
 	cfg.getValue("HEAT_END", "SnowpackAdvanced", heat_end, IOUtils::nothrow);
 
-	// Get the soil evaporation model to be used
-	std::string soil_evap;
-	cfg.getValue("SOIL_EVAP_MODEL", "SnowpackAdvanced", soil_evap);
-	if(soil_evap=="RESISTANCE")
-	{
-		soil_evaporation = EVAP_RESISTANCE;
-	}
-	else if(soil_evap=="RELATIVE_HUMIDITY")
-	{
-		soil_evaporation = EVAP_RELATIVE_HUMIDITY;
-	}
-	else if(soil_evap=="NONE")
-	{
-		soil_evaporation = EVAP_NONE;
-	}
-	else
-	{
-		throw IOException("Unknown value for key SOIL_EVAP_MODEL in [SnowpackAdvanced]. Accepted values are \"RESISTANCE\", \"RELATIVE HUMIDITY\", and \"NONE\".", AT);
-	}
+	/* Get the soil evaporation model to be used
+	*  - EVAP_RESISTANCE: Resistance Approach, see Laws_sn.c␊
+	*  - RELATIVE_HUMIDITY: Relative Humidity Approach, see Snowpack.cc
+	*  - NONE: none, assume saturation pressure and no extra resistance */
+	cfg.getValue("SOIL_EVAP_MODEL", "SnowpackAdvanced", soil_evaporation);
+	/* Get the soil thermal conductivity model to be used
+	*  - FITTED: Use fit values for soil thermal conductivity, see snLaws::compSoilThermalConductivity()
+	*  - RAW: Use simply Edata.soil[SOIL_K] + Edata.theta[WATER] * SnLaws::conductivity_water(Edata.Te)
+	                    + Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te) */
+	cfg.getValue("SOIL_THERMAL_CONDUCTIVITY", "SnowpackAdvanced", soil_thermal_conductivity);
 
 	// Soot/impurity in ppmv for albedo caclulations
 	cfg.getValue("SOOT_PPMV", "SnowpackAdvanced", soot_ppmv);
@@ -626,7 +619,7 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Find the conductivity of the element TODO: check thresholds
 	double Keff;    // the effective thermal conductivity
 	if (Edata.theta[SOIL] > 0.0) {
-		Keff = SnLaws::compSoilThermalConductivity(Edata, dvdz);
+		Keff = SnLaws::compSoilThermalConductivity(Edata, dvdz,soil_thermal_conductivity);
 	} else if (Edata.theta[ICE] > 0.55 || Edata.theta[ICE] < min_ice_content) {
 		Keff = Edata.theta[AIR] * Constants::conductivity_air + Edata.theta[ICE] * Constants::conductivity_ice +
 		           (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * Constants::conductivity_water + Edata.theta[SOIL] * Edata.soil[SOIL_K];
@@ -1654,7 +1647,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	const size_t nOldN = Xdata.getNumberOfNodes(); //Old number of nodes
 	const size_t nOldE = Xdata.getNumberOfElements(); //Old number of elements
 	const double cos_sl = Xdata.cos_sl; //slope cosinus
- 	
+
  	double Tw, rho_hn, delta_cH, theta_w;
 	TechSnow::productionPpt(Mdata, cumu_precip, Tw, rho_hn, delta_cH, theta_w);
 
@@ -2193,6 +2186,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 #endif
 	if (Xdata.Seaice != NULL) Xdata.Seaice->ConfigSeaIce(cfg);
 
+	// ADJUST_HEIGHT_OF_METEO_VALUE is checked at each call to allow different
+	// cfg values for different pixels in Alpine3D
+	cfg.getValue("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", adjust_height_of_meteo_values);
+
+
 	try {
 		//since precipitation phase is a little less intuitive than other, measured parameters, make sure it is provided
 		if (Mdata.psum_ph==IOUtils::nodata)
@@ -2295,8 +2293,13 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 		Meteo M(cfg);
 		do {
-			// Update Meteo object to reflect on the new stability state
-			M.compMeteo(Mdata, Xdata, false);
+			// After the first sub-time step, update Meteo object to reflect on the new stability state
+			if (ii >= 1){
+				// ADJUST_HEIGHT_OF_WIND_VALUE is checked at each call to allow different
+				// cfg values for different pixels in Alpine3D
+				cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
+				M.compMeteo(Mdata, Xdata, false, adjust_height_of_wind_value);
+			}
 			// Reinitialize and compute the initial meteo heat fluxes
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
