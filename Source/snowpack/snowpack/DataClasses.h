@@ -142,8 +142,8 @@ class CurrentMeteo {
 		std::vector<double> zv_ts; ///< Positions of all measured snow or/and soil temperatures (m)
 		std::vector<double> conc;  ///< Solute concentrations in precipitation
 		double rho_hn;             ///< Measured new snow density (kg m-3)
-		double rime_hn;            ///< riming index of new snow  
-		double lwc_hn;             ///< liquid water content of new snow  
+		double rime_hn;            ///< riming index of new snow
+		double lwc_hn;             ///< liquid water content of new snow
 
 	private:
 		size_t getNumberMeasTemperatures(const mio::MeteoData& md);
@@ -371,7 +371,7 @@ class ElementData {
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
 		double lwc_source;         ///< Source/sink term for Richards equation (m^3/m^3 / timestep)
 		double PrefFlowArea;       ///< Preferential flow path relative area (-)
-		double theta_w_transfer;   ///< Volumetric content of water transferred from preferential flow to matrix domain (1) 
+		double theta_w_transfer;   ///< Volumetric content of water transferred from preferential flow to matrix domain (1)
 		double theta_i_reservoir;  ///< Volumetric ice content in ice reservoir (1)
 		double theta_i_reservoir_cumul;  ///< Volumetric ice content in cumulated ice reservoir (1)
 		double SlopeParFlux;       ///< Slope parallel flux (m^3/m^3 * m / timestep)
@@ -443,7 +443,7 @@ class CanopyData {
 		CondFluxTrunks(0.), LWnet_Trunks(0.), SWnet_Trunks(0.), QStrunks(0.), forestfloor_alb(0.),
 		BasalArea(0.), HMLeaves(0.), HMTrunks(0.) {}
 
-		void initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopyModel);
+		void initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopyModel, const bool isAlpine3D);
 		void reset(const bool& cumsum_mass);
 		void initializeSurfaceExchangeData();
 		void multiplyFluxes(const double& factor);
@@ -595,7 +595,8 @@ class CanopyData {
 class SeaIce;	// Foreward-declare sea ice class
 class SnowStation {
 	public:
-		explicit SnowStation(const bool& i_useCanopyModel=true, const bool& i_useSoilLayers=true, const bool& i_useSeaIceModule=false);
+		explicit SnowStation(const bool i_useCanopyModel=true, const bool i_useSoilLayers=true,
+                         const bool i_isAlpine3D=false, const bool i_useSeaIceModule=false);
 		SnowStation(const SnowStation& c);
 
 		~SnowStation();
@@ -694,7 +695,7 @@ class SnowStation {
 		size_t nNodes;                      ///< Actual number of nodes; different for each exposition
 		size_t nElems;                      ///< Actual number of elements (nElems=nNodes-1)
 		unsigned short int maxElementID;    ///< maximum ElementID currently used (so each element can get a unique ID)
-		bool useCanopyModel, useSoilLayers; ///< The model includes soil layers
+		bool useCanopyModel, useSoilLayers, isAlpine3D; ///< The model includes soil layers
 		static double flexibleMaxElemLength(const double& depth, const double& comb_thresh_l); ///< When using REDUCE_N_ELEMENTS, this function determines the max element length, depending on depth inside the snowpack.
 };
 

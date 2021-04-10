@@ -60,11 +60,12 @@ const double SeaIce::InitSnowSalinity = 0.;
  ************************************************************/
 
 SeaIce::SeaIce():
-	SeaLevel(0.), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), salinityprofile(SINUSSAL) {}
+	SeaLevel(0.), ForcedSeaLevel(IOUtils::nodata), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), salinityprofile(SINUSSAL) {}
 
 SeaIce& SeaIce::operator=(const SeaIce& source) {
 	if(this != &source) {
 		SeaLevel = source.SeaLevel;
+		ForcedSeaLevel = source.ForcedSeaLevel;
 		FreeBoard = source.FreeBoard;
 		IceSurface = source.IceSurface;
 		IceSurfaceNode = source.IceSurfaceNode;
@@ -239,7 +240,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 void SeaIce::updateFreeboard(SnowStation& Xdata)
 {
 	Xdata.compSnowpackMasses();
-	SeaLevel = (Xdata.swe / (Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity));
+	SeaLevel = (ForcedSeaLevel!=IOUtils::nodata) ? (ForcedSeaLevel) : (Xdata.swe / (Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity));
 	const double FreeBoard_snow = Xdata.cH - SeaLevel;	// This is the freeboard relative to snow surface
 	FreeBoard = (findIceSurface(Xdata) - (Xdata.cH - FreeBoard_snow));
 	return;
@@ -590,6 +591,11 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 	NDS[Xdata.SoilNode].z = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
 		NDS[e + 1].z = NDS[e].z + EMS[e].L;
+	}
+
+	// Adjust externally forced sea level:
+	if (ForcedSeaLevel != IOUtils::nodata) {
+		ForcedSeaLevel += dz;
 	}
 
 	// Ocean water is infinite, so as much ice will be created as energy available, i.e., the bottom node is at meltfreeze_tk!
