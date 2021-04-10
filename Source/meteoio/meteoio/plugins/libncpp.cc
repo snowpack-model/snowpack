@@ -251,12 +251,66 @@ void close_file(const std::string& filename, const int& ncid)
 * @param[out] data data extracted from the file
 */
 void read_data(const int& ncid, const nc_variable& var,
-               const size_t& pos, const size_t& nrows, const size_t& ncols, double* data)
+               const size_t& pos, const size_t& nrows, const size_t& ncols, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data)
 {
-	const size_t start[] = {pos, 0, 0};
-	const size_t count[] = {1, nrows, ncols};
+	//map dimensions for variable (start)
+	size_t start[NC_MAX_VAR_DIMS] = { 0 };
+	start[pos_i] = pos;
+	start[col_i] = 0;
+	start[row_i] = 0;
+
+	//map dimensions for variable (count)
+	size_t count[NC_MAX_VAR_DIMS];
+	std::fill(count, count + NC_MAX_VAR_DIMS, 1);
+	count[pos_i] = 1;		// read only one pos
+	count[col_i] = ncols;
+	count[row_i] = nrows;
 
 	const int status = nc_get_vara_double(ncid, var.varid, start, count, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
+* @brief Read grid point in 2D gridded data for non time dependent data
+* @param[in] ncid file ID
+* @param[in] var variable to read
+* @param[in] row
+* @param[in] col
+* @param[out] data data extracted from the file
+*/
+void read_data_point(const int& ncid, const nc_variable& var,
+               const size_t& row, const size_t& col, const size_t& row_i, const size_t& col_i, double* data)
+{
+	//map dimensions for variable
+	size_t c[NC_MAX_VAR_DIMS] = { 0 };
+	c[col_i] = col;
+	c[row_i] = row;
+
+	const int status = nc_get_var1_double(ncid, var.varid, c, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
+* @brief Read grid point in 2D gridded data at the provided time position for a specific variable
+* @param[in] ncid file ID
+* @param[in] var variable to read
+* @param[in] pos time index in the file
+* @param[in] row
+* @param[in] col
+* @param[out] data data extracted from the file
+*/
+void read_data_point(const int& ncid, const nc_variable& var,
+               const size_t& pos, const size_t& row, const size_t& col, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data)
+{
+	//map dimensions for variable
+	size_t c[NC_MAX_VAR_DIMS] = { 0 };
+	c[pos_i] = pos;
+	c[col_i] = col;
+	c[row_i] = row;
+
+	const int status = nc_get_var1_double(ncid, var.varid, c, data);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }

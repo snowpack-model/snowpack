@@ -70,12 +70,13 @@ class SnLaws {
 
 		static double compSensibleHeatCoefficient(const CurrentMeteo& Mdata, const SnowStation& Xdata,
 		                                          const double& height_of_meteo_values);
-		static double compLatentHeat_Rh(const Snowpack::soil_evap_model soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata,
+		static double compLatentHeat_Rh(const std::string soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata,
 		                                const double& height_of_meteo_values);
-		static double compLatentHeat(const Snowpack::soil_evap_model soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata,
+		static double compLatentHeat(const std::string soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata,
 		                             const double& height_of_meteo_values);
 
-		static double compSoilThermalConductivity(const ElementData& Edata, const double& dvdz);
+		static double compSoilThermalConductivity(const ElementData& Edata, const double& dvdz,
+		                                          const std::string& soil_thermal_conductivity);
 
 		static double soilVaporDiffusivity(const ElementData& Edata);
 		static double compEnhanceWaterVaporTransportSoil(const ElementData& Edata,const double& clay_fraction);

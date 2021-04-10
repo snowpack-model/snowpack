@@ -13,9 +13,11 @@ if [ $# -lt 2 ]; then
 	echo "Invoke with: ./timeshift_sno_files.sh <sno-file> <date>" > /dev/stderr
 	echo "Profile will be written to stdout and can be redirected as wished." > /dev/stderr
 	echo "" > /dev/stderr
-	echo "Note: for gawk version 4.1.1 or older." > /dev/stderr
+	echo "Example: ./timeshift_sno_files_oldawk.sh WFJ2.sno 1990-10-01T00:00 > WFJ2_new.sno" > /dev/stderr
 	echo "" > /dev/stderr
-	echo "Example: ./timeshift_sno_files.sh WFJ2.sno 1990-10-01T00:00 > WFJ2_new.sno" > /dev/stderr
+	echo "Notes: - for gawk version 4.1.1 or older." > /dev/stderr
+	echo "       - dates before noon on Monday, January 1, 4713 BC (start of" > /dev/stderr
+	echo "         julian period) are set to that date." > /dev/stderr
 	exit
 fi
-awk -v t=$2 'BEGIN {td=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(/ProfileDate/) {s=$NF; sd=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(s,1,4), substr(s,6,2), substr(s,9,2), substr(s,12,2), substr(s,15,2), substr(s,19,2))); printf "ProfileDate\t = %s\n", t} else if(!data) {print} else {ld=mktime(sprintf("%04d %02d %02d %02d %02d %02d, 0", substr($1,1,4), substr($1,6,2), substr($1,9,2), substr($1,12,2), substr($1,15,2), substr($1,19,2))); cmd=sprintf("date \"+%%Y-%%m-%%dT%%H:%%M:%%S\" -d @%d", ld - (sd - td)); cmd | getline cmd_out; close(cmd); printf "%s", cmd_out; for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/DATA/) {data=1}}' $1
+awk -v t=$2 'BEGIN {minunixtime=-210866760000; os=(substr(t,1,1)=="-")?(1):(0); td=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4+os), substr(t,6+os,2), substr(t,9+os,2), substr(t,12+os,2), substr(t,15+os,2), substr(t,19+os,2)))} {if(/ProfileDate/) {s=$NF; os=(substr(s,1,1)=="-")?(1):(0); sd=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(s,1,4+os), substr(s,6+os,2), substr(s,9+os,2), substr(s,12+os,2), substr(s,15+os,2), substr(s,19+os,2))); printf "ProfileDate\t = %s\n", t} else if(!data) {print} else {os=(substr($1,1,1)=="-")?(1):(0); ld=mktime(sprintf("%04d %02d %02d %02d %02d %02d, 0", substr($1,1,4+os), substr($1,6+os,2), substr($1,9+os,2), substr($1,12+os,2), substr($1,15+os,2), substr($1,19+os,2))); nd=(ld-(sd-td)); if(nd<minunixtime) {nd=minunixtime}; cmd=sprintf("date \"+%%Y-%%m-%%dT%%H:%%M:%%S\" -d @%d", nd); cmd | getline cmd_out; close(cmd); printf "%s", cmd_out; for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/DATA/) {data=1}}' $1

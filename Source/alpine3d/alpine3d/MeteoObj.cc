@@ -351,6 +351,9 @@ void MeteoObj::setGlacierMask(const Grid2DObject& glacierMask)
 void MeteoObj::setDEM(const mio::DEMObject& in_dem)
 {
 	dem=in_dem;
+	dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE | DEMObject::NORMAL | DEMObject::CURVATURE));
+	dem.update();
+	dem.sanitize();
 }
 
 //this should only be called when "--nocompute" was set. So we consider that

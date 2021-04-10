@@ -62,18 +62,22 @@ namespace ncpp {
 
 	/** This structure contains the metadata associated with a NetCDF variable that are file specific as well as contains the schema specific metadata */
 	typedef struct NC_VARIABLE {
-		NC_VARIABLE() : attributes(), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {} //please do NOT use this constructor!
-		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}
+		NC_VARIABLE() : attributes(), dimids(), dimid_time(0.), dimid_X(0.), dimid_Y(0.), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {} //please do NOT use this constructor!
+		NC_VARIABLE(const int& i_type) : attributes(i_type), dimids(), dimid_time(0.), dimid_X(0.), dimid_Y(0.), scale(1.), offset(0.), nodata(mio::IOUtils::nodata), varid(-1) {}
 		NC_VARIABLE(const var_attr& attr, const double& i_nodata)
-							: attributes(attr), dimids(), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {}
-		NC_VARIABLE(const var_attr& attr, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
-							: attributes(attr), dimids(), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {}
+							: attributes(attr), dimids(), dimid_time(0.), dimid_X(0.), dimid_Y(0.), scale(1.), offset(0.), nodata(i_nodata), varid(-1) {}
+		NC_VARIABLE(const var_attr& attr, const size_t& i_dimid_time, const size_t& i_dimid_X, const size_t& i_dimid_Y, const double& i_scale, const double& i_offset, const double& i_nodata, const int& i_varid)
+							: attributes(attr), dimids(), dimid_time(i_dimid_time), dimid_X(i_dimid_X), dimid_Y(i_dimid_Y), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {}
 		
 		bool isUndef() const {return (attributes.isUndef());}
 		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();}
 		
 		var_attr attributes; ///< metadata about the variable
 		std::vector<int> dimids;  ///< dimensions this variable depends on
+		// Store the sequence in which dimensions vary:
+		size_t dimid_time;	///< dimension sequence for time variable
+		size_t dimid_X;	///< dimension sequence for longitude/easting
+		size_t dimid_Y;	///< dimension sequence for latitude/northing
 		double scale, offset, nodata; ///< scale and offset for data packing, nodata value
 		int varid; ///< variable ID, set to -1 and then to a positive value after reading/writing to/from a file
 	} nc_variable;
@@ -113,7 +117,9 @@ namespace ncpp {
 	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, std::string& attr_value);
 	void getAttribute(const int& ncid, const nc_variable& var, const std::string& attr_name, double& attr_value);
 	
-	void read_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, double* data);
+	void read_data(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& nrows, const size_t& ncols, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data);
+	void read_data_point(const int& ncid, const nc_variable& var, const size_t& row, const size_t& col, const size_t& row_i, const size_t& col_i, double* data);
+	void read_data_point(const int& ncid, const nc_variable& var, const size_t& pos, const size_t& row, const size_t& col, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data);
 	void read_data(const int& ncid, const nc_variable& var, double* data);
 	void read_data(const int& ncid, const nc_variable& var, int* data);
 	void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& readTimeTransform=false, const double& TZ=0.);

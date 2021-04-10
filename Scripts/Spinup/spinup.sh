@@ -128,6 +128,7 @@ if [ -z "${spinup_start}" ]; then
 else
 	startdate=${spinup_start}
 fi
+snofile_in=${snopath}/${snofile}
 snofile_out=${outpath}/${stn}_${experiment}.sno
 
 
@@ -181,7 +182,7 @@ do
 			spinup=1
 		fi
 		# Make sno file valid for init date
-		bash ${time_shift_script} ${snofile_out} ${startdate} > ${snopath}/${snofile}
+		bash ${time_shift_script} ${snofile_out} ${startdate} > ${snofile_in}
 	else
 		if (( "${flag}" > 0 )) ; then
 			# If a spinup was executed, but the ${snofile_out} file does not exist, something must have gone wrong.
@@ -190,7 +191,9 @@ do
 		fi
 		spinup=1
 		sim_depth=0
-		bash ${time_shift_script} ${snow_init_dir}/${snofile} ${startdate} > ${snopath}/${snofile}
+		if [ ! -e "${snofile_in}" ]; then
+			bash ${time_shift_script} ${snow_init_dir}/${snofile} ${startdate} > ${snofile_in}
+		fi
 	fi
 
 	if (( ${spinup} )) || (( ${spinup2} )); then

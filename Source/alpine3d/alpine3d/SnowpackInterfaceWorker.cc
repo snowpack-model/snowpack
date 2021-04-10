@@ -226,12 +226,12 @@ void SnowpackInterfaceWorker::initGrids(std::vector<std::string>& params,
 		IOUtils::toUpper(params[ii]); //make sure all parameters are upper case
 
 		const size_t param_idx = SnGrids::getParameterIndex( params[ii] );
-    const auto position = std::find(grids_not_computed_in_worker.begin(),
-                         grids_not_computed_in_worker.end(),
-                         params[ii]);
-    if(position<grids_not_computed_in_worker.end()) {
-      continue;
-    }
+		const auto position = std::find(grids_not_computed_in_worker.begin(),
+						 grids_not_computed_in_worker.end(),
+						 params[ii]);
+		if(position<grids_not_computed_in_worker.end()) {
+			continue;
+		}
 		if (param_idx==IOUtils::npos)
 			throw UnknownValueException("Unknow meteo grid '"+params[ii]+"' selected for gridded output", AT);
 
@@ -390,8 +390,6 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = store(ii,jj); break;
 			case SnGrids::ERODEDMASS:
 				value = erodedmass(ii,jj) / snowPixel.cos_sl; break;
-			case SnGrids::WINDEROSIONDEPOSITION: // This grid does not exist on the workers, but may be requested, so return IOUtils::nodata in such cases.
-				value = IOUtils::nodata; break;
 			case SnGrids::GLACIER:
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:
@@ -408,7 +406,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				}
 				else
 				{
-          std::cout << it->first << std::endl;
+					std::cout << it->first << std::endl;
 					throw InvalidArgumentException("Invalid parameter requested", AT);
 				}
 		}
@@ -543,9 +541,10 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				meteo.setStability(Meteo::MO_HOLTSLAG);
 			}
 		}
-
+		bool adjust_height_of_wind_value;
+		sn_cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
 		//compute ustar, psi_s, z0
-		meteo.compMeteo(meteoPixel, snowPixel, true);
+		meteo.compMeteo(meteoPixel, snowPixel, true, adjust_height_of_wind_value);
 		SurfaceFluxes surfaceFlux;
 		// run snowpack model itself
 		double dIntEnergy = 0.; //accumulate the dIntEnergy over the snowsteps

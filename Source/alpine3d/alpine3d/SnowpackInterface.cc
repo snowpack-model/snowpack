@@ -30,6 +30,7 @@ const std::vector<std::string> SnowpackInterface::grids_not_computed_in_worker{
 "TA",
 "RH",
 "VW",
+"VW_DRIFT",
 "DW",
 "PSUM",
 "PSUM_PH",
@@ -40,7 +41,8 @@ const std::vector<std::string> SnowpackInterface::grids_not_computed_in_worker{
 "ISWR_TERRAIN",
 "ILWR_TERRAIN",
 "ISWR_DIFF",
-"ISWR_DIR"};
+"ISWR_DIR",
+"WINDEROSIONDEPOSITION"};
 
 //sort the by increasing y and increasing x as a second key
 inline bool pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r)
@@ -135,20 +137,20 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	if (mpicontrol.master()) {
 
-    bool write_dem_details=false;
-    io_cfg.getValue("WRITE_DEM_DETAILS", "output", write_dem_details,IOUtils::nothrow);
-    if(write_dem_details){
-      std::cout << "[i] Writing DEM details grids" << std::endl;
-      io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.slope), "DEM_SLOPE");
-      io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.azi), "DEM_AZI");
-      io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.curvature), "DEM_CURVATURE");
-    }
+		bool write_dem_details=false;
+		io_cfg.getValue("WRITE_DEM_DETAILS", "output", write_dem_details,IOUtils::nothrow);
+		if(write_dem_details){
+			std::cout << "[i] Writing DEM details grids" << std::endl;
+			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.slope), "DEM_SLOPE");
+			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.azi), "DEM_AZI");
+			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.curvature), "DEM_CURVATURE");
+		}
 
 		std::cout << "[i] SnowpackInterface initializing a total of " << mpicontrol.size();
 		if (mpicontrol.size()>1) std::cout << " processes with " << nbworkers;
 		else std::cout << " process with " << nbworkers;
 		if (nbworkers>1) std::cout << " workers";
-		else  std::cout << " worker";
+		else std::cout << " worker";
 		std::cout << " each using Snowpack " << snowpack::getLibVersion() << "\n";
 	}
 
@@ -792,12 +794,12 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 			return shortwave;
 		case SnGrids::ILWR:
 			return longwave;
-    case SnGrids::ISWR_TERRAIN:
-      return terrain_shortwave;
-    case SnGrids::ILWR_TERRAIN:
-      return terrain_longwave;
-    case SnGrids::ISWR_DIFF:
-		  return diffuse;
+		case SnGrids::ISWR_TERRAIN:
+			return terrain_shortwave;
+		case SnGrids::ILWR_TERRAIN:
+			return terrain_longwave;
+		case SnGrids::ISWR_DIFF:
+			return diffuse;
 		case SnGrids::ISWR_DIR:
 			return shortwave-diffuse-terrain_shortwave;
 		case SnGrids::WINDEROSIONDEPOSITION:
@@ -1226,7 +1228,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 						snow_stations_tmp.push_back( NULL );
 						continue;
 					}
-					snow_stations_tmp.push_back( new SnowStation(useCanopy, useSoil) );
+					snow_stations_tmp.push_back( new SnowStation(useCanopy, useSoil, true) );
 
 					SnowStation& snowPixel = *(snow_stations_tmp.back());
 					const bool is_special_point = SnowpackInterfaceWorker::is_special(pts, ix, iy);

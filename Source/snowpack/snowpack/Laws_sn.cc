@@ -63,18 +63,6 @@ std::vector<double> SnLaws::swa_pc; ///< fraction of sun power spectrum per band
 std::vector<double> SnLaws::swa_fb; ///< fudge_bohren
 //@}
 
-/**
- * @name SOIL PARAMETERS
- *
- * @brief Define Method and Coefficents for the computation of the influence of soil water
- * content on Evaporation from Bare Soil Layers:
- *  - Resistance Approach, see Laws_sn.c
- *  - Relative Humidity Approach, see Snowpack.cc
- *  - none, assume saturation pressure and no extra resistance
- */
-//@{
-//const SnLaws::soil_evap_model SnLaws::soil_evaporation = EVAP_RESISTANCE; //EVAP_RELATIVE_HUMIDITY
-
 /// @brief Minimum soil surface resistance, 50 sm-1 (van den Hurk et al, 2000)
 const double SnLaws::rsoilmin = 50.0;
 
@@ -691,17 +679,19 @@ double SnLaws::compWindGradientSnow(const ElementData& Edata, double& v_pump)
  * Kersten in <i>"Geotechnical Engeneering for Cold Regions"</i> article by Harlan and Nixon,
  * the water influence deduced from deVries and Afgan in <i>"Heat and Mass Transfer in the Biosphere"</i>.
  * @version 11.03: thermal conductivity made temperature dependent.
+ * @version 12.0: thermal conductivity model is now defined by a key SOIL_THERMAL_CONDUCTIVITY in SNOWPACK_ADVANCED
  * @param[in] Edata
  * @param[in] dvdz Wind velocity gradient (s-1)
  * @param[in] soil_thermal_conductivity Thermal conductivity model to use (either "FITTED" or any other string)
  * @return Soil thermal conductivity (W K-1 m-1)
  */
-double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const double& dvdz)
+double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const double& dvdz,
+                                           const std::string& soil_thermal_conductivity)
 {
 	double C_eff_soil;
 
 	//0 means no soil, 10000 means rock
-	if ((Edata.rg > 0.) && (Edata.rg < 10000.)) {
+	if ((Edata.rg > 0.) && (Edata.rg < 10000.) && soil_thermal_conductivity == "FITTED") {
 		static const double c_clay = 1.3, c_sand = 0.27;
 		static const double beta1 = 6., beta2 = 4.978, c_mineral = 2.9;
 		const double weight = (c_clay - Edata.soil[SOIL_K]) / (c_clay - c_sand);
@@ -989,12 +979,14 @@ double SnLaws::compSensibleHeatCoefficient(const CurrentMeteo& Mdata, const Snow
  * ql = beta*(eA - eS) Latent heat transfer. eA and eS are the vapor
  * pressures of air and snow, respectively.
  * @version 9Y.mm
+ * @param soil_evaporation The evaporation method to be used
  * @param Mdata
  * @param Xdata
  * @param height_of_meteo_values Height at which meteo parameters are measured
  * @return Latent heat flux (W m-2)
  */
-double SnLaws::compLatentHeat_Rh(const Snowpack::soil_evap_model soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
+double SnLaws::compLatentHeat_Rh(const std::string soil_evaporation,
+                                 const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
 {
 	const size_t nElems = Xdata.getNumberOfElements();
 	const double T_air = Mdata.ta;
@@ -1017,10 +1009,10 @@ double SnLaws::compLatentHeat_Rh(const Snowpack::soil_evap_model soil_evaporatio
 			/*
 			 * Soil evaporation can now be computed using the Relative Humidity approach below,
 			 * or a Resistance approach modifying the ql value instead of the eS. The latter
-			 * function is defined in compLatentHeat, and the Switch SnLaws::soil_evaporation is found
-			 * in Laws_sn.h
+			 * function is defined in compLatentHeat, and the soil_evaporation key is read
+			 * in snowpackCore/Snowpack.h
 			*/
-			if (soil_evaporation==Snowpack::EVAP_RELATIVE_HUMIDITY) {
+			if (soil_evaporation=="EVAP_RELATIVE_HUMIDITY") {
 				eS = Vp2 * Xdata.Edata[Xdata.SoilNode-1].RelativeHumidity();
 			} else {
 				eS = Vp2;
@@ -1049,7 +1041,7 @@ double SnLaws::compLatentHeat_Rh(const Snowpack::soil_evap_model soil_evaporatio
  * is used to reduce the heat exchange coefficient in the case of evaporation:
  * c = 1/(Ra + Rsoil), where Ra = 1/c as computed above, and
  * Rsoil = 50 [s/m] * field_capacity_soil / theta_soil. \n
- * A new switch SnLaws::soil_evaporation is defined in Constants.h to select method.
+ * A key SNOWPACK_ADVANCED::soil_evaporation is defined to select method.
  * The resistance formulation originates from van den Hurk et al.(2000) "Offline validation
  * of the ERA40 surface scheme": ECMWF Tech.Memo 295. \n
  * A difference from the RH method is that the surface vapour pressure is always assumed
@@ -1060,12 +1052,13 @@ double SnLaws::compLatentHeat_Rh(const Snowpack::soil_evap_model soil_evaporatio
  * method should work in a discretized model, it is important to consider the difference
  * between vapour pressure at the surface and the average of the top soil layer. \n
  * The soil resistance is only used for bare soil layers, when TSS >= 0C and eSurf >= eAtm
+ * @param[in] soil_evaporation The evaporation method to be used
  * @param[in] Mdata
  * @param[in] Xdata
  * @param[in] height_of_meteo_values Height at which meteo parameters are measured
  * @return Latent heat flux (W m-2)
  */
-double SnLaws::compLatentHeat(const Snowpack::soil_evap_model soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
+double SnLaws::compLatentHeat(const std::string soil_evaporation, const CurrentMeteo& Mdata, SnowStation& Xdata, const double& height_of_meteo_values)
 {
 	const size_t nElems = Xdata.getNumberOfElements();
 	const bool SurfSoil = (nElems > 0) ? (Xdata.Edata[nElems-1].theta[SOIL] > 0.) : false;
@@ -1073,7 +1066,7 @@ double SnLaws::compLatentHeat(const Snowpack::soil_evap_model soil_evaporation, 
 	double c = compSensibleHeatCoefficient(Mdata, Xdata, height_of_meteo_values);
 
 	if (SurfSoil && (Xdata.Ndata[nElems].T >= Xdata.Edata[nElems-1].meltfreeze_tk)
-		    && (soil_evaporation == Snowpack::EVAP_RESISTANCE)) {
+		    && (soil_evaporation == "EVAP_RESISTANCE")) {
 		const double Tse = (nElems > 0) ? (Xdata.Edata[nElems-1].Te) : Constants::meltfreeze_tk;
 		const double eA = Mdata.rh * Atmosphere::vaporSaturationPressure( Mdata.ta );
 		const double eS = Atmosphere::vaporSaturationPressure( Tse );
