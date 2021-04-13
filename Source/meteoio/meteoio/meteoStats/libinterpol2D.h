@@ -58,7 +58,7 @@ class Interpol2D {
 		                          const std::vector<StationData>& vecStations_in,
 		                          const DEMObject& dem, const size_t& nrOfNeighbors,
 		                          Grid2DObject& grid, const double& scale, const double& alpha=1.);
-		static void ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW);
+		static void ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW, const double& eta);
 		static void CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);

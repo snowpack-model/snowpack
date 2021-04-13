@@ -93,6 +93,7 @@ class DEMObject : public Grid2DObject {
 		int getDefaultAlgorithm() const;
 		void setUpdatePpt(const update_type& in_update_flag);
 		int getUpdatePpt() const;
+		void setCurvatureScale(const double& in_curvature_scale);
 
 		void update(const std::string& algorithm);
 		void update(const slope_type& algorithm=DFLT);
@@ -133,7 +134,7 @@ class DEMObject : public Grid2DObject {
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);
 		static double CalculateAzimuth(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double& no_slope=0.);
-		double getCurvature(double A[4][4]);
+		double getCurvature(double A[4][4], const double& scale=IOUtils::nodata);
 		void CalculateHick(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void CalculateFleming(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		void CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
@@ -145,10 +146,11 @@ class DEMObject : public Grid2DObject {
 		static double fillMissingGradient(const double& delta1, const double& delta2);
 		static void surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]);
 		static double avgHeight(const double& z1, const double &z2, const double& z3);
-		void getNeighbours(const size_t& i, const size_t& j, double A[4][4]) const;
+		void getNeighbours(const size_t& i, const size_t& j, double A[4][4], const double& scale=IOUtils::nodata) const;
 		double safeGet(const int& i, const int& j) const;
 
 		double max_shade_distance; ///< maximum distance to look for when computing a horizon
+		double curvature_scale; ///< length scale for curvature calculations
 		int update_flag;
 		slope_type dflt_algorithm;
 		size_t slope_failures; ///<contains the number of points that have an elevation but no slope
