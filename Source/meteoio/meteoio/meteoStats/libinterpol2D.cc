@@ -340,8 +340,9 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 * @param i_dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
 * @param VW 2D array of Wind Velocity to fill
 * @param DW 2D array of Wind Direction to fill
+* @param eta (curvature length scale)
 */
-void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW)
+void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW, const double& eta)
 {
 	static const double eps = 1e-3;
 	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(i_dem))){
@@ -356,8 +357,13 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 		intern_dem = new DEMObject(i_dem);
 		intern_dem->setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE|DEMObject::CURVATURE));
 		intern_dem->update();
+	} else if (eta!=IOUtils::nodata) {
+		intern_dem = new DEMObject(i_dem);
+		intern_dem->setCurvatureScale(eta);
+		intern_dem->setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE|DEMObject::CURVATURE));
+		intern_dem->update();
 	}
-	const DEMObject *dem = (recomputeDEM)? intern_dem : &i_dem;
+	const DEMObject *dem = (recomputeDEM || eta!=IOUtils::nodata)? intern_dem : &i_dem;
 
 	//calculate terrain slope in the direction of the wind
 	Array2D<double> Omega_s(VW.getNx(), VW.getNy());

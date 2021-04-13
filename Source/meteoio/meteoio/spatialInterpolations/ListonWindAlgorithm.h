@@ -34,6 +34,9 @@ namespace mio {
  * direction fields are altered by wind weighting factors and wind diverting factors (respectively) calculated
  * from the local curvature and slope (as taken from the DEM, see DEMObject). The wind diverting factor is
  * actually the same as in RyanAlgorithm. It takes the following arguments:
+ *  - ETA: this is a topographic length scale (m) for calculating the curvature. Recommended is to choose this length scale equal to approximately
+ *    half the wavelength of the topographic features within the domain (e.g., the distance from a typical ridge to the nearest valley) (default: equal
+ *    to grid cell size).
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
@@ -53,7 +56,7 @@ class ListonWindAlgorithm : public InterpolationAlgorithm {
 		void simpleWindInterpolate(const DEMObject& dem, Grid2DObject &VW, Grid2DObject &DW);
 		Trend trend;
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
-		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
+		double eta, scale, alpha; ///<a scale parameter for calculating curvature, a scale parameter to smooth out the 1/dist and an exponent
 		size_t param_idx;
 		bool inputIsAllZeroes;
 };
