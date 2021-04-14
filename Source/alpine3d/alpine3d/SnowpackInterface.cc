@@ -1495,179 +1495,78 @@ void SnowpackInterface::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedM
 
 
 /**
- * @brief Calculates explicit drifting snow by solving the 2-D advection equation using a first-order upwind finite difference scheme.
+ * @brief Calculates explicit drifting snow redistribution.
  * @author Nander Wever and Eric Keenan
  */
 mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass)
 {
 	// Retrieve and initialize grids
 	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) ); // Wind speed
-	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) ); // Wind direction
 	mio::Grid2DObject U( grid_VW, 0. );
 	mio::Grid2DObject V( grid_VW, 0. );
-	mio::Grid2DObject Um( grid_VW, 0. );
-	mio::Grid2DObject Vm( grid_VW, 0. );
-	mio::Grid2DObject dM( ErodedMass, 0. ); // Local mass perturbation due to drifting snow redistribution.
-	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass.
-	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass; // Output mass
-	grid_snowdrift_out(0.);
+	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass (kg/m^2).
+	mio::Grid2DObject Q_x( ErodedMass, 0. ); // Mass flux through a vertical gate in the x direction (kg/m/s)
+	mio::Grid2DObject Q_y( ErodedMass, 0. ); // Mass flux through a vertical gate in the y direction (kg/m/s) 
+	mio::Grid2DObject divQ( ErodedMass, 0. ); // (Divergence of Q (kg/m^2/s)
 
-	// Boundary condtion:
-	const bool ZeroFluxBC = false;
-
-	// Slowdown of particles relative to ambient wind speed
-	const double particle_slowdown = 2.;	// 2 m/s slowdown of the particle speed relative to wind speed
+	// Get constants
+	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
+	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
+	const double L = 10.; // Fetch length (m)
 
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
 		return ErodedMass;
 	}
 
-	// Calculate largest possible drifting snow sub time step such that the scheme is still stable and satisfies
-	// the CFL criterion.
-	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
-	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
-	const double C_max = 0.999;				// Courant number used to calculate sub time step.
-	double sub_dt = std::min(C_max * dx / (sqrt(2.) * grid_VW.grid2D.getMax() - particle_slowdown), dt); // Sub time step
-	std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
-
-	// Eroded mass must be greater than or equal to zero.
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (tmp_ErodedMass(ix, iy) == IOUtils::nodata || tmp_ErodedMass(ix, iy) < 0.) {
-				tmp_ErodedMass(ix, iy) = 0.;
+	// Loop over all grid cells to determine Q_x and Q_y
+	for (size_t iy=0; iy<=dimy; iy++) {
+		for (size_t ix=0; ix<=dimx; ix++) {
+			if ( grid_VW(ix, iy) == IOUtils::nodata || grid_VW(ix, iy) <= 0.) {
+				Q_x(ix, iy) = 0.;
+				Q_y(ix, iy) = 0.;
+			} else {
+				Q_x(ix, iy) = (tmp_ErodedMass(ix, iy) * L * U(ix, iy)) / (dt * grid_VW(ix, iy));
+				Q_y(ix, iy) = (tmp_ErodedMass(ix, iy) * L * V(ix, iy)) / (dt * grid_VW(ix, iy));
 			}
-
-			winderosiondeposition(ix, iy) = tmp_ErodedMass(ix, iy);
-			mns(ix, iy) = 0.;		// Reset mass deposition field
-
-			// Add a determination of u and v componets for each grid cell.
-			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., grid_VW(ix, iy) - particle_slowdown), grid_DW(ix, iy));
-			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., grid_VW(ix, iy) - particle_slowdown), grid_DW(ix, iy));
 		}
 	}
 
-	// Calculate wind speed on "staggered" grid
+	// Loop over all interior grid cells to calculate divQ using central difference.
 	for (size_t iy=1; iy<dimy; iy++) {
 		for (size_t ix=1; ix<dimx; ix++) {
-			// U-component
-			if (U(ix, iy) == IOUtils::nodata && U(ix-1, iy) == IOUtils::nodata) {
-				Um(ix, iy) = IOUtils::nodata;
-			} else if (U(ix-1, iy) == IOUtils::nodata) {
-				Um(ix, iy) = U(ix, iy);
-			} else if (U(ix, iy) == IOUtils::nodata) {
-				Um(ix, iy) = U(ix-1, iy);
-			} else {
-				Um(ix, iy) = 0.5 * (U(ix-1, iy) + U(ix, iy));
-			}
 
-			// V-component
-			if (V(ix, iy) == IOUtils::nodata && V(ix, iy-1) == IOUtils::nodata) {
-				Vm(ix, iy) = IOUtils::nodata;
-			} else if (V(ix, iy-1) == IOUtils::nodata) {
-				Vm(ix, iy) = V(ix, iy);
-			} else if (V(ix, iy) == IOUtils::nodata) {
-				Vm(ix, iy) = V(ix, iy-1);
-			} else {
-				Vm(ix, iy) = 0.5 * (V(ix, iy-1) + V(ix, iy));
-			}
+			divQ(ix, iy) = (Q_x(ix + 1, iy) - Q_x(ix - 1, iy)) / (2 * dx) + (Q_y(ix, iy + 1) - Q_y(ix, iy - 1)) / (2 * dx);
 		}
 	}
 
-	// Fill grid_snowdrift_out
-	for (double time_advance = 0.; time_advance < dt; time_advance += sub_dt) {
-		if (time_advance + sub_dt > dt) {
-			sub_dt = dt - time_advance;
-		}
+	// // Loop over all interior grid cells to calculate divQ using upwind difference.
+	// for (size_t iy=1; iy<dimy; iy++) {
+	// 	for (size_t ix=1; ix<dimx; ix++) {
 
-		// Calculate change of suspended mass
-		for (size_t iy=1; iy<dimy; iy++) {
-			for (size_t ix=1; ix<dimx; ix++) {
-				if (Um(ix, iy) != IOUtils::nodata && Vm(ix, iy) != IOUtils::nodata) {
-					if(Um(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
-						dM(ix-1, iy) -= deltaM;
-						dM(ix, iy)   += deltaM;
-					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
-						dM(ix-1, iy) += deltaM;
-						dM(ix, iy)   -= deltaM;
-					}
-					if(Vm(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy-1) -= deltaM;
-						dM(ix, iy)   += deltaM;
-					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy-1) += deltaM;
-						dM(ix, iy)   -= deltaM;
-					}
-				}
+	// 		if (U(ix, iy) > 0) {
+	// 			divQ(ix, iy) += (fabs(Q_x(ix - 1, iy)) - Q_x(ix, iy)) /  dx;
+	// 		}
+	// 		if (U(ix, iy) < 0) {
+	// 			divQ(ix, iy) += (fabs(Q_x(ix + 1, iy)) - Q_x(ix, iy)) /  dx;
+	// 		}
+	// 		if (V(ix, iy) > 0) {
+	// 			divQ(ix, iy) += (fabs(Q_y(ix, iy - 1)) - Q_y(ix, iy)) /  dx;
+	// 		}
+	// 		if (V(ix, iy) < 0) {
+	// 			divQ(ix, iy) += (fabs(Q_y(ix, iy + 1)) - Q_y(ix, iy)) /  dx;
+	// 		}
+	// 	}
+	// }
 
-				// Set boundary condition
-				if (!ZeroFluxBC) {
-					// If not zero-flux, then we set constant-flux (i.e., dM at boundaries == 0):
-					dM(0,iy) = 0.;
-					dM(dimx-1,iy) = 0.;
-					dM(ix,0) = 0.;
-					dM(ix,dimy-1) = 0.;
-				}
-			}
-		}
+	// Loop over grid cells to calculate ErodedMass perturbation
+	for (size_t iy=0; iy<=dimy; iy++) {
+		for (size_t ix=0; ix<=dimx; ix++) {
 
-		// Apply calculated change of suspended mass
-		for (size_t iy=0; iy<dimy; iy++) {
-			for (size_t ix=0; ix<dimx; ix++) {
-				// Negative suspended mass (tmp_ErodedMass) is impossible. If this field becomes negative, set it to zero.
-				if (ErodedMass(ix, iy) != IOUtils::nodata) {
-					tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
-					// This if statement could introduce a mass balance error.
-					if (tmp_ErodedMass(ix, iy) < 0.) {
-						//std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #1 ";
-						//std::cout << ix << " " << iy << " ";
-						//std::cout << tmp_ErodedMass(ix, iy) << "\n";
-						tmp_ErodedMass(ix, iy) = 0.;
-					}
-				}
-			}
+			tmp_ErodedMass(ix, iy) += -divQ(ix, iy) * dt;
+
 		}
 	}
 
-	double s1 = 0, s2 = 0., s3 = 0.;
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (dM(ix, iy) > 0.) {s1 += dM(ix, iy);}
-			if (ErodedMass(ix, iy) != IOUtils::nodata) {
-				// This line could introduce a mass balance error.
-				// The change in mass cannot be more than was originally eroded!
-				//    -95        - 10               -100
-				if (dM(ix, iy) - Constants::eps < -ErodedMass(ix, iy)) {
-					// std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-					// std::cout << ix << " " << iy << " ";
-					// std::cout << dM(ix, iy) << -ErodedMass(ix, iy) << "\n";
-					s2 += -ErodedMass(ix, iy) - dM(ix, iy);
-					dM(ix, iy) = -ErodedMass(ix, iy);
-				}
-			}
-			s3+=dM(ix, iy);
-		}
-	}
-	if(s2!=0. || s3!=0.) {
-		std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-		printf("%.10f (total pos: %.10f). Sum dM==%.10f\n", s2, s1, s3);
-		//s2+=s3;
-		s3=0.;
-	}
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (ErodedMass(ix, iy) != IOUtils::nodata) {
-				if (dM(ix, iy) > 0.) {dM(ix, iy) += (-s2*(dM(ix, iy)/s1));}
-				winderosiondeposition(ix, iy) = dM(ix, iy);
-				grid_snowdrift_out(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
-				if(grid_snowdrift_out(ix, iy) < Constants::eps) grid_snowdrift_out(ix, iy) = 0.;
-			}
-		}
-	}
-
-	return grid_snowdrift_out;
+	return tmp_ErodedMass;
 }
