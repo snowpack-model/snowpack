@@ -1520,8 +1520,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	}
 
 	// Loop over all grid cells to determine Q_x and Q_y
-	for (size_t iy=0; iy<=dimy; iy++) {
-		for (size_t ix=0; ix<=dimx; ix++) {
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
 			if ( grid_VW(ix, iy) == IOUtils::nodata || grid_VW(ix, iy) <= 0.) {
 				Q_x(ix, iy) = 0.;
 				Q_y(ix, iy) = 0.;
@@ -1533,16 +1533,16 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	}
 
 	// Loop over all interior grid cells to calculate divQ using central difference.
-	for (size_t iy=1; iy<dimy; iy++) {
-		for (size_t ix=1; ix<dimx; ix++) {
+	for (size_t iy=1; iy<dimy-1; iy++) {
+		for (size_t ix=1; ix<dimx-1; ix++) {
 
 			divQ(ix, iy) = (Q_x(ix + 1, iy) - Q_x(ix - 1, iy)) / (2 * dx) + (Q_y(ix, iy + 1) - Q_y(ix, iy - 1)) / (2 * dx);
 		}
 	}
 
 	// // Loop over all interior grid cells to calculate divQ using upwind difference.
-	// for (size_t iy=1; iy<dimy; iy++) {
-	// 	for (size_t ix=1; ix<dimx; ix++) {
+	// for (size_t iy=1; iy<dimy-1; iy++) {
+	// 	for (size_t ix=1; ix<dimx-1; ix++) {
 
 	// 		if (U(ix, iy) > 0) {
 	// 			divQ(ix, iy) += (fabs(Q_x(ix - 1, iy)) - Q_x(ix, iy)) /  dx;
@@ -1560,8 +1560,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// }
 
 	// Loop over grid cells to calculate ErodedMass perturbation
-	for (size_t iy=0; iy<=dimy; iy++) {
-		for (size_t ix=0; ix<=dimx; ix++) {
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
 
 			tmp_ErodedMass(ix, iy) += -divQ(ix, iy) * dt;
 
