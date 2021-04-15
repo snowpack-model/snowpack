@@ -1502,6 +1502,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 {
 	// Retrieve and initialize grids
 	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) ); // Wind speed
+	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) ); // Wind direction
 	mio::Grid2DObject U( grid_VW, 0. );
 	mio::Grid2DObject V( grid_VW, 0. );
 	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass (kg/m^2).
@@ -1517,6 +1518,14 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
 		return ErodedMass;
+	}
+
+	// Loop over all grid cells to determine U and V
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
+			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., grid_VW(ix, iy)), grid_DW(ix, iy));
+			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., grid_VW(ix, iy)), grid_DW(ix, iy));
+		}
 	}
 
 	// Loop over all grid cells to determine Q_x and Q_y
@@ -1535,7 +1544,6 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// Loop over all interior grid cells to calculate divQ using central difference.
 	for (size_t iy=1; iy<dimy-1; iy++) {
 		for (size_t ix=1; ix<dimx-1; ix++) {
-
 			divQ(ix, iy) = (Q_x(ix + 1, iy) - Q_x(ix - 1, iy)) / (2 * dx) + (Q_y(ix, iy + 1) - Q_y(ix, iy - 1)) / (2 * dx);
 		}
 	}
@@ -1562,9 +1570,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// Loop over grid cells to calculate ErodedMass perturbation
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
-
 			tmp_ErodedMass(ix, iy) += -divQ(ix, iy) * dt;
-
 		}
 	}
 
