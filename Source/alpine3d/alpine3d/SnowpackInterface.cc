@@ -1495,7 +1495,7 @@ void SnowpackInterface::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedM
 
 
 /**
- * @brief Calculates explicit drifting snow redistribution.
+ * @brief Calculates drifting snow redistribution using a divergence approach.
  * @author Nander Wever and Eric Keenan
  */
 mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass)
@@ -1513,7 +1513,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// Get constants
 	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
 	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
-	const double L = 10.; // Fetch length (m)
+	const double L = 10.; // Fetch length (m). Note that this is currently hard coded to 10 m. This should be replaced with a variable determined by the configuration file.
 
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
@@ -1544,32 +1544,14 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// Loop over all interior grid cells to calculate divQ using central difference.
 	for (size_t iy=1; iy<dimy-1; iy++) {
 		for (size_t ix=1; ix<dimx-1; ix++) {
-			divQ(ix, iy) = (Q_x(ix + 1, iy) - Q_x(ix - 1, iy)) / (2 * dx) + (Q_y(ix, iy + 1) - Q_y(ix, iy - 1)) / (2 * dx);
+			divQ(ix, iy) = (Q_x(ix + 1, iy) - Q_x(ix - 1, iy)) / (2. * dx) + (Q_y(ix, iy + 1) - Q_y(ix, iy - 1)) / (2. * dx);
 		}
 	}
-
-	// // Loop over all interior grid cells to calculate divQ using upwind difference.
-	// for (size_t iy=1; iy<dimy-1; iy++) {
-	// 	for (size_t ix=1; ix<dimx-1; ix++) {
-
-	// 		if (U(ix, iy) > 0) {
-	// 			divQ(ix, iy) += (fabs(Q_x(ix - 1, iy)) - Q_x(ix, iy)) /  dx;
-	// 		}
-	// 		if (U(ix, iy) < 0) {
-	// 			divQ(ix, iy) += (fabs(Q_x(ix + 1, iy)) - Q_x(ix, iy)) /  dx;
-	// 		}
-	// 		if (V(ix, iy) > 0) {
-	// 			divQ(ix, iy) += (fabs(Q_y(ix, iy - 1)) - Q_y(ix, iy)) /  dx;
-	// 		}
-	// 		if (V(ix, iy) < 0) {
-	// 			divQ(ix, iy) += (fabs(Q_y(ix, iy + 1)) - Q_y(ix, iy)) /  dx;
-	// 		}
-	// 	}
-	// }
 
 	// Loop over grid cells to calculate ErodedMass perturbation
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
+			winderosiondeposition(ix, iy) += -divQ(ix, iy) * dt;
 			tmp_ErodedMass(ix, iy) += -divQ(ix, iy) * dt;
 		}
 	}
