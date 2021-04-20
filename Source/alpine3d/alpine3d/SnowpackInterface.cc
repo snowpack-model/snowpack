@@ -1551,8 +1551,11 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	// Loop over grid cells to calculate ErodedMass perturbation
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
-			winderosiondeposition(ix, iy) += -divQ(ix, iy) * dt;
-			tmp_ErodedMass(ix, iy) += -divQ(ix, iy) * dt;
+			double dM = -divQ(ix, iy) * dt;
+			if (fabs(dM) > Constants::eps) {
+				winderosiondeposition(ix, iy) += dM;
+				tmp_ErodedMass(ix, iy) += dM;
+			}
 		}
 	}
 
