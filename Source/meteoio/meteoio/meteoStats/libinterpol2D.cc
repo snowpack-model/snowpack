@@ -642,9 +642,9 @@ void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& 
 /**
  * @brief compute the max slope angle looking toward the horizon in a given direction.
  * The search distance is limited between dmin and dmax from the starting point (i,j) and the elvation difference
- * must be at least 2 meters (otherwise it is considered flat). If a slope start to be positive/negative before turning negative/positive,
+ * must be at least 2 meters (otherwise it is considered flat). If a slope start to be positive before turning negative,
  * the first one would be returned (so a pixel just behind a ridge would still see an uphill slope to the ridge even if the
- * slope behind the ridge would be greater).
+ * slope behind the ridge would be greater). However, a negative slope may turn positive.
  *
  * This is exactly identical with the Winstral Sx factor for a single direction. Or the upwind slope for Ryan.
  * @param[in] dem DEM to work with
@@ -664,7 +664,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 	const double inv_dmax = 1./dmax;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
-	static const double altitude_thresh = 1.;
+	static const double altitude_thresh = 0.1;
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
 	const int ncols = static_cast<int>(dem.getNx()), nrows = static_cast<int>(dem.getNy());
@@ -684,7 +684,8 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 
 				const double tan_slope = delta_elev*inv_distance;
 				//update max_tan_sx if necessary. We compare and tan(sx) in order to avoid computing atan()
-				if (max_tan_slope>=0. && tan_slope>max_tan_slope) max_tan_slope = tan_slope;
+				//note: we stay positive when started positive, but we allow a switch from negative to positive
+				if ((max_tan_slope>=0. && tan_slope>max_tan_slope) || (max_tan_slope<=0. && tan_slope>0.)) max_tan_slope = tan_slope;
 				if (max_tan_slope<=0. && tan_slope<max_tan_slope) max_tan_slope = tan_slope;
 			}
 		}
@@ -852,6 +853,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	//erosion: fully eroded at min_sx
 	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
+		//const double sx = std::min(max_sx, std::max(min_sx, Sx(ii)));
 		if (sx==IOUtils::nodata || (sx<0 && VW(ii)<vw_thresh)) continue; //low wind speed pixels don't contribute to erosion
 		double &val = grid(ii);
 		if (sx<0.) {
@@ -872,6 +874,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const Gr
 	const double ratio = sum_erosion/sum_deposition;
 	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
+		//const double sx = std::min(max_sx, std::max(min_sx, Sx(ii)));
 		if (sx==IOUtils::nodata) continue;
 		double &val = grid(ii);
 		if (sx>0.) {
@@ -905,6 +908,7 @@ void Interpol2D::WinstralDrift(const DEMObject& dem, const Grid2DObject& DW, con
 
 	for (size_t ii=0; ii<Sx.size(); ii++) {
 		const double sx = Sx(ii);
+
 		double &val = grid(ii);
 		if (sx > 0.) {
 			val = -sx;
@@ -913,6 +917,7 @@ void Interpol2D::WinstralDrift(const DEMObject& dem, const Grid2DObject& DW, con
 		} else {
 			val = VW(ii);
 		}
+		//val = sx;	//HACK: this line can be activated to return wind exposure factor instead! (For plotting and showcasing how it works).
 	}
 }
 

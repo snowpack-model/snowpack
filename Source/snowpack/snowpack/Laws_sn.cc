@@ -192,7 +192,7 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 {
 	current_variant = variant;
 
-	if (current_variant == "ANTARCTICA" || current_variant == "POLAR") {
+	if (current_variant == "ANTARCTICA" || current_variant == "POLAR" || current_variant == "SEAICE") {
 		t_term = t_term_arrhenius_critical;
 		visc = visc_dflt;
 		visc_ice_fudge = 9.45;
@@ -1322,13 +1322,13 @@ double SnLaws::NewSnowViscosityLehning(const ElementData& Edata)
  */
 double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 {
-	const double Q = (current_variant == "POLAR") ? (16080.) : (67000.); // Activation energy for defects in ice (J mol-1)
+	const double Q = (current_variant == "POLAR" || current_variant == "SEAICE") ? (16080.) : (67000.); // Activation energy for defects in ice (J mol-1)
 
 	switch (SnLaws::t_term) {
 	case t_term_arrhenius_critical:
 	{
-		const double Q_fac = (current_variant == "POLAR") ? (0.24) : (0.39); // Adjust Q to snow; from Schweizer et al. (2004): 0.24
-		const double criticalExp = (current_variant == "POLAR") ? (0.3) : (0.7); //0.5; //0.3; //
+		const double Q_fac = (current_variant == "POLAR" || current_variant == "SEAICE") ? (0.24) : (0.39); // Adjust Q to snow; from Schweizer et al. (2004): 0.24
+		const double criticalExp = (current_variant == "POLAR" || current_variant == "SEAICE") ? (0.3) : (0.7); //0.5; //0.3; //
 		const double T_r = 265.15; // Reference temperature (K), from Schweizer et al. (2004)
 		return ((1. / SnLaws::ArrheniusLaw(Q_fac * Q, Te, T_r))
 		             * (0.3 * pow((Constants::meltfreeze_tk - Te), criticalExp) + 0.4));
@@ -1718,7 +1718,7 @@ double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
  */
 double SnLaws::AirEmissivity(const double& ilwr, const double& ta, const std::string& variant)
 {
-	const double min_emissivity = (variant != "ANTARCTICA" && variant != "POLAR") ? 0.55 : 0.31;
+	const double min_emissivity = (variant != "ANTARCTICA" && variant != "POLAR" && variant != "SEAICE") ? 0.55 : 0.31;
 
 	if(ilwr==IOUtils::nodata || ta==IOUtils::nodata) return min_emissivity;
 

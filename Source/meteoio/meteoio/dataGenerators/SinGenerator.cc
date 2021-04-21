@@ -32,6 +32,7 @@ void SinGenerator::parse_args(const std::vector< std::pair<std::string, std::str
 			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
 
 			if (type_str=="YEARLY") type='y';
+			else if (type_str=="WEEKLY") type='w';
 			else if (type_str=="DAILY") type='d';
 			else
 				throw InvalidArgumentException("Invalid period \""+type_str+"\" specified for "+where, AT);
@@ -62,6 +63,11 @@ bool SinGenerator::generate(const size_t& param, MeteoData& md)
 		double t; //also, the minimum must occur at 0 if phase=0
 		if (type=='y') {
 			t = (static_cast<double>(md.date.getJulianDayNumber()) - phase*365.25) / 366.25 - .25;
+		} else if (type=='w') {
+			const double julian = md.date.getJulian();
+			const double deg = ((int(julian)%7)+(julian-int(julian)))*360/7.;
+			return std::max(0., std::min(359.999, deg));
+			t = (julian/7 - phase) + .25;
 		} else if (type=='d') {
 			const double julian = md.date.getJulian();
 			t = (julian - Optim::intPart(julian) - phase) + .25; //watch out: julian day starts at noon!

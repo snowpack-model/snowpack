@@ -358,6 +358,7 @@ void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string&
 		fout << "xllcorner " << setw(23-10) << setprecision(3) << llcorner.getEasting() << "\n";
 		fout << "yllcorner " << setw(23-10) << setprecision(3) << llcorner.getNorthing() << "\n";
 		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << "\n";
+fout << setprecision(8);
 		fout << "NODATA_value " << (int)(IOUtils::nodata) << "\n";
 
 		if (nrows>0) {

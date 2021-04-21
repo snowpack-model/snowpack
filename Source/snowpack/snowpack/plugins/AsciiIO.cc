@@ -930,8 +930,9 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 
 	// Are we using sea ice variant? Check if the object is defined via the pointer:
 	const bool SeaIce = (Xdata.Seaice==NULL)?(false):(true);
+	const bool fullOutput = false;
 	// Offset profile [m]:
-	const double offset = (SeaIce)?(4.):(0.);
+	const double offset = (SeaIce)?(5.):(0.);
 	// Check reference level: either a marked reference level, or, if non existent, the sea level (if sea ice module is used), otherwise 0:
 	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==Constants::undefined || !useReferenceLayer  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  - Xdata.Ground);
 	// Number of fill elements for offset (only 0 or 1 is supported now):
@@ -965,10 +966,12 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 	for (size_t e = 0; e < nE; e++)
 		fout << "," << std::fixed << std::setprecision(2) << IOUtils::K_TO_C(EMS[e].Te);
-	// 0504: element ID
-	fout << "\n0504," << nE;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::fixed << std::setprecision(0) << EMS[e].ID;
+	if (fullOutput) {
+		// 0504: element ID
+		fout << "\n0504," << nE;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(0) << EMS[e].ID;
+	}
 	// 0506: liquid water content by volume (%)
 	fout << "\n0506," << nE + Noffset;
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
@@ -981,41 +984,43 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		for (size_t e = 0; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta[WATER_PREF];
 	}
-	// 0508: snow dendricity (1)
-	if (no_snow) {
-		fout << "\n0508,1,0";
-	} else {
-		fout << "\n0508," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << EMS[e].dd;
-	}
-	// 0509: snow sphericity (1)
-	if (no_snow) {
-		fout << "\n0509,1,0";
-	} else {
-		fout << "\n0509," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << EMS[e].sp;
-	}
-	// 0510: snow coordination number (1)
-	if (no_snow) {
-		fout << "\n0510,1,0";
-	} else {
-		fout << "\n0510," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(1) << EMS[e].N3;
-	}
-	// 0511: snow bond size (mm)
-	if (no_snow) {
-		fout << "\n0511,1,0";
-	} else {
-		fout << "\n0511," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << 2.*EMS[e].rb;
+	if (fullOutput) {
+		// 0508: snow dendricity (1)
+		if (no_snow) {
+			fout << "\n0508,1,0";
+		} else {
+			fout << "\n0508," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << EMS[e].dd;
+		}
+		// 0509: snow sphericity (1)
+		if (no_snow) {
+			fout << "\n0509,1,0";
+		} else {
+			fout << "\n0509," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << EMS[e].sp;
+		}
+		// 0510: snow coordination number (1)
+		if (no_snow) {
+			fout << "\n0510,1,0";
+		} else {
+			fout << "\n0510," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(1) << EMS[e].N3;
+		}
+		// 0511: snow bond size (mm)
+		if (no_snow) {
+			fout << "\n0511,1,0";
+		} else {
+			fout << "\n0511," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << 2.*EMS[e].rb;
+		}
 	}
 	// 0512: snow grain size (mm)
 	if (no_snow) {
@@ -1052,95 +1057,106 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 	for (size_t e = 0; e < nE; e++)
 		fout << "," << std::fixed << std::setprecision(0) << 100.*EMS[e].theta[AIR];
-	// 0517: stress (kPa)
-	fout << "\n0517," << nE + Noffset;
-	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::scientific << std::setprecision(3) << 1.e-3*EMS[e].C;
-	// 0518: viscosity (GPa s)
-	fout << "\n0518," << nE + Noffset;
-	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::scientific << std::setprecision(3) << 1.e-9*EMS[e].k[SETTLEMENT];
-	// 0519: soil volume fraction (%)
-	fout << "\n0519," << nE + Noffset;
-	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::fixed << std::setprecision(0) <<100.*EMS[e].theta[SOIL];
-	// 0520: temperature gradient (K m-1)
-	fout << "\n0520," << nE + Noffset;
-	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::scientific << std::setprecision(3) << EMS[e].gradT;
-	// 0521: thermal conductivity (W K-1 m-1)
-	fout << "\n0521," << nE + Noffset;
-	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::scientific << std::setprecision(3) << EMS[e].k[TEMPERATURE];
-	// 0522: snow absorbed shortwave radiation (W m-2)
-	if (no_snow) {
-		fout << "\n0522,1,0";
-	} else {
-		fout << "\n0522," << nE-Xdata.SoilNode + Noffset;
+	if (fullOutput) {
+		// 0517: stress (kPa)
+		fout << "\n0517," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(1) << EMS[e].sw_abs;
-	}
-	// 0523: snow viscous deformation rate (1.e-6 s-1)
-	if (no_snow) {
-		fout << "\n0523,1,0";
-	} else {
-		fout << "\n0523," << nE-Xdata.SoilNode + Noffset;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::scientific << std::setprecision(3) << 1.e-3*EMS[e].C;
+		// 0518: viscosity (GPa s)
+		fout << "\n0518," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(1) << 1.e6*EMS[e].Eps_vDot;
-	}
-	// 0530: position (cm) and minimum stability indices
-	fout << "\n0530,8";
-	fout << "," << std::fixed << +Xdata.S_class1 << "," << +Xdata.S_class2; //force printing type char as numerica value
-	fout << "," <<  std::setprecision(1) << M_TO_CM(Xdata.z_S_d/cos_sl) << "," << std::setprecision(2) << Xdata.S_d;
-	fout << "," << std::fixed << std::setprecision(1) << M_TO_CM(Xdata.z_S_n/cos_sl) << "," << std::setprecision(2) <<  Xdata.S_n;
-	fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_s/cos_sl) << "," << std::fixed << std::setprecision(2) << Xdata.S_s;
-	// 0531: deformation rate stability index Sdef
-	if (no_snow) {
-		fout << "\n0531,1,0";
-	} else {
-		fout << "\n0531," << nE-Xdata.SoilNode + Noffset;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::scientific << std::setprecision(3) << 1.e-9*EMS[e].k[SETTLEMENT];
+		// 0519: soil volume fraction (%)
+		fout << "\n0519," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << EMS[e].S_dr;
-	}
-	// 0532: natural stability index Sn38
-	if (no_snow) {
-		fout << "\n0532,1,0";
-	} else {
-		fout << "\n0532," << nE-Xdata.SoilNode + Noffset;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(0) <<100.*EMS[e].theta[SOIL];
+		// 0520: temperature gradient (K m-1)
+		fout << "\n0520," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode;  e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_n;
-	}
-	// 0533: stability index Sk38
-	if (no_snow) {
-		fout << "\n0533,1,0";
-	} else {
-		fout << "\n0533," << nE-Xdata.SoilNode + Noffset;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::scientific << std::setprecision(3) << EMS[e].gradT;
+		// 0521: thermal conductivity (W K-1 m-1)
+		fout << "\n0521," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_s;
-	}
-	// 0534: hand hardness ...
-	if (no_snow) {
-		fout << "\n0534,1,0";
-	} else {
-		fout << "\n0534," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		if (r_in_n) { // ... either converted to newtons according to the ICSSG 2009
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::scientific << std::setprecision(3) << EMS[e].k[TEMPERATURE];
+		// 0522: snow absorbed shortwave radiation (W m-2)
+		if (no_snow) {
+			fout << "\n0522,1,0";
+		} else {
+			fout << "\n0522," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 			for (size_t e = Xdata.SoilNode; e < nE; e++)
-				fout << "," << std::fixed << std::setprecision(1) << -1.*(19.3*pow(EMS[e].hard, 2.4));
-		} else { // ... or in index steps (1)
-			for (size_t e = Xdata.SoilNode; e < nE; e++)
-				fout << "," << std::fixed << std::setprecision(1) << -EMS[e].hard;
+				fout << "," << std::fixed << std::setprecision(1) << EMS[e].sw_abs;
 		}
+		// 0523: snow viscous deformation rate (1.e-6 s-1)
+		if (no_snow) {
+			fout << "\n0523,1,0";
+		} else {
+			fout << "\n0523," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(1) << 1.e6*EMS[e].Eps_vDot;
+		}
+		// 0530: position (cm) and minimum stability indices
+		fout << "\n0530,8";
+		fout << "," << std::fixed << +Xdata.S_class1 << "," << +Xdata.S_class2; //force printing type char as numerica value
+		fout << "," <<  std::setprecision(1) << M_TO_CM(Xdata.z_S_d/cos_sl) << "," << std::setprecision(2) << Xdata.S_d;
+		fout << "," << std::fixed << std::setprecision(1) << M_TO_CM(Xdata.z_S_n/cos_sl) << "," << std::setprecision(2) <<  Xdata.S_n;
+		fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_s/cos_sl) << "," << std::fixed << std::setprecision(2) << Xdata.S_s;
+		// 0531: deformation rate stability index Sdef
+		if (no_snow) {
+			fout << "\n0531,1,0";
+		} else {
+			fout << "\n0531," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << EMS[e].S_dr;
+		}
+		// 0532: natural stability index Sn38
+		if (no_snow) {
+			fout << "\n0532,1,0";
+		} else {
+			fout << "\n0532," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode;  e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_n;
+		}
+		// 0533: stability index Sk38
+		if (no_snow) {
+			fout << "\n0533,1,0";
+		} else {
+			fout << "\n0533," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_s;
+		}
+		// 0534: hand hardness ...
+		if (no_snow) {
+			fout << "\n0534,1,0";
+		} else {
+			fout << "\n0534," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			if (r_in_n) { // ... either converted to newtons according to the ICSSG 2009
+				for (size_t e = Xdata.SoilNode; e < nE; e++)
+					fout << "," << std::fixed << std::setprecision(1) << -1.*(19.3*pow(EMS[e].hard, 2.4));
+			} else { // ... or in index steps (1)
+				for (size_t e = Xdata.SoilNode; e < nE; e++)
+					fout << "," << std::fixed << std::setprecision(1) << -EMS[e].hard;
+			}
+		}
+	}
+	// 0535: optical equivalent grain size OGS (mm)
+	if (no_snow) {
+		fout << "\n0535,1,0";
+	} else {
+		fout << "\n0535," << nE-Xdata.SoilNode + Noffset;
+		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(2) << EMS[e].ogs;
 	}
 	if (Xdata.Seaice!=NULL) {
 		// 0540: bulk salinity (g/kg)
@@ -1162,19 +1178,12 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 				fout << "," << std::fixed << std::setprecision(2) << ((EMS[e].theta[WATER] == 0.) ? (mio::IOUtils::nodata) : (EMS[e].salinity / EMS[e].theta[WATER]));
 		}
 	}
-	// 0535: optical equivalent grain size OGS (mm)
-	if (no_snow) {
-		fout << "\n0535,1,0";
-	} else {
-		fout << "\n0535," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << EMS[e].ogs;
+	if (fullOutput) {
+		if (variant == "CALIBRATION")
+			writeProfileProAddCalibration(Xdata, fout);
+		else
+			writeProfileProAddDefault(Xdata, fout);
 	}
-	if (variant == "CALIBRATION")
-		writeProfileProAddCalibration(Xdata, fout);
-	else
-		writeProfileProAddDefault(Xdata, fout);
 
 	fout.close();
 }
@@ -2366,6 +2375,7 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 
 void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) const
 {
+	const bool fullOutput = false;
 	const string stationname = Xdata.meta.getStationName();
 	fout << "[STATION_PARAMETERS]";
 	fout <<  "\nStationName= " << stationname;
@@ -2388,56 +2398,66 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)";
 	fout << "\n0502,nElems,element density (kg m-3)";
 	fout << "\n0503,nElems,element temperature (degC)";
-	fout << "\n0504,nElems,element ID (1)";
+	if (fullOutput) {
+		fout << "\n0504,nElems,element ID (1)";
+	}
 	fout << "\n0506,nElems,liquid water content by volume (%)";
 	if(enable_pref_flow) fout << "\n0507,nElems,liquid preferential flow water content by volume (%)";
-	fout << "\n0508,nElems,dendricity (1)";
-	fout << "\n0509,nElems,sphericity (1)";
-	fout << "\n0510,nElems,coordination number (1)";
-	fout << "\n0511,nElems,bond size (mm)";
+	if (fullOutput) {
+		fout << "\n0508,nElems,dendricity (1)";
+		fout << "\n0509,nElems,sphericity (1)";
+		fout << "\n0510,nElems,coordination number (1)";
+		fout << "\n0511,nElems,bond size (mm)";
+	}
 	fout << "\n0512,nElems,grain size (mm)";
 	fout << "\n0513,nElems,grain type (Swiss Code F1F2F3)";
 	fout << "\n0514,3,grain type, grain size (mm), and density (kg m-3) of SH at surface";
 	fout << "\n0515,nElems,ice volume fraction (%)";
 	fout << "\n0516,nElems,air volume fraction (%)";
-	fout << "\n0517,nElems,stress in (kPa)";
-	fout << "\n0518,nElems,viscosity (GPa s)";
-	fout << "\n0519,nElems,soil volume fraction (%)";
-	fout << "\n0520,nElems,temperature gradient (K m-1)";
-	fout << "\n0521,nElems,thermal conductivity (W K-1 m-1)";
-	fout << "\n0522,nElems,absorbed shortwave radiation (W m-2)";
-	fout << "\n0523,nElems,viscous deformation rate (1.e-6 s-1)";
-	fout << "\n0530,8,position (cm) and minimum stability indices:";
-	fout << "\n       profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38";
-	fout << "\n0531,nElems,deformation rate stability index Sdef";
-	fout << "\n0532,nElems,natural stability index Sn38";
-	fout << "\n0533,nElems,stability index Sk38";
-	fout << "\n0534,nElems,hand hardness either (N) or index steps (1)";
+	if (fullOutput) {
+		fout << "\n0517,nElems,stress in (kPa)";
+		fout << "\n0518,nElems,viscosity (GPa s)";
+		fout << "\n0519,nElems,soil volume fraction (%)";
+		fout << "\n0520,nElems,temperature gradient (K m-1)";
+		fout << "\n0521,nElems,thermal conductivity (W K-1 m-1)";
+		fout << "\n0522,nElems,absorbed shortwave radiation (W m-2)";
+		fout << "\n0523,nElems,viscous deformation rate (1.e-6 s-1)";
+		fout << "\n0530,8,position (cm) and minimum stability indices:";
+		fout << "\n       profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38";
+		fout << "\n0531,nElems,deformation rate stability index Sdef";
+		fout << "\n0532,nElems,natural stability index Sn38";
+		fout << "\n0533,nElems,stability index Sk38";
+		fout << "\n0534,nElems,hand hardness either (N) or index steps (1)";
+	}
 	fout << "\n0535,nElems,optical equivalent grain size (mm)";
 	if (Xdata.Seaice != NULL) {
 		fout << "\n0540,nElems,bulk salinity (g/kg)";
 		fout << "\n0541,nElems,brine salinity (g/kg)";
 	}
-	fout << "\n0601,nElems,snow shear strength (kPa)";
-	fout << "\n0602,nElems,grain size difference (mm)";
-	fout << "\n0603,nElems,hardness difference (1)";
-	fout << "\n0604,nElems,ssi";
-	fout << "\n0605,nElems,inverse texture index ITI (Mg m-4)";
-	fout << "\n0606,nElems,critical cut length (m)";
-	if (metamorphism_model == "NIED") {
-		fout << "\n0621,nElems,dry snow metamorphism factor (dsm)";
-		fout << "\n0622,nElems,Sigdsm";
-		fout << "\n0623,nElems,S_dsm";
+	if (fullOutput) {
+		fout << "\n0601,nElems,snow shear strength (kPa)";
+		fout << "\n0602,nElems,grain size difference (mm)";
+		fout << "\n0603,nElems,hardness difference (1)";
+		fout << "\n0604,nElems,ssi";
+		fout << "\n0605,nElems,inverse texture index ITI (Mg m-4)";
+		fout << "\n0606,nElems,critical cut length (m)";
 	}
-	if (variant == "CALIBRATION") {
-		fout << "\n0701,nElems,SNOWPACK: total settling rate (% h-1)";
-		fout << "\n0702,nElems,SNOWPACK: settling rate due to load (% h-1)";
-		fout << "\n0703,nElems,SNOWPACK: settling rate due to metamorphism (sig0) (% h-1)";
-		fout << "\n0704,nElems,SNOWPACK: ratio -Sig0 to load EMS[e].C (1)";
-		fout << "\n0705,nElems,SNOWPACK: bond to grain ratio (1)";
-		fout << "\n0891,nElems,SNTHERM: settling rate due to load (% h-1)";
-		fout << "\n0892,nElems,SNTHERM: settling rate due to metamorphism (% h-1)";
-		fout << "\n0893,nElems,SNTHERM: viscosity (GPa s)";
+	if (fullOutput) {
+		if (metamorphism_model == "NIED") {
+			fout << "\n0621,nElems,dry snow metamorphism factor (dsm)";
+			fout << "\n0622,nElems,Sigdsm";
+			fout << "\n0623,nElems,S_dsm";
+		}
+		if (variant == "CALIBRATION") {
+			fout << "\n0701,nElems,SNOWPACK: total settling rate (% h-1)";
+			fout << "\n0702,nElems,SNOWPACK: settling rate due to load (% h-1)";
+			fout << "\n0703,nElems,SNOWPACK: settling rate due to metamorphism (sig0) (% h-1)";
+			fout << "\n0704,nElems,SNOWPACK: ratio -Sig0 to load EMS[e].C (1)";
+			fout << "\n0705,nElems,SNOWPACK: bond to grain ratio (1)";
+			fout << "\n0891,nElems,SNTHERM: settling rate due to load (% h-1)";
+			fout << "\n0892,nElems,SNTHERM: settling rate due to metamorphism (% h-1)";
+			fout << "\n0893,nElems,SNTHERM: viscosity (GPa s)";
+		}
 	}
 	fout << "\n\n[DATA]";
 }

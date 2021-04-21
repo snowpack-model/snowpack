@@ -59,7 +59,7 @@ using namespace mio;
 const double ReSolver1d::max_theta_ice = 0.99;	//An ice pore space of around 5% is a reasonable value: K. M. Golden et al. The Percolation Phase Transition in Sea Ice, Science 282, 2238 (1998), doi: 10.1126/science.282.5397.2238
 
 //Setting convergence criteria and numerical limits
-const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-5;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion
+const double ReSolver1d::REQUIRED_ACCURACY_H = 1E-3;		//Required accuracy for the Richard solver: this is for the delta h convergence criterion
 const double ReSolver1d::REQUIRED_ACCURACY_THETA = 1E-5;	//Required accuracy for the Richard solver: this is for the delta theta convergence criterion. It is recommended to adjust PhaseChange::RE_theta_r in PhaseChanges.cc in case this value is changed.
 								//Huang et al. (1996) proposes 0.0001 here (=1E-4). 1E-4 causes some mass balance problems. Therefore, it is set to 1E-5.
 const double ReSolver1d::convergencecriterionthreshold = 0.8;	//Based on this value of theta_dim, either theta-based convergence is chosen, or h-based. Note we need to make this destinction, beacuse theta-based does not work close to saturation or with ponding.
@@ -540,7 +540,7 @@ std::vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
 		Salinity.dz_up[i] = dz_up[i];
 		Salinity.dz_down[i] = dz_down[i];
 		Salinity.theta1[i] = theta_n[i];
-		Salinity.D[i] = 1E-9;	// See Poisson
+		Salinity.D[i] = 1E-10;
 		switch (SALINITY_MIXING) {
 			case NONE:
 			{
@@ -934,7 +934,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			}
 
 			theta_i_n[i]=0.;						//This sounds strange for snow, but the idea is that ice in snow functions as soil in soil (being the matrix)
-			EMS[i].meltfreeze_tk=Constants::meltfreeze_tk;	//For snow, we currently don't have anything with freezing point depression, as we have in soil.
+			EMS[i].meltfreeze_tk = -SeaIce::mu * EMS[i].salinity + Constants::meltfreeze_tk; //For snow, we currently don't have anything with freezing point depression, as we have in soil.
 		} else {				//Soil
 			EMS[i].VG.SetVGParamsSoil();
 			theta_i_n[i]=EMS[i].theta[ICE];
@@ -1012,8 +1012,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		//Now copy the EMS water content into the working arrays to solve Richards-equation (so this is the important part were this function is coupled to the rest of SNOWPACK).
 		if(EMS[i].theta[SOIL]<Constants::eps2) {		//For snow
 			h_n[i]=EMS[i].VG.fromTHETAtoHforICE(EMS[i].theta[WATERINDEX], h_d, theta_i_n[i]);
-			if(variant=="SEAICE" && h_n[i]>EMS[i].VG.h_e-Constants::eps && EMS[i].h>EMS[i].VG.h_e-Constants::eps && NDS[i].z < Xdata.Seaice->SeaLevel) {
-				h_n[i]=EMS[i].h;
+			if(variant=="SEAICE" && EMS[i].h>EMS[i].VG.h_e-Constants::eps) {
+				h_n[i]=std::min((NDS[nE].z-NDS[i].z), EMS[i].h);
 			}
 		} else {
 			//For soil, we take the matrix pressure head as lower boundary for the snow preferential flow
@@ -1234,7 +1234,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 						case UPSTREAM:
 						{
-							if (((h_np1_m[i+1]-h_np1_m[i])/dz_down[i+1]) - Xdata.cos_sl > 0.) {
+							if (((h_np1_m[i+1]*rho[i+1]-h_np1_m[i]*rho[i])/(0.5*(rho[i+1]+rho[i])*dz_down[i+1])) - Xdata.cos_sl > 0.) {
 								k_np1_m_ip12[i]=K[i];
 							} else {
 								k_np1_m_ip12[i]=K[i+1];
@@ -1273,8 +1273,11 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					EMS[i].theta[WATER]=EMS[i].VG.fromHtoTHETAforICE(h_n[i], theta_i_n[i]);
 				}
 				Xdata.Seaice->updateFreeboard(Xdata);
-				hbottom=Xdata.Seaice->SeaLevel - NDS[0].z - .5 * EMS[lowernode].L;
+				hbottom=std::min((Xdata.Seaice->SeaLevel - NDS[lowernode].z - .5 * EMS[lowernode].L), NDS[uppernode+1].z); // Keep hbottom smaller than depth of simulation domain.
 				h_n[lowernode]=hbottom;
+				EMS[lowernode].salinity += Xdata.Seaice->OceanSalinity * (EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]) - EMS[lowernode].theta[WATER]);
+				EMS[lowernode].theta[WATER] = theta_n[lowernode] = EMS[lowernode].VG.fromHtoTHETAforICE(h_n[lowernode], theta_i_n[lowernode]);
+				EMS[lowernode].updDensity();
 			}*/
 
 			//Determine which and how boundary conditions should be applied:
@@ -1881,9 +1884,16 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 							track_accuracy_h=fabs(delta_h[memstate%nmemstates][i]);
 						}
 						//Now check against convergence criterion:
-						if(fabs(delta_h[memstate%nmemstates][i]/h_np1_m[i]) > REQUIRED_ACCURACY_H) {	//relative accuracy
-						//if(fabs(delta_h[memstate%nmemstates][i])>REQUIRED_ACCURACY_H) {		//absolute accuracy
-							accuracy=fabs(delta_h[memstate%nmemstates][i]);
+						if(h_np1_m[i]<EMS[i].VG.h_e) {
+							// Relative accuracy when not ponding
+							if(fabs(delta_h[memstate%nmemstates][i]/h_np1_m[i]) > REQUIRED_ACCURACY_H) {	//relative accuracy
+								accuracy=fabs(delta_h[memstate%nmemstates][i]);
+							}
+						} else {
+							// Absolute accuracy when ponding
+							if(fabs(delta_h[memstate%nmemstates][i])>REQUIRED_ACCURACY_H) {		//absolute accuracy
+								accuracy=fabs(delta_h[memstate%nmemstates][i]);
+							}
 						}
 					}
 				}
@@ -1952,7 +1962,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 			//Make sure to trigger a rewind by making max_delta_h very large in case the mass balance is violated or change in head are too large.
 			if(fabs(massbalanceerror)>1E-1 || max_delta_h>MAX_ALLOWED_DELTA_H) {
-				//max_delta_h=2.*MAX_ALLOWED_DELTA_H;
+				max_delta_h=2.*MAX_ALLOWED_DELTA_H;
 			}
 
 			if (accuracy > 1E-20 || fabs(massbalanceerror)>maxallowedmassbalanceerror || solver_result==-1) {		//Check whether we converged. Note that accuracy is only assigned when the layer exceeds the prescribed required accuracy. This is because we want to have more than one convergence criterion (both h and theta based), we say accuracy=0 is a sign of convergence in the whole domain.
@@ -2625,7 +2635,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	if(matrix==true) {
 		for (i = lowernode; i <= uppernode; i++) {
 			if(EMS[i].theta[SOIL]<Constants::eps2) {
-				EMS[i].meltfreeze_tk=Constants::meltfreeze_tk;
+				EMS[i].meltfreeze_tk=-SeaIce::mu*EMS[i].salinity+Constants::meltfreeze_tk;
 			} else {
 				//For soil layers solved with Richards Equation, everything (water transport and phase change) is done in this routine, except calculating the heat equation.
 				//To suppress phase changes in PhaseChange.cc, set the melting and freezing temperature equal to the element temperature:

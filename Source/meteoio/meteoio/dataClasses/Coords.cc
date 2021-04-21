@@ -679,8 +679,12 @@ void Coords::setDistances(const geo_distances in_algo) {
 void Coords::check(const std::string& pre_msg)
 {
 	//calculate/check coordinates if necessary
-	if (coordsystem=="LOCAL" && (ref_latitude==IOUtils::nodata || ref_longitude==IOUtils::nodata)) {
-		throw InvalidArgumentException(pre_msg+"please define a reference point for LOCAL coordinate system", AT);
+	if (coordsystem=="LOCAL") {
+		if (ref_latitude==IOUtils::nodata || ref_longitude==IOUtils::nodata) {
+			throw InvalidArgumentException(pre_msg+"please define a reference point for LOCAL coordinate system", AT);
+		} else {
+			return;
+		}
 	}
 
 	if (latitude==IOUtils::nodata || longitude==IOUtils::nodata) {

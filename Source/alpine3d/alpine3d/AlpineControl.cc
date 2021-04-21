@@ -33,8 +33,8 @@ using namespace std;
  * @param cfg User configuration keys
  * @param dem DEM defining the simulation
  */
-AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& dem)
-              : meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda), runoff(myrunoff),
+AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject dem_in)
+              : dem(dem_in), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda), runoff(myrunoff),
                 snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), nocompute(false), out_snow(true)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
@@ -86,6 +86,14 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			cout << "\nSimulation step " << t_ind+1 << "/" << max_steps << " at time step " << calcDate.toString(mio::Date::ISO_TZ) << "\n";
 			cout << std::fixed << "Elapsed time: " << setprecision(1) << elapsed_start << " seconds\nEstimated completion in " << est_completion/3600. << " hours\n";
 		}
+
+		// update DEM with simulated snow depth
+		const bool updateDEM = true;
+		if (updateDEM) {
+			Grid2DObject ELEV( snowpack->getGrid(SnGrids::ELEV) );
+			const DEMObject upd_dem = dem + ELEV;
+			meteo.updateDEM(upd_dem);
+		}
 		
 		//for --no-compute, simply check the data and move on
 		if (nocompute) {
@@ -114,12 +122,20 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 
 		if (eb) {
 			eb->setStations(vecMeteo);
+		} else {
+			if (snowpack) {
+				mio::Grid2DObject iswr, diff;
+				iswr.set(ilwr, 0.);
+				diff.set(ilwr, 0.);
+				meteo.getISWR(calcDate, iswr);
+				snowpack->setRadiationComponents(iswr.grid2D, ilwr.grid2D, diff.grid2D, 0., calcDate);
+			}
 		}
 
+		if (snowpack && enable_simple_snow_drift) snowpack->setVwDrift(vw_drift, calcDate);
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
 			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
 		}
-		if (snowpack && enable_simple_snow_drift) snowpack->setVwDrift(vw_drift, calcDate);
 
 		try { //Snowdrift
 			if (snowdrift) {

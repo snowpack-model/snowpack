@@ -40,6 +40,7 @@ bool SnGrids::initStaticData()
 	paramname.push_back("ISWR_DIR");
 	paramname.push_back("ILWR");
 	paramname.push_back("HS");
+	paramname.push_back("ELEV");
 	paramname.push_back("PSUM");
 	paramname.push_back("PSUM_PH");
 	paramname.push_back("PSUM_TECH");
@@ -100,7 +101,7 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
 /************************************************************
  * MeteoObj                                           *
  ************************************************************/
-MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
+MeteoObj::MeteoObj(const mio::Config& in_config, mio::DEMObject in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
                      ta(in_dem, IOUtils::nodata), tsg(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata),
                      psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
@@ -126,7 +127,6 @@ void MeteoObj::prepare(const mio::Date& in_date)
 {
 	if (!MPIControl::instance().master())  // Only master reads data
 		return;
-
 	date = in_date;
 	getMeteo(date);
 }
@@ -172,6 +172,11 @@ void MeteoObj::get(const mio::Date& in_date, mio::Grid2DObject& out_ta, mio::Gri
 	out_p = p;
 	out_ilwr = ilwr;
 	timer.stop();
+}
+
+void MeteoObj::getISWR(const mio::Date& in_date, mio::Grid2DObject& out_iswr)
+{
+	io.getMeteoData(in_date, dem, MeteoData::ISWR, out_iswr);
 }
 
 void MeteoObj::get(const mio::Date& in_date, std::vector<mio::MeteoData>& o_vecMeteo)
@@ -413,4 +418,16 @@ void MeteoObj::checkMeteoForcing(const mio::Date& calcDate)
 	checkLapseRate(vecMd, MeteoData::RH);
 	checkLapseRate(vecMd, MeteoData::VW);
 	checkLapseRate(vecMd, MeteoData::PSUM);
+}
+
+//provide updated DEM
+void MeteoObj::updateDEM(const mio::DEMObject newdem)
+{
+	dem = newdem;
+	for (size_t ii = 0; ii < newdem.size(); ii++) {
+		if (dem(ii) !=IOUtils::nodata && newdem(ii) != IOUtils::nodata) dem(ii) = newdem(ii);
+	}
+	dem.sanitize();
+	dem.update();
+	cout << "Update DEM: min: " << dem.grid2D.getMin() << "  max: " << dem.grid2D.getMax() << "\n";
 }

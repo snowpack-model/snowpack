@@ -22,12 +22,12 @@ int main(int /*argc*/, char** argv) {
 
 	//performing spatial interpolations
 	Grid2DObject param;
-	io.getMeteoData(d1, dem, MeteoData::TA, param);
-	io.write2DGrid(param, MeteoGrids::TA, d1);
-	io.getMeteoData(d1, dem, MeteoData::PSUM, param);
-	io.write2DGrid(param, MeteoGrids::PSUM, d1);
-	io.getMeteoData(d1, dem, MeteoData::RH, param);
-	io.write2DGrid(param, MeteoGrids::RH, d1);
+	io.getMeteoData(d1, dem, std::string("VW_DRIFT"), param);
+	io.write2DGrid(param, std::string("VW_DRIFT"));
+	io.getMeteoData(d1, dem, MeteoData::DW, param);
+	io.write2DGrid(param, MeteoGrids::DW, d1);
+	//io.getMeteoData(d1, dem, MeteoData::RH, param);
+	//io.write2DGrid(param, MeteoGrids::RH, d1);
 
 	return 0;
 }

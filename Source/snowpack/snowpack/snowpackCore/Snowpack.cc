@@ -245,14 +245,14 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	* - If VW_DENDRICITY is set, new snow dendricity is f(vw)
 	* - BOND_FACTOR_RH new snow bonds get stronger for average winds >= SnLaws::event_wind_lowlim and
 	*   mean relative humidity >= rh_lowlim */
-	if (variant == "ANTARCTICA" || variant == "POLAR") {
+	if (variant == "ANTARCTICA" || variant == "POLAR" || variant == "SEAICE") {
 		if (variant == "ANTARCTICA") {
 			new_snow_dd = 0.5;
 			new_snow_sp = 0.75;
 			new_snow_dd_wind = 0.15;
 			new_snow_sp_wind = 1.0;
 		}
-		if (variant == "POLAR") {
+		if (variant == "POLAR" || variant == "SEAICE") {
 			// average between ANTARCTICA and DEFAULT
 			new_snow_dd = 0.75;
 			new_snow_sp = 0.625;
@@ -805,7 +805,7 @@ double Snowpack::getParameterizedAlbedo(const SnowStation& Xdata, const CurrentM
 				Albedo = Xdata.SoilAlb;
 		}
 
-		if (!alpine3d) //for Alpine3D, the radiation has been differently computed
+//		if (!alpine3d) //for Alpine3D, the radiation has been differently computed
 			Albedo = std::max(Albedo, Mdata.rswr / Constants::solcon);
 
 		if (nE > Xdata.SoilNode) {
@@ -1122,7 +1122,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 				// This approach is not stable, may introduce oscillations such that the temperature equation doesn't converge
 				const double dth_i_sum = 0.5 * (dth_i_up[e] + dth_i_down[e]);	// Net phase change effect on ice content in element
-				if(dth_i_sum != 0.) {	// Element has phase changes
+				//if(dth_i_sum != 0.) {	// Element has phase changes
+				if(dth_i_up[e] != 0. || dth_i_down[e] != 0.) {
 					double dth_i_lim = dth_i_sum;
 					if(dth_i_lim < 0.) {
 						// Melt: Only available ice can melt
@@ -1243,7 +1244,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		if(useNewPhaseChange) {
 			// With new phase change, we want at least one iteration extra, to account for possible phase changes,
 			// and we want an additional constraint of maximum change in phase change amount
-			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > ((variant == "SEAICE") ? (1.E-5) : (0.0001)));
+			NotConverged = (MaxTDiff > ControlTemp || iteration == 1 || maxd > ((variant == "SEAICE") ? (1.E-4) : (0.0001)));
 		} else {
 			NotConverged = (MaxTDiff > ControlTemp);
 		}
@@ -1268,8 +1269,13 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 				prn_msg(__FILE__, __LINE__, "msg", Date(),
 				        "Latent: %lf  Sensible: %lf  Rain: %lf  NetLong:%lf  NetShort: %lf",
 				        Bdata.ql, Bdata.qs, Bdata.qr, Bdata.lw_net, I0);
-				free(U); free(dU); free(ddU);
-				throw IOException("Runtime error in compTemperatureProfile", AT);
+				if (!alpine3d) {
+					free(U); free(dU); free(ddU);
+					throw IOException("Runtime error in compTemperatureProfile", AT);
+				} else {
+					TempEqConverged = true;		// Set return value of function
+					NotConverged = false;		// Ensure we leave the do...while loop
+				}
 			} else {
 				TempEqConverged = false;	// Set return value of function
 				NotConverged = false;		// Ensure we leave the do...while loop
@@ -1398,7 +1404,7 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 			elem.dd = new_snow_dd;
 			elem.sp = new_snow_sp;
 			// Adapt dd and sp for blowing snow
-			if ((Mdata.vw > 5.) && ((variant == "ANTARCTICA" || variant == "POLAR")
+			if ((Mdata.vw > 5.) && ((variant == "ANTARCTICA" || variant == "POLAR" || variant == "SEAICE")
 			|| (!SnLaws::jordy_new_snow && ((hn_density_parameterization == "BELLAIRE")
 			|| (hn_density_parameterization == "LEHNING_NEW"))))) {
 				elem.dd = new_snow_dd_wind;
@@ -1793,7 +1799,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 
 			if (nAddE < 1) {
 				// Always add snow on virtual slope (as there is no storage variable available) and some other cases
-				if (!alpine3d && ((Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
+				if ((!alpine3d || force_add_snowfall) && ((Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
 				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps))) { //no virtual slopes in Alpine3D
 					nAddE = 1;
 				} else {
@@ -2030,7 +2036,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// neccessary. Note that also the very important friction velocity is computed in this
 		// routine and later used to compute the Meteo Heat Fluxes
 		if (forcing=="ATMOS") {
-			if (!alpine3d) { //HACK: we need to set to 0 the external drift
+			if (!alpine3d || (snow_erosion == "REDEPOSIT")) { //HACK: we need to set to 0 the external drift
 				double tmp = 0.;
 				const double eroded = snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
 				if (eroded > 0.) {
@@ -2104,8 +2110,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 
 		Meteo M(cfg);
 		do {
-			// Update Meteo object to reflect on the new stability state
-			M.compMeteo(Mdata, Xdata, false);
+			// After the first sub-time step, update Meteo object to reflect on the new stability state
+			if (ii >= 1) M.compMeteo(Mdata, Xdata, false);
 			// Reinitialize and compute the initial meteo heat fluxes
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
@@ -2257,6 +2263,9 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// Check for splitting elements
 		if (reduce_n_elements > 0) {
 			Xdata.splitElements(-1., comb_thresh_l);
+		}
+		if (variant == "SEAICE") {
+			//Xdata.splitElementsSmoothDomain();
 		}
 	}
 

@@ -42,10 +42,8 @@ using namespace std;
  ************************************************************/
 
 //Threshold that defines ice
-const double SeaIce::ThetaIceMin = 0.98;	// Griewank and Notz (2013) take 0.05
-const double SeaIce::SeaIceDensity = ThetaIceMin * Constants::density_ice;
+const double SeaIce::SeaIceDensity = ReSolver1d::max_theta_ice * Constants::density_ice;
 const double SeaIce::ice_threshold = 800.;
-const double SeaIce::height_new_seaice_elem = 0.001;
 const double SeaIce::mu = 0.054;		// Freezing point coefficient
 const double SeaIce::betaS = 0.824;		// Density coefficient (see: Appendix A Sea Water Density According to UNESCO Formula, https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf)
 const double SeaIce::ThicknessFirstIceLayer = 0.01;
@@ -61,7 +59,7 @@ const double SeaIce::InitSnowSalinity = 0.;
  ************************************************************/
 
 SeaIce::SeaIce():
-	SeaLevel(0.), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), OceanSalinity(SeaIce::InitOceanSalinity), OceanBufferLayerDepth(0.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), salinityprofile(SINUSSAL) {}
+	SeaLevel(0.), ForcedSeaLevel(IOUtils::nodata), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), OceanSalinity(SeaIce::InitOceanSalinity), OceanBufferLayerDepth(-1.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), salinityprofile(SINUSSAL) {}
 
 SeaIce& SeaIce::operator=(const SeaIce& source) {
 	if(this != &source) {
@@ -219,7 +217,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 			}
 			// define salinity in snow
 			for (; e <  nE ; e++) {
-//				Xdata.Edata[e].salinity = 1; // 8 after Massom et al. 1997
+				Xdata.Edata[e].salinity = 1; // 8 after Massom et al. 1997
 				Xdata.Edata[e].updDensity();
 				calculateMeltingTemperature(Xdata.Edata[e]);
 			}
@@ -240,7 +238,7 @@ void SeaIce::compSalinityProfile(SnowStation& Xdata)
 void SeaIce::updateFreeboard(SnowStation& Xdata)
 {
 	Xdata.compSnowpackMasses();
-	SeaLevel = (Xdata.swe / (Constants::density_water + SeaIce::betaS * OceanSalinity));
+	SeaLevel = (ForcedSeaLevel!=IOUtils::nodata) ? (ForcedSeaLevel) : (Xdata.swe / (Constants::density_water + SeaIce::betaS * OceanSalinity));
 	const double FreeBoard_snow = Xdata.cH - SeaLevel;	// This is the freeboard relative to snow surface
 	FreeBoard = (findIceSurface(Xdata) - (Xdata.cH - FreeBoard_snow));
 	return;
@@ -269,9 +267,11 @@ double SeaIce::findIceSurface(SnowStation& Xdata)
 	// Go from top to bottom. Note that ice layers inside the snowpack may fool this simple search.
 	for (size_t e = nE-1; e-- > 0;) {
 		if (Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold && Xdata.Edata[e+1].theta[ICE] * Constants::density_ice < ice_threshold) {
-			IceSurface = Xdata.Ndata[e+1].z;
-			IceSurfaceNode = e+1;
-			return IceSurface;
+			if((e==0) || (e>0 && Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold)) {
+				IceSurface = Xdata.Ndata[e+1].z;
+				IceSurfaceNode = e+1;
+				return IceSurface;
+			}
 		}
 	}
 	IceSurfaceNode = 0;
@@ -305,7 +305,7 @@ void SeaIce::compFlooding(SnowStation& Xdata)
 		Xdata.Edata[iN].theta[WATER] += dth_w;
 		Xdata.Edata[iN].theta[AIR] -= dth_w;
 		Xdata.Edata[iN].salinity += OceanSalinity * dth_w;
-		//Xdata.Edata[iN].salinity = std::min(SeaIce::OceanSalinity, Xdata.Edata[iN].salinity);
+		Xdata.Edata[iN].salinity = std::min(OceanSalinity, Xdata.Edata[iN].salinity);
 		Xdata.Edata[iN].updDensity();
 		Xdata.Edata[iN].M = Xdata.Edata[iN].Rho * Xdata.Edata[iN].L;
 		calculateMeltingTemperature(Xdata.Edata[iN]);
@@ -463,11 +463,12 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 
 	// Apply mass change:
 	double dz = 0.;
+	double dMass = 0.;
 	if ( dM > 0 ) {
 		// dM > 0: mass gain
-		if ( nE == 0 || EMS[Xdata.SoilNode].theta[ICE] > ThetaIceMin ) {
+		if ( nE == 0 || EMS[Xdata.SoilNode].Rho < ice_threshold ) {
 			const double dH = dM / SeaIceDensity;								// Total height to be added
-			const size_t nAddE = std::max(size_t(1), (size_t)(dH / (height_new_seaice_elem*Xdata.cos_sl)));	// Number of elements
+			const size_t nAddE = size_t(1); //std::max(size_t(1), (size_t)(dH / (height_new_seaice_elem*Xdata.cos_sl)));	// Number of elements
 			const double dL = (dH / double(nAddE));								// Height of each individual layer
 			for ( size_t j = 0; j < nAddE; j++ ) {
 				dz += dL;
@@ -494,6 +495,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				EMS[Xdata.SoilNode].theta[AIR] = 1.0 - EMS[Xdata.SoilNode].theta[WATER] - EMS[Xdata.SoilNode].theta[WATER_PREF] - EMS[Xdata.SoilNode].theta[ICE] - EMS[Xdata.SoilNode].theta[SOIL];
 				EMS[Xdata.SoilNode].updDensity();
 				EMS[Xdata.SoilNode].M = dM / double(nAddE);
+				dMass += EMS[Xdata.SoilNode].M;
 
 				for (unsigned short ii = 0; ii < Xdata.number_of_solutes; ii++) {
 					EMS[Xdata.SoilNode].conc[ICE][ii]   = Mdata.conc[ii]*Constants::density_ice/Constants::density_water;
@@ -553,10 +555,6 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 			}
 		} else {
 			// First add theta[ICE]
-			const double dth_ice = std::min((dM / Constants::density_ice / EMS[Xdata.SoilNode].L), std::min(0., (ThetaIceMin - EMS[Xdata.SoilNode].theta[ICE])));
-			EMS[Xdata.SoilNode].theta[ICE] += dth_ice;
-			EMS[Xdata.SoilNode].theta[WATER] -= dth_ice * (Constants::density_ice / Constants::density_water);
-			dM -= dth_ice * Constants::density_ice * EMS[Xdata.SoilNode].L;
 			// In this case, increase existing element
 			const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
 			dz += dL;
@@ -571,6 +569,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 		// dM < 0: Mass loss
 		while (dM < 0. && nE > 0) {
 			if(EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice * EMS[Xdata.SoilNode].L + dM > Constants::eps2) {
+				const double mass_in = EMS[Xdata.SoilNode].M;
 				const double dL = dM / (EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice);
 				// Reduce element length
 				EMS[Xdata.SoilNode].L0 = EMS[Xdata.SoilNode].L = EMS[Xdata.SoilNode].L + dL;
@@ -578,10 +577,13 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				EMS[Xdata.SoilNode].updDensity();
 				BottomSalFlux += EMS[Xdata.SoilNode].salinity * dL;
 				dz += dL;
+				const double mass_out = EMS[Xdata.SoilNode].M;
+				dMass += (mass_out - mass_in);
 				dM = 0.;
 			} else {
 				// Remove element
 				dM += EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice * EMS[Xdata.SoilNode].L;
+				dMass -= EMS[Xdata.SoilNode].M;
 				dz += -EMS[Xdata.SoilNode].L;
 				// TODO: put mass in SNOWPACK runoff!
 				// Add salinity to BottomSalFlux
@@ -609,6 +611,11 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 	NDS[Xdata.SoilNode].z = 0.;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
 		NDS[e + 1].z = NDS[e].z + EMS[e].L;
+	}
+
+	// Adjust externally forced sea level:
+	if (ForcedSeaLevel != IOUtils::nodata) {
+		ForcedSeaLevel += dz;
 	}
 
 	// Ocean water is infinite, so as much ice will be created as energy available, i.e., the bottom node is at meltfreeze_tk!

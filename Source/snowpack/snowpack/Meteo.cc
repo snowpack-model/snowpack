@@ -134,7 +134,7 @@ double Meteo::windspeedProfile(const CurrentMeteo& Mdata, const double& target_z
 	const double z_ratio = log((target_z - d_pump) / Mdata.z0);
 	const double ustar_corr = (source_vw < 0. || Mdata.vw < 0.) ? (Mdata.ustar) : (Mdata.ustar * (source_vw / Mdata.vw));
 	const double vw_corr = (ustar_corr / Constants::karman) * (z_ratio - Mdata.psi_m);
-	return (source_vw >= 0.) ? (source_vw) : (Mdata.vw);	// THIS LINE RETURNS WIND SPEED FROM INPUT, AND DEACTIVATES THE WORKING OF THIS FUNCTION!!!
+	//return (source_vw >= 0.) ? (source_vw) : (Mdata.vw);	// THIS LINE RETURNS WIND SPEED FROM INPUT, AND DEACTIVATES THE WORKING OF THIS FUNCTION!!!
 	return vw_corr;						// TODO: THIS LINE NEEDS TO BE ACTIVATED IN THE FUTURE.
 }
 

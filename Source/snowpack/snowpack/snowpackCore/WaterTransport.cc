@@ -580,7 +580,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 				}
 				if ((eUpper < nE-1) && (EMS[eUpper+1].Rho < 0.) && (EMS[eUpper+1].L > 0.)) {
 					// When upper+1 element is not marked to be removed, but we merge the upper element, we should remove the upper+1 element.
-					EMS[eUpper+1].L *= -1.;
+					EMS[eUpper+1].L *= 0.;
 				}
 			} else {
 				if (EMS[eUpper+1].Rho == Constants::undefined) {

@@ -55,13 +55,13 @@ class AlpineControl
 		              DataAssimilation *myda,
 		              Runoff *myrunoff,
 		              const mio::Config& cfg,
-		              const mio::DEMObject& dem);
+		              const mio::DEMObject dem_in);
 		void Run(mio::Date i_startdate, const unsigned int max_steps);
 		void setNoCompute(bool i_nocompute) {nocompute = i_nocompute;}
 
 	private:
+		const mio::DEMObject dem;
 		MeteoObj meteo;
-		
 		SnowpackInterface *snowpack;
 		SnowDriftA3D *snowdrift;
 		EnergyBalance *eb;

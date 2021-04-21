@@ -371,6 +371,11 @@ double vanGenuchten::dtheta_dh(const double h) {
 	// > theta(h) = theta_r + ( (theta_s-theta_r)*(1./Sc)*(1.+((alpha*abs(h))^n))^(-m) )
 	// > diff(%o1, h)
 	// result: -(pow((alpha*fabs(h)),n)*pow((pow((alpha*fabs(h)), n)+1.),-m-1.)*m*n*(theta_s-theta_r))/(h*Sc), rewrites to:
+	//This could be a way to limit oscillations in the iterations:
+	//if (h==h_e) return 0.;
+	//const double max = std::max((theta_s-fromHtoTHETA(h)) / (h_e-h));
+	//const double max = std::max((theta_s-theta_r) / (h_e-h));
+	//return std::min(max, alpha*n*m*((theta_s-theta_r)/Sc)*(pow((alpha*fabs(h)), (n-1.)))*(pow(1.+pow((alpha*fabs(h)), n), (-m-1.))));
 	return alpha*n*m*((theta_s-theta_r)/Sc)*(pow((alpha*fabs(h)), (n-1.)))*(pow(1.+pow((alpha*fabs(h)), n), (-m-1.)));
 }
 

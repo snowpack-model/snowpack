@@ -337,6 +337,14 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = Atmosphere::blkBody_Radiation(meteoPixel.ea, meteoPixel.ta); break;
 			case SnGrids::HS:
 				value = (snowPixel.cH - snowPixel.Ground) /  snowPixel.cos_sl; break; //slope2horiz
+			case SnGrids::ELEV:
+				if (snowPixel.Seaice != NULL) {
+					value = (snowPixel.Ndata[snowPixel.getNumberOfNodes()-1].z - snowPixel.Seaice->ForcedSeaLevel);
+				} else {
+					// ELEV equal to HS
+					value = (snowPixel.cH - snowPixel.Ground) /  snowPixel.cos_sl;
+				}
+				break; //slope2horiz
 			case SnGrids::PSUM:
 				value = meteoPixel.psum; break;
 			case SnGrids::PSUM_PH:
@@ -351,7 +359,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::TSG:
 				value = snowPixel.Ndata[snowPixel.SoilNode].T; break;
 			case SnGrids::TS0:
-				value = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : IOUtils::nodata; break;
+				value = snowPixel.Ndata[0].T; break;
 			case SnGrids::TSNOW:
 				value = getValueAtDepth(snowPixel, snow_temp_depth); break;
 			case SnGrids::TSNOW_AVG:
@@ -481,12 +489,17 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		meteoPixel.rh = rh(ix,iy);
 		meteoPixel.ta = ta(ix,iy);
 		meteoPixel.vw = vw(ix,iy);
-		meteoPixel.vw_drift = (vw_drift(ix,iy) > 0.) ? (vw_drift(ix,iy)) : (0.);	//negative vw_drift is used by the Simple Snow Drift to store the positive sx values (sheltered pixels)
+		const std::string snow_erosion = sn_cfg.get("SNOW_EROSION", "SnowpackAdvanced");
+		if (snow_erosion == "REDEPOSIT" && !(vw_drift(ix, iy) > 0.)) {
+			meteoPixel.vw_drift = meteoPixel.vw;
+		} else {
+			meteoPixel.vw_drift = (vw_drift(ix,iy) > 0.) ? (vw_drift(ix,iy)) : (0.);	//negative vw_drift is used by the Simple Snow Drift to store the positive sx values (sheltered pixels)
+		}
 		meteoPixel.dw = dw(ix,iy);
 		meteoPixel.iswr = shortwave(ix,iy);
 		meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
 		meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
-		meteoPixel.ts0 = (snowPixel.SoilNode>0) ? snowPixel.Ndata[snowPixel.SoilNode].T : tsg(ix,iy); //we use previous timestep value
+		meteoPixel.ts0 = (tsg(ix,iy) == IOUtils::nodata) ? (snowPixel.Ndata[0].T) : (tsg(ix,iy));
 		meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
 		meteoPixel.psum_ph = psum_ph(ix,iy);
 		meteoPixel.psum_tech = psum_tech(ix, iy);
@@ -526,8 +539,6 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			}
 		}
 
-		//compute ustar, psi_s, z0
-		meteo.compMeteo(meteoPixel, snowPixel, true);
 		SurfaceFluxes surfaceFlux;
 		// run snowpack model itself
 		double dIntEnergy = 0.; //accumulate the dIntEnergy over the snowsteps
@@ -542,6 +553,9 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 			store(ix,iy) += meteoPixel.psum;
 
 			try {
+				//compute ustar, psi_s, z0
+				meteo.compMeteo(meteoPixel, snowPixel, true);
+
 				BoundCond Bdata;
 				sn.runSnowpackModel(meteoPixel, snowPixel, store(ix,iy), Bdata, surfaceFlux);
 				surfaceFlux.collectSurfaceFluxes(Bdata, snowPixel, meteoPixel);

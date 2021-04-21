@@ -186,6 +186,7 @@ class Runoff; // forward declaration, cyclic header include
 		void write_special_points();
 		void calcLateralFlow();
 		void calcSimpleSnowDrift(const mio::Grid2DObject& ErodedMass, mio::Grid2DObject& psum);
+		double calcHydrostaticBalance(const double& sealevel_in, double& tot_mass_in, const bool& begin);
 
 		RunInfo run_info;
 
@@ -197,7 +198,7 @@ class Runoff; // forward declaration, cyclic header include
 		const mio::DEMObject dem;
 
 		// Config dependent information
-		bool is_restart, useCanopy, enable_simple_snow_drift, enable_lateral_flow, a3d_view;
+		bool is_restart, useCanopy, enable_simple_snow_drift, enable_lateral_flow, enforce_hydrostatic_balance, a3d_view;
 		bool do_io_locally; // if false all I/O will only be done on the master process
 		std::string station_name; // value for the key OUTPUT::EXPERIMENT
 		bool glacier_katabatic_flow, snow_preparation;

@@ -2218,7 +2218,7 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 				Ndata[eNew].S_s = Ndata[e+1].S_s;
 				Ndata[eNew].S_n = Ndata[e+1].S_n;
 			} else { // Removing elements for negative length L
-				dL += Edata[e].L;
+				dL += (Ndata[e+1].z - Ndata[e].z); //Previously: Edata[e].L;  Since element merging can be complex, the Edata[e].L is not a reliable measure of vertical displacement.
 			}
 		} else {
 			if (eNew < e) {
@@ -2408,22 +2408,20 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
 			if (Edata[e].salinity > 0.) {
 				Edata[e].meltfreeze_tk = -SeaIce::mu * br_sal + Constants::meltfreeze_tk;
-			}
-			if (Edata[e].h == Constants::undefined) {
-				Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);
 			} else {
-				// Initialize 
-				if (e >= SoilNode) {		//Snow
-					Edata[e].VG.SetVGParamsSnow(vanGenuchten::YAMAGUCHI2012, vanGenuchten::CALONNE, /*matrix*/ true, /*seaice*/ true);
-				} else {			//Soil
-					Edata[e].VG.SetVGParamsSoil();
-				}
-				// If pressure head indicates full saturation, make sure no rounding errors exists from writing/reading sno files.
-				if (Edata[e].h >= Edata[e].VG.h_e) {
-					Edata[e].theta[WATER] = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water) - Edata[e].theta[WATER_PREF];
-					Edata[e].theta[AIR] = 1. - Edata[e].theta[ICE] - Edata[e].theta[WATER] - Edata[e].theta[WATER_PREF] - Edata[e].theta[SOIL];
-					Edata[e].updDensity();
-				}
+				Edata[e].meltfreeze_tk = Constants::meltfreeze_tk;
+			}
+			// Initialize
+			if (e >= SoilNode) {		//Snow
+				Edata[e].VG.SetVGParamsSnow(vanGenuchten::YAMAGUCHI2012, vanGenuchten::CALONNE, /*matrix*/ true, /*seaice*/ true);
+			} else {			//Soil
+				Edata[e].VG.SetVGParamsSoil();
+			}
+			// If pressure head indicates full saturation, make sure no rounding errors exists from writing/reading sno files.
+			if (Edata[e].h >= Edata[e].VG.h_e) {
+				Edata[e].theta[WATER] = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water) - Edata[e].theta[WATER_PREF];
+				Edata[e].theta[AIR] = 1. - Edata[e].theta[ICE] - Edata[e].theta[WATER] - Edata[e].theta[WATER_PREF] - Edata[e].theta[SOIL];
+				Edata[e].updDensity();
 			}
 		}
 	}
@@ -2585,6 +2583,8 @@ void SnowStation::splitElement(const size_t& e)
 	Ndata[e+2]=Ndata[e+1];
 	Ndata[e+1].hoar=0.;
 	Ndata[e+1].T=Edata[e].Te;
+	Edata[e].Te = 0.5 * (Ndata[e+1].T + Ndata[e].T);
+	Edata[e+1].Te = 0.5 * (Ndata[e+2].T + Ndata[e].T);
 	// Position the new node correctly in the domain
 	Ndata[e+1].z=(Ndata[e+2].z+Ndata[e].z)/2.;
 	Ndata[e+2].u*=0.5;
@@ -2617,6 +2617,31 @@ void SnowStation::splitElements(const double& max_element_length, const double& 
 		// If max_element_length > 0: take its value, else use function flexibleMaxElemLength.
 		max_elem_l = (max_element_length > 0) ? (0.5 * max_element_length) : (flexibleMaxElemLength(depth, comb_thresh_l));
 		if(0.5*(Edata[e].L) > max_elem_l) {
+			splitElement(e);
+			e--;			// Make sure the same element gets checked again, in case 1 split is not sufficient
+		}
+	}
+}
+
+/**
+ * @brief Split elements when they are near the top of the snowpack, when REDUCE_N_ELEMENTS is used.
+ * - This function split elements when they are getting closer to the top of the snowpack. This is required
+ *   when using the "aggressive" merging option (REDUCE_N_ELEMENTS). When snow melt brings elements back to the
+ *   snow surface, smaller layer spacing is required to accurately describe temperature and moisture gradients.
+ * @param max_element_length If positive: maximum allowed element length (m), above which splitting is applied.
+ *                           If argument is not positive: use function flexibleMaxElemLength.
+ */
+void SnowStation::splitElementsSmoothDomain()
+{
+	//Return when no snow present
+	if (nElems == SoilNode) return;
+
+	const double factor = 2.;
+	for (size_t e = SoilNode; e < nElems-1; e++) {
+		if(e>1 && Edata[e].L > factor * Edata[e-1].L) {
+			splitElement(e);
+		}
+		if(e<nElems-1 && Edata[e].L > factor * Edata[e+1].L) {
 			splitElement(e);
 			e--;			// Make sure the same element gets checked again, in case 1 split is not sufficient
 		}
@@ -2699,7 +2724,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 			EdataLower.rb = ( EdataLower.theta[ICE]*L_lower*EdataLower.rb + EdataUpper.theta[ICE]*L_upper*EdataUpper.rb ) / (EdataLower.theta[ICE]*L_lower + EdataUpper.theta[ICE]*L_upper);
 			EdataLower.CDot = ( EdataLower.theta[ICE]*L_lower*EdataLower.CDot + EdataUpper.theta[ICE]*L_upper*EdataUpper.CDot ) / (EdataLower.theta[ICE]*L_lower + EdataUpper.theta[ICE]*L_upper);
 		}
-		EdataLower.h = (EdataLower.h * L_lower + EdataUpper.h * L_upper) / (LNew);
+		EdataLower.h = ((EdataLower.h < EdataLower.VG.h_e && EdataUpper.h < EdataUpper.VG.h_e) || (EdataLower.h > EdataLower.VG.h_e && EdataUpper.h > EdataUpper.VG.h_e)) ? ((EdataLower.h * L_lower + EdataUpper.h * L_upper) / (LNew)) : (Constants::undefined);
 		EdataLower.opticalEquivalentGrainSize();
 		EdataLower.Eps = EdataLower.Eps_v; //HACK: why?
 		EdataLower.Eps_e = 0.0; // TODO (very old) Check whether not simply add the elastic
@@ -2757,7 +2782,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
  * @return true if the profile belongs to a glacier
  */
 bool SnowStation::isGlacier(const bool& hydro) const
-{
+{ return false;
 	if (hydro) {
 		//if more than 2m of pure ice in the whole profile -> hydrologically, glacier melt
 		static const double ice_depth_glacier = 2.;

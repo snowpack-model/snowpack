@@ -52,7 +52,6 @@ class SeaIce {
 		static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
 		static double calculateMeltingTemperature(const double& Sal);
 
-		const static double ThetaIceMin;
 		const static double SeaWaterFreezingTemp;
 		const static double SeaIceDensity;
 		const static double ice_threshold;
@@ -67,6 +66,7 @@ class SeaIce {
 		const static double InitSnowSalinity;
 
 		double SeaLevel;            ///< Sea level in domain (m)
+		double ForcedSeaLevel;      ///< Force sea level externally (Alpine3D)
 		double FreeBoard;           ///< Freeboard of sea ice (m)
 		double IceSurface;          ///< Interface sea ice/snow (m)
 		size_t IceSurfaceNode;      ///< Interface node sea ice/snow (m)

@@ -250,7 +250,7 @@ void SnowpackConfig::setDefaults()
 		if (watertransportmodel_snow.empty()) addKey("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", "NIED");
 		if (watertransportmodel_soil.empty()) addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", "NIED");
 
-	} else if (variant == "ANTARCTICA" || variant == "POLAR") {
+	} else if (variant == "ANTARCTICA" || variant == "POLAR" || variant == "SEAICE") {
 		string hoar_density_buried; getValue("HOAR_DENSITY_BURIED", "SnowpackAdvanced", hoar_density_buried, IOUtils::nothrow);
 		if (hoar_density_buried.empty()) addKey("HOAR_DENSITY_BURIED", "SnowpackAdvanced", "200.0");
 

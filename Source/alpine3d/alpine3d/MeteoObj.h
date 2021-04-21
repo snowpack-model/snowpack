@@ -40,6 +40,7 @@ class SnGrids {
                                           ISWR_DIR, ///< Incoming short wave, direct
                                           ILWR, ///< Incoming long wave radiation
                                           HS, ///< Height of snow
+                                          ELEV, ///< Surface elevation
                                           PSUM, ///< Water equivalent of precipitations, either solid or liquid
                                           PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
                                           PSUM_TECH, ///< Water equivalent precipitation from artificial snow production
@@ -84,7 +85,7 @@ class SnGrids {
 class MeteoObj
 {
 	public:
-		MeteoObj(const mio::Config& config, const mio::DEMObject& in_dem);
+		MeteoObj(const mio::Config& config, mio::DEMObject in_dem);
 		~MeteoObj();
 
 		void setSkipWind(const bool& i_skipWind);
@@ -100,10 +101,12 @@ class MeteoObj
 		         mio::Grid2DObject& dw,
 		         mio::Grid2DObject& p,
 		         mio::Grid2DObject& ilwr);
+		void getISWR(const mio::Date& in_date, mio::Grid2DObject& iswr);
 		void get(const mio::Date& in_date, std::vector<mio::MeteoData>& o_vecMeteo);
 		void checkMeteoForcing(const mio::Date& calcDate);
 		void setGlacierMask(const mio::Grid2DObject& glacierMask);
 		double getTiming() const;
+		void updateDEM(const mio::DEMObject newdem);
 
 	private:
 		static void checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, const mio::MeteoData::Parameters& param);
@@ -115,7 +118,7 @@ class MeteoObj
 		mio::Timer timer;
 		const mio::Config &config;
 		mio::IOManager io;
-		const mio::DEMObject &dem;
+		mio::DEMObject dem;
 		mio::Grid2DObject ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr;
 		mio::Grid2DObject sum_ta, sum_rh, sum_rh_psum, sum_psum, sum_psum_ph, sum_vw, sum_ilwr;
 		std::vector<mio::MeteoData> vecMeteo;

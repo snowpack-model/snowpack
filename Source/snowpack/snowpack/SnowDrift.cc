@@ -164,7 +164,7 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
 	}
 
 	// First, look whether there is any transport at all: use formulation of Schmidt
-	if ( tau_thresh > tau ) {
+	if ( tau_thresh > tau || EMS[nE-1].Rho > 700. ) {
 		return (0.0);
 	}
 
@@ -231,7 +231,7 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 			if (forced_massErode != IOUtils::nodata) {
 				massErode = std::max(0., -forced_massErode); //negative mass is erosion
 			}
-		} else if (fabs(forced_massErode) > Constants::eps2) {
+		} else if (forced_massErode < -Constants::eps2) {
 			massErode = std::max(0., -forced_massErode); //negative mass is erosion
 		} else {
 			const double ustar_max = (Mdata.vw>0.1) ? Mdata.ustar * Mdata.vw_drift / Mdata.vw : 0.; // Scale Mdata.ustar
