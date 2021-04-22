@@ -1552,8 +1552,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
 			double dM = -divQ(ix, iy) * dt;
-			winderosiondeposition(ix, iy) = dM;
-			grid_snowdrift_out(ix, iy) = ErodedMass(ix, iy) + dM;
+			winderosiondeposition(ix, iy) += dM;
+			grid_snowdrift_out(ix, iy) += ErodedMass(ix, iy) + dM;
 			if(grid_snowdrift_out(ix, iy) < Constants::eps) grid_snowdrift_out(ix, iy) = 0.;
 		}
 	}
