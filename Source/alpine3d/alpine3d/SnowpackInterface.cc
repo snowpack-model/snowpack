@@ -1505,10 +1505,10 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) ); // Wind direction
 	mio::Grid2DObject U( grid_VW, 0. );
 	mio::Grid2DObject V( grid_VW, 0. );
-	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass (kg/m^2).
 	mio::Grid2DObject Q_x( ErodedMass, 0. ); // Mass flux through a vertical gate in the x direction (kg/m/s)
 	mio::Grid2DObject Q_y( ErodedMass, 0. ); // Mass flux through a vertical gate in the y direction (kg/m/s) 
 	mio::Grid2DObject divQ( ErodedMass, 0. ); // (Divergence of Q (kg/m^2/s)
+	mio::Grid2DObject grid_snowdrift_out( ErodedMass, 0. );
 
 	// Get constants
 	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
@@ -1535,8 +1535,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 				Q_x(ix, iy) = 0.;
 				Q_y(ix, iy) = 0.;
 			} else {
-				Q_x(ix, iy) = (tmp_ErodedMass(ix, iy) * L * U(ix, iy)) / (dt * grid_VW(ix, iy));
-				Q_y(ix, iy) = (tmp_ErodedMass(ix, iy) * L * V(ix, iy)) / (dt * grid_VW(ix, iy));
+				Q_x(ix, iy) = (ErodedMass(ix, iy) * L * U(ix, iy)) / (dt * grid_VW(ix, iy));
+				Q_y(ix, iy) = (ErodedMass(ix, iy) * L * V(ix, iy)) / (dt * grid_VW(ix, iy));
 			}
 		}
 	}
@@ -1552,12 +1552,11 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
 			double dM = -divQ(ix, iy) * dt;
-			if (fabs(dM) > Constants::eps) {
-				winderosiondeposition(ix, iy) += dM;
-				tmp_ErodedMass(ix, iy) += dM;
-			}
+			winderosiondeposition(ix, iy) = dM;
+			grid_snowdrift_out(ix, iy) = ErodedMass(ix, iy) + dM;
+			if(grid_snowdrift_out(ix, iy) < Constants::eps) grid_snowdrift_out(ix, iy) = 0.;
 		}
 	}
 
-	return tmp_ErodedMass;
+	return grid_snowdrift_out;
 }
