@@ -1516,7 +1516,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	const bool ZeroFluxBC = false;
 
 	// Slowdown of particles relative to ambient wind speed
-	const double particle_slowdown = 2.;	// 2 m/s slowdown of the particle speed relative to wind speed
+	const double particle_slowdown = 0.1;	// 2 m/s slowdown of the particle speed relative to wind speed
 
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
@@ -1528,7 +1528,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
 	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
 	const double C_max = 0.999;				// Courant number used to calculate sub time step.
-	double sub_dt = std::min(C_max * dx / (sqrt(2.) * grid_VW.grid2D.getMax() - particle_slowdown), dt); // Sub time step
+	double sub_dt = std::min(C_max * dx / (sqrt(2.) * grid_VW.grid2D.getMax() * particle_slowdown), dt); // Sub time step
+	double dt_ratio = sub_dt / dt;
 	std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
 
 	// Eroded mass must be greater than or equal to zero.
@@ -1542,8 +1543,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 			mns(ix, iy) = 0.;		// Reset mass deposition field
 
 			// Add a determination of u and v componets for each grid cell.
-			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., grid_VW(ix, iy) - particle_slowdown), grid_DW(ix, iy));
-			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., grid_VW(ix, iy) - particle_slowdown), grid_DW(ix, iy));
+			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., grid_VW(ix, iy) * particle_slowdown), grid_DW(ix, iy));
+			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., grid_VW(ix, iy) * particle_slowdown), grid_DW(ix, iy));
 		}
 	}
 
@@ -1578,6 +1579,7 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	for (double time_advance = 0.; time_advance < dt; time_advance += sub_dt) {
 		if (time_advance + sub_dt > dt) {
 			sub_dt = dt - time_advance;
+			dt_ratio = sub_dt / dt;
 		}
 
 		// Calculate change of suspended mass
@@ -1585,20 +1587,20 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 			for (size_t ix=1; ix<dimx; ix++) {
 				if (Um(ix, iy) != IOUtils::nodata && Vm(ix, iy) != IOUtils::nodata) {
 					if(Um(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+						const double deltaM = dt_ratio * tmp_ErodedMass(ix-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
 						dM(ix-1, iy) -= deltaM;
 						dM(ix, iy)   += deltaM;
 					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+						const double deltaM = dt_ratio * tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
 						dM(ix-1, iy) += deltaM;
 						dM(ix, iy)   -= deltaM;
 					}
 					if(Vm(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+						const double deltaM = dt_ratio * tmp_ErodedMass(ix, iy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
 						dM(ix, iy-1) -= deltaM;
 						dM(ix, iy)   += deltaM;
 					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+						const double deltaM = dt_ratio * tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
 						dM(ix, iy-1) += deltaM;
 						dM(ix, iy)   -= deltaM;
 					}
