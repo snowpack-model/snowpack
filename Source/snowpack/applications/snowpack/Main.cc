@@ -804,8 +804,12 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 
 	// Add keys to perform running mean in Antarctic variant
 	if (variant == "ANTARCTICA") {
-		cfg.addKey("VW_AVG::COPY", "Input", "VW");
-		cfg.addKey("RH_AVG::COPY", "Input", "RH");
+		cfg.addKey("*::edit999", "InputEditing", "COPY");
+		cfg.addKey("*::arg999::dest", "InputEditing", "VW_AVG");
+		cfg.addKey("*::arg999::src", "InputEditing", "VW");
+		cfg.addKey("*::edit998", "InputEditing", "COPY");
+		cfg.addKey("*::arg998::dest", "InputEditing", "RH_AVG");
+		cfg.addKey("*::arg998::src", "InputEditing", "RH");
 
 		cfg.addKey("VW_AVG::filter1", "Filters", "AGGREGATE");
 		cfg.addKey("VW_AVG::arg1::type", "Filters", "MEAN");

@@ -464,7 +464,8 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
 MeteoData::Merge_Conflicts MeteoData::getMergeConflicts(std::string merge_conflicts)
 {
 	IOUtils::toUpper( merge_conflicts );
-	if (merge_conflicts=="CONFLICTS_PRIORITY") return CONFLICTS_PRIORITY;
+	if (merge_conflicts=="CONFLICTS_PRIORITY_FIRST") return CONFLICTS_PRIORITY_FIRST;
+	else if (merge_conflicts=="CONFLICTS_PRIORITY_LAST") return CONFLICTS_PRIORITY_LAST;
 	else if (merge_conflicts=="CONFLICTS_AVERAGE") return CONFLICTS_AVERAGE;
 	else
 		throw UnknownValueException("Unknown merge conflicts type '"+merge_conflicts+"'", AT);
@@ -660,7 +661,7 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 	if (date.isUndef()) date=meteo2.date; //we don't accept different dates, see above
 	if (meteo2.resampled==true ) resampled=true;
 	
-	if (conflicts_strategy==CONFLICTS_PRIORITY) {
+	if (conflicts_strategy==CONFLICTS_PRIORITY_FIRST) {
 		//merge standard parameters
 		for (size_t ii=0; ii<nrOfParameters; ii++) {
 			if (data[ii]==IOUtils::nodata) {
@@ -679,6 +680,30 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 				data[new_idx] = meteo2.data[nrOfParameters+ii];
 				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
 			} else if (data[extra_param_idx]==IOUtils::nodata) {
+				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
+				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
+			}
+		}
+		return true;
+	} else if (conflicts_strategy==CONFLICTS_PRIORITY_LAST) {
+		//merge standard parameters
+		for (size_t ii=0; ii<nrOfParameters; ii++) {
+			if (meteo2.data[ii]!=IOUtils::nodata) {
+				data[ii] = meteo2.data[ii];
+				flags[ii] = meteo2.flags[ii];
+			}
+		}
+
+		//for each meteo2 extra parameter, check if a matching parameter exist
+		const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
+		for (size_t ii=0; ii<nrExtra2; ii++) {
+			const std::string extra_name( meteo2.extra_param_name[ii] );
+			const size_t extra_param_idx = getParameterIndex(extra_name);
+			if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
+				const size_t new_idx = addParameter( extra_name );
+				data[new_idx] = meteo2.data[nrOfParameters+ii];
+				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
+			} else if (meteo2.data[nrOfParameters+ii]!=IOUtils::nodata) {
 				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
 				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
 			}

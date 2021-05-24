@@ -221,7 +221,7 @@ class EditingKeep : public EditingBlock {
  * parameter has priority). Please also note that which timestamps will be merged depends on the chosen merge 
  * strategy with the MERGE_STRATEGY option (see MeteoData::Merge_Type, by default it is MeteoData::EXPAND_MERGE). The handling 
  * of merge conflicts can be configured with the MERGE_CONFLICTS optional argument (see MeteoData::Merge_Conflicts, 
- * by default it is MeteoData::CONFLICTS_PRIORITY). Furthermore, a station can be merged into multiple other stations, 
+ * by default it is MeteoData::CONFLICTS_PRIORITY_FIRST). Furthermore, a station can be merged into multiple other stations,
  * but circular dependencies are prohibited (and checked for).
  *
  * @code
