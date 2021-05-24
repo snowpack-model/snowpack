@@ -156,9 +156,6 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 	double solarAzimuth, solarElevation;
 	radfields[0].getPositionSun(solarAzimuth, solarElevation);
 
-	if (hasSP())
-		terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
-
 	mio::Array2D<double> sky_ilwr(in_ilwr.grid2D);
 	mio::Array2D<double> terrain_ilwr(in_ilwr.grid2D);
 	sky_ilwr=0;
@@ -168,6 +165,9 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 		terrain_radiation->setMeteo(albedo.grid2D, in_ta.grid2D);
 		terrain_radiation->getRadiation(direct, diffuse, reflected, direct_unshaded_horizontal,
                                     in_ilwr.grid2D,sky_ilwr,terrain_ilwr, solarAzimuth, solarElevation);
+		if (hasSP()){
+			terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
+		}
 	}
 
 	if (MPIControl::instance().master())

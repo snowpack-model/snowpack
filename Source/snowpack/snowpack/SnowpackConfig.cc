@@ -51,6 +51,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ALBEDO_AVERAGE_SCHMUCKI"] = "ALL_DATA";
 	advancedConfig["ALBEDO_AGING"] = "true";
 	advancedConfig["SOOT_PPMV"] = "0.0";
+	advancedConfig["COUPLEDPHASECHANGES"] = "true";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";

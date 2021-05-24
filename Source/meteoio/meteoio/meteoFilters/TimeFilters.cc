@@ -33,6 +33,7 @@ namespace mio {
 
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
+////////////////////////////////////////////////// SUPPR
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), op_mode(NONE)
 {
@@ -249,6 +250,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 }
 
 
+////////////////////////////////////////////////// SHIFT
 TimeShift::TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), dst_changes()
 {
@@ -322,6 +324,7 @@ void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
+////////////////////////////////////////////////// SORT
 TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg)
 {
@@ -345,6 +348,7 @@ void TimeSort::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
+////////////////////////////////////////////////// LOOP
 TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), req_start(), req_end(), match_date(), ref_start(), ref_end()
 {

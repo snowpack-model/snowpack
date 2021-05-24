@@ -244,7 +244,7 @@ void DataEditing::editTimeSeries(STATIONS_SET& vecStation)
 	}
 	
 	for (size_t ll=0; ll<processing_order.size(); ll++) {
-		const std::string current_ID( processing_order[ll] );
+		const std::string current_ID( processing_order[ll] ); //already upper-case
 		
 		for (size_t ii=0; ii<vecStation.size(); ii++) {
 			if (IOUtils::strToUpper(vecStation[ii].getStationID()) == current_ID) {
@@ -284,7 +284,7 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	
 	//process in the order that has been computed above
 	for (size_t ll=0; ll<processing_order.size(); ll++) {
-		const std::string current_ID( processing_order[ll] );
+		const std::string current_ID( processing_order[ll] ); //already upper-case
 		
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
