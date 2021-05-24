@@ -128,7 +128,7 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 
 /**
  * @brief Applies the logarithmic wind profile to adjust provided wind speed to another height above surface.
- * Wind pumping is ignored. NOTE THAT THE FUNCTION IS DEACTIVATED AND WILL RETURN WIND SPEED FROM INPUT!!!
+ * Wind pumping is ignored.
  * @param Mdata
  * @param target_z target height above surface (m) to translate the windspeed to.
  * @param source_vw (optional) Wind speed to use to scale ustar(Mdata.vw). If omitted, Mdata.vw is taken.
