@@ -473,8 +473,8 @@ double Interpol1D::variance(const std::vector<double>& X)
 	size_t count=0;
 	double sum=0.;
 
-	for (size_t i=0; i<n; i++) {
-		const double value = X[i];
+	for (size_t ii=0; ii<n; ii++) {
+		const double value = X[ii];
 		if (value!=IOUtils::nodata) {
 			sum += value;
 			count++;
@@ -485,8 +485,8 @@ double Interpol1D::variance(const std::vector<double>& X)
 
 	const double mean = sum/(double)count;
 	double sum2=0., sum3=0.;
-	for (size_t i=0; i<n; i++) {
-		const double value = X[i];
+	for (size_t ii=0; ii<n; ii++) {
+		const double value = X[ii];
 		if (value!=IOUtils::nodata) {
 			const double delta = value - mean;
 			sum2 += delta*delta;
@@ -516,9 +516,9 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 
 	size_t count=0;
 	double sum=0.;
-	for (size_t i=0; i<Xsize; i++) {
-		if (X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
-			sum += (X[i] - X_mean) * (Y[i] - Y_mean);
+	for (size_t ii=0; ii<Xsize; ii++) {
+		if (X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+			sum += (X[ii] - X_mean) * (Y[ii] - Y_mean);
 			count++;
 		}
 	}
@@ -545,6 +545,41 @@ double Interpol1D::corr(const std::vector<double>& X, const std::vector<double>&
 	if (cov==IOUtils::nodata) return IOUtils::nodata;
 	
 	return ( cov / (sigma_x*sigma_y));
+}
+
+/**
+* @brief Computes the Pearson product-moment correlation coefficient in a more numerically efficient manner than "corr".
+* @param X first vector of data
+* @param Y second vector of data
+* @return correlation coefficient
+*/
+double Interpol1D::Pearson(const std::vector<double>& X, const std::vector<double>& Y)
+{
+	const size_t Xsize = X.size();
+	if (Xsize!=Y.size())
+		throw IOException("Vectors should have the same size for the Pearson's coefficient!", AT);
+	if (Xsize==0) return IOUtils::nodata;
+	
+	size_t count=0;
+	double sumX=0., sumX2=0., sumY=0., sumY2=0., sumXY=0.;
+	for (size_t ii=0; ii<Xsize; ii++) {
+		const double valueX = X[ii];
+		const double valueY = Y[ii];
+		if (valueX!=IOUtils::nodata && valueY!=IOUtils::nodata) {
+			sumX += valueX;
+			sumX2 += valueX * valueX;
+			
+			sumY += valueY;
+			sumY2 += valueY * valueY;
+			
+			sumXY += valueX * valueY;
+			count++;
+		}
+	}
+	if (count==0) return IOUtils::nodata;
+	
+	const double pearson = (static_cast<double>(count)*sumXY - sumX*sumY) / (sqrt(static_cast<double>(count)*sumX2 - sumX*sumX) * sqrt(static_cast<double>(count)*sumY2 - sumY*sumY));
+	return pearson;
 }
 
 /**

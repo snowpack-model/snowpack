@@ -161,7 +161,7 @@ class Snowpack {
 		bool allow_adaptive_timestepping;
 		bool research_mode, useCanopyModel, enforce_measured_snow_heights, detect_grass;
 		bool soil_flux, useSoilLayers;
-		bool useNewPhaseChange;
+		bool coupled_phase_changes;
 		bool combine_elements;
 		int reduce_n_elements;
 		bool force_add_snowfall;

@@ -765,12 +765,13 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	std::vector<std::string> tmp_vec; //to read a few lines of data
 	Date prev_dt;
 	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
+	static const size_t min_valid_lines = 10; //we want to correctly parse at least that many lines before quitting our sneak peek into the file
 	const bool delimIsNoWS = (csv_delim!=' ');
 	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty());
 	bool fields_ready = false;
 	try {
 		eoln = FileUtils::getEoln(fin);
-		for (size_t ii=0; ii<(header_lines+10); ii++) {
+		for (size_t ii=0; ii<(header_lines+1000); ii++) {
 			getline(fin, line, eoln); //read complete line
 			IOUtils::trim(line);
 			if (fin.eof()) {
@@ -820,6 +821,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				}
 				prev_dt = dt;
 			}
+			if (count_asc+count_dsc >= min_valid_lines) break; //we've add enough valid lines to understand the file, quitting
 		}
 	} catch (...) {
 		fin.close();
@@ -827,6 +829,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	}
 	fin.close();
 	date_cols.auto_wrap = user_auto_wrap; //resetting it since we might have triggered it
+	if (!date_cols.isSet()) 
+		throw NoDataException("Date and time parsing not properly initialized, please contact the MeteoIO developers!", AT);
 
 	if (count_dsc>count_asc) asc_order=false;
 	

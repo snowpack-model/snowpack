@@ -128,7 +128,7 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 
 /**
  * @brief Applies the logarithmic wind profile to adjust provided wind speed to another height above surface.
- * Wind pumping is ignored. NOTE THAT THE FUNCTION IS DEACTIVATED AND WILL RETURN WIND SPEED FROM INPUT!!!
+ * Wind pumping is ignored.
  * @param Mdata
  * @param target_z target height above surface (m) to translate the windspeed to.
  * @param source_vw (optional) Wind speed to use to scale ustar(Mdata.vw). If omitted, Mdata.vw is taken.
@@ -335,7 +335,7 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	}
 
 	// Save the values in the global Mdata data structure to use it later
-	Mdata.ustar = ustar;
+	Mdata.ustar = Constants::karman * vw / (z_ratio - psi_m);
 	Mdata.z0 = rough_len;
 	Mdata.psi_s = psi_s;
 	Mdata.psi_m = psi_m;

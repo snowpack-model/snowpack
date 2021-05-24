@@ -74,7 +74,6 @@ class Meteo {
 		Canopy canopy;
 		std::string roughness_length_parametrization;
 		double roughness_length, height_of_wind_value;
-		bool adjust_height_of_wind_value;
 		ATM_STABILITY stability;
 		bool research_mode, useCanopyModel;
 };

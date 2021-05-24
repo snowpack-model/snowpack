@@ -333,6 +333,7 @@ METEO_SET GridsManager::getVirtualStationsFromGrid(const DEMObject& dem, const s
 * @param[in] v_stations a vector of StationData where to provide the meteorological data
 * @param[in] dateStart when to start extracting the virtual stations
 * @param[in] dateEnd when to stop extracting the virtual stations
+* @param[in] PtsExtract use the method to only request points instead of full grids from the plugin?
 * @return a vector of meteodata for the configured virtual stations at the provided date, for the provided parameters
 */
 std::vector<METEO_SET> GridsManager::getVirtualStationsFromGrid(const DEMObject& dem, const std::vector<size_t>& v_params, const std::vector<StationData>& v_stations, const Date& dateStart, const Date& dateEnd, const bool& PtsExtract)

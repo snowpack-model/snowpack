@@ -201,7 +201,6 @@ void Date::setFromSys() {
 /**
 * @brief Set timezone and Daylight Saving Time flag.
 * @param in_timezone timezone as an offset to GMT (in hours)
-* @param in_dst is it DST?
 */
 void Date::setTimeZone(const double& in_timezone) {
 //please keep in mind that timezone might be fractional (ie: 15 minutes, etc)
