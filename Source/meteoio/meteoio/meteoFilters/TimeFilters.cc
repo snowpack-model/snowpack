@@ -300,13 +300,13 @@ void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>&
 		
 		//when reverting back to winter time, timestamps are not in increasing order for an overlap period
 		if (ovec[ii].date<=prev_date) {
-			const double overlap = (dst_changes[next_idx].offset*sec2Jul-offset);
+			const double overlap = (dst_changes[next_idx].value*sec2Jul-offset);
 			if (ovec[ii].date>=(dst_changes[next_idx].date - overlap))
 				apply_change = true;
 		}
 		
 		if (apply_change) {
-			offset = dst_changes[next_idx].offset * sec2Jul;
+			offset = dst_changes[next_idx].value * sec2Jul;
 			next_idx++;
 			if (next_idx==Nset) break; //no more new corrections to expect
 		}

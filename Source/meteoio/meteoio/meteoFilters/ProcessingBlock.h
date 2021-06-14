@@ -68,14 +68,14 @@ class ProcessingBlock {
 	public:
 		
 		typedef struct OFFSET_SPEC {
-			OFFSET_SPEC() : date(), offset(0.) {}
-			OFFSET_SPEC(const Date& d1, const double& i_offset) : date(d1), offset(i_offset) {}
+			OFFSET_SPEC() : date(), value(0.) {}
+			OFFSET_SPEC(const Date& d1, const double& i_value) : date(d1), value(i_value) {}
 			bool operator<(const OFFSET_SPEC& a) const { //needed for "sort"
 				return date < a.date;
 			}
 
 			Date date;
-			double offset;
+			double value;
 		} offset_spec;
 		
 		virtual ~ProcessingBlock() {}

@@ -179,8 +179,10 @@ std::vector< std::pair<std::string, std::string> > Meteo1DInterpolator::getArgum
 
 Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {
 	if (this != &source) {
+		mapAlgorithms = source.mapAlgorithms;
 		window_size = source.window_size;
-		mapAlgorithms= source.mapAlgorithms;
+		enable_resampling = source.enable_resampling;
+		data_qa_logs = source.data_qa_logs;
 	}
 	return *this;
 }

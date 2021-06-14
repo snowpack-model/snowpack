@@ -141,23 +141,47 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		filterApplied = true; //at least one filter has been applied in the whole stack
 		const size_t output_size = ovec[stat_idx].size();
 
-		if (ivec.size() != output_size) {
-			ostringstream ss;
-			ss << "The filter \"" << (*filter_stack[jj]).getName() << "\" received " << ivec.size();
-			ss << " timestamps and returned " << output_size << " timestamps!";
-			throw IndexOutOfBoundsException(ss.str(), AT);
-		}
-
-		for (size_t kk=0; kk<output_size; kk++) {
-			const double orig = ivec[kk](param);
-			const double filtered = ovec[stat_idx][kk](param);
-			if (orig!=filtered) {
-				ovec[stat_idx][kk].setFiltered(param);
-				if (data_qa_logs) {
-					const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
-					const std::string stat = (!statID.empty())? statID : statName;
-					const std::string filtername( (*filter_stack[jj]).getName() );
-					cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+		if (ivec.size() == output_size) {
+			for (size_t kk=0; kk<ivec.size(); kk++) {
+				const double orig = ivec[kk](param);
+				const double filtered = ovec[stat_idx][kk](param);
+				if (orig!=filtered) {
+					ovec[stat_idx][kk].setFiltered(param);
+					if (data_qa_logs) {
+						const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
+						const std::string stat = (!statID.empty())? statID : statName;
+						const std::string filtername( (*filter_stack[jj]).getName() );
+						cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+					}
+				}
+			}
+		} else { //filters such as SHIFT might change the number of points
+			size_t kk_out=0;
+			for (size_t kk=0; kk<ivec.size(); kk++) {
+				while (kk_out<output_size && ovec[stat_idx][kk_out].date < ivec[kk].date) { //new points inserted
+					ovec[stat_idx][kk_out].setFiltered(param);
+					if (data_qa_logs) {
+						const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
+						const std::string stat = (!statID.empty())? statID : statName;
+						const std::string filtername( (*filter_stack[jj]).getName() );
+						cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+					}
+					kk_out++;
+				}
+				if (kk_out==output_size) break;
+				
+				if (ovec[stat_idx][kk_out].date == ivec[kk].date) {
+					const double orig = ivec[kk](param);
+					const double filtered = ovec[stat_idx][kk_out](param);
+					if (orig!=filtered) {
+						ovec[stat_idx][kk_out].setFiltered(param);
+						if (data_qa_logs) {
+							const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
+							const std::string stat = (!statID.empty())? statID : statName;
+							const std::string filtername( (*filter_stack[jj]).getName() );
+							cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+						}
+					}
 				}
 			}
 		}

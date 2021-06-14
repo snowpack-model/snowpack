@@ -1,6 +1,6 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 # IF(CMAKE_COMPILER_IS_GNUCXX)
 # 	SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary

@@ -833,7 +833,7 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats,
 	}
 
 	//we need to erase from the end in order to keep the index unchanged...
-	for (size_t ii=deletions.size(); ii>0; ii--) {
+	for (size_t ii=deletions.size(); ii-- >0; ) {
 		const size_t index=deletions[ii-1];
 		vecPoints.erase(vecPoints.begin()+index);
 	}

@@ -19,7 +19,7 @@ MACRO (GETDATE TODAY)
 	ENDIF(CMAKE_VERSION VERSION_GREATER 2.8.11)
 ENDMACRO (GETDATE)
 
-MACRO(BuildVersion)
+MACRO(BuildVersionSVN)
 	FIND_PACKAGE(Subversion)
 	IF(Subversion_FOUND)
 		SET(VERSION_FROM_SVN OFF CACHE BOOL "Retrieve software version from Subversion")
@@ -33,4 +33,26 @@ MACRO(BuildVersion)
 	ELSE(Subversion_FOUND)
 		SET(_versionString "${VERSION_MAJOR}.${VERSION_MINOR}${VERSION_PATCH}")
 	ENDIF(Subversion_FOUND)
-ENDMACRO(BuildVersion)
+ENDMACRO(BuildVersionSVN)
+
+MACRO(BuildVersionGIT)
+	FIND_PACKAGE(Git)
+	IF(GIT_FOUND)
+		SET(VERSION_FROM_GIT OFF CACHE BOOL "Retrieve software version from Git")
+		IF(VERSION_FROM_GIT)
+			execute_process(
+				COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+				WORKING_DIRECTORY "${local_dir}"
+				OUTPUT_VARIABLE project_WC_REVISION
+				ERROR_QUIET
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+			)
+			GETDATE(TODAY)
+			SET(_versionString "${TODAY}.${project_WC_REVISION}")
+		ELSE(VERSION_FROM_GIT)
+			SET(_versionString "${VERSION_MAJOR}.${VERSION_MINOR}${VERSION_PATCH}")
+		ENDIF(VERSION_FROM_GIT)
+	ELSE(GIT_FOUND)
+		SET(_versionString "${VERSION_MAJOR}.${VERSION_MINOR}${VERSION_PATCH}")
+	ENDIF(GIT_FOUND)
+ENDMACRO(BuildVersionGIT)

@@ -239,14 +239,29 @@ class DateRange {
 		DateRange() : start(), end() {}
 		DateRange(const Date& d1, const Date& d2) : start(d1), end(d2) {}
 		
+		/**
+		 * @brief Is the provided date within the current range?
+		 * @param[in] a Date to check
+		 * @return true if the date is within the current range, false otherwise
+		 */
 		bool in(const Date& a) const {
 			return (a >= start && a <= end);
 		}
 		
+		/**
+		 * @brief Is the provided date before the *end* of the range?
+		 * @param[in] a Date to check
+		 * @return true if the date is less than the end of the current range, false otherwise
+		 */
 		bool operator<(const Date& a) const {
 			return end < a;
 		}
 		
+		/**
+		 * @brief Is the provided date after the *start* of the range?
+		 * @param[in] a Date to check
+		 * @return true if the date is greater than the end of the current range, false otherwise
+		 */
 		bool operator>(const Date& a) const {
 			return start > a;
 		}
