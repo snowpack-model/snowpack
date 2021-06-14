@@ -572,9 +572,6 @@ void vanGenuchten::SetVGParamsSoil()
 	//Calculate saturation at cut-off point h_e (see Ippisch et al (2006)).
 	Sc=pow((1.+pow(alpha*fabs(h_e), n)), -1.*m);
 
-	//The VG model has been initialized
-	defined=true;
-
 	//I encountered the following problem: fully saturated soil and freezing water: there is not enough place to store the ice!!!
 	//In the old snowpack code, this problem was solved by keeping the increase in volume when all the water in the element would freeze, free as theta[AIR].
 	//However, this will not work in the Richards, as theta[WATER] is varying per time step. So we keep free a volume as if the soil is saturated AND will freeze:

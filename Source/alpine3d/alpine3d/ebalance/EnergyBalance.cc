@@ -23,10 +23,11 @@ using namespace mio;
 using namespace std;
 
 EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config& cfg_in, const mio::DEMObject &dem_in)
-              : snowpack(NULL), terrain_radiation(NULL), radfields(), dem(dem_in), vecMeteo(),  dimx(dem_in.getNx()),
-                dimy(dem_in.getNy()), albedo(dem, 0.), direct_unshaded_horizontal(dimx, dimy, 0.),
-                direct(dimx, dimy, 0.), diffuse(dimx, dimy, 0.), reflected(dimx, dimy, 0.), timer(),
-                nbworkers(i_nbworkers), cfg(cfg_in)
+              : snowpack(NULL), terrain_radiation(NULL), radfields(), dem(dem_in), vecMeteo(), 
+                albedo(dem, 0.), direct_unshaded_horizontal(dem_in.getNx(), dem_in.getNy(), 0.),
+                direct(dem_in.getNx(), dem_in.getNy(), 0.), diffuse(dem_in.getNx(), dem_in.getNy(), 0.), 
+                reflected(dem_in.getNx(), dem_in.getNy(), 0.), timer(), cfg(cfg_in), 
+                dimx(dem_in.getNx()), dimy(dem_in.getNy()), nbworkers(i_nbworkers)
 {
 
 	MPIControl& instance = MPIControl::instance();

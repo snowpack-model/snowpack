@@ -356,8 +356,8 @@ The visibility test according to Amanatides(1987) for ray tracing
 	double view_angle, testview_angle;
 	double azi;
 	int a, b;
-	double bz;
-	double dist;
+// 	double bz;
+// 	double dist;
 
 	//Round value to avoid that internal rounding or inaccuracies
 	// prevent that the comparison between them go wrong

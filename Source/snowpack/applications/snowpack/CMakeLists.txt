@@ -1,6 +1,6 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 IF(MSVC)
 	SET(getopt_src getopt.c getopt_long.c)
