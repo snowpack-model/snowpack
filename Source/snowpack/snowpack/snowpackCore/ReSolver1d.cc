@@ -1434,7 +1434,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			}
 
 			//Solve equation
+#ifdef CLAPACK
 			if(ActiveSolver==DGESVD || AllowSwitchSolver==true) std::fill(ainv.begin(), ainv.end(), 0.);	//This is very important: with inverting the matrix, it may become non-tridiagonal! So we have to explicitly set its elements to 0, because some of the for-loops only touch the tridiagonal part of the matrix.
+#endif
 			for (i = lowernode; i <= uppernode; i++) {
 				j=i;	//As matrix A is tridiagonal, it can be filled very efficiently. The notation of i and j is kept for clarity of the structure of A. However, only evaluating when i==j is required.
 
@@ -1454,7 +1456,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				}
 
 
-
+#ifdef CLAPACK
 				//This part is for the DGESVD/DGESDD solver, which uses full matrix inversion of matrix A (ainv).
 				if(ActiveSolver==DGESVD || AllowSwitchSolver==true) {
 					// For DGESVD, i indexes rows, j index columns, both starting at 0.
@@ -1497,6 +1499,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						}
 					}
 				}
+#endif
 
 				//This part is for the DGTSV or TDMA solver, that uses the fact that A is a tridiagonal matrix, so we only have to specify the diagonals and subdiagonals.
 				if(ActiveSolver==DGTSV || ActiveSolver==TDMA) {
