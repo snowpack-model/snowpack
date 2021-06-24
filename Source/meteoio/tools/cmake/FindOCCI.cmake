@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 # - Find Oracle OCCI library
 # Find the Oracle OCCI library and includes
 #

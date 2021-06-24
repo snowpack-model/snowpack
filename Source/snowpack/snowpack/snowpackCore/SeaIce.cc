@@ -60,7 +60,7 @@ const double SeaIce::InitSnowSalinity = 0.;
  ************************************************************/
 
 SeaIce::SeaIce():
-	SeaLevel(0.), ForcedSeaLevel(IOUtils::nodata), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), salinityprofile(SINUSSAL) {}
+	SeaLevel(0.), ForcedSeaLevel(IOUtils::nodata), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), TotalFloodingBucket(0.), check_initial_conditions(false), salinityprofile(SINUSSAL) {}
 
 SeaIce& SeaIce::operator=(const SeaIce& source) {
 	if(this != &source) {
@@ -77,8 +77,9 @@ SeaIce& SeaIce::operator=(const SeaIce& source) {
 SeaIce::~SeaIce() {}
 
 void SeaIce::ConfigSeaIce(const SnowpackConfig& i_cfg) {
+	// Read salinity profile
 	std::string tmp_salinityprofile;
-	i_cfg.getValue("SALINITYPROFILE", "SnowpackSeaice", tmp_salinityprofile);
+	i_cfg.getValue("SALINITYPROFILE", "SnowpackSeaice", tmp_salinityprofile, mio::IOUtils::nothrow);
 	if (tmp_salinityprofile=="NONE") {
 		salinityprofile=NONE;
 	} else if (tmp_salinityprofile=="CONSTANT") {
@@ -95,6 +96,9 @@ void SeaIce::ConfigSeaIce(const SnowpackConfig& i_cfg) {
 		prn_msg( __FILE__, __LINE__, "err", Date(), "Unknown salinity profile (key: SALINITYPROFILE).");
 		throw;
 	}
+
+	// Read whether or not to check the initial conditions
+	i_cfg.getValue("CHECK_INITIAL_CONDITIONS", "SnowpackSeaice", check_initial_conditions, mio::IOUtils::nothrow);
 	return;
 }
 
@@ -655,6 +659,49 @@ double SeaIce::getTotSalinity(const SnowStation& Xdata)
 	return ret;
 }
 
+/**
+ * @brief Initializes a SnowStation object for appropriate sea ice conditions \n
+ * First, water and ice content is calculated, while maintaining initial bulk salinity and temperature
+ * After that, initialize pressure head consistently with the displaced ocean water
+ * @version 21.06: initial version
+ * @author Nander Wever
+ * @param Xdata The SnowStation object to initialize
+ */
+void SeaIce::InitSeaIce(SnowStation& Xdata)
+{
+	const size_t nE = Xdata.getNumberOfElements();
+	if (nE==0 || !check_initial_conditions) return;	// Nothing to do...
+
+	double totM = 0.;	// Tracks total mass
+
+	// Set thermodynamical properties consistently (temperature, salinity, etc):
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		// If a layer is reported as dry, no salinity can be present:
+		if (Xdata.Edata[e].theta[WATER]<Constants::eps) {
+			Xdata.Edata[e].salinity = 0.;
+		} else {
+			// A given temperature corresponds to a specific brine salinity
+			const double BrineSal = (Xdata.Edata[e].Te - Constants::meltfreeze_tk) / -SeaIce::mu;
+			// Given brine salinity and provided bulk salinity, we can derive theta[WATER]
+			const double theta_water_new = Xdata.Edata[e].salinity / BrineSal;
+			// We can now estimate theta[ICE]
+			const double theta_ice_new = 1. - (theta_water_new * (Constants::density_water / Constants::density_ice));
+			Xdata.Edata[e].theta[ICE] = theta_ice_new;
+			Xdata.Edata[e].theta[WATER] = theta_water_new;
+			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[ICE];
+		}
+		Xdata.Edata[e].updDensity();
+		totM += Xdata.Edata[e].M;
+	}
+
+	// Set pressure head consistently:
+	const double hbottom = totM / (Constants::density_water + (SeaIce::betaS * SeaIce::OceanSalinity));	// pressure head at bottom
+	double z = .5 * Xdata.Edata[0].L;
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		Xdata.Edata[e].h = (hbottom - Xdata.Edata[e].VG.h_e) - z;
+		z += Xdata.Edata[e].L;
+	}
+}
 
 /**
  * @brief The sea ice module\n

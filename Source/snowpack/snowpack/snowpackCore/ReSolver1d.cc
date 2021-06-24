@@ -628,7 +628,7 @@ std::vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
  * @param Xdata
  * @param Sdata
  */
-void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql)
+void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql, const mio::Date& date)
 {
 // Main publications about the development of this code:
 // - Wever, N., Fierz, C., Mitterer, C., Hirashima, H., and Lehning, M.: Solving Richards Equation for snow improves snowpack meltwater runoff estimations in detailed multi-layer snowpack model, The Cryosphere, 8, 257-274, doi:10.5194/tc-8-257-2014, 2014.
@@ -1542,13 +1542,15 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			r_mpfd = AssembleRHS(lowernode, uppernode, h_np1_m, theta_n, theta_np1_m, theta_i_n, theta_i_np1_m, s, dt, rho, k_np1_m_im12, k_np1_m_ip12, aTopBC, TopFluxRate, aBottomBC, BottomFluxRate, Xdata, Salinity, SALINITY_MIXING);
 			r_mpfd2 = r_mpfd;			// We make a copy for use with DGTSV and TDMA solvers.
 
-			if(variant=="SEAICE" && SalinityTransportSolver==SalinityTransport::EXPLICIT && Salinity.VerifyCFL(dt)==false) {
-				printf("CFL failed for dt=%.10f\n", dt);
-				solver_result=-1;
-			}
-			if(variant=="SEAICE" && (SalinityTransportSolver==SalinityTransport::IMPLICIT || SalinityTransportSolver==SalinityTransport::IMPLICIT2) && Salinity.VerifyImplicitDt(dt)==false) {
-				printf("ImplicitLimit failed for dt=%.10f\n", dt);
-				solver_result=-1;
+			// Check stability criterion for salinity transport for sea ice simulations
+			if(variant=="SEAICE") {
+				if(SalinityTransportSolver==SalinityTransport::EXPLICIT && Salinity.VerifyCFL(dt)==false) {
+					printf("CFL failed for dt=%.10f --> reducing time step\n", dt);
+					solver_result=-1;
+				} else if((SalinityTransportSolver==SalinityTransport::IMPLICIT || SalinityTransportSolver==SalinityTransport::IMPLICIT2) && Salinity.VerifyImplicitDt(dt)==false) {
+					printf("ImplicitLimit failed for dt=%.10f --> reducing time step\n", dt);
+					solver_result=-1;
+				}
 			}
 
 
@@ -2004,7 +2006,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//Print latest state for debugging:
 				bool DoThrow=false;
 				if(SafeMode==false) {
-					prn_msg(__FILE__, __LINE__, "err", Date(), "Richards-Equation solver did not converge for %s: reached maximum number of iterations (500), with a time step: %G\n", Xdata.meta.stationID.c_str(), dt);
+					prn_msg(__FILE__, __LINE__, "err", date, "Richards-Equation solver did not converge for %s: reached maximum number of iterations (500), with a time step: %G\n", Xdata.meta.stationID.c_str(), dt);
 					DoThrow=true;
 				} else {
 					if(seq_safemode>3) {
@@ -2629,7 +2631,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		EMS[newnE-1].Te = (backupWATERLAYER_Te != Constants::undefined) ? (backupWATERLAYER_Te) : NDS[newnE-2].T;
 		NDS[newnE].T = NDS[newnE-1].T = NDS[newnE-2].T = EMS[newnE-1].Te;
 		Xdata.Edata[newnE-1].mk = 19;	// Mark the layer as a water layer
-		prn_msg( __FILE__, __LINE__, "wrn", Date(), "Ponding occuring, water layer added! [depth = %lf m]", Xdata.Edata[newnE-1].L);
+		prn_msg( __FILE__, __LINE__, "wrn", date, "Ponding occuring, water layer added! [depth = %lf m]", Xdata.Edata[newnE-1].L);
 	}
 
 

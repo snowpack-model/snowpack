@@ -247,7 +247,10 @@ void close_file(const std::string& filename, const int& ncid)
 * @param[in] var variable to read
 * @param[in] pos time index in the file
 * @param[in] nrows number of rows
-* @param[in] ncols number of longitudes
+* @param[in] ncols number of columns
+* @param[in] pos_i dimension index of time
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data(const int& ncid, const nc_variable& var,
@@ -275,8 +278,10 @@ void read_data(const int& ncid, const nc_variable& var,
 * @brief Read grid point in 2D gridded data for non time dependent data
 * @param[in] ncid file ID
 * @param[in] var variable to read
-* @param[in] row
-* @param[in] col
+* @param[in] row row index to read
+* @param[in] col column index to read
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data_point(const int& ncid, const nc_variable& var,
@@ -297,8 +302,11 @@ void read_data_point(const int& ncid, const nc_variable& var,
 * @param[in] ncid file ID
 * @param[in] var variable to read
 * @param[in] pos time index in the file
-* @param[in] row
-* @param[in] col
+* @param[in] row row index to read
+* @param[in] col column index to read
+* @param[in] pos_i dimension index of time
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data_point(const int& ncid, const nc_variable& var,

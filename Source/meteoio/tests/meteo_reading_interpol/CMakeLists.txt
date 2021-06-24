@@ -1,4 +1,4 @@
-
+#SPDX-License-Identifier: LGPL-3.0-or-later
 ## Test Meteo reading
 # generate executable
 ADD_EXECUTABLE(meteo_reading_int meteo_reading.cc)

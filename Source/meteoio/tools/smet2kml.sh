@@ -1,7 +1,8 @@
 #!/bin/bash
-#from a list of SMET files, this generates a KML file that can be read in google earth or map.geo.admin
-#to represent on a map where the stations are
-#see https://developers.google.com/kml/documentation/kml_tut for more on kml
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# from a list of SMET files, this generates a KML file that can be read in google earth or map.geo.admin
+# to represent on a map where the stations are
+# see https://developers.google.com/kml/documentation/kml_tut for more on kml
 
 if [ $# -lt 1 ]; then
 	INPUT_DIR="."

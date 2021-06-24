@@ -455,10 +455,10 @@ bool SalinityTransport::VerifyCFL(const double dt)
 //		const double tmp_flux_2 = (flux_up_2[i] * dz_up[i] + flux_down_2[i] * dz_down[i]) / (dz_up[i] + dz_down[i]);
 //		if (tmp_flux * dt / std::min(dz_up[i], dz_down[i]) > CFL_limit) {printf("FAIL1@%d ", int(i)); return false;}
 //		if (tmp_flux_2 * dt / std::min(dz_up[i], dz_down[i]) > CFL_limit) {printf("FAIL2@%d ", int(i)); return false;}
-		if (std::max( fabs(flux_up[i]) , fabs(flux_down[i]) ) * (dt / (std::min(dz_up[i], dz_down[i]))) > CFL_limit) {printf("FAIL4A@%d ", int(i)); return false;}
-		if (std::max( fabs(flux_up_2[i]) , fabs(flux_down_2[i]) ) * (dt / (std::min(dz_up[i], dz_down[i]))) > CFL_limit) {printf("FAIL4B@%d ", int(i)); return false;}
+		if (std::max( fabs(flux_up[i]) , fabs(flux_down[i]) ) * (dt / (std::min(dz_up[i], dz_down[i]))) > CFL_limit) {printf("Criterion 1 @%d ", int(i)); return false;}
+		if (std::max( fabs(flux_up_2[i]) , fabs(flux_down_2[i]) ) * (dt / (std::min(dz_up[i], dz_down[i]))) > CFL_limit) {printf("Criterion 2 @%d ", int(i)); return false;}
 		// Check CFL for diffusion
-		if (D[i] * theta1[i] * dt / (std::min(dz_up[i], dz_down[i]) * std::min(dz_up[i], dz_down[i])) > CFL_limit) {printf("FAIL3@%d ", int(i)); return false;}
+		if (D[i] * theta1[i] * dt / (std::min(dz_up[i], dz_down[i]) * std::min(dz_up[i], dz_down[i])) > CFL_limit) {printf("Criterion 3 @%d ", int(i)); return false;}
 	}
 	return true;
 }
@@ -475,11 +475,11 @@ bool SalinityTransport::VerifyImplicitDt(const double dt)
 	const double limit = 0.999;
 	for(size_t i = 0; i < NumberOfElements; i++) {
 		// Check advection
-		if (std::max( fabs(flux_up[i])/dz_up[i] , fabs(flux_down[i]/dz_down[i]) ) * dt > limit) {printf("FAIL4A@%d ", int(i)); return false;}
-		if (std::max( fabs(flux_up_2[i])/dz_up[i] , fabs(flux_down_2[i]/dz_down[i]) ) * dt > limit) {printf("FAIL4B@%d ", int(i)); return false;}
+		if (std::max( fabs(flux_up[i])/dz_up[i] , fabs(flux_down[i]/dz_down[i]) ) * dt > limit) {printf("Criterion 4 @%d ", int(i)); return false;}
+		if (std::max( fabs(flux_up_2[i])/dz_up[i] , fabs(flux_down_2[i]/dz_down[i]) ) * dt > limit) {printf("Criterion 5 @%d ", int(i)); return false;}
 		// Check diffusion
 		if (i!=0 && D[i] * theta1[i] * dt / (std::min(dz_up[i], dz_down[i]) * std::min(dz_up[i], dz_down[i])) > limit) {printf("FAIL5@%d ", int(i)); return false;}
-		if (i==0 && D[i] * dt / (std::min(dz_up[i], dz_down[i]) * std::min(dz_up[i], dz_down[i])) > limit) {printf("FAIL6@%d ", int(i)); return false;}
+		if (i==0 && D[i] * dt / (std::min(dz_up[i], dz_down[i]) * std::min(dz_up[i], dz_down[i])) > limit) {printf("Criterion 6 @%d ", int(i)); return false;}
 	}
 	return true;
 }

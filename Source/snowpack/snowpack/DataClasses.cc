@@ -2436,6 +2436,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 
 	// Sea ice initializations
 	if (Seaice != NULL) {
+		Seaice->InitSeaIce(*this);
 		Seaice->updateFreeboard(*this);
 		for (size_t e = nElems; e -->0; ) {
 			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
