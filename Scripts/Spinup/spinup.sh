@@ -153,6 +153,7 @@ flag=0		# Check to see if a spinup was executed, to see if there are any problem
 spinup=1
 spinup2=0
 
+prev_sim_depth=-9999	# To check if the snow depth is increasing during the spinups
 
 while :
 do
@@ -178,7 +179,11 @@ do
 					spinup2=0
 				fi
 			fi
+		elif (( $(echo "${sim_depth} <= ${prev_sim_depth}" | bc -l) )); then
+			echo "ERROR: spinup interrupted since SNOWPACK does not seem to build an increasing snowpack/firn layer [depth = ${sim_depth}m]!"
+			exit
 		else
+			prev_sim_depth=${sim_depth}
 			spinup=1
 		fi
 		# Make sno file valid for init date
