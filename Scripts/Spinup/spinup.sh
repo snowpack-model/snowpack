@@ -153,6 +153,7 @@ flag=0		# Check to see if a spinup was executed, to see if there are any problem
 spinup=1
 spinup2=0
 
+prev_sim_depth=-9999	# To check if the snow depth is increasing during the spinups
 
 while :
 do
@@ -178,7 +179,11 @@ do
 					spinup2=0
 				fi
 			fi
+		elif (( $(echo "${sim_depth} <= ${prev_sim_depth}" | bc -l) )); then
+			echo "ERROR: spinup interrupted since SNOWPACK does not seem to build an increasing snowpack/firn layer [depth = ${sim_depth}m]!"
+			exit
 		else
+			prev_sim_depth=${sim_depth}
 			spinup=1
 		fi
 		# Make sno file valid for init date
@@ -199,9 +204,8 @@ do
 	if (( ${spinup} )) || (( ${spinup2} )); then
 		let i=${i}+1
 
-		# Ensure output is not written
-		sed -i 's/^PROF_WRITE.*/PROF_WRITE		=       FALSE/' ${cfgfile}
-		sed -i 's/^TS_WRITE.*/TS_WRITE		=       FALSE/' ${cfgfile}
+		# Use spinup.ini for specific settings for the spinups
+		sed -i 's/^IMPORT_AFTER.*/IMPORT_AFTER	=	..\/spinup.ini/' ${cfgfile}
 
 		# Print message
 		if (( ${spinup} )); then
@@ -212,9 +216,8 @@ do
 			echo "2nd spinup ${j}/${n_spinup} [depth = ${sim_depth}m]"
 		fi
 	else
-		# Ensure output is written
-		sed -i 's/^PROF_WRITE.*/PROF_WRITE		=       TRUE/' ${cfgfile}
-		sed -i 's/^TS_WRITE.*/TS_WRITE		=       TRUE/' ${cfgfile}
+		# Use final.ini for specific settings for the final simulation
+		sed -i 's/^IMPORT_AFTER.*/IMPORT_AFTER	=	..\/final.ini/' ${cfgfile}
 
 		# Print message
 		echo "Final simulation"
