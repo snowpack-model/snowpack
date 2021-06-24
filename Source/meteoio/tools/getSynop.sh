@@ -1,5 +1,6 @@
 #!/bin/bash
-#Please look for the station code on http://www.ogimet.com/indicativos.phtml.en
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Please look for the station code on http://www.ogimet.com/indicativos.phtml.en
 
 if [ $# -ne 3 ]; then
 	printf "$0\tdownload and convert the synop data for a given station\n"

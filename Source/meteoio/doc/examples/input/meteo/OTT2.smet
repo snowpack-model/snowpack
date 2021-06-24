@@ -10,7 +10,7 @@ northing     =  154250.000000
 epsg         =   21781
 nodata       =    -9999
 tz           =       1
-fields       = timestamp TA RH VW DW OSWR HS PSUM TSG TSS
+fields       = timestamp TA RH VW DW RSWR HS PSUM TSG TSS
 units_multiplier = 1 1 1 1 1 1 0.01 1 1 1
 [DATA]
 2008-12-01T00:00   269.65   0.443    0.4    91       0    68.000  0.000   274.45   263.95 

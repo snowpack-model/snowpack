@@ -191,7 +191,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 		const Date current_date( ovec[ii].date );
 		if (current_date>previous_date) {
 			if (!start_ooo_period.isUndef()) {
-				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " points\n";
+				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " timestamp(s)\n";
 				start_ooo_period.setUndef(true);
 			}
 			previous_date = current_date;
@@ -220,7 +220,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 			previous_idx = ii;
 			nr_conflict_free_pts++;
 			if (!start_conflicts_period.isUndef() && nr_conflict_free_pts>1) {
-				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " timestamp(s)\n";
 				start_conflicts_period.setUndef(true);
 			}
 		} else {
@@ -242,7 +242,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	
 	//print any remaining conflicts, if any
 	if (!start_conflicts_period.isUndef()) {
-		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " timestamp(s)\n";
 	}
 	
 	//now really remove the points from the vector

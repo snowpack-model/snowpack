@@ -37,7 +37,7 @@ class ReSolver1d {
 
 	public:
 		ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part);	// Class constructor
-		void SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql);
+		void SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql, const mio::Date& date);
 
 		double surfacefluxrate;			// Surfacefluxrate for solving RE. It is either surface of snow, in case of snowpack and solving RE for snow, or surface of soil, when no snowpack and/or solving RE only for soil.
 		double soilsurfacesourceflux;		// Soilsurfacesourceflux for solving RE. This is used when we use RE for snow AND there is a snowpack AND the lowest snow element is removed.

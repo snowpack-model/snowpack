@@ -19,7 +19,6 @@
 #ifndef PROCTRANSFORMWINDVECTOR_H
 #define PROCTRANSFORMWINDVECTOR_H
 
-//#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
 #include <meteoio/meteoFilters/ProcessingBlock.h> //use this one for all others
 
 #include <vector>
@@ -69,7 +68,6 @@ namespace mio {
 #endif
 
 class ProcTransformWindVector : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
 		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		~ProcTransformWindVector();

@@ -22,7 +22,6 @@
         #include <proj_api.h>
 #endif
 #include <stdio.h>
-using namespace std;
 
 namespace mio {
 

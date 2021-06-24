@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-4-Clause
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 /*	$FreeBSD: src/lib/libc/stdlib/getopt_long.c,v 1.2 2002/10/16 22:18:42 alfred Exp $ */
 

@@ -53,7 +53,7 @@ namespace mio {
  *      - REF_PARAM: the name of the reference meteo parameter (mandatory);
  *      - SAMPLING_RATE: the sampling rate to use when computing the time offsets (default: automatically extracted from the data)
  *      - WIDTH: data window width (in seconds) over which to compute each correlation coefficient (default: 2 days);
- *      - OFFSET_RANGE: range of allowed variation for the offset when searching for the maximum correlation (default: 1 day, so looking for 
+ *      - OFFSET_RANGE: range of allowed variation (in seconds) for the offset when searching for the maximum correlation (default: 1 day, so looking for 
  *                      a maximum between 1/2 a day before and after the current point);
  *  - if EXTRACT_OFFSETS is set to false, the meteo parameter will be corrected.
  *      - TYPE: the type of correction to apply, either CST (constant over the whole dataset) or STEPWISE 
