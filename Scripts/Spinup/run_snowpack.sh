@@ -43,6 +43,7 @@ do
 	}' ${f} > ${snofile}
 	echo "[GENERAL]" > ${cfgfile}
 	echo "IMPORT_BEFORE		=	../base.ini" >> ${cfgfile}
+	echo "IMPORT_AFTER		=	../spinup.ini" >> ${cfgfile}
 	echo "[INPUT]" >> ${cfgfile}
 	echo "STATION1		=	${stn}.smet" >> ${cfgfile}
 	echo "SNOWFILE1		=	${stn}.sno" >> ${cfgfile}

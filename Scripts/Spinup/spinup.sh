@@ -199,9 +199,8 @@ do
 	if (( ${spinup} )) || (( ${spinup2} )); then
 		let i=${i}+1
 
-		# Ensure output is not written
-		sed -i 's/^PROF_WRITE.*/PROF_WRITE		=       FALSE/' ${cfgfile}
-		sed -i 's/^TS_WRITE.*/TS_WRITE		=       FALSE/' ${cfgfile}
+		# Use spinup.ini for specific settings for the spinups
+		sed -i 's/^IMPORT_AFTER.*/IMPORT_AFTER	=	..\/spinup.ini/' ${cfgfile}
 
 		# Print message
 		if (( ${spinup} )); then
@@ -212,9 +211,8 @@ do
 			echo "2nd spinup ${j}/${n_spinup} [depth = ${sim_depth}m]"
 		fi
 	else
-		# Ensure output is written
-		sed -i 's/^PROF_WRITE.*/PROF_WRITE		=       TRUE/' ${cfgfile}
-		sed -i 's/^TS_WRITE.*/TS_WRITE		=       TRUE/' ${cfgfile}
+		# Use final.ini for specific settings for the final simulation
+		sed -i 's/^IMPORT_AFTER.*/IMPORT_AFTER	=	..\/final.ini/' ${cfgfile}
 
 		# Print message
 		echo "Final simulation"
