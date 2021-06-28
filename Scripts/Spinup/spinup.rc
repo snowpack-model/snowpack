@@ -32,3 +32,7 @@ time_shift_script="../../Source/snowpack/tools/timeshift_sno_files.sh"
 
 # Specify if you want to do a spinup and refresh spinup, where first the spinup is run to achieve min_sim_depth, after which the same amount of spinups is repeated to refresh the firn
 dospinup2=0	# 1 is YES, 0 is NO
+
+
+# Specify a directory where a *.zip-file containing the output is stored. Leave empty ("") to skip this step.
+zip_output_dir=""
