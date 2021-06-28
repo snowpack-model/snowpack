@@ -15,9 +15,15 @@
 #
 #  Integration example in python, read output in numpy array:
 #  ==========================================================
+#	# Example 1: directly parsing *.pro file
 #	import os;
 #	import numpy as np;
 #	numpy_array = np.array(os.popen('bash extract_profile.sh WFJ2.pro 2016-08-01').read())
+#
+#	# Example 2: unzipping an archive with a *.pro file
+#	import os;
+#	import numpy as np;
+#	numpy_array = np.array(os.popen('bash -c "bash extract_profile.sh <(unzip -p zip/WFJ2.zip *pro) 2016-08-01"').read())
 #
 #
 #  Integration in R, read output into data frame:
