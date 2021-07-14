@@ -76,6 +76,8 @@ bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const s
 		//we know there is at least 1 element
 		const Date start( ivec.front().date ), end( ivec.back().date );
 		bool filterApplied = false;
+		//the filters only receive tmp_ovec and expand it to tmp_ivec so ovec may not have been resized...
+		ovec = ivec;
 		
 		//filter for all time restrictions that fit into ivec
 		for (size_t ii=0; ii<time_restrictions.size(); ii++) {
