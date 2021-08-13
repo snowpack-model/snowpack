@@ -1,4 +1,4 @@
-
+#SPDX-License-Identifier: LGPL-3.0-or-later
 ## Test statistical functions
 # generate executable
 ADD_EXECUTABLE(stats stats.cc)

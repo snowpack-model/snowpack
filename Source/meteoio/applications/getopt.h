@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-4-Clause
 /*      $NetBSD: getopt.h,v 1.4 2000/07/07 10:43:54 ad Exp $    */
 /*      $FreeBSD: src/include/getopt.h,v 1.1 2002/09/29 04:14:30 eric Exp $ */
 

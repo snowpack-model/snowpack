@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-4-Clause-UC
 /*
  * Copyright (c) 1987, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

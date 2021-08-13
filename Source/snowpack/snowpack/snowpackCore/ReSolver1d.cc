@@ -347,13 +347,11 @@ int ReSolver1d::pinv(int m, int n, int lda, double *a)
 	//Calculate pseudo-inverse: Step 1: U.S':
 	for (i = m-1; i >= 0; i--) {
 		for (j = n-1; j >= 0; j--) {
-			//dinv[j*m+i]=0.;							//This line is not necessary anymore, as we reset array to zero where it is declared.
-			for (k = n-1; k >= 0; k--) {						//Do matrix multiplications
-				if (j==k) {							//j==k: this is because s is actually a diagonal matrix, and therefore, represented as a vector.
-					if(s[k]!=0.) {						//NANDER TODO HACK: I'm not happy with this solution, but how to circumvent underflow? I just want 0. in that case.
-						dinv[j*m+i]+=(vt[i*n+k]*(double(1.)/s[k]));	//Note: vt needs to be transposed AND is in FORTRAN matrix notation, therefore, the indices appear normal again.
-					}
-				}
+			k=j;							//This works because s is a diagonal matrix
+			if(s[k]!=0.) {
+				dinv[j*m+i]+=(vt[i*n+k]*(double(1.)/s[k]));	//Note: vt needs to be transposed AND is in FORTRAN matrix notation, therefore, the indices appear normal again.
+			} else {
+				return -1;
 			}
 		}
 	}
@@ -636,7 +634,7 @@ std::vector<double> ReSolver1d::AssembleRHS( const size_t& lowernode,
  * @param Xdata
  * @param Sdata
  */
-void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql)
+void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql, const mio::Date& date)
 {
 // Main publications about the development of this code:
 // - Wever, N., Fierz, C., Mitterer, C., Hirashima, H., and Lehning, M.: Solving Richards Equation for snow improves snowpack meltwater runoff estimations in detailed multi-layer snowpack model, The Cryosphere, 8, 257-274, doi:10.5194/tc-8-257-2014, 2014.
@@ -1442,7 +1440,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			}
 
 			//Solve equation
-			std::fill(ainv.begin(), ainv.end(), 0.);	//This is very important: with inverting the matrix, it may become non-tridiagonal! So we have to explicitly set its elements to 0, because some of the for-loops only touch the tridiagonal part of the matrix.
+#ifdef CLAPACK
+			if(ActiveSolver==DGESVD || AllowSwitchSolver==true) std::fill(ainv.begin(), ainv.end(), 0.);	//This is very important: with inverting the matrix, it may become non-tridiagonal! So we have to explicitly set its elements to 0, because some of the for-loops only touch the tridiagonal part of the matrix.
+#endif
 			for (i = lowernode; i <= uppernode; i++) {
 				j=i;	//As matrix A is tridiagonal, it can be filled very efficiently. The notation of i and j is kept for clarity of the structure of A. However, only evaluating when i==j is required.
 
@@ -1462,44 +1462,53 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				}
 
 
+#ifdef CLAPACK
+				//This part is for the DGESVD/DGESDD solver, which uses full matrix inversion of matrix A (ainv).
+				if(ActiveSolver==DGESVD || AllowSwitchSolver==true) {
+					// For DGESVD, i indexes rows, j index columns, both starting at 0.
+					if(i==j) {
+						size_t LDA=(uppernode+1);
+						size_t i_d=j*LDA+i;		// The index for the main diagonal
+						size_t i_u=(j+1)*LDA+i;		// The index for the upper diagonal
+						size_t i_l=(j-1)*LDA+i;		// The index for the lower diagonal
 
-				//This part is for the DGESVD/DGESDD solver, which uses full matrix a (ainv). We always need them, because in case DGTSV fails, we should be able to fall back on DGESVD/DGESDD:
-				if(i==j) {
-					//Set up the matrix diagonal
-					ainv[j*(uppernode+1)+i]=(1./dt)*(C[i]/rho[i]);
+						//Set up the matrix diagonal
+						ainv[i_d]=(1./dt)*(C[i]/rho[i]);
 
-					//The following two lines assume Neumann boundary conditions (for upper and lowernode, one of the terms drop out). If Dirichlet is used, this will be corrected later.
-					if(i!=lowernode) ainv[j*(uppernode+1)+i]+=(1./dz_[i])*(k_np1_m_im12[i]/rho_down/dz_down[i]);
-					if(i!=uppernode) ainv[j*(uppernode+1)+i]+=(1./dz_[i])*(k_np1_m_ip12[i]/rho_up/dz_up[i]);
+						//The following two lines assume Neumann boundary conditions (for upper and lowernode, one of the terms drop out). If Dirichlet is used, this will be corrected later.
+						if(i!=lowernode) ainv[i_d]+=(1./dz_[i])*(k_np1_m_im12[i]/rho_down/dz_down[i]);
+						if(i!=uppernode) ainv[i_d]+=(1./dz_[i])*(k_np1_m_ip12[i]/rho_up/dz_up[i]);
 
-					//Correct diagonal in case of Dirichlet
-					if(aTopBC==DIRICHLET && i==uppernode) {
-						ainv[i*(uppernode+1)+i]=1.;
-					}
-					if(aBottomBC==DIRICHLET && i==lowernode) {
-						ainv[i*(uppernode+1)+i]=1.;
-					}
-
-					//Set up the matrix upper and lower diagonals
-					if(i!=lowernode) ainv[i*(uppernode+1)+(i-1)]=(-1./dz_[i])*(k_np1_m_im12[i]/rho_down/dz_down[i]);
-					if(i!=uppernode) ainv[i*(uppernode+1)+(i+1)]=(-1./dz_[i])*(k_np1_m_ip12[i]/rho_up/dz_up[i]);
-
-					if(uppernode>0) {
-						//Correct upper and lower diagonals in case of Dirichlet
-						//HACK/TODO: check if this piece of code is actually correct. Why is condition uppernode>0 necessary here, but not when using DGTSV or TDMA solvers?
+						//Correct diagonal in case of Dirichlet
 						if(aTopBC==DIRICHLET && i==uppernode) {
-							ainv[(i-1)*(uppernode+1)+i]=0.;
-							ainv[i*(uppernode+1)+(i-1)]=0.;
+							ainv[i_d]=1.;
 						}
 						if(aBottomBC==DIRICHLET && i==lowernode) {
-							ainv[(i+1)*(uppernode+1)+i]=0.;
-							ainv[i*(uppernode+1)+(i+1)]=0.;
+							ainv[i_d]=1.;
+						}
+
+						//Set up the matrix upper and lower diagonals
+						if(i!=lowernode) ainv[i_l]=(-1./dz_[i])*(k_np1_m_im12[i]/rho_down/dz_down[i]);
+						if(i!=uppernode) ainv[i_u]=(-1./dz_[i])*(k_np1_m_ip12[i]/rho_up/dz_up[i]);
+
+						//Correct upper and lower diagonals in case of Dirichlet
+						if(aTopBC==DIRICHLET && i==uppernode) {
+							ainv[i_l]=0.;
+						}
+						if(aBottomBC==DIRICHLET && i==lowernode) {
+							ainv[i_u]=0.;
+						}
+
+						// Prevent degenerate case
+						if(ainv[i_d]==0. && ainv[i_l]==0. && ainv[i_u]==0.) {
+							ainv[i_d]=1.;
 						}
 					}
 				}
+#endif
 
 				//This part is for the DGTSV or TDMA solver, that uses the fact that A is a tridiagonal matrix, so we only have to specify the diagonals and subdiagonals.
-				if(ActiveSolver==DGTSV || ActiveSolver==TDMA ) {
+				if(ActiveSolver==DGTSV || ActiveSolver==TDMA) {
 					if(i==j) {
 						//Set up the matrix diagonal
 						ad[i]=(1./dt)*(C[i]/rho[i]);
@@ -1522,30 +1531,32 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 						//Correct diagonals in case of Dirichlet
 						if(aTopBC==DIRICHLET && i==uppernode) {
-							adu[i-1]=0.;
 							adl[i-1]=0.;
 						}
 						if(aBottomBC==DIRICHLET && i==lowernode) {
 							adu[i]=0.;
-							adl[i]=0.;
+						}
+
+						// Prevent degenerate case
+						if(ad[i]==0. && adl[i-1]==0. && adu[i]==0.) {
+							ad[i]=1.;
 						}
 					}
 				}
-
-				//We copy here the matrix to the ainv, which is passed to the SVD-routine later on. This ainv is altered externally, that's why we need a copy.
-				//ainv[j*(uppernode+1)+i]=a[i][j];
 			}
 
 			r_mpfd = AssembleRHS(lowernode, uppernode, h_np1_m, theta_n, theta_np1_m, theta_i_n, theta_i_np1_m, s, dt, rho, k_np1_m_im12, k_np1_m_ip12, aTopBC, TopFluxRate, aBottomBC, BottomFluxRate, Xdata, Salinity, SALINITY_MIXING);
 			r_mpfd2 = r_mpfd;			// We make a copy for use with DGTSV and TDMA solvers.
 
-			if(variant=="SEAICE" && SalinityTransportSolver==SalinityTransport::EXPLICIT && Salinity.VerifyCFL(dt)==false) {
-				printf("CFL failed for dt=%.10f\n", dt);
-				solver_result=-1;
-			}
-			if(variant=="SEAICE" && (SalinityTransportSolver==SalinityTransport::IMPLICIT || SalinityTransportSolver==SalinityTransport::IMPLICIT2) && Salinity.VerifyImplicitDt(dt)==false) {
-				printf("ImplicitLimit failed for dt=%.10f\n", dt);
-				solver_result=-1;
+			// Check stability criterion for salinity transport for sea ice simulations
+			if(variant=="SEAICE") {
+				if(SalinityTransportSolver==SalinityTransport::EXPLICIT && Salinity.VerifyCFL(dt)==false) {
+					printf("CFL failed for dt=%.10f --> reducing time step\n", dt);
+					solver_result=-1;
+				} else if((SalinityTransportSolver==SalinityTransport::IMPLICIT || SalinityTransportSolver==SalinityTransport::IMPLICIT2) && Salinity.VerifyImplicitDt(dt)==false) {
+					printf("ImplicitLimit failed for dt=%.10f --> reducing time step\n", dt);
+					solver_result=-1;
+				}
 			}
 
 
@@ -2001,7 +2012,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//Print latest state for debugging:
 				bool DoThrow=false;
 				if(SafeMode==false) {
-					prn_msg(__FILE__, __LINE__, "err", Date(), "Richards-Equation solver did not converge for %s: reached maximum number of iterations (500), with a time step: %G\n", Xdata.meta.stationID.c_str(), dt);
+					prn_msg(__FILE__, __LINE__, "err", date, "Richards-Equation solver did not converge for %s: reached maximum number of iterations (500), with a time step: %G\n", Xdata.meta.stationID.c_str(), dt);
 					DoThrow=true;
 				} else {
 					if(seq_safemode>3) {
@@ -2636,7 +2647,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		EMS[newnE-1].Te = (backupWATERLAYER_Te != Constants::undefined) ? (backupWATERLAYER_Te) : NDS[newnE-2].T;
 		NDS[newnE].T = NDS[newnE-1].T = NDS[newnE-2].T = EMS[newnE-1].Te;
 		Xdata.Edata[newnE-1].mk = 19;	// Mark the layer as a water layer
-		prn_msg( __FILE__, __LINE__, "wrn", Date(), "Ponding occuring, water layer added! [depth = %lf m]", Xdata.Edata[newnE-1].L);
+		prn_msg( __FILE__, __LINE__, "wrn", date, "Ponding occuring, water layer added! [depth = %lf m]", Xdata.Edata[newnE-1].L);
 	}
 
 

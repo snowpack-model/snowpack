@@ -629,7 +629,7 @@ void DEMObject::CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx,
 }
 
 double DEMObject::getCurvature(double A[4][4], const double& scale)
-{ //This methode computes the curvature of a specific cell
+{ //This methode computes the curvature of a specific cell (see Eq. 8 in https://doi.org/10.3189/172756507782202865)
 	if (A[2][2]!=IOUtils::nodata) {
 		const double Zwe   = avgHeight(A[2][1], A[2][2], A[2][3]);
 		const double Zsn   = avgHeight(A[1][2], A[2][2], A[3][2]);
@@ -647,19 +647,19 @@ double DEMObject::getCurvature(double A[4][4], const double& scale)
 		size_t count=0;
 
 		if (Zwe!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Zwe)/dX;
+			sum += (A[2][2]-Zwe)/dX;
 			count++;
 		}
 		if (Zsn!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Zsn)/dX;
+			sum += (A[2][2]-Zsn)/dX;
 			count++;
 		}
 		if (Zswne!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Zswne)/(dX*sqrt2);
+			sum += (A[2][2]-Zswne)/(dX*sqrt2);
 			count++;
 		}
 		if (Znwse!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Znwse)/(dX*sqrt2);
+			sum += (A[2][2]-Znwse)/(dX*sqrt2);
 			count++;
 		}
 

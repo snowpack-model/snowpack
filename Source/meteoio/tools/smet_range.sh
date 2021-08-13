@@ -1,5 +1,6 @@
 #!/bin/sh
-#prints min/max/mean for a given parameter in all smet files
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# prints min/max/mean for a given parameter in all smet files
 
 if [ $# -lt 2 ]; then
 	me=`basename $0`
@@ -41,7 +42,7 @@ if [ "${param}" = "time" ]; then
 					return sprintf("%s", strftime("%FT%H:%m:00", (ts-2440587.5)*24*3600))
 				}
 				function getSec(ts){
-					gsub(/\-|\:|T/," ", ts); split(ts,d," ");
+					gsub(/\-|:|T/," ", ts); split(ts,d," ");
 					date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
 					return mktime(date)
 				}

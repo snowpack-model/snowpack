@@ -78,7 +78,6 @@ namespace mio {
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
- *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
@@ -159,7 +158,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - SLOPE (in degrees);
  * - AZI (for the slope azimuth, in degree as read from a compass);
  * - NODATA (string to interpret as nodata);
- * - PARAM (to identify the content of a file that only contains the time information and one meteorological parameter);
+ * - PARAM (the extracted metadata will replace the PARAM field either as found in the file's headers or in the CSV_FIELDS user configuration key);
  * - SKIP (skip this field).
  * 
  * If ID or NAME appear more than once in one specification string, their mutliple values will be appended.
@@ -254,6 +253,8 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * [InputEditing]
  * AUTOMERGE = true
  * @endcode
+ * Please note that here the file's headers will look like 'DATE;TIME;PARAM' which will allow PARAM to be replaced by
+ * the PARAM special value extracted from the file name.
  * 
  * In order to read a set of files and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature):
@@ -598,8 +599,13 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames)
 {
 	const bool user_provided_field_names = (!fieldNames.empty());
-	if (headerFields.empty() && !user_provided_field_names)
-		throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+	if (headerFields.empty() && !user_provided_field_names) {
+		if (single_field.empty())
+			throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS (or a PARAM metadata)", AT);
+	}
+	
+	std::map<std::string, size_t> data_fields;
+	bool single_field_found = false;
 	
 	if (!user_provided_field_names) fieldNames = headerFields;
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
@@ -610,7 +616,12 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		IOUtils::replaceWhitespaces(tmp, '_');
 		if (tmp.empty()) continue;
 		
-		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
+		if (tmp.compare("PARAM")==0) {
+			tmp = single_field;
+			if (single_field_found)
+				throw InvalidArgumentException("It is not possible to have more than one PARAM field!", AT);
+			single_field_found = true;
+		} else if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
 			if (dt_as_decimal) 
 				date_cols.decimal_date = ii;
 			else 
@@ -659,6 +670,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
 			ID_col = ii;
 			skip_fields[ ii ] = true;
+		} else {
+			if (data_fields.count( tmp ) > 0)
+				throw InvalidArgumentException("Multiple definitions of the same field name either in column headers or user-provided CSV_FIELDS", AT);
+			data_fields[ tmp ] = ii;
 		}
 		
 		//tmp = identifyField( tmp ); //try to identify known fields
@@ -666,9 +681,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components). Identified fields: "+date_cols.toString(), AT);
-	if (dt_as_components && !single_field.empty())
-		throw InvalidArgumentException("It is not possible to provide date/time as individual components and declare CSV_SINGLE_PARAM_INDEX", AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components)", AT);
 
 	//if necessary, set the format to the appropriate defaults
 	if (!dt_as_decimal) {
@@ -685,20 +698,8 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 
 	//the user wants to keep only one column, find the one he wants...
 	//if there is a parameter name from the filename or header it has priority:
-	if (!single_field.empty() && !user_provided_field_names) {
-		if (ID_col!=IOUtils::npos) throw InvalidArgumentException("It is not possible set CSV_SINGLE_PARAM_INDEX when multiple stations are present within one single file with an ID field", AT);
-		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
-			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change date_cols.date_str
-		} else if (date_cols.date_str == date_cols.time_str && fieldNames.size() == 2) { //no index given but unambiguous
-			const size_t pidx = (date_cols.date_str == 0)? 1 : 0; //field that is not datetime
-			fieldNames[pidx] = single_field;
-		} else if (date_cols.date_str != date_cols.time_str && fieldNames.size() == 3) {
-			size_t pidx;
-			for (pidx = 0; pidx < 3; ++pidx) //look for 3rd field that is neither date nor time
-				if (pidx != date_cols.date_str && pidx != date_cols.time_str) break;
-			fieldNames[pidx] = single_field;
-		}
-	}
+	if (!single_field.empty() && data_fields.size()==1 && !single_field_found)
+		fieldNames[ data_fields.begin()->second ] = data_fields.begin()->first;
 }
 
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary
@@ -1246,6 +1247,8 @@ void CsvIO::parseInputOutputSection()
 		if (!coords_specs.empty()) {
 			const Coords loc(coordin, coordinparam, coords_specs);
 			tmp_csv.setLocation(loc, name, id);
+		} else if (!coordin.empty()) { //coord system parameters in [INPUT], coordinates in csv files
+			tmp_csv.setLocation(Coords(coordin, coordinparam), name, id);
 		} else {
 			tmp_csv.setLocation(Coords(), name, id);
 		}
@@ -1275,15 +1278,6 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"COMMENTS_MK", "Input")) cfg.getValue(pre+"COMMENTS_MK", "Input", comments_mk);
 		else cfg.getValue(dflt+"COMMENTS_MK", "Input", comments_mk, IOUtils::nothrow);
 		if (comments_mk!='\n') tmp_csv.comments_mk = comments_mk;
-		
-		size_t single_parameter_index;
-		if (cfg.keyExists(pre+"SINGLE_PARAM_INDEX", "Input")) {
-			cfg.getValue(pre+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
-			tmp_csv.single_param_idx = single_parameter_index - 1; //counting starts at 1 in ini file
-		} else if (cfg.keyExists(dflt+"SINGLE_PARAM_INDEX", "Input")) {
-			cfg.getValue(dflt+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
-			tmp_csv.single_param_idx = single_parameter_index - 1;
-		}
 
 		std::string header_delim_spec;
 		if (cfg.keyExists(pre+"HEADER_DELIMITER", "Input"))
@@ -1308,9 +1302,6 @@ void CsvIO::parseInputOutputSection()
 		
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
-		
-		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
-			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS (make sure it is <= CSV_NR_HEADERS) or CSV_FIELDS", AT);
 		
 		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
 		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);

@@ -29,11 +29,11 @@
 using namespace mio;
 
 TerrainRadiationComplex::TerrainRadiationComplex(const mio::Config &cfg_in, const mio::DEMObject &dem_in,
-												 const std::string &method)
-	: TerrainRadiationAlgorithm(method), dimx(dem_in.getNx()), dimy(dem_in.getNy()), dimx_process(dimx), startx(0), endx(dimx),
-	  dem(dem_in), cfg(cfg_in), BRDFobject(cfg_in), pv_points(),
-	  albedo_grid(dem_in.getNx(), dem_in.getNy(), IOUtils::nodata),
-	  sky_vf(2, mio::Array2D<double>(dimx, dimy, IOUtils::nodata)), sky_vf_mean(dimx, dimy, IOUtils::nodata)
+                                                 const std::string &method)
+    : TerrainRadiationAlgorithm(method), dimx(dem_in.getNx()), dimy(dem_in.getNy()), dimx_process(dimx), startx(0), endx(dimx),
+    dem(dem_in), cfg(cfg_in), BRDFobject(cfg_in), pv_points(),
+    albedo_grid(dem_in.getNx(), dem_in.getNy(), IOUtils::nodata),
+    sky_vf_mean(dimx, dimy, IOUtils::nodata), sky_vf(2, mio::Array2D<double>(dimx, dimy, IOUtils::nodata))
 {
 	// PRECISION PARAMETERS
 	// ####################
@@ -214,22 +214,17 @@ void TerrainRadiationComplex::initBasicSetHorizontal()
 
 	BasicSet_Horizontal.clear();
 
-	for (size_t n = 0; n < M_epsilon; ++n)
-	{
+	for (size_t n = 0; n < M_epsilon; ++n) {
 		psi_0 = psi_1;
-		if (n == (M_epsilon - 1))
-		{
+		if (n == (M_epsilon - 1)) {
 			psi_1 = 3.1415926 / 2;
-		}
-		else
-		{
+		} else {
 			delta = acos(-2 / float(M_epsilon) + cos(2 * psi_0)) / 2 - psi_0; // [~ MT eq. 2.5]
 			psi_1 = psi_0 + delta;
 		}
 		epsilon = (psi_1 + psi_0) / 2; // [MT eq. 2.4]
 
-		for (size_t m = 0; m < M_phi; ++m)
-		{
+		for (size_t m = 0; m < M_phi; ++m) {
 			phi = 2 * 3.1415926 * (m + 0.5) / M_phi; // [MT eq. 2.3]
 			i += 1;
 			BasicSet_Horizontal.push_back({cos(epsilon) * sin(phi), cos(epsilon) * cos(phi), sin(epsilon)}); // [MT eq. 2.1]
@@ -245,36 +240,29 @@ void TerrainRadiationComplex::initBasicSetHorizontal()
 */
 void TerrainRadiationComplex::initBasicSetRotated()
 {
-
 	BasicSet_rotated.resize(dimx, dimy, 2, S, {0, 0, 0});
 
 #pragma omp parallel for
-	for (size_t ii = 1; ii < dimx - 1; ++ii)
-	{
-		for (size_t jj = 1; jj < dimy - 1; ++jj)
-		{
-			for (size_t which_triangle = 0; which_triangle < 2; ++which_triangle) // Triangles: A=1, B=0  [MT Figure 2.2]
-			{
+	for (size_t ii = 1; ii < dimx - 1; ++ii) {
+		for (size_t jj = 1; jj < dimy - 1; ++jj) {
+			for (size_t which_triangle = 0; which_triangle < 2; ++which_triangle) { // Triangles: A=1, B=0  [MT Figure 2.2]
 				Vec3D triangle_normal, axis, z_axis = {0, 0, 1};
 				TriangleNormal(ii, jj, which_triangle, triangle_normal);
 				VectorCrossProduct(z_axis, triangle_normal, axis);						 // [MT eq. 2.39]
 				double inclination = acos(VectorScalarProduct(triangle_normal, z_axis)); // [MT eq. 2.40]
 
-				if (NormOfVector(axis) == 0)
-				{ // [MT see text after eq. 2.41]
+				if (NormOfVector(axis) == 0) { // [MT see text after eq. 2.41]
 					axis[0] = 1;
 					axis[1] = 0;
 					axis[2] = 0;
 				}
 
-				for (size_t solidangle = 0; solidangle < S; ++solidangle)
-				{
+				for (size_t solidangle = 0; solidangle < S; ++solidangle) {
 					Vec3D rotated;
 					const auto &solid_angle = BasicSet_Horizontal[solidangle];
 					RotN(axis, solid_angle, inclination, rotated); // [MT eq. 2.38]
 					auto &to_rotate = BasicSet_rotated(ii, jj, which_triangle, solidangle);
-					for (auto i = 0; i < rotated.size(); ++i)
-					{
+					for (size_t i = 0; i < rotated.size(); ++i) {
 						to_rotate[i] = rotated[i];
 					}
 				}
@@ -293,21 +281,16 @@ void TerrainRadiationComplex::initViewList()
 {
 
 	std::cout << "[i] Initialize Terrain Radiation Complex\n";
-
 	ViewList.resize(dimx, dimy, 2, S, {0, 0, 0, 0, 0});
 
 	int counter = 0; // For output bar
 //loop over all triangles of surface
 #pragma omp parallel for
-	for (size_t ii = 1; ii < dimx - 1; ++ii)
-	{
+	for (size_t ii = 1; ii < dimx - 1; ++ii) {
 #pragma omp parallel for
-		for (size_t jj = 1; jj < dimy - 1; ++jj)
-		{
-			for (size_t which_triangle = 0; which_triangle < 2; ++which_triangle) // Triangles: A=1, B=0  [MT Figure 2.2]
-			{
-				for (size_t solidangle = 0; solidangle < S; ++solidangle) // loop over all vectors of basic set
-				{
+		for (size_t jj = 1; jj < dimy - 1; ++jj) {
+			for (size_t which_triangle = 0; which_triangle < 2; ++which_triangle) { // Triangles: A=1, B=0  [MT Figure 2.2]
+				for (size_t solidangle = 0; solidangle < S; ++solidangle) { // loop over all vectors of basic set
 					// Initialize with Impossible Numbers
 					size_t ii_temp = 999999;
 					size_t jj_temp = 999999;
@@ -318,29 +301,23 @@ void TerrainRadiationComplex::initViewList()
 					// Search for Intersection Candidates
 					size_t ii_dem = ii, jj_dem = jj, nb_cells = 0;
 					const auto &ray = BasicSet_rotated(ii, jj, which_triangle, solidangle);
-					if (ray.size() != 3)
-					{
+					if (ray.size() != 3) {
 						throw IndexOutOfBoundsException("Expected array of size 3");
 					}
 					Vec3D projected_ray, z_axis = {0, 0, 1};
 					ProjectVectorToPlane(ray, z_axis, projected_ray); // [in MT 2.1.3:  projected_ray ~ v_view,yx]
-					if (NormOfVector(projected_ray) != 0)
+					if (NormOfVector(projected_ray) != 0) {
 						normalizeVector(projected_ray, projected_ray);
-					else
-					{
+					} else {
 						projected_ray[0] = 1;
 						projected_ray[1] = 0;
 						projected_ray[2] = 0;
 					}
 
 					// [MT Figure 2.4] Smart loop over intersection Candidates [Amanatides et al. (1987)]
-					while (!(ii_dem < 1 || ii_dem > dem.getNx() - 2 || jj_dem < 1 || jj_dem > dem.getNy() - 2))
-					{
-
-						for (int k = -1; k < 2; ++k)
-						{
-							for (int kk = -1; kk < 2; ++kk)
-							{
+					while (!(ii_dem < 1 || ii_dem > dem.getNx() - 2 || jj_dem < 1 || jj_dem > dem.getNy() - 2)) {
+						for (int k = -1; k < 2; ++k) {
+							for (int kk = -1; kk < 2; ++kk) {
 
 								ii_dem = ii + (int)round(((double)nb_cells) * projected_ray[0]) + k;  // [~ MT eq. 2.32]
 								jj_dem = jj + (int)round(((double)nb_cells) * projected_ray[1]) + kk; // [~ MT eq. 2.32]
@@ -348,8 +325,7 @@ void TerrainRadiationComplex::initViewList()
 									continue;
 
 								distance = IntersectionRayTriangle(ray, ii, jj, ii_dem, jj_dem, 0); // Triangles B: [MT Figure 2.2]
-								if (distance != -999 && distance < minimal_distance)
-								{
+								if (distance != -999 && distance < minimal_distance) {
 									minimal_distance = distance; // If intersection with sevaral trangles, take the closest intersection
 									ii_temp = ii_dem;
 									jj_temp = jj_dem;
@@ -357,8 +333,7 @@ void TerrainRadiationComplex::initViewList()
 								}
 
 								distance = IntersectionRayTriangle(ray, ii, jj, ii_dem, jj_dem, 1); // Triangles A: [MT Figure 2.2]
-								if (distance != -999 && distance < minimal_distance)
-								{
+								if (distance != -999 && distance < minimal_distance) {
 									minimal_distance = distance; // If intersection with sevaral trangles, take the closest intersection
 									ii_temp = ii_dem;
 									jj_temp = jj_dem;
@@ -372,8 +347,7 @@ void TerrainRadiationComplex::initViewList()
 					}
 					if (minimal_distance == dem.cellsize * (dem.getNx() + dem.getNy()))
 						minimal_distance = -999; // No intersection found    =>    -999 == "SKY"
-					if (ii_temp > 0 && ii_temp < dimx)
-					{
+					if (ii_temp > 0 && ii_temp < dimx) {
 						Vec3D ray_stretched;
 						VectorStretch(ray, -1, ray_stretched);
 						solidangle_temp = vectorToSPixel(ray_stretched, ii_temp, jj_temp, which_triangle_temp);
@@ -639,14 +613,13 @@ bool TerrainRadiationComplex::ReadViewList()
 *
 */
 void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Array2D<double> &diffuse,
-										   mio::Array2D<double> &terrain, const mio::Array2D<double> &direct_unshaded_horizontal, const mio::Array2D<double> &total_ilwr,
-										   mio::Array2D<double> &sky_ilwr, mio::Array2D<double> &terrain_ilwr,
+										   mio::Array2D<double> &terrain, const mio::Array2D<double> &direct_unshaded_horizontal, const mio::Array2D<double> &/*total_ilwr*/,
+										   mio::Array2D<double> &/*sky_ilwr*/, mio::Array2D<double> &/*terrain_ilwr*/,
 										   double solarAzimuth, double solarElevation)
 {
 	MPIControl &mpicontrol = MPIControl::instance();
 
-	if (_hasSP)
-	{
+	if (_hasSP) {
 		SP.setGridRadiation(albedo_grid, direct, diffuse, direct_unshaded_horizontal, solarAzimuth, solarElevation);
 	}
 
@@ -671,11 +644,9 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 // Calculate [MT eq. 2.96] and all Elements thereof
 // --> Initialize direct_temp, diffuse_temp, TList_sky_aniso, TList_sky_iso, TList_direct
 #pragma omp parallel for
-	for (size_t ii = startx; ii < endx; ++ii)
-	{
+	for (size_t ii = startx; ii < endx; ++ii) {
 		size_t ii_idx = ii - startx;
-		for (size_t jj = 1; jj < dimy - 1; ++jj)
-		{
+		for (size_t jj = 1; jj < dimy - 1; ++jj) {
 			//////////////////////////////////
 			///// DIRECT [in MT eq. 2.96: F_direct,t]
 			size_t solidangle_sun;
@@ -684,8 +655,7 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 			// Triangle-A, Geometric projection: horizontal radiation -> beam radiation -> triangle radiation
 			Vec3D triangle;
 			TriangleNormal(ii, jj, 1, triangle);
-			if (a_sun[2] > 0 && VectorScalarProduct(triangle, a_sun) > 0)
-			{
+			if (a_sun[2] > 0 && VectorScalarProduct(triangle, a_sun) > 0) {
 				double proj_to_ray, proj_to_triangle;
 
 				proj_to_ray = 1. / VectorScalarProduct(a_sun, z_axis);
@@ -698,14 +668,13 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 
 				if (distance_closest_triangle != -999)
 					direct_A(ii_idx, jj) = 0;
-			}
-			else
+			} else {
 				direct_A(ii_idx, jj) = 0;
+			}
 
 			// Triangle-B, Geometric projection: horizontal radiation -> beam radiation -> triangle radiation
 			TriangleNormal(ii, jj, 0, triangle);
-			if (a_sun[2] > 0 && VectorScalarProduct(triangle, a_sun) > 0)
-			{
+			if (a_sun[2] > 0 && VectorScalarProduct(triangle, a_sun) > 0) {
 				double proj_to_ray, proj_to_triangle;
 
 				proj_to_ray = 1. / VectorScalarProduct(a_sun, z_axis);
@@ -718,9 +687,9 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 
 				if (distance_closest_triangle != -999)
 					direct_B(ii_idx, jj) = 0;
-			}
-			else
+			} else {
 				direct_B(ii_idx, jj) = 0;
+			}
 
 			///////////////////////////////////////
 			///// DIFFUSE [in MT eq. 2.96: F_diffuse,t]

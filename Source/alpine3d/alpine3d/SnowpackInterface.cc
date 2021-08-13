@@ -1201,6 +1201,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 
 	if (MPIControl::instance().master() || do_io_locally) {
 		const bool useSoil = sn_cfg.get("SNP_SOIL", "Snowpack");
+		const std::string variant = sn_cfg.get("VARIANT", "SnowpackAdvanced");
 		const std::string coordsys = sn_cfg.get("COORDSYS", "Input");
 		const std::string coordparam = sn_cfg.get("COORDPARAM", "Input", "");
 		Coords llcorner_out( dem.llcorner );
@@ -1228,7 +1229,10 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 						snow_stations_tmp.push_back( NULL );
 						continue;
 					}
-					snow_stations_tmp.push_back( new SnowStation(useCanopy, useSoil, true) );
+					snow_stations_tmp.push_back( new SnowStation(useCanopy, useSoil, true, (variant=="SEAICE")) );
+					if (snow_stations_tmp.back()->Seaice != NULL) {
+						snow_stations_tmp.back()->Seaice->ConfigSeaIce(sn_cfg);
+					}
 
 					SnowStation& snowPixel = *(snow_stations_tmp.back());
 					const bool is_special_point = SnowpackInterfaceWorker::is_special(pts, ix, iy);

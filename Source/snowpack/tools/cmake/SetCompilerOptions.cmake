@@ -4,7 +4,7 @@
 # It can also edit CMAKE_SHARED_LINKER_FLAGS and CMAKE_EXE_LINKER_FLAGS
 
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 MACRO (SET_COMPILER_OPTIONS)
 	###########################################################

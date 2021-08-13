@@ -1,5 +1,6 @@
 #!/bin/sh
-#extract a given column from a smet file
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# extract a given column from a smet file
 
 if [ $# -lt 1 ]; then
 	me=`basename $0`

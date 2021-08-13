@@ -1068,8 +1068,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 		const double meltfreeze_tk = (Xdata.getNumberOfElements()>0)? Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk : Constants::meltfreeze_tk;
 		const bool isSurfaceMelting = !(NDS[nE].T < meltfreeze_tk);
 
-		RichardsEquationSolver1d_matrix.SolveRichardsEquation(Xdata, Sdata, ((isTopLayerSolvedByREQ && isSurfaceMelting) || (variant == "SEAICE" && ql < 0.)) ? (ql) : (dummy_ql));
-		if(Xdata.getNumberOfElements() > Xdata.SoilNode && enable_pref_flow) RichardsEquationSolver1d_pref.SolveRichardsEquation(Xdata, Sdata, dummy_ql);	// Matrix flow will take care of potential evaporation/condensation, provided by ql, so send dummy_ql for preferential flow
+		RichardsEquationSolver1d_matrix.SolveRichardsEquation(Xdata, Sdata, ((isTopLayerSolvedByREQ && isSurfaceMelting) || (variant == "SEAICE" && ql < 0.)) ? (ql) : (dummy_ql), Mdata.date);
+		if(Xdata.getNumberOfElements() > Xdata.SoilNode && enable_pref_flow) RichardsEquationSolver1d_pref.SolveRichardsEquation(Xdata, Sdata, dummy_ql, Mdata.date);	// Matrix flow will take care of potential evaporation/condensation, provided by ql, so send dummy_ql for preferential flow
 	}
 
 	// The TOP element is very important because it is always losing mass--the strain state

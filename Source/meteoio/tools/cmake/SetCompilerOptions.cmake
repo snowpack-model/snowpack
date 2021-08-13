@@ -1,10 +1,11 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 #Set different variables according to the detected compiler and processor
 #based on $CMAKE_CXX_COMPILER_ID it sets the following variables:
 # WARNINGS, EXTRA_WARNINGS, EXTRA, OPTIM, ARCH, DEBUG, _VERSION, PROFILING
 # It can also edit CMAKE_SHARED_LINKER_FLAGS and CMAKE_EXE_LINKER_FLAGS
 
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 MACRO (SET_COMPILER_OPTIONS)
 	SET(USER_COMPILER_OPTIONS "" CACHE STRING "Provide some extra compiler options")

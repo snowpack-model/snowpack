@@ -60,7 +60,7 @@ class CsvDateTime {
 class CsvParameters {
 	public:
 		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), single_param_idx(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
+		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
 		
 		void setPurgeQuotes(const bool& i_purgeQuotes) {purgeQuotes=i_purgeQuotes;}
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
@@ -86,7 +86,6 @@ class CsvParameters {
 		std::string nodata, header_repeat_mk, filter_ID;
 		size_t ID_col;
 		size_t header_lines, columns_headers, units_headers;
-		size_t single_param_idx;
 		char csv_delim, header_delim;
 		char eoln, comments_mk;
 		bool header_repeat_at_start, asc_order, purgeQuotes;

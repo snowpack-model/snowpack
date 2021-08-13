@@ -83,7 +83,7 @@ class EnergyBalance
 
 		void writeSP(const unsigned int max_steps);
 
-		const bool hasSP(){return terrain_radiation->hasSP();}
+		bool hasSP(){return terrain_radiation->hasSP();}
 		void setStations(const std::vector<mio::MeteoData>& in_vecMeteo);
 		double getTiming() const;
 		void Destroy();
@@ -95,11 +95,11 @@ class EnergyBalance
 		std::vector<RadiationField> radfields;
 		mio::DEMObject dem;
 		std::vector<mio::MeteoData> vecMeteo;
-		size_t dimx, dimy;
 		mio::Grid2DObject albedo;
 		mio::Array2D<double> direct_unshaded_horizontal, direct, diffuse, reflected; //FELIX: direct_unshaded_horizontal
 		mio::Timer timer;
 		const mio::Config& cfg;
+		size_t dimx, dimy;
 		unsigned int nbworkers;
 };
 

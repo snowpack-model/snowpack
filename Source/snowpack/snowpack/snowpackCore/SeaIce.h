@@ -74,6 +74,7 @@ class SeaIce {
 		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
 		double TotalFloodingBucket;		//Total flooding with Bucket scheme (kg / m^2)
 
+		bool check_initial_conditions;
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
 		salinityprofiles salinityprofile;
 
@@ -92,6 +93,7 @@ class SeaIce {
 		double getAvgBrineSalinity(const SnowStation& Xdata);
 		double getTotSalinity(const SnowStation& Xdata);
 
+		void InitSeaIce(SnowStation& Xdata);
 		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt);
 	private:
 
