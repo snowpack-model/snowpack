@@ -222,6 +222,13 @@ do
 		# Print message
 		echo "Final simulation"
 		eval ${to_exec}
+		if [ ! -z "${zip_output_dir}" ]; then
+			if [ ! -d "${zip_output_dir}" ]; then
+				echo "ERROR: zip output directory is not a valid directory! [zip_output_dir=${zip_output_dir}]"
+				exit
+			fi
+			zip ${zip_output_dir}/${stn}_${experiment}.zip -- ${outpath}/${stn}_${experiment}.*
+		fi
 		exit
 	fi
 	eval ${to_exec_spinup}
