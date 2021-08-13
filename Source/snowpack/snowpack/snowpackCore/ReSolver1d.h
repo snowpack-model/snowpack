@@ -55,7 +55,7 @@ class ReSolver1d {
 		//To prevent string comparisons, we define an enumerated list:
 		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};
 		//K_Average types
-		enum K_AverageTypes{ARITHMETICMEAN, GEOMETRICMEAN, HARMONICMEAN, MINIMUMVALUE, UPSTREAM};
+		enum K_AverageTypes{ARITHMETICMEAN, LOGMEAN, GEOMETRICMEAN, HARMONICMEAN, MINIMUMVALUE, UPSTREAM};
 		//Solvers
 		enum SOLVERS{DGESVD, DGTSV, TDMA};
 		//Boundary conditions

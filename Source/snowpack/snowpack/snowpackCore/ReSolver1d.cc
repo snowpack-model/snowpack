@@ -151,6 +151,8 @@ ReSolver1d::ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part)
 		cfg.getValue("AVG_METHOD_HYDRAULIC_CONDUCTIVITY", "SnowpackAdvanced", tmp_avg_method_K);
 		if (tmp_avg_method_K=="ARITHMETICMEAN") {
 			K_AverageType=ARITHMETICMEAN;
+		} else if (tmp_avg_method_K=="LOGMEAN") {
+			K_AverageType=LOGMEAN;
 		} else if (tmp_avg_method_K=="GEOMETRICMEAN") {
 			K_AverageType=GEOMETRICMEAN;
 		} else if (tmp_avg_method_K=="HARMONICMEAN") {
@@ -168,6 +170,8 @@ ReSolver1d::ReSolver1d(const SnowpackConfig& cfg, const bool& matrix_part)
 		cfg.getValue("AVG_METHOD_HYDRAULIC_CONDUCTIVITY_PREF_FLOW", "SnowpackAdvanced", tmp_avg_method_K);
 		if (tmp_avg_method_K=="ARITHMETICMEAN") {
 			K_AverageType=ARITHMETICMEAN;
+		} else if (tmp_avg_method_K=="LOGMEAN") {
+			K_AverageType=LOGMEAN;
 		} else if (tmp_avg_method_K=="GEOMETRICMEAN") {
 			K_AverageType=GEOMETRICMEAN;
 		} else if (tmp_avg_method_K=="HARMONICMEAN") {
@@ -1209,6 +1213,19 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						case ARITHMETICMEAN:
 						{
 							k_np1_m_ip12[i]=.5*(K[i]+K[i+1]);
+							break;
+						}
+
+						case LOGMEAN:
+						{
+							// See: https://doi.org/10.1061/9780784480472.078
+							if (K[i]==K[i+1]) {
+								k_np1_m_ip12[i]=K[i];
+							} else if (K[i]==0. || K[i+1]==0.) {
+								k_np1_m_ip12[i]=0.;
+							} else {
+								k_np1_m_ip12[i]=(K[i+1]-K[i])/log(K[i+1]/K[i]);
+							}
 							break;
 						}
 
