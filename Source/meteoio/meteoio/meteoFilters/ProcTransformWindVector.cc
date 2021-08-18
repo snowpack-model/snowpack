@@ -18,18 +18,18 @@
 */
 #include <meteoio/meteoFilters/ProcTransformWindVector.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
-#ifdef PROJ4
+#ifdef PROJ
         #include <proj_api.h>
 #endif
 #include <stdio.h>
 
 namespace mio {
 
-#ifndef PROJ4
+#ifndef PROJ
 ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg), t_coordparam()
 {
-	throw IOException("ProcTransformWindVector requires PROJ4 library. Please compile MeteoIO with PROJ4 support.", AT);
+	throw IOException("ProcTransformWindVector requires PROJ library. Please compile MeteoIO with PROJ support.", AT);
 }
 
 ProcTransformWindVector::~ProcTransformWindVector() {}
@@ -37,7 +37,7 @@ ProcTransformWindVector::~ProcTransformWindVector() {}
 void ProcTransformWindVector::process(const unsigned int&, const std::vector<MeteoData>&,
                         std::vector<MeteoData>&)
 {
-	throw IOException("ProcTransformWindVector requires PROJ4 library. Please compile MeteoIO with PROJ4 support.", AT);
+	throw IOException("ProcTransformWindVector requires PROJ library. Please compile MeteoIO with PROJ support.", AT);
 }
 
 #else
@@ -62,7 +62,7 @@ ProcTransformWindVector::~ProcTransformWindVector() {
 ProcTransformWindVector::ProcTransformWindVector(const ProcTransformWindVector& c) :
 	ProcessingBlock(c.vecArgs_i, c.name_i, c.cfg_i), pj_latlong(nullptr), pj_dest(nullptr), vecArgs_i(c.vecArgs_i), name_i(c.name_i), cfg_i(c.cfg_i), t_coordparam(c.t_coordparam)
 {
-	initPROJ4();
+	initPROJ();
 }
 
 ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformWindVector& source) {
@@ -73,35 +73,35 @@ ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformW
 		name_i = source.name_i;
 		cfg_i = source.cfg_i;
 		t_coordparam = source.t_coordparam;
-		initPROJ4();
+		initPROJ();
 	}
 	return *this;
 }
 
-void ProcTransformWindVector::initPROJ4()
+void ProcTransformWindVector::initPROJ()
 {
 	static const std::string src_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	const std::string dest_param("+init=epsg:"+t_coordparam);
 
 	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+src_param, AT);
 	}
 }
 
-void ProcTransformWindVector::WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& /*coordparam*/, double& east_out, double& north_out)
+void ProcTransformWindVector::WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& /*coordparam*/, double& east_out, double& north_out)
 {
 	double x=long_in*Cst::to_rad, y=lat_in*Cst::to_rad;
 	const int p = pj_transform(pj_latlong, pj_dest, 1, 1, &x, &y, NULL );
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
 	}
 	east_out = x;
 	north_out = y;
@@ -204,19 +204,19 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 		// Get easting and northing of point in target coordinate system (given by ivec[ii].meta.getPosition())
 		double e0=0., n0=0.;
 		// Note that we do not use the easting and northing from getPosition, since those may be a different coordinate system.
-		WGS84_to_PROJ4(lat, lon, t_coordparam, e0, n0); //CoordsAlgorithms::WGS84_to_PROJ4(lat, lon, t_coordparam, e0, n0);
+		WGS84_to_PROJ(lat, lon, t_coordparam, e0, n0); //CoordsAlgorithms::WGS84_to_PROJ(lat, lon, t_coordparam, e0, n0);
 
 		// Find ratio between m per degree latitude over m per degree longitude
 		double et1=0., nt1=0., et2=0., nt2=0.;	// temporary variables to determine the ratio
 		if (lat>0.) {
-			WGS84_to_PROJ4(lat-eps, lon, t_coordparam, et1, nt1); //CoordsAlgorithms::WGS84_to_PROJ4(lat-eps, lon, t_coordparam, et1, nt1);
+			WGS84_to_PROJ(lat-eps, lon, t_coordparam, et1, nt1); //CoordsAlgorithms::WGS84_to_PROJ(lat-eps, lon, t_coordparam, et1, nt1);
 		} else {
-			WGS84_to_PROJ4(lat+eps, lon, t_coordparam, et1, nt1); //CoordsAlgorithms::WGS84_to_PROJ4(lat+eps, lon, t_coordparam, et1, nt1);
+			WGS84_to_PROJ(lat+eps, lon, t_coordparam, et1, nt1); //CoordsAlgorithms::WGS84_to_PROJ(lat+eps, lon, t_coordparam, et1, nt1);
 		}
 		if (lon>0.) {
-			WGS84_to_PROJ4(lat, lon-eps, t_coordparam, et2, nt2); //CoordsAlgorithms::WGS84_to_PROJ4(lat, lon-eps, t_coordparam, et2, nt2);
+			WGS84_to_PROJ(lat, lon-eps, t_coordparam, et2, nt2); //CoordsAlgorithms::WGS84_to_PROJ(lat, lon-eps, t_coordparam, et2, nt2);
 		} else {
-			WGS84_to_PROJ4(lat, lon+eps, t_coordparam, et2, nt2); //CoordsAlgorithms::WGS84_to_PROJ4(lat, lon+eps, t_coordparam, et2, nt2);
+			WGS84_to_PROJ(lat, lon+eps, t_coordparam, et2, nt2); //CoordsAlgorithms::WGS84_to_PROJ(lat, lon+eps, t_coordparam, et2, nt2);
 		}
 		const double ratio = (et2!=e0 && nt2!=n0) ? (sqrt(  ((et1-e0)*(et1-e0) + (nt1-n0)*(nt1-n0)) / ((et2-e0)*(et2-e0) + (nt2-n0)*(nt2-n0))  )) : (1.);
 
@@ -225,19 +225,19 @@ void ProcTransformWindVector::process(const unsigned int& param, const std::vect
 		double u_new, v_new;	// transformed wind speed components
 		if (lat-(v*eps) >= -90. && lat-(v*eps) <= 90.) {
 			if (lon-(u*eps*ratio)>=-360. && lon-(u*eps*ratio)<=360.) {
-				WGS84_to_PROJ4(lat-(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ4(lat-(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1);
+				WGS84_to_PROJ(lat-(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ(lat-(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1);
 				v_new = n0 - n1;
 			} else {
-				WGS84_to_PROJ4(lat-(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ4(lat-(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1);
+				WGS84_to_PROJ(lat-(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ(lat-(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1);
 				v_new = n1 - n0;
 			}
 			u_new = e0 - e1;
 		} else {
 			if (lon-(u*eps*ratio)>=-360. && lon-(u*eps*ratio)<=360.) {
-				WGS84_to_PROJ4(lat+(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ4(lat+(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1);
+				WGS84_to_PROJ(lat+(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ(lat+(v*eps), lon-(u*eps*ratio), t_coordparam, e1, n1);
 				v_new = n0 - n1;
 			} else {
-				WGS84_to_PROJ4(lat+(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ4(lat+(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1);
+				WGS84_to_PROJ(lat+(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1); //CoordsAlgorithms::WGS84_to_PROJ(lat+(v*eps), lon+(u*eps*ratio), t_coordparam, e1, n1);
 				v_new = n1 - n0;
 			}
 			u_new = e1 - e0;
@@ -282,7 +282,7 @@ void ProcTransformWindVector::parse_args(const std::vector< std::pair<std::strin
 		}
 	}
 
-	initPROJ4();
+	initPROJ();
 }
 #endif
 } //end namespace

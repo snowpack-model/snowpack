@@ -23,6 +23,7 @@ MACRO (SET_COMPILER_OPTIONS)
 		#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs" FORCE)
 		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions /w35045: inform about Spectre mitigation
 		#SET(EXTRA_WARNINGS "/Wp64") #/Wall
+		SET(WARNINGS "${WARNINGS} /experimental:external /external:I c:/Windows /external:W0")
 		SET(OPTIM "/O2 /DNDEBUG /DEBUG:FASTLINK /MD /DNOSAFECHECKS")
 		SET(ARCH_OPTIM "/arch:AVX2")
 		SET(ARCH_SAFE "")

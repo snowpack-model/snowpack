@@ -28,11 +28,11 @@ namespace mio {
 
 /**
  * @class ProcTransformWindVector
- * @brief This filter projects wind direction, and/or wind speed components, from WGS84 to a PROJ4 supported coordinate system,
- * defined by an EPSG code (requires PROJ4).
+ * @brief This filter projects wind direction, and/or wind speed components, from WGS84 to a PROJ supported coordinate system,
+ * defined by an EPSG code (requires PROJ).
  * @details
  * The filter assumes the wind direction and/or the U and V wind speed components are defined in WGS84 (i.e, north/south is parallel
- * to longitude, and east/west is parallel to latitude). After transformation to a PROJ4 supported coordinate system defined by an
+ * to longitude, and east/west is parallel to latitude). After transformation to a PROJ supported coordinate system defined by an
  * EPSG code, the wind direction is defined such that north/south is parallel to northing, and east/west is parallel to easting.
  * The following arguments are supported:
  * - COORDPARAM: provides the target EPSG code for transformation
@@ -63,7 +63,7 @@ namespace mio {
  * @endcode
  */
 
-#ifdef PROJ4
+#ifdef PROJ
 	#include <proj_api.h>
 #endif
 
@@ -78,12 +78,12 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-#ifdef PROJ4
+#ifdef PROJ
 		static std::string findUComponent(const MeteoData& md);
 		static std::string findVComponent(const MeteoData& md);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg);
-		void initPROJ4(void);
-		void WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
+		void initPROJ(void);
+		void WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
 
 		projPJ pj_latlong, pj_dest;
 

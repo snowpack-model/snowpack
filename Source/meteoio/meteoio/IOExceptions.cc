@@ -19,13 +19,13 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string.h>
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
-	#include <execinfo.h> //needed for the backtracing of the stack
-	#if defined(__GNUC__)
+#if defined(__linux)
+	#if defined(__GLIBC__)
+		#include <execinfo.h> //needed for the backtracing of the stack
 		#include <sstream>
 		#include <cxxabi.h>
 	#endif
-	#if defined(MSG_BOX)
+	#if defined(MSG_BOX) && !defined(ANDROID) && !defined(__CYGWIN__)
 		#include <meteoio/MessageBoxX11.h>
 	#endif
 #endif
@@ -66,10 +66,9 @@ void inline messageBox(const std::string& msg) {
 }
 #endif
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__GLIBC__)
 std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const
 {
-#ifdef __GNUC__
 	found_main=false;
 	std::ostringstream ss;
 	char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
@@ -103,9 +102,6 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 	}
 
 	return ss.str();
-#else
-	return "\tat " + std::string(symbols);
-#endif
 }
 #endif
 
@@ -119,7 +115,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	const std::string where = (position.empty())? "unknown position" : ((delim)? delim+1 : position);
 	msg = "[" + where + "] " + message;
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__GLIBC__)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings

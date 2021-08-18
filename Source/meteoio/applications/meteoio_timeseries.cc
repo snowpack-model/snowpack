@@ -166,6 +166,11 @@ static void signal_handler( int signal_num )
 
 static void signals_catching(void) 
 {
+#ifdef _MSC_VER
+	typedef void(*SignalHandlerPointer)(int);
+	SignalHandlerPointer previousHandler;
+	previousHandler = signal(SIGTERM, signal_handler);
+#else
 	struct sigaction catch_signal;
 	catch_signal.sa_handler = signal_handler;
 	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
@@ -173,6 +178,7 @@ static void signals_catching(void)
 	
 	sigaction(SIGTERM, &catch_signal, NULL);
 	//sigaction(SIGHUP, &catch_signal, NULL);
+#endif
 }
 
 
