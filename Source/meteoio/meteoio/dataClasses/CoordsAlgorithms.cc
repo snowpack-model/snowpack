@@ -26,7 +26,7 @@
 #include <cstdio> //for sscanf
 #include <iomanip> //for setprecision
 
-#ifdef PROJ4
+#ifdef PROJ
 	#include <proj_api.h>
 #endif
 
@@ -336,7 +336,7 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 			return (5042);
 		}
 	}
-	if (coordsystem=="PROJ4") {
+	if (coordsystem=="PROJ") {
 		const int tmp = atoi(coordparam.c_str());
 		if (tmp<0 || tmp>32767) {
 			std::ostringstream ss;
@@ -422,8 +422,8 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		return;
 	}
 	
-	//anything else has to be processed by proj4
-	coordsystem.assign("PROJ4");
+	//anything else has to be processed by proj
+	coordsystem.assign("PROJ");
 	std::ostringstream osstream;
 	osstream << epsg;
 	coordparam=osstream.str();
@@ -805,7 +805,7 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 }
 
 /**
-* @brief Coordinate conversion: from WGS84 Lat/Long to proj4 parameters
+* @brief Coordinate conversion: from WGS84 Lat/Long to proj parameters
 * @param[in] lat_in Decimal Latitude
 * @param[in] long_in Decimal Longitude
 * @param[in] coordparam Extra parameters necessary for the conversion (such as UTM zone, etc)
@@ -814,9 +814,9 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 * 
 * \note Using libproj is currently not thread safe (see https://trac.osgeo.org/proj/wiki/ThreadSafety)
 */
-void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
+void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
-#ifdef PROJ4
+#ifdef PROJ
 	static const std::string src_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	const std::string dest_param("+init=epsg:"+coordparam);
 	projPJ pj_latlong, pj_dest;
@@ -824,19 +824,19 @@ void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_i
 
 	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+src_param, AT);
 	}
 
 	const int p = pj_transform(pj_latlong, pj_dest, 1, 1, &x, &y, NULL );
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
 	}
 	east_out = x;
 	north_out = y;
@@ -848,21 +848,21 @@ void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_i
 	(void)coordparam;
 	(void)east_out;
 	(void)north_out;
-	throw IOException("Not compiled with PROJ4 support", AT);
+	throw IOException("Not compiled with PROJ support", AT);
 #endif
 }
 
 /**
-* @brief Coordinate conversion: from proj4 parameters to WGS84 Lat/Long
+* @brief Coordinate conversion: from proj parameters to WGS84 Lat/Long
 * @param east_in easting coordinate (Swiss system)
 * @param north_in northing coordinate (Swiss system)
 * @param[in] coordparam Extra parameters necessary for the conversion (such as UTM zone, etc)
 * @param lat_out Decimal Latitude
 * @param long_out Decimal Longitude
 */
-void CoordsAlgorithms::PROJ4_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
+void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
 {
-#ifdef PROJ4
+#ifdef PROJ
 	const std::string src_param("+init=epsg:"+coordparam);
 	static const std::string dest_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	projPJ pj_latlong, pj_src;
@@ -870,19 +870,19 @@ void CoordsAlgorithms::PROJ4_to_WGS84(const double& east_in, const double& north
 
 	if ( !(pj_src = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_src);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+src_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
 
 	const int p = pj_transform(pj_src, pj_latlong, 1, 1, &x, &y, NULL );
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
-		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
 	}
 	long_out = x*RAD_TO_DEG;
 	lat_out = y*RAD_TO_DEG;
@@ -894,7 +894,7 @@ void CoordsAlgorithms::PROJ4_to_WGS84(const double& east_in, const double& north
 	(void)coordparam;
 	(void)lat_out;
 	(void)long_out;
-	throw IOException("Not compiled with PROJ4 support", AT);
+	throw IOException("Not compiled with PROJ support", AT);
 #endif
 }
 

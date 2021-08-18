@@ -807,17 +807,26 @@ void DEMObject::getNeighbours(const size_t& i, const size_t& j, double A[4][4], 
 
 double DEMObject::safeGet(const int& i, const int& j) const
 {//this function would allow reading the value of *any* point,
-//that is, even for coordinates outside of the grid (where it would return nodata)
+//that is, even for coordinates outside of the grid (where it would return the boundary grid cell)
 //this is to make implementing the slope/curvature computation easier for edges, holes, etc
 
-	if (i<0 || i>=(signed)getNx()) {
-		return IOUtils::nodata;
+	size_t i2=0, j2=0;
+	if (i<0) {
+		i2=0;
+	} else if (i>=(int)getNx()) {
+		i2=getNx()-1;
+	} else {
+		i2=(size_t)i;
 	}
-	if (j<0 || j>=(signed)getNy()) {
-		return IOUtils::nodata;
+	if (j<0) {
+		j2=0;
+	} else if (j>=(int)getNy()) {
+		j2=getNy()-1;
+	} else {
+		j2=(size_t)j;
 	}
 
-	return grid2D((unsigned)i, (unsigned)j);
+	return grid2D(i2, j2);
 }
 
 const std::string DEMObject::toString(const FORMATS& type) const

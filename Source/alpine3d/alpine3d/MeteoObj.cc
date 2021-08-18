@@ -72,14 +72,19 @@ bool SnGrids::initStaticData()
 	paramname.push_back("GLACIER");
 	paramname.push_back("GLACIER_EXPOSED");
 	paramname.push_back("ET");
-  paramname.push_back("ISWR_TERRAIN");
-  paramname.push_back("ILWR_TERRAIN");
-  paramname.push_back("ISWR_BELOW_CAN");
+	paramname.push_back("ISWR_TERRAIN");
+	paramname.push_back("ILWR_TERRAIN");
+	paramname.push_back("ISWR_BELOW_CAN");
 	paramname.push_back("TSOIL1");
 	paramname.push_back("TSOIL2");
 	paramname.push_back("TSOIL3");
 	paramname.push_back("TSOIL4");
 	paramname.push_back("TSOIL5");
+	paramname.push_back("RHO1");
+	paramname.push_back("RHO2");
+	paramname.push_back("RHO3");
+	paramname.push_back("RHO4");
+	paramname.push_back("RHO5");
 
 
 	if (paramname.size()!=(SnGrids::lastparam+1))

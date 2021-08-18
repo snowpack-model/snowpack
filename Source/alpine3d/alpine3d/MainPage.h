@@ -158,8 +158,8 @@
  * @endcode
  * Then run the simulation as laid out in the previous section.
  *
- * \image html mpi_scaling.png "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation)"
- * \image latex mpi_scaling.eps "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation)" width=0.9\textwidth
+ * \image html mpi_scaling.png "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)"
+ * \image latex mpi_scaling.eps "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)" width=0.9\textwidth
  * 
  * \note Please make sure that the environment variables $TEMPDIR, $TEMP and $TMP (if defined) don't point to a shared drive (such as an NFS mounted home directory), 
  * otherwise MPI might run very slowly.

@@ -248,6 +248,8 @@ class Fit1D {
 
 		/**
 		* @brief Compute the regression parameters
+		* @details This is a specific optimizations for 1D linear regression: y = ax + b with scalars.
+		* See https://mathworld.wolfram.com/LeastSquaresFitting.html
 		* @return false if could not compute the parameters
 		*/
 		bool fit() {return model->fit();}
@@ -305,19 +307,20 @@ class Fit1D {
 };
 
 /**
- * @class FitMult
- * @brief A class to perform multiple linear regressions.
+ * @class FitLinClosedForm
+ * @brief A class to perform multiple linear regressions relying on the closed form solution.
  * @details This class performs linear regressions with multiple predictors. For example,
  * to compute air temperature trends based on elevation, easting, northing (ie predictors).
- * See www.public.iastate.edu/~maitra/stat501/lectures/MultivariateRegression.pdf
+ * See https://www.statlearning.com/ and http://www.public.iastate.edu/~maitra/stat501/lectures/MultivariateRegression.pdf
  *
  * It solves the multiple linear regression as
  * \f[
- * \bm{Y = Z\beta + \epsilon}
+ * \mathbf{Y = \theta^\top X + \epsilon}
  * \f]
- * where \f$ \bm{Y} \f$ is the matrix of the observations, \f$ \bm{Z} \f$ the matrix of the predictors, \f$ \bm{\beta} \f$ the matrix of the regression
- * coefficients and \f$ \bm{\epsilon} \f$ the matrix of errors. The \f$ \bm{Y} \f$ and \f$ \bm{Z} \f$ matrices are filled with the \f$ \bm{n} \f$ observations
- * and \f$ \bm{r} \f$ predictors (for example with 3 predictors, altitude, easting and northing) so the previous equation becomes:
+ * where \f$ \mathbf{Y} \f$ is the vector of the observations (or outputs), \f$ \mathbf{X} \f$ the design matrix (predictors prefixed with a column of 1's so
+ * the intercept term is included in the multiplication), \f$ \mathbf{\theta} \f$ the matrix of the regression coefficients and \f$ \mathbf{\epsilon} \f$ 
+ * the matrix of errors. The \f$ \mathbf{Y} \f$ and \f$ \mathbf{X} \f$ matrices are filled with the \f$ \mathbf{n} \f$ observations and \f$ \mathbf{m} \f$
+ * predictors (for example with 3 predictors, altitude, easting and northing) so the previous equation becomes:
  * \f[
  * \underbrace{
  * \left(
@@ -334,6 +337,17 @@ class Fit1D {
  * \qquad
  * \underbrace{
  * \left(
+ * \begin{array}{c}
+ * \beta_0 \\
+ * \beta_1  \\
+ * \vdots \\
+ * \beta_m
+ * \end{array}
+ * \right)^\top
+ * }_{\theta}
+ * \cdot
+ * \underbrace{
+ * \left(
  * \begin{array}{cccc}
  * 1 & alt_1 & east_1 & north_1 \\
  * 1 & alt_2 & east_2 & north_2 \\
@@ -341,18 +355,7 @@ class Fit1D {
  * 1 & alt_n & east_n & north_n
  * \end{array}
  * \right)
- * }_{Z}
- * \cdot
- * \underbrace{
- * \left(
- * \begin{array}{c}
- * \beta_0 \\
- * \beta_1  \\
- * \vdots \\
- * \beta_r
- * \end{array}
- * \right)
- * }_{\beta}
+ * }_{X}
  * +
  * \underbrace{
  * \left(
@@ -360,20 +363,20 @@ class Fit1D {
  * \epsilon_1 \\
  * \epsilon_2 \\
  * \vdots \\
- * \epsilon_n
+ * \epsilon_m
  * \end{array}
  * \right)
  * }_{\epsilon}
  * \f]
  *
- * If we write \f$ \bm{\hat{\beta}} \f$ the least square estimate of \f$ \bm{\beta} \f$, then \f$ \bm{ \hat{\beta} = (Z^\top Z)^{-1}Z^\top Y} \f$
- * and the predicted values are computed as \f$ \bm{ \hat{Y} = Z\hat{\beta} } \f$.
+ * If we write \f$ \mathbf{\hat{\theta}} \f$ the least square estimate of \f$ \mathbf{\theta} \f$, then \f$ \mathbf{ \hat{\theta} = (X^\top X)^{-1}X^\top Y} \f$
+ * and the predicted values are computed as \f$ \mathbf{ \hat{Y} = \hat{\theta}^\top X } \f$ (closed form solution).
  *
  * @ingroup stats
  */
-class FitMult {
+class FitLinClosedForm {
 	public:
-		FitMult() : predictors(), observations(), Beta(), regname("MultiLinear"), infoString(), nPreds(0), fit_ready(false) {}
+		FitLinClosedForm() : predictors(), observations(), Beta(), regname("MultiLinear"), infoString(), nPreds(0), fit_ready(false) {}
 
 		void addData(const std::vector<double>& vecPreds, const double& obs);
 		bool fit();
@@ -383,7 +386,7 @@ class FitMult {
 		std::string getName() const {return regname;}
 		std::string getInfo() const {return infoString;}
 		void setInfo(const std::string& info) {infoString=info;}
-		FitMult& operator =(const FitMult& source);
+		FitLinClosedForm& operator =(const FitLinClosedForm& source);
 		bool isReady() const {return fit_ready;}
 		std::string toString() const;
 	private:

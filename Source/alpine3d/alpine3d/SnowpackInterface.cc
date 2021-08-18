@@ -165,7 +165,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		sn_cfg.getValue("GRIDS_PARAMETERS", "output", output_grids);
 		std::vector<double> soil_temp_depths;
 		sn_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
-		const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
+		const unsigned short max_Tsoil( SnGrids::TSOIL5 - SnGrids::TSOIL1 + 1 );
 		if (soil_temp_depths.size()>max_Tsoil)
 			throw InvalidArgumentException("Too many soil temperatures requested", AT);
 		for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
@@ -174,6 +174,18 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			const std::string ii_str(ss.str());
 			Tsoil_idx.push_back( ii_str );
 			output_grids.push_back( "TSOIL"+ii_str );
+		}
+		std::vector<double> snow_density_depths;
+		sn_cfg.getValue("SNOW_DENSITY_DEPTHS", "Output", snow_density_depths, IOUtils::nothrow);
+		const unsigned short max_rhosnow( SnGrids::RHO5 - SnGrids::RHO1 + 1 );
+		if (snow_density_depths.size()>max_rhosnow)
+			throw InvalidArgumentException("Too many snow densities requested", AT);
+		for (size_t ii=0; ii<snow_density_depths.size(); ii++) {
+			std::stringstream ss;
+			ss << (ii+1);
+			const std::string ii_str(ss.str());
+			Tsoil_idx.push_back( ii_str );
+			output_grids.push_back( "RHO"+ii_str );
 		}
 		SnowpackInterfaceWorker::uniqueOutputGrids(output_grids);
 	}

@@ -75,7 +75,7 @@ class SnowpackInterfaceWorker
 		void initGrids(std::vector<std::string>& params, const std::vector<std::string>& grids_not_computed_in_worker);
 		void gatherSpecialPoints(const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
 		void fillGrids(const size_t& ii, const size_t& jj, const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
-    double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
+		double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
 
 	private:
 		SnowpackConfig sn_cfg; // created on element
@@ -100,6 +100,7 @@ class SnowpackInterfaceWorker
 		std::vector<CurrentMeteo> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
 		std::vector<double> soil_temp_depths;
+		std::vector<double> snow_density_depths;
 
 		double calculation_step_length;
 		double height_of_wind_value;

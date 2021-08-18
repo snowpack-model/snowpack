@@ -43,7 +43,7 @@ class IOException : public std::exception {
 		virtual const char* what() const noexcept;
 
 	protected:
-	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+	#if defined(__GLIBC__)
 		std::string resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const;
 	#endif
 		std::string msg, full_output;

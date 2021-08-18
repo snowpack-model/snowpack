@@ -51,7 +51,7 @@ class Trend {
 		void multilinearRetrend(const DEMObject& dem, Grid2DObject &grid) const;
 		static std::vector<double> getStationAltitudes(const std::vector<StationData>& vecMeta);
 
-		FitMult multi_trend;
+		FitLinClosedForm multi_trend;
 		Fit1D trend_model;
 		const std::string param;
 		double user_lapse; ///<when detrending the data, this is a user provided lapse_rate
