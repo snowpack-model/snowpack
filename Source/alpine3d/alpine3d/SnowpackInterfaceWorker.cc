@@ -433,6 +433,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				{
 					value = (soil_temp_depths.empty())? IOUtils::nodata : getSoilTemperature(snowPixel, soil_temp_depths[ it->first - SnGrids::TSOIL1 ]);
 				}
+				else if (it->first>=SnGrids::RHO1 && it->first<=SnGrids::RHO5) //dealing with snow densities
+				{
+					value = (snow_density_depths.empty())? IOUtils::nodata : getSnowDensityDepth(snowPixel, snow_density_depths[ it->first - SnGrids::RHO1 ]);
+				}
 				else
 				{
 					std::cout << it->first << std::endl;
