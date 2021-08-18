@@ -1541,12 +1541,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 
 	// Calculate largest possible drifting snow sub time step such that the scheme is still stable and satisfies
 	// the CFL criterion.
-	const double dx = dem.cellsize;			// Cell size in m, assuming equal in x and y.
+	const double dx = dem.cellsize;		// Cell size in m, assuming equal in x and y.
 	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
-	const double C_max = 0.999;				// Courant number used to calculate sub time step.
-	double sub_dt = std::min(C_max * dx / (sqrt(2.) * grid_VW.grid2D.getMax() * particle_slowdown), dt); // Sub time step
-	double dt_ratio = sub_dt / dt;
-	std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
 
 	// Eroded mass must be greater than or equal to zero.
 	for (size_t iy=0; iy<dimy; iy++) {
@@ -1565,6 +1561,8 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	}
 
 	// Calculate wind speed on "staggered" grid
+	double Ummax = 0.;
+	double Vmmax = 0.;
 	for (size_t iy=1; iy<dimy; iy++) {
 		for (size_t ix=1; ix<dimx; ix++) {
 			// U-component
@@ -1588,8 +1586,16 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 			} else {
 				Vm(ix, iy) = 0.5 * (V(ix, iy-1) + V(ix, iy));
 			}
+
+			// For CFL:
+			if (fabs(Vm(ix,iy)) > Vmmax) Vmmax = fabs(Vm(ix,iy));
+			if (fabs(Um(ix,iy)) > Ummax) Ummax = fabs(Um(ix,iy));
 		}
 	}
+	const double C_max = 0.999;					// Courant number used to calculate sub time step.
+	double sub_dt = std::min(C_max * dx / (Ummax + Vmmax), dt);	// Sub time step
+	double dt_ratio = sub_dt / dt;
+	std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
 
 	// Fill grid_snowdrift_out
 	for (double time_advance = 0.; time_advance < dt; time_advance += sub_dt) {
