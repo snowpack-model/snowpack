@@ -77,7 +77,8 @@ class SnGrids {
                                           ILWR_TERRAIN, ///< Long wave received by terrain emission
                                           ISWR_BELOW_CAN,
                                           TSOIL1, TSOIL2, TSOIL3, TSOIL4, TSOIL5, ///< Temperature within the soil, at a given depth
-                                          lastparam=TSOIL5};
+                                          RHO1, RHO2, RHO3, RHO4, RHO5, ///< Snow density, in the provided uppermost part of the snow
+                                          lastparam=RHO5};
 
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData

@@ -80,6 +80,11 @@ bool SnGrids::initStaticData()
 	paramname.push_back("TSOIL3");
 	paramname.push_back("TSOIL4");
 	paramname.push_back("TSOIL5");
+	paramname.push_back("RHO1");
+	paramname.push_back("RHO2");
+	paramname.push_back("RHO3");
+	paramname.push_back("RHO4");
+	paramname.push_back("RHO5");
 
 
 	if (paramname.size()!=(SnGrids::lastparam+1))

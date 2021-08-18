@@ -100,6 +100,7 @@ class SnowpackInterfaceWorker
 		std::vector<CurrentMeteo> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
 		std::vector<double> soil_temp_depths;
+		std::vector<double> snow_density_depths;
 
 		double calculation_step_length;
 		double height_of_wind_value;
