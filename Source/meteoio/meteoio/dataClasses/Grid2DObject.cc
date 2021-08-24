@@ -467,11 +467,12 @@ void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 {
+	static const double eps = 1.e-4;
 	const bool isSameLoc = grid2D.getNx()==target.grid2D.getNx() &&
 	                     grid2D.getNy()==target.grid2D.getNy() &&
 	                     llcorner==target.llcorner &&
 	                     (cellsize==target.cellsize 
-	                     || (ur_lat==target.ur_lat && ur_lon==target.ur_lon));
+	                     || (fabs(ur_lat-target.ur_lat) < eps && fabs(ur_lon-target.ur_lon) < eps));
 
 	return isSameLoc;
 }

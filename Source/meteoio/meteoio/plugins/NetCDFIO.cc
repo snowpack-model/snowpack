@@ -1976,7 +1976,7 @@ void ncFiles::initVariablesFromFile()
 
 		//try harder: we try some typical names that are NOT part of the schema (like for DEM)
 		if (tmp_attr.param==IOUtils::npos) {
-			if (varname=="Band1" || varname=="z" || varname=="height" || varname=="HGT")
+			if (varname=="Band1" || varname=="z" || varname=="height" || varname=="HGT" || varname=="elevation")
 				tmp_attr.param = MeteoGrids::DEM;
 			else if (varname=="lat")
 				tmp_attr.param = ncpp::LATITUDE;
