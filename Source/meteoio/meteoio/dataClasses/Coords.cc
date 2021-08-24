@@ -591,7 +591,7 @@ void Coords::setAltitude(const double in_altitude, const bool in_update) {
 void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) 
 {
 	if (in_coordinatesystem=="PROJ" && in_parameters=="4326")
-		throw InvalidArgumentException("Please define a cartesian coordinate system, not a spehrical one!", AT);
+		throw InvalidArgumentException("Please define a cartesian coordinate system, not a spherical one!", AT);
 
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system

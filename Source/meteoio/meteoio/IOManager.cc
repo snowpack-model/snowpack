@@ -215,6 +215,8 @@ IOUtils::OperationMode IOManager::getIOManagerGridMode(const Config& i_cfg)
 		return IOUtils::STD;
 	if (regridding_strategy_str=="GRID_RESAMPLE")
 		return IOUtils::GRID_RESAMPLE;
+	if (regridding_strategy_str=="GRID_1DINTERPOLATE")
+		return IOUtils::GRID_1DINTERPOLATE;
 	
 	throw InvalidArgumentException("The selected regridding_strategy is not supported", AT);
 }
@@ -429,6 +431,8 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	throw InvalidArgumentException("Unsuppported operation_mode", AT);
 }
 
+
+///////// Spatially interpolating into a 2D grid
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result)
 {
@@ -464,6 +468,8 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 			const Date dateEnd( date - buffer_before + buffer_size );
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
+	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
+		throw IOException("Not implemented yet", AT);
 	}
 
 	info_string = interpolator.interpolate(date, dem, meteoparam, result);
@@ -485,12 +491,16 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 			const Date dateEnd( date - buffer_before + buffer_size );
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
+	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
+		throw IOException("Not implemented yet", AT);
 	}
 
 	info_string = interpolator.interpolate(date, dem, param_name, result);
 	return (!result.empty());
 }
 
+
+///////// Spatially interpolating into a vector of doubles
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result)
 {

@@ -67,7 +67,8 @@ namespace IOUtils {
 		GRID_EXTRACT_PTS, ///< as GRID_EXTRACT, but queries plugin only for virtual stations points, instead of full grids
 		GRID_SMART, ///< extract all relevant grid points from a provided grid
 		GRID_ALL, ///< extract all grid points from a provided grid
-		GRID_RESAMPLE ///< generate a grid at a different resolution
+		GRID_RESAMPLE, ///< generate a grid at a different resolution
+		GRID_1DINTERPOLATE  ///< temporally interpolate existing grids
 	};
 
 	enum ThrowOptions { dothrow, nothrow };
