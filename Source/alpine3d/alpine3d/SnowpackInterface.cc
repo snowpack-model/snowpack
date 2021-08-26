@@ -879,11 +879,17 @@ void SnowpackInterface::calcNextStep()
 
 	if (enable_explicit_snow_drift) {
 		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
-		mns = calcExplicitSnowDrift(erodedmass);
+		if (MPIControl::instance().master()) {
+			mns = calcExplicitSnowDrift(erodedmass);
+		}
+		MPIControl::instance().broadcast(mns);
 	} else if (enable_simple_snow_drift) {
-		// calc simple snow drift, by using eroded snow from previous time step
 		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
-		calcSimpleSnowDrift(erodedmass, psum);
+		if (MPIControl::instance().master()) {
+			// calc simple snow drift, by using eroded snow from previous time step
+			calcSimpleSnowDrift(erodedmass, psum);
+		}
+		MPIControl::instance().broadcast(psum);
 	}
 
 	size_t errCount = 0;
