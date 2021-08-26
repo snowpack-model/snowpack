@@ -102,7 +102,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
                   do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_production(false), snow_grooming(false),
                   Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
-                  grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false), glacier_from_grid(false),
+                  grids_write(true), ts_write(false), prof_write(false), snow_write(false), write_poi_meteo(true), snow_poi_written(false), glacier_from_grid(false),
                   meteo_outpath(), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(), tz_out(0.),
                   sn_cfg(readAndTweakConfig(io_cfg, !pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
                   landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
@@ -355,6 +355,7 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		ts_write = source.ts_write;
 		prof_write = source.prof_write;
 		snow_write = source.snow_write;
+		write_poi_meteo = source.write_poi_meteo;
 		snow_poi_written = source.snow_poi_written;
 		meteo_outpath = source.meteo_outpath;
 		tz_out = source.tz_out;
@@ -404,6 +405,7 @@ mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, con
 	tmp_cfg.getValue("PROF_WRITE", "Output", prof_write);
 	tmp_cfg.getValue("PROF_START", "Output", prof_start);
 	tmp_cfg.getValue("PROF_DAYS_BETWEEN", "Output", prof_days_between);
+	tmp_cfg.getValue("WRITE_POI_METEO", "Output", write_poi_meteo, IOUtils::nothrow);
 
 	tmp_cfg.getValue("METEOPATH", "Output", meteo_outpath);
 	tmp_cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
@@ -910,7 +912,11 @@ void SnowpackInterface::calcNextStep()
 
 	//Lateral flow
 	if (enable_lateral_flow) {
+#ifdef ENABLE_MPI
+		throw IOException("LATERAL_FLOW is not supported when using MPI.", AT);
+#else
 		calcLateralFlow();
+#endif
 	}
 
 	//Retrieve special points data and write files
@@ -1014,7 +1020,7 @@ void SnowpackInterface::writeOutputSpecialPoints(const mio::Date& date, const st
 
 	const ProcessDat Hdata; // empty ProcessDat, get it from where ??
 	for (size_t ii=0; ii<snow_pixel.size(); ii++) {
-		write_SMET(*meteo_pixel[ii], snow_pixel[ii]->meta, *surface_flux[ii]);
+		if (write_poi_meteo) write_SMET(*meteo_pixel[ii], snow_pixel[ii]->meta, *surface_flux[ii]);
 		if (TS) snowpackIO.writeTimeSeries(*snow_pixel[ii], *surface_flux[ii], *meteo_pixel[ii], Hdata, 0.);
 		if (PR) snowpackIO.writeProfile(date, *snow_pixel[ii]);
 	}
@@ -1303,7 +1309,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 					station_idx << ix << "_" << iy;
 					snowPixel.meta.stationName = station_idx.str() + "_" + station_name;
 					snowPixel.meta.stationID = station_idx.str();
-					if (is_special_point) { //create SMET files for special points
+					if (is_special_point && write_poi_meteo) { //create SMET files for special points
 						write_SMET_header(snowPixel.meta, landuse(ix, iy));
 					}
 				}
