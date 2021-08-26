@@ -211,7 +211,7 @@ class Runoff; // forward declaration, cyclic header include
 		double grids_start, grids_days_between; //gridded outputs
 		double ts_start, ts_days_between; //time series outputs
 		double prof_start, prof_days_between; //profiles outputs
-		bool grids_write, ts_write, prof_write, snow_write, snow_poi_written, glacier_from_grid;
+		bool grids_write, ts_write, prof_write, snow_write, write_poi_meteo, snow_poi_written, glacier_from_grid;
 		std::string meteo_outpath;
 		std::string outpath;
 		bool mask_glaciers; //mask glaciers in outputs?
