@@ -748,7 +748,7 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 		}
 	}
 
-	mpicontrol.allreduce_sum(TList_sky_aniso);
+	mpicontrol.reduce_sum(TList_sky_aniso);
 
 	///////////////////////////////
 	///// LAND MAIN LOOP [MT eq. 2.97]
@@ -815,8 +815,8 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 			}
 		}
 
-		mpicontrol.allreduce_sum(terrain_flux_new);
-		mpicontrol.allreduce_sum(TList_ms_new);
+		mpicontrol.reduce_sum(terrain_flux_new);
+		mpicontrol.reduce_sum(TList_ms_new);
 
 		// Test if convergence is below treshold [MT eq. 2.100]
 		if (number_rounds != 0 && TerrainBiggestDifference(terrain_flux_new, terrain_flux_old) < delta_F_max)
@@ -886,9 +886,9 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 	// If SolarPanel-module is used, send all needed data
 	if (_hasSP)
 	{
-		mpicontrol.allreduce_sum(TList_sky_iso);
-		mpicontrol.allreduce_sum(TList_direct);
-		mpicontrol.allreduce_sum(TList_ms_new);
+		mpicontrol.reduce_sum(TList_sky_iso);
+		mpicontrol.reduce_sum(TList_direct);
+		mpicontrol.reduce_sum(TList_ms_new);
 		SP.setTLists(TList_direct, TList_sky_iso, TList_sky_aniso, TList_ms_new + TList_sky_aniso);
 	}
 
@@ -901,8 +901,8 @@ void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Ar
 			terrain_temp(ii, jj) = (terrain_flux_new(ii, jj, 1) + terrain_flux_new(ii, jj, 0)) / 2.;
 		}
 	}
-	mpicontrol.allreduce_sum(diffuse_temp);
-	mpicontrol.allreduce_sum(terrain_temp);
+	mpicontrol.reduce_sum(diffuse_temp);
+	mpicontrol.reduce_sum(terrain_temp);
 	diffuse = diffuse_temp;
 	terrain = terrain_temp;
 
@@ -1141,7 +1141,7 @@ double TerrainRadiationComplex::computeSkyViewFactor(size_t ii_dem, size_t jj_de
 void TerrainRadiationComplex::getSkyViewFactor(mio::Array2D<double> &o_sky_vf)
 {
 	o_sky_vf = sky_vf_mean;
-	MPIControl::instance().allreduce_sum(o_sky_vf);
+	MPIControl::instance().reduce_sum(o_sky_vf);
 }
 
 double TerrainRadiationComplex::getSkyViewFactor(size_t ii_dem, size_t jj_dem, size_t which_triangle)
