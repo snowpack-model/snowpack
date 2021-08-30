@@ -455,7 +455,7 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 	const bool isMaster = mpicontrol.master();
 
 	if (do_grid_output(date)) {
-		//no OpenMP pragma here, otherwise multiple threads might call an MPI allreduce_sum()
+		//no OpenMP pragma here, otherwise multiple threads might call an MPI reduce_sum()
 		for (size_t ii=0; ii<output_grids.size(); ii++) {
 			const size_t SnGrids_idx = SnGrids::getParameterIndex( output_grids[ii] );
 			mio::Grid2DObject grid( getGrid( static_cast<SnGrids::Parameters>(SnGrids_idx)) );
@@ -821,7 +821,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 		default: ; //so compilers do not complain about missing conditions
 	}
 
-	mio::Grid2DObject o_grid2D(dem, 0.); //so the allreduce_sum works
+	mio::Grid2DObject o_grid2D(dem, 0.); //so the reduce_sum works
 	size_t errCount = 0;
 	mio::Grid2DObject tmp_grid2D_(dem,mpi_offset, 0, mpi_nx, dimy);
 	mio::Grid2DObject tmp_grid2D(tmp_grid2D_,mio::IOUtils::nodata);
@@ -831,10 +831,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 		if (!tmp.empty()) {
 			for (size_t i=0; i<tmp_grid2D.getNx(); ++i){
 				for (size_t j=0; j<tmp_grid2D.getNy(); ++j){
-					if (tmp(i,j)!=mio::IOUtils::nodata)
-					{
-							tmp_grid2D(i,j)=tmp(i,j);
-					}
+					if (tmp(i,j)!=mio::IOUtils::nodata) tmp_grid2D(i,j)=tmp(i,j);
 				}
 			}
 		} else {
@@ -843,7 +840,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 	}
 	o_grid2D.grid2D.fill(tmp_grid2D.grid2D, mpi_offset, 0, mpi_nx, dimy);
 
-	MPIControl::instance().allreduce_sum(o_grid2D);
+	MPIControl::instance().reduce_sum(o_grid2D, false);
 	//with some MPI implementations, when transfering large amounts of data, the buffers might get full and lead to a crash
 
 	if (errCount>0) {
