@@ -151,9 +151,9 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 		diffuse.fill(band_diffuse, startx, 0, nx, dimy);
 		direct_unshaded_horizontal.fill(band_direct_unshaded_horizontal, startx, 0, nx, dimy);
 	}
-	MPIControl::instance().allreduce_sum(direct);
-	MPIControl::instance().allreduce_sum(diffuse);
-	MPIControl::instance().allreduce_sum(direct_unshaded_horizontal);
+	MPIControl::instance().reduce_sum(direct);
+	MPIControl::instance().reduce_sum(diffuse);
+	MPIControl::instance().reduce_sum(direct_unshaded_horizontal);
 	double solarAzimuth, solarElevation;
 	radfields[0].getPositionSun(solarAzimuth, solarElevation);
 
