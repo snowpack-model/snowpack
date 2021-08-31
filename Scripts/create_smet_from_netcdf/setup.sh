@@ -12,7 +12,7 @@ do
 	if (( ${permonth} )); then
 		for m in $(seq 1 12)
 		do
-			mm=$(echo ${m} | mawk '{printf "%02d", $1}')
+			mm=$(echo ${m} | awk '{printf "%02d", $1}')
 			echo "bash create_forcing.sh ${model} ${yr} ${mm}" >> to_exec.lst
 		done
 	else

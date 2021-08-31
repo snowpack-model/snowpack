@@ -229,7 +229,7 @@ class MPIControl
 			delete[] (char*)in_obj_char;
 		}
 		#else
-		template <class T> void reduce_sum(T& /*obj*/, const bool /*all*/) {}
+		template <class T> void reduce_sum(T& /*obj*/, const bool /*all*/=true) {}
 		#endif
 
 		#ifdef ENABLE_MPI
