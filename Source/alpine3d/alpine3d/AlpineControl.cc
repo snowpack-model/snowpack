@@ -159,14 +159,18 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 
 		// Check if elapsed time exceeds specified maximum run time
 		const double tmp_elapsed = elapsed.getElapsed();
-		const bool ForceStop = (max_run_time > 0. && tmp_elapsed > max_run_time);
-		if (max_run_time > 0.) {
-			if (ForceStop) {
-				cout << std::fixed << "[W] !!! Elapsed time (" << setprecision(1) << tmp_elapsed << " seconds) exceeds specified maximum run time (" << setprecision(1) << max_run_time << " seconds) !!!\n        ---> Force writing restart files (if requested) and exiting...\n";
-			} else {
-				cout << std::fixed << "[i] Maximum run time set to: " << setprecision(1) << max_run_time << " seconds ---> time remaining: " << (max_run_time - tmp_elapsed)/3600. << " hours.\n";
+		bool ForceStop = false;
+		if (isMaster) {
+			ForceStop = (max_run_time > 0. && tmp_elapsed > max_run_time);
+			if (max_run_time > 0.) {
+				if (ForceStop) {
+					cout << std::fixed << "[W] !!! Elapsed time (" << setprecision(1) << tmp_elapsed << " seconds) exceeds specified maximum run time (" << setprecision(1) << max_run_time << " seconds) !!!\n        ---> Force writing restart files (if requested) and exiting...\n";
+				} else {
+					cout << std::fixed << "[i] Maximum run time set to: " << setprecision(1) << max_run_time << " seconds ---> time remaining: " << (max_run_time - tmp_elapsed)/3600. << " hours.\n";
+				}
 			}
 		}
+		MPIControl::instance().broadcast(ForceStop);
 
 		try { //do some outputs (note, if ForceStop == true, output will be done outside of the loop)
 			if ( snowpack && out_snow && (t_ind > 0) && !ForceStop ) {
