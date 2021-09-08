@@ -218,6 +218,8 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
 	Xdata.ErosionMass = 0.;
 	Xdata.ErosionLength = 0.;
+	Xdata.Erosion_ustar_th = SnowDrift::get_ustar_thresh(EMS[nE-1]);
+
 	if (no_snow || no_wind_data) {
 		if (no_snow) {
 			Xdata.ErosionLevel = Xdata.SoilNode;

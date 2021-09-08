@@ -69,6 +69,7 @@ class SnGrids {
                                           MNS, ///< drifted mass (when snowdrift is enabled)
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
                                           ERODEDMASS, ///< wind eroded mass (kg/m2)
+                                          EROSION_USTAR_TH, ///< Erosion threshold friction velocity (m/s, property of snowpack)
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)

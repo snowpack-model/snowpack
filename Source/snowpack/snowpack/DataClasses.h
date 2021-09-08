@@ -682,6 +682,7 @@ class SnowStation {
 		size_t ErosionLevel;        ///< Element where snow erosion stopped previously for the drift index
 		double ErosionMass;         ///< Eroded mass either real or virtually (storage if less than one element)
 		double ErosionLength;       ///< Snow height change dueo to eroded mass (only real erosion)
+		double Erosion_ustar_th;    ///< Erosion threshold friction velocity (m/s, property of snowpack)
 #ifndef SNOWPACK_CORE
 		char S_class1;               ///< Stability class based on hand hardness, grain class ...
 		char S_class2;               ///< Stability class based on hand hardness, grain class ...

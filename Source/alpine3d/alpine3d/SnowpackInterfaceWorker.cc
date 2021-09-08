@@ -421,6 +421,8 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = store(ii,jj); break;
 			case SnGrids::ERODEDMASS:
 				value = erodedmass(ii,jj) / snowPixel.cos_sl; break;
+			case SnGrids::EROSION_USTAR_TH:
+				value = snowPixel.Erosion_ustar_th; break;
 			case SnGrids::GLACIER:
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:

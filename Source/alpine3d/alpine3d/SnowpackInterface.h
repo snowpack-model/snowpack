@@ -191,7 +191,7 @@ class Runoff; // forward declaration, cyclic header include
 		void write_special_points();
 		void calcLateralFlow();
 		void calcSimpleSnowDrift(const mio::Grid2DObject& ErodedMass, mio::Grid2DObject& psum);
-		mio::Grid2DObject calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass);
+		mio::Grid2DObject calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass, const mio::Grid2DObject& ustar_th);
 
 		RunInfo run_info;
 

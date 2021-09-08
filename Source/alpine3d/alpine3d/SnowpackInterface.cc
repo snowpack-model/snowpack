@@ -374,6 +374,7 @@ std::string SnowpackInterface::getGridsRequirements() const
 	}
 	if (enable_simple_snow_drift || enable_explicit_snow_drift) {
 		 ret += " ERODEDMASS";
+		 if (enable_explicit_snow_drift) ret += " EROSION_USTAR_TH";
 	}
 	return ret;
 }
@@ -876,8 +877,9 @@ void SnowpackInterface::calcNextStep()
 
 	if (enable_explicit_snow_drift) {
 		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
+		const Grid2DObject erosion_ustar_th( getGrid(SnGrids::EROSION_USTAR_TH) );
 		if (MPIControl::instance().master()) {
-			mns = calcExplicitSnowDrift(erodedmass);
+			mns = calcExplicitSnowDrift(erodedmass, erosion_ustar_th);
 		}
 		MPIControl::instance().broadcast(mns);
 	} else if (enable_simple_snow_drift) {
@@ -1523,7 +1525,7 @@ void SnowpackInterface::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedM
  * @brief Calculates explicit drifting snow by solving the 2-D advection equation using a first-order upwind finite difference scheme.
  * @author Nander Wever and Eric Keenan
  */
-mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass)
+mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass, const mio::Grid2DObject& ustar_th)
 {
 	// Retrieve and initialize grids
 	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) ); // Wind speed
