@@ -1536,14 +1536,12 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	mio::Grid2DObject Vm( grid_VW, 0. );
 	mio::Grid2DObject dM( ErodedMass, 0. ); // Local mass perturbation due to drifting snow redistribution.
 	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass.
+	mio::Grid2DObject copy_ustar_th( ustar_th ); // Copy of ustar_th
 	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass; // Output mass
 	grid_snowdrift_out(0.);
 
 	// Boundary condtion:
 	const bool ZeroFluxBC = false;
-
-	// Slowdown of particles relative to ambient wind speed
-	const double particle_slowdown = 0.1;	// 2 m/s slowdown of the particle speed relative to wind speed
 
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
@@ -1562,12 +1560,18 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 				tmp_ErodedMass(ix, iy) = 0.;
 			}
 
+			if (copy_ustar_th(ix, iy) == Constants::undefined) {
+				copy_ustar_th(ix, iy) = 0.;
+			}
+
 			winderosiondeposition(ix, iy) = tmp_ErodedMass(ix, iy);
 			mns(ix, iy) = 0.;		// Reset mass deposition field
 
 			// Add a determination of u and v componets for each grid cell.
-			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., grid_VW(ix, iy) * particle_slowdown), grid_DW(ix, iy));
-			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., grid_VW(ix, iy) * particle_slowdown), grid_DW(ix, iy));
+			// Following Pomeroy and Gray 1990, we set the saltation velocity <U, V> to be equal to 2.8 times
+			// the friction threshold velocity (ustar_th) in the direction parallel to the 10m wind.
+			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., 2.8 * copy_ustar_th(ix, iy) ), grid_DW(ix, iy));
+			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., 2.8 * copy_ustar_th(ix, iy) ), grid_DW(ix, iy));
 		}
 	}
 
