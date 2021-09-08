@@ -1608,8 +1608,13 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		}
 	}
 	const double C_max = 0.999;					// Courant number used to calculate sub time step.
-	double sub_dt = std::min(C_max * dx / (Ummax + Vmmax), dt);	// Sub time step
-	std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
+	double sub_dt = dt;
+	if (Ummax + Vmmax == 0) {
+		return ErodedMass;
+	} else {
+		sub_dt = std::min(C_max * dx / (Ummax + Vmmax), dt);	// Sub time step
+		std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
+	}
 
 	// Fill grid_snowdrift_out
 	for (double time_advance = 0.; time_advance < dt; time_advance += sub_dt) {
