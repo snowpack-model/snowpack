@@ -161,7 +161,7 @@ const bool AsciiIO::t_gnd = false;
  * 0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)
  * 0502,nElems,element density (kg m-3)
  * 0503,nElems,element temperature (degC)
- * 0504,nElems,element ID
+ * 0504,nElems,element ID    -- or --    element mk (see key PROF_ID_OR_MK)
  * 0505,nElems,element age (days)
  * 0506,nElems,liquid water content by volume (%)
  * 0507,nElems,liquid preferential flow water content by volume (%)
@@ -181,6 +181,7 @@ const bool AsciiIO::t_gnd = false;
  * 0521,nElems,thermal conductivity (W K-1 m-1)
  * 0522,nElems,absorbed shortwave radiation (W m-2)
  * 0523,nElems,viscous deformation rate (1.e-6 s-1)
+ * 0529,nElems,Stress rate CDot (Pa s-1), i.e., the LAST overload change rate
  * 0530,8,position (cm) and minimum stability indices:
  *		profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38
  * 0531,nElems,deformation rate stability index Sdef
@@ -324,7 +325,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
            min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), enable_pref_flow(false), enable_ice_reservoir(false),
            avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
            out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_t(false),
-           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false)
+           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false), prof_ID_or_MK("ID")
 {
 	//Defines how heights/depths of snow or/and soil temperatures are read in and output \n
 	// Snowpack section
@@ -358,6 +359,10 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	const std::string out_snowpath = cfg.get("SNOWPATH", "Output", "");
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("PROF_FORMAT", "Output", vecProfileFmt);
+	cfg.getValue("PROF_ID_OR_MK", "Output", prof_ID_or_MK);
+	if (prof_ID_or_MK != "ID" && prof_ID_or_MK != "MK") {
+		throw InvalidArgumentException("Unknown value for PROF_ID_OR_MK: "+prof_ID_or_MK+". Please specify if element 0504 in *.pro file should contain \"ID\" or \"MK\"", AT);
+	}
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
 	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 
@@ -974,10 +979,10 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 	for (size_t e = 0; e < nE; e++)
 		fout << "," << std::fixed << std::setprecision(2) << IOUtils::K_TO_C(EMS[e].Te);
-	// 0504: element ID
+	// 0504: element ID  -- or --  MK
 	fout << "\n0504," << nE;
 	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::fixed << std::setprecision(0) << EMS[e].ID;
+		fout << "," << std::fixed << std::setprecision(0) << ((prof_ID_or_MK == "ID") ? (EMS[e].ID) : (EMS[e].mk));
 	// 0505: element age
 	fout << "\n0505," << nE;
 	for (size_t e = 0; e < nE; e++)
@@ -1121,6 +1126,15 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 		for (size_t e = 0; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta_i_reservoir_cumul;
+	}
+	// 0529: Stress rate CDot (Pa s-1)
+	if (no_snow) {
+		fout << "\n0529,1,0";
+	} else {
+		fout << "\n0529," << nE-Xdata.SoilNode + Noffset;
+		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(1) << EMS[e].CDot;
 	}
 	// 0530: position (cm) and minimum stability indices
 	fout << "\n0530,8";
@@ -2415,7 +2429,11 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)";
 	fout << "\n0502,nElems,element density (kg m-3)";
 	fout << "\n0503,nElems,element temperature (degC)";
-	fout << "\n0504,nElems,element ID (1)";
+	if (prof_ID_or_MK == "ID") {
+		fout << "\n0504,nElems,element ID (1)";
+	} else {
+		fout << "\n0504,nElems,element mk (1)";
+	}
 	fout << "\n0505,nElems,element age (days)";
 	fout << "\n0506,nElems,liquid water content by volume (%)";
 	if(enable_pref_flow) fout << "\n0507,nElems,liquid preferential flow water content by volume (%)";
@@ -2437,6 +2455,7 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0523,nElems,viscous deformation rate (1.e-6 s-1)";
 	if(enable_ice_reservoir) fout << "\n0524,nElems, ice reservoir volume fraction (%)";
 	if(enable_ice_reservoir) fout << "\n0525,nElems, cumulated ice reservoir volume fraction (%)";
+	fout << "\n0529,nElems,Stress rate CDot (Pa s-1)";
 	fout << "\n0530,8,position (cm) and minimum stability indices:";
 	fout << "\n       profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38";
 	fout << "\n0531,nElems,deformation rate stability index Sdef";
