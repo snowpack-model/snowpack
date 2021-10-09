@@ -76,7 +76,7 @@ size_t findUpperNode(const double& z, const std::vector<NodeData>& Ndata, const 
 
 double forcedErosion(const double hs, SnowStation& Xdata);
 
-void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_corr, double& mass_corr);
+void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_corr, double& mass_corr, const bool &prn_check);
 
 double logisticFunction(const double input, const double threshold, const double width);
 

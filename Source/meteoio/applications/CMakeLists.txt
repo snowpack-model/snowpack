@@ -26,7 +26,7 @@ BuildVersionGIT()
 
 #Handle the missing getopt on Windows
 IF(MSVC)
-	SET(getopt_src getopt.c getopt_long.c)
+	SET(getopt_src getopt.c)
 ENDIF(MSVC)
 
 #get the proper MeteoIO library

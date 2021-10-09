@@ -447,6 +447,22 @@ std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::
 	return vecArgs;
 }
 
+std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm, const std::string& section) const
+{
+	const std::string key_prefix( parname+"::"+algorithm+"::" );
+	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(key_prefix, section) );
+
+	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+		if (beg_arg_name==std::string::npos)
+			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
+		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+	}
+
+	return vecArgs;
+}
+
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
 
 ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(), imported(), sections(), deferred_vars(), sourcename(filename)
@@ -468,8 +484,12 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 				it++;
 		}
 		const size_t new_deferred_count = deferred_vars.size();
-		if (new_deferred_count==deferred_count)
-			throw InvalidArgumentException("Can not resolve some variables in file "+filename+" (circular dependency? invalid variable name?)", AT);
+		if (new_deferred_count==deferred_count) {
+			std::string msg("In file "+filename+", the following keys could not be resolved (circular dependency? invalid variable name? syntax error?):");
+			for (std::set<std::string>::iterator it = deferred_vars.begin(); it!=deferred_vars.end(); ++it)
+				msg.append( " "+*it );
+			throw InvalidArgumentException(msg, AT);
+		}
 		deferred_count = new_deferred_count;
 	}
 	

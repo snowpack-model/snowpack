@@ -160,6 +160,8 @@ class Grid2DObject {
 		*/
 		bool empty() const;
 
+		bool allNodata() const;
+
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
 		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT

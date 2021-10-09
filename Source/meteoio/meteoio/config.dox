@@ -762,6 +762,7 @@ INPUT                  = ./meteoio \
                          ./meteoio/meteoFilters \
                          ./meteoio/meteoResampling \
                          ./meteoio/spatialInterpolations \
+                         ./meteoio/gridResampling \
                          ./meteoio/meteoStats
                          
 

@@ -944,7 +944,15 @@ uint32_t RngPcg::int32()
 	//permutation function of a tuple as output function:
 	const uint32_t xorshifted = (uint32_t)( ((oldstate >> 18u) ^ oldstate) >> 27u );
 	const uint32_t rot = (uint32_t)(oldstate >> 59u);
-	return  (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+#ifdef _MSC_VER
+#pragma warning( push ) //for Visual C++
+#pragma warning(disable:4146) //Visual C++ rightfully complains... but this behavior is what we want!
+#endif
+	const uint32_t result = (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+#ifdef _MSC_VER
+#pragma warning( pop ) //for Visual C++, restore previous warnings behavior
+#endif
+	return  result;
 }
 //---------- End Apache license
 

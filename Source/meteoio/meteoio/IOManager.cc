@@ -152,12 +152,11 @@ namespace mio {
  * 
  * @section grids_resample Resampling of gridded data
  * A new keyword has been introduce and will be expanded: *REGRIDDING_STRATEGY*. It describes how to generate gridded data out of other gridded data. 
- * It currently only accepts the "GRID_RESAMPLE" argument (all grid points are extracted and used with an additional DEM to resample the grids to 
- * a different resolution (by calling spatial interpolations)). Ultimately, it should offer various methods... Please note that it is currently NOT 
- * possible to use both RESAMPLING_STRATEGY and REGRIDDING_STRATEGY
+ * It currently accepts the "GRID_RESAMPLE" and "GRID_1DINTERPOLATE" arguments. Using the former, all grid points are extracted and used with an additional DEM to resample the grids to
+ * a different resolution (by calling spatial interpolations). Using the latter, grids can be regridded to different dates/times by means of temporal interpolations.
+ * Ultimately, it should offer various methods... Please note that it is currently NOT possible to use both RESAMPLING_STRATEGY and REGRIDDING_STRATEGY.
  * 
- * 
- * The process is very similar to what has been laid out for the \ref sp_resampling "spatial resampling". The meteorological time series are extracted 
+ * The process for "GRID_RESAMPLE" is very similar to what has been laid out for the \ref sp_resampling "spatial resampling". The meteorological time series are extracted
  * as described out in \ref grids_extract "From gridded data" for each grid point and forwarded to a 
  * Meteo2DInterpolator to be spatially interpolated over the provided DEM. This therefore performs grid resampling and accounts for elevation gradients, etc
  * as configured in the [2DInterpolations] section. The following keys control this downscaling process (in the [InputEditing] section):
@@ -181,6 +180,7 @@ namespace mio {
  * @endcode
  * @note The resampled grids won't be provided by the read2DGrid() call but by the getMeteoData() call since they are considered as spatial interpolations.
  * 
+ * For regridding data to different dates please have a look at \ref grid_resampling.
  */
 
 IOUtils::OperationMode IOManager::getIOManagerTSMode(const Config& i_cfg)
@@ -263,14 +263,16 @@ void IOManager::initIOManager()
 	}
 	
 	if (ts_mode!=IOUtils::STD) initVirtualStations();
+
+	cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_resampled_grids, IOUtils::nothrow);
 }
 
 void IOManager::initVirtualStations()
 {
 	if (ts_mode==IOUtils::GRID_RESAMPLE) {
 		source_dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE));
-		const std::string source_dem_str = cfg.get("Source_dem", "InputEditing");
-		gdm1.read2DGrid(source_dem, source_dem_str);
+		const std::string source_dem_path = cfg.get("Source_dem", "InputEditing");
+		gdm1.read2DGrid(source_dem, source_dem_path);
 		source_dem.update();
 	} else {
 		gdm1.readDEM(source_dem);
@@ -325,7 +327,7 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 //TODO: smarter rebuffer! (ie partial)
 size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo) 
 {
-	if (ts_mode==IOUtils::STD) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+	if (ts_mode==IOUtils::STD || ts_mode==IOUtils::GRID_1DINTERPOLATE) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 	
 	if (ts_mode>=IOUtils::GRID_EXTRACT && ts_mode!=IOUtils::GRID_SMART) {
 		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
@@ -360,7 +362,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 		return tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
 	}
 	
-	throw InvalidArgumentException("Unsuppported operation_mode", AT);
+	throw InvalidArgumentException("Unsupported operation_mode", AT);
 }
 
 //data can be raw or processed (filtered, resampled)
@@ -432,14 +434,16 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 }
 
 
-///////// Spatially interpolating into a 2D grid
+///////// Interpolating into a 2D grid
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result)
 {
 	std::string info_string;
 	const bool status = getMeteoData(date, dem, meteoparam, result, info_string);
-	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cerr << " (" << info_string << ") " << endl;
+	if (!info_string.empty()) { //not read as raw grid
+		cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+		cerr << " (" << info_string << ") " << endl;
+	}
 	return status;
 }
 
@@ -448,8 +452,10 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 {
 	std::string info_string;
 	const bool status = getMeteoData(date, dem, param_name, result, info_string);
-	cerr << "[i] Interpolating " << param_name;
-	cerr << " (" << info_string << ") " << endl;
+	if (!info_string.empty()) { //not read as raw grid
+		cerr << "[i] Interpolating " << param_name;
+		cerr << " (" << info_string << ") " << endl;
+	}
 	return status;
 }
 
@@ -469,7 +475,11 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
-		throw IOException("Not implemented yet", AT);
+		const MeteoGrids::Parameters gpar( MeteoData::findGridParam(meteoparam) );
+		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
+		if (write_resampled_grids)
+			gdm1.write2DGrid(result, gpar, date);
+		return (!result.empty());
 	}
 
 	info_string = interpolator.interpolate(date, dem, meteoparam, result);
@@ -492,7 +502,11 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const std::
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 		}
 	} else if (ts_mode==IOUtils::GRID_1DINTERPOLATE) { //temporally interpolate grid
-		throw IOException("Not implemented yet", AT);
+		const MeteoGrids::Parameters gpar( static_cast<MeteoGrids::Parameters>(MeteoGrids::getParameterIndex(param_name)) );
+		gdm1.read2DGrid(result, gpar, date, true); //this puts the resampled grid into the buffer
+		if (write_resampled_grids)
+			gdm1.write2DGrid(result, gpar, date);
+		return (!result.empty());
 	}
 
 	info_string = interpolator.interpolate(date, dem, param_name, result);

@@ -182,6 +182,20 @@ size_t MeteoData::getStaticParameterIndex(const std::string& parname)
 	return IOUtils::npos; //parameter not a part of MeteoData
 }
 
+MeteoGrids::Parameters MeteoData::findGridParam(const MeteoData::Parameters& mpar)
+{
+	const std::string parname( MeteoData::getParameterName(mpar) );
+	const size_t idx = MeteoGrids::getParameterIndex(parname);
+	return static_cast<MeteoGrids::Parameters>(idx);
+}
+
+MeteoData::Parameters MeteoData::findMeteoParam(const MeteoGrids::Parameters& gpar)
+{
+	const std::string parname( MeteoGrids::getParameterName(gpar) );
+	const size_t idx = MeteoData().getParameterIndex(parname);
+	return static_cast<MeteoData::Parameters>(idx);
+}
+
 /************************************************************
  * non-static section                                       *
  ************************************************************/

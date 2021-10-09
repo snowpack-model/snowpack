@@ -38,7 +38,7 @@ namespace mio {
 */
 
 /*! \defgroup parametrizations Parametrizations
-   Documentation for available parametrizations components that compute given parameters from other parameters. These used for DataCreator and DataGenerator.
+   Documentation for available parametrizations components that compute given parameters from other parameters. These are used for DataCreator and DataGenerator.
 */
 
 /*! \defgroup spatialization Spatial interpolations
@@ -72,6 +72,7 @@ namespace mio {
  *    -# \subpage generators "Available data creators and generators" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  *    -# \subpage spatial_resampling "Spatial resampling"
+ *    -# \subpage grid_resampling "Temporal grid resampling" and usage
  * -# Advanced: Programing using MeteoIO
  *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
@@ -125,7 +126,8 @@ namespace mio {
  * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
  * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
  * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
- * - it is also possible to \ref spatial_resampling "spatially resample" the data  (for example to extract points out of gridded data or generate data from neighbouring stations)
+ * - a set of \ref grid_resampling "gridded resampling algorithms" (for example to regrid model data to different dates/times)
+ * - it is also possible to \ref spatial_resampling "spatially resample" the data (for example to extract points out of gridded data or generate data from neighbouring stations)
  *
  * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user. Moreover, a few
  * assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort
@@ -227,7 +229,6 @@ namespace mio {
  *
  */
 
-//TODO: Get rid of ?? in [General]
 /**
  * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
@@ -270,6 +271,8 @@ namespace mio {
  *                         Digital Elevation Model. The goal is to populate two dimensional grids with meteorological
  *                         parameters from point measurements, according to the specifications of the user.
  *                         See \ref interpol2d .
+ *
+ * - [GridInterpolations1D] : This section is for temporal resampling between existing gridded data.
  *
  * The application that you are using might also need its own section(s), check this with your application.
  *
