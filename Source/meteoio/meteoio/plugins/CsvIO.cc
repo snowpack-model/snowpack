@@ -44,7 +44,8 @@ namespace mio {
  * such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- * **The final units MUST be SI**. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
+ * **The final units MUST be <a href="https://www.bipm.org/documents/20126/41483022/SI-Brochure-9-EN.pdf">coherent derived SI units</a>** 
+ * (section 2.3.4 in the SI-Brochure). If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
  * or the units declared (in the headers) and supported by this plugin.
  *
  * @section csvio_keywords Keywords
@@ -91,8 +92,8 @@ namespace mio {
  *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
  * - <b>Metadata</b>
- *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
- *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
+ *    - CSV\#_NAME: a descriptive station name to use (if provided, has priority over the special headers);
+ *    - CSV\#_ID: the (short) station id to use (if provided, has priority over the special headers);
  *    - CSV\#_SLOPE: the slope angle in degrees at the station (if providing a slope, also provide an azimuth);
  *    - CSV\#_AZIMUTH: the slope azimuth in degrees from North at the station ;
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional

@@ -437,6 +437,19 @@ class Config {
 		*/
 		std::vector< std::pair<std::string, std::string> > parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const;
 
+		/**
+		 * @brief retrieve the resampling algorithm to be used for the 1D interpolation of meteo parameters.
+		 * The potential arguments are also extracted.
+		 * @param parname meteo parameter to deal with
+		 * @param algorithm algorithm name
+		 * @param section INI section to look into
+		 * @return vector of named arguments
+		 */
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm,
+			const std::string& section = "Interpolations1d") const;
+
+
+
 	private:
 		std::map<std::string, std::string> properties; ///< Save key value pairs
  		std::set<std::string> sections; ///< list of all the sections that have been found

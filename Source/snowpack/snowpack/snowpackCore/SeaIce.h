@@ -44,6 +44,7 @@ class SeaIce {
 		~SeaIce();
 		void ConfigSeaIce(const SnowpackConfig& i_cfg);
 		SeaIce& operator=(const SeaIce&); ///<Assignement operator
+		constexpr SeaIce(const SeaIce& org) = default;
 
 		//SeaIce(const SnowpackConfig& i_cfg);
 		static double compSeaIceHeatCapacity(const double& T, const double& Sal);

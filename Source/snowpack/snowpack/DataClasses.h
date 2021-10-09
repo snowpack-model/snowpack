@@ -300,6 +300,7 @@ class ElementData {
 
 		ElementData(const unsigned short int& in_ID);
 		ElementData(const ElementData& cc); //required to get the correct back-reference in vanGenuchten object
+		ElementData& operator=(const ElementData&) = default; ///<Assignement operator
 
 		bool checkVolContent();
 		void heatCapacity();
@@ -770,7 +771,7 @@ class SurfaceFluxes {
 			MS_SNOWPACK_RUNOFF,///< The total mass loss of snowpack due to water transport (virtual lysimeter)
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
 			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
-			MS_SETTLING_DHS,   ///< Snow height change due to settling (m)
+			MS_SETTLING_DHS,   ///< Snow height change due to settling, and element removal (m)
 			MS_SUBL_DHS,       ///< Snow height change due to sublimation (m)
 			MS_REDEPOSIT_DHS,  ///< Snow height change due to wind compaction in REDEPOSIT mode (m)
 			MS_REDEPOSIT_DRHO, ///< Density change due to wind compaction in REDEPOSIT mode (m)

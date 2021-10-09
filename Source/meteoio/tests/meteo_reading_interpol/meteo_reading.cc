@@ -203,7 +203,7 @@ int main() {
 
 	// Compare data with hard coded values
 	if(vecMeteo.size() != 7) {
-		cerr << "ERROR on amout of Data read !!! \n";
+		cerr << "ERROR on amount of Data read !!! \n";
 		status = false;
 	}
 

@@ -27,11 +27,11 @@ using namespace std;
 namespace mio {
 
 GridsManager::GridsManager(IOHandler& in_iohandler, const Config& in_cfg)
-             : iohandler(in_iohandler), cfg(in_cfg), buffer(0), grids2d_list(), grids2d_start(), grids2d_end(),
+             : iohandler(in_iohandler), cfg(in_cfg), buffer(0), gridprocessor(cfg), grids2d_list(), grids2d_start(), grids2d_end(),
                grid2d_list_buffer_size(370.), processing_level(IOUtils::filtered | IOUtils::resampled | IOUtils::generated), dem_altimeter(false)
 {
 	size_t max_grids = 10;
-	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);
+	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);  //HACK document it!
 	buffer.setMaxGrids(max_grids);
 	cfg.getValue("BUFFER_SIZE", "General", grid2d_list_buffer_size, IOUtils::nothrow);
 	cfg.getValue("DEM_FROM_PRESSURE", "Input", dem_altimeter, IOUtils::nothrow); //HACK document it! if no dem is found but local and sea level pressure grids are found, use them to rebuild a DEM; [Input] section
@@ -63,7 +63,7 @@ void GridsManager::setProcessingLevel(const unsigned int& i_level)
 /**
 * @brief Read the requested grid, according to the configured processing level
 * @details If the grid has been buffered, it will be returned from the buffer. If it is not available but can be generated, it will
-* be generated transparently. If everything fails, it will thrown an exception.
+* be generated transparently. If everything fails, it will throw an exception.
 * @param[out] grid2D a grid filled with the requested parameter
 * @param option a parameter used to figure out which filename or grid to read
 */
@@ -86,10 +86,11 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& option)
 * @param[out] grid2D a grid filled with the requested parameter
 * @param parameter the parameter to get
 * @param[in] date the timestamp that we would like to have
+* @param[in] enable_grid_resampling Completely enable or disable temporal grid resampling.
 */
-void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
+void GridsManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date, const bool& enable_grid_resampling)
 {
-	grid2D = getGrid(parameter, date);
+	grid2D = getGrid(parameter, date, false, enable_grid_resampling);
 }
 
 void GridsManager::readDEM(DEMObject& grid2D)
@@ -404,10 +405,8 @@ bool GridsManager::setGrids2d_list(const Date& date)
 			}
 			return true;
 		}
-
 		return false;
 	}
-
 	return true;
 }
 
@@ -425,10 +424,8 @@ bool GridsManager::setGrids2d_list(const Date& dateStart, const Date& dateEnd)
 			}
 			return true;
 		}
-
 		return false;
 	}
-
 	return true;
 }
 
@@ -458,7 +455,7 @@ Grid2DObject GridsManager::getRawGrid(const MeteoGrids::Parameters& parameter, c
 * @param[in] enforce_cartesian set to true to garantee a cartesian grid (it will be reprojected if necessary)
 * @return a grid filled with the requested parameter
 */
-Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& enforce_cartesian)
+Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, const Date& date, const bool& enforce_cartesian, const bool& enable_grid_resampling)
 {
 	Grid2DObject grid2D;
 
@@ -481,19 +478,58 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 							throw NoDataException("Could not find or generate a grid of "+MeteoGrids::getParameterName( parameter )+" at time "+date.toString(Date::ISO), AT);
 					}
 				} else {
-					const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
-					const std::string msg2("There are grids from " + grids2d_list.begin()->first.toString(Date::ISO) + " until " + grids2d_list.rbegin()->first.toString(Date::ISO));
-					throw NoDataException(msg1 + msg2, AT);
+					if (enable_grid_resampling) { //user requests to temporally interpolate inbetween grids
+						Date sdate( date - gridprocessor.getWindowSize() );
+						Date edate( date + gridprocessor.getWindowSize() );
+						const bool status_all = setGrids2d_list(sdate, edate); //rebuffer the grid list if necessary
+						if (!status_all)
+							throw InvalidArgumentException("The data input plugin does not support the necessary call to query all available grids.", AT);
+						const std::map<Date, Grid2DObject> all_grids( getAllGridsForParameter(parameter) );
+						gridprocessor.resample(date, parameter, all_grids, grid2D);
+						buffer.push(grid2D, parameter, date);
+					} else {
+						const std::string msg1("Could not find grid for "+MeteoGrids::getParameterName( parameter )+" at time " + date.toString(Date::ISO) + ". " );
+						std::string msg2("There are no grids.");
+						if (!grids2d_list.empty())
+							msg2 = "There are grids from " + grids2d_list.begin()->first.toString(Date::ISO) + " until " + grids2d_list.rbegin()->first.toString(Date::ISO);
+						throw NoDataException(msg1 + msg2, AT);
+					} //endif enable_grid_resampling
 				}
-			}
-		}
-	}
+			} //status
+		} //buffer
+	} //processing level
 
 	 //reproject grid if it is lat/lon
 	if (enforce_cartesian && grid2D.isLatlon())
 		grid2D.reproject(); //HACK this is currently very, very primitive
 
 	return grid2D;
+}
+
+/**
+ * @brief Build a list of grids that are available as input for a specific parameter.
+ * @details This function queries the input plugin for grids that are available for a specific
+ * parameter. If gridded data is available from which the parameter can losslessly be generated
+ * this is treated as equal and also returned.
+ * @param[in] parameter The meteo parameter to go look for.
+ * @return A list of available grids and their dates.
+ */
+std::map<Date, Grid2DObject> GridsManager::getAllGridsForParameter(const MeteoGrids::Parameters& parameter)
+{
+	std::map<Date, Grid2DObject> all_grids;
+	for (auto it = grids2d_list.begin(); it != grids2d_list.end(); ++it) {
+		if (isAvailable(it->second, parameter, it->first)) {
+			const auto pair( std::make_pair(it->first, getRawGrid(parameter, it->first)) );
+			all_grids.insert(pair);
+		} else {
+			Grid2DObject generated;
+			if (generateGrid(generated, it->second, parameter, it->first)) {
+				const auto pair( std::make_pair(it->first, generated) );
+				all_grids.insert(pair);
+			}
+		}
+	} //endfor
+	return all_grids;
 }
 
 /**

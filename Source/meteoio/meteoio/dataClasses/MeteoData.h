@@ -244,6 +244,9 @@ class MeteoData {
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const {return nrOfAllParameters;}
 
+		static MeteoGrids::Parameters findGridParam(const Parameters& mpar);
+		static Parameters findMeteoParam(const MeteoGrids::Parameters& gpar);
+
 		/**
 		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.
 		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be

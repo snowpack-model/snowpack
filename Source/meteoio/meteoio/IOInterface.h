@@ -237,8 +237,8 @@ class IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_out, const std::string& options="");
 
 		/**
-		* @brief Write a Grid2DObject comtaining a known meteorological parameter
-		* A filename is build relative to GRID2DPATH for most plugins.
+		* @brief Write a Grid2DObject containing a known meteorological parameter
+		* A filename is built relative to GRID2DPATH for most plugins.
 		* @param grid_out (Grid2DObject) The grid to write
 		* @param parameter The meteo parameter grid type of the provided grid object (ie: air temperature, wind component, etc)
 		* @param date date of the data to write

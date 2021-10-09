@@ -289,8 +289,8 @@ void TerrainRadiationHelbig::ComputeTerrainRadiation(const bool &day, int i_max_
 	// view factors are either stored or computed on the fly (according to vf_in_ram)
 	unsigned int n;			   // counts iteration steps
 	double threshold_itEps_SW; // stopping threshold for SW PR iteration
-	double threshold_itEps_LW; // stopping threshold for LW PR iteration
-	int itMax_LW;			   // maximum number of iteration steps for longwave emission
+	//double threshold_itEps_LW; // stopping threshold for LW PR iteration
+	//int itMax_LW;			   // maximum number of iteration steps for longwave emission
 	int converged = 0;		   // 0 until iterated solution reaches a certain accuracy
 	clock_t t0;
 
@@ -331,11 +331,11 @@ void TerrainRadiationHelbig::ComputeTerrainRadiation(const bool &day, int i_max_
 	// itEps_LW: LW radiosity stopping tolerance
 	// Two options:
 	//threshold_itEps_LW = itEps_LW * lw_start_l1 * viewFactorsHelbigObj.min_area * viewFactorsHelbigObj.min_vterr;
-	threshold_itEps_LW = itEps_LW * lw_start_l1 * viewFactorsHelbigObj.min_area * viewFactorsHelbigObj.min_vterr * (1 - viewFactorsHelbigObj.max_vterr) / (viewFactorsHelbigObj.max_vterr);
+	//threshold_itEps_LW = itEps_LW * lw_start_l1 * viewFactorsHelbigObj.min_area * viewFactorsHelbigObj.min_vterr * (1 - viewFactorsHelbigObj.max_vterr) / (viewFactorsHelbigObj.max_vterr);
 
 	// maximum number of iteration steps for longwave emission is limited to the number of
 	// grid cells per model domain
-	itMax_LW = dimx * dimy;
+	//itMax_LW = dimx * dimy;
 
 	//---> Block to uncomment to put back LW
 	// converged = 0;

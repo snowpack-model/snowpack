@@ -11,7 +11,7 @@ epsg             = 21781
 nodata           = -999
 tz               = 1
 source           = WSL-Institute for Snow and Avalanche Research SLF; CFierz, 2011-10
-fields           = timestamp TA RH TSG TSS HS VW DW OSWR ISWR ILWR PSUM TS1 TS2 TS3
+fields           = timestamp TA RH TSG TSS HS VW DW RSWR ISWR ILWR PSUM TS1 TS2 TS3
 units_offset = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0	#this whole line could be ommitted
 units_multiplier = 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1	#this whole line could be ommitted
 [DATA]

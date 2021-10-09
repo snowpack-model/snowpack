@@ -459,6 +459,14 @@ bool Grid2DObject::empty() const {
 	return (grid2D.getNx()==0 && grid2D.getNy()==0);
 }
 
+bool Grid2DObject::allNodata() const {
+	for (size_t jj = 0; jj < grid2D.size(); ++jj) {
+		if (grid2D(jj) != IOUtils::nodata)
+			return false;
+	}
+	return true;
+}
+
 void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 {
 	cellsize = i_cellsize;
