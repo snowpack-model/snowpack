@@ -148,30 +148,32 @@ class Runoff; // forward declaration, cyclic header include
 		void setRunoff(Runoff& init_runoff);
 
 		// Methods to communicate with other modules
+		void setSnowDrift();
+		void setEnergyBalance();
 		void assimilate(const mio::Grid2DObject& daData, const mio::Date& timestamp);
 		void setSnowMassChange(const mio::Grid2DObject& new_mns, const mio::Date& timestamp);
 		void setMeteo(const mio::Grid2DObject& new_psum,
-		                const mio::Grid2DObject& new_psum_ph,
-		                const mio::Grid2DObject& new_vw,
-		                const mio::Grid2DObject& new_dw,
-		                const mio::Grid2DObject& new_rh,
-		                const mio::Grid2DObject& new_ta,
-		                const mio::Grid2DObject& new_tsg,
-		                const mio::Date& timestamp);
+		              const mio::Grid2DObject& new_psum_ph,
+		              const mio::Grid2DObject& new_vw,
+		              const mio::Grid2DObject& new_dw,
+		              const mio::Grid2DObject& new_rh,
+		              const mio::Grid2DObject& new_ta,
+		              const mio::Grid2DObject& new_tsg,
+		              const mio::Date& timestamp);
 		void setVwDrift(const mio::Grid2DObject& new_vw_drift,
 		                const mio::Date& timestamp);
 		void setRadiationComponents(const mio::Array2D<double>& shortw,
 		                            const mio::Array2D<double>& longwave,
 		                            const mio::Array2D<double>& diff,
-                                const mio::Array2D<double>& terrain_shortwave_in,
-                                const mio::Array2D<double>& terrain_longwave_in,
+		                            const mio::Array2D<double>& terrain_shortwave_in,
+		                            const mio::Array2D<double>& terrain_longwave_in,
 		                            const double& solarElevation,
 		                            const mio::Date& timestamp);
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
 
 	private:
-    static const std::vector<std::string> grids_not_computed_in_worker;
+		static const std::vector<std::string> grids_not_computed_in_worker;
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
@@ -237,13 +239,13 @@ class Runoff; // forward declaration, cyclic header include
 		std::vector<SnowpackInterfaceWorker*> workers;
 		std::vector<size_t> worker_startx; // stores offset for each workers slice
 		std::vector<size_t> worker_deltax; // stores size for each workers slize
-		std::vector<std::vector<std::pair<size_t,size_t> > > worker_stations_coord; // ttores te grid coordiante of each worker
+		std::vector<std::vector<std::pair<size_t,size_t> > > worker_stations_coord; // stores the grid coordinates of each worker
 		// time relevant
-		mio::Timer timer; // used to mesure calc time of one step
+		mio::Timer timer; // used to measure calc time of one step
 		mio::Date nextStepTimestamp;
 		double timeStep; // size of timestep
 
-		bool dataMeteo2D, dataDa, dataSnowDrift, dataRadiation; // say, if data are present for the actuall step
+		bool dataMeteo2D, dataDa, dataSnowDrift, dataRadiation; // say, if data are present for the actual step
 
 		// ==== other Modules ====
 		SnowDriftA3D *drift;

@@ -569,8 +569,17 @@ void SnowpackInterface::setSnowDrift(SnowDriftA3D& mydrift)
 
 	if (drift) {
 		for (size_t i = 0; i < workers.size(); i++) workers[i]->setUseDrift(true);
+		setSnowDrift();
+	}
+}
 
-		// Provide initial snow parameters to SnowDrift
+/**
+ * @brief Send required fields to SnowDrift module
+ */
+void SnowpackInterface::setSnowDrift()
+{
+	if (drift) {
+		// Provide snow parameters to SnowDrift
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
 		const Grid2DObject sp( getGrid(SnGrids::SP) );
 		const Grid2DObject rg( getGrid(SnGrids::RG) );
@@ -589,10 +598,18 @@ void SnowpackInterface::setEnergyBalance(EnergyBalance& myeb)
 
 	eb = &myeb;
 	if (eb) {
-		for (size_t i = 0; i < workers.size(); i++){
-			workers[i]->setUseEBalance(true);
-		}
-		// Provide initial albedo to EnergyBalance
+		for (size_t i = 0; i < workers.size(); i++) workers[i]->setUseEBalance(true);
+		setEnergyBalance();
+	}
+}
+
+/**
+ * @brief Send required fields to EnergyBalance module
+ */
+void SnowpackInterface::setEnergyBalance()
+{
+	if (eb) {
+		// Provide albedo to EnergyBalance
 		const Grid2DObject alb( getGrid(SnGrids::TOP_ALB) );
 		eb->setAlbedo(alb);
 	}
@@ -841,7 +858,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 	}
 	o_grid2D.grid2D.fill(tmp_grid2D.grid2D, mpi_offset, 0, mpi_nx, dimy);
 
-	MPIControl::instance().reduce_sum(o_grid2D, false);
+	MPIControl::instance().reduce_sum(o_grid2D);
 	//with some MPI implementations, when transfering large amounts of data, the buffers might get full and lead to a crash
 
 	if (errCount>0) {
@@ -938,20 +955,10 @@ void SnowpackInterface::calcNextStep()
 	}
 
 	// Gather data if needed and make exchange for SnowDrift
-	if (drift) {
-		const Grid2DObject cH( getGrid(SnGrids::HS) );
-		const Grid2DObject sp( getGrid(SnGrids::SP) );
-		const Grid2DObject rg( getGrid(SnGrids::RG) );
-		const Grid2DObject N3( getGrid(SnGrids::N3) );
-		const Grid2DObject rb( getGrid(SnGrids::RB) );
-		drift->setSnowSurfaceData(cH, sp, rg, N3, rb);
-	}
+	if (drift) setSnowDrift();
 
 	// Gather data if needed and make exchange for EnergyBalance
-	if (eb) {
-		const Grid2DObject alb( getGrid(SnGrids::TOP_ALB) );
-		eb->setAlbedo(alb);
-	}
+	if (eb) setEnergyBalance();
 
 	//make output
 	writeOutput(nextStepTimestamp);

@@ -51,7 +51,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ALBEDO_AVERAGE_SCHMUCKI"] = "ALL_DATA";
 	advancedConfig["ALBEDO_AGING"] = "true";
 	advancedConfig["SOOT_PPMV"] = "0.0";
-	advancedConfig["COUPLEDPHASECHANGES"] = "true";
+	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
@@ -169,6 +169,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["PROF_FORMAT"] = "PRO";
 	outputConfig["PROF_DAYS_BETWEEN"] = "1";
 	outputConfig["PROF_START"] = "0";
+	outputConfig["PROF_ID_OR_MK"] = "ID";
 	outputConfig["SNOW_WRITE"] = "true";
 	outputConfig["SNOW"] = "SMET";
 	outputConfig["HAZ_WRITE"] = "true";

@@ -252,6 +252,7 @@ class IOManager {
 		std::vector<size_t> v_params, grids_params; ///< Parameters for virtual stations
 		std::vector<StationData> v_stations, v_gridstations; ///< metadata for virtual stations
 		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated? (in seconds)
+		bool write_resampled_grids = false; ///< Output all temporally resampled grids to the file system?
 };
 } //end namespace
 #endif

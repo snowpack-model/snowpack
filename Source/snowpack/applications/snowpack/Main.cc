@@ -821,7 +821,7 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 		cfg.addKey("*::edit998", "InputEditing", "COPY");
 		cfg.addKey("*::arg998::dest", "InputEditing", "RH_AVG");
 		cfg.addKey("*::arg998::src", "InputEditing", "RH");
-
+		
 		cfg.addKey("VW_AVG::filter1", "Filters", "AGGREGATE");
 		cfg.addKey("VW_AVG::arg1::type", "Filters", "MEAN");
 		cfg.addKey("VW_AVG::arg1::soft", "Filters", "true");
@@ -863,21 +863,27 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 	if (detect_grass) {
 		// we need various average values of tss and hs, all for "past" windows (left)
 		// Require at least one value per 3 hours
-		cfg.addKey("TSS_A24H::COPY", "Input", "TSS");
+		cfg.addKey("*::edit899", "InputEditing", "COPY");
+		cfg.addKey("*::arg899::dest", "InputEditing", "TSS_A24H");
+		cfg.addKey("*::arg899::src", "InputEditing", "TSS");
 		cfg.addKey("TSS_A24H::filter1", "Filters", "AGGREGATE");
 		cfg.addKey("TSS_A24H::arg1::type", "Filters", "MEAN");
 		cfg.addKey("TSS_A24H::arg1::centering", "Filters", "left");
 		cfg.addKey("TSS_A24H::arg1::min_pts", "Filters", "48"); //TODO change # data required to 4
 		cfg.addKey("TSS_A24H::arg1::min_span", "Filters", "86340");
 
-		cfg.addKey("TSS_A12H::COPY", "Input", "TSS");
+		cfg.addKey("*::edit890", "InputEditing", "COPY");
+		cfg.addKey("*::arg890::dest", "InputEditing", "TSS_A12H");
+		cfg.addKey("*::arg890::src", "InputEditing", "TSS");
 		cfg.addKey("TSS_A12H::filter1", "Filters", "AGGREGATE");
 		cfg.addKey("TSS_A12H::arg1::type", "Filters", "MEAN");
 		cfg.addKey("TSS_A12H::arg1::centering", "Filters", "left");
 		cfg.addKey("TSS_A12H::arg1::min_pts", "Filters", "24"); //TODO change # data required to 2
 		cfg.addKey("TSS_A12H::arg1::min_span", "Filters", "43140");
 
-		cfg.addKey("HS_A3H::COPY", "Input", "HS");
+		cfg.addKey("*::edit880", "InputEditing", "COPY");
+		cfg.addKey("*::arg880::dest", "InputEditing", "HS_A3H");
+		cfg.addKey("*::arg880::src", "InputEditing", "HS");
 		cfg.addKey("HS_A3H::filter1", "Filters", "AGGREGATE");
 		cfg.addKey("HS_A3H::arg1::type", "Filters", "MEAN");
 		cfg.addKey("HS_A3H::arg1::centering", "Filters", "left");
@@ -953,6 +959,41 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
 	}
 }
 
+/*
+* Snow depth and mass corrections (deflate-inflate):
+*   Monitor snow depth discrepancy assumed to be due to ...
+*   ... wrong settling, which in turn is assumed to be due to a wrong estimation ...
+*   of fresh snow mass because Michi spent many painful days calibrating the settling ...
+*   and therefore it can't be wrong, dixunt Michi and Charles.
+*/
+inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, double &time_count_deltaHS, const CurrentMeteo &Mdata, const double &sn_dt, const size_t &i_hz, const bool &prn_check)
+{
+	const double cH = Xdata.cH - Xdata.Ground;
+	const double mH = Xdata.mH - Xdata.Ground;
+	// Look for missed erosion or not strong enough settling ...
+	// ... and nastily deep "dips" caused by buggy data ...
+	if (time_count_deltaHS > -Constants::eps2) {
+		if ((mH + 0.01) < cH) {
+			time_count_deltaHS += S_TO_D(sn_dt);
+		} else {
+			time_count_deltaHS = 0.;
+		}
+	}
+	// ... or too strong settling
+	if (time_count_deltaHS < Constants::eps2) {
+		if ((mH - 0.01) > cH) {
+			time_count_deltaHS -= S_TO_D(sn_dt);
+		} else {
+			time_count_deltaHS = 0.;
+		}
+	}
+	// If the error persisted for at least one day => apply correction
+	if (fabs(time_count_deltaHS) > (1. - 0.05 * S_TO_D(sn_dt))) {
+		deflateInflate(Mdata, Xdata, qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr, prn_check);
+		time_count_deltaHS = 0.;
+	}
+}
+
 // SNOWPACK MAIN **************************************************************
 inline void real_main (int argc, char *argv[])
 {
@@ -964,16 +1005,14 @@ inline void real_main (int argc, char *argv[])
 	//parse the command line arguments
 	std::string begin_date_str, end_date_str;
 	parseCmdLine(argc, argv, begin_date_str, end_date_str);
+	SnowpackConfig cfg(cfgfile);
+	addSpecialKeys(cfg);
 
-	const bool prn_check = false;
 	mio::Timer meteoRead_timer;
 	mio::Timer run_timer;
 	run_timer.start();
 	time_t nowSRT = time(NULL);
 	MainControl mn_ctrl; //Time step control parameters
-
-	SnowpackConfig cfg(cfgfile);
-	addSpecialKeys(cfg);
 
 	const double i_time_zone = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
 	if (!begin_date_str.empty()) {
@@ -1008,6 +1047,8 @@ inline void real_main (int argc, char *argv[])
 	bool label_snow = true;	// Initialize to true to be compliant with legacy SNOWPACK
 	cfg.getValue("LABEL_SNOW", "Output", label_snow, mio::IOUtils::nothrow);
 
+	const bool allow_inflate = cfg.get("INFLATE_ALLOW", "Snowpack", (mode == "OPERATIONAL"));
+	const bool prn_check = cfg.get("INFLATE_INFO", "Snowpack", false);
 	const bool grooming = cfg.get("SNOW_GROOMING", "TechSnow");
 #ifdef SNOWPACK_CORE
 	if ( grooming ) {
@@ -1271,51 +1312,17 @@ inline void real_main (int argc, char *argv[])
 						cumsum.redeposition[slope.mainStation] += vecXdata[slope.mainStation].hn_redeposit * vecXdata[slope.mainStation].rho_hn_redeposit;
 						cumsum.redeposition_length[slope.mainStation] += vecXdata[slope.mainStation].hn_redeposit;
 					}
+					
 					const size_t i_hz = mn_ctrl.HzStep;
-					if (mode == "OPERATIONAL") {
-						if (!cumsum_mass) { // Cumulate flat field runoff in operational mode
-							qr_Hdata.at(i_hz).runoff += surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF];
-							cumsum.runoff += surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF];
-						}
-						/*
-						 * Snow depth and mass corrections (deflate-inflate):
-						 *   Monitor snow depth discrepancy assumed to be due to ...
-						 *   ... wrong settling, which in turn is assumed to be due to a wrong estimation ...
-						 *   of fresh snow mass because Michi spent many painful days calibrating the settling ...
-						 *   and therefore it can't be wrong, dixunt Michi and Charles.
-						 */
-						const double cH = vecXdata[slope.mainStation].cH - vecXdata[slope.mainStation].Ground;
-						const double mH = vecXdata[slope.mainStation].mH - vecXdata[slope.mainStation].Ground;
-						// Look for missed erosion or not strong enough settling ...
-						// ... and nastily deep "dips" caused by buggy data ...
-						if (time_count_deltaHS > -Constants::eps2) {
-							if ((mH + 0.01) < cH) {
-								time_count_deltaHS += S_TO_D(sn_dt);
-							} else {
-								time_count_deltaHS = 0.;
-							}
-						}
-						// ... or too strong settling
-						if (time_count_deltaHS < Constants::eps2) {
-							if ((mH - 0.01) > cH) {
-								time_count_deltaHS -= S_TO_D(sn_dt);
-							} else {
-								time_count_deltaHS = 0.;
-							}
-						}
-						// If the error persisted for at least one day => apply correction
-						if (enforce_snow_height && (fabs(time_count_deltaHS) > (1. - 0.05 * M_TO_D(calculation_step_length)))) {
-							deflateInflate(Mdata, vecXdata[slope.mainStation],
-							               qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr);
-							if (prn_check) {
-								prn_msg(__FILE__, __LINE__, "msg+", Mdata.date,
-								        "InflDefl (i_hz=%u): dhs=%f, dmass=%f, counter=%f",
-								        i_hz, qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr,
-								        time_count_deltaHS);
-							}
-							time_count_deltaHS = 0.;
-						}
+					if (mode == "OPERATIONAL" && !cumsum_mass) { // Cumulate flat field runoff in operational mode
+						qr_Hdata.at(i_hz).runoff += surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF];
+						cumsum.runoff += surfFluxes.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF];
 					}
+					
+					//check if inflate-deflate is required and perform it if necessary
+					if (enforce_snow_height && allow_inflate)
+						deflateInflate(vecXdata[slope.mainStation], qr_Hdata, time_count_deltaHS, Mdata, sn_dt, i_hz, prn_check);
+					
 					if (mn_ctrl.HzDump) { // Save hazard data ...
 						qr_Hdata.at(i_hz).stat_abbrev = vecStationIDs[i_stn];
 						if (mode == "OPERATIONAL") {

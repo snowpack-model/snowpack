@@ -8,6 +8,7 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoStats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoFilters/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoResampling/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/gridResampling/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/spatialInterpolations/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataGenerators/CMakeLists.txt")
 
@@ -37,13 +38,16 @@ SET(meteoio_sources
 	DataEditingAlgorithms.cc
 	IOHandler.cc
 	MeteoProcessor.cc
+	GridProcessor.cc
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
+	Grid1DInterpolator.cc
 	DataGenerator.cc
 	plugins/libacdd.cc
 	plugins/libsmet.cc
 	IOInterface.cc
 	${meteoResampling_sources}
+	${gridResampling_sources}
 	${spatialInterpolations_sources}
 	${plugins_sources}
 	${meteoLaws_sources}

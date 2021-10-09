@@ -3,7 +3,7 @@ INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersionGIT()
 
 IF(MSVC)
-	SET(getopt_src getopt.c getopt_long.c)
+	SET(getopt_src getopt.c)
 ENDIF(MSVC)
 
 SET(snowpack-app_sources

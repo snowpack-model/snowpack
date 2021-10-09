@@ -393,7 +393,6 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
 		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] -= topFlux * sn_dt;
 	}
-
 	double dHoar = 0.;
 	for (e = 0; e < nE; e++) {
 		EMS[e].M += deltaM[e];
@@ -477,6 +476,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 	if (NDS[nN-1].hoar < 0.) {
 		NDS[nN-1].hoar = 0.;
 	}
+	WaterTransport::mergingElements(Xdata, Sdata);
 }
 
 void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,

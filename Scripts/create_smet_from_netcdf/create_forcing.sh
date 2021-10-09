@@ -1,4 +1,5 @@
 #!/bin/bash
+export TZ=UTC
 shopt -s expand_aliases	# Make sure aliases work in non-interactive shells
 # Check if mawk exist, otherwise create alias
 if ! command -v mawk &> /dev/null
