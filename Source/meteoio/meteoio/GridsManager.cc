@@ -726,6 +726,22 @@ bool GridsManager::generateGrid(Grid2DObject& grid2D, const std::set<size_t>& av
 	if (parameter==MeteoGrids::PSUM_PH) {
 		const bool hasPSUM_S = isAvailable(available_params, MeteoGrids::PSUM_S, date);
 		const bool hasPSUM_L = isAvailable(available_params, MeteoGrids::PSUM_L, date);
+		const bool hasPSUM_LC = isAvailable(available_params, MeteoGrids::PSUM_LC, date);
+
+		if (hasPSUM_S && hasPSUM_L && hasPSUM_LC) {
+			const Grid2DObject psum_l( getRawGrid(MeteoGrids::PSUM_L, date) );
+			const Grid2DObject psum_lc( getRawGrid(MeteoGrids::PSUM_LC, date) );
+			grid2D = getRawGrid(MeteoGrids::PSUM_S, date);
+			grid2D += psum_l + psum_lc;
+			buffer.push(grid2D, MeteoGrids::PSUM, date);
+
+			for (size_t ii=0; ii<grid2D.size(); ii++) {
+				const double psum = grid2D(ii);
+				if (psum!=IOUtils::nodata && psum>0)
+					grid2D(ii) = (psum_l(ii) + psum_lc(ii)) / psum;
+			}
+			return true;
+		}
 
 		if (hasPSUM_S && hasPSUM_L) {
 			const Grid2DObject psum_l( getRawGrid(MeteoGrids::PSUM_L, date) );

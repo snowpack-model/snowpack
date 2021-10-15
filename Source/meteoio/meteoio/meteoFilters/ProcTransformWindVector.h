@@ -40,6 +40,7 @@ namespace mio {
  * projection string. Leave empty, or use "4326" to specify WGS84.
  * - COORDPARAM:	provides the target coordinate system for the transformation. Provide EPSG code or a filename with a
  * projection string. Leave empty, or use "4326" to specify WGS84.
+ * - RACMO2:		Default: false. Set to true to properly deal with the rotated polar grid from RACMO2.
  *
  * @note
  * - If both DW and wind speed components are present and defined, all three variables will be recalculated, even when the filter is
@@ -98,6 +99,7 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 		Config cfg_i;
 #endif
 		std::string s_coordparam, t_coordparam;
+		bool RACMO2;		// to properly deal with the rotated polar grids from RACMO2
 };
 
 } //end namespace

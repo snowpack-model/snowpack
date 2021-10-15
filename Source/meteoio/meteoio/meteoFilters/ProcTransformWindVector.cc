@@ -30,7 +30,7 @@ namespace mio {
 
 #ifndef PROJ
 ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-          : ProcessingBlock(vecArgs, name, cfg), s_coordparam(), t_coordparam()
+          : ProcessingBlock(vecArgs, name, cfg), s_coordparam(), t_coordparam(), RACMO2(false)
 {
 	throw IOException("ProcTransformWindVector requires PROJ library. Please compile MeteoIO with PROJ support.", AT);
 }
@@ -51,7 +51,7 @@ inline bool isEPSG(const std::string &c) {
 }
 
 ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-          : ProcessingBlock(vecArgs, name, cfg), pj_src(nullptr), pj_dest(nullptr), vecArgs_i(vecArgs), name_i(name), cfg_i(cfg), s_coordparam(), t_coordparam()
+          : ProcessingBlock(vecArgs, name, cfg), pj_src(nullptr), pj_dest(nullptr), vecArgs_i(vecArgs), name_i(name), cfg_i(cfg), s_coordparam(), t_coordparam(), RACMO2(false)
 {
 	parse_args(vecArgs, cfg);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)
@@ -68,7 +68,7 @@ ProcTransformWindVector::~ProcTransformWindVector() {
 }
 
 ProcTransformWindVector::ProcTransformWindVector(const ProcTransformWindVector& c) :
-	ProcessingBlock(c.vecArgs_i, c.name_i, c.cfg_i), pj_src(nullptr), pj_dest(nullptr), vecArgs_i(c.vecArgs_i), name_i(c.name_i), cfg_i(c.cfg_i), s_coordparam(c.s_coordparam), t_coordparam(c.t_coordparam)
+	ProcessingBlock(c.vecArgs_i, c.name_i, c.cfg_i), pj_src(nullptr), pj_dest(nullptr), vecArgs_i(c.vecArgs_i), name_i(c.name_i), cfg_i(c.cfg_i), s_coordparam(c.s_coordparam), t_coordparam(c.t_coordparam), RACMO2(c.RACMO2)
 {
 	initPROJ();
 }
@@ -118,8 +118,8 @@ void ProcTransformWindVector::initPROJ()
 
 void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out)
 {
-	double x = X_in;
-	double y = Y_in;
+	double x = (RACMO2) ? (Y_in) : (X_in);
+	double y = (RACMO2) ? (X_in) : (Y_in);
 	if (pj_is_latlong(pj_src)) {
 		x *= Cst::to_rad;
 		y *= Cst::to_rad;
@@ -329,6 +329,8 @@ void ProcTransformWindVector::parse_args(const std::vector< std::pair<std::strin
 			if (!isEPSG(s_coordparam)) {
 				s_coordparam = readProjectionfromFile(s_coordparam, cfg.getConfigRootDir());
 			}
+		} else if (vecArgs[ii].first=="RACMO2") {
+			IOUtils::parseArg(vecArgs[ii], where, RACMO2);
 		}
 	}
 
