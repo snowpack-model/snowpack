@@ -30,6 +30,8 @@ namespace mio {
  *
  * @section grid_resampling_section Grid resampling section
  * First, grid resampling must be enabled by setting the REGRIDDING_STRATEGY to GRID_1DINTERPOLATE in the [InputEditing] section.
+ * Note that this currently forces the path through the temoral resampling (regridding) algorithms, and any spatial resampling
+ * configured (from point timeseries) will not take action.
  * Then, grid resampling is configured in the [GridInterpolations1D] section for each meteo parameter separately.
  *
  * For example:
@@ -47,7 +49,8 @@ namespace mio {
  * - TIMESERIES: extract time series at all grid points and use Interpolations1D algorithm, see GridTimeseriesResampling
  *
  * @note By default, linear resampling will be used. It is possible to enable/disable all resampling with the ENABLE_GRID_RESAMPLING key
- * (in the [GridInterpolations1D] section)..
+ * (in the [GridInterpolations1D] section). You can make MeteoIO write all grids that were resampled/regridded this way to the file system
+ * by setting WRITE_RESAMPLED_GRIDS = TRUE (also in [GridInterpolations1D]).
  */
 
 /**

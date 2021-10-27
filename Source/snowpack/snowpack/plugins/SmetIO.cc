@@ -1191,7 +1191,8 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Mdata.vw_drift );
 		data.push_back( Mdata.dw );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_HNW] );
-		data.push_back( M_TO_CM((Xdata.cH - Xdata.Ground)/cos_sl) );
+		const double ReferenceLevel = (!useReferenceLayer || Xdata.findMarkedReferenceLayer() == IOUtils::nodata) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
+		data.push_back( M_TO_CM((Xdata.cH - ReferenceLevel - Xdata.Ground)/cos_sl) );
 		if (Xdata.mH!=Constants::undefined)
 			data.push_back( M_TO_CM((Xdata.mH - Xdata.Ground)/cos_sl) );
 		else
