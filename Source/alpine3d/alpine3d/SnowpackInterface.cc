@@ -1547,9 +1547,6 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass; // Output mass
 	grid_snowdrift_out(0.);
 
-	// Boundary condtion:
-	const bool ZeroFluxBC = false;
-
 	// If there is no wind, then there is no transport of eroded snow between grid cells.
 	if (grid_VW.grid2D.getMax() == 0.) {
 		return ErodedMass;
@@ -1582,44 +1579,22 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		}
 	}
 
-	// Calculate wind speed on "staggered" grid
-	double Ummax = 0.;
-	double Vmmax = 0.;
-	for (size_t iy=1; iy<dimy; iy++) {
-		for (size_t ix=1; ix<dimx; ix++) {
-			// U-component
-			if (U(ix, iy) == IOUtils::nodata && U(ix-1, iy) == IOUtils::nodata) {
-				Um(ix, iy) = IOUtils::nodata;
-			} else if (U(ix-1, iy) == IOUtils::nodata) {
-				Um(ix, iy) = U(ix, iy);
-			} else if (U(ix, iy) == IOUtils::nodata) {
-				Um(ix, iy) = U(ix-1, iy);
-			} else {
-				Um(ix, iy) = 0.5 * (U(ix-1, iy) + U(ix, iy));
-			}
-
-			// V-component
-			if (V(ix, iy) == IOUtils::nodata && V(ix, iy-1) == IOUtils::nodata) {
-				Vm(ix, iy) = IOUtils::nodata;
-			} else if (V(ix, iy-1) == IOUtils::nodata) {
-				Vm(ix, iy) = V(ix, iy);
-			} else if (V(ix, iy) == IOUtils::nodata) {
-				Vm(ix, iy) = V(ix, iy-1);
-			} else {
-				Vm(ix, iy) = 0.5 * (V(ix, iy-1) + V(ix, iy));
-			}
-
+	// Calculate max wind speed components
+	double Umax = 0.;
+	double Vmax = 0.;
+	for (size_t iy=0; iy<dimy; iy++) {
+		for (size_t ix=0; ix<dimx; ix++) {
 			// For CFL:
-			if (fabs(Vm(ix,iy)) > Vmmax) Vmmax = fabs(Vm(ix,iy));
-			if (fabs(Um(ix,iy)) > Ummax) Ummax = fabs(Um(ix,iy));
+			if (fabs(V(ix,iy)) > Vmax) Vmax = fabs(V(ix,iy));
+			if (fabs(U(ix,iy)) > Umax) Umax = fabs(U(ix,iy));
 		}
 	}
 	const double C_max = 0.999;					// Courant number used to calculate sub time step.
 	double sub_dt = dt;
-	if (Ummax + Vmmax == 0) {
+	if (Umax + Vmax == 0) {
 		return ErodedMass;
 	} else {
-		sub_dt = std::min(C_max * dx / (Ummax + Vmmax), dt);	// Sub time step
+		sub_dt = std::min(C_max * dx / (Umax + Vmax), dt);	// Sub time step
 		std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
 	}
 
@@ -1629,37 +1604,49 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 			sub_dt = dt - time_advance;
 		}
 
-		// Calculate change of suspended mass
-		for (size_t iy=1; iy<dimy; iy++) {
-			for (size_t ix=1; ix<dimx; ix++) {
-				if (Um(ix, iy) != IOUtils::nodata && Vm(ix, iy) != IOUtils::nodata) {
-					if(Um(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
-						dM(ix-1, iy) -= deltaM;
-						dM(ix, iy)   += deltaM;
+		// Calculate change of suspended mass with Periodic boundary conditions
+		for (size_t iy=0; iy<dimy; iy++) {
+			for (size_t ix=0; ix<dimx; ix++) {
+				if (U(ix, iy) != IOUtils::nodata && V(ix, iy) != IOUtils::nodata) {
+					
+					if(U(ix, iy)>0) {
+						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
+						dM(ix, iy) -= deltaM;
+						if (ix != dimx-1){
+							dM(ix+1, iy) += deltaM;
+						} else {
+							dM(0, iy) += deltaM;
+						}
+						
+					
 					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
-						dM(ix-1, iy) += deltaM;
-						dM(ix, iy)   -= deltaM;
+						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
+						dM(ix, iy) -= deltaM;
+						if (ix != 0){
+							dM(ix-1, iy) += deltaM;
+						} else {
+							dM(dimx-1, iy) += deltaM;
+						}
 					}
-					if(Vm(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy-1) -= deltaM;
-						dM(ix, iy)   += deltaM;
+					
+					if(V(ix, iy)>0) {
+						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
+						dM(ix, iy) -= deltaM;
+						if (iy != dimy-1){
+							dM(ix, iy+1) += deltaM;
+						} else {
+							dM(ix, 0) += deltaM;
+						}
+					
 					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy-1) += deltaM;
-						dM(ix, iy)   -= deltaM;
+						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
+						dM(ix, iy) -= deltaM;
+						if (iy != 0){
+							dM(ix, iy-1) += deltaM;
+						} else {
+							dM(ix, dimy-1) += deltaM;
+						}
 					}
-				}
-
-				// Set boundary condition
-				if (!ZeroFluxBC) {
-					// If not zero-flux, then we set constant-flux (i.e., dM at boundaries == 0):
-					dM(0,iy) = 0.;
-					dM(dimx-1,iy) = 0.;
-					dM(ix,0) = 0.;
-					dM(ix,dimy-1) = 0.;
 				}
 			}
 		}
