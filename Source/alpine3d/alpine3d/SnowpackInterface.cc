@@ -1608,40 +1608,36 @@ mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObje
 		for (size_t iy=0; iy<dimy; iy++) {
 			for (size_t ix=0; ix<dimx; ix++) {
 				if (U(ix, iy) != IOUtils::nodata && V(ix, iy) != IOUtils::nodata) {
-					
 					if(U(ix, iy)>0) {
 						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
 						dM(ix, iy) -= deltaM;
-						if (ix != dimx-1){
+						if (ix != dimx-1) {
 							dM(ix+1, iy) += deltaM;
 						} else {
 							dM(0, iy) += deltaM;
 						}
-						
-					
 					} else {
 						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
 						dM(ix, iy) -= deltaM;
-						if (ix != 0){
+						if (ix != 0) {
 							dM(ix-1, iy) += deltaM;
 						} else {
 							dM(dimx-1, iy) += deltaM;
 						}
 					}
-					
+
 					if(V(ix, iy)>0) {
 						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
 						dM(ix, iy) -= deltaM;
-						if (iy != dimy-1){
+						if (iy != dimy-1) {
 							dM(ix, iy+1) += deltaM;
 						} else {
 							dM(ix, 0) += deltaM;
 						}
-					
 					} else {
 						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
 						dM(ix, iy) -= deltaM;
-						if (iy != 0){
+						if (iy != 0) {
 							dM(ix, iy-1) += deltaM;
 						} else {
 							dM(ix, dimy-1) += deltaM;
