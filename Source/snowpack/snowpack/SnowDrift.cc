@@ -265,14 +265,12 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 		}
 
 		unsigned int nErode=0; // number of eroded elements
-		double max_ustar_th = 0.;
-		double layer_ustar_th = 0.;
+		Xdata.Erosion_ustar_th = 0.;
 		for(size_t e = nE; e --> Xdata.SoilNode; ) {
 
 			// Set ustar_th to the max ustar_th of eroded layers
-			layer_ustar_th = SnowDrift::get_ustar_thresh(EMS[e]);
-			if (layer_ustar_th > max_ustar_th) {
-				max_ustar_th = layer_ustar_th;
+			const double layer_ustar_th = SnowDrift::get_ustar_thresh(EMS[e]);
+			if (layer_ustar_th > Xdata.Erosion_ustar_th) {
 				Xdata.Erosion_ustar_th = layer_ustar_th;
 			}
 
