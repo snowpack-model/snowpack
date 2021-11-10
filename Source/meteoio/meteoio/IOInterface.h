@@ -319,6 +319,7 @@ class IOInterface {
 		static void set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon);
 		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
 		
+	protected: 
 		/**
 		 * @brief built the set of line ranges to read or skip.
 		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
