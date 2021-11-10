@@ -32,6 +32,60 @@
 namespace mio {
 
 /**
+ * @class LinesRange
+ * @brief A class to represent and handle ranges of lines. They can be sorted, 
+ * checked for uniqueness and a line number can be compared to the range (is it 
+ * before or after?).
+ *
+ * @author Mathias Bavay
+ */
+class LinesRange {
+	public:
+		LinesRange() : start(), end() {}
+		LinesRange(const size_t& l1, const size_t& l2) : start(l1), end(l2) {}
+		
+		/**
+		 * @brief Is the provided line number within the current range?
+		 * @param[in] ll line number to check
+		 * @return true if the line number is within the current range, false otherwise
+		 */
+		bool in(const size_t& ll) const {
+			return (ll >= start && ll <= end);
+		}
+		
+		/**
+		 * @brief Is the provided line number before the *end* of the range?
+		 * @param[in] ll line number to check
+		 * @return true if the line number is less than the end of the current range, false otherwise
+		 */
+		bool operator<(const size_t& ll) const {
+			return end < ll;
+		}
+		
+		/**
+		 * @brief Is the provided line number after the *start* of the range?
+		 * @param[in] ll line number to check
+		 * @return true if the line number is greater than the end of the current range, false otherwise
+		 */
+		bool operator>(const size_t& ll) const {
+			return start > ll;
+		}
+		
+		bool operator<(const LinesRange& ll) const { //needed for "sort"
+			if (start==ll.start) return end < ll.end;
+			return start < ll.start;
+		}
+		
+		bool operator==(const LinesRange& ll) const { //needed to check for uniqueness
+			return (start==ll.start) && (end==ll.end);
+		}
+		
+		const std::string toString() const {std::ostringstream os; os << "[" << start << " - " << end << "]"; return os.str();}
+		
+		size_t start, end;
+};
+
+/**
  * @class IOInterface
  * @brief A class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
  * a derived class is to be created that holds the specific implementation of the appropriate virtual methods.
@@ -262,9 +316,18 @@ class IOInterface {
 		*/
 		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
-
 		static void set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon);
 		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
+		
+		/**
+		 * @brief built the set of line ranges to read or skip.
+		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
+		 * Obviously this can not be implemented by every plugin!
+		 * @param[in] args the textual representation of the line ranges or lines to parse
+		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
+		 * @return set of line ranges
+		 */
+		static std::vector< LinesRange > initLinesRestrictions(const std::string& args, const std::string& where);
 };
 
 } //end namespace

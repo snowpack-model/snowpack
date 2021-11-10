@@ -166,7 +166,7 @@ static void signal_handler( int signal_num )
 
 static void signals_catching(void) 
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
 	typedef void(*SignalHandlerPointer)(int);
 	SignalHandlerPointer previousHandler;
 	previousHandler = signal(SIGTERM, signal_handler);

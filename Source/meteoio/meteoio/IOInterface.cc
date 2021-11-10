@@ -175,4 +175,49 @@ double IOInterface::computeGridXYCellsize(const std::vector<double>& vecX, const
 	return Grid2DObject::calculate_XYcellsize(vecX, vecY);
 }
 
+std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& args, const std::string& where)
+{
+	std::vector<LinesRange> lines_specs;
+	if (args.empty()) return lines_specs;
+	
+	std::vector<std::string> vecString;
+	const size_t nrElems = IOUtils::readLineToVec(args, vecString, ',');
+	
+	for (size_t jj=0; jj<nrElems; jj++) {
+		size_t l1, l2;
+		const size_t delim_pos = vecString[jj].find(" - ");
+		if (delim_pos==std::string::npos) {
+			if (!IOUtils::convertString(l1, vecString[jj]))
+				throw InvalidFormatException("Could not process line number restriction "+vecString[jj]+" for "+where, AT);
+			lines_specs.push_back( LinesRange(l1, l1) );
+		} else {
+			if (!IOUtils::convertString(l1, vecString[jj].substr(0, delim_pos)))
+				throw InvalidFormatException("Could not process line number restriction "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+			if (!IOUtils::convertString(l2, vecString[jj].substr(delim_pos+3)))
+				throw InvalidFormatException("Could not process line number restriction "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+			lines_specs.push_back( LinesRange(l1, l2) );
+		}
+	}
+
+	
+	if (lines_specs.empty()) return lines_specs;
+	
+	//now sort the vector and merge overlapping ranges
+	std::sort(lines_specs.begin(), lines_specs.end()); //in case of identical start dates, the oldest end date comes first
+	for (size_t ii=0; ii<(lines_specs.size()-1); ii++) {
+		if (lines_specs[ii]==lines_specs[ii+1]) {
+			//remove exactly identical ranges
+			lines_specs.erase(lines_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
+			ii--; //we must redo the current element
+		} else if (lines_specs[ii].start==lines_specs[ii+1].start || lines_specs[ii].end >= lines_specs[ii+1].start) {
+			//remove overlapping ranges. Since the vector is sorted on (start, end), the overlap criteria is very simplified!
+			lines_specs[ii].end = std::max(lines_specs[ii].end, lines_specs[ii+1].end);
+			lines_specs.erase(lines_specs.begin()+ii+1);
+			ii--; //we must redo the current element
+		}
+	}
+	
+	return lines_specs;
+}
+
 } //end namespace
