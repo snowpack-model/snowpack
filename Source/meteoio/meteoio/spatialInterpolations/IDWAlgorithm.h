@@ -35,6 +35,10 @@ namespace mio {
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
+ *
+ * @note If IDW is applied on wind speed (VW, VW_MAX or VW_DRIFT) or wind direction (DW),
+ * the algorithm internally applies the interpolation on the wind speed components individually,
+ * if both wind speed and direction are available at the same station.
  */
 class IDWAlgorithm : public InterpolationAlgorithm {
 	public:

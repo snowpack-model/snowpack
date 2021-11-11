@@ -157,6 +157,7 @@ int main()
 	setbuf(stderr, nullptr); //always flush stderr
 
 	try {
+		//the boolean flag can be set to TRUE in order to write the data out
 		std::vector< std::vector<MeteoData> > vecMeteoRef( read_data("io_ref_data.ini", false) );
 		std::vector< std::vector<MeteoData> > vecMeteoTest( read_data("io.ini", false) );
 		

@@ -70,6 +70,10 @@ bool SnGrids::initStaticData()
 	paramname.push_back("ERODEDMASS");
 	paramname.push_back("EROSION_USTAR_TH");
 	paramname.push_back("WINDEROSIONDEPOSITION");
+	paramname.push_back("MS_SNOW_DHS");
+	paramname.push_back("MS_SUBL_DHS");
+	paramname.push_back("MS_SETTLING_DHS");
+	paramname.push_back("MS_EROSION_DHS");
 	paramname.push_back("GLACIER");
 	paramname.push_back("GLACIER_EXPOSED");
 	paramname.push_back("ET");

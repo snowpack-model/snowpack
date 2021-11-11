@@ -226,6 +226,13 @@ namespace IOUtils {
 	* @param line The string to read and modify
 	*/
 	void removeQuotes(std::string& line);
+	
+	/**
+	* @brief Removes any character present in the provided set from the given line
+	* @param line The string to read and modify
+	* @param specialChars The characters to exclude
+	*/
+	void removeChars(std::string& line, const std::set<char>& specialChars);
 
 	/**
 	 * @brief Cleans up a string to be usable as, for example, a parameter name

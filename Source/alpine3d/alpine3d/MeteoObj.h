@@ -71,6 +71,10 @@ class SnGrids {
                                           ERODEDMASS, ///< wind eroded mass (kg/m2)
                                           EROSION_USTAR_TH, ///< Erosion threshold friction velocity (m/s, property of snowpack)
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
+                                          MS_SNOW_DHS, ///< snow height change due to snowfall and deposition of drifting snow (mm)
+                                          MS_SUBL_DHS, ///< snow height change due to sublimation (mm)
+                                          MS_SETTLING_DHS, ///< snow height change due to snow settling (mm)
+                                          MS_EROSION_DHS, ///< snow height change due to snow erosion (mm)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
                                           ET, ///< Evapotranspiration

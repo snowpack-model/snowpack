@@ -36,7 +36,7 @@ namespace mio {
  * edition commands in the [InputEditing] section that can be stacked at will, per station ID. This is similar to the way that 
  * filters (\ref processing "processing elements") are also stacked together. In order to rectrict any editing to a 
  * specific set of time ranges, use the **when** option followed by a comma delimited list of date intervals (represented 
- * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), similarly to 
+ * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash) or individual dates, similarly to 
  * the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
  * @code
  * {stationID}::edit#            = {command}
@@ -46,7 +46,7 @@ namespace mio {
  * [InputEditing]
  * WFJ2::edit1         = EXCLUDE
  * WFJ2::arg1::params  = VW DW ISWR RSWR
- * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
+ * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30 , 2020-07-11T04:00
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 

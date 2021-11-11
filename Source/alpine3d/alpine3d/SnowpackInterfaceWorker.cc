@@ -423,6 +423,14 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = erodedmass(ii,jj) / snowPixel.cos_sl; break;
 			case SnGrids::EROSION_USTAR_TH:
 				value = snowPixel.Erosion_ustar_th; break;
+			case SnGrids::MS_SNOW_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_SNOW_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_SNOW_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
+			case SnGrids::MS_SUBL_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_SUBL_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_SUBL_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
+			case SnGrids::MS_SETTLING_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_SETTLING_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_SETTLING_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
+			case SnGrids::MS_EROSION_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_EROSION_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_EROSION_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
 			case SnGrids::GLACIER:
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:

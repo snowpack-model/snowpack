@@ -89,6 +89,8 @@ std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek_before(const Da
 		return grids.end();
 	if (date < grids.begin()->first) //there is no element before date
 		return grids.end();
+	if (grids.size() == 1)
+		return grids.begin(); //if there is only 1 grid, it is closest to any date...
 	for (auto it = ++grids.begin(); it != grids.end(); ++it) {
 		if (it->first > date)
 			return --it;

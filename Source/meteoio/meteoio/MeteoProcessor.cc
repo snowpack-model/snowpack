@@ -130,16 +130,19 @@ std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< s
 			const size_t nrElems = IOUtils::readLineToVec(vecArgs[ii].second, vecString, ',');
 			
 			for (size_t jj=0; jj<nrElems; jj++) {
-				const size_t delim_pos = vecString[jj].find(" - ");
-				if (delim_pos==std::string::npos)
-					throw InvalidFormatException("Invalid time restriction syntax for " + where + ": the two dates must be separated by ' - '", AT);
-				
 				Date d1, d2;
-				if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
-					throw InvalidFormatException("Could not process date "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
-				if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
-					throw InvalidFormatException("Could not process date "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
-				dates_specs.push_back( DateRange(d1, d2) );
+				const size_t delim_pos = vecString[jj].find(" - ");
+				if (delim_pos==std::string::npos) {
+					if (!IOUtils::convertString(d1, vecString[jj], TZ))
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj]+" for "+where, AT);
+					dates_specs.push_back( DateRange(d1, d1) );
+				} else {
+					if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+					if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+					dates_specs.push_back( DateRange(d1, d2) );
+				}
 			}
 		}
 	}
@@ -150,17 +153,17 @@ std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< s
 	std::sort(dates_specs.begin(), dates_specs.end()); //in case of identical start dates, the oldest end date comes first
 	for (size_t ii=0; ii<(dates_specs.size()-1); ii++) {
 		if (dates_specs[ii]==dates_specs[ii+1]) {
-			//remove identical ranges
+			//remove exactly identical ranges
 			dates_specs.erase(dates_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
 			ii--; //we must redo the current element
 		} else if (dates_specs[ii].start==dates_specs[ii+1].start || dates_specs[ii].end >= dates_specs[ii+1].start) {
-			//remove overlapping ranges
-			dates_specs[ii].end = dates_specs[ii+1].end;
+			//remove overlapping ranges. Since the vector is sorted on (start, end), the overlap criteria is very simplified!
+			dates_specs[ii].end = std::max(dates_specs[ii].end, dates_specs[ii+1].end);
 			dates_specs.erase(dates_specs.begin()+ii+1);
 			ii--; //we must redo the current element
 		}
 	}
-
+	
 	return dates_specs;
 }
 
