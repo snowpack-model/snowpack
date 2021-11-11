@@ -450,6 +450,10 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 	bool verify_top_element = false;
 	double removedMass = 0.;
 	size_t eUpper = nE; // Index of the upper element, the properties of which will be transferred to the lower adjacent one
+	double height_in = 0.;
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		height_in += EMS[e].L;
+	}
 	while (eUpper-- > Xdata.SoilNode) {
 		bool enforce_merge = true;	// To enforce merging in special cases
 		if ((EMS[eUpper].L < minimum_l_element) || (EMS[eUpper].mk%100 == 3)) {
@@ -506,7 +510,6 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 
 				// After dealing with all possibilities, now finally do the merge:
 				if(!merged) removedMass += EMS[eUpper].M;
-				if(!merged) Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += EMS[eUpper].L;
 				SnowStation::mergeElements(EMS[eUpper-1], EMS[eUpper], merged, (eUpper==rnE-1 && variant != "SEAICE"));
 
 				// The upper element may grow too much in length by subsequent element merging, limit this! Note that this has the desired effect of averaging the two top elements.
@@ -539,7 +542,6 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 
 					// route mass and solute load to runoff
 					removedMass += EMS[eUpper].M;
-					Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += EMS[eUpper].L;
 					if (iwatertransportmodel_snow != RICHARDSEQUATION) {
 						// The mass from the snow element to be removed is snowpack runoff
 						Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] += EMS[eUpper].M;
@@ -618,6 +620,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 			// set rnE to the upper soil element, in case we should inhibit element splitting.
 			if (EMS[Xdata.getNumberOfElements()-1].L > 2.*comb_thresh_l) {
 				Xdata.splitElement(Xdata.getNumberOfElements()-1);
+				rnE++;
 			}
 		}
 	}
@@ -630,10 +633,15 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 	}
 
 	if (rnE >= Xdata.SoilNode) {
+		double height_out = 0.;
 		Xdata.ColdContent = 0.;
 		for (size_t e=Xdata.SoilNode; e<rnE; e++) {
+			height_out += EMS[e].L;
 			Xdata.ColdContent += EMS[e].coldContent();
 		}
+		Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += height_out - height_in;
+	} else {
+		Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] -= height_in;
 	}
 }
 
@@ -643,8 +651,9 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
  * too low density and this needs to be corrected. \n
  * TODO Check description!
  * @param Xdata
+ * @param Sdata
  */
-void WaterTransport::adjustDensity(SnowStation& Xdata)
+void WaterTransport::adjustDensity(SnowStation& Xdata, SurfaceFluxes& Sdata)
 {
 	const size_t nN = Xdata.getNumberOfNodes();
 	if (nN == Xdata.SoilNode + 1) return;
@@ -697,6 +706,7 @@ void WaterTransport::adjustDensity(SnowStation& Xdata)
 	}
 	const double cH_old = Xdata.cH;
 	Xdata.cH = NDS[Xdata.getNumberOfNodes()-1].z + NDS[Xdata.getNumberOfNodes()-1].u;
+	Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += Xdata.cH - cH_old;
 	Xdata.mH -= (cH_old - Xdata.cH);
 }
 
@@ -1212,7 +1222,7 @@ void WaterTransport::compTransportMass(const CurrentMeteo& Mdata,
 	mergingElements(Xdata, Sdata);
 
 	try {
-		adjustDensity(Xdata);
+		adjustDensity(Xdata, Sdata);
 		if (variant=="SEAICE" && Xdata.Seaice!=NULL && iwatertransportmodel_snow == BUCKET) Xdata.Seaice->compFlooding(Xdata);
 		transportWater(Mdata, Xdata, Sdata, ql);
 	} catch(const exception&){

@@ -332,5 +332,6 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	} else {
 		Xdata.ErosionMass = 0.;
 	}
+	Sdata.mass[SurfaceFluxes::MS_EROSION_DHS] += Xdata.ErosionLength;
 	return;
 }

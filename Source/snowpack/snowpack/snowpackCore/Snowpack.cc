@@ -1822,6 +1822,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			Xdata.resize(nNewE);
 			vector<NodeData>& NDS = Xdata.Ndata;
 			vector<ElementData>& EMS = Xdata.Edata;
+			Sdata.mass[SurfaceFluxes::MS_SNOW_DHS] += hn;
 
 			// Create hoar layer
 			if (nHoarE > 0) {
