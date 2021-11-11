@@ -70,6 +70,10 @@ class SnGrids {
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
                                           ERODEDMASS, ///< wind eroded mass (kg/m2)
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
+                                          MS_SNOW_DHS, ///< snow height change due to snowfall and deposition of drifting snow (mm)
+                                          MS_SUBL_DHS, ///< snow height change due to sublimation (mm)
+                                          MS_SETTLING_DHS, ///< snow height change due to snow settling (mm)
+                                          MS_EROSION_DHS, ///< snow height change due to snow erosion (mm)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
                                           ET, ///< Evapotranspiration
