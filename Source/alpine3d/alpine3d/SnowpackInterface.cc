@@ -133,6 +133,12 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		setInitGlacierHeight();
 	}
 
+	//check if simple snow drift is enabled (needs to be determined before grid requirements check!)
+	enable_simple_snow_drift = false;
+	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
+	enable_explicit_snow_drift = false;
+	sn_cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
+
 	readInitalSnowCover(snow_stations,snow_stations_coord);
 
 	if (mpicontrol.master()) {
@@ -153,12 +159,6 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		else std::cout << " worker";
 		std::cout << " each using Snowpack " << snowpack::getLibVersion() << "\n";
 	}
-
-	//check if simple snow drift is enabled (needs to be determined before grid requirements check!)
-	enable_simple_snow_drift = false;
-	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
-	enable_explicit_snow_drift = false;
-	sn_cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
 
 	//create and prepare  the vector of output grids
 	if (grids_write) {
@@ -1085,6 +1085,7 @@ void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const do
 
 	if (useCanopy) smet_out << " ISWR_can RSWR_can";
 	if (snow_production) smet_out << " PSUM_TECH";
+	if (enable_explicit_snow_drift) smet_out << " SNOWD";
 	smet_out << "\n[DATA]\n";
 
 	smet_out.close();
@@ -1131,6 +1132,9 @@ void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationDa
 	}
 	if (snow_production) {
 		smet_out << std::setw(6) << std::setprecision(3) << met.psum_tech << " ";
+	}
+	if (enable_explicit_snow_drift) {
+		smet_out << std::setw(6) << std::setprecision(3) << met.snowdrift << " ";
 	}
 	smet_out << "\n";
 
