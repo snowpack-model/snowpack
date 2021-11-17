@@ -508,7 +508,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				EMS[Xdata.SoilNode].rb = InitRb;
 				EMS[Xdata.SoilNode].N3 = Metamorphism::getCoordinationNumberN3(EMS[Xdata.SoilNode].Rho);
 				EMS[Xdata.SoilNode].opticalEquivalentGrainSize();
-				EMS[Xdata.SoilNode].mk = 7.;
+				EMS[Xdata.SoilNode].mk = 7;
 				EMS[Xdata.SoilNode].metamo = 0.;
 				EMS[Xdata.SoilNode].snowType(); // Snow classification
 				EMS[Xdata.SoilNode].salinity = OceanSalinity * EMS[Xdata.SoilNode].theta[WATER];
