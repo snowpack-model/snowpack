@@ -22,8 +22,8 @@ if [ -z "${model}" ] && [ -z "${yr}" ]; then
 	exit
 fi
 
-if [ ${model} != "MERRA-2" ] && [ ${model} != "CESM" ] && [ ${model} != "RACMO2" ]; then
-	echo "Only MERRA-2, CESM or RACMO2 supported as model."
+if [ ${model} != "MERRA-2" ] && [ ${model} != "CESM" ] && [ ${model} != "RACMO2" ] && [ ${model} != "ERA5" ] && [ ${model} != "COSMO-1" ] && [ ${model} != "COSMO-2" ]; then
+	echo "Only MERRA-2, CESM, RACMO2, ERA5, COSMO-1 or COSMO-2 supported as model."
 	exit
 fi
 
@@ -83,8 +83,8 @@ fi
 output_res_in_minutes=$(echo ${output_res_in_seconds} / 60 | bc)							# In minutes
 
 # Create .smet files for each year
-if [ ${model} == "MERRA-2" ]; then
-	# MERRA-2 has output each :30
+if [ ${model} == "MERRA-2" ] || [ "${model}" == "COSMO-2" ]; then
+	# MERRA-2 and COSMO-2 have output each :30
 	if [ -z "${mm}" ]; then
 		# When no month is provided and we do the processing per year
 		bt="${yr}-01-01T00:30:00"
