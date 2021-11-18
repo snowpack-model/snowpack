@@ -1048,7 +1048,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 
 	//Initialize upper boundary in case of Dirichlet
-	if(TopBC==DIRICHLET) {
+	if (TopBC==DIRICHLET) {
 		aTopBC=DIRICHLET;
 		htop=h_n[uppernode];
 	}
@@ -1314,7 +1314,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					const double flux_compare = (dz[uppernode]*(EMS[uppernode].VG.theta_s - (theta_np1_m[uppernode] + theta_i_np1_m[uppernode]))/dt);
 					if((0.999*flux_compare) < TopFluxRate) {			//If prescribed flux is too large:
 						if(dt>MIN_DT_FOR_INFILTRATION) {			//Trigger rewind when the top layer cannot accomodate for all infiltrating flux
-							solver_result=-1.;
+							solver_result=-1;
 						} else {						//Limit flux. Note: we multiply flux_compare with 0.999 because flux_compare can be
 							TopFluxRate=std::max(0., (0.999*flux_compare));	//regarded as the asymptotic case from which we want to stay away a little.
 						}
@@ -1444,7 +1444,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 						if(fabs(tmp - s[i])>Constants::eps2) {
 							if(dt>MIN_DT_FOR_INFILTRATION) {			//Trigger rewind when the layer cannot accomodate for the source/sink term
 								s[i]=tmp;					//Reset source/sink term to original value
-								solver_result=-1.;				//Trigger rewind
+								solver_result=-1;				//Trigger rewind
 							} else {
 								std::cout << "[W] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied with dt=" << dt << ". Term reduced from " << tmp << " to " << s[i] << ".\n";
 							}
@@ -1918,7 +1918,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				//Absolute accuracy in theta. This doesn't behave stable, especially during saturated soil conditions, when the accuracy is set too low.
 				//See Huang (1996), which proposes this, and also discusses the need for a higher accuracy:
 				//if(not(Se[i]>convergencecriterionthreshold || i==uppernode || i==lowernode || i==Xdata.SoilNode-1 || i==Xdata.SoilNode)) {
-				if(not(Se[i]>convergencecriterionthreshold || i==Xdata.SoilNode-1 || i==Xdata.SoilNode || i==lowernode || i==lowernode-1)) {
+				if(!(Se[i]>convergencecriterionthreshold || i==Xdata.SoilNode-1 || i==Xdata.SoilNode || i==lowernode || i==lowernode-1)) {
 					if ((i!=lowernode || aBottomBC==NEUMANN) && (i!=uppernode || aTopBC==NEUMANN)) {
 						//First check general accuarcy:
 						if(fabs(delta_theta[i]+delta_theta_i[i]*(Constants::density_ice/Constants::density_water))>track_accuracy_theta) {

@@ -326,9 +326,16 @@ class IOInterface {
 		 * Obviously this can not be implemented by every plugin!
 		 * @param[in] args the textual representation of the line ranges or lines to parse
 		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
+		 * @param[in] negate take the negation of the provided ranges (converting a "ONLY" statement into an "EXCLUDE" statement)
 		 * @return set of line ranges
 		 */
-		static std::vector< LinesRange > initLinesRestrictions(const std::string& args, const std::string& where);
+		static std::vector< LinesRange > initLinesRestrictions(const std::string& args, const std::string& where, const bool& negate);
+		
+		/**
+		 * @brief Merge potentially overlaping line ranges
+		 * @param[in] lines_specs sorted, unique and non-overlapping set of line ranges
+		 */
+		static void mergeLinesRanges(std::vector< LinesRange >& lines_specs);
 };
 
 } //end namespace

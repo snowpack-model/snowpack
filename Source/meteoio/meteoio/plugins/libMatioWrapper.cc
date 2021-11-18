@@ -59,17 +59,22 @@ std::string readString(const std::string &filename, const std::string &fieldname
 
 double readDouble(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar)
 {
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	//we support reading matvar as a variable 'fieldname' or as a variable containing a structure 'fieldname'
+	matvar_t *field = matvar;
+	if (matvar->class_type==MAT_C_STRUCT) {
+		field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+		if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	}
+	
 	if (Mat_VarReadDataAll(matfp, field))
-		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (field->class_type!=MAT_C_DOUBLE) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a type double", AT);
+		throw InvalidFormatException("could not read '"+fieldname+"' in file '"+filename+"'", AT);
+	if (field->class_type!=MAT_C_DOUBLE) throw InvalidFormatException("'"+fieldname+"' in file '"+filename+"' is not a type double", AT);
 
-	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (field->rank!=2) throw InvalidFormatException("invalid rank for '"+fieldname+"' in file '"+filename+"'", AT);
 
 	const size_t nrows = field->dims[0];
 	const size_t ncols = field->dims[1];
-	if (nrows!=1 || ncols!=1) throw InvalidFormatException("invalid nrows/ncols for field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (nrows!=1 || ncols!=1) throw InvalidFormatException("invalid nrows/ncols for '"+fieldname+"' in file '"+filename+"'", AT);
 
 	const double* matData( static_cast<double*>( field->data ) );
 	return matData[0];
@@ -77,27 +82,32 @@ double readDouble(const std::string &filename, const std::string &fieldname, mat
 
 std::vector<std::string> readStringVector(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar)
 {
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	//we support reading matvar as a variable 'fieldname' or as a variable containing a structure 'fieldname'
+	matvar_t *field = matvar;
+	if (matvar->class_type==MAT_C_STRUCT) {
+		field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+		if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	}
+	
 	if (Mat_VarReadDataAll(matfp, field))
-		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+		throw InvalidFormatException("could not read '"+fieldname+"' in file '"+filename+"'", AT);
 
-	if (field->class_type!=MAT_C_CELL) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a cell type", AT);
-	if (field->data_type!=MAT_T_CELL) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a cell array data type", AT);
+	if (field->class_type!=MAT_C_CELL) throw InvalidFormatException("'"+fieldname+"' in file '"+filename+"' is not a cell type", AT);
+	if (field->data_type!=MAT_T_CELL) throw InvalidFormatException("'"+fieldname+"' in file '"+filename+"' is not a cell array data type", AT);
 
 	matvar_t *cell = Mat_VarGetCell(matvar, 0);
-	if (cell==nullptr) throw InvalidFormatException("could not read data in field '"+fieldname+"' in file '"+filename+"'", AT);
-	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (cell==nullptr) throw InvalidFormatException("could not read data in '"+fieldname+"' in file '"+filename+"'", AT);
+	if (field->rank!=2) throw InvalidFormatException("invalid rank for '"+fieldname+"' in file '"+filename+"'", AT);
 
 	const size_t nrows = field->dims[0];
 	const size_t ncols = field->dims[1];
-	if (nrows!=1) throw InvalidFormatException("invalid nrows for field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (nrows!=1) throw InvalidFormatException("invalid nrows for '"+fieldname+"' in file '"+filename+"'", AT);
 
 	std::vector<std::string> vecString( ncols );
 	for (size_t ii=0; ii<ncols; ii++) {
 		cell = Mat_VarGetCell(field, static_cast<int>(ii));
 		if (cell->rank!=2) throw InvalidFormatException("invalid cell rank in file '"+filename+"'", AT);
-		if (cell->class_type!=MAT_C_CHAR) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a type string", AT);
+		if (cell->class_type!=MAT_C_CHAR) throw InvalidFormatException("'"+fieldname+"' in file '"+filename+"' is not a type string", AT);
 		vecString[ii] = static_cast<char*>(cell->data);
 	}
 
@@ -106,17 +116,22 @@ std::vector<std::string> readStringVector(const std::string &filename, const std
 
 std::vector<double> readDoubleVector(const std::string &filename, const std::string &fieldname, mat_t *matfp, matvar_t *matvar)
 {
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	//we support reading matvar as a variable 'fieldname' or as a variable containing a structure 'fieldname'
+	matvar_t *field = matvar;
+	if (matvar->class_type==MAT_C_STRUCT) {
+		field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+		if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	}
+	
 	if (Mat_VarReadDataAll(matfp, field))
-		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+		throw InvalidFormatException("could not read '"+fieldname+"' in file '"+filename+"'", AT);
 
-	if (field->class_type!=MAT_C_DOUBLE) throw InvalidFormatException("field '"+fieldname+"' in file '"+filename+"' is not a double type", AT);
-	if (field->rank!=2) throw InvalidFormatException("invalid rank for field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (field->class_type!=MAT_C_DOUBLE) throw InvalidFormatException("'"+fieldname+"' in file '"+filename+"' is not a double type", AT);
+	if (field->rank!=2) throw InvalidFormatException("invalid rank for '"+fieldname+"' in file '"+filename+"'", AT);
 
 	const size_t nrows = field->dims[0];
 	const size_t ncols = field->dims[1];
-	if (nrows!=1) throw InvalidFormatException("invalid nrows for field '"+fieldname+"' in file '"+filename+"'", AT);
+	if (nrows!=1) throw InvalidFormatException("invalid nrows for '"+fieldname+"' in file '"+filename+"'", AT);
 
 	std::vector<double> vecData( ncols );
 	const double* matData( static_cast<double*>( field->data ) );
@@ -132,8 +147,13 @@ void readDoubleArray(const std::string &filename, const std::string &fieldname, 
 	array.clear();
 	const double nodata( readDouble(filename, "NODATA_value", matfp, matvar) );
 
-	matvar_t *field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
-	if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	//we support reading matvar as a variable 'fieldname' or as a variable containing a structure 'fieldname'
+	matvar_t *field = matvar;
+	if (matvar->class_type==MAT_C_STRUCT) {
+		field = Mat_VarGetStructFieldByName(matvar, fieldname.c_str(), 0);
+		if (matvar==nullptr) throw NotFoundException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
+	}
+	
 	if (Mat_VarReadDataAll(matfp, field))
 		throw InvalidFormatException("could not read field '"+fieldname+"' in file '"+filename+"'", AT);
 
