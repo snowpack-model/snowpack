@@ -34,7 +34,7 @@ using namespace std;
  * @param dem DEM defining the simulation
  */
 AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& in_dem)
-              : dem(in_dem), meteo(cfg, in_dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda),
+              : dem(in_dem), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda),
                 runoff(myrunoff), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
@@ -111,7 +111,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 				throw;
 			}
 		}
-		
+
 		if (t_ind < (max_steps-1)) {
 			meteo.prepare(calcDate+timeStep); //prepare next timestep
 		}

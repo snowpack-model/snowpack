@@ -60,8 +60,8 @@ class AlpineControl
 		void setNoCompute(bool i_nocompute) {nocompute = i_nocompute;}
 
 	private:
-		MeteoObj meteo;
 		const mio::DEMObject& dem;
+		MeteoObj meteo;
 
 		SnowpackInterface *snowpack;
 		SnowDriftA3D *snowdrift;
