@@ -21,6 +21,7 @@ SET(a3d_sources
 	${snowdrift_sources}
 	SnowpackInterfaceWorker.cc
 	SnowpackInterface.cc
+	SnowDrift2D.cc
 	Glaciers.cc
 	TechSnowA3D.cc
 	DataAssimilation.cc

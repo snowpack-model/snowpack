@@ -30,6 +30,7 @@ class Runoff; // forward declaration, cyclic header include
 #include <alpine3d/DataAssimilation.h>
 #include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
+#include <alpine3d/SnowDrift2D.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/Glaciers.h>
 #include <alpine3d/TechSnowA3D.h>
@@ -232,7 +233,6 @@ class Runoff; // forward declaration, cyclic header include
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse, terrain_shortwave, terrain_longwave;
 		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
-		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 
 		std::vector<std::string> output_grids; //which grids should be written out
@@ -249,6 +249,7 @@ class Runoff; // forward declaration, cyclic header include
 
 		// ==== other Modules ====
 		SnowDriftA3D *drift;
+		SnowDrift2D *snowdrift2d;
 		EnergyBalance *eb;
 		DataAssimilation *da;
 		Runoff *runoff;

@@ -16,6 +16,7 @@
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <alpine3d/SnowpackInterface.h>
+#include <alpine3d/SnowDrift2D.h>
 #include <alpine3d/AlpineMain.h>
 #include <alpine3d/MPIControl.h>
 #include <alpine3d/OMPControl.h>
@@ -109,10 +110,10 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   terrain_shortwave(dem_in, IOUtils::nodata), terrain_longwave(dem_in, IOUtils::nodata),
                   psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
                   vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata),
-                  ta(dem_in, IOUtils::nodata), tsg(dem_in, IOUtils::nodata), init_glaciers_height(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
+                  ta(dem_in, IOUtils::nodata), tsg(dem_in, IOUtils::nodata), init_glaciers_height(dem_in, IOUtils::nodata),
                   solarElevation(0.), output_grids(), workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), worker_stations_coord(nbworkers),
                   timer(), nextStepTimestamp(startTime), timeStep(dt_main/86400.), dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
-                  drift(NULL), eb(NULL), da(NULL), runoff(NULL), glaciers(NULL), techSnow(NULL)
+                  drift(NULL), snowdrift2d(NULL), eb(NULL), da(NULL), runoff(NULL), glaciers(NULL), techSnow(NULL)
 {
 	MPIControl& mpicontrol = MPIControl::instance();
 
@@ -138,6 +139,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
 	enable_explicit_snow_drift = false;
 	sn_cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
+	if (enable_simple_snow_drift || enable_explicit_snow_drift) snowdrift2d = new SnowDrift2D(io_cfg, timeStep, dem);
 
 	readInitalSnowCover(snow_stations,snow_stations_coord);
 
@@ -490,7 +492,7 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 					}
 
 					// Reset WINDEROSIONDEPOSITION, which is cumulative since the previous output grid
-					if (output_grids[ii] == "WINDEROSIONDEPOSITION") winderosiondeposition.set(winderosiondeposition, 0.);
+					if (output_grids[ii] == "WINDEROSIONDEPOSITION" && snowdrift2d != NULL) snowdrift2d->reset_output();
 				}
 			}
 		}
@@ -835,7 +837,11 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 		case SnGrids::ISWR_DIR:
 			return shortwave-diffuse-terrain_shortwave;
 		case SnGrids::WINDEROSIONDEPOSITION:
-			return winderosiondeposition;
+			if (snowdrift2d != NULL) {
+				return snowdrift2d->winderosiondeposition;
+			} else {
+				throw InvalidArgumentException("Requested grid " + SnGrids::getParameterName( param ) + ", but this is only available when SnowDrift2D is enabled!\n", AT);
+			}
 		default: ; //so compilers do not complain about missing conditions
 	}
 
@@ -892,20 +898,23 @@ void SnowpackInterface::calcNextStep()
 	// timing
 	timer.restart();
 
-	if (enable_explicit_snow_drift) {
-		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
-		const Grid2DObject erosion_ustar_th( getGrid(SnGrids::EROSION_USTAR_TH) );
-		if (MPIControl::instance().master()) {
-			mns = calcExplicitSnowDrift(erodedmass, erosion_ustar_th);
+	if (snowdrift2d != NULL) {
+		// Run 2D snowdrift module
+		if (enable_explicit_snow_drift) {
+			const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
+			const Grid2DObject erosion_ustar_th( getGrid(SnGrids::EROSION_USTAR_TH) );
+			if (MPIControl::instance().master()) {
+				mns = snowdrift2d->calcExplicitSnowDrift(vw, dw, erodedmass, erosion_ustar_th);
+			}
+			MPIControl::instance().broadcast(mns);
+		} else if (enable_simple_snow_drift) {
+			const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
+			if (MPIControl::instance().master()) {
+				// calc simple snow drift, by using eroded snow from previous time step
+				snowdrift2d->calcSimpleSnowDrift(erodedmass, psum, vw_drift);
+			}
+			MPIControl::instance().broadcast(psum);
 		}
-		MPIControl::instance().broadcast(mns);
-	} else if (enable_simple_snow_drift) {
-		const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
-		if (MPIControl::instance().master()) {
-			// calc simple snow drift, by using eroded snow from previous time step
-			calcSimpleSnowDrift(erodedmass, psum);
-		}
-		MPIControl::instance().broadcast(psum);
 	}
 
 	size_t errCount = 0;
@@ -1493,217 +1502,4 @@ void SnowpackInterface::calcLateralFlow()
 		workers[ii]->setLateralFlow(snow_pixel_out);
 	}
 	return;
-}
-
-
-/**
- * @brief Get data from other modules and run one simulation step.
- * Once the simulation step has been performed, the data are pushed to ther other modules.
- */
-void SnowpackInterface::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedMass, mio::Grid2DObject& tmp_psum)
-{
-	double sum_positive_exposure = 0.;
-	double sum_erodedmass = 0.;
-
-	const double max_sx = -vw_drift.grid2D.getMax(); //positive
-	for (size_t ii=0; ii<vw_drift.size(); ii++) {
-		if(vw_drift(ii) < 0.) {
-			sum_positive_exposure += -vw_drift(ii) / max_sx;
-		}
-		sum_erodedmass += tmp_ErodedMass(ii);
-	}
-	if (sum_positive_exposure == 0) return;
-
-	const double ratio = sum_erodedmass / sum_positive_exposure;
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			double deposition = 0.;
-			if(vw_drift(ix, iy) < 0.) {
-				const double val = -vw_drift(ix, iy) * ratio / max_sx;
-				deposition = val;
-				tmp_psum(ix, iy) += val;
-			} else {
-				deposition = -tmp_ErodedMass(ix,iy);
-			}
-			winderosiondeposition(ix, iy) = deposition;
-		}
-	}
-	return;
-}
-
-
-/**
- * @brief Calculates explicit drifting snow by solving the 2-D advection equation using a first-order upwind finite difference scheme.
- * @author Nander Wever and Eric Keenan
- */
-mio::Grid2DObject SnowpackInterface::calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass, const mio::Grid2DObject& ustar_th)
-{
-	// Retrieve and initialize grids
-	mio::Grid2DObject grid_VW( getGrid( SnGrids::VW ) ); // Wind speed
-	mio::Grid2DObject grid_DW( getGrid( SnGrids::DW ) ); // Wind direction
-	mio::Grid2DObject U( grid_VW, 0. );
-	mio::Grid2DObject V( grid_VW, 0. );
-	mio::Grid2DObject Um( grid_VW, 0. );
-	mio::Grid2DObject Vm( grid_VW, 0. );
-	mio::Grid2DObject dM( ErodedMass, 0. ); // Local mass perturbation due to drifting snow redistribution.
-	mio::Grid2DObject tmp_ErodedMass( ErodedMass ); // Copy of initially eroded mass.
-	mio::Grid2DObject copy_ustar_th( ustar_th ); // Copy of ustar_th
-	mio::Grid2DObject grid_snowdrift_out = tmp_ErodedMass; // Output mass
-	grid_snowdrift_out(0.);
-
-	// If there is no wind, then there is no transport of eroded snow between grid cells.
-	if (grid_VW.grid2D.getMax() == 0.) {
-		return ErodedMass;
-	}
-
-	// Calculate largest possible drifting snow sub time step such that the scheme is still stable and satisfies
-	// the CFL criterion.
-	const double dx = dem.cellsize;		// Cell size in m, assuming equal in x and y.
-	const double dt = timeStep * 86400.;	// From time steps in days to seconds.
-
-	// Eroded mass must be greater than or equal to zero.
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (tmp_ErodedMass(ix, iy) == IOUtils::nodata || tmp_ErodedMass(ix, iy) < 0.) {
-				tmp_ErodedMass(ix, iy) = 0.;
-			}
-
-			if (copy_ustar_th(ix, iy) == Constants::undefined) {
-				copy_ustar_th(ix, iy) = 0.;
-			}
-
-			winderosiondeposition(ix, iy) = tmp_ErodedMass(ix, iy);
-			mns(ix, iy) = 0.;		// Reset mass deposition field
-
-			// Add a determination of u and v componets for each grid cell.
-			// Following Pomeroy and Gray 1990, we set the saltation velocity <U, V> to be equal to 2.8 times
-			// the friction threshold velocity (ustar_th) in the direction parallel to the 10m wind.
-			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., 2.8 * copy_ustar_th(ix, iy) ), grid_DW(ix, iy));
-			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., 2.8 * copy_ustar_th(ix, iy) ), grid_DW(ix, iy));
-		}
-	}
-
-	// Calculate max wind speed components
-	double Umax = 0.;
-	double Vmax = 0.;
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			// For CFL:
-			if (fabs(V(ix,iy)) > Vmax) Vmax = fabs(V(ix,iy));
-			if (fabs(U(ix,iy)) > Umax) Umax = fabs(U(ix,iy));
-		}
-	}
-	const double C_max = 0.999;					// Courant number used to calculate sub time step.
-	double sub_dt = dt;
-	if (Umax + Vmax == 0) {
-		return ErodedMass;
-	} else {
-		sub_dt = std::min(C_max * dx / (Umax + Vmax), dt);	// Sub time step
-		std::cout << "[i] Explicit snow drift sub time step = " << sub_dt << " seconds\n";
-	}
-
-	// Fill grid_snowdrift_out
-	for (double time_advance = 0.; time_advance < dt; time_advance += sub_dt) {
-		if (time_advance + sub_dt > dt) {
-			sub_dt = dt - time_advance;
-		}
-
-		// Calculate change of suspended mass with Periodic boundary conditions
-		for (size_t iy=0; iy<dimy; iy++) {
-			for (size_t ix=0; ix<dimx; ix++) {
-				if (U(ix, iy) != IOUtils::nodata && V(ix, iy) != IOUtils::nodata) {
-					if(U(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (ix != dimx-1) {
-							dM(ix+1, iy) += deltaM;
-						} else {
-							dM(0, iy) += deltaM;
-						}
-					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (ix != 0) {
-							dM(ix-1, iy) += deltaM;
-						} else {
-							dM(dimx-1, iy) += deltaM;
-						}
-					}
-
-					if(V(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (iy != dimy-1) {
-							dM(ix, iy+1) += deltaM;
-						} else {
-							dM(ix, 0) += deltaM;
-						}
-					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (iy != 0) {
-							dM(ix, iy-1) += deltaM;
-						} else {
-							dM(ix, dimy-1) += deltaM;
-						}
-					}
-				}
-			}
-		}
-
-		// Apply calculated change of suspended mass
-		for (size_t iy=0; iy<dimy; iy++) {
-			for (size_t ix=0; ix<dimx; ix++) {
-				// Negative suspended mass (tmp_ErodedMass) is impossible. If this field becomes negative, set it to zero.
-				if (ErodedMass(ix, iy) != IOUtils::nodata) {
-					tmp_ErodedMass(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
-					// This if statement could introduce a mass balance error.
-					if (tmp_ErodedMass(ix, iy) < 0.) {
-						//std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #1 ";
-						//std::cout << ix << " " << iy << " ";
-						//std::cout << tmp_ErodedMass(ix, iy) << "\n";
-						tmp_ErodedMass(ix, iy) = 0.;
-					}
-				}
-			}
-		}
-	}
-
-	double s1 = 0, s2 = 0., s3 = 0.;
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (dM(ix, iy) > 0.) {s1 += dM(ix, iy);}
-			if (ErodedMass(ix, iy) != IOUtils::nodata) {
-				// This line could introduce a mass balance error.
-				// The change in mass cannot be more than was originally eroded!
-				//    -95        - 10               -100
-				if (dM(ix, iy) - Constants::eps < -ErodedMass(ix, iy)) {
-					// std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-					// std::cout << ix << " " << iy << " ";
-					// std::cout << dM(ix, iy) << -ErodedMass(ix, iy) << "\n";
-					s2 += -ErodedMass(ix, iy) - dM(ix, iy);
-					dM(ix, iy) = -ErodedMass(ix, iy);
-				}
-			}
-			s3+=dM(ix, iy);
-		}
-	}
-	if(s2!=0. || s3!=0.) {
-		std::cout << "[W] Explicit Snow Drift: Potential mass balance violation #2 ";
-		printf("%.10f (total pos: %.10f). Sum dM==%.10f\n", s2, s1, s3);
-		//s2+=s3;
-		s3=0.;
-	}
-	for (size_t iy=0; iy<dimy; iy++) {
-		for (size_t ix=0; ix<dimx; ix++) {
-			if (ErodedMass(ix, iy) != IOUtils::nodata) {
-				if (dM(ix, iy) > 0.) {dM(ix, iy) += (-s2*(dM(ix, iy)/s1));}
-				winderosiondeposition(ix, iy) = dM(ix, iy);
-				grid_snowdrift_out(ix, iy) = ErodedMass(ix, iy) + dM(ix, iy);
-				if(grid_snowdrift_out(ix, iy) < Constants::eps) grid_snowdrift_out(ix, iy) = 0.;
-			}
-		}
-	}
-
-	return grid_snowdrift_out;
 }
