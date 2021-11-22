@@ -35,7 +35,7 @@ SnowDrift2D::SnowDrift2D(const mio::Config& cfg, const double in_A3DtimeStep, co
 
 void SnowDrift2D::init(const mio::Config& cfg)
 {
-	std::string tmp_bc_string="CONSTANTFLUX";
+	std::string tmp_bc_string="CONSTANTFLUX";	// The default option
 	cfg.getValue("SNOWDRIFT2D_BC", "Alpine3D", tmp_bc_string, IOUtils::nothrow);
 	if (tmp_bc_string=="CONSTANTFLUX") {
 		bc=CONSTANTFLUX;
@@ -44,10 +44,8 @@ void SnowDrift2D::init(const mio::Config& cfg)
 	} else if (tmp_bc_string=="PERIODIC") {
 		bc=PERIODIC;
 	} else {
-		throw mio::InvalidArgumentException("Unknown boundary condition " + tmp_bc_string + " for SnowDrift2D. Only CONSTANTFLUX, ZEROFLUX and PERIODIC are supported.", AT);
+		throw mio::InvalidArgumentException("Unknown boundary condition '" + tmp_bc_string + "' for key SNOWDRIFT2D_BC. Only CONSTANTFLUX, ZEROFLUX and PERIODIC are supported.", AT);
 	}
-
-	//cfg.getValue("SNOWDRIFT2D_BC", "Snowpack", BC, IOUtils::dothrow);
 	
 	if (MPIControl::instance().master()) 
 		std::cout << "[i] Initialization SnowDrift2D complete.\n";
@@ -59,8 +57,8 @@ void SnowDrift2D::reset_output()
 }
 
 /**
- * @brief Get data from other modules and run one simulation step.
- * Once the simulation step has been performed, the data are pushed to ther other modules.
+ * @brief Calculates drifting snow by applying a statistical scheme
+ * @author Nander Wever
  */
 void SnowDrift2D::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedMass, mio::Grid2DObject& psum, const mio::Grid2DObject& tmp_vw_drift)
 {
@@ -96,6 +94,11 @@ void SnowDrift2D::calcSimpleSnowDrift(const mio::Grid2DObject& tmp_ErodedMass, m
 
 /**
  * @brief Calculates explicit drifting snow by solving the 2-D advection equation using a first-order upwind finite difference scheme.
+ * @param grid_VW grid with wind speed
+ * @param grid_DW grid with wind diection
+ * @param ErodedMass grid with mass of snow particles in the air (drifting snow mass)
+ * @param ustar_th grid with threshold friction velocity
+ * @return 2-D grid with mass of snow particles in the air (i.e., similar to ErodedMass) after solving the 2-D advection equation
  * @author Nander Wever and Eric Keenan
  */
 mio::Grid2DObject SnowDrift2D::calcExplicitSnowDrift(const mio::Grid2DObject grid_VW, const mio::Grid2DObject grid_DW, const mio::Grid2DObject& ErodedMass, const mio::Grid2DObject& ustar_th)
@@ -133,14 +136,64 @@ mio::Grid2DObject SnowDrift2D::calcExplicitSnowDrift(const mio::Grid2DObject gri
 		}
 	}
 
-	// Calculate max wind speed components
+	// Calculate wind speed on "staggered" grid, and determined the max wind speed components
+	// --------------------------------------------------------------------------------------
+	// The staggered grid is shifted left and down, w.r.t. the base grid. This means that ix=1 in the staggered gris is half-way ix=0 and ix=1 in the base grid. Similarly
+	// iy=1 is half-way between iy=1 and iy=0 in the base grid.
+	// In the staggered grid, ix=0 and iy=0 is only used for the periodice boundary conditions, i.e., ix=0 in the staggered grid is half-way ix=dimx-1 and ix=0.
 	double Umax = 0.;
 	double Vmax = 0.;
 	for (size_t iy=0; iy<dimy; iy++) {
 		for (size_t ix=0; ix<dimx; ix++) {
+			// U-component
+			if (ix == 0) {
+				// Periodic boundary conditions only
+				if (U(ix, iy) == IOUtils::nodata && U(dimx-1, iy) == IOUtils::nodata) {
+					Um(ix, iy) = IOUtils::nodata;
+				} else if (U(dimx-1, iy) == IOUtils::nodata) {
+					Um(ix, iy) = U(ix, iy);
+				} else if (U(ix, iy) == IOUtils::nodata) {
+					Um(ix, iy) = U(dimx-1, iy);
+				} else {
+					Um(ix, iy) = 0.5 * (U(dimx-1, iy) + U(ix, iy));
+				}
+			} else {
+				if (U(ix, iy) == IOUtils::nodata && U(ix-1, iy) == IOUtils::nodata) {
+					Um(ix, iy) = IOUtils::nodata;
+				} else if (U(ix-1, iy) == IOUtils::nodata) {
+					Um(ix, iy) = U(ix, iy);
+				} else if (U(ix, iy) == IOUtils::nodata) {
+					Um(ix, iy) = U(ix-1, iy);
+				} else {
+					Um(ix, iy) = 0.5 * (U(ix-1, iy) + U(ix, iy));
+				}
+			}
+			// V-component
+			if (iy == 0) {
+				// Periodic boundary conditions only
+				if (V(ix, iy) == IOUtils::nodata && V(ix, dimy-1) == IOUtils::nodata) {
+					Vm(ix, iy) = IOUtils::nodata;
+				} else if (V(ix, dimy-1) == IOUtils::nodata) {
+					Vm(ix, iy) = V(ix, iy);
+				} else if (V(ix, iy) == IOUtils::nodata) {
+					Vm(ix, iy) = V(ix, dimy-1);
+				} else {
+					Vm(ix, iy) = 0.5 * (V(ix, dimy-1) + V(ix, iy));
+				}
+			} else {
+				if (V(ix, iy) == IOUtils::nodata && V(ix, iy-1) == IOUtils::nodata) {
+					Vm(ix, iy) = IOUtils::nodata;
+				} else if (V(ix, iy-1) == IOUtils::nodata) {
+					Vm(ix, iy) = V(ix, iy);
+				} else if (V(ix, iy) == IOUtils::nodata) {
+					Vm(ix, iy) = V(ix, iy-1);
+				} else {
+					Vm(ix, iy) = 0.5 * (V(ix, iy-1) + V(ix, iy));
+				}
+			}
 			// For CFL:
-			if (fabs(V(ix,iy)) > Vmax) Vmax = fabs(V(ix,iy));
-			if (fabs(U(ix,iy)) > Umax) Umax = fabs(U(ix,iy));
+			if (fabs(Vm(ix,iy)) > Vmax) Vmax = fabs(Vm(ix,iy));
+			if (fabs(Um(ix,iy)) > Umax) Umax = fabs(Um(ix,iy));
 		}
 	}
 	
@@ -161,45 +214,68 @@ mio::Grid2DObject SnowDrift2D::calcExplicitSnowDrift(const mio::Grid2DObject gri
 			sub_dt = dt - time_advance;
 		}
 
-		// Calculate change of suspended mass with Periodic boundary conditions
+		// Calculate change of suspended mass
 		for (size_t iy=0; iy<dimy; iy++) {
 			for (size_t ix=0; ix<dimx; ix++) {
-				if (U(ix, iy) != IOUtils::nodata && V(ix, iy) != IOUtils::nodata) {
-					if(U(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (ix != dimx-1) {
-							dM(ix+1, iy) += deltaM;
-						} else {
-							dM(0, iy) += deltaM;
+				if (Um(ix, iy) != IOUtils::nodata && Vm(ix, iy) != IOUtils::nodata) {
+					// Periodic boundary conditions are applied when set and treating ix==0 or iy==0
+					// Otherwise, zero flux boundary conditions are assumed. When constant flux is set,
+					// this is corrected for afterwards.
+					if (ix == 0) {
+						if (bc == PERIODIC) {
+							if(Um(ix, iy)>0) {
+								const double deltaM = tmp_ErodedMass(dimx-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+								dM(dimx-1, iy) -= deltaM;
+								dM(ix, iy)   += deltaM;
+							} else {
+								const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+								dM(dimx-1, iy) += deltaM;
+								dM(ix, iy)   -= deltaM;
+							}
 						}
 					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(U(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (ix != 0) {
+						if(Um(ix, iy)>0) {
+							const double deltaM = tmp_ErodedMass(ix-1, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
+							dM(ix-1, iy) -= deltaM;
+							dM(ix, iy)   += deltaM;
+						} else {
+							const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Um(ix, iy)) * (sub_dt / dx);
 							dM(ix-1, iy) += deltaM;
-						} else {
-							dM(dimx-1, iy) += deltaM;
+							dM(ix, iy)   -= deltaM;
 						}
 					}
-
-					if(V(ix, iy)>0) {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (iy != dimy-1) {
-							dM(ix, iy+1) += deltaM;
-						} else {
-							dM(ix, 0) += deltaM;
+					if (iy == 0) {
+						if (bc == PERIODIC) {
+							if(Vm(ix, iy)>0) {
+								const double deltaM = tmp_ErodedMass(ix, dimy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+								dM(ix, dimy-1) -= deltaM;
+								dM(ix, iy)   += deltaM;
+							} else {
+								const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+								dM(ix, dimy-1) += deltaM;
+								dM(ix, iy)   -= deltaM;
+							}
 						}
 					} else {
-						const double deltaM = tmp_ErodedMass(ix, iy) * fabs(V(ix, iy)) * (sub_dt / dx);
-						dM(ix, iy) -= deltaM;
-						if (iy != 0) {
-							dM(ix, iy-1) += deltaM;
+						if(Vm(ix, iy)>0) {
+							const double deltaM = tmp_ErodedMass(ix, iy-1) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+							dM(ix, iy-1) -= deltaM;
+							dM(ix, iy)   += deltaM;
 						} else {
-							dM(ix, dimy-1) += deltaM;
+							const double deltaM = tmp_ErodedMass(ix, iy) * fabs(Vm(ix, iy)) * (sub_dt / dx);
+							dM(ix, iy-1) += deltaM;
+							dM(ix, iy)   -= deltaM;
 						}
 					}
+				}
+
+				// Set boundary condition
+				if (bc == CONSTANTFLUX) {
+					// Constant-flux (i.e., dM at boundaries == 0):
+					dM(0,iy) = 0.;
+					dM(dimx-1,iy) = 0.;
+					dM(ix,0) = 0.;
+					dM(ix,dimy-1) = 0.;
 				}
 			}
 		}

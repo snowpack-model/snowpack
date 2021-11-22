@@ -100,7 +100,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                                      const std::string& grids_requirements,
                                      const bool is_restart_in)
                 : run_info(), io(io_cfg), pts(prepare_pts(vec_pts)),dem(dem_in),
-                  is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_explicit_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
+                  is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_snowdrift2d(false), enable_lateral_flow(false), a3d_view(false),
                   do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_production(false), snow_grooming(false),
                   Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
                   grids_write(true), ts_write(false), prof_write(false), snow_write(false), write_poi_meteo(true), snow_poi_written(false), glacier_from_grid(false),
@@ -137,9 +137,9 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	//check if simple snow drift is enabled (needs to be determined before grid requirements check!)
 	enable_simple_snow_drift = false;
 	sn_cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
-	enable_explicit_snow_drift = false;
-	sn_cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
-	if (enable_simple_snow_drift || enable_explicit_snow_drift) snowdrift2d = new SnowDrift2D(io_cfg, timeStep, dem);
+	enable_snowdrift2d = false;
+	sn_cfg.getValue("SNOWDRIFT2D", "Alpine3D", enable_snowdrift2d, IOUtils::nothrow);
+	if (enable_simple_snow_drift || enable_snowdrift2d) snowdrift2d = new SnowDrift2D(io_cfg, timeStep, dem);
 
 	readInitalSnowCover(snow_stations,snow_stations_coord);
 
@@ -374,9 +374,9 @@ std::string SnowpackInterface::getGridsRequirements() const
 	if (glacier_katabatic_flow) {
 		ret += " GLACIER TSS HS";
 	}
-	if (enable_simple_snow_drift || enable_explicit_snow_drift) {
+	if (enable_simple_snow_drift || enable_snowdrift2d) {
 		 ret += " ERODEDMASS";
-		 if (enable_explicit_snow_drift) ret += " EROSION_USTAR_TH";
+		 if (enable_snowdrift2d) ret += " EROSION_USTAR_TH";
 	}
 	return ret;
 }
@@ -900,7 +900,7 @@ void SnowpackInterface::calcNextStep()
 
 	if (snowdrift2d != NULL) {
 		// Run 2D snowdrift module
-		if (enable_explicit_snow_drift) {
+		if (enable_snowdrift2d) {
 			const Grid2DObject erodedmass( getGrid(SnGrids::ERODEDMASS) );
 			const Grid2DObject erosion_ustar_th( getGrid(SnGrids::EROSION_USTAR_TH) );
 			if (MPIControl::instance().master()) {
@@ -1094,7 +1094,7 @@ void SnowpackInterface::write_SMET_header(const mio::StationData& meta, const do
 
 	if (useCanopy) smet_out << " ISWR_can RSWR_can";
 	if (snow_production) smet_out << " PSUM_TECH";
-	if (enable_explicit_snow_drift) smet_out << " SNOWD";
+	if (enable_snowdrift2d) smet_out << " SNOWD";
 	smet_out << "\n[DATA]\n";
 
 	smet_out.close();
@@ -1142,7 +1142,7 @@ void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationDa
 	if (snow_production) {
 		smet_out << std::setw(6) << std::setprecision(3) << met.psum_tech << " ";
 	}
-	if (enable_explicit_snow_drift) {
+	if (enable_snowdrift2d) {
 		smet_out << std::setw(6) << std::setprecision(3) << met.snowdrift << " ";
 	}
 	smet_out << "\n";

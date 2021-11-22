@@ -193,8 +193,6 @@ class Runoff; // forward declaration, cyclic header include
 		                              const std::vector<SurfaceFluxes*>& surface_flux);
 		void write_special_points();
 		void calcLateralFlow();
-		void calcSimpleSnowDrift(const mio::Grid2DObject& ErodedMass, mio::Grid2DObject& psum);
-		mio::Grid2DObject calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass, const mio::Grid2DObject& ustar_th);
 
 		RunInfo run_info;
 
@@ -206,7 +204,7 @@ class Runoff; // forward declaration, cyclic header include
 		const mio::DEMObject dem;
 
 		// Config dependent information
-		bool is_restart, useCanopy, enable_simple_snow_drift, enable_explicit_snow_drift, enable_lateral_flow, a3d_view;
+		bool is_restart, useCanopy, enable_simple_snow_drift, enable_snowdrift2d, enable_lateral_flow, a3d_view;
 		bool do_io_locally; // if false all I/O will only be done on the master process
 		std::string station_name; // value for the key OUTPUT::EXPERIMENT
 		bool glacier_katabatic_flow, snow_production, snow_grooming;
