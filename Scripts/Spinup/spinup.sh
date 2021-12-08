@@ -1,15 +1,20 @@
 shopt -s expand_aliases		# Make sure aliases work in non-interactive shells
+export TZ=UTC
 
 
 # Load settings
 source ./spinup.rc
 default_spinup_end="2500-01-01T00:00"
+startover=0
 
 
 function PrintUseMessage {
 	echo "Usage example:" >> /dev/stderr
 	echo "  bash spinup.sh \"<snowpack command to execute>\" min_sim_depth=150" >> /dev/stderr
 	echo "  Example: bash spinup.sh \"./src/usr/bin/snowpack -c cfgfiles/MERRA2_-76.952_-121.22.ini -e 2011-01-14 > log/MERRA2_-76.952_-121.22_TEST.log 2>&1\""
+	echo "" >> /dev/stderr
+	echo "  Add \"startover=1\" to ignore previous spinups and start over from the *sno file in snow_init_dir." >> /dev/stderr
+	echo "  Example: bash spinup.sh \"./src/usr/bin/snowpack -c cfgfiles/MERRA2_-76.952_-121.22.ini -e 2011-01-14 > log/MERRA2_-76.952_-121.22_TEST.log 2>&1\" startover=1" >> /dev/stderr
 }
 
 
@@ -157,7 +162,7 @@ prev_sim_depth=-9999	# To check if the snow depth is increasing during the spinu
 
 while :
 do
-	if [ -e "${snofile_out}" ]; then
+	if [ -e "${snofile_out}" ] && [ "${startover}" == 0 ]; then
 		sim_depth=$(mawk 'BEGIN {s=0; d=0} {if(d) {s+=$2}; if(/\[DATA\]/) {d=1}} END {print s}' ${snofile_out})
 		if (( $(echo "${sim_depth} == 0" | bc -l) )) && (( "${i}" > 0 )) ; then
 			echo "ERROR: spinup interrupted since SNOWPACK does not seem to build a snowpack/firn layer!"
@@ -194,6 +199,7 @@ do
 			echo "ERROR: spinup interrupted since SNOWPACK did not write output *sno file: ${snofile_out}!"
 			exit
 		fi
+		startover=0
 		spinup=1
 		sim_depth=0
 		if [ ! -e "${snofile_in}" ]; then

@@ -27,7 +27,7 @@
 	#include <sys/time.h>
 #endif
 
-#include "Timer.h"
+#include <meteoio/Timer.h>
 
 namespace mio {
 
@@ -114,8 +114,6 @@ long double Timer::getCurrentTime() {
 	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6L;
 	return t;
 }
-
-
 #endif
 
 #if !defined _WIN32 && !defined __MINGW32__

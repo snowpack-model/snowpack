@@ -52,7 +52,7 @@ namespace mio {
  *    + RESAMPLING_STRATEGY set to VSTATIONS;
  *    + VSTATION# : provide the lat, lon and altitude or easting, northing and altitude for a virtual station (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#);
- *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
+ *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds (default: 0);
  *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
@@ -98,7 +98,7 @@ namespace mio {
  *    + RESAMPLING_STRATEGY set to either *GRID_EXTRACT*, *GRID_EXTRACT_PTS* or *GRID_ALL*;
  *    + VSTATION# : provide the lat, lon and altitude for the virtual station (only required for GRID_EXTRACT and GRID_EXTRACT_PTS);
  *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#, unused for GRID_ALL);
- *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
+ *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
  * Currently, a DEM has to be provided in order to check the position of the stations and the consistency of the grids.
  * @code
@@ -127,7 +127,7 @@ namespace mio {
  *    + RESAMPLING_STRATEGY set to *GRID_SMART*;
  *    + VSTATION# : provide the lat, lon and altitude for the virtual station;
  *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#);
- *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
+ *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
  *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
@@ -162,7 +162,7 @@ namespace mio {
  * as configured in the [2DInterpolations] section. The following keys control this downscaling process (in the [InputEditing] section):
  *    + REGRIDDING_STRATEGY set to *GRID_RESAMPLE*;
  *    + SOURCE_DEM : filename of the DEM to be read by the GRID2D plugin. This DEM provides the elevations, slopes, etc for the source grids.
- *    + VIRTUAL_PARAMETERS: list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
+ *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations.
  *
  * @code
  * [Input]

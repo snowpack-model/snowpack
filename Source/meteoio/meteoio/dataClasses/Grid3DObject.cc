@@ -438,7 +438,7 @@ std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid) {
 
 	const size_t s_z = grid.z.size();
 	os.write(reinterpret_cast<const char*>(&s_z), sizeof(size_t));
-	os.write(reinterpret_cast<const char*>(&grid.z[0]), s_z*sizeof(grid.z[0]));
+	os.write(reinterpret_cast<const char*>(&grid.z[0]), static_cast<streamsize>(s_z*sizeof(grid.z[0])));
 
 	os << grid.llcorner;
 	os << grid.grid3D;
@@ -452,7 +452,7 @@ std::istream& operator>>(std::istream& is, Grid3DObject& grid) {
 	size_t s_z;
 	is.read(reinterpret_cast<char*>(&s_z), sizeof(size_t));
 	grid.z.resize(s_z);
-	is.read(reinterpret_cast<char*>(&grid.z[0]), s_z*sizeof(grid.z[0]));
+	is.read(reinterpret_cast<char*>(&grid.z[0]), static_cast<streamsize>(s_z*sizeof(grid.z[0])));
 
 	is >> grid.llcorner;
 	is >> grid.grid3D;

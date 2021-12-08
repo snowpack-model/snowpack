@@ -112,6 +112,7 @@ class Date {
 		static const double epsilon_sec;
 
 		Date();
+		Date(const double& in_timezone);
 		Date(const double& julian_in, const double& in_timezone);
 		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone);
 		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone);

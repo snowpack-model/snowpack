@@ -32,10 +32,17 @@ namespace mio {
  * be ".asc". But the following arguments allow overriding it:
  *  - SUBDIR: look for grids in the provided subdirectory of GRID2DPATH;
  *  - EXT: use another file extension.
+ * 
  * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc.
  * But the following argument allows overriding this.
  *  - TIME_CONSTANT: if true, use the same grid for all timesteps (default: false). If TIME_CONSTANT is set to true, files must be named according to:
  *    <b>{capitalized meteo parameter}.{ext}</b>, for example TA.asc.
+ * 
+ *  If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
+ * and provide a fallback. Therefore, it is not necessary to provide grids for all time steps but one can focuss on only the relevant and interesting
+ * time steps. The following argument changes this behavior:
+ *  - LOWEST_PRIORITY: by default, when a user provided grid exists it will have priority over any other interpolation algorithm. Setting LOWEST_PRIORITY 
+ * to TRUE gives user provided grids the lowest priority so such grids are only used when no other spatial interpolation algorithm can provide interpolations.
  *
  * The meteo parameters can be found in \ref meteoparam "MeteoData". Examples of use:
  * @code
@@ -48,14 +55,10 @@ namespace mio {
  * PSUM::user::subdir = precip
  * PSUM::user::ext    = .dat
  *
- * TSG::algorithms    = USER     # read grids from GRID2DPATH using the GRD2D plugin
+ * TSG::algorithms    = USER     # read grids from GRID2DPATH using the GRID2D plugin
  * TSG::user::ext     = .asc
  * TSG::user::time_constant  = TRUE  # use the same grid for all timesteps.
  * @endcode
- *
- * If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
- * and provide a fallback. Therefore, it is not necessary to provide grids for all time steps but one can focuss on only the relevant and interesting
- * time steps.
  */
 class USERInterpolation : public InterpolationAlgorithm {
 	public:
@@ -68,7 +71,7 @@ class USERInterpolation : public InterpolationAlgorithm {
 		GridsManager& gdm;
 		std::string filename, grid2d_path;
 		std::string subdir, file_ext;
-		bool time_constant;
+		bool time_constant, lowest_priority;
 };
 
 } //end namespace mio

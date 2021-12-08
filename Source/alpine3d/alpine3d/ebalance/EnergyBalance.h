@@ -81,9 +81,9 @@ class EnergyBalance
 		void setMeteo(const mio::Grid2DObject& in_ilwr,
 		              const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Date timestamp);
 
-		void writeSP(const unsigned int max_steps);
+		void writeSP(const unsigned int max_steps); //write Solar Panels information
 
-		bool hasSP(){return terrain_radiation->hasSP();}
+		bool hasSP(){return terrain_radiation->hasSP();} //are Solar Panels defined?
 		void setStations(const std::vector<mio::MeteoData>& in_vecMeteo);
 		double getTiming() const;
 		void Destroy();
