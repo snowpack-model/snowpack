@@ -36,10 +36,10 @@ class Runoff; // forward declaration, cyclic header include
 
 /**
  * @page snowpack Snowpack
- * This module call the Snowpack energy balance model on each relevant cell of the domain (see \ref principles_snowpack). The cells that are excluded
+ * This module calls the Snowpack energy balance model on each relevant cell of the domain (see \ref principles_snowpack). The cells that are excluded
  * are the following:
- *     - cells those altitude is nodata (in the dem);
- *     - cells those land cover is undefined/nodata (in the lus);
+ *     - cells whose altitude is nodata (in the dem);
+ *     - cells whose land cover is undefined/nodata (in the lus);
  *     - cells marked as "water body".
  *
  * During a parallel simulation, it is often more efficient (but not always possible) to let each node perform its I/O on its local disk instead
@@ -53,9 +53,9 @@ class Runoff; // forward declaration, cyclic header include
  * Several types of outputs are supported: gridded outputs and full snowpack stratigraphy.
  *
  * @section gridded_outputs Gridded outputs
- * The gridded outputs are written out for all requested the parameters every GRIDS_DAYS_BETWEEN (in days), starting at GRIDS_START
+ * The gridded outputs are written out for all requested parameters every GRIDS_DAYS_BETWEEN (in days), starting at GRIDS_START
  * (in days, <i>0</i> being noon). The available parameters are provided in SnGrids::Parameters and should be written as a space delimited
- * list of parameters as GRIDS_PARAMETERS key (in the [Output] section).
+ * list of parameters using the GRIDS_PARAMETERS key (in the [Output] section).
  *
  * It is possible to mask the glaciated areas (in order to keep a relevant scaling
  * on snow water equivalent or similar parameters) either statically (performed once and for all at the begining of the run) or dynamically
@@ -86,7 +86,7 @@ class Runoff; // forward declaration, cyclic header include
  * @endcode
  *
  * @subsection output_new_grids Writing new grids out
- * If the parameters you want to write out do not already exist in  SnGrids::Parameters, then you have a few extra steps to perform:
+ * If the parameters you want to write out do not already exist in SnGrids::Parameters, then you have a few extra steps to perform:
  *     -# add the parameter in SnGrids::Parameters as well as its string representation in SnGrids::initStaticData()
  *     -# add the proper code (similarly as for the already existing parameters) in SnowpackInterfaceWorker::fillGrids() (in some rare cases, this must be done in SnowpackInterface::getGrid() ie for parameters that only exist in SnowpackInterface);
  *     -# after recompiling, it will be possible to specify the newly created grid as explained in \ref gridded_outputs.
@@ -127,7 +127,7 @@ class Runoff; // forward declaration, cyclic header include
  class SnowpackInterface
   {
 	public:
-		// Methods for accessing Snopack Interface Manager
+		// Methods for accessing Snowpack Interface Manager
 		SnowpackInterface(const mio::Config &io_cfg, const size_t& nbworkers,
 		                  const mio::DEMObject& dem_in,
 		                  const mio::Grid2DObject& landuse_in, const std::vector<mio::Coords>& vec_pts,
@@ -135,7 +135,7 @@ class Runoff; // forward declaration, cyclic header include
 		SnowpackInterface(const SnowpackInterface&);
 		~SnowpackInterface();
 
-		SnowpackInterface& operator=(const SnowpackInterface&); ///<Assignement operator, required because of pointer member
+		SnowpackInterface& operator=(const SnowpackInterface&); ///<Assignment operator, required because of pointer member
 
 		double getTiming() const;
 		void writeOutput(const mio::Date& julian);

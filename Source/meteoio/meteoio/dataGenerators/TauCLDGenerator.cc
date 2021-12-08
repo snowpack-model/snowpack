@@ -113,8 +113,8 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 	if (value == IOUtils::nodata) {
 		double cld = (md.param_exists("CLD"))? md("CLD") : IOUtils::nodata;
 		if (cld!=IOUtils::nodata) {
-			if (cld>8. || cld<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
 			if (cld==9) cld=8.; //Synop sky obstructed from view -> fully cloudy
+			if (cld>8. || cld<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
 			value = Atmosphere::Kasten_clearness( cld/8. );
 			return true;
 		}

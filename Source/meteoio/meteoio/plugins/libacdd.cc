@@ -79,13 +79,20 @@ void ACDD::defaultInit()
 	now.setFromSys();
 	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
 	addAttribute("creator_name", mio::IOUtils::getLogName(), "ACDD_CREATOR");
-	addAttribute("creator_email", "", "ACDD_EMAIL");
+	addAttribute("creator_email", "", "ACDD_CREATOR_EMAIL");
+	addAttribute("creator_institution", mio::IOUtils::getDomainName(), "ACDD_CREATOR_INSTITUTION");
+	addAttribute("creator_url", mio::IOUtils::getDomainName(), "ACDD_CREATOR_URL");
+	addAttribute("creator_type", "person", "ACDD_CREATOR_TYPE");
+	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
+	addAttribute("publisher_name", mio::IOUtils::getLogName(), "ACDD_PUBLISHER");
+	addAttribute("publisher_email", "", "ACDD_PUBLISHER_EMAIL");
+	addAttribute("publisher_url", mio::IOUtils::getDomainName(), "ACDD_PUBLISHER_URL");
+	addAttribute("publisher_type", "person", "ACDD_PUBLISHER_TYPE");
 	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true));
 	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
-	addAttribute("keywords_vocabulary", "AGU Index Terms");
+	addAttribute("keywords_vocabulary", "AGU Index Terms", "ACDD_KEYWORDS_VOCABULARY");
 	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "ACDD_KEYWORDS");
 	addAttribute("title", "", "ACDD_TITLE");
-	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
 	addAttribute("project", "", "ACDD_PROJECT");
 	addAttribute("program", "", "ACDD_PROGRAM");
 	addAttribute("id", "", "ACDD_ID");
@@ -97,6 +104,8 @@ void ACDD::defaultInit()
 	addAttribute("metadata_link", "", "ACDD_METADATA_LINK");
 	addAttribute("license", "", "ACDD_LICENSE");
 	addAttribute("product_version", "1.0", "ACDD_PRODUCT_VERSION");
+	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
+	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
 }
 
 /**
@@ -302,12 +311,11 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 		else
 			addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
 	}
-	if (!singlePoint) {
-		addAttribute("geospatial_lat_min", lat_min);
-		addAttribute("geospatial_lat_max", lat_max);
-		addAttribute("geospatial_lon_min", lon_min);
-		addAttribute("geospatial_lon_max", lon_max);
-	}
+	
+	addAttribute("geospatial_lat_min", lat_min);
+	addAttribute("geospatial_lat_max", lat_max);
+	addAttribute("geospatial_lon_min", lon_min);
+	addAttribute("geospatial_lon_max", lon_max);
 }
 
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)

@@ -165,7 +165,7 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 		// note: parallelization has to take place inside the TerrainRadiationAlgorithm implementations
 		terrain_radiation->setMeteo(albedo.grid2D, in_ta.grid2D);
 		terrain_radiation->getRadiation(direct, diffuse, reflected, direct_unshaded_horizontal,
-                                    in_ilwr.grid2D,sky_ilwr,terrain_ilwr, solarAzimuth, solarElevation);
+                                    in_ilwr.grid2D, sky_ilwr, terrain_ilwr, solarAzimuth, solarElevation);
 		if (hasSP()){
 			terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
 		}
@@ -193,7 +193,8 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 	timer.stop();
 }
 
-void EnergyBalance::writeSP(const unsigned int max_steps){
+void EnergyBalance::writeSP(const unsigned int max_steps)
+{
 	if (hasSP()) terrain_radiation->writeSP(max_steps);
 }
 

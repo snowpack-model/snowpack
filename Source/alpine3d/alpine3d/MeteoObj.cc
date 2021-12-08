@@ -225,36 +225,28 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData, const bo
 {
 	//This function checks that the necessary input data are available for the current timestamp
 	unsigned int nb_ta=0, nb_tsg=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
-	unsigned int nb_ilwr_ta=0;
+	unsigned int nb_iswr_ta_rh=0;
 
 	if (vecData.empty())
 		throw IOException("Vector of input meteo data is empty!", AT);
 
 	for (size_t ii=0; ii<vecData.size(); ii++) {
 		if (vecData[ii](MeteoData::TA) != IOUtils::nodata) nb_ta++;
-
 		if (vecData[ii](MeteoData::TSG) != IOUtils::nodata) nb_tsg++;
-
-		if (vecData[ii](MeteoData::ISWR) != IOUtils::nodata) nb_iswr++;
-
 		if (vecData[ii](MeteoData::RH) != IOUtils::nodata) nb_rh++;
+		if (vecData[ii](MeteoData::ILWR) != IOUtils::nodata) nb_ilwr++;
 
-		if (vecData[ii](MeteoData::ILWR) != IOUtils::nodata) {
-			nb_ilwr++;
-			//We need ILWR and TA at the same location (so that the emissivity can be computed)
-			//But since we rely on having one meteo1D station in the code, we also need ISWR at this place
-			//(since we use the location of the measurement for computations with ISWR)
-			if (vecData[ii](MeteoData::TA) != IOUtils::nodata && vecData[ii](MeteoData::ISWR) != IOUtils::nodata) nb_ilwr_ta++;
+		if (vecData[ii](MeteoData::ISWR) != IOUtils::nodata) {
+			nb_iswr++;
+			//We need ISWR and TA+RH at the same location (so that the splitting coefficient and atmospheric losses can be computed)
+			if (vecData[ii](MeteoData::TA) != IOUtils::nodata && vecData[ii](MeteoData::RH) != IOUtils::nodata) nb_iswr_ta_rh++;
 		}
 	}
 
-	if ( nb_ta==0 || nb_iswr==0 || nb_rh==0 || nb_ilwr==0) {
-		printf("nb(ta)=%d nb(iswr)=%d nb(rh)=%d nb(ilwr)=%d\n",nb_ta, nb_iswr, nb_rh, nb_ilwr);
-                throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
-	}
-	if ( nb_ilwr_ta==0 ) {
-		cout << "[e] For emissivity calculation, at least one set of both TA and ILWR are needed at the same station!\n";
-		throw IOException("Not enough input meteo data", AT);
+	if ( nb_ta==0 || nb_rh==0 || nb_ilwr==0 || nb_iswr==0 || nb_iswr_ta_rh==0 ) {
+		printf("nb(ta)=%d nb(rh)=%d nb(ilwr)=%d nb(iswr)=%d\n",nb_ta, nb_rh, nb_ilwr, nb_iswr);
+		if ( nb_iswr_ta_rh==0 ) cout << "[e] For short wave radiation calculation, at least one set of both TA, RH and ISWR are needed at the same station!\n";
+		throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
 	}
 }
 
