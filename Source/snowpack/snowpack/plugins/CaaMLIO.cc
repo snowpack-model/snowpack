@@ -763,7 +763,7 @@ void CaaMLIO::writeSnowCover(const Date& date, const SnowStation& Xdata,
 			ss << "backup";
 		} else {
 			// >1: Label using timestamp
-			ss << "" << (int)(double(date.getUnixDate()) + double(0.5));
+			ss << "" << (date.toString(Date::NUM));
 		}
 		snofilename += ss.str();
 		hazfilename += ss.str();

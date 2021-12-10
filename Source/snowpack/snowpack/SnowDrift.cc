@@ -267,6 +267,15 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 		unsigned int nErode=0; // number of eroded elements
 		Xdata.Erosion_ustar_th = 0.;
 		for(size_t e = nE; e --> Xdata.SoilNode; ) {
+			if (erosion_limit != Constants::undefined && erosion_limit != 0.) {
+				// A positive value of erosion_limit denotes a snow density above which layer erosion is halted.
+				// A negative value of erosion_limit denotes that erosion is halted if a layer threshold friction velocity exceeds the actual friction velocity
+				if (erosion_limit > 0.) {
+					if (EMS[e].Rho > erosion_limit) break;
+				} else {
+					if (SnowDrift::get_ustar_thresh(EMS[e]) > ustar) break;
+				}
+			}
 
 			// Set ustar_th to the max ustar_th of eroded layers
 			const double layer_ustar_th = SnowDrift::get_ustar_thresh(EMS[e]);

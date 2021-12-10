@@ -106,6 +106,7 @@ class SMETIO : public IOInterface {
 		char output_separator;         //output field separator
 		bool outputCommentedHeaders;   //prefix all headers with a '#' for easy import into dbs but breaks SMET conformance
 		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
+		bool outputVersioning; //this is usefull when generating multiple versions of the same dataset, for example with forecast data
 };
 
 } //namespace

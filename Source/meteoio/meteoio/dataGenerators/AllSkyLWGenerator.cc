@@ -60,8 +60,15 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 	double &value = md(param);
 	if (value==IOUtils::nodata) {
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), TAU_CLD=md(MeteoData::TAU_CLD);
+		const double CLD = (md.param_exists("CLD"))? md("CLD") : IOUtils::nodata;
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 		double cloudiness = (TAU_CLD!=IOUtils::nodata)? Atmosphere::Kasten_cloudiness( TAU_CLD ) : IOUtils::nodata;
+		
+		if (CLD!=IOUtils::nodata) {
+			//Synop sky obstructed from view -> fully cloudy
+			if (CLD>9. || CLD<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
+			cloudiness = std::max(std::min(CLD/8., 1.), 0.1);
+		}
 
 		const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
 		const double julian_gmt = md.date.getJulian(true);

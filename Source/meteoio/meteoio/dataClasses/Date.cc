@@ -117,9 +117,20 @@ Date::Date() : timezone(0.), gmt_julian(0.), undef(true)
 }
 
 /**
+* @brief Current date constructor: the object is created with the current system date and time
+* @param in_timezone timezone as an offset to GMT (in hours)
+*/
+Date::Date(const double& in_timezone)
+         : timezone(0.), gmt_julian(0.), undef(true)
+{
+	setTimeZone(in_timezone);
+	setFromSys();
+}
+
+/**
 * @brief Julian date constructor.
 * @param julian_in julian date to set
-* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_timezone timezone as an offset to GMT (in hours)
 */
 Date::Date(const double& julian_in, const double& in_timezone)
          : timezone(0.), gmt_julian(0.), undef(true)
