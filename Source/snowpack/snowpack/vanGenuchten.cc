@@ -482,9 +482,19 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 	}
 
 
-	const double tmp_dynamic_viscosity_water=0.001792;				//In Pa/s, from WaterTransport code by Hirashima: 0.001792
-	if (1. - EMS->theta[ICE] > 0.25) {						//For low density
+	const double tmp_dynamic_viscosity_water=0.001792;		// In Pa/s, from WaterTransport code by Hirashima: 0.001792
+	const double tmp_phi = (1. - EMS->theta[ICE]);			// Porosity
+	if (tmp_phi > 0.25) {						// For low density
 		switch ( K_PARAM ) {	//Set saturated hydraulic conductivity
+
+		case CALONNE:
+			//See: Calonne et al., 3-D image-based numerical computations of snow permeability: links to specific surface area, density, and microstructural anisotropy, TC, 2012.
+			ksat=0.75 * (EMS->ogs / 1000.)*(EMS->ogs / 1000.) * exp(-0.013 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+			break;
+
+		case KOZENYCARMAN:
+			ksat=(EMS->sp * EMS->sp) * (tmp_phi * tmp_phi * tmp_phi * (EMS->ogs / 1000.) * (EMS->ogs / 1000.)) / (150. * ( EMS->theta[ICE] * EMS->theta[ICE] )) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
+			break;
 
 		case SHIMIZU:
 			//This formulation for ksat is proposed by Shimizu (1970), and is valid up to 450 kg/m^3. See Equation 5 in Jordan, 1999 + conversion from hydraulic permeability to hydraulic conductivity.
@@ -493,11 +503,6 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 			} else {
 				ksat=0.077 * (2.*EMS->rg / 1000.)*(2.*EMS->rg / 1000.) * exp(-0.0078 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 			}
-			break;
-
-		case CALONNE:
-			//See: Calonne et al., 3-D image-based numerical computations of snow permeability: links to specific surface area, density, and microstructural anisotropy, TC, 2012.
-			ksat=0.75 * (EMS->ogs / 1000.)*(EMS->ogs / 1000.) * exp(-0.013 * EMS->theta[ICE] * Constants::density_ice) * (Constants::g * Constants::density_water) / tmp_dynamic_viscosity_water;
 			break;
 
 		default:

@@ -24,14 +24,48 @@
 namespace mio {
 
 TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
-                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), use_rswr(false)
+                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), cloudiness_model(KASTEN), use_rswr(false)
 {
 	const std::string where( section+"::"+algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
+			
+			if (user_algo=="LHOMME") cloudiness_model = CLF_LHOMME;
+			else if (user_algo=="KASTEN") cloudiness_model = KASTEN;
+			else if (user_algo=="CRAWFORD") cloudiness_model = CLF_CRAWFORD;
+			else
+				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
+		}
 		if (vecArgs[ii].first=="USE_RSWR") {
 			IOUtils::parseArg(vecArgs[ii], where, use_rswr);
 		}
 	}
+}
+
+/**
+ * @brief Compute the clearness index from an atmospheric cloudiness value
+ * @details
+ * This is a convenience method that helps process the same way various types of inputs: if a cloudiness
+ * is provided (which is quite rare), it can be converted to a clearness index (ie the ratio of the incoming 
+ * short wave radiation over the ground potential radiation, projected on the horizontal) and then processed 
+ * the same way as more traditional measurements (ie only ISWR provided) where it will be re-converted
+ * to a cloudiness (thus falling abck to the same cloudiness as originally provided).
+
+ * @param[in] clf_model cloudiness parametrization
+ * @param[in] cloudiness cloudiness (between 0 and 1)
+ * @return clearness index (between 0 and 1)
+ */
+double TauCLDGenerator::getClearness(const clf_parametrization& clf_model, const double& cloudiness)
+{
+	if (clf_model==CLF_LHOMME) {
+		return Atmosphere::Lhomme_cloudiness( cloudiness/8. );
+	} else if (clf_model==KASTEN) {
+		return Atmosphere::Kasten_cloudiness( cloudiness/8. );
+	} else if (clf_model==CLF_CRAWFORD) {
+		return Atmosphere::Lhomme_cloudiness( cloudiness/8. );
+	} else
+		return IOUtils::nodata; //this should never happen
 }
 
 /**
@@ -95,12 +129,16 @@ double TauCLDGenerator::getCloudiness(const clf_parametrization& clf_model, cons
 		return IOUtils::nodata;
 	}
 
-	if (clf_model==KASTEN) {
+	if (clf_model==CLF_LHOMME) {
+		const double clf = Atmosphere::Lhomme_cloudiness(ISWR/iswr_clear_sky);
+		if (clf<0. || clf>1.) return IOUtils::nodata;
+		return clf;
+	} else if (clf_model==KASTEN) {
 		const double clf = Atmosphere::Kasten_cloudiness(ISWR/iswr_clear_sky);
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
 	} else if (clf_model==CLF_CRAWFORD) {
-		const double clf = 1. - ISWR/iswr_clear_sky;
+		const double clf = Atmosphere::Lhomme_cloudiness(ISWR/iswr_clear_sky);
 		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
 	} else
@@ -115,7 +153,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		if (cld!=IOUtils::nodata) {
 			if (cld==9) cld=8.; //Synop sky obstructed from view -> fully cloudy
 			if (cld>8. || cld<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
-			value = Atmosphere::Kasten_clearness( cld/8. );
+			value = getClearness( cloudiness_model, cld );
 			return true;
 		}
 
@@ -135,7 +173,7 @@ bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
 		sun.setDate(julian_gmt, 0.);
 
 		bool is_night;
-		double cloudiness = TauCLDGenerator::getCloudiness(KASTEN, md, use_rswr, sun, is_night);
+		double cloudiness = TauCLDGenerator::getCloudiness(cloudiness_model, md, use_rswr, sun, is_night);
 		if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 		if (is_night) { //interpolate the cloudiness over the night
