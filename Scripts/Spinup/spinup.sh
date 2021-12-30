@@ -44,6 +44,12 @@ if (( $i == 0 )); then
 	exit
 fi
 
+# Check some settings
+if [ ! -e "${time_shift_script}" ]; then
+	echo "ERROR: variable time_shift_script (see spinup.rc) does not point to an existing file!" >> /dev/stderr
+	echo "       time_shift_script = ${time_shift_script}" >> /dev/stderr
+	exit
+fi
 
 # Check if mawk exist, otherwise create alias
 if ! command -v mawk &> /dev/null

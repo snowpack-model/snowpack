@@ -58,7 +58,7 @@ void inline messageBox(const std::string& msg) {
 				kCFUserNotificationAlertMessageKey };
 		const void* values[] = { CFSTR("Oops, something went wrong!"),
 					CFStringCreateWithCString(nullptr, box_msg.c_str(), kCFStringEncodingMacRoman) };
-		CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
+		CFDictionaryRef dict = CFDictionaryCreate(nullptr, keys, values,
 				sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		SInt32 error = 0;
 		CFUserNotificationCreate(nullptr, 0, kCFUserNotificationStopAlertLevel, &error, dict);

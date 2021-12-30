@@ -124,7 +124,7 @@ class MeteoObj
 	private:
 		static void checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, const mio::MeteoData::Parameters& param);
 		static void checkGridRange(const mio::Date& calcDate, const mio::Grid2DObject& grid, const mio::MeteoData::Parameters& param);
-		static void checkInputsRequirements(std::vector<mio::MeteoData>& vecData, const bool& soil_flux);
+		static void checkInputsRequirements(std::vector<mio::MeteoData>& vecData);
 		void fillMeteoGrids(const mio::Date& calcDate);
 		void getMeteo(const mio::Date& calcDate);
 

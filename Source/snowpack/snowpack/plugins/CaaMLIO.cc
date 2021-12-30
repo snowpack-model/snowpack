@@ -492,10 +492,6 @@ void CaaMLIO::setCustomSnowSoil(SN_SNOWSOIL_DATA& SSdata, const std::string& in_
 	if (SSdata.Canopy_LAI == mio::IOUtils::nodata) {
 		throw InvalidFormatException("Can not read CanopyLAI in file "+in_snowFilename, AT);
 	}
-	SSdata.Canopy_BasalArea = xmlSetVal(xpath,"CanopyBasalArea",mio::IOUtils::nodata);
-	if (SSdata.Canopy_BasalArea == mio::IOUtils::nodata) {
-		throw InvalidFormatException("Can not read CanopyBasalArea in file "+in_snowFilename, AT);
-	}
 	SSdata.Canopy_Direct_Throughfall = xmlSetVal(xpath,"CanopyDirectThroughfall",mio::IOUtils::nodata);
 	if (SSdata.Canopy_Direct_Throughfall == mio::IOUtils::nodata) {
 		throw InvalidFormatException("Can not read CanopyDirectThroughfall in file "+in_snowFilename, AT);
@@ -504,7 +500,7 @@ void CaaMLIO::setCustomSnowSoil(SN_SNOWSOIL_DATA& SSdata, const std::string& in_
 	if (SSdata.WindScalingFactor == mio::IOUtils::nodata) {
 		throw InvalidFormatException("Can not read WindScalingFactor in file "+in_snowFilename, AT);
 	}
-	SSdata.ErosionLevel = xmlSetVal(xpath,"ErosionLevel",static_cast<int>(mio::IOUtils::nodata));
+	SSdata.ErosionLevel = xmlSetVal(xpath,"ErosionLevel",mio::IOUtils::inodata);
 	if (SSdata.ErosionLevel == mio::IOUtils::nodata) {
 		throw InvalidFormatException("Can not read ErosionLevel in file "+in_snowFilename, AT);
 	}
@@ -514,14 +510,13 @@ void CaaMLIO::setCustomSnowSoil(SN_SNOWSOIL_DATA& SSdata, const std::string& in_
 	}
 
 	/// CANOPY OPTIONNAL PARAMETERS, a warning will be thrown in CANOPY::Initialze if no value is provided
-
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopySnowIntCapacity",mio::IOUtils::nodata);
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopyAlbedoDry",mio::IOUtils::nodata);
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopyAlbedoWet",mio::IOUtils::nodata);
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopyAlbedoSnow",mio::IOUtils::nodata);
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopyDiameter",mio::IOUtils::nodata);
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopyFracLAIUpperLayer",mio::IOUtils::nodata);
-	SSdata.TimeCountDeltaHS = xmlSetVal(xpath,"CanopyBasalArea",mio::IOUtils::nodata);
+	SSdata.Canopy_int_cap_snow = xmlSetVal(xpath,"CanopySnowIntCapacity",mio::IOUtils::nodata);
+	SSdata.Canopy_alb_dry = xmlSetVal(xpath,"CanopyAlbedoDry",mio::IOUtils::nodata);
+	SSdata.Canopy_alb_wet = xmlSetVal(xpath,"CanopyAlbedoWet",mio::IOUtils::nodata);
+	SSdata.Canopy_alb_snow = xmlSetVal(xpath,"CanopyAlbedoSnow",mio::IOUtils::nodata);
+	SSdata.Canopy_diameter = xmlSetVal(xpath,"CanopyDiameter",mio::IOUtils::nodata);
+	SSdata.Canopy_lai_frac_top_default = xmlSetVal(xpath,"CanopyFracLAIUpperLayer",mio::IOUtils::nodata);
+	SSdata.Canopy_BasalArea = xmlSetVal(xpath,"CanopyBasalArea",mio::IOUtils::nodata);
 
 }
 
@@ -627,7 +622,7 @@ void CaaMLIO::getProfiles(const std::string path, std::vector<double> &depths, s
 						std::string name( field_name );
 						if (name.compare(0,4,"snow")==0) name.erase(0,4);
 
-						if (!name.empty()) name[0] = (const char)std::toupper( name[0] );
+						if (!name.empty()) name[0] = (char)std::toupper( name[0] );
 						const std::string unitname( "uom"+name );
 
 						if (name=="Temp" || name=="Density" || name=="Hardness") {
@@ -653,14 +648,10 @@ void CaaMLIO::getProfiles(const std::string path, std::vector<double> &depths, s
 
 	//If necessary, reverse order
 	if (depths.size()>=2 && depths[0]<depths[1]) {
-		double temp;
-		for (size_t ii=0; ii<floor(nrElem/2); ++ii) {
-			temp = depths[ii];
-			depths[ii] = depths[nrElem-ii-1];
-			depths[nrElem-ii-1] = temp;
-			temp = val[ii];
-			val[ii] = val[nrElem-ii-1];
-			val[nrElem-ii-1] = temp;
+		const size_t nMax = static_cast<size_t>( floor(nrElem/2) );
+		for (size_t ii=0; ii<nMax; ++ii) {
+			std::swap(depths[ii], depths[nrElem-ii-1]);
+			std::swap(val[ii], val[nrElem-ii-1]);
 		}
 	}
 }
