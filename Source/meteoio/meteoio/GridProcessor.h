@@ -43,7 +43,7 @@ class GridProcessor {
 		static std::map<Date, Grid2DObject>::const_iterator seek(const Date& date, const std::map<Date, Grid2DObject>& grids, const bool& exact_match = false);
 		static std::map<Date, Grid2DObject>::const_iterator seek_before(const Date& date, const std::map<Date, Grid2DObject>& grids);
 		static std::map<Date, Grid2DObject>::const_iterator seek_after(const Date& date, const std::map<Date, Grid2DObject>& grids);
-		double getWindowSize() const { return gi1d.getWindowSize(); };
+		double getWindowSize() const { return gi1d.getWindowSize(); }
 
 	private:
 		static std::set<std::string> getParameters(const Config& cfg);

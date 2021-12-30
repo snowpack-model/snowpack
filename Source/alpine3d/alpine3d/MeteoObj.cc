@@ -221,10 +221,10 @@ double MeteoObj::getTiming() const
 	return timer.getElapsed();
 }
 
-void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData, const bool& soil_flux)
+void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 {
 	//This function checks that the necessary input data are available for the current timestamp
-	unsigned int nb_ta=0, nb_tsg=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
+	unsigned int nb_ta=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
 	unsigned int nb_iswr_ta_rh=0;
 
 	if (vecData.empty())
@@ -232,7 +232,6 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData, const bo
 
 	for (size_t ii=0; ii<vecData.size(); ii++) {
 		if (vecData[ii](MeteoData::TA) != IOUtils::nodata) nb_ta++;
-		if (vecData[ii](MeteoData::TSG) != IOUtils::nodata) nb_tsg++;
 		if (vecData[ii](MeteoData::RH) != IOUtils::nodata) nb_rh++;
 		if (vecData[ii](MeteoData::ILWR) != IOUtils::nodata) nb_ilwr++;
 
@@ -282,7 +281,7 @@ void MeteoObj::getMeteo(const Date& calcDate)
 
 	// Collect the Meteo values at each stations
 	io.getMeteoData(calcDate, vecMeteo);
-	checkInputsRequirements(vecMeteo, soil_flux);
+	checkInputsRequirements(vecMeteo);
 
 	// Now fill the 2D Meteo Fields. Keep in mind that snowdrift might edit these fields
 	fillMeteoGrids(calcDate);

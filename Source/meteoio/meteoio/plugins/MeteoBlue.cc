@@ -40,7 +40,8 @@ namespace mio {
  * <a href="https://docs.meteoblue.com/en/weather-apis/packages-api/introduction">packages API</a> as a RESTful web service. 
  * To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
  * 
- * The meteorological parameters are defined by Meteoblue in <a href="https://content.meteoblue.com/fr/specifications/variables-meteo/meteoblue_weather_variables-documentation_EN_v06.pdf">this document</a>.
+ * The meteorological parameters are defined by Meteoblue in <a href="https://content.meteoblue.com/fr/specifications/variables-meteo/meteoblue_weather_variables-documentation_EN_v06.pdf">this document</a>. The update times are given in the  
+ * <a href="https://content.meteoblue.com/en/specifications/weather-model-theory/model-run">description of the modeling process</a>.
  *
  * @section meteoblue_keywords Keywords
  * This plugin uses the following keywords:

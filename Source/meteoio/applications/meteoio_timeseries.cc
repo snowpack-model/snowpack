@@ -176,8 +176,8 @@ static void signals_catching(void)
 	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
 	catch_signal.sa_flags = 0;
 	
-	sigaction(SIGTERM, &catch_signal, NULL);
-	//sigaction(SIGHUP, &catch_signal, NULL);
+	sigaction(SIGTERM, &catch_signal, nullptr);
+	//sigaction(SIGHUP, &catch_signal, nullptr);
 #endif
 }
 

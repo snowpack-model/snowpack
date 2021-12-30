@@ -49,7 +49,7 @@ class vanGenuchten {
 		//Van genuchten model types
 		enum VanGenuchten_ModelTypesSnow{YAMAGUCHI2012, YAMAGUCHI2010, YAMAGUCHI2010_ADAPTED, DAANEN};
 		//Hydraulic conductivity parameterizations
-		enum K_Parameterizations{SHIMIZU, CALONNE};
+		enum K_Parameterizations{CALONNE, KOZENYCARMAN, SHIMIZU};
 
 		// Functions
 		static double AirEntryPressureHead(double MaximumPoreSize, double Temperature);

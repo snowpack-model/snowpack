@@ -15,6 +15,12 @@ if [ ! -z "${3}" ]; then
 else
 	mm=""
 fi
+# Check if environment variable OUTPUTINTERVAL is set
+if [[ -z "${OUTPUTINTERVAL}" ]]; then
+	oi=0
+else
+	oi=${OUTPUTINTERVAL}
+fi
 
 # Do some checks on provided arguments:
 if [ -z "${model}" ] && [ -z "${yr}" ]; then
@@ -50,7 +56,7 @@ cd io_files
 
 # Retrieve directory with netCDF and create file links, if netCDF files are split by year
 flag_netcdf_files_are_linked=0
-grid2dpath=$(fgrep GRID2DPATH ./${model}.ini | mawk -F= '{gsub(/^[ \t]+/,"",$NF); gsub(/[ \t]+$/,"",$NF); print $NF}')	# Use gsub to remove trailing and leading white spaces
+grid2dpath=$(grep ^GRID2DPATH ./${model}.ini | mawk -F= '{sub(/#.*/,"",$0); sub(/;.*/,"",$0); gsub(/^[ \t]+/,"",$NF); gsub(/[ \t]+$/,"",$NF); print $NF}')	# Use sub to remove comments and gsub to remove trailing and leading white spaces
 list_of_nc_files=$(find ${grid2dpath} -name "*${yr}*")
 if [ ! -z "${list_of_nc_files}" ]; then
 	# Create dir to link the NetCDF files
@@ -94,7 +100,7 @@ if [ ${model} == "MERRA-2" ] || [ "${model}" == "COSMO-2" ]; then
 		bt=$(echo ${yr} ${mm} | mawk '{printf("%04d-%02d-01T00:30:00", $1, $2)}')
 		et=$(echo ${yr} ${mm} ${output_res_in_minutes} | mawk '{d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", ($2==12)?($1+1):($1), ($2==12)?(1):($2+1), 1, 0, 30, 0, 0)); printf(strftime("%Y-%m-%dT%H:%M:%S", d-($3*60)), $1)}')
 	fi
-	../meteoio_timeseries -b ${bt} -e ${et} -c ${model}_${yr}${mm}.ini -s ${output_res_in_minutes} -p > ../log/${model}_${yr}${mm}.log 2>&1
+	../meteoio_timeseries -o ${oi} -b ${bt} -e ${et} -c ${model}_${yr}${mm}.ini -s ${output_res_in_minutes} -p > ../log/${model}_${yr}${mm}.log 2>&1
 else
 	# Other models have output each :00, and the following line assumes the last time step is 21:00 (i.e., 3-hourly output)
 	if [ -z "${mm}" ]; then
@@ -106,5 +112,5 @@ else
 		bt=$(echo ${yr} ${mm} | mawk '{printf("%04d-%02d-01T00:00:00", $1, $2)}')
 		et=$(echo ${yr} ${mm} ${output_res_in_minutes} | mawk '{d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", ($2==12)?($1+1):($1), ($2==12)?(1):($2+1), 1, 0, 0, 0, 0)); printf(strftime("%Y-%m-%dT%H:%M:%S", d-($3*60)), $1)}')
 	fi
-	../meteoio_timeseries -b ${bt} -e ${et} -c ${model}_${yr}${mm}.ini -s ${output_res_in_minutes} -p > ../log/${model}_${yr}${mm}.log 2>&1
+	../meteoio_timeseries -o ${oi} -b ${bt} -e ${et} -c ${model}_${yr}${mm}.ini -s ${output_res_in_minutes} -p > ../log/${model}_${yr}${mm}.log 2>&1
 fi

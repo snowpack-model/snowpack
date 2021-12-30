@@ -740,7 +740,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 
 	//Set parameterization for hydraulic functions for snow
 	const vanGenuchten::VanGenuchten_ModelTypesSnow VGModelTypeSnow=vanGenuchten::YAMAGUCHI2012;	//[Water retention curve]    Recommended: YAMAGUCHI2012   Set a VanGenuchten model for snow (relates pressure head to theta and vice versa)
-	const vanGenuchten::K_Parameterizations K_PARAM=vanGenuchten::CALONNE;				//[Hydraulic conductivity]   Recommended: CALONNE         Implemented choices: SHIMIZU, CALONNE, based on Shimizu (1970) and Calonne (2012).
+	const vanGenuchten::K_Parameterizations K_PARAM=vanGenuchten::CALONNE;				//[Hydraulic conductivity]   Recommended: CALONNE         Implemented choices: CALONNE, KOZENYCARMAN and SHIMIZU, based on Kozeny (1927), Calonne (2012) and Shimizu (1970), respectively.
 	const SalinityMixingModels SALINITY_MIXING = NONE;
 
 

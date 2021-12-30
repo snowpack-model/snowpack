@@ -96,8 +96,6 @@ GridResamplingAlgorithm* GridResamplingAlgorithmsFactory::getAlgorithm(const std
 		return new GridTimeseriesResampling(algorithm, parname, grid_window_size, vecArgs);
 	else
 		throw IOException("The temporal grid resampling algorithm '" + algorithm + "' is not implemented", AT);
-
-	return nullptr;
 }
 
 } //namespace

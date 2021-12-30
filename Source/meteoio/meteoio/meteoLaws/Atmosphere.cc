@@ -284,7 +284,8 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure (Pa)
 */
-double Atmosphere::vaporSaturationPressure(const double& T) {
+double Atmosphere::vaporSaturationPressure(const double& T) 
+{
 	double c2, c3; // varying constants
 
 	if ( T < Cst::t_water_triple_pt ) { // for a flat ice surface
@@ -307,12 +308,9 @@ double Atmosphere::vaporSaturationPressure(const double& T) {
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure, assuming water surface (Pa)
 */
-double Atmosphere::vaporSaturationPressureWater(const double& T) {
-	double c2, c3; // varying constants
-
-	c2 = 17.27;
-	c3 = 35.86;
-
+double Atmosphere::vaporSaturationPressureWater(const double& T) 
+{
+	static const double c2=17.27, c3=35.86; // varying constants
 	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
 
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
@@ -326,7 +324,8 @@ double Atmosphere::vaporSaturationPressureWater(const double& T) {
 * @param p air pressure (Pa)
 * @return virtual temperature multiplying coefficient
 */
-double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
+double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) 
+{
 	static const double epsilon = 0.622;
 	return 1. / (1.-(1.-epsilon)*e/p);
 }
@@ -341,7 +340,8 @@ double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
  * @param TA Air temperature (K)
  * @return clear sky emissivity
  */
-double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA); //water vapor pressure
 	const double e0_mBar = 0.01 * e0;
 	static const double exponent = 1./7.;
@@ -359,7 +359,8 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
  * @param TA Air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) 
+{
 	const double ea = Brutsaert_emissivity(RH, TA);
 	return blkBody_Radiation(ea, TA);
 }
@@ -374,7 +375,8 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) 
+{
 	const double ilwr_dilley = Dilley_ilwr(RH, TA);
 	const double ilwr_blkbody = blkBody_Radiation(1., TA);
 	const double ea = ilwr_dilley/ilwr_blkbody;
@@ -390,7 +392,8 @@ double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 
@@ -407,7 +410,8 @@ double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Prata_emissivity(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
@@ -422,7 +426,8 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Prata_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Prata_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -435,7 +440,8 @@ double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Clark_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Clark_emissivity(const double& RH, const double& TA) 
+{
 	const double Tdp = RhtoDewPoint(RH, TA, false);
 	const double ea = 0.787 + 0.0028 * (Tdp-Cst::t_water_triple_pt);
 	return ea;
@@ -449,7 +455,8 @@ double Atmosphere::Clark_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Clark_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Clark_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Clark_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -462,7 +469,8 @@ double Atmosphere::Clark_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Tang_emissivity(const double& RH, const double& TA) 
+{
 	const double Tdp = RhtoDewPoint(RH, TA, false);
 	const double ea = 0.754 + 0.0044 * (Tdp-Cst::t_water_triple_pt);
 	return std::min(ea, 1.);
@@ -476,7 +484,8 @@ double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Tang_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Tang_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -489,7 +498,8 @@ double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return clear sky emissivity
 */
-double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
+double Atmosphere::Idso_emissivity(const double& RH, const double& TA) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
 	const double ea = 0.70 + 5.95e-5 * e0 * exp(1500./TA);
 	return std::min(ea, 1.);
@@ -503,7 +513,8 @@ double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
+double Atmosphere::Idso_ilwr(const double& RH, const double& TA) 
+{
 	const double epsilon = Idso_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
@@ -517,7 +528,8 @@ double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double e0 = RH * vaporSaturationPressure(TA); //water vapor pressure
 	static const double eps_w = 0.97;
 	static const double a1 = 0.68;
@@ -537,7 +549,8 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = Omstedt_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
@@ -551,7 +564,8 @@ double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = RH * vaporSaturationPressure(TA); //screen-level water vapor pressure
 	static const double exponent = 1./8.;
 
@@ -573,7 +587,8 @@ double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, con
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = Konzelmann_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
@@ -588,7 +603,8 @@ double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const dou
 * @param cloudiness 1 - ratio of measured ISWR over potential ISWR (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness) 
+{
 	static const double beta_0 = -0.34;
 	static const double beta_1 = 3.36e-3;
 	static const double beta_2 = 1.94e-3;
@@ -608,7 +624,8 @@ double Atmosphere::Carmona_emissivity(const double& RH, const double& TA, const 
 * @param cloudiness 1 - ratio of measured ISWR over potential ISWR (between 0 and 1, 0 being clear sky)
 * @return long wave radiation (W/m^2)
 */
-double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness) 
+{
 	const double ea = Carmona_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
@@ -622,7 +639,8 @@ double Atmosphere::Carmona_ilwr(const double& RH, const double& TA, const double
  * @param cloudiness in okta, between 0 and 1
  * @return solar clearness index
 */
-double Atmosphere::Kasten_clearness(const double& cloudiness) {
+double Atmosphere::Kasten_clearness(const double& cloudiness) 
+{
 	static const double b1 = 0.75, b2 = 3.4;
 	if (cloudiness<0. || cloudiness>1.) {
 		std::ostringstream ss;
@@ -642,7 +660,8 @@ double Atmosphere::Kasten_clearness(const double& cloudiness) {
  * @param solarIndex solar index
  * @return cloudiness (in okta, between 0 and 1)
 */
-double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
+double Atmosphere::Kasten_cloudiness(const double& solarIndex) 
+{
 	static const double b1 = 0.75, b2 = 3.4;
 
 	if (solarIndex>1.) return 0.;
@@ -651,13 +670,128 @@ double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
 }
 
 /**
+ * @brief Evaluate the solar clearness index for a given cloudiness.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007.
+ * The solar index is defined as measured radiation / clear sky radiation, values
+ * outside of [0;1] will be truncated to [0;1].
+ * @param cloudiness in okta, between 0 and 1
+ * @return solar clearness index
+*/
+double Atmosphere::Lhomme_clearness(const double& cloudiness)
+{
+	if (cloudiness<0. || cloudiness>1.) {
+		std::ostringstream ss;
+		ss << "Invalid cloudiness value: " << cloudiness << " (it should be between 0 and 1)";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	const double clearness = 1. - cloudiness;
+	return clearness;
+}
+
+/**
+ * @brief Evaluate the cloudiness from a given solar index.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007.
+ * The solar index is defined as measured radiation / clear sky radiation, values
+ * outside of [0;1] will be truncated to [0;1].
+ * @param solarIndex solar index
+ * @return cloudiness (in okta, between 0 and 1)
+*/
+double Atmosphere::Lhomme_cloudiness(const double& solarIndex)
+{
+	if (solarIndex>1.) return 0.;
+	const double cloudiness = 1. - solarIndex;
+	return std::min(cloudiness, 1.);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007. If no cloud cover fraction is provided, a parametrization
+ * using iswr_meas and iswr_clear_sky will be used. 
+ * These parameters can therefore safely be set to IOUtils::nodata if cloudiness is provided.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
+ * @param iswr_clear_sky Clear Sky Modelled Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+*/
+double Atmosphere::Lhomme_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness)
+{
+	static const double a=1.07, b=0.34;
+	double clf;
+	if (cloudiness==IOUtils::nodata) {
+		if (iswr_meas<=0. || iswr_clear_sky<=0.)
+			return IOUtils::nodata;
+		clf = 1. - iswr_meas/iswr_clear_sky;  //cloud fraction estimate
+		if (clf<0.) clf=0.;
+	} else {
+		if (cloudiness<0. || cloudiness>1.)
+			return IOUtils::nodata;
+		clf = cloudiness;
+	}
+
+	const double epsilon_cs = Dilley_emissivity(RH, TA);
+	const double epsilon = epsilon_cs * (a + b*clf);
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007. If no cloud cover fraction is provided, a parametrization
+ * using the current location (lat, lon, altitude) and ISWR will be used. These parameters can therefore safely
+ * be set to IOUtils::nodata if cloudiness is provided.
+ * @param lat latitude of the point of observation
+ * @param lon longitude of the point of observation
+ * @param altitude altitude of the point of observation
+ * @param julian julian date at the point of observation
+ * @param TZ time zone at the point of observation
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+ * Please note that this call might NOT be efficient for processing large amounts of points,
+ * since it internally builds complex objects at every call. You might want to copy/paste
+ * its code in order to process data in bulk.
+*/
+double Atmosphere::Lhomme_ilwr(const double& lat, const double& lon, const double& altitude,
+                                 const double& julian, const double& TZ,
+                                 const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
+{
+	if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		return IOUtils::nodata;
+	}
+
+	if (cloudiness==IOUtils::nodata) {
+		if (ISWR==IOUtils::nodata) return IOUtils::nodata;
+
+		SunObject Sun(lat, lon, altitude, julian, TZ);
+		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
+		double toa, direct, diffuse;
+		Sun.getHorizontalRadiation(toa, direct, diffuse);
+		return Atmosphere::Lhomme_ilwr(RH, TA, ISWR, direct+diffuse, IOUtils::nodata);
+	} else {
+		return Atmosphere::Lhomme_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);
+	}
+}
+
+
+/**
  * @brief Evaluate the long wave radiation for clear or cloudy sky.
  * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
  * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology,
  * <b>38</b>, 1999, pp 474-480. If no cloud cover fraction is provided, a parametrization
- * using iswr_meas and iswr_clear_sky will be used. These parameters can therefore safely
- * be set to IOUtils::nodata if cloudiness is provided.
+ * using iswr_meas and iswr_clear_sky will be used (same as in Lhomme et al., 2007). 
+ * These parameters can therefore safely be set to IOUtils::nodata if cloudiness is provided.
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)

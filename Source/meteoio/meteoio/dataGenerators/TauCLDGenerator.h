@@ -40,7 +40,9 @@ namespace mio {
  * (ratio of measured iswr to potential iswr, therefore using the current location (lat, lon, altitude) and ISWR
  * to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980).
  *
- * It takes on (optional) argument: USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
+ * It takes the following (optional) argument:
+ *    - TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers);
+ *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
  * @code
@@ -52,6 +54,7 @@ namespace mio {
 class TauCLDGenerator : public GeneratorAlgorithm {
 	public:
 		typedef enum CLF_PARAMETRIZATION {
+			CLF_LHOMME,
 			KASTEN,
 			CLF_CRAWFORD
 		} clf_parametrization;
@@ -60,8 +63,10 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, SunObject& sun, bool &is_night);
+		static double getClearness(const clf_parametrization& clf_model, const double& cloudiness);
 	private:
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		clf_parametrization cloudiness_model;
 		bool use_rswr;
 };
 
