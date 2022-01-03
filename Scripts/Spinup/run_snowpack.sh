@@ -8,6 +8,16 @@ then
 	alias mawk="awk"
 fi
 
+
+# Check if required directories exist, otherwise create them
+if [ ! -d "./snow_init/" ]; then
+	mkdir snow_init
+fi
+if [ ! -d "./cfgfiles/" ]; then
+	mkdir cfgfiles
+fi
+
+
 for f in ./smet/*smet
 do
 	sed -i.bakr -e '/^easting.*/d' -e '/^northing.*/d' -e '/^epsg/d' ${f} && rm ${f}.bakr	# Delete the coordinates, since there seems to be a slight imprecision in the easting/northing.

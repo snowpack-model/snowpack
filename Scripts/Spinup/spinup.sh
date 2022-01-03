@@ -107,7 +107,15 @@ if [ -z "${snopath}" ]; then
 	# If no SNOWPATH found, try METEOPATH
 	snopath="${meteopath}"
 fi
+if [ ! -d "${snopath}" ]; then
+	# Create path, if it doesn't yet exist
+	mkdir -p ${snopath}
+fi
 outpath=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[OUTPUT\]/) {read=1} else {read=0}}; if(read) {if(/METEOPATH/) {val=$NF}}} END {print val}')
+if [ ! -d "${outpath}" ]; then
+	# Create path, if it doesn't yet exist
+	mkdir -p ${outpath}
+fi
 experiment=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[OUTPUT\]/) {read=1} else {read=0}}; if(read) {if(/EXPERIMENT/) {val=$NF}}} END {print val}')
 if [ -z "${experiment}" ]; then
 	# Default experiment suffix:
