@@ -29,4 +29,4 @@ do
 done
 
 # Zip output .smet files
-zip output/smet_forcing output/VIR*.smet
+zip output/smet_forcing output/*.smet
