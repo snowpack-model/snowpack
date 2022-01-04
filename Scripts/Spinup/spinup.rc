@@ -14,6 +14,10 @@
 min_sim_depth=150
 
 
+# Here, an awk script can be provided, which does additional checks. The script should output 1 if spinup has been achieved, and 0 otherwise. Leave empty ("") to only check min_sim_depth.
+checkscript="check_spinup.awk"
+
+
 # Specify the spinup start date (YYYY-MM-DDTHH:mm) or keep empty ("") to have the start date determined from the *.sno file.
 spinup_start=""
 

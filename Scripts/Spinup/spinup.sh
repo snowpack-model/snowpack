@@ -182,7 +182,13 @@ do
 			echo "ERROR: spinup interrupted since SNOWPACK does not seem to build a snowpack/firn layer!"
 			exit
 		fi
-		if (( $(echo "${sim_depth} > ${min_sim_depth}" | bc -l) )) || (( ${spinup2} )) ; then
+		if [ ! -z "${checkscript}" ]; then
+			checkscript_out=$(mawk -f ${checkscript} ${snofile_out})
+			echo "Info: ${checkscript} returned ${checkscript_out}."
+		else
+			checkscript_out=0
+		fi
+		if (( $(echo "${sim_depth} > ${min_sim_depth}" | bc -l) )) || (( ${checkscript_out} )) || (( ${spinup2} )) ; then
 			spinup=0
 			if (( ! ${dospinup2} )); then
 				# No second spinup
