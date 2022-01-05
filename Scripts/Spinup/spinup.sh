@@ -4,7 +4,7 @@ export TZ=UTC
 
 # Load settings
 source ./spinup.rc
-default_spinup_end="2500-01-01T00:00"
+default_spinup_end="${final_end}"
 startover=0
 
 
