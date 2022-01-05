@@ -9,21 +9,37 @@
 #
 
 
+# Specify the SNOWPACK binary to use
+which_snowpack="../../Source/snowpack/bin/snowpack"
+
+
 # Specify the miminum simulated snow/firn depth before considering a spinup procedure finished
 # Make sure that this value is smaller than MAX_SIMULATED_HS in the ini file, otherwise you'll get an infinite spinup loop!
 min_sim_depth=150
+
+
+# Here, an awk script can be provided, which does additional checks. The script should output 1 if spinup has been achieved, and 0 otherwise. Leave empty ("") to only check min_sim_depth.
+checkscript="check_spinup.awk"
 
 
 # Specify the spinup start date (YYYY-MM-DDTHH:mm) or keep empty ("") to have the start date determined from the *.sno file.
 spinup_start=""
 
 
-# Specify the spinup end date (YYYY-MM-DDTHH:mm) or keep empty ("") for the period data is available.
+# Specify the spinup end date (YYYY-MM-DDTHH:mm) or keep empty ("") to have the end date determined from the available meteo data in the *.smet file.
 spinup_end=""
+
+
+# Specify the final simulation end date (YYYY-MM-DDTHH:mm, or "NOW" for current date), also used as spinup_end in case spinup_end="". Keep empty ("") to have it determined from the *.smet file.
+final_end=""
 
 
 # Directory for the initial snow files for the spinup (typically "empty" *.sno files).
 snow_init_dir="./snow_init/"
+
+
+# Specify if the slope information in the *.smet file should be ignored when creating the *sno file
+ignore_slope=1	# 1 is YES, 0 is NO
 
 
 # Specify location of the timeshift_sno_files.sh script. Point to timeshift_sno_files_oldawk.sh when error message appear about the date being out of range.

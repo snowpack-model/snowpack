@@ -1,12 +1,23 @@
 shopt -s expand_aliases		# Make sure aliases work in non-interactive shells
 
-which_snowpack="./src/usr/bin/snowpack"
+# Load settings
+source ./spinup.rc
 
 # Check if mawk exist, otherwise create alias
 if ! command -v mawk &> /dev/null
 then
 	alias mawk="awk"
 fi
+
+
+# Check if required directories exist, otherwise create them
+if [ ! -d "./snow_init/" ]; then
+	mkdir snow_init
+fi
+if [ ! -d "./cfgfiles/" ]; then
+	mkdir cfgfiles
+fi
+
 
 for f in ./smet/*smet
 do
@@ -15,7 +26,7 @@ do
 	snofile="./snow_init/${stn}.sno"
 	cfgfile="./cfgfiles/${stn}.ini"
 
-	awk '{if(/station_id/) {stn_id=$NF} else if(/station_name/) {stn=$NF} else if(/latitude/) {lat=$NF} else if(/longitude/) {lon=$NF} else if(/altitude/) {alt=$NF} else if(/slope_angle/) {sl=$NF} else if(/slope_azi/) {azi=$NF} else if(/\[DATA\]/) {getline; getline; start=$1; exit}} END {
+	awk -v ignore_slope=${ignore_slope} '{if(/station_id/) {stn_id=$NF} else if(/station_name/) {stn=$NF} else if(/latitude/) {lat=$NF} else if(/longitude/) {lon=$NF} else if(/altitude/) {alt=$NF} else if(/slope_angle/) {sl=$NF} else if(/slope_azi/) {azi=$NF} else if(/\[DATA\]/) {getline; getline; start=$1; exit}} END {
 		print "SMET 1.1 ASCII";
 		print "[HEADER]";
 		print "station_id       = ", stn_id;
@@ -26,8 +37,8 @@ do
 		print "nodata           = -999";
 		print "ProfileDate      = ", start;
 		print "HS_Last          = 0.00";
-		print "SlopeAngle       = ", 1.*sl;
-		print "SlopeAzi         = ", 1.*azi;
+		print "SlopeAngle       = ", (1.-ignore_slope)*sl;
+		print "SlopeAzi         = ", (1.-ignore_slope)*azi;
 		print "nSoilLayerData   = 0";
 		print "nSnowLayerData   = 0";
 		print "SoilAlbedo       = 0.09";
@@ -65,6 +76,14 @@ do
 	stn=$(basename ${f} .smet)
 	lat_lon=$(echo ${stn} | mawk -F_ '{print $2 "_" $3}')
 	enddate=$(find ./profiles/* | fgrep -- ${lat_lon} | mawk -F\/ '{print substr($NF,1,4) "-" substr($NF,5,2) "-" ((substr($NF,7,2)==32)?(31):(substr($NF,7,2)))}')
+	if [ -z "${enddate}" ]; then
+		if [ ! -z "${final_end}" ]; then
+			enddate=${final_end}
+		else
+			# Determine from last time stamp in *.smet file
+			enddate=$(tail -1 ${f} | mawk '{print $1}')
+		fi
+	fi
 	let i=${i}+1
 	echo "bash spinup.sh \"${which_snowpack} -c cfgfiles/${stn}.ini -e ${enddate} > log/${stn}_${exp}.log 2>&1\"" >> to_exec.lst
 done

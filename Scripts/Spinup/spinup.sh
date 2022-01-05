@@ -4,7 +4,7 @@ export TZ=UTC
 
 # Load settings
 source ./spinup.rc
-default_spinup_end="2500-01-01T00:00"
+default_spinup_end="${final_end}"
 startover=0
 
 
@@ -107,7 +107,15 @@ if [ -z "${snopath}" ]; then
 	# If no SNOWPATH found, try METEOPATH
 	snopath="${meteopath}"
 fi
+if [ ! -d "${snopath}" ]; then
+	# Create path, if it doesn't yet exist
+	mkdir -p ${snopath}
+fi
 outpath=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[OUTPUT\]/) {read=1} else {read=0}}; if(read) {if(/METEOPATH/) {val=$NF}}} END {print val}')
+if [ ! -d "${outpath}" ]; then
+	# Create path, if it doesn't yet exist
+	mkdir -p ${outpath}
+fi
 experiment=$(cat ${cfgfiles[@]} | mawk '{if(/^\[/) {$0=toupper($0); if(/\[OUTPUT\]/) {read=1} else {read=0}}; if(read) {if(/EXPERIMENT/) {val=$NF}}} END {print val}')
 if [ -z "${experiment}" ]; then
 	# Default experiment suffix:
@@ -174,7 +182,13 @@ do
 			echo "ERROR: spinup interrupted since SNOWPACK does not seem to build a snowpack/firn layer!"
 			exit
 		fi
-		if (( $(echo "${sim_depth} > ${min_sim_depth}" | bc -l) )) || (( ${spinup2} )) ; then
+		if [ ! -z "${checkscript}" ]; then
+			checkscript_out=$(mawk -f ${checkscript} ${snofile_out})
+			echo "Info: ${checkscript} returned ${checkscript_out}."
+		else
+			checkscript_out=0
+		fi
+		if (( $(echo "${sim_depth} > ${min_sim_depth}" | bc -l) )) || (( ${checkscript_out} )) || (( ${spinup2} )) ; then
 			spinup=0
 			if (( ! ${dospinup2} )); then
 				# No second spinup
