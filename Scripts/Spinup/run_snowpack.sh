@@ -26,7 +26,7 @@ do
 	snofile="./snow_init/${stn}.sno"
 	cfgfile="./cfgfiles/${stn}.ini"
 
-	awk '{if(/station_id/) {stn_id=$NF} else if(/station_name/) {stn=$NF} else if(/latitude/) {lat=$NF} else if(/longitude/) {lon=$NF} else if(/altitude/) {alt=$NF} else if(/slope_angle/) {sl=$NF} else if(/slope_azi/) {azi=$NF} else if(/\[DATA\]/) {getline; getline; start=$1; exit}} END {
+	awk -v ignore_slope=${ignore_slope} '{if(/station_id/) {stn_id=$NF} else if(/station_name/) {stn=$NF} else if(/latitude/) {lat=$NF} else if(/longitude/) {lon=$NF} else if(/altitude/) {alt=$NF} else if(/slope_angle/) {sl=$NF} else if(/slope_azi/) {azi=$NF} else if(/\[DATA\]/) {getline; getline; start=$1; exit}} END {
 		print "SMET 1.1 ASCII";
 		print "[HEADER]";
 		print "station_id       = ", stn_id;
@@ -37,8 +37,8 @@ do
 		print "nodata           = -999";
 		print "ProfileDate      = ", start;
 		print "HS_Last          = 0.00";
-		print "SlopeAngle       = ", 1.*sl;
-		print "SlopeAzi         = ", 1.*azi;
+		print "SlopeAngle       = ", (1.-ignore_slope)*sl;
+		print "SlopeAzi         = ", (1.-ignore_slope)*azi;
 		print "nSoilLayerData   = 0";
 		print "nSnowLayerData   = 0";
 		print "SoilAlbedo       = 0.09";
