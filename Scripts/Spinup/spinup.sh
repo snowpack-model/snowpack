@@ -219,12 +219,12 @@ do
 			echo "ERROR: spinup interrupted since SNOWPACK did not write output *sno file: ${snofile_out}!"
 			exit
 		fi
+		if [ ! -e "${snofile_in}" ] || [ "${startover}" == 1 ]; then
+			bash ${time_shift_script} ${snow_init_dir}/${snofile} ${startdate} > ${snofile_in}
+		fi
 		startover=0
 		spinup=1
 		sim_depth=0
-		if [ ! -e "${snofile_in}" ]; then
-			bash ${time_shift_script} ${snow_init_dir}/${snofile} ${startdate} > ${snofile_in}
-		fi
 	fi
 
 	if (( ${spinup} )) || (( ${spinup2} )); then
