@@ -222,9 +222,9 @@ do
 		if [ ! -e "${snofile_in}" ] || [ "${startover}" == 1 ]; then
 			bash ${time_shift_script} ${snow_init_dir}/${snofile} ${startdate} > ${snofile_in}
 		fi
+		sim_depth=$(mawk 'BEGIN {s=0; d=0} {if(d) {s+=$2}; if(/\[DATA\]/) {d=1}} END {print s}' ${snofile_in})
 		startover=0
 		spinup=1
-		sim_depth=0
 	fi
 
 	if (( ${spinup} )) || (( ${spinup2} )); then
