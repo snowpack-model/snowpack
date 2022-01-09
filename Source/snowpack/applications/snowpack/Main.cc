@@ -455,6 +455,12 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	if (md.param_exists("ADV_HEAT"))
 		Mdata.adv_heat = md("ADV_HEAT");
 
+	// Temporarly copy Net_SW to iswr, the real iswr/rswr will be computed in setShortWave()
+	if (md.param_exists("NET_SW")) {
+		Mdata.iswr = md("NET_SW");
+		iswr_is_net = true;
+	}
+
 	// Add massbal parameters (surface snow melt, snow drift, sublimation), all mass fluxes in kg m-2 CALCULATION_STEP_LENGTH-1
 	if(md.param_exists("SMELT"))
 		Mdata.surf_melt = md("SMELT");
