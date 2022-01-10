@@ -58,13 +58,14 @@ namespace mio {
  * @param[in] algorithm The current algorithm's semantic name.
  * @param[in] i_parname The current meteo parameter's identifier.
  * @param[in] dflt_window_size The default grid resampling window size.
- * @param[in] Vector of arguments (user settings) for this algorithm.
+ * @param[in] vecArgs vector of arguments (user settings) for this algorithm.
  */
 GridResamplingAlgorithm::GridResamplingAlgorithm(const std::string& algorithm, const std::string& i_parname,
-	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
+	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 	: algo(algorithm), parname(i_parname), grid_window_size(dflt_window_size)
 {
 	//do nothing
+	(void)vecArgs;
 }
 
 /**

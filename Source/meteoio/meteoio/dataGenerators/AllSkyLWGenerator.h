@@ -48,6 +48,10 @@ namespace mio {
  * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
  *      - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
+ *  - CLOUDINESS_TYPE: normally, the cloudiness parametrization that might be needed to convert a clearness index (comparing the
+ * measured ISWR to the potential ISWR, see TauCLDGenerator for more as well as the supported parametrizations) is given for 
+ * each long wave parametrization but it is possible here to force it to a specific parametrization (default: the 
+ * cloudiness parametrization that belongs to the long wave parametrization);
  *  - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
@@ -79,7 +83,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
 		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(),
-		                 last_cloudiness(), model(OMSTEDT), clf_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
+		                 last_cloudiness(), model(OMSTEDT), cloudiness_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
@@ -97,7 +101,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		SunObject sun;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		parametrization model;
-		TauCLDGenerator::clf_parametrization clf_model;
+		TauCLDGenerator::clf_parametrization cloudiness_model;
 		bool use_rswr;
 };
 
