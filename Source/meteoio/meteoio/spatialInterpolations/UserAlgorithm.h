@@ -38,6 +38,8 @@ namespace mio {
  *		- TA::user::naming = YYYY-MM-DDThh.mm_PARAM searches for files named 2008-12-01T15.00_TA.asc.
  *  - TIME_CONSTANT: if true, use the same grid for all timesteps (default: false). If TIME_CONSTANT is set to true, files must be named according to:
  *    <b>{capitalized meteo parameter}.{ext}</b>, for example TA.asc.
+ *  - REGRID: if true, allows for regridding of the grids to match the DEM, using bilinear interpolation.
+ * Grids may differ in coverage and cell size with the DEM, but must be in the same coordinate system. If false, an error will be thrown if the georeferencing of the grid does not match the DEM.
  *
  *  If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
  * and provide a fallback. Therefore, it is not necessary to provide grids for all time steps but one can focuss on only the relevant and interesting
@@ -56,6 +58,7 @@ namespace mio {
  * PSUM::user::subdir = precip
  * PSUM::user::ext    = .dat
  * PSUM::user::naming = YYYY-MM-DDThh.mm.ss_PARAM
+ * PSUM::user::regrid = true
  *
  * TSG::algorithms    = USER     # read grids from GRID2DPATH using the GRID2D plugin
  * TSG::user::ext     = .asc
@@ -69,11 +72,13 @@ class USERInterpolation : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
+		double bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_nx, const size_t &org_ny, const double &x, const double &y);
+		Grid2DObject resample(const DEMObject& dem, const Grid2DObject& grid_in);
 		std::string getGridFileName() const;
 		GridsManager& gdm;
 		std::string filename, grid2d_path;
 		std::string subdir, file_ext, naming;
-		bool time_constant, lowest_priority;
+		bool allow_regridding, time_constant, lowest_priority;
 };
 
 } //end namespace mio
