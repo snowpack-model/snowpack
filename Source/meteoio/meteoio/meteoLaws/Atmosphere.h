@@ -97,6 +97,8 @@ class Atmosphere {
 
 		static double blkBody_Emissivity(const double& lwr, const double& T);
 		static double blkBody_Radiation(const double& ea, const double& T);
+		
+		static const double day_iswr_thresh; //threhold on ISWR above which it is considered to be daylight
 };
 
 } //end namespace

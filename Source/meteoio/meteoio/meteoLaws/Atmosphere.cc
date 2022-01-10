@@ -28,6 +28,8 @@
 #include <meteoio/IOUtils.h>
 
 namespace mio {
+const double Atmosphere::day_iswr_thresh = 40.;
+
 /**
  * @brief Calculate the black body emissivity
  * @param lwr longwave radiation emitted by the body (W m-2)
@@ -726,7 +728,7 @@ double Atmosphere::Lhomme_ilwr(const double& RH, const double& TA, const double&
 	static const double a=1.07, b=0.34;
 	double clf;
 	if (cloudiness==IOUtils::nodata) {
-		if (iswr_meas<=0. || iswr_clear_sky<=0.)
+		if (iswr_meas<=day_iswr_thresh || iswr_clear_sky<=day_iswr_thresh)
 			return IOUtils::nodata;
 		clf = 1. - iswr_meas/iswr_clear_sky;  //cloud fraction estimate
 		if (clf<0.) clf=0.;
@@ -804,7 +806,7 @@ double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const doubl
 {
 	double clf;
 	if (cloudiness==IOUtils::nodata) {
-		if (iswr_meas<=0. || iswr_clear_sky<=0.)
+		if (iswr_meas<=day_iswr_thresh || iswr_clear_sky<=day_iswr_thresh)
 			return IOUtils::nodata;
 		clf = 1. - iswr_meas/iswr_clear_sky;  //cloud fraction estimate
 		if (clf<0.) clf=0.;
@@ -890,7 +892,7 @@ double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const doubl
 			return IOUtils::nodata;
 		c = cloudiness;
 	} else {
-		if (iswr_meas<=0. || iswr_clear_sky<=0.)
+		if (iswr_meas<=day_iswr_thresh || iswr_clear_sky<=day_iswr_thresh)
 			return IOUtils::nodata;
 		c = Kasten_cloudiness(iswr_meas/iswr_clear_sky);
 	}
@@ -963,13 +965,12 @@ double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const
                                      const double& julian, const double& TZ,
                                      const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
 {
-	static const double iswr_thresh = 5.; //any iswr less than this is not considered as valid for Crawford
 	const double ND=IOUtils::nodata; //since we will do lots of comparisons with it...
 
 	if (RH!=ND && TA!=ND && cloudiness!=ND) {
 		return Omstedt_ilwr(RH, TA, cloudiness);
 	}
-	if (lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
+	if (lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>day_iswr_thresh) {
 		const double ilwr_p = Unsworth_ilwr(lat, lon, altitude, julian, TZ, RH, TA, ISWR);
 		if (ilwr_p!=ND) return ilwr_p; //it might have been that we could not compute (for low solar angles)
 	}
