@@ -32,12 +32,13 @@ namespace mio {
  * be ".asc". But the following arguments allow overriding it:
  *  - SUBDIR: look for grids in the provided subdirectory of GRID2DPATH;
  *  - EXT: use another file extension.
- * 
- * The files must be named according to the following schema: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc.
- * But the following argument allows overriding this.
+ *  - NAMING: provide file name template using YYYY for year, MM for month, DD for day, hh for hour, mm for minute, ss for second (optional) and PARAM for parameter name.
+ *		Examples:
+ *		- param::user::naming = YYYYMMDDhhmmss_PARAM (default) searches for files named: <b>{numeric date with second resolution}_{capitalized meteo parameter}.{ext}</b>, for example 20081201150000_TA.asc.
+ *		- TA::user::naming = YYYY-MM-DDThh.mm_PARAM searches for files named 2008-12-01T15.00_TA.asc.
  *  - TIME_CONSTANT: if true, use the same grid for all timesteps (default: false). If TIME_CONSTANT is set to true, files must be named according to:
  *    <b>{capitalized meteo parameter}.{ext}</b>, for example TA.asc.
- * 
+ *
  *  If no grid exists for a given timestamp and parameter, the algorithm returns a zero rating so any other interpolation algorithm can pickup
  * and provide a fallback. Therefore, it is not necessary to provide grids for all time steps but one can focuss on only the relevant and interesting
  * time steps. The following argument changes this behavior:
@@ -54,6 +55,7 @@ namespace mio {
  * PSUM::algorithms   = USER	# read grids from GRID2DPATH/precip with the ".dat" extension
  * PSUM::user::subdir = precip
  * PSUM::user::ext    = .dat
+ * PSUM::user::naming = YYYY-MM-DDThh.mm.ss_PARAM
  *
  * TSG::algorithms    = USER     # read grids from GRID2DPATH using the GRID2D plugin
  * TSG::user::ext     = .asc
@@ -70,7 +72,7 @@ class USERInterpolation : public InterpolationAlgorithm {
 		std::string getGridFileName() const;
 		GridsManager& gdm;
 		std::string filename, grid2d_path;
-		std::string subdir, file_ext;
+		std::string subdir, file_ext, naming;
 		bool time_constant, lowest_priority;
 };
 

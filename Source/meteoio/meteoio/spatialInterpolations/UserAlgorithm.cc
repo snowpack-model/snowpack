@@ -24,20 +24,22 @@ namespace mio {
 
 USERInterpolation::USERInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
                                                                  GridsManager& i_gdm)
-                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext(), time_constant(false), lowest_priority(false)
+                                : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), gdm(i_gdm), filename(), grid2d_path(), subdir(), file_ext(), naming("YYYYMMDDhhmmss_PARAM"), time_constant(false), lowest_priority(false)
 {
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SUBDIR") {
 			subdir = vecArgs[ii].second;
 		} else if (vecArgs[ii].first=="EXT") {
 			file_ext = vecArgs[ii].second;
+		} else if (vecArgs[ii].first=="NAMING") {
+			naming = vecArgs[ii].second;
 		} else if (vecArgs[ii].first=="TIME_CONSTANT") {
 			const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 			IOUtils::parseArg(vecArgs[ii], where, time_constant);
 		} else if (vecArgs[ii].first=="LOWEST_PRIORITY") {
 			const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 			IOUtils::parseArg(vecArgs[ii], where, lowest_priority);
-		} 
+		}
 	}
 
 	if (!subdir.empty()) subdir += "/";
@@ -52,7 +54,54 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 		filename = subdir + param + file_ext;
 	} else {
 		date = i_date;
-		filename = subdir + date.toString(Date::NUM) + "_" + param + file_ext;
+		std::string timenum = date.toString(Date::NUM);
+		std::string timestr = naming;
+		bool invalidnaming = false;
+		size_t pos = 0;
+		// Insert year
+		pos = naming.find("YYYY");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 4, timenum.substr(0, 4));
+		else
+			invalidnaming = true;
+		// Insert month
+		pos = naming.find("MM");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 2, timenum.substr(4, 2));
+		else
+			invalidnaming = true;
+		// Insert day
+		pos = naming.find("DD");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 2, timenum.substr(6, 2));
+		else
+			invalidnaming = true;
+		// Insert hours
+		pos = naming.find("hh");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 2, timenum.substr(8, 2));
+		else
+			invalidnaming = true;
+		// Insert minutes
+		pos = naming.find("mm");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 2, timenum.substr(10, 2));
+		else
+			invalidnaming = true;
+		// Insert seconds (optional)
+		pos = naming.find("ss");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 2, timenum.substr(12, 2));
+		// Insert param
+		pos = naming.find("PARAM");
+		if (pos!=std::string::npos)
+			timestr.replace(pos, 5, param);
+		else
+			invalidnaming = true;
+
+		if (invalidnaming) throw InvalidArgumentException("[E] Invalid NAMING key (" + naming + ") for "+algo+" interpolation algorithm.\n", AT);;
+
+		filename = subdir + timestr + file_ext;
 	}
 
 	if (!FileUtils::validFileAndPath(grid2d_path+"/"+filename)) {
