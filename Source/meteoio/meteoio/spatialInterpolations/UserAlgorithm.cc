@@ -57,7 +57,7 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 		filename = subdir + param + file_ext;
 	} else {
 		date = i_date;
-		std::string timenum = date.toString(Date::NUM);
+		const std::string timenum = date.toString(Date::NUM);
 		std::string timestr = naming;
 		bool invalidnaming = false;
 		size_t pos = 0;
@@ -102,7 +102,7 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 		else
 			invalidnaming = true;
 
-		if (invalidnaming) throw InvalidArgumentException("[E] Invalid NAMING key (" + naming + ") for "+algo+" interpolation algorithm.\n", AT);;
+		if (invalidnaming) throw InvalidArgumentException("[E] Invalid NAMING key (" + naming + ") for "+algo+" interpolation algorithm.\n", AT);
 
 		filename = subdir + timestr + file_ext;
 	}
@@ -111,7 +111,7 @@ double USERInterpolation::getQualityRating(const Date& i_date)
 		std::cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << grid2d_path+"/"+filename << "\n";
 		return 0.0;
 	}
-	
+
 	const bool has_data = FileUtils::fileExists(grid2d_path+"/"+filename);
 
 	if (!lowest_priority)

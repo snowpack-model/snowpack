@@ -417,6 +417,10 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	Mdata.rswr   = md(MeteoData::RSWR);
 
 	Mdata.ea  = md("EA");
+	if (md.param_exists("NET_LW"))
+		Mdata.lw_net = md("NET_LW");
+	else
+		Mdata.lw_net = IOUtils::nodata;
 	Mdata.tss = md(MeteoData::TSS);
 	if (md.param_exists("TSS_A12H") && (md("TSS_A12H") != mio::IOUtils::nodata))
 		Mdata.tss_a12h = md("TSS_A12H");

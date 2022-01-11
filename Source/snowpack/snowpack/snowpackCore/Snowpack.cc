@@ -628,7 +628,13 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 
 	const double lw_in  = emmisivity * Atmosphere::blkBody_Radiation(Mdata.ea, Tair);
 	Bdata.lw_out = emmisivity * Constants::stefan_boltzmann * Optim::pow4(Tss);
-	Bdata.lw_net = lw_in - Bdata.lw_out;
+	if (Mdata.lw_net == IOUtils::nodata) {
+		// Default
+		Bdata.lw_net = lw_in - Bdata.lw_out;
+	} else {
+		// NET_LW provided
+		Bdata.lw_net = Mdata.lw_net;
+	}
 
 	if (Mdata.geo_heat != IOUtils::nodata) {
 		// If geo_heat is provided in CurrentMeteo,  use it.
