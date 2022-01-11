@@ -2,11 +2,14 @@ shopt -s expand_aliases		# Make sure aliases work in non-interactive shells
 
 which_snowpack="./src/usr/bin/snowpack"
 
+
 # Check if mawk exist, otherwise create alias
 if ! command -v mawk &> /dev/null
 then
 	alias mawk="awk"
 fi
+
+ignore_slope=1		# Ignore slope information from smet file: 
 
 for f in ./smet/*smet
 do
@@ -26,8 +29,8 @@ do
 		print "nodata           = -999";
 		print "ProfileDate      = ", start;
 		print "HS_Last          = 0.00";
-		print "SlopeAngle       = ", 1.*sl;
-		print "SlopeAzi         = ", 1.*azi;
+		print "SlopeAngle       = ", (1.-ignore_slope)*sl;
+		print "SlopeAzi         = ", (1.-ignore_slope)*azi;
 		print "nSoilLayerData   = 0";
 		print "nSnowLayerData   = 0";
 		print "SoilAlbedo       = 0.09";
