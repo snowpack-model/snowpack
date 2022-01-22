@@ -1,7 +1,7 @@
 #!/bin/bash
 
-year_start=1996
-year_end=1997
+year_start=1995
+year_end=2004
 temporal_res=3600 # In seconds
 model="COSMO-2"
 
