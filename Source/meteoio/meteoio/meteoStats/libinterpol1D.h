@@ -52,6 +52,7 @@ class Interpol1D {
 		static double std_dev(const std::vector<double>& X);
 		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
 		static double corr(const std::vector<double>& z1, const std::vector<double>& z2);
+		static double Pearson(const std::vector<double>& X, const std::vector<double>& Y);
 		static double R2(const std::vector<double>& obs, const std::vector<double>& sim);
 		static double NashSuttcliffe(const std::vector<double>& obs, const std::vector<double>& sim);
 		static double getBoxMuller();

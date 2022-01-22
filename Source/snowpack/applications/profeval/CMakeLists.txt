@@ -21,7 +21,7 @@ IF(APPLE)
 ENDIF(APPLE)
 
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 IF(UNIX)
 	LIST(APPEND SN_LINKS "dl;pthread")

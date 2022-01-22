@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 SET(meteoFilters_sources
@@ -30,6 +31,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
 	meteoFilters/ProcRHWaterToIce.cc
+	meteoFilters/ProcShift.cc
 	meteoFilters/ProcTransformWindVector.cc
 	meteoFilters/FilterNoChange.cc
 	meteoFilters/FilterTimeconsistency.cc

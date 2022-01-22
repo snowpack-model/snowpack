@@ -36,7 +36,7 @@ namespace mio {
  * edition commands in the [InputEditing] section that can be stacked at will, per station ID. This is similar to the way that 
  * filters (\ref processing "processing elements") are also stacked together. In order to rectrict any editing to a 
  * specific set of time ranges, use the **when** option followed by a comma delimited list of date intervals (represented 
- * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), similarly to 
+ * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash) or individual dates, similarly to 
  * the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
  * @code
  * {stationID}::edit#            = {command}
@@ -46,7 +46,7 @@ namespace mio {
  * [InputEditing]
  * WFJ2::edit1         = EXCLUDE
  * WFJ2::arg1::params  = VW DW ISWR RSWR
- * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
+ * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30 , 2020-07-11T04:00
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
@@ -385,7 +385,7 @@ void EditingKeep::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// AUTOMERGE
 EditingAutoMerge::EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY_FIRST)
 {
 	parse_args(vecArgs);
 }
@@ -492,7 +492,7 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// MERGE
 EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY_FIRST)
 {
 	if (i_stationID=="*")
 		throw InvalidArgumentException("It is not possible to do a MERGE on the '*' stationID", AT);
@@ -524,7 +524,7 @@ void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::str
 	//check that the station does not merge with itself
 	if (tmp.count(stationID)>0)
 		throw InvalidArgumentException("A station can not merge with itself! Wrong argument in "+where, AT);
-	
+
 	if (merged_stations.empty()) throw InvalidArgumentException("Please provide a valid MERGE value for "+where, AT);
 }
 
@@ -567,7 +567,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	
 	for (size_t jj=0; jj<merged_stations.size(); jj++) {
 		const std::string fromStationID( IOUtils::strToUpper( merged_stations[jj] ) );
-		
+
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
 			if (IOUtils::strToUpper(vecMeteo[ii].front().getStationID()) != fromStationID) continue;
@@ -784,7 +784,7 @@ void EditingMetadata::mergeMigratedData(std::vector<METEO_SET>& vecMeteo, const 
 	}
 	
 	for (size_t station=0; station<vecTmp.size(); ++station) {
-		MeteoData::mergeTimeSeries(vecMeteo[new_station_pos], vecTmp[station], MeteoData::FULL_MERGE, MeteoData::CONFLICTS_PRIORITY);
+		MeteoData::mergeTimeSeries(vecMeteo[new_station_pos], vecTmp[station], MeteoData::FULL_MERGE, MeteoData::CONFLICTS_PRIORITY_FIRST);
 	}
 }
 

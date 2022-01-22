@@ -33,6 +33,7 @@ namespace mio {
 
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
+////////////////////////////////////////////////// SUPPR
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), op_mode(NONE)
 {
@@ -190,7 +191,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 		const Date current_date( ovec[ii].date );
 		if (current_date>previous_date) {
 			if (!start_ooo_period.isUndef()) {
-				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " points\n";
+				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " timestamp(s)\n";
 				start_ooo_period.setUndef(true);
 			}
 			previous_date = current_date;
@@ -219,7 +220,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 			previous_idx = ii;
 			nr_conflict_free_pts++;
 			if (!start_conflicts_period.isUndef() && nr_conflict_free_pts>1) {
-				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " timestamp(s)\n";
 				start_conflicts_period.setUndef(true);
 			}
 		} else {
@@ -241,7 +242,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	
 	//print any remaining conflicts, if any
 	if (!start_conflicts_period.isUndef()) {
-		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " timestamp(s)\n";
 	}
 	
 	//now really remove the points from the vector
@@ -249,6 +250,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 }
 
 
+////////////////////////////////////////////////// SHIFT
 TimeShift::TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), dst_changes()
 {
@@ -298,13 +300,13 @@ void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>&
 		
 		//when reverting back to winter time, timestamps are not in increasing order for an overlap period
 		if (ovec[ii].date<=prev_date) {
-			const double overlap = (dst_changes[next_idx].offset*sec2Jul-offset);
+			const double overlap = (dst_changes[next_idx].value*sec2Jul-offset);
 			if (ovec[ii].date>=(dst_changes[next_idx].date - overlap))
 				apply_change = true;
 		}
 		
 		if (apply_change) {
-			offset = dst_changes[next_idx].offset * sec2Jul;
+			offset = dst_changes[next_idx].value * sec2Jul;
 			next_idx++;
 			if (next_idx==Nset) break; //no more new corrections to expect
 		}
@@ -322,6 +324,7 @@ void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>&
 }
 
 
+////////////////////////////////////////////////// SORT
 TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg)
 {
@@ -345,6 +348,7 @@ void TimeSort::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
+////////////////////////////////////////////////// LOOP
 TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), req_start(), req_end(), match_date(), ref_start(), ref_end()
 {

@@ -25,65 +25,72 @@
 #include <algorithm>
 #include <fstream>
 
+//in alphabetical order
 #cmakedefine PLUGIN_ALPUG
 #cmakedefine PLUGIN_ARCIO
 #cmakedefine PLUGIN_ARGOSIO
-#cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_ARPSIO
-#cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_A3DIO
 #cmakedefine PLUGIN_DBO
-#cmakedefine PLUGIN_GRASSIO
-#cmakedefine PLUGIN_GEOTOPIO
-#cmakedefine PLUGIN_SMETIO
-#cmakedefine PLUGIN_SNIO
-#cmakedefine PLUGIN_PGMIO
-#cmakedefine PLUGIN_PMODIO
-#cmakedefine PLUGIN_IMISIO
-#cmakedefine PLUGIN_OSHDIO
-#cmakedefine PLUGIN_GRIBIO
-#cmakedefine PLUGIN_GOESIO
-#cmakedefine PLUGIN_PNGIO
 #cmakedefine PLUGIN_COSMOXMLIO
+#cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_GEOTOPIO
+#cmakedefine PLUGIN_GOESIO
+#cmakedefine PLUGIN_GRASSIO
+#cmakedefine PLUGIN_GRIBIO
+#cmakedefine PLUGIN_IMISIO
+#cmakedefine PLUGIN_METEOBLUE
 #cmakedefine PLUGIN_NETCDFIO
+#cmakedefine PLUGIN_OSHDIO
+#cmakedefine PLUGIN_PGMIO
+#cmakedefine PLUGIN_PNGIO
+#cmakedefine PLUGIN_PMODIO
 #cmakedefine PLUGIN_PSQLIO
 #cmakedefine PLUGIN_SASEIO
+#cmakedefine PLUGIN_SMETIO
+#cmakedefine PLUGIN_SNIO
 #cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/Argos.h>
-#include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/ARPSIO.h>
+#include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/CsvIO.h>
+#include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/Goes.h>
 #include <meteoio/plugins/GrassIO.h>
-#include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/PGMIO.h>
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/plugins/SNIO.h>
 
-#ifdef PLUGIN_COSMOXMLIO
-#include <meteoio/plugins/CosmoXMLIO.h>
-#endif
-
+//now for the plugins that bring special includes
 #ifdef PLUGIN_DBO
 #include <meteoio/plugins/DBO.h>
 #endif
 
-#ifdef PLUGIN_IMISIO
-#include <meteoio/plugins/ImisIO.h>
-#endif
-
-#ifdef PLUGIN_OSHDIO
-#include <meteoio/plugins/OshdIO.h>
+#ifdef PLUGIN_COSMOXMLIO
+#include <meteoio/plugins/CosmoXMLIO.h>
 #endif
 
 #ifdef PLUGIN_GRIBIO
 #include <meteoio/plugins/GRIBIO.h>
 #endif
 
+#ifdef PLUGIN_IMISIO
+#include <meteoio/plugins/ImisIO.h>
+#endif
+
+#ifdef PLUGIN_METEOBLUE
+#include <meteoio/plugins/MeteoBlue.h>
+#endif
+
 #ifdef PLUGIN_NETCDFIO
 #include <meteoio/plugins/NetCDFIO.h>
+#endif
+
+#ifdef PLUGIN_OSHDIO
+#include <meteoio/plugins/OshdIO.h>
 #endif
 
 #ifdef PLUGIN_PMODIO
@@ -152,6 +159,7 @@ namespace mio {
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>Grass grid files</td><td></td></tr>
  * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td></td>		<td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
+ * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>grid2d</td>		<td>PGM grid files</td><td></td></tr>
@@ -241,6 +249,9 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #endif
 #ifdef PLUGIN_DBO
 	if (plugin_name == "DBO") return new DBO(i_cfg);
+#endif
+#ifdef PLUGIN_METEOBLUE
+	if (plugin_name == "METEOBLUE") return new MeteoBlue(i_cfg);
 #endif
 #ifdef PLUGIN_NETCDFIO
 	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
@@ -352,6 +363,12 @@ void IOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters&
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
 	plugin->read2DGrid(grid_out, parameter, date);
+}
+
+void IOHandler::readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	IOInterface *plugin = getPlugin("GRID2D", "Input");
+	plugin->readPointsIn2DGrid(data, parameter, date, Pts);
 }
 
 void IOHandler::read3DGrid(Grid3DObject& grid_out, const std::string& i_filename)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2013-2021 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -35,6 +35,9 @@ namespace mio {
  * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
  * this offers the choice of several all-sky parametrizations, with the following arguments:
  *  - TYPE: specify which parametrization should be used, from the following:
+ *      - LHOMME -- from Lhomme et al. -- <i>"Estimating downward long-wave 
+ * radiation on the Andean Altiplano"</i>, Agric. For. Meteorol., <b>145</b>, 2007, 
+ * pp 139–148, doi:10.1016/j.agrformet.2007.04.007
  *      - CARMONA -- from Carmona et al., <i>"Estimation of daytime downward 
 * longwave radiation under clear and cloudy skies conditions over a sub-humid region."</i> Theoretical and applied climatology <b>115.1-2</b> (2014): 281-295.
  *      - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
@@ -45,12 +48,16 @@ namespace mio {
  * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
  *      - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
+ *  - CLOUDINESS_TYPE: normally, the cloudiness parametrization that might be needed to convert a clearness index (comparing the
+ * measured ISWR to the potential ISWR, see TauCLDGenerator for more as well as the supported parametrizations) is given for 
+ * each long wave parametrization but it is possible here to force it to a specific parametrization (default: the 
+ * cloudiness parametrization that belongs to the long wave parametrization);
  *  - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *
  * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
  * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
- * except for Crawford that provides its own parametrization.
+ * except for Crawford and Lhomme that provide their own parametrizations.
  * The last evaluation of cloud transmissivity is used all along during the times when no ISWR is available if such ratio
  * is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
@@ -76,13 +83,14 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
 		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(),
-		                 last_cloudiness(), model(OMSTEDT), clf_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
+		                 last_cloudiness(), model(OMSTEDT), cloudiness_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		typedef enum PARAMETRIZATION {
+			LHOMME,
 			CARMONA,
 			CRAWFORD,
 			KONZELMANN,
@@ -93,7 +101,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		SunObject sun;
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		parametrization model;
-		TauCLDGenerator::clf_parametrization clf_model;
+		TauCLDGenerator::clf_parametrization cloudiness_model;
 		bool use_rswr;
 };
 

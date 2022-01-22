@@ -71,12 +71,6 @@ class Snowpack {
 			DIRICHLET_BC
 		};
 
-		typedef enum SOIL_EVAP_MODEL {
-			EVAP_RESISTANCE,
-			EVAP_RELATIVE_HUMIDITY,
-			EVAP_NONE
-		} soil_evap_model;
-
 		double getParameterizedAlbedo(const SnowStation& Xdata,
 		                              const CurrentMeteo& Mdata) const;
 		double getModelAlbedo(const SnowStation& Xdata, CurrentMeteo& Mdata) const;
@@ -146,7 +140,7 @@ class Snowpack {
 		bool allow_adaptive_timestepping;
 		bool research_mode, useCanopyModel, enforce_measured_snow_heights, detect_grass;
 		bool soil_flux, useSoilLayers;
-		bool useNewPhaseChange;
+		bool coupled_phase_changes;
 		bool combine_elements;
 		int reduce_n_elements;
 		bool force_add_snowfall;
@@ -163,13 +157,13 @@ class Snowpack {
 		const static bool hydrometeor;
 		const static double snowfall_warning;
 		const static unsigned int new_snow_marker;
-		bool adjust_height_of_meteo_values;
+		bool adjust_height_of_meteo_values, adjust_height_of_wind_value;
 		bool advective_heat;
 		double heat_begin, heat_end;
 		double temp_index_degree_day, temp_index_swr_factor;
 		bool forestfloor_alb;
 		bool rime_index, newsnow_lwc, read_dsm;
-		soil_evap_model soil_evaporation;
+		std::string soil_evaporation, soil_thermal_conductivity;
 }; //end class Snowpack
 
 #endif

@@ -30,6 +30,7 @@ const std::vector<std::string> SnowpackInterface::grids_not_computed_in_worker{
 "TA",
 "RH",
 "VW",
+"VW_DRIFT",
 "DW",
 "PSUM",
 "PSUM_PH",
@@ -40,7 +41,8 @@ const std::vector<std::string> SnowpackInterface::grids_not_computed_in_worker{
 "ISWR_TERRAIN",
 "ILWR_TERRAIN",
 "ISWR_DIFF",
-"ISWR_DIR"};
+"ISWR_DIR",
+"WINDEROSIONDEPOSITION"};
 
 //sort the by increasing y and increasing x as a second key
 inline bool pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r)
@@ -100,7 +102,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   is_restart(is_restart_in), useCanopy(false), enable_simple_snow_drift(false), enable_lateral_flow(false), a3d_view(false),
                   do_io_locally(true), station_name(),glacier_katabatic_flow(false), snow_production(false), snow_grooming(false),
                   Tsoil_idx(), grids_start(0), grids_days_between(0), ts_start(0.), ts_days_between(0.), prof_start(0.), prof_days_between(0.),
-                  grids_write(true), ts_write(false), prof_write(false), snow_write(false), snow_poi_written(false), glacier_from_grid(false),
+                  grids_write(true), ts_write(false), prof_write(false), snow_write(false), write_poi_meteo(true), snow_poi_written(false), glacier_from_grid(false),
                   meteo_outpath(), outpath(), mask_glaciers(false), mask_dynamic(false), maskGlacier(), tz_out(0.),
                   sn_cfg(readAndTweakConfig(io_cfg, !pts.empty())), snowpackIO(sn_cfg), dimx(dem_in.getNx()), dimy(dem_in.getNy()), mpi_offset(0), mpi_nx(dimx),
                   landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
@@ -135,20 +137,20 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	if (mpicontrol.master()) {
 
-    bool write_dem_details=false;
-    io_cfg.getValue("WRITE_DEM_DETAILS", "output", write_dem_details,IOUtils::nothrow);
-    if(write_dem_details){
-      std::cout << "[i] Writing DEM details grids" << std::endl;
-      io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.slope), "DEM_SLOPE");
-      io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.azi), "DEM_AZI");
-      io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.curvature), "DEM_CURVATURE");
-    }
+		bool write_dem_details=false;
+		io_cfg.getValue("WRITE_DEM_DETAILS", "output", write_dem_details,IOUtils::nothrow);
+		if(write_dem_details){
+			std::cout << "[i] Writing DEM details grids" << std::endl;
+			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.slope), "DEM_SLOPE");
+			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.azi), "DEM_AZI");
+			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.curvature), "DEM_CURVATURE");
+		}
 
 		std::cout << "[i] SnowpackInterface initializing a total of " << mpicontrol.size();
 		if (mpicontrol.size()>1) std::cout << " processes with " << nbworkers;
 		else std::cout << " process with " << nbworkers;
 		if (nbworkers>1) std::cout << " workers";
-		else  std::cout << " worker";
+		else std::cout << " worker";
 		std::cout << " each using Snowpack " << snowpack::getLibVersion() << "\n";
 	}
 
@@ -161,7 +163,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		sn_cfg.getValue("GRIDS_PARAMETERS", "output", output_grids);
 		std::vector<double> soil_temp_depths;
 		sn_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
-		const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
+		const unsigned short max_Tsoil( SnGrids::TSOIL5 - SnGrids::TSOIL1 + 1 );
 		if (soil_temp_depths.size()>max_Tsoil)
 			throw InvalidArgumentException("Too many soil temperatures requested", AT);
 		for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
@@ -170,6 +172,18 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			const std::string ii_str(ss.str());
 			Tsoil_idx.push_back( ii_str );
 			output_grids.push_back( "TSOIL"+ii_str );
+		}
+		std::vector<double> snow_density_depths;
+		sn_cfg.getValue("SNOW_DENSITY_DEPTHS", "Output", snow_density_depths, IOUtils::nothrow);
+		const unsigned short max_rhosnow( SnGrids::RHO5 - SnGrids::RHO1 + 1 );
+		if (snow_density_depths.size()>max_rhosnow)
+			throw InvalidArgumentException("Too many snow densities requested", AT);
+		for (size_t ii=0; ii<snow_density_depths.size(); ii++) {
+			std::stringstream ss;
+			ss << (ii+1);
+			const std::string ii_str(ss.str());
+			Tsoil_idx.push_back( ii_str );
+			output_grids.push_back( "RHO"+ii_str );
 		}
 		SnowpackInterfaceWorker::uniqueOutputGrids(output_grids);
 	}
@@ -341,6 +355,7 @@ SnowpackInterface& SnowpackInterface::operator=(const SnowpackInterface& source)
 		ts_write = source.ts_write;
 		prof_write = source.prof_write;
 		snow_write = source.snow_write;
+		write_poi_meteo = source.write_poi_meteo;
 		snow_poi_written = source.snow_poi_written;
 		meteo_outpath = source.meteo_outpath;
 		tz_out = source.tz_out;
@@ -390,6 +405,7 @@ mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, con
 	tmp_cfg.getValue("PROF_WRITE", "Output", prof_write);
 	tmp_cfg.getValue("PROF_START", "Output", prof_start);
 	tmp_cfg.getValue("PROF_DAYS_BETWEEN", "Output", prof_days_between);
+	tmp_cfg.getValue("WRITE_POI_METEO", "Output", write_poi_meteo, IOUtils::nothrow);
 
 	tmp_cfg.getValue("METEOPATH", "Output", meteo_outpath);
 	tmp_cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
@@ -437,7 +453,7 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 	const bool isMaster = mpicontrol.master();
 
 	if (do_grid_output(date)) {
-		//no OpenMP pragma here, otherwise multiple threads might call an MPI allreduce_sum()
+		//no OpenMP pragma here, otherwise multiple threads might call an MPI reduce_sum()
 		for (size_t ii=0; ii<output_grids.size(); ii++) {
 			const size_t SnGrids_idx = SnGrids::getParameterIndex( output_grids[ii] );
 			mio::Grid2DObject grid( getGrid( static_cast<SnGrids::Parameters>(SnGrids_idx)) );
@@ -550,8 +566,17 @@ void SnowpackInterface::setSnowDrift(SnowDriftA3D& mydrift)
 
 	if (drift) {
 		for (size_t i = 0; i < workers.size(); i++) workers[i]->setUseDrift(true);
+		setSnowDrift();
+	}
+}
 
-		// Provide initial snow parameters to SnowDrift
+/**
+ * @brief Send required fields to SnowDrift module
+ */
+void SnowpackInterface::setSnowDrift()
+{
+	if (drift) {
+		// Provide snow parameters to SnowDrift
 		const Grid2DObject cH( getGrid(SnGrids::HS) );
 		const Grid2DObject sp( getGrid(SnGrids::SP) );
 		const Grid2DObject rg( getGrid(SnGrids::RG) );
@@ -570,10 +595,18 @@ void SnowpackInterface::setEnergyBalance(EnergyBalance& myeb)
 
 	eb = &myeb;
 	if (eb) {
-		for (size_t i = 0; i < workers.size(); i++){
-			workers[i]->setUseEBalance(true);
-		}
-		// Provide initial albedo to EnergyBalance
+		for (size_t i = 0; i < workers.size(); i++) workers[i]->setUseEBalance(true);
+		setEnergyBalance();
+	}
+}
+
+/**
+ * @brief Send required fields to EnergyBalance module
+ */
+void SnowpackInterface::setEnergyBalance()
+{
+	if (eb) {
+		// Provide albedo to EnergyBalance
 		const Grid2DObject alb( getGrid(SnGrids::TOP_ALB) );
 		eb->setAlbedo(alb);
 	}
@@ -790,12 +823,12 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 			return shortwave;
 		case SnGrids::ILWR:
 			return longwave;
-    case SnGrids::ISWR_TERRAIN:
-      return terrain_shortwave;
-    case SnGrids::ILWR_TERRAIN:
-      return terrain_longwave;
-    case SnGrids::ISWR_DIFF:
-		  return diffuse;
+		case SnGrids::ISWR_TERRAIN:
+			return terrain_shortwave;
+		case SnGrids::ILWR_TERRAIN:
+			return terrain_longwave;
+		case SnGrids::ISWR_DIFF:
+			return diffuse;
 		case SnGrids::ISWR_DIR:
 			return shortwave-diffuse-terrain_shortwave;
 		case SnGrids::WINDEROSIONDEPOSITION:
@@ -803,7 +836,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 		default: ; //so compilers do not complain about missing conditions
 	}
 
-	mio::Grid2DObject o_grid2D(dem, 0.); //so the allreduce_sum works
+	mio::Grid2DObject o_grid2D(dem, 0.); //so the reduce_sum works
 	size_t errCount = 0;
 	mio::Grid2DObject tmp_grid2D_(dem,mpi_offset, 0, mpi_nx, dimy);
 	mio::Grid2DObject tmp_grid2D(tmp_grid2D_,mio::IOUtils::nodata);
@@ -813,10 +846,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 		if (!tmp.empty()) {
 			for (size_t i=0; i<tmp_grid2D.getNx(); ++i){
 				for (size_t j=0; j<tmp_grid2D.getNy(); ++j){
-					if (tmp(i,j)!=mio::IOUtils::nodata)
-					{
-							tmp_grid2D(i,j)=tmp(i,j);
-					}
+					if (tmp(i,j)!=mio::IOUtils::nodata) tmp_grid2D(i,j)=tmp(i,j);
 				}
 			}
 		} else {
@@ -825,7 +855,7 @@ mio::Grid2DObject SnowpackInterface::getGrid(const SnGrids::Parameters& param) c
 	}
 	o_grid2D.grid2D.fill(tmp_grid2D.grid2D, mpi_offset, 0, mpi_nx, dimy);
 
-	MPIControl::instance().allreduce_sum(o_grid2D);
+	MPIControl::instance().reduce_sum(o_grid2D);
 	//with some MPI implementations, when transfering large amounts of data, the buffers might get full and lead to a crash
 
 	if (errCount>0) {
@@ -896,7 +926,11 @@ void SnowpackInterface::calcNextStep()
 
 	//Lateral flow
 	if (enable_lateral_flow) {
+#ifdef ENABLE_MPI
+		throw IOException("LATERAL_FLOW is not supported when using MPI.", AT);
+#else
 		calcLateralFlow();
+#endif
 	}
 
 	//Retrieve special points data and write files
@@ -908,20 +942,10 @@ void SnowpackInterface::calcNextStep()
 	}
 
 	// Gather data if needed and make exchange for SnowDrift
-	if (drift) {
-		const Grid2DObject cH( getGrid(SnGrids::HS) );
-		const Grid2DObject sp( getGrid(SnGrids::SP) );
-		const Grid2DObject rg( getGrid(SnGrids::RG) );
-		const Grid2DObject N3( getGrid(SnGrids::N3) );
-		const Grid2DObject rb( getGrid(SnGrids::RB) );
-		drift->setSnowSurfaceData(cH, sp, rg, N3, rb);
-	}
+	if (drift) setSnowDrift();
 
 	// Gather data if needed and make exchange for EnergyBalance
-	if (eb) {
-		const Grid2DObject alb( getGrid(SnGrids::TOP_ALB) );
-		eb->setAlbedo(alb);
-	}
+	if (eb) setEnergyBalance();
 
 	//make output
 	writeOutput(nextStepTimestamp);
@@ -1000,7 +1024,7 @@ void SnowpackInterface::writeOutputSpecialPoints(const mio::Date& date, const st
 
 	const ProcessDat Hdata; // empty ProcessDat, get it from where ??
 	for (size_t ii=0; ii<snow_pixel.size(); ii++) {
-		write_SMET(*meteo_pixel[ii], snow_pixel[ii]->meta, *surface_flux[ii]);
+		if (write_poi_meteo) write_SMET(*meteo_pixel[ii], snow_pixel[ii]->meta, *surface_flux[ii]);
 		if (TS) snowpackIO.writeTimeSeries(*snow_pixel[ii], *surface_flux[ii], *meteo_pixel[ii], Hdata, 0.);
 		if (PR) snowpackIO.writeProfile(date, *snow_pixel[ii]);
 	}
@@ -1194,6 +1218,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 
 	if (MPIControl::instance().master() || do_io_locally) {
 		const bool useSoil = sn_cfg.get("SNP_SOIL", "Snowpack");
+		const std::string variant = sn_cfg.get("VARIANT", "SnowpackAdvanced");
 		const std::string coordsys = sn_cfg.get("COORDSYS", "Input");
 		const std::string coordparam = sn_cfg.get("COORDPARAM", "Input", "");
 		Coords llcorner_out( dem.llcorner );
@@ -1221,7 +1246,10 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 						snow_stations_tmp.push_back( NULL );
 						continue;
 					}
-					snow_stations_tmp.push_back( new SnowStation(useCanopy, useSoil) );
+					snow_stations_tmp.push_back( new SnowStation(useCanopy, useSoil, true, (variant=="SEAICE")) );
+					if (snow_stations_tmp.back()->Seaice != NULL) {
+						snow_stations_tmp.back()->Seaice->ConfigSeaIce(sn_cfg);
+					}
 
 					SnowStation& snowPixel = *(snow_stations_tmp.back());
 					const bool is_special_point = SnowpackInterfaceWorker::is_special(pts, ix, iy);
@@ -1285,7 +1313,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 					station_idx << ix << "_" << iy;
 					snowPixel.meta.stationName = station_idx.str() + "_" + station_name;
 					snowPixel.meta.stationID = station_idx.str();
-					if (is_special_point) { //create SMET files for special points
+					if (is_special_point && write_poi_meteo) { //create SMET files for special points
 						write_SMET_header(snowPixel.meta, landuse(ix, iy));
 					}
 				}

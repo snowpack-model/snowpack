@@ -626,7 +626,7 @@ void SmetIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 			ss << "backup";
 		} else {
 			// >1: Label using timestamp
-			ss << "" << (int)(double(date.getUnixDate()) + double(0.5));
+			ss << "" << (date.toString(Date::NUM));
 		}
 		snofilename += ss.str();
 		hazfilename += ss.str();
@@ -954,7 +954,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 		os << "SWE MS_Water MS_Wind MS_Rain MS_SN_Runoff MS_Soil_Runoff MS_Sublimation MS_Evap MS_melt MS_freeze" << " ";	// 34-39: SWE (kg m-2), LWC (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), runoff at bottom of soil (kg m-2), sublimation and evaporation (both in kg m-2), mass melt, mass freeze (kg m^2); see also 52 & 93.
 														// Note: in operational mode, runoff at bottom of snowpack is expressed as kg m-2 h-1 when !cumsum_mass.
 	if (out_dhs)
-		os << "MS_Sublimation_dHS MS_Settling_dHS MS_Redeposit_dHS MS_Redeposit_dRHO" << " "; // snow height change from sublimation (mm), snow height change from settling (mm), snow height change from redeposition mode (mm), density change from redeposition mode (kg/m^3).
+		os << "MS_Snow_dHS MS_Sublimation_dHS MS_Settling_dHS MS_Erosion_dHS MS_Redeposit_dHS MS_Redeposit_dRHO" << " "; // snow height change from sublimation (mm), snow height change from settling (mm), snow height change from redeposition mode (mm), density change from redeposition mode (kg/m^3).
 	if (out_load)
 		os << "load "; // 50: Solute load at ground surface
 	if (out_t && !fixedPositions.empty()) {
@@ -1066,11 +1066,11 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	}
 	if (out_dhs) {
 		//"MS_Sublimation_dHS MS_Settling_dHS MS_Redeposit_dHS MS_Redeposit_dRHO"
-		plot_description << "snow_height_change_from_sublimation snow_height_change_from_settling snow_height_change_from_redeposition density_change_from_redeposition" << " ";
-		plot_units << "mm mm mm kg/m3" << " ";
-		units_offset << "0 0 0 0" << " ";
-		units_multiplier << "1 1 1 1" << " ";
-		plot_color << "0x8282A3 0x8282A3 0xA38282 0x82A382" << " ";
+		plot_description << "snow_height_change_from_snowfall snow_height_change_from_sublimation snow_height_change_from_settling snow_height_snow_from_wind_erosion snow_height_change_from_redeposition density_change_from_redeposition" << " ";
+		plot_units << "mm mm mm mm mm kg/m3" << " ";
+		units_offset << "0 0 0 0 0 0" << " ";
+		units_multiplier << "1 1 1 1 1 1" << " ";
+		plot_color << "0x8282A3 0x8282A3 0x8282A3 0x8282A3 0xA38282 0x82A382" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1191,7 +1191,8 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( Mdata.vw_drift );
 		data.push_back( Mdata.dw );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_HNW] );
-		data.push_back( M_TO_CM((Xdata.cH - Xdata.Ground)/cos_sl) );
+		const double ReferenceLevel = (!useReferenceLayer || Xdata.findMarkedReferenceLayer() == IOUtils::nodata) ? (0.) : (Xdata.findMarkedReferenceLayer() - Xdata.Ground);
+		data.push_back( M_TO_CM((Xdata.cH - ReferenceLevel - Xdata.Ground)/cos_sl) );
 		if (Xdata.mH!=Constants::undefined)
 			data.push_back( M_TO_CM((Xdata.mH - Xdata.Ground)/cos_sl) );
 		else
@@ -1226,8 +1227,10 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 	}
 
 	if (out_dhs) {
+		data.push_back( (Sdata.mass[SurfaceFluxes::MS_SNOW_DHS] != IOUtils::nodata) ? (M_TO_MM(Sdata.mass[SurfaceFluxes::MS_SNOW_DHS])/cos_sl) : (IOUtils::nodata) );
 		data.push_back( (Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] != IOUtils::nodata) ? (M_TO_MM(Sdata.mass[SurfaceFluxes::MS_SUBL_DHS])/cos_sl) : (IOUtils::nodata) );
 		data.push_back( (Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] != IOUtils::nodata) ? (M_TO_MM(Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS])/cos_sl) : (IOUtils::nodata) );
+		data.push_back( (Sdata.mass[SurfaceFluxes::MS_EROSION_DHS] != IOUtils::nodata) ? (M_TO_MM(Sdata.mass[SurfaceFluxes::MS_EROSION_DHS])/cos_sl) : (IOUtils::nodata) );
 		data.push_back( (Sdata.mass[SurfaceFluxes::MS_REDEPOSIT_DHS] != IOUtils::nodata) ? (M_TO_MM(Sdata.mass[SurfaceFluxes::MS_REDEPOSIT_DHS])/cos_sl) : (IOUtils::nodata) );
 		data.push_back( Sdata.mass[SurfaceFluxes::MS_REDEPOSIT_DRHO] );
 	}

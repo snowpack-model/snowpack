@@ -66,9 +66,10 @@ TerrainRadiationHelbig::TerrainRadiationHelbig(const mio::Config &cfg, const mio
 }
 
 void TerrainRadiationHelbig::getRadiation(mio::Array2D<double> &direct, mio::Array2D<double> &diffuse,
-										  mio::Array2D<double> &terrain, const mio::Array2D<double> &direct_unshaded_horizontal, const mio::Array2D<double> &total_ilwr, mio::Array2D<double> &sky_ilwr,
-										  mio::Array2D<double> &terrain_ilwr,
-										  double solarAzimuth, double solarElevation)
+                                          mio::Array2D<double> &terrain, const mio::Array2D<double>& /*direct_unshaded_horizontal*/, 
+                                          const mio::Array2D<double> &total_ilwr, mio::Array2D<double>& /*sky_ilwr*/,
+                                          mio::Array2D<double> &/*terrain_ilwr*/,
+                                          double /*solarAzimuth*/, double /*solarElevation*/)
 {
 	std::cout << "[i] Computing Helbig radiation" << std::endl;
 	tdir = direct;
@@ -103,7 +104,7 @@ int TerrainRadiationHelbig::SWTerrainRadiationStep(const double threshold_itEps_
 	// The coordinates of the next cell with the most unshoot radiation is writen in (*c,*d)
 	const int i_shoot = i_max_unshoot, j_shoot = j_max_unshoot; //variables for the grid cell with the most unshot radiation
 	double diffmax_sw = 0.;										// reference product for detecting the grid cell with most unshot shortwave radiation
-	const double diffmax_thres = 0.;							// threshold for when to stop looking for maximum cells
+	//const double diffmax_thres = 0.;							// threshold for when to stop looking for maximum cells
 	double eps_stern = 0.;										// stopping criterion
 	double be = 0.;												// matrix difference B^(k) - E resp. (L_sky + L_terrain) - L_sky
 	unsigned int s = 0;											// counts gathering patches, i.e. those patches within limited distance radius
@@ -271,7 +272,7 @@ int TerrainRadiationHelbig::LWTerrainRadiationStep(const double threshold_itEps_
 	lw_t(i_shoot, j_shoot) = 0;
 
 	// check for stopping the iteration
-	if (eps_stern <= threshold_itEps_LW || (n >= itMax_LW))
+	if (eps_stern <= threshold_itEps_LW || (n >= (unsigned)itMax_LW))
 	{
 		printf("[i] EBALANCE: LW converged after n=%u steps eps_stern <= %2.10lf with %u gathering patches\n", n, eps_stern, s);
 		printf("    time for LW %f seconds\n", (double)((clock() - t0) / CLOCKS_PER_SEC));
@@ -281,15 +282,15 @@ int TerrainRadiationHelbig::LWTerrainRadiationStep(const double threshold_itEps_
 	return 0;
 }
 
-void TerrainRadiationHelbig::ComputeTerrainRadiation(const bool &day, int i_max_unshoot, int j_max_unshoot, int i_max_unshoot_lw, int j_max_unshoot_lw)
+void TerrainRadiationHelbig::ComputeTerrainRadiation(const bool &day, int i_max_unshoot, int j_max_unshoot, int /*i_max_unshoot_lw*/, int /*j_max_unshoot_lw*/)
 {
 	// computes long wave and short wave terrain radiation using
 	// a Progressive Refinement Radiosity (e.g. Gortler et al. (1994)
 	// view factors are either stored or computed on the fly (according to vf_in_ram)
 	unsigned int n;			   // counts iteration steps
 	double threshold_itEps_SW; // stopping threshold for SW PR iteration
-	double threshold_itEps_LW; // stopping threshold for LW PR iteration
-	int itMax_LW;			   // maximum number of iteration steps for longwave emission
+	//double threshold_itEps_LW; // stopping threshold for LW PR iteration
+	//int itMax_LW;			   // maximum number of iteration steps for longwave emission
 	int converged = 0;		   // 0 until iterated solution reaches a certain accuracy
 	clock_t t0;
 
@@ -330,11 +331,11 @@ void TerrainRadiationHelbig::ComputeTerrainRadiation(const bool &day, int i_max_
 	// itEps_LW: LW radiosity stopping tolerance
 	// Two options:
 	//threshold_itEps_LW = itEps_LW * lw_start_l1 * viewFactorsHelbigObj.min_area * viewFactorsHelbigObj.min_vterr;
-	threshold_itEps_LW = itEps_LW * lw_start_l1 * viewFactorsHelbigObj.min_area * viewFactorsHelbigObj.min_vterr * (1 - viewFactorsHelbigObj.max_vterr) / (viewFactorsHelbigObj.max_vterr);
+	//threshold_itEps_LW = itEps_LW * lw_start_l1 * viewFactorsHelbigObj.min_area * viewFactorsHelbigObj.min_vterr * (1 - viewFactorsHelbigObj.max_vterr) / (viewFactorsHelbigObj.max_vterr);
 
 	// maximum number of iteration steps for longwave emission is limited to the number of
 	// grid cells per model domain
-	itMax_LW = dimx * dimy;
+	//itMax_LW = dimx * dimy;
 
 	//---> Block to uncomment to put back LW
 	// converged = 0;

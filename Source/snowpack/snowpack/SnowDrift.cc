@@ -104,6 +104,13 @@ static double get_fetch_length(const SnowpackConfig& cfg)
 	return fetch_length;
 }
 
+static double get_erosion_limit(const SnowpackConfig& cfg)
+{
+	double tmp_erosion_limit = Constants::undefined;
+	cfg.getValue("SNOW_EROSION_LIMIT", "SnowpackAdvanced", tmp_erosion_limit, IOUtils::nothrow);
+	return tmp_erosion_limit;
+}
+
 double SnowDrift::get_tau_thresh(const ElementData& Edata)
 {
 	// Compute basic quantities that are needed: friction velocity, z0, threshold vw
@@ -128,7 +135,7 @@ double SnowDrift::get_ustar_thresh(const ElementData& Edata)
 
 SnowDrift::SnowDrift(const SnowpackConfig& cfg) : saltation(cfg),
                      enforce_measured_snow_heights( get_bool(cfg, "ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack") ), snow_redistribution( get_redistribution(cfg) ), snow_erosion( get_erosion(cfg) ), alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ),
-                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), forcing("ATMOS")
+                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), erosion_limit( get_erosion_limit(cfg) ), forcing("ATMOS")
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 }
@@ -225,6 +232,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
 	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
 
+	double ustar = 0.;
 	if (windward || erosion || (forced_massErode < -Constants::eps2) || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
 		if (forcing == "MASSBAL") {
@@ -238,8 +246,10 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 			try {
 				if (enforce_measured_snow_heights && !windward) {
 					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
+					ustar = Mdata.ustar;
 				} else {
 					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
+					ustar = ustar_max;
 				}
 			} catch(const exception&) {
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Cannot compute mass flux of drifting snow!");
@@ -250,6 +260,17 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 
 		unsigned int nErode=0; // number of eroded elements
 		for(size_t e = nE; e --> Xdata.SoilNode; ) {
+			// Check for limits to halt erosion
+			if (erosion_limit != Constants::undefined && erosion_limit != 0.) {
+				// A positive value of erosion_limit denotes a snow density above which layer erosion is halted.
+				// A negative value of erosion_limit denotes that erosion is halted if a layer threshold friction velocity exceeds the actual friction velocity
+				if (erosion_limit > 0.) {
+					if (EMS[e].Rho > erosion_limit) break;
+				} else {
+					if (SnowDrift::get_ustar_thresh(EMS[e]) > ustar) break;
+				}
+			}
+
 			// Continue with mass erosion:
 			if (massErode >= 0.95 * EMS[e].M) {
 				// Erode at most one element with a maximal error of +- 5 % on mass ...
@@ -332,5 +353,6 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	} else {
 		Xdata.ErosionMass = 0.;
 	}
+	Sdata.mass[SurfaceFluxes::MS_EROSION_DHS] += Xdata.ErosionLength;
 	return;
 }

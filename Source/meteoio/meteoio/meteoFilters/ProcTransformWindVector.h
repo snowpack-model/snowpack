@@ -19,7 +19,6 @@
 #ifndef PROCTRANSFORMWINDVECTOR_H
 #define PROCTRANSFORMWINDVECTOR_H
 
-//#include <meteoio/meteoFilters/WindowedFilter.h> //use this one for filters relying on a data window, for example std_dev
 #include <meteoio/meteoFilters/ProcessingBlock.h> //use this one for all others
 
 #include <vector>
@@ -29,17 +28,21 @@ namespace mio {
 
 /**
  * @class ProcTransformWindVector
- * @brief This filter projects wind direction, and/or wind speed components, from WGS84 to a PROJ4 supported coordinate system,
- * defined by an EPSG code (requires PROJ4).
+ * @brief This filter reprojects wind direction, and/or wind speed components, between PROJ supported coordinate systems.
  * @details
- * The filter assumes the wind direction and/or the U and V wind speed components are defined in WGS84 (i.e, north/south is parallel
- * to longitude, and east/west is parallel to latitude). After transformation to a PROJ4 supported coordinate system defined by an
- * EPSG code, the wind direction is defined such that north/south is parallel to northing, and east/west is parallel to easting.
+ * The filter reprojects the wind direction and/or the U and V wind speed components defined by a PROJ supported coordinate system.
+ * For example, when the source coordinate system is WGS84, U and V components indicate flow along latitudes and longitudes, respectively.
+ * After using this filter to reproject to for example EPSG:3031 (Antarctic Polar Stereographic), U and V components will be directed
+ * along easting and northing, respectively.
+ *
  * The following arguments are supported:
- * - COORDPARAM: provides the target EPSG code for transformation
+ * - COORDPARAM_SRC:	provides the source coordinate system for the transformation. Provide EPSG code or a filename with a
+ * projection string. Leave empty, or use "4326" to specify WGS84.
+ * - COORDPARAM:	provides the target coordinate system for the transformation. Provide EPSG code or a filename with a
+ * projection string. Leave empty, or use "4326" to specify WGS84.
+ * - RACMO2:		Default: false. Set to true to properly deal with the rotated polar grid from RACMO2.
  *
  * @note
- * - If no COORDPARAM is provided, it is tried to read COORDPARAM from the [Input] section.
  * - If both DW and wind speed components are present and defined, all three variables will be recalculated, even when the filter is
  * only set to act on wind direction or wind speed components. This ensures consistency.
  * - When applying the filter on wind speed components, the filter needs to be specified for only one component (the other one is
@@ -52,24 +55,25 @@ namespace mio {
  * @author Nander Wever
  * @date   2020-06-10
  *
- * Example using wind direction:
+ * Example using wind direction, with source coordinate system described in the file racmo2.prj:
  * @code
- * DW::filter1		= TRANSFORMWINDVECTOR
- * DW::arg1::COORDPARAM	= 3031		; Antarctic Polar Stereographic
+ * DW::filter1			= TRANSFORMWINDVECTOR
+ * DW::arg1::COORDPARAM_SRC	= racmo2.prj	; file contains: "-m 57.295779506 +proj=ob_tran +o_proj=latlon +o_lat_p=-161.0 +lon_0=193.0"
+ * DW::arg1::COORDPARAM		= 3031		; Antarctic Polar Stereographic
  * @endcode
  * Example using wind speed components:
  * @code
- * U::filter1		= TRANSFORMWINDVECTOR
- * U::arg1::COORDPARAM	= 21781		; CH1903 / LV03 -- Swiss CH1903 / LV03
+ * U::filter1			= TRANSFORMWINDVECTOR
+ * U::arg1::COORDPARAM_SRC		= 4326		; WGS84
+ * U::arg1::COORDPARAM		= 21781		; CH1903 / LV03 -- Swiss CH1903 / LV03
  * @endcode
  */
 
-#ifdef PROJ4
+#ifdef PROJ
 	#include <proj_api.h>
 #endif
 
 class ProcTransformWindVector : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
-//class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
 		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		~ProcTransformWindVector();
@@ -80,21 +84,22 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-#ifdef PROJ4
+#ifdef PROJ
 		static std::string findUComponent(const MeteoData& md);
 		static std::string findVComponent(const MeteoData& md);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg);
-		void initPROJ4(void);
-		void WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
+		void initPROJ(void);
+		void TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out);
 
-		projPJ pj_latlong, pj_dest;
+		projPJ pj_src, pj_dest;
 
 		// The declarations below are needed when the copy constructor is called.
 		std::vector< std::pair<std::string, std::string> > vecArgs_i;
 		std::string name_i;
 		Config cfg_i;
 #endif
-		std::string t_coordparam;
+		std::string s_coordparam, t_coordparam;
+		bool RACMO2;		// to properly deal with the rotated polar grids from RACMO2
 };
 
 } //end namespace

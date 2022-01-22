@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/thirdParty/CMakeLists.txt")
@@ -7,19 +8,19 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoStats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoFilters/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoResampling/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/gridResampling/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/spatialInterpolations/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataGenerators/CMakeLists.txt")
 
-IF(PROJ4)
-	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
-	FIND_LIBRARY(LIBPROJ proj)
-	INCLUDE_DIRECTORIES(${LIBPROJ_INCLUDE_DIR})
+IF(PROJ)
+	FIND_PACKAGE(PROJ)
+	INCLUDE_DIRECTORIES(${PROJ_INCLUDE_DIRS})
 	IF(MSVC)
-		ADD_DEFINITIONS(/DPROJ4) #it looks like some VC++ versions don't support -D syntax
+		ADD_DEFINITIONS(/DPROJ) #it looks like some VC++ versions don't support -D syntax
 	ELSE(MSVC)
-		ADD_DEFINITIONS(-DPROJ4)
+		ADD_DEFINITIONS(-DPROJ)
 	ENDIF(MSVC)
-ENDIF(PROJ4)
+ENDIF(PROJ)
 
 SET(meteoio_sources
 	${thirdParty_sources}
@@ -37,13 +38,16 @@ SET(meteoio_sources
 	DataEditingAlgorithms.cc
 	IOHandler.cc
 	MeteoProcessor.cc
+	GridProcessor.cc
 	Meteo1DInterpolator.cc
 	Meteo2DInterpolator.cc
+	Grid1DInterpolator.cc
 	DataGenerator.cc
 	plugins/libacdd.cc
 	plugins/libsmet.cc
 	IOInterface.cc
 	${meteoResampling_sources}
+	${gridResampling_sources}
 	${spatialInterpolations_sources}
 	${plugins_sources}
 	${meteoLaws_sources}
@@ -78,7 +82,7 @@ ENDIF(GUI_EXCEPTIONS)
 IF(BUILD_SHARED_LIBS)
 	SET(SHAREDNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${SHAREDNAME} ${meteoio_sources})
-	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${LIBPROJ} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
+	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${PROJ_LIBRARIES} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
 	SET_TARGET_PROPERTIES(${SHAREDNAME} PROPERTIES
 		MACOSX_RPATH TRUE
 		PREFIX "${LIBPREFIX}"
@@ -101,7 +105,7 @@ IF(BUILD_STATIC_LIBS)
 	SET(STATICNAME ${PROJECT_NAME}_STATIC)
 	SET(STATICLIBNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${STATICNAME} STATIC ${meteoio_sources})
-	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${LIBPROJ} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
+	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${PROJ_LIBRARIES} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
 	SET_TARGET_PROPERTIES(${STATICNAME} PROPERTIES
 		MACOSX_RPATH TRUE
 		PREFIX "${LIBPREFIX}"

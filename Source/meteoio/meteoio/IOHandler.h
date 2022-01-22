@@ -47,6 +47,7 @@ class IOHandler : public IOInterface {
 		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list);
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
 		virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 

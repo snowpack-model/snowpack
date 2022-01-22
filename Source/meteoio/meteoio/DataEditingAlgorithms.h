@@ -118,8 +118,9 @@ class EditingSwap : public EditingBlock {
  * @brief MOVE input editing command
  * @details
  * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take 
- * multiple source names that will be processed in the order of declaration. Original names that are not found in the current
- * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
+ * multiple source names that will be processed in the order of declaration and renamed into a single 
+ * destination name. Original names that are not found in the current dataset will silently be ignored, 
+ * so it is safe to provide a list that contain many possible names:
  * 
  * @code
  * [InputEditing]
@@ -160,7 +161,7 @@ class EditingMove : public EditingBlock {
  * 
  * SLF2::edit1         = EXCLUDE
  * SLF2::arg3::params  = *
- * SLF2::arg3::when    = 2020-09-01 - 2020-09-03
+ * SLF2::arg3::when    = 2020-09-01 - 2020-09-03 , 2020-11-01T04:00
  * @endcode
  */
 class EditingExclude : public EditingBlock {
@@ -221,7 +222,7 @@ class EditingKeep : public EditingBlock {
  * parameter has priority). Please also note that which timestamps will be merged depends on the chosen merge 
  * strategy with the MERGE_STRATEGY option (see MeteoData::Merge_Type, by default it is MeteoData::EXPAND_MERGE). The handling 
  * of merge conflicts can be configured with the MERGE_CONFLICTS optional argument (see MeteoData::Merge_Conflicts, 
- * by default it is MeteoData::CONFLICTS_PRIORITY). Furthermore, a station can be merged into multiple other stations, 
+ * by default it is MeteoData::CONFLICTS_PRIORITY_FIRST). Furthermore, a station can be merged into multiple other stations,
  * but circular dependencies are prohibited (and checked for).
  *
  * @code

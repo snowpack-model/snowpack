@@ -467,13 +467,11 @@ double forcedErosion(const double hs, SnowStation& Xdata)
  * @param dhs_corr Correction on calculated snow depth (m)
  * @param mass_corr Mass correction (kg m-2)
  */
-void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_corr, double& mass_corr)
+void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_corr, double& mass_corr, const bool &prn_check)
 {
 	const size_t nE = Xdata.getNumberOfElements(), soil_node = Xdata.SoilNode;
 	const double cH = Xdata.cH - Xdata.Ground;    // Calculated snow depth
 	const double mH = Xdata.mH - Xdata.Ground;    // Enforced snow depth
-	//double cH_old;                                // Temporary snow depth
-	bool prn_CK = false;
 
 	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
@@ -486,10 +484,8 @@ void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_c
 	if ((mH + 0.03) < cH) {
 		dhs_corr = mH - cH;
 		mass_corr = forcedErosion(mH, Xdata);
-		if (prn_CK) { //HACK
-			prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Missed erosion event detected");
-			prn_msg(__FILE__, __LINE__, "msg-", Date(), "Measured Snow Depth:%lf   Computed Snow Depth:%lf",
-			        mH, cH);
+		if (prn_check) {
+			prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Missed erosion event detected, measured_hs=%lf m computed_hs=%lf m mass_corr=%lf cm", mH, cH, mass_corr);
 		}
 	} else if (cH > Constants::eps) { // assume settling error
 		double factor_corr=0., sum_total_correction=0.;
@@ -498,12 +494,6 @@ void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_c
 		if (EMS[nE-1].depositionDate.getJulian() <= EMS[soil_node].depositionDate.getJulian())
 			return;
 
-		if (prn_CK) { //HACK
-			prn_msg(__FILE__, __LINE__, "msg+", Mdata.date,
-			          "Small correction due to assumed settling error");
-			prn_msg(__FILE__, __LINE__, "msg-", Date(),
-			          "Enforced Snow Depth:%lf   Computed Snow Depth:%lf", mH, cH);
-		}
 		// Second find the normalization quantity, which we choose to be the age of the layer.
 		dhs_corr = mH - cH;
 		for (size_t e = soil_node; e < nE; e++) {
@@ -540,9 +530,7 @@ void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_c
 				if (age_fraction < 0.) {
 					age_fraction = 0.;
 				}
-				ddL = EMS[e].L
-				        * std::max(-0.9,
-			                 std::min(0.9, factor_corr * (1. - sqrt(age_fraction))));
+				ddL = EMS[e].L * std::max(-0.9, std::min(0.9, factor_corr * (1. - sqrt(age_fraction))));
 			} else {
 				ddL = 0.;
 			}
@@ -555,6 +543,10 @@ void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_c
 			EMS[e].L0 = EMS[e].L += ddL;
 			EMS[e].E  = EMS[e].Eps  = EMS[e].dEps = EMS[e].Eps_e = EMS[e].Eps_v = EMS[e].S = 0.0;
 		}
+		if (prn_check) {
+			prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Correction due to assumed settling error, measured_hs=%lf m computed_hs=%lf m mass_corr=%lf cm", mH, cH, mass_corr);
+		}
+		
 		// Update the overall height
 		Xdata.cH  = NDS[nE].z + NDS[nE].u;
 	} else {

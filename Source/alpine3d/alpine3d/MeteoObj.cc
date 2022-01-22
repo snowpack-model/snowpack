@@ -69,17 +69,26 @@ bool SnGrids::initStaticData()
 	paramname.push_back("STORE");
 	paramname.push_back("ERODEDMASS");
 	paramname.push_back("WINDEROSIONDEPOSITION");
+	paramname.push_back("MS_SNOW_DHS");
+	paramname.push_back("MS_SUBL_DHS");
+	paramname.push_back("MS_SETTLING_DHS");
+	paramname.push_back("MS_EROSION_DHS");
 	paramname.push_back("GLACIER");
 	paramname.push_back("GLACIER_EXPOSED");
 	paramname.push_back("ET");
-  paramname.push_back("ISWR_TERRAIN");
-  paramname.push_back("ILWR_TERRAIN");
-  paramname.push_back("ISWR_BELOW_CAN");
+	paramname.push_back("ISWR_TERRAIN");
+	paramname.push_back("ILWR_TERRAIN");
+	paramname.push_back("ISWR_BELOW_CAN");
 	paramname.push_back("TSOIL1");
 	paramname.push_back("TSOIL2");
 	paramname.push_back("TSOIL3");
 	paramname.push_back("TSOIL4");
 	paramname.push_back("TSOIL5");
+	paramname.push_back("RHO1");
+	paramname.push_back("RHO2");
+	paramname.push_back("RHO3");
+	paramname.push_back("RHO4");
+	paramname.push_back("RHO5");
 
 
 	if (paramname.size()!=(SnGrids::lastparam+1))
@@ -212,40 +221,31 @@ double MeteoObj::getTiming() const
 	return timer.getElapsed();
 }
 
-void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData, const bool& soil_flux)
+void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 {
 	//This function checks that the necessary input data are available for the current timestamp
-	unsigned int nb_ta=0, nb_tsg=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
-	unsigned int nb_ilwr_ta=0;
+	unsigned int nb_ta=0, nb_iswr=0, nb_rh=0, nb_ilwr=0;
+	unsigned int nb_iswr_ta_rh=0;
 
 	if (vecData.empty())
 		throw IOException("Vector of input meteo data is empty!", AT);
 
 	for (size_t ii=0; ii<vecData.size(); ii++) {
 		if (vecData[ii](MeteoData::TA) != IOUtils::nodata) nb_ta++;
-
-		if (vecData[ii](MeteoData::TSG) != IOUtils::nodata) nb_tsg++;
-
-		if (vecData[ii](MeteoData::ISWR) != IOUtils::nodata) nb_iswr++;
-
 		if (vecData[ii](MeteoData::RH) != IOUtils::nodata) nb_rh++;
+		if (vecData[ii](MeteoData::ILWR) != IOUtils::nodata) nb_ilwr++;
 
-		if (vecData[ii](MeteoData::ILWR) != IOUtils::nodata) {
-			nb_ilwr++;
-			//We need ILWR and TA at the same location (so that the emissivity can be computed)
-			//But since we rely on having one meteo1D station in the code, we also need ISWR at this place
-			//(since we use the location of the measurement for computations with ISWR)
-			if (vecData[ii](MeteoData::TA) != IOUtils::nodata && vecData[ii](MeteoData::ISWR) != IOUtils::nodata) nb_ilwr_ta++;
+		if (vecData[ii](MeteoData::ISWR) != IOUtils::nodata) {
+			nb_iswr++;
+			//We need ISWR and TA+RH at the same location (so that the splitting coefficient and atmospheric losses can be computed)
+			if (vecData[ii](MeteoData::TA) != IOUtils::nodata && vecData[ii](MeteoData::RH) != IOUtils::nodata) nb_iswr_ta_rh++;
 		}
 	}
 
-	if ( nb_ta==0 || nb_iswr==0 || nb_rh==0 || nb_ilwr==0) {
-		printf("nb(ta)=%d nb(iswr)=%d nb(rh)=%d nb(ilwr)=%d\n",nb_ta, nb_iswr, nb_rh, nb_ilwr);
-                throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
-	}
-	if ( nb_ilwr_ta==0 ) {
-		cout << "[e] For emissivity calculation, at least one set of both TA and ILWR are needed at the same station!\n";
-		throw IOException("Not enough input meteo data", AT);
+	if ( nb_ta==0 || nb_rh==0 || nb_ilwr==0 || nb_iswr==0 || nb_iswr_ta_rh==0 ) {
+		printf("nb(ta)=%d nb(rh)=%d nb(ilwr)=%d nb(iswr)=%d\n",nb_ta, nb_rh, nb_ilwr, nb_iswr);
+		if ( nb_iswr_ta_rh==0 ) cout << "[e] For short wave radiation calculation, at least one set of both TA, RH and ISWR are needed at the same station!\n";
+		throw IOException("Not enough input meteo data on "+vecData[0].date.toString(Date::ISO), AT);
 	}
 }
 
@@ -281,7 +281,7 @@ void MeteoObj::getMeteo(const Date& calcDate)
 
 	// Collect the Meteo values at each stations
 	io.getMeteoData(calcDate, vecMeteo);
-	checkInputsRequirements(vecMeteo, soil_flux);
+	checkInputsRequirements(vecMeteo);
 
 	// Now fill the 2D Meteo Fields. Keep in mind that snowdrift might edit these fields
 	fillMeteoGrids(calcDate);
@@ -349,6 +349,9 @@ void MeteoObj::setGlacierMask(const Grid2DObject& glacierMask)
 void MeteoObj::setDEM(const mio::DEMObject& in_dem)
 {
 	dem=in_dem;
+	dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE | DEMObject::NORMAL | DEMObject::CURVATURE));
+	dem.update();
+	dem.sanitize();
 }
 
 //this should only be called when "--nocompute" was set. So we consider that

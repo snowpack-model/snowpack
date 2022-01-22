@@ -223,7 +223,7 @@ void GoesIO::readRaw(const std::string& file_and_path, const Date& dateStart, co
 				continue;
 			}
 
-			float SF = ((A & 8) != 0)? -1 : 1;
+			float SF = ((A & 8) != 0)? -1.f : 1.f;
 			if ((A & 4) != 0) SF *= 0.01f;
 			if ((A & 2) != 0) SF *= 0.1f;
 			if ((A & 1) != 0) raw_data[ii-1] = 4096.;

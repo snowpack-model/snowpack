@@ -181,6 +181,7 @@ inline bool isTwoSpaces(const char& a, const char& b) { return (a == b) && (a ==
 inline bool isTwoTabs(const char& a, const char& b) { return (a == b) && (a == '\t'); }
 inline bool isInvalidChar(const char& c) { return (c < 32 || c > 126); }
 inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false; }
+inline bool isSpecialChar(const char& c, const std::set<char>& specialChars ) { if (specialChars.count(c)==0) return false; return true; }
 
 void removeDuplicateWhitespaces(std::string& line)
 { //remove consecutive occurrences of either spaces or tabs
@@ -203,6 +204,12 @@ void replaceInvalidChars(std::string& line, const char& rep /* = '\0' */)
 void removeQuotes(std::string& line)
 { //remove single and double quotation marks
 	const std::string::iterator close_str = std::remove_if(line.begin(), line.end(), &isQuote);
+	line.erase(close_str, line.end());
+}
+
+void removeChars(std::string& line, const std::set<char>& specialChars)
+{ //remove all specified characters if/when found
+	const std::string::iterator close_str = std::remove_if(line.begin(), line.end(), [specialChars](const char& c){if (specialChars.count(c)==0) return false; return true;});
 	line.erase(close_str, line.end());
 }
 

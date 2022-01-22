@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script extracts time series of average values for temperature, density, grain size, and volumetric ice, water and air content.
 #
-# Use extract_params.sh <pro-file> [d=<depth>]      - OR -      extract_params.sh <pro-file> [r=<density>]
+# Use extract_timeseries.sh <pro-file> [d=<depth>]      - OR -      extract_timeseries.sh <pro-file> [r=<density>]
 #  <pro file>: specify *.pro file
 #  <depth>   : specify depth from surface (m) over which calculations are done. If <depth> is negative, it calculates averages over the whole snow column.
 #  <density> : specify bulk density threshold (kg/m^3). Searching from bottom up, calculations start when the bulk density drops below this threshold.
@@ -14,20 +14,26 @@
 #  Usage examples:
 #  ===============
 #
-#  	bash extract_params.sh WFJ2.pro d=1 > WFJ2_ts.txt	# Extract variables over uppermost 1 m.
-#  	bash extract_params.sh WFJ2.pro r=500 > WFJ2_ts.txt	# Extract variables over part where the bulk density is less than 500 kg/m^3.
+#  	bash extract_timeseries.sh WFJ2.pro d=1 > WFJ2_ts.txt	# Extract variables over uppermost 1 m.
+#  	bash extract_timeseries.sh WFJ2.pro r=500 > WFJ2_ts.txt	# Extract variables over part where the bulk density is less than 500 kg/m^3.
 #
 #
 #  Integration example in python, read output in numpy array:
 #  ==========================================================
+#	# Example 1: directly parsing *.pro file
 #	import os;
 #	import numpy as np;
-#	numpy_array = np.array(os.popen('bash extract_params.sh WFJ2.pro d=1').read())
+#	numpy_array = np.array(os.popen('bash extract_timeseries.sh WFJ2.pro d=1').read())
+#
+#	# Example 2: unzipping an archive with a *.pro file
+#	import os;
+#	import numpy as np;
+#	numpy_array = np.array(os.popen('bash -c "bash extract_timeseries.sh <(unzip -p zip/WFJ2.zip *pro) d=1"').read())
 #
 #
 #  Integration example in R, read output into data frame:
 #  ==============================================
-#	data_frame <- system("bash extract_params.sh WFJ2.pro d=1", intern = TRUE)
+#	data_frame <- system("bash extract_timeseries.sh WFJ2.pro d=1", intern = TRUE)
 #
 
 

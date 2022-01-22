@@ -63,7 +63,9 @@ namespace IOUtils {
 	enum OperationMode {
 		STD, ///< default: extract timeseries from timeseries or grids from grids or spatially interpolate timeseries
 		VSTATIONS, ///< extract virtual stations as specified in the ini file
+		GRID_1DINTERPOLATE,  ///< temporally interpolate existing grids (must be enumerated before GRID_EXTRACT)
 		GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+		GRID_EXTRACT_PTS, ///< as GRID_EXTRACT, but queries plugin only for virtual stations points, instead of full grids
 		GRID_SMART, ///< extract all relevant grid points from a provided grid
 		GRID_ALL, ///< extract all grid points from a provided grid
 		GRID_RESAMPLE ///< generate a grid at a different resolution
@@ -224,6 +226,13 @@ namespace IOUtils {
 	* @param line The string to read and modify
 	*/
 	void removeQuotes(std::string& line);
+	
+	/**
+	* @brief Removes any character present in the provided set from the given line
+	* @param line The string to read and modify
+	* @param specialChars The characters to exclude
+	*/
+	void removeChars(std::string& line, const std::set<char>& specialChars);
 
 	/**
 	 * @brief Cleans up a string to be usable as, for example, a parameter name

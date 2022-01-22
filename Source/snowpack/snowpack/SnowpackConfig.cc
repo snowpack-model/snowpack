@@ -51,6 +51,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ALBEDO_AVERAGE_SCHMUCKI"] = "ALL_DATA";
 	advancedConfig["ALBEDO_AGING"] = "true";
 	advancedConfig["SOOT_PPMV"] = "0.0";
+	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
@@ -121,7 +122,8 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["CANOPY_HEAT_MASS"] = "true";
 	advancedConfig["CANOPY_TRANSMISSION"] = "true";
 	advancedConfig["FORESTFLOOR_ALB"] = "true";
-	advancedConfig["SOIL_EVAP_MODEL"] = "RELATIVE_HUMIDITY";
+	advancedConfig["SOIL_EVAP_MODEL"] = "EVAP_RESISTANCE";
+	advancedConfig["SOIL_THERMAL_CONDUCTIVITY"] = "FITTED";
 
 	//temporary keys for Stability until we decide for a permanent solution
 	advancedConfig["MULTI_LAYER_SK38"] = "false";
@@ -167,6 +169,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["PROF_FORMAT"] = "PRO";
 	outputConfig["PROF_DAYS_BETWEEN"] = "1";
 	outputConfig["PROF_START"] = "0";
+	outputConfig["PROF_ID_OR_MK"] = "ID";
 	outputConfig["SNOW_WRITE"] = "true";
 	outputConfig["SNOW"] = "SMET";
 	outputConfig["HAZ_WRITE"] = "true";
@@ -175,7 +178,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["TS_START"] = "0";
 	outputConfig["ACDD_WRITE"] = "false";
 	outputConfig["WRITE_PROCESSED_METEO"] = "false";
-	
+
 	TechSnowConfig["SNOW_GROOMING"] = "false";
 	TechSnowConfig["GROOMING_WEEK_START"] = "40";
 	TechSnowConfig["GROOMING_WEEK_END"] = "17";
@@ -325,7 +328,7 @@ void SnowpackConfig::setDefaults()
 		string value; getValue(it->first, "Output", value, IOUtils::nothrow);
 		if (value.empty()) addKey(it->first, "Output", it->second);
 	}
-	
+
 	for(map<string,string>::const_iterator it = TechSnowConfig.begin(); it != TechSnowConfig.end(); ++it) {
 		//[TechSnow] section
 		string value; getValue(it->first, "TechSnow", value, IOUtils::nothrow);

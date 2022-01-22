@@ -23,10 +23,11 @@ using namespace mio;
 using namespace std;
 
 EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config& cfg_in, const mio::DEMObject &dem_in)
-              : snowpack(NULL), terrain_radiation(NULL), radfields(), dem(dem_in), vecMeteo(),  dimx(dem_in.getNx()),
-                dimy(dem_in.getNy()), albedo(dem, 0.), direct_unshaded_horizontal(dimx, dimy, 0.),
-                direct(dimx, dimy, 0.), diffuse(dimx, dimy, 0.), reflected(dimx, dimy, 0.), timer(),
-                nbworkers(i_nbworkers), cfg(cfg_in)
+              : snowpack(NULL), terrain_radiation(NULL), radfields(), dem(dem_in), vecMeteo(), 
+                albedo(dem, 0.), direct_unshaded_horizontal(dem_in.getNx(), dem_in.getNy(), 0.),
+                direct(dem_in.getNx(), dem_in.getNy(), 0.), diffuse(dem_in.getNx(), dem_in.getNy(), 0.), 
+                reflected(dem_in.getNx(), dem_in.getNy(), 0.), timer(), cfg(cfg_in), 
+                dimx(dem_in.getNx()), dimy(dem_in.getNy()), nbworkers(i_nbworkers)
 {
 
 	MPIControl& instance = MPIControl::instance();
@@ -150,14 +151,11 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 		diffuse.fill(band_diffuse, startx, 0, nx, dimy);
 		direct_unshaded_horizontal.fill(band_direct_unshaded_horizontal, startx, 0, nx, dimy);
 	}
-	MPIControl::instance().allreduce_sum(direct);
-	MPIControl::instance().allreduce_sum(diffuse);
-	MPIControl::instance().allreduce_sum(direct_unshaded_horizontal);
+	MPIControl::instance().reduce_sum(direct);
+	MPIControl::instance().reduce_sum(diffuse);
+	MPIControl::instance().reduce_sum(direct_unshaded_horizontal);
 	double solarAzimuth, solarElevation;
 	radfields[0].getPositionSun(solarAzimuth, solarElevation);
-
-	if (hasSP())
-		terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
 
 	mio::Array2D<double> sky_ilwr(in_ilwr.grid2D);
 	mio::Array2D<double> terrain_ilwr(in_ilwr.grid2D);
@@ -167,7 +165,10 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 		// note: parallelization has to take place inside the TerrainRadiationAlgorithm implementations
 		terrain_radiation->setMeteo(albedo.grid2D, in_ta.grid2D);
 		terrain_radiation->getRadiation(direct, diffuse, reflected, direct_unshaded_horizontal,
-                                    in_ilwr.grid2D,sky_ilwr,terrain_ilwr, solarAzimuth, solarElevation);
+                                    in_ilwr.grid2D, sky_ilwr, terrain_ilwr, solarAzimuth, solarElevation);
+		if (hasSP()){
+			terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
+		}
 	}
 
 	if (MPIControl::instance().master())
@@ -192,7 +193,8 @@ void EnergyBalance::setMeteo(const mio::Grid2DObject& in_ilwr,
 	timer.stop();
 }
 
-void EnergyBalance::writeSP(const unsigned int max_steps){
+void EnergyBalance::writeSP(const unsigned int max_steps)
+{
 	if (hasSP()) terrain_radiation->writeSP(max_steps);
 }
 

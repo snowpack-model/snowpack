@@ -44,7 +44,8 @@ namespace mio {
  * such as the station name, ID, coordinates, etc
  *
  * @section csvio_units Units
- * **The final units MUST be SI**. If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
+ * **The final units MUST be <a href="https://www.bipm.org/documents/20126/41483022/SI-Brochure-9-EN.pdf">coherent derived SI units</a>** 
+ * (section 2.3.4 in the SI-Brochure). If not, the conversion offsets/factors must be provided to convert the data back to SI (see required keywords below)
  * or the units declared (in the headers) and supported by this plugin.
  *
  * @section csvio_keywords Keywords
@@ -62,9 +63,7 @@ namespace mio {
  * keys by \em "CSV#_" where \em "#" represents the station index). Of course, you can mix keys that are defined for all files with some keys only defined for a 
  * few specific files (the keys defined for a particular station have priority over the global version).
  * - CSV\#_DELIMITER: field delimiter to use (default: ','), use SPACE or TAB for whitespaces (in this case, multiple whitespaces directly following each other are considered to be only one whitespace);
- * - CSV\#_NODATA: a value that should be interpreted as \em nodata (default: NAN);
- * - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
- * - CSV\#_DEQUOTE: if set to true, all single and double quotes will be purged from each line \em before parsing (default: false);
+ * - CSV\#_NODATA: a space delimited list of strings (of course, this also contains numbers such as -6999) that should be interpreted as \em nodata (default: NAN NULL);
  * - <b>Headers handling</b>
  *    - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  *    - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
@@ -72,13 +71,17 @@ namespace mio {
  *    - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
  *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
+ * - <b>Data parsing restrictions</b>
+ *    - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
+ *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 " ;
+ *    - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to exclude from parsing (ie the lines within these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
+ *    - CSV\#_ONLY_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to restrict the parsing to (ie the lines outside of these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1, see also \ref csvio_special_fields "special field names");
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below (see also the \ref csvio_special_fields "special field names" for more); optional
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
- *    - CSV\#_SINGLE_PARAM_INDEX: if the parameter is identified by {PARAM} (see below), this sets the column number in which the parameter is found; optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
  *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
@@ -92,8 +95,8 @@ namespace mio {
  *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
  * - <b>Metadata</b>
- *    - CSV\#_NAME: the station name to use (if provided, has priority over the special headers);
- *    - CSV\#_ID: the station id to use (if provided, has priority over the special headers);
+ *    - CSV\#_NAME: a descriptive station name to use (if provided, has priority over the special headers);
+ *    - CSV\#_ID: the (short) station id to use (if provided, has priority over the special headers);
  *    - CSV\#_SLOPE: the slope angle in degrees at the station (if providing a slope, also provide an azimuth);
  *    - CSV\#_AZIMUTH: the slope azimuth in degrees from North at the station ;
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
@@ -159,7 +162,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - SLOPE (in degrees);
  * - AZI (for the slope azimuth, in degree as read from a compass);
  * - NODATA (string to interpret as nodata);
- * - PARAM (to identify the content of a file that only contains the time information and one meteorological parameter);
+ * - PARAM (the extracted metadata will replace the PARAM field either as found in the file's headers or in the CSV_FIELDS user configuration key);
  * - SKIP (skip this field).
  * 
  * If ID or NAME appear more than once in one specification string, their mutliple values will be appended.
@@ -254,6 +257,8 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * [InputEditing]
  * AUTOMERGE = true
  * @endcode
+ * Please note that here the file's headers will look like 'DATE;TIME;PARAM' which will allow PARAM to be replaced by
+ * the PARAM special value extracted from the file name.
  * 
  * In order to read a set of files and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature):
@@ -389,6 +394,12 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true),  location(), nodata(), purgeCharsSet(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), exclusion_idx(0), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) 
+{
+	//prepare default values for the nodata markers
+	setNodata( "NAN NULL" );
+}
+
 //parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
 //(since there can be multiple keys on the same line)
 std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec)
@@ -470,7 +481,7 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 	} else if (field_type=="NAME") {
 		if (name.empty()) name = field_val;
 	} else if (field_type=="NODATA") {
-			nodata = field_val;
+		setNodata( field_val );
 	} else if (field_type=="SKIP") {
 		return;
 	} else if (field_type=="PARAM") {
@@ -598,8 +609,13 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 void CsvParameters::parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames)
 {
 	const bool user_provided_field_names = (!fieldNames.empty());
-	if (headerFields.empty() && !user_provided_field_names)
-		throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS", AT);
+	if (headerFields.empty() && !user_provided_field_names) {
+		if (single_field.empty())
+			throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS (or a PARAM metadata)", AT);
+	}
+	
+	std::map<std::string, size_t> data_fields;
+	bool single_field_found = false;
 	
 	if (!user_provided_field_names) fieldNames = headerFields;
 	for (size_t ii=0; ii<fieldNames.size(); ii++) {
@@ -610,7 +626,12 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		IOUtils::replaceWhitespaces(tmp, '_');
 		if (tmp.empty()) continue;
 		
-		if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
+		if (tmp.compare("PARAM")==0) {
+			tmp = single_field;
+			if (single_field_found)
+				throw InvalidArgumentException("It is not possible to have more than one PARAM field!", AT);
+			single_field_found = true;
+		} else if (tmp.compare("TIMESTAMP")==0 || tmp.compare("TS")==0 || tmp.compare("DATETIME")==0) {
 			if (dt_as_decimal) 
 				date_cols.decimal_date = ii;
 			else 
@@ -659,6 +680,10 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		} else if (tmp.compare("ID")==0 || tmp.compare("STATIONID")==0) {
 			ID_col = ii;
 			skip_fields[ ii ] = true;
+		} else {
+			if (data_fields.count( tmp ) > 0)
+				throw InvalidArgumentException("Multiple definitions of the same field name either in column headers or user-provided CSV_FIELDS", AT);
+			data_fields[ tmp ] = ii;
 		}
 		
 		//tmp = identifyField( tmp ); //try to identify known fields
@@ -666,9 +691,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 	date_cols.updateMaxCol();
 	
 	//check for time handling consistency
-	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components). Identified fields: "+date_cols.toString(), AT);
-	if (dt_as_components && !single_field.empty())
-		throw InvalidArgumentException("It is not possible to provide date/time as individual components and declare CSV_SINGLE_PARAM_INDEX", AT);
+	if (!date_cols.isSet()) throw UnknownValueException("Please define how to parse the date and time information (as strings, decimal or components)", AT);
 
 	//if necessary, set the format to the appropriate defaults
 	if (!dt_as_decimal) {
@@ -685,20 +708,8 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 
 	//the user wants to keep only one column, find the one he wants...
 	//if there is a parameter name from the filename or header it has priority:
-	if (!single_field.empty() && !user_provided_field_names) {
-		if (ID_col!=IOUtils::npos) throw InvalidArgumentException("It is not possible set CSV_SINGLE_PARAM_INDEX when multiple stations are present within one single file with an ID field", AT);
-		if (single_param_idx < fieldNames.size()) { //an index for the parameter column was given by the user
-			fieldNames[single_param_idx] = single_field; //if this is wrongly date or time it has no effect on SMET output as long as we don't change date_cols.date_str
-		} else if (date_cols.date_str == date_cols.time_str && fieldNames.size() == 2) { //no index given but unambiguous
-			const size_t pidx = (date_cols.date_str == 0)? 1 : 0; //field that is not datetime
-			fieldNames[pidx] = single_field;
-		} else if (date_cols.date_str != date_cols.time_str && fieldNames.size() == 3) {
-			size_t pidx;
-			for (pidx = 0; pidx < 3; ++pidx) //look for 3rd field that is neither date nor time
-				if (pidx != date_cols.date_str && pidx != date_cols.time_str) break;
-			fieldNames[pidx] = single_field;
-		}
-	}
+	if (!single_field.empty() && data_fields.size()==1 && !single_field_found)
+		fieldNames[ data_fields.begin()->second ] = data_fields.begin()->first;
 }
 
 //very basic units parsing: a few hard-coded units are recognized and provide the necessary
@@ -738,6 +749,71 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 	}
 }
 
+void CsvParameters::setNodata(const std::string& nodata_markers)
+{
+	//by NOT calling clear(), we append the provided markers to potential previous ones
+	//(such as default values)
+	
+	std::vector<std::string> vecNodata;
+	const size_t nrElems = IOUtils::readLineToVec(nodata_markers, vecNodata);
+	
+	for (size_t ii=0; ii<nrElems; ii++) {
+		nodata.insert( vecNodata[ii] );
+		nodata.insert( "\""+vecNodata[ii]+"\"" );
+		nodata.insert( "'"+vecNodata[ii]+"'" );
+	}
+}
+
+void CsvParameters::setPurgeChars(const std::string& chars_to_purge)
+{
+	std::vector<std::string> vecPurge;
+	const size_t nrElems = IOUtils::readLineToVec(chars_to_purge, vecPurge);
+	char rest[32] = "";
+	
+	for (size_t ii=0; ii<nrElems; ii++) {
+		unsigned int c;
+		const char* c_str( vecPurge[ii].c_str() );
+		
+		if (vecPurge[ii].length()==1) { //the character has been directly given
+			purgeCharsSet.insert( vecPurge[ii][0] );
+		} else if (sscanf(c_str, "0x%2x%31s", &c, rest) == 1) { //hexadecimal
+			purgeCharsSet.insert( static_cast<char>(c) );
+		} else if (sscanf(c_str, "%3u%31s", &c, rest) == 1) { //hexadecimal
+			purgeCharsSet.insert( static_cast<char>(c) );
+		} else {
+			throw InvalidArgumentException("Invalid purge chars specification '"+std::string(c_str)+"' for the CSV plugin, please use either single chars or decimal notation", AT);
+		}
+	}
+}
+
+bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
+{
+	//As an optimimzation, we reuse the exclusion periods index over calls.
+	//Since line numbers should always be increasing, this should not be a problem
+	
+	if (linesExclusions.empty() || linenr>linesExclusions.back().end) {
+		hasExclusions = false;
+		return false; //no more exclusions to handle
+	}
+	
+	for (; exclusion_idx<linesExclusions.size(); exclusion_idx++) {
+		if (linesExclusions[ exclusion_idx ].in( linenr )) {
+			return true;
+		}
+		if (linenr<linesExclusions[ exclusion_idx ].start) break;
+	}
+	
+	return false;
+}
+
+bool CsvParameters::isNodata(const std::string& value) const
+{
+	if (value.empty()) return true;
+	if (nodata.find( value ) != nodata.end()) return true;
+	
+	return false;
+}
+
 //read and parse the file's headers in order to extract all possible information (including how to interpret the date/time information)
 void CsvParameters::setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx)
 {
@@ -759,39 +835,43 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	
 	const bool user_auto_wrap = date_cols.auto_wrap; //we might trigger it, so we must reset it after the pre-reading
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
-	size_t linenr=0;
+	size_t linenr=0, repeat_markers=0;
 	std::string line;
 	std::vector<std::string> headerFields; //this contains the column headers from the file itself
 	std::vector<std::string> tmp_vec; //to read a few lines of data
 	Date prev_dt;
 	size_t count_asc=0, count_dsc=0; //count how many ascending/descending timestamps are present
+	static const size_t min_valid_lines = 10; //we want to correctly parse at least that many lines before quitting our sneak peek into the file
 	const bool delimIsNoWS = (csv_delim!=' ');
 	const bool hasHeaderRepeatMk = (!header_repeat_mk.empty());
 	bool fields_ready = false;
 	try {
 		eoln = FileUtils::getEoln(fin);
-		for (size_t ii=0; ii<(header_lines+10); ii++) {
+		for (size_t ii=0; ii<(header_lines+1000); ii++) {
 			getline(fin, line, eoln); //read complete line
+			linenr++;
+			
 			IOUtils::trim(line);
 			if (fin.eof()) {
-				if (header_repeat_at_start) linenr++; //since it was not incremented when matching the repeat header marker
-				if (linenr>header_lines) break; //eof while reading the data section
+				if ((linenr-repeat_markers)>header_lines) break; //eof while reading the data section
 				std::ostringstream ss;
 				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
+			
 			if (hasHeaderRepeatMk && !header_repeat_at_start && line.find(header_repeat_mk)!=std::string::npos) {
 				header_repeat_at_start = true; //so we won't match another header_repeat_mk marker
-				continue; //the line count it not incremented so the special headers still keep logical indices
+				repeat_markers++;
+				continue;
 			}
-			linenr++;
+			
 			if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 			if (line.empty()) continue;
 			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
 			
-			if (meta_spec.count(linenr)>0) 
-				parseSpecialHeaders(line, linenr, meta_spec, lat, lon, easting, northing);
-			if (linenr==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
+			if (meta_spec.count(linenr-repeat_markers)>0) 
+				parseSpecialHeaders(line, linenr-repeat_markers, meta_spec, lat, lon, easting, northing); //do not count repeat_markers if any
+			if ((linenr-repeat_markers)==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				if (delimIsNoWS) { //even if header_delim is set, we expect the fields to be separated by csv_delim
 					IOUtils::cleanFieldName(line, false); //we'll handle whitespaces when parsing
 					IOUtils::readLineToVec(line, headerFields, csv_delim);
@@ -800,10 +880,10 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 					IOUtils::readLineToVec(line, headerFields);
 				}
 			}
-			if (read_units && linenr==units_headers)
+			if (read_units && (linenr-repeat_markers)==units_headers)
 				setUnits(line, csv_delim);
 
-			if (linenr<=header_lines) continue; //we are still parsing the header
+			if ((linenr-repeat_markers)<=header_lines) continue; //we are still parsing the header
 			if (!fields_ready) { //we should now have all the information from the headers, so build what we need for data parsing
 				parseFields(headerFields, csv_fields);
 				fields_ready=true;
@@ -820,6 +900,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				}
 				prev_dt = dt;
 			}
+			if (count_asc+count_dsc >= min_valid_lines) break; //we've add enough valid lines to understand the file, quitting
 		}
 	} catch (...) {
 		fin.close();
@@ -827,6 +908,8 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	}
 	fin.close();
 	date_cols.auto_wrap = user_auto_wrap; //resetting it since we might have triggered it
+	if (!date_cols.isSet()) 
+		throw NoDataException("Date and time parsing not properly initialized, please contact the MeteoIO developers!", AT);
 
 	if (count_dsc>count_asc) asc_order=false;
 	
@@ -1242,6 +1325,8 @@ void CsvIO::parseInputOutputSection()
 		if (!coords_specs.empty()) {
 			const Coords loc(coordin, coordinparam, coords_specs);
 			tmp_csv.setLocation(loc, name, id);
+		} else if (!coordin.empty()) { //coord system parameters in [INPUT], coordinates in csv files
+			tmp_csv.setLocation(Coords(coordin, coordinparam), name, id);
 		} else {
 			tmp_csv.setLocation(Coords(), name, id);
 		}
@@ -1254,32 +1339,27 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"AZIMUTH", "INPUT", azimuth, IOUtils::nothrow);
 		tmp_csv.setSlope(slope, azimuth);
 		
-		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", tmp_csv.nodata);
-		else cfg.getValue(dflt+"NODATA", "Input", tmp_csv.nodata, IOUtils::nothrow);
+		std::string csv_nodata;
+		if (cfg.keyExists(pre+"NODATA", "Input")) cfg.getValue(pre+"NODATA", "Input", csv_nodata);
+		else cfg.getValue(dflt+"NODATA", "Input", csv_nodata, IOUtils::nothrow);
+		tmp_csv.setNodata( csv_nodata );
 		
 		std::string delim_spec(","); //default delimiter
 		if (cfg.keyExists(pre+"DELIMITER", "Input")) cfg.getValue(pre+"DELIMITER", "Input", delim_spec);
 		else cfg.getValue(dflt+"DELIMITER", "Input", delim_spec, IOUtils::nothrow);
 		tmp_csv.setDelimiter(delim_spec);
 		
-		bool purgeQuotes=false;
-		if (cfg.keyExists(pre+"DEQUOTE", "Input")) cfg.getValue(pre+"DEQUOTE", "Input", purgeQuotes);
-		else cfg.getValue(dflt+"DEQUOTE", "Input", purgeQuotes, IOUtils::nothrow);
-		tmp_csv.setPurgeQuotes(purgeQuotes);
+		std::string PurgeCharsSpecs;
+		if (cfg.keyExists(pre+"PURGE_CHARS", "INPUT")) cfg.getValue(pre+"PURGE_CHARS", "INPUT", PurgeCharsSpecs);
+		else cfg.getValue(dflt+"PURGE_CHARS", "INPUT", PurgeCharsSpecs, IOUtils::nothrow);
+		if (!PurgeCharsSpecs.empty()) {
+			tmp_csv.setPurgeChars( PurgeCharsSpecs );
+		}
 		
 		char comments_mk='\n';
 		if (cfg.keyExists(pre+"COMMENTS_MK", "Input")) cfg.getValue(pre+"COMMENTS_MK", "Input", comments_mk);
 		else cfg.getValue(dflt+"COMMENTS_MK", "Input", comments_mk, IOUtils::nothrow);
 		if (comments_mk!='\n') tmp_csv.comments_mk = comments_mk;
-		
-		size_t single_parameter_index;
-		if (cfg.keyExists(pre+"SINGLE_PARAM_INDEX", "Input")) {
-			cfg.getValue(pre+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
-			tmp_csv.single_param_idx = single_parameter_index - 1; //counting starts at 1 in ini file
-		} else if (cfg.keyExists(dflt+"SINGLE_PARAM_INDEX", "Input")) {
-			cfg.getValue(dflt+"SINGLE_PARAM_INDEX", "Input", single_parameter_index);
-			tmp_csv.single_param_idx = single_parameter_index - 1;
-		}
 
 		std::string header_delim_spec;
 		if (cfg.keyExists(pre+"HEADER_DELIMITER", "Input"))
@@ -1304,9 +1384,6 @@ void CsvIO::parseInputOutputSection()
 		
 		if (cfg.keyExists(pre+"FIELDS", "Input")) cfg.getValue(pre+"FIELDS", "Input", tmp_csv.csv_fields);
 		else cfg.getValue(dflt+"FIELDS", "Input", tmp_csv.csv_fields, IOUtils::nothrow);
-		
-		if (tmp_csv.columns_headers==IOUtils::npos && tmp_csv.csv_fields.empty())
-			throw InvalidArgumentException("Please provide either CSV_COLUMNS_HEADERS (make sure it is <= CSV_NR_HEADERS) or CSV_FIELDS", AT);
 		
 		if (cfg.keyExists(pre+"FILTER_ID", "Input")) cfg.getValue(pre+"FILTER_ID", "Input", tmp_csv.filter_ID);
 		else cfg.getValue(dflt+"FILTER_ID", "Input", tmp_csv.filter_ID, IOUtils::nothrow);
@@ -1376,6 +1453,27 @@ void CsvIO::parseInputOutputSection()
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
+		
+		//handling of lines restrictions (either as ONLY or EXCLUDE statements)
+		std::string linesExclusionsSpecs;
+		if (cfg.keyExists(pre+"EXCLUDE_LINES", "INPUT")) cfg.getValue(pre+"EXCLUDE_LINES", "INPUT", linesExclusionsSpecs);
+		else cfg.getValue(dflt+"EXCLUDE_LINES", "INPUT", linesExclusionsSpecs, IOUtils::nothrow);
+		
+		std::string linesRestrictionsSpecs;
+		if (cfg.keyExists(pre+"ONLY_LINES", "INPUT")) cfg.getValue(pre+"ONLY_LINES", "INPUT", linesRestrictionsSpecs);
+		else cfg.getValue(dflt+"ONLY_LINES", "INPUT", linesRestrictionsSpecs, IOUtils::nothrow);
+		
+		if (!linesExclusionsSpecs.empty() || !linesRestrictionsSpecs.empty()) {
+			if (!linesExclusionsSpecs.empty() && !linesRestrictionsSpecs.empty()) 
+				throw InvalidArgumentException("It is not possible to provide both CSV_EXCLUDE_LINES and CSV_ONLY_LINES", AT);
+			if (!linesExclusionsSpecs.empty()) {
+				const std::vector< LinesRange > lrRange( initLinesRestrictions(linesExclusionsSpecs, "INPUT::CSV_EXCLUDE_LINES", false) );
+				tmp_csv.setLinesExclusions( lrRange );
+			} else {
+				const std::vector< LinesRange > lrRange( initLinesRestrictions(linesRestrictionsSpecs, "INPUT::CSV_ONLY_LINES", true) );
+				tmp_csv.setLinesExclusions( lrRange );
+			}
+		}
 		
 		std::string filename_spec;
 		if (cfg.keyExists(pre+"FILENAME_SPEC", "Input")) cfg.getValue(pre+"FILENAME_SPEC", "Input", filename_spec);
@@ -1460,19 +1558,21 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	//and now, read the data and fill the vector vecMeteo
 	std::vector<MeteoData> vecMeteo;
 	std::vector<std::string> tmp_vec;
-	const std::string nodata( params.nodata );
-	const std::string nodata_with_quotes( "\""+params.nodata+"\"" );
-	const std::string nodata_with_single_quotes( "\'"+params.nodata+"\'" );
-	const bool delimIsNoWS = (params.csv_delim!=' ');
-	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
 	const std::string filterID = (params.filter_ID.empty())? template_md.getStationID() : params.filter_ID; //necessary if filtering on stationID field
 	const char comments_mk = params.comments_mk;
+	const bool delimIsNoWS = (params.csv_delim!=' ');
+	const bool hasHeaderRepeat = (!params.header_repeat_mk.empty());
+	const bool purgeChars = params.hasPurgeChars();
+	bool has_exclusions = true; //this wil be set at the first call to params.excludeLine
 	Date prev_dt;
 	while (!fin.eof()){
 		getline(fin, line, params.eoln);
 		linenr++;
+		
+		if (has_exclusions && params.excludeLine( linenr, has_exclusions )) continue;
+		
 		if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
-		if (params.purgeQuotes) IOUtils::removeQuotes(line);
+		if (purgeChars) params.purgeChars(line);
 		IOUtils::trim( line );
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 		if (hasHeaderRepeat && line.find(params.header_repeat_mk)!=std::string::npos) {
@@ -1527,13 +1627,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		bool no_errors = true;
 		for (size_t ii=0; ii<tmp_vec.size(); ii++){
 			if (params.skip_fields.count(ii)>0) continue; //the user has requested this field to be skipped or this is a special field
-			if (tmp_vec[ii].empty() || tmp_vec[ii]==nodata || tmp_vec[ii]==nodata_with_quotes || tmp_vec[ii]==nodata_with_single_quotes) //treat empty value as nodata, try nodata marker w/o quotes
-				continue;
-			
-			if (tmp_vec[ii]=="NAN" || tmp_vec[ii]=="NULL") {
-				md( params.csv_fields[ii] ) = IOUtils::nodata;
-				continue;
-			}
+			if (params.isNodata( tmp_vec[ii] )) continue; //recognize nodata
 			
 			double tmp;
 			if (!IOUtils::convertString(tmp, tmp_vec[ii])) {

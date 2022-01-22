@@ -6,30 +6,30 @@ using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
 
 // Static varibales containing the results
-const double res_Lat []		= {46.752399,		46.668527,		46.338206,		46.996607,		46.191333,		46.539473,		46.647044};
-const double res_Lon []		= {9.946666,		8.064570,		8.853099,		9.037582,		6.827770,		7.561830,		8.740198};
-const double res_Alt []		= {2390,		2110,			2100,			1630,			2020,			2020,			2220};
-const double res_X []		= {791600,		647900,			708900,			721610,			552840,			609450,			699639};
-const double res_Y []		= {180975,		168780,			132850,			206300,			115725,			154250,			167027};
-const string res_ID []		= {"FLU2",		"FIR2",			"FRA2",			"GLA2",			"ILI2",			"OTT2",			"TUJ3"};
-const string res_Name []	= {"Fluela Hospiz",	"Schmidigen-Bidmeren",	"Efra",			"Guppen",		"Les Collines",		"Ottere",		"Nual"};
+const double res_Lat []		= {46.752399,		46.668527,			46.338206,			46.996607,			46.191333,			46.539473,			46.647044};
+const double res_Lon []		= {9.946666,		8.064570,			8.853099,			9.037582,			6.827770,			7.561830,			8.740198};
+const double res_Alt []		= {2390,			2110,				2100,				1630,				2020,				2020,				2220};
+const double res_X []		= {791600,			647900,				708900,				721610,				552840,				609450,				699639};
+const double res_Y []		= {180975,			168780,				132850,				206300,				115725,				154250,				167027};
+const string res_ID []		= {"FLU2",			"FIR2",				"FRA2",				"GLA2",				"ILI2",				"OTT2",				"TUJ3"};
+const string res_Name []	= {"Fluela Hospiz",	"Schmidigen-Bidmeren",	"Efra",			"Guppen",			"Les Collines",		"Ottere",			"Nual"};
 const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
-const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
-const double res_Met_1 []	= {263.2811074,		264.8240384,		265.6572426,		265.8351213,		264.9516688,		265.3552443,		263.9469165}; // TA
-const double res_Met_2 []	= {1.,			0.9669166667,		1.,			0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
-const double res_Met_3[]	= {273.6963,		274.3503833,		273.9969,		274.6983,		274.0971,		274.9251417,		274.0971}; // TSG
-const double res_Met_4[]	= {262.9366667,		266.1666667,		264.41,			268.9033333,		265.43,			266.89,			262.1966667}; // TSS
-const double res_Met_5 []	= {0.5875000001,	0.95,			1.894166667,		1.415833333,		0.35,			0.72,			1.47}; // HS
-const double res_Met_6 []	= {2.2,			1.2,			2.2,			0.2,			2.1,			0.6,			1.}; // VW
-const double res_Met_7 []	= {335.5833333,		144.4166666,		103.25,			213.0833333,		266.8333333,		239.5,			112.25}; // DW
+const double res_Met_0 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
+const double res_Met_1 []	= {263.8564879,		265.0744597,		266.1950635,		266.4899775,		265.1469832,		265.623974,			264.2723508}; // TA
+const double res_Met_2 []	= {1.,				0.9669166667,		1.,					0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
+const double res_Met_3 []	= {273.6963,		274.3503833,		273.9969,			274.6983,			274.0971,			274.9251417,		274.0971}; // TSG
+const double res_Met_4 []	= {262.9366667,		266.1666667,		264.41,				268.9033333,		265.43,				266.89,				262.1966667}; // TSS
+const double res_Met_5 []	= {0.5875000001,	0.95,				1.894166667,		1.415833333,		0.35,				0.72,				1.47}; // HS
+const double res_Met_6 []	= {2.2,				1.2,				2.2,				0.2,				2.1,				0.6,				1.}; // VW
+const double res_Met_7 []	= {335.5833333,		144.4166666,		103.25,				213.0833333,		266.8333333,		239.5,				112.25}; // DW
 const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
-const double res_Met_9 []	= {84.79166651,		81.29166661,		67.83333342,		50.37500004,		88.41666666,		85.45833337,		87.4999999}; //RSWR
+const double res_Met_9 []	= {53.83333397,		59.16666651,		51.25000000,		35.75000000,		60.91666651,		66.58333349,		62.58333349}; //RSWR
 const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
 const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
 const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TAU_CLD
-const double res_Met_13 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.,			0.}; // HNW
+const double res_Met_13 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.000,				0.}; // HNW
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
@@ -203,7 +203,7 @@ int main() {
 
 	// Compare data with hard coded values
 	if(vecMeteo.size() != 7) {
-		cerr << "ERROR on amout of Data read !!! \n";
+		cerr << "ERROR on amount of Data read !!! \n";
 		status = false;
 	}
 

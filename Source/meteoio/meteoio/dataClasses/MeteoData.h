@@ -59,6 +59,7 @@ class MeteoGrids {
 				OLWR, ///< Outgoing long wave radiation
 				LWR_NET, ///< Net long wave radiation
 				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
+				CLD, ///< Total cloud cover in oktas (see https://en.wikipedia.org/wiki/Okta)
 				HS, ///< Height of snow
 				PSUM, ///< Water equivalent of precipitations, either solid or liquid
 				PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
@@ -136,8 +137,9 @@ class MeteoData {
 		 * used to replace the nodata). How to handle conflicts is defined by the choice of conflicts resolution strategy. 
 		 */
 		typedef enum MERGE_CONFLICTS {
-				CONFLICTS_PRIORITY=0, ///< Station1 has priority over station 2
-				CONFLICTS_AVERAGE=1 ///< The merged value is the average of station1 and station2 
+				CONFLICTS_PRIORITY_FIRST=0, ///< Station1 has priority over station 2
+				CONFLICTS_PRIORITY_LAST=1, ///< Station2 has priority over station 1
+				CONFLICTS_AVERAGE=2 ///< The merged value is the average of station1 and station2
 		} Merge_Conflicts;
 
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
@@ -243,6 +245,9 @@ class MeteoData {
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const {return nrOfAllParameters;}
 
+		static MeteoGrids::Parameters findGridParam(const Parameters& mpar);
+		static Parameters findMeteoParam(const MeteoGrids::Parameters& gpar);
+
 		/**
 		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.
 		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
@@ -252,10 +257,10 @@ class MeteoData {
 		 * @param vec1 reference vector, highest priority
 		 * @param[in] vec2 extra vector to merge, lowest priority
 		 * @param[in] strategy how should the merge be done? (default: STRICT_MERGE)
-		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 * @return number of merge conflicts
 		 */
-		static size_t mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		static size_t mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
@@ -269,9 +274,9 @@ class MeteoData {
 		 * @param vec1 reference vector, highest priority
 		 * @param[in] vec2 extra vector to merge, lowest priority
 		 * @param[in] simple_merge if set to true, assume all stations are unique (ie. simply append vec2 to vec1), default: false
-		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 */
-		static void merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge=false, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		static void merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge=false, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
@@ -284,9 +289,9 @@ class MeteoData {
 		 * @param vec reference vector, highest priority
 		 * @param[in] meteo2 extra MeteoData object to merge, lowest priority
 		 * @param[in] simple_merge if set to true, assume all stations are unique (ie.simply append meteo2 to vec), default: false
-		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 */
-		static void merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge=false, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		static void merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge=false, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy within a vector of MeteoData.
@@ -299,9 +304,9 @@ class MeteoData {
 		 * @note the datasets are supposed to contain data at a given time stamp. If the stations don't match a
 		 * common time stamp, nothing is done
 		 * @param vec vector of stations
-		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 */
-		static void merge(std::vector<MeteoData>& vec, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		static void merge(std::vector<MeteoData>& vec, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy.
@@ -310,10 +315,10 @@ class MeteoData {
 		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
 		 * @param meteo1 reference MeteoData, highest priority
 		 * @param[in] meteo2 extra MeteoData to merge, lowest priority
-		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 * @return new MeteoData object resulting from the merge
 		 */
-		static MeteoData merge(MeteoData meteo1, const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		static MeteoData merge(MeteoData meteo1, const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy.
@@ -321,10 +326,10 @@ class MeteoData {
 		 * provided argument.
 		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
 		 * @param[in] meteo2 extra MeteoData to merge, lowest priority
-		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 * @return true if no conflicts were found
 		 */
-		bool merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY);
+		bool merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Check for data conflicts between two MeteoData objects

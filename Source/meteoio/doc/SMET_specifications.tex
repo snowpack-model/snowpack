@@ -2,7 +2,7 @@
 
 %%TODO: GSN has trouble with space delimited formats, it needs comma delimited...
 %opening
-\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 1.1}
+\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 1.2}
 \author{Mathias Bavay}
 
 \begin{document}
@@ -12,7 +12,7 @@
 \begin{abstract}
 The goal of this data format is to ease the exchange of meteorological point measurements by providing both the data and the metadata in an easy to interpret and to manipulate format. Data manipulations should be possible manually using a standard text editor or using some tools (shell scripting, awk, perl, as well as spreadsheets, R, as well as stadard programing languages). The format is versioned, which means that format updates could break backward compatibility if necessary.
 
-Compared to specification 1.0, when using a unit offset/multiplier, the multiplier is now applied \emph{before} the offset so that it is possible to easily force a whole column to nodata.
+Compared to specification 1.0, when using a unit offset/multiplier, the multiplier is now applied \emph{before} the offset so that it is possible to easily force a whole column to nodata. Compared to specification 1.1, the reflected short wave radiation has been renamed into RSWR (instead of OSWR).
 \end{abstract}
 
 \section{Requirements}
@@ -116,7 +116,7 @@ The field tyes are measurement parameter identifier chosen from the following li
 	\item[VW] Velocity Wind, in m/s
 	\item[DW] Direction Wind, in degrees, clockwise and north being zero degrees
 	\item[ISWR] Incoming Short Wave Radiation, in W/m$^2$
-	\item[OSWR] Reflected Short Wave Radiation, in W/m$^2$
+	\item[RSWR] Reflected Short Wave Radiation, in W/m$^2$ (previously OSWR)
 	\item[ILWR] Incoming Long Wave Radiation, in W/m$^2$
 	\item[OLWR] Outgoing Long Wave Radiation, in W/m$^2$
 	\item[PINT] Precipitation Intensity, in mm/h, as an average over the timestep

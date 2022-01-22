@@ -46,11 +46,11 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg, const char& rank,
 
 		if (algo_name=="ACCUMULATE" && mode==IOUtils::VSTATIONS && rank==1) {
 			//when doing VSTATIONS, the first pass must re-accumulate over the refresh rate while the second will do over the original user choice
-			const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "Input");
+			const std::string vstations_refresh_rate = cfg.get("VSTATIONS_REFRESH_RATE", "InputEditing");
 			const std::vector< std::pair<std::string, std::string> > vecArgs( 1, std::make_pair("PERIOD", vstations_refresh_rate));
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
 		} else {
-			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
+			const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getArgumentsForAlgorithm(parname, algo_name) );
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
 		}
 	}
@@ -118,7 +118,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::string& stat
 			it->second->resample(stationHash, index, elementpos, ii, vecM, md);
 		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			const std::string algo_name( getAlgorithmsForParameter(parname) );
-			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(parname, algo_name) );
+			const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getArgumentsForAlgorithm(parname, algo_name) );
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
 			mapAlgorithms[parname]->resample(stationHash, index, elementpos, ii, vecM, md);
 		}
@@ -154,33 +154,12 @@ std::string Meteo1DInterpolator::getAlgorithmsForParameter(const std::string& pa
 	return algo;
 }
 
-/**
- * @brief retrieve the resampling algorithm to be used for the 1D interpolation of meteo parameters.
- * The potential arguments are also extracted.
- * @param parname meteo parameter to deal with
- * @param algorithm algorithm name
- * @return vector of named arguments
- */
-std::vector< std::pair<std::string, std::string> > Meteo1DInterpolator::getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm) const
-{
-	const std::string key_prefix( parname+"::"+algorithm+"::" );
-	std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getValues(key_prefix, "Interpolations1D") );
-
-	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
-		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
-		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
-	}
-
-	return vecArgs;
-}
-
 Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {
 	if (this != &source) {
+		mapAlgorithms = source.mapAlgorithms;
 		window_size = source.window_size;
-		mapAlgorithms= source.mapAlgorithms;
+		enable_resampling = source.enable_resampling;
+		data_qa_logs = source.data_qa_logs;
 	}
 	return *this;
 }

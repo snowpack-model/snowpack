@@ -208,7 +208,6 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 
 				EMS[e].M += dM;
 				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dM;
-				Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] -= EMS[e].L;
 				ql -= dM*Constants::lh_sublimation/sn_dt;     // Update the energy used
 
 				// If present at surface, surface hoar is sublimated away
@@ -223,7 +222,13 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				// Keep layer if it is a soil layer inside the snowpack (for example with snow farming)
 				if(e>=Xdata.SoilNode) {
 					if(EMS[e].theta[SOIL]<Constants::eps) {
-						if (e>0) SnowStation::mergeElements(EMS[e-1], EMS[e], false, true);
+						if (e>0) {
+							const double height_in = EMS[e-1].L + EMS[e].L;
+							SnowStation::mergeElements(EMS[e-1], EMS[e], false, true);
+							Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] += EMS[e-1].L - height_in;
+						} else {
+							Sdata.mass[SurfaceFluxes::MS_SUBL_DHS] -= EMS[e].L;
+						}
 						// Now reduce the number of elements by one.
 						nE--;
 					}
@@ -393,7 +398,6 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
 		Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] -= topFlux * sn_dt;
 	}
-
 	double dHoar = 0.;
 	for (e = 0; e < nE; e++) {
 		EMS[e].M += deltaM[e];
@@ -477,6 +481,7 @@ void VapourTransport::LayerToLayer(SnowStation& Xdata, SurfaceFluxes& Sdata, dou
 	if (NDS[nN-1].hoar < 0.) {
 		NDS[nN-1].hoar = 0.;
 	}
+	WaterTransport::mergingElements(Xdata, Sdata);
 }
 
 void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
@@ -493,7 +498,7 @@ void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
 	if (Xdata.getNumberOfNodes() == Xdata.SoilNode+1) return;
 
 	try {
-		WaterTransport::adjustDensity(Xdata);
+		WaterTransport::adjustDensity(Xdata, Sdata);
 		LayerToLayer(Xdata, Sdata, ql);
 	} catch(const exception&){
 		prn_msg( __FILE__, __LINE__, "err", Mdata.date, "Error in transportVapourMass()");

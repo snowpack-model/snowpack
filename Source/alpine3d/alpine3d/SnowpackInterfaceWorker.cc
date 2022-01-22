@@ -50,6 +50,29 @@ inline double getSoilTemperature(const SnowStation& pixel, const double& depth)
 	}
 }
 
+//This is a function to retrieve snow density from the surface to a given depth for output purposes.
+inline double getSnowDensityDepth(const SnowStation& pixel, const double& depth)
+{
+	if(pixel.getNumberOfNodes() == 0) {
+		return IOUtils::nodata;
+	} else if(depth < 1e-5) {//we want the density of the surface element
+		return pixel.Edata[pixel.getNumberOfElements()-1].Rho;
+	} else {
+		size_t i = pixel.getNumberOfElements();
+		double H = 0.;
+		double M = 0.;
+		while (i-- > 0) {
+			const double dz = pixel.Edata[i].L;
+			H += dz;
+			M += dz * pixel.Edata[i].Rho;
+			if (H > depth) {
+				return (H==0)?(IOUtils::nodata):(M/H);
+			}
+		}
+		return (H==0)?(IOUtils::nodata):(M/H);
+	}
+}
+
 //This is a function to retrieve a given parameter at a given depth in the snow
 //for output purposes.
 inline double getValueAtDepth(const SnowStation& pixel, const double& depth)
@@ -135,7 +158,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
  : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), sn_techsnow(sn_cfg), dem(dem_in),
    dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), SnowStationsCoord(snow_stations_coord),
    isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
-   surface_flux(), soil_temp_depths(), calculation_step_length(0.), height_of_wind_value(0.),
+   surface_flux(), soil_temp_depths(), snow_density_depths(), calculation_step_length(0.), height_of_wind_value(0.),
    snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
    enable_simple_snow_drift(false), useDrift(false), useEBalance(false), useCanopy(false)
 {
@@ -159,11 +182,19 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 
 	//handle the soil temperatures
 	io_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
-	const unsigned short max_Tsoil( SnGrids::lastparam - SnGrids::TSOIL1 + 1 );
+	const unsigned short max_Tsoil( SnGrids::TSOIL5 - SnGrids::TSOIL1 + 1 );
 	if (soil_temp_depths.size()>max_Tsoil)
 		throw InvalidArgumentException("Too many soil temperatures requested", AT);
 	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
 		params.push_back( "TSOIL"+mio::IOUtils::toString(ii+1) );
+	}
+	//handle the snow densities
+	io_cfg.getValue("SNOW_DENSITY_DEPTHS", "Output", snow_density_depths, IOUtils::nothrow);
+	const unsigned short max_rhosnow( SnGrids::RHO5 - SnGrids::RHO1 + 1 );
+	if (snow_density_depths.size()>max_rhosnow)
+		throw InvalidArgumentException("Too many snow densities requested", AT);
+	for (size_t ii=0; ii<snow_density_depths.size(); ii++) {
+		params.push_back( "RHO"+mio::IOUtils::toString(ii+1) );
 	}
 	uniqueOutputGrids(params);
 	initGrids(params, grids_not_computed_in_worker);
@@ -224,12 +255,12 @@ void SnowpackInterfaceWorker::initGrids(std::vector<std::string>& params,
 		IOUtils::toUpper(params[ii]); //make sure all parameters are upper case
 
 		const size_t param_idx = SnGrids::getParameterIndex( params[ii] );
-    const auto position = std::find(grids_not_computed_in_worker.begin(),
-                         grids_not_computed_in_worker.end(),
-                         params[ii]);
-    if(position<grids_not_computed_in_worker.end()) {
-      continue;
-    }
+		const auto position = std::find(grids_not_computed_in_worker.begin(),
+						 grids_not_computed_in_worker.end(),
+						 params[ii]);
+		if(position<grids_not_computed_in_worker.end()) {
+			continue;
+		}
 		if (param_idx==IOUtils::npos)
 			throw UnknownValueException("Unknow meteo grid '"+params[ii]+"' selected for gridded output", AT);
 
@@ -388,8 +419,14 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				value = store(ii,jj); break;
 			case SnGrids::ERODEDMASS:
 				value = erodedmass(ii,jj) / snowPixel.cos_sl; break;
-			case SnGrids::WINDEROSIONDEPOSITION: // This grid does not exist on the workers, but may be requested, so return IOUtils::nodata in such cases.
-				value = IOUtils::nodata; break;
+			case SnGrids::MS_SNOW_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_SNOW_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_SNOW_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
+			case SnGrids::MS_SUBL_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_SUBL_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_SUBL_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
+			case SnGrids::MS_SETTLING_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_SETTLING_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_SETTLING_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
+			case SnGrids::MS_EROSION_DHS:
+				value = (surfaceFlux.mass[SurfaceFluxes::MS_EROSION_DHS] != IOUtils::nodata) ? (M_TO_MM(surfaceFlux.mass[SurfaceFluxes::MS_EROSION_DHS])/snowPixel.cos_sl) : (IOUtils::nodata); break;
 			case SnGrids::GLACIER:
 				value = (!snowPixel.isGlacier(true))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::GLACIER_EXPOSED:
@@ -400,13 +437,17 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 					value += useCanopy?(snowPixel.Cdata.transp+snowPixel.Cdata.intevap)/snowPixel.cos_sl:0; //slope2horiz
 					break;
 			default:
-				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::lastparam) //dealing with soil temperatures
+				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::TSOIL5) //dealing with soil temperatures
 				{
 					value = (soil_temp_depths.empty())? IOUtils::nodata : getSoilTemperature(snowPixel, soil_temp_depths[ it->first - SnGrids::TSOIL1 ]);
 				}
+				else if (it->first>=SnGrids::RHO1 && it->first<=SnGrids::RHO5) //dealing with snow densities
+				{
+					value = (snow_density_depths.empty())? IOUtils::nodata : getSnowDensityDepth(snowPixel, snow_density_depths[ it->first - SnGrids::RHO1 ]);
+				}
 				else
 				{
-          std::cout << it->first << std::endl;
+					std::cout << it->first << std::endl;
 					throw InvalidArgumentException("Invalid parameter requested", AT);
 				}
 		}
@@ -538,9 +579,10 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 				meteo.setStability(Meteo::MO_HOLTSLAG);
 			}
 		}
-
+		bool adjust_height_of_wind_value;
+		sn_cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
 		//compute ustar, psi_s, z0
-		meteo.compMeteo(meteoPixel, snowPixel, true);
+		meteo.compMeteo(meteoPixel, snowPixel, true, adjust_height_of_wind_value);
 		SurfaceFluxes surfaceFlux;
 		// run snowpack model itself
 		double dIntEnergy = 0.; //accumulate the dIntEnergy over the snowsteps

@@ -160,6 +160,8 @@ class Grid2DObject {
 		*/
 		bool empty() const;
 
+		bool allNodata() const;
+
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
 		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT
@@ -180,6 +182,13 @@ class Grid2DObject {
 		* values greater than the last threshold. Hence, you need one more id than threshold values.
 		*/
 		void binning(const std::vector<double>& thresholds, const std::vector<double>& ids);
+
+		/**
+		* @brief extract point values from grid
+		* @param Pts (const std::vector< std::pair<size_t, size_t> >) vector of pairs consisting of column, row to read
+		* @return vector of doubles holding the values of the points provided in Pts.
+		*/
+		std::vector< double > extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const;
 
 		Grid2DObject& operator=(const double& value); ///<Assignement operator
 

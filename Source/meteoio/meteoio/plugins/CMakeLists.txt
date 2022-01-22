@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
@@ -102,6 +103,13 @@ IF(PLUGIN_SASEIO)
 	SET(plugin_libs ${plugin_libs} ${MYSQL_LIBRARY})
 	SET(plugins_sources ${plugins_sources} plugins/SASEIO.cc)
 ENDIF(PLUGIN_SASEIO)
+
+IF(PLUGIN_METEOBLUE)
+	FIND_PACKAGE(CURL REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM ${CURL_INCLUDE_DIRS})
+	SET(plugin_libs ${plugin_libs} ${CURL_LIBRARIES})
+	SET(plugins_sources ${plugins_sources} plugins/MeteoBlue.cc)
+ENDIF(PLUGIN_METEOBLUE)
 
 IF(PLUGIN_NETCDFIO)
 	FIND_PACKAGE(NetCDF REQUIRED)

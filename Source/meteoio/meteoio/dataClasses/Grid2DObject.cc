@@ -459,6 +459,14 @@ bool Grid2DObject::empty() const {
 	return (grid2D.getNx()==0 && grid2D.getNy()==0);
 }
 
+bool Grid2DObject::allNodata() const {
+	for (size_t jj = 0; jj < grid2D.size(); ++jj) {
+		if (grid2D(jj) != IOUtils::nodata)
+			return false;
+	}
+	return true;
+}
+
 void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 {
 	cellsize = i_cellsize;
@@ -467,11 +475,12 @@ void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 {
+	static const double eps = 1.e-4;
 	const bool isSameLoc = grid2D.getNx()==target.grid2D.getNx() &&
 	                     grid2D.getNy()==target.grid2D.getNy() &&
 	                     llcorner==target.llcorner &&
 	                     (cellsize==target.cellsize 
-	                     || (ur_lat==target.ur_lat && ur_lon==target.ur_lon));
+	                     || (fabs(ur_lat-target.ur_lat) < eps && fabs(ur_lon-target.ur_lon) < eps));
 
 	return isSameLoc;
 }
@@ -493,6 +502,22 @@ void Grid2DObject::binning(const std::vector<double>& thresholds, const std::vec
 			grid2D(jj) = ids[ii];
 		}
 	}
+}
+
+std::vector< double > Grid2DObject::extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const
+{
+	size_t nx = getNx();
+	size_t ny = getNy();
+
+	//define return vector
+	std::vector < double > retVec;
+	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
+		double val = IOUtils::nodata;
+		if(it->first < nx && it->second < ny)
+			val=grid2D(it->first, it->second);
+		retVec.push_back(val);
+	}
+	return retVec;
 }
 
 double Grid2DObject::calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)

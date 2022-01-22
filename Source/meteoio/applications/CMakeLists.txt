@@ -1,6 +1,7 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 # IF(CMAKE_COMPILER_IS_GNUCXX)
 # 	SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
@@ -25,7 +26,7 @@ BuildVersion()
 
 #Handle the missing getopt on Windows
 IF(MSVC)
-	SET(getopt_src getopt.c getopt_long.c)
+	SET(getopt_src getopt.c)
 ENDIF(MSVC)
 
 #get the proper MeteoIO library

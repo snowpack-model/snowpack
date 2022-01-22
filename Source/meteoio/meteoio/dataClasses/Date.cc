@@ -117,9 +117,20 @@ Date::Date() : timezone(0.), gmt_julian(0.), undef(true)
 }
 
 /**
+* @brief Current date constructor: the object is created with the current system date and time
+* @param in_timezone timezone as an offset to GMT (in hours)
+*/
+Date::Date(const double& in_timezone)
+         : timezone(0.), gmt_julian(0.), undef(true)
+{
+	setTimeZone(in_timezone);
+	setFromSys();
+}
+
+/**
 * @brief Julian date constructor.
 * @param julian_in julian date to set
-* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_timezone timezone as an offset to GMT (in hours)
 */
 Date::Date(const double& julian_in, const double& in_timezone)
          : timezone(0.), gmt_julian(0.), undef(true)
@@ -201,7 +212,6 @@ void Date::setFromSys() {
 /**
 * @brief Set timezone and Daylight Saving Time flag.
 * @param in_timezone timezone as an offset to GMT (in hours)
-* @param in_dst is it DST?
 */
 void Date::setTimeZone(const double& in_timezone) {
 //please keep in mind that timezone might be fractional (ie: 15 minutes, etc)
@@ -1133,7 +1143,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 		case(ISO_Z):
 		case(ISO):
 			tmpstr
-			<< setw(4) << setfill('0') << year_out << "-"
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
@@ -1158,13 +1168,13 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			break;
 		case(ISO_DATE):
 			tmpstr
-			<< setw(4) << setfill('0') << year_out << "-"
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out;
 			break;
 		case(NUM):
 			tmpstr
-			<< setw(4) << setfill('0') << year_out
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out)
 			<< setw(2) << setfill('0') << month_out
 			<< setw(2) << setfill('0') << day_out
 			<< setw(2) << setfill('0') << hour_out
@@ -1173,7 +1183,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			break;
 		case(FULL):
 			tmpstr
-			<< setw(4) << setfill('0') << year_out << "-"
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
@@ -1186,7 +1196,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			tmpstr
 			<< setw(2) << setfill('0') << day_out << "."
 			<< setw(2) << setfill('0') << month_out << "."
-			<< setw(4) << setfill('0') << year_out << " "
+			<< ( (year_out < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(year_out) << " "
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out << ":"
 			<< setw(2) << setfill('0') << whole_sec << subsec_str;
@@ -1196,7 +1206,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 			int ISO_year;
 			const int ISO_week = getISOWeekNr(ISO_year, gmt);
 			tmpstr
-			<< setw(4) << setfill('0') << ISO_year << "-W"
+			<< ( (ISO_year < 0) ? ("-") : ("") ) << setw(4) << setfill('0') << abs(ISO_year) << "-W"
 			<< setw(2) << setfill('0') << ISO_week << "-"
 			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
 			break;

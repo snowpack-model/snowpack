@@ -1,6 +1,7 @@
 #!/bin/sh
-#This script converts a given smet file into an XmGrace format
-#to automatically, on-the-fly convert smet to agr directly in xmgrace, add the following line to your gracerc:
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# This script converts a given smet file into an XmGrace format
+# to automatically, on-the-fly convert smet to agr directly in xmgrace, add the following line to your gracerc:
 # DEFINE IFILTER "smet2agr.sh %s" PATTERN "*.smet"
 
 INPUT=$1

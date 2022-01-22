@@ -83,6 +83,14 @@ void IOInterface::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Param
 	throw IOException("Nothing implemented here", AT);
 }
 
+void IOInterface::readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts)
+{
+	// If plugins do not implement their own readPointsIn2DGrid, use generic version (i.e., get full grid and extract points).
+	Grid2DObject grid2D;
+	read2DGrid(grid2D, parameter, date);
+	data = grid2D.extractPoints(Pts);
+}
+
 void IOInterface::read3DGrid(Grid3DObject& /*grid_out*/, const std::string& /*parameter=""*/)
 {
 	throw IOException("Nothing implemented here", AT);
@@ -165,6 +173,74 @@ void IOInterface::set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, co
 double IOInterface::computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)
 {
 	return Grid2DObject::calculate_XYcellsize(vecX, vecY);
+}
+
+void IOInterface::mergeLinesRanges(std::vector< LinesRange >& lines_specs)
+{
+	std::sort(lines_specs.begin(), lines_specs.end()); //in case of identical start dates, the oldest end date comes first
+	for (size_t ii=0; ii<(lines_specs.size()-1); ii++) {
+		if (lines_specs[ii]==lines_specs[ii+1]) {
+			//remove exactly identical ranges
+			lines_specs.erase(lines_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
+			ii--; //we must redo the current element
+		} else if (lines_specs[ii].start==lines_specs[ii+1].start || lines_specs[ii].end >= lines_specs[ii+1].start) {
+			//remove overlapping ranges. Since the vector is sorted on (start, end), the overlap criteria is very simplified!
+			lines_specs[ii].end = std::max(lines_specs[ii].end, lines_specs[ii+1].end);
+			lines_specs.erase(lines_specs.begin()+ii+1);
+			ii--; //we must redo the current element
+		}
+	}
+}
+
+//we assume that the first line is line 1
+//if we don't receive any specifications, we return an empty vector (both for an empty EXCLUDE or an empty ONLY)
+std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& args, const std::string& where, const bool& negate)
+{
+	std::vector<LinesRange> lines_specs;
+	if (args.empty()) return lines_specs;
+	
+	std::vector<std::string> vecString;
+	const size_t nrElems = IOUtils::readLineToVec(args, vecString, ',');
+	
+	for (size_t ii=0; ii<nrElems; ii++) {
+		size_t l1, l2;
+		const size_t delim_pos = vecString[ii].find(" - ");
+		if (delim_pos==std::string::npos) {
+			if (!IOUtils::convertString(l1, vecString[ii]))
+				throw InvalidFormatException("Could not process line number restriction "+vecString[ii]+" for "+where, AT);
+			lines_specs.push_back( LinesRange(l1, l1) );
+		} else {
+			if (!IOUtils::convertString(l1, vecString[ii].substr(0, delim_pos)))
+				throw InvalidFormatException("Could not process line number restriction "+vecString[ii].substr(0, delim_pos)+" for "+where, AT);
+			if (!IOUtils::convertString(l2, vecString[ii].substr(delim_pos+3)))
+				throw InvalidFormatException("Could not process line number restriction "+vecString[ii].substr(delim_pos+3)+" for "+where, AT);
+			lines_specs.push_back( LinesRange(l1, l2) );
+		}
+	}
+
+	if (lines_specs.empty()) return lines_specs;
+	
+	//now sort the vector and merge overlapping ranges
+	mergeLinesRanges(lines_specs);
+	
+	if (!negate) {
+		return lines_specs;
+	} else {
+		//if negate, then compute the negation of the lines ranges
+		//trick: remember that a [] ONLY range is converted to a ][ EXCLUDE range!
+		std::vector<LinesRange> negative_lines_specs;
+		size_t ii_exclude_start = 1;
+		
+		for (size_t ii=0; ii<lines_specs.size(); ii++) {
+			const size_t only_start = lines_specs[ii].start;
+			if (only_start>1)
+				negative_lines_specs.push_back( LinesRange(ii_exclude_start, only_start-1) );
+			ii_exclude_start = lines_specs[ii].end+1;
+		}
+		negative_lines_specs.push_back( LinesRange(ii_exclude_start, static_cast<size_t>(-1)) );
+		
+		return negative_lines_specs;
+	}
 }
 
 } //end namespace

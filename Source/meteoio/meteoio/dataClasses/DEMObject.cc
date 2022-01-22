@@ -44,7 +44,7 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), curvature_scale(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -65,7 +65,7 @@ DEMObject::DEMObject(const size_t& ncols_in, const size_t& nrows_in, const Coord
              min_altitude(init), min_slope(0.), min_curvature(0.),
              max_altitude(init), max_slope(0.), max_curvature(0.),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(DFLT),
+             max_shade_distance(IOUtils::nodata), curvature_scale(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(DFLT),
              slope_failures(0), curvature_failures(0)
 {}
 
@@ -84,7 +84,7 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), curvature_scale(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -105,7 +105,7 @@ DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const A
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), curvature_scale(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -128,7 +128,7 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), curvature_scale(IOUtils::nodata), update_flag(UPDATE_UNSET), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	setDefaultAlgorithm(i_algorithm);
@@ -158,7 +158,7 @@ DEMObject::DEMObject(const DEMObject& i_dem, const size_t& i_nx, const size_t& i
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
-             max_shade_distance(IOUtils::nodata), update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
+             max_shade_distance(IOUtils::nodata), curvature_scale(IOUtils::nodata), update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
 {
 	if ((i_ncols==0) || (i_nrows==0)) {
@@ -221,6 +221,13 @@ void DEMObject::setUpdatePpt(const update_type& in_update_flag) {
 */
 int DEMObject::getUpdatePpt() const {
 	return update_flag;
+}
+
+/**
+* @brief Set the curvature length scale for calculating curvature
+*/
+void DEMObject::setCurvatureScale(const double& in_curvature_scale) {
+	curvature_scale = in_curvature_scale;
 }
 
 /**
@@ -431,6 +438,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
 	                //we use matrix notation: A[y][x]
+	double A_c[4][4]; //table to store neigbouring heights for curvature calculations: 3x3 matrix but we want to start at [1][1]
+	                  //we use matrix notation: A[y][x]
 	if (algorithm==DFLT) {
 		algorithm = dflt_algorithm;
 	}
@@ -466,16 +475,17 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 					Nx(i,j) = Ny(i,j) = Nz(i,j) = IOUtils::nodata;
 				}
 			} else {
-				getNeighbours(i, j, A);
+				getNeighbours(i, j, A, IOUtils::nodata);
 				double new_slope, new_Nx, new_Ny, new_Nz;
 				(this->*CalculateSlope)(A, new_slope, new_Nx, new_Ny, new_Nz);
 				const double new_azi = CalculateAzimuth(new_Nx, new_Ny, new_Nz, new_slope);
-				const double new_curvature = getCurvature(A);
 				if (update_flag&SLOPE) {
 					slope(i,j) = new_slope;
 					azi(i,j) = new_azi;
 				}
 				if (update_flag&CURVATURE) {
+					getNeighbours(i, j, A_c, curvature_scale);
+					const double new_curvature = getCurvature(A_c, curvature_scale);
 					curvature(i,j) = new_curvature;
 				}
 				if (update_flag&NORMAL) {
@@ -618,8 +628,8 @@ void DEMObject::CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx,
 	}
 }
 
-double DEMObject::getCurvature(double A[4][4]) 
-{ //This methode computes the curvature of a specific cell
+double DEMObject::getCurvature(double A[4][4], const double& scale)
+{ //This methode computes the curvature of a specific cell (see Eq. 8 in https://doi.org/10.3189/172756507782202865)
 	if (A[2][2]!=IOUtils::nodata) {
 		const double Zwe   = avgHeight(A[2][1], A[2][2], A[2][3]);
 		const double Zsn   = avgHeight(A[1][2], A[2][2], A[3][2]);
@@ -627,23 +637,29 @@ double DEMObject::getCurvature(double A[4][4])
 		const double Znwse = avgHeight(A[1][1], A[2][2], A[3][3]);
 
 		static const double sqrt2 = sqrt(2.);
+		size_t step = 1;
+		if (scale != IOUtils::nodata) {
+			const size_t max_step = std::min(getNx()-1, getNy()-1);
+			step = std::min(max_step, std::max(static_cast <size_t> (1), static_cast <size_t> ( (scale / cellsize) + 0.5)));
+		}
+		const double dX = 2. * static_cast <double> (step) * cellsize;
 		double sum=0.;
 		size_t count=0;
 
 		if (Zwe!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Zwe);
+			sum += (A[2][2]-Zwe)/dX;
 			count++;
 		}
 		if (Zsn!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Zsn);
+			sum += (A[2][2]-Zsn)/dX;
 			count++;
 		}
 		if (Zswne!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Zswne)/sqrt2;
+			sum += (A[2][2]-Zswne)/(dX*sqrt2);
 			count++;
 		}
 		if (Znwse!=IOUtils::nodata) {
-			sum += 0.5*(A[2][2]-Znwse)/sqrt2;
+			sum += (A[2][2]-Znwse)/(dX*sqrt2);
 			count++;
 		}
 
@@ -756,45 +772,61 @@ double DEMObject::avgHeight(const double& z1, const double &z2, const double& z3
 	return IOUtils::nodata;
 }
 
-void DEMObject::getNeighbours(const size_t& i, const size_t& j, double A[4][4]) const 
+void DEMObject::getNeighbours(const size_t& i, const size_t& j, double A[4][4], const double& scale) const
 { //this fills a 3x3 table containing the neighboring values
-	if ((i>0 && i<(getNx()-1)) && (j>0 && j<(getNy()-1))) {
+	size_t step;
+	if (scale == IOUtils::nodata) {
+		step = 1;
+	} else {
+		const size_t max_step = std::min(getNx()-1, getNy()-1);
+		step = std::min(max_step, std::max(static_cast <size_t> (1), static_cast <size_t> ( (scale / cellsize) + 0.5)));
+	}
+	if ((i>step-1 && i<(getNx()-step)) && (j>step-1 && j<(getNy()-step))) {
 		//this is the normal case
-		A[1][1] = grid2D(i-1, j+1);
-		A[1][2] = grid2D(i, j+1);
-		A[1][3] = grid2D(i+1, j+1);
-		A[2][1] = grid2D(i-1, j);
+		A[1][1] = grid2D(i-step, j+step);
+		A[1][2] = grid2D(i, j+step);
+		A[1][3] = grid2D(i+step, j+step);
+		A[2][1] = grid2D(i-step, j);
 		A[2][2] = grid2D(i, j);
-		A[2][3] = grid2D(i+1, j);
-		A[3][1] = grid2D(i-1, j-1);
-		A[3][2] = grid2D(i, j-1);
-		A[3][3] = grid2D(i+1, j-1);
+		A[2][3] = grid2D(i+step, j);
+		A[3][1] = grid2D(i-step, j-step);
+		A[3][2] = grid2D(i, j-step);
+		A[3][3] = grid2D(i+step, j-step);
 	} else { //somewhere on the border
-		A[1][1] = safeGet((signed)i-1, (signed)j+1);
-		A[1][2] = safeGet((signed)i, (signed)j+1);
-		A[1][3] = safeGet((signed)i+1, (signed)j+1);
-		A[2][1] = safeGet((signed)i-1, (signed)j);
+		A[1][1] = safeGet((signed)i-(signed)step, (signed)j+(signed)step);
+		A[1][2] = safeGet((signed)i, (signed)j+(signed)step);
+		A[1][3] = safeGet((signed)i+(signed)step, (signed)j+(signed)step);
+		A[2][1] = safeGet((signed)i-(signed)step, (signed)j);
 		A[2][2] = safeGet((signed)i, (signed)j);
-		A[2][3] = safeGet((signed)i+1, (signed)j);
-		A[3][1] = safeGet((signed)i-1, (signed)j-1);
-		A[3][2] = safeGet((signed)i, (signed)j-1);
-		A[3][3] = safeGet((signed)i+1, (signed)j-1);
+		A[2][3] = safeGet((signed)i+(signed)step, (signed)j);
+		A[3][1] = safeGet((signed)i-(signed)step, (signed)j-(signed)step);
+		A[3][2] = safeGet((signed)i, (signed)j-(signed)step);
+		A[3][3] = safeGet((signed)i+(signed)step, (signed)j-(signed)step);
 	}
 }
 
 double DEMObject::safeGet(const int& i, const int& j) const
 {//this function would allow reading the value of *any* point,
-//that is, even for coordinates outside of the grid (where it would return nodata)
+//that is, even for coordinates outside of the grid (where it would return the boundary grid cell)
 //this is to make implementing the slope/curvature computation easier for edges, holes, etc
 
-	if (i<0 || i>=(signed)getNx()) {
-		return IOUtils::nodata;
+	size_t i2=0, j2=0;
+	if (i<0) {
+		i2=0;
+	} else if (i>=(int)getNx()) {
+		i2=getNx()-1;
+	} else {
+		i2=(size_t)i;
 	}
-	if (j<0 || j>=(signed)getNy()) {
-		return IOUtils::nodata;
+	if (j<0) {
+		j2=0;
+	} else if (j>=(int)getNy()) {
+		j2=getNy()-1;
+	} else {
+		j2=(size_t)j;
 	}
 
-	return grid2D((unsigned)i, (unsigned)j);
+	return grid2D(i2, j2);
 }
 
 const std::string DEMObject::toString(const FORMATS& type) const
@@ -845,6 +877,7 @@ std::ostream& operator<<(std::ostream& os, const DEMObject& dem) {
 	os.write(reinterpret_cast<const char*>(&dem.max_curvature), sizeof(dem.max_curvature));
 
 	os.write(reinterpret_cast<const char*>(&dem.max_shade_distance), sizeof(dem.max_shade_distance));
+	os.write(reinterpret_cast<const char*>(&dem.curvature_scale), sizeof(dem.curvature_scale));
 	os.write(reinterpret_cast<const char*>(&dem.update_flag), sizeof(dem.update_flag));
 	os.write(reinterpret_cast<const char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	os.write(reinterpret_cast<const char*>(&dem.slope_failures), sizeof(dem.slope_failures));
@@ -868,6 +901,7 @@ std::istream& operator>>(std::istream& is, DEMObject& dem) {
 	is.read(reinterpret_cast<char*>(&dem.max_curvature), sizeof(dem.max_curvature));
 
 	is.read(reinterpret_cast<char*>(&dem.max_shade_distance), sizeof(dem.max_shade_distance));
+	is.read(reinterpret_cast<char*>(&dem.curvature_scale), sizeof(dem.curvature_scale));
 	is.read(reinterpret_cast<char*>(&dem.update_flag), sizeof(dem.update_flag));
 	is.read(reinterpret_cast<char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	is.read(reinterpret_cast<char*>(&dem.slope_failures), sizeof(dem.slope_failures));

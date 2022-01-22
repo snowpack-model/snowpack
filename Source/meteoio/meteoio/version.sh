@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
 # This script retrives the SVN version number of the tree on disk and displays
 # a warning if it is unsuitable for an operational version (ie: composite version).
 # cf http://subversion.tigris.org/faq.html#version-value-in-source

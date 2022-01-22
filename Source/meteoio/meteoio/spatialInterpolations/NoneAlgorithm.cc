@@ -23,7 +23,7 @@ namespace mio {
 
 double NoneAlgorithm::getQualityRating(const Date& /*i_date*/)
 {
-	return 1e-6;
+	return 1e-12;
 }
 
 void NoneAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)

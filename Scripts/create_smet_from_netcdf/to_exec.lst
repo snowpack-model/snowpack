@@ -1,10 +1,2 @@
+
 bash create_forcing.sh COSMO-2 1995 3600
-bash create_forcing.sh COSMO-2 1996 3600
-bash create_forcing.sh COSMO-2 1997 3600
-bash create_forcing.sh COSMO-2 1998 3600
-bash create_forcing.sh COSMO-2 1999 3600
-bash create_forcing.sh COSMO-2 2000 3600
-bash create_forcing.sh COSMO-2 2001 3600
-bash create_forcing.sh COSMO-2 2002 3600
-bash create_forcing.sh COSMO-2 2003 3600
-bash create_forcing.sh COSMO-2 2004 3600

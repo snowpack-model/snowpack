@@ -38,43 +38,44 @@ const bool MeteoGrids::__init = MeteoGrids::initStaticData();
 bool MeteoGrids::initStaticData()
 {
 	//the order must be the same as in the enum
-	paramname.push_back("TA");					description.push_back("Air Temperature");						units.push_back("K");
-	paramname.push_back("RH");					description.push_back("Relative Humidity");					units.push_back("-");
-	paramname.push_back("QI");					description.push_back("Specific Humidity");					units.push_back("g/g");
-	paramname.push_back("TD");					description.push_back("Dew Point Temperature");			units.push_back("K");
-	paramname.push_back("VW");				description.push_back("Wind Velocity");							units.push_back("m/s");
-	paramname.push_back("DW");				description.push_back("Wind Direction");						units.push_back("°");
+	paramname.push_back("TA");			description.push_back("Air Temperature");						units.push_back("K");
+	paramname.push_back("RH");			description.push_back("Relative Humidity");					units.push_back("-");
+	paramname.push_back("QI");			description.push_back("Specific Humidity");					units.push_back("g/g");
+	paramname.push_back("TD");			description.push_back("Dew Point Temperature");			units.push_back("K");
+	paramname.push_back("VW");			description.push_back("Wind Velocity");							units.push_back("m/s");
+	paramname.push_back("DW");			description.push_back("Wind Direction");						units.push_back("°");
 	paramname.push_back("VW_MAX");		description.push_back("Gust Wind Velocity");					units.push_back("m/s");
-	paramname.push_back("ISWR");				description.push_back("Incoming Short Wave Radiation");				units.push_back("W/m2");
-	paramname.push_back("RSWR");			description.push_back("Reflected Short Wave Radiation");				units.push_back("W/m2");
-	paramname.push_back("ISWR_DIFF");		description.push_back("Incoming Diffuse Short Wave Radiation");	units.push_back("W/m2");
-	paramname.push_back("ISWR_DIR");		description.push_back("Incoming Direct Short Wave Radiation");	units.push_back("W/m2");
-	paramname.push_back("ILWR");				description.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
-	paramname.push_back("OLWR");			description.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("ISWR");		description.push_back("Incoming Short Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("RSWR");		description.push_back("Reflected Short Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("ISWR_DIFF");	description.push_back("Incoming Diffuse Short Wave Radiation");	units.push_back("W/m2");
+	paramname.push_back("ISWR_DIR");	description.push_back("Incoming Direct Short Wave Radiation");	units.push_back("W/m2");
+	paramname.push_back("ILWR");		description.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("OLWR");		description.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
 	paramname.push_back("LWR_NET");                 description.push_back("Net Long Wave Radiation");                               units.push_back("W/m2");
 	paramname.push_back("TAU_CLD");		description.push_back("Atmospheric Transmissivity");					units.push_back("-");
-	paramname.push_back("HS");					description.push_back("Snow Height");							units.push_back("m");
-	paramname.push_back("PSUM");			description.push_back("Precipitation Sum");					units.push_back("kg/m2");
+	paramname.push_back("CLD");			description.push_back("Total cloud cover");					units.push_back("okta");
+	paramname.push_back("HS");			description.push_back("Snow Height");							units.push_back("m");
+	paramname.push_back("PSUM");		description.push_back("Precipitation Sum");					units.push_back("kg/m2");
 	paramname.push_back("PSUM_PH");		description.push_back("Precipitation Phase");					units.push_back("-");
-	paramname.push_back("PSUM_L");			description.push_back("Precipitation Sum of the Liquid Phase");	units.push_back("kg/m2");
+	paramname.push_back("PSUM_L");		description.push_back("Precipitation Sum of the Liquid Phase");	units.push_back("kg/m2");
 	paramname.push_back("PSUM_LC");                  description.push_back("Precipitation Sum of the Liquid Convection"); units.push_back("kg/m2");
-	paramname.push_back("PSUM_S");			description.push_back("Precipitation Sum of the Solid Phase");		units.push_back("kg/m2");
-	paramname.push_back("TSG");				description.push_back("Ground Surface Temperature");					units.push_back("K");
-	paramname.push_back("TSS");				description.push_back("Surface Temperature");				units.push_back("K");
-	paramname.push_back("TSOIL");			description.push_back("Soil Temperature");					units.push_back("K");
-	paramname.push_back("P");					description.push_back("Air Pressure");							units.push_back("Pa");
-	paramname.push_back("P_SEA");			description.push_back("Air Pressure at Sea Level");		units.push_back("Pa");
-	paramname.push_back("U");					description.push_back("Wind Velocity East Component");				units.push_back("m/s");
-	paramname.push_back("V");					description.push_back("Wind Velocity North Component");			units.push_back("m/s");
-	paramname.push_back("W");					description.push_back("Wind Velocity Vertical Component");			units.push_back("m/s");
-	paramname.push_back("SWE");				description.push_back("Snow Water Equivalent");			units.push_back("kg/m2");
-	paramname.push_back("RSNO");			description.push_back("Snow Mean Density");				units.push_back("kg/m3");
-	paramname.push_back("ROT");				description.push_back("Total generated runoff");			units.push_back("gk/m2");
-	paramname.push_back("ALB");				description.push_back("Albedo");									units.push_back("-");
-	paramname.push_back("DEM");				description.push_back("Altitude above Sea Level");		units.push_back("m");
-	paramname.push_back("SHADE");			description.push_back("Hillshade");								units.push_back("-");
-	paramname.push_back("SLOPE");			description.push_back("Slope Angle");							units.push_back("degree");
-	paramname.push_back("AZI");				description.push_back("Slope Aspect");							units.push_back("degree");
+	paramname.push_back("PSUM_S");		description.push_back("Precipitation Sum of the Solid Phase");		units.push_back("kg/m2");
+	paramname.push_back("TSG");			description.push_back("Ground Surface Temperature");					units.push_back("K");
+	paramname.push_back("TSS");			description.push_back("Surface Temperature");				units.push_back("K");
+	paramname.push_back("TSOIL");		description.push_back("Soil Temperature");					units.push_back("K");
+	paramname.push_back("P");			description.push_back("Air Pressure");							units.push_back("Pa");
+	paramname.push_back("P_SEA");		description.push_back("Air Pressure at Sea Level");		units.push_back("Pa");
+	paramname.push_back("U");			description.push_back("Wind Velocity East Component");				units.push_back("m/s");
+	paramname.push_back("V");			description.push_back("Wind Velocity North Component");			units.push_back("m/s");
+	paramname.push_back("W");			description.push_back("Wind Velocity Vertical Component");			units.push_back("m/s");
+	paramname.push_back("SWE");			description.push_back("Snow Water Equivalent");			units.push_back("kg/m2");
+	paramname.push_back("RSNO");		description.push_back("Snow Mean Density");				units.push_back("kg/m3");
+	paramname.push_back("ROT");			description.push_back("Total generated runoff");			units.push_back("gk/m2");
+	paramname.push_back("ALB");			description.push_back("Albedo");									units.push_back("-");
+	paramname.push_back("DEM");			description.push_back("Altitude above Sea Level");		units.push_back("m");
+	paramname.push_back("SHADE");		description.push_back("Hillshade");								units.push_back("-");
+	paramname.push_back("SLOPE");		description.push_back("Slope Angle");							units.push_back("degree");
+	paramname.push_back("AZI");			description.push_back("Slope Aspect");							units.push_back("degree");
 
 	return true;
 }
@@ -180,6 +181,20 @@ size_t MeteoData::getStaticParameterIndex(const std::string& parname)
 	}
 
 	return IOUtils::npos; //parameter not a part of MeteoData
+}
+
+MeteoGrids::Parameters MeteoData::findGridParam(const MeteoData::Parameters& mpar)
+{
+	const std::string parname( MeteoData::getParameterName(mpar) );
+	const size_t idx = MeteoGrids::getParameterIndex(parname);
+	return static_cast<MeteoGrids::Parameters>(idx);
+}
+
+MeteoData::Parameters MeteoData::findMeteoParam(const MeteoGrids::Parameters& gpar)
+{
+	const std::string parname( MeteoGrids::getParameterName(gpar) );
+	const size_t idx = MeteoData().getParameterIndex(parname);
+	return static_cast<MeteoData::Parameters>(idx);
 }
 
 /************************************************************
@@ -464,7 +479,8 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
 MeteoData::Merge_Conflicts MeteoData::getMergeConflicts(std::string merge_conflicts)
 {
 	IOUtils::toUpper( merge_conflicts );
-	if (merge_conflicts=="CONFLICTS_PRIORITY") return CONFLICTS_PRIORITY;
+	if (merge_conflicts=="CONFLICTS_PRIORITY_FIRST") return CONFLICTS_PRIORITY_FIRST;
+	else if (merge_conflicts=="CONFLICTS_PRIORITY_LAST") return CONFLICTS_PRIORITY_LAST;
 	else if (merge_conflicts=="CONFLICTS_AVERAGE") return CONFLICTS_AVERAGE;
 	else
 		throw UnknownValueException("Unknown merge conflicts type '"+merge_conflicts+"'", AT);
@@ -660,7 +676,7 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 	if (date.isUndef()) date=meteo2.date; //we don't accept different dates, see above
 	if (meteo2.resampled==true ) resampled=true;
 	
-	if (conflicts_strategy==CONFLICTS_PRIORITY) {
+	if (conflicts_strategy==CONFLICTS_PRIORITY_FIRST) {
 		//merge standard parameters
 		for (size_t ii=0; ii<nrOfParameters; ii++) {
 			if (data[ii]==IOUtils::nodata) {
@@ -679,6 +695,30 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 				data[new_idx] = meteo2.data[nrOfParameters+ii];
 				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
 			} else if (data[extra_param_idx]==IOUtils::nodata) {
+				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
+				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
+			}
+		}
+		return true;
+	} else if (conflicts_strategy==CONFLICTS_PRIORITY_LAST) {
+		//merge standard parameters
+		for (size_t ii=0; ii<nrOfParameters; ii++) {
+			if (meteo2.data[ii]!=IOUtils::nodata) {
+				data[ii] = meteo2.data[ii];
+				flags[ii] = meteo2.flags[ii];
+			}
+		}
+
+		//for each meteo2 extra parameter, check if a matching parameter exist
+		const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
+		for (size_t ii=0; ii<nrExtra2; ii++) {
+			const std::string extra_name( meteo2.extra_param_name[ii] );
+			const size_t extra_param_idx = getParameterIndex(extra_name);
+			if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
+				const size_t new_idx = addParameter( extra_name );
+				data[new_idx] = meteo2.data[nrOfParameters+ii];
+				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
+			} else if (meteo2.data[nrOfParameters+ii]!=IOUtils::nodata) {
 				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
 				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
 			}

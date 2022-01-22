@@ -118,6 +118,7 @@ class AsciiIO : public SnowpackIOInterface {
 		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool r_in_n;
+		std::string prof_ID_or_MK;
 
 		static const bool t_srf, t_gnd;
 };

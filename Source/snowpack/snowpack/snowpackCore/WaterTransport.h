@@ -45,7 +45,7 @@ class WaterTransport {
 
 	protected:
 		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata);
-		void adjustDensity(SnowStation& Xdata);
+		void adjustDensity(SnowStation& Xdata, SurfaceFluxes& Sdata);
 
 		//To prevent string comparisons, we define an enumerated list:
 		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};

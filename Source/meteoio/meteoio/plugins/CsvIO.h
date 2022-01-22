@@ -59,37 +59,41 @@ class CsvDateTime {
 
 class CsvParameters {
 	public:
-		CsvParameters(const double& tz_in)
-		: csv_fields(), units_offset(), units_multiplier(), skip_fields(), nodata("NAN"), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), single_param_idx(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), purgeQuotes(false),  location(), datetime_idx(), time_idx(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) {}
+		CsvParameters(const double& tz_in);
 		
-		void setPurgeQuotes(const bool& i_purgeQuotes) {purgeQuotes=i_purgeQuotes;}
 		void setHeaderRepeatMk(const std::string& marker) {header_repeat_mk=marker;}
 		void setDelimiter(const std::string& delim);
 		void setHeaderDelimiter(const std::string& delim);
 		void setSkipFields(const std::vector<size_t>& vecSkipFields);
 		void setUnits(const std::string& csv_units,  const char& delim);
+		void setLinesExclusions(const std::vector< LinesRange >& linesSpecs) {linesExclusions=linesSpecs;}
 		void setDateTimeSpec(const std::string& datetime_spec);
 		void setTimeSpec(const std::string& time_spec);
 		void setDecimalDateType(std::string decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& auto_wrap);
+		void setNodata(const std::string& nodata_markers);
+		void setPurgeChars(const std::string& chars_to_purge);
 		void setFile(const std::string& i_file_and_path, const std::vector<std::string>& vecMetaSpec, const std::string& filename_spec, const std::string& station_idx="");
 		void setLocation(const Coords i_location, const std::string& i_name, const std::string& i_id) {location=i_location; name=i_name; id=i_id;}
 		void setSlope(const double& i_slope, const double& i_azimuth) {slope=i_slope; azi=i_azimuth;}
 		Date parseDate(const std::vector<std::string>& vecFields);
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
+		bool excludeLine(const size_t& linenr, bool& hasExclusions);
+		bool hasPurgeChars() const {return !purgeCharsSet.empty();}
+		void purgeChars(std::string &line) {IOUtils::removeChars(line, purgeCharsSet);}
+		bool isNodata(const std::string& value) const;
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
 		std::map<size_t, bool> skip_fields;		///< Fields that should not be read
 		
-		std::string nodata, header_repeat_mk, filter_ID;
+		std::string header_repeat_mk, filter_ID;
 		size_t ID_col;
 		size_t header_lines, columns_headers, units_headers;
-		size_t single_param_idx;
 		char csv_delim, header_delim;
 		char eoln, comments_mk;
-		bool header_repeat_at_start, asc_order, purgeQuotes;
+		bool header_repeat_at_start, asc_order;
 	private:
 		static std::string identifyField(const std::string& fieldname);
 		void assignMetadataVariable(const std::string& field_type, const std::string& field_val, double &lat, double &lon, double &easting, double &northing);
@@ -106,13 +110,17 @@ class CsvParameters {
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
 		Coords location;
+		std::set<std::string> nodata;		///< representations of nodata with their variants (with quotes, with double quotes, etc)
+		std::set<char> purgeCharsSet;			///< characters to purge from each line (such as quotes, double quotes, etc)
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate: Year Month Day Hour Minutes Seconds
 		std::vector<size_t> time_idx;		///< order of the time fields for use in parseDate for split date / time
+		std::vector< LinesRange > linesExclusions;	///< lines to exclude from reading
 		std::string file_and_path, datetime_format, time_format, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
 		CsvDateTime date_cols;		///< index of each column containing the a date/time component
 		double slope, azi;
 		double csv_tz;		///< timezone to apply to parsed dates
+		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
 		bool dt_as_components; 	///< is date/time provided as components each in its own column (ie an hour column, a day column, etc)?
 		bool dt_as_year_and_jdn;	///< is date provided as year + julian day?

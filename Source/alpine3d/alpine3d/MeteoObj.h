@@ -70,6 +70,10 @@ class SnGrids {
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
                                           ERODEDMASS, ///< wind eroded mass (kg/m2)
                                           WINDEROSIONDEPOSITION, ///< wind erosion and deposition (kg/m2)
+                                          MS_SNOW_DHS, ///< snow height change due to snowfall and deposition of drifting snow (mm)
+                                          MS_SUBL_DHS, ///< snow height change due to sublimation (mm)
+                                          MS_SETTLING_DHS, ///< snow height change due to snow settling (mm)
+                                          MS_EROSION_DHS, ///< snow height change due to snow erosion (mm)
                                           GLACIER, ///< mask showing the glaciated pixels
                                           GLACIER_EXPOSED, ///< mask showing the exposed glaciated pixels (ie not snow covered)
                                           ET, ///< Evapotranspiration
@@ -77,7 +81,8 @@ class SnGrids {
                                           ILWR_TERRAIN, ///< Long wave received by terrain emission
                                           ISWR_BELOW_CAN,
                                           TSOIL1, TSOIL2, TSOIL3, TSOIL4, TSOIL5, ///< Temperature within the soil, at a given depth
-                                          lastparam=TSOIL5};
+                                          RHO1, RHO2, RHO3, RHO4, RHO5, ///< Snow density, in the provided uppermost part of the snow
+                                          lastparam=RHO5};
 
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
@@ -118,7 +123,7 @@ class MeteoObj
 	private:
 		static void checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, const mio::MeteoData::Parameters& param);
 		static void checkGridRange(const mio::Date& calcDate, const mio::Grid2DObject& grid, const mio::MeteoData::Parameters& param);
-		static void checkInputsRequirements(std::vector<mio::MeteoData>& vecData, const bool& soil_flux);
+		static void checkInputsRequirements(std::vector<mio::MeteoData>& vecData);
 		void fillMeteoGrids(const mio::Date& calcDate);
 		void getMeteo(const mio::Date& calcDate);
 

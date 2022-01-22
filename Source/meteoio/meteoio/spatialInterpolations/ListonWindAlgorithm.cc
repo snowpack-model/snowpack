@@ -25,11 +25,13 @@ namespace mio {
 
 ListonWindAlgorithm::ListonWindAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param), vecDataVW(), vecDataDW(),
-                                   scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
+                                   eta(IOUtils::nodata), scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="SCALE") {
+		if (vecArgs[ii].first=="ETA") {
+			IOUtils::parseArg(vecArgs[ii], where, eta);
+		} else if (vecArgs[ii].first=="SCALE") {
 			IOUtils::parseArg(vecArgs[ii], where, scale);
 		} else if (vecArgs[ii].first=="ALPHA") {
 			IOUtils::parseArg(vecArgs[ii], where, alpha);
@@ -88,12 +90,12 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		// Direction
 		Grid2DObject VW;
 		simpleWindInterpolate(dem, VW, grid);
-		Interpol2D::ListonWind(dem, VW, grid);
+		Interpol2D::ListonWind(dem, VW, grid, eta);
 	} else {
 		// If not direction, it must be a type of wind speed
 		Grid2DObject DW;
 		simpleWindInterpolate(dem, grid, DW);
-		Interpol2D::ListonWind(dem, grid, DW);
+		Interpol2D::ListonWind(dem, grid, DW, eta);
 	}
 }
 

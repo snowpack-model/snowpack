@@ -81,9 +81,9 @@ class EnergyBalance
 		void setMeteo(const mio::Grid2DObject& in_ilwr,
 		              const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Date timestamp);
 
-		void writeSP(const unsigned int max_steps);
+		void writeSP(const unsigned int max_steps); //write Solar Panels information
 
-		const bool hasSP(){return terrain_radiation->hasSP();}
+		bool hasSP(){return terrain_radiation->hasSP();} //are Solar Panels defined?
 		void setStations(const std::vector<mio::MeteoData>& in_vecMeteo);
 		double getTiming() const;
 		void Destroy();
@@ -95,11 +95,11 @@ class EnergyBalance
 		std::vector<RadiationField> radfields;
 		mio::DEMObject dem;
 		std::vector<mio::MeteoData> vecMeteo;
-		size_t dimx, dimy;
 		mio::Grid2DObject albedo;
 		mio::Array2D<double> direct_unshaded_horizontal, direct, diffuse, reflected; //FELIX: direct_unshaded_horizontal
 		mio::Timer timer;
 		const mio::Config& cfg;
+		size_t dimx, dimy;
 		unsigned int nbworkers;
 };
 

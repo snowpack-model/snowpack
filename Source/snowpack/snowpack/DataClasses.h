@@ -120,6 +120,7 @@ class CurrentMeteo {
 		double dir_h;    ///< Horizontal direct radiation from the sky (W m-2)
 		double elev;     ///< Solar elevation to be used in Canopy.c (rad) => see also
 		double ea;       ///< Atmospheric emissivity (1)
+		double lw_net;   ///< Net longwave radiation (W m-2)
 		double tss;      ///< Snow surface temperature (K)
 		double tss_a12h; ///< Snow surface temperature averaged over past 12 hours (K)
 		double tss_a24h; ///< Snow surface temperature averaged over past 24 hours (K)
@@ -142,8 +143,8 @@ class CurrentMeteo {
 		std::vector<double> zv_ts; ///< Positions of all measured snow or/and soil temperatures (m)
 		std::vector<double> conc;  ///< Solute concentrations in precipitation
 		double rho_hn;             ///< Measured new snow density (kg m-3)
-		double rime_hn;            ///< riming index of new snow  
-		double lwc_hn;             ///< liquid water content of new snow  
+		double rime_hn;            ///< riming index of new snow
+		double lwc_hn;             ///< liquid water content of new snow
 
 	private:
 		size_t getNumberMeasTemperatures(const mio::MeteoData& md);
@@ -296,6 +297,7 @@ class ElementData {
 
 		ElementData(const unsigned short int& in_ID);
 		ElementData(const ElementData& cc); //required to get the correct back-reference in vanGenuchten object
+		ElementData& operator=(const ElementData&) = default; ///<Assignement operator
 
 		bool checkVolContent();
 		void heatCapacity();
@@ -371,7 +373,7 @@ class ElementData {
 		vanGenuchten VG;           ///< Van Genuchten Model for water retention
 		double lwc_source;         ///< Source/sink term for Richards equation (m^3/m^3 / timestep)
 		double PrefFlowArea;       ///< Preferential flow path relative area (-)
-		double theta_w_transfer;   ///< Volumetric content of water transferred from preferential flow to matrix domain (1) 
+		double theta_w_transfer;   ///< Volumetric content of water transferred from preferential flow to matrix domain (1)
 		double theta_i_reservoir;  ///< Volumetric ice content in ice reservoir (1)
 		double theta_i_reservoir_cumul;  ///< Volumetric ice content in cumulated ice reservoir (1)
 		double SlopeParFlux;       ///< Slope parallel flux (m^3/m^3 * m / timestep)
@@ -443,7 +445,7 @@ class CanopyData {
 		CondFluxTrunks(0.), LWnet_Trunks(0.), SWnet_Trunks(0.), QStrunks(0.), forestfloor_alb(0.),
 		BasalArea(0.), HMLeaves(0.), HMTrunks(0.) {}
 
-		void initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopyModel);
+		void initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopyModel, const bool isAlpine3D);
 		void reset(const bool& cumsum_mass);
 		void initializeSurfaceExchangeData();
 		void multiplyFluxes(const double& factor);
@@ -595,7 +597,8 @@ class CanopyData {
 class SeaIce;	// Foreward-declare sea ice class
 class SnowStation {
 	public:
-		explicit SnowStation(const bool& i_useCanopyModel=true, const bool& i_useSoilLayers=true, const bool& i_useSeaIceModule=false);
+		explicit SnowStation(const bool i_useCanopyModel=true, const bool i_useSoilLayers=true,
+                         const bool i_isAlpine3D=false, const bool i_useSeaIceModule=false);
 		SnowStation(const SnowStation& c);
 
 		~SnowStation();
@@ -694,7 +697,7 @@ class SnowStation {
 		size_t nNodes;                      ///< Actual number of nodes; different for each exposition
 		size_t nElems;                      ///< Actual number of elements (nElems=nNodes-1)
 		unsigned short int maxElementID;    ///< maximum ElementID currently used (so each element can get a unique ID)
-		bool useCanopyModel, useSoilLayers; ///< The model includes soil layers
+		bool useCanopyModel, useSoilLayers, isAlpine3D; ///< The model includes soil layers
 		static double flexibleMaxElemLength(const double& depth, const double& comb_thresh_l); ///< When using REDUCE_N_ELEMENTS, this function determines the max element length, depending on depth inside the snowpack.
 };
 
@@ -740,10 +743,12 @@ class SurfaceFluxes {
 			MS_SNOWPACK_RUNOFF,///< The total mass loss of snowpack due to water transport (virtual lysimeter)
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
 			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
-			MS_SETTLING_DHS,   ///< Snow height change due to settling (m)
+			MS_SNOW_DHS,       ///< Snow height change due to snowfall (m)
+			MS_SETTLING_DHS,   ///< Snow height change due to settling, and element removal (m)
 			MS_SUBL_DHS,       ///< Snow height change due to sublimation (m)
 			MS_REDEPOSIT_DHS,  ///< Snow height change due to wind compaction in REDEPOSIT mode (m)
 			MS_REDEPOSIT_DRHO, ///< Density change due to wind compaction in REDEPOSIT mode (m)
+			MS_EROSION_DHS,    ///< Snow height change due to wind erosion (m)
 			N_MASS_CHANGES     ///< Total number of different mass change types
 		};
 

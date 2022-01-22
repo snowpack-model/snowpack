@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+# SPDX-License-Identifier: LGPL-3.0-or-later
 # This script can resample SMET data to lower resolutions.
 #
 # General recipe: PSUM is always an average (to keep [mm/h]), other variables can be averaged with the switch -m, or else they are just taken on the resampled time stamp.
