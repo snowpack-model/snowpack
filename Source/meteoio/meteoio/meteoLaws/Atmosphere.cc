@@ -28,7 +28,7 @@
 #include <meteoio/IOUtils.h>
 
 namespace mio {
-const double Atmosphere::day_iswr_thresh = 40.;
+const double Atmosphere::day_iswr_thresh = 5.;
 
 /**
  * @brief Calculate the black body emissivity

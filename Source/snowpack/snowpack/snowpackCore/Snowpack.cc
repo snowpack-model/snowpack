@@ -751,7 +751,13 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 
 	const double lw_in  = emmisivity * Atmosphere::blkBody_Radiation(Mdata.ea, Tair);
 	Bdata.lw_out = emmisivity * Constants::stefan_boltzmann * Optim::pow4(Tss);
-	Bdata.lw_net = lw_in - Bdata.lw_out;
+	if (Mdata.lw_net == IOUtils::nodata) {
+		// Default
+		Bdata.lw_net = lw_in - Bdata.lw_out;
+	} else {
+		// NET_LW provided
+		Bdata.lw_net = Mdata.lw_net;
+	}
 
 	if (Mdata.geo_heat != IOUtils::nodata) {
 		// If geo_heat is provided in CurrentMeteo,  use it.
@@ -2225,7 +2231,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// If it is SNOWING, find out how much, prepare for new FEM data. If raining, cumu_precip is set back to 0
 		const double tmp_Xdata_hn = Xdata.hn;		// Store initial hn
 		const double tmp_Xdata_rho_hn = Xdata.rho_hn;	// Store initial rho_hn
-		Xdata.hn = 0.;
+		if (alpine3d || !(Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)) Xdata.hn = 0.;	// Virtual slopes receive precipitation via Xdata.hn
 		compSnowFall(Mdata, Xdata, cumu_precip, Sdata);
 		if (Xdata.hn > 0.) {
 			// If new snow was added, recalculate rho_hn as a weighted average

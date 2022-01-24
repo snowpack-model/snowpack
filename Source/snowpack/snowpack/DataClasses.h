@@ -120,6 +120,7 @@ class CurrentMeteo {
 		double dir_h;    ///< Horizontal direct radiation from the sky (W m-2)
 		double elev;     ///< Solar elevation to be used in Canopy.c (rad) => see also
 		double ea;       ///< Atmospheric emissivity (1)
+		double lw_net;   ///< Net longwave radiation (W m-2)
 		double tss;      ///< Snow surface temperature (K)
 		double tss_a12h; ///< Snow surface temperature averaged over past 12 hours (K)
 		double tss_a24h; ///< Snow surface temperature averaged over past 24 hours (K)
