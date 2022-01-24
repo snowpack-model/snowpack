@@ -21,6 +21,7 @@ function PrintUseMessage {
 #
 # Parse command line arguments
 #
+echo $*		# Print invoked command
 i=0
 for p in "$@"
 do
