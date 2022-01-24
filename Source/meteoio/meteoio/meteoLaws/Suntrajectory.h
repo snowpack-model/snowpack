@@ -48,6 +48,7 @@ class SunTrajectory {
 
 		///(see http://en.wikipedia.org/wiki/Horizontal_coordinate_system)
 		///please remember that zenith_angle = 90 - elevation
+		virtual double getSolarElevation() const=0;
 		virtual void getHorizontalCoordinates(double& azimuth, double& elevation) const=0;
 		virtual void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const=0;
 		virtual void getDaylight(double& sunrise, double& sunset, double& daylight)=0;
@@ -114,6 +115,7 @@ class SunMeeus : public SunTrajectory {
 		void setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.);
 		void reset();
 
+		double getSolarElevation() const;
 		void getHorizontalCoordinates(double& azimuth, double& elevation) const;
 		void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const;
 		void getDaylight(double& sunrise, double& sunset, double& MeeusDaylight);

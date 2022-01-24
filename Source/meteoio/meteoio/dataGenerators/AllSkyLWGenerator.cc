@@ -54,6 +54,8 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 			user_cloudiness = IOUtils::strToUpper(vecArgs[ii].second);
 		} else if (vecArgs[ii].first=="USE_RSWR") {
 			IOUtils::parseArg(vecArgs[ii], where, use_rswr);
+		} else if (vecArgs[ii].first=="USE_RAD_THRESHOLD") {
+			IOUtils::parseArg(vecArgs[ii], where, use_rad_threshold);
 		}
 	}
 
@@ -96,7 +98,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			sun.setDate(julian_gmt, 0.);
 
 			bool is_night;
-			cloudiness = TauCLDGenerator::getCloudiness(cloudiness_model, md, use_rswr, sun, is_night);
+			cloudiness = TauCLDGenerator::getCloudiness(cloudiness_model, md, use_rswr, use_rad_threshold, sun, is_night);
 			if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 			if (is_night) { //interpolate the cloudiness over the night

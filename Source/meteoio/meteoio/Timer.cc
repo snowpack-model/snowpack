@@ -23,11 +23,15 @@
 	#include <windows.h>
 	#undef max
 	#undef min
+	#include <cstdlib>
 #else
 	#include <sys/time.h>
+	#include <unistd.h>
+	#include <signal.h>
 #endif
 
 #include <meteoio/Timer.h>
+#include <meteoio/IOUtils.h>
 
 namespace mio {
 
@@ -191,6 +195,44 @@ void UsageTimer::getElapsedTimes()
 	user_time = static_cast<double>( end_user_time - start_user_time );
 	sys_time = static_cast<double>( end_sys_time - start_sys_time );
 	elapsed = static_cast<double>( sys_time + user_time );
+}
+#endif
+
+
+#ifdef _WIN32
+/* function called when the timer expires */
+void CALLBACK TimerProc(void* parameters, BOOLEAN timerCalled)
+{
+	std::cerr << "Timeout: aborting after receiving signal SIGALRM" << std::endl;
+	exit( EXIT_FAILURE );
+}
+
+WatchDog::WatchDog(const unsigned int& seconds)
+{
+	HANDLE m_hTimer = NULL;
+	const bool success = CreateTimerQueueTimer(&m_hTimer, NULL, TimerProc, this, seconds*1000, 0, WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE);
+}
+#else
+/* function called when a SIGALRM signal is caught */
+void signal_handler( int signal_num )
+{
+	throw TimeOutException("Timeout: aborting after receiving signal "+IOUtils::toString(signal_num), AT);
+}
+
+void signals_catching(const int& SIG)
+{
+	struct sigaction catch_signal;
+	catch_signal.sa_handler = signal_handler;
+	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
+	catch_signal.sa_flags = 0;
+
+	sigaction(SIG, &catch_signal, nullptr);
+}
+
+WatchDog::WatchDog(const unsigned int& seconds)
+{
+	alarm(seconds);
+	signals_catching( SIGALRM );
 }
 #endif
 

@@ -45,6 +45,11 @@ namespace mio {
  * Please also note that CRAWFORD and LHOMME are exactly identical as the both simply consider that the cloudiness is <em>1-clearness_index</em>);
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
+ *    - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
+ * stand in a place where it is shaded by the surrounding terrain at some point during the day. This would lead to an overestimation 
+ * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
+ * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
+ * in this specific scenario.
  *
  * @code
  * [Generators]
@@ -63,12 +68,12 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ);
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
-		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, SunObject& sun, bool &is_night);
+		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, const bool& i_use_rad_threshold, SunObject& sun, bool &is_night);
 		static double getClearness(const clf_parametrization& clf_model, const double& cloudiness);
 	private:
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		clf_parametrization cloudiness_model;
-		bool use_rswr;
+		bool use_rswr, use_rad_threshold;
 };
 
 } //end namespace mio

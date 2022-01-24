@@ -20,6 +20,7 @@
 #define SUN_H
 
 #include <meteoio/meteoLaws/Suntrajectory.h>
+#include <meteoio/dataClasses/Date.h>
 
 namespace mio {
 
@@ -46,6 +47,7 @@ class SunObject {
 
 		//local julian date and timezone
 		void setDate(const double& i_julian, const double& i_TZ=0.);
+		void setDate(const Date& date) {julian_gmt=date.getJulian(false); TZ=date.getTimeZone();}
 		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		void resetAltitude(const double& i_altitude);
 		void setElevationThresh(const double& i_elevation_threshold);
@@ -64,6 +66,7 @@ class SunObject {
 		double getCorrectionFactor(const double& iswr_measured) const;
 
 		double getJulian(const double& o_TZ) const {return (julian_gmt+o_TZ*1./24.);}
+		Date getDate() const {return Date(julian_gmt, TZ);}
 		const std::string toString() const;
 		
 		//SunTrajectory position;
