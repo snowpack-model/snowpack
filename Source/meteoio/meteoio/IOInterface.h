@@ -323,7 +323,9 @@ class IOInterface {
 		/**
 		 * @brief built the set of line ranges to read or skip.
 		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
-		 * Obviously this can not be implemented by every plugin!
+		 * Obviously this can not be implemented by every plugin! The line ranges are given as a comma delimited list of 
+		 * either single line numbers or ranges (line numbers delimited by a "-" character). Extra spaces can be given for more clarity
+		 * in the input.
 		 * @param[in] args the textual representation of the line ranges or lines to parse
 		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
 		 * @param[in] negate take the negation of the provided ranges (converting a "ONLY" statement into an "EXCLUDE" statement)

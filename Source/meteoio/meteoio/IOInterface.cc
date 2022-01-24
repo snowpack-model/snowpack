@@ -204,16 +204,19 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 	
 	for (size_t ii=0; ii<nrElems; ii++) {
 		size_t l1, l2;
-		const size_t delim_pos = vecString[ii].find(" - ");
+		const size_t delim_pos = vecString[ii].find("-");
 		if (delim_pos==std::string::npos) {
-			if (!IOUtils::convertString(l1, vecString[ii]))
-				throw InvalidFormatException("Could not process line number restriction "+vecString[ii]+" for "+where, AT);
+			const std::string arg1( vecString[ii] );
+			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
+				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
 			lines_specs.push_back( LinesRange(l1, l1) );
 		} else {
-			if (!IOUtils::convertString(l1, vecString[ii].substr(0, delim_pos)))
-				throw InvalidFormatException("Could not process line number restriction "+vecString[ii].substr(0, delim_pos)+" for "+where, AT);
-			if (!IOUtils::convertString(l2, vecString[ii].substr(delim_pos+3)))
-				throw InvalidFormatException("Could not process line number restriction "+vecString[ii].substr(delim_pos+3)+" for "+where, AT);
+			const std::string arg1( vecString[ii].substr(0, delim_pos) );
+			const std::string arg2( vecString[ii].substr(delim_pos+1) );
+			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
+				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
+			if (!IOUtils::convertString(l2, IOUtils::trim(arg2) ))
+				throw InvalidFormatException("Could not process line number restriction "+arg2+" for "+where, AT);
 			lines_specs.push_back( LinesRange(l1, l2) );
 		}
 	}

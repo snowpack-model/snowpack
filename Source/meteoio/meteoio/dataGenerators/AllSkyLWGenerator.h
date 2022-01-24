@@ -52,8 +52,13 @@ namespace mio {
  * measured ISWR to the potential ISWR, see TauCLDGenerator for more as well as the supported parametrizations) is given for 
  * each long wave parametrization but it is possible here to force it to a specific parametrization (default: the 
  * cloudiness parametrization that belongs to the long wave parametrization);
- *  - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
+ *  - USE_RSWR: if set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
+ *  - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
+ * stand in a place where it is shaded by the surrounding terrain at some point during the day. This would lead to an overestimation 
+ * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
+ * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
+ * in this specific scenario.
  *
  * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
  * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
@@ -83,7 +88,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
 		               : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(),
-		                 last_cloudiness(), model(OMSTEDT), cloudiness_model(TauCLDGenerator::KASTEN), use_rswr(false) { parse_args(vecArgs); }
+		                 last_cloudiness(), model(OMSTEDT), cloudiness_model(TauCLDGenerator::KASTEN), use_rswr(false), use_rad_threshold(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
@@ -102,7 +107,7 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		parametrization model;
 		TauCLDGenerator::clf_parametrization cloudiness_model;
-		bool use_rswr;
+		bool use_rswr, use_rad_threshold;
 };
 
 } //end namespace mio
