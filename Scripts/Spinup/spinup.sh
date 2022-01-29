@@ -248,6 +248,7 @@ do
 
 		# Print message
 		echo "Final simulation"
+		echo "${to_exec}"
 		eval ${to_exec}
 		if [ ! -z "${zip_output_dir}" ]; then
 			if [ ! -d "${zip_output_dir}" ]; then
