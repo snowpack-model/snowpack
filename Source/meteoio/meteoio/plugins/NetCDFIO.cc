@@ -986,7 +986,7 @@ std::vector< double > ncFiles::readPointsIn2DGrid(const ncpp::nc_variable& var, 
 		applyUnits(*data, var.attributes.units, time_pos, m2mm);
 
 		retVec.push_back(*data);
-		delete[] data;
+		delete data;
 	}
 
 	if (!keep_input_files_open) {

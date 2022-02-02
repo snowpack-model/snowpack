@@ -157,6 +157,16 @@ class NoDataException : public IOException
 		NoDataException(const std::string& message="",
 		                         const std::string& position="") : IOException("NoData: " + message, position){}
 };
+
+/**
+ * @class TimeOutException
+ * @brief thrown when an operation does not complete in the foreseen time
+ */
+class TimeOutException : public IOException {
+	public:
+		TimeOutException(const std::string& filename="",
+		                      const std::string& position="") : IOException("NotFound: " + filename, position){}
+};
 } //end namespace
 
 #endif

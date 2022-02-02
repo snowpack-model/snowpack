@@ -55,6 +55,7 @@ static std::string cfgfile( "io.ini" );
 static mio::Date dateBegin, dateEnd;
 static double samplingRate = IOUtils::nodata;
 static size_t outputBufferSize = 0;
+static unsigned int timeout_secs = 0;
 
 inline void Version()
 {
@@ -77,6 +78,7 @@ inline void Usage(const std::string& programname)
 		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (e.g. 60)\n"
 		<< "\t[-o, --output-buffer=<output buffer size in number of timesteps>] (e.g. 24, requires APPEND mode enabled in output plugin)\n"
 		<< "\t[-p, --progress] Show progress\n"
+		<< "\t[-t, --timeout] Kill the process after that many seconds if still running\n"
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
 
@@ -96,6 +98,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		{"sampling-rate", required_argument, nullptr, 's'},
 		{"output-buffer", required_argument, nullptr, 's'},
 		{"progress", no_argument, nullptr, 'p'},
+		{"timeout", no_argument, nullptr, 't'},
 		{"version", no_argument, nullptr, 'v'},
 		{"help", no_argument, nullptr, 'h'},
 		{nullptr, 0, nullptr, 0}
@@ -106,7 +109,7 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 		exit(1);
 	}
 
-	while ((opt=getopt_long( argc, argv, ":b:e:c:s:o:pvh", long_options, &longindex)) != -1) {
+	while ((opt=getopt_long( argc, argv, ":b:e:c:s:o:t:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 0:
 			break;
@@ -134,6 +137,9 @@ inline void parseCmdLine(int argc, char **argv, std::string& begin_date_str, std
 			exit(1);
 		case 'p':
 			showProgress = true;
+			break;
+		case 't':
+			mio::IOUtils::convertString(timeout_secs, std::string(optarg));
 			break;
 		case 'v':
 			Version();
@@ -187,6 +193,7 @@ static void real_main(int argc, char* argv[])
 	bool showProgress = false;
 	std::string begin_date_str, end_date_str;
 	parseCmdLine(argc, argv, begin_date_str, end_date_str, showProgress);
+	if (timeout_secs!=0) WatchDog watchdog(timeout_secs); //set to kill itself after that many seconds
 	
 	Config cfg(cfgfile);
 	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
