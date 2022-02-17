@@ -153,8 +153,11 @@ else
 	startdate=${spinup_start}
 fi
 snofile_in=${snopath}/${snofile}
-snofile_out=${outpath}/${stn}_${experiment}.sno
-
+if [ "${experiment}" == "NO_EXP" ]; then
+	snofile_out=${outpath}/${stn}.sno
+else
+	snofile_out=${outpath}/${stn}_${experiment}.sno
+fi
 
 
 
@@ -259,7 +262,11 @@ do
 				echo "ERROR: zip output directory is not a valid directory! [zip_output_dir=${zip_output_dir}]" >> /dev/stderr
 				exit
 			fi
-			zip ${zip_output_dir}/${stn}_${experiment}.zip -- ${outpath}/${stn}_${experiment}.*
+			if [ "${experiment}" == "NO_EXP" ]; then
+				zip ${zip_output_dir}/${stn}.zip -- ${outpath}/${stn}.* ${outpath}/${stn}_${experiment}.ini
+			else
+				zip ${zip_output_dir}/${stn}_${experiment}.zip -- ${outpath}/${stn}_${experiment}.*
+			fi
 		fi
 		exit
 	fi
