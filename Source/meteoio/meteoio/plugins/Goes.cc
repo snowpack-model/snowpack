@@ -48,7 +48,9 @@ namespace mio {
  * 8030011818095224101G44+0NN067EXE00143 FOh@_bBNvDbXFC[FITFBSI~I~I~OQBOTMOX{I~ONbOvoLMSLUkLU`LU]LTzBN_BORFc]FiaBWaBXBCKjF@@FJ{FEFFAHF@^LT{LTkLVLLVEFusF|BFD}FEJLS~I~NCKLUILTpDTz
  * @endcode
  * 
- * Since there are no headers, the decoded values need some user-provided metadata to be interpreted (see below in \ref goes_keywords).
+ * Since there are no headers, the decoded values need some user-provided metadata to be interpreted (see below in \ref goes_keywords). Please also keep 
+ * in mind that one file usually contains the data for several stations and multiple files might contain the data for the same group of stations but 
+ * for different time periods.
  *
  * @section goes_keywords Keywords
  * This plugin uses the following keywords, all in the [Input] section:
@@ -65,6 +67,7 @@ namespace mio {
  * - GOES_DEBUG: should extra (ie very verbose) information be displayed? (default: false)
  * - METAFILE: an ini file that contains all the metadata, for each station that has to be read;
  *
+ * @section goes_metafile Metafile
  * The METAFILE is structured like an ini file with one section per Goes ID (ie per station). An extra [Default] section
  * can be defined so multiple stations sharing almost the same configuration can share some keys (the Goes ID section
  * keys have priority over the keys defined in [Default]). The following keys are defined:
@@ -77,7 +80,19 @@ namespace mio {
  *  - FIELDS: the parameter name to use for each field (the given number of parameters defines which lines are valid or invalid);
  *
  * The FIELDS should take their names from MeteoData::meteoparam when possible, or be either of the following: "STATIONID", "YEAR", "JDN", "HOUR", "SKIP".
- * Any other name will be used as is but won't be automatically recognized within MeteoIO.
+ * Any other name will be used as is but won't be automatically recognized within MeteoIO. See below for an example of such metafile, 
+ * here only containing one station:
+ * @code
+ * [107282]		#This is the goesID for this station
+ * fields = Station_nr SKIP SKIP SKIP ISWR RSWR SWR_Net TC1_temp TC2_temp HMP50_temp1 HMP50_temp2 RH RH2 VW VW2
+ * units_offset = 0 0 0 0 0 0 0 273.15 273.15 273.15 273.15 0 0 0 0
+ * units_multiplier = 1 1 1 1 1 1 1 1 1 1 1 0.01 0.01 1 1
+ * fields2 = Station_nr DW DW2 P HS HS2 ISWR_MAX RSWR_MAX Max_TC1 Max_TC2 Min_TC1 Min_TC2 VW_MAX VW_MAX2 Battery_Voltage
+ * units_offset2 = 0 0 0 0 0 0 0 0 273.15 273.15 273.15 273.15 0 0 0
+ * position = latlon (46.8, 9.80, 1700)
+ * id = ARG1
+ * name = argos test 1
+ * @endcode
  */
 
 //this is fixed by GOES

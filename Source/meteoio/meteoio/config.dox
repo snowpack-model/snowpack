@@ -763,7 +763,8 @@ INPUT                  = ./meteoio \
                          ./meteoio/meteoResampling \
                          ./meteoio/spatialInterpolations \
                          ./meteoio/gridResampling \
-                         ./meteoio/meteoStats
+                         ./meteoio/meteoStats \
+                         ./applications
                          
 
 # This tag can be used to specify the character encoding of the source files

@@ -218,7 +218,7 @@ std::vector<SnowProfileLayer> SnowProfileLayer::generateProfile(const mio::Date&
 		Pdata[ll].loc_for_wind = 1;
 
 		// Write snow layer data
-		if (ll < nE) {
+		if (e < nE) {
 			Pdata[ll].generateLayer(EMS[e], NDS[e+1]);
 		} else { // add a SH layer
 			Pdata[ll].generateLayer(EMS[nE-1], NDS[nE], dateOfProfile, hoar_density_surf);

@@ -73,6 +73,7 @@ namespace mio {
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  *    -# \subpage spatial_resampling "Spatial resampling"
  *    -# \subpage grid_resampling "Temporal grid resampling" and usage
+ * -# \subpage mio_standalone
  * -# Advanced: Programing using MeteoIO
  *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
