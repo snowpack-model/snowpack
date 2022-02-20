@@ -41,7 +41,7 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
- * - special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
+ * - \anchor config_special_syntax special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
  *       - environment variables are called by using the following syntax: ${env:my_env_var};
  *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key} (make sure to prefix the key with its section if it refers to another section!)
  *       - evaluating an arithmetic expression: ${{arithm. expression}}

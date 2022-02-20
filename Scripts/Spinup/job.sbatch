@@ -46,6 +46,7 @@ fi
 if [ -n "${command1}" ]; then
 	# Case using job arrays with a job manager
 	eval ${command1}
+	echo ${command1} >> finished.lst
 else
 	# Other cases
 	bash to_exec.lst

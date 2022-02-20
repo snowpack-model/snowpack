@@ -31,17 +31,22 @@ namespace mio {
  * The closest n stations to each pixel are
  * used to compute the local lapse rate, allowing to project the contributions of these n stations to the
  * local pixel with an inverse distance weight. It therefore takes the following arguments:
- *  - NEIGHBORS: how many neighbouring stations should be used (mandatory);
+ *  - NEIGHBORS: how many neighbouring stations should be used;
+ *  - MAX_DISTANCE: maximum allowed distance (in meters) between the stations and grid points to interpolate to;
  *  - SCALE: this is a scaling parameter to smooth the IDW distribution. In effect, this is added to the distance in order
  * to move into the tail of the 1/d distribution (default: 1000m);
  *  - ALPHA: this is an exponent to the 1/d distribution (default: 1);
- *  - all the trend-controlling arguments supported by Trend::Trend().
+ *
+ * Either NEIGHBORS or MAX_DISTANCE needs to be specified. When both are specified, both restrictions are used. In such cases,
+ * only stations less than MAX_DISTANCE away from the grid point to interpolate to are used, up to a maximum of n stations.
+ * This can lead to less than n stations to be included in the interpolation.
  *
  * @note Beware, this method sometimes produces very sharp transitions
  * as it spatially moves from one station's area of influence to another one!
+ *
  * @code
- * TA::algorithms           = LIDW_LAPSE
- * TA::idw_lapse::neighbors = 6
+ * TA::algorithms            = LIDW_LAPSE
+ * TA::lidw_lapse::neighbors = 6
  * @endcode
  */
 class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
@@ -53,6 +58,7 @@ class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 		Trend trend;
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		size_t nrOfNeighbors;
+		double MaxDistance;
 };
 
 } //end namespace mio
