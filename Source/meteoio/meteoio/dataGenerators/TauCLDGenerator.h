@@ -21,6 +21,7 @@
 
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
 #include <meteoio/meteoLaws/Sun.h>
+#include <meteoio/dataClasses/DEMObject.h>
 
 #include <map>
 
@@ -41,8 +42,11 @@ namespace mio {
  * to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980).
  *
  * It takes the following (optional) argument:
- *    - TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers. 
+ *    - CLD_TYPE: cloudiness model, either LHOMME, KASTEN or CRAWFORD (default: KASTEN, see AllSkyLWGenerator for the references of the papers. 
  * Please also note that CRAWFORD and LHOMME are exactly identical as the both simply consider that the cloudiness is <em>1-clearness_index</em>);
+ *    - SHADE_FROM_DEM: if set to true, the DEM defined in the [Input] section will be used to compute the shading;
+ *    - INFILE: a file containing the horizon for some or all stations (see the ProcShade filter for the format);
+ *    - OUTFILE: a file to write the computed horizons to. If some horizons have been read from INFILE, they will also be written out in OUTFILE;
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
  * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
  *    - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
@@ -50,6 +54,9 @@ namespace mio {
  * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
  * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
  * in this specific scenario.
+ * 
+ * Please not that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
+ * INFILE will be computed from DEM. If none is available, a fixed 5 degrees threshold is used.
  *
  * @code
  * [Generators]
@@ -60,20 +67,30 @@ namespace mio {
 class TauCLDGenerator : public GeneratorAlgorithm {
 	public:
 		typedef enum CLF_PARAMETRIZATION {
+			DEFAULT,	//will be mapped to KASTEN
 			CLF_LHOMME,
 			KASTEN,
 			CLF_CRAWFORD
 		} clf_parametrization;
 
-		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ);
+		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
+		~TauCLDGenerator();
+		
 		bool generate(const size_t& param, MeteoData& md);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
-		static double getCloudiness(const clf_parametrization& clf_model, const MeteoData& md, const bool& i_use_rswr, const bool& i_use_rad_threshold, SunObject& sun, bool &is_night);
-		static double getClearness(const clf_parametrization& clf_model, const double& cloudiness);
-	private:
+	protected:
+		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
+		double getClearness(const double& cloudiness) const;
+		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
+		
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		std::map< std::string , std::vector< std::pair<double,double> > > masks;
+		std::string horizons_outfile;
+		const Config &cfg;
+		DEMObject dem;
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
+		bool write_mask_out, has_dem;
 };
 
 } //end namespace mio

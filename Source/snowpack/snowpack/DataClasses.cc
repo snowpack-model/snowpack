@@ -370,12 +370,12 @@ void SurfaceFluxes::collectSurfaceFluxes(const BoundCond& Bdata,
 	// 2) Long wave fluxes.
 	lw_out += Bdata.lw_out;
 	lw_net += Bdata.lw_net;
-	if (Mdata.lw_net != IOUtils::nodata) {
+	if (Mdata.lw_net == IOUtils::nodata) {
 		// Default
 		lw_in  +=  Atmosphere::blkBody_Radiation(Mdata.ea, Mdata.ta);
 	} else {
 		// NET_LW provided
-		lw_in  +=  lw_net + lw_out;
+		lw_in  +=  Bdata.lw_net + Bdata.lw_out;
 	}
 
 	// 3) Turbulent fluxes.
