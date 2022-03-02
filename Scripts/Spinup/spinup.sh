@@ -187,10 +187,20 @@ do
 	if [ -e "${snofile_out}" ] && [ "${startover}" == 0 ]; then
 		sim_depth=$(mawk 'BEGIN {s=0; d=0} {if(d) {s+=$2}; if(/\[DATA\]/) {d=1}} END {print s}' ${snofile_out})
 		if (( $(echo "${sim_depth} == 0" | bc -l) )) && (( "${i}" > 0 )) ; then
-			echo "ERROR: spinup interrupted since SNOWPACK does not seem to build a snowpack/firn layer!" >> /dev/stderr
-			exit
+			if (( "${insert_ice_layer}" )) && (( ${i} == 1 )); then
+				echo "Info: SNOWPACK does not seem to build an increasing snowpack/firn layer [depth = ${sim_depth}m], inserting ${ice_layer_thickness} m ice layer!" >> /dev/stderr
+				nsnow=$(fgrep nSnowLayerData ${snofile_out} | mawk -F= '{printf "%d", $NF+1}')
+				nsnow_sub=$(echo ${ice_layer_thickness} | mawk '{print int($1/0.05)}')
+				sed -i -e 's/nSnowLayerData.*/nSnowLayerData = '${nsnow}'/' -e 's/\[DATA\]/\[DATA\]\n'${startdate}'     '${ice_layer_thickness}'    240     1.000     0.000000     0.000     0.000000       0.0     0.000          0.0   44.701810   9.645336   0.000000   1.000000     0      0.000000    '${nsnow_sub}'       0.000        0.000000/' ${snofile_out}
+				sim_depth=$(mawk 'BEGIN {s=0; d=0} {if(d) {s+=$2}; if(/\[DATA\]/) {d=1}} END {print s}' ${snofile_out})
+			else
+				echo "ERROR: spinup interrupted since SNOWPACK does not seem to build a snowpack/firn layer!" >> /dev/stderr
+				exit
+			fi
 		fi
 		if [ ! -z "${checkscript}" ]; then
+			# Use the commented out line below to remove the added ice layers before running the checkscript.
+			#checkscript_out=$(mawk -f ${checkscript} <(mawk -v il=${ice_layer_thickness} 'BEGIN {data=0} {if(data) {h+=$2; if(h>il) {print}} else {print}; if(/\[DATA\]/) {data=1}}' ${snofile_out}))
 			checkscript_out=$(mawk -f ${checkscript} ${snofile_out})
 			echo "Info: ${checkscript} returned ${checkscript_out}."
 		else
