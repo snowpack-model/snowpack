@@ -42,6 +42,11 @@ snow_init_dir="./snow_init/"
 ignore_slope=1	# 1 is YES, 0 is NO
 
 
+# Specify if an ice layer should be inserted when the sinup does not build a firn layer in the first spinup
+insert_ice_layer=0		# 1 is YES, 0 is NO
+ice_layer_thickness=2		# Thickness of ice layers in meters
+
+
 # Specify location of the timeshift_sno_files.sh script. Point to timeshift_sno_files_oldawk.sh when error message appear about the date being out of range.
 time_shift_script="../../Source/snowpack/tools/timeshift_sno_files.sh"
 

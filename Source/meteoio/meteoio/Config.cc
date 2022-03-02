@@ -269,11 +269,12 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 	} else {
 		keymatch = section + keymatch;
 
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t found_pos = (it->first).find(keymatch, 0);
+		//for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
+		for (const auto& it : properties) {
+			const size_t found_pos = (it.first).find(keymatch, 0);
 			if (found_pos==0) { //found it!
 				const size_t section_len = section.length();
-				const std::string key( (it->first).substr(section_len) ); //from pos to the end
+				const std::string key( (it.first).substr(section_len) ); //from pos to the end
 				vecResult.push_back( key );
 			}
 		}
@@ -291,8 +292,8 @@ void Config::write(const std::string& filename) const
 	try {
 		std::string current_section;
 		unsigned int sectioncount = 0;
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const std::string key_full( it->first );
+		for (const auto& it : properties) {
+			const std::string key_full( it.first );
 			const std::string section( ConfigParser::extract_section(key_full) );
 
 			if (current_section != section) {
@@ -304,7 +305,7 @@ void Config::write(const std::string& filename) const
 			}
 
 			const size_t key_start = key_full.find_first_of(":");
-			const std::string value( it->second );
+			const std::string value( it.second );
 			if (value.empty()) continue;
 
 			if (key_start!=string::npos) //start after the "::" marking the section prefix
@@ -327,7 +328,7 @@ const std::string Config::toString() const {
 	std::ostringstream os;
 	os << "<Config>\n";
 	os << "Source: " << sourcename << "\n";
-	for (map<string,string>::const_iterator it = properties.begin(); it != properties.end(); ++it){
+	for (auto it = properties.begin(); it != properties.end(); ++it){
 		os << (*it).first << " -> " << (*it).second << "\n";
 	}
 	os << "</Config>\n";

@@ -23,7 +23,7 @@
 	#include <windows.h>
 	#undef max
 	#undef min
-	#include <cstdlib>
+	#include <threadpoollegacyapiset.h>
 #else
 	#include <sys/time.h>
 	#include <unistd.h>
