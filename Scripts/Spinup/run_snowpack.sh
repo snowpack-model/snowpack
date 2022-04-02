@@ -113,7 +113,11 @@ do
 	echo ${stn}
 	stn=$(basename ${f} .smet)
 	lat_lon=$(echo ${stn} | mawk -F_ '{print $2 "_" $3}')
-	enddate=$(find ./profiles/* | fgrep -- ${lat_lon} | mawk -F\/ '{print substr($NF,1,4) "-" substr($NF,5,2) "-" ((substr($NF,7,2)==32)?(31):(substr($NF,7,2)))}')
+	if [ -d "./profiles/" ]; then
+		enddate=$(find ./profiles/* | fgrep -- ${lat_lon} | mawk -F\/ '{print substr($NF,1,4) "-" substr($NF,5,2) "-" ((substr($NF,7,2)==32)?(31):(substr($NF,7,2)))}')
+	else
+		enddate=""
+	fi
 	if [ -z "${enddate}" ]; then
 		if [ ! -z "${final_end}" ]; then
 			enddate=${final_end}

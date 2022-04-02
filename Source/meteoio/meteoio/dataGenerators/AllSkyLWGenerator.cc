@@ -26,6 +26,13 @@
 
 namespace mio {
 
+AllSkyLWGenerator::AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg)
+                   : TauCLDGenerator(vecArgs, i_algo, i_section, TZ, i_cfg), sun(), model(OMSTEDT)
+{ 
+	//TauCLDGenerator will do its own arguments parsing, then AllSkyLWGenerator
+	parse_args(vecArgs); 
+}
+
 void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( section+"::"+algo );
@@ -42,29 +49,17 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 			else if (user_algo=="UNSWORTH") model = UNSWORTH;
 			else if (user_algo=="CRAWFORD") {
 				model = CRAWFORD;
-				cloudiness_model = TauCLDGenerator::CLF_CRAWFORD;
+				if (cloudiness_model==TauCLDGenerator::DEFAULT)
+					cloudiness_model = TauCLDGenerator::CLF_CRAWFORD;
 			} else if (user_algo=="LHOMME") {
 				model = LHOMME;
-				cloudiness_model = TauCLDGenerator::CLF_LHOMME;
+				if (cloudiness_model==TauCLDGenerator::DEFAULT)
+					cloudiness_model = TauCLDGenerator::CLF_LHOMME;
 			} else
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
 
 			has_type = true;
-		} else if (vecArgs[ii].first=="CLOUDINESS_TYPE") {
-			user_cloudiness = IOUtils::strToUpper(vecArgs[ii].second);
-		} else if (vecArgs[ii].first=="USE_RSWR") {
-			IOUtils::parseArg(vecArgs[ii], where, use_rswr);
-		} else if (vecArgs[ii].first=="USE_RAD_THRESHOLD") {
-			IOUtils::parseArg(vecArgs[ii], where, use_rad_threshold);
 		}
-	}
-
-	if (!user_cloudiness.empty()) {
-		if (user_cloudiness=="LHOMME") cloudiness_model = TauCLDGenerator::CLF_LHOMME;
-		else if (user_cloudiness=="KASTEN") cloudiness_model = TauCLDGenerator::KASTEN;
-		else if (user_cloudiness=="CRAWFORD") cloudiness_model = TauCLDGenerator::CLF_CRAWFORD;
-		else
-			throw InvalidArgumentException("Unknown parametrization \""+user_cloudiness+"\" supplied for "+where, AT);
 	}
 	
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
@@ -98,7 +93,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 			sun.setDate(julian_gmt, 0.);
 
 			bool is_night;
-			cloudiness = TauCLDGenerator::getCloudiness(cloudiness_model, md, use_rswr, use_rad_threshold, sun, is_night);
+			cloudiness = TauCLDGenerator::getCloudiness(md, sun, is_night);
 			if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 			if (is_night) { //interpolate the cloudiness over the night

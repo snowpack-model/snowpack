@@ -12,26 +12,10 @@ install_manifest.txt
 
 #generated files
 /doc/html/*
-/meteoio/IOHandler.cc
-lib/*
+lib/*.so*
 /bin/*
 *.aux
 *.log
-
-#example files and binaries:
-/doc/examples/CMakeCache.txt
-/doc/examples/Makefile
-/doc/examples/2D_interpolations
-/doc/examples/coordinates
-/doc/examples/data_converter
-/doc/examples/dem_reading
-/doc/examples/grid2d_reading
-/doc/examples/matrix
-/doc/examples/meteo_reading
-/doc/examples/random_numbers
-/doc/examples/statistical_filters
-/doc/examples/sun
-/doc/examples/time
 
 #editor files:
 *.swp
