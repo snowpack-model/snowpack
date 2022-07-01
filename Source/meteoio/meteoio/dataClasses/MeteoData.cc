@@ -24,6 +24,7 @@
 #include <limits>
 #include <iomanip>
 #include <sstream>
+#include <algorithm> //for set_difference
 
 using namespace std;
 namespace mio {
@@ -250,6 +251,11 @@ MeteoData::MeteoData()
 
 MeteoData::MeteoData(const Date& date_in)
          : date(date_in), meta(), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
+           resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
+{ }
+
+MeteoData::MeteoData(const StationData& meta_in)
+         : date(0.0, 0.), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
            resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
 { }
 
@@ -791,17 +797,57 @@ bool MeteoData::hasConflicts(const MeteoData& meteo2) const
 std::set<std::string> MeteoData::listAvailableParameters(const std::vector<MeteoData>& vecMeteo)
 {
 	std::set<std::string> results;
-	std::set<size_t> tmp; //for efficiency, we assume that through the vector, the indices remain identical for any given parameter
-
+	
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		for (size_t jj=0; jj<vecMeteo[ii].getNrOfParameters(); jj++)
-			if (vecMeteo[ii](jj) != IOUtils::nodata && tmp.count(jj)==0) { //for efficiency, we compare on the index
-				tmp.insert( jj );
-				results.insert( vecMeteo[ii].getNameForParameter(jj) );
-			}
+		for (const std::string& parname : MeteoData::s_default_paramname)
+			if (vecMeteo[ii](parname) != IOUtils::nodata) results.insert( parname );
+		
+		for (const std::string& parname : vecMeteo[ii].extra_param_name)
+			if (vecMeteo[ii](parname) != IOUtils::nodata) results.insert( parname );
 	}
-
+	
 	return results;
 }
+
+void MeteoData::unifyMeteoData(METEO_SET &vecMeteo)
+{
+	const size_t nElems = vecMeteo.size();
+	if (nElems<2) return;
+	
+	std::vector<std::string> extra_params_ref( vecMeteo.front().extra_param_name );
+	
+	for (size_t ii=0; ii<nElems; ii++) {
+		//easy case: exactly the same vectors
+		if (vecMeteo[ii].extra_param_name == extra_params_ref) continue;
+		
+		//maybe the same parameters are present, but in a different order?
+		std::set<std::string> ref_params(extra_params_ref.begin(), extra_params_ref.end());
+		std::set<std::string> new_params(vecMeteo[ii].extra_param_name.begin(), vecMeteo[ii].extra_param_name.end());
+		if (ref_params == new_params) { //yes, it is only in a different order
+			//most probably the new order will remain from now on
+			extra_params_ref = vecMeteo[ii].extra_param_name;
+			continue;
+		}
+		
+		//now comes the hard work: we need set the whole vector to the same extra_param_name
+		//first, we add all new elements to the begining of the vector until now
+		std::vector<std::string> new_elems;
+		std::set_difference(new_params.begin(), new_params.end(), ref_params.begin(), ref_params.end(), std::inserter(new_elems, new_elems.end()));
+		for (size_t jj=0; jj<ii; jj++) {
+			for(const auto &new_param : new_elems) vecMeteo[jj].addParameter( new_param );
+		}
+		
+		//then, we add all past elements to the rest of the vector starting now and until the end
+		std::vector<std::string> past_elems;
+		std::set_difference(ref_params.begin(), ref_params.end(), new_params.begin(), new_params.end(), std::inserter(past_elems, past_elems.end()));
+		for (size_t jj=ii; jj<nElems; jj++) {
+			for(const auto &new_param : past_elems) vecMeteo[jj].addParameter( new_param );
+		}
+
+		//reset the reference parameters list to contain all potentially new elements
+		extra_params_ref = vecMeteo[ii].extra_param_name;
+	}
+}
+
 
 } //namespace

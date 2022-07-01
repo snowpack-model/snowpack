@@ -26,8 +26,11 @@
 #include <cstdio> //for sscanf
 #include <iomanip> //for setprecision
 
-#ifdef PROJ
+#ifdef PROJ4
+	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
+#elif PROJ
+	#include <proj.h>
 #endif
 
 namespace mio {
@@ -816,7 +819,7 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 */
 void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
-#ifdef PROJ
+#ifdef PROJ4
 	static const std::string src_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	const std::string dest_param("+init=epsg:"+coordparam);
 	projPJ pj_latlong, pj_dest;
@@ -842,6 +845,28 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 	north_out = y;
 	pj_free(pj_latlong);
 	pj_free(pj_dest);
+#elif PROJ
+	static const std::string src_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
+	const std::string dest_param("EPSG:"+coordparam);
+
+	PJ_CONTEXT* pj_context = PJ_DEFAULT_CTX;
+	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("PROJ: Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+
+	double x=long_in, y=lat_in;
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("PROJ: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	east_out = x;
+	north_out = y;
+	proj_destroy(pj_trans);
+	proj_context_destroy(pj_context);
 #else
 	(void)lat_in;
 	(void)long_in;
@@ -862,7 +887,7 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 */
 void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
 {
-#ifdef PROJ
+#ifdef PROJ4
 	const std::string src_param("+init=epsg:"+coordparam);
 	static const std::string dest_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	projPJ pj_latlong, pj_src;
@@ -888,6 +913,28 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 	lat_out = y*RAD_TO_DEG;
 	pj_free(pj_latlong);
 	pj_free(pj_src);
+#elif PROJ
+	const std::string src_param("EPSG:"+coordparam);
+	static const std::string dest_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
+
+	PJ_CONTEXT* pj_context = PJ_DEFAULT_CTX;
+	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("PROJ: Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+
+	double x=east_in, y=north_in;
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("PROJ: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	long_out = x;
+	lat_out = y;
+	proj_destroy(pj_trans);
+	proj_context_destroy(pj_context);
 #else
 	(void)east_in;
 	(void)north_in;

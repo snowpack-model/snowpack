@@ -1,12 +1,12 @@
 # Alpine3D
 
-Alpine3D is a spatially distributed (surface), three dimensional (atmospheric) model for analyzing and predicting dynamics of snow-dominated surface processes in mountainous topography. It includes models for snow cover ([SNOWPACK](http://models.slf.ch/p/snowpack/)), vegetation and soil, snow transport, radiation transfer and runoff which can be enabled or disabled on demand. Alpine3D is available under LGPL version 3 or above, see [www.gnu.org](https://www.gnu.org/).
+Alpine3D is a spatially distributed (surface), three dimensional (atmospheric) model for analyzing and predicting dynamics of snow-dominated surface processes in mountainous topography. It includes models for snow cover ([SNOWPACK](http://snowpack.slf.ch)), vegetation and soil, snow transport, radiation transfer and runoff which can be enabled or disabled on demand. Alpine3D is available under LGPL version 3 or above, see [www.gnu.org](https://www.gnu.org/).
 
-The model supports a variety of input options including interpolation of meteorological weather stations, input from a meteorological model or from remote sensing data ([MeteoIO](http://models.slf.ch/p/meteoio/)) and has been parallelized in order to run on a multi-core computer (with [open-mp](http://openmp.org/) or a cluster (with [MPI](https://en.wikipedia.org/wiki/Message_Passing_Interface)).
+The model supports a variety of input options including interpolation of meteorological weather stations, input from a meteorological model or from remote sensing data ([MeteoIO](http://meteoio.slf.ch)) and has been parallelized in order to run on a multi-core computer (with [open-mp](http://openmp.org/) or a cluster (with [MPI](https://en.wikipedia.org/wiki/Message_Passing_Interface)).
 
 Alpine3D has a broad variety of potential applications. Most dominant is the assessment of snow water resource dynamics in mountain catchments (Michlmayr et al., 2008). This includes predictions of future snow on the basis of climate change scenarios (Bavay et al., 2009, 2012). One exotic application of the model system Alpine3D is the forecasting of surface temperatures on ski-pistes, e.g. for the Vancouver winter olympics. For this forecast local shadings (might) change surface temperature up to 5 °C.
 
-You can find a more exhaustive documentation on how to compile and run Alpine3D the [wiki page](https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home)
+You can find a more exhaustive documentation on how to compile and run Alpine3D the [home page](https://alpine3d.slf.ch)
 
 ## Compiling Alpine3D
 

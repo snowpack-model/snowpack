@@ -151,6 +151,11 @@ void SMETCommon::copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
+std::string SMETCommon::strToLower(std::string str) {
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+	return str;
+}
+
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
 	char* conversion_end = nullptr;
@@ -520,23 +525,24 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 
 		//check if location is in data and if timestamp is present
 		for (size_t ii = 0; ii<tmp_vec.size(); ii++){
-			if (tmp_vec[ii] == "latitude") count_wgs84++;
-			else if (tmp_vec[ii] == "longitude") count_wgs84++;
-			else if (tmp_vec[ii] == "easting") count_epsg++;
-			else if (tmp_vec[ii] == "northing") count_epsg++;
+			const std::string field_name = SMETCommon::strToLower( tmp_vec[ii] );
+			if (field_name == "latitude") count_wgs84++;
+			else if (field_name == "longitude") count_wgs84++;
+			else if (field_name == "easting") count_epsg++;
+			else if (field_name == "northing") count_epsg++;
 
-			if (tmp_vec[ii] == "altitude") {
+			if (field_name == "altitude") {
 				count_wgs84++;
 				count_epsg++;
 			}
 
-			if (tmp_vec[ii] == "timestamp"){
+			if (field_name == "timestamp"){
 				if (timestamp_present) return false; //no duplicate timestamp field allowed
 				timestamp_present = true;
 				timestamp_field = ii;
 			}
 
-			if (tmp_vec[ii] == "julian"){
+			if (field_name == "julian"){
 				if (julian_present) return false; //no duplicate julian field allowed
 				julian_present = true;
 				julian_field = ii;
@@ -976,7 +982,8 @@ void SMETReader::process_header()
 			std::string newfields;
 			if (!tmp_vec.empty()){
 				for (size_t ii=0; ii<tmp_vec.size(); ii++){
-					if (tmp_vec[ii] == "timestamp"){
+					const std::string field_name = SMETCommon::strToLower( tmp_vec[ii] );
+					if (field_name == "timestamp"){
 						timestamp_present = true;
 						timestamp_field = ii;
 					} else {
@@ -986,20 +993,20 @@ void SMETReader::process_header()
 						nr_of_fields++;
 					}
 
-					if (tmp_vec[ii] == "julian"){
+					if (field_name == "julian"){
 						julian_present = true;
 						julian_field = ii;
 					}
 
 					//Using WGS_84 coordinate system
-					if (tmp_vec[ii] == "latitude")  location_data_wgs84 |= 1;
-					else if (tmp_vec[ii] == "longitude") location_data_wgs84 |= 2;
-					else if (tmp_vec[ii] == "altitude")  location_data_wgs84 |= 4;
+					if (field_name == "latitude")  location_data_wgs84 |= 1;
+					else if (field_name == "longitude") location_data_wgs84 |= 2;
+					else if (field_name == "altitude")  location_data_wgs84 |= 4;
 
 					//Using an EPSG coordinate system
-					if (tmp_vec[ii] == "easting")  location_data_epsg |= 1;
-					else if (tmp_vec[ii] == "northing") location_data_epsg |= 2;
-					else if (tmp_vec[ii] == "altitude") location_data_epsg |= 4;
+					if (field_name == "easting")  location_data_epsg |= 1;
+					else if (field_name == "northing") location_data_epsg |= 2;
+					else if (field_name == "altitude") location_data_epsg |= 4;
 				}
 				it->second = newfields;
 			}

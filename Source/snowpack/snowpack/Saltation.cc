@@ -398,11 +398,15 @@ bool Saltation::compSaltation(const double& i_tauS, const double& tau_th, const 
                                   double& massflux, double& c_salt) const
 {
 	if (saltation_model == "SORENSEN") { // Default model
-		// Sorensen
+		// Sorensen (1991), parameters from Lehning et al. (2008)
+		// Note that this equatin is expressed in the wrong units. See comment in: https://doi.org/10.5194/gmd-2022-28-RC1. The coefficients
+		// should have been converted from g/cm/s to kg/m/s. According to Vionnet, 2012 (https://pastel.archives-ouvertes.fr/tel-00781279v3/document,
+		// Fig. 5.3) SORENSEN2004 implemented below may be considered a better option.
 		const double tauS = i_tauS;
 		const double ustar = sqrt(tauS / Constants::density_air);
 		const double ustar_thresh = sqrt(tau_th / Constants::density_air);
 		if (ustar > ustar_thresh) {
+			// Eq. 2 in Lehning et al. (2008) [http://doi.org/10.1016/j.coldregions.2007.05.012]:
 			massflux = 0.0014 * Constants::density_air * ustar * (ustar - ustar_thresh) * (ustar + 7.6*ustar_thresh + 205.);
 			c_salt = massflux / ustar*0.001; // Arbitrary Scaling to match Doorschot concentration
 		} else {
@@ -410,8 +414,22 @@ bool Saltation::compSaltation(const double& i_tauS, const double& tau_th, const 
 			c_salt = 0.;
 		}
 	}
+	else if (saltation_model == "SORENSEN2004") {
+		// Sorensen (2004), parameters from Vionnet et al. (2014)
+		const double tauS = i_tauS;
+		const double ustar = sqrt(tauS / Constants::density_air);
+		const double ustar_thresh = sqrt(tau_th / Constants::density_air);
+		if (ustar > ustar_thresh) {
+			// Eq. 11 in Vionnet et al. (2014) [https://doi.org/10.5194/tc-8-395-2014]:
+			massflux = Constants::density_air / Constants::g * Optim::pow3(ustar) * (1. - Optim::pow2(ustar_thresh / ustar)) * (2.6 + 2.5 * Optim::pow2(ustar_thresh / ustar) + 2. * ustar_thresh / ustar);
+			c_salt = massflux / ustar*0.001; // Arbitrary Scaling to match Doorschot concentration
+		} else {
+			massflux = 0.;
+			c_salt = 0.;
+		}
+	}
 	else if (saltation_model == "DOORSCHOT") { // Judith Doorschot's model
-		int    k = 5;
+		int k = 5;
 		// Initialize Shear Stress Distribution
 		const double taumean = i_tauS;
 		const double taumax = 15.* i_tauS;

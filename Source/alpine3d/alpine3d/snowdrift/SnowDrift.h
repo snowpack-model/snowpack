@@ -62,7 +62,7 @@ struct WIND_FIELD {unsigned int start_step;std::string wind;};
  * @page snowdrift Snowdrift
  * This module computes the preferential deposition and redistribution of snow by the wind (see \ref principles_snowdrift). It is
  * enabled using the "--enable-drift" command line option.
- * The 3D wind fields are read using a GRID3D <A HREF="https://models.slf.ch/p/meteoio">MeteoIO</A> plugin such as ARPS:
+ * The 3D wind fields are read using a GRID3D <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home">MeteoIO</A> plugin such as ARPS:
  * @code
  * GRID3D		= ARPS
  * GRID3DPATH	= ../input/wind_fields/

@@ -58,12 +58,22 @@ const double SnowStation::comb_thresh_sp = 0.05;    ///< Sphericity (1)
 const double SnowStation::comb_thresh_rg = 0.125;   ///< Grain radius (mm)
 
 RunInfo::RunInfo()
-            : version(SN_VERSION), computation_date(getRunDate()),
+            : version(SN_VERSION), version_num( getNumericVersion(SN_VERSION) ), computation_date(getRunDate()),
               compilation_date(getCompilationDate()), user(IOUtils::getLogName()), hostname(IOUtils::getHostName()) {}
 
 RunInfo::RunInfo(const RunInfo& orig)
-            : version(orig.version), computation_date(orig.computation_date),
+            : version(orig.version), version_num(orig.version_num), computation_date(orig.computation_date),
               compilation_date(orig.compilation_date), user(orig.user), hostname(orig.hostname) {}
+
+double RunInfo::getNumericVersion(std::string version_str)
+{
+	//remove any '-' used for formatting the date
+	version_str.erase(std::remove_if(version_str.begin(), version_str.end(), [] (char c) { return c=='-'; }), version_str.end());
+	//keep only the first '.' and remove the other ones, if any
+	const size_t pos = version_str.find('.');
+	version_str.erase(std::remove_if(version_str.begin()+pos+1, version_str.end(), [] (char c) { return c=='.'; }), version_str.end());
+	return atof( version_str.c_str() );
+}
 
 mio::Date RunInfo::getRunDate()
 {

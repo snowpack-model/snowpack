@@ -50,6 +50,7 @@
 #include <meteoio/meteoFilters/ProcMult.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
+#include <meteoio/meteoFilters/ProcReducePressure.h>
 #include <meteoio/meteoFilters/ProcRHWaterToIce.h>
 #include <meteoio/meteoFilters/ProcTransformWindVector.h>
 #include <meteoio/meteoFilters/ProcShift.h>
@@ -163,6 +164,7 @@ namespace mio {
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  * - PSUM_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcPSUMDistribute
  * - SHADE: apply a shading mask to the Incoming or Reflected Short Wave Radiation, see ProcShade
+ * - REDUCE_PRESSURE: reduce local pressure to sea level pressure, see ProcReducePressure
  * - RHWATERTOICE: correct relative humidity over water to over ice in case temperature is below freezing, see ProcRHWaterToIce
  * - TRANSFORMWINDVECTOR: transform wind direction and/or wind speed components, see ProcTransformWindVector
  *
@@ -250,6 +252,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcPSUMDistribute(vecArgs, blockname, cfg);
 	} else if (blockname == "SHADE"){
 		return new ProcShade(vecArgs, blockname, cfg);
+	} else if (blockname == "REDUCE_PRESSURE"){
+		return new ProcReducePressure(vecArgs, blockname, cfg);
 	} else if (blockname == "RHWATERTOICE"){
 		return new ProcRHWaterToIce(vecArgs, blockname, cfg);
 	} else if (blockname == "TRANSFORMWINDVECTOR"){

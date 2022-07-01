@@ -1,90 +1,75 @@
-# - Try to find PROJ 
-# Once done this will define 
-# 
-#  PROJ_FOUND - system has PROJ 
-#  PROJ_INCLUDE_DIRS - the PROJ include directory 
-#  PROJ_LIBRARIES - Link these to use PROJ 
-#  PROJ_DEFINITIONS - Compiler switches required for using PROJ 
-# 
+#SPDX-License-Identifier: BSD-3-Clause
+# Find Proj
+# ~~~~~~~~~
+# Copyright (c) 2007, Martin Dobias <wonder.sk at gmail.com> with contributions from Mathias Bavay <bavay at slf dot ch>, 2022
+# Redistribution and use is allowed according to the terms of the BSD license.
+# (see https://opensource.org/licenses/BSD-3-Clause)
+#
+# CMake module to search for Proj library
+#
+# If it's found it sets PROJ_FOUND to TRUE
+# and following variables are set:
+#    PROJ_INCLUDE_DIR
+#    PROJ_LIBRARY
 
-if (PROJ_LIBRARIES AND PROJ_INCLUDE_DIRS) 
-  # in cache already 
-  set(PROJ_FOUND TRUE) 
-else (PROJ_LIBRARIES AND PROJ_INCLUDE_DIRS) 
+# FIND_PATH and FIND_LIBRARY normally search standard locations
+# before the specified paths. To search non-standard paths first,
+# FIND_* is invoked first with specified paths and NO_DEFAULT_PATH
+# and then again with no specified paths to search the default
+# locations. When an earlier FIND_* succeeds, subsequent FIND_*s
+# searching for the same item do nothing.
 
-  find_path(PROJ_INCLUDE_DIR 
-    NAMES 
-      proj.h 
-    PATHS 
-if(WIN32) 
-      ${PROJ_DEV_PATH}/include 
-endif(WIN32) 
-        /usr/include 
-        /usr/local/include 
-        /opt/local/include 
-        /sw/include 
-        ${CMAKE_INSTALL_PREFIX}/include 
-        ${CMAKE_SOURCE_DIR}/Win32/GDAL/include 
-    PATH_SUFFIXES 
-        proj 
+# try to use framework on mac
+# want clean framework path, not unix compatibility path
+IF (APPLE)
+	IF (CMAKE_FIND_FRAMEWORK MATCHES "FIRST" OR CMAKE_FRAMEWORK_PATH MATCHES "ONLY" OR NOT CMAKE_FIND_FRAMEWORK)
+		SET (CMAKE_FIND_FRAMEWORK_save ${CMAKE_FIND_FRAMEWORK} CACHE STRING "" FORCE)
+		SET (CMAKE_FIND_FRAMEWORK "ONLY" CACHE STRING "" FORCE)
+		#FIND_PATH(PROJ_INCLUDE_DIR PROJ/proj_api.h)
+		FIND_LIBRARY(PROJ_LIBRARY PROJ)
+		IF (PROJ_LIBRARY)
+			# FIND_PATH doesn't add "Headers" for a framework
+			SET (PROJ_INCLUDE_DIR ${PROJ_LIBRARY}/Headers CACHE PATH "Path to a file.")
+		ENDIF (PROJ_LIBRARY)
+		SET (CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_save} CACHE STRING "" FORCE)
+	ENDIF ()
+ENDIF (APPLE)
 
-  ) 
-  #mark_as_advanced(PROJ_INCLUDE_DIR) 
+FIND_PATH(PROJ_INCLUDE_DIR proj_api.h "$ENV{INCLUDE}" "$ENV{LIB_DIR}/include")
+IF (NOT PROJ_INCLUDE_DIR)
+	FIND_PATH(PROJ_INCLUDE_DIR proj.h "$ENV{INCLUDE}" "$ENV{LIB_DIR}/include")
+ENDIF (NOT PROJ_INCLUDE_DIR)
 
-  find_library(LIBPROJ_LIBRARY 
-    NAMES 
-        proj 
-        libproj 
-        proj_6_0 
-        proj_6_1 
-        proj_6_2 
-    PATHS 
-if(WIN32) 
-      ${PROJ_DEV_PATH}/lib 
-endif(WIN32) 
-        /usr/lib 
-        /usr/lib64 
-        /usr/local/lib 
-        /opt/local/lib 
-        /sw/lib 
-        ${CMAKE_INSTALL_PREFIX}/lib 
-        ${CMAKE_SOURCE_DIR}/Win32/GDAL/lib 
-  ) 
-  #mark_as_advanced(LIBPROJ_LIBRARY) 
+FIND_LIBRARY(PROJ_LIBRARY NAMES proj_i proj PATHS "$ENV{LIB}" "$ENV{LIB_DIR}/lib")
 
-  if (LIBPROJ_LIBRARY) 
-    set(LIBPROJ_FOUND TRUE) 
-  else (LIBPROJ_LIBRARY) 
-      message(FATAL_ERROR "Not found PROJ library") 
-  endif (LIBPROJ_LIBRARY) 
+IF (PROJ_INCLUDE_DIR AND PROJ_LIBRARY)
+	SET(PROJ_FOUND TRUE)
+ENDIF (PROJ_INCLUDE_DIR AND PROJ_LIBRARY)
 
-  set(PROJ_INCLUDE_DIRS 
-    ${PROJ_INCLUDE_DIR} 
-  ) 
+IF (PROJ_FOUND)
+	IF (EXISTS ${PROJ_INCLUDE_DIR}/proj_api.h)
+		FILE(READ ${PROJ_INCLUDE_DIR}/proj_api.h proj_version)
+		STRING(REGEX REPLACE "^.*PJ_VERSION ([0-9]+).*$" "\\1" PJ_VERSION "${proj_version}")
 
-  if (LIBPROJ_FOUND) 
-    set(PROJ_LIBRARIES 
-      ${PROJ_LIBRARIES} 
-      ${LIBPROJ_LIBRARY} 
-    ) 
-  endif (LIBPROJ_FOUND) 
+		# This will break if 4.10.0 ever will be released (highly unlikely)
+		STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\1" PROJ_VERSION_MAJOR "${PJ_VERSION}")
+		STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\2" PROJ_VERSION_MINOR "${PJ_VERSION}")
+		STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\3" PROJ_VERSION_PATCH "${PJ_VERSION}")
+		STRING(CONCAT PROJ_VERSION_STR "(" ${PROJ_VERSION_MAJOR} "." ${PROJ_VERSION_MINOR} "." ${PROJ_VERSION_PATCH} ")")
+		
+		SET(PROJ4 ON CACHE BOOL "Use the old PROJ API" FORCE)
+	ELSE (EXISTS ${PROJ_INCLUDE_DIR}/proj.h)
+		FILE(READ ${PROJ_INCLUDE_DIR}/proj.h proj_version)
+		STRING(REGEX REPLACE "^.*PROJ_VERSION_MAJOR +([0-9]+).*$" "\\1" PROJ_VERSION_MAJOR "${proj_version}")
+		STRING(REGEX REPLACE "^.*PROJ_VERSION_MINOR +([0-9]+).*$" "\\1" PROJ_VERSION_MINOR "${proj_version}")
+		STRING(REGEX REPLACE "^.*PROJ_VERSION_PATCH +([0-9]+).*$" "\\1" PROJ_VERSION_PATCH "${proj_version}")
+		STRING(CONCAT PROJ_VERSION_STR "(" ${PROJ_VERSION_MAJOR} "." ${PROJ_VERSION_MINOR} "." ${PROJ_VERSION_PATCH} ")")
+	ENDIF (EXISTS ${PROJ_INCLUDE_DIR}/proj_api.h)
 
-  if (PROJ_INCLUDE_DIRS AND PROJ_LIBRARIES) 
-     set(PROJ_FOUND TRUE) 
-     set(PROJ_VERSION "6.0.0") 
-  endif (PROJ_INCLUDE_DIRS AND PROJ_LIBRARIES) 
-
-  if (PROJ_FOUND) 
-    if (NOT PROJ_FIND_QUIETLY) 
-      message(STATUS "Found PROJ: ${PROJ_LIBRARIES}") 
-    endif (NOT PROJ_FIND_QUIETLY) 
-  else (PROJ_FOUND) 
-    if (PROJ_FIND_REQUIRED) 
-      message(FATAL_ERROR "Could not find PROJ") 
-    endif (PROJ_FIND_REQUIRED) 
-  endif (PROJ_FOUND) 
-
-  # show the PROJ_INCLUDE_DIRS and PROJ_LIBRARIES variables only in the advanced view 
-  #mark_as_advanced(PROJ_INCLUDE_DIRS PROJ_LIBRARIES) 
-
-endif (PROJ_LIBRARIES AND PROJ_INCLUDE_DIRS)
+	INCLUDE_DIRECTORIES(BEFORE SYSTEM ${PROJ_INCLUDE_DIR})
+	MARK_AS_ADVANCED(PROJ_INCLUDE_DIR PROJ_LIBRARY PROJ4)
+ELSE (PROJ_FOUND)
+	IF (PROJ_FIND_REQUIRED)
+		MESSAGE(FATAL_ERROR "Could not find Proj")
+	ENDIF (PROJ_FIND_REQUIRED)
+ENDIF (PROJ_FOUND)

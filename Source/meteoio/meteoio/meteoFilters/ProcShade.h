@@ -82,7 +82,7 @@ class ProcShade : public ProcessingBlock {
 		DEMObject dem;
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
 		std::string horizons_outfile;
-		bool has_dem, write_mask_out;
+		bool has_dem;
 
 		static const double diffuse_thresh;
 };
