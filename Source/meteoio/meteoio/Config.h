@@ -335,6 +335,9 @@ class Config {
 		
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
+		 * @details Please not that if the keys are postfixed by integral numbers (ie build as <i>{common string}{integral number}</i>, such as *STATION12*)
+		 * then the keys will be sorted in ascending order based on this integral number. As soon as a key does not fit this pattern, the sort will be
+		 * purely alphabetical (therefore *STATION11_a* would appear **before** *STATION2_a*).
 		 * @param[in] keymatch std::string representing a pattern for the key in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
@@ -346,8 +349,8 @@ class Config {
 			IOUtils::toUpper(section);
 			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key( section + "::" + vecKeys[ii] );
+			for (const std::string key : vecKeys) {
+				const std::string full_key( section + "::" + key );
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -365,8 +368,8 @@ class Config {
 			IOUtils::toUpper(section);
 			vecKeys = getKeys(keymatch, section);
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key = section + "::" + vecKeys[ii];
+			for (const std::string key : vecKeys) {
+				const std::string full_key = section + "::" + key;
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);

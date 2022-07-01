@@ -1,0 +1,199 @@
+default:
+  image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
+  tags: ['docker']
+  before_script:
+  - apt-get update && apt-get -y install cmake
+
+stages:
+  - build
+  - test
+  - test coverage
+  - release build
+  - release
+  - pages
+
+build:
+  stage: build
+  script:
+    # build meteoio including binaries (test if build works for all artifacts)
+    - mkdir build && cd build
+    - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
+      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
+      -D CPACK_BUNDLE_ALL:BOOL=ON
+    - make -j 2
+    # cleanup to avoid limits in GitLab
+    - find . -name "*.o" -type f -delete
+  artifacts:
+    expire_in: 1h
+    paths:
+      - build
+      - lib
+
+.test_base:
+  stage: test
+  script:
+    - cp -r tests build
+    - cd build
+    - ctest --verbose -R "^${TEST_NAME}$"
+
+meteo_reading_interpol:
+  extends: .test_base
+  variables:
+    TEST_NAME: meteo_reading_interpol.smoke
+
+meteo_reading_no_interpol:
+  extends: .test_base
+  variables:
+    TEST_NAME: meteo_reading_no_interpol.smoke
+
+dataEditing:
+  extends: .test_base
+  variables:
+    TEST_NAME: data_editing.smoke
+
+sun:
+  extends: .test_base
+  variables:
+    TEST_NAME: sun.smoke
+  before_script:
+  - apt-get update && apt-get -y install cmake numdiff
+
+dem_reading:
+  extends: .test_base
+  variables:
+    TEST_NAME: dem_reading.smoke
+
+2D_interpolations:
+  extends: .test_base
+  variables:
+    TEST_NAME: 2D_interpolations.smoke
+
+arrays:
+  extends: .test_base
+  variables:
+    TEST_NAME: arrays.smoke
+
+coords:
+  extends: .test_base
+  variables:
+    TEST_NAME: coordinates.smoke
+
+stats:
+  extends: .test_base
+  variables:
+    TEST_NAME: stats.smoke
+
+running times and coverage:
+  stage: test coverage
+  script:
+    - apt-get -y install numdiff
+    - cp -r tests build # copy the required test files into the tests folder
+    - cd build
+    - ctest && ctest -D NightlyCoverage
+
+Debian release build:
+  stage: release build
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies: []
+  script:
+    - apt-get -y install doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
+    - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
+    - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
+    - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
+    - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF
+      -D USE_LTO_OPTIMIZATIONS:BOOL=ON -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON -D CPACK_GENERATOR:STRING="DEB;TGZ"
+    - make -j 2
+    - make doc
+    - cpack
+    # Documentation only package
+    - mv doc MeteoIO-${METEOIO_VERSION}-doc
+    - tar -czvf MeteoIO-${METEOIO_VERSION}-doc.tar.gz MeteoIO-${METEOIO_VERSION}-doc
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb
+      - MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz
+
+Fedora release build:
+  stage: release build
+  image: fedora
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies: []
+  before_script:
+    - yum -y install make gcc g++ cmake doxygen graphviz rpm-build
+  script:
+    - echo "%__os_install_post %{nil}" > ~/.rpmmacros # Turn off binary stripping for rpm
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
+    - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
+    - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
+    - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
+    - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF -D USE_LTO_OPTIMIZATIONS:BOOL=ON 
+      -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON -D CPACK_GENERATOR:STRING="RPM" -D USE_RPATH:BOOL=OFF
+    - make -j 2
+    - make doc
+    - cpack
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  before_script: # overrides global before_script
+    - apk add --no-cache curl
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies:
+    - Debian release build
+    - Fedora release build
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.tar.gz
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.tar.gz"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.rpm
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.rpm"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.deb
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.deb"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-doc.tar.gz
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-doc.tar.gz"'
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Created using GitLab CI/CD'
+    tag_name: '$CI_COMMIT_TAG'
+    ref: '$CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'Linux Debian binary tarball'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz'
+          link_type: 'other'
+        - name: 'Linux Fedora RPM binary package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm'
+          link_type: 'other'
+        - name: 'Linux Debian DEB binary package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb'
+          link_type: 'other'
+        - name: 'Documentation only package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz'
+          link_type: 'other'
+
+update pages:
+  stage: pages
+  before_script: [] # overrides global before_script
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies:
+    - release
+  script:
+    - curl --request POST
+     --form token=${CI_JOB_TOKEN}
+     --form ref=main
+     "https://gitlabext.wsl.ch/api/v4/projects/174/trigger/pipeline"

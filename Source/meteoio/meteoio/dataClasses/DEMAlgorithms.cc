@@ -174,8 +174,10 @@ std::vector< std::pair<double,double> > DEMAlgorithms::getHorizonScan(const DEMO
 	const size_t iy1 = static_cast<size_t>( point.getGridJ() );
 	for (double bearing=0.0; bearing <360.; bearing += increment) {
 		const double tan_alpha = getHorizon(dem, ix1, iy1, bearing);
-		if (tan_alpha!=IOUtils::nodata)
-			horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
+		if (tan_alpha!=IOUtils::nodata) {
+			const double angle = std::ceil(atan(tan_alpha)*Cst::to_deg * 10.) * .1; //rounded up to the nearest .1 deg
+			horizon.push_back( make_pair(bearing, angle) );
+		}
 	}
 	
 	return horizon;

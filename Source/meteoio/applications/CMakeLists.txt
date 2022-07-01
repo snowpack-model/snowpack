@@ -2,6 +2,7 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersionGIT()
+SET(BINARY "meteoio_timeseries")
 
 # IF(CMAKE_COMPILER_IS_GNUCXX)
 # 	SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
@@ -30,9 +31,16 @@ IF(MSVC)
 ENDIF(MSVC)
 
 #get the proper MeteoIO library
-SET(METEOIO_LIBRARIES ${PROJECT_NAME})
-#link_directories(${PROJECT_SOURCE_DIR}/lib)
-
+IF(BUILD_SHARED_LIBS)
+	SET(METEOIO_LIBRARIES ${PROJECT_NAME})
+ELSE(BUILD_SHARED_LIBS)
+	IF(BUILD_STATIC_LIBS)
+		SET(METEOIO_LIBRARIES "${PROJECT_NAME}_STATIC")
+	ELSE(BUILD_STATIC_LIBS)
+		MESSAGE(SEND_ERROR "Not building MeteoIO, the standalone application won't be able to build")
+	ENDIF(BUILD_STATIC_LIBS)
+ENDIF(BUILD_SHARED_LIBS)
+INCLUDE_DIRECTORIES(../)
 
 #Handle extra libraries needed for GUI exceptions
 IF(APPLE)
@@ -41,12 +49,18 @@ ENDIF(APPLE)
 IF(UNIX AND NOT HAIKU)
 	SET(EXTRA_LINKS "dl;pthread")
 ENDIF(UNIX AND NOT HAIKU)
+IF (LEAKS_CHECK)
+	SET(EXTRA_LINKS "${EXTRA_LINKS} -fsanitize=address -fno-omit-frame-pointer -static-libasan")
+ENDIF(LEAKS_CHECK)
 
 #Prepare executable
-ADD_EXECUTABLE(meteoio_timeseries meteoio_timeseries.cc ${getopt_src})
-TARGET_LINK_LIBRARIES(meteoio_timeseries ${METEOIO_LIBRARIES})
-SET_TARGET_PROPERTIES(meteoio_timeseries PROPERTIES
+ADD_EXECUTABLE(${BINARY} meteoio_timeseries.cc ${getopt_src})
+TARGET_LINK_LIBRARIES(${BINARY} ${METEOIO_LIBRARIES} ${EXTRA_LINKS})
+IF(BUILD_STATIC_LIBS)
+	TARGET_LINK_OPTIONS(${BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
+ENDIF(BUILD_STATIC_LIBS)
+SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 	CLEAN_DIRECT_OUTPUT 1
-	OUTPUT_NAME "meteoio_timeseries")
-INSTALL(TARGETS meteoio_timeseries RUNTIME DESTINATION bin COMPONENT exe)
+	OUTPUT_NAME "${BINARY}")
+INSTALL(TARGETS ${BINARY} RUNTIME DESTINATION bin COMPONENT exe)

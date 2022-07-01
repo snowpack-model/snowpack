@@ -30,6 +30,7 @@ SET(meteoFilters_sources
 	meteoFilters/ProcMult.cc
 	meteoFilters/ProcExpSmoothing.cc
 	meteoFilters/ProcWMASmoothing.cc
+	meteoFilters/ProcReducePressure.cc
 	meteoFilters/ProcRHWaterToIce.cc
 	meteoFilters/ProcShift.cc
 	meteoFilters/ProcTransformWindVector.cc

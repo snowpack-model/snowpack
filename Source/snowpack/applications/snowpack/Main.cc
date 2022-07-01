@@ -760,6 +760,8 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 					vecSSdata[slope.mainStation].meta.position = vectmpmd[i_stn].meta.position;
 				} else { //all metadata from the meteo forcings
 					vecSSdata[slope.mainStation].meta = vectmpmd[i_stn].meta;
+					if (vecSSdata[slope.mainStation].meta.getSlopeAngle()==mio::IOUtils::nodata || vecSSdata[slope.mainStation].meta.getAzimuth()==mio::IOUtils::nodata)
+						throw mio::NoDataException("SLOPE_FROM_SNO has been set to false, but slope information is incomplete in the meteorological forcings for station " + vecStationIDs[i_stn], AT);
 				}
 			} else {
 				std::stringstream sec_snowfile;

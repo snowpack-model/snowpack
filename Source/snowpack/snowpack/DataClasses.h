@@ -881,12 +881,14 @@ class RunInfo {
 		RunInfo& operator=(const RunInfo&) {return *this;} //everything is static, so we can not change anything
 
 		const std::string version;   ///< SNOWPACK version
+		const double version_num;    ///< SNOWPACK version formatted as a number
 		const mio::Date computation_date; ///< Date of computation
 		const std::string compilation_date; ///< Date of compilation
 		const std::string user; ///< logname of the user running the simulation
 		const std::string hostname; ///< hostname of the computer running the simulation
 
 	private:
+		static double getNumericVersion(std::string version_str);
 		static mio::Date getRunDate();
 		static std::string getCompilationDate();
 };

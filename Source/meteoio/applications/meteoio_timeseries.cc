@@ -393,6 +393,8 @@ static void real_main(int argc, char* argv[])
 		
 		if (outputBufferSize > 0 && count%outputBufferSize == 0) {	// Check for buffered output
 			std::cout << "Writing output data and clearing buffer" << std::endl;
+			//handle extra parameters changing over time
+			for(size_t ii=0; ii<vecMeteo.size(); ii++) MeteoData::unifyMeteoData( vecMeteo[ii] );
 			io.writeMeteoData(vecMeteo);
 			for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
 				const std::string stationID( Meteo[ii].meta.stationID );
@@ -408,6 +410,8 @@ static void real_main(int argc, char* argv[])
 	
 	//In any case, we write the data out
 	std::cout << "Writing output data" << std::endl;
+	//handle extra parameters changing over time
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) MeteoData::unifyMeteoData( vecMeteo[ii] );
 	io.writeMeteoData(vecMeteo);
 
 	timer.stop();

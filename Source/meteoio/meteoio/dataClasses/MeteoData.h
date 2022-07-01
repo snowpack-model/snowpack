@@ -185,6 +185,12 @@ class MeteoData {
 		MeteoData(const Date& in_date);
 
 		/**
+		* @brief A constructor that sets the meta data and keeps julian ==0.0
+		* @param meta_in A StationData object containing the meta data
+		*/
+		MeteoData(const StationData& meta_in);
+		
+		/**
 		* @brief A constructor that sets the measurment time and meta data
 		* @param date_in A Date object representing the time of the measurement
 		* @param meta_in A StationData object containing the meta data
@@ -360,6 +366,14 @@ class MeteoData {
 		 * @return parameters that have at least one valid value
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
+		
+		/**
+		 * @brief Ensure all elements in a METEO_SET have the same parameters.
+		 * @details This should be called before writing out the METEO_SET with a plugin such as smet
+		 * in order to guarantee that all parameters are always present.
+		 * @param vecMeteo METEO_SET to process
+		 */
+		static void unifyMeteoData(METEO_SET &vecMeteo);
 
 		/**
 		 * @brief Print the content of the current object

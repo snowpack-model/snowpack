@@ -64,7 +64,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-src.tar.gz</name>
 		<summary>Source package</summary>
-		<description>Please have a look at <a href="https://models.slf.ch/p/meteoio/page/Getting-started/">Getting-started</a> for instructions (the build is based on cmake). Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>Please have a look at <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Getting-started">Getting-started</a> for instructions (the build is based on cmake). Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-src.tar.gz</replaces>
 		<labels>
 			<label>Type:Source</label>

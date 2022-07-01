@@ -11,4 +11,3 @@ SET_TESTS_PROPERTIES(sun.smoke
                      FAIL_REGULAR_EXPRESSION "error|differ")
 
 
-
