@@ -63,7 +63,7 @@ using namespace mio;
  *                            - mk < 10, mk=mk+10 : first complete wetting
  *                            - mk < 20, mk=mk+10 : first melt-freeze cycle completed
  *                            - mk / 100 >= 1     : tagged snow layer
- *                            - mk / 1000 >= 9    : marked reference level to reference height of wind and meteo values, as well as measured snow height 
+ *                            - mk / 1000 >= 9    : marked reference level to reference height of wind and meteo values, as well as measured snow height
  *
  * SECONDARY micro-structure parameters computed by Metamorphism routine:
  * - N3   : coordination number (1)
@@ -226,21 +226,21 @@ double Metamorphism::ddRate(const ElementData& Edata)
  * non-static section                                       *
  ************************************************************/
 
-static std::string get_model(const SnowpackConfig& cfg) 
+static std::string get_model(const SnowpackConfig& cfg)
 {
 	std::string model;
 	cfg.getValue("METAMORPHISM_MODEL", "SnowpackAdvanced", model);
 	return model;
 }
 
-static double get_sn_dt(const SnowpackConfig& cfg) 
+static double get_sn_dt(const SnowpackConfig& cfg)
 {
 	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
 	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
 	return M_TO_S(calculation_step_length);
 }
 
-static double get_nsgs(const SnowpackConfig& cfg) 
+static double get_nsgs(const SnowpackConfig& cfg)
 {
 	const double nsgs = cfg.get("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced");
 	return nsgs;
@@ -698,7 +698,7 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
 				EMS[e].mk += 2;  // grains become fully rounded
 			}
 			// An ice layer forms in the snowpack for dry densities above 700 kg m-3!
-			if ((EMS[e].theta[ICE] > 0.763) && ((marker % 10 != 7) || (marker % 10 != 8))) {
+			if ((EMS[e].theta[ICE] > 0.763) && marker % 10 != 7 && marker % 10 != 8 ) {
 				EMS[e].mk = (EMS[e].mk / 10) * 10 + 8;
 			}
 		}

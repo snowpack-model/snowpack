@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2014 Snow and Avalanche Study Establishment    SASE-CHANDIGARH       */
+/*  Copyright 2022 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef WWCSIO_H
-#define WWCSIO_H
+#ifndef MYSQLIO_H
+#define MYSQLIO_H
 
 #include <meteoio/IOInterface.h>
 
@@ -26,18 +26,17 @@
 namespace mio {
 
 /**
- * @class WWCSIO_H
- * @brief This is the plugin required to get meteorological data from the WWCS database.
+ * @class MYSQLIO_H
+ * @brief This is the plugin required to get meteorological data from all sorts of MySQL databases.
  *
  * @ingroup plugins
  * @author Mathias Bavay
  * @date   2022-02-24
  */
-class WWCSIO : public IOInterface {
+class MYSQLIO : public IOInterface {
 	public:
-		WWCSIO(const std::string& configfile);
-		WWCSIO(const WWCSIO&);
-		WWCSIO(const Config& cfgreader);
+		MYSQLIO(const std::string& configfile);
+		MYSQLIO(const Config& cfgreader);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -45,18 +44,10 @@ class WWCSIO : public IOInterface {
 
 	private:
 		void readConfig();
-		void readStationIDs(std::vector<std::string>& vecStationID) const;
-		static void parseStationID(const std::string& stationID, std::string& stnAbbrev, std::string& stnNumber);
-		void getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,const std::string& sqlQuery,
-		                        std::vector<std::string>& vecMetaData);
+		std::vector<std::string> readStationIDs() const;
 		void readStationMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-		              const size_t& stationindex, const std::vector<StationData>& vecMeta) const;
-		static void convertUnits(MeteoData& meteo);
-		void parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md) const;
-		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,const Date& dateS,
-		                    const Date& dateE,const std::vector<std::string>& vecHTS1,
-		                    std::vector< std::vector<std::string> >& vecMeteoData) const;
+		              const size_t& stationindex) const;
 
 		const Config cfg;
 		std::vector<std::string> vecStationIDs;
@@ -64,10 +55,7 @@ class WWCSIO : public IOInterface {
 		std::string mysqlhost, mysqldb, mysqluser, mysqlpass;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;
-
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string MySQLQueryStationMetaData;
-		static const std::string MySQLQueryMeteoData;
+		unsigned int mysql_options;
 };
 
 } //namespace

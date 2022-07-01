@@ -21,9 +21,9 @@
  /**
  * @mainpage Table of content
  * -# External Links
- *    -# <A HREF="https://models.slf.ch/p/alpine3d/">Alpine3D's home page</A>
- *          -# <A HREF="https://models.slf.ch/p/alpine3d/page/Getting-started/">Installation, compilation</A>
- *          -# <A HREF="https://models.slf.ch/p/alpine3d/page/Running-a-simulation/">Running a simulation</A>
+ *    -# <A HREF="https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home">Alpine3D's home page</A>
+ *          -# <A HREF="https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/Getting-started">Installation, compilation</A>
+ *          -# <A HREF="https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/Running-a-simulation">Running a simulation</A>
  * -# End User documentation
  *     -# General principles
  *        -# \subpage model_principles "Model principles"
@@ -46,12 +46,12 @@
  * <p>
  * Alpine3D is a spatially distributed (surface), three dimensional (atmospheric) model for
  * analyzing and predicting dynamics of snow-dominated surface processes in mountainous topography.
- * It includes models for snow cover (<A HREF="https://models.slf.ch/p/snowpack/">SNOWPACK</A>),
+ * It includes models for snow cover (<A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Home">SNOWPACK</A>),
  * vegetation and soil, snow transport, radiation transfer and runoff which can be enabled or disabled on demand.
  *
  * The model supports a variety of input options including interpolation of meteorological weather stations,
  * input from a meteorological model or from remote sensing data
- * (<A HREF="https://models.slf.ch/p/meteoio">MeteoIO</A>) and has been parallelized
+ * (<A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</A>) and has been parallelized
  * in order to run on computing grids or clusters
  * (using <A HREF="https://en.wikipedia.org/wiki/Message_Passing_Interface">MPI</A> and <A HREF="http://openmp.org/wp/">OpenMP</A>).
  *
@@ -74,14 +74,14 @@
  * @subsection model_workflow Simulation workflow
  * When running a simulation, it is important to keep in mind that the model is organized as several modules that interract together. It is possible to configure
  * some parameters for the various modules and to enable/disable modules. Some modules can be used outside of Alpine3D (like
- * <A HREF="https://models.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by the standalone
- * <A HREF="https://models.slf.ch">Snowpack</A> model) .
+ * <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</A> that is used in various applications or libSnowpack that is used by the standalone
+ * <A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Home">Snowpack</A> model) .
  *
  * \image html simulation_workflow.png "Simulation workflow"
  * \image latex simulation_workflow.eps "Simulation workflow" width=0.9\textwidth
  *
  * @subsection installing Installing Alpine3D
- * Please follow the instructions given on <a href="https://models.slf.ch/p/alpine3d/page/Getting-started/">the forge</a> in order to download Alpine3D (from svn, from source or from a
+ * Please follow the instructions given on <a href="https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/Getting-started/">the forge</a> in order to download Alpine3D (from svn, from source or from a
  * binary package) and its dependencies (Snowpack and MeteoIO, knowing that binary packages might already contain all the required dependencies). If you've
  * downloaded a binary package, there is nothing special to do, just install it on your system.
  *
@@ -93,7 +93,7 @@
  * (in cmake) to a directory where you can write (it is *highly* recommended to set it to '${HOME}/usr'), make sure this directory exists and is writable and then install by
  * typing '*make install*' in a terminal opened at Alpine3D's source root folder. Make sure that CMAKE_INSTALL_PREFIX/bin is in your PATH and that CMAKE_INSTALL_PREFIX/lib
  * is recognized as a library path (variables PATH and LD_LIBRARY_PATH for Linux, PATH and DYLD_FALLBACK_LIBRARY_PATH for osX,
- * see <a href="https://models.slf.ch/p/snowpack/page/Getting-started/#wikititle_4">Getting Started</a> on the forge).
+ * see <a href="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Getting-started">Getting Started</a> on the forge).
  *
  * After Alpine3D has been installed, you can check that it works by opening a terminal and typing "alpine3d". Alpine3D should be found and display its help message.
  *
@@ -213,7 +213,7 @@
  * @subsection snowpack_coupling Coupling with Snowpack
  * Alpine3D needs spatially interpolated forcings for each grid points. Unfortunately, it limits the choice of forcing parameters: for some parameters
  * (such as HS or RSWR), there are no reliable interpolation methods. One way to make use of the existing measurements that could not be easily
- * interpolated is to run a <A HREF="https://models.slf.ch/p/snowpack">Snowpack</A> simulation at the stations that provided these measurements,
+ * interpolated is to run a <A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Home">Snowpack</A> simulation at the stations that provided these measurements,
  * then use alternate, computed parameters (such as PSUM or ISWR) as inputs to Alpine3D.
  *
  * This process is made easier by writing Snowpack's outputs in the smet format and making sure all the necessary parameters are written out.
@@ -286,7 +286,7 @@
  * @subsection principles_snowpack Distributed 1D soil/snow/canopy column
  * \image html distributed_sn.png "Distributed SNOWPACK over the domain taking into account the land cover"
  * \image latex distributed_sn.eps "Distributed SNOWPACK over the domain taking into account the land cover" width=0.9\textwidth
- * At the core of the model, is the <A HREF="http://models.slf.ch/p/snowpack/">SNOWPACK</A> model, a physically based,
+ * At the core of the model, is the <A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Home">SNOWPACK</A> model, a physically based,
  * energy balance model for a 1D soil/snow/canopy column.
  * This gives us a very detailed description of the snow stratigraphy and a very good evaluation of the mass and energy balance (therefore also of
  * quantities such as Snow Water Equivalent (SWE) or temperature profile). This 1D energy balance is performed for each pixel of the domain
@@ -299,7 +299,7 @@
  * In order to perform a SNOWPACK simulation at every pixel of the domain, it is necessary to get the meteorological forcing for each pixel.
  * But the measured meteorological parameters are usually measured by a set of stations, which means that the data is available at a set of points.
  * Interpolating these points measurements to every pixels of the domain is performed by the means of statistical interpolations with
- * <A HREF="http://models.slf.ch/p/meteoio">MeteoIO</A>. if the forcing data is coming out of another model (such as a meteorological model),
+ * <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</A>. if the forcing data is coming out of another model (such as a meteorological model),
  * most probably the input grids have a resolution that is very insufficient for Alpine3D and therefore need downscaling. If the downscaling factor
  * is very large, we often end up with only a few points from the meteorological model that are part of the Alpine3D domain, therefore such points
  * can be considered as "virtual stations" and spatially interpolated similarly to weather stations.
@@ -553,7 +553,7 @@
 
 /**
  * @page tools Simulation tools
- * Several tools are available to help using Alpine3D. As for SNOWPACK, it is possible to use <A HREF="https://models.slf.ch/p/inishell">inishell</A> to
+ * Several tools are available to help using Alpine3D. As for SNOWPACK, it is possible to use <A HREF="https://gitlabext.wsl.ch/snow-models/inishell/-/wikis/Home">inishell</A> to
  * configure the simulations. There is also another java tool, "view" in the "Interface" sub directory, that can be used to visualize ARC ASCII grids as
  * well as to visualize DEM and LUS files in this format. This can also be used to generate a LUS file by opening an aerial picture and manually tagging
  * the pixels (one by one, along lines or within polygons). Finally, this tool can also generate a POI (points of interest) file for more detailed

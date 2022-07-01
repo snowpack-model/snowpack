@@ -37,6 +37,7 @@ lib/*
 *.swp
 tags
 **/*~
+.vscode/
 
 #profiling:
 callgrind.out.*

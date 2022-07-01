@@ -68,9 +68,11 @@ namespace mio {
  * U::arg1::COORDPARAM		= 21781		; CH1903 / LV03 -- Swiss CH1903 / LV03
  * @endcode
  */
-
-#ifdef PROJ
+#ifdef PROJ4
+	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
+#elif PROJ
+	#include <proj.h>
 #endif
 
 class ProcTransformWindVector : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
@@ -84,14 +86,19 @@ class ProcTransformWindVector : public ProcessingBlock { //use this one for simp
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-#ifdef PROJ
+#if defined PROJ4 || defined PROJ
 		static std::string findUComponent(const MeteoData& md);
 		static std::string findVComponent(const MeteoData& md);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg);
 		void initPROJ(void);
 		void TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out);
 
+#ifdef PROJ4
 		projPJ pj_src, pj_dest;
+#elif PROJ
+		PJ_CONTEXT* pj_context;
+		PJ* pj_trans;
+#endif
 
 		// The declarations below are needed when the copy constructor is called.
 		std::vector< std::pair<std::string, std::string> > vecArgs_i;

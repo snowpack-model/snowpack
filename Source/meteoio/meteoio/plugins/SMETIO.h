@@ -88,17 +88,12 @@ class SMETIO : public IOInterface {
 		void parseInputOutputSection();
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
-		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& smet_timezone,
-		                            std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
 		bool getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const;
-		void getFormatting(const size_t& param, int& prec, int& width) const;
+		void getFormatting(const std::string& parname, int& prec, int& width) const;
 		std::string buildVersionString(const std::vector< std::vector<MeteoData> >& vecMeteo, const double& smet_timezone) const;
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-		                        const double& smet_timezone, const size_t& nr_of_parameters,
-		                        const std::vector<bool>& vecParamInUse,
-		                        const std::vector<std::string>& vecColumnName,
-		                        smet::SMETWriter& mywriter);
+		                        const double& smet_timezone, const std::set<std::string>& paramInUse, smet::SMETWriter& mywriter);
 
 		static const char* dflt_extension;
 		static const double snVirtualSlopeAngle;

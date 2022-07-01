@@ -61,9 +61,9 @@ namespace mio {
  *    -# \subpage configuration "Configuration file"
  *    -# \subpage build_io "How to build your io.ini configuration file"
  *    -# External Links
- *         -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
- *               -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
- *               -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
+ *         -# <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home">MeteoIO's home page</A>
+ *               -# <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Getting-started">Installation, compilation</A>
+ *               -# <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/GettingHelp">Getting help</A>
  * -# Processing steps documentation
  *    -# \subpage data_sources "Data sources, input/output"
  *    -# \subpage data_editing "Input Data Editing"
@@ -80,12 +80,12 @@ namespace mio {
  *    -# <A HREF="modules.html">Modules list</a>
  *    -# \subpage examples "Usage examples"
  * -# Advanced: Expanding MeteoIO
- *    -# How to \subpage dev_coords "write a coordinate system support"
- *    -# How to \subpage dev_plugins "write a Plugin"
- *    -# How to \subpage dev_processing "write a processing element"
- *    -# How to \subpage dev_1Dinterpol "write a resampling algorithm"
+ *    -# How to \subpage dev_coords "Write a coordinate system support"
+ *    -# How to \subpage dev_plugins "Write a Plugin"
+ *    -# How to \subpage dev_processing "Write a processing element"
+ *    -# How to \subpage dev_1Dinterpol "Write a resampling algorithm"
  *    -# How to \subpage dev_DataGenerator "Write a data generator"
- *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
+ *    -# How to \subpage dev_2Dinterpol "Write a spatial interpolation algorithm"
  * 
  * <center><hr></center>
  * <p><center><i><small>
@@ -233,8 +233,8 @@ namespace mio {
 /**
  * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
- * <b>it is highly recommended to use <a href="https://models.slf.ch/p/inishell">inishell</a></b> to build your io.ini configuration file, since this significantly
- * reduces the number of errors and provides help text for each keys.
+ * <b>it is highly recommended to use <a href="https://gitlabext.wsl.ch/snow-models/inishell/-/wikis/home">inishell</a></b> to build your io.ini 
+ * configuration file, since this significantly reduces the number of errors and provides help text for each keys.
  *
  * Anyway, this section will show you how to manually set up a configuration file. Please read
  * \ref general documentation page before starting!

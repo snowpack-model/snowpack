@@ -61,6 +61,7 @@ class SMETCommon {
 		static bool validFileAndPath(const std::string& filename);
 		static void copy_file(const std::string& src, const std::string& dest);
 		static bool fileExists(const std::string& filename);
+		static std::string strToLower(std::string str);
 		static double convert_to_double(const std::string& in_string);
 		static int convert_to_int(const std::string& in_string);
 		static char convert_to_char(const std::string& in_string);

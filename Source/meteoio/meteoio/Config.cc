@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <fstream>
 #include <cstdio>
+#include <regex>
 
 using namespace std;
 
@@ -213,32 +214,73 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 
 std::vector< std::pair<std::string, std::string> > Config::getValues(std::string keymatch, std::string section, const bool& anywhere) const
 {
+	static const std::regex index_regex("(?:[^0-9]+)([0-9]{1,9})"); //limit the number of digits so it fits within an "int" for the call to atoi()
+	std::smatch index_matches;
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keymatch);
+	
 	std::vector< std::pair<std::string, std::string> > vecResult;
+	std::map<int, std::pair<std::string, std::string> > keyMap;
+	bool indexed_keys = true;
 
 	//Loop through keys, look for match - push it into vecResult
 	if (anywhere) {
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t section_start = (it->first).find(section, 0);
+		for (const auto& prop : properties) {
+			const size_t section_start = (prop.first).find(section, 0);
 			if (section_start==0) { //found the section!
 				const size_t section_len = section.length();
-				const size_t found_pos = (it->first).find(keymatch, section_len);
+				const size_t found_pos = (prop.first).find(keymatch, section_len);
 				if (found_pos!=string::npos) { //found it!
-					const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-					vecResult.push_back( make_pair(key, it->second));
+					const std::string key( (prop.first).substr(section_len + 2) ); //from pos to the end
+					
+					//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
+					if (indexed_keys) {
+						if (std::regex_match(key, index_matches, index_regex)) { //retrieve the key index
+							const int index = atoi( index_matches.str(1).c_str() ); //we take the first capture group, guaranteed to fit in an int
+							keyMap[ index ] = make_pair(key, prop.second);
+						} else {
+							indexed_keys = false;
+							//the keys are not indexed, move the processed keys into the results vector
+							for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+							keyMap.clear();
+							vecResult.push_back( make_pair(key, prop.second) ); //push the current, unprocessed key
+						}
+					} else { //keys are not indexed, store them directly in the results vector
+						vecResult.push_back( make_pair(key, prop.second) );
+					}
 				}
 			}
 		}
 	} else {
 		keymatch = section + "::" + keymatch;
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t found_pos = (it->first).find(keymatch, 0);
-			if (found_pos==0) { //found it!
+		for (const auto& prop : properties) {
+			const size_t found_pos = (prop.first).find(keymatch, 0);
+			if (found_pos==0) { //found it starting at the begining
 				const size_t section_len = section.length();
-				const std::string key( (it->first).substr(section_len + 2) ); //from pos to the end
-				vecResult.push_back( make_pair(key, it->second));
+				const std::string key( (prop.first).substr(section_len + 2) ); //from pos to the end
+				
+				//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
+				if (indexed_keys) {
+					if (std::regex_match(key, index_matches, index_regex)) { //retrieve the key index
+						const int index = atoi( index_matches.str(1).c_str() ); //we take the first capture group, guaranteed to fit in an int
+						keyMap[ index ] = make_pair(key, prop.second);
+					} else {
+						indexed_keys = false;
+						//the keys are not indexed, moved the processed keys into the results vector
+						for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+						keyMap.clear();
+						vecResult.push_back( make_pair(key, prop.second) ); //push the current, unprocessed key
+					}
+				} else { //keys are nto indexed, store them directly in the results vector
+					vecResult.push_back( make_pair(key, prop.second) );
+				}
 			}
+		}
+	}
+	
+	if (indexed_keys && !keyMap.empty()) {
+		for (const auto& key_record : keyMap) {
+			vecResult.push_back( key_record.second );
 		}
 	}
 
@@ -248,38 +290,14 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 std::vector<std::string> Config::getKeys(std::string keymatch,
                         std::string section, const bool& anywhere) const
 {
-	IOUtils::toUpper(section);
-	section = section + "::"; //include the delimiter
-	IOUtils::toUpper(keymatch);
+	
+	const std::vector< std::pair<std::string, std::string> > vecKeys( getValues(keymatch, section, anywhere) );
 	std::vector<std::string> vecResult;
-
-	//Loop through keys, look for match - push it into vecResult
-	if (anywhere) {
-		for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-			const size_t section_start = (it->first).find(section, 0);
-			if (section_start==0) { //found the section!
-				const size_t section_len = section.length();
-				const size_t found_pos = (it->first).find(keymatch, section_len);
-				if (found_pos!=string::npos) { //found it!
-					const std::string key( (it->first).substr(section_len) ); //from pos to the end
-					vecResult.push_back( key );
-				}
-			}
-		}
-	} else {
-		keymatch = section + keymatch;
-
-		//for (std::map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
-		for (const auto& it : properties) {
-			const size_t found_pos = (it.first).find(keymatch, 0);
-			if (found_pos==0) { //found it!
-				const size_t section_len = section.length();
-				const std::string key( (it.first).substr(section_len) ); //from pos to the end
-				vecResult.push_back( key );
-			}
-		}
+	
+	for (const auto& key_record : vecKeys) {
+		vecResult.push_back( key_record.first );
 	}
-
+	
 	return vecResult;
 }
 
@@ -292,8 +310,8 @@ void Config::write(const std::string& filename) const
 	try {
 		std::string current_section;
 		unsigned int sectioncount = 0;
-		for (const auto& it : properties) {
-			const std::string key_full( it.first );
+		for (const auto& prop : properties) {
+			const std::string key_full( prop.first );
 			const std::string section( ConfigParser::extract_section(key_full) );
 
 			if (current_section != section) {
@@ -305,7 +323,7 @@ void Config::write(const std::string& filename) const
 			}
 
 			const size_t key_start = key_full.find_first_of(":");
-			const std::string value( it.second );
+			const std::string value( prop.second );
 			if (value.empty()) continue;
 
 			if (key_start!=string::npos) //start after the "::" marking the section prefix
@@ -438,11 +456,11 @@ std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::
 	std::ostringstream arg_str;
 	arg_str << cmd_id << arg_pattern << cmd_nr;
 	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(arg_str.str(), section) );
-	for (size_t jj=0; jj<vecArgs.size(); jj++) {
-		const size_t beg_arg_name = vecArgs[jj].first.find_first_not_of(":", arg_str.str().length());
+	for (auto& arg : vecArgs) {
+		const size_t beg_arg_name = arg.first.find_first_not_of(":", arg_str.str().length());
 		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[jj].first+"'", AT);
-		vecArgs[jj].first = vecArgs[jj].first.substr(beg_arg_name);
+			throw InvalidFormatException("Wrong argument format for '"+arg.first+"'", AT);
+		arg.first = arg.first.substr(beg_arg_name);
 	}
 	
 	return vecArgs;
@@ -454,19 +472,20 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(key_prefix, section) );
 
 	//clean the arguments up (ie remove the {Param}::{algo}:: in front of the argument key itself)
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		const size_t beg_arg_name = vecArgs[ii].first.find_first_not_of(":", key_prefix.length());
+	for (auto& arg : vecArgs) {
+		const size_t beg_arg_name = arg.first.find_first_not_of(":", key_prefix.length());
 		if (beg_arg_name==std::string::npos)
-			throw InvalidFormatException("Wrong argument format for '"+vecArgs[ii].first+"'", AT);
-		vecArgs[ii].first = vecArgs[ii].first.substr(beg_arg_name);
+			throw InvalidFormatException("Wrong argument format for '"+arg.first+"'", AT);
+		arg.first = arg.first.substr(beg_arg_name);
 	}
 
 	return vecArgs;
 }
 
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
-
-ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(), imported(), sections(), deferred_vars(), sourcename(filename)
+//the local values must have priority -> we initialize from the given i_properties, overwrite from the local values 
+//and swap the two before returning i_properties
+ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(i_properties), imported(), sections(), deferred_vars(), sourcename(filename)
 {
 	parseFile(filename);
 	
@@ -494,8 +513,7 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 		deferred_count = new_deferred_count;
 	}
 	
-	//make sure that local values have priority -> insert and swap
-	properties.insert(i_properties.begin(), i_properties.end()); //keep local values if they exist
+	//swap the caller and local properties before returning, so the caller gets the new version
 	std::swap(properties, i_properties);
 
 	i_sections.insert(sections.begin(), sections.end());

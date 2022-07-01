@@ -7,7 +7,7 @@ SET(CTEST_SOURCE_DIRECTORY .)
 SET(CTEST_BINARY_DIRECTORY .)
 
 # set cTest commands to be used
-SET(CTEST_COMMAND "\"${CTEST_EXECUTABLE_NAME}\" -D Nightly")
+SET(CTEST_COMMAND "\"${CTEST_EXECUTABLE_NAME}\" -V -D Nightly")
 
 #set cMake command to be used
 SET(CTEST_CMAKE_COMMAND "\"${CMAKE_EXECUTABLE_NAME}\"")

@@ -230,33 +230,74 @@ namespace mio {
  *
  * @note The reanalysis runs offer the mean fluxes over the last hour as well as accumulated precipitation over the last hour, making it very easy to work with.
  *
- * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, the request
- * would be for example (the time period and spatial extend should be defined properly...):
+ * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, the request would be the following:
+ *
  * @code
  * #!/usr/bin/env python
+ * import sys
  * import cdsapi
+ *
  * c = cdsapi.Client()
+ * month = sys.argv[1]
  * 
  * c.retrieve(
- *             'reanalysis-era5-single-levels',{
- *                 'product_type':'reanalysis',
- *                 'variable':[
- *                     '10m_u_component_of_wind','10m_v_component_of_wind','2m_dewpoint_temperature',
- *                     '2m_temperature','forecast_albedo','skin_temperature',
- *                     'snow_density','snow_depth','soil_temperature_level_1',
- *                     'surface_pressure','mean_surface_downward_short_wave_radiation_flux',
- *                     'mean_surface_downward_long_wave_radiation_flux',
- *                     'total_precipitation'
- *                 ],
- *                 'year':['2018'],
- *                 'month':['01','02','03','04','05','06','07','08','09','10','11','12'],
- *                 'day':['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31'],
- *                 'time':'00/to/23/by/1',
- *                 'area':'42.2/-1.5/51.7/15.7', # North, West, South, East. Default: global
- *                 'grid':'0.25/0.25',
- *                 'format':'netcdf'
- *           },'download.nc')
+ *    'reanalysis-era5-single-levels',
+ *    {
+ *        'product_type': 'reanalysis',
+ *        'format': 'netcdf',
+ *        'variable': [
+ *           '10m_u_component_of_wind', '10m_v_component_of_wind', '2m_dewpoint_temperature',
+ *            '2m_temperature', 'mean_surface_downward_long_wave_radiation_flux', 'mean_surface_downward_short_wave_radiation_flux',
+ *            'near_ir_albedo_for_direct_radiation', 'skin_temperature', 'snow_density',
+ *            'snow_depth', 'soil_temperature_level_1', 'surface_pressure',
+ *            'total_precipitation',
+ *        ],
+ *        'year': '2021',
+ *        'month': [
+ *            f'{month}'
+ *        ],
+ *        'day': [
+ *            '01', '02', '03',
+ *            '04', '05', '06',
+ *            '07', '08', '09',
+ *            '10', '11', '12',
+ *            '13', '14', '15',
+ *            '16', '17', '18',
+ *            '19', '20', '21',
+ *            '22', '23', '24',
+ *            '25', '26', '27',
+ *            '28', '29', '30',
+ *            '31',
+ *        ],
+ *        'time': [
+ *            '00:00', '01:00', '02:00',
+ *            '03:00', '04:00', '05:00',
+ *            '06:00', '07:00', '08:00',
+ *            '09:00', '10:00', '11:00',
+ *            '12:00', '13:00', '14:00',
+ *            '15:00', '16:00', '17:00',
+ *            '18:00', '19:00', '20:00',
+ *            '21:00', '22:00', '23:00',
+ *        ],
+ *        'area': [
+ *            47, 9.5, 46.5,
+ *            10,
+ *        ],
+ *    },
+ *    f'./era5_{month}.nc')
  * @endcode
+ *
+ * The time period and spatial extent of the request should be defined properly in the 'year' and 'area' instances, respectively. This API request downloads from the CDS 
+ * all the aforementioned variables at hourly resolution for each day of the desired year(s). The request limit for CDS is 120'000 items per single request, which is why sometimes
+ * heavy requests can crash after being queued and processed. For this reason, the above script should be launched from terminal in the following way:
+ *
+ * @code
+ * parallel ./era5_download.py ::: {01..12} -j 4
+ * @endcode
+ *
+ * In this way, each month of the selected year(s) will be downloaded separately within a parallel process that runs, for example, maximum 4 jobs at one time. 
+ * This should ease each request and reduce the risk of crashing. Some post-processing will be required later to merge all the files together into a single .nc file. 
+ * This can either be left to be done transparently by MeteoIO or manually for example with the <A href="https://docs.xarray.dev/en/stable/">xarray</A> library for Python.
  *
  * @section netcdf_tricks External tools and tricks to work with NetCDF
  * @subsection netcdf_editing Editing the metadata of a NetCDF file
@@ -1493,9 +1534,10 @@ std::vector< std::pair<Date,size_t> > ncFiles::createCommonTimeBase(const std::v
 		}
 
 		std::vector< std::pair<Date,size_t> > result( tmp.size() );
+		//attribute an index to each unique Date value from the set
 		size_t ii=0;
 		for (std::set<Date>::const_iterator it=tmp.begin(); it!=tmp.end(); ++it) {
-			std::make_pair(vecMeteo[station_idx][ii].date, ii);
+			result[ii] = std::make_pair(*it, ii);
 			ii++;
 		}
 		return result;

@@ -18,10 +18,10 @@ In order to reduce the maintenance burden and to make SNOWPACK easier to tailor 
 * libsnowpack for doing the core computation and snowpack for calling libsnowpack for a point simulation (ie. what most people want out of SNOWPACK)
 * niViz for simulation output visualization (or go to https://niviz.org)
 
-The Snowpack releases that are found in the Downloads (currently at https://models.slf.ch/p/snowpack/downloads/) bundle MeteoIO and Snowpack but NOT Inishell that has to be downloaded separately (at https://models.slf.ch/p/inishell-ng/downloads/). They are available for Linux, Windows and osX and contain an HTML documentation (either in the start menu or in the share subfolder of the installation directory).
+The Snowpack releases that are found in the Downloads (currently at https://code.wsl.ch/snow-models/snowpack/-/releases) bundle MeteoIO and Snowpack but NOT Inishell that has to be downloaded separately (at https://code.wsl.ch/snow-models/inishell/-/releases). They are available for Linux, Windows and osX and contain an HTML documentation (either in the start menu or in the share subfolder of the installation directory).
 
-Otherwise, if you recompile SNOWPACK from sources (instructions provided at https://models.slf.ch/p/snowpack/page/Getting-started/), you need to download and install a few other of these package. At the minimum, you need to have MeteoIO on your system, compiled and preferably installed.
+Otherwise, if you recompile SNOWPACK from sources (instructions provided at https://snowpack.slf.ch/Getting-started/), you need to download and install a few other of these package. At the minimum, you need to have MeteoIO on your system, compiled and preferably installed.
 
 ## Running SNOWPACK
 
-Please follow the instructions at https://models.slf.ch/p/snowpack/page/Running-Snowpack/ that also show how to run the provided examples. There is also some documentation at https://models.slf.ch/ in the "Documentation server" section.
+Please follow the instructions at https://snowpack.slf.ch/Running-Snowpack/ that also show how to run the provided examples. There is also some documentation at https://snowpack.slf.ch/doc-release/html/.

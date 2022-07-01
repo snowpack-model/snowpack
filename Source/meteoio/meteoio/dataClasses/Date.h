@@ -137,7 +137,7 @@ class Date {
 		void setUnixDate(const time_t& in_time);
 		void setExcelDate(const double excel_in, const double& in_timezone);
 		void setMatlabDate(const double matlab_in, const double& in_timezone);
-		void setUndef(const bool& flag);
+		void setUndef(const bool& flag=true);
 
 		bool isUndef() const {return undef;}
 		double getTimeZone() const;

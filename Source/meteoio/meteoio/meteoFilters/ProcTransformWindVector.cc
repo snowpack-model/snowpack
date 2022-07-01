@@ -21,8 +21,11 @@
 #include <meteoio/meteoFilters/ProcTransformWindVector.h>
 #include <meteoio/dataClasses/CoordsAlgorithms.h>
 #include <meteoio/FileUtils.h>
-#ifdef PROJ
+#ifdef PROJ4
+	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
+#elif PROJ
+	#include <proj.h>
 #endif
 #include <stdio.h>
 
@@ -51,7 +54,13 @@ inline bool isEPSG(const std::string &c) {
 }
 
 ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-          : ProcessingBlock(vecArgs, name, cfg), pj_src(nullptr), pj_dest(nullptr), vecArgs_i(vecArgs), name_i(name), cfg_i(cfg), s_coordparam(), t_coordparam(), RACMO2(false)
+          : ProcessingBlock(vecArgs, name, cfg),
+#ifdef PROJ4
+            pj_src(nullptr), pj_dest(nullptr),
+#elif PROJ
+            pj_context(nullptr), pj_trans(nullptr),
+#endif
+            vecArgs_i(vecArgs), name_i(name), cfg_i(cfg), s_coordparam(), t_coordparam(), RACMO2(false)
 {
 	parse_args(vecArgs, cfg);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)
@@ -63,24 +72,41 @@ ProcTransformWindVector::ProcTransformWindVector(const std::vector< std::pair<st
 }
 
 ProcTransformWindVector::~ProcTransformWindVector() {
+#ifdef PROJ4
 	if (pj_src!=nullptr) pj_free(pj_src);
 	if (pj_dest!=nullptr) pj_free(pj_dest);
+#elif PROJ
+	if (pj_context!=nullptr) proj_context_destroy(pj_context);
+	if (pj_trans!=nullptr) proj_destroy(pj_trans);
+#endif
 }
 
 ProcTransformWindVector::ProcTransformWindVector(const ProcTransformWindVector& c) :
-	ProcessingBlock(c.vecArgs_i, c.name_i, c.cfg_i), pj_src(nullptr), pj_dest(nullptr), vecArgs_i(c.vecArgs_i), name_i(c.name_i), cfg_i(c.cfg_i), s_coordparam(c.s_coordparam), t_coordparam(c.t_coordparam), RACMO2(c.RACMO2)
+	ProcessingBlock(c.vecArgs_i, c.name_i, c.cfg_i),
+#ifdef PROJ4
+	                pj_src(nullptr), pj_dest(nullptr),
+#elif PROJ
+			pj_context(nullptr), pj_trans(nullptr),
+#endif
+	                vecArgs_i(c.vecArgs_i), name_i(c.name_i), cfg_i(c.cfg_i), s_coordparam(c.s_coordparam), t_coordparam(c.t_coordparam), RACMO2(c.RACMO2)
 {
 	initPROJ();
 }
 
 ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformWindVector& source) {
 	if (this != &source) {
+#ifdef PROJ4
 		pj_src = nullptr;
 		pj_dest = nullptr;
+#elif PROJ
+		pj_context = nullptr;
+		pj_trans = nullptr;
+#endif
 		vecArgs_i = source.vecArgs_i;
 		name_i = source.name_i;
 		cfg_i = source.cfg_i;
 		t_coordparam = source.t_coordparam;
+		RACMO2 = source.RACMO2;
 		initPROJ();
 	}
 	return *this;
@@ -88,6 +114,7 @@ ProcTransformWindVector& ProcTransformWindVector::operator=(const ProcTransformW
 
 void ProcTransformWindVector::initPROJ()
 {
+#ifdef PROJ4
 	std::string src_param;
 	if (s_coordparam == "") {
 		src_param = std::string("+proj=latlong +datum=WGS84 +ellps=WGS84");
@@ -114,8 +141,42 @@ void ProcTransformWindVector::initPROJ()
 	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
+#elif PROJ
+	std::string src_param;
+	if (s_coordparam == "") {
+		src_param = std::string("EPSG:4326");
+	} else if (isEPSG(s_coordparam)) {
+		src_param = std::string("EPSG:" + s_coordparam);
+	} else {
+		// Assume it is a proj string
+		src_param = s_coordparam;
+	}
+
+	std::string dest_param;
+	if (t_coordparam == "") {
+		dest_param = std::string("EPSG:4326");
+	} else if (isEPSG(t_coordparam)) {
+		dest_param = std::string("EPSG:" + t_coordparam);
+	} else {
+		// Assume it is a proj string
+		dest_param = t_coordparam;
+	}
+
+	// Note that we strictly use <lon>, <lat>, whereas the definition of EPSG:4326 expects <lat>, <lon>. We convert to "+proj=longlat +datum=WGS84 +no_defs", which does expect <lon>, <lat>
+	if (src_param == "EPSG:4326") src_param="+proj=longlat +datum=WGS84 +no_defs";
+	if (dest_param == "EPSG:4326") dest_param="+proj=longlat +datum=WGS84 +no_defs";
+
+	pj_context = PJ_DEFAULT_CTX;
+	pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+#endif
 }
 
+#ifdef PROJ4
 void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out)
 {
 	double x = (RACMO2) ? (Y_in) : (X_in);
@@ -133,6 +194,22 @@ void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y
 		Y_out *= Cst::to_deg;
 	}
 }
+#elif PROJ
+void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y_in, double& X_out, double& Y_out)
+{
+	double x = X_in;
+	double y = Y_in;
+
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	X_out = x;
+	Y_out = y;
+}
+#endif
+
 
 std::string ProcTransformWindVector::findUComponent(const MeteoData& md)
 {

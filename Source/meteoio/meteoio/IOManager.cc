@@ -383,7 +383,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			tsm1.getBufferProperties(buffer_size, buffer_before);
 			
 			const Date dateStart = i_date - buffer_before;
-			const Date dateEnd( i_date - buffer_before + buffer_size + 1 );
+			const Date dateEnd( i_date - buffer_before + buffer_size );
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS)));
 		}
 		return tsm1.getMeteoData(i_date, vecMeteo);
