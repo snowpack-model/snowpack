@@ -8,6 +8,8 @@
 #  Output *sno file is written to stdout.
 #
 # NOTES:
+#	- The *sno file will be made valid for timestep <date>, shifting layers backward in time when the exact
+#         timestep is not available in the *.pro file.
 #	- Files with soil layers are not correctly processed, since the *pro files don't contain information on
 #         soil density and thermal properties.
 #	- Sea ice simulations are not implemented yet, since that would require processing salinity
@@ -23,7 +25,7 @@ metamo=0		# Currently unused in SNOWPACK
 write_h=0		# Write pressure head?
 
 awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v wsf=${windscalingfactor} -v metamo=${metamo} -v write_h=${write_h} -F, 'BEGIN { \
-	data=0; written=0; d1=sprintf("%02d.%02d.%04d %02d:%02d", substr(d,9,2), substr(d,6,2), substr(d,1,4), substr(d,12,2), substr(d,15,2)); \
+	data=0; written=0; d1=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(d,1,4), substr(d,6,2), substr(d,9,2), substr(d,12,2), substr(d,15,2), substr(d,18,2))); \
 } \
 { \
 	if(/StationName=/) {split($1,a,"= "); station_id=a[2]; station_name=a[2];} \
@@ -36,9 +38,10 @@ awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v wsf=${w
 	if(/\[DATA\]/) {data=1; getline}; \
 	if(data) { \
 		if(/^0500/) { \
-			d1=sprintf("%04d-%02d-%02dT%02d:%02d", substr($2,7,4), substr($2,4,2), substr($2,1,2), substr($2,12,2), substr($2,15,2)); \
-			d2=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr($2,7,4), substr($2,4,2), substr($2,1,2), substr($2,12,2), substr($2,15,2), substr($2,18,2))); \
-			if(d<=d1) { \
+			t1=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr($2,7,4), substr($2,4,2), substr($2,1,2), substr($2,12,2), substr($2,15,2), substr($2,18,2))); \
+			if(d1<=t1) { \
+				timeshift=(d1-t1); \
+				d2=strftime("%Y-%m-%dT%H:%M:%S", t1+timeshift); \
 				hoar=0; \
 				while(1) { \
 					res=getline; \
@@ -58,9 +61,9 @@ awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v wsf=${w
 					if(/^0519/) {for(i=3; i<=NF; i++) {soil[i-3]=$i/100.}}; \
 					if(/^0529/) {for(i=3; i<=NF; i++) {cdot[i-3]=$i}}; \
 					if(/^0500/ || res==0) { \
-						printf("SMET 1.1 ASCII\n[HEADER]\nstation_id       = %s\nstation_name     = %s\nlatitude         = %s\nlongitude        = %s\naltitude         = %s\nnodata           = -999\nProfileDate      = %s\nHS_Last          = 0\nSlopeAngle       = %s\nSlopeAzi         = %s\nnSoilLayerData   = %d\nnSnowLayerData   = %s\nSoilAlbedo       = %s\nBareSoil_z0      = %s\nCanopyHeight     = 0.00\nCanopyLeafAreaIndex = 0.000000\nCanopyDirectThroughfall = 1.00\nWindScalingFactor = %s\nErosionLevel     = 0\nTimeCountDeltaHS = 0.000000\nfields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo%s\n[DATA]\n", station_id, station_id, lat, lon, alt, d1, slope, azi, nsoil, nsnow, sab, bsz0, wsf, ((write_h)?(" h"):(""))); \
+						printf("SMET 1.1 ASCII\n[HEADER]\nstation_id       = %s\nstation_name     = %s\nlatitude         = %s\nlongitude        = %s\naltitude         = %s\nnodata           = -999\nProfileDate      = %s\nHS_Last          = 0\nSlopeAngle       = %s\nSlopeAzi         = %s\nnSoilLayerData   = %d\nnSnowLayerData   = %s\nSoilAlbedo       = %s\nBareSoil_z0      = %s\nCanopyHeight     = 0.00\nCanopyLeafAreaIndex = 0.000000\nCanopyDirectThroughfall = 1.00\nWindScalingFactor = %s\nErosionLevel     = 0\nTimeCountDeltaHS = 0.000000\nfields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo%s\n[DATA]\n", station_id, station_id, lat, lon, alt, d2, slope, azi, nsoil, nsnow, sab, bsz0, wsf, ((write_h)?(" h"):(""))); \
 						for(i=0; i<n; i++) { \
-							ts=strftime("%Y-%m-%dT%H:%M:%S", d2-age[i]*(24.*60.*60.)); \
+							ts=strftime("%Y-%m-%dT%H:%M:%S", t1-age[i]*(24.*60.*60.)+timeshift); \
 							printf("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s%s\n", ts, z[i+1]-z[i], T[i], ice[i], lwc[i], 1.-ice[i]-lwc[i], soil[i], -999, -999, -999, rg[i], rb[i], dd[i], sp[i], mk[i], hoar, 1, cdot[i+nsoil], metamo, ((write_h)?(" -999"):(""))) \
 						} \
 						written=1; \
