@@ -35,7 +35,7 @@ using namespace std;
  */
 AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject& in_dem)
               : dem(in_dem), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda),
-                runoff(myrunoff), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), enable_explicit_snow_drift(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false)
+                runoff(myrunoff), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), enable_snowdrift2d(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
 	if (out_snow) {
@@ -46,8 +46,8 @@ AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnow
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
 	cfg.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
-	enable_explicit_snow_drift = false;
-	cfg.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
+	enable_snowdrift2d = false;
+	cfg.getValue("SNOWDRIFT2D", "Alpine3D", enable_snowdrift2d, IOUtils::nothrow);
 
 	//check if maximum run time is specified
 	cfg.getValue("MAX_RUN_TIME", "Alpine3D", max_run_time, IOUtils::nothrow);
@@ -125,7 +125,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
 			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
 		}
-		if (snowpack && (enable_simple_snow_drift || enable_explicit_snow_drift)) snowpack->setVwDrift(vw_drift, calcDate);
+		if (snowpack && (enable_simple_snow_drift || enable_snowdrift2d)) snowpack->setVwDrift(vw_drift, calcDate);
 
 		try { //Snowdrift
 			if (snowdrift) {

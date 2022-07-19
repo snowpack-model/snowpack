@@ -124,13 +124,13 @@ MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                      ta(in_dem, IOUtils::nodata), tsg(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata), psum(in_dem, IOUtils::nodata),
                      psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata),
                      sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(), sum_vw(), sum_ilwr(),
-                     vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false), soil_flux(true), enable_simple_snow_drift(false), enable_explicit_snow_drift(false)
+                     vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0), skipWind(false), soil_flux(true), enable_simple_snow_drift(false), enable_snowdrift2d(false)
 {
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
 	in_config.getValue("SIMPLE_SNOW_DRIFT", "Alpine3D", enable_simple_snow_drift, IOUtils::nothrow);
 	enable_simple_snow_drift = false;
-	in_config.getValue("EXPLICIT_SNOW_DRIFT", "Alpine3D", enable_explicit_snow_drift, IOUtils::nothrow);
+	in_config.getValue("SNOWDRIFT2D", "Alpine3D", enable_snowdrift2d, IOUtils::nothrow);
 	in_config.getValue("SOIL_FLUX", "Snowpack", soil_flux, IOUtils::nothrow);
 }
 
@@ -263,7 +263,7 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 		if (!soil_flux) io.getMeteoData(calcDate, dem, MeteoData::TSG, tsg);
 		if (!skipWind) {
 			io.getMeteoData(calcDate, dem, MeteoData::VW, vw);
-			if (enable_simple_snow_drift || enable_explicit_snow_drift) io.getMeteoData(calcDate, dem, "VW_DRIFT", vw_drift);
+			if (enable_simple_snow_drift || enable_snowdrift2d) io.getMeteoData(calcDate, dem, "VW_DRIFT", vw_drift);
 			io.getMeteoData(calcDate, dem, MeteoData::DW, dw);
 		}
 		io.getMeteoData(calcDate, dem, MeteoData::P, p);

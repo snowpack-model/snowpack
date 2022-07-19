@@ -140,7 +140,7 @@ class MeteoObj
 		unsigned int count_sums, count_precip;
 		bool skipWind; ///<should the grids be filled or only the data vectors returned?
 		bool soil_flux;
-		bool enable_simple_snow_drift, enable_explicit_snow_drift;
+		bool enable_simple_snow_drift, enable_snowdrift2d;
 };
 
 #endif
