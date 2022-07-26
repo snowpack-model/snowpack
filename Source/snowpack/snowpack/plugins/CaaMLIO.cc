@@ -1125,20 +1125,41 @@ void CaaMLIO::writeCustomSnowSoil(pugi::xml_node& node, const SnowStation& Xdata
 	xmlWriteElement(node,(namespaceSNP+":SoilAlb").c_str(),valueStr,"","");
 	sprintf(valueStr,"%.4f",Xdata.BareSoil_z0);
 	xmlWriteElement(node,(namespaceSNP+":BareSoil_z0").c_str(),valueStr,"uom","m");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.height);
-	xmlWriteElement(node,(namespaceSNP+":CanopyHeight").c_str(),valueStr,"uom","m");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.lai);
-	xmlWriteElement(node,(namespaceSNP+":CanopyLAI").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.BasalArea);
-	xmlWriteElement(node,(namespaceSNP+":CanopyBasalArea").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.throughfall);
-	xmlWriteElement(node,(namespaceSNP+":CanopyDirectThroughfall").c_str(),valueStr,"","");
+	if (Xdata.Cdata != NULL) {
+		sprintf(valueStr,"%.4f",Xdata.Cdata->height);
+		xmlWriteElement(node,(namespaceSNP+":CanopyHeight").c_str(),valueStr,"uom","m");
+		sprintf(valueStr,"%.4f",Xdata.Cdata->lai);
+		xmlWriteElement(node,(namespaceSNP+":CanopyLAI").c_str(),valueStr,"","");
+		sprintf(valueStr,"%.4f",Xdata.Cdata->BasalArea);
+		xmlWriteElement(node,(namespaceSNP+":CanopyBasalArea").c_str(),valueStr,"","");
+		sprintf(valueStr,"%.4f",Xdata.Cdata->throughfall);
+		xmlWriteElement(node,(namespaceSNP+":CanopyDirectThroughfall").c_str(),valueStr,"","");
+	} else {
+		sprintf(valueStr,"%.4f",IOUtils::nodata);
+		xmlWriteElement(node,(namespaceSNP+":CanopyHeight").c_str(),valueStr,"uom","m");
+		sprintf(valueStr,"%.4f",IOUtils::nodata);
+		xmlWriteElement(node,(namespaceSNP+":CanopyLAI").c_str(),valueStr,"","");
+		sprintf(valueStr,"%.4f",IOUtils::nodata);
+		xmlWriteElement(node,(namespaceSNP+":CanopyBasalArea").c_str(),valueStr,"","");
+		sprintf(valueStr,"%.4f",IOUtils::nodata);
+		xmlWriteElement(node,(namespaceSNP+":CanopyDirectThroughfall").c_str(),valueStr,"","");
+	}
+#ifndef SNOWPACK_CORE
 	sprintf(valueStr,"%.4f",Xdata.WindScalingFactor);
 	xmlWriteElement(node,(namespaceSNP+":WindScalingFactor").c_str(),valueStr,"","");
+#else
+	sprintf(valueStr,"%.0f",IOUtils::nodata);
+	xmlWriteElement(node,(namespaceSNP+":WindScalingFactor").c_str(),valueStr,"","");
+#endif
 	sprintf(valueStr,"%d",static_cast<unsigned int>(Xdata.ErosionLevel));
 	xmlWriteElement(node,(namespaceSNP+":ErosionLevel").c_str(),valueStr,"","");
+#ifndef SNOWPACK_CORE
 	sprintf(valueStr,"%.4f",Xdata.TimeCountDeltaHS);
 	xmlWriteElement(node,(namespaceSNP+":TimeCountDeltaHS").c_str(),valueStr,"","");
+#else
+	sprintf(valueStr,"%.0f",IOUtils::nodata);
+	xmlWriteElement(node,(namespaceSNP+":TimeCountDeltaHS").c_str(),valueStr,"","");
+#endif
 }
 
 /**
@@ -1309,8 +1330,13 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
 			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L);
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
+#ifndef SNOWPACK_CORE
 			sprintf(valueStr,"%.2f",(Xdata.Edata[ii].s_strength)*1000); //conversion from kPa to Nm-2: *1000
 			xmlWriteElement(layerNode,(namespaceCAAML+":strengthValue").c_str(),valueStr,"uom","Nm-2");
+#else
+			sprintf(valueStr,"%.0f",IOUtils::nodata); //conversion from kPa to Nm-2: *1000
+			xmlWriteElement(layerNode,(namespaceCAAML+":strengthValue").c_str(),valueStr,"uom","Nm-2");
+#endif
 		}
 	}//end strengthProfile
 }
