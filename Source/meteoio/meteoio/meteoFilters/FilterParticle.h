@@ -123,7 +123,7 @@ namespace mio {
  * 8. Repeat 2-7 for each time step `T`.
  * 9. Take the <b>mean particle path</b> (or the one with the highest weight) and calculate the observation function.
  *
- * @note Critique about these workings welcome <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/issues?sort=created_date&state=opened">here</a>. 
+ * @note Critique about these workings welcome <a href="https://code.wsl.ch/snow-models/meteoio/-/issues?sort=created_date&state=opened">here</a>. 
  * The core parts in the code are prefaced with `* PARTICLE FILTER *` and `* KALMAN FILTER *` and shouldn't be too hard to read.
  *
  * @subsection particleexample Example: Mockup snow model
@@ -200,7 +200,7 @@ namespace mio {
  *
  * @note Neither of the two features separating the particle from the Kalman filter was actually used in this example. First, the noise was Gaussian
  * again (cf. <a href="https://en.wikipedia.org/wiki/Central_limit_theorem">central limit theorem</a>). Cumulative distribution functions are relatively
- * hard to write, and only Gauss is implemented so far. If you need a specific one, you can <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/issues?sort=created_date&state=opened">request
+ * hard to write, and only Gauss is implemented so far. If you need a specific one, you can <a href="https://code.wsl.ch/snow-models/meteoio/-/issues?sort=created_date&state=opened">request
  * one here</a>. Maybe at this time C99's gamma functions will be available. Secondly, the model function was linear again. The next example uses a
  * nonlinear one.
  *

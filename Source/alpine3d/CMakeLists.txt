@@ -410,29 +410,29 @@ ELSE(UNIX)
 
 		#Main links (they can get overwritten later)
 		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "niViz online visualization" )
-		SET(MENU_LINKS_ALPINE3D "https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home" "Alpine3D Home page")
+		SET(MENU_LINKS_ALPINE3D "https://alpine3d.slf.ch" "Alpine3D Home page")
 		IF(INSTALL_DOC)
 			SET(MENU_LINKS_ALPINE3D
 			"${DOC_PATH}/Alpine3D_doc.html" "Alpine3D documentation"
 			"${DOC_PATH}/examples" "Alpine3D examples"
-			"https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home" "Alpine3D Home page"
+			"https://alpine3d.slf.ch" "Alpine3D Home page"
 			)
 		ENDIF(INSTALL_DOC)
 
 		#all other links: inishell, Snowpack, meteoio
 		IF(CPACK_BUNDLE_ALL)
 			#SET(MENU_LINKS_INISHELL "bin/inishell.exe" "Alpine3D's Inishell")
-			SET(MENU_LINKS_SNOWPACK "https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/home" "SNOWPACK Home page")
-			SET(MENU_LINKS_METEOIO "https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home" "MeteoIO Home page")
+			SET(MENU_LINKS_SNOWPACK "https://snowpack.slf.ch" "SNOWPACK Home page")
+			SET(MENU_LINKS_METEOIO "https://meteoio.slf.ch" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				SET(MENU_LINKS_METEOIO
 				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
-				"https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home" "MeteoIO Home page"
+				"https://meteoio.slf.ch" "MeteoIO Home page"
 				)
 				SET(MENU_LINKS_SNOWPACK
 				"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
 				"${DOC_PATH}/examples" "SNOWPACK examples"
-				"https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/home" "SNOWPACK Home page"
+				"https://snowpack.slf.ch" "SNOWPACK Home page"
 				)
 			ENDIF(INSTALL_DOC)
 		ENDIF(CPACK_BUNDLE_ALL)
@@ -443,7 +443,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home")
+		SET(CPACK_NSIS_HELP_LINK "https://alpine3d.slf.ch")
 		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 		SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
 	ENDIF(WIN32)

@@ -1,5 +1,5 @@
 Welcome to the installation of Alpine3D!
-This installer will guide you through installing Alpine3D and its html documentation. You can always check Alpine3D's home page at https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home to follow what is going on with Alpine3D!
+This installer will guide you through installing Alpine3D and its html documentation. You can always check Alpine3D's home page at https://alpine3d.slf.ch to follow what is going on with Alpine3D!
 
 In order to run the examples, please follow the "Getting Started" section in the html documentation.
 

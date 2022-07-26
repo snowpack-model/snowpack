@@ -31,9 +31,9 @@
  /**
  * @mainpage Table of content
  * -# External Links
- *    -# <A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/home">Snowpack's home page</A>
- *          -# <A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Getting-started">Installation, compilation</A>
- *          -# <A HREF="https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/GettingHelp">Getting help</A>
+ *    -# <A HREF="https://snowpack.slf.ch">Snowpack's home page</A>
+ *          -# <A HREF="https://snowpack.slf.ch/Getting-started">Installation, compilation</A>
+ *          -# <A HREF="https://snowpack.slf.ch/GettingHelp">Getting help</A>
  * -# End User documentation
  *    -# \subpage getting_started "Getting Started"
  *    -# Model principles
@@ -79,7 +79,7 @@
  *      - on osX: set \em PATH and \em DYLD_FALLBACK_LIBRARY_PATH
  *      - on Linux: set \em PATH and \em LD_LIBRARY_PATH if you install the package to a non-standard location
  *      - on Windows: set \em PATH
- * How to do this (and much more) is explained in the online documentation at https://gitlabext.wsl.ch/snow-models/snowpack/-/wikis/Getting-started.
+ * How to do this (and much more) is explained in the online documentation at https://snowpack.slf.ch/Getting-started.
  *
  * @section Running_an_example Running an example simulation
  * In order to run an example simulation, please follow the steps below:
@@ -94,9 +94,9 @@
  * @section Running_own_simulation Running your own simulation
  * Once you have been able to run an example simulation, you can try to run your own simulation. This involves the following steps:
  * -# First, gather the meteorological data that you need to drive the simulation. Please have a look at \subpage requirements "Data requirements";
- * -# Then, write the data in a format that <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">meteoio</a> can read for %Snowpack, for example SMET (see the file
+ * -# Then, write the data in a format that <a href="https://meteoio.slf.ch">meteoio</a> can read for %Snowpack, for example SMET (see the file
  *    format specification included in the meteoio's documentation and follow it);
- * -# Once your data is ready, you can \subpage configuration "configure your simulation", using <a href="https://gitlabext.wsl.ch/snow-models/inishell/-/wikis/home">inishell</a>. Please keep in
+ * -# Once your data is ready, you can \subpage configuration "configure your simulation", using <a href="https://inishell.slf.ch">inishell</a>. Please keep in
  *    mind that the default choices in inishell are such that if you don't change them, a simple simulation should work. And do \b not change parameters in
  *    the SnowpackAdvanced section! (this section is reserved for some specific use cases where a deeper control on the operation of the model is required).
  * -# Then, run the simulation from a terminal (after going to the directory where your simulation is) with a command line such as
@@ -107,7 +107,7 @@
  * @section model_workflow Simulation workflow
  * When running a simulation, it is important to keep in mind that the model is organized as several modules that interract together. It is possible to configure
  * some parameters for the various modules and to enable/disable modules. Some modules can be used outside of Snowpack (like
- * <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</A> that is used in various applications or libSnowpack that is used by <A HREF="https://gitlabext.wsl.ch/snow-models/alpine3d/-/wikis/home">Alpine3D</A>) .
+ * <A HREF="https://meteoio.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by <A HREF="https://alpine3d.slf.ch">Alpine3D</A>) .
  *
  * \image html simulation_workflow.png "Simulation workflow"
  * \image latex simulation_workflow.eps "Simulation workflow" width=0.9\textwidth
@@ -116,7 +116,7 @@
  * Through MeteoIO, it is possible to force Snowpack with data that has not been measured locally. The forcings are then extracted for example from gridded data (such as the outputs of
  * weather forecasting models or reanalysis models) or by spatially interpolating stations' data to the point of interest. For the data extraction or interpolation, please
  * refer to MeteoIO's documentation section "Spatial resampling" (see for example the current stable release 
- * <a href="https://models.slf.ch/docserver/meteoio/html/spatial_resampling.html">documentation</a>). 
+ * <a href="https://meteoio.slf.ch/doc-release/html/spatial_resampling.html">documentation</a>). 
  * 
  * \image html virtual_stations.png "Spatial resampling"
  * \image latex virtual_stations.eps "Spatial resampling" width=0.9\textwidth
@@ -352,7 +352,7 @@
  * - incoming short wave radiation (ISWR) <i>and/or</i> reflected short wave radiation (RSWR) <i>or</i> net short wave radiation (it must be called NET_SW in Smet files).
  * - incoming long wave radiation (ILWR) <i>and/or</i> surface temperature (TSS)
  * - precipitation (PSUM) <i>and/or</i> snow height (HS)
- * - ground temperature (TSG, if available. Otherwise, you will have to use <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</A>'s 
+ * - ground temperature (TSG, if available. Otherwise, you will have to use <a href="https://meteoio.slf.ch">MeteoIO</A>'s 
  * data generators to generate a value) <i>or</i> geothermal heat flux
  * - snow temperatures at various depths (TS1, TS2, etc if available and only for comparisons, see section \ref SnowSoilTemperatures)
  *
@@ -361,15 +361,15 @@
  * at the \ref snowpackio "other input parameters" that are required to run your simulation!
  *
  * @section data_preparation Data preparation
- * In order to help %Snowpack handle the (sometimes broken) data sets to be used in a simulation, the <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO library</a> is used.
+ * In order to help %Snowpack handle the (sometimes broken) data sets to be used in a simulation, the <a href="https://meteoio.slf.ch">MeteoIO library</a> is used.
  * This enables %Snowpack to get data from a variety of sources (several input file formats, connection to a database, connection to a web service) and to
  * pre-process real-world data, by filtering the data on the fly and by resampling the data on the fly. Please read the MeteoIO documentation (available 
- * <A HREF="https://models.slf.ch/docserver/meteoio/html/index.html">online</A> for the last official release) to learn about
+ * <A HREF="https://meteoio.slf.ch/doc-release/html/index.html">online</A> for the last official release) to learn about
  * the supported file formats, the available filters and resampling/re-accumulation strategies as well as the available parametrizations that can help generate
  * some otherwise missing data (either from other parameters or fully synthetic, as last resort).
  * 
  * It is recommended to prepare the data in the
- * <A HREF="https://models.slf.ch/docserver/meteoio/html/smetio.html">SMET</A> file format for its ease of use.
+ * <A HREF="https://meteoio.slf.ch/doc-release/html/smetio.html">SMET</A> file format for its ease of use.
  *
  * @section data_recomendations Data recommendations
  * In case incoming and reflected short wave radiation as well as incoming long wave radiation are all
@@ -445,11 +445,11 @@
  * The configuration for a given simulation is kept in a <i>".ini"</i> file (see http://en.wikipedia.org/wiki/INI_file). This is an ascii file that contains
  * keys/values structured by sections. This can be easily edited with a simple text editor. More information about the structure of the file and how to generally deal
  * with it can be found in MeteoIO's documentation (section "How to build your io.ini configuration file"). However, it is recommended to use the inishell tool for
- * generating the configuration file for %Snowpack in order to prevent missing important keys, etc Please read <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</A>'s documentation (specially the "general
+ * generating the configuration file for %Snowpack in order to prevent missing important keys, etc Please read <a href="https://meteoio.slf.ch">MeteoIO</A>'s documentation (specially the "general
  * Concepts" introduction)!
  *
  * @section inishell_config The inishell tool
- * It is highly recommended to use the <a href="https://gitlabext.wsl.ch/snow-models/inishell/-/wikis/home">Inishell</a> tool to generate these ini files
+ * It is highly recommended to use the <a href="https://inishell.slf.ch">Inishell</a> tool to generate these ini files
  * in order to reduce editing errors. This tool also allows you to edit an existing file in order to change the configuration.
  * \image html inishell.png "inishell overview"
  * \image latex inishell.eps "inishell overview" width=0.9\textwidth
