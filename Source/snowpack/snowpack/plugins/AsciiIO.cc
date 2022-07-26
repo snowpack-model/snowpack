@@ -1198,6 +1198,15 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 				fout << "," << std::fixed << std::setprecision(1) << -EMS[e].hard;
 		}
 	}
+	// 0535: optical equivalent grain size OGS (mm)
+	if (no_snow) {
+		fout << "\n0535,1,0";
+	} else {
+		fout << "\n0535," << nE-Xdata.SoilNode + Noffset;
+		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(2) << EMS[e].ogs;
+	}
 	if (Xdata.Seaice!=NULL) {
 		// 0540: bulk salinity (g/kg)
 		if (no_snow) {
@@ -1217,15 +1226,6 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 			for (size_t e = Xdata.SoilNode; e < nE; e++)
 				fout << "," << std::fixed << std::setprecision(2) << ((EMS[e].theta[WATER] == 0.) ? (mio::IOUtils::nodata) : (EMS[e].salinity / EMS[e].theta[WATER]));
 		}
-	}
-	// 0535: optical equivalent grain size OGS (mm)
-	if (no_snow) {
-		fout << "\n0535,1,0";
-	} else {
-		fout << "\n0535," << nE-Xdata.SoilNode + Noffset;
-		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = Xdata.SoilNode; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(2) << EMS[e].ogs;
 	}
 	if (variant == "CALIBRATION")
 		writeProfileProAddCalibration(Xdata, fout);

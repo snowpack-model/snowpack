@@ -1,7 +1,7 @@
 Adding a new Test to Testenvirenment
 ####################################
 This manual shows how to add a test to the testing environment of MeteoIO 
-(https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home). This example will create from a test
+(https://meteoio.slf.ch). This example will create from a test
 source the test excecutabel and add the test.
 
 

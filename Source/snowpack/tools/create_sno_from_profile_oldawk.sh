@@ -64,7 +64,8 @@ awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v wsf=${w
 					if(/^0500/ || res==0) { \
 						printf("SMET 1.1 ASCII\n[HEADER]\nstation_id       = %s\nstation_name     = %s\nlatitude         = %s\nlongitude        = %s\naltitude         = %s\nnodata           = -999\nProfileDate      = %s\nHS_Last          = 0\nSlopeAngle       = %s\nSlopeAzi         = %s\nnSoilLayerData   = %d\nnSnowLayerData   = %s\nSoilAlbedo       = %s\nBareSoil_z0      = %s\nCanopyHeight     = 0.00\nCanopyLeafAreaIndex = 0.000000\nCanopyDirectThroughfall = 1.00\nWindScalingFactor = %s\nErosionLevel     = 0\nTimeCountDeltaHS = 0.000000\nfields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo%s\n[DATA]\n", station_id, station_id, lat, lon, alt, d2, slope, azi, nsoil, nsnow, sab, bsz0, wsf, ((write_h)?(" h"):(""))); \
 						for(i=0; i<n; i++) { \
-							ts=strftime("%Y-%m-%dT%H:%M:%S", t1-age[i]*(24.*60.*60.)+timeshift); \
+							nd=t1-age[i]*(24.*60.*60.)+timeshift; \
+							cmd=sprintf("date \"+%%Y-%%m-%%dT%%H:%%M:%%S\" -d @%d", nd); cmd | getline ts; close(cmd); \
 							printf("%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s%s\n", ts, z[i+1]-z[i], ((b_T==1)?(T[i]):(-999)), ((b_ice)?(ice[i]):(-999)), ((b_lwc)?(lwc[i]):(-999)), ((b_ice && b_lwc)?(1.-ice[i]-lwc[i]):(-999)), ((b_soil)?(soil[i]):(-999)), -999, -999, -999, ((b_rg)?(rg[i]):(-999)), ((b_rb)?(rb[i]):(-999)), ((b_dd)?(dd[i]):(-999)), ((b_sp)?(sp[i]):(-999)), ((b_mk)?(mk[i]):(-999)), hoar, 1, ((b_cdot)?(cdot[i+nsoil]):(-999)), metamo, ((write_h)?(" -999"):(""))) \
 						} \
 						written=1; \

@@ -61,7 +61,7 @@ LINUX (Ubuntu):
 -cmake:
 	"$sudo apt install cmake-curses-gui"
 
-- meteoio: (see here: https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Compiling-MeteoIO )
+- meteoio: (see here: https://meteoio.slf.ch/Compiling-MeteoIO )
 make sure that meteoio is installed correctly ("make install")!!!
 
 - python: python 2.7 or 3.x should be fine
@@ -85,7 +85,7 @@ run the test-script:
 MAC
 1) Required Tools:
 
-- meteoio and c-compiler: (see here: https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Compiling-MeteoIO )
+- meteoio and c-compiler: (see here: https://meteoio.slf.ch/Compiling-MeteoIO )
 make sure that meteoio is installed correctly ("make install")!!!
 
 - python: download and install latest release from https://www.python.org/downloads/mac-osx/
