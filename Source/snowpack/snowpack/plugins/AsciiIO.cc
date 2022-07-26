@@ -1140,6 +1140,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		for (size_t e = 0; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta_i_reservoir_cumul;
 	}
+#endif
 	// 0529: Stress rate CDot (Pa s-1)
 	if (no_snow) {
 		fout << "\n0529,1,0";
@@ -1149,6 +1150,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(1) << EMS[e].CDot;
 	}
+#ifndef SNOWPACK_CORE
 	// 0530: position (cm) and minimum stability indices
 	fout << "\n0530,8";
 	fout << "," << std::fixed << +Xdata.S_class1 << "," << +Xdata.S_class2; //force printing type char as numerica value
@@ -1181,9 +1183,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
 		for (size_t e = Xdata.SoilNode; e < nE; e++)
 			fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].S_s;
-
 	}
-#endif
 	// 0534: hand hardness ...
 	if (no_snow) {
 		fout << "\n0534,1,0";
@@ -1198,6 +1198,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 				fout << "," << std::fixed << std::setprecision(1) << -EMS[e].hard;
 		}
 	}
+#endif
 	if (Xdata.Seaice!=NULL) {
 		// 0540: bulk salinity (g/kg)
 		if (no_snow) {
@@ -2492,15 +2493,19 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0521,nElems,thermal conductivity (W K-1 m-1)";
 	fout << "\n0522,nElems,absorbed shortwave radiation (W m-2)";
 	fout << "\n0523,nElems,viscous deformation rate (1.e-6 s-1)";
+#ifndef SNOWPACK_CORE
 	if(enable_ice_reservoir) fout << "\n0524,nElems, ice reservoir volume fraction (%)";
 	if(enable_ice_reservoir) fout << "\n0525,nElems, cumulated ice reservoir volume fraction (%)";
+#endif
 	fout << "\n0529,nElems,Stress rate CDot (Pa s-1)";
+#ifndef SNOWPACK_CORE
 	fout << "\n0530,8,position (cm) and minimum stability indices:";
 	fout << "\n       profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38";
 	fout << "\n0531,nElems,deformation rate stability index Sdef";
 	fout << "\n0532,nElems,natural stability index Sn38";
 	fout << "\n0533,nElems,stability index Sk38";
 	fout << "\n0534,nElems,hand hardness either (N) or index steps (1)";
+#endif
 	fout << "\n0535,nElems,optical equivalent grain size (mm)";
 	if (Xdata.Seaice != NULL) {
 		fout << "\n0540,nElems,bulk salinity (g/kg)";
