@@ -31,7 +31,7 @@ using namespace mio;
  * @page smet SMET
  * @section smet_format Format
  * This plugin reads the SMET files as specified in the
- * <a href="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Home">MeteoIO</a> pre-processing library documentation (under
+ * <a href="https://meteoio.slf.ch">MeteoIO</a> pre-processing library documentation (under
  * <i>"Available plugins and usage"</i>, then <i>"smet"</i>).
  *
  * @section fluxes_ts Fluxes timeseries

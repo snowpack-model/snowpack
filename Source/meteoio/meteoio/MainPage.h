@@ -61,9 +61,9 @@ namespace mio {
  *    -# \subpage configuration "Configuration file"
  *    -# \subpage build_io "How to build your io.ini configuration file"
  *    -# External Links
- *         -# <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/home">MeteoIO's home page</A>
- *               -# <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/Getting-started">Installation, compilation</A>
- *               -# <A HREF="https://gitlabext.wsl.ch/snow-models/meteoio/-/wikis/GettingHelp">Getting help</A>
+ *         -# <A HREF="https://meteoio.slf.ch">MeteoIO's home page</A>
+ *               -# <A HREF="https://meteoio.slf.ch/Getting-started">Installation, compilation</A>
+ *               -# <A HREF="https://meteoio.slf.ch/GettingHelp">Getting help</A>
  * -# Processing steps documentation
  *    -# \subpage data_sources "Data sources, input/output"
  *    -# \subpage data_editing "Input Data Editing"
@@ -233,7 +233,7 @@ namespace mio {
 /**
  * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
- * <b>it is highly recommended to use <a href="https://gitlabext.wsl.ch/snow-models/inishell/-/wikis/home">inishell</a></b> to build your io.ini 
+ * <b>it is highly recommended to use <a href="https://inishell.slf.ch">inishell</a></b> to build your io.ini 
  * configuration file, since this significantly reduces the number of errors and provides help text for each keys.
  *
  * Anyway, this section will show you how to manually set up a configuration file. Please read
