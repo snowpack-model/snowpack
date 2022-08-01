@@ -233,6 +233,13 @@ static std::string get_model(const SnowpackConfig& cfg)
 	return model;
 }
 
+static std::string get_variant(const SnowpackConfig& cfg)
+{
+	std::string variant;
+	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
+	return variant;
+}
+
 static double get_sn_dt(const SnowpackConfig& cfg)
 {
 	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
@@ -247,7 +254,7 @@ static double get_nsgs(const SnowpackConfig& cfg)
 }
 
 Metamorphism::Metamorphism(const SnowpackConfig& cfg)
-              : metamorphism_model( get_model(cfg) ), sn_dt( get_sn_dt(cfg) ), new_snow_grain_size( get_nsgs(cfg) )
+              : metamorphism_model( get_model(cfg) ), variant( get_variant(cfg) ), sn_dt( get_sn_dt(cfg) ), new_snow_grain_size( get_nsgs(cfg) )
 {
 	const map<string, MetaModelFn>::const_iterator it1 = mapMetamorphismModel.find(metamorphism_model);
 	if (it1 == mapMetamorphismModel.end())
@@ -716,6 +723,23 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
 		// Check for first complete melt-freeze cycle
 		else if ((marker < 20) && (marker >= 10) && (EMS[e].Te < EMS[e].meltfreeze_tk - 0.3)) {
 			EMS[e].mk += 10;
+		}
+
+		if (variant == "POLAR" || variant == "ANTARCTICA") {
+			// Some ad-hoc modifications for better settling behaviour with depth
+			double age = Mdata.date.getJulian() - EMS[e].depositionDate.getJulian(); // layer age in days
+			if (age > 365.) {
+				if ((EMS[e].mk % 100) > 20) {
+					EMS[e].mk -= 10;
+				}
+				if ((EMS[e].mk % 100) > 10) {
+					EMS[e].mk -= 10;
+				}
+				if (EMS[e].theta[ICE] > .6) {	// Above 550 kg/m3 dry density, we set microstructure to rounded
+					EMS[e].sp = 1.;
+					if (EMS[e].mk%10==1) EMS[e].mk++;
+				}
+			}
 		}
 
 		EMS[e].snowType();
