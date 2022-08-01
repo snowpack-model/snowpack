@@ -2714,7 +2714,7 @@ bool SnowStation::combineCondition(const ElementData& Edata0, const ElementData&
 			comb_thresh_rg_flex = comb_thresh_rg * 50.;
 		}
 	} else {
-		comb_thresh_rg_flex = (std::max(0., (depth - 1.) / scale) * comb_thresh_rg) + comb_thresh_rg;
+		comb_thresh_rg_flex = (std::max(0., (depth - 1.) / scale) * 4. * comb_thresh_rg) + comb_thresh_rg;
 	}
 
 	if ( fabs(Edata0.rg - Edata1.rg) > comb_thresh_rg_flex )
