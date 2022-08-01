@@ -1316,7 +1316,8 @@ double SnLaws::NewSnowViscosityLehning(const ElementData& Edata)
  */
 double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 {
-	const double Q = 67000.; // Activation energy for defects in ice (J mol-1)
+	// Max Stevens concluded in presentation at AGU 2021 that models with activation energy 60 kJ/mol worked best for South Pole (see https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/947354)
+	const double Q = (current_variant == "POLAR" || current_variant == "ANTARCTICA") ? (60000.) :(67000.); // Activation energy for defects in ice (J mol-1)
 
 	switch (SnLaws::t_term) {
 	case t_term_arrhenius_critical:
