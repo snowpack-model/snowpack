@@ -17,6 +17,9 @@ fi
 if [ ! -d "./cfgfiles/" ]; then
 	mkdir cfgfiles
 fi
+if [ ! -d "./log/" ]; then
+	mkdir log
+fi
 
 
 for f in ./smet/*smet
