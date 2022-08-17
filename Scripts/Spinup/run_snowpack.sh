@@ -52,7 +52,7 @@ do
 		print "WindScalingFactor = 1.00";
 		print "ErosionLevel     = 0";
 		print "TimeCountDeltaHS = 0.000000";
-		print "fields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
+		print "fields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
 		print "[DATA]";
 	}' ${f} > ${snofile}
 	echo "[GENERAL]" > ${cfgfile}

@@ -186,7 +186,7 @@ while :
 do
 	if [ -e "${snofile_out}" ] && [ "${startover}" == 0 ]; then
 		sim_depth=$(mawk 'BEGIN {s=0; d=0} {if(d) {s+=$2}; if(/\[DATA\]/) {d=1}} END {print s}' ${snofile_out})
-		if (( $(echo "${sim_depth} == 0" | bc -l) )) && (( "${i}" > 0 )) ; then
+		if (( $(echo "${sim_depth} <= ${prev_sim_depth} || ${sim_depth} == 0" | bc -l) )) && (( "${i}" > 0 )) ; then
 			if (( "${insert_ice_layer}" )) && (( ${i} == 1 )); then
 				echo "Info: SNOWPACK does not seem to build an increasing snowpack/firn layer [depth = ${sim_depth}m], inserting ${ice_layer_thickness} m ice layer!" >> /dev/stderr
 				nsnow=$(fgrep nSnowLayerData ${snofile_out} | mawk -F= '{printf "%d", $NF+1}')
