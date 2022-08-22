@@ -131,8 +131,8 @@ mio::Grid2DObject SnowDrift2D::calcExplicitSnowDrift(const mio::Grid2DObject gri
 			// Following Pomeroy and Gray 1990, we set the saltation velocity <U, V> to be equal to 2.8 times
 			// the friction threshold velocity (ustar_th) in the direction parallel to the 10m wind.
 			const double tmp_ustar_th = (ustar_th(ix, iy) == Constants::undefined) ? (0.) : (ustar_th(ix, iy));
-			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., 2.8 * tmp_ustar_th ), grid_DW(ix, iy));
-			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., 2.8 * tmp_ustar_th ), grid_DW(ix, iy));
+			U(ix, iy) = IOUtils::VWDW_TO_U(std::max(0., 2.8 * tmp_ustar_th), grid_DW(ix, iy));
+			V(ix, iy) = IOUtils::VWDW_TO_V(std::max(0., 2.8 * tmp_ustar_th), grid_DW(ix, iy));
 		}
 	}
 
