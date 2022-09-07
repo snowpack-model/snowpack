@@ -98,7 +98,7 @@ class SnowDriftA3D {
 		double getTiming() const;
 
 		void Destroy();
-		
+
 		std::string getGridsRequirements() const;
 
 	protected:

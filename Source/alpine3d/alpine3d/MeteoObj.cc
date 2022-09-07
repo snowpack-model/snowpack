@@ -98,7 +98,6 @@ bool SnGrids::initStaticData()
 	paramname.push_back("RHO4");
 	paramname.push_back("RHO5");
 
-
 	if (paramname.size()!=(SnGrids::lastparam+1))
 		throw IOException("Wrong number of string representations for the SnGrids parameters! You forgot to update the \"paramname\" vector.", AT);
 
@@ -129,7 +128,7 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
 MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                    : timer(), config(in_config), io(in_config), dem(in_dem),
                      ta(in_dem, IOUtils::nodata), tsg(in_dem, IOUtils::nodata), rh(in_dem, IOUtils::nodata),psum(in_dem, IOUtils::nodata),
-                     psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata), 
+                     psum_ph(in_dem, IOUtils::nodata), vw(in_dem, IOUtils::nodata), vw_drift(in_dem, IOUtils::nodata), dw(in_dem, IOUtils::nodata),
                      p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata), iswr_dir(in_dem, IOUtils::nodata),
                      iswr_diff(in_dem, IOUtils::nodata), sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(),
                      sum_vw(), sum_ilwr(), vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0),

@@ -782,7 +782,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 {
 	if (vecMeteo.empty())
 		throw mio::NoDataException("No meteo data!", AT);
-	
+
 	// find the first (often the only one) MeteoData having iswr, ta and ilwr
 	// it should exist, otherwise the checkInputsRequirements method would have failed.
 	bool found = false;

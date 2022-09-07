@@ -412,6 +412,7 @@ class NodeData {
 		double S_dsm;
 		double Sigdsm;
 		double rime;
+
 		double soil_lysimeter; ///< Water flowing through the node
 };
 

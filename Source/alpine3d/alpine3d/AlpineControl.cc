@@ -108,6 +108,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			meteo.prepare(calcDate+timeStep); //prepare next timestep
 		}
 
+
 		// Snowdrift will overwrite VW and DW with data from 3D wind fields and update mns in SnowpackInterface
 		if (snowdrift) {
 			try { //Snowdrift

@@ -209,9 +209,8 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 	if (snow_avg_temp_depth!=IOUtils::nodata) params.push_back("TSNOW_AVG");
 	if (snow_avg_rho_depth!=IOUtils::nodata) params.push_back("RHOSNOW_AVG");
 
-	//handle the soil temperatures and runoff
+	//handle the soil temperatures, runoff and snow densities
 	io_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
-
 	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
 		if(ii==soil_temp_depths.size()-1){
 			params.push_back("TSOIL_MAX");
@@ -229,11 +228,7 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 			params.push_back( "SOIL_RUNOFF"+mio::IOUtils::toString(ii+1) );
 		}
 	}
-	//handle the snow densities
 	io_cfg.getValue("SNOW_DENSITY_DEPTHS", "Output", snow_density_depths, IOUtils::nothrow);
-	const unsigned short max_rhosnow( SnGrids::RHO5 - SnGrids::RHO1 + 1 );
-	if (snow_density_depths.size()>max_rhosnow)
-		throw InvalidArgumentException("Too many snow densities requested", AT);
 	for (size_t ii=0; ii<snow_density_depths.size(); ii++) {
 		params.push_back( "RHO"+mio::IOUtils::toString(ii+1) );
 	}
@@ -499,7 +494,6 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				}
 				else
 				{
-					std::cout << it->first << std::endl;
 					throw InvalidArgumentException("Invalid parameter requested " + it->first, AT);
 				}
 		}
@@ -587,7 +581,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		meteoPixel.iswr = shortwave(ix,iy);
 		meteoPixel.rswr = previous_albedo*meteoPixel.iswr;
 		meteoPixel.tss = snowPixel.Ndata[snowPixel.getNumberOfElements()].T; //we use previous timestep value
-		meteoPixel.ts0 = (snowPixel.SoilNode>0) ? snowPixel.Ndata[snowPixel.SoilNode].T : tsg(ix,iy); //we use previous timestep value
+		meteoPixel.ts0 = (snowPixel.SoilNode>0)? snowPixel.Ndata[snowPixel.SoilNode].T : tsg(ix,iy); //we use previous timestep value
 		meteoPixel.ea = Atmosphere::blkBody_Emissivity(longwave(ix,iy), meteoPixel.ta); //to be consistent with Snowpack
 		meteoPixel.psum_ph = psum_ph(ix,iy);
 		meteoPixel.psum_tech = psum_tech(ix, iy);
