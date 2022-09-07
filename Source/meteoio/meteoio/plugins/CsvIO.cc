@@ -68,9 +68,9 @@ namespace mio {
  *    - CSV\#_NR_HEADERS: how many lines should be treated as headers? (default: 1);
  *    - CSV\#_HEADER_DELIMITER: different field delimiter to use in header lines; optional
  *    - CSV\#_HEADER_REPEAT_MK: a string that is used to signal another copy of the headers mixed with the data in the file (the matching is done anywhere in the line) (default: empty);
- *    - CSV\#_UNITS_HEADERS: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
- *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI; optional
- *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI; optional
+ *    - CSV\#_UNITS_HEADER: header line providing the measurements units (the subset of recognized units is small, please inform us if one is missing for you); optional
+ *    - CSV\#_UNITS_OFFSET: offset to add to each value in order to convert it to SI (if also providing CSV\#_UNITS, would be applied afterwards); optional
+ *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI (if also providing CSV\#_UNITS, would be applied afterwards); optional
  * - <b>Data parsing restrictions</b>
  *    - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
  *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 " ;
@@ -80,7 +80,7 @@ namespace mio {
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1, see also \ref csvio_special_fields "special field names");
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below (see also the \ref csvio_special_fields "special field names" for more); optional
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
- *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others)
+ *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others). If CSV\#UNITS_OFFSET / MULTIPLIER were also provided, CSV\#_UNITS would be applied first.
  *    - CSV\#_SKIP_FIELDS: a space-delimited list of field to skip (first field is numbered 1). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
@@ -126,6 +126,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * In order to be able to read any date and time format, the format has to be provided in the configuration file. This is provided as a string containing
  * the following special markers:
  * - YYYY: the 4 digits year;
+ * - YY: the 2 digits year (using 40 as cutoff year: date greater than 40 get converted to 1900+year, otherwise to 2000+year);
  * - MM: the two digits month;
  * - DD: the two digits day;
  * - HH24: the two digits hour of the day (0-24);
@@ -163,7 +164,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - AZI (for the slope azimuth, in degree as read from a compass);
  * - NODATA (string to interpret as nodata);
  * - PARAM (the extracted metadata will replace the PARAM field either as found in the file's headers or in the CSV_FIELDS user configuration key);
- * - SKIP (skip this field).
+ * - SKIP or - (skip this field).
  * 
  * If ID or NAME appear more than once in one specification string, their mutliple values will be appended.
  *
@@ -394,7 +395,7 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true),  location(), nodata(), purgeCharsSet(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), exclusion_idx(0), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false) 
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), skip_fields(), header_repeat_mk(), filter_ID(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true),  location(), nodata(), purgeCharsSet(), datetime_idx(), time_idx(), linesExclusions(), file_and_path(), datetime_format(), time_format(), single_field(), name(), id(), date_cols(), slope(IOUtils::nodata), azi(IOUtils::nodata), csv_tz(tz_in), exclusion_idx(0), has_tz(false), dt_as_components(false), dt_as_year_and_jdn(false), dt_as_decimal(false), dt_2digits_year(false)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
@@ -643,7 +644,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		} else if (tmp.compare("TIME")==0 || tmp.compare("ORA")==0 || tmp.compare("HORA")==0) {
 			date_cols.time_str = ii;
 			skip_fields[ ii ] = true;
-		} else if (tmp.compare("SKIP")==0) {
+		} else if (tmp.compare("SKIP")==0 || tmp.compare("-")==0) {
 			skip_fields[ ii ] = true;
 		} else if (tmp.compare("YEAR")==0) {
 			date_cols.year = ii;
@@ -716,9 +717,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const size_t nrStdUnits = 12; //NOTE: do not forget to update this index when editing stdUnits!!
-	static const std::string stdUnits[nrStdUnits] = {"TS", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2"};
-	static const std::set<std::string> noConvUnits( stdUnits, stdUnits+nrStdUnits );
+	static const std::set<std::string> noConvUnits = {"TS", "RN", "W/M2", "M/S", "K", "M", "N", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3"};
 
 	std::vector<std::string> units;
 	IOUtils::readLineToVec(csv_units, units, delim);
@@ -956,12 +955,17 @@ void CsvParameters::checkSpecString(const std::string& spec_string, const size_t
 //the indices are based on ISO timestamp, so year=0, month=1, ..., ss=5 while tz is handled separately
 void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 {
-	static const char* keys[6] = {"YYYY", "MM", "DD", "HH24", "MI", "SS"};
+	//support for 2 digits year is a little hacky: it requires special processing in order to avoid machting both
+	//YYYY and YY as well as having a boolean to know if we should add an offset to the year or not
+	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"YYYY", 0}, {"YY", 0}, {"MM", 1}, {"DD", 2}, {"HH24", 3}, {"MI", 4}, {"SS", 5}} );
+	dt_2digits_year = (datetime_spec.find("YYYY")==std::string::npos && datetime_spec.find("YY")!=std::string::npos);
+	
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<6; ii++) {
-		const size_t key_pos = datetime_spec.find( keys[ii] );
+	for (size_t ii=0; ii<keys.size(); ii++) {
+		if (!dt_2digits_year && keys[ii].first=="YY") continue;	//skip looking for 2 digit years if not applicable
+		const size_t key_pos = datetime_spec.find( keys[ii].first );
 		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, ii) );
+			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
 	}
 	
 	//fill datetime_idx as a vector of [0-5] indices (for ISO fields) in the order they appear in the user-provided format string
@@ -977,12 +981,14 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 		has_tz = true;
 		datetime_format.replace(tz_pos, 2, "%32s");
 	}
-	IOUtils::replace_all(datetime_format, "DD", "%2f");
-	IOUtils::replace_all(datetime_format, "MM", "%2f");
+	//the order of the replacements is important in order to match YYYY first and then YY
+	IOUtils::replace_all(datetime_format, "DD",   "%2f");
+	IOUtils::replace_all(datetime_format, "MM",   "%2f");
 	IOUtils::replace_all(datetime_format, "YYYY", "%4f");
+	IOUtils::replace_all(datetime_format, "YY",   "%2f");
 	IOUtils::replace_all(datetime_format, "HH24", "%2f");
-	IOUtils::replace_all(datetime_format, "MI", "%2f");
-	IOUtils::replace_all(datetime_format, "SS", "%f");
+	IOUtils::replace_all(datetime_format, "MI",   "%2f");
+	IOUtils::replace_all(datetime_format, "SS",   "%f");
 	
 	const size_t nr_params_check = (has_tz)? datetime_idx.size()+1 : datetime_idx.size();
 	checkSpecString(datetime_format, nr_params_check);
@@ -991,12 +997,12 @@ void CsvParameters::setDateTimeSpec(const std::string& datetime_spec)
 void CsvParameters::setTimeSpec(const std::string& time_spec)
 {
 	if (time_spec.empty()) return;
-	static const char* keys[3] = {"HH24", "MI", "SS"};
+	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"HH24", 0}, {"MI", 1}, {"SS", 2}} );
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
-	for (size_t ii=0; ii<3; ii++) {
-		const size_t key_pos = time_spec.find( keys[ii] );
+	for (size_t ii=0; ii<keys.size(); ii++) {
+		const size_t key_pos = time_spec.find( keys[ii].first );
 		if (key_pos!=std::string::npos)
-			sorting_vector.push_back( make_pair( key_pos, ii) );
+			sorting_vector.push_back( make_pair( key_pos, keys[ii].second) );
 	}
 
 	//fill time_idx as a vector of [0-3] indices (for ISO fields) in the order they appear in the user-provided format string
@@ -1048,15 +1054,20 @@ void CsvParameters::setFixedYear(const int& i_year, const bool& auto_wrap)
 }
 
 //check that all arguments are integers except the seconds, then build a Date
-Date CsvParameters::createDate(const float args[6], const double i_tz)
+Date CsvParameters::createDate(const float args[6], const double i_tz) const
 {
+	static const int cutoff_year = 40;
 	int i_args[5] = {0, 0, 0, 0, 0};
 	for (unsigned int ii=0; ii<5; ii++) {
 		i_args[ii] = (int)args[ii];
 		if ((float)i_args[ii]!=args[ii]) return Date();
 	}
-	
-	return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
+	if (!dt_2digits_year)
+		return Date(i_args[0], i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
+	else {
+		const int year = (i_args[0]>cutoff_year)? 1900+i_args[0] : 2000+i_args[0];
+		return Date(year, i_args[1], i_args[2], i_args[3], i_args[4], static_cast<double>(args[5]), i_tz);
+	}
 }
 
 Date CsvParameters::parseDate(const std::string& date_str, const std::string& time_str) const
@@ -1396,20 +1407,16 @@ void CsvIO::parseInputOutputSection()
 		if (cfg.keyExists(pre+"UNITS_HEADERS", "Input")) cfg.getValue(pre+"UNITS_HEADERS", "Input", tmp_csv.units_headers);
 		else cfg.getValue(dflt+"UNITS_HEADERS", "Input", tmp_csv.units_headers, IOUtils::nothrow);
 		
-		if (cfg.keyExists(pre+"UNITS_OFFSET", "Input")) cfg.getValue(pre+"UNITS_OFFSET", "Input", tmp_csv.units_offset);
-		else cfg.getValue(dflt+"UNITS_OFFSET", "Input", tmp_csv.units_offset, IOUtils::nothrow);
+		if (cfg.keyExists(pre+"UNITS_OFFSET", "Input")) cfg.getValue(pre+"UNITS_OFFSET", "Input", tmp_csv.field_offset);
+		else cfg.getValue(dflt+"UNITS_OFFSET", "Input", tmp_csv.field_offset, IOUtils::nothrow);
 		
-		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier);
-		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.units_multiplier, IOUtils::nothrow);
+		if (cfg.keyExists(pre+"UNITS_MULTIPLIER", "Input")) cfg.getValue(pre+"UNITS_MULTIPLIER", "Input", tmp_csv.field_multiplier);
+		else cfg.getValue(dflt+"UNITS_MULTIPLIER", "Input", tmp_csv.field_multiplier, IOUtils::nothrow);
 		
 		std::string csv_units;
 		if (cfg.keyExists(pre+"UNITS", "Input")) cfg.getValue(pre+"UNITS", "Input", csv_units);
 		else cfg.getValue(dflt+"UNITS", "Input", csv_units, IOUtils::nothrow);
-		if (!csv_units.empty()) {
-			if (!tmp_csv.units_multiplier.empty() || !tmp_csv.units_offset.empty())
-				throw InvalidArgumentException("It is not possible to define both CSV_UNITS and CSV_UNITS_OFFSET or CSV_UNITS_MULTIPLIER", AT);
-			tmp_csv.setUnits( csv_units, ' ' );
-		}
+		if (!csv_units.empty()) tmp_csv.setUnits( csv_units, ' ' );
 		
 		//Date and time formats. The defaults will be set when parsing the column names (so they are appropriate for the available columns)
 		std::string datetime_spec, date_spec, time_spec, decimaldate_type;
@@ -1523,12 +1530,20 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 {
 	const std::string filename( params.getFilename() );
 	size_t nr_of_data_fields = params.csv_fields.size(); //this has been checked by CsvParameters
-	const bool use_offset = !params.units_offset.empty();
-	const bool use_multiplier = !params.units_multiplier.empty();
-	if ((use_offset && params.units_offset.size()!=nr_of_data_fields) || (use_multiplier && params.units_multiplier.size()!=nr_of_data_fields)) {
+	const bool use_unit_offset = !params.units_offset.empty();
+	const bool use_unit_multiplier = !params.units_multiplier.empty();
+	if ((use_unit_offset && params.units_offset.size()!=nr_of_data_fields) || (use_unit_multiplier && params.units_multiplier.size()!=nr_of_data_fields)) {
 		const std::string msg( "in file '"+filename+"', the declared units_offset ("+IOUtils::toString(params.units_offset.size())+") / units_multiplier ("+IOUtils::toString(params.units_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
 		throw InvalidFormatException(msg, AT);
 	}
+	
+	const bool use_field_offset = !params.field_offset.empty();
+	const bool use_field_multiplier = !params.field_multiplier.empty();
+	if ((use_field_offset && params.field_offset.size()!=nr_of_data_fields) || (use_field_multiplier && params.field_multiplier.size()!=nr_of_data_fields)) {
+		const std::string msg( "in file '"+filename+"', the declared field_offset ("+IOUtils::toString(params.field_offset.size())+") / field_multiplier ("+IOUtils::toString(params.field_multiplier.size())+") must match the number of columns ("+IOUtils::toString(nr_of_data_fields)+") in the file!" );
+		throw InvalidFormatException(msg, AT);
+	}
+	
 
 	const MeteoData template_md( createTemplate(params) );
 
@@ -1640,8 +1655,14 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 					tmp = IOUtils::nodata;
 				} else throw InvalidFormatException(err_msg, AT);
 			}
-			if (use_multiplier && tmp!=IOUtils::nodata) tmp *= params.units_multiplier[ii];
-			if (use_offset && tmp!=IOUtils::nodata) tmp += params.units_offset[ii];
+			
+			if (tmp!=IOUtils::nodata) {
+				if (use_unit_multiplier) tmp *= params.units_multiplier[ii];
+				if (use_unit_offset) tmp += params.units_offset[ii];
+				if (use_field_multiplier) tmp *= params.field_multiplier[ii];
+				if (use_field_offset) tmp += params.field_offset[ii];
+			}
+			
 			md( params.csv_fields[ii] ) = tmp;
 		}
 		if (no_errors) vecMeteo.push_back( md );

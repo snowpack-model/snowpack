@@ -102,7 +102,7 @@ class ncFiles {
 		bool strict_schema, lax_schema, debug, isLatLon;
 		std::string nc_filename;
 		int ncid;
-		bool keep_input_files_open, keep_output_files_open;
+		bool keep_input_files_open, keep_output_files_open, allow_missing_coords;
 };
 
 /**

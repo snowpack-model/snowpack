@@ -73,7 +73,6 @@ fi
 
 A3D_CMD="${TOOL} ${EXE} \
 --iofile=./io.ini \
---enable-eb  \
 --np-ebalance=${N_EB} \
 --np-snowpack=${N_SN} \
 --startdate=${BEGIN} --enddate=${END}"

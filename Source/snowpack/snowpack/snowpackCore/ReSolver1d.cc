@@ -824,6 +824,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	double snowsoilinterfaceflux=0.;		//Stores the actual flux through the soil-snow interface (positive is flow into soil).
 	double totalsourcetermflux=0.;			//Stores the total applied source term flux (it's a kind of boundary flux, but then in the middle of the domain).
 
+	std::vector<double> soil_lysimeters(Xdata.SoilNode+1, 0.);
+
 	//Declare all numerical arrays and matrices:
 	std::vector< std::vector<double> > delta_h(nmemstates, std::vector<double> (nE,0.));	//Change in pressure head per iteration
 	std::vector<double> delta_h_dt(nE, 0.);		//Change in pressure head per time step.
@@ -1050,6 +1052,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	// Initialize upper boundary for evaporation
 	surfacefluxrate += (ql/Constants::lh_vaporization)/Constants::density_water;
 	Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += ql*sn_dt/Constants::lh_vaporization;
+	if(Xdata.swe < Constants::eps2) {
+		Sdata.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX] += ql*sn_dt/Constants::lh_vaporization;
+	}
 	ql = 0.; //We dealt with ql, so set it to 0, only to be possibly modified at the end of the function.
 
 	//Important: We have to be aware that the previous time step may be too large for the infiltration flux in the current time step. Then, too much of the infiltration flux may be rejected.
@@ -2281,6 +2286,12 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			if(WriteDebugOutput) printf("MASSBALANCE: mass1 %.8f    mass2 %.8f    delta %.8f\n", mass1, mass2, massbalanceerror);
 
 
+			if(Xdata.SoilNode > 0) {
+				for(size_t node_i=1; node_i < Xdata.SoilNode; node_i++) {
+					soil_lysimeters[node_i] += (1./rho[node_i])*((((h_n[node_i]*rho[node_i]-h_n[node_i-1]*rho[node_i-1])/dz_up[node_i-1])+Xdata.cos_sl*rho[node_i])*k_np1_m_ip12[node_i-1]*dt);
+				}
+			}
+
 			//Determine flux at soil snow interface (note: postive=flux upward, negative=flux downward):
 			if (Xdata.SoilNode<nE) {	//We have snow layers
 				if(uppernode+1==Xdata.SoilNode) {	//We run RE-solver only for soil layers AND have snow layers in the model (meaning TopFluxRate is coming from snow)
@@ -2609,6 +2620,17 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	// Update snow pack runoff (mass[MS_SNOWPACK_RUNOFF] = kg/m^2 (almost equal to mm/m^2), surfacefluxrate=m^3/m^2/s and snowsoilinterfaceflux = m^3/m^2):
 	// NOTE: snowsoilinterfaceflux will only be non-zero IF there is a snowpack AND we solve the richards equation also for snow! Else, snowpack runoff is calculated in the original WaterTransport functions.
 	Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] += snowsoilinterfaceflux*Constants::density_water;
+	Sdata.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX] += snowsoilinterfaceflux*Constants::density_water;
+
+	// Deal with the virtual lysimeters
+	Xdata.Ndata[0].soil_lysimeter += actualbottomflux*Constants::density_water;
+	if(Xdata.SoilNode > 0) {
+		// See comment above, to be sure we take all contibutions, we take MS_SURFACE_MASS_FLUX
+		Xdata.Ndata[Xdata.SoilNode].soil_lysimeter = Sdata.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX];
+		for(size_t node_i=1; node_i < Xdata.SoilNode; node_i++) {
+			Xdata.Ndata[node_i].soil_lysimeter += soil_lysimeters[node_i]*Constants::density_water;
+		}
+	}
 
 	//Deal with the situation that evaporation flux was limited in case of snow. Then, sublimate ice matrix.
 	if (refusedtopflux<0. && uppernode+1>=Xdata.SoilNode) {
@@ -2618,6 +2640,9 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 		refusedtopflux = 0.;
 		//First, we fully intepreted ql as evaporation. Now, remaining energy (ql) should not be counted as evaporation
 		Sdata.mass[SurfaceFluxes::MS_EVAPORATION] -= ql*sn_dt/Constants::lh_vaporization;
+		if(Xdata.swe < Constants::eps2) {
+			Sdata.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX] -= ql*sn_dt/Constants::lh_vaporization;
+		}
 		if(uppernode+1==Xdata.SoilNode) {
 			//The energy is substracted from the top element
 			//const double tmp_delta_Te = ql / (EMS[Xdata.SoilNode-1].c[TEMPERATURE] * EMS[Xdata.SoilNode-1].Rho);
@@ -2629,6 +2654,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	//If we could not handle all incoming water at top boundary AND we have snow AND we solve RE for snow:
 	if(refusedtopflux>0. && uppernode+1>Xdata.SoilNode) {
 		Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF] += refusedtopflux*Constants::density_water;
+		Sdata.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX] += refusedtopflux*Constants::density_water;
 	}
 
 	//If we could not handle all snowpack runoff when not modelling snow with RE, add water layer

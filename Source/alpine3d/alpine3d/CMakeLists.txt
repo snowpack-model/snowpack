@@ -1,7 +1,6 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 INCLUDE("${PROJECT_SOURCE_DIR}/alpine3d/ebalance/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/alpine3d/runoff/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/alpine3d/snowdrift/CMakeLists.txt")
 
 FIND_PACKAGE(MeteoIO)
@@ -17,7 +16,6 @@ ENDIF(MPI)
 
 SET(a3d_sources
 	${ebalance_sources}
-	${runoff_sources}
 	${snowdrift_sources}
 	SnowpackInterfaceWorker.cc
 	SnowpackInterface.cc

@@ -86,6 +86,7 @@ class CsvParameters {
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
+		std::vector<double> field_offset, field_multiplier;		///< offsets and multipliers to apply to each field
 		std::map<size_t, bool> skip_fields;		///< Fields that should not be read
 		
 		std::string header_repeat_mk, filter_ID;
@@ -101,7 +102,7 @@ class CsvParameters {
 		void parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames);
 		static std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec);
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon, double &easting, double &northing);
-		static Date createDate(const float args[6], const double i_tz);
+		Date createDate(const float args[6], const double i_tz) const;
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, int& value);
 		static bool parseDateComponent(const std::vector<std::string>& vecFields, const size_t& idx, double& value);
 		Date parseJdnDate(const std::vector<std::string>& vecFields);
@@ -125,6 +126,7 @@ class CsvParameters {
 		bool dt_as_components; 	///< is date/time provided as components each in its own column (ie an hour column, a day column, etc)?
 		bool dt_as_year_and_jdn;	///< is date provided as year + julian day?
 		bool dt_as_decimal;	///< is date provided as a single decimal number?
+		bool dt_2digits_year;	///< is the year only provided with 2 digits?
 };
 
 /**

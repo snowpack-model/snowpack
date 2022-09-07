@@ -63,7 +63,8 @@ namespace mio {
  *  - ACDD_LICENSE: describes the license applicable to the dataset;
  *  - ACDD_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0);
  *  - ACDD_ACTIVITY_TYPE: Activity types are used to identify the origin of the dataset. Pick one from this <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type">controlled vocabulary</a>;
- *  - ACDD_OPERATIONAL_STATUS: The current operational status of the product. Choose from the <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status">controlled vocabulary</a>.
+ *  - ACDD_OPERATIONAL_STATUS: The current operational status of the product. Choose from the <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status">controlled vocabulary</a>;
+ *  - WIGOS_ID: although this is not an ACDD key, it can be very useful in linking datasets together through their <a href="https://oscar.wmo.int/surface/#/">WIGOS ID</a>.
  * 
  * This list contains all mandatory ACDD fields as listed at the <a href="https://adc.met.no/node/4">Arctic Data Centre</a> as well as most of the 
  * optional fields (please note that the geospatial and time coverage are automatically generated based on the data itself and the history is 

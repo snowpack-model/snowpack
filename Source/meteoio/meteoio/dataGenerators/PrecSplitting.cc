@@ -24,7 +24,7 @@ namespace mio {
 
 void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	bool has_model=false, has_snow=false, has_rain=false;
+	bool has_snow=false, has_rain=false;
 	double snow_T_thresh=273.15, rain_T_thresh=273.15; //to silence a warning
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -33,10 +33,10 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 
 			if (user_algo=="THRESH") model = THRESH;
 			else if (user_algo=="RANGE") model = RANGE;
+			else if (user_algo=="NONE") model = NONE;
 			else
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where+" generator", AT);
 
-			has_model = true;
 		} else if(vecArgs[ii].first=="SNOW") {
 			IOUtils::parseArg(vecArgs[ii], where, snow_T_thresh);
 			has_snow = true;
@@ -47,7 +47,6 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 			throw InvalidArgumentException("Unknown argument \""+vecArgs[ii].first+"\" supplied for "+where+" generator", AT);
 	}
 
-	if (!has_model) throw InvalidArgumentException("Please provide a MODEL for "+where, AT);
 	if (model == THRESH) {
 		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for "+where, AT);
 		fixed_thresh = snow_T_thresh;
@@ -257,6 +256,7 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 //generate PSUM_PH from PSUM and TA
 bool PrecSplitting::runModel(double &value, MeteoData& md) const
 {
+	if (model==NONE) return false;
 	const double TA=md(MeteoData::TA);
 	if (TA==IOUtils::nodata) return false;
 	

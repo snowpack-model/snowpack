@@ -17,7 +17,7 @@ export SIMULATION_ROOT="${PROG_ROOTDIR}/doc/examples/Stillberg/input"	#where to 
 
 #now run the simulation
 date
-${PROG_ROOTDIR}/bin/alpine3d --iofile=./io.ini --enable-eb --np-ebalance=2 --np-snowpack=2 --startdate=${BEGIN} --enddate=${END}
+${PROG_ROOTDIR}/bin/alpine3d --iofile=./io.ini --np-ebalance=2 --np-snowpack=2 --startdate=${BEGIN} --enddate=${END}
 ret=$?
 date
 if [ "$ret" -eq "0" ]; then

@@ -34,3 +34,9 @@ CPackSourceConfig.cmake
 *.tar.gz
 *.exe
 *.dmg
+*.DS_Store*
+
+#examples generated files
+doc/examples/Stillberg/output/grids/*
+doc/examples/Stillberg/output/9*
+doc/examples/Stillberg/output/io.ini

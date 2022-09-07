@@ -283,10 +283,6 @@ void Interpol1D::equalCountBin(const unsigned int k, std::vector<double> &X, std
 	Y = Y_bin;
 }
 
-inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
-	return l.first < r.first;
-}
-
 /**
  * @brief This function sorts the X and Y vectors by increasing X.
  * The nodata values (both in X and Y) are removed, meaning that the vector length might not
@@ -312,7 +308,11 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
 		new_vec.push_back( tmp );
 	}
 
-	std::sort( new_vec.begin(), new_vec.end(), pair_comparator );
+	std::sort( new_vec.begin(), new_vec.end(), 
+		[](const std::pair<double, double>& l, const std::pair<double, double>& r) {
+			return l.first < r.first;
+		}
+	);
 
 	const size_t newSize = new_vec.size();
 	X.resize( newSize );

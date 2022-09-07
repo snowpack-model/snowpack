@@ -33,20 +33,15 @@ DataGenerator::DataGenerator(const Config& cfg)
 	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 	
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
-
-	std::set<std::string>::const_iterator it;
-	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
-		const std::string parname( *it );
+	for (const std::string& parname : set_of_used_parameters) {
 		mapAlgorithms[parname] = buildStack(cfg, parname); //a stack of all generators for this parameter
 	}
 }
 
 DataGenerator::~DataGenerator()
 { //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::iterator it;
-
-	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		std::vector<GeneratorAlgorithm*> &vec( it->second );
+	for (auto& it : mapAlgorithms) {
+		std::vector<GeneratorAlgorithm*> &vec( it.second );
 		for (size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
 	}
@@ -72,13 +67,12 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 {
 	if (mapAlgorithms.empty()) return; //no generators defined by the end user
 
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
+	for (auto const& it : mapAlgorithms) {
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it.second );
 
 		for (size_t station=0; station<vecMeteo.size(); ++station) { //process this parameter on all stations
-			const size_t param = vecMeteo[station].getParameterIndex(it->first);
-			if (param==IOUtils::npos) continue;
+			size_t param = vecMeteo[station].getParameterIndex( it.first );
+			if (param==IOUtils::npos) param = vecMeteo[station].addParameter( it.first );
 
 			const std::string statID( vecMeteo[station].meta.getStationID() );
 			//these are only required by data_qa_logs
@@ -94,7 +88,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 					if (vecMeteo[station](param) != old_val) {
 						vecMeteo[station].setGenerated(param);
 						if (data_qa_logs) {
-							const std::string parname( it->first );
+							const std::string parname( it.first );
 							const std::string algo_name( vecGenerators[jj]->getAlgo() );
 							const Date date( vecMeteo[station].date );
 							cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << date.toString(Date::ISO_TZ) << " [" << date.toString(Date::ISO_WEEK) << "]\n";
@@ -118,15 +112,14 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 {
 	if (mapAlgorithms.empty()) return; //no generators defined by the end user
 
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
+	for (auto const& it : mapAlgorithms) {
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it.second );
 
 		for (size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
 			if (vecVecMeteo[station].empty()) continue; //the station does not have any data
 			
-			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
-			if (param==IOUtils::npos) continue;
+			size_t param = vecVecMeteo[station][0].getParameterIndex( it.first );
+			if (param==IOUtils::npos) param = vecVecMeteo[station][0].addParameter( it.first );
 
 			const std::string statID( vecVecMeteo[station][0].meta.getStationID() );
 			//these are only required by data_qa_logs
@@ -149,7 +142,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 						if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
 							vecVecMeteo[station][kk].setGenerated(param);
 							if (data_qa_logs) {
-								const std::string parname( it->first );
+								const std::string parname( it.first );
 								const std::string algo_name( vecGenerators[jj]->getAlgo() );
 								cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
 							}
