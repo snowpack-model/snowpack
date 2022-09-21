@@ -186,8 +186,8 @@ inline void Usage(const std::string& programname)
 		<< "\t[-v, --version] Print the version number\n"
 		<< "\t[-h, --help] Print help message and version information\n\n";
 
-	std::cout << "If the key DATA_QA_LOGS in the [General] section is set to true, you can provide a list of\n";
-	std::cout << "meteo parameters to check for valid values in the CHECK_MISSING key of the [Input] section.\n";
+	std::cout << "If the key DATA_QA_LOGS in the [General] section is set to true, you can also provide a list of\n";
+	std::cout << "meteo parameters to check for valid values in the QA_CHECK_MISSING key of the [General] section.\n";
 	std::cout << "You can define the output sampling rate in the SAMPLING_RATE_MIN key of the [Output] section\n";
 	std::cout << "but the command line parameter has priority.\n";
 	std::cout << "Example use:\n\t" << programname << " -c io.ini -b 1996-06-17T00:00 -e NOW\n\n";
@@ -342,7 +342,7 @@ static void validMeteoData(const std::vector<std::string>& enforce_variables, co
 
 	for (size_t ii=0; ii<enforce_variables.size(); ii++) {
 		if (md(enforce_variables[ii]) == mio::IOUtils::nodata)
-			std::cout <<msg_head << enforce_variables[ii] << " " << md.date.toString(mio::Date::ISO) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
+			std::cout << msg_head << enforce_variables[ii] << " " << md.date.toString(mio::Date::ISO) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
 	}
 }
 
@@ -357,7 +357,7 @@ static void real_main(int argc, char* argv[])
 	
 	IOManager io(cfg);
 	const bool data_qa = cfg.get("DATA_QA_LOGS", "General", false);
-	if (data_qa) cfg.getValue("Check_Missing", "Input", enforce_variables);
+	if (data_qa) cfg.getValue("QA_CHECK_MISSING", "General", enforce_variables, IOUtils::nothrow);
 	
 	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
 	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";

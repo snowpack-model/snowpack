@@ -214,13 +214,16 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 
 std::vector< std::pair<std::string, std::string> > Config::getValues(std::string keymatch, std::string section, const bool& anywhere) const
 {
-	static const std::regex index_regex("(?:[^0-9]+)([0-9]{1,9})"); //limit the number of digits so it fits within an "int" for the call to atoi()
+	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})"); //limit the number of digits so it fits within an "int" for the call to atoi()
 	std::smatch index_matches;
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keymatch);
 	
 	std::vector< std::pair<std::string, std::string> > vecResult;
-	std::map<int, std::pair<std::string, std::string> > keyMap;
+	//stores (index, key_root) as map index and (key, value) as map value
+	//although the key could be rebuilt from (index, key_root), storing it makes conversion 
+	//to the vector of pair to be returned easier and robust
+	std::map< std::pair<int, std::string>, std::pair<std::string, std::string> > keyMap;
 	bool indexed_keys = true;
 
 	//Loop through keys, look for match - push it into vecResult
@@ -236,17 +239,21 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 					//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
 					if (indexed_keys) {
 						if (std::regex_match(key, index_matches, index_regex)) { //retrieve the key index
-							const int index = atoi( index_matches.str(1).c_str() ); //we take the first capture group, guaranteed to fit in an int
-							keyMap[ index ] = make_pair(key, prop.second);
+							const std::string key_root( index_matches.str(1) );
+							const int index = atoi( index_matches.str(2).c_str() ); //we take the first capture group, guaranteed to fit in an int
+							keyMap[ make_pair(index, key_root) ] = make_pair(key, prop.second);
 						} else {
 							indexed_keys = false;
-							//the keys are not indexed, move the processed keys into the results vector
-							for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
-							keyMap.clear();
-							vecResult.push_back( make_pair(key, prop.second) ); //push the current, unprocessed key
 						}
-					} else { //keys are not indexed, store them directly in the results vector
-						vecResult.push_back( make_pair(key, prop.second) );
+					}
+					
+					//keys are not indexed, store them directly in the results vector
+					//if indexed_keys just got toggled above, we recover already processed keys
+					if (!indexed_keys) {
+						//the keys are not indexed, move the processed keys into the results vector
+						for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+						keyMap.clear();
+						vecResult.push_back( make_pair(key, prop.second) ); //push the current, unprocessed key
 					}
 				}
 			}
@@ -262,17 +269,21 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 				//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
 				if (indexed_keys) {
 					if (std::regex_match(key, index_matches, index_regex)) { //retrieve the key index
-						const int index = atoi( index_matches.str(1).c_str() ); //we take the first capture group, guaranteed to fit in an int
-						keyMap[ index ] = make_pair(key, prop.second);
+						const std::string key_root( index_matches.str(1) );
+						const int index = atoi( index_matches.str(2).c_str() ); //we take the first capture group, guaranteed to fit in an int
+						keyMap[ make_pair(index, key_root) ] = make_pair(key, prop.second);
 					} else {
 						indexed_keys = false;
-						//the keys are not indexed, moved the processed keys into the results vector
-						for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
-						keyMap.clear();
-						vecResult.push_back( make_pair(key, prop.second) ); //push the current, unprocessed key
 					}
-				} else { //keys are nto indexed, store them directly in the results vector
-					vecResult.push_back( make_pair(key, prop.second) );
+				}
+				
+				//keys are not indexed, store them directly in the results vector
+				//if indexed_keys just got toggled above, we recover already processed keys
+				if (!indexed_keys) {
+					//the keys are not indexed, move the processed keys into the results vector
+					for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+					keyMap.clear();
+					vecResult.push_back( make_pair(key, prop.second) ); //push the current, unprocessed key
 				}
 			}
 		}

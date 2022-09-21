@@ -56,7 +56,7 @@ void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& /*direct*/,
 	#pragma omp parallel for collapse(2)
 	for (size_t jj=0; jj<dimy; jj++) {
 		for (size_t ii=startx; ii<endx; ii++) {
-			if (sky_vf(ii,jj) == IOUtils::nodata) {
+			if (sky_vf(ii,jj) == IOUtils::nodata || getAlbedo(ii,jj) == IOUtils::nodata) {
 				terrain(ii,jj) = IOUtils::nodata;
 				diff_corr(ii,jj) = IOUtils::nodata;
 			} else {

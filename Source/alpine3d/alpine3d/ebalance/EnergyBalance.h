@@ -78,8 +78,10 @@ class EnergyBalance
 		void setSnowPack(SnowpackInterface &mysnowpack );
 		void setAlbedo( const mio::Grid2DObject &in_albedo );
 
-		void setMeteo(const mio::Grid2DObject& in_ilwr,
-		              const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Date timestamp);
+		void compute(const mio::Grid2DObject& in_ilwr,
+		             const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p,
+		             const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
+		             const mio::Date timestamp);
 
 		void writeSP(const unsigned int max_steps); //write Solar Panels information
 
@@ -101,6 +103,7 @@ class EnergyBalance
 		const mio::Config& cfg;
 		size_t dimx, dimy;
 		unsigned int nbworkers;
+		bool dataFromGrids;
 };
 
 #endif

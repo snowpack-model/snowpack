@@ -849,7 +849,7 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 	static const std::string src_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
 	const std::string dest_param("EPSG:"+coordparam);
 
-	PJ_CONTEXT* pj_context = PJ_DEFAULT_CTX;
+	PJ_CONTEXT* pj_context = proj_context_create();
 	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
 
 	if (pj_trans == NULL) {
@@ -917,7 +917,7 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 	const std::string src_param("EPSG:"+coordparam);
 	static const std::string dest_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
 
-	PJ_CONTEXT* pj_context = PJ_DEFAULT_CTX;
+	PJ_CONTEXT* pj_context = proj_context_create();
 	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
 
 	if (pj_trans == NULL) {

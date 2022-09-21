@@ -47,10 +47,10 @@ const double SnowDriftA3D::z0 = 0.01; //Wind Field Z0 - includes larger surface 
 const bool SnowDriftA3D::thresh_snow = true;//Flag to determine whether ustar_thresh is calculated from the Snowpack properties
 
 
-SnowDriftA3D::SnowDriftA3D(const DEMObject& dem, const mio::Config& cfg) 
-                        : saltation_obj(cfg), auxLayerHeight(0.02), io(cfg), snowpack(NULL), eb(NULL), 
+SnowDriftA3D::SnowDriftA3D(const DEMObject& dem, const mio::Config& cfg)
+                        : saltation_obj(cfg), auxLayerHeight(0.02), io(cfg), snowpack(NULL),
                         cH(dem, IOUtils::nodata), sp(dem, IOUtils::nodata), rg(dem, IOUtils::nodata), N3(dem, IOUtils::nodata), rb(dem, IOUtils::nodata),
-                        nx(0), ny(0), nz(0), vw(dem, IOUtils::nodata), rh(dem, IOUtils::nodata), ta(dem, IOUtils::nodata), p(dem, IOUtils::nodata), 
+                        nx(0), ny(0), nz(0), vw(dem, IOUtils::nodata), rh(dem, IOUtils::nodata), ta(dem, IOUtils::nodata), p(dem, IOUtils::nodata),
                         psum(dem, IOUtils::nodata), psum_ph(dem, IOUtils::nodata), STATIONARY(true)
 {
 	const string wind_field_string = cfg.get("WINDFIELDS", "Input");
@@ -62,7 +62,7 @@ SnowDriftA3D::SnowDriftA3D(const DEMObject& dem, const mio::Config& cfg)
 	for (size_t ii=0; ii<TA_interpol.size(); ii++) {
 		const string current = TA_interpol[ii];
 		if (current!="CST" && current!="AVG" && current!="AVG_LAPSE") {
-			if (MPIControl::instance().master()) 
+			if (MPIControl::instance().master())
 				cout << "[W] for Snowdrift with sublimation, it is recommended to use CST or AVG or AVG_LAPSE as 2D interpolations for TA\n";
 			break;
 		}
@@ -106,7 +106,7 @@ bool SnowDriftA3D::isNewWindField(const unsigned int current_step)
 	const unsigned int next_index = wind_field_index+1;
 
 	if (wind_field_index==-1) return true;
-	
+
 	if ((next_index<wind_fields.size()) && (current_step >= wind_fields[next_index].start_step)) {
 		return true;
 	} else {
@@ -123,7 +123,7 @@ void SnowDriftA3D::Initialize()
 	Grid3DObject z_readMatr;
 	io.read3DGrid(z_readMatr, wind_fields[0].wind+":DEM");
 	z_readMatr.llcorner = ta.llcorner; //most probably the user did not properly specify the ARPS_XCOORDS and ARPS_YCOORDS
-	
+
 	nx = z_readMatr.getNx();
 	ny = z_readMatr.getNy();
 	nz = z_readMatr.getNz();
@@ -133,7 +133,7 @@ void SnowDriftA3D::Initialize()
 	the snow height and new snow mass per bottom element */
 	saltation.resize(nx,ny, 0.);
 	c_salt.resize(nx,ny);
-	
+
 	mns.set(nx, ny, ta.cellsize, ta.llcorner, 0.);
 	mns_subl.resize(nx,ny);
 	mns_nosubl.resize(nx,ny);
@@ -252,7 +252,7 @@ void SnowDriftA3D::InitializeNodes(const mio::Grid3DObject& z_readMatr)
 		nodes_q_ini.set(z_readMatr, 0.);
 		nodes_Subl_ini.set(z_readMatr, 0.);
 	}
-	
+
 	for (unsigned int kk=0; kk<nz; kk++){
 		for (unsigned int jj=0;jj<ny;jj++){
 			for (unsigned int ii=0;ii<nx;ii++){
@@ -392,7 +392,7 @@ void SnowDriftA3D::SnowMassChange(bool setbound, const mio::Date& calcDate)
 	//LH_DEBUG BEGIN
 	static int timestepp=0;
 	timestepp++;
-	
+
 	//loop over all interior nodes, boundary nodes are set to zero
 	//subsequently
 	for (unsigned int iy = 1; iy < ny-1; iy++) {
@@ -400,7 +400,7 @@ void SnowDriftA3D::SnowMassChange(bool setbound, const mio::Date& calcDate)
 			dif_mns_subl(ix,iy)=0.; //reset
 			if (!SALTATION) {
 				mns(ix,iy) = 0.;
-				continue; //saltation is not computed, only initiliazing 
+				continue; //saltation is not computed, only initiliazing
 			}
 
 			// second ARPS layer is topography
@@ -472,7 +472,7 @@ void SnowDriftA3D::SnowMassChange(bool setbound, const mio::Date& calcDate)
 			//now the edge loop in order to calculate the contribution
 			//of each edge to the final salt_flux of the element
 			double salt_flux_frac[4];
-			
+
 			double fac1[4];
 			for (size_t i = 0; i < 4; i++) {
 				//4ptdiv
@@ -655,7 +655,7 @@ void SnowDriftA3D::SnowMassChange(bool setbound, const mio::Date& calcDate)
 void SnowDriftA3D::Compute(const Date& calcDate)
 {
 	timer.restart();
-	
+
 	const double max_hs = cH.grid2D.getMax();
 	const double max_psum = psum.grid2D.getMax();
 	const double min_psum_ph = psum_ph.grid2D.getMin();
@@ -711,11 +711,6 @@ void SnowDriftA3D::setSnowPack(SnowpackInterface &mysnowpack)
 	snowpack=&mysnowpack;
 }
 
-void SnowDriftA3D::setEnergyBalance(EnergyBalance &myeb)
-{
-	eb=&myeb;
-}
-
 void SnowDriftA3D::setSnowSurfaceData(const mio::Grid2DObject& cH_in, const mio::Grid2DObject& sp_in, const mio::Grid2DObject& rg_in,
                                       const mio::Grid2DObject& N3_in, const mio::Grid2DObject& rb_in)
 {
@@ -728,9 +723,9 @@ void SnowDriftA3D::setSnowSurfaceData(const mio::Grid2DObject& cH_in, const mio:
 
 void SnowDriftA3D::debugOutputs(const Date& calcDate, const std::string& outpath, const DRIFT_OUTPUT& output_type)
 {
-	const std::string ext = (output_type==OUT_CONC)? ".ctn" : ".sub"; 
+	const std::string ext = (output_type==OUT_CONC)? ".ctn" : ".sub";
 	const std::string fname( outpath + calcDate.toString(Date::NUM) + ext );
-	
+
 	writeOutput(fname); //write output file of snowdrift
 }
 
@@ -750,27 +745,27 @@ void SnowDriftA3D::writeOutput(const std::string& fname)
 	fprintf(logfile, "#1:j 2:ix 3:iy 4:iz \t 5:z 6:c");
 	if (SUBLIMATION_OUTPUT) fprintf(logfile, " \t 7:sublimation 8:RH 9:q 10:Ta");
 	fprintf(logfile, " \t 11:u 12:v 13:w \n");
-	
+
 	for (unsigned int iy=0; iy<ny; iy++) {
 		for (unsigned int ix=0; ix<nx; ix++) {
-		    //compute int dz c
-		    double intc=0;
-		    for (unsigned int iz=0; iz<nz-1; iz++) {
-			const int j = iz*nx*ny + iy*nx + ix;
-			    intc += c[j]*(nodes_z.grid3D(ix,iy,iz+1)-nodes_z.grid3D(ix,iy,iz));
-		    }
-		    intc /= (nodes_z.grid3D(ix,iy,nz-1)-nodes_z.grid3D(ix,iy,0));
-		    
-		    for (unsigned int iz=0; iz<nz; iz++) {
-			const int j = iz*nx*ny + iy*nx + ix;
-			fprintf(logfile, "%d %d %d %d \t %f %f", j, ix, iy, iz, nodes_z.grid3D(ix,iy,iz), c[j]*1000);
-			
-			if (SUBLIMATION_OUTPUT)
-			fprintf(logfile, " \t %f %f %f %f",
+			//compute int dz c
+			double intc=0;
+			for (unsigned int iz=0; iz<nz-1; iz++) {
+				const int j = iz*nx*ny + iy*nx + ix;
+				intc += c[j]*(nodes_z.grid3D(ix,iy,iz+1)-nodes_z.grid3D(ix,iy,iz));
+			}
+			intc /= (nodes_z.grid3D(ix,iy,nz-1)-nodes_z.grid3D(ix,iy,0));
+
+			for (unsigned int iz=0; iz<nz; iz++) {
+				const int j = iz*nx*ny + iy*nx + ix;
+				fprintf(logfile, "%d %d %d %d \t %f %f", j, ix, iy, iz, nodes_z.grid3D(ix,iy,iz), c[j]*1000);
+
+				if (SUBLIMATION_OUTPUT)
+					fprintf(logfile, " \t %f %f %f %f",
 				nodes_Subl.grid3D(ix,iy,iz)*1000, nodes_RH.grid3D(ix,iy,iz), nodes_q.grid3D(ix,iy,iz)*1000, nodes_Tair.grid3D(ix,iy,iz));
-			
-			fprintf(logfile, " \t %f %f %f\n", nodes_u.grid3D(ix,iy,iz), nodes_v.grid3D(ix,iy,iz), nodes_w.grid3D(ix,iy,iz));
-		    }
+
+				fprintf(logfile, " \t %f %f %f\n", nodes_u.grid3D(ix,iy,iz), nodes_v.grid3D(ix,iy,iz), nodes_w.grid3D(ix,iy,iz));
+			}
 		}
 	}
 	fclose (logfile);
@@ -779,13 +774,15 @@ void SnowDriftA3D::writeOutput(const std::string& fname)
 /**
 * @brief Sets the required meteo fields
 */
-void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph, const Grid2DObject& new_p, const Grid2DObject& /*new_vw*/,
-                          const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_tsg, const Grid2DObject& new_ilwr, const mio::Date& calcDate,
-                          const std::vector<mio::MeteoData>& vecMeteo)
+void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_psum,
+                             const mio::Grid2DObject& new_psum_ph, const Grid2DObject& new_p,
+                             Grid2DObject& new_vw, Grid2DObject& dw,
+                             const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_tsg,
+                             const mio::Date& calcDate, const std::vector<mio::MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty())
 		throw mio::NoDataException("No meteo data!", AT);
-	
+
 	// find the first (often the only one) MeteoData having iswr, ta and ilwr
 	// it should exist, otherwise the checkInputsRequirements method would have failed.
 	bool found = false;
@@ -799,7 +796,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 	}
 	if (!found)
 		throw mio::NoDataException("No TA station could be found at "+vecMeteo[0].date.toString(mio::Date::ISO), AT);
-	
+
 	//Common meteo fields
 	psum = new_psum;
 	psum_ph = new_psum_ph;
@@ -819,21 +816,17 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
 		cout <<"[i] Snowdrift: ARPS wind field successfully read"<<endl;
 	}
 
-	mio::Grid2DObject dw(vw, IOUtils::nodata);	// dw field with vw as template for dimensions
-	//adjust the meteo fields that depend on the 3D wind field
+	// adjust the meteo fields that depend on the 3D wind field
+	// vw and new_dw gwt updated on AlpineMain
 	for (size_t jj=0; jj<ny; jj++) {
 		for (size_t ii=0; ii<nx; ii++) {
 			vw.grid2D(ii,jj) = Optim::fastSqrt_Q3( Optim::pow2(nodes_u.grid3D(ii,jj,2)) + Optim::pow2(nodes_v.grid3D(ii,jj,2)) ); //Third layer is first layer in the air
 			dw.grid2D(ii,jj) = (atan2(nodes_u.grid3D(ii,jj,2), nodes_v.grid3D(ii,jj,2))) * mio::Cst::to_deg;
 		}
 	}
-	
+	new_vw = vw;
 	CompleteNodes();
 	if (SUBLIMATION) initializeTRH();
-	
-	//TODO: feedback mecanism: make it more general!
-	if (snowpack!=NULL) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
-	if (eb!=NULL) eb->setMeteo(new_ilwr, ta, rh, p, calcDate);
 }
 
 /**

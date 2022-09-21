@@ -410,7 +410,7 @@ class NodeData {
 #ifndef SNOWPACK_CORE
                              , dsm(0.), S_dsm(0.), Sigdsm(0.), rime(0.)
 #endif
-                             {} //HACK: set ssi to max_stability!
+                             , soil_lysimeter(0.) {} //HACK: set ssi to max_stability!
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const NodeData& data);
@@ -435,6 +435,8 @@ class NodeData {
 		double Sigdsm;
 		double rime;
 #endif
+
+		double soil_lysimeter; ///< Water flowing through the node
 };
 
 /**
@@ -652,6 +654,8 @@ class SnowStation {
 
 		size_t find_tag(const size_t& tag) const;
 
+		void reset_lysimeters();
+
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const SnowStation& data);
 		friend std::istream& operator>>(std::istream& is, SnowStation& data);
@@ -674,6 +678,8 @@ class SnowStation {
 		double mass_sum;            ///< Total mass summing mass of snow elements
 		double swe;                 ///< Total mass summing snow water equivalent of elements
 		double lwc_sum;             ///< Total liquid water in snowpack
+		double lwc_sum_soil;        ///< Total liquid water in soil
+		double swc_sum_soil;        ///< Total solid water in soil
 		double hn;                  ///< Depth of new snow to be used on slopes
 		double rho_hn;              ///< Density of new snow to be used on slopes
 #ifndef SNOWPACK_CORE
@@ -764,12 +770,15 @@ class SurfaceFluxes {
 			MS_TOTALMASS,      ///< This of course is the total mass of the snowpack at the present time
 			MS_SWE,            ///< This too, of course, but summing rho*L
 			MS_WATER,          ///< The total amount of water in the snowpack at the present time
+			MS_WATER_SOIL,     ///< The total amount of water in the soil at the present time
+			MS_ICE_SOIL,       ///< The total amount of ice in the soil at the present time
 			MS_HNW,            ///< Solid precipitation rate
 			MS_RAIN,           ///< Rain rate
 			MS_WIND,           ///< Mass loss rate due to wind erosion
 			MS_EVAPORATION,    ///< The mass loss or gain of the top element due to water evaporating
 			MS_SUBLIMATION,    ///< The mass loss or gain of the top element due to snow (ice) sublimating
-			MS_SNOWPACK_RUNOFF,///< The total mass loss of snowpack due to water transport (virtual lysimeter)
+			MS_SNOWPACK_RUNOFF,///< The mass loss of snowpack from snow melt due to water transport (virtual lysimeter)
+			MS_SURFACE_MASS_FLUX, ///< The total mass loss of snowpack due to water transport (virtual lysimeter)
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
 			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
 			MS_SNOW_DHS,       ///< Snow height change due to snowfall (m)

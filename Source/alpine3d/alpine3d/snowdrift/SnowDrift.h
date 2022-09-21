@@ -85,20 +85,20 @@ class SnowDriftA3D {
 		                                const mio::Grid2DObject& N3_in, const mio::Grid2DObject& rb_in);
 
 		void setSnowPack(SnowpackInterface &mysnowpack);
-		void setEnergyBalance(EnergyBalance &myeb);
 
 		virtual void Compute(const mio::Date& calcDate);
 		bool isNewWindField(const unsigned int current_step) /*const*/;
-		void setMeteo (const unsigned int& steps, const mio::Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph, const mio::Grid2DObject& new_p, const mio::Grid2DObject& new_vw,
-		                     const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_tsg, const mio::Grid2DObject& new_ilwr, const mio::Date& calcDate,
-		                     const std::vector<mio::MeteoData>& vecMeteo);
+		void setMeteo (const unsigned int& steps, const mio::Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph,
+                   const mio::Grid2DObject& new_p, mio::Grid2DObject& vw, mio::Grid2DObject& dw,
+                   const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_tsg,
+                   const mio::Date& calcDate, const std::vector<mio::MeteoData>& vecMeteo);
 
 		void GetTResults(double  outtime_v[15], double outtime_tau[15], double outtime_salt[15], double outtime_diff[15]);
 
 		double getTiming() const;
 
 		void Destroy();
-		
+
 		std::string getGridsRequirements() const;
 
 	protected:
@@ -200,7 +200,7 @@ class SnowDriftA3D {
 
 	protected:
 		Saltation saltation_obj;
-		
+
 		//Time dependent data output after each computation step (SnowDrift::Compute)
 		double  time_v[15], time_tau[15], time_salt[15], time_diff[15];
 		int DOITERATION;
@@ -209,7 +209,6 @@ class SnowDriftA3D {
 
 		mio::IOManager io;
 		SnowpackInterface *snowpack;
-		EnergyBalance *eb;
 		mio::Timer timer;
 
 		mio::Grid2DObject cH;
@@ -313,7 +312,7 @@ class SnowDriftA3D {
 
 		//Meteo 1D data
 		double ta_1D;
-		
+
 		mio::Date skip_date; //time step to skip because there would be no drift
 
 		//3D
@@ -323,7 +322,6 @@ class SnowDriftA3D {
 		mio::Grid3DObject nodes_Tair,nodes_Tair_ini, nodes_q, nodes_q_ini, nodes_RH, nodes_Subl, nodes_Subl_ini, nodes_WindVel, nodes_tmp_c;
 		bool STATIONARY;
 
-	protected:
 		void buildWindFieldsTable(const std::string& wind_field_string);
 		std::vector<struct WIND_FIELD> wind_fields;
 		int wind_field_index;
@@ -342,8 +340,3 @@ class SnowDriftA3D {
 #pragma GCC diagnostic pop
 
 #endif
-
-
-
-
-

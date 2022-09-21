@@ -80,7 +80,8 @@ namespace mio {
  *     - NETCDF_SCHEMA: the schema to use (either CF-1.6, CROCUS, AMUNDSEN,  ERA-INTERIM, ERA5 or WRF); [Input] and [Output] section (default: CF-1.6)
  *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
  *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
- *     - NC_DEBUG : print some low level details about the file being read (default: false); [Input] section;
+ *     - NC_DEBUG: print some low level details about the file being read (default: false); [Input] section;
+ *     - NC_ALLOW_MISSING_COORDS: for files containing timeseries without any STATION dimension, accept files that do not contain the geolocalization of the measurements (please then use a data creator to provide the geolocalization, otherwise you can expect a mess at some point. Default: false); [Input] section;
  *     - NC_KEEP_FILES_OPEN: keep files open for efficient access (default for input: true, default for output: false). Reading from or writing to many NetCDF files may cause the
  *       plugin to exceed the maximum allowed concurrent open files determined by system limits. Also, when multiple modules write to the same output file, file corruption may occur.
  *       For those cases, NC_KEEP_FILES_OPEN = FALSE forces the plugin to open only one file at a time for reading (when in [Input] section), or writing (when in [Output] section,
@@ -326,13 +327,6 @@ namespace mio {
  * @endcode
  */
 
-//helper function to sort the cache of grid files
-inline bool sort_cache_grids(const std::pair<std::pair<Date,Date>,ncFiles> &left, const std::pair<std::pair<Date,Date>,ncFiles> &right) {
-	if (left.first.first < right.first.first) return true;
-	if (left.first.first > right.first.first) return false;
-	return left.first.second < right.first.second; //date_start equallity case
-}
-
 NetCDFIO::NetCDFIO(const std::string& configfile)
          : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
          out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
@@ -439,7 +433,13 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 			nc_files.push_back( make_pair(file.getDateRange(), file) );
 		++it;
 	}
-	std::sort(nc_files.begin(), nc_files.end(), &sort_cache_grids);
+	std::sort(nc_files.begin(), nc_files.end(), 
+		[](const std::pair<std::pair<Date,Date>,ncFiles> &left, const std::pair<std::pair<Date,Date>,ncFiles> &right) {
+			if (left.first.first < right.first.first) return true;
+			if (left.first.first > right.first.first) return false;
+			return left.first.second < right.first.second; //date_start equallity case
+		}
+	);
 }
 
 bool NetCDFIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list)
@@ -690,7 +690,7 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
                file_and_path(filename), coord_sys(), coord_param(), TZ(0.), dflt_zref(IOUtils::nodata),
                dflt_uref(IOUtils::nodata), dflt_slope(IOUtils::nodata), dflt_azi(IOUtils::nodata),
                max_unknown_param_idx(ncpp::lastdimension),
-               strict_schema(false), lax_schema(false), debug(i_debug), isLatLon(false), nc_filename(std::string()), ncid(-1), keep_input_files_open(true), keep_output_files_open(false)
+               strict_schema(false), lax_schema(false), debug(i_debug), isLatLon(false), nc_filename(std::string()), ncid(-1), keep_input_files_open(true), keep_output_files_open(false), allow_missing_coords(false)
 {
 	IOUtils::getProjectionParameters(cfg, coord_sys, coord_param);
 
@@ -701,6 +701,7 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 	cfg.getValue("DEFAULT_AZI", "Output", dflt_azi, IOUtils::nothrow);
 	cfg.getValue("NC_KEEP_FILES_OPEN", "Output", keep_output_files_open, IOUtils::nothrow);
 	cfg.getValue("NC_KEEP_FILES_OPEN", "Input", keep_input_files_open, IOUtils::nothrow);
+	cfg.getValue("NC_ALLOW_MISSING_COORDS", "INPUT", allow_missing_coords, IOUtils::nothrow);
 	schema.initFromSchema(vars, dimensions_map);
 
 	if (mode==WRITE) {
@@ -744,7 +745,7 @@ ncFiles::ncFiles(const ncFiles& c) :
 	dimensions_map(c.dimensions_map), file_and_path(c.file_and_path), coord_sys(c.coord_sys), coord_param(c.coord_param), TZ(c.TZ),
 	dflt_zref(c.dflt_zref), dflt_uref(c.dflt_uref), dflt_slope(c.dflt_slope), dflt_azi(c.dflt_azi), max_unknown_param_idx(c.max_unknown_param_idx),
 	strict_schema(c.strict_schema), lax_schema(c.lax_schema), debug(c.debug), isLatLon(c.isLatLon), nc_filename(c.nc_filename), ncid(-1),
-	keep_input_files_open(c.keep_input_files_open), keep_output_files_open(c.keep_output_files_open)
+	keep_input_files_open(c.keep_input_files_open), keep_output_files_open(c.keep_output_files_open), allow_missing_coords(c.allow_missing_coords)
 {
 	// The copy constructor ensures that the copy doesn't inherit the ncid from an opened file, to prevent trying to close the same file twice.
 }
@@ -777,6 +778,7 @@ ncFiles& ncFiles::operator=(const ncFiles& source) {
 		ncid = -1;
 		keep_input_files_open = source.keep_input_files_open;
 		keep_output_files_open = source.keep_output_files_open;
+		allow_missing_coords = source.allow_missing_coords;
 	}
 	return *this;
 }
@@ -1269,10 +1271,12 @@ std::vector<StationData> ncFiles::readStationData()
 
 	const bool hasLatLon = (hasVariable(ncpp::LONGITUDE) && hasVariable(ncpp::LATITUDE));
 	const bool hasEastNorth = (hasVariable(ncpp::EASTING) && hasVariable(ncpp::NORTHING));
-	if (!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth))
-		throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
 
 	if (hasDimension(ncpp::STATION)) { //multiple stations per file or one station but still with STATION dimension
+		//the gelocalisation must be available
+		if ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth)))
+			throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
+
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 			nc_filename = file_and_path;
@@ -1317,11 +1321,14 @@ std::vector<StationData> ncFiles::readStationData()
 		}
 
 	} else { //only one station, no station dimension
+		if (!allow_missing_coords && ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth))))
+			throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
+
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 			nc_filename = file_and_path;
 		}
-		const double alt = read_0Dvariable(MeteoGrids::DEM);
+		const double alt = (hasVariable(MeteoGrids::DEM))? read_0Dvariable(MeteoGrids::DEM) : IOUtils::nodata;
 		const double slope = (hasVariable(MeteoGrids::SLOPE))? read_0Dvariable(MeteoGrids::SLOPE) : IOUtils::nodata;
 		const double azi = (hasVariable(MeteoGrids::AZI))? read_0Dvariable(MeteoGrids::AZI) : IOUtils::nodata;
 		std::string stationID, stationName;
@@ -1335,7 +1342,7 @@ std::vector<StationData> ncFiles::readStationData()
 			const double lat = read_0Dvariable(ncpp::LATITUDE);
 			const double lon = read_0Dvariable(ncpp::LONGITUDE);
 			position.setLatLon(lat, lon, alt);
-		} else {
+		} else if (hasEastNorth) {
 			const double easting = read_0Dvariable(ncpp::EASTING);
 			const double northing = read_0Dvariable(ncpp::NORTHING);
 			position.setXY(easting, northing, alt);
@@ -2188,7 +2195,10 @@ bool ncFiles::hasDimension(const size_t& dim) const
 	if (it_dim==dimensions_map.end()) return false;
 	if (it_dim->second.dimid==-1) return false;
 
-	return hasVariable( dim );
+	const bool hasMatchingVariable = hasVariable( dim );
+	if (!hasMatchingVariable)
+		std::cerr << "[W] Could not find the variable containing the values for dimension '" << it_dim->second.name << "', it won't be usable\n";
+	return hasMatchingVariable;
 }
 
 //check that a given variable exists and has a positive varid
