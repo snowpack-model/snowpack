@@ -1328,12 +1328,11 @@ double StabilityAlgorithms::CriticalCutLength(const double& H_slab, const double
 	const double tau_p = STpar.Sig_c2;
 	const double sigma_n = - stress / 1000.; 
 	const double tau_g = sigma_n * sin_sl / cos_sl; 
-	const double E = ElementData::getYoungModule(rho_slab, ElementData::Exp);
+	const double E = ElementData::getYoungModule(rho_slab, ElementData::Pow);
 	
 	const double E_prime = E / (1. - 0.2*0.2);	// 0.2 is poisson ratio
-	static const double G_wl = 2e5;
-	const double Dwl = Edata.L;
-	const double lambda = sqrt( (E_prime * D * Dwl) / (G_wl) );
+	const double Fwl = 6.21e-7 * exp(-2.11*log(Edata.Rho)) * exp(-2.11*log(2. * Edata.rg*0.001)) * 0.01; //[m/Pa]
+	const double lambda = sqrt( E_prime * D * Fwl );
 	const double sqrt_arg = Optim::pow2(tau_g) + 2.*sigma_n*(tau_p - tau_g);
 	if (sqrt_arg<0.) return 0.;
 	

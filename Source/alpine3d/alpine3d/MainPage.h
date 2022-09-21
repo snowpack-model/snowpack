@@ -475,8 +475,8 @@
  * must be dated from before the simulation starts.
  *
  * There are two possibilities for assigning these files to each cell of the simulation domain (see \subpage reading_snow_files "reading snow files"):
- *     - by land cover classes. In this case, every cell receives an initial soil/snow profile based on its land cover class. The files must be named as {LAND_USE_CLASS}_{EXPERIMENT_NAME}.{ext};
- *     - independently for each (i,j) pixel. In this case, the files must be named as {i_index}_{j_index}_{EXPERIMENT_NAME}.{ext};
+ *     - by land cover classes. In this case, every cell receives an initial soil/snow profile based on its land cover class. The files must be named as <i>{LAND_USE_CLASS}_{EXPERIMENT_NAME}.{ext}</i>;
+ *     - independently for each (i,j) pixel. In this case, the files must be named as <i>{i_index}_{j_index}_{EXPERIMENT_NAME}.{ext}</i>;
  *
  * @note In any case, you MUST set the key "EXPERIMENT_NAME" in the [Output] section.
  *

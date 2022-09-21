@@ -417,6 +417,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	//Watertransport models
 	cfg.getValue("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", watertransportmodel_snow);
 	cfg.getValue("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", watertransportmodel_soil);
+	if (watertransportmodel_snow=="RICHARDSEQUATION" || watertransportmodel_soil=="RICHARDSEQUATION") coupled_phase_changes = true;	// to better deal with soil freezing
 
 	//Indicate if the meteo values can be considered at constant height above the snow surface (e.g., Col de Porte measurement method)
 	cfg.getValue("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", adjust_height_of_meteo_values);

@@ -33,10 +33,11 @@ namespace mio {
  * generate the missing components (for example, the precipitation phase associated with a given precipitation amout based on a splitting model).
  * 
  * The component that will be generated depends on the parameter name, so only the following parameters are supported: PSUM, PSUM_PH, PSUM_L, PSUM_S.
- * Whenever a component is missing, a splitting model is called to compute the splitting. It is therefore mandatory to configure a splitting model.
+ * Whenever a component is missing, a splitting model is called to compute the splitting. It is therefore recommended to configure a splitting model.
  * 
  * It takes the following arguments:
  *  - TYPE: the splitting method to use, any of the following:
+ *     - NONE: don't do any splitting (default). This can be usefull to overwrite an inherited generator (from an imported file)
  *     - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
  *     - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
@@ -53,7 +54,7 @@ namespace mio {
  * PSUM_PH::arg1::snow = 274.35
  * @endcode
  * 
- * To generate the liquid and solid amounts from the precipitation sum, relying on a simple temperature threshold for the splitting
+ * To generate the liquid and solid amounts from the precipitation sum and phase, relying on a simple temperature threshold for the splitting
  * (if the precipitation phase is available, it will be used instead of calling the splitting model):
  * @code
  * [InputEditing]
@@ -71,12 +72,19 @@ namespace mio {
  * *::arg2::snow      = 274.35
  * @endcode
  * 
+ * To generate the precipitation sum and phase from the liquid and solid amounts without any fallback algorithm for the splitting:
+ * @code
+ * [Generators]
+ * PSUM::generator1 = PRECSPLITTING
+ * PSUM_PH::generator1 = PRECSPLITTING
+ * @endcode
+ * 
  * @note When generating PSUM_L / PSUM_S, you most probably also need to set their resampling to "accumulate", like for PSUM...
  */
 class PrecSplitting : public GeneratorAlgorithm {
 	public:
 		PrecSplitting(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
-			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(THRESH), where( section+"::"+algo ), fixed_thresh(IOUtils::nodata),
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(NONE), where( section+"::"+algo ), fixed_thresh(IOUtils::nodata),
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
 
 		bool generate(const size_t& param, MeteoData& md);
@@ -92,7 +100,8 @@ class PrecSplitting : public GeneratorAlgorithm {
 
 		typedef enum PARAMETRIZATION {
 			THRESH,
-			RANGE
+			RANGE,
+			NONE
 		} parametrization;
 		parametrization model;
 		const std::string where;

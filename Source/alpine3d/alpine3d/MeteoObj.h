@@ -60,11 +60,14 @@ class SnGrids {
                                           RG, ///< grain radius
                                           N3, ///< grain Coordination number
                                           MS_SNOWPACK_RUNOFF, ///< runoff on the surface of the soil (vitual lysimeter)
+                                          MS_SURFACE_MASS_FLUX, ///< mass flux through the soil surface
                                           MS_SOIL_RUNOFF, ///< runoff at the bottom of the snow/soil column
                                           MS_RAIN, ///< Rainfall (kg m-2 h-1)
                                           MS_HNW, ///< Snowfall (kg m-2 h-1)
                                           MS_WIND, ///< Mass loss rate due to wind erosion (kg m-2 h-1)
                                           MS_WATER, ///< The total amount of water in the snowpack at the present time
+                                          MS_WATER_SOIL, ///< The total amount of water in the soil at the present time
+                                          MS_ICE_SOIL, ///< The total amount of ice in the soil at the present time
                                           SFC_SUBL, ///< The mass loss or gain of the top element due to snow (ice) sublimating
                                           MNS, ///< drifted mass (when snowdrift is enabled)
                                           STORE, ///< internal usage (precipitation events that are delayed because they are too small)
@@ -81,7 +84,8 @@ class SnGrids {
                                           ISWR_TERRAIN, ///< Short wave received by terrain reflection
                                           ILWR_TERRAIN, ///< Long wave received by terrain emission
                                           ISWR_BELOW_CAN,
-                                          TSOIL1, TSOIL2, TSOIL3, TSOIL4, TSOIL5, ///< Temperature within the soil, at a given depth
+                                          TSOIL1, TSOIL2, TSOIL3, TSOIL4, TSOIL_MAX, ///< Temperature within the soil, at a given depth
+                                          SOIL_RUNOFF1, SOIL_RUNOFF2, SOIL_RUNOFF3, SOIL_RUNOFF4, SOIL_RUNOFF_MAX,
                                           RHO1, RHO2, RHO3, RHO4, RHO5, ///< Snow density, in the provided uppermost part of the snow
                                           lastparam=RHO5};
 
@@ -114,8 +118,11 @@ class MeteoObj
 		         mio::Grid2DObject& vw_drift,
 		         mio::Grid2DObject& dw,
 		         mio::Grid2DObject& p,
-		         mio::Grid2DObject& ilwr);
+		         mio::Grid2DObject& ilwr,
+		         mio::Grid2DObject& iswr_dir,
+		         mio::Grid2DObject& iswr_diff);
 		void get(const mio::Date& in_date, std::vector<mio::MeteoData>& o_vecMeteo);
+		bool fillPrecSplitting();
 		void checkMeteoForcing(const mio::Date& calcDate);
 		void setGlacierMask(const mio::Grid2DObject& glacierMask);
 		void setDEM(const mio::DEMObject& in_dem);
@@ -132,13 +139,14 @@ class MeteoObj
 		const mio::Config &config;
 		mio::IOManager io;
 		mio::DEMObject dem;
-		mio::Grid2DObject ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr;
+		mio::Grid2DObject ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr, iswr_dir, iswr_diff;
 		mio::Grid2DObject sum_ta, sum_rh, sum_rh_psum, sum_psum, sum_psum_ph, sum_vw, sum_ilwr;
 		std::vector<mio::MeteoData> vecMeteo;
 		mio::Date date;
 		Glaciers *glaciers;
 		unsigned int count_sums, count_precip;
 		bool skipWind; ///<should the grids be filled or only the data vectors returned?
+		bool dataFromGrids; ///<should input data be computed from grids
 		bool soil_flux;
 		bool enable_simple_snow_drift, enable_snowdrift2d;
 };

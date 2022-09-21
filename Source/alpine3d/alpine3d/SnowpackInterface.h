@@ -25,10 +25,8 @@
 
 class SnowpackInterfaceWorker;
 class SnowDriftA3D;
-class Runoff; // forward declaration, cyclic header include
 
 #include <alpine3d/DataAssimilation.h>
-#include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/SnowDrift2D.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
@@ -146,7 +144,6 @@ class Runoff; // forward declaration, cyclic header include
 		void setSnowDrift(SnowDriftA3D& drift);
 		void setEnergyBalance(EnergyBalance& myeb);
 		void setDataAssimilation(DataAssimilation& init_da);
-		void setRunoff(Runoff& init_runoff);
 
 		// Methods to communicate with other modules
 		void setSnowDrift();
@@ -172,13 +169,13 @@ class Runoff; // forward declaration, cyclic header include
 		                            const mio::Date& timestamp);
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
+		void calcNextStep();
 
 	private:
 		static const std::vector<std::string> grids_not_computed_in_worker;
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
-		void calcNextStep();
 		void setInitGlacierHeight();
 		SN_SNOWSOIL_DATA getIcePixel(const double glacier_height, const std::stringstream& GRID_sno, const bool seaIce);
 		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
@@ -210,6 +207,7 @@ class Runoff; // forward declaration, cyclic header include
 		bool glacier_katabatic_flow, snow_production, snow_grooming;
 		// Output
 		std::vector<std::string> Tsoil_idx; //TSOIL names in order to build the "field" header of the smet output
+		std::vector<std::string> soil_runoff_idx; // Runoff depths names in order to build the "field" header of the smet output
 		double grids_start, grids_days_between; //gridded outputs
 		double ts_start, ts_days_between; //time series outputs
 		double prof_start, prof_days_between; //profiles outputs
@@ -231,6 +229,7 @@ class Runoff; // forward declaration, cyclic header include
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse, terrain_shortwave, terrain_longwave;
 		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
+		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 
 		std::vector<std::string> output_grids; //which grids should be written out
@@ -250,7 +249,6 @@ class Runoff; // forward declaration, cyclic header include
 		SnowDrift2D *snowdrift2d;
 		EnergyBalance *eb;
 		DataAssimilation *da;
-		Runoff *runoff;
 
 		Glaciers *glaciers;
 		TechSnowA3D *techSnow;

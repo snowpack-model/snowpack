@@ -50,6 +50,7 @@
 #cmakedefine PLUGIN_SASEIO
 #cmakedefine PLUGIN_SMETIO
 #cmakedefine PLUGIN_SNIO
+#cmakedefine PLUGIN_SYNTHIO
 #cmakedefine PLUGIN_ZRXPIO
 
 #include <meteoio/plugins/ALPUG.h>
@@ -64,6 +65,7 @@
 #include <meteoio/plugins/PGMIO.h>
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/plugins/SNIO.h>
+#include <meteoio/plugins/SyntheticIO.h>
 
 //now for the plugins that bring special includes
 #ifdef PLUGIN_DBO
@@ -175,6 +177,7 @@ namespace mio {
  * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td></td>		<td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>meteo</td>		<td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>meteo</td>		<td>original SNOWPACK meteo files</td><td></td></tr>
+ * <tr><td>\subpage synthio "SYNTH"</td><td>meteo</td><td></td>		<td>synthetic data generation</td><td></td></tr>
  * <tr><td>\subpage zrxpio "ZRXP"</td><td></td><td>meteo</td>		<td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
@@ -270,6 +273,9 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #endif
 #ifdef PLUGIN_SNIO
 	if (plugin_name == "SNOWPACK") return new SNIO(i_cfg);
+#endif
+#ifdef PLUGIN_SYNTHIO
+	if (plugin_name == "SYNTH") return new SynthIO(i_cfg);
 #endif
 #ifdef PLUGIN_ZRXPIO
 	if (plugin_name == "ZRXP") return new ZRXPIO(i_cfg);

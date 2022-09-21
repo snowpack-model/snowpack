@@ -14,7 +14,6 @@ fi
 
 A3D_CMD="${EXE} \
 --iofile=./io.ini \
---enable-eb  \
 --np-ebalance=${NCORES} \
 --np-snowpack=${NCORES} \
 --startdate=${BEGIN} --enddate=${END}"

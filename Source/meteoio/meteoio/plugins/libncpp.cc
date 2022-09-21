@@ -378,8 +378,12 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	
-	if (readTimeTransform)
+	if (readTimeTransform) {
+		//trying to be more robust as some might misplace the time units
+		if (var.attributes.units.empty()) 
+			ncpp::getAttribute(ncid, var, "description", var.attributes.units);
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
+	}
 }
 
 /**

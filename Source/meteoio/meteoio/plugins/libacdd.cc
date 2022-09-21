@@ -107,6 +107,7 @@ void ACDD::defaultInit()
 	addAttribute("product_version", "1.0", "ACDD_PRODUCT_VERSION");
 	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
 	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
+	addAttribute("wmo__wsi", "", "WIGOS_ID");
 }
 
 /**
