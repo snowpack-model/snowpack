@@ -473,10 +473,10 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 			case SnGrids::GLACIER_EXPOSED:
 				value = (!snowPixel.isGlacier(false))? 1. : IOUtils::nodata; break; //glaciated pixels receive IOUtils::nodata
 			case SnGrids::ET:
-					value = -(surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION]+surfaceFlux.mass[SurfaceFluxes::MS_EVAPORATION])/snowPixel.cos_sl; //slope2horiz
-					// Add part from Canopy
-					value += useCanopy?(snowPixel.Cdata.transp+snowPixel.Cdata.intevap)/snowPixel.cos_sl:0; //slope2horiz
-					break;
+				value = -(surfaceFlux.mass[SurfaceFluxes::MS_SUBLIMATION]+surfaceFlux.mass[SurfaceFluxes::MS_EVAPORATION])/snowPixel.cos_sl; //slope2horiz
+				// Add part from Canopy
+				value += useCanopy?(snowPixel.Cdata.transp+snowPixel.Cdata.intevap)/snowPixel.cos_sl:0; //slope2horiz
+				break;
 			default:
 				if (it->first>=SnGrids::TSOIL1 && it->first<=SnGrids::TSOIL_MAX) //dealing with soil temperatures
 				{

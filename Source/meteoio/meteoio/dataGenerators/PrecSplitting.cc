@@ -231,7 +231,7 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 	const bool hasPSUML = (PSUM_L!=IOUtils::nodata && PSUM_L>=0.); //very basic plausibility check
 	const bool hasPSUMS = (PSUM_S!=IOUtils::nodata && PSUM_S>=0.); //very basic plausibility check
 	const bool hasPsum = (PSUM!=IOUtils::nodata && PSUM>=0.); //very basic plausibility check
-		
+	
 	if (hasPsum) {
 		if (!hasPSUML && !hasPSUMS) {
 			return runModel(value, md);
@@ -239,7 +239,7 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 			value = std::min( std::max(PSUM_L / PSUM, 0.), 1.);
 			return true;
 		} else if (hasPSUMS) {
-			value = 1. - std::min( std::max(PSUM_L / PSUM, 0.), 1.);
+			value = 1. - std::min( std::max(PSUM_S / PSUM, 0.), 1.);
 			return true;
 		}
 	}

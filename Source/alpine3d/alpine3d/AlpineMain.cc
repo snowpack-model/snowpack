@@ -411,8 +411,15 @@ inline void real_main(int argc, char **argv)
 		cleanDestroyAll(drift, eb, snowpack);
 		throw;
 	} catch (...) {
-		cout << "[E] exception thrown!" << endl;
+		cout << "[E] exception thrown!!!" << endl;
 		cleanDestroyAll(drift, eb, snowpack);
+		auto expPtr = std::current_exception();
+		try {
+			if(expPtr) std::rethrow_exception(expPtr);
+		}
+		catch(const std::exception& e) {
+			std::cout << e.what();
+		}
 		throw;
 	}
 

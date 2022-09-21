@@ -289,9 +289,7 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 		io.read2DGrid(ilwr, MeteoGrids::ILWR,date);
 		io.read2DGrid(iswr_dir, MeteoGrids::ISWR_DIR,date);
 		io.read2DGrid(iswr_diff, MeteoGrids::ISWR_DIFF,date);
-	}
-
-	else{
+	} else {
 		//fill the meteo parameter grids (of the AlpineControl object) using the data from the stations
 		try {
 			io.getMeteoData(calcDate, dem, MeteoData::PSUM, psum);

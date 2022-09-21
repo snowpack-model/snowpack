@@ -135,6 +135,10 @@ IF(PLUGIN_SNIO)
 	SET(plugins_sources ${plugins_sources} plugins/SNIO.cc)
 ENDIF(PLUGIN_SNIO)
 
+IF(PLUGIN_SYNTHIO)
+	SET(plugins_sources ${plugins_sources} plugins/SyntheticIO.cc)
+ENDIF(PLUGIN_SYNTHIO)
+
 IF(PLUGIN_ZRXPIO)
 	SET(plugins_sources ${plugins_sources} plugins/ZRXPIO.cc)
 ENDIF(PLUGIN_ZRXPIO)
