@@ -24,6 +24,26 @@
 #include <string>
 
 namespace mio {
+/**
+ * @class Synthesizer
+ * @brief Generator to produce synthetic data for the SynthIO plugin
+ * @author Mathias Bavay
+ * @date   2022-09-19
+ */
+class Synthesizer {
+	public:
+		/*Synthesizer(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs) {(void)vecArgs;}*/
+		virtual ~Synthesizer() {}
+		
+		virtual double generate(const Date& dt) const {(void)dt; return IOUtils::nodata;}
+};
+
+//object factory for the Synthesizer class
+class SynthFactory {
+	public:
+		static Synthesizer* getSynth(std::string type, const std::string& station, const StationData& sd, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
+};
+
 
 /**
  * @class SynthIO
@@ -38,17 +58,58 @@ class SynthIO : public IOInterface {
 		SynthIO(const std::string& configfile);
 		SynthIO(const SynthIO&);
 		SynthIO(const Config& cfgreader);
+		
+		~SynthIO();
 
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
 		void init();
+		std::map< std::string, Synthesizer* > getSynthesizer(const std::string& stationRoot, const StationData &sd) const;
 		
 		const Config cfg;
+		std::map< std::string, std::map< std::string, Synthesizer* > > mapSynthesizers; //map[station][parmname] to contain the Synthesizer
 		std::vector<StationData> vecStations;
 		Date dt_start, dt_end;
-		double dt_step;
+		double dt_step, TZ;
+};
+
+///////////////////////////////////////////////////////
+//below derived classes of Synthesizer to implement specific algorithms (or generators)
+class CST_Synth : public Synthesizer {
+	public:
+		CST_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		virtual double generate(const Date& dt) const;
+	private:
+		double value;
+};
+
+class STEP_Synth : public Synthesizer {
+	public:
+		STEP_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
+		virtual double generate(const Date& dt) const;
+	private:
+		Date dt_step;
+		double value_before, value_after;
+};
+
+class RECT_Synth : public Synthesizer {
+	public:
+		RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
+		virtual double generate(const Date& dt) const;
+	private:
+		Date step_start, step_stop;
+		double value, value_step;
+};
+
+class STDPRESS_Synth : public Synthesizer {
+	public:
+		STDPRESS_Synth(const StationData& sd);
+		virtual double generate(const Date& dt) const;
+	private:
+		double altitude;
 };
 
 } //namespace

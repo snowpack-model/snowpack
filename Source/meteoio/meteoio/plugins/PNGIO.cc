@@ -560,8 +560,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 87000.; max = 115650.; //centered around 1 atm
 			gradient.set(Gradient::bluewhitered, min, max, autoscale);
 		} else {
-			const double delta1 = fabs(Cst::std_press-min);
-			const double delta2 = fabs(max - Cst::std_press);
+			const double delta1 = std::abs(Cst::std_press-min);
+			const double delta2 = std::abs(max - Cst::std_press);
 			const double delta = (delta1>delta2)?delta1:delta2;
 			gradient.set(Gradient::bluewhitered, Cst::std_press-delta, Cst::std_press+delta, autoscale);
 		}

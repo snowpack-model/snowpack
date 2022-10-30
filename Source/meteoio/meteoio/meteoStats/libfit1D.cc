@@ -255,7 +255,7 @@ double SphericVario::f(const double& x) const {
 	const double cs = Lambda.at(1);
 	const double as = Lambda.at(2);
 
-	const double abs_x = fabs(x);
+	const double abs_x = std::abs(x);
 	if (abs_x>0 && abs_x<=as) {
 		const double val = abs_x/as;
 		const double y = c0 + cs * ( 1.5*val - 0.5*Optim::pow3(val) );
@@ -278,7 +278,7 @@ double LinVario::f(const double& x) const {
 		//c0>=0, b1>=0
 		const double c0 = Lambda.at(0);
 		const double bl = Lambda.at(1);
-		const double y = c0 + bl * abs(x);
+		const double y = c0 + bl * std::abs(x);
 		return y;
 	}
 }

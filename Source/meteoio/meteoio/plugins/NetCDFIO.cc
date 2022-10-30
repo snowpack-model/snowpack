@@ -1857,7 +1857,7 @@ const std::vector<double> ncFiles::fillBufferForVar(const Grid2DObject& grid, nc
 			const double length = (param==ncpp::NORTHING)? lat_length : lon_length;
 			const double min = center - (.5*static_cast<double>(nrPts)*cellsize) / length;
 			const double max = center + (.5*static_cast<double>(nrPts)*cellsize) / length;
-			const double interval =  abs(max - min);
+			const double interval = std::abs(max - min);
 
 			for (size_t ii=0; ii<nrPts; ii++)
 				data[ii] = min + (interval * static_cast<double>(ii)) / (static_cast<double>(nrPts)-1.);

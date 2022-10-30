@@ -95,7 +95,7 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 			throw InvalidFormatException("Can not parse given latitude or longitude: "+dms,AT);
 	}
 
-	decimal = fabs(d);
+	decimal = std::abs(d);
 	if (m!=IOUtils::nodata) decimal += m/60.;
 	if (s!=IOUtils::nodata) decimal += s/3600.;
 
@@ -142,7 +142,7 @@ void CoordsAlgorithms::parseLatLon(const std::string& coordinates, double &lat, 
 */
 std::string CoordsAlgorithms::decimal_to_dms(const double& decimal) {
 	std::ostringstream dms;
-	const double abs_dec = fabs(decimal);
+	const double abs_dec = std::abs(decimal);
 	const int d = (int)floor(abs_dec);
 	const int m = (int)floor( (abs_dec - (double)d)*60. );
 	const double s = 3600.*(abs_dec - (double)d) - 60.*(double)m;
@@ -166,7 +166,7 @@ double CoordsAlgorithms::lat_degree_lenght(const double& latitude) {
 	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*(1.-e2)) / ( 180.*pow(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad)), 1.5) );
-	return fabs( degree_length );
+	return std::abs( degree_length );
 }
 
 /**
@@ -182,7 +182,7 @@ double CoordsAlgorithms::lon_degree_lenght(const double& latitude) {
 	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*cos(latitude*Cst::to_rad)) / ( 180.*sqrt(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad))) );
-	return fabs( degree_length );
+	return std::abs( degree_length );
 }
 
 /**
@@ -711,7 +711,7 @@ void CoordsAlgorithms::WGS84_to_UPS(const double& lat_in, const double& long_in,
 
 	static const double e = sqrt(e2);
 	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
-	const double lat_abs = fabs(lat_in); //since the computation assumes positive latitudes even for the Antarctis
+	const double lat_abs = std::abs(lat_in); //since the computation assumes positive latitudes even for the Antarctis
 	const double tan_Z2 = pow( (1.+e*sin(lat_abs*Cst::to_rad))/(1.-e*sin(lat_abs*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_abs*Cst::to_rad/2.);
 	const double R = k0*C0*tan_Z2;
 
@@ -768,11 +768,11 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 	//computing latitude
 	double R;
 	if (Delta_N==0.) {
-		R = fabs(Delta_E);
+		R = std::abs(Delta_E);
 	} else if (Delta_E==0.) {
-		R = fabs(Delta_N);
+		R = std::abs(Delta_N);
 	} else {
-		R = (Delta_N>Delta_E)? fabs( Delta_N / cos(long_out*Cst::to_rad)) : fabs( Delta_E / sin(long_out*Cst::to_rad) );
+		R = (Delta_N>Delta_E)? std::abs( Delta_N / cos(long_out*Cst::to_rad)) : std::abs( Delta_E / sin(long_out*Cst::to_rad) );
 	}
 	static const double e = sqrt(e2), e4=e2*e2;
 	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
@@ -839,7 +839,7 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	}
 	east_out = x;
 	north_out = y;
@@ -907,7 +907,7 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
-		throw ConversionFailedException("PROJ conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	}
 	long_out = x*RAD_TO_DEG;
 	lat_out = y*RAD_TO_DEG;
@@ -1053,7 +1053,7 @@ double CoordsAlgorithms::VincentyDistance(const double& lat1, const double& lon1
 			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*Optim::pow2(cos_2sigma_m)) )
 			);
 		n++;
-	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
+	} while ( (n<n_max) && (std::abs(lambda - lambda_p) > thresh) );
 
 	if (n>n_max) {
 		throw IOException("Distance calculation not converging", AT);
@@ -1114,7 +1114,7 @@ void CoordsAlgorithms::VincentyInverse(const double& lat_ref, const double& lon_
 	static double sigma_p = 2.*Cst::PI;
 	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
 
-	while (fabs(sigma - sigma_p) > thresh) {
+	while (std::abs(sigma - sigma_p) > thresh) {
 		cos2sigma_m = cos( 2.*sigma1 + sigma );
 		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * (
 			cos(sigma)*(-1.+2.*cos2sigma_m*cos2sigma_m)

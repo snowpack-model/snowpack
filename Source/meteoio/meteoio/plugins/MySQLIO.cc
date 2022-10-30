@@ -201,7 +201,7 @@ void MYSQLIO::readStationMetaData()
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
 	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, metaDataQuery, 1);
 	
-	for (const std::string stationID : vecStationID) {
+	for (const std::string& stationID : vecStationID) {
 		std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID) };
 		mysql_wrp::bindParams(&stmt, params_fields);
 		
@@ -215,7 +215,7 @@ void MYSQLIO::readStationMetaData()
 			//loop over all fields that we should find
 			std::string station_name;
 			double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope=IOUtils::nodata, azi=IOUtils::nodata;
-			for (const auto meta : metaDataFields) { //this is given by the metadata parsing vector metaDataFields
+			for (const auto& meta : metaDataFields) { //this is given by the metadata parsing vector metaDataFields
 				if (meta.param=="STATNAME") station_name = meta.str;
 				else if (meta.param=="LAT") lat = meta.val;
 				else if (meta.param=="LON") lon = meta.val;

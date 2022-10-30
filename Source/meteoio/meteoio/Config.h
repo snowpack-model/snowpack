@@ -349,7 +349,7 @@ class Config {
 			IOUtils::toUpper(section);
 			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
-			for (const std::string key : vecKeys) {
+			for (const std::string& key : vecKeys) {
 				const std::string full_key( section + "::" + key );
 				T tmp;
 				try {
@@ -380,6 +380,8 @@ class Config {
 			}
 		}
 
+		std::vector< std::pair<std::string, std::string> > getValuesRegex(std::string regex_str, std::string section) const;
+		
 		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
 
 		/**

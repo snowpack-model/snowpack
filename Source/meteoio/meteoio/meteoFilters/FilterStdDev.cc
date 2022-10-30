@@ -62,7 +62,7 @@ void FilterStdDev::process(const unsigned int& param, const std::vector<MeteoDat
 			continue;
 		}
 
-		if ( value!=IOUtils::nodata && abs(value-mean)>sigma*std_dev) {
+		if ( value!=IOUtils::nodata && std::abs(value-mean)>sigma*std_dev) {
 			value = IOUtils::nodata;
 		}
 	}

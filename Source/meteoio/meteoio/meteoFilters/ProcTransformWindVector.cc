@@ -186,7 +186,7 @@ void ProcTransformWindVector::TransformCoord(const double& X_in, const double& Y
 		y *= Cst::to_rad;
 	}
 	const int p = pj_transform(pj_src, pj_dest, 1, 1, &x, &y, NULL );
-	if (p!=0) throw ConversionFailedException("PROJ conversion failed: "+p, AT);
+	if (p!=0) throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	X_out = x;
 	Y_out = y;
 	if (pj_is_latlong(pj_dest)) {

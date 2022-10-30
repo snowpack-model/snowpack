@@ -725,7 +725,7 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 { //cumulative distribution function for a Gauss curve at point xx
 	const double mean = DistributionParameters[0];
 	const double sigma = DistributionParameters[1];
-	const double xabs = fabs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
+	const double xabs = std::abs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
 	
 	static const double bb[5] = { //|error| < 7.5e-8
 	    0.319381530, 
