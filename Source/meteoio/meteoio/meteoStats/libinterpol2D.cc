@@ -689,7 +689,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
-			if (inv_distance<=inv_dmin && fabs(delta_elev)>=altitude_thresh) { //only for cells further than dmin
+			if (inv_distance<=inv_dmin && std::abs(delta_elev)>=altitude_thresh) { //only for cells further than dmin
 				if (inv_distance<inv_dmax) break; //stop if distance>dmax
 
 				const double tan_slope = delta_elev*inv_distance;

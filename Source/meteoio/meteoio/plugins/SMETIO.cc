@@ -728,7 +728,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	//Add all other used parameters
 	bool some_params_identified = false;
 	int tmpwidth, tmpprecision;
-	for (const std::string parname : paramInUse) {
+	for (const std::string& parname : paramInUse) {
 		ss << " " << parname;
 		getFormatting(parname, tmpprecision, tmpwidth);
 		myprecision.push_back(tmpprecision);

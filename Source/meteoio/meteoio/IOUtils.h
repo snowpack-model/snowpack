@@ -118,7 +118,7 @@ namespace IOUtils {
 	* @param epsilon is a radius around val1
 	* @return true if val2 is within the radius around val1, false otherwise.
 	*/
-	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (fabs(val1-val2) < epsilon);}
+	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (std::abs(val1-val2) < epsilon);}
 
 	/**
 	* @brief Search for an element at a given date in a vector of MeteoData.

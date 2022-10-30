@@ -395,7 +395,7 @@ The visibility test according to Amanatides(1987) for ray tracing
 	double tMax_old;
 	double tMax_new;
 
-	(stepsx * stepsy == 0) ? (tMax_new = std::max(abs(tMaxX), abs(tMaxY))) : (tMax_new = std::min(abs(tMaxX), abs(tMaxY)));
+	(stepsx * stepsy == 0) ? (tMax_new = std::max(std::abs(tMaxX), std::abs(tMaxY))) : (tMax_new = std::min(std::abs(tMaxX), std::abs(tMaxY)));
 
 	// do while the source and the destination seems to bo visible
 	do
@@ -405,7 +405,7 @@ The visibility test according to Amanatides(1987) for ray tracing
 
 		// Get the next intermerdiate cells
 		GetNextCell(a, b, tMaxX, tMaxY, stepsx, stepsy, tDeltaX, tDeltaY);
-		(stepsx * stepsy == 0) ? (tMax_new = std::max(abs(tMaxX), abs(tMaxY))) : (tMax_new = std::min(abs(tMaxX), abs(tMaxY)));
+		(stepsx * stepsy == 0) ? (tMax_new = std::max(std::abs(tMaxX), std::abs(tMaxY))) : (tMax_new = std::min(std::abs(tMaxX), std::abs(tMaxY)));
 
 		if (CellOutsideGrid(a, b))
 		{

@@ -177,7 +177,7 @@ bool FitLeastSquare::computeFit()
 		max_delta = 0.;
 		for (size_t n=1; n<=nParam; n++) {
 			Lambda[n-1] += dLambda(n,1); //Lambda is a vector
-			if ( fabs(dLambda(n,1))>max_delta ) max_delta=fabs(dLambda(n,1));
+			if ( std::abs(dLambda(n,1))>max_delta ) max_delta=std::abs(dLambda(n,1));
 		}
 
 	} while (max_delta>eps_conv && iter<max_iter);

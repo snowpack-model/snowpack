@@ -31,7 +31,7 @@
 using namespace std;
 using namespace mio;
 
-TechSnow::TechSnow(const SnowpackConfig& cfg) 
+TechSnow::TechSnow(const SnowpackConfig& cfg)
         : grooming_week_start(cfg.get("GROOMING_WEEK_START", "TechSnow")), grooming_week_end(cfg.get("GROOMING_WEEK_END", "TechSnow")),
           grooming_hour(cfg.get("GROOMING_HOUR", "TechSnow")), min_depth( cfg.get("GROOMING_DEPTH_START", "TechSnow")),
           max_depth( cfg.get("GROOMING_DEPTH_IMPACT", "TechSnow"))
@@ -79,7 +79,7 @@ void TechSnow::productionPpt(const CurrentMeteo& Mdata, const double& cumu_preci
 	Tw = IOUtils::K_TO_C(Mdata.ta) * atan(0.151977 * sqrt(Mdata.rh*100. + 8.313659)) + atan(IOUtils::K_TO_C(Mdata.ta) + Mdata.rh*100.) - atan(Mdata.rh*100. - 1.676331) + 0.00391838 * pow(Mdata.rh*100, 1.5) * atan(0.023101 * Mdata.rh*100) - 4.686035; // (°C) Wet-bulb temperature
 	rho_hn = 1.7261 * Optim::pow2(Tw) + 37.484 * Tw + 505.05; // (kg/m3) density of technical snow (kg/m3) dependent from the wet-bulb temperature
 
-	double LWC_max = 29.76 - 11.71 * log(abs(Tw)) + 1.07*T_water - 1.6 * v_wind;	// (%vol) liquid water content at 55 l/min
+	double LWC_max = 29.76 - 11.71 * log(std::abs(Tw)) + 1.07*T_water - 1.6 * v_wind;	// (%vol) liquid water content at 55 l/min
 	if (LWC_max < 0.) LWC_max = 0.;
 
 	const double LWC = (0.004 * V_water + 0.52) * 100 * (rho_hn/917.) / 36.3 * LWC_max * 0.4;	// (%vol) liquid water content (average value multiply by 0.4)

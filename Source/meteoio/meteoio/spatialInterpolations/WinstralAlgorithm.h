@@ -41,7 +41,7 @@ namespace mio {
  * "avg" if only one station can provide the precipitation at a given time step (for an easy fallback). Please do not forget
  * to provide any necessary arguments for this base method!
  *  - TYPE: specify how the synoptic wind direction is derived. It is either of the following:
- *     - AUTO: automatic computation of the synoptic wind direction (see below);
+ *     - AUTO: automatic computation of the synoptic wind direction (default, see below);
  *     - FIXED: provide a fixed synoptic wind bearing that is used for all time steps. It then needs the following argument:
  *          - DW_SYNOP: fixed synoptic wind bearing that is used for all time steps;
  *     - REF_STATION: the wind direction at the provided station is assumed to be the synoptic wind direction. It then needs the following argument:
@@ -61,6 +61,19 @@ namespace mio {
  * PSUM::winstral::dw_synop = 180
  * PSUM::winstral::dmax     = 300
  * @endcode
+ * 
+ * Another example, using non-default values for the base algorithm:
+ * @code
+ * PSUM::ALGORITHMS = WINSTRAL IDW_LAPSE
+ * PSUM::WINSTRAL::BASE = idw_lapse
+ * PSUM::WINSTRAL::DMAX = 300
+ * PSUM::WINSTRAL::TYPE = AUTO
+ * 
+ * PSUM::IDW_LAPSE::SOFT = TRUE
+ * PSUM::IDW_LAPSE::TREND_MIN_ALT = 500.0
+ * PSUM::IDW_LAPSE::TREND_MAX_ALT = 1500.0
+ * @endcode
+ * 
  * @remarks Only cells with an air temperature below freezing participate in the redistribution
  */
 class WinstralAlgorithm : public InterpolationAlgorithm {

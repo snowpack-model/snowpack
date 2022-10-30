@@ -212,6 +212,58 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 	}
 }
 
+std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(std::string regex_str, std::string section) const
+{
+	//regex for selecting the keys
+	static const std::regex user_regex(regex_str);
+	//regex to try sorting the keys by numerical order of their index, so STATION2 comes before STATION10
+	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})$"); //limit the number of digits so it fits within an "int" for the call to atoi()
+	std::smatch index_matches;
+	
+	IOUtils::toUpper(section);
+	std::vector< std::pair<std::string, std::string> > vecResult;
+	std::map< std::pair<int, std::string>, std::pair<std::string, std::string> > keyMap;
+	bool indexed_keys = true;
+	
+	for (const auto& prop : properties) {
+		const size_t section_start = (prop.first).find(section, 0);
+		if (section_start==0) { //found the section!
+			const size_t section_len = section.length();
+			const std::string key_no_section( prop.first.substr(section_len+2) ); //account for "::" between section and key
+			
+			if (std::regex_match(key_no_section, user_regex)) {
+				//we want to figure out of the keys are all indexed, ie like {some prefix}{some integral number}
+				if (indexed_keys) {
+					if (std::regex_match(key_no_section, index_matches, index_regex)) { //retrieve the key index
+						const std::string key_root( index_matches.str(1) );
+						const int index = atoi( index_matches.str(2).c_str() ); //we take the first capture group, guaranteed to fit in an int
+						keyMap[ make_pair(index, key_root) ] = make_pair(key_no_section, prop.second);
+					} else {
+						indexed_keys = false;
+					}
+				}
+				
+				//keys are not indexed, store them directly in the results vector
+				//if indexed_keys just got toggled above, we recover already processed keys
+				if (!indexed_keys) {
+					//the keys are not indexed, move the processed keys into the results vector
+					for (const auto& key_record : keyMap) vecResult.push_back( key_record.second );
+					keyMap.clear();
+					vecResult.push_back( make_pair(key_no_section, prop.second) ); //push the current, unprocessed key
+				}
+			}
+		}
+	}
+	
+	if (indexed_keys && !keyMap.empty()) {
+		for (const auto& key_record : keyMap) {
+			vecResult.push_back( key_record.second );
+		}
+	}
+
+	return vecResult;
+}
+
 std::vector< std::pair<std::string, std::string> > Config::getValues(std::string keymatch, std::string section, const bool& anywhere) const
 {
 	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})"); //limit the number of digits so it fits within an "int" for the call to atoi()
