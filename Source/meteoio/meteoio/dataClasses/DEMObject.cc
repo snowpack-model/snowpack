@@ -676,21 +676,21 @@ double DEMObject::steepestGradient(const double& i_cellsize, double A[4][4])
 
 	if (A[2][2]!=IOUtils::nodata) {
 		if (A[1][1]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[1][1])/(i_cellsize*sqrt2) );
+			smax = max( smax, std::abs(A[2][2] - A[1][1])/(i_cellsize*sqrt2) );
 		if (A[1][2]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[1][2])/(i_cellsize) );
+			smax = max( smax, std::abs(A[2][2] - A[1][2])/(i_cellsize) );
 		if (A[1][3]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[1][3])/(i_cellsize*sqrt2) );
+			smax = max( smax, std::abs(A[2][2] - A[1][3])/(i_cellsize*sqrt2) );
 		if (A[2][1]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[2][1])/(i_cellsize) );
+			smax = max( smax, std::abs(A[2][2] - A[2][1])/(i_cellsize) );
 		if (A[2][3]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[2][3])/(i_cellsize) );
+			smax = max( smax, std::abs(A[2][2] - A[2][3])/(i_cellsize) );
 		if (A[3][1]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[3][1])/(i_cellsize*sqrt2) );
+			smax = max( smax, std::abs(A[2][2] - A[3][1])/(i_cellsize*sqrt2) );
 		if (A[3][2]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[3][2])/(i_cellsize) );
+			smax = max( smax, std::abs(A[2][2] - A[3][2])/(i_cellsize) );
 		if (A[3][3]!=IOUtils::nodata)
-			smax = max( smax, fabs(A[2][2] - A[3][3])/(i_cellsize*sqrt2) );
+			smax = max( smax, std::abs(A[2][2] - A[3][3])/(i_cellsize*sqrt2) );
 	}
 
 	if (smax<0.)

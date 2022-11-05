@@ -402,7 +402,7 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 		double cellsize_x, cellsize_y;
 		llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this is the center cell
 		cellsize = (double)Optim::round( std::min(cellsize_x, cellsize_y) * 100. ) / 100.; // round to 1cm precision for numerical stability
-		if ( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
+		if ( std::abs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
 			factor_x = cellsize_x / cellsize;
 			factor_y = cellsize_y / cellsize;
 		}

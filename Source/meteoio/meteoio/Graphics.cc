@@ -151,7 +151,7 @@ void Legend::smartLegend(const unsigned int &height, const double &minimum, cons
 
 		for (unsigned int l=0; l<nb_labels_norm; l++) {
 			double level_val = (step_norm*l/10.+min_norm)*decade_mult;
-			if ( fabs(level_val)<(range*1e-6) )level_val=0.; //to get a nice 0 at zero
+			if ( std::abs(level_val)<(range*1e-6) )level_val=0.; //to get a nice 0 at zero
 			const unsigned int px_row = l*label_height+start_legend;
 			writeLine(level_val, px_row);
 		}

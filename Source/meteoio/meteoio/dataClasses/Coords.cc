@@ -497,7 +497,7 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 */
 void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) 
 {
-	if ((in_latitude!=IOUtils::nodata && fabs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && fabs(in_longitude)>360.)) {
+	if ((in_latitude!=IOUtils::nodata && std::abs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && std::abs(in_longitude)>360.)) {
 		std::ostringstream ss;
 		ss << "(" << in_latitude << "," << in_longitude << ")";
 		throw InvalidArgumentException("Invalid latitude/longitude: "+ss.str(), AT);

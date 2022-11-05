@@ -120,13 +120,13 @@ void IDWSlopesAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 			const double w_azi = 1. - azi / 90.;
 			grid(ii) = w_flat*grid(ii) + (1.-w_flat)*(w_azi*north(ii) + (1.-w_azi)*east(ii));
 		} else if (azi<180) {
-			const double w_azi = 1. - fabs(azi - 90.) / 90.;
+			const double w_azi = 1. - std::abs(azi - 90.) / 90.;
 			grid(ii) = w_flat*grid(ii) + (1.-w_flat)*(w_azi*east(ii) + (1.-w_azi)*south(ii));
 		} else if (azi<270) {
-			const double w_azi = 1. - fabs(azi - 180.) / 90.;
+			const double w_azi = 1. - std::abs(azi - 180.) / 90.;
 			grid(ii) = w_flat*grid(ii) + (1.-w_flat)*(w_azi*south(ii) + (1.-w_azi)*west(ii));
 		} else {
-			const double w_azi = 1. - fabs(azi - 270.) / 90.;
+			const double w_azi = 1. - std::abs(azi - 270.) / 90.;
 			grid(ii) = w_flat*grid(ii) + (1.-w_flat)*(w_azi*west(ii) + (1.-w_azi)*north(ii));
 		}
 		

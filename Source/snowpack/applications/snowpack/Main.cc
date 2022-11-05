@@ -574,11 +574,11 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		surfFluxes.reset(cumsum_mass);
 		if (useCanopyModel)
 			currentSector.Cdata->reset(cumsum_mass);
-			if(!cumsum_mass) {
-				for(auto station:vecXdata) {
-					station.reset_lysimeters();
-				}
+		if(!cumsum_mass) {
+			for(auto station:vecXdata) {
+				station.reset_lysimeters();
 			}
+		}
 		const bool mass_balance = cfg.get("MASS_BALANCE", "SnowpackAdvanced");
 		if (mass_balance) {
 			// Do an initial mass balance check

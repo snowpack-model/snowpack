@@ -919,7 +919,7 @@ bool Date::operator==(const Date& indate) const {
 		return( undef==true && indate.isUndef() );
 	}
 
-	return (fabs(gmt_julian - indate.gmt_julian) <= epsilon);
+	return (std::abs(gmt_julian - indate.gmt_julian) <= epsilon);
 }
 
 bool Date::operator!=(const Date& indate) const {

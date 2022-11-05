@@ -36,7 +36,8 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
 		if (vecArgs[ii].first=="TYPE") {
 			const std::string user_type( IOUtils::strToUpper(vecArgs[ii].second) );
 
-			if (user_type=="FIXED") type = FIXED;
+			if (user_type=="AUTO") type = AUTO;
+			else if (user_type=="FIXED") type = FIXED;
 			else if (user_type=="REF_STATION") type = REF_STATION;
 			else
 				throw InvalidArgumentException("Unknown algorithm \""+user_type+"\" supplied for "+where, AT);
@@ -66,7 +67,6 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date)
 	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
 
 	if (inputIsAllZeroes) return 0.99;
-
 	if (nrOfMeasurments==0) return 0.0;
 
 	//check that the necessary wind data is available
@@ -94,9 +94,9 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
 	if (i_ref_station.empty()) {
-		for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
-			const double VW = i_vecMeteo[ii](MeteoData::VW);
-			const double DW = i_vecMeteo[ii](MeteoData::DW);
+		for (const auto& md : i_vecMeteo) {
+			const double VW = md(MeteoData::VW);
+			const double DW = md(MeteoData::DW);
 			if (VW!=IOUtils::nodata && DW!=IOUtils::nodata)
 				return true; //at least one station is enough
 		}
@@ -110,9 +110,9 @@ bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& i_vecMeteo
 
 double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
-	for (size_t ii=0; ii<i_vecMeteo.size(); ++ii) {
-		if (i_vecMeteo[ii].meta.stationID==i_ref_station)
-			return i_vecMeteo[ii](MeteoData::DW);
+	for (const auto& md : i_vecMeteo) {
+		if (md.meta.stationID==i_ref_station)
+			return md(MeteoData::DW);
 	}
 
 	return IOUtils::nodata;
@@ -165,9 +165,9 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vec
 {
 	double ve=0.0, vn=0.0;
 	size_t count=0;
-	for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
-		const double VW = i_vecMeteo[ii](MeteoData::VW);
-		const double DW = i_vecMeteo[ii](MeteoData::DW);
+	for (const auto& md : i_vecMeteo) {
+		const double VW = md(MeteoData::VW);
+		const double DW = md(MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
 			ve += IOUtils::VWDW_TO_U(VW, DW);
 			vn += IOUtils::VWDW_TO_V(VW, DW);
@@ -194,9 +194,9 @@ double WinstralAlgorithm::getSynopticBearing(const DEMObject& dem, const std::ve
 	// (2) can be used on all the stations selected in (1)
 
 	std::vector<MeteoData> stationsSubset;
-	for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
-		if (isExposed(dem, i_vecMeteo[ii].meta.position))
-			stationsSubset.push_back( i_vecMeteo[ii] );
+	for (const auto& md : i_vecMeteo) {
+		if (isExposed(dem, md.meta.position))
+			stationsSubset.push_back( md );
 	}
 
 	if (!stationsSubset.empty()) {
