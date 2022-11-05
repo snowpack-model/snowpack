@@ -67,9 +67,19 @@ class OshdIO : public IOInterface {
 			std::string path;
 			std::string filename;
 		};
+		
+		struct station_index {
+			station_index(const std::string& i_id) 
+			             : id(i_id), oshd_acro(), idx(IOUtils::npos) {}
+			station_index(const std::string& i_id, const std::string& acro, const size_t& i_idx) 
+			             : id(i_id), oshd_acro(acro), idx(i_idx) {}
+			std::string id, oshd_acro;
+			size_t idx;
+		};
+		
 		void parseInputOutputSection();
 		void readFromFile(const std::string& file_and_path, const Date& in_timestep, std::vector< std::vector<MeteoData> >& vecMeteo) const;
-		void buildVecIdx(const std::vector<std::string>& vecAcro);
+		void buildVecIdx(std::vector<std::string> vecAcro);
 		void fillStationMeta();
 		
 		static size_t getFileIdx(const std::vector< struct file_index >& cache, const Date& start_date);
@@ -80,8 +90,7 @@ class OshdIO : public IOInterface {
 		std::vector< struct file_index > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::vector< struct file_index > cache_grid_files; //cache of meteo files in METEOPATH
 		std::vector<StationData> vecMeta;
-		std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
-		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors
+		std::vector< struct station_index > statIDs;
 		std::string coordin, coordinparam; //projection parameters
 		std::string grid2dpath_in, in_meteopath, in_metafile;
 		size_t nrMetadata; ///< How many stations have been provided in the metadata file
