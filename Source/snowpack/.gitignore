@@ -20,6 +20,8 @@ lib/*
 Testing
 CTest*
 Dart*
+.vscode/
+.DS_store
 
 #example files and binaries:
 /doc/examples/output/*

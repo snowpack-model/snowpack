@@ -587,11 +587,35 @@ bool CaaMLIO::read_snocaaml(const std::string& in_snowFilename, const std::strin
 		//lwc data is optional. if not available, no problem:
 		getAndSetProfile("/caaml:lwcProfile/caaml:Layer","caaml:lwc",directionTopDown,true,SSdata.Ldata);
 
+		adjustToSlopeAngle(SSdata); // #cmb
+		
 		checkAllDataForConsistencyAndSetMissingValues(SSdata);
 	}
 	//checkWhatWasReadIn(SSdata);
 	return true;
 }
+
+
+/**
+ * @brief This routine adjust the snow pack thickness/height to the slope angle (internal snow profile is always vertical to ground)
+ * @param SSdata data structure including all important station parameters as well as LayerData
+ * #cmb (needs to be called before checkAllDataForConsistency...)
+ */
+void CaaMLIO::adjustToSlopeAngle(SN_SNOWSOIL_DATA& SSdata)
+{
+	const double cos_sl = cos(SSdata.meta.getSlopeAngle()*mio::Cst::to_rad);
+	SSdata.Height = SSdata.Height * cos_sl;
+	SSdata.HS_last = SSdata.HS_last * cos_sl;
+	for (size_t ii=0; ii<SSdata.nLayers; ii++) {
+		SSdata.Ldata[ii].hl = SSdata.Ldata[ii].hl * cos_sl;
+		if(i_max_element_thickness != IOUtils::nodata){
+			SSdata.Ldata[ii].ne = (size_t) ceil(SSdata.Ldata[ii].hl/i_max_element_thickness);
+		}else{
+			SSdata.Ldata[ii].ne=1;
+		}
+	}
+}
+
 
 /**
  * @brief This routine reads the date of the snowpack from the caaml-file
@@ -1088,14 +1112,14 @@ void CaaMLIO::writeSnowFile(const std::string& snofilename, const Date& date, co
 	writeCustomSnowSoil(snowSoilNode,Xdata);
 
 	// Write profile depth
-	sprintf(valueStr,"%.4f",100.*Xdata.cH);
+	sprintf(valueStr,"%.4f",100.*Xdata.cH/Xdata.cos_sl); // cmb
 	xmlWriteElement(stratNode,(namespaceCAAML+":profileDepth").c_str(),valueStr,"uom","cm");
 
 	//Write height of snow and Snow Water Equivalent (SWE)
 	pugi::xml_node tempNode = stratNode.append_child( (namespaceCAAML+":snowPackCond").c_str() )
 	                                   .append_child( (namespaceCAAML+":hS").c_str() )
 	                                   .append_child( (namespaceCAAML+":Components").c_str() );
-	sprintf(valueStr,"%.4f",100.*(Xdata.cH - Xdata.Ground));
+	sprintf(valueStr,"%.4f",100.*(Xdata.cH - Xdata.Ground)/Xdata.cos_sl); // cmb
 	xmlWriteElement(tempNode,(namespaceCAAML+":height").c_str(),valueStr,"uom","cm");
 	sprintf(valueStr,"%.2f",Xdata.swe);
 	xmlWriteElement(tempNode,(namespaceCAAML+":waterEquivalent").c_str(),valueStr,"uom","kgm-2");
@@ -1179,10 +1203,10 @@ void CaaMLIO::writeLayers(pugi::xml_node& node, const SnowStation& Xdata)
 			                                     .append_child( (namespaceCAAML+":customData").c_str() );
 			writeCustomLayerData(customNode,Xdata.Edata[ii],Xdata.Ndata[ii]);
 
-			// Write snow and soil layer data
-			sprintf(layerDepthTopStr,"%.4f",100.*(Xdata.cH - Xdata.Ndata[ii+1].z));
+			// Write snow and soil layer data 
+			sprintf(layerDepthTopStr,"%.4f",100.*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100.*Xdata.Edata[ii].L);
+			sprintf(layerThicknessStr,"%.4f",100.*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 
 			if (snowLayer) {
@@ -1258,7 +1282,7 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Ndata.empty()) {
 		for (size_t ii = Xdata.Ndata.size(); ii-->0;) {
 			pugi::xml_node obsNode = tempNode.append_child( (namespaceCAAML+":Obs").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii].z));
+			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(obsNode,(namespaceCAAML+":depth").c_str(),layerDepthTopStr,"uom","cm");
 			sprintf(valueStr,"%.3f",unitConversion(Xdata.Ndata[ii].T,(char*)"degK",(char*)"degC"));
 			xmlWriteElement(obsNode,(namespaceCAAML+":snowTemp").c_str(),valueStr,"uom","degC");
@@ -1272,9 +1296,9 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = densityNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z));
+			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L);
+			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 			sprintf(valueStr,"%.2f",Xdata.Edata[ii].Rho);
 			xmlWriteElement(layerNode,(namespaceCAAML+":density").c_str(),valueStr,"uom","kgm-3");
@@ -1289,9 +1313,9 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = lwcNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z));
+			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L);
+			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 			sprintf(valueStr,"%.2f",Xdata.Edata[ii].theta[2]*100);
 			xmlWriteElement(layerNode,(namespaceCAAML+":lwc").c_str(),valueStr,"uom","% by Vol");
@@ -1306,9 +1330,9 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = ssaNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z));
+			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L);
+			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 			double ogs = Xdata.Edata[ii].ogs;
 			double rho = Xdata.Edata[ii].Rho;
@@ -1326,9 +1350,9 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = strengthNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z));
+			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L);
+			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 #ifndef SNOWPACK_CORE
 			sprintf(valueStr,"%.2f",(Xdata.Edata[ii].s_strength)*1000); //conversion from kPa to Nm-2: *1000

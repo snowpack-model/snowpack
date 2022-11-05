@@ -78,6 +78,7 @@ class CaaMLIO : public SnowpackIOInterface {
 		mio::StationData xmlGetStationData(const std::string& stationID);
 		void setCustomSnowSoil(SN_SNOWSOIL_DATA& Xdata);
 		void xmlReadLayerData(SN_SNOWSOIL_DATA& SSdata);
+		void adjustToSlopeAngle(SN_SNOWSOIL_DATA& SSdata); // #cmb
 		LayerData xmlGetLayer(pugi::xml_node nodeLayer, std::string& grainFormCode);
 		bool getLayersDir();
 		void getAndSetProfile(const std::string path, const std::string name,const bool directionTopDown,
