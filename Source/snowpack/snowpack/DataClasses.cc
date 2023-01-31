@@ -1985,7 +1985,7 @@ SnowStation::SnowStation(const bool i_useCanopyModel, const bool i_useSoilLayers
 #ifndef SNOWPACK_CORE
 	rime_hn(0.),
 #endif
-	hn_redeposit(0.), rho_hn_redeposit(0.), ErosionLevel(0), ErosionMass(0.), ErosionLength(0.), Erosion_ustar_th(Constants::undefined),
+	hn_redeposit(0.), rho_hn_redeposit(0.), ErosionLevel(0), ErosionMass(0.), ErosionLength(0.), ErosionAge(Constants::undefined), Erosion_ustar_th(Constants::undefined),
 #ifndef SNOWPACK_CORE
 	S_class1(0), S_class2(0), S_d(0.), z_S_d(0.), S_n(0.), z_S_n(0.),
 	S_s(0.), z_S_s(0.), S_4(0.), z_S_4(0.), S_5(0.), z_S_5(0.),
@@ -2015,7 +2015,7 @@ SnowStation::SnowStation(const SnowStation& c) :
 #ifndef SNOWPACK_CORE
 	rime_hn(c.rime_hn),
 #endif
-	hn_redeposit(c.hn_redeposit), rho_hn_redeposit(c.rho_hn_redeposit), ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass), ErosionLength(c.ErosionLength), Erosion_ustar_th(c.Erosion_ustar_th),
+	hn_redeposit(c.hn_redeposit), rho_hn_redeposit(c.rho_hn_redeposit), ErosionLevel(c.ErosionLevel), ErosionMass(c.ErosionMass), ErosionLength(c.ErosionLength), ErosionAge(c.ErosionAge), Erosion_ustar_th(c.Erosion_ustar_th),
 #ifndef SNOWPACK_CORE
 	S_class1(c.S_class1), S_class2(c.S_class2), S_d(c.S_d), z_S_d(c.z_S_d), S_n(c.S_n), z_S_n(c.z_S_n),
 	S_s(c.S_s), z_S_s(c.z_S_s), S_4(c.S_4), z_S_4(c.z_S_4), S_5(c.S_5), z_S_5(c.z_S_5),
@@ -2076,6 +2076,7 @@ SnowStation& SnowStation::operator=(const SnowStation& source) {
 		ErosionLevel = source.ErosionLevel;
 		ErosionMass = source.ErosionMass;
 		ErosionLength = source.ErosionLength;
+		ErosionAge = source.ErosionAge;
 		Erosion_ustar_th = source.Erosion_ustar_th;
 #ifndef SNOWPACK_CORE
 		S_class1 = source.S_class1;
@@ -3036,6 +3037,7 @@ std::ostream& operator<<(std::ostream& os, const SnowStation& data)
 	os.write(reinterpret_cast<const char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	os.write(reinterpret_cast<const char*>(&data.ErosionMass), sizeof(data.ErosionMass));
 	os.write(reinterpret_cast<const char*>(&data.ErosionLength), sizeof(data.ErosionLength));
+	os.write(reinterpret_cast<const char*>(&data.ErosionAge), sizeof(data.ErosionAge));
 	os.write(reinterpret_cast<const char*>(&data.Erosion_ustar_th), sizeof(data.Erosion_ustar_th));
 #ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.S_class1), sizeof(data.S_class1));
@@ -3131,6 +3133,7 @@ std::istream& operator>>(std::istream& is, SnowStation& data)
 	is.read(reinterpret_cast<char*>(&data.ErosionLevel), sizeof(data.ErosionLevel));
 	is.read(reinterpret_cast<char*>(&data.ErosionMass), sizeof(data.ErosionMass));
 	is.read(reinterpret_cast<char*>(&data.ErosionLength), sizeof(data.ErosionLength));
+	is.read(reinterpret_cast<char*>(&data.ErosionAge), sizeof(data.ErosionAge));
 	is.read(reinterpret_cast<char*>(&data.Erosion_ustar_th), sizeof(data.Erosion_ustar_th));
 #ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.S_class1), sizeof(data.S_class1));
