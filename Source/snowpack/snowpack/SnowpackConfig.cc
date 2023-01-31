@@ -84,6 +84,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["PERP_TO_SLOPE"] = "false";
 	advancedConfig["PLASTIC"] = "false";
 	advancedConfig["PREVAILING_WIND_DIR"] = "0.";
+	advancedConfig["REDEPOSIT_KEEP_AGE"] = "false";
 	advancedConfig["RESEARCH"] = "true";
 	advancedConfig["SNOW_ALBEDO"] = "PARAMETERIZED";
 	advancedConfig["SNOW_EROSION"] = "false";

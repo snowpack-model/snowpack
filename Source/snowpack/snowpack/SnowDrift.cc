@@ -218,6 +218,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
 	Xdata.ErosionMass = 0.;
 	Xdata.ErosionLength = 0.;
+	Xdata.ErosionAge = 0.;
 	if (no_snow || no_wind_data) {
 		if (no_snow) {
 			Xdata.ErosionLevel = Xdata.SoilNode;
@@ -282,6 +283,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 				Xdata.ErosionMass += EMS[e].M;
 				Xdata.ErosionLength -= EMS[e].L;
 				Xdata.ErosionLevel = std::min(e, Xdata.ErosionLevel);
+				Xdata.ErosionAge += EMS[e].depositionDate.getJulian() * EMS[e].L;
 				nErode++;
 				massErode -= EMS[e].M;
 				forced_massErode = -massErode;
@@ -304,6 +306,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 				assert(EMS[e].M>=0.); //mass must be positive
 				Xdata.ErosionMass += massErode;
 				Xdata.ErosionLength += dL;
+				Xdata.ErosionAge += EMS[e].depositionDate.getJulian() * -dL;
 				massErode = 0.;
 				forced_massErode = 0.;
 				break;
@@ -354,5 +357,10 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 		Xdata.ErosionMass = 0.;
 	}
 	Sdata.mass[SurfaceFluxes::MS_EROSION_DHS] += Xdata.ErosionLength;
+	if (Xdata.ErosionLength < 0.) {
+		Xdata.ErosionAge /= -Xdata.ErosionLength;
+	} else {
+		Xdata.ErosionAge = Constants::undefined;
+	}
 	return;
 }
