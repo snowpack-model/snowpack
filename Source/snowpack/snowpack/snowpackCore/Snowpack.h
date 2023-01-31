@@ -170,6 +170,7 @@ class Snowpack {
 		bool vw_dendricity;
 		bool enhanced_wind_slab; ///< to use an even stronger wind slab densification than implemented by default
 		std::string snow_erosion;
+		bool redeposit_keep_age;
 		bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)
 		bool ageAlbedo; ///< use the age of snow in the albedo parametrizations? default: true
 		double soot_ppmv; ///< Impurity content in ppmv for albedo calculatoins

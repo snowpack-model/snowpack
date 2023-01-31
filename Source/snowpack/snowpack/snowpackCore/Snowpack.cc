@@ -218,7 +218,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), coupled_phase_changes(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true),
+            enhanced_wind_slab(false), snow_erosion("NONE"), redeposit_keep_age(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true),
             adjust_height_of_wind_value(false), advective_heat(false), heat_begin(0.), heat_end(0.),
             temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(), soil_thermal_conductivity()
 {
@@ -397,6 +397,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
 	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
+	cfg.getValue("REDEPOSIT_KEEP_AGE", "SnowpackAdvanced", redeposit_keep_age);
 
 	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
 	new_snow_bond_size = 0.25 * new_snow_grain_size;
@@ -2092,6 +2093,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
 	const double tmp_Xdata_hn = Xdata.hn;
 	const double tmp_Xdata_rho_hn = Xdata.rho_hn;
+	const mio::Date tmp_MdataDate = Mdata.date;
 	// Deposition mode settings:
 	double tmp_psum = redeposit_mass;
 	force_add_snowfall = true;
@@ -2102,6 +2104,10 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
 	if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
 	Xdata.hn = 0.;
+	if (Xdata.ErosionAge != Constants::undefined && redeposit_keep_age) {
+		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());
+		Mdata.date = EnforcedDepositionDate;
+	}
 	// Add eroded snow:
 	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
 	// Set back original settings:
@@ -2109,6 +2115,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	hn_density = tmp_hn_density;
 	variant = tmp_variant;
 	enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
+	Mdata.date = tmp_MdataDate;
 	// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
 	Xdata.hn_redeposit = Xdata.hn;
 	Xdata.rho_hn_redeposit = Xdata.rho_hn;
