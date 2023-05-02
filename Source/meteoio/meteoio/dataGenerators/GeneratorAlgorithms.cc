@@ -76,9 +76,9 @@ namespace mio {
  * [InputEditing]
  * #calling the parametrizations very early on, just after reading the raw data
  * *::edit1            = CREATE
- * *::arg1::algorithgm = CST
+ * *::arg1::algorithm  = CST
  * *::arg1::param      = TAU_CLD	;create a new TAU_CLD parameter set at constant 0.5
- * *::arg1::param      = 0.5
+ * *::arg1::value      = 0.5
  *
  * [Generators]
  * #calling the parametrizations after everything else happened 

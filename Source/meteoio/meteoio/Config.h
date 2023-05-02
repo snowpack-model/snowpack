@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -368,7 +367,7 @@ class Config {
 			IOUtils::toUpper(section);
 			vecKeys = getKeys(keymatch, section);
 
-			for (const std::string key : vecKeys) {
+			for (const std::string& key : vecKeys) {
 				const std::string full_key = section + "::" + key;
 				T tmp;
 				try {

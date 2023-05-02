@@ -113,7 +113,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 		if (snowdrift) {
 			try { //Snowdrift
 				// This will overwrite VW and DW with data from 3D wind fields
-				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, dw, rh, ta, tsg, calcDate, vecMeteo);
+				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, dw, rh, ta, tsg, vecMeteo);
 				// This will update mns grid in SnowpackInterface
 				snowdrift->Compute(calcDate);
 			} catch (std::exception& e) {

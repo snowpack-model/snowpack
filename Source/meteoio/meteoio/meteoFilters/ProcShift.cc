@@ -105,10 +105,11 @@ void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>
 	} else {
 		const size_t nCorr = corrections.size();
 		if (nCorr==0) return;
-		size_t jj=0; //index for the corrections
-		double offset = 0.;
 		
 		if (offsets_interp==stepwise) {
+			size_t jj=0; //index for the corrections
+			double offset = 0.;
+			
 			for (size_t ii=0; ii<ovec.size(); ii++) {
 				const Date curr_date(ovec[ii].date);
 				

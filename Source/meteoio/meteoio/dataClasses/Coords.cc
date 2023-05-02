@@ -866,14 +866,12 @@ void Coords::distance(const Coords& destination, double& o_distance, double& o_b
 */
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
-	double alpha;
-	double dist;
-
 	if ((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
 		east_out = IOUtils::nodata;
 		north_out = IOUtils::nodata;
 		//throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
 	} else {
+		double alpha, dist;
 		switch(distance_algo) {
 			case GEO_COSINE:
 				dist = CoordsAlgorithms::cosineDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);

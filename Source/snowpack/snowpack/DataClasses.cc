@@ -3124,7 +3124,7 @@ CurrentMeteo::CurrentMeteo()
           iswr(0.), rswr(0.), mAlbedo(0.), diff(0.), dir_h(0.), elev(0.), ea(0.), lw_net(IOUtils::nodata), tss(0.), tss_a12h(0.), tss_a24h(0.), ts0(0.),
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
-          ts(), zv_ts(), conc(SnowStation::number_of_solutes, 0.), rho_hn(0.), rime_hn(0.), lwc_hn(0.),
+          ts(), zv_ts(), conc(SnowStation::number_of_solutes, 0.), rho_hn(0.), rime_hn(0.), lwc_hn(0.), poor_ea(false),
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {}
@@ -3136,7 +3136,7 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
           iswr(0.), rswr(0.), mAlbedo(0.), diff(0.), dir_h(0.), elev(0.), ea(0.), lw_net(IOUtils::nodata), tss(0.), tss_a12h(0.), tss_a24h(0.), ts0(0.),
           psum(0.), psum_ph(IOUtils::nodata), psum_tech(IOUtils::nodata), hs(0.), hs_a3h(0.), hs_rate(0.), geo_heat(IOUtils::nodata), adv_heat(IOUtils::nodata),
           surf_melt(0.), snowdrift(0.), sublim(0.), odc(0.), p(0.),
-          ts(), zv_ts(), conc(SnowStation::number_of_solutes, 0.), rho_hn(0.), rime_hn(0.), lwc_hn(0.),
+          ts(), zv_ts(), conc(SnowStation::number_of_solutes, 0.), rho_hn(0.), rime_hn(0.), lwc_hn(0.), poor_ea(false),
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
@@ -3331,6 +3331,8 @@ std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data)
 
 	os.write(reinterpret_cast<const char*>(&data.rho_hn), sizeof(data.rho_hn));
 	os.write(reinterpret_cast<const char*>(&data.rime_hn), sizeof(data.rime_hn));
+	os.write(reinterpret_cast<const char*>(&data.lwc_hn), sizeof(data.lwc_hn));
+	os.write(reinterpret_cast<const char*>(&data.poor_ea), sizeof(data.poor_ea));
 
 	const size_t s_fixedPositions = data.fixedPositions.size();
 	os.write(reinterpret_cast<const char*>(&s_fixedPositions), sizeof(size_t));
@@ -3402,7 +3404,9 @@ std::istream& operator>>(std::istream& is, CurrentMeteo& data)
 
 	is.read(reinterpret_cast<char*>(&data.rho_hn), sizeof(data.rho_hn));
 	is.read(reinterpret_cast<char*>(&data.rime_hn), sizeof(data.rime_hn));
-
+	is.read(reinterpret_cast<char*>(&data.lwc_hn), sizeof(data.lwc_hn));
+	is.read(reinterpret_cast<char*>(&data.poor_ea), sizeof(data.poor_ea));
+	
 	size_t s_fixedPositions;
 	is.read(reinterpret_cast<char*>(&s_fixedPositions), sizeof(size_t));
 	data.fixedPositions.resize(s_fixedPositions);

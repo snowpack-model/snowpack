@@ -384,12 +384,9 @@ void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr
 	IOUtils::readLineToVec(mdata, tmpvec, ',');
 }
 
-void GeotopIO::readMetaData(const std::string& metafile) {
-	//vector indexes correspond to meteo data
-	size_t x = 0, y = 1, lat = 2, lon = 3, elv = 4;
-
+void GeotopIO::readMetaData(const std::string& metafile)
+{
 	std::vector<std::string> tmpvec;
-	unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered
 
 	if (!FileUtils::validFileAndPath(metafile)) throw InvalidNameException(metafile, AT);
 	if (!FileUtils::fileExists(metafile)) throw NotFoundException(metafile, AT);
@@ -401,13 +398,11 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 	}
 
 	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-
 	std::vector<std::string> vecX, vecY, vecLat, vecLon, vecAlt;
-
-	size_t meta_counter = 0;
 
 	try {
 		std::string line;
+		size_t meta_counter = 0;
 		Coords coordinate(coordin, coordinparam);
 		while (!fin.eof()) {
 			getline(fin, line, eoln); //read complete line of data
@@ -472,6 +467,9 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 		if ((vecX.size() != vecY.size()) || (vecY.size() != vecLat.size()) || (vecLat.size() != vecLon.size()) || (vecLon.size() != vecAlt.size()))
 			throw InvalidFormatException("Your GEOtop METAFILE " + metafile + " does not contain a consistent number of meta data fields", AT);
 
+		//vector indexes correspond to meteo data
+		static const size_t x = 0, y = 1, lat = 2, lon = 3, elv = 4;
+		unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered
 		for (size_t i = 0; i < vecX.size(); i++) {
 			std::vector<double> tmpdata = std::vector<double>(5);
 

@@ -248,20 +248,41 @@
  * METEOPATH  = ../input/meteo
  * STATION1   = WFJ2
  *
- * PSUM_S::MOVE = MS_Snow
- * PSUM_L::MOVE = MS_Rain
- * HS::MOVE    = HS_meas	;so we can still compare measured vs modelled snow height
- * TSG::MOVE   = T_bottom	;so we can compare the ground temperatures
- * TSS::MOVE   = TSS_meas	;so we can compare the surface temperatures
- *
- * WFJ2::KEEP = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
- *
- * PSUM_PH::create     = PRECSPLITTING
- * PSUM_PH::PRECSPLITTING::type   = THRESH
- * PSUM_PH::PRECSPLITTING::snow   = 274.35
- * PSUM::create     = PRECSPLITTING
- * PSUM::PRECSPLITTING::type   = THRESH
- * PSUM::PRECSPLITTING::snow   = 274.35
+ * [InputEditing]
+ * *::EDIT1 = MOVE
+ * *::ARG1::DEST = PSUM_S
+ * *::ARG1::SRC = MS_Snow
+ * 
+ * *::EDIT2 = MOVE
+ * *::ARG2::DEST = PSUM_L
+ * *::ARG2::SRC = MS_Rain
+ * 
+ * *::EDIT3 = MOVE              ;so we can still compare measured vs modelled snow height
+ * *::ARG3::DEST = HS
+ * *::ARG3::SRC = HS_meas
+ * 
+ * *::EDIT4 = MOVE              ;so we can compare the ground temperatures
+ * *::ARG4::DEST = TSG
+ * *::ARG4::SRC = T_bottom
+ * 
+ * *::EDIT5 = MOVE              ;so we can compare the surface temperatures
+ * *::ARG5::DEST = TSS
+ * *::ARG5::SRC = TSS_meas
+ * 
+ * *::EDIT6 = KEEP
+ * *::ARG6::PARAMS = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH    ;so we do not keep all kind of unnecessary parameters
+ * 
+ * *::EDIT7 = CREATE
+ * *::ARG7::PARAM = PSUM_PH
+ * *::ARG7::ALGORITHM = PRECSPLITTING
+ * *::ARG7::TYPE = THRESH
+ * *::ARG7::SNOW = 274.35
+ * 
+ * *::EDIT8 = CREATE
+ * *::ARG8::PARAM = PSUM
+ * *::ARG8::ALGORITHM = PRECSPLITTING
+ * *::ARG8::TYPE = THRESH
+ * *::ARG8::SNOW = 274.35
  *
  * [SNOWPACK]
  * ENFORCE_MEASURED_SNOW_HEIGHTS = FALSE
@@ -476,7 +497,7 @@
  *
  * There are two possibilities for assigning these files to each cell of the simulation domain (see \subpage reading_snow_files "reading snow files"):
  *     - by land cover classes. In this case, every cell receives an initial soil/snow profile based on its land cover class. The files must be named as <i>{LAND_USE_CLASS}_{EXPERIMENT_NAME}.{ext}</i>;
- *     - independently for each (i,j) pixel. In this case, the files must be named as <i>{i_index}_{j_index}_{EXPERIMENT_NAME}.{ext}</i>;
+ *     - independently for each (i,j) pixel (*i* being in the *x* direction and *j* in the *y* direction, referenced by the lower left corner). In this case, the files must be named as <i>{i_index}_{j_index}_{EXPERIMENT_NAME}.{ext}</i>;
  *
  * @note In any case, you MUST set the key "EXPERIMENT_NAME" in the [Output] section.
  *

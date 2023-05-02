@@ -203,7 +203,7 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 	const size_t nrElems = IOUtils::readLineToVec(args, vecString, ',');
 	
 	for (size_t ii=0; ii<nrElems; ii++) {
-		size_t l1, l2;
+		size_t l1;
 		const size_t delim_pos = vecString[ii].find("-");
 		if (delim_pos==std::string::npos) {
 			const std::string arg1( vecString[ii] );
@@ -211,6 +211,7 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
 			lines_specs.push_back( LinesRange(l1, l1) );
 		} else {
+			size_t l2;
 			const std::string arg1( vecString[ii].substr(0, delim_pos) );
 			const std::string arg2( vecString[ii].substr(delim_pos+1) );
 			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))

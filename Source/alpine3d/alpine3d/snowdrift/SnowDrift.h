@@ -91,7 +91,7 @@ class SnowDriftA3D {
 		void setMeteo (const unsigned int& steps, const mio::Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph,
                    const mio::Grid2DObject& new_p, mio::Grid2DObject& vw, mio::Grid2DObject& dw,
                    const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_tsg,
-                   const mio::Date& calcDate, const std::vector<mio::MeteoData>& vecMeteo);
+                   const std::vector<mio::MeteoData>& vecMeteo);
 
 		void GetTResults(double  outtime_v[15], double outtime_tau[15], double outtime_salt[15], double outtime_diff[15]);
 

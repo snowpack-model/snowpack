@@ -1387,7 +1387,7 @@ std::vector< std::pair<size_t, std::string> > ncFiles::getTSParameters() const
 			}
 		}
 
-		if (has_time && (station_dim==IOUtils::inodata || (station_dim!=IOUtils::inodata && has_station))) {
+		if (has_time && (station_dim==IOUtils::inodata || has_station)) {
 			results.push_back( std::make_pair(it->first, ncpp::getParameterName( it->first )) );
 		}
 	}
@@ -1403,7 +1403,7 @@ std::vector< std::pair<size_t, std::string> > ncFiles::getTSParameters() const
 			}
 		}
 
-		if (has_time && (station_dim==IOUtils::inodata || (station_dim!=IOUtils::inodata && has_station))) {
+		if (has_time && (station_dim==IOUtils::inodata || has_station)) {
 			results.push_back( std::make_pair(IOUtils::npos, it->second.attributes.name) );
 		}
 	}
@@ -2136,7 +2136,7 @@ std::vector<std::string> ncFiles::read_1Dstringvariable(const size_t& param) con
 
 	std::vector<std::string> results(length);
 	for (size_t ii=0; ii<length; ii++)
-		results[ii] = std::string( &data[ii*strMaxLen] ); //this way the string ends at the first \0 char
+		results[ii] = std::string( &data[ii*strMaxLen], strMaxLen );
 	
 	free( data );
 	return results;

@@ -416,11 +416,18 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	Mdata.iswr   = md(MeteoData::ISWR);
 	Mdata.rswr   = md(MeteoData::RSWR);
 
+	//if ea was parametrized in SnLaws::AirEmissivity without either TAU_CLD or ISWR, it is of bad quality
+	Mdata.ea  = md("EA");
+	if (md(MeteoData::ILWR)!=IOUtils::nodata || md(MeteoData::TAU_CLD)!=IOUtils::nodata || md(MeteoData::ISWR)!=IOUtils::nodata) {
+		Mdata.poor_ea = false;
+	} else {
+		Mdata.poor_ea = true;
+	}
 	if (md.param_exists("NET_LW")) {
 		Mdata.ea = 1.;
+		Mdata.poor_ea = false;
 		Mdata.lw_net = md("NET_LW");
 	} else {
-		Mdata.ea = md("EA");
 		Mdata.lw_net = IOUtils::nodata;
 	}
 	Mdata.tss = md(MeteoData::TSS);
@@ -550,7 +557,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
                             SunObject &sun,
                             double& precip, const double& lw_in, const double hs_a3hl6,
                             double& tot_mass_in,
-                            const std::string& variant, const bool& iswr_is_net)
+                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo)
 {
 	SnowStation &currentSector = vecXdata[slope.sector]; //alias: the current station
 	const bool isMainStation = (slope.sector == slope.mainStation);
@@ -559,8 +566,6 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 	if (Mdata.tss == mio::IOUtils::nodata) {
 		cfg.addKey("MEAS_TSS", "Snowpack", "false");
 	}
-
-	Meteo meteo(cfg);
 
 	// Reset Surface and Canopy Data to zero if you seek current values
 	const bool avgsum_time_series = cfg.get("AVGSUM_TIME_SERIES", "Output");
@@ -1014,6 +1019,7 @@ inline void real_main (int argc, char *argv[])
 	parseCmdLine(argc, argv, begin_date_str, end_date_str);
 	SnowpackConfig cfg(cfgfile);
 	addSpecialKeys(cfg);
+	Meteo meteo(cfg);
 
 	mio::Timer meteoRead_timer;
 	mio::Timer run_timer;
@@ -1229,7 +1235,7 @@ inline void real_main (int argc, char *argv[])
 				slope.setSlope(slope_sequence, vecXdata, Mdata.dw_drift);
 				dataForCurrentTimeStep(Mdata, surfFluxes, vecXdata, slope, tmpcfg,
                                        sun, cumsum.precip, lw_in, hs_a3hl6,
-                                       tot_mass_in, variant, iswr_is_net);
+                                       tot_mass_in, variant, iswr_is_net, meteo);
 
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;

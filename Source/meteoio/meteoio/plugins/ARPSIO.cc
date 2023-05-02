@@ -148,7 +148,7 @@ void ARPSIO::listFields(const std::string& i_name)
 	const std::string dem_marker = (is_true_arps)? "zp coordinat" : "zp_coordinat";
 	moveToMarker(fin, filename, dem_marker);
 	
-	char dummy[ARPS_MAX_LINE_LENGTH];
+	char dummy[ARPS_MAX_LINE_LENGTH+1];
 	int nb_elems = 0;
 	do {
 		nb_elems = fscanf(fin," %" XSTR(ARPS_MAX_LINE_LENGTH) "[^\t\n] ",dummy);
@@ -526,7 +526,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 			if (readPts==1) {
 				grid(ix,iy) = tmp;
 			} else {
-				char dummy[ARPS_MAX_LINE_LENGTH];
+				char dummy[ARPS_MAX_LINE_LENGTH+1];
 				const int status = fscanf(fin,"%" XSTR(ARPS_MAX_LINE_LENGTH) "s",dummy);
 				fclose(fin);
 				std::string msg( "Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"'" );
@@ -540,7 +540,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 
 void ARPSIO::moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker)
 {
-	char dummy[ARPS_MAX_LINE_LENGTH];
+	char dummy[ARPS_MAX_LINE_LENGTH+1];
 	do {
 		const int nb_elems = fscanf(fin," %" XSTR(ARPS_MAX_LINE_LENGTH) "[^\t\n] ",dummy);
 		if (nb_elems==0) {

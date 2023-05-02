@@ -392,8 +392,6 @@ EditingAutoMerge::EditingAutoMerge(const std::string& i_stationID, const std::ve
 
 void EditingAutoMerge::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
-
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );

@@ -41,7 +41,7 @@ EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config&
 		const size_t offset = startx + thread_startx;
 		std::cout << "[i] EnergyBalance worker " << ii << " on process " << instance.rank() << " will start at offset " <<
 		offset << " with nx " << thread_nx << "\n";
-		radfields.push_back(RadiationField(cfg_in, dem_in, offset, thread_nx));
+		radfields.push_back(RadiationField(dem_in, offset, thread_nx));
 	}
 
 	if (instance.master()) std::cout << "[i] EnergyBalance initialized a total of " << instance.size() <<

@@ -23,7 +23,7 @@
 class RadiationField {
 	public:
 		RadiationField();
-		RadiationField(const mio::Config& cfg_in, const mio::DEMObject& in_dem, const size_t& in_startx, const size_t& in_nx);
+		RadiationField(const mio::DEMObject& in_dem, const size_t& in_startx, const size_t& in_nx);
 
 		void setDEM(const mio::DEMObject& in_dem);
 		void setDEM(const mio::DEMObject& in_dem, const size_t& in_startx, const size_t& in_nx);

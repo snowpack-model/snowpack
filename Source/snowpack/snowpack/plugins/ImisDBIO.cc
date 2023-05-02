@@ -128,7 +128,7 @@ bool ImisDBIO::snowCoverExists(const std::string& /*i_snowfile*/, const std::str
 }
 
 void ImisDBIO::readSnowCover(const std::string& /*i_snowfile*/, const std::string& /*stationID*/,
-                             SN_SNOWSOIL_DATA& /*SSdata*/, ZwischenData& /*Zdata*/)
+                             SN_SNOWSOIL_DATA& /*SSdata*/, ZwischenData& /*Zdata*/, const bool& read_salinity)
 {
 	throw IOException("Nothing implemented here!", AT);
 }

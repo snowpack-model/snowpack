@@ -51,7 +51,9 @@ double IDWSlopesAlgorithm::getQualityRating(const Date& i_date)
 	date = i_date;
 	tsmanager.getMeteoData(date, vecMeteo);
 	
-	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (!vecMeteo[ii].param_exists(param)) continue;
+		
 		const double val = vecMeteo[ii](param);
 		if (val==IOUtils::nodata) continue;
 
