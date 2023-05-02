@@ -78,6 +78,7 @@ class SnowpackInterfaceWorker
 
 	public:
 		std::vector<std::pair<size_t,size_t> > SnowStationsCoord;
+
 	private:
 		SnowpackConfig sn_cfg; // created on element
 		Snowpack sn;

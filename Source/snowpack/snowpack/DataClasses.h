@@ -147,6 +147,8 @@ class CurrentMeteo {
 		double rime_hn;            ///< riming index of new snow
 		double lwc_hn;             ///< liquid water content of new snow
 #endif
+		
+		bool poor_ea;              ///< when ilwr has not been measured nor parametrized in good conditions, it could be redone later on
 
 	private:
 		size_t getNumberMeasTemperatures(const mio::MeteoData& md);

@@ -83,7 +83,7 @@ void FilterRate::parse_args(const std::vector< std::pair<std::string, std::strin
 	}
 
 	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
-	if (has_max && !has_min) min_rate_of_change = -max_rate_of_change;
+	if (!has_min) min_rate_of_change = -max_rate_of_change;
 }
 
 }

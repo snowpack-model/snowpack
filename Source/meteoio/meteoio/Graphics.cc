@@ -100,14 +100,14 @@ void Legend::simpleLegend(const unsigned int &height, const double &minimum, con
 void Legend::smartLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
 	const double range = maximum-minimum;
-	double min_norm=minimum, max_norm=maximum, decade_mult;
+	double min_norm=minimum, decade_mult;
 	unsigned int step_norm, nb_labels_norm;
 
 	if (range>0.) {
 		const double decade = floor(log10(range));
 		decade_mult = pow(10., decade);
 		min_norm = floor(minimum/decade_mult*10.)/10.; //between 0 & 10
-		max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
+		double max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
 		const double range_norm = max_norm-min_norm; //between 0 & 10
 		const double step = range_norm/nb_labels; //between 0 & 10 / number of labels -> between 0 & 1
 

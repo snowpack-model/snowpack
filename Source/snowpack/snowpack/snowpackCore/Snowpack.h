@@ -58,7 +58,7 @@ class Snowpack {
 		~Snowpack();					///< Class destructor
 #endif
 
-		void runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
+		void runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                      BoundCond& Bdata, SurfaceFluxes& Sdata);
 
 		/**

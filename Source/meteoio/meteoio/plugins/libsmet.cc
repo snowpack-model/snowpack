@@ -204,15 +204,8 @@ void SMETCommon::trim(std::string& str)
 bool SMETCommon::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
                                   std::map<std::string,std::string>& out_map)
 {
-	//size_t pos = in_line.find(delimiter); //first occurence of '='
-
-	size_t pos = std::string::npos;
-	if ((delimiter==" ") || (delimiter=="\t")) {
-		pos = in_line.find_first_of(" \t", 0);
-	} else {
-		pos = in_line.find(delimiter); //first occurence of '='
-	}
-
+	const bool delim_is_ws = (delimiter==" ") || (delimiter=="\t");
+	const size_t pos = (delim_is_ws)? in_line.find_first_of(" \t", 0) : in_line.find(delimiter);
 
 	if (pos != std::string::npos) { //ignore in_lines that are empty or without '='
 		std::string key = in_line.substr(0, pos);

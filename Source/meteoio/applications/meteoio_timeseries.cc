@@ -179,7 +179,7 @@ inline void Usage(const std::string& programname)
 		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
 		<< "\t[-d, --duration=<in days>] (e.g.: 30)\n"
 		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
-		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (e.g. 60)\n"
+		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (default: 60)\n"
 		<< "\t[-o, --output-buffer=<output buffer size in number of timesteps>] (e.g. 24, requires APPEND mode enabled in output plugin)\n"
 		<< "\t[-p, --progress] Show progress\n"
 		<< "\t[-t, --timeout] Kill the process after that many seconds if still running\n"
@@ -221,58 +221,59 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 
 	const struct option long_options[] =
 	{
-		{"begindate", required_argument, nullptr, 'b'},
-		{"enddate", required_argument, nullptr, 'e'},
-		{"duration", required_argument, nullptr, 'd'},
-		{"config", required_argument, nullptr, 'c'},
-		{"sampling-rate", required_argument, nullptr, 's'},
-		{"output-buffer", required_argument, nullptr, 'o'},
-		{"progress", no_argument, nullptr, 'p'},
-		{"timeout", no_argument, nullptr, 't'},
-		{"version", no_argument, nullptr, 'v'},
-		{"help", no_argument, nullptr, 'h'},
+		{"begindate", required_argument, nullptr, 0},
+		{"enddate", required_argument, nullptr, 0},
+		{"duration", required_argument, nullptr, 0},
+		{"config", required_argument, nullptr, 0},
+		{"sampling-rate", required_argument, nullptr, 0},
+		{"output-buffer", required_argument, nullptr, 0},
+		{"progress", no_argument, nullptr, 0},
+		{"timeout", no_argument, nullptr, 0},
+		{"version", no_argument, nullptr, 0},
+		{"help", no_argument, nullptr, 0},
 		{nullptr, 0, nullptr, 0}
 	};
 
-	while ((opt=getopt_long( argc, argv, ":b:e:d:c:s:o:t:pvh", long_options, &longindex)) != -1) {
+	while ((opt=getopt_long( argc, argv, "b:e:d:c:s:o:t:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 0:
 			break;
-		case 'b': {
+		case 'b':
 			begin_date_str = std::string(optarg); //we don't know yet the time zone, conversion will be done later
 			setStart = true;
 			break;
-		}
-		case 'e': {
+		case 'e':
 			end_date_str = std::string(optarg); //we don't know yet the time zone, conversion will be done later
 			setEnd = true;
 			break;
-		}
-		case 'd': {
-			mio::IOUtils::convertString(duration, std::string(optarg));
+		case 'd':
+			if (!mio::IOUtils::convertString(duration, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the duration argument '"+std::string(optarg)+"'", AT);
 			setDuration = true;
 			break;
-		}
 		case 'c':
 			cfgfile = std::string(optarg);
 			break;
 		case 's':
-			mio::IOUtils::convertString(samplingRate, std::string(optarg));
+			if (!mio::IOUtils::convertString(samplingRate, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the sampling rate argument '"+std::string(optarg)+"'", AT);
 			break;
 		case 'o':
-			mio::IOUtils::convertString(outputBufferSize, std::string(optarg));
+			if (!mio::IOUtils::convertString(outputBufferSize, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the output-buffer argument '"+std::string(optarg)+"'", AT);
 			break;
-		case ':': //operand missing
+		case ':': //operand missing, but it seems that this check does not work properly
 			std::cerr << std::endl << "[E] Command line option '-" << char(opt) << "' requires an operand\n";
 			Usage(std::string(argv[0]));
 			exit(1);
-		case 'p':
+		case 'p': 
 			showProgress = true;
 			break;
-		case 't':
-			mio::IOUtils::convertString(timeout_secs, std::string(optarg));
+		case 't': 
+			if (!mio::IOUtils::convertString(timeout_secs, std::string(optarg)))
+				throw ConversionFailedException("Could not parse the timeout argument '"+std::string(optarg)+"'", AT);
 			break;
-		case 'v':
+		case 'v': 
 			Version();
 			exit(0);
 		case 'h':
@@ -312,6 +313,8 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 	if (samplingRate==IOUtils::nodata)
 		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
 	samplingRate /= 24.*60; //convert to sampling rate in days
+	if (samplingRate<=0)
+		throw InvalidArgumentException("The sampling rate argument must be > 0! (check both on the command line and as configuration key)", AT);
 }
 
 static void signal_handler( int signal_num ) 
@@ -323,8 +326,7 @@ static void signals_catching(void)
 {
 #ifdef _WIN32
 	typedef void(*SignalHandlerPointer)(int);
-	SignalHandlerPointer previousHandler;
-	previousHandler = signal(SIGTERM, signal_handler);
+	SignalHandlerPointer previousHandler = signal(SIGTERM, signal_handler);
 #else
 	struct sigaction catch_signal;
 	catch_signal.sa_handler = signal_handler;
@@ -340,9 +342,9 @@ static void validMeteoData(const std::vector<std::string>& enforce_variables, co
 {
 	const std::string msg_head( "[DATA_QA] Missing "+md.meta.getStationID()+"::" );
 
-	for (size_t ii=0; ii<enforce_variables.size(); ii++) {
-		if (md(enforce_variables[ii]) == mio::IOUtils::nodata)
-			std::cout << msg_head << enforce_variables[ii] << " " << md.date.toString(mio::Date::ISO) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
+	for (const std::string& var : enforce_variables) {
+		if (md(var) == mio::IOUtils::nodata)
+			std::cout << msg_head << var << " " << md.date.toString(mio::Date::ISO) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
 	}
 }
 
@@ -376,11 +378,11 @@ static void real_main(int argc, char* argv[])
 		count++;
 		io.getMeteoData(d, Meteo); //read 1 timestep at once, forcing resampling to the timestep
 		
-		for (size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
-			if (data_qa) validMeteoData( enforce_variables, Meteo[ii] ); //check that we have everything we need
-			if (Meteo[ii].isNodata()) continue;
+		for (const MeteoData& md : Meteo) {
+			if (data_qa) validMeteoData( enforce_variables, md ); //check that we have everything we need
+			if (md.isNodata()) continue;
 			
-			const std::string stationID( Meteo[ii].meta.stationID );
+			const std::string stationID( md.meta.stationID );
 			if (mapIDs.count( stationID )==0) { //if this is the first time we encounter this station, save where it should be inserted
 				mapIDs[ stationID ] = insert_position++;
 				vecMeteo.push_back( std::vector<MeteoData>() ); //allocating the new station
@@ -388,16 +390,16 @@ static void real_main(int argc, char* argv[])
 				const size_t nr_samples_buffered = (outputBufferSize > 0) ? (outputBufferSize) : (nr_samples);
 				vecMeteo[ mapIDs[stationID] ].reserve( std::min(nr_samples, nr_samples_buffered) ); //to avoid memory re-allocations with push_back()
 			}
-			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
+			vecMeteo[ mapIDs[stationID] ].push_back(md); //fill the data manually into the vector of vectors
 		}
 		
 		if (outputBufferSize > 0 && count%outputBufferSize == 0) {	// Check for buffered output
 			std::cout << "Writing output data and clearing buffer" << std::endl;
 			//handle extra parameters changing over time
-			for(size_t ii=0; ii<vecMeteo.size(); ii++) MeteoData::unifyMeteoData( vecMeteo[ii] );
+			for (auto& station_data : vecMeteo) MeteoData::unifyMeteoData( station_data );
 			io.writeMeteoData(vecMeteo);
-			for(size_t ii=0; ii<Meteo.size(); ii++) { //loop over all stations
-				const std::string stationID( Meteo[ii].meta.stationID );
+			for (const MeteoData& md : Meteo) {
+				const std::string stationID( md.meta.stationID );
 				vecMeteo[ mapIDs[stationID] ].clear();
 			}
 		}

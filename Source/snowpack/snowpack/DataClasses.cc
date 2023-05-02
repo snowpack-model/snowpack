@@ -3255,6 +3255,7 @@ CurrentMeteo::CurrentMeteo()
 #ifndef SNOWPACK_CORE
           rime_hn(0.), lwc_hn(0.),
 #endif
+          poor_ea(false),
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {}
@@ -3270,6 +3271,7 @@ CurrentMeteo::CurrentMeteo(const SnowpackConfig& cfg)
 #ifndef SNOWPACK_CORE
           rime_hn(0.), lwc_hn(0.),
 #endif
+          poor_ea(false),
           fixedPositions(), minDepthSubsurf(), maxNumberMeasTemperatures(),
           numberMeasTemperatures(mio::IOUtils::unodata), numberFixedRates()
 {
@@ -3465,7 +3467,9 @@ std::ostream& operator<<(std::ostream& os, const CurrentMeteo& data)
 	os.write(reinterpret_cast<const char*>(&data.rho_hn), sizeof(data.rho_hn));
 #ifndef SNOWPACK_CORE
 	os.write(reinterpret_cast<const char*>(&data.rime_hn), sizeof(data.rime_hn));
+	os.write(reinterpret_cast<const char*>(&data.lwc_hn), sizeof(data.lwc_hn));
 #endif
+	os.write(reinterpret_cast<const char*>(&data.poor_ea), sizeof(data.poor_ea));
 
 	const size_t s_fixedPositions = data.fixedPositions.size();
 	os.write(reinterpret_cast<const char*>(&s_fixedPositions), sizeof(size_t));
@@ -3538,8 +3542,10 @@ std::istream& operator>>(std::istream& is, CurrentMeteo& data)
 	is.read(reinterpret_cast<char*>(&data.rho_hn), sizeof(data.rho_hn));
 #ifndef SNOWPACK_CORE
 	is.read(reinterpret_cast<char*>(&data.rime_hn), sizeof(data.rime_hn));
+	is.read(reinterpret_cast<char*>(&data.lwc_hn), sizeof(data.lwc_hn));
 #endif
-
+	is.read(reinterpret_cast<char*>(&data.poor_ea), sizeof(data.poor_ea));
+	
 	size_t s_fixedPositions;
 	is.read(reinterpret_cast<char*>(&s_fixedPositions), sizeof(size_t));
 	data.fixedPositions.resize(s_fixedPositions);

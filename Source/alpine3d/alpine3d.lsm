@@ -6,9 +6,9 @@ Description:    Spatially distributed, three dimensional model of snow-dominated
 Keywords:       alpine meteorology, catchment, energy balance, snow
 Author:         bavay@slf.ch (Mathias Bavay)
 Maintained-by:  bavay@slf.ch (Mathias Bavay)
-Primary-site:   http://models.slf.ch p/alpine3d/downloads/362/get/
+Primary-site:   https://code.wsl.ch/snow-models/alpine3d/-/releases
                 10.41 M Alpine3D-3.2.0-src.tar.gz
-Home-page:      http://models.slf.ch/p/meteoio
+Home-page:      https://alpine3d.slf.ch
 Platforms:      Linux and other Unices, Windows, OsX
 Copying-policy: GNU Lesser Public License version 3
 End

@@ -266,7 +266,7 @@ inline void setStaticData(const Config &cfg, IOManager& io, DEMObject &dem, Grid
 	MPIControl::instance().broadcast(vec_pts);
 }
 
-inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, const Grid2DObject &landuse, const std::vector<Coords> &vec_pts, SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack)
+inline void setModules(const Config &cfg, const DEMObject &dem, const Grid2DObject &landuse, const std::vector<Coords> &vec_pts, SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack)
 {
 	const bool isMaster = MPIControl::instance().master(); // Check if this process is the master (always true for non-parallel mode)
 
@@ -403,7 +403,7 @@ inline void real_main(int argc, char **argv)
 		//setStaticData(cfg, io, dem, landuse, vec_pts);
 		//FELIX:
 		setStaticData(cfg, io, dem, landuse, vec_pts);
-		setModules(cfg, io, dem, landuse, vec_pts, drift, eb, snowpack);
+		setModules(cfg, dem, landuse, vec_pts, drift, eb, snowpack);
 		AlpineControl control(snowpack, drift, eb, cfg, dem);
 		control.Run(startdate, steps);
 	} catch (std::exception& e) {

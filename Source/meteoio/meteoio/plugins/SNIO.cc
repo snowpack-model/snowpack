@@ -482,23 +482,21 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md(MeteoData::RSWR) = tmpdata[ii++];
 	else
 		md(MeteoData::RSWR) = IOUtils::nodata;
-
-	double& ea = tmpdata[ii++];
-	if ((ea <= 1) && (ea != plugin_nodata)){
-		if ((md(MeteoData::TA) != plugin_nodata) && (md(MeteoData::RH) != plugin_nodata)) {
-			if (ea==0.)
-				ea = Atmosphere::Brutsaert_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)));
-			else
-				ea = Atmosphere::Omstedt_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)), ea); //calculate ILWR from cloudiness
+	
+	//read either EA or ILWR
+	const double tmp = tmpdata[ii++];
+	if (tmp>0) {
+		if (tmp<=1) {
+			md.addParameter("EA");
+			md("EA") = tmp;
 		} else {
-			ea = plugin_nodata;
+			md(MeteoData::ILWR) = tmp;
 		}
 	}
-
-	md(MeteoData::ILWR) = ea;
+	
 	md(MeteoData::TSS)  = tmpdata[ii++];
 	md(MeteoData::TSG)  = tmpdata[ii++];
-	md(MeteoData::PSUM)  = tmpdata[ii++];
+	md(MeteoData::PSUM) = tmpdata[ii++];
 	md(MeteoData::HS)   = tmpdata[ii++]; // nr_meteoData
 
 	// Read optional values

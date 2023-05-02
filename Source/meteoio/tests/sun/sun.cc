@@ -114,9 +114,9 @@ int main()
 	std::ofstream ofs(f_output.c_str(), ofstream::out | ofstream::trunc);
 
 	printHeader(ofs);
-	for (list<mio::Date>::iterator it_date = date.begin(); it_date != date.end(); it_date++) {
+	for (list<mio::Date>::iterator it_date = date.begin(); it_date != date.end(); ++it_date) {
 		std::cout << " -- read information for date : " << (*it_date).toString(Date::ISO) << "\n -- Processing reference iswr [";
-		for (list<double>::iterator it_iswr = iswr.begin(); it_iswr != iswr.end(); it_iswr++) {
+		for (list<double>::iterator it_iswr = iswr.begin(); it_iswr != iswr.end(); ++it_iswr) {
 			cout << " " << *it_iswr;
 			if(!writeSun24h(ofs, *it_date, *it_iswr)){
 				exit(1);

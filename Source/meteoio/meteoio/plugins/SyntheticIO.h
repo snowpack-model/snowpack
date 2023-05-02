@@ -81,7 +81,7 @@ class SynthIO : public IOInterface {
 class CST_Synth : public Synthesizer {
 	public:
 		CST_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		virtual double generate(const Date& dt) const;
+		virtual double generate(const Date& dt) const override;
 	private:
 		double value;
 };
@@ -89,7 +89,7 @@ class CST_Synth : public Synthesizer {
 class STEP_Synth : public Synthesizer {
 	public:
 		STEP_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
-		virtual double generate(const Date& dt) const;
+		virtual double generate(const Date& dt) const override;
 	private:
 		Date dt_step;
 		double value_before, value_after;
@@ -98,7 +98,7 @@ class STEP_Synth : public Synthesizer {
 class RECT_Synth : public Synthesizer {
 	public:
 		RECT_Synth(const std::string& station, const std::string& parname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const double& TZ);
-		virtual double generate(const Date& dt) const;
+		virtual double generate(const Date& dt) const override;
 	private:
 		Date step_start, step_stop;
 		double value, value_step;
@@ -107,7 +107,7 @@ class RECT_Synth : public Synthesizer {
 class STDPRESS_Synth : public Synthesizer {
 	public:
 		STDPRESS_Synth(const StationData& sd);
-		virtual double generate(const Date& dt) const;
+		virtual double generate(const Date& dt) const override;
 	private:
 		double altitude;
 };

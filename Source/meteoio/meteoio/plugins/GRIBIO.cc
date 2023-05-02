@@ -744,7 +744,7 @@ void GRIBIO::scanMeteoPath()
 		const std::pair<Date,std::string> tmp(date, filename);
 
 		cache_meteo_files.push_back(tmp);
-		it++;
+		++it;
 	}
 }
 

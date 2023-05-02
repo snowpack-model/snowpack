@@ -6,7 +6,7 @@ Description:    Meteorological data preprocessing library: it covers data retrie
 Keywords:       meteorological data access filtering spatial interpolation
 Author:         bavay@slf.ch (Mathias Bavay)
 Maintained-by:  bavay@slf.ch (Mathias Bavay)
-Primary-site:   http://models.slf.ch p/meteoio/downloads/349/get/
+Primary-site:   https://code.wsl.ch/snow-models/meteoio/-/releases/MeteoIO-2.9.0
                 5.74 M MeteoIO-2.9.0-src.tar.gz
 Platforms:      Linux and other Unices, Windows, OsX
 Copying-policy: GNU Lesser Public License version 3

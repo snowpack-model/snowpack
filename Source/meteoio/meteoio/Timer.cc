@@ -201,7 +201,7 @@ void UsageTimer::getElapsedTimes()
 
 #ifdef _WIN32
 /* function called when the timer expires */
-void CALLBACK TimerProc(void* parameters, BOOLEAN timerCalled)
+void CALLBACK TimerProc(void* /*parameters*/, BOOLEAN /*timerCalled*/)
 {
 	std::cerr << "Timeout: aborting after receiving signal SIGALRM" << std::endl;
 	exit( EXIT_FAILURE );
@@ -210,7 +210,7 @@ void CALLBACK TimerProc(void* parameters, BOOLEAN timerCalled)
 WatchDog::WatchDog(const unsigned int& seconds)
 {
 	HANDLE m_hTimer = NULL;
-	const bool success = CreateTimerQueueTimer(&m_hTimer, NULL, TimerProc, this, seconds*1000, 0, WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE);
+	CreateTimerQueueTimer(&m_hTimer, NULL, TimerProc, this, seconds*1000, 0, WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE);
 }
 #else
 /* function called when a SIGALRM signal is caught */

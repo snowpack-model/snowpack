@@ -517,7 +517,7 @@ std::vector< std::pair<std::string, std::string> > Config::parseArgs(const std::
 {
 	//read the arguments and clean them up (ie get all key/values matching {cmd_id}::{arg_pattern}#:: and remove this prefix)
 	std::ostringstream arg_str;
-	arg_str << cmd_id << arg_pattern << cmd_nr;
+	arg_str << cmd_id << arg_pattern << cmd_nr << "::";
 	std::vector< std::pair<std::string, std::string> > vecArgs( getValues(arg_str.str(), section) );
 	for (auto& arg : vecArgs) {
 		const size_t beg_arg_name = arg.first.find_first_not_of(":", arg_str.str().length());
@@ -564,13 +564,13 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 			if (status) //the variable could be fully expanded
 				deferred_vars.erase( it++ );
 			else
-				it++;
+				++it;
 		}
 		const size_t new_deferred_count = deferred_vars.size();
 		if (new_deferred_count==deferred_count) {
 			std::string msg("In file "+filename+", the following keys could not be resolved (circular dependency? invalid variable name? syntax error?):");
-			for (std::set<std::string>::iterator it = deferred_vars.begin(); it!=deferred_vars.end(); ++it)
-				msg.append( " "+*it );
+			for (const std::string& var : deferred_vars) 
+				msg.append( " "+var );
 			throw InvalidArgumentException(msg, AT);
 		}
 		deferred_count = new_deferred_count;
@@ -627,16 +627,19 @@ void ConfigParser::parseFile(const std::string& filename)
 
 bool ConfigParser::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
 {
-	if (line[0] == '[') {
-		const size_t endpos = line.find_last_of(']');
-		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
+	static const std::regex section_regex("^\\[((?:\\w|\\-)+)\\].*$"); //valid chars for section: letters, numbers, _ and -
+	std::smatch section_matches;
+	
+	if (std::regex_match(line, section_matches, section_regex)) {
+		static const std::regex sectionValidation_regex("^\\[((?:\\w|\\-)+)\\]\\s*((;|#).*)*$"); //valid chars for section: letters, numbers, _ and -. Any number of whitespaces after the section header, potentially comments too
+		std::smatch sectionValidation_matches;
+		if (!std::regex_match(line, sectionValidation_matches, sectionValidation_regex))
 			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
-		} else {
-			section = line.substr(1, endpos-1);
-			IOUtils::toUpper(section);
-			sections.insert( section );
-			return true;
-		}
+		
+		section = section_matches.str(1);
+		IOUtils::toUpper(section);
+		sections.insert( section );
+		return true;
 	}
 
 	return false;

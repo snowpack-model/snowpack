@@ -184,7 +184,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
 	Date start_ooo_period;
-	size_t count_ooo_points = 0, previous_idx = 0;
+	size_t count_ooo_points = 0;
 	
 	//Generate the warnings for non-chronological order
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
@@ -195,7 +195,6 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 				start_ooo_period.setUndef(true);
 			}
 			previous_date = current_date;
-			previous_idx = ii;
 		} else if (current_date<previous_date) {
 			if (start_ooo_period.isUndef()) {
 				start_ooo_period = current_date;
@@ -212,7 +211,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	previous_date = ovec.front().date;
 	Date start_conflicts_period;
 	size_t nr_conflict_free_pts = 0, nr_conflicts_pts = 0;
-	previous_idx = 0;
+	size_t previous_idx = 0;
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date!=previous_date) {

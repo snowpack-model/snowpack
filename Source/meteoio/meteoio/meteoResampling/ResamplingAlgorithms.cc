@@ -344,7 +344,7 @@ size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, c
 		if (hour1==0 && min1==0)
 			indexP1=IOUtils::npos;
 		else { //otherwise, this means multiple daily sums have been found for the same day
-			const std::string msg = "More than one daily sum of solar radiation found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
+			const std::string msg = "More than one daily value found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
 			throw IOException(msg, AT);
 		}
 	}
