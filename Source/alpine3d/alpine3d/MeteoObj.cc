@@ -132,8 +132,8 @@ MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                      p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata), iswr_dir(in_dem, IOUtils::nodata),
                      iswr_diff(in_dem, IOUtils::nodata), sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(),
                      sum_vw(), sum_ilwr(), vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0),
-                     skipWind(false), soil_flux(true), enable_simple_snow_drift(false)
-{
+                     skipWind(false), dataFromGrids(false), soil_flux(true), enable_simple_snow_drift(false) {
+
 	config.getValue("DATA_FROM_GRIDS", "input", dataFromGrids,IOUtils::nothrow);
 
 	//check if simple snow drift is enabled
