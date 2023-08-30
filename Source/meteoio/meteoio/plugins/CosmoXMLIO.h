@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -40,7 +41,7 @@ class CosmoXMLIO : public IOInterface {
 		CosmoXMLIO(const std::string& configfile);
 		CosmoXMLIO(const CosmoXMLIO&);
 		CosmoXMLIO(const Config& cfg);
-		~CosmoXMLIO() throw();
+		~CosmoXMLIO() noexcept;
 
 		CosmoXMLIO& operator=(const CosmoXMLIO&); ///<Assignement operator, required because of pointer member
 
@@ -54,7 +55,7 @@ class CosmoXMLIO : public IOInterface {
 		void scanMeteoPath(const std::string& meteopath_in, std::vector< std::pair<Date,std::string> > &meteo_files) const;
 		size_t getFileIdx(const Date& start_date) const;
 		void openIn_XML(const std::string& in_meteofile);
-		void closeIn_XML() throw();
+		void closeIn_XML() noexcept;
 		bool parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd);
 		MeteoReadStatus parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const;
 

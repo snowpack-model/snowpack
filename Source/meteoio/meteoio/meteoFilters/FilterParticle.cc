@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
 /***********************************************************************************/
@@ -22,13 +23,13 @@
 #include <fstream> //for the dump files
 #include <limits>
 #include <sstream> //for readLineToVec
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 
 namespace mio {
 
-FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-        : ProcessingBlock(vecArgs, name), filter_alg(PF_SIR), resample_alg(PF_SYSTEMATIC), NN(500), path_resampling(true),
+FilterParticle::FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg), filter_alg(PF_SIR), resample_alg(PF_SYSTEMATIC), NN(500), path_resampling(true),
           model_expression(""), obs_model_expression(""), fit_expression(""), fit_param(""), fit_degree(3), model_x0(IOUtils::nodata),
 		  resample_percentile(0.5), estim_measure(PF_MEAN), rng_model(), rng_obs(), rng_prior(), resample_seed(),
           be_verbose(true), unrecognized_keys(""), dump_particles_file(""), dump_states_file(""), input_states_file("")
@@ -92,7 +93,7 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 
 	te_variable *te_vars = new te_variable[sub_expr.size()];
 	initFunctionVars(te_vars, sub_expr, sub_values); //build te_variables from substitution vectors
-	te_expr *expr_model = NULL; //only compile if available
+	te_expr *expr_model = nullptr; //only compile if available
 	te_expr *expr_obs = compileExpression(obs_model_expression, te_vars, sub_expr.size());
 
 	/*
@@ -295,7 +296,7 @@ void FilterParticle::initFunctionVars(te_variable* vars, const std::vector<std::
 		vars[ii].name = expr[ii].c_str();
 		vars[ii].address = &values.data()[ii];
 		vars[ii].type = 0;
-		vars[ii].context = 0;
+		vars[ii].context = nullptr;
 	}
 }
 
@@ -352,13 +353,13 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
 {
 	static const std::string prefix("meteo(");
 	static const size_t len = prefix.length();
-	size_t pos1 = 0, pos2;
+	size_t pos1 = 0;
 
 	while (true) {
 		pos1 = line.find(prefix, pos1);
 		if (pos1 == std::string::npos)
 			break; //done
-		pos2 = line.find(")", pos1+len);
+		const size_t pos2 = line.find(")", pos1+len);
 		if (pos2 == std::string::npos || pos2-pos1-len == 0) //no closing bracket
 			throw InvalidArgumentException("Missing closing bracket in meteo(...) part of particle filter's system model.", AT);
 

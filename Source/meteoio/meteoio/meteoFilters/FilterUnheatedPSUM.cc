@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -21,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(vecArgs, name), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
+FilterUnheatedPSUM::FilterUnheatedPSUM(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                  : ProcessingBlock(vecArgs, name, cfg), thresh_rh(0.5), thresh_Dt(3.), is_soft(true)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -51,8 +52,8 @@ void FilterUnheatedPSUM::process(const unsigned int& param, const std::vector<Me
 				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
 				tmp = 0.;
-                        if (!is_soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
-                                tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
+			if (!is_soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
+					tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
 		}
 	}
 }

@@ -41,10 +41,10 @@ class DataAssimilation{
 		void SetEnergyBalance(EnergyBalance &myeb);
 
 		void Compute(mio::Date julian);
-		void Initialize();
 		std::string getGridsRequirements() const;
 
 	private:
+		void Initialize();
 		mio::Grid2DObject data;
 		mio::IOManager* io;
 		SnowpackInterface* snowpack;

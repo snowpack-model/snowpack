@@ -30,13 +30,15 @@ map<string,string> SnowpackConfig::snowpackConfig;
 map<string,string> SnowpackConfig::advancedConfig;
 map<string,string> SnowpackConfig::inputConfig;
 map<string,string> SnowpackConfig::outputConfig;
+map<string,string> SnowpackConfig::TechSnowConfig;
 
 const bool SnowpackConfig::__init = SnowpackConfig::initStaticData();
 
 bool SnowpackConfig::initStaticData()
 {
 	//[Snowpack] section
-	advancedConfig["SOIL_FLUX"] = "false";
+	snowpackConfig["FORCING"] = "ATMOS";
+	snowpackConfig["SOIL_FLUX"] = "false";
 
 	//[SnowpackAdvanced] section
 	advancedConfig["ADVECTIVE_HEAT"] = "false";
@@ -49,6 +51,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ALBEDO_AVERAGE_SCHMUCKI"] = "ALL_DATA";
 	advancedConfig["ALBEDO_AGING"] = "true";
 	advancedConfig["SOOT_PPMV"] = "0.0";
+	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
@@ -81,6 +84,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["PERP_TO_SLOPE"] = "false";
 	advancedConfig["PLASTIC"] = "false";
 	advancedConfig["PREVAILING_WIND_DIR"] = "0.";
+	advancedConfig["REDEPOSIT_KEEP_AGE"] = "false";
 	advancedConfig["RESEARCH"] = "true";
 	advancedConfig["SNOW_ALBEDO"] = "PARAMETERIZED";
 	advancedConfig["SNOW_EROSION"] = "false";
@@ -108,6 +112,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["PREF_FLOW_PARAM_N"] = "0.0";					// Only for use with RE and preferential flow.
 	advancedConfig["PREF_FLOW_PARAM_HETEROGENEITY_FACTOR"] = "1.0";			// Only for use with RE and preferential flow.
 	advancedConfig["PREF_FLOW_RAIN_INPUT_DOMAIN" ] = "MATRIX";			// Only for use with RE.
+	advancedConfig["ICE_RESERVOIR" ] = "false";					// Only for use with RE and preferential flow.
 	advancedConfig["ADJUST_HEIGHT_OF_METEO_VALUES"] = "true";
 	advancedConfig["ADJUST_HEIGHT_OF_WIND_VALUE"] = "true";
 	advancedConfig["WIND_SCALING_FACTOR"] = "1.0";
@@ -118,31 +123,30 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["CANOPY_HEAT_MASS"] = "true";
 	advancedConfig["CANOPY_TRANSMISSION"] = "true";
 	advancedConfig["FORESTFLOOR_ALB"] = "true";
-	advancedConfig["SOIL_EVAP_MODEL"] = "RELATIVE_HUMIDITY";
+	advancedConfig["SOIL_EVAP_MODEL"] = "EVAP_RESISTANCE";
+	advancedConfig["SOIL_THERMAL_CONDUCTIVITY"] = "FITTED";
 
 	//temporary keys for Stability until we decide for a permanent solution
 	advancedConfig["MULTI_LAYER_SK38"] = "false";
 	advancedConfig["SSI_IS_RTA"] = "false";
-	advancedConfig["SNOW_PREPARATION"] = "false";
-    
+
 	// followings are for input
 	advancedConfig["RIME_INDEX"] = "false";
 	advancedConfig["NEWSNOW_LWC"] = "false";
 	advancedConfig["READ_DSM"] = "false";
-
 
 	//[Input] section
 	inputConfig["METEOPATH"] = "./input";
 	inputConfig["NUMBER_OF_SOLUTES"] = "0";
 	inputConfig["SNOW"] = "SMET";
 	inputConfig["SOLUTE_NAMES"] = "NITRATE";
-	inputConfig["ISWR_IS_NET"] = "false";
 
 	//[Output] section
 	outputConfig["AGGREGATE_PRO"] = "false";
 	outputConfig["AGGREGATE_PRF"] = "false";
 	outputConfig["AVGSUM_TIME_SERIES"] = "true";
-	outputConfig["BACKUP_DAYS_BETWEEN"] = "365.";
+	outputConfig["SNOW_DAYS_BETWEEN"] = "365.";
+	outputConfig["LABEL_SNOW"] = "true";
 	outputConfig["CLASSIFY_PROFILE"] = "false";
 	outputConfig["CUMSUM_MASS"] = "false";
 	outputConfig["EXPERIMENT"] = "NO_EXP";
@@ -166,12 +170,22 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["PROF_FORMAT"] = "PRO";
 	outputConfig["PROF_DAYS_BETWEEN"] = "1";
 	outputConfig["PROF_START"] = "0";
+	outputConfig["PROF_ID_OR_MK"] = "ID";
 	outputConfig["SNOW_WRITE"] = "true";
 	outputConfig["SNOW"] = "SMET";
+	outputConfig["HAZ_WRITE"] = "true";
 	outputConfig["TS_FORMAT"] = "MET";
 	outputConfig["TS_DAYS_BETWEEN"] = "1";
 	outputConfig["TS_START"] = "0";
+	outputConfig["ACDD_WRITE"] = "false";
 	outputConfig["WRITE_PROCESSED_METEO"] = "false";
+
+	TechSnowConfig["SNOW_GROOMING"] = "false";
+	TechSnowConfig["GROOMING_WEEK_START"] = "40";
+	TechSnowConfig["GROOMING_WEEK_END"] = "17";
+	TechSnowConfig["GROOMING_HOUR"] = "21";
+	TechSnowConfig["GROOMING_DEPTH_START"] = "0.4";
+	TechSnowConfig["GROOMING_DEPTH_IMPACT"] = "0.4";
 
 	return true;
 }
@@ -314,6 +328,12 @@ void SnowpackConfig::setDefaults()
 		//[Output] section
 		string value; getValue(it->first, "Output", value, IOUtils::nothrow);
 		if (value.empty()) addKey(it->first, "Output", it->second);
+	}
+
+	for(map<string,string>::const_iterator it = TechSnowConfig.begin(); it != TechSnowConfig.end(); ++it) {
+		//[TechSnow] section
+		string value; getValue(it->first, "TechSnow", value, IOUtils::nothrow);
+		if (value.empty()) addKey(it->first, "TechSnow", it->second);
 	}
 
 	/**

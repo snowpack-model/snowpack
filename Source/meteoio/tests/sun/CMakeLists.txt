@@ -1,4 +1,4 @@
-
+#SPDX-License-Identifier: LGPL-3.0-or-later
 ## Test Sun
 # generate executable
 ADD_EXECUTABLE(sun sun.cc)
@@ -9,6 +9,5 @@ ADD_TEST(sun.smoke sun.sh)
 SET_TESTS_PROPERTIES(sun.smoke
                      PROPERTIES LABELS smoke
                      FAIL_REGULAR_EXPRESSION "error|differ")
-
 
 

@@ -5,11 +5,10 @@ station_name  = S12
 latitude      = -76.292
 longitude     = -43.49
 altitude      = 0
-epsg          = 21781
 nodata        = -999
 tz            = 1
 source        = SLF-AWI
-fields        = timestamp TA RH TSG TSS HS VW DW OSWR ISWR ILWR PSUM GEO_HEAT TS1 TS2 TS3
+fields        = timestamp TA RH TSG TSS HS VW DW RSWR ISWR ILWR PSUM GEO_HEAT TS1 TS2 TS3
 units_multiplier = 1 1 1 1 1 1 1 1 1 1 1 0.75 1.5 1 1 1
 [DATA]
 2014-01-18T00:00 266.55 0.803 273.05 266.55 0.031 4.6 168.889765 0.00 -999.0 -999.0 0.0000 6.5614 -999.0 -999.0 -999.0 

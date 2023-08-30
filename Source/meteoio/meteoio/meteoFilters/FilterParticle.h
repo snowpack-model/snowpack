@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
 /***********************************************************************************/
@@ -23,7 +24,7 @@
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/meteoStats/RandomNumberGenerator.h>
 
-#include <meteoio/tinyexpr.h>
+#include <meteoio/thirdParty/tinyexpr.h>
 
 #include <inttypes.h> //for RNG int types
 #include <string>
@@ -80,7 +81,7 @@ namespace mio {
  * These particles are assigned a weight that is essentially (derived from) the _Bayesian statistics formula_
  * \f$P(A|B) = P(B|A) * P(A) / P(B)\f$ expressing a degree of belief in the estimated state.
  *
- * Contrary to a Kalman filter (FilterKalman), a particle filter is able to emulate truly _nonlinear model functions_ aswell as _arbitrary
+ * Contrary to a Kalman filter (FilterKalman), a particle filter is able to emulate truly _nonlinear model functions_ as well as _arbitrary
  * probability density functions_.
  *
  * The syntax follows Ref. [AM+02] and all remarks here can be investigated further therein.
@@ -122,8 +123,8 @@ namespace mio {
  * 8. Repeat 2-7 for each time step `T`.
  * 9. Take the <b>mean particle path</b> (or the one with the highest weight) and calculate the observation function.
  *
- * @note Critique about these workings welcome <a href="https://models.slf.ch/p/meteoio/issues/">here</a>. The core parts
- * in the code are prefaced with `* PARTICLE FILTER *` and `* KALMAN FILTER *` and shouldn't be too hard to read.
+ * @note Critique about these workings welcome <a href="https://code.wsl.ch/snow-models/meteoio/-/issues?sort=created_date&state=opened">here</a>. 
+ * The core parts in the code are prefaced with `* PARTICLE FILTER *` and `* KALMAN FILTER *` and shouldn't be too hard to read.
  *
  * @subsection particleexample Example: Mockup snow model
  *
@@ -199,7 +200,7 @@ namespace mio {
  *
  * @note Neither of the two features separating the particle from the Kalman filter was actually used in this example. First, the noise was Gaussian
  * again (cf. <a href="https://en.wikipedia.org/wiki/Central_limit_theorem">central limit theorem</a>). Cumulative distribution functions are relatively
- * hard to write, and only Gauss is implemented so far. If you need a specific one, you can <a href="https://models.slf.ch/p/meteoio/issues/">request
+ * hard to write, and only Gauss is implemented so far. If you need a specific one, you can <a href="https://code.wsl.ch/snow-models/meteoio/-/issues?sort=created_date&state=opened">request
  * one here</a>. Maybe at this time C99's gamma functions will be available. Secondly, the model function was linear again. The next example uses a
  * nonlinear one.
  *
@@ -243,7 +244,7 @@ namespace mio {
  * Let's use a MeteoIO internal model for the global radiation:
  *
  * @code
- * [INPUT]
+ * [InputEditing]
  * ISWR_MODEL::CREATE = CLEARSKY_SW ;depends on TA, RH
  * @endcode
  *
@@ -410,7 +411,7 @@ namespace mio {
 
 class FilterParticle : public ProcessingBlock {
 	public:
-		FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		FilterParticle(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		        std::vector<MeteoData>& ovec);
 

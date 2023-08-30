@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -23,7 +24,7 @@ namespace mio {
 /**
  * @page template TEMPLATE
  * @section template_format Format
- * *Put here the informations about the standard format that is implemented*
+ * *Put here the information about the standard format that is implemented*
  *
  * @section template_units Units
  *
@@ -61,7 +62,7 @@ TEMPLATE::TEMPLATE(const Config& cfgreader) : cfg(cfgreader)
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-TEMPLATE::~TEMPLATE() throw()
+TEMPLATE::~TEMPLATE() noexcept
 {
 	//if there is no need to cleanup some pointers before exiting, do not even declare a destructor!
 }
@@ -124,7 +125,7 @@ void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 	 */
 }
 
-void TEMPLATE::cleanup() throw()
+void TEMPLATE::cleanup() noexcept
 {
 	//if there is nothing to cleanup, remove this method
 }

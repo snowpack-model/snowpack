@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <cstdlib>
 #include <time.h>
 #include <algorithm>
@@ -182,7 +183,7 @@ bool check_basics(const vector<double>& X, const vector<double>& Y) {
 	const double m1_ref = 310.465757275, m2_ref = 353.558802994;
 	const double m1 = Interpol1D::weightedMean(d1, d2, w1);
 	const double m2 = Interpol1D::weightedMean(d1, d2, w2);
-	double wmean_status = true;
+	bool wmean_status = true;
 	if(IOUtils::checkEpsilonEquality(m1, m1_ref, 1e-6) && IOUtils::checkEpsilonEquality(m2, m2_ref, 1e-6))
 		std::cout << "Weighted mean: success\n";
 	else {

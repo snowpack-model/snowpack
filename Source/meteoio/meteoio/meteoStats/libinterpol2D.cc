@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -226,12 +227,13 @@ double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vec
 * @param vecStations_in position of the "values" (altitude and coordinates)
 * @param dem array of elevations (dem)
 * @param nrOfNeighbors number of neighboring stations to use for each pixel
+* @param MaxDistance maximum allowed distance of neighboring stations to the target grid point
 * @param grid 2D array to fill
 * @param scale The scale factor is used to smooth the grid. It is added to the distance before applying the weights in order to come into the tail of "1/d".
 * @param alpha The weights are computed as 1/dist^alpha, so give alpha=1 for standards 1/dist weights.
 */
 void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const size_t& nrOfNeighbors,
+                               const DEMObject& dem, const size_t& nrOfNeighbors, const double& MaxDistance,
                                Grid2DObject& grid, const double& scale, const double& alpha)
 {
 	grid.set(dem, IOUtils::nodata);
@@ -240,7 +242,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 	for (size_t j=0; j<grid.getNy(); j++) {
 		for (size_t i=0; i<grid.getNx(); i++) {
 			//LL_IDW_pixel returns nodata when appropriate
-			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors, scale, alpha);
+			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors, MaxDistance, scale, alpha);
 		}
 	}
 }
@@ -248,7 +250,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const size_t& nrOfNeighbors, const double& scale, const double& alpha)
+                               const DEMObject& dem, const size_t& nrOfNeighbors, const double& MaxDistance, const double& scale, const double& alpha)
 {
 	const double cell_altitude = dem(i,j);
 	if (cell_altitude==IOUtils::nodata)
@@ -266,17 +268,19 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 		const size_t st_index = sorted_neighbors[st].second;
 		const double value = vecData_in[st_index];
 		const double altitude = vecStations_in[st_index].position.getAltitude();
+		if (MaxDistance > 0. && sorted_neighbors[st].first > MaxDistance * MaxDistance) break;
 		if ((value != IOUtils::nodata) && (altitude != IOUtils::nodata)) {
 			altitudes.push_back( altitude );
 			values.push_back( value );
 			distances_sq.push_back( sorted_neighbors[st].first );
-			if (altitudes.size()>=nrOfNeighbors) break;
+			if (nrOfNeighbors > 0 && altitudes.size()>=nrOfNeighbors) break;
 		}
 
 	}
 
 	//compute lapse rate and detrend the stations' data
 	if (altitudes.empty()) return IOUtils::nodata;
+	if (altitudes.size()==1) return values[0];
 	const Fit1D trend(Fit1D::NOISY_LINEAR, altitudes, values);
 	for (size_t ii=0; ii<altitudes.size(); ii++) {
 		values[ii] -= trend( altitudes[ii] );
@@ -339,8 +343,9 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 * @param i_dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
 * @param VW 2D array of Wind Velocity to fill
 * @param DW 2D array of Wind Direction to fill
+* @param eta (curvature length scale)
 */
-void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW)
+void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW, const double& eta)
 {
 	static const double eps = 1e-3;
 	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(i_dem))){
@@ -349,14 +354,19 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 
 	//make sure dem has the curvature that we need
 	const bool recomputeDEM = i_dem.curvature.empty();
-	DEMObject *intern_dem = NULL;
+	DEMObject *intern_dem = nullptr;
 	if (recomputeDEM) {
 		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Computing it...\n";
 		intern_dem = new DEMObject(i_dem);
 		intern_dem->setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE|DEMObject::CURVATURE));
 		intern_dem->update();
+	} else if (eta!=IOUtils::nodata) {
+		intern_dem = new DEMObject(i_dem);
+		intern_dem->setCurvatureScale(eta);
+		intern_dem->setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE|DEMObject::CURVATURE));
+		intern_dem->update();
 	}
-	const DEMObject *dem = (recomputeDEM)? intern_dem : &i_dem;
+	const DEMObject *dem = (recomputeDEM || eta!=IOUtils::nodata)? intern_dem : &i_dem;
 
 	//calculate terrain slope in the direction of the wind
 	Array2D<double> Omega_s(VW.getNx(), VW.getNy());
@@ -399,7 +409,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 		DW(ii) = fmod(dw+theta_t + 360., 360.);
 	}
 
-	if (intern_dem!=NULL) delete (intern_dem);
+	if (intern_dem!=nullptr) delete (intern_dem);
 }
 
 /**
@@ -679,7 +689,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
-			if (inv_distance<=inv_dmin && fabs(delta_elev)>=altitude_thresh) { //only for cells further than dmin
+			if (inv_distance<=inv_dmin && std::abs(delta_elev)>=altitude_thresh) { //only for cells further than dmin
 				if (inv_distance<inv_dmax) break; //stop if distance>dmax
 
 				const double tan_slope = delta_elev*inv_distance;

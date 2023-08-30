@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2016 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : WindowedFilter(vecArgs, name), max_variance(0.)
+FilterNoChange::FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : WindowedFilter(vecArgs, name, cfg), max_variance(0.)
 {
 	properties.stage = ProcessingProperties::first;
 	

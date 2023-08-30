@@ -1,11 +1,18 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.4)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
+SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(alpine3d)
 # Version of library
-SET(VERSION_MAJOR 3 CACHE INTERNAL "")
-SET(VERSION_MINOR 1 CACHE INTERNAL "")
-SET(VERSION_PATCH 0 CACHE INTERNAL "")
+IF(DEFINED ENV{VERSION_MAJOR} AND DEFINED ENV{VERSION_MINOR} AND DEFINED ENV{VERSION_PATCH})
+	SET(VERSION_MAJOR $ENV{VERSION_MAJOR} CACHE INTERNAL "Major version")
+	SET(VERSION_MINOR $ENV{VERSION_MINOR} CACHE INTERNAL "Minor version")
+	SET(VERSION_PATCH $ENV{VERSION_PATCH} CACHE INTERNAL "Patch version")
+ELSE()
+	SET(VERSION_MAJOR 3 CACHE INTERNAL "Major version")
+	SET(VERSION_MINOR 0 CACHE INTERNAL "Minor version")
+	SET(VERSION_PATCH 0 CACHE INTERNAL "Patch version")
+ENDIF()
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
@@ -28,16 +35,30 @@ SET_COMPILER_OPTIONS()
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
 	SET(LIB_DEST "lib")
-	#set a full rpath for both build & install tree
-	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-	# add the automatically determined parts of the RPATH
-	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	# the RPATH to be used when installing, but only if it's not a system directory
-	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-	IF("${isSystemDir}" STREQUAL "-1")
-		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-	ENDIF("${isSystemDir}" STREQUAL "-1")
+
+	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
+	MARK_AS_ADVANCED(FORCE USE_RPATH)
+	if(USE_RPATH)
+		#set a full rpath for both build & install tree
+		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+		# add the directory of the binary to the rpath
+		IF(APPLE)
+			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+		ELSE(APPLE)
+			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+		ENDIF(APPLE)
+
+		# add the automatically determined parts of the RPATH
+		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+		# the RPATH to be used when installing, but only if it's not a system directory
+		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+		IF("${isSystemDir}" STREQUAL "-1")
+			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+		ENDIF("${isSystemDir}" STREQUAL "-1")
+	ELSE(USE_RPATH)
+		SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+	ENDIF(USE_RPATH)
 
 	IF(APPLE)
 		SET(DLL_EXT "dylib")
@@ -71,13 +92,8 @@ FIND_PACKAGE(Libsnowpack REQUIRED)
 SET(ALPINE3D_STANDALONE ON CACHE BOOL "Compilation Alpine3D standalone ON or OFF")
 SET(MPI OFF CACHE BOOL "Compile with MPI support ON or OFF")
 SET(OPENMP OFF CACHE BOOL "Compile with OPENMP support ON or OFF")
-SET(PETSC OFF CACHE BOOL "Compile with PETSc support ON or OFF")
+SET(PROFILING OFF CACHE BOOL "Link the profiler library")
 
-IF(PETSC)
-	SET(PETSC_FLAGS "-DENABLE_PETSC")
-	UNSET(MPI CACHE)
-	SET (MPI ON CACHE BOOL "Compile with MPI support ON or OFF")
-ENDIF(PETSC)
 IF(MPI)
 	SET(MPI_FLAGS "-DENABLE_MPI")
 ENDIF(MPI)
@@ -87,10 +103,12 @@ ENDIF(OPENMP)
 
 ###########################################################
 #finally, SET compile flags
-SET(CMAKE_CXX_FLAGS "${PETSC_FLAGS} ${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${ARCH} ${CFLAGS} ${EXTRA}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS "${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED True)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
 #Add subdirectory, so they can inherit all variables defined above
@@ -154,7 +172,7 @@ ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/c
 INCLUDE(FindDoxygen)
 FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
-	ADD_CUSTOM_TARGET(doc "doxygen" ${PROJECT_SOURCE_DIR}/alpine3d/config.dox)
+	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env A3D_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/alpine3d/config.dox)
 ENDIF(DOXYGEN_FOUND)
 #Install the documentation if the user desires it
 SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
@@ -181,6 +199,23 @@ ENDIF(INSTALL_DOC)
 ###########################################################
 SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
 IF(CPACK_BUNDLE_ALL)
+	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
+
+	#standard libraries must be installed for gcc on Windows
+	IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+		SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
+		IF(CPACK_BUNDLE_STDLIBS)
+			FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
+			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
+			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
+			IF("${stdlibs}" STREQUAL "")
+ 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+			ENDIF("${stdlibs}" STREQUAL "")
+			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		ENDIF(CPACK_BUNDLE_STDLIBS)
+	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+
 	#bundle MeteoIO
 	FIND_PACKAGE(MeteoIO REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
@@ -190,8 +225,15 @@ IF(CPACK_BUNDLE_ALL)
 		ELSE(WIN32)
 			INSTALL(FILES ${meteoio_libs} DESTINATION lib COMPONENT exe)
 		ENDIF(WIN32)
+		FILE(GLOB meteoio_bins "${METEOIO_ROOT}/bin/meteoio_timeserie*")
+		INSTALL(FILES ${meteoio_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		INSTALL(DIRECTORY ${METEOIO_INCLUDE_DIR}/meteoio/ DESTINATION include/meteoio COMPONENT headers 
+		        FILES_MATCHING PATTERN "*.h" 
+		        PATTERN "CMakeFiles" EXCLUDE 
+		        PATTERN "icons" EXCLUDE 
+		        PATTERN "jnative" EXCLUDE)
 	ENDIF(BUILD_SHARED_LIBS)
-	#bundle Snwpack
+	#bundle Snowpack
 	FIND_PACKAGE(Libsnowpack REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
 		FILE(GLOB snowpack_libs "${LIBSNOWPACK_ROOT}/${LIB_DEST}/libsnowpack*.${DLL_EXT}")
@@ -200,6 +242,12 @@ IF(CPACK_BUNDLE_ALL)
 		ELSE(WIN32)
 			INSTALL(FILES ${snowpack_libs} DESTINATION lib COMPONENT exe)
 		ENDIF(WIN32)
+		FILE(GLOB snowpack_bins "${LIBSNOWPACK_ROOT}/bin/snowpac*")
+		INSTALL(FILES ${snowpack_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		INSTALL(DIRECTORY ${LIBSNOWPACK_INCLUDE_DIR}/snowpack/ DESTINATION include/snowpack COMPONENT headers 
+		        FILES_MATCHING PATTERN "*.h" 
+		        PATTERN "CMakeFiles" EXCLUDE 
+		        PATTERN "icons" EXCLUDE)
 	ENDIF(BUILD_SHARED_LIBS)
 	IF(INSTALL_DOC)
 		#meteoio's documentation
@@ -233,37 +281,31 @@ IF(CPACK_BUNDLE_ALL)
 	ENDIF(INSTALL_DOC)
 
 	#bundle inishell
-	FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/tools/inish*.jar")
-	IF("${inishell}" STREQUAL "")
-		MESSAGE("Inishell not found! Please copy inishell.jar into the tools directory")
-	ENDIF("${inishell}" STREQUAL "")
-	INSTALL(FILES ${inishell} DESTINATION bin COMPONENT exe)
-	
+# 	IF(NOT APPLE)
+# 		FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/../inishell-ng/build/inishel*")
+# 		IF("${inishell}" STREQUAL "")
+# 				MESSAGE("Inishell not found! Please make sure it is in ${CMAKE_SOURCE_DIR}/../inishell-ng and has been built")
+# 		ENDIF("${inishell}" STREQUAL "")
+# 		FILE(GLOB_RECURSE inishell-dll "${CMAKE_SOURCE_DIR}/../inishell-ng/build/*.${DLL_EXT}")
+# 		FILE(GLOB inishell-xml "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.xml")
+# 		FILE(GLOB inishell-png "${CMAKE_SOURCE_DIR}/../inishell-ng/inishell-apps/*.png")
+# 		INSTALL(FILES ${inishell} ${inishell-dll} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+# 		INSTALL(FILES ${inishell-xml} ${inishell-png} DESTINATION share/inishell-apps PERMISSIONS ${ALL_RO_PERM} COMPONENT resources)
+# 	ENDIF(NOT APPLE)
+
 	#bundle the grid viewer
 	FILE(GLOB grid_view "${CMAKE_SOURCE_DIR}/tools/Interface/view.*")
 	IF("${grid_view}" STREQUAL "")
 		MESSAGE("View not found! Please copy view.jar into the tools directory")
 	ENDIF("${grid_view}" STREQUAL "")
 	INSTALL(FILES ${grid_view} DESTINATION bin COMPONENT exe)
-
-	#bundle niViz
-	SET(CPACK_BUNDLE_NIVIZ ON CACHE BOOL "Should niViz also be bundled?")
-	IF(CPACK_BUNDLE_NIVIZ)
-		SET(NIVIZ_DIST_PATH "../niViz" CACHE PATH "Path to niViz 'dist' subdirectory")
-		FILE(GLOB niviz_html "${NIVIZ_DIST_PATH}/*.html")
-		IF("${niviz_html}" STREQUAL "")
-			MESSAGE("niViz not found! Please provide a proper path to niViz 'dist' and don't forget to run 'make dist'")
-		ENDIF("${niviz_html}" STREQUAL "")
-		INSTALL(DIRECTORY "${NIVIZ_DIST_PATH}/assets" DESTINATION bin/niviz COMPONENT exe)
-		INSTALL(FILES ${niviz_html} DESTINATION bin/niviz COMPONENT exe)
-	ENDIF(CPACK_BUNDLE_NIVIZ)
 ENDIF(CPACK_BUNDLE_ALL)
 
-SET(CPACK_PACKAGE_DESCRIPTION "Alpine3D")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is the Alpine3D model distributed physical modeling of snow pack.")
+SET(CPACK_PACKAGE_DESCRIPTION "Alpine3d Model")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is the Alpine3D distributed alpine surface processes model.")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
-SET(CPACK_PACKAGE_NAME "Alpine3D")
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Alpine3D")
+SET(CPACK_PACKAGE_NAME "Alpine3d")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Alpine3d")
 SET(CPACK_PACKAGE_CONTACT "Mathias Bavay <Mathias.Bavay@wsl.ch>")
 SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
 SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/alpine3d/icons\\\\icon.ico")
@@ -284,6 +326,13 @@ SET(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 SET(CPACK_COMPONENTS_ALL documentation examples exe)
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Alpine3D static library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The Alpine3D static library")
+SET(CPACK_COMPONENT_LIBRARIES_GROUP Runtime)
+SET(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Header files")
+SET(CPACK_COMPONENT_HEADERS_DESCRIPTION "Necessary C++ header files for developing applications using Alpine3D")
+SET(CPACK_COMPONENT_HEADERS_GROUP Development)
+SET(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
+SET(CPACK_COMPONENT_DEVELOPMENT_GROUP "Development")
+SET(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "What you need to develop an application based on Alpine3D")
 SET(CPACK_COMPONENT_EXE_DISPLAY_NAME "Alpine3D application")
 SET(CPACK_COMPONENT_EXE_DESCRIPTION "The Alpine3D standalone model")
 SET(CPACK_COMPONENT_EXE_GROUP Runtime)
@@ -324,7 +373,8 @@ IF(UNIX)
 		INSTALL(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink bin/alpine3d /usr/bin/alpine3d)")
 	ELSE(APPLE)
 		SET(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
-		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
+		SET(CPACK_GENERATOR "DEB;RPM;TGZ" CACHE STRING "Which packages to build")
+		MARK_AS_ADVANCED(FORCE CPACK_GENERATOR)
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "alpine3d")
 		SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
@@ -332,7 +382,7 @@ IF(UNIX)
 		IF(CPACK_BUNDLE_ALL OR BUILD_STATIC_LIBS)
 			SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libc6")
 		ELSE(CPACK_BUNDLE_ALL OR BUILD_STATIC_LIBS)
-			SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++, meteoio,snowpack")
+			SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++, meteoio, snowpack")
 		ENDIF(CPACK_BUNDLE_ALL OR BUILD_STATIC_LIBS)
 		#SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
 		IF("${CPACK_ARCH}" STREQUAL "x86_64")
@@ -342,7 +392,7 @@ IF(UNIX)
 		ENDIF("${CPACK_ARCH}" STREQUAL "x86_64")
 		SET(CPACK_RPM_PACKAGE_NAME "alpine3d")
 		SET(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
-		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, meteoio,snowpack")
+		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++, meteoio, snowpack")
 		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "${CPACK_ARCH}")
 		SET(CPACK_RPM_PACKAGE_GROUP "Applications/Science")
 	ENDIF(APPLE)
@@ -357,37 +407,41 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MODIFY_PATH ON)
 
 		#Main links (they can get overwritten later)
-		SET(MENU_LINKS_NIVIZ "http://niviz.org" "niViz online visualization" )
-		SET(MENU_LINKS_ALPINE3D "https://models.slf.ch/p/alpine3d/" "Alpine3D Home page")
+		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "niViz online visualization" )
+		SET(MENU_LINKS_ALPINE3D "https://alpine3d.slf.ch" "Alpine3D Home page")
 		IF(INSTALL_DOC)
-			LIST(APPEND MENU_LINKS_ALPINE3D
+			SET(MENU_LINKS_ALPINE3D
 			"${DOC_PATH}/Alpine3D_doc.html" "Alpine3D documentation"
 			"${DOC_PATH}/examples" "Alpine3D examples"
+			"https://alpine3d.slf.ch" "Alpine3D Home page"
 			)
 		ENDIF(INSTALL_DOC)
 
-		#all other links: inishell, local niviz, meteoio
+		#all other links: inishell, Snowpack, meteoio
 		IF(CPACK_BUNDLE_ALL)
-			SET(MENU_LINKS_INISHELL "bin/inishell.jar" "Inishell")
-			IF(CPACK_BUNDLE_NIVIZ)
-				SET(MENU_LINKS_NIVIZ "bin/niviz/index.html" "NIVIZ visualization")
-			ENDIF(CPACK_BUNDLE_NIVIZ)
-			SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
+			#SET(MENU_LINKS_INISHELL "bin/inishell.exe" "Alpine3D's Inishell")
+			SET(MENU_LINKS_SNOWPACK "https://snowpack.slf.ch" "SNOWPACK Home page")
+			SET(MENU_LINKS_METEOIO "https://meteoio.slf.ch" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				SET(MENU_LINKS_METEOIO
 				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
-				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page"
+				"https://meteoio.slf.ch" "MeteoIO Home page"
+				)
+				SET(MENU_LINKS_SNOWPACK
+				"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
+				"${DOC_PATH}/examples" "SNOWPACK examples"
+				"https://snowpack.slf.ch" "SNOWPACK Home page"
 				)
 			ENDIF(INSTALL_DOC)
 		ENDIF(CPACK_BUNDLE_ALL)
 
-		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_ALPINE3D} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ} ${MENU_LINKS_METEOIO})
+		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_ALPINE3D} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ} ${MENU_LINKS_SNOWPACK} ${MENU_LINKS_METEOIO})
 
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://models.slf.ch/p/alpine3d")
+		SET(CPACK_NSIS_HELP_LINK "https://alpine3d.slf.ch")
 		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 		SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
 	ENDIF(WIN32)

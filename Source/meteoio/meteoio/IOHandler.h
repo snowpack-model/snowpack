@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,8 +20,7 @@
 #define IOHANDLER_H
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/DataCreator.h>
-#include <meteoio/meteoFilters/TimeFilters.h>
+#include <meteoio/DataEditing.h>
 
 #include <map>
 #include <set>
@@ -39,7 +39,7 @@ class IOHandler : public IOInterface {
 		IOHandler(const IOHandler&);
 		IOHandler(const Config&);
 
-		virtual ~IOHandler() throw();
+		virtual ~IOHandler() noexcept;
 
 		IOHandler& operator=(const IOHandler&); ///<Assignement operator
 
@@ -47,6 +47,7 @@ class IOHandler : public IOInterface {
 		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list);
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
 		virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
@@ -75,33 +76,10 @@ class IOHandler : public IOInterface {
 		IOInterface* getPlugin(std::string plugin_name, const Config& i_cfg) const;
 		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection, const std::string& sec_rename="");
 		std::vector<std::string> getListOfSources(const std::string& plugin_key, const std::string& sec_pattern) const;
-		void create_copy_map();
-		void create_move_map();
-		void create_exclude_map();
-		void create_keep_map();
-		void create_merge_map();
-
-		void copy_params(std::vector< METEO_SET >& vecMeteo) const;
-		void move_params(std::vector< METEO_SET >& vecMeteo) const;
-		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
-		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
-		void merge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
-		void merge_stations(STATIONS_SET& vecStation) const;
-		void automerge_stations(std::vector<METEO_SET>& vecVecMeteo) const;
-		void automerge_stations(STATIONS_SET& vecStation) const;
 
 		const Config& cfg;
-		DataCreator dataCreator;
-		TimeProcStack timeproc;
+		DataEditing preProcessor;
 		std::map<std::string, IOInterface*> mapPlugins;
-		std::map< std::string, std::set<std::string> > excluded_params; //station_id, set of params
-		std::map< std::string, std::set<std::string> > kept_params; //station_id, set of params
-		std::map< std::string, std::vector<std::string> > merge_commands;
-		std::map< std::string, std::string > copy_commands;
-		std::map< std::string, std::set<std::string> > move_commands;
-		std::vector<std::string> merged_stations;
-		int merge_strategy;
-		bool copy_ready, move_ready, excludes_ready, keeps_ready, merge_ready, automerge;
 };
 
 } //namespace

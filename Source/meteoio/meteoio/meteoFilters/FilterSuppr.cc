@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -18,7 +19,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <algorithm>
 
 #include <meteoio/meteoFilters/FilterSuppr.h>
@@ -28,31 +29,53 @@ using namespace std;
 
 namespace mio {
 
-FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ)
-          : ProcessingBlock(vecArgs, name), suppr_dates(), range(IOUtils::nodata)
+FilterSuppr::FilterSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), type(NONE)
 {
 	const std::string where( "Filters::"+block_name );
 	properties.stage = ProcessingProperties::first; //for the rest: default values
-	const size_t nrArgs = vecArgs.size();
+	bool has_type=false, has_range=false, has_width=false, has_file=false;
 
-	if (nrArgs>1)
-		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
+			if (type_str=="FRAC") type=FRAC_SUPPR;
+			else if (type_str=="FILE") type=FILE_SUPPR;
+			else if (type_str=="ALL") type=ALL_SUPPR;
+			else
+				throw InvalidArgumentException("Unknown type '"+type_str+"' for " + where, AT);
 
-	if (nrArgs==1) {
-		if (vecArgs[0].first=="FRAC") {
-			if (!IOUtils::convertString(range, vecArgs[0].second))
-				throw InvalidArgumentException("Invalid range \""+vecArgs[0].second+"\" specified for "+where, AT);
+			has_type = true;
+		}
+		if (vecArgs[ii].first=="FRAC") {
+			if (!IOUtils::convertString(range, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid range \""+vecArgs[ii].second+"\" specified for "+where, AT);
 			if (range<0. || range>1.)
 				throw InvalidArgumentException("Wrong range for " + where + ", it should be between 0 and 1", AT);
-		} else if (vecArgs[0].first=="SUPPR") {
-			const std::string in_filename( vecArgs[0].second );
-			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : root_path+"/";
+			has_range = true;
+		}
+		if (vecArgs[ii].first=="WIDTH") {
+			if (!IOUtils::convertString(width, vecArgs[ii].second))
+				throw InvalidArgumentException("Invalid width \""+vecArgs[ii].second+"\" specified for "+where, AT);
+			if (width<=0.)
+				throw InvalidArgumentException("Wrong width for " + where + ", it should be > 0", AT);
+			has_width = true;
+		}
+		if (vecArgs[ii].first=="FILE") {
+			const std::string in_filename( vecArgs[ii].second );
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : cfg.getConfigRootDir()+"/";
 			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
 			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-			suppr_dates = ProcessingBlock::readDates(block_name, filename, TZ);
+			suppr_dates = ProcessingBlock::readDates(block_name, filename, cfg.get("TIME_ZONE", "Input"));
+			has_file = true;
 		}
 	}
+	
+	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
+	if (type==FILE_SUPPR && (has_range || !has_file)) throw InvalidArgumentException("For "+where+" and type=FILE, please provide the FILE argument and no other", AT);
+	if (type==FRAC_SUPPR && (!has_range || has_file)) throw InvalidArgumentException("For "+where+" and type=FRAC, please provide the RANGE argument and no other", AT);
+	if (type!=FRAC_SUPPR && has_width) throw InvalidArgumentException("For "+where+" the WIDTH argument is only supported for type FRAC", AT);
 }
 
 void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
@@ -61,9 +84,9 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
-	if (!suppr_dates.empty()) {
-		supprByDates(param, ovec);
-	} else if (range==IOUtils::nodata) { //remove all
+	if (type==FILE_SUPPR) { //remove periods provided in a file
+		if (!suppr_dates.empty()) supprByDates(param, ovec);
+	} else if (type==ALL_SUPPR) { //remove all
 		for (size_t ii=0; ii<ovec.size(); ii++)
 			ovec[ii](param) = IOUtils::nodata;
 	} else { //only remove a given fraction
@@ -75,10 +98,10 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 void FilterSuppr::supprByDates(const unsigned int& param, std::vector<MeteoData>& ovec) const
 {
 	const std::string station_ID( ovec[0].meta.stationID ); //we know it is not empty
-	const std::map< std::string, std::vector<dates_range> >::const_iterator station_it( suppr_dates.find( station_ID ) );
+	const std::map< std::string, std::vector<DateRange> >::const_iterator station_it( suppr_dates.find( station_ID ) );
 	if (station_it==suppr_dates.end()) return;
 
-	const std::vector<dates_range> &suppr_specs = station_it->second;
+	const std::vector<DateRange> &suppr_specs = station_it->second;
 	const size_t Nset = suppr_specs.size();
 	size_t curr_idx = 0; //we know there is at least one
 	for (size_t ii=0; ii<ovec.size(); ii++) {
@@ -96,17 +119,43 @@ void FilterSuppr::supprByDates(const unsigned int& param, std::vector<MeteoData>
 
 void FilterSuppr::supprFrac(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) const
 {
+	static const double sec_to_days = 1. / (24. * 3600.);
 	const size_t set_size = ovec.size();
 	const size_t nrRemove = static_cast<size_t>( round( (double)set_size*range ) );
 
-	srand( static_cast<unsigned int>(time(NULL)) );
+	srand( static_cast<unsigned int>(time(nullptr)) );
 	size_t ii=1;
-	while (ii<nrRemove) {
-		const size_t idx = (unsigned)rand() % set_size;
-		if (ivec[idx](param)!=IOUtils::nodata && ovec[idx](param)==IOUtils::nodata) continue; //the point was already removed
+	if (width==IOUtils::nodata) { //remove individual points
+		while (ii<nrRemove) {
+			const size_t idx = (unsigned)rand() % set_size;
+			if (ivec[idx](param)!=IOUtils::nodata && ovec[idx](param)==IOUtils::nodata) continue; //the point was already removed
 
-		ovec[idx](param) = IOUtils::nodata;
-		ii++;
+			ovec[idx](param) = IOUtils::nodata;
+			ii++;
+		}
+	} else { //remove a full time periode, the width has been provided by the user
+		while (ii<nrRemove) {
+			const size_t last_idx = set_size-1;
+			const size_t idx = (unsigned)rand() % set_size;
+			if (ivec[idx](param)!=IOUtils::nodata && ovec[idx](param)==IOUtils::nodata) continue; //the point was already removed
+			if (idx==0 || idx==last_idx) continue; //first and last point must remain
+			
+			//get the start and end indices
+			const Date start_period( ovec[idx].date );
+			const Date end_period = start_period + width * sec_to_days;
+			size_t jj = idx + 1;
+			while (jj<last_idx) {
+				if (ovec[jj].date > end_period) break; //so we will cut from idx to jj-1
+				jj++;
+			}
+			if (jj==last_idx) continue; //the period could not be fully contained before the end of data
+			if (ovec[jj](param) == IOUtils::nodata) continue; //we want at least one point after the period
+			
+			//now delete the data within the period
+			for (size_t ll=idx; ll<jj; ll++) 
+				ovec[ll](param) = IOUtils::nodata;
+			ii += jj - idx + 1;
+		}
 	}
 }
 

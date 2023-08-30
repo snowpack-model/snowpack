@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -25,18 +26,18 @@ namespace mio {
 /**
  * @class RadiationComponents
  * @brief Compute the global radiation (ISWR) from the direct and diffuse components.
- * @details
- * The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
+ * @details The split radiation must be nammed ISWR_DIR and ISWR_DIFF to be recognized.
  * @code
- * ISWR::create = RadComponents
+ * [Generators]
+ * ISWR::generator1 = RadComponents
  * @endcode
  */
 class RadiationComponents : public GeneratorAlgorithm {
 	public:
-		RadiationComponents(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), where("generators::"+algo) { parse_args(vecArgs); }
+		RadiationComponents(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), where( section+"::"+algo ) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::string where;

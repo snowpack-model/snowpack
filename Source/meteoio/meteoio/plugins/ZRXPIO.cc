@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
 /***********************************************************************************/
@@ -17,7 +18,7 @@
 */
 
 #include <fstream>
-#include <errno.h> //for file open errors
+#include <cerrno> //for file open errors
 #include <cstring> //for pretty file open errors
 
 #include <meteoio/dataClasses/Date.h>

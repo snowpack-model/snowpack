@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -36,6 +37,7 @@
 #include <meteoio/spatialInterpolations/PPhaseAlgorithm.h>
 #include <meteoio/spatialInterpolations/RHListonAlgorithm.h>
 #include <meteoio/spatialInterpolations/RyanWindAlgorithm.h>
+#include <meteoio/spatialInterpolations/SnowlineAlgorithm.h>
 #include <meteoio/spatialInterpolations/SnowPsumAlgorithm.h>
 #include <meteoio/spatialInterpolations/StdPressAlgorithm.h>
 #include <meteoio/spatialInterpolations/SwRadAlgorithm.h>
@@ -50,7 +52,6 @@
 #include <algorithm>
 
 namespace mio {
-
 /**
  * @page interpol2d Spatial interpolations
  * Using the vectors of MeteoData and StationData as filled by the IOInterface::readMeteoData call
@@ -127,6 +128,7 @@ namespace mio {
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  * - ALS_SCALING: scaling from Airborn Laser Scan data (see ALS_Interpolation)
+ * - SNOWLINE: assimilation of snowline elevation information from external data sources (see SnowlineAlgorithm)
  *
  * @section interpol2D_trends Altitudinal trends
  * Several algorithms use elevation trends, all of them relying on the same principles: the lapse rates are recomputed at each time steps
@@ -226,6 +228,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(std::string algoname,
 		return new SnowPSUMInterpolation(vecArgs, algoname, param, tsm, gdm, mi);
 	} else if (algoname == "SWRAD") {// terrain shadding interpolation
 		return new SWRadInterpolation(vecArgs, algoname, param, tsm, mi);
+	} else if (algoname == "SNOWLINE") {// Snowline elevation assimilation
+		return new SnowlineAlgorithm(vecArgs, algoname, param, tsm, gdm, mi);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -237,6 +241,7 @@ std::vector<double> InterpolationAlgorithm::getData(const Date& i_date, const st
 
 	std::vector<double> o_vecData;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		if (!vecMeteo[ii].param_exists(i_param)) continue;
 		const double val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata) {
 			o_vecData.push_back( val );
@@ -253,6 +258,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const std::string& i_
 	o_vecData.clear();
 	o_vecMeta.clear();
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		if (!vecMeteo[ii].param_exists(i_param)) continue;
 		const double val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata){
 			o_vecData.push_back( val );
@@ -384,7 +390,7 @@ bool Trend::multilinearDetrend(const std::vector<StationData>& vecMeta, std::vec
 
 /**
  * @brief Compute the trend according to the provided data and detrend vecDat
- * @param[in] vecMeta Location informations sorted similarly as the data in vecDat
+ * @param[in] vecMeta Location information sorted similarly as the data in vecDat
  * @param vecDat data for the interpolated parameter
 */
 void Trend::detrend(const std::vector<StationData>& vecMeta, std::vector<double> &vecDat)

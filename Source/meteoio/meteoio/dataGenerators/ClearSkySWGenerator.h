@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -35,16 +36,17 @@ namespace mio {
  * If no TA or RH is available, average values will be used (in order to get an average value
  * for the precipitable water vapor).
  * @code
- * ISWR::generators = clearSky_SW
+ * [Generators]
+ * ISWR::generator1 = clearSky_SW
  * @endcode
  * @note This relies on SunObject to perform the heavy duty computation. If it is used on RSWR, then a snow or grassy soil albedo is used (depending on the snow height).
  */
 class ClearSkySWGenerator : public GeneratorAlgorithm {
 	public:
-		ClearSkySWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
+		ClearSkySWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		SunObject sun;

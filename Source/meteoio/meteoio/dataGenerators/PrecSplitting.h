@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013-2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -32,10 +33,11 @@ namespace mio {
  * generate the missing components (for example, the precipitation phase associated with a given precipitation amout based on a splitting model).
  * 
  * The component that will be generated depends on the parameter name, so only the following parameters are supported: PSUM, PSUM_PH, PSUM_L, PSUM_S.
- * Whenever a component is missing, a splitting model is called to compute the splitting. It is therefore mandatory to configure a splitting model.
+ * Whenever a component is missing, a splitting model is called to compute the splitting. It is therefore recommended to configure a splitting model.
  * 
  * It takes the following arguments:
  *  - TYPE: the splitting method to use, any of the following:
+ *     - NONE: don't do any splitting (default). This can be usefull to overwrite an inherited generator (from an imported file)
  *     - THRESH: a provided fixed air temperature threshold splits precipitation as either fully solid or fully liquid
  *     - RANGE: two air temperature thresholds provide the lower and upper range for fully solid / fully liquid precipitation.
  *                 Within the provided range, a linear transition is assumed.
@@ -47,34 +49,46 @@ namespace mio {
  * threshold for doing the splitting:
  * @code
  * [Generators]
- * PSUM_PH::generators     = PRECSPLITTING
- * PSUM_PH::PRECSPLITTING::type   = THRESH
- * PSUM_PH::PRECSPLITTING::snow   = 274.35
+ * PSUM_PH::generator1 = PRECSPLITTING
+ * PSUM_PH::arg1::type = THRESH
+ * PSUM_PH::arg1::snow = 274.35
  * @endcode
  * 
- * To generate the liquid and solid amounts from the precipitation sum, relying on a simple temperature threshold for the splitting
+ * To generate the liquid and solid amounts from the precipitation sum and phase, relying on a simple temperature threshold for the splitting
  * (if the precipitation phase is available, it will be used instead of calling the splitting model):
  * @code
- * [Input]
- * PSUM_L::create     = PRECSPLITTING
- * PSUM_L::PRECSPLITTING::type   = THRESH
- * PSUM_L::PRECSPLITTING::snow   = 274.35
+ * [InputEditing]
+ * ;using the '*' station ID, this will apply to all stations
+ * *::edit1           = CREATE
+ * *::arg1::algorithm = PRECSPLITTING
+ * *::arg1::param     = PSUM_L
+ * *::arg1::type      = THRESH
+ * *::arg1::snow      = 274.35
  * 
- * PSUM_S::create     = PRECSPLITTING
- * PSUM_S::PRECSPLITTING::type   = THRESH
- * PSUM_S::PRECSPLITTING::snow   = 274.35
+ * *::edit2           = CREATE
+ * *::arg2::algorithm = PRECSPLITTING
+ * *::arg2::param     = PSUM_S
+ * *::arg2::type      = THRESH
+ * *::arg2::snow      = 274.35
+ * @endcode
+ * 
+ * To generate the precipitation sum and phase from the liquid and solid amounts without any fallback algorithm for the splitting:
+ * @code
+ * [Generators]
+ * PSUM::generator1 = PRECSPLITTING
+ * PSUM_PH::generator1 = PRECSPLITTING
  * @endcode
  * 
  * @note When generating PSUM_L / PSUM_S, you most probably also need to set their resampling to "accumulate", like for PSUM...
  */
 class PrecSplitting : public GeneratorAlgorithm {
 	public:
-		PrecSplitting(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), model(THRESH), where("generators::"+algo), fixed_thresh(IOUtils::nodata),
+		PrecSplitting(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(NONE), where( section+"::"+algo ), fixed_thresh(IOUtils::nodata),
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
 
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -86,7 +100,8 @@ class PrecSplitting : public GeneratorAlgorithm {
 
 		typedef enum PARAMETRIZATION {
 			THRESH,
-			RANGE
+			RANGE,
+			NONE
 		} parametrization;
 		parametrization model;
 		const std::string where;

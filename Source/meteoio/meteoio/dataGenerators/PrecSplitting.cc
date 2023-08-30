@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013-2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -23,7 +24,7 @@ namespace mio {
 
 void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	bool has_model=false, has_snow=false, has_rain=false;
+	bool has_snow=false, has_rain=false;
 	double snow_T_thresh=273.15, rain_T_thresh=273.15; //to silence a warning
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -32,10 +33,10 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 
 			if (user_algo=="THRESH") model = THRESH;
 			else if (user_algo=="RANGE") model = RANGE;
+			else if (user_algo=="NONE") model = NONE;
 			else
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where+" generator", AT);
 
-			has_model = true;
 		} else if(vecArgs[ii].first=="SNOW") {
 			IOUtils::parseArg(vecArgs[ii], where, snow_T_thresh);
 			has_snow = true;
@@ -46,7 +47,6 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 			throw InvalidArgumentException("Unknown argument \""+vecArgs[ii].first+"\" supplied for "+where+" generator", AT);
 	}
 
-	if (!has_model) throw InvalidArgumentException("Please provide a MODEL for "+where, AT);
 	if (model == THRESH) {
 		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for "+where, AT);
 		fixed_thresh = snow_T_thresh;
@@ -60,7 +60,7 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 	}
 }
 
-bool PrecSplitting::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool PrecSplitting::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 	const std::string parname( vecMeteo.front().getNameForParameter( param ) );
@@ -70,28 +70,28 @@ bool PrecSplitting::create(const size_t& param, std::vector<MeteoData>& vecMeteo
 	
 	bool all_filled = true;
 	if (param==MeteoData::PSUM_PH) {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM_PH(value, vecMeteo[ii]))
 				all_filled = false;
 		}
 	} else if (param==MeteoData::PSUM) {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM(value, vecMeteo[ii]))
 				all_filled = false;
 		}
 	} else if (parname=="PSUM_L") {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM_L(value, vecMeteo[ii]))
 				all_filled = false;
 		}
 	} else if (parname=="PSUM_S") {
-		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t ii=ii_min; ii<ii_max; ii++) {
 			double &value = vecMeteo[ii](param);
 			if (value!=IOUtils::nodata) continue;
 			if (!generatePSUM_S(value, vecMeteo[ii]))
@@ -231,7 +231,7 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 	const bool hasPSUML = (PSUM_L!=IOUtils::nodata && PSUM_L>=0.); //very basic plausibility check
 	const bool hasPSUMS = (PSUM_S!=IOUtils::nodata && PSUM_S>=0.); //very basic plausibility check
 	const bool hasPsum = (PSUM!=IOUtils::nodata && PSUM>=0.); //very basic plausibility check
-		
+	
 	if (hasPsum) {
 		if (!hasPSUML && !hasPSUMS) {
 			return runModel(value, md);
@@ -239,7 +239,7 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 			value = std::min( std::max(PSUM_L / PSUM, 0.), 1.);
 			return true;
 		} else if (hasPSUMS) {
-			value = 1. - std::min( std::max(PSUM_L / PSUM, 0.), 1.);
+			value = 1. - std::min( std::max(PSUM_S / PSUM, 0.), 1.);
 			return true;
 		}
 	}
@@ -256,6 +256,7 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 //generate PSUM_PH from PSUM and TA
 bool PrecSplitting::runModel(double &value, MeteoData& md) const
 {
+	if (model==NONE) return false;
 	const double TA=md(MeteoData::TA);
 	if (TA==IOUtils::nodata) return false;
 	

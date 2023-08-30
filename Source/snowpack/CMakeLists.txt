@@ -1,11 +1,17 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.4)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(snowpack)
 # Version of library
-SET(VERSION_MAJOR 3 CACHE INTERNAL "")
-SET(VERSION_MINOR 4 CACHE INTERNAL "")
-SET(VERSION_PATCH 5 CACHE INTERNAL "")
+IF(DEFINED ENV{VERSION_MAJOR} AND DEFINED ENV{VERSION_MINOR} AND DEFINED ENV{VERSION_PATCH})
+	SET(VERSION_MAJOR $ENV{VERSION_MAJOR} CACHE INTERNAL "Major version")
+	SET(VERSION_MINOR $ENV{VERSION_MINOR} CACHE INTERNAL "Minor version")
+	SET(VERSION_PATCH $ENV{VERSION_PATCH} CACHE INTERNAL "Patch version")
+ELSE()
+	SET(VERSION_MAJOR 3 CACHE INTERNAL "Major version")
+	SET(VERSION_MINOR 0 CACHE INTERNAL "Minor version")
+	SET(VERSION_PATCH 0 CACHE INTERNAL "Patch version")
+ENDIF()
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
@@ -21,6 +27,8 @@ ENDIF(WIN32)
 
 ###########################################################
 #set compiler flags according to the detected compiler and user options
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED True)
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
 SET_COMPILER_OPTIONS()
 
@@ -28,16 +36,31 @@ SET_COMPILER_OPTIONS()
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
 	SET(LIB_DEST "lib")
-	#set a full rpath for both build & install tree
-	SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-	# add the automatically determined parts of the RPATH
-	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	# the RPATH to be used when installing, but only if it's not a system directory
-	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-	IF("${isSystemDir}" STREQUAL "-1")
-		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-	ENDIF("${isSystemDir}" STREQUAL "-1")
+
+	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
+	MARK_AS_ADVANCED(FORCE USE_RPATH)
+	if(USE_RPATH)
+		#set a full rpath for both build & install tree
+		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+		# add the directory of the binary to the rpath
+		IF(APPLE)
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+			SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+		ELSE(APPLE)
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+		ENDIF(APPLE)
+		
+		# add the automatically determined parts of the RPATH
+		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+		# the RPATH to be used when installing, but only if it's not a system directory
+		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+		IF("${isSystemDir}" STREQUAL "-1")
+			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+		ENDIF("${isSystemDir}" STREQUAL "-1")
+	ELSE(USE_RPATH)
+		SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+	ENDIF(USE_RPATH)
 
 	IF(APPLE)
 		SET(DLL_EXT "dylib")
@@ -63,7 +86,7 @@ IF(NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-FIND_PACKAGE(MeteoIO)
+FIND_PACKAGE(MeteoIO REQUIRED)
 
 ###########################################################
 #plugins and applications
@@ -72,7 +95,7 @@ SET(PROFEVAL OFF CACHE BOOL "Compilation PROFEVAL ON or OFF")
 
 SET(ENABLE_LAPACK OFF CACHE BOOL "Compile with the CLAPACK library?")
 SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISDBIO ON or OFF - only relevant for SLF")
-SET(PLUGIN_CAAMLIO OFF CACHE BOOL "Compilation CAAMLIO ON or OFF to read CAAML profiles")
+SET(PLUGIN_CAAMLIO ON CACHE BOOL "Compilation CAAMLIO ON or OFF to read CAAML profiles")
 
 ###########################################################
 #finally, SET compile flags
@@ -109,9 +132,11 @@ ENDIF(PROFEVAL)
 #for the install target
 FILE(GLOB hfiles "snowpack/*.h")
 FILE(GLOB hpluginfiles "snowpack/plugins/*.h")
+FILE(GLOB pugifiles "snowpack/plugins/pugixml/pugi*.?pp")
 FILE(GLOB hcorefiles "snowpack/snowpackCore/*.h")
 INSTALL(FILES ${hfiles} DESTINATION include/snowpack COMPONENT headers)
 INSTALL(FILES ${hpluginfiles} DESTINATION include/snowpack/plugins COMPONENT headers)
+INSTALL(FILES ${pugifiles} DESTINATION include/snowpack/plugins/pugixml COMPONENT headers)
 INSTALL(FILES ${hcorefiles} DESTINATION include/snowpack/snowpackCore COMPONENT headers)
 
 ADD_CUSTOM_TARGET(distclean make clean
@@ -141,7 +166,7 @@ ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/c
 INCLUDE(FindDoxygen)
 FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
-	ADD_CUSTOM_TARGET(doc "doxygen" ${PROJECT_SOURCE_DIR}/snowpack/config.dox)
+	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env SN_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/snowpack/config.dox)
 ENDIF(DOXYGEN_FOUND)
 #Install the documentation if the user desires it
 SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
@@ -151,7 +176,7 @@ IF(INSTALL_DOC)
 	ELSE(WIN32)
 		SET(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
 	ENDIF(WIN32)
-	SET(DOC_FILES License.txt Readme.txt snowpack/icons/icon.ico)
+	SET(DOC_FILES License.txt Readme.md snowpack/icons/icon.ico)
 	IF (DOXYGEN_FOUND)
 		INSTALL(DIRECTORY doc/html DESTINATION ${DOC_PATH} COMPONENT documentation)
 		LIST(APPEND DOC_FILES doc/Snowpack_doc.html)
@@ -168,6 +193,23 @@ ENDIF(INSTALL_DOC)
 ###########################################################
 SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
 IF(CPACK_BUNDLE_ALL)
+	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
+	
+	#standard libraries must be installed for gcc on Windows
+	IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+		SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
+		IF(CPACK_BUNDLE_STDLIBS)
+			FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
+			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
+			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
+			IF("${stdlibs}" STREQUAL "")
+ 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+			ENDIF("${stdlibs}" STREQUAL "")
+			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		ENDIF(CPACK_BUNDLE_STDLIBS)
+	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+	
 	#bundle MeteoIO
 	FIND_PACKAGE(MeteoIO REQUIRED)
 	IF(BUILD_SHARED_LIBS) #consider that if STATIC, we don't need the libs
@@ -177,8 +219,16 @@ IF(CPACK_BUNDLE_ALL)
 		ELSE(WIN32)
 			INSTALL(FILES ${meteoio_libs} DESTINATION lib COMPONENT exe)
 		ENDIF(WIN32)
+		FILE(GLOB meteoio_bins "${METEOIO_ROOT}/bin/meteoio_timeserie*")
+		INSTALL(FILES ${meteoio_bins} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+		INSTALL(DIRECTORY ${METEOIO_INCLUDE_DIR}/meteoio/ DESTINATION include/meteoio COMPONENT headers 
+		        FILES_MATCHING PATTERN "*.h" 
+		        PATTERN "CMakeFiles" EXCLUDE 
+		        PATTERN "icons" EXCLUDE 
+		        PATTERN "jnative" EXCLUDE)
 	ENDIF(BUILD_SHARED_LIBS)
 	IF(INSTALL_DOC)
+		#meteoio's documentation
 		IF(WIN32)
 			SET(METEOIO_INSTALLED_DOC "${METEOIO_ROOT}/doc")
 			SET(METEOIO_DOC ${DOC_PATH}/meteoio)
@@ -193,25 +243,6 @@ IF(CPACK_BUNDLE_ALL)
 		FILE(GLOB meteoio_docs "${METEOIO_INSTALLED_DOC}/*.*")
 		INSTALL(FILES ${meteoio_docs} DESTINATION ${METEOIO_DOC} COMPONENT documentation)
 	ENDIF(INSTALL_DOC)
-
-	#bundle inishell
-	FILE(GLOB inishell "${CMAKE_SOURCE_DIR}/tools/inish*.jar")
-	IF("${inishell}" STREQUAL "")
-		MESSAGE("Inishell not found! Please copy inishell.jar into the tools directory")
-	ENDIF("${inishell}" STREQUAL "")
-	INSTALL(FILES ${inishell} DESTINATION bin COMPONENT exe)
-	
-	#bundle niViz
-	SET(CPACK_BUNDLE_NIVIZ ON CACHE BOOL "Should niViz also be bundled?")
-	IF(CPACK_BUNDLE_NIVIZ)
-		SET(NIVIZ_DIST_PATH "../niviz" CACHE PATH "Path to NIVIZ 'dist' subdirectory")
-		FILE(GLOB niviz_html "${NIVIZ_DIST_PATH}/*.html")
-		IF("${niviz_html}" STREQUAL "")
-			MESSAGE("niViz not found! Please provide a proper path to niViz 'dist' and don't forget to run 'make dist'")
-		ENDIF("${niviz_html}" STREQUAL "")
-		INSTALL(DIRECTORY "${NIVIZ_DIST_PATH}/assets" "${NIVIZ_DIST_PATH}/doc" "${NIVIZ_DIST_PATH}/img" "${NIVIZ_DIST_PATH}/lib" DESTINATION bin/niviz COMPONENT exe)
-		INSTALL(FILES ${niviz_html} DESTINATION bin/niviz COMPONENT exe)
-	ENDIF(CPACK_BUNDLE_NIVIZ)
 ENDIF(CPACK_BUNDLE_ALL)
 
 SET(CPACK_PACKAGE_DESCRIPTION "Snowpack Model")
@@ -224,7 +255,7 @@ SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
 SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/snowpack/icons\\\\icon.ico")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
 SET(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/Welcome.txt")
-SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/Readme.txt")
+SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/Readme.md")
 
 SET(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
@@ -236,9 +267,18 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${VERSION}-${
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
 SET(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-SET(CPACK_COMPONENTS_ALL documentation examples exe)
+SET(CPACK_COMPONENTS_ALL documentation examples exe resources)
+SET(CPACK_COMPONENT_RESOURCES_DISPLAY_NAME "Inishell resources")
+SET(CPACK_COMPONENT_RESOURCES_DESCRIPTION "Additional files to use Inishell")
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Snowpack library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The SNOWPACK library")
+SET(CPACK_COMPONENT_LIBRARIES_GROUP Runtime)
+SET(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Header files")
+SET(CPACK_COMPONENT_HEADERS_DESCRIPTION "Necessary C++ header files for developing applications using SNOWPACK")
+SET(CPACK_COMPONENT_HEADERS_GROUP Development)
+SET(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
+SET(CPACK_COMPONENT_DEVELOPMENT_GROUP "Development")
+SET(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "What you need to develop an application based on SNOWPACK")
 SET(CPACK_COMPONENT_EXE_DISPLAY_NAME "Snowpack application")
 SET(CPACK_COMPONENT_EXE_DESCRIPTION "The SNOWPACK standalone model")
 SET(CPACK_COMPONENT_EXE_GROUP Runtime)
@@ -279,7 +319,8 @@ IF(UNIX)
 		INSTALL(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink bin/snowpack /usr/bin/snowpack)")
 	ELSE(APPLE)
 		SET(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
-		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
+		SET(CPACK_GENERATOR "DEB;RPM;TGZ" CACHE STRING "Which packages to build")
+		MARK_AS_ADVANCED(FORCE CPACK_GENERATOR)
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "snowpack")
 		SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
@@ -297,7 +338,7 @@ IF(UNIX)
 		ENDIF("${CPACK_ARCH}" STREQUAL "x86_64")
 		SET(CPACK_RPM_PACKAGE_NAME "snowpack")
 		SET(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
-		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, meteoio")
+		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++, meteoio")
 		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "${CPACK_ARCH}")
 		SET(CPACK_RPM_PACKAGE_GROUP "Applications/Science")
 	ENDIF(APPLE)
@@ -311,8 +352,8 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MODIFY_PATH ON)
 		
 		#Main links (they can get overwritten later)
-		SET(MENU_LINKS_NIVIZ "https://niviz.org" "NIVIZ online visualization" )
-		SET(MENU_LINKS_SNOWPACK "https://models.slf.ch/p/snowpack/" "SNOWPACK Home page")
+		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
+		SET(MENU_LINKS_SNOWPACK "https://snowpack.slf.ch" "SNOWPACK Home page")
 		IF(INSTALL_DOC)
 			LIST(APPEND MENU_LINKS_SNOWPACK
 			"${DOC_PATH}/Snowpack_doc.html" "SNOWPACK documentation"
@@ -320,17 +361,14 @@ ELSE(UNIX)
 			)
 		ENDIF(INSTALL_DOC)
 		
-		#all other links: inishell, local niviz, meteoio
+		#all other links: inishell, meteoio
 		IF(CPACK_BUNDLE_ALL)
-			SET(MENU_LINKS_INISHELL "bin/inishell.jar" "SNOWPACK inishell")
-			IF(CPACK_BUNDLE_NIVIZ)
-				SET(MENU_LINKS_NIVIZ "bin/niviz/index.html" "niViz visualization")
-			ENDIF(CPACK_BUNDLE_NIVIZ)
-			SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
+# 			SET(MENU_LINKS_INISHELL "bin/inishell.exe" "SNOWPACK's Inishell")
+			SET(MENU_LINKS_METEOIO "https://meteoio.slf.ch" "MeteoIO Home page")
 			IF(INSTALL_DOC)
 				SET(MENU_LINKS_METEOIO
 				"${METEOIO_DOC}/MeteoIO_doc.html" "MeteoIO documentation"
-				"https://models.slf.ch/p/meteoio/" "MeteoIO Home page"
+				"https://meteoio.slf.ch" "MeteoIO Home page"
 				)
 			ENDIF(INSTALL_DOC)
 		ENDIF(CPACK_BUNDLE_ALL)
@@ -341,7 +379,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://models.slf.ch/p/snowpack")
+		SET(CPACK_NSIS_HELP_LINK "https://snowpack.slf.ch")
 		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 		SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
 	ENDIF(WIN32)

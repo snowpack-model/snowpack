@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -47,6 +48,10 @@ namespace mio {
  * References/Literature: Tilg, A.-M., Marty C. and G. Klein, <i>"An automatic algorithm for validating snow 
  * depth measurements of IMIS stations"</i>, 2015. Swiss Geoscience Meeting 2015
  * 
+ * Normally, the filter computes any potential offset on TSS before using it in its algorithms. But it is possible
+ * to provide the offset that must be used, with the optional TSS_OFFSET argument (then TSS_meas + TSS_offset is compared to given thresholds to
+ * determine if snow can exist on the ground, so you can give a negative offset to more easily keep snow on the ground). 
+ * 
  * Example of use:
  * @code
  * HS::filter1	= DETECT_GRASS
@@ -62,7 +67,7 @@ namespace mio {
 
 class FilterDeGrass : public ProcessingBlock {
 	public:
-		FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		FilterDeGrass(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -81,6 +86,7 @@ class FilterDeGrass : public ProcessingBlock {
 		
 		Date prev_day;
 		double TSS_daily_max, TSS_daily_min, TSS_daily_mean, TSG_daily_var;
+		double TSS_user_offset; ///< The user can optionally provide his/her own TSS offset instead of relying on an automatic one
 		int month;
 };
 

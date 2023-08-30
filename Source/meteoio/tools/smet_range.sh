@@ -1,5 +1,6 @@
 #!/bin/sh
-#prints min/max/mean for a given parameter in all smet files
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# prints min/max/mean for a given parameter in all smet files
 
 if [ $# -lt 2 ]; then
 	me=`basename $0`
@@ -27,12 +28,12 @@ fi
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
 		NAME=`basename "${SMET}" .smet`
-		ALT=`head -100 "${SMET}" | grep altitude | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f3 | cut -d'.' -f1`
-		JULIAN=`head -100 "${SMET}" | grep fields | grep julian`
-		ISO=`head -100 "${SMET}" | grep fields | grep timestamp`
-		start=`head -100 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
-		end=`tail -5 "${SMET}" | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
-		header_nr_lines=`head -100 "${SMET}" | grep -n "\[DATA\]" | cut -d':' -f1`
+		ALT=`head -100 "${SMET}" | grep --binary-files=text altitude | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f3 | cut -d'.' -f1`
+		JULIAN=`head -100 "${SMET}" | grep --binary-files=text fields | grep --binary-files=text julian`
+		ISO=`head -100 "${SMET}" | grep --binary-files=text fields | grep --binary-files=text timestamp`
+		start=`head -100 "${SMET}" | grep --binary-files=text -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+		end=`tail -5 "${SMET}" | grep --binary-files=text -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s '\t' ' ' | tr -s ' ' | cut -d' ' -f1`
+		header_nr_lines=`head -100 "${SMET}" | grep --binary-files=text -n "\[DATA\]" | cut -d':' -f1`
 		full_nr_lines=`wc -l "${SMET}" | cut -d' ' -f1`
 		nr_lines=`expr ${full_nr_lines} - ${header_nr_lines}`
 
@@ -41,7 +42,7 @@ if [ "${param}" = "time" ]; then
 					return sprintf("%s", strftime("%FT%H:%m:00", (ts-2440587.5)*24*3600))
 				}
 				function getSec(ts){
-					gsub(/\-|\:|T/," ", ts); split(ts,d," ");
+					gsub(/\-|:|T/," ", ts); split(ts,d," ");
 					date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
 					return mktime(date)
 				}
@@ -54,17 +55,20 @@ if [ "${param}" = "time" ]; then
 						ISO_end=getISO($2); ISO_start=getISO($1);
 						end=$2*24*3600; start=$1*24*3600; nr=$3
 					}
-					period=int( (end-start)/(nr-1) + 0.5); #round to the nearest second
+					if (nr>1)
+						period=int( (end-start)/(nr-1) + 0.5); #round to the nearest second
+					else
+						 period=0
 					if (period<299 && period!=60 && period!=120 && period!=180 && period!=240)
-						sampling=sprintf("%3.0f s  ", period)
+						sampling=sprintf("%4.0f s  ", period)
 					else if (period<60*60)
-						sampling=sprintf("%3.0f min", period/60)
+						sampling=sprintf("%4.0f min", period/60)
 					else if (period<24*3600)
-						sampling=sprintf("%3.0f h  ", period/3600)
+						sampling=sprintf("%4.0f h  ", period/3600)
 					else {
 						period_days=period/(3600*24)
-						if (period_days==1) sampling=sprintf("%3.0f days", period_days)
-						else sampling=sprintf("%3.0f days", period_days)
+						if (period_days==1) sampling=sprintf("%4.0f day", period_days)
+						else sampling=sprintf("%4.0f days", period_days)
 					}
 					printf( "%04d m\t[ %s - %s ]\t~%s\t(%s)\n", "'"${ALT}"'", ISO_start, ISO_end, sampling, "'"${NAME}"'")
 				}'
@@ -74,15 +78,15 @@ if [ "${param}" = "time" ]; then
 fi
 
 for SMET in ${files}; do
-	IJ=`head -100 ${SMET} | grep station_id | tr -s ' \t' | cut -d' ' -f3`
+	IJ=`head -100 ${SMET} | grep --binary-files=text station_id | tr -s ' \t' | cut -d' ' -f3`
 	if [ -z "${IJ}" ]; then
 		IJ=`echo ${SMET} | cut -d'.' -f 1 | cut -d'_' -f2,3 | tr "_" ","`
 	fi
-	LAT=`head -100 ${SMET} | grep latitude | tr -s ' \t' | cut -d' ' -f3`
-	LON=`head -100 ${SMET} | grep longitude | tr -s ' \t' | cut -d' ' -f3`
-	ALT=`head -100 ${SMET} | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
-	NODATA=`head -100 ${SMET} | grep nodata | tr -s ' \t' | cut -d' ' -f3`
-	JULIAN=`head -100 "${SMET}" | grep fields | grep julian`
+	LAT=`head -100 ${SMET} | grep --binary-files=text latitude | tr -s ' \t' | cut -d' ' -f3`
+	LON=`head -100 ${SMET} | grep --binary-files=text longitude | tr -s ' \t' | cut -d' ' -f3`
+	ALT=`head -100 ${SMET} | grep --binary-files=text altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
+	NODATA=`head -100 ${SMET} | grep --binary-files=text nodata | tr -s ' \t' | cut -d' ' -f3`
+	JULIAN=`head -100 "${SMET}" | grep --binary-files=text fields | grep --binary-files=text julian`
 
 	${local_awk} '
 	function toJul(ts){

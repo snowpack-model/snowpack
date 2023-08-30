@@ -28,19 +28,19 @@ using namespace std;
  * @param mysnowpack pointer to the initialized SNOWPACK Manager
  * @param mysnowdrift pointer to the initialized Snowdrift Manager
  * @param myeb pointer to the initialized radiation manager
- * @param myda pointer to the initialized data assimilation Manager
- * @param myrunoff pointer to the initialized runoff Manager
  * @param cfg User configuration keys
  * @param dem DEM defining the simulation
  */
-AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb, DataAssimilation *myda, Runoff *myrunoff, const Config& cfg, const DEMObject dem_in)
-              : dem(dem_in), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), da(myda), runoff(myrunoff),
-                snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), nocompute(false), out_snow(true)
+AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb,
+                             const Config& cfg, const DEMObject in_dem)
+              : dem(in_dem), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false), dataFromGrids(false)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
 	if (out_snow) {
 		cfg.getValue("SNOW_DAYS_BETWEEN", "Output", snow_days_between);
 	}
+	cfg.getValue("ADD_HS_TO_DEM_FOR_METEO", "input", correct_meteo_grids_HS,IOUtils::nothrow);
+	cfg.getValue("DATA_FROM_GRIDS", "input", dataFromGrids,IOUtils::nothrow);
 
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
@@ -57,18 +57,18 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	const double timeStep = dt_main/86400.;
 	Timer elapsed;
 	std::vector<MeteoData> vecMeteo; // to transfer meteo information
-	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, tsg, ilwr;
+	mio::Grid2DObject p, psum, psum_ph, vw, vw_drift, dw, rh, ta, tsg, ilwr, iswr_dir, iswr_diff;
 	const bool isMaster = MPIControl::instance().master();
 
 	if (isMaster) {
 		cout << "\n**** Done initializing\n";
 		cout << "**** Starting Calculation on date: " << calcDate.toString(Date::ISO) << " using Alpine3D version " << A3D_VERSION << "\n";
-		if (nocompute) 
+		if (nocompute)
 			cout << "**** Performing dry run (--no-compute option)\n";
 		cout << "\n";
-		
+
 		if (nocompute) {
-			const Grid2DObject maskGlacier( snowpack->getGrid(SnGrids::GLACIER) );
+			const Grid2DObject maskGlacier{snowpack->getGrid(SnGrids::GLACIER)};
 			meteo.setGlacierMask(maskGlacier);
 		}
 	}
@@ -76,7 +76,7 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	//if the meteo data would need to be resampled, we try to fill the buffer with a date a little bit before
 	if (snowdrift) meteo.setSkipWind(true); //do not fill grids if met3D
 	meteo.prepare(i_startdate);
-	
+
 	elapsed.start();
 	for (unsigned int t_ind=0; t_ind<max_steps; t_ind++) { //main computational loop
 		const double elapsed_start = elapsed.getElapsed();
@@ -94,65 +94,54 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			const DEMObject upd_dem = dem + ELEV;
 			meteo.updateDEM(upd_dem);
 		}
-		
-		//for --no-compute, simply check the data and move on
-		if (nocompute) {
-			meteo.prepare(calcDate); //prepare the current timestep (because it could not be prepared before)
-			meteo.checkMeteoForcing(calcDate);
-			calcDate += timeStep; //move to next time step
-			continue;
-		}
 
 		//get 1D and 2D meteo for the current time step
+		// The grids ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr get populated here
 		try {
 			meteo.get(calcDate, vecMeteo);
-			meteo.get(calcDate, ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr);
+			if(correct_meteo_grids_HS){
+				meteo.setDEM(dem+snowpack->getGrid(SnGrids::HS));
+			}
+			meteo.get(calcDate, ta, tsg, rh, psum, psum_ph, vw, vw_drift, dw, p, ilwr, iswr_dir, iswr_diff);
 		} catch (IOException&) {
 			//saving state files before bailing out
 			if (isMaster) {
-				if (out_snow && t_ind>0 && snowpack) 
+				if (out_snow && t_ind>0 && snowpack)
 					snowpack->writeOutputSNO(calcDate-1./24.); //output for last hour
 				throw;
 			}
 		}
-		
+
 		if (t_ind < (max_steps-1)) {
 			meteo.prepare(calcDate+timeStep); //prepare next timestep
 		}
 
-		if (eb) {
-			eb->setStations(vecMeteo);
-		} else {
-			if (snowpack) {
-				mio::Grid2DObject iswr, diff;
-				iswr.set(ilwr, 0.);
-				diff.set(ilwr, 0.);
-				meteo.getISWR(calcDate, iswr);
-				snowpack->setRadiationComponents(iswr.grid2D, ilwr.grid2D, diff.grid2D, 0., calcDate);
-			}
-		}
 
 		if (snowpack && enable_simple_snow_drift) snowpack->setVwDrift(vw_drift, calcDate);
 		if (!snowdrift) { //otherwise snowdrift calls snowpack.setMeteo()
 			if (snowpack) snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
 		}
 
-		try { //Snowdrift
-			if (snowdrift) {
-				//meteo1d(MeteoData::TA) : big TODO, see with Christine if we could get rid of it
-				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, rh, ta, tsg, ilwr, calcDate, vecMeteo);
+		// Snowdrift will overwrite VW and DW with data from 3D wind fields and update mns in SnowpackInterface
+		if (snowdrift) {
+			try { //Snowdrift
+				// This will overwrite VW and DW with data from 3D wind fields
+				snowdrift->setMeteo(t_ind, psum, psum_ph, p, vw, dw, rh, ta, tsg, vecMeteo);
+				// This will update mns grid in SnowpackInterface
 				snowdrift->Compute(calcDate);
+			} catch (std::exception& e) {
+				cout << "[E] Exception: Snowdrift compute\n";
+				cout << e.what() << endl;
+				throw;
 			}
-		} catch (std::exception& e) {
-			cout << "[E] Exception: Snowdrift compute\n";
-			cout << e.what() << endl;
-			throw;
 		}
 
+		// Enery balance
+		// This will populate direct, diffuse, reflected, direct_unshaded_horizontal, ilwr, sky_ilwr, terrain_ilwr,
+		// solarAzimuth, solarElevation grids in SnowpackInterface
 		try {
-			if (eb && !snowdrift) { //otherwise snowdrift calls eb.setMeteo()
-				eb->setMeteo(ilwr, ta, rh, p, calcDate);
-			}
+			eb->setStations(vecMeteo);
+			eb->compute(ilwr, ta, rh, p, iswr_dir, iswr_diff, calcDate);
 		} catch (std::bad_alloc&) {
 			cout << "[E] AlpineControl : Virtual memory exceeded\n";
 		} catch (std::exception& e) {
@@ -161,24 +150,33 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			throw;
 		}
 
-		try { //Data Assimilation
-			if (da) da->Compute(calcDate);
-		} catch (std::exception& e) {
-			cout << "[E] Exception: Data Assimilation compute\n";
-			cout << e.what() << endl;
-			throw;
+		// try { //Data Assimilation
+		// 	if (da) da->Compute(calcDate);
+		// } catch (std::exception& e) {
+		// 	cout << "[E] Exception: Data Assimilation compute\n";
+		// 	cout << e.what() << endl;
+		// 	throw;
+		// }
+
+		if (snowpack!=NULL) {
+			snowpack->setMeteo(psum, psum_ph, vw, dw, rh, ta, tsg, calcDate);
+			snowpack->calcNextStep();
 		}
 
 		// Check if elapsed time exceeds specified maximum run time
 		const double tmp_elapsed = elapsed.getElapsed();
-		const bool ForceStop = (max_run_time > 0. && tmp_elapsed > max_run_time);
-		if (!(max_run_time < 0.)) {
-			if (ForceStop) {
-				cout << std::fixed << "[W] !!! Elapsed time (" << setprecision(1) << tmp_elapsed << " seconds) exceeds specified maximum run time (" << setprecision(1) << max_run_time << " seconds) !!!\n        ---> Force writing restart files (if requested) and exiting...\n";
-			} else {
-				cout << std::fixed << "[i] Maximum run time set to: " << setprecision(1) << max_run_time << " seconds ---> time remaining: " << (max_run_time - tmp_elapsed)/3600. << " hours\n";
+		bool ForceStop = false;
+		if (isMaster) {
+			ForceStop = (max_run_time > 0. && tmp_elapsed > max_run_time);
+			if (max_run_time > 0.) {
+				if (ForceStop) {
+					cout << std::fixed << "[W] !!! Elapsed time (" << setprecision(1) << tmp_elapsed << " seconds) exceeds specified maximum run time (" << setprecision(1) << max_run_time << " seconds) !!!\n        ---> Force writing restart files (if requested) and exiting...\n";
+				} else {
+					cout << std::fixed << "[i] Maximum run time set to: " << setprecision(1) << max_run_time << " seconds ---> time remaining: " << (max_run_time - tmp_elapsed)/3600. << " hours.\n";
+				}
 			}
 		}
+		MPIControl::instance().broadcast(ForceStop);
 
 		try { //do some outputs (note, if ForceStop == true, output will be done outside of the loop)
 			if ( snowpack && out_snow && (t_ind > 0) && !ForceStop ) {
@@ -199,7 +197,6 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 			if (eb) cout << "ebalance=" << eb->getTiming() << "  ";
 			if (snowdrift) cout << "snowdrift=" << snowdrift->getTiming() << "  ";
 			if (snowpack) cout << "snowpack=" << snowpack->getTiming() << "  ";
-			if (runoff) cout << "runoff=" << runoff->getTiming() << " ";
 
 			cout << "\n\ttotal=" << elapsed.getElapsed()-elapsed_start << endl;
 		}
@@ -210,9 +207,9 @@ void AlpineControl::Run(Date i_startdate, const unsigned int max_steps)
 	} /* For all times max_steps */
 
 	//Finish the program: Write SNO Files and put final output on the screen
+	if (eb && eb->hasSP()) eb->writeSP(max_steps);
 	if (snowpack && out_snow && !nocompute){
 		if (isMaster) cout << "[i] Simulation finished, writing output files...\n";
 		snowpack->writeOutputSNO(calcDate);
 	 }
 }
-

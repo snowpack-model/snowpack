@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -39,23 +40,41 @@ namespace mio {
  * generate an initial precipitation field, and then modify it. By default, this base method is "idw_lapse" and switches to
  * "avg" if only one station can provide the precipitation at a given time step (for an easy fallback). Please do not forget
  * to provide any necessary arguments for this base method!
- *  - DW_SYNOP: provide a fixed synoptic wind bearing that is used for all time steps (optional);
- *  - REF: provides the station_id of the station to get the wind direction from (optional);
+ *  - TYPE: specify how the synoptic wind direction is derived. It is either of the following:
+ *     - AUTO: automatic computation of the synoptic wind direction (default, see below);
+ *     - FIXED: provide a fixed synoptic wind bearing that is used for all time steps. It then needs the following argument:
+ *          - DW_SYNOP: fixed synoptic wind bearing that is used for all time steps;
+ *     - REF_STATION: the wind direction at the provided station is assumed to be the synoptic wind direction. It then needs the following argument:
+ *          - REF_STATION: the station ID providing the wind direction;
  *  - DMAX: maximum search distance or radius (default: 300m);
  *
- * If neither the DW_SYNOP nor REF arguments have been provided, the synoptic wind direction will be computed as follow:
+ * If type=AUTO, the synoptic wind direction will be computed as follow:
  * the stations are located in the DEM and their wind shading (or exposure) is computed. If at least one station is found
  * that is not sheltered from the wind (in every direction), it provides the synoptic wind (in case of multiple stations, the
  * vector average is used). Please note that the stations that are not included in the DEM are considered to be sheltered.
  * If no such station is found, the vector average of all the available stations is used.
  *
- * @remarks Only cells with an air temperature below freezing participate in the redistribution
  * @code
  * PSUM::algorithms         = WINSTRAL
  * PSUM::winstral::base     = idw_lapse
+ * PSUM::winstral::type     = fixed
  * PSUM::winstral::dw_synop = 180
  * PSUM::winstral::dmax     = 300
  * @endcode
+ * 
+ * Another example, using non-default values for the base algorithm:
+ * @code
+ * PSUM::ALGORITHMS = WINSTRAL IDW_LAPSE
+ * PSUM::WINSTRAL::BASE = idw_lapse
+ * PSUM::WINSTRAL::DMAX = 300
+ * PSUM::WINSTRAL::TYPE = AUTO
+ * 
+ * PSUM::IDW_LAPSE::SOFT = TRUE
+ * PSUM::IDW_LAPSE::TREND_MIN_ALT = 500.0
+ * PSUM::IDW_LAPSE::TREND_MAX_ALT = 1500.0
+ * @endcode
+ * 
+ * @remarks Only cells with an air temperature below freezing participate in the redistribution
  */
 class WinstralAlgorithm : public InterpolationAlgorithm {
 	public:
@@ -71,6 +90,12 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		static double getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo);
 		static double getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& i_vecMeteo);
 
+		typedef enum TYPE {
+				FIXED,
+				REF_STATION,
+				AUTO
+			} synoptic_wind_type;
+			
 		Meteo2DInterpolator& mi;
 		GridsManager& gdm;
 		std::string base_algo_user, ref_station;

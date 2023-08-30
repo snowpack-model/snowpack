@@ -64,7 +64,7 @@
 	<file>
 		<name>Snowpack-3.4.5-src.tar.gz</name>
 		<summary>Source package</summary>
-		<description>Please have a look at <a href="http://models.slf.ch/p/snowpack/page/Getting-started/">Getting-started</a> for instructions. <b>Please use cmake for building Snowpack!</b>
+		<description>Please have a look at <a href="https://snowpack.slf.ch/Getting-started">Getting-started</a> for instructions. <b>Please use cmake for building Snowpack!</b>
         </description>
 		<replaces>Snowpack-3.4.1.tar.gz</replaces>
 		<labels>

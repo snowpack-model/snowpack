@@ -166,7 +166,7 @@ void Stability::checkStability(const CurrentMeteo& Mdata, SnowStation& Xdata)
 	double slab_mass = 0.;	// Slab mass
 	double hi_Ei = 0.;		//this is the denominator of the multi layer Young's modulus
 
-	std::vector<unsigned short> n_lemon(nN, 0.);
+	std::vector<unsigned short> n_lemon(nN, 0);
 	size_t e = nE;
 	while (e-- > Xdata.SoilNode) {
 		EMS[e].hard = (mapHandHardness[hardness_parameterization])(EMS[e], hoar_density_buried);

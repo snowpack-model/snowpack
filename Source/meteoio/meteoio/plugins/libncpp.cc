@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -30,7 +31,7 @@
 #include <netcdf.h>
 #include <fstream>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 
 using namespace std;
 
@@ -48,6 +49,7 @@ inline std::vector<std::string> initDimensionNames()
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
 	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
 	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("DATESTRLEN");
 	tmp.push_back("ZREF"); tmp.push_back("UREF");
 	
 	return tmp;
@@ -121,6 +123,22 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 }
 
 /**
+* @brief Add all the ACDD attributes contained in the acdd object to the file pointed to by ncid.
+* @param[in] ncid file ID
+* @param[in] acdd ACDD object containing all ACDD attributes (only those that have a value will be written)
+*/
+void writeACDDAttributes(const int& ncid, const mio::ACDD& acdd)
+{
+	const size_t nr = acdd.getNrAttributes();
+	std::string name, value;
+	for (size_t ii=0; ii<nr; ii++) {
+		acdd.getAttribute(ii, name, value);
+		if (name.empty() || value.empty()) continue;
+		ncpp::add_attribute(ncid, NC_GLOBAL, name, value);
+	}
+}
+
+/**
 * @brief Check if a variable has a given attribute
 * @param[in] ncid file ID
 * @param[in] varid ID of the variable those attributes should be checked
@@ -138,6 +156,31 @@ bool check_attribute(const int& ncid, const int& varid, const std::string& attr_
 }
 
 /**
+* @brief Add attributes to non-standard variables
+* @param[in,out] var variable whose attributes should be set.
+*/
+inline void overload_attributes(ncpp::nc_variable& var)
+{
+	if (var.attributes.name == "MS_SNOWPACK_RUNOFF" ) {
+		var.attributes.standard_name = "Snowpack_runoff";
+		var.attributes.long_name = "Runoff at bottom of snowpack (positive = downward flux)";
+		var.attributes.units = "kg/m2";
+	} else if (var.attributes.name == "MS_SOIL_RUNOFF" ) {
+		var.attributes.standard_name = "Soil_runoff";
+		var.attributes.long_name = "Runoff at bottom of soil (positive = downward flux)";
+		var.attributes.units = "kg/m2";
+	} else if (var.attributes.name == "RSNO") {
+		var.attributes.standard_name = "Mean_snow_density";
+		var.attributes.long_name = "Mean snow density";
+		var.attributes.units = "kg/m3";
+	} else if (var.attributes.name == "SFC_SUBL") {
+		var.attributes.standard_name = "Surface_evaporation_sublimation";
+		var.attributes.long_name = "Evaporation and sublimated mass from surface (positive = downward flux)";
+		var.attributes.units = "kg/m2";
+	}
+}
+
+/**
 * @brief Write a pre-defined set of attributes for the given variable.
 * @details Please note that during this call, a variable will be created, therefore the nc_variable structure will get a positive varid.
 * If the variable already exists, it will return without doing anything.
@@ -152,6 +195,7 @@ void create_variable(const int& ncid, ncpp::nc_variable& var)
 	const int status = nc_def_var(ncid, var.attributes.name.c_str(), var.attributes.type, ndims, &var.dimids[0], &var.varid);
 	if (status != NC_NOERR) throw mio::IOException("Could not define variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 	
+	if (var.attributes.standard_name.empty()) overload_attributes(var);		// If no attributes, check if variable is defined in function overload_attributes.
 	if (!var.attributes.standard_name.empty()) ncpp::add_attribute(ncid, var.varid, "standard_name", var.attributes.standard_name);
 	if (!var.attributes.long_name.empty()) ncpp::add_attribute(ncid, var.varid, "long_name", var.attributes.long_name);
 	if (!var.attributes.units.empty()) ncpp::add_attribute(ncid, var.varid, "units", var.attributes.units);
@@ -204,16 +248,78 @@ void close_file(const std::string& filename, const int& ncid)
 * @param[in] var variable to read
 * @param[in] pos time index in the file
 * @param[in] nrows number of rows
-* @param[in] ncols number of longitudes
+* @param[in] ncols number of columns
+* @param[in] pos_i dimension index of time
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data(const int& ncid, const nc_variable& var,
-               const size_t& pos, const size_t& nrows, const size_t& ncols, double* data)
+               const size_t& pos, const size_t& nrows, const size_t& ncols, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data)
 {
-	const size_t start[] = {pos, 0, 0};
-	const size_t count[] = {1, nrows, ncols};
+	//map dimensions for variable (start)
+	size_t start[NC_MAX_VAR_DIMS] = { 0 };
+	start[pos_i] = pos;
+	start[col_i] = 0;
+	start[row_i] = 0;
+
+	//map dimensions for variable (count)
+	size_t count[NC_MAX_VAR_DIMS];
+	std::fill(count, count + NC_MAX_VAR_DIMS, 1);
+	count[pos_i] = 1;		// read only one pos
+	count[col_i] = ncols;
+	count[row_i] = nrows;
 
 	const int status = nc_get_vara_double(ncid, var.varid, start, count, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
+* @brief Read grid point in 2D gridded data for non time dependent data
+* @param[in] ncid file ID
+* @param[in] var variable to read
+* @param[in] row row index to read
+* @param[in] col column index to read
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
+* @param[out] data data extracted from the file
+*/
+void read_data_point(const int& ncid, const nc_variable& var,
+               const size_t& row, const size_t& col, const size_t& row_i, const size_t& col_i, double* data)
+{
+	//map dimensions for variable
+	size_t c[NC_MAX_VAR_DIMS] = { 0 };
+	c[col_i] = col;
+	c[row_i] = row;
+
+	const int status = nc_get_var1_double(ncid, var.varid, c, data);
+	if (status != NC_NOERR)
+		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
+}
+
+/**
+* @brief Read grid point in 2D gridded data at the provided time position for a specific variable
+* @param[in] ncid file ID
+* @param[in] var variable to read
+* @param[in] pos time index in the file
+* @param[in] row row index to read
+* @param[in] col column index to read
+* @param[in] pos_i dimension index of time
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
+* @param[out] data data extracted from the file
+*/
+void read_data_point(const int& ncid, const nc_variable& var,
+               const size_t& pos, const size_t& row, const size_t& col, const size_t& pos_i, const size_t& row_i, const size_t& col_i, double* data)
+{
+	//map dimensions for variable
+	size_t c[NC_MAX_VAR_DIMS] = { 0 };
+	c[pos_i] = pos;
+	c[col_i] = col;
+	c[row_i] = row;
+
+	const int status = nc_get_var1_double(ncid, var.varid, c, data);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not retrieve data for variable '" + var.attributes.name + "': " + nc_strerror(status), AT);
 }
@@ -261,7 +367,7 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 
 	int status = nc_inq_varid (ncid, var.attributes.name.c_str(), &var.varid);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
-	status = nc_inq_var(ncid, var.varid, NULL, NULL, &nrdims, dimids, NULL);
+	status = nc_inq_var(ncid, var.varid, nullptr, nullptr, &nrdims, dimids, nullptr);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	var.dimids.assign(dimids, dimids+nrdims);
 	
@@ -273,8 +379,12 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	
-	if (readTimeTransform)
+	if (readTimeTransform) {
+		//trying to be more robust as some might misplace the time units
+		if (var.attributes.units.empty()) 
+			ncpp::getAttribute(ncid, var, "description", var.attributes.units);
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
+	}
 }
 
 /**
@@ -575,283 +685,6 @@ std::string generateHistoryAttribute()
 
 } //end namespace
 
-///////////////////////////////////////////////////// Now the ACDD class starts //////////////////////////////////////////
-
-void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section)
-{
-	for (size_t ii=0; ii<name.size(); ii++) {
-		cfg.getValue(cfg_key[ii], section, value[ii], mio::IOUtils::nothrow);
-
-		if (cfg_key[ii]=="NC_SUMMARY") { //overwrite with the content of summary_file if available
-			const std::string summary_file = cfg.get("NC_SUMMARY_FILE", section, "");
-			if (!summary_file.empty()) {
-				std::string buffer;
-				std::ifstream fin( summary_file.c_str() );
-				if (fin.fail())
-					throw mio::AccessException("Error opening NC_SUMMARY_FILE \""+summary_file+"\", possible reason: "+std::strerror(errno), AT);
-
-				const char eoln = mio::FileUtils::getEoln(fin); //get the end of line character for the file
-				try {
-					do {
-						std::string line;
-						getline(fin, line, eoln); //read complete line
-						buffer.append(line+"\n");
-					} while (!fin.eof());
-					fin.close();
-				} catch (const std::exception&){
-					if (fin.is_open()) fin.close();
-					throw;
-				}
-				value[ii] = buffer;
-			}
-		}
-	}
-}
-
-void ACDD::defaultInit()
-{
-	mio::Date now; 
-	now.setFromSys();
-	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
-	addAttribute("creator_name", mio::IOUtils::getLogName(), "NC_CREATOR");
-	addAttribute("creator_email", "", "NC_EMAIL");
-	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true));
-	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
-	addAttribute("keywords_vocabulary", "AGU Index Terms");
-	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "NC_KEYWORDS");
-	addAttribute("title", "", "NC_TITLE");
-	addAttribute("institution", mio::IOUtils::getDomainName(), "NC_INSTITUTION");
-	addAttribute("project", "", "NC_PROJECT");
-	addAttribute("id", "", "NC_ID");
-	addAttribute("naming_authority", "", "NC_NAMING_AUTHORITY");
-	addAttribute("processing_level", "", "NC_PROCESSING_LEVEL");
-	addAttribute("summary", "", "NC_SUMMARY"); //special handling, see setUserConfig()
-	addAttribute("comment", "", "NC_COMMENT");
-	addAttribute("acknowledgement", "", "NC_ACKNOWLEDGEMENT");
-	addAttribute("metadata_link", "", "NC_METADATA_LINK");
-	addAttribute("license", "", "NC_LICENSE");
-	addAttribute("product_version", "1.0", "NC_PRODUCT_VERSION");
-}
-
-/**
-* @brief Add an attribute and its content to the internal list
-* @details This allows to create or edit attributes. For the MERGE or APPEND modes, if the attribute name is not found, it will be created.
-* @param[in] att_name attribute name
-* @param[in] att_value attribute value
-* @param[in] att_cfg_key associated configuration key (to read user provided values from a mio::Config object)
-* @param[in] mode write mode: MERGE (currently empty values will be replaced by the given arguments), APPEND (the value content will be expanded by
-* what is provided in att_value, separated by ", ", REPLACE (the current attribute will be fully replaced by the provided arguments)
-*/
-void ACDD::addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key, Mode mode)
-{
-	if (att_name.empty())
-		throw mio::InvalidFormatException("The attribute name must be provided", AT);
-	
-	if (mode==MERGE) {
-		const size_t pos = find( att_name );
-		if (pos==mio::IOUtils::npos) {
-			mode = REPLACE;
-		} else {
-			if (!att_value.empty()) value[pos] = att_value;
-			if (!att_cfg_key.empty()) cfg_key[pos] = att_cfg_key;
-			return;
-		}
-	} else if (mode==APPEND) {
-		const size_t pos = find( att_name );
-		if (pos==mio::IOUtils::npos) {
-			mode = REPLACE;
-		} else {
-			value[pos] = value[pos] + ", " + att_value;
-			return;
-		}
-	}
-	
-	if (mode==REPLACE) {
-		name.push_back( att_name );
-		value.push_back( att_value );
-		cfg_key.push_back( att_cfg_key );
-		return;
-	}
-	
-	//we should not have come here -> throw
-	throw mio::InvalidFormatException("The specified write mode does not exists", AT);
-}
-
-void ACDD::addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key, const Mode& mode)
-{
-	std::ostringstream os;
-	os << att_value;
-	addAttribute(att_name, os.str(), att_cfg_key, mode);
-}
-
-void ACDD::writeAttributes(const int& ncid) const
-{
-	for (size_t ii=0; ii<name.size(); ii++) {
-		if (name[ii].empty() || value[ii].empty()) continue;
-		ncpp::add_attribute(ncid, NC_GLOBAL, name[ii], value[ii]);
-	}
-}
-
-/**
-* @brief Given an attribute name, return its associated index (or IOUtils::npos if it does not exists)
-* @param[in] search_name attribute name to get the index for
-* @return attribute index or IOUtils::npos
-*/
-size_t ACDD::find(const std::string& search_name) const
-{
-	for (size_t ii=0; ii<name.size(); ii++) {
-		if (name[ii]==search_name) return ii;
-	}
-	
-	return mio::IOUtils::npos;
-}
-
-void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
-{
-	mio::Coords urcorner(grid.llcorner);
-	urcorner.moveByXY(static_cast<double>(grid.getNx())*grid.cellsize, static_cast<double>(grid.getNy())*grid.cellsize);
-	
-	std::string epsg_str = "4326";
-	std::string geometry;
-	if (isLatLon) {
-		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(10) << grid.llcorner.getLon() << " " << grid.llcorner.getLat() << ", ";
-		ss << urcorner.getLon() << " " << grid.llcorner.getLat() << ", ";
-		ss << urcorner.getLon() << " " << urcorner.getLat() << ", ";
-		ss << grid.llcorner.getLon() << " " << urcorner.getLat();
-		geometry = ss.str();
-	}else {
-		std::ostringstream os;
-		os << grid.llcorner.getEPSG();
-		epsg_str = os.str();
-		
-		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(10) << grid.llcorner.getEasting() << " " << grid.llcorner.getNorthing() << ", ";
-		ss << urcorner.getEasting() << " " << grid.llcorner.getNorthing() << ", ";
-		ss << urcorner.getEasting() << " " << urcorner.getNorthing() << ", ";
-		ss << grid.llcorner.getEasting() << " " << urcorner.getNorthing();
-		geometry = ss.str();
-	}
-	
-	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
-	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
-}
-
-void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
-{
-	if (vecMeteo.empty()) return;
-	
-	std::string multiPts;
-	short int epsg = -1;
-	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
-	bool found = false;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (vecMeteo[ii].empty()) continue;
-
-		//create the strings for the MultiPoint property
-		std::ostringstream ss;
-		if (isLatLon) {
-			ss  << std::fixed << std::setprecision(10) << "(" << vecMeteo[ii].front().meta.position.getLon() << " " << vecMeteo[ii].front().meta.position.getLat() << ")";
-		} else {
-			ss  << std::fixed << std::setprecision(0) << "(" << vecMeteo[ii].front().meta.position.getEasting() << " " << vecMeteo[ii].front().meta.position.getNorthing() << ")";
-		}
-		if (epsg==-1) { //first valid point
-			epsg = (isLatLon)? 4326 : vecMeteo[ii].front().meta.position.getEPSG();
-			multiPts = ss.str();
-		} else {
-			if (!isLatLon && epsg!=vecMeteo[ii].front().meta.position.getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
-			multiPts += ", "+ss.str();
-		}
-
-		const double curr_lat = vecMeteo[ii].front().meta.position.getLat();
-		const double curr_lon = vecMeteo[ii].front().meta.position.getLon();
-		found = true;
-		
-		if (lat_min>curr_lat) lat_min = curr_lat;
-		if (lat_max<curr_lat) lat_max = curr_lat;
-		if (lon_min>curr_lon) lon_min = curr_lon;
-		if (lon_max<curr_lon) lon_max = curr_lon;
-	}
-	if (!found) return;
-	
-	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
-		std::ostringstream os;
-		os << epsg;
-		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
-		addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
-	}
-	addAttribute("geospatial_lat_min", lat_min);
-	addAttribute("geospatial_lat_max", lat_max);
-	addAttribute("geospatial_lon_min", lon_min);
-	addAttribute("geospatial_lon_max", lon_max);
-}
-
-void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
-{
-	std::string epsg_str = "4326";
-	std::string geometry;
-	if (isLatLon) {
-		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(10) << location.getLon() << " " << location.getLat();
-		geometry = ss.str();
-	}else {
-		std::ostringstream os;
-		os << location.getEPSG();
-		epsg_str = os.str();
-		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(0) << location.getEasting() << " " << location.getNorthing();
-	}
-	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
-	addAttribute("geospatial_bounds", "Point ("+geometry+")");
-}
-
-void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
-{
-	if (vecMeteo.empty()) return;
-	
-	mio::Date set_start( vecMeteo[0].front().date );
-	mio::Date set_end( vecMeteo[0].back().date );
-	int sampling_period = -1;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) { //we must redo station 0 in order to get sampling_period
-		if (vecMeteo[ii].empty()) continue;
-		const mio::Date curr_start = vecMeteo[ii].front().date;
-		const mio::Date curr_end = vecMeteo[ii].back().date;
-		if (set_start>curr_start) set_start = curr_start;
-		if (set_end<curr_end) set_end = curr_end;
-		
-		const size_t npts = vecMeteo[ii].size();
-		if (npts>1) {
-			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
-			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
-		}
-	}
-	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
-	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
-	
-	if (sampling_period>0) {
-		std::ostringstream os;
-		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		addAttribute("time_coverage_resolution", os.str());
-	}
-}
-
-void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
-{
-	if (vecMeteo.empty()) return;
-	
-	const mio::Date set_start = vecMeteo.front().date;
-	const mio::Date set_end = vecMeteo.back().date;
-	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
-	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
-	
-	const size_t npts = vecMeteo.size();
-	if (npts>1) {
-		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
-		std::ostringstream os;
-		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		addAttribute("time_coverage_resolution", os.str());
-	}
-}
 
 ///////////////////////////////////////////////////// Now the NC_SCHEMA class starts //////////////////////////////////////////
 std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::schemas_dims( initSchemasDims() );
@@ -947,6 +780,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "west_east") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::DATESTRLEN, "DateStrLen") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
@@ -1110,7 +944,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "U at 10 M", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "V at 10 M", "m/s", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::W, "W10", "10-meter wind speed", "W at 10 M", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
 	
 	//METEOCH schema

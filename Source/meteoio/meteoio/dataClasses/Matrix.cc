@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -21,7 +22,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <time.h> //needed for random()
-#include <cmath> //needed for fabs()
+#include <cmath> //needed for std::abs()
 #include <iostream>
 #include <iomanip>
 
@@ -112,7 +113,7 @@ void Matrix::clear()
 
 void Matrix::random(const double& range)
 {
-	srand( static_cast<unsigned>(time(NULL)) );
+	srand( static_cast<unsigned>(time(nullptr)) );
 
 	for (size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] = (double)rand()/(double)RAND_MAX*range;
@@ -820,7 +821,7 @@ void Matrix::gaussElimination(Matrix& MM, std::vector<size_t>& pp)
 		size_t ipiv=jj;
 		double piv=MM(pp[jj], jj);
 		for (size_t ii=jj+1; ii<=dim; ii++) { //rows below diagonal
-			if (fabs(MM(pp[ii], jj))>fabs(piv)) { //biggest element for stability
+			if (std::abs(MM(pp[ii], jj))>std::abs(piv)) { //biggest element for stability
 				ipiv=ii;
 				piv=MM(pp[ii], jj);
 			}
@@ -1028,7 +1029,7 @@ size_t Matrix::findMaxInCol(const size_t &col)
 	double max_val=0.;
 
 	for (size_t ii=1; ii<=nrows; ii++) {
-		const double val = fabs( operator()(ii,col) );
+		const double val = std::abs( operator()(ii,col) );
 		if ( val>max_val) {
 			max_val = val;
 			row_idx = ii;
@@ -1044,7 +1045,7 @@ size_t Matrix::findMaxInRow(const size_t &row)
 	double max_val=0.;
 
 	for (size_t jj=1; jj<=ncols; jj++) {
-		const double val = fabs( operator()(row,jj) );
+		const double val = std::abs( operator()(row,jj) );
 		if ( val>max_val ) {
 			max_val=val;
 			col_idx=jj;
@@ -1106,7 +1107,7 @@ unsigned int Matrix::eigenvaluesJacobi(Matrix& AA, Matrix& DD)
 		counter++;
 		for (size_t pp=1; pp<dim; pp++) {
 			for (size_t qq=pp+1; qq<=dim; qq++) {
-				if ( IOUtils::checkEpsilonEquality(fabs(AA(pp, qq)), 0., epsilon) )
+				if ( IOUtils::checkEpsilonEquality(std::abs(AA(pp, qq)), 0., epsilon) )
 					continue; //nothing to transform
 
 				const double beta=(AA(qq, qq)-AA(pp, pp))/(2.*AA(pp, qq)); //calculate all the constants, i. e. the elements of Q

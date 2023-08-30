@@ -30,18 +30,23 @@ class RadiationField {
 		void setStations(const std::vector<mio::MeteoData>& vecMeteo, const mio::Grid2DObject& albedo);
 
 		void setMeteo(const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Grid2DObject& in_albedo);
+		void setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
+		              const mio::Grid2DObject& in_albedo, const mio::Date timestamp);
+
 
 		void getPositionSun(double& o_solarAzimuth, double& o_solarElevation) const;
-		void getRadiation(mio::Array2D<double>& o_direct, mio::Array2D<double>& o_diffuse) const;
+		void getRadiation(mio::Array2D<double>& o_direct, mio::Array2D<double>& o_diffuse, mio::Array2D<double>& o_direct_unshaded_horizontal) const;
 		void getBandOffsets(size_t& o_startx, size_t& o_stopx) const;
+		const mio::Date getDate() const {return timestamp;}
 
 	private:
 		mio::Date date;
 		mio::DEMObject dem;
-		mio::Grid2DObject dem_band, direct, diffuse;
+		mio::Grid2DObject dem_band, direct, diffuse, direct_unshaded_horizontal; // FELIX: direct_unshaded_horizontal;
 		mio::SunObject Sun;
 		std::vector<mio::StationData> vecMeta;
 		std::vector<double> vecMd, vecCorr;
+		mio::Date timestamp;
 		double dem_mean_altitude;
 		double cellsize;
 		size_t dem_dimx, band_dimx, dimy;

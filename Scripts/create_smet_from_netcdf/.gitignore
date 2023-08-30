@@ -1,0 +1,15 @@
+# Don't track files with these exstensions
+**.smet
+
+# Don't track these directories
+sbatch_out_files/*
+log/*
+output/*
+io_files/*
+
+# File exceptions
+!sbatch_out_files/.gitkeep
+!io_files/base.ini
+!io_files/MERRA-2.ini
+!io_files/CESM.ini
+!io_files/RACMO2.ini

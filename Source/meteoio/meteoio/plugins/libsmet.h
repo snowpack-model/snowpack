@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,6 +20,7 @@
 #define LIBSMET_H
 
 #include <meteoio/FileUtils.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <string>
 #include <iostream>
@@ -43,8 +45,7 @@ enum LocationType {WGS84, EPSG};
 class SMETException : public std::exception {
 	public:
 		SMETException(const std::string& message="SMETException occured", const std::string& position="");
-		~SMETException() throw();
-		const char* what() const throw();
+		const char* what() const noexcept;
 
 	protected:
 		std::string msg;
@@ -60,15 +61,18 @@ class SMETCommon {
 		static bool validFileAndPath(const std::string& filename);
 		static void copy_file(const std::string& src, const std::string& dest);
 		static bool fileExists(const std::string& filename);
+		static std::string strToLower(std::string str);
 		static double convert_to_double(const std::string& in_string);
 		static int convert_to_int(const std::string& in_string);
+		static char convert_to_char(const std::string& in_string);
 		static void stripComments(std::string& str);
 		static char getEoln(std::istream& fin);
 		static void trim(std::string& str);
 		static void toUpper(std::string& str);
 		static bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
 		                             std::map<std::string,std::string>& out_map);
-		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vec_string);
+		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
+		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 		static bool is_decimal(const std::string& value);
 
 	public:
@@ -130,15 +134,17 @@ class SMETWriter {
 		 *            is aligned sequentially, not per line; Total size of the vector:
 		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields
 		 *            (timestamp is not counted as field)
+		 * @param[in] acdd ACDD object that contains acdd metadata
 		 */
-		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data);
+		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const mio::ACDD& acdd);
 
 		/**
 		 * @brief Write a SMET file, providing a vector of doubles
 		 * @param[in] data All the data to be written sequentially into the columns, the data
 		 *            is aligned sequentially, not per line;
+		 * @param[in] acdd ACDD object that contains acdd metadata
 		 */
-		void write(const std::vector<double>& data);
+		void write(const std::vector<double>& data, const mio::ACDD& acdd);
 
 		/**
 		 * @brief Set precision for each field (except timestamp), otherwise a default
@@ -155,13 +161,30 @@ class SMETWriter {
 		 *            (timestamp is not counted if present)
 		 */
 		void set_width(const std::vector<int>& vec_width);
+		
+		/**
+		 * @brief For some special cases (import into DB), the white space separator
+		 *        should be replaced by another one (typically, comma). In this case,
+		 *        each field will be delimited by a single separator but the headers
+		 *        will remain space-delimited.
+		 * @param[in] i_separator field separator to use instead of spaces
+		 */
+		void set_separator(const char& i_separator);
+		
+		/**
+		 * @brief For some special cases (import into DB), the headers should be
+		 * commented out (please note that this breaks SMET conformance)
+		 * @param[in] flag should headers be commented out?
+		 */
+		void set_commented_headers(const bool& flag) {comment_headers=flag;}
 
 		const std::string toString() const;
 		
 	private:
 		void setAppendMode(std::vector<std::string> vecFields);
-		void print_if_exists(const std::string& header_field, std::ofstream& fout) const;
-		void write_header(std::ofstream& fout); //only writes when all necessary header values are set
+		void print_if_exists(const std::string& header_field, const std::string& prefix, std::ofstream& fout) const;
+		void printACDD(std::ofstream& fout, const std::string& prefix, const mio::ACDD& acdd) const;
+		void write_header(std::ofstream& fout, const mio::ACDD& acdd); //only writes when all necessary header values are set
 		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
 		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
 		bool check_fields(const std::string& key, const std::string& value);
@@ -180,9 +203,10 @@ class SMETWriter {
 		double nodata_value;
 		size_t nr_of_fields, julian_field, timestamp_field;
 		char location_wgs84, location_epsg;
+		char separator;
 		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
 		bool timestamp_present, julian_present;
-		bool file_is_binary, append_mode, append_possible;
+		bool file_is_binary, append_mode, append_possible, comment_headers;
 };
 
 /**
@@ -202,7 +226,6 @@ class SMETReader {
 		 * @param[in] in_fname The filename of the SMET file
 		 */
 		SMETReader(const std::string& in_fname);
-		~SMETReader(){}
 
 		/**
 		 * @brief Read the data in a SMET file for a given interval of time
@@ -321,7 +344,7 @@ class SMETReader {
 		std::string getLastTimestamp() const;
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 		void read_data_binary(std::ifstream& fin, std::vector<double>& vec_data);
-		void cleanup(std::ifstream& fin) throw();
+		void cleanup(std::ifstream& fin) noexcept;
 		void checkSignature(const std::vector<std::string>& vecSignature, bool& o_isAscii);
 		void read_header(std::ifstream& fin);
 		void process_header();
@@ -343,6 +366,7 @@ class SMETReader {
 		size_t timestamp_field, julian_field; //index of the timestamp and julian column, if present
 		char location_wgs84, location_epsg, location_data_wgs84, location_data_epsg;
 		char eoln; //end of line character for this file
+		char separator; //column separator
 		bool timestamp_present, julian_present;
 		bool isAscii; //true if the file is in SMET ASCII format, false if it is in binary format
 		bool mksa; //true if MKSA converted values have to be returned

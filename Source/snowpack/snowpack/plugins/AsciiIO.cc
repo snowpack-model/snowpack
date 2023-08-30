@@ -161,6 +161,8 @@ const bool AsciiIO::t_gnd = false;
  * 0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)
  * 0502,nElems,element density (kg m-3)
  * 0503,nElems,element temperature (degC)
+ * 0504,nElems,element ID    -- or --    element mk (see key PROF_ID_OR_MK)
+ * 0505,nElems,element age (days)
  * 0506,nElems,liquid water content by volume (%)
  * 0507,nElems,liquid preferential flow water content by volume (%)
  * 0508,nElems,dendricity (1)
@@ -179,6 +181,7 @@ const bool AsciiIO::t_gnd = false;
  * 0521,nElems,thermal conductivity (W K-1 m-1)
  * 0522,nElems,absorbed shortwave radiation (W m-2)
  * 0523,nElems,viscous deformation rate (1.e-6 s-1)
+ * 0529,nElems,Stress rate CDot (Pa s-1), i.e., the LAST overload change rate
  * 0530,8,position (cm) and minimum stability indices:
  *		profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38
  * 0531,nElems,deformation rate stability index Sdef
@@ -319,10 +322,10 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
            info(run_info), vecProfileFmt(), aggregate_prf(false),
            fixedPositions(), numberMeasTemperatures(0), maxNumberMeasTemperatures(0), numberTags(0), numberFixedSensors(0),
            totNumberSensors(0), time_zone(0.), calculation_step_length(0.), hazard_steps_between(0.), ts_days_between(0.),
-           min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), enable_pref_flow(false),
+           min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), enable_pref_flow(false), enable_ice_reservoir(false),
            avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
            out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_t(false),
-           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false)
+           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false), prof_ID_or_MK("ID")
 {
 	//Defines how heights/depths of snow or/and soil temperatures are read in and output \n
 	// Snowpack section
@@ -356,6 +359,10 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	const std::string out_snowpath = cfg.get("SNOWPATH", "Output", "");
 	cfg.getValue("TS_DAYS_BETWEEN", "Output", ts_days_between);
 	cfg.getValue("PROF_FORMAT", "Output", vecProfileFmt);
+	cfg.getValue("PROF_ID_OR_MK", "Output", prof_ID_or_MK);
+	if (prof_ID_or_MK != "ID" && prof_ID_or_MK != "MK") {
+		throw InvalidArgumentException("Unknown value for PROF_ID_OR_MK: "+prof_ID_or_MK+". Please specify if element 0504 in *.pro file should contain \"ID\" or \"MK\"", AT);
+	}
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
 	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
 
@@ -368,6 +375,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
 	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 	cfg.getValue("PREF_FLOW", "SnowpackAdvanced", enable_pref_flow);
+	cfg.getValue("ICE_RESERVOIR", "SnowpackAdvanced", enable_ice_reservoir);
 
 	i_snowpath = (in_snowpath.empty())? inpath : in_snowpath;
 	o_snowpath = (out_snowpath.empty())? outpath : out_snowpath;
@@ -754,12 +762,18 @@ void AsciiIO::readSnowCover(const std::string& i_snowfile, const std::string& st
  * @param forbackup dump Xdata on the go
  */
 void AsciiIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-                             const ZwischenData& Zdata, const bool& forbackup)
+                             const ZwischenData& Zdata, const size_t& forbackup)
 {
 	string snofilename = getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + ".snoold";
-	if (forbackup){
-		stringstream ss;
-		ss << "" << (int)(date.getJulian() + 0.5);
+	if (forbackup > 0){
+		std::stringstream ss;
+		if (forbackup == 1) {
+			// 1: No labeling
+			ss << "backup";
+		} else {
+			// >1: Label using timestamp
+			ss << "" << (date.toString(Date::NUM));
+		}
 		snofilename += ss.str();
 	}
 
@@ -967,10 +981,15 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	for (size_t e = 0; e < nE; e++)
 		fout << "," << std::fixed << std::setprecision(2) << IOUtils::K_TO_C(EMS[e].Te);
 	if (fullOutput) {
-		// 0504: element ID
+		// 0504: element ID  -- or --  MK
 		fout << "\n0504," << nE;
 		for (size_t e = 0; e < nE; e++)
-			fout << "," << std::fixed << std::setprecision(0) << EMS[e].ID;
+			fout << "," << std::fixed << std::setprecision(0) << ((prof_ID_or_MK == "ID") ? (EMS[e].ID) : (EMS[e].mk));
+		// 0505: element age
+		fout << "\n0505," << nE;
+		for (size_t e = 0; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(2) << i_date.getJulian() - EMS[e].depositionDate.getJulian();
+
 	}
 	// 0506: liquid water content by volume (%)
 	fout << "\n0506," << nE + Noffset;
@@ -1066,8 +1085,45 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		// 0518: viscosity (GPa s)
 		fout << "\n0518," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
-		for (size_t e = 0; e < nE; e++)
-			fout << "," << std::scientific << std::setprecision(3) << 1.e-9*EMS[e].k[SETTLEMENT];
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(1) << 1.e6*EMS[e].Eps_vDot;
+		// 0524: ice reservoir content by volume (%)
+		if(enable_ice_reservoir) {
+			fout << "\n0524," << nE + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = 0; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta_i_reservoir;
+		}
+		// 0525: cumulated ice reservoir content by volume (%)
+		if(enable_ice_reservoir) {
+			fout << "\n0525," << nE + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = 0; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(3) << 100.*EMS[e].theta_i_reservoir_cumul;
+		}
+		// 0529: Stress rate CDot (Pa s-1)
+		if (no_snow) {
+			fout << "\n0529,1,0";
+		} else {
+			fout << "\n0529," << nE-Xdata.SoilNode + Noffset;
+			if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+			for (size_t e = Xdata.SoilNode; e < nE; e++)
+				fout << "," << std::fixed << std::setprecision(1) << EMS[e].CDot;
+		}
+		// 0530: position (cm) and minimum stability indices
+		fout << "\n0530,8";
+		fout << "," << std::fixed << +Xdata.S_class1 << "," << +Xdata.S_class2; //force printing type char as numerica value
+		fout << "," <<  std::setprecision(1) << M_TO_CM(Xdata.z_S_d/cos_sl) << "," << std::setprecision(2) << Xdata.S_d;
+		fout << "," << std::fixed << std::setprecision(1) << M_TO_CM(Xdata.z_S_n/cos_sl) << "," << std::setprecision(2) <<  Xdata.S_n;
+		fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_s/cos_sl) << "," << std::fixed << std::setprecision(2) << Xdata.S_s;
+		// 0531: deformation rate stability index Sdef
+		if (no_snow) {
+			fout << "\n0531,1,0";
+		} else {
+			fout << "\n0531," << nE-Xdata.SoilNode + Noffset;
+			for (size_t e = 0; e < nE; e++)
+				fout << "," << std::scientific << std::setprecision(3) << 1.e-9*EMS[e].k[SETTLEMENT];
+		}
 		// 0519: soil volume fraction (%)
 		fout << "\n0519," << nE + Noffset;
 		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
@@ -1148,6 +1204,15 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 					fout << "," << std::fixed << std::setprecision(1) << -EMS[e].hard;
 			}
 		}
+	}
+	// 0535: optical equivalent grain size OGS (mm)
+	if (no_snow) {
+		fout << "\n0535,1,0";
+	} else {
+		fout << "\n0535," << nE-Xdata.SoilNode + Noffset;
+		if (Noffset == 1) fout << "," << std::fixed << std::setprecision(2) << mio::IOUtils::nodata;
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(2) << EMS[e].ogs;
 	}
 	// 0535: optical equivalent grain size OGS (mm)
 	if (no_snow) {
@@ -1950,14 +2015,15 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 		}
 	}
 	if (out_mass) {
-		// 34-39: SWE (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2), sublimation and evaporation (both in kg m-2); see also 52 & 93.
+		// 34-40: SWE (kg m-2), eroded mass (kg m-2 h-1), rain rate (kg m-2 h-1), runoff at bottom of snowpack (kg m-2),
+		// runoff at the soil surface (kg m-2), sublimation and evaporation (both in kg m-2); see also 53 & 94.
 		// Note: in operational mode, runoff at bottom of snowpack is expressed as kg m-2 h-1 when !cumsum_mass.
 		fout << "," << Sdata.mass[SurfaceFluxes::MS_SWE]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_WIND]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_RAIN];
-		fout << "," << Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_SUBLIMATION]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_EVAPORATION]/cos_sl;
+		fout << "," << Sdata.mass[SurfaceFluxes::MS_SNOWPACK_RUNOFF]/cos_sl << "," <<  Sdata.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_SUBLIMATION]/cos_sl << "," << Sdata.mass[SurfaceFluxes::MS_EVAPORATION]/cos_sl;
 	} else {
 		fout << ",,,,,,";
 	}
-	// 40-49: Internal Temperature Time Series at fixed heights, modeled and measured, all in degC
+	// 41-50: Internal Temperature Time Series at fixed heights, modeled and measured, all in degC
 	if (out_t && (fixedPositions.size() || Mdata.getNumberFixedRates())) {
 		const size_t nrFixedPositions = std::min((size_t)5, fixedPositions.size());
 		if (Mdata.zv_ts.size()!=nrFixedPositions || Mdata.ts.size()!=nrFixedPositions) {
@@ -1976,22 +2042,22 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 		fout << ",,,,,,,,,,";
 	}
 	if (maxNumberMeasTemperatures == 5) {
-		// 50: Solute load at ground surface
+		// 51: Solute load at ground surface
 		if (out_load && !Sdata.load.empty())
 			fout << "," << Sdata.load[0];
 		else
 			fout << ",";
-		// 51: input snow depth HS (cm); see also 28-29
+		// 52: input snow depth HS (cm); see also 28-29
 		if (out_meteo)
 			fout << "," << std::fixed << std::setprecision(2) << M_TO_CM(Mdata.hs)/cos_sl << std::setprecision(6);
 		else
 			fout << ",";
-		// 52: LWC (kg m-2); see also 34-39
+		// 52-54: LWC (kg m-2); see also 34-39
 		if (out_mass)
-			fout << "," <<  Sdata.mass[SurfaceFluxes::MS_WATER]/cos_sl;
+			fout << "," <<  Sdata.mass[SurfaceFluxes::MS_WATER]/cos_sl  << "," <<  Sdata.mass[SurfaceFluxes::MS_WATER_SOIL]/cos_sl << "," <<  Sdata.mass[SurfaceFluxes::MS_ICE_SOIL]/cos_sl;
 		else
 			fout << ",";
-		// 53-64: Stability Time Series, heights in cm
+		// 55-66: Stability Time Series, heights in cm
 		if (out_stab) {
 			fout << "," << +Xdata.S_class1 << "," << +Xdata.S_class2 << std::fixed; //profile type and stability class, force printing type char as numerica value
 			fout << "," << std::setprecision(1) << M_TO_CM(Xdata.z_S_d/cos_sl) << "," << std::setprecision(2) << Xdata.S_d;
@@ -2003,7 +2069,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 		} else {
 			fout << ",,,,,,,,,,,,";
 		}
-		// 65-92 (28 columns)
+		// 67-94 (28 columns)
 		if (out_canopy && useCanopyModel)
 			Canopy::DumpCanopyData(fout, &Xdata.Cdata, &Sdata, cos_sl);
 		else {
@@ -2028,7 +2094,7 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 			}
 		}
 	} else if (out_t) {
-		// 50-93 (44 columns)
+		// 52-95 (44 columns)
 		size_t ii, jj = 0;
 		for (ii = std::min((size_t)5, fixedPositions.size()); ii < numberFixedSensors; ii++) {
 			if ((jj += writeTemperatures(fout, Mdata.zv_ts.at(ii), Mdata.ts.at(ii), ii, Xdata)) > 44) {
@@ -2037,12 +2103,12 @@ void AsciiIO::writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sda
 				throw IOException("Writing Time Series data failed", AT);
 			}
 		}
-		for (; jj < 44; jj++)
+		for (; jj < 45; jj++)
 			fout << ",";
 	} else {
 		fout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,";
 	}
-	// 93[94]-100 (8 or 7 free columns)
+	// 96[94]-102 (8 or 7 free columns)
 	size_t nCalcSteps = 1;
 	double crust = 0., dhs_corr = 0., mass_corr = 0.;
 	if (!avgsum_time_series)
@@ -2249,16 +2315,16 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 		else
 			fout <<  " (operational mode)";
 	}
-	fout << "\n,,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102";
+	fout << "\n,,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103";
 	fout << "\nID,Date,Sensible heat,Latent heat,Outgoing longwave radiation,Incoming longwave radiation,Net absorbed longwave radiation,Reflected shortwave radiation,Incoming shortwave radiation,Net absorbed shortwave radiation,Modelled surface albedo,Air temperature,Modeled surface temperature,Measured surface temperature,Temperature at bottom of snow or soil pack,Heat flux at bottom of snow or soil pack,Ground surface temperature,Heat flux at ground surface,Heat advected to the surface by liquid precipitation,Global solar radiation (horizontal)";
 	if(out_haz==true || out_soileb==false) {
-		fout << ",Global solar radiation on slope,Direct solar radiation on slope,Diffuse solar radiation on slope,Measured surface albedo,Relative humidity,Wind speed,Max wind speed at snow station or wind speed at ridge station,Wind direction at snow station,Precipitation rate at surface (solid only),Modelled snow depth (vertical),Enforced snow depth (vertical),Surface hoar size,24h Drift index (vertical),Height of new snow HN (24h vertical),3d sum of daily height of new snow (vertical),SWE (of snowpack),Eroded mass,Rain rate,Snowpack runoff (virtual lysimeter)";
+		fout << ",Global solar radiation on slope,Direct solar radiation on slope,Diffuse solar radiation on slope,Measured surface albedo,Relative humidity,Wind speed,Max wind speed at snow station or wind speed at ridge station,Wind direction at snow station,Precipitation rate at surface (solid only),Modelled snow depth (vertical),Enforced snow depth (vertical),Surface hoar size,24h Drift index (vertical),Height of new snow HN (24h vertical),3d sum of daily height of new snow (vertical),SWE (of snowpack),Eroded mass,Rain rate,Snowpack runoff (virtual lysimeter, snow only), Surface mass flux (virtual lysimeter)";
 	} else {
-		fout << ",Global solar radiation on slope,Direct solar radiation on slope,Diffuse solar radiation on slope,Measured surface albedo,Relative humidity,Wind speed,Max wind speed at snow station or wind speed at ridge station,Wind direction at snow station,Precipitation rate at surface (solid only),Modelled snow depth (vertical),Enforced snow depth (vertical),Internal energy change soil,Melt freeze part of internal energy change soil,Cold content soil,,SWE (of snowpack),Eroded mass,Rain rate,Snowpack runoff (virtual lysimeter)";
+		fout << ",Global solar radiation on slope,Direct solar radiation on slope,Diffuse solar radiation on slope,Measured surface albedo,Relative humidity,Wind speed,Max wind speed at snow station or wind speed at ridge station,Wind direction at snow station,Precipitation rate at surface (solid only),Modelled snow depth (vertical),Enforced snow depth (vertical),Internal energy change soil,Melt freeze part of internal energy change soil,Cold content soil,,SWE (of snowpack),Eroded mass,Rain rate,Snowpack runoff (virtual lysimeter, snow only), Surface mass flux (virtual lysimeter)";
 	}
 	fout << ",Sublimation,Evaporation,Temperature 1 (modelled),Temperature 1 (measured),Temperature 2 (modelled),Temperature 2 (measured),Temperature 3 (modelled),Temperature 3 (measured),Temperature 4 (modelled),Temperature 4 (measured),Temperature 5 (modelled),Temperature 5 (measured)";
 	if (maxNumberMeasTemperatures == 5) {
-		fout << ",Solute load at soil surface,Measured snow depth HS,Liquid Water Content (of snowpack),Profile type,Stability class,z_Sdef,Deformation rate stability index Sdef,z_Sn38,Natural stability index Sn38,z_Sk38,Skier stability index Sk38,z_SSI,Structural Stability index SSI,z_S5,Stability index S5";
+		fout << ",Solute load at soil surface,Measured snow depth HS,Liquid Water Content (of snowpack),Liquid Water Content (of soil),Solid Water Content (of soil),Profile type,Stability class,z_Sdef,Deformation rate stability index Sdef,z_Sn38,Natural stability index Sn38,z_Sk38,Skier stability index Sk38,z_SSI,Structural Stability index SSI,z_S5,Stability index S5";
 		if (useCanopyModel && out_canopy) {
 			Canopy::DumpCanopyHeader(fout);
 		} else {
@@ -2318,9 +2384,9 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	}
 
 	if(out_haz==true || out_soileb==false) {
-		fout << "\n,,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,degC,degC,degC,degC,W m-2,degC,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,%,m s-1,m s-1,deg,kg m-2 h-1,cm,cm,mm,cm,cm,cm,kg m-2,kg m-2 h-1,kg m-2 h-1,kg m-2,kg m-2,kg m-2,degC,degC,degC,degC,degC,degC,degC,degC,degC,degC";
+		fout << "\n,,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,degC,degC,degC,degC,W m-2,degC,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,%,m s-1,m s-1,deg,kg m-2 h-1,cm,cm,mm,cm,cm,cm,kg m-2,kg m-2 h-1,kg m-2 h-1,kg m-2,kg m-2,kg m-2,kg m-2,degC,degC,degC,degC,degC,degC,degC,degC,degC,degC";
 	} else {
-		fout << "\n,,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,degC,degC,degC,degC,W m-2,degC,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,%,m s-1,m s-1,deg,kg m-2 h-1,cm,cm,kJ m-2,kJ m-2,MJ m-2,,kg m-2,kg m-2 h-1,kg m-2 h-1,kg m-2,kg m-2,kg m-2,degC,degC,degC,degC,degC,degC,degC,degC,degC,degC";
+		fout << "\n,,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,degC,degC,degC,degC,W m-2,degC,W m-2,W m-2,W m-2,W m-2,W m-2,W m-2,1,%,m s-1,m s-1,deg,kg m-2 h-1,cm,cm,kJ m-2,kJ m-2,MJ m-2,kg m-2 h-1,kg m-2 h-1,kg m-2,kg m-2,kg m-2,kg m-2,kg m-2,degC,degC,degC,degC,degC,degC,degC,degC,degC,degC";
 	}
 	if (maxNumberMeasTemperatures == 5) {
 		fout << ",kg m-2,cm,kg m-2,-,-,cm,1,cm,1,cm,1,cm,1,cm,1";
@@ -2400,6 +2466,12 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0503,nElems,element temperature (degC)";
 	if (fullOutput) {
 		fout << "\n0504,nElems,element ID (1)";
+		if (prof_ID_or_MK == "ID") {
+			fout << "\n0504,nElems,element ID (1)";
+		} else {
+			fout << "\n0504,nElems,element mk (1)";
+		}
+		fout << "\n0505,nElems,element age (days)";
 	}
 	fout << "\n0506,nElems,liquid water content by volume (%)";
 	if(enable_pref_flow) fout << "\n0507,nElems,liquid preferential flow water content by volume (%)";
@@ -2422,6 +2494,9 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 		fout << "\n0521,nElems,thermal conductivity (W K-1 m-1)";
 		fout << "\n0522,nElems,absorbed shortwave radiation (W m-2)";
 		fout << "\n0523,nElems,viscous deformation rate (1.e-6 s-1)";
+		if(enable_ice_reservoir) fout << "\n0524,nElems, ice reservoir volume fraction (%)";
+		if(enable_ice_reservoir) fout << "\n0525,nElems, cumulated ice reservoir volume fraction (%)";
+		fout << "\n0529,nElems,Stress rate CDot (Pa s-1)";
 		fout << "\n0530,8,position (cm) and minimum stability indices:";
 		fout << "\n       profile type, stability class, z_Sdef, Sdef, z_Sn38, Sn38, z_Sk38, Sk38";
 		fout << "\n0531,nElems,deformation rate stability index Sdef";

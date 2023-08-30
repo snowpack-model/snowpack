@@ -40,9 +40,9 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
- * - special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
+ * - \anchor config_special_syntax special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
  *       - environment variables are called by using the following syntax: ${env:my_env_var};
- *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key}
+ *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key} (make sure to prefix the key with its section if it refers to another section!)
  *       - evaluating an arithmetic expression: ${{arithm. expression}}
  * 
  * @note The arithemic expressions are evaluated thanks to the <A HREF="https://codeplea.com/tinyexpr">tinyexpr</A> math library (under the 
@@ -69,7 +69,7 @@ namespace mio {
  * user = ${env:LOGNAME}			; this uses the value of the environment variable "LOGNAME" for the key "user"
  * output_log = ${env:LOGNAME}_output.log	; we can even concatenate environment variables with other elements
  *
- * ConfigBackup = ${user}_${smart_read}.bak	; using other keys to build a value
+ * ConfigBackup = ${Input::user}_${smart_read}.bak	; using other keys to build a value (the section reference can be omitted within the same section)
  * Target_rate = ${{24*3600}}		; arithmetic expression that will be evaluated when reading the key
  * @endcode
  */
@@ -82,8 +82,6 @@ class Config {
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
 		 */
 		Config();
-
-		//virtual ~Config() {}
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
@@ -267,6 +265,7 @@ class Config {
 		 */
 		std::string get(const std::string& key, const std::string& section, const std::string& dflt) const;
 		std::string get(const std::string& key, const std::string& section, const char dflt[]) const;
+		double get(const std::string& key, const std::string& section, const double& dflt) const; //surprisingly, in c++11 with gcc 9.3.0 this is needed...
 		bool get(const std::string& key, const std::string& section, const bool& dflt) const;
 
 
@@ -335,6 +334,9 @@ class Config {
 		
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
+		 * @details Please not that if the keys are postfixed by integral numbers (ie build as <i>{common string}{integral number}</i>, such as *STATION12*)
+		 * then the keys will be sorted in ascending order based on this integral number. As soon as a key does not fit this pattern, the sort will be
+		 * purely alphabetical (therefore *STATION11_a* would appear **before** *STATION2_a*).
 		 * @param[in] keymatch std::string representing a pattern for the key in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
@@ -346,8 +348,8 @@ class Config {
 			IOUtils::toUpper(section);
 			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key( section + "::" + vecKeys[ii] );
+			for (const std::string& key : vecKeys) {
+				const std::string full_key( section + "::" + key );
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -365,8 +367,8 @@ class Config {
 			IOUtils::toUpper(section);
 			vecKeys = getKeys(keymatch, section);
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key = section + "::" + vecKeys[ii];
+			for (const std::string& key : vecKeys) {
+				const std::string full_key = section + "::" + key;
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -377,6 +379,8 @@ class Config {
 			}
 		}
 
+		std::vector< std::pair<std::string, std::string> > getValuesRegex(std::string regex_str, std::string section) const;
+		
 		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
 
 		/**
@@ -387,7 +391,7 @@ class Config {
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
-		 *  const std::vector<std::string> myVec( cfg.findKeys(myVec, "TA::", "Filters") );
+		 *  const std::vector<std::string> myVec( cfg.findKeys("TA::", "Filters") );
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
@@ -405,6 +409,50 @@ class Config {
 		 * @param[in] overwrite if true, all keys in the destination section are erased before creating the new keys
 		 */
 		void moveSection(std::string org, std::string dest, const bool& overwrite);
+		
+		/**
+		 * @brief Extract the command number from a given command string, given the command pattern
+		 * @details Each new command is defined as {cmd_id}::{cmd_pattern}# = {value} and this call
+		 * extracts the command number out of a given "{cmd_id}::{cmd_pattern}#" string.
+		 * 
+		 * For example, a filter command will have as command pattern "TA::FILTER", as command key
+		 * "TA::FILTER3" and this call will return *3*.
+		 * @param[in] section The section this command belongs to (for error messages)
+		 * @param[in] cmd_pattern Pattern used to build the stack of commands, such as "TA::FILTER" or even just "::FILTER"
+		 * @param[in] cmd_key the base command key, such as "TA::FILTER3" that will be parsed as {cmd_id}::{cmd_pattern}# to extract the command number
+		 * @return the key index contained in the cmd_key or IOUtils::unodata if a number could not be extracted
+		 */
+		static unsigned int getCommandNr(const std::string& section, const std::string& cmd_pattern, const std::string& cmd_key);
+		
+		/**
+		* @brief Extract the arguments for a given command and store them into a vector of key / value pairs.
+		* @details The goal of this call is to provide an algorithm with easy to parse arguments, independent
+		* of the entry syntax. The syntax that is supported here is the following:
+		*    - each new command is defined as {cmd_id}::{cmd_pattern}# = {value}
+		*    - each argument for this command is defined as {cmd_id}::{arg_pattern}#::{argument_name} = {value}
+		* From the command definition, the command number will be retrieved by a call to getCommandNr(). Then all its arguments 
+		* will be extracted by the current call and saved into a vector of pairs {argument_name} / {value}.
+		* 
+		* @param[in] section The section where to look for this command
+		* @param[in] cmd_id the command ID to process
+		* @param[in] cmd_nr the command number to process (most probably provided by a call to getCommandNr())
+		* @param[in] arg_pattern as part of the argument definition
+		* @return All arguments for this command, as vector of key / value pairs, {argument_name} / {value}
+		*/
+		std::vector< std::pair<std::string, std::string> > parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const;
+
+		/**
+		 * @brief retrieve the resampling algorithm to be used for the 1D interpolation of meteo parameters.
+		 * The potential arguments are also extracted.
+		 * @param parname meteo parameter to deal with
+		 * @param algorithm algorithm name
+		 * @param section INI section to look into
+		 * @return vector of named arguments
+		 */
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm,
+			const std::string& section = "Interpolations1d") const;
+
+
 
 	private:
 		std::map<std::string, std::string> properties; ///< Save key value pairs
@@ -428,8 +476,6 @@ class ConfigProxy {
 			proxycfg.getValue(key, section, tmp, IOUtils::dothrow);
 			return tmp;
 		}
-
-		ConfigProxy& operator =(const ConfigProxy& /*i_cfg*/) {return *this;} //making VC++ happy...
 };
 
 class ConfigParser {

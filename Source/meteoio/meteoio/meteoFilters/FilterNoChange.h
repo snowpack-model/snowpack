@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2015 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -31,7 +32,7 @@ namespace mio {
  * @brief This filter removes periods showing insufficient changes. 
  * @details
  * It searches for time periods in which the value of the certain variable doesn't change by looking at the variance. 
- * It takes as arguments all the window parameters as defined in WindowedFilter::setWindowFParams();
+ * It takes as arguments all the window parameters as defined in WindowedFilter::setWindowFParams().
  * Additionally, you can set the maximum variance that is allowed with MAX_VARIANCE. If not set, this value is 0.
  * 
  * For example:
@@ -55,7 +56,7 @@ namespace mio {
 
 class FilterNoChange : public WindowedFilter {
 	public:
-		FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		FilterNoChange(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

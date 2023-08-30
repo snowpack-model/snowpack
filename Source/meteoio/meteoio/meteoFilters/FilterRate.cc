@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -23,8 +24,8 @@ using namespace std;
 
 namespace mio {
 
-FilterRate::FilterRate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-           : ProcessingBlock(vecArgs, name), min_rate_of_change(0.), max_rate_of_change(0.)
+FilterRate::FilterRate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+           : ProcessingBlock(vecArgs, name, cfg), min_rate_of_change(0.), max_rate_of_change(0.)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -82,7 +83,7 @@ void FilterRate::parse_args(const std::vector< std::pair<std::string, std::strin
 	}
 
 	if (!has_max) throw InvalidArgumentException("Please provide a MAX value for "+where, AT);
-	if (has_max && !has_min) min_rate_of_change = -max_rate_of_change;
+	if (!has_min) min_rate_of_change = -max_rate_of_change;
 }
 
 }

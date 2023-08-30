@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,7 +23,7 @@ namespace mio {
 
 void ConstGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const std::string where( "generators::"+algo );
+	const std::string where( section+"::"+algo );
 	bool has_cst=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -44,11 +45,11 @@ bool ConstGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool ConstGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ConstGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		generate(param, vecMeteo[ii]);
 	}
 

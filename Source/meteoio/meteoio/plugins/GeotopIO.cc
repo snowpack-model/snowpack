@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 EPFL                                                            */
 /***********************************************************************************/
@@ -85,7 +86,8 @@ GeotopIO::GeotopIO(const Config& cfgreader)
 	cfg.getValue("TIME_ZONE", "Output", out_tz, IOUtils::nothrow);
 }
 
-void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) {
+void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) 
+{
 	mapParam["Iprec"] = MeteoData::PSUM;
 	mapParam["WindSp"] = MeteoData::VW;
 	mapParam["WindDir"] = MeteoData::DW;
@@ -96,25 +98,26 @@ void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) {
 }
 
 void GeotopIO::writeMeteoData( const std::vector<std::vector<MeteoData> >& vecMeteo,
-                               const std::string&) {
-	map<string, size_t> mapParam;
+                               const std::string&) 
+{
+	std::map<std::string, size_t> mapParam;
 	initParamNames(mapParam);
 
-	string path;
+	std::string path;
 	cfg.getValue("METEOPATH", "Output", path);
-	vector<string> vecSequence;
+	std::vector<std::string> vecSequence;
 	cfg.getValue("METEOSEQ", "Output", vecSequence);
 
 	//Check whether vecSequence is valid, that is the keys are part of mapParam
 	for (size_t ii = 0; ii < vecSequence.size(); ii++) {
-		const map<string, size_t>::const_iterator it = mapParam.find(vecSequence[ii]);
+		const std::map<std::string, size_t>::const_iterator it = mapParam.find(vecSequence[ii]);
 		if (it == mapParam.end())
 			throw InvalidFormatException("Key " + vecSequence[ii]
 					+ " invalid in io.ini:METEOSEQ", AT);
 	}
 
 	//write the meta data file _meteo.txt
-	const string meteoFile = path + "/_meteo.txt";
+	const std::string meteoFile( path + "/_meteo.txt" );
 	if (!FileUtils::validFileAndPath(meteoFile)) throw InvalidNameException(meteoFile,AT);
 	std::ofstream fout;
 	fout.open(meteoFile.c_str(), ios::out);
@@ -139,7 +142,7 @@ void GeotopIO::writeMeteoData( const std::vector<std::vector<MeteoData> >& vecMe
 	fout.close(); //finished writing meta data
 
 	//Writing actual meteo files
-	vector<int> ymdhm = vector<int> (5);
+	std::vector<int> ymdhm = vector<int> (5);
 	for (size_t ii = 0; ii < vecMeteo.size(); ii++) {
 		ostringstream ss;
 		ss.fill('0');
@@ -189,8 +192,9 @@ void GeotopIO::writeMeteoData( const std::vector<std::vector<MeteoData> >& vecMe
 	}
 }
 
-void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
-	string metafile;
+void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) 
+{
+	std::string metafile;
 	vecMeta.clear();
 
 	if (vecStation.empty()) {
@@ -202,7 +206,8 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 }
 
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                             std::vector<std::vector<MeteoData> >& vecMeteo) {
+                             std::vector<std::vector<MeteoData> >& vecMeteo) 
+{
 	vecMeteo.clear();
 	std::string line;
 
@@ -220,7 +225,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (nr_of_stations == IOUtils::npos)
 		nr_of_stations = vecStation.size();
 
-	cerr << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
+	std::cout << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
 
 	std::vector<std::string> tmpvec;
 	vecMeteo.resize( nr_of_stations );
@@ -305,7 +310,8 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 }
 
 void GeotopIO::parseDate(const std::string& datestring,
-                         const std::string& fileandline, Date& date) {
+                         const std::string& fileandline, Date& date) 
+{
 	/*
 	 * In order to be more flexible with the date parsing in GEOtop meteo files,
 	 * this function will allow any date format common to GEOtop to be accepted
@@ -346,7 +352,8 @@ void GeotopIO::parseDate(const std::string& datestring,
 }
 
 void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std::string& filename,
-                               std::vector<size_t>& indices, MeteoData& md) {
+                               std::vector<size_t>& indices, MeteoData& md) 
+{
 	//Go through the columns and seek out which parameter corresponds with which column
 	for (size_t jj = 1; jj < tmpvec.size(); jj++) { //skip field 1, that one is reserved for the date
 		const std::map<std::string, size_t>::iterator it = mapColumnNames.find(tmpvec[jj]);
@@ -370,18 +377,16 @@ void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std
 	}
 }
 
-void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec) {
+void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec) 
+{
 	tmpvec.clear();
-	const string mdata = datastr.substr(head.length() + 1, datastr.length() + 1);
+	const std::string mdata( datastr.substr(head.length() + 1, datastr.length() + 1) );
 	IOUtils::readLineToVec(mdata, tmpvec, ',');
 }
 
-void GeotopIO::readMetaData(const std::string& metafile) {
-	//vector indexes correspond to meteo data
-	size_t x = 0, y = 1, lat = 2, lon = 3, elv = 4;
-
+void GeotopIO::readMetaData(const std::string& metafile)
+{
 	std::vector<std::string> tmpvec;
-	unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered
 
 	if (!FileUtils::validFileAndPath(metafile)) throw InvalidNameException(metafile, AT);
 	if (!FileUtils::fileExists(metafile)) throw NotFoundException(metafile, AT);
@@ -393,13 +398,11 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 	}
 
 	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
-
 	std::vector<std::string> vecX, vecY, vecLat, vecLon, vecAlt;
-
-	size_t meta_counter = 0;
 
 	try {
 		std::string line;
+		size_t meta_counter = 0;
 		Coords coordinate(coordin, coordinparam);
 		while (!fin.eof()) {
 			getline(fin, line, eoln); //read complete line of data
@@ -464,6 +467,9 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 		if ((vecX.size() != vecY.size()) || (vecY.size() != vecLat.size()) || (vecLat.size() != vecLon.size()) || (vecLon.size() != vecAlt.size()))
 			throw InvalidFormatException("Your GEOtop METAFILE " + metafile + " does not contain a consistent number of meta data fields", AT);
 
+		//vector indexes correspond to meteo data
+		static const size_t x = 0, y = 1, lat = 2, lon = 3, elv = 4;
+		unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered
 		for (size_t i = 0; i < vecX.size(); i++) {
 			std::vector<double> tmpdata = std::vector<double>(5);
 
@@ -515,7 +521,7 @@ std::string GeotopIO::getValueForKey(const std::string& line)
 	const size_t pos_end = line.find("\"", pos_start+1);
 
 	if ((pos_start != string::npos) && (pos_end != string::npos)) {
-		string param_name = line.substr(pos_start+1, pos_end - pos_start - 1);
+		std::string param_name( line.substr(pos_start+1, pos_end - pos_start - 1) );
 		IOUtils::trim(param_name);
 		return param_name;
 	}
@@ -523,7 +529,8 @@ std::string GeotopIO::getValueForKey(const std::string& line)
 	return std::string();
 }
 
-void GeotopIO::convertUnitsBack(MeteoData& meteo) {
+void GeotopIO::convertUnitsBack(MeteoData& meteo) 
+{
 	//converts Kelvin to C, converts RH to [0,100]
 	double& ta = meteo(MeteoData::TA);
 	ta = IOUtils::K_TO_C(ta);
@@ -543,7 +550,8 @@ void GeotopIO::convertUnitsBack(MeteoData& meteo) {
 		p /= 100.; //from Pascal to mbar
 }
 
-void GeotopIO::convertUnits(MeteoData& meteo) {
+void GeotopIO::convertUnits(MeteoData& meteo) 
+{
 	meteo.standardizeNodata(plugin_nodata);
 
 	//converts C to Kelvin, converts RH to [0,1]

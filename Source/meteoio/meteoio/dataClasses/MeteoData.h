@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -56,11 +57,14 @@ class MeteoGrids {
 				ISWR_DIR, ///< Incoming short wave, direct
 				ILWR, ///< Incoming long wave radiation
 				OLWR, ///< Outgoing long wave radiation
+				LWR_NET, ///< Net long wave radiation
 				TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
+				CLD, ///< Total cloud cover in oktas (see https://en.wikipedia.org/wiki/Okta)
 				HS, ///< Height of snow
 				PSUM, ///< Water equivalent of precipitations, either solid or liquid
 				PSUM_PH, ///<  Precipitation phase, between 0 (fully solid) and 1 (fully liquid)
 				PSUM_L, ///< Water equivalent of liquid precipitation
+				PSUM_LC, ///< Water equivalent of liquid convective precipitation
 				PSUM_S, ///< Water equivalent of solid precipitation
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
@@ -82,9 +86,9 @@ class MeteoGrids {
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static size_t getParameterIndex(const std::string& parname);
-		static const std::string& getParameterName(const size_t& parindex);
-		static const std::string& getParameterDescription(const size_t& parindex);
-		static const std::string& getParameterUnits(const size_t& parindex);
+		static const std::string getParameterName(const size_t& parindex);
+		static const std::string getParameterDescription(const size_t& parindex, const bool& allow_ws=true);
+		static const std::string getParameterUnits(const size_t& parindex);
 
 	private:
 		//static methods
@@ -107,6 +111,7 @@ class MeteoData {
 		///Keywords for selecting the toString formats
 		typedef enum {
 			DFLT, ///< Shows detailed information, skipping nodata fields
+			FULL, ///< Shows detailed information, including nodata fields
 			COMPACT ///< output optimized to print the content of vector<MeteoData>
 		} FORMATS;
 		
@@ -122,8 +127,20 @@ class MeteoData {
 		typedef enum MERGE_TYPE {
 				STRICT_MERGE=0, ///< Station1 receives data from station2 only for common timestamps
 				EXPAND_MERGE=1, ///< If station2 can provide some data before/after station1, this extra data is added to station1
-				FULL_MERGE=2 ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+				FULL_MERGE=2, ///< All timestamps from station2 are brought into station1 even if the timestamps don't match
+				WINDOW_MERGE=3 ///< Similar to a full merge but within the time range of station1
 		} Merge_Type;
+		
+		/** @brief Available %MeteoData conflict resolution strategies.
+		 * When two stations are merged, there is a merge conflict when they have different values for the same parameter 
+		 * at the same timestamp (please note that if one of them has nodata, it is not a conflict: the valid value will be 
+		 * used to replace the nodata). How to handle conflicts is defined by the choice of conflicts resolution strategy. 
+		 */
+		typedef enum MERGE_CONFLICTS {
+				CONFLICTS_PRIORITY_FIRST=0, ///< Station1 has priority over station 2
+				CONFLICTS_PRIORITY_LAST=1, ///< Station2 has priority over station 1
+				CONFLICTS_AVERAGE=2 ///< The merged value is the average of station1 and station2
+		} Merge_Conflicts;
 
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
@@ -137,13 +154,20 @@ class MeteoData {
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
 		                 VW_MAX, ///< Maximum wind velocity
+		                 U, ///< Wind velocity (west-east component)
+		                 V, ///< Wind velocity (sout-north component)
 		                 RSWR, ///< Reflected short wave radiation
 		                 ISWR, ///< Incoming short wave radiation
 		                 ILWR, ///< Incoming long wave radiation (downwelling)
+		                 OLWR, ///< Outgoing long wave radiation
+		                 LWR_NET, ///< Net long wave radiation
 		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 PSUM, ///< Water equivalent of precipitations, either solid or liquid
 		                 PSUM_PH, ///< Precipitation phase: between 0 (fully solid) and 1(fully liquid)
-		                 lastparam=PSUM_PH};
+		                 PSUM_L, ///< Water equivalent of liquid precipitation
+		                 PSUM_LC, ///< Water equivalent of liquid convective precipitation
+		                 PSUM_S, ///< Water equivalent of solid precipitation
+		                 lastparam=PSUM_S};
 
 		static const std::string& getParameterName(const size_t& parindex);
 
@@ -160,6 +184,12 @@ class MeteoData {
 		*/
 		MeteoData(const Date& in_date);
 
+		/**
+		* @brief A constructor that sets the meta data and keeps julian ==0.0
+		* @param meta_in A StationData object containing the meta data
+		*/
+		MeteoData(const StationData& meta_in);
+		
 		/**
 		* @brief A constructor that sets the measurment time and meta data
 		* @param date_in A Date object representing the time of the measurement
@@ -221,6 +251,9 @@ class MeteoData {
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const {return nrOfAllParameters;}
 
+		static MeteoGrids::Parameters findGridParam(const Parameters& mpar);
+		static Parameters findMeteoParam(const MeteoGrids::Parameters& gpar);
+
 		/**
 		 * @brief Simple merge strategy for two vectors containing meteodata time series for two stations.
 		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
@@ -230,8 +263,10 @@ class MeteoData {
 		 * @param vec1 reference vector, highest priority
 		 * @param[in] vec2 extra vector to merge, lowest priority
 		 * @param[in] strategy how should the merge be done? (default: STRICT_MERGE)
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
+		 * @return number of merge conflicts
 		 */
-		static void mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE);
+		static size_t mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy=STRICT_MERGE, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
@@ -243,10 +278,11 @@ class MeteoData {
 		 * @note the vectors are supposed to contain data at a given time stamp. If both vectors don't match a
 		 * common time stamp, nothing is done
 		 * @param vec1 reference vector, highest priority
-		 * @param vec2 extra vector to merge, lowest priority
-		 * @param simple_merge if set to true, assume all stations are unique (ie. simply append vec2 to vec1)
+		 * @param[in] vec2 extra vector to merge, lowest priority
+		 * @param[in] simple_merge if set to true, assume all stations are unique (ie. simply append vec2 to vec1), default: false
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 */
-		static void merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge=false);
+		static void merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge=false, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
@@ -257,14 +293,16 @@ class MeteoData {
 		 * @note the datasets are supposed to contain data at a given time stamp. If vec1 and meteo2 don't match a
 		 * common time stamp, nothing is done
 		 * @param vec reference vector, highest priority
-		 * @param meteo2 extra MeteoData object to merge, lowest priority
-		 * @param simple_merge if set to true, assume all stations are unique (ie.simply append meteo2 to vec)
+		 * @param[in] meteo2 extra MeteoData object to merge, lowest priority
+		 * @param[in] simple_merge if set to true, assume all stations are unique (ie.simply append meteo2 to vec), default: false
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 */
-		static void merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge=false);
+		static void merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge=false, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy within a vector of MeteoData.
-		 * All stations that can be considerd as identical (see note) will be merged in case of fields set to nodata.
+		 * All stations that can be considerd as identical (see note) will be merged using the defined conflict resolution
+		 * policy (see Merge_Conflicts).
 		 * The priority goes to the stations at the beginning of the vector. For example, if vec[0] has TA but no HS and
 		 * vec[3] has TA and HS, then vec[0] will <i>keep</i> its TA and get HS from vec[3]. If vec[2] is further away than
 		 * 5m from vec[0], then it can not contribute to vec[0].
@@ -272,8 +310,9 @@ class MeteoData {
 		 * @note the datasets are supposed to contain data at a given time stamp. If the stations don't match a
 		 * common time stamp, nothing is done
 		 * @param vec vector of stations
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
 		 */
-		static void merge(std::vector<MeteoData>& vec);
+		static void merge(std::vector<MeteoData>& vec, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy.
@@ -281,25 +320,45 @@ class MeteoData {
 		 * provided argument.
 		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
 		 * @param meteo1 reference MeteoData, highest priority
-		 * @param meteo2 extra MeteoData to merge, lowest priority
+		 * @param[in] meteo2 extra MeteoData to merge, lowest priority
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
+		 * @return new MeteoData object resulting from the merge
 		 */
-		static MeteoData merge(MeteoData meteo1, const MeteoData& meteo2);
+		static MeteoData merge(MeteoData meteo1, const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
 		/**
 		 * @brief Simple merge strategy.
 		 * If some fields of the current object are nodata, they will be filled by the matching field from the
 		 * provided argument.
 		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
-		 * @param meteo2 extra MeteoData to merge, lowest priority
+		 * @param[in] meteo2 extra MeteoData to merge, lowest priority
+		 * @param[in] conflicts_strategy In case of conflicts, define how to resolve them (see Merge_Conflicts), default: CONFLICTS_PRIORITY_FIRST
+		 * @return true if no conflicts were found
 		 */
-		void merge(const MeteoData& meteo2);
+		bool merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_strategy=CONFLICTS_PRIORITY_FIRST);
 
+		/**
+		 * @brief Check for data conflicts between two MeteoData objects
+		 * Conflicts are defined as two identical data fields having different 
+		 * non-nodata values. The metadata are NOT checked for conflict.
+		 * @param[in] meteo2 other MeteoData to compare to
+		 * @return true if meteo2 has conflicts with the current MeteoData object
+		 */
+		bool hasConflicts(const MeteoData& meteo2) const;
+		
 		/**
 		 * @brief Parse a string containing a merge type and return the proper enum member for it.
 		 * @param[in] merge_type
 		 * @return Merge_Type
 		 */
 		static MeteoData::Merge_Type getMergeType(std::string merge_type);
+		
+		/**
+		 * @brief Parse a string containing a merge conflcits type and return the proper enum member for it.
+		 * @param[in] merge_conflicts
+		 * @return Merge_Conflicts
+		 */
+		static MeteoData::Merge_Conflicts getMergeConflicts(std::string merge_conflicts);
 
 		/**
 		 * @brief List the parameters that have a least one valid value in a vector of MeteoData.
@@ -307,6 +366,14 @@ class MeteoData {
 		 * @return parameters that have at least one valid value
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
+		
+		/**
+		 * @brief Ensure all elements in a METEO_SET have the same parameters.
+		 * @details This should be called before writing out the METEO_SET with a plugin such as smet
+		 * in order to guarantee that all parameters are always present.
+		 * @param vecMeteo METEO_SET to process
+		 */
+		static void unifyMeteoData(METEO_SET &vecMeteo);
 
 		/**
 		 * @brief Print the content of the current object
@@ -357,7 +424,7 @@ class MeteoData {
 
 		//data qa containers:
 		bool resampled; ///<set this to true if MeteoData is result of resampling
-		std::vector<flag_field> flags; ///<Per-parameter data quality flags
+		std::vector<flag_field> flags; ///<Per-parameter data quality flags BUG these are currently not serialized!!
 		static flag_field zero_flag; //TODO: is there a way to make this const?
 };
 

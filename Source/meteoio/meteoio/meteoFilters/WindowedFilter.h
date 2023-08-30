@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -43,7 +44,7 @@ class WindowedFilter : public ProcessingBlock {
 		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
-		WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		WindowedFilter(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg, const bool& skipWindowParams=false);
 
 		void setWindowFParams(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		const std::vector<const MeteoData*>& get_window(const size_t& index,

@@ -73,7 +73,7 @@ PhaseChange::PhaseChange(const SnowpackConfig& cfg)
                forcing("ATMOS"),
                sn_dt( get_sn_dt(cfg) ), cold_content_in(IOUtils::nodata), cold_content_soil_in(IOUtils::nodata),
                cold_content_out(IOUtils::nodata), cold_content_soil_out(IOUtils::nodata),
-	       alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ), t_crazy_min( get_double(cfg, "T_CRAZY_MIN", "SnowpackAdvanced") ), t_crazy_max( get_double(cfg, "T_CRAZY_MAX", "SnowpackAdvanced") ), max_theta_ice(1.)
+	       alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ), t_crazy_min( get_double(cfg, "T_CRAZY_MIN", "SnowpackAdvanced") ), t_crazy_max( get_double(cfg, "T_CRAZY_MAX", "SnowpackAdvanced") ), max_theta_ice(1.), enable_ice_reservoir(false)
 {
 	//Water transport model snow
 	cfg.getValue("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", watertransportmodel_snow);
@@ -98,6 +98,10 @@ PhaseChange::PhaseChange(const SnowpackConfig& cfg)
 	}
 
 	cfg.getValue("FORCING", "Snowpack", forcing);
+
+	// Check for ice reservoir
+	cfg.getValue("ICE_RESERVOIR", "SnowpackAdvanced", enable_ice_reservoir);
+
 }
 
 void PhaseChange::reset()
@@ -318,6 +322,25 @@ void PhaseChange::compSubSurfaceFrze(ElementData& Edata, const unsigned int nSol
 		Edata.Qmf += (dth_i * Constants::density_ice * Constants::lh_fusion) / dt; // (W m-3)
 		Edata.dth_w += dth_w;
 		Edata.Te += dT;
+
+		// Treat here the ice reservoir
+		if (enable_ice_reservoir) {
+			if (-dth_w >= Edata.theta_w_transfer) { // The water frozen comes from both PF transfer and matrix water
+				const double theta_i_transfer = (Constants::density_water / Constants::density_ice) * Edata.theta_w_transfer; // Volumetric content of ice formed, coming from the PF transfer
+				Edata.theta[ICE] -= theta_i_transfer; // Take away the PF ice from matrix ice
+				Edata.theta_i_reservoir += theta_i_transfer; // Add the PF ice to the ice reservoir
+			} else { // All water from PF transfer does not freeze
+				const double theta_i_transfer = (Constants::density_water / Constants::density_ice) * (-dth_w); // Volumetric content of ice formed, coming from the PF transfer
+				Edata.theta[ICE] -= theta_i_transfer; // Take away the PF ice from matrix ice
+				Edata.theta_i_reservoir += theta_i_transfer; // Add the PF ice to the ice reservoir
+			}
+
+			// And check here for first wetting to set microstructural marker correctly, as not done in Resolver1d.cc
+			if ((Edata.theta[WATER] > 5E-6 * sn_dt) && (Edata.mk%100 < 10)) {
+				Edata.mk += 10;
+			}
+
+		}
 	}
 }
 
@@ -449,7 +472,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 			e--;
 			// Verify element state against maximum possible density: only water
 			if (!(EMS[e].Rho > Constants::eps && EMS[e].Rho <= (1.-EMS[e].theta[SOIL])*Constants::density_water + (EMS[e].theta[SOIL] * EMS[e].soil[SOIL_RHO]))) {
-				prn_msg(__FILE__, __LINE__, "err", date_in, "Phase Change Begin: volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le", e, EMS[e].Rho,
+				prn_msg(__FILE__, __LINE__, "err", date_in, "Phase Change Begin: volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le",
 									    e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
 				throw IOException("Run-time error in compPhaseChange()", AT);
 			}
@@ -640,6 +663,50 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 		}
 	} catch (const exception& ) {
 		throw;
+	}
+
+	// Calculate the cumulated ice reservoir, from the bottom to the top
+	if (enable_ice_reservoir) {
+		// First, reset the CIR to zero (recalculated every time step)
+		e = nE;
+		while (e > 0) {
+			e--;
+			EMS[e].theta_i_reservoir_cumul = 0.;
+		}
+		e = 0; // Initialize e at the bottom
+		bool CIR_to_fill = false;
+		size_t e_CIR = 0;
+		double reservoir_residual_ice = 0.;
+		size_t e_loc = 0;
+		while (e < nE) { // Until the top of the snowpack
+			if (CIR_to_fill) { // If there is a cumulated reservoir currently available to fill
+				if (EMS[e].theta_i_reservoir > 0.) { // If there is ice in the reservoir
+					EMS[e_CIR].theta_i_reservoir_cumul += EMS[e].theta_i_reservoir; // Ice of the reservoir added to the layer of the open cumulated ice reservoir
+				} else {
+					CIR_to_fill = false;
+					// Test now if the last cumulated ice reservoir is full
+					if ( (EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]+EMS[e_CIR].theta_i_reservoir_cumul >= 0.763) && (EMS[e_CIR].theta_i_reservoir_cumul>0.) ) { // If the cumulated ice reservoir is full respectively to the void available in the matrix, leave a little bit of space
+						reservoir_residual_ice = EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]+EMS[e_CIR].theta_i_reservoir_cumul - 0.99; // Residual ice that stays in the reservoir in order not to oversaturate the matrix
+						e_loc = e_CIR;
+						while (e_loc+1 < e) {
+							e_loc++;
+							EMS[e_loc].theta_i_reservoir = 0.; // Empty ice reservoirs
+						}
+						EMS[e_CIR].theta[ICE] += EMS[e_CIR].theta_i_reservoir_cumul - reservoir_residual_ice; // Transfer ice from the cumulated ice reservoir to the matrix at lowest layer
+						EMS[e_CIR].theta[AIR] = 1. - (EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]);
+						EMS[e_CIR].theta_i_reservoir = reservoir_residual_ice; // Leave only potential residual ice in the reservoir
+						cout << "TRANSFER OF RESERVOIR ICE";
+					}
+				}
+			} else { // Case CIR_to_fill==false
+				if (EMS[e].theta_i_reservoir > 0.) {
+					CIR_to_fill = true; // New cumulated ice reservoir to open here
+					e_CIR = e;
+					EMS[e_CIR].theta_i_reservoir_cumul += EMS[e].theta_i_reservoir; // Ice of the reservoir added to the cumulated reservoir
+				}
+			}
+			e++;
+		}
 	}
 
 	// Check surface node, in case TSS is above melting point, but the element itself is below melting point and consequently, phase changes did not occur.

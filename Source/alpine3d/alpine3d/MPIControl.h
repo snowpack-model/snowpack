@@ -117,16 +117,18 @@ class MPIControl
 
 		//@{
 		/**
-		 * Combines values from all processes and distributes the result back to all processes.
-		 * - allreduce_max distributes the maximum of all processes
-		 * - allreduce_min distributes the minimum of all processes
-		 * - allreduce_sum distributes the sum of all processes
+		 * Combines values from all processes and, if all==true, distributes the result back to all processes.
+		 * - reduce_max distributes the maximum of all processes
+		 * - reduce_min distributes the minimum of all processes
+		 * - reduce_sum distributes the sum of all processes
 		 * @param[in,out] value The value that is used to perform the reduction and to hold the result
+		 * @param[in] all True (default): value will be distributed back to all processes (i.e., MPI_Allreduce).
+		 *                False: value will only be available at the master process (i.e., MPI_reduce).
 		 */
-		void allreduce_max(double& value);
-		void allreduce_min(double& value);
-		void allreduce_sum(double& value);
-		void allreduce_sum(int& value);
+		void reduce_max(double& value, const bool all=true);
+		void reduce_min(double& value, const bool all=true);
+		void reduce_sum(double& value, const bool all=true);
+		void reduce_sum(int& value, const bool all=true);
 		//@}
 
 		/**
@@ -191,12 +193,14 @@ class MPIControl
 		#endif
 
 		#ifdef ENABLE_MPI
-		/** @brief Adds up the values of type T from all processes and distributes the sum back to all processes.
-		 * @param obj The obj that is a summand of the global sum and will hold the result
+		/** @brief Adds up the values of type T from all processes and, if all==true, distributes the sum back to all processes.
+		 * @param obj The obj that is summed and will hold the result
+		 * @param all True (default): obj will be distributed back to all processes (i.e., MPI_Allreduce).
+		 *            False: obj will only be available at the master process (i.e., MPI_reduce).
 		 * @note class T must support the extraction and insertion operators, \>\> and \<\<
 		 *       and furthermore support the operator+
 		 */
-		template <class T> void allreduce_sum(T& obj)
+		template <class T> void reduce_sum(T& obj, const bool all=true)
 		{
 			if (size_ <= 1) return;
 
@@ -213,16 +217,19 @@ class MPIControl
 			MPI_Type_contiguous(static_cast<int>(len), MPI_CHAR, &chars_datatype);
 			MPI_Type_commit(&chars_datatype);
 
-			MPI_Allreduce(in_obj_char, out_obj_char, 1, chars_datatype, op, MPI_COMM_WORLD);
+			if (all)
+				MPI_Allreduce(in_obj_char, out_obj_char, 1, chars_datatype, op, MPI_COMM_WORLD);
+			else
+				MPI_Reduce(in_obj_char, out_obj_char, 1, chars_datatype, op, master_rank(), MPI_COMM_WORLD);
 			MPI_Op_free(&op);
 
-			deserialize(out_obj_char, len, obj);
+			if (all || rank() == master_rank()) deserialize(out_obj_char, len, obj);
 
 			delete[] (char*)out_obj_char;
 			delete[] (char*)in_obj_char;
 		}
 		#else
-		template <class T> void allreduce_sum(T& /*obj*/) {}
+		template <class T> void reduce_sum(T& /*obj*/, const bool /*all*/=true) {}
 		#endif
 
 		#ifdef ENABLE_MPI
@@ -405,7 +412,7 @@ class MPIControl
 			const size_t sum = vec_local.size();
 
 			gather(vec_local.size(), vec_sizes); //global offsets
-			allreduce_sum(sum); //global amount of T*
+			reduce_sum(sum, false); //global amount of T*
 
 			if (rank_ == root) {
 				std::string obj_string;

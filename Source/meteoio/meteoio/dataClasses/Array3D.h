@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -228,7 +229,6 @@ template<class T> class Array3D {
 		const T operator ()(const size_t& x, const size_t& y, const size_t& z) const;
 		Array3DProxy<T> operator[](const size_t& i);
 
-		Array3D<T>& operator =(const Array3D<T>&);
 		Array3D<T>& operator =(const T& value);
 
 		Array3D<T>& operator+=(const T& rhs);
@@ -506,6 +506,7 @@ template<class P> std::istream& operator>>(std::istream& is, Array3D<P>& array) 
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
 	is.read(reinterpret_cast<char*>(&array.nz), sizeof(array.nz));
+	array.nxny = array.nx * array.ny;
 	array.vecData.resize(array.nx*array.ny*array.nz);
 	is.read(reinterpret_cast<char*>(&array.vecData[0]), static_cast<std::streamsize>(array.nx*array.ny*array.nz*sizeof(P))); //30 times faster than assign() or copy()
 	return is;
@@ -623,18 +624,6 @@ template<class T> bool Array3D<T>::checkEpsilonEquality(const Array3D<double>& r
 
 template<class T> bool Array3D<T>::checkEpsilonEquality(const Array3D<double>& rhs1, const Array3D<double>& rhs2, const double& epsilon) {
 	return rhs1.checkEpsilonEquality(rhs2, epsilon);
-}
-
-template<class T> Array3D<T>& Array3D<T>::operator=(const Array3D<T>& source) {
-	if (this != &source) {
-		keep_nodata = source.keep_nodata;
-		nx = source.nx;
-		ny = source.ny;
-		nz = source.nz;
-		nxny = source.nxny;
-		vecData = source.vecData;
-	}
-	return *this;
 }
 
 template<class T> Array3D<T>& Array3D<T>::operator=(const T& value) {

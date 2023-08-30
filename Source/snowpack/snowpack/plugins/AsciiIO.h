@@ -36,7 +36,7 @@ class AsciiIO : public SnowpackIOInterface {
 		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-		                            const ZwischenData& Zdata, const bool& forbackup=false);
+		                            const ZwischenData& Zdata, const size_t& forbackup=0);
 
 		virtual void writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata,
 		                             const ProcessDat& Hdata, const double wind_trans24);
@@ -113,10 +113,12 @@ class AsciiIO : public SnowpackIOInterface {
 		double calculation_step_length, hazard_steps_between, ts_days_between;
 		double min_depth_subsurf, hoar_density_surf, hoar_min_size_surf;
 		bool enable_pref_flow;
+		bool enable_ice_reservoir;
 		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope;
 		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool r_in_n;
+		std::string prof_ID_or_MK;
 
 		static const bool t_srf, t_gnd;
 };

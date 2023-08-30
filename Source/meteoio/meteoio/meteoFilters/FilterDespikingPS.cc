@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
@@ -25,9 +26,9 @@ using namespace std;
 
 namespace mio {
 
-FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50),
-			degreeOfInterpolation(3), windowWidth(24)
+FilterDespikingPS::FilterDespikingPS(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), sensitivityParam(1), methodParam(GORING), nIterations(0), maxIterations(50),
+            degreeOfInterpolation(3), windowWidth(24)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first;
@@ -47,23 +48,23 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 {
 	ovec = ivec;
 	//the time vector (a vector of double-values):
-	std::vector<double> timeVec( helperGetTimeVectorOutOfMeteoDataVector(ivec) );
+	const std::vector<double> timeVec( helperGetTimeVectorOutOfMeteoDataVector(ivec) );
 	//the signal (a vector of double-values) we will despike:
 	std::vector<double> doubleVec( helperGetDoubleVectorOutOfMeteoDataVector(ivec,param) );
 
 	bool keepLookingForSpikes = true;
 	unsigned int nNewSpikes=0;
 	nIterations=0;
-	while(keepLookingForSpikes == true){
+	while (keepLookingForSpikes == true) {
 		//1. subtract mean from signal
 		const double mean = Interpol1D::arithmeticMean(doubleVec);
-		for (size_t ii=0; ii<doubleVec.size(); ii++){
+		for (size_t ii=0; ii<doubleVec.size(); ii++) {
 			if (doubleVec[ii] != IOUtils::nodata)
 				doubleVec[ii] -= mean;
 		}
 		//2. find spikes
 		std::vector<int> spikesVec;
-		if (methodParam==MORI){
+		if (methodParam==MORI) {
 			spikesVec = findSpikesMori(timeVec,doubleVec,nNewSpikes);
 		} else {
 			spikesVec = findSpikesGoring(timeVec,doubleVec,nNewSpikes);
@@ -79,19 +80,19 @@ void FilterDespikingPS::process(const unsigned int& param, const std::vector<Met
 		//1. we reached the maximum number of iterations
 		//2. no new spike was detected
 		//3. the standard deviation of the signal is not decreasing
-		if (nIterations >= maxIterations) keepLookingForSpikes=false;
-		if (nNewSpikes==0) keepLookingForSpikes=false;
-		if (stdDev0 <= stdDev1) keepLookingForSpikes=false;
+		if (nIterations >= maxIterations) keepLookingForSpikes = false;
+		if (nNewSpikes==0) keepLookingForSpikes = false;
+		if (stdDev0 <= stdDev1) keepLookingForSpikes = false;
 		
 		//4. add mean back to signal again
-		for (size_t ii=0; ii<doubleVec.size(); ii++){
+		for (size_t ii=0; ii<doubleVec.size(); ii++) {
 			if (doubleVec[ii] != IOUtils::nodata)
 				doubleVec[ii] += mean;
 		}
 	}
 
 	//5. set output
-	for (size_t ii=0; ii<ovec.size(); ii++){
+	for (size_t ii=0; ii<ovec.size(); ii++) {
 		double& value = ovec[ii](param);
 		value = doubleVec[ii];
 	}
@@ -107,16 +108,14 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 	//if the filter is based on WindowedFilter, its constructor will automatically read the window parameters as well as the "soft" argument
 
 	//to perform syntax checks (see after the "for" loop)
-	bool hasSensitivityParam=false;
-	bool hasMethodParam=false;
+	bool hasMethodParam = false;
 
 	//parse the arguments (the keys are all upper case)
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="SENSITIVITY") {
 			IOUtils::parseArg(vecArgs[ii], where, sensitivityParam);
-			hasSensitivityParam=true;
 		} else if (vecArgs[ii].first=="METHOD") {
-			const std::string type_str( vecArgs[ii].second );
+			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (type_str=="MORI") methodParam = MORI;
 			else if (type_str=="GORING") methodParam = GORING;
 			else throw InvalidArgumentException("Invalid type \""+vecArgs[ii].second+"\" for \""+where+"\". Please use \"MORI\" or \"GORING\".", AT);
@@ -129,7 +128,6 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
 	}
 
 	//second part of the syntax check
-	if (!hasSensitivityParam) throw InvalidArgumentException("Please provide a sensitivity-argument "+where, AT);
 	if (!hasMethodParam) throw InvalidArgumentException("Please provide a method-argument "+where, AT);
 }
 
@@ -144,6 +142,7 @@ void FilterDespikingPS::parse_args(const std::vector< std::pair<std::string, std
  */
 std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec)
 {
+	static const int maxSteps = 100;
 	std::vector<double> ovec;
 	ovec.reserve( ivec.size() );
 
@@ -153,28 +152,27 @@ std::vector<double> FilterDespikingPS::calculateDerivatives(const std::vector<do
 		} else {
 			int i1 = static_cast<int>(ii);
 			int i2 = static_cast<int>(ii);
-			bool stop=false;
-			const int maxSteps = 100;
+			bool stop = false;
 			while (stop==false){
 				i1 = i1-1;
 				i2 = i2+1;
-				if (i1<0){
+				if (i1<0) {
 					stop=true;
-					i1=static_cast<int>(ii);
+					i1 = static_cast<int>(ii);
 				}
-				if (i2>=static_cast<int>(ivec.size())){
-					stop=true;
-					i2=static_cast<int>(ii);
+				if (i2>=static_cast<int>(ivec.size())) {
+					stop = true;
+					i2 = static_cast<int>(ii);
 				}
-				if (ivec[i1]!=IOUtils::nodata && ivec[i2]!=IOUtils::nodata){
-					stop=true;
+				if (ivec[i1]!=IOUtils::nodata && ivec[i2]!=IOUtils::nodata) {
+					stop = true;
 				}
-				if (i1+maxSteps < static_cast<int>(ii) || i2 > static_cast<int>(ii)+maxSteps){
-					stop=true;
+				if (i1+maxSteps < static_cast<int>(ii) || i2 > static_cast<int>(ii)+maxSteps) {
+					stop = true;
 				}
 			}
-			const double dt = timeVec[i2]-timeVec[i1];
-			if (dt != 0 && ivec[i1] != IOUtils::nodata && ivec[i2] != IOUtils::nodata){
+			const double dt = timeVec[i2] - timeVec[i1];
+			if (dt != 0 && ivec[i1] != IOUtils::nodata && ivec[i2] != IOUtils::nodata) {
 				const double derivative = (ivec[i2]-ivec[i1]) / dt;
 				ovec.push_back(derivative);
 			} else {
@@ -198,8 +196,8 @@ double FilterDespikingPS::calculateCrossCorrelation(const std::vector<double>& a
 	if (aVec.size() != bVec.size())
 		return IOUtils::nodata;
 
-	double ab=0;
-	double bb=0;
+	double ab = 0;
+	double bb = 0;
 	for (size_t ii=0; ii<aVec.size(); ii++) {
 		if (aVec[ii]!=IOUtils::nodata && bVec[ii]!=IOUtils::nodata){
 			ab = ab + (aVec[ii]*bVec[ii]);
@@ -223,7 +221,7 @@ double FilterDespikingPS::calculateCrossCorrelation(const std::vector<double>& a
  */
 unsigned int FilterDespikingPS::nNodataElements(const std::vector<double>& iVec)
 {
-	unsigned int nNodata=0;
+	unsigned int nNodata = 0;
 	for (size_t ii=0; ii<iVec.size(); ii++) {
 		if (iVec[ii]==IOUtils::nodata)
 			nNodata++;
@@ -247,7 +245,7 @@ unsigned int FilterDespikingPS::nNodataElements(const std::vector<double>& iVec)
 void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec,const std::vector<double>& yVec,
                                                 const double a,const double b,const double theta, std::vector<int>& outsideVec)
 {
-	if(xVec.size() != yVec.size()) return;
+	if (xVec.size() != yVec.size()) return;
 
 	for (size_t ii=0; ii<xVec.size(); ii++) {
 		const double x = xVec[ii];
@@ -270,7 +268,7 @@ void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec
  */
 std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes)
 {
-	std::vector<int> spikesVec(uVec.size(),0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
+	std::vector<int> spikesVec(uVec.size(), 0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
 
 	//step 1: calculate the first and second derivatives:
 	const std::vector<double> duVec( calculateDerivatives(uVec,timeVec) );
@@ -292,7 +290,7 @@ std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& 
 	double universalThreshold = sqrt(2*log(nElements));
 	//make the filter a little bit adjustable by the sensitivity parameter
 	//the larger the parameter the smaller the threshold and the more spikes are detected
-	universalThreshold=universalThreshold/sensitivityParam;
+	universalThreshold /= sensitivityParam;
 
 	const double a1 = universalThreshold*uStdDev;
 	const double b1 = universalThreshold*duStdDev;
@@ -313,8 +311,8 @@ std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& 
 
 	//step 6: count number of detected spikes:
 	nNewSpikes=0;
-	for (size_t ii=0; ii<spikesVec.size(); ii++){
-		nNewSpikes=nNewSpikes+spikesVec[ii];
+	for (size_t ii=0; ii<spikesVec.size(); ii++) {
+		nNewSpikes += spikesVec[ii];
 	}
 
 	return spikesVec;
@@ -374,7 +372,7 @@ std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& ti
 	double universalThreshold = sqrt(2*log(nElements));
 	//make the filter a little bit adjustable by the sensitivity parameter
 	//the larger the parameter the smaller the threshold and the more spikes are detected
-	universalThreshold=universalThreshold/sensitivityParam;
+	universalThreshold /= sensitivityParam;
 
 	//step 3: calculate the rotation angle of the principal axis of du2Vec versus uVec:
 	const double crossCorrelation = calculateCrossCorrelation(du2Vec, uVec);
@@ -411,8 +409,8 @@ std::vector<int> FilterDespikingPS::findSpikesMori(const std::vector<double>& ti
 
 	//step 6: count number of detected spikes:
 	nNewSpikes=0;
-	for (size_t ii=0; ii<spikesVec.size(); ii++){
-		nNewSpikes=nNewSpikes+spikesVec[ii];
+	for (size_t ii=0; ii<spikesVec.size(); ii++) {
+		nNewSpikes += spikesVec[ii];
 	}
 
 	return spikesVec;
@@ -438,16 +436,16 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index,const std::
 	yVec.clear();
 	const unsigned int windowRadius = windowWidth/2;
 	size_t ii = index;
-	unsigned int nLeftPointsFound=0;
+	unsigned int nLeftPointsFound = 0;
 	double timeShift = timeVec[index];
-	while (nLeftPointsFound < windowRadius && ii > 0){
+	while (nLeftPointsFound < windowRadius && ii > 0) {
 		ii--;
-		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
+		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0) {
 			nLeftPointsFound++;
 		}
 	}
 	while (ii < index){
-		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
+		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0) {
 			xVec.push_back(timeVec[ii]-timeShift);
 			yVec.push_back(uVec[ii]);
 		}
@@ -455,9 +453,9 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index,const std::
 	}
 	unsigned int nRightPointsFound=0;
 	ii=index;
-	while (nRightPointsFound < windowRadius && ii < uVec.size()-1){
+	while (nRightPointsFound < windowRadius && ii < uVec.size()-1) {
 		ii++;
-		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0){
+		if (uVec[ii] != IOUtils::nodata && spikesVec[ii]==0) {
 			nRightPointsFound++;
 			xVec.push_back(timeVec[ii]-timeShift);
 			yVec.push_back(uVec[ii]);
@@ -478,15 +476,15 @@ void FilterDespikingPS::getWindowForInterpolation(const size_t index,const std::
 bool FilterDespikingPS::checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,
                                                                   const unsigned int minPoints, const bool avoidExtrapolation)
 {
-	if(xVec.size()==0) return false;
+	if (xVec.size()==0) return false;
 
-	if(avoidExtrapolation){
-		if (xVec[0]>=time || xVec[xVec.size()-1]<=time){
+	if (avoidExtrapolation) {
+		if (xVec[0]>=time || xVec[xVec.size()-1]<=time) {
 			return false;
 		}
 	}
 	bool sufficient = false;
-	if(xVec.size() >= minPoints){
+	if (xVec.size() >= minPoints) {
 		sufficient = true;
 	}
 	return sufficient;
@@ -511,10 +509,10 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 	bool avoidExtrapolation = true; //to avoid extrapolation, we need data points left and right of the spike
 
 	for (size_t ii=0; ii<uVec.size(); ii++) {
-		if (spikesVec[ii]!=0){ //here we have a spike. replace its value:
+		if (spikesVec[ii]!=0) { //here we have a spike. replace its value:
 			if (degreeOfInterpolation>0) {
 				getWindowForInterpolation(ii,timeVec,uVec,spikesVec,xVec,yVec);
-				if(checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)){
+				if (checkIfWindowForInterpolationIsSufficient(xVec,0,minPointsForInterpolation,avoidExtrapolation)) {
 					try{
 						//interpolate the spike data point:
 						Fit1D polyFit = Fit1D("POLYNOMIAL",xVec,yVec,false);
@@ -547,7 +545,7 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 void FilterDespikingPS::solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x)
 {
 	const double denominator = a[0]*b[1]-b[0]*a[1];
-	if(denominator==0){                     //todo: check if denominator is close to zero!???
+	if (denominator==0){                     //todo: check if denominator is close to zero!???
 		x[0] = IOUtils::nodata;
 		x[1] = IOUtils::nodata;
 	}else{

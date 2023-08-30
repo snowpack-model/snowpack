@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -37,7 +38,7 @@ class TEMPLATE : public IOInterface {
 		TEMPLATE(const std::string& configfile);
 		TEMPLATE(const TEMPLATE&);
 		TEMPLATE(const Config& cfgreader);
-		~TEMPLATE() throw();
+		~TEMPLATE() noexcept;
 
 		using IOInterface::read2DGrid; //to call before overriding the method when NOT all the polymorphic calls are implemented (see http://bojolais.livejournal.com/222428.html)
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -46,7 +47,7 @@ class TEMPLATE : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 	private:
-		void cleanup() throw();
+		void cleanup() noexcept;
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

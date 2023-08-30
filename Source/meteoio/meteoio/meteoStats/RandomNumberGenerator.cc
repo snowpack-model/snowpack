@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 Michael Reisecker and work cited in documentation and source    */
 /***********************************************************************************/
@@ -38,7 +39,7 @@ namespace mio { //the holy land
  * @param type Random number generator algorithm
  * @param distribution Distribution of double random numbers
  * @param distribution_params Parameters to shape the distribution functions
- * @return RNG object with defaults or if supplied the desired distribution properties
+ * This builds an RNG object with defaults or if supplied the desired distribution properties
  */
 RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DISTR& distribution,
     const std::vector<double>& distribution_params) :
@@ -58,7 +59,7 @@ RandomNumberGenerator::RandomNumberGenerator(const RNG_TYPE& type, const RNG_DIS
 /**
  * @brief Copy-constructor
  * @param source RNG to copy from
- * @return RNG object that is in an identical state as the given RNG
+ * This builds an RNG object that is in an identical state as the given RNG
  */
 RandomNumberGenerator::RandomNumberGenerator(const RandomNumberGenerator& source) : 
     rng_core(RngFactory::getCore(source.rng_type)),
@@ -289,7 +290,7 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::getDistribution(std::vec
 	return rng_distribution;
 }
 
-//CUSTOM_DIST step 3/7: Add a case for your distribution here and set your functions from step 2, aswell as defaults
+//CUSTOM_DIST step 3/7: Add a case for your distribution here and set your functions from step 2, as well as defaults
 //for all parameters the distribution needs via the vector DistributionParameters. Please make sure all mandatory ones
 //are described properly. Cf. notes in doc setDistribution().
 
@@ -465,7 +466,6 @@ double RandomNumberGenerator::getDistributionParameter(const std::string& param_
  * @brief Set single distribution parameter
  * @param param_name Name of the parameter (see section \ref rng_distributionparams) to set
  * @param param_val Value to set
- * @return Current value of the distribution parameter
  */
 void RandomNumberGenerator::setDistributionParameter(const std::string& param_name, const double& param_val)
 { //convenience
@@ -629,10 +629,10 @@ RandomNumberGenerator::RNG_TYPE RandomNumberGenerator::strToRngtype(const std::s
 	tv.push_back("PCG");
 	tv.push_back("MTW");
 
-	for (size_t i = 0; i < tv.size(); ++i) //find string
+	for (size_t ii = 0; ii < tv.size(); ++ii) //find string
 	{
-		if (tv[i] == IOUtils::strToUpper(str))
-			return (RNG_TYPE)i;
+		if (tv[ii] == IOUtils::strToUpper(str))
+			return (RNG_TYPE)ii;
 	}
 	throw InvalidArgumentException("RNG: Algorithm '" + str + "' not found for string conversion.", AT);
 }
@@ -655,10 +655,10 @@ RandomNumberGenerator::RNG_DISTR RandomNumberGenerator::strToRngdistr(const std:
 	tv.push_back("BETA");
 	tv.push_back("F");
 
-	for (size_t i = 0; i < tv.size(); ++i) //find string
+	for (size_t ii = 0; ii < tv.size(); ++ii) //find string
 	{
-		if (tv[i] == IOUtils::strToUpper(str))
-			return (RNG_DISTR)i;
+		if (tv[ii] == IOUtils::strToUpper(str))
+			return (RNG_DISTR)ii;
 	}
 	throw InvalidArgumentException("RNG: Distribution '" + str + "' not found for string conversion.", AT);
 }
@@ -725,7 +725,7 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 { //cumulative distribution function for a Gauss curve at point xx
 	const double mean = DistributionParameters[0];
 	const double sigma = DistributionParameters[1];
-	const double xabs = fabs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
+	const double xabs = std::abs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
 	
 	static const double bb[5] = { //|error| < 7.5e-8
 	    0.319381530, 
@@ -944,7 +944,15 @@ uint32_t RngPcg::int32()
 	//permutation function of a tuple as output function:
 	const uint32_t xorshifted = (uint32_t)( ((oldstate >> 18u) ^ oldstate) >> 27u );
 	const uint32_t rot = (uint32_t)(oldstate >> 59u);
-	return  (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+#ifdef _MSC_VER
+#pragma warning( push ) //for Visual C++
+#pragma warning(disable:4146) //Visual C++ rightfully complains... but this behavior is what we want!
+#endif
+	const uint32_t result = (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+#ifdef _MSC_VER
+#pragma warning( pop ) //for Visual C++, restore previous warnings behavior
+#endif
+	return  result;
 }
 //---------- End Apache license
 
@@ -1145,13 +1153,13 @@ bool RngCore::getUniqueSeed(uint64_t& store) const
 		uint64_t entropy; //TODO: confirm it's there on Android
 		const bool success = getEntropy(entropy);
 		if (!success) {
-			entropy = timeMixer(time(NULL), clock()); //clock() prevents static
+			entropy = timeMixer(time(nullptr), clock()); //clock() prevents static
 		}
 		store = entropy;
 		return success;
 	#else
 		//in the future, there could be a case for the Windows crypto box
-		store = timeMixer(time(NULL), clock());
+		store = timeMixer(time(nullptr), clock());
 		return false;
 	#endif
 }
@@ -1249,9 +1257,8 @@ unsigned int RngCore::countLeadingZeros(const uint64_t& nn) const //our own poor
 	unsigned int clz = 0;
 
 	static const unsigned short bit_char = std::numeric_limits<unsigned char>::digits; //avoid CHAR_BIT
-	for (size_t i = 0; i < bit_char * sizeof(nn); ++i) 
-	{
-		if ((nn & (1 << i)) == 0)
+	for (size_t ii = 0; ii < bit_char * sizeof(nn); ++ii) {
+		if ((nn & (uint64_t(1) << ii)) == 0)
 			clz++;
 		else //first non-zero character hit
 			break;

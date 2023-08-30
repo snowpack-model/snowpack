@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -29,9 +30,18 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
                     user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false), dmax(300.)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
+	synoptic_wind_type type = AUTO;
 	bool has_ref=false, has_synop=false;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="REF") {
+		if (vecArgs[ii].first=="TYPE") {
+			const std::string user_type( IOUtils::strToUpper(vecArgs[ii].second) );
+
+			if (user_type=="AUTO") type = AUTO;
+			else if (user_type=="FIXED") type = FIXED;
+			else if (user_type=="REF_STATION") type = REF_STATION;
+			else
+				throw InvalidArgumentException("Unknown algorithm \""+user_type+"\" supplied for "+where, AT);
+		} else if (vecArgs[ii].first=="REF_STATION") {
 			ref_station = vecArgs[ii].second;
 			has_ref = true;
 		} else if(vecArgs[ii].first=="BASE") {
@@ -44,7 +54,10 @@ WinstralAlgorithm::WinstralAlgorithm(const std::vector< std::pair<std::string, s
 		}
 	}
 
+	if (type==AUTO && (has_synop || has_ref)) throw InvalidArgumentException("No REF_STATION or DW_SYNOP arguments expected when TYPE=AUTO for "+where, AT);
 	if (has_synop && has_ref) throw InvalidArgumentException("It is not possible to provide both REF and DW_SYNOP for "+where, AT);
+	if (type==FIXED && !has_synop) throw InvalidArgumentException("Please provide DW_SYNOP for "+where, AT);
+	if (type==REF_STATION && !has_ref) throw InvalidArgumentException("Please provide REF_STATION for "+where, AT);
 }
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date)
@@ -54,7 +67,6 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date)
 	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
 
 	if (inputIsAllZeroes) return 0.99;
-
 	if (nrOfMeasurments==0) return 0.0;
 
 	//check that the necessary wind data is available
@@ -82,9 +94,9 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
 	if (i_ref_station.empty()) {
-		for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
-			const double VW = i_vecMeteo[ii](MeteoData::VW);
-			const double DW = i_vecMeteo[ii](MeteoData::DW);
+		for (const auto& md : i_vecMeteo) {
+			const double VW = md(MeteoData::VW);
+			const double DW = md(MeteoData::DW);
 			if (VW!=IOUtils::nodata && DW!=IOUtils::nodata)
 				return true; //at least one station is enough
 		}
@@ -98,12 +110,12 @@ bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& i_vecMeteo
 
 double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
-	for (size_t ii=0; ii<i_vecMeteo.size(); ++ii) {
-		if (i_vecMeteo[ii].meta.stationID==i_ref_station)
-			return i_vecMeteo[ii](MeteoData::DW);
-	}
-
-	return IOUtils::nodata;
+	const std::vector<MeteoData>::const_iterator it = std::find_if(i_vecMeteo.begin(), i_vecMeteo.end(), [&](const MeteoData& md){ return md.meta.stationID == i_ref_station; });
+	
+	if (it!=i_vecMeteo.end())
+		return it->operator()(MeteoData::DW);
+	else 
+		return IOUtils::nodata;
 }
 
 //this method scans a square centered on the station for summmits
@@ -153,12 +165,12 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vec
 {
 	double ve=0.0, vn=0.0;
 	size_t count=0;
-	for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
-		const double VW = i_vecMeteo[ii](MeteoData::VW);
-		const double DW = i_vecMeteo[ii](MeteoData::DW);
+	for (const auto& md : i_vecMeteo) {
+		const double VW = md(MeteoData::VW);
+		const double DW = md(MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
-			ve += VW * sin(DW*Cst::to_rad);
-			vn += VW * cos(DW*Cst::to_rad);
+			ve += IOUtils::VWDW_TO_U(VW, DW);
+			vn += IOUtils::VWDW_TO_V(VW, DW);
 			count++;
 		}
 	}
@@ -168,7 +180,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vec
 		vn /= static_cast<double>(count);
 
 		//const double meanspeed = sqrt(ve*ve + vn*vn);
-		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+		const double meandirection = IOUtils::UV_TO_DW(ve, vn);
 		return static_cast<double>(Optim::round(meandirection/10.))*10.; //round to nearest 10 deg
 	}
 
@@ -182,9 +194,9 @@ double WinstralAlgorithm::getSynopticBearing(const DEMObject& dem, const std::ve
 	// (2) can be used on all the stations selected in (1)
 
 	std::vector<MeteoData> stationsSubset;
-	for (size_t ii=0; ii<i_vecMeteo.size(); ii++) {
-		if (isExposed(dem, i_vecMeteo[ii].meta.position))
-			stationsSubset.push_back( i_vecMeteo[ii] );
+	for (const auto& md : i_vecMeteo) {
+		if (isExposed(dem, md.meta.position))
+			stationsSubset.push_back( md );
 	}
 
 	if (!stationsSubset.empty()) {

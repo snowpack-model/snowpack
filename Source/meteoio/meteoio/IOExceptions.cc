@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -18,13 +19,13 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string.h>
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
-	#include <execinfo.h> //needed for the backtracing of the stack
-	#if defined(__GNUC__)
+#if defined(__linux)
+	#if defined(__GLIBC__)
+		#include <execinfo.h> //needed for the backtracing of the stack
 		#include <sstream>
 		#include <cxxabi.h>
 	#endif
-	#if defined(MSG_BOX)
+	#if defined(MSG_BOX) && !defined(ANDROID) && !defined(__CYGWIN__)
 		#include <meteoio/MessageBoxX11.h>
 	#endif
 #endif
@@ -49,26 +50,25 @@ void inline messageBox(const std::string& msg) {
 	#endif
 	#if defined _WIN32 || defined __MINGW32__
 		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
-		MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+		MessageBox( nullptr, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 	#endif
 	#if defined(__APPLE__)
 		const std::string box_msg( msg + "\n\nPlease check the terminal for more information!" );
 		const void* keys[] = { kCFUserNotificationAlertHeaderKey,
 				kCFUserNotificationAlertMessageKey };
 		const void* values[] = { CFSTR("Oops, something went wrong!"),
-					CFStringCreateWithCString(NULL, box_msg.c_str(), kCFStringEncodingMacRoman) };
-		CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
+					CFStringCreateWithCString(nullptr, box_msg.c_str(), kCFStringEncodingMacRoman) };
+		CFDictionaryRef dict = CFDictionaryCreate(nullptr, keys, values,
 				sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		SInt32 error = 0;
-		CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
+		CFUserNotificationCreate(nullptr, 0, kCFUserNotificationStopAlertLevel, &error, dict);
 	#endif
 }
 #endif
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__GLIBC__)
 std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const
 {
-#ifdef __GNUC__
 	found_main=false;
 	std::ostringstream ss;
 	char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
@@ -102,9 +102,6 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 	}
 
 	return ss.str();
-#else
-	return "\tat " + std::string(symbols);
-#endif
 }
 #endif
 
@@ -118,7 +115,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	const std::string where = (position.empty())? "unknown position" : ((delim)? delim+1 : position);
 	msg = "[" + where + "] " + message;
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__GLIBC__)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
@@ -137,7 +134,7 @@ IOException::IOException(const std::string& message, const std::string& position
 #endif
 }
 
-const char* IOException::what() const throw()
+const char* IOException::what() const noexcept
 {
 #if defined(MSG_BOX)
 	messageBox(msg);

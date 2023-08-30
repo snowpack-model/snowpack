@@ -39,7 +39,7 @@ const double SnowDrift::schmidt_drift_fudge = 1.0;
 const bool SnowDrift::msg_erosion = false;
 
 ///For REDEPOSIT mode: search depth for average threshold tau from the surface downward (in cm)
-const double SnowDrift::redeposit_avg_depth = 0.03;
+const double SnowDrift::redeposit_avg_depth = 0.0;
 
 
 /************************************************************
@@ -104,6 +104,13 @@ static double get_fetch_length(const SnowpackConfig& cfg)
 	return fetch_length;
 }
 
+static double get_erosion_limit(const SnowpackConfig& cfg)
+{
+	double tmp_erosion_limit = Constants::undefined;
+	cfg.getValue("SNOW_EROSION_LIMIT", "SnowpackAdvanced", tmp_erosion_limit, IOUtils::nothrow);
+	return tmp_erosion_limit;
+}
+
 double SnowDrift::get_tau_thresh(const ElementData& Edata)
 {
 	// Compute basic quantities that are needed: friction velocity, z0, threshold vw
@@ -114,7 +121,9 @@ double SnowDrift::get_tau_thresh(const ElementData& Edata)
 	const double binding = 0.0015 * sig * Edata.N3 * Optim::pow2(Edata.rb/Edata.rg);
 	const double tau_thresh = SnowDrift::schmidt_drift_fudge * (weight + binding);  // Original value for fudge: 1. (Schmidt)
 	//const double ustar_thresh = sqrt(tau_thresh / Constants::density_air);
-	return tau_thresh;
+	unsigned int wet_marker = (int(Edata.mk/10)%10);
+	const double fudge = (wet_marker==1 || wet_marker==2) ? (10.) : (1.);            // For wet/crusted snow, a pragmatic fudge factor makes the snow not easily erodible.
+	return fudge * tau_thresh;
 }
 
 double SnowDrift::get_ustar_thresh(const ElementData& Edata)
@@ -126,7 +135,7 @@ double SnowDrift::get_ustar_thresh(const ElementData& Edata)
 
 SnowDrift::SnowDrift(const SnowpackConfig& cfg) : saltation(cfg),
                      enforce_measured_snow_heights( get_bool(cfg, "ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack") ), snow_redistribution( get_redistribution(cfg) ), snow_erosion( get_erosion(cfg) ), alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ),
-                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), forcing("ATMOS")
+                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), erosion_limit( get_erosion_limit(cfg) ), forcing("ATMOS")
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 }
@@ -199,33 +208,33 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
  * @param Sdata
  * @param forced_massErode if greater than 0, force the eroded mass to the given value (instead of computing it)
 */
-double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& forced_massErode) const
+void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& forced_massErode) const
 {
 	size_t nE = Xdata.getNumberOfElements();
 	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
-	double ret = 0.;
 
 	const bool no_snow = ((nE < Xdata.SoilNode+1) || (EMS[nE-1].theta[SOIL] > 0.));
 	const bool no_wind_data = (Mdata.vw_drift == mio::IOUtils::nodata);
 	Xdata.ErosionMass = 0.;
 	Xdata.ErosionLength = 0.;
+	Xdata.ErosionAge = 0.;
 	if (no_snow || no_wind_data) {
 		if (no_snow) {
 			Xdata.ErosionLevel = Xdata.SoilNode;
 			Sdata.drift = 0.;
+			return;
 		} else
 			Sdata.drift = Constants::undefined;
-		return ret;
 	}
 
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
 	// At main station, measured snow depth controls whether erosion is possible or not
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
 	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
-	double ustar = 0.;
 
-	if (windward || alpine3d || erosion || (fabs(forced_massErode) > Constants::eps2) || (forcing == "MASSBAL")) {
+	double ustar = 0.;
+	if (windward || erosion || (forced_massErode < -Constants::eps2) || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
 		if (forcing == "MASSBAL") {
 			if (forced_massErode != IOUtils::nodata) {
@@ -252,8 +261,16 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 
 		unsigned int nErode=0; // number of eroded elements
 		for(size_t e = nE; e --> Xdata.SoilNode; ) {
-			// In REDEPOSIT mode, don't erode elements which wouldn't erode based on the threshold friction velocity, even if massErode has not yet been satisfied:
-			if (snow_erosion == "REDEPOSIT" && SnowDrift::get_ustar_thresh(EMS[e]) > ustar) break;
+			// Check for limits to halt erosion
+			if (erosion_limit != Constants::undefined && erosion_limit != 0.) {
+				// A positive value of erosion_limit denotes a snow density above which layer erosion is halted.
+				// A negative value of erosion_limit denotes that erosion is halted if a layer threshold friction velocity exceeds the actual friction velocity
+				if (erosion_limit > 0.) {
+					if (EMS[e].Rho > erosion_limit) break;
+				} else {
+					if (SnowDrift::get_ustar_thresh(EMS[e]) > ustar) break;
+				}
+			}
 
 			// Continue with mass erosion:
 			if (massErode >= 0.95 * EMS[e].M) {
@@ -266,11 +283,9 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				Xdata.ErosionMass += EMS[e].M;
 				Xdata.ErosionLength -= EMS[e].L;
 				Xdata.ErosionLevel = std::min(e, Xdata.ErosionLevel);
+				Xdata.ErosionAge += EMS[e].depositionDate.getJulian() * EMS[e].L;
 				nErode++;
 				massErode -= EMS[e].M;
-				if (snow_erosion == "REDEPOSIT") {
-					ret += EMS[e].M;
-				}
 				forced_massErode = -massErode;
 			} else if (massErode > Constants::eps) { // ... or take away massErode from top element - partial real erosion
 				if (fabs(EMS[e].L * EMS[e].Rho - EMS[e].M) > 0.001) {
@@ -288,12 +303,10 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 				NDS[e+1].u = 0.0;
 				NDS[e+1].hoar = 0.;
 				EMS[e].M -= massErode;
-				if (snow_erosion == "REDEPOSIT") {
-					ret += massErode;
-				}
 				assert(EMS[e].M>=0.); //mass must be positive
 				Xdata.ErosionMass += massErode;
 				Xdata.ErosionLength += dL;
+				Xdata.ErosionAge += EMS[e].depositionDate.getJulian() * -dL;
 				massErode = 0.;
 				forced_massErode = 0.;
 				break;
@@ -343,5 +356,11 @@ double SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, S
 	} else {
 		Xdata.ErosionMass = 0.;
 	}
-	return ret;
+	Sdata.mass[SurfaceFluxes::MS_EROSION_DHS] += Xdata.ErosionLength;
+	if (Xdata.ErosionLength < 0.) {
+		Xdata.ErosionAge /= -Xdata.ErosionLength;
+	} else {
+		Xdata.ErosionAge = Constants::undefined;
+	}
+	return;
 }

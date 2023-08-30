@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -26,18 +27,6 @@
 using namespace std;
 
 namespace mio {
-
-Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
-	if (this != &source) {
-		grid2D = source.grid2D;
-		cellsize = source.cellsize;
-		llcorner = source.llcorner;
-		ur_lat = source.ur_lat;
-		ur_lon = source.ur_lon;
-		isLatLon = source.isLatLon;
-	}
-	return *this;
-}
 
 Grid2DObject& Grid2DObject::operator=(const double& value) {
 	grid2D = value;
@@ -307,8 +296,8 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const
 	
 	if (ur_lat!=IOUtils::nodata && ur_lon!=IOUtils::nodata) { //use lat/lon extraction if possible
 		//remember that cellsize = (ur_lon - llcorner.getLon()) / (getNx()-1.)
-		ii = (int)floor( (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1)); //round to lowest
-		jj = (int)floor( (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1));
+		ii = (int)( 0.5 + (point.getLon() - llcorner.getLon()) / (ur_lon - llcorner.getLon()) * static_cast<double>(getNx()-1)); //round to lowest
+		jj = (int)( 0.5 + (point.getLat() - llcorner.getLat()) / (ur_lat - llcorner.getLat()) * static_cast<double>(getNy()-1));
 	} else {
 		if (point.isSameProj(llcorner)==true) {
 			//same projection between the grid and the point -> precise, simple and efficient arithmetics
@@ -386,6 +375,64 @@ void Grid2DObject::rescale(const double& i_cellsize)
 	cellsize = i_cellsize;
 }
 
+/*This is a first implementation by A.Michel
+ A better implementation can be achieved using e.g.:
+ https://github.com/bfraboni/FastGaussianBlur
+ */
+void Grid2DObject::compute_spatial_mean(const double& radius)
+{
+	if (radius<=0)
+		throw InvalidArgumentException("Provided radius should be > 0", AT);
+	if (radius>static_cast<double>(getNx())*cellsize && radius>static_cast<double>(getNy())*cellsize) {
+		grid2D = grid2D.getMean();
+		return;
+	}
+	const size_t num_cell = static_cast<size_t>(std::ceil(radius/cellsize));
+	if(num_cell==1) return;
+
+	const size_t num_cell_sq = num_cell * num_cell;
+	const size_t kernel_size = num_cell*2+1;
+	Array2D<char> kernel(kernel_size, kernel_size, 1); //it will only contain 0s or 1s
+	for (size_t kk=0; kk<kernel_size; ++kk) {
+		for (size_t ll=0; ll<kernel_size; ++ll) {
+			const size_t dx = num_cell > kk ? num_cell - kk : kk - num_cell;
+			const size_t dy = num_cell > ll ? num_cell - ll : ll - num_cell;
+			if (dx*dx+dy*dy > num_cell_sq)
+				kernel(kk,ll) = 0;
+		}
+	}
+
+	Array2D<double> grid2D_tmp( grid2D );
+	const size_t nx = getNx();
+	const size_t ny = getNy();
+
+	for (size_t ii=0; ii<nx; ++ii) {
+		for (size_t jj=0; jj<ny; ++jj) {
+			double sum = 0;
+			size_t count = 0;
+			for (size_t kk=0; kk<kernel_size; ++kk) {
+				const size_t i_k = ii - num_cell + kk;
+				if (i_k >= nx) continue;
+				
+				for (size_t ll=0; ll<kernel_size; ++ll) {
+					const size_t j_l = jj - num_cell + ll;
+					if (j_l >= ny || kernel(kk,ll)==0 || grid2D(i_k,j_l)==mio::IOUtils::nodata )
+						continue;
+					sum += grid2D(i_k,j_l);
+					++count;
+				}
+			}
+			if (count==0)
+				grid2D_tmp(ii,jj) = mio::IOUtils::nodata;
+			else
+				grid2D_tmp(ii,jj) = sum/static_cast<double>(count);
+		}
+	}
+	
+	grid2D = grid2D_tmp;
+}
+
+
 void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
 	o_ncols = getNx();
 	o_nrows = getNy();
@@ -412,6 +459,14 @@ bool Grid2DObject::empty() const {
 	return (grid2D.getNx()==0 && grid2D.getNy()==0);
 }
 
+bool Grid2DObject::allNodata() const {
+	for (size_t jj = 0; jj < grid2D.size(); ++jj) {
+		if (grid2D(jj) != IOUtils::nodata)
+			return false;
+	}
+	return true;
+}
+
 void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 {
 	cellsize = i_cellsize;
@@ -420,41 +475,55 @@ void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 {
+	static const double eps = 1.e-4;
 	const bool isSameLoc = grid2D.getNx()==target.grid2D.getNx() &&
 	                     grid2D.getNy()==target.grid2D.getNy() &&
 	                     llcorner==target.llcorner &&
 	                     (cellsize==target.cellsize 
-	                     || (ur_lat==target.ur_lat && ur_lon==target.ur_lon));
+	                     || (std::abs(ur_lat-target.ur_lat) < eps && std::abs(ur_lon-target.ur_lon) < eps));
 
 	return isSameLoc;
 }
 
-bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids)
+void Grid2DObject::binning(const std::vector<double>& thresholds, const std::vector<double>& ids)
 {
-	if (thresholds.empty()==0) {
-		throw IOException("Can't start clusterization, cluster definition list is empty", AT);
-	}
-	if ((thresholds.size()+1) != ids.size()) {
-		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
-	}
-	const size_t nscl = thresholds.size();
-	for (size_t jj = 0; jj< grid2D.size(); jj++){
+	if (thresholds.empty())
+		throw IOException("Can't start binning, thresholds definition list is empty", AT);
+	if ((thresholds.size()+1) != ids.size())
+		throw IOException("Can't start binning, thresholds definition list doesn't fit id definition list", AT);
+
+	for (size_t jj = 0; jj < grid2D.size(); jj++) {
 		const double& val = grid2D(jj);
 		if (val!=IOUtils::nodata){
-			size_t i = 0;
-			for ( ;i<nscl; i++)
-				if (thresholds[i] >= val)
+			size_t ii = 0;
+			for ( ;ii < thresholds.size(); ii++)
+				if (thresholds[ii] > val)
 					break;
-			grid2D(jj) = ids[i];
+			grid2D(jj) = ids[ii];
 		}
 	}
-	return true;
+}
+
+std::vector< double > Grid2DObject::extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const
+{
+	size_t nx = getNx();
+	size_t ny = getNy();
+
+	//define return vector
+	std::vector < double > retVec;
+	for (std::vector< std::pair<size_t, size_t> >::const_iterator it=Pts.begin(); it!=Pts.end(); ++it) {
+		double val = IOUtils::nodata;
+		if(it->first < nx && it->second < ny)
+			val=grid2D(it->first, it->second);
+		retVec.push_back(val);
+	}
+	return retVec;
 }
 
 double Grid2DObject::calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)
 {
-	const double distanceX = fabs(vecX.front() - vecX.back());
-	const double distanceY = fabs(vecY.front() - vecY.back());
+	const double distanceX = std::abs(vecX.front() - vecX.back());
+	const double distanceY = std::abs(vecY.front() - vecY.back());
 
 	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
 	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;

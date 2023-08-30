@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -17,34 +18,45 @@
 */
 
 #include <meteoio/DataGenerator.h>
+#include <meteoio/MeteoProcessor.h> //required to provide RestrictionsIdx
+
+#include <set>
+#include <regex>
 
 using namespace std;
 
 namespace mio {
-DataGenerator::DataGenerator(const Config& cfg)
-              : DataCreator(cfg), data_qa_logs(false)
+const std::string DataGenerator::cmd_section( "GENERATORS" );
+const std::string DataGenerator::cmd_pattern( "::GENERATOR" );
+const std::string DataGenerator::arg_pattern( "::ARG" );
+
+DataGenerator::DataGenerator(const Config& cfg, const std::set<std::string>& params_to_generate)
+              : mapAlgorithms(), data_qa_logs(false)
 {
 	cfg.getValue("DATA_QA_LOGS", "GENERAL", data_qa_logs, IOUtils::nothrow);
 	
-	static const std::string section( "Generators" );
-	static const std::string key_pattern( "::generators" );
-	const std::set<std::string> set_of_used_parameters( getParameters(cfg, key_pattern, section) );
-
-	std::set<std::string>::const_iterator it;
-	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
-		const std::string parname( *it );
-		const std::vector<std::string> tmpAlgorithms( getAlgorithmsForParameter(cfg, key_pattern, section, parname) );
-		const size_t nrOfAlgorithms = tmpAlgorithms.size();
-
-		std::vector<GeneratorAlgorithm*> vecGenerators( nrOfAlgorithms );
-		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
-			const std::vector< std::pair<std::string, std::string> > vecArgs( getArgumentsForAlgorithm(cfg, parname, tmpAlgorithms[jj], section) );
-			vecGenerators[jj] = GeneratorAlgorithmFactory::getAlgorithm( cfg, tmpAlgorithms[jj], vecArgs);
+	const std::set<std::string> set_of_ini_parameters( getParameters(cfg) );
+	
+	if (params_to_generate.empty()) {
+		//handle all parameters that appear in the ini file
+		for (const std::string& parname : set_of_ini_parameters) {
+			mapAlgorithms[parname] = buildStack(cfg, parname); //a stack of all generators for this parameter
 		}
-
-		if (nrOfAlgorithms>0) {
-			mapAlgorithms[parname] = vecGenerators;
+	} else {
+		//only handle the parameters requested by the params_to_generate that also appear in the ini file
+		for (const std::string& parname : set_of_ini_parameters) {
+			if (params_to_generate.count(parname)==1)
+				mapAlgorithms[parname] = buildStack(cfg, parname); //a stack of all generators for this parameter
 		}
+	}
+}
+
+DataGenerator::~DataGenerator()
+{ //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
+	for (auto& it : mapAlgorithms) {
+		std::vector<GeneratorAlgorithm*> &vec( it.second );
+		for (size_t ii=0; ii<vec.size(); ii++)
+			delete vec[ii];
 	}
 }
 
@@ -52,6 +64,7 @@ DataGenerator& DataGenerator::operator=(const DataGenerator& source)
 {
 	if (this != &source) {
 		mapAlgorithms = source.mapAlgorithms;
+		data_qa_logs = source.data_qa_logs;
 	}
 	return *this;
 }
@@ -67,31 +80,30 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 {
 	if (mapAlgorithms.empty()) return; //no generators defined by the end user
 
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
+	for (auto const& it : mapAlgorithms) { //map< paraname, algorithms_stack>
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it.second );
 
-		for (size_t station=0; station<vecMeteo.size(); ++station) { //process this parameter on all stations
-			const size_t param = vecMeteo[station].getParameterIndex(it->first);
-			if (param==IOUtils::npos) continue;
+		for (MeteoData& station : vecMeteo) {
+			size_t param = station.getParameterIndex( it.first );
+			if (param==IOUtils::npos) param = station.addParameter( it.first );
 
-			const std::string statID( vecMeteo[station].meta.getStationID() );
+			const std::string statID( station.meta.getStationID() );
 			//these are only required by data_qa_logs
-			const double old_val = vecMeteo[station](param);
-			const std::string statName( vecMeteo[station].meta.getStationName() );
+			const double old_val = station(param);
+			const std::string statName( station.meta.getStationName() );
 			const std::string stat = (!statID.empty())? statID : statName;
 
 			bool status = false;
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
-				if (!vecGenerators[jj]->skipStation( statID )) {
-					status = vecGenerators[jj]->generate(param, vecMeteo[station]);
-					if (vecMeteo[station](param) != old_val) {
-						vecMeteo[station].setGenerated(param);
+				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipTimeStep( vecMeteo.front().date ) ) {
+					status = vecGenerators[jj]->generate(param, station);
+					if (station(param) != old_val) {
+						station.setGenerated(param);
 						if (data_qa_logs) {
-							const std::string parname( it->first );
+							const std::string parname( it.first );
 							const std::string algo_name( vecGenerators[jj]->getAlgo() );
-							const Date date( vecMeteo[station].date );
+							const Date date( station.date );
 							cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << date.toString(Date::ISO_TZ) << " [" << date.toString(Date::ISO_WEEK) << "]\n";
 						}
 					} //endif new=old
@@ -113,19 +125,18 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 {
 	if (mapAlgorithms.empty()) return; //no generators defined by the end user
 
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
+	for (auto const& it : mapAlgorithms) {
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it.second );
 
-		for (size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
-			if (vecVecMeteo[station].empty()) continue; //the station does not have any data
+		for (std::vector<MeteoData>& vecMeteo : vecVecMeteo) { //process this parameter on all stations
+			if (vecMeteo.empty()) continue; //the station does not have any data
 			
-			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
-			if (param==IOUtils::npos) continue;
+			size_t param = vecMeteo[0].getParameterIndex( it.first );
+			if (param==IOUtils::npos) param = vecMeteo[0].addParameter( it.first );
 
-			const std::string statID( vecVecMeteo[station][0].meta.getStationID() );
+			const std::string statID( vecMeteo[0].meta.getStationID() );
 			//these are only required by data_qa_logs
-			const METEO_SET old_val( vecVecMeteo[station] );
+			const METEO_SET old_val( vecMeteo );
 			const std::string statName( old_val[0].meta.getStationName() );
 			const std::string stat = (!statID.empty())? statID : statName;
 
@@ -133,12 +144,18 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
 				if (!vecGenerators[jj]->skipStation( statID )) {
-					status = vecGenerators[jj]->create(param, vecVecMeteo[station]);
+					
+					//loop over time restrictions periods
+					status = true; //so if any time restriction period returns false, status will be set to false
+					for (RestrictionsIdx editPeriod(vecMeteo, vecGenerators[jj]->getTimeRestrictions()); editPeriod.isValid(); ++editPeriod) 
+						status &= vecGenerators[jj]->create(param, editPeriod.getStart(), editPeriod.getEnd(), vecMeteo);
+					
+					//compare the resulting data with the original copy to see if there are some changes for DATA_QA
 					for (size_t kk=0; kk<old_val.size(); kk++) {
-						if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
-							vecVecMeteo[station][kk].setGenerated(param);
+						if (old_val[kk](param) != vecMeteo[kk](param)) {
+							vecMeteo[kk].setGenerated(param);
 							if (data_qa_logs) {
-								const std::string parname( it->first );
+								const std::string parname( it.first );
 								const std::string algo_name( vecGenerators[jj]->getAlgo() );
 								cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
 							}
@@ -151,16 +168,64 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 	}
 }
 
+/**
+ * @brief Build a list of station IDs that will be edited
+ * @param[in] cfg Config object to read the configuration from
+ * @return set of station IDs
+ */
+std::set<std::string> DataGenerator::getParameters(const Config& cfg)
+{
+	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, cmd_section, true) );
+	
+	//extracting the parameter names from keys such as 'ILWR::GENERATOR1'
+	static const std::regex param_regex("([^:]+)"+cmd_pattern+"[0-9]+$");
+	std::smatch param_matches;
+
+	std::set<std::string> set_params;
+	for (const auto& key : vec_keys) {
+		if (std::regex_match(key, param_matches, param_regex)) {
+			set_params.insert( param_matches.str(1) ); //we keep the case of the parameters
+		}
+	}
+
+	return set_params;
+}
+
+/**
+ * @brief For a given parameter name, build the stack of GeneratorAlgorithm
+ * @param[in] cfg Config object to read the configuration from
+ * @param[in] parname the parameter to process
+ * @return vector of GeneratorAlgorithm* to process in this order
+ */
+std::vector< GeneratorAlgorithm* > DataGenerator::buildStack(const Config& cfg, const std::string& parname)
+{
+	//extract each filter and its arguments, then build the filter stack
+	const std::vector< std::pair<std::string, std::string> > vecGenerators( cfg.getValues(parname+cmd_pattern, cmd_section) );
+	std::vector< GeneratorAlgorithm* > generators_stack;
+	generators_stack.reserve( vecGenerators.size() );
+	
+	for (size_t ii=0; ii<vecGenerators.size(); ii++) {
+		const std::string cmd_name( IOUtils::strToUpper( vecGenerators[ii].second ) );
+		if (cmd_name=="NONE") continue;
+		
+		const unsigned int cmd_nr = Config::getCommandNr(cmd_section, parname+cmd_pattern, vecGenerators[ii].first);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.parseArgs(cmd_section, parname, cmd_nr, arg_pattern) );
+		generators_stack.push_back( GeneratorAlgorithmFactory::getAlgorithm( cfg, cmd_name, cmd_section, vecArgs) );
+	}
+	
+	return generators_stack;
+}
+
 const std::string DataGenerator::toString() const {
 	std::ostringstream os;
 	os << "<DataGenerator>\n";
 	os << "Generators defined: " << std::boolalpha << !mapAlgorithms.empty() << std::noboolalpha << "\n";
 	if (!mapAlgorithms.empty()) {
 		os << "User list of generators:\n";
-		for (std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
-			os << setw(10) << iter->first << " :: ";
-			for (size_t jj=0; jj<iter->second.size(); jj++) {
-				os << iter->second[jj]->getAlgo() << " ";
+		for (const auto& algo : mapAlgorithms) {
+			os << setw(10) << algo.first << " :: ";
+			for (size_t jj=0; jj<algo.second.size(); jj++) {
+				os << algo.second[jj]->getAlgo() << " ";
 			}
 			os << "\n";
 		}

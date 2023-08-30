@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -99,14 +100,14 @@ void Legend::simpleLegend(const unsigned int &height, const double &minimum, con
 void Legend::smartLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
 	const double range = maximum-minimum;
-	double min_norm=minimum, max_norm=maximum, decade_mult;
+	double min_norm=minimum, decade_mult;
 	unsigned int step_norm, nb_labels_norm;
 
 	if (range>0.) {
 		const double decade = floor(log10(range));
 		decade_mult = pow(10., decade);
 		min_norm = floor(minimum/decade_mult*10.)/10.; //between 0 & 10
-		max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
+		double max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
 		const double range_norm = max_norm-min_norm; //between 0 & 10
 		const double step = range_norm/nb_labels; //between 0 & 10 / number of labels -> between 0 & 1
 
@@ -150,7 +151,7 @@ void Legend::smartLegend(const unsigned int &height, const double &minimum, cons
 
 		for (unsigned int l=0; l<nb_labels_norm; l++) {
 			double level_val = (step_norm*l/10.+min_norm)*decade_mult;
-			if ( fabs(level_val)<(range*1e-6) )level_val=0.; //to get a nice 0 at zero
+			if ( std::abs(level_val)<(range*1e-6) )level_val=0.; //to get a nice 0 at zero
 			const unsigned int px_row = l*label_height+start_legend;
 			writeLine(level_val, px_row);
 		}
@@ -302,13 +303,13 @@ const unsigned char Gradient::reserved_idx = 5;
 const unsigned char Gradient::reserved_cols = 2;
 
 Gradient::Gradient(const Type& i_type, const double& i_min, const double& i_max, const bool& i_autoscale)
-          : min(i_min), max(i_max), delta(i_max - i_min), type(none), model(NULL), nr_unique_cols(0), autoscale(i_autoscale)
+          : min(i_min), max(i_max), delta(i_max - i_min), type(none), model(nullptr), nr_unique_cols(0), autoscale(i_autoscale)
 {
 	setModel(i_type);
 }
 
 Gradient::Gradient(const Gradient& c)
-          : min(c.min), max(c.max), delta(c.delta), type(c.type), model(NULL), nr_unique_cols(c.nr_unique_cols), autoscale(c.autoscale)
+          : min(c.min), max(c.max), delta(c.delta), type(c.type), model(nullptr), nr_unique_cols(c.nr_unique_cols), autoscale(c.autoscale)
 {
 	setModel(type);
 }
@@ -370,7 +371,7 @@ void Gradient::setNrOfLevels(const unsigned char& i_nr_unique_levels) {
 
 void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, unsigned char& b, bool& a) const
 {
-	if (model==NULL) {
+	if (model==nullptr) {
 		throw UnknownValueException("Please set the color gradient before using it!", AT);
 	}
 
@@ -406,7 +407,7 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 
 void Gradient::getColor(const double& val, unsigned char& index) const
 {
-	if (model==NULL) {
+	if (model==nullptr) {
 		throw UnknownValueException("Please set the color gradient before using it!", AT);
 	}
 
@@ -447,7 +448,7 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 
 void Gradient::getPalette(std::vector<unsigned char> &palette, size_t &nr_colors) const
 {
-	if (model==NULL) {
+	if (model==nullptr) {
 		throw UnknownValueException("Please set the color gradient before using it!", AT);
 	}
 	if (nr_unique_cols==0) {

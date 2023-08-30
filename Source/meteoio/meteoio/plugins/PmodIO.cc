@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 WSL Institute for Snow and Avalanche Research    PMOD-DAVOS      */
 /***********************************************************************************/
@@ -19,7 +20,8 @@
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
 
-#include <errno.h>
+#include <cerrno>
+#include <cstring>
 #include <string.h>
 #include <fstream>
 
@@ -98,7 +100,7 @@ void PmodIO::parseInputOutputSection()
 	cfg.getValue("TIME_ZONE","Input", in_TZ);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	const std::string in_meteo = cfg.get("METEO", "Input", "");
+	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo == "PMOD") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		cfg.getValue("STATION1", "Input", filename);

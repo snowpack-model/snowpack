@@ -1,6 +1,4 @@
 /***********************************************************************************/
-/*  Copyright 2009-2015 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
-/***********************************************************************************/
 /* This file is part of Alpine3D.
     Alpine3D is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -21,8 +19,8 @@
 #include <alpine3d/DataAssimilation.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/ebalance/EnergyBalance.h>
-#include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/MeteoObj.h> //for the SnGrids
+#include <snowpack/libsnowpack.h> //for TechSnow
 
 class SnowpackInterfaceWorker
 {
@@ -33,7 +31,8 @@ class SnowpackInterfaceWorker
 		                        const std::vector< std::pair<size_t,size_t> >& pts_in,
 		                        const std::vector<SnowStation*>& snow_stations,
 		                        const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
-		                        const size_t offset_in);
+		                        const size_t offset_in,
+                            const std::vector<std::string>& grids_not_computed_in_worker);
 
 		~SnowpackInterfaceWorker();
 
@@ -45,7 +44,6 @@ class SnowpackInterfaceWorker
 		void clearSpecialPointsData();
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
-		double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
 
 		void runModel(const mio::Date& julian,
 		              const mio::Grid2DObject &psum,
@@ -63,7 +61,7 @@ class SnowpackInterfaceWorker
 		              const mio::Grid2DObject &longwave,
 		              const double solarElevation);
 
-		void grooming(const mio::Grid2DObject &grooming_map);
+		void grooming(const mio::Date &current_date, const mio::Grid2DObject &grooming_map);
 
 		static int round_landuse(const double& landuse_dbl);
 		static bool skipThisCell(const double& landuse_val, const double& dem_val);
@@ -73,20 +71,24 @@ class SnowpackInterfaceWorker
 		void setLateralFlow(const std::vector<SnowStation*>& snow_station);
 
 	private:
-		void initGrids(std::vector<std::string>& params);
+		void initGrids(std::vector<std::string>& params, const std::vector<std::string>& grids_not_computed_in_worker);
 		void gatherSpecialPoints(const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
 		void fillGrids(const size_t& ii, const size_t& jj, const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
+		double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
+
+	public:
+		std::vector<std::pair<size_t,size_t> > SnowStationsCoord;
 
 	private:
 		SnowpackConfig sn_cfg; // created on element
 		Snowpack sn;
 		Meteo meteo;
 		Stability stability;
+		TechSnow sn_techsnow;
 
 		const mio::DEMObject dem;
 		const size_t dimx, dimy, offset;
 		std::vector<SnowStation*> SnowStations; // Save different Pixel values
-		std::vector<std::pair<size_t,size_t> > SnowStationsCoord;
 		std::vector<bool> isSpecialPoint;
 
 		const mio::Grid2DObject landuse;
@@ -98,7 +100,7 @@ class SnowpackInterfaceWorker
 		std::vector<SnowStation> snow_pixel;
 		std::vector<CurrentMeteo> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
-		std::vector<double> soil_temp_depths;
+		std::vector<double> soil_temp_depths, soil_runoff_depths, snow_density_depths;
 
 		double calculation_step_length;
 		double height_of_wind_value;

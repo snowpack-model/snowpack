@@ -35,7 +35,7 @@ Glaciers::Glaciers(const mio::Config& cfg, const mio::DEMObject& in_dem)
 
 void Glaciers::init(const mio::Config& cfg)
 {
-	cfg.getValue("KATABATIC_LAYER_HEIGHT", "Snowpack", KBL, IOUtils::nothrow); //Katabatic Boundary Layer (KBL) thickness, 17m in GB
+	cfg.getValue("KATABATIC_LAYER_HEIGHT", "Snowpack", KBL, IOUtils::dothrow); //Katabatic Boundary Layer (KBL) thickness, 17m in GB
 	cfg.getValue("KATABATIC_SCALING", "Snowpack", scale, IOUtils::nothrow); //a value of .25 seems to work quite well
 	cfg.getValue("KATABATIC_K_COEFFICIENT", "Snowpack", K, IOUtils::nothrow); //K=0 for original GB model
 	
@@ -207,7 +207,7 @@ void Glaciers::correctTemperatures(mio::Grid2DObject& ta) const
 		if (downhill_dist<=0.) continue;
 		const double tan_slope = (z0-dem(idx)) / downhill_dist;
 		const double cos_slope = Optim::invSqrt(1.+tan_slope*tan_slope); //1+tan^2 = 1/cos^2 and this is 30% faster than computing cos()
-		const double Lr =KBL / CH * cos_slope; //KBL is H in the original paper
+		const double Lr = KBL / CH * cos_slope; //KBL is H in the original paper
 		const double b = Gamma * tan_slope;
 		const double Teq = b * Lr;
 		

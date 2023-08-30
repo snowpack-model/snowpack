@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE(LibFindMacros)
 
 FIND_LIBRARY(Matio_LIBRARY

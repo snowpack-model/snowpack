@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,6 +20,7 @@
 #define PROCESSINGBLOCK_H
 
 #include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/Config.h>
 #include <vector>
 #include <string>
@@ -60,31 +62,20 @@ class ProcessingProperties {
 
 /**
  * @class  ProcessingBlock
- * @brief  An abstract class
- * @author Thomas Egger
- * @date   2011-01-02
+ * @brief  The base class for all filters that provides the interface and a few helper methods
  */
 class ProcessingBlock {
 	public:
-		typedef struct DATES_RANGE {
-			DATES_RANGE() : start(), end() {}
-			DATES_RANGE(const Date& d1, const Date& d2) : start(d1), end(d2) {}
-			bool operator<(const DATES_RANGE& a) const { //needed for "sort"
-				return start < a.start;
-			}
-
-			Date start, end;
-		} dates_range;
 		
 		typedef struct OFFSET_SPEC {
-			OFFSET_SPEC() : date(), offset(0.) {}
-			OFFSET_SPEC(const Date& d1, const double& i_offset) : date(d1), offset(i_offset) {}
+			OFFSET_SPEC() : date(), value(0.) {}
+			OFFSET_SPEC(const Date& d1, const double& i_value) : date(d1), value(i_value) {}
 			bool operator<(const OFFSET_SPEC& a) const { //needed for "sort"
 				return date < a.date;
 			}
 
 			Date date;
-			double offset;
+			double value;
 		} offset_spec;
 		
 		virtual ~ProcessingBlock() {}
@@ -100,16 +91,16 @@ class ProcessingBlock {
 		const std::string toString() const;
 		bool skipStation(const std::string& station_id) const;
 		bool noStationsRestrictions() const {return excluded_stations.empty() && kept_stations.empty();}
+		const std::vector<DateRange> getTimeRestrictions() const {return time_restrictions;}
 
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y);
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2);
 		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
 		static std::vector<offset_spec> readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx=2);
-		static std::map< std::string, std::vector<dates_range> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
-		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		static std::map< std::string, std::vector<DateRange> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
 
 	protected:
-		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name); ///< protected constructor only to be called by children
+		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg); ///< protected constructor only to be called by children
 
 		static void extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                               std::vector<double>& ovec);
@@ -117,6 +108,7 @@ class ProcessingBlock {
                                                std::vector<double>& ovec);
 		
 		const std::set<std::string> excluded_stations, kept_stations;
+		const std::vector<DateRange> time_restrictions;
 		ProcessingProperties properties;
 		const std::string block_name;
 

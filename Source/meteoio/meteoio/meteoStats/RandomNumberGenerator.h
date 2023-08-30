@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 Michael Reisecker and work cited in documentation and source    */
 /***********************************************************************************/
@@ -46,7 +47,7 @@ namespace mio {
  *
  * @section rng_purpose Purpose of this class
  * We offer two inherently 32 bit generators, and an inherently 64 bit generator
- * (although all three need 64 bits space), aswell as some convenience methods.
+ * (although all three need 64 bits space), as well as some convenience methods.
  *
  * The goal is to have a generator suite that satisfies all needs for statistical filters / Monte Carlo methods (and not
  * more), especially when working within MeteoIO. In a way, statistical filters are what ultimately justify this class,
@@ -54,7 +55,7 @@ namespace mio {
  *
  * So, if you are currently using this (cf. \ref rng_appendix_A):
  * @code
- *     srand( time(NULL) );
+ *     srand( time(nullptr) );
  *     return rand() % range;
  *     return rand() / double(RAND_MAX + 1);
  * @endcode
@@ -432,7 +433,7 @@ namespace mio {
  * @section rng_appendix_A Appendix A
  * Why is
  * @code
- * srand( time(NULL) );
+ * srand( time(nullptr) );
  * return rand() % range;
  * return rand() / double(RAND_MAX + 1);
  * @endcode

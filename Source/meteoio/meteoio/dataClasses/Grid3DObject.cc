@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,17 +23,6 @@
 using namespace std;
 
 namespace mio {
-
-Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
-	if (this != &source) {
-		grid3D = source.grid3D;
-		cellsize = source.cellsize;
- 		llcorner = source.llcorner;
-		z = source.z;
-		z_is_absolute = source.z_is_absolute;
-	}
-	return *this;
-}
 
 Grid3DObject& Grid3DObject::operator=(const double& value) {
 	grid3D = value;
@@ -448,7 +438,7 @@ std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid) {
 
 	const size_t s_z = grid.z.size();
 	os.write(reinterpret_cast<const char*>(&s_z), sizeof(size_t));
-	os.write(reinterpret_cast<const char*>(&grid.z[0]), s_z*sizeof(grid.z[0]));
+	os.write(reinterpret_cast<const char*>(&grid.z[0]), static_cast<streamsize>(s_z*sizeof(grid.z[0])));
 
 	os << grid.llcorner;
 	os << grid.grid3D;
@@ -462,7 +452,7 @@ std::istream& operator>>(std::istream& is, Grid3DObject& grid) {
 	size_t s_z;
 	is.read(reinterpret_cast<char*>(&s_z), sizeof(size_t));
 	grid.z.resize(s_z);
-	is.read(reinterpret_cast<char*>(&grid.z[0]), s_z*sizeof(grid.z[0]));
+	is.read(reinterpret_cast<char*>(&grid.z[0]), static_cast<streamsize>(s_z*sizeof(grid.z[0])));
 
 	is >> grid.llcorner;
 	is >> grid.grid3D;

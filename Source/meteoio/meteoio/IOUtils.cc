@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -132,6 +133,14 @@ void stripComments(std::string& str)
 	}
 }
 
+void stripComments(std::string& str, const char& comment_mk)
+{
+	const size_t found = str.find_first_of(comment_mk);
+	if (found != std::string::npos){
+		str.erase(found); //rest of line disregarded
+	}
+}
+
 void trim(std::string& str)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
@@ -172,6 +181,7 @@ inline bool isTwoSpaces(const char& a, const char& b) { return (a == b) && (a ==
 inline bool isTwoTabs(const char& a, const char& b) { return (a == b) && (a == '\t'); }
 inline bool isInvalidChar(const char& c) { return (c < 32 || c > 126); }
 inline bool isQuote(const char& c) { if (c=='"' || c=='\'') return true; return false; }
+inline bool isSpecialChar(const char& c, const std::set<char>& specialChars ) { if (specialChars.count(c)==0) return false; return true; }
 
 void removeDuplicateWhitespaces(std::string& line)
 { //remove consecutive occurrences of either spaces or tabs
@@ -194,6 +204,12 @@ void replaceInvalidChars(std::string& line, const char& rep /* = '\0' */)
 void removeQuotes(std::string& line)
 { //remove single and double quotation marks
 	const std::string::iterator close_str = std::remove_if(line.begin(), line.end(), &isQuote);
+	line.erase(close_str, line.end());
+}
+
+void removeChars(std::string& line, const std::set<char>& specialChars)
+{ //remove all specified characters if/when found
+	const std::string::iterator close_str = std::remove_if(line.begin(), line.end(), [specialChars](const char& c){if (specialChars.count(c)==0) return false; return true;});
 	line.erase(close_str, line.end());
 }
 
@@ -301,13 +317,13 @@ std::string getLogName()
 {
 	char *tmp;
 
-	if ((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
-		if ((tmp=getenv("LOGNAME"))==NULL) { //Unix
+	if ((tmp=getenv("USERNAME"))==nullptr) { //Windows & Unix
+		if ((tmp=getenv("LOGNAME"))==nullptr) { //Unix
 			tmp=getenv("USER"); //Windows & Unix
 		}
 	}
 
-	if (tmp==NULL) return std::string("");
+	if (tmp==nullptr) return std::string("");
 	return std::string(tmp);
 }
 
@@ -395,9 +411,9 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
-	std::string word;
 	std::istringstream iss(line_in);
 
+	std::string word;
 	while (getline(iss, word, delim)){
 		vecString.push_back(word);
 	}
@@ -435,7 +451,7 @@ static const char NUM[] = "0123456789";
 template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
-	t =str;
+	t = str;
 	trim(t); //delete trailing and leading whitespaces and tabs
 	return true;
 }

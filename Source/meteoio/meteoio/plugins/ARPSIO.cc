@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -119,12 +120,12 @@ ARPSIO& ARPSIO::operator=(const ARPSIO& source) {
 
 void ARPSIO::setOptions()
 {
-	const string grid_in = cfg.get("GRID2D", "Input", "");
+	const string grid_in = IOUtils::strToUpper( cfg.get("GRID2D", "Input", "") );
 	if (grid_in == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	}
 	
-	const string grid3d_in = cfg.get("GRID3D", "Input", "");
+	const string grid3d_in = IOUtils::strToUpper( cfg.get("GRID3D", "Input", "") );
 	if (grid3d_in == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID3DPATH", "Input", grid3dpath_in);
 	}
@@ -147,7 +148,7 @@ void ARPSIO::listFields(const std::string& i_name)
 	const std::string dem_marker = (is_true_arps)? "zp coordinat" : "zp_coordinat";
 	moveToMarker(fin, filename, dem_marker);
 	
-	char dummy[ARPS_MAX_LINE_LENGTH];
+	char dummy[ARPS_MAX_LINE_LENGTH+1];
 	int nb_elems = 0;
 	do {
 		nb_elems = fscanf(fin," %" XSTR(ARPS_MAX_LINE_LENGTH) "[^\t\n] ",dummy);
@@ -248,7 +249,7 @@ void ARPSIO::read2DGrid_internal(FILE* &fin, const std::string& filename, Grid2D
 		readGridLayer(fin, filename, "v", 2, V);
 		for (size_t jj=0; jj<grid_out.getNy(); jj++) {
 			for (size_t ii=0; ii<grid_out.getNx(); ii++) {
-				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
+				grid_out(ii,jj) = IOUtils::UV_TO_DW(grid_out(ii,jj), V(ii,jj)); // turn into degrees [0;360)
 			}
 		}
 	}
@@ -434,7 +435,7 @@ void ARPSIO::initializeTrueARPS(FILE* &fin, const std::string& filename, const s
 void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 {
 	if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
-	if ((fin=fopen(filename.c_str(),"r")) == NULL) {
+	if ((fin=fopen(filename.c_str(),"r")) == nullptr) {
 		throw AccessException("Can not open file "+filename, AT);
 	}
 
@@ -442,7 +443,7 @@ void ARPSIO::openGridFile(FILE* &fin, const std::string& filename)
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	for (unsigned char j=0; j<5; j++) {
 		//the first easy difference in the structure happens at line 5
-		if (fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==NULL) {
+		if (fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==nullptr) {
 			fclose(fin);
 			throw InvalidFormatException("Fail to read header lines of file "+filename, AT);
 		}
@@ -525,7 +526,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 			if (readPts==1) {
 				grid(ix,iy) = tmp;
 			} else {
-				char dummy[ARPS_MAX_LINE_LENGTH];
+				char dummy[ARPS_MAX_LINE_LENGTH+1];
 				const int status = fscanf(fin,"%" XSTR(ARPS_MAX_LINE_LENGTH) "s",dummy);
 				fclose(fin);
 				std::string msg( "Fail to read data layer for parameter '"+parameter+"' in file '"+filename+"'" );
@@ -539,7 +540,7 @@ void ARPSIO::readGridLayer(FILE* &fin, const std::string& filename, const std::s
 
 void ARPSIO::moveToMarker(FILE* &fin, const std::string& filename, const std::string& marker)
 {
-	char dummy[ARPS_MAX_LINE_LENGTH];
+	char dummy[ARPS_MAX_LINE_LENGTH+1];
 	do {
 		const int nb_elems = fscanf(fin," %" XSTR(ARPS_MAX_LINE_LENGTH) "[^\t\n] ",dummy);
 		if (nb_elems==0) {

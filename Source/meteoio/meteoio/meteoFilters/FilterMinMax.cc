@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -21,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMinMax::FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-             : ProcessingBlock(vecArgs, name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(false)
+FilterMinMax::FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+             : ProcessingBlock(vecArgs, name, cfg), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(false)
 
 {
 	parse_args(vecArgs);

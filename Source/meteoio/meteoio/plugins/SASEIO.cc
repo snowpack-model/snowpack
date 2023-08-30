@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 Snow and Avalanche Study Establishment    SASE-CHANDIGARH       */
 /***********************************************************************************/
@@ -140,8 +141,8 @@ void SASEIO::getStationMetaData(const std::string& stat_abk, const std::string& 
 {
 	vecMetaData.clear();
 
-	MYSQL *conn = mysql_init(NULL);
-	if (!mysql_real_connect(conn, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0)) {
+	MYSQL *conn = mysql_init(nullptr);
+	if (!mysql_real_connect(conn, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, nullptr, 0)) {
 		throw IOException("Could not initiate connection to Mysql server "+mysqlhost, AT);
 	}
 
@@ -158,7 +159,7 @@ void SASEIO::getStationMetaData(const std::string& stat_abk, const std::string& 
 	const unsigned int column_no = mysql_num_fields(res);
 	std::string tmp_str;
 	MYSQL_ROW row;
-	while ( ( row = mysql_fetch_row(res) ) != NULL ) {
+	while ( ( row = mysql_fetch_row(res) ) != nullptr ) {
 		for (unsigned int ii=0; ii<column_no; ii++) {
 			IOUtils::convertString(tmp_str, row[ii]);
 			vecMetaData.push_back(tmp_str);
@@ -307,8 +308,8 @@ bool SASEIO::getStationData(const std::string& stat_abk, const std::string& stao
 	Query2.replace( Query2.find(str3), str3.length(), sDate ); // set 3rd variable's value
 	Query2.replace( Query2.find(str4), str4.length(), eDate ); // set 4th variable's value
 
-	MYSQL *conn2 = mysql_init(NULL);
-	if (!mysql_real_connect(conn2, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, NULL, 0)) {
+	MYSQL *conn2 = mysql_init(nullptr);
+	if (!mysql_real_connect(conn2, mysqlhost.c_str(), mysqluser.c_str(), mysqlpass.c_str(), mysqldb.c_str(), 0, nullptr, 0)) {
 		throw IOException("Could not initiate connection to Mysql server "+mysqlhost, AT);
 	}
 
@@ -319,7 +320,7 @@ bool SASEIO::getStationData(const std::string& stat_abk, const std::string& stao
 	MYSQL_RES *res2 = mysql_use_result(conn2);
 	const unsigned int column_no2 = mysql_num_fields(res2);
 	MYSQL_ROW row2;
-	while ( ( row2= mysql_fetch_row(res2) ) != NULL ) {
+	while ( ( row2= mysql_fetch_row(res2) ) != nullptr ) {
 		std::vector<std::string> vecData;
 		for (unsigned int ii=0; ii<column_no2; ii++) {
 			std::string row_02;

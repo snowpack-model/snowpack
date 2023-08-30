@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -25,8 +26,8 @@ namespace mio {
 const double ProcPSUMDistribute::thresh_rh = .7;
 const double ProcPSUMDistribute::thresh_Dt = 3.;
 
-ProcPSUMDistribute::ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(vecArgs, name), measured_period(IOUtils::nodata), is_soft(false)
+ProcPSUMDistribute::ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                  : ProcessingBlock(vecArgs, name, cfg), measured_period(IOUtils::nodata), is_soft(false)
 {
 	parse_args(vecArgs);
 }

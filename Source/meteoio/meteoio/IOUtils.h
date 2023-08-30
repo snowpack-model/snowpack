@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -62,7 +63,9 @@ namespace IOUtils {
 	enum OperationMode {
 		STD, ///< default: extract timeseries from timeseries or grids from grids or spatially interpolate timeseries
 		VSTATIONS, ///< extract virtual stations as specified in the ini file
+		GRID_1DINTERPOLATE,  ///< temporally interpolate existing grids (must be enumerated before GRID_EXTRACT)
 		GRID_EXTRACT, ///< extract data from grids at locations provided in the ini file
+		GRID_EXTRACT_PTS, ///< as GRID_EXTRACT, but queries plugin only for virtual stations points, instead of full grids
 		GRID_SMART, ///< extract all relevant grid points from a provided grid
 		GRID_ALL, ///< extract all grid points from a provided grid
 		GRID_RESAMPLE ///< generate a grid at a different resolution
@@ -82,7 +85,32 @@ namespace IOUtils {
 
 	inline double C_TO_K(const double& T) {return ((T==nodata)? T : T + Cst::t_water_freezing_pt);}
 	inline double K_TO_C(const double& T) {return ((T==nodata)? T : T - Cst::t_water_freezing_pt);}
-	
+
+	/**
+	* @brief From wind speed components (u,v) to wind direction, following standard meteorological definitions:
+	* U is positive with positive easting/longitude. V is positive with positive northing/latitude. Direction is the angle the wind comes from.
+	* @param U (west-to-east component)
+	* @param V (south-to-north component)
+	* @return Wind direction in degrees, defined as the direction the wind is coming from.
+	*/
+	inline double UV_TO_DW(const double& U, const double& V) {return ((U==nodata || V==nodata)? nodata : fmod(atan2(U, V) * Cst::to_deg + 180., 360.));}
+
+	/**
+	* @brief From wind speed and direction to u component (west-to-east)
+	* @param VW (wind speed)
+	* @param DW (wind direction)
+	* @return U component of wind.
+	*/
+	inline double VWDW_TO_U(const double& VW, const double& DW) {return ((VW==nodata || DW==nodata)? nodata : (- VW * sin(DW*Cst::to_rad)));}
+
+	/**
+	* @brief From wind speed and direction to v component (south-to-north)
+	* @param VW (wind speed)
+	* @param DW (wind direction)
+	* @return V component of wind.
+	*/
+	inline double VWDW_TO_V(const double& VW, const double& DW) {return ((VW==nodata || DW==nodata)? nodata : (- VW * cos(DW*Cst::to_rad)));}
+
 	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
 	* @param val1
@@ -90,7 +118,7 @@ namespace IOUtils {
 	* @param epsilon is a radius around val1
 	* @return true if val2 is within the radius around val1, false otherwise.
 	*/
-	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (fabs(val1-val2) < epsilon);}
+	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (std::abs(val1-val2) < epsilon);}
 
 	/**
 	* @brief Search for an element at a given date in a vector of MeteoData.
@@ -162,6 +190,8 @@ namespace IOUtils {
 
 	void stripComments(std::string& str);
 	
+	void stripComments(std::string& str, const char& comment_mk);
+	
 	/**
 	 * @brief Replace a substring within a given string by another one.
 	 * @details This should be quite similar to Boost::replace_all.
@@ -196,6 +226,13 @@ namespace IOUtils {
 	* @param line The string to read and modify
 	*/
 	void removeQuotes(std::string& line);
+	
+	/**
+	* @brief Removes any character present in the provided set from the given line
+	* @param line The string to read and modify
+	* @param specialChars The characters to exclude
+	*/
+	void removeChars(std::string& line, const std::set<char>& specialChars);
 
 	/**
 	 * @brief Cleans up a string to be usable as, for example, a parameter name
@@ -267,7 +304,7 @@ namespace IOUtils {
 	template <class T> bool convertString(T& t, std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
 		trim(str); //delete trailing and leading whitespaces and tabs
 		if (str.empty()) {
-			t = static_cast<T> (nodata);
+			t = static_cast<T>(nodata);
 			return true;
 		} else {
 			std::istringstream iss(str);

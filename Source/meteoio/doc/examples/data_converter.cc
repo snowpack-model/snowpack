@@ -1,9 +1,11 @@
-/*This example takes two ISO-formatted dates and a sampling rate (in h) on the command line
-* for example ./data_converter 2008-12-01T00:00:00 2008-12-31T23:00 1
-* It will retrieve the data for this time interval and write it out once per 1 hour as specified
+// SPDX-License-Identifier: LGPL-3.0-or-later
+/*This example takes two ISO-formatted dates and a sampling rate (in minutes) on the command line
+* for example ./data_converter 2008-12-01T00:00:00 2008-12-31T23:00 60
+* It will retrieve the data for this time interval and write it out once per 60 minutes as specified
 * in the io.ini configuration
 */
 #include <iostream>
+#include <cstdio>
 #include <string.h>
 #include <map>
 #include <vector>
@@ -11,14 +13,16 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 
-void real_main(int argc, char** argv)
+static void real_main(int argc, char** argv)
 {
-	Config cfg("io.ini");
+	setbuf(stdout, NULL); //always flush stdout
+	const std::string config_filename = (argc==5)? argv[4] : "io.ini";
+	Config cfg(config_filename);
 	const double TZ = cfg.get("TIME_ZONE", "Input");
 
 	double Tstep;
 	IOUtils::convertString(Tstep, argv[3]);
-	Tstep /= 24.; //convert to sampling rate in days
+	Tstep /= 24.*60; //convert to sampling rate in days
 
 	Date d_start, d_end;
 	IOUtils::convertString(d_start, argv[1], TZ);
@@ -50,7 +54,7 @@ void real_main(int argc, char** argv)
 			vecMeteo[ mapIDs[stationID] ].push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
 	}
-	
+
 	//io.getMeteoData(d_start, d_end, vecMeteo); //This would be the call that does NOT resample the data, instead of the above "for" loop
 
 	//In both case, we write the data out
@@ -63,8 +67,8 @@ void real_main(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	if(argc!=4) {
-		std::cout << "Invalid number of arguments! Please provide a date range and a sampling rate (in hours)\n";
+	if(argc<4 || argc>5) {
+		std::cout << "Invalid number of arguments! Please provide a date range and a sampling rate (in minutes)\n";
 		exit(0);
 	}
 

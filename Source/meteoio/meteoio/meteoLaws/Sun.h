@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,6 +20,7 @@
 #define SUN_H
 
 #include <meteoio/meteoLaws/Suntrajectory.h>
+#include <meteoio/dataClasses/Date.h>
 
 namespace mio {
 
@@ -39,12 +41,13 @@ class SunObject {
 			MEEUS ///<Jean Meeus' algorithm (Meeus, j. "Astronomical Algorithms", second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA)
 		} position_algo;
 
-		SunObject(const position_algo alg=MEEUS);
+		SunObject(const SunObject::position_algo& alg=MEEUS);
 		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& i_TZ=0.);
 
 		//local julian date and timezone
 		void setDate(const double& i_julian, const double& i_TZ=0.);
+		void setDate(const Date& date) {julian_gmt=date.getJulian(false); TZ=date.getTimeZone();}
 		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		void resetAltitude(const double& i_altitude);
 		void setElevationThresh(const double& i_elevation_threshold);
@@ -56,13 +59,14 @@ class SunObject {
 		void getSlopeRadiation(const double& slope_azi, const double& slope_elev, double& R_toa, double& R_direct, double& R_diffuse) const;
 		double getElevationThresh() const {return elevation_threshold;}
 
-		double getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const;
-		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
+		double getSplittingBoland(const double& toa_h, const double& iswr_measured, const double& t) const;
+		double getSplitting(const double& toa_h, const double& iswr_measured) const;
 		double getSplitting(const double& iswr_measured) const;
 		double getCorrectionFactor(const double& iswr_measured, double &Md, bool &day, bool &night) const;
 		double getCorrectionFactor(const double& iswr_measured) const;
 
 		double getJulian(const double& o_TZ) const {return (julian_gmt+o_TZ*1./24.);}
+		Date getDate() const {return Date(julian_gmt, TZ);}
 		const std::string toString() const;
 		
 		//SunTrajectory position;

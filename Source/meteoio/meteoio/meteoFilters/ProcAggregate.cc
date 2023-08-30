@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -23,8 +24,8 @@ using namespace std;
 
 namespace mio {
 
-ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-              : WindowedFilter(vecArgs, name), type(mean_agg)
+ProcAggregate::ProcAggregate(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+              : WindowedFilter(vecArgs, name, cfg, true), type(mean_agg)
 {
 	parse_args(vecArgs);
 
@@ -39,6 +40,11 @@ void ProcAggregate::process(const unsigned int& param, const std::vector<MeteoDa
                             std::vector<MeteoData>& ovec)
 {
 	ovec = ivec;
+	
+	if (type==step_sum) {
+		sumOverLastStep(ovec, param);
+		return;
+	}
 	
 	for (size_t ii=0; ii<ovec.size(); ii++){ //for every element in ivec, get a window
 		double& value = ovec[ii](param);
@@ -61,6 +67,24 @@ void ProcAggregate::process(const unsigned int& param, const std::vector<MeteoDa
 		} else {
 			if (!is_soft) value = IOUtils::nodata;
 		}
+	}
+}
+
+void ProcAggregate::sumOverLastStep(std::vector<MeteoData>& ovec, const unsigned int& param)
+{
+	double previous_ts = IOUtils::nodata;
+	for (size_t ii=0; ii<ovec.size(); ii++) {
+		double& value = ovec[ii](param);
+		if (value!=IOUtils::nodata && value!=0) {
+			if (previous_ts!=IOUtils::nodata) {
+				const double acc_period = (ovec[ii].date.getJulian() - previous_ts) * 24.; //in hours
+				value *= acc_period;
+			} else {
+				value = IOUtils::nodata;
+			}
+		}
+		
+		previous_ts = ovec[ii].date.getJulian();
 	}
 }
 
@@ -126,8 +150,8 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 		const double VW = ivec[ii](MeteoData::VW);
 		const double DW = ivec[ii](MeteoData::DW);
 		if (VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
-			ve += VW * sin(DW*Cst::to_rad);
-			vn += VW * cos(DW*Cst::to_rad);
+			ve += IOUtils::VWDW_TO_U(VW, DW);
+			vn += IOUtils::VWDW_TO_V(VW, DW);
 			count++;
 		}
 	}
@@ -141,7 +165,7 @@ double ProcAggregate::calc_wind_avg(const std::vector<MeteoData>& ivec, const un
 		const double meanspeed = sqrt(ve*ve + vn*vn);
 		return meanspeed;
 	} else {
-		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360. , 360.); // turn into degrees [0;360)
+		const double meandirection = IOUtils::UV_TO_DW(ve, vn); // turn into degrees [0;360)
 		return meandirection;
 	}
 }
@@ -159,6 +183,7 @@ void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::st
 			else if (type_str=="MAX") type=max_agg;
 			else if (type_str=="MEAN") type=mean_agg;
 			else if (type_str=="MEDIAN") type=median_agg;
+			else if (type_str=="STEP_SUM") type=step_sum;
 			else if (type_str=="WIND_AVG") type=wind_avg_agg;
 			else
 				throw InvalidArgumentException("Unknown type '"+type_str+"' for " + where, AT);
@@ -168,6 +193,8 @@ void ProcAggregate::parse_args(const std::vector< std::pair<std::string, std::st
 	}
 
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
+	
+	if (type!=step_sum) setWindowFParams( vecArgs );
 }
 
 } //namespace

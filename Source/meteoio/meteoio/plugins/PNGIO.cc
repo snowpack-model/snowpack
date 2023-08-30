@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -24,7 +25,7 @@
 #include <fstream>
 #include <cstring>
 #include <algorithm>
-#include <errno.h>
+#include <cerrno>
 #include <zlib.h>
 
 using namespace std;
@@ -114,7 +115,7 @@ const unsigned char PNGIO::transparent_grey = channel_max_color;
 
 PNGIO::PNGIO(const std::string& configfile)
        : cfg(configfile),
-         fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
+         fp(nullptr), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
          indexed_png(true), nr_levels(30),
          coordout(), coordoutparam(), grid2dpath(),
          scaling("bilinear"), min_w(IOUtils::unodata), min_h(IOUtils::unodata), max_w(IOUtils::unodata), max_h(IOUtils::unodata),
@@ -125,7 +126,7 @@ PNGIO::PNGIO(const std::string& configfile)
 
 PNGIO::PNGIO(const Config& cfgreader)
        : cfg(cfgreader),
-         fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
+         fp(nullptr), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
          indexed_png(true), nr_levels(30),
          coordout(), coordoutparam(), grid2dpath(),
          scaling("bilinear"), min_w(IOUtils::unodata), min_h(IOUtils::unodata), max_w(IOUtils::unodata), max_h(IOUtils::unodata),
@@ -136,7 +137,7 @@ PNGIO::PNGIO(const Config& cfgreader)
 
 PNGIO& PNGIO::operator=(const PNGIO& source) {
 	if (this != &source) {
-		fp = NULL;
+		fp = nullptr;
 		autoscale = source.autoscale;
 		has_legend = source.has_legend;
 		has_world_file = source.has_world_file;
@@ -157,10 +158,10 @@ PNGIO& PNGIO::operator=(const PNGIO& source) {
 	return *this;
 }
 
-PNGIO::~PNGIO() throw() 
+PNGIO::~PNGIO() noexcept 
 {
-	if (fp!=NULL) fclose(fp); 
-	fp=NULL;
+	if (fp!=nullptr) fclose(fp); 
+	fp=nullptr;
 }
 
 void PNGIO::setOptions()
@@ -272,21 +273,21 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
-	if (fp == NULL)
+	if (fp == nullptr)
 		throw AccessException("Error opening file \""+filename+"\", possible reason: "+std::string(std::strerror(errno)), AT);
 
 	// Initialize write structure
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (png_ptr == NULL) {
-		fclose(fp); fp=NULL;
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+	if (png_ptr == nullptr) {
+		fclose(fp); fp=nullptr;
 		throw IOException("Could not allocate write structure. Are you running with the same version of libpng that you linked to?", AT);
 	}
 
 	// Initialize info structure
 	info_ptr = png_create_info_struct(png_ptr);
-	if (info_ptr == NULL) {
-		fclose(fp); fp=NULL;
-		png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+	if (info_ptr == nullptr) {
+		fclose(fp); fp=nullptr;
+		png_destroy_write_struct(&png_ptr, (png_infopp)nullptr);
 		free(png_ptr);
 		throw IOException("Could not allocate info structure", AT);
 	}
@@ -296,7 +297,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	#pragma warning(disable:4611) //the setjmp of libpng has been set up so that it can safely be called from c++
 #endif
 	if (setjmp(png_jmpbuf(png_ptr))) {
-		closePNG(png_ptr, info_ptr, NULL);
+		closePNG(png_ptr, info_ptr, nullptr);
 		throw IOException("Error during png creation. Can not set jump pointer (I have no clue what it means too!)", AT);
 	}
 
@@ -306,10 +307,10 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	else png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
 
 	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB|PNG_FILTER_UP); //any other filter is costly and brings close to nothing...
-	if (indexed_png) png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 
 	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	if (indexed_png) {
+		png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 		png_set_IHDR(png_ptr, info_ptr, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height),
 			channel_depth, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -366,8 +367,8 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	const unsigned char channels = (indexed_png)? 1 : 3; //4 for rgba
 	png_bytep row = (png_bytep)calloc(full_width, channels*sizeof(png_byte));
-	if (row==NULL) {
-		fclose(fp); fp=NULL;
+	if (row==nullptr) {
+		fclose(fp); fp=nullptr;
 		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 		free(png_ptr);
 		throw IOException("Can not allocate row memory for PNG!", AT);
@@ -428,8 +429,8 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 {
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
-	if (indexed_png && palette!=NULL) free(palette);
-	fclose(fp); fp=NULL;
+	if (indexed_png && palette!=nullptr) free(palette);
+	fclose(fp); fp=nullptr;
 	free(info_ptr);
 	free(png_ptr);
 }
@@ -437,9 +438,9 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
 	const std::string full_name( grid2dpath+"/"+filename );
-	fp=NULL;
-	png_structp png_ptr=NULL;
-	png_infop info_ptr=NULL;
+	fp=nullptr;
+	png_structp png_ptr=nullptr;
+	png_infop info_ptr=nullptr;
 
 	//scale input image
 	const Grid2DObject grid( scaleGrid(grid_in) );
@@ -456,7 +457,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
-	png_color *palette = (indexed_png)? setPalette(gradient, png_ptr, info_ptr) : NULL;
+	png_color *palette = (indexed_png)? setPalette(gradient, png_ptr, info_ptr) : nullptr;
 	if (has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
@@ -465,7 +466,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr, info_ptr);
-	png_write_end(png_ptr, NULL);
+	png_write_end(png_ptr, nullptr);
 
 	closePNG(png_ptr, info_ptr, palette);
 }
@@ -477,9 +478,9 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	std::replace( date_str.begin(), date_str.end(), ':', '.');
 	const std::string filename( grid2dpath + "/" + date_str + MeteoGrids::getParameterName(parameter) + ".png" );
 
-	fp=NULL;
-	png_structp png_ptr=NULL;
-	png_infop info_ptr=NULL;
+	fp=nullptr;
+	png_structp png_ptr=nullptr;
+	png_infop info_ptr=nullptr;
 
 	//scale input image
 	Grid2DObject grid( scaleGrid(grid_in) );
@@ -559,8 +560,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 87000.; max = 115650.; //centered around 1 atm
 			gradient.set(Gradient::bluewhitered, min, max, autoscale);
 		} else {
-			const double delta1 = fabs(Cst::std_press-min);
-			const double delta2 = fabs(max - Cst::std_press);
+			const double delta1 = std::abs(Cst::std_press-min);
+			const double delta2 = std::abs(max - Cst::std_press);
 			const double delta = (delta1>delta2)?delta1:delta2;
 			gradient.set(Gradient::bluewhitered, Cst::std_press-delta, Cst::std_press+delta, autoscale);
 		}
@@ -601,7 +602,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, png_ptr, info_ptr, full_width, nrows);
-	png_color *palette = (indexed_png)? setPalette(gradient, png_ptr, info_ptr) : NULL;
+	png_color *palette = (indexed_png)? setPalette(gradient, png_ptr, info_ptr) : nullptr;
 	if (has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
@@ -614,7 +615,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr, info_ptr);
-	png_write_end(png_ptr, NULL);
+	png_write_end(png_ptr, nullptr);
 
 	closePNG(png_ptr, info_ptr, palette);
 }

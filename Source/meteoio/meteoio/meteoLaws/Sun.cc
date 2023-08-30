@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -32,7 +33,7 @@ namespace mio {
 const double SunObject::elevation_dftlThreshold = 5.; //in degrees
 const double SunObject::rad_threshold = 4.; //if radiation is below this threshold, it is assumed to be night
 
-SunObject::SunObject(SunObject::position_algo /*alg*/)
+SunObject::SunObject(const SunObject::position_algo& /*alg*/)
            : position(), julian_gmt(IOUtils::nodata), TZ(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
              elevation_threshold(elevation_dftlThreshold),
              beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata) {}
@@ -153,6 +154,9 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
                             const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
                             double& R_direct, double& R_diffuse) const
 {
+	if (ta<0. || rh<0.) 
+		throw InvalidArgumentException("When calling SunObject::getClearSky(), TA and RH must be >0, currently TA="+IOUtils::toString(ta)+", RH="+IOUtils::toString(rh), AT);
+	
 	//these pow cost us a lot here, but replacing them by fastPow() has a large impact on accuracy (because of the exp())
 	static const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
 	static const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
@@ -294,14 +298,14 @@ void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_e
  * see
  * D. G. Erbs, S.A. Klein, J.A. Duffie, <i>"Estimation of the diffuse radiation fraction for hourly, daily and monthly-average global radiation"</i>, Solar Energy, <b>28</b>, 4, 1982, Pages 293-302 and
  * M. Iqbal, <i>"An introduction to solar radiation"</i>, 1983, Academic Press,  ISBN: 0-12-373750-8 and
- * D. T. Reindl, W. A. Beckman, J. A. Duffle, <i>"Diffuse fraction correlations</i>, Solar Energy, <b>45</b>, 1990, pp 1-7.
- * @param iswr_modeled modelled radiation, it should be horizontal Top Of %Atmosphere Radiation (W/m²)
+ * D. T. Reindl, W. A. Beckman, J. A. Duffle, <i>"Diffuse fraction correlations"</i>, Solar Energy, <b>45</b>, 1990, pp 1-7.
+ * @param toa_h  horizontal top of atmosphere Radiation (W/m²)
  * @param iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
  * @return splitting coefficient (between 0 and 1, 1 being 100% diffuse radiation)
  */
-double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_measured) const
+double SunObject::getSplitting(const double& toa_h, const double& iswr_measured) const
 {
-	if (iswr_modeled==IOUtils::nodata)
+	if (toa_h==IOUtils::nodata)
 		throw NoDataException("modelled ISWR can not be nodata, please call Sun::calculateRadiation() before!", AT);
 	
 	if (iswr_measured==IOUtils::nodata)
@@ -312,13 +316,13 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 	position.getHorizontalCoordinates(azimuth, elevation);
 
 	if ( elevation < elevation_threshold ) {
-		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
+		// when the Sun is low above the horizon, Mt is getting abnormally too large pretending
 		// this is a clear sky day when almost all the radiation should be diffuse
 		// no matter how the sky is
 		splitting_coef = 1.0;
 	} else {
 		// clear sky index (ratio global measured to top of atmosphere radiation)
-		const double Mt = iswr_measured / iswr_modeled; // should be <=1.2, aka clearness index Kt
+		const double Mt = iswr_measured / toa_h; // should be <=1.2, aka clearness index Kt
 		static const double clear_sky = 0.147;
 
 		// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
@@ -346,14 +350,14 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
  * measured incoming global radiation to top of the atmosphere radiation toa_h.
  * This is based on Boland, John, Lynne Scott, and Mark Luther, <i>"Modelling the diffuse fraction 
  * of global solar radiation on a horizontal surface"</i>, Environmetrics <b>12.2</b>, 2001, pp103-116.
- * @param iswr_modeled modelled radiation, it should be horizontal Top Of %Atmosphere Radiation (W/m²)
+ * @param toa_h  horizontal top of  Atmosphere radiation (W/m²)
  * @param iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
  * @param t solar time of day, ie solar time between 0 and 24
  * @return splitting coefficient (between 0 and 1, 1 being 100% diffuse radiation)
  */
-double SunObject::getSplittingBoland(const double& iswr_modeled, const double& iswr_measured, const double& t) const
+double SunObject::getSplittingBoland(const double& toa_h, const double& iswr_measured, const double& t) const
 {
-	if (iswr_modeled==IOUtils::nodata)
+	if (toa_h==IOUtils::nodata)
 		throw NoDataException("modelled ISWR can not be nodata, please call Sun::calculateRadiation() before!", AT);
 	
 	if (iswr_measured==IOUtils::nodata)
@@ -371,7 +375,7 @@ double SunObject::getSplittingBoland(const double& iswr_modeled, const double& i
 		splitting_coef = 1.0;
 	} else {
 		// clear sky index (ratio global measured to top of atmosphere radiation)
-		const double kt = iswr_measured / iswr_modeled; // should be <=1.2, aka clearness index Kt
+		const double kt = iswr_measured / toa_h; // should be <=1.2, aka clearness index Kt
 		static const double beta_0 = -8.769;
 		static const double beta_1 = 7.325;
 		static const double beta_2 = 0.377;

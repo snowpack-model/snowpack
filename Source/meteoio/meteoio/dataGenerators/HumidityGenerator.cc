@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -23,7 +24,7 @@ namespace mio {
 
 void HumidityGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const std::string where( "generators::"+algo );
+	const std::string where( section+"::"+algo );
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
@@ -52,12 +53,12 @@ bool HumidityGenerator::generate(const size_t& param, MeteoData& md)
 		throw InvalidArgumentException("Invalid parameter type", AT);
 }
 
-bool HumidityGenerator::create(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool HumidityGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty()) return true;
 
 	bool all_filled = true;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		if (!generate(param, vecMeteo[ii])) all_filled=false;
 	}
 

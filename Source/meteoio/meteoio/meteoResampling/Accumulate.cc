@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -70,6 +71,7 @@ size_t Accumulate::findStartOfPeriod(const std::vector<MeteoData>& vecM, const s
 	return start_idx;
 }
 
+//accumulate within a single input time step
 double Accumulate::easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const
 {//to keep in mind: start_idx is last index <= dateStart and index is first index >= resampling_date
 	double sum = IOUtils::nodata;
@@ -126,7 +128,6 @@ void Accumulate::resample(const std::string& /*stationHash*/, const size_t& inde
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 	if (position==ResamplingAlgorithms::begin || index==0) {
-		if (!strict) md(paramindex) = 0.;
 		return;
 	}
 
@@ -141,9 +142,8 @@ void Accumulate::resample(const std::string& /*stationHash*/, const size_t& inde
 		return;
 	}
 
+	//the period that should be accumulated is not even in vecM
 	if (position==ResamplingAlgorithms::end && start_idx>=(vecM.size()-1)) { //the first element before "position" is the last of the vector
-		//the period that should be accumulated is not even in vecM
-		if (!strict) md(paramindex) = 0.;
 		return;
 	}
 

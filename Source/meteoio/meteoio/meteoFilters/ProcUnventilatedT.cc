@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -25,8 +26,8 @@ namespace mio {
 const double ProcUnventilatedT::dflt_albedo = .23;
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
-ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                  : ProcessingBlock(vecArgs, name), usr_albedo(dflt_albedo),
+ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                  : ProcessingBlock(vecArgs, name, cfg), usr_albedo(dflt_albedo),
                     usr_vw_thresh(IOUtils::nodata), nakamura(false)
 {
 	parse_args(vecArgs);

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -27,7 +28,8 @@ namespace mio {
 
 const double FilterTukey::k = 1.5; ///<How many times the stddev allowed as deviation to the smooth signal for valid points
 
-FilterTukey::FilterTukey(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) : WindowedFilter(vecArgs, name)
+FilterTukey::FilterTukey(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg) 
+            : WindowedFilter(vecArgs, name, cfg)
 {
 	//This is safe, but maybe too imprecise:
 	properties.time_before = min_time_span;
@@ -50,7 +52,7 @@ void FilterTukey::process(const unsigned int& param, const std::vector<MeteoData
 
 			const double u3 = getU3(ivec, ii, param);
 			if (std_dev!=IOUtils::nodata && u3!=IOUtils::nodata) {
-				if ( abs(value-u3) > k*std_dev ) {
+				if ( std::abs(value-u3) > k*std_dev ) {
 					value = IOUtils::nodata;
 				}
 			} else if (!is_soft) value = IOUtils::nodata;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -26,8 +27,8 @@ namespace mio {
 
 const double ProcUndercatch_WMO::Tsnow_WMO=-2., ProcUndercatch_WMO::Train_WMO=2.; //WMO values from Yan et al (2001)
 
-ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-                   : ProcessingBlock(vecArgs, name), type(cst),
+ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+                   : ProcessingBlock(vecArgs, name, cfg), type(cst),
                      factor_snow(1.3), factor_mixed(1.1), Tsnow(Tsnow_WMO), Train(Train_WMO)
 {
 	parse_args(vecArgs);
@@ -47,7 +48,7 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 		if (VW!=IOUtils::nodata) VW = std::min(Atmosphere::windLogProfile(VW, 10., 2.), 7.); //impact seems minimal, but 7m/s restriction is important
 		double t = ovec[ii](MeteoData::TA);
 		if (t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
-		t=std::max(IOUtils::K_TO_C(t), -15.); //t in celsius, restricted to >=-15
+		t = std::max(IOUtils::K_TO_C(t), -15.); //t in celsius, restricted to >=-15
 		precip_type precip = (t<=Tsnow)? snow : (t>=Train)? rain : mixed;
 
 		//We don't use Tmax, Tmin, Tmean but only the current temperature instead

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009-2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -37,7 +38,7 @@ namespace mio {
 */
 
 /*! \defgroup parametrizations Parametrizations
-   Documentation for available parametrizations components that compute given parameters from other parameters. These used for DataCreator and DataGenerator.
+   Documentation for available parametrizations components that compute given parameters from other parameters. These are used for DataCreator and DataGenerator.
 */
 
 /*! \defgroup spatialization Spatial interpolations
@@ -60,29 +61,31 @@ namespace mio {
  *    -# \subpage configuration "Configuration file"
  *    -# \subpage build_io "How to build your io.ini configuration file"
  *    -# External Links
- *         -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
- *               -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
- *               -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
+ *         -# <A HREF="https://meteoio.slf.ch">MeteoIO's home page</A>
+ *               -# <A HREF="https://meteoio.slf.ch/Getting-started">Installation, compilation</A>
+ *               -# <A HREF="https://meteoio.slf.ch/GettingHelp">Getting help</A>
  * -# Processing steps documentation
- *    -# \subpage data_sources "Data input and sources"
- *    -# \subpage raw_data_editing "Raw Data Editing"
+ *    -# \subpage data_sources "Data sources, input/output"
+ *    -# \subpage data_editing "Input Data Editing"
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage generators "Available data creators and generators" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  *    -# \subpage spatial_resampling "Spatial resampling"
+ *    -# \subpage grid_resampling "Temporal grid resampling" and usage
+ * -# \subpage mio_standalone
  * -# Advanced: Programing using MeteoIO
  *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  *    -# <A HREF="modules.html">Modules list</a>
  *    -# \subpage examples "Usage examples"
  * -# Advanced: Expanding MeteoIO
- *    -# How to \subpage dev_coords "write a coordinate system support"
- *    -# How to \subpage dev_plugins "write a Plugin"
- *    -# How to \subpage dev_processing "write a processing element"
- *    -# How to \subpage dev_1Dinterpol "write a resampling algorithm"
+ *    -# How to \subpage dev_coords "Write a coordinate system support"
+ *    -# How to \subpage dev_plugins "Write a Plugin"
+ *    -# How to \subpage dev_processing "Write a processing element"
+ *    -# How to \subpage dev_1Dinterpol "Write a resampling algorithm"
  *    -# How to \subpage dev_DataGenerator "Write a data generator"
- *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
+ *    -# How to \subpage dev_2Dinterpol "Write a spatial interpolation algorithm"
  * 
  * <center><hr></center>
  * <p><center><i><small>
@@ -119,12 +122,13 @@ namespace mio {
  * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
- * - a set of \ref raw_data_editing "raw data editing" methods to select/merge/convert the raw data
+ * - a set of \ref data_editing "input data editing" methods to select/merge/convert the raw data
  * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
  * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
  * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
  * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
- * - it is also possible to \ref spatial_resampling "spatially resample" the data  (for example to extract points out of gridded data or generate data from neighbouring stations)
+ * - a set of \ref grid_resampling "gridded resampling algorithms" (for example to regrid model data to different dates/times)
+ * - it is also possible to \ref spatial_resampling "spatially resample" the data (for example to extract points out of gridded data or generate data from neighbouring stations)
  *
  * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user. Moreover, a few
  * assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort
@@ -226,27 +230,30 @@ namespace mio {
  *
  */
 
-//TODO: Get rid of ?? in [General]
 /**
  * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
- * <b>it is highly recommended to use <a href="https://models.slf.ch/p/inishell">inishell</a></b> to build your io.ini configuration file, since this significantly
- * reduces the number of errors and provides help text for each keys.
+ * <b>it is highly recommended to use <a href="https://inishell.slf.ch">inishell</a></b> to build your io.ini 
+ * configuration file, since this significantly reduces the number of errors and provides help text for each keys.
  *
  * Anyway, this section will show you how to manually set up a configuration file. Please read
  * \ref general documentation page before starting!
  *
  * You first need to create the various sections:
- * - [General] : The documentation about this section is found in \ref Config. It currently contains the PLUGIN_PATH key that
- *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler).
+ * - [General] : The documentation about this section is found in \ref Config. It currently contains 
+ *               some buffering keys (see BufferedIOHandler).
  *
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
  *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for the Points Of Interest
  *             (key=POI), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
- *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
- *             possible to perform some editing on the raw data, see \ref raw_data_editing.
+ *             system should often be specified, as explained in \ref coords as well as a fallback time zone (so if some
+ *             time information comes without a time zone, it will use the one declared in this section).
+ * 
+ * - [InputEditing] : Through keys configured in this section, it is possible to perform some editing on the input 
+ *                    meteorological timeseries, see \ref data_editing as well as various kind of 
+ *                    spatial resampling (see \ref spatial_resampling).
  *
  * - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *
@@ -265,6 +272,8 @@ namespace mio {
  *                         Digital Elevation Model. The goal is to populate two dimensional grids with meteorological
  *                         parameters from point measurements, according to the specifications of the user.
  *                         See \ref interpol2d .
+ *
+ * - [GridInterpolations1D] : This section is for temporal resampling between existing gridded data.
  *
  * The application that you are using might also need its own section(s), check this with your application.
  *
@@ -310,7 +319,7 @@ namespace mio {
  *
  *
  * @section proj_sec Geographic projections
- * The class Coords is dedicated to geographic projections. It can use projections provided by <a href="http://trac.osgeo.org/proj/">libproj4</a> or
+ * The class Coords is dedicated to geographic projections. It can use projections provided by <a href="http://trac.osgeo.org/proj/">libproj</a> or
  * internal implementations provided by the CoordsAlgorithms static class alongside a set of helper algorithms (such as grid rotation, datum conversion, etc).
  * @subsection coord_conv Coordinate conversion
  * The class Coords takes one or two arguments describing the coordinate system of the input data and then converts back and forth with lat/long WGS84. It can be used to construct a local coordinate system, that is to say a metric grid whose origin is chosen by the user (through the lat/long parameters provided to the constructor). This is useful when working with multiple gridded coordinate system in order to get a common system that would still allow easy distances calculations. See the supported \ref Coordinate_types "projections".

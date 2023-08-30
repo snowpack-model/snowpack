@@ -10,13 +10,14 @@ rm -f output/5_*; rm -f output/grids/20*; rm -f output/snowfiles/*
 #setup the simulation
 BEGIN="2014-10-01T01:00"
 END="2014-12-31T00:00"
-PROG_ROOTDIR=../../bin
-export DYLD_FALLBACK_LIBRARY_PATH=${PROG_ROOTDIR}:${DYLD_FALLBACK_LIBRARY_PATH}	#for osX
-export LD_LIBRARY_PATH=${PROG_ROOTDIR}:${LD_LIBRARY_PATH}	#for Linux
+if [ -z "$PROG_ROOTDIR" ]; then PROG_ROOTDIR="../.."; fi;
+export DYLD_FALLBACK_LIBRARY_PATH=${PROG_ROOTDIR}/lib:${DYLD_FALLBACK_LIBRARY_PATH}	#for osX
+export LD_LIBRARY_PATH=${PROG_ROOTDIR}/lib:${LD_LIBRARY_PATH}	#for Linux
+export SIMULATION_ROOT="${PROG_ROOTDIR}/doc/examples/Stillberg/input"	#where to find the input data for the simulation
 
 #now run the simulation
 date
-../../bin/alpine3d --iofile=./io.ini --enable-eb --np-ebalance=2 --np-snowpack=2 --startdate=${BEGIN} --enddate=${END} > stdouterr.log 2>&1
+${PROG_ROOTDIR}/bin/alpine3d --iofile=./io.ini --np-ebalance=2 --np-snowpack=2 --startdate=${BEGIN} --enddate=${END}
 ret=$?
 date
 if [ "$ret" -eq "0" ]; then
@@ -32,26 +33,27 @@ fi
 PREC="1e-3"
 rm -f output_ref/5_2_dischma.met
 bunzip2 -k output_ref/5_2_dischma.met.bz2
-sed -i '11d' output_ref/5_2_dischma.met; sed -i '11d' output/5_2_dischma.met
+#sed -i '11d' output_ref/5_2_dischma.met; sed -i '11d' output/5_2_dischma.met
 numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.met output/5_2_dischma.met | grep "+++"
 rm -f output_ref/5_2_dischma.met
 
 rm -f output_ref/5_2_dischma.pro
 bunzip2 -k output_ref/5_2_dischma.pro.bz2
-sed -i '10d' output_ref/5_2_dischma.pro; sed -i '10d' output/5_2_dischma.pro
+#sed -i '10d' output_ref/5_2_dischma.pro; sed -i '10d' output/5_2_dischma.pro
 numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.pro output/5_2_dischma.pro | grep "+++"
 rm -f output_ref/5_2_dischma.pro
 
-rm -f output_ref/5_2_dischma.smet
-bunzip2 -k output_ref/5_2_dischma.smet.bz2
-sed -i '16,17d' output_ref/5_2_dischma.smet; sed -i '16,17d' output/5_2_dischma_meteo.smet
-numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma.smet output/5_2_dischma_meteo.smet | grep "+++"
-rm -f output_ref/5_2_dischma.smet
+rm -f output_ref/5_2_dischma_meteo.smet
+bunzip2 -k output_ref/5_2_dischma_meteo.smet.bz2
+sed -i '16,17d' output_ref/5_2_dischma_meteo.smet; sed -i '16,17d' output/5_2_dischma_meteo.smet
+numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/5_2_dischma_meteo.smet output/5_2_dischma_meteo.smet | grep "+++"
+rm -f output_ref/5_2_dischma_meteo.smet
 
 for fichier in $(ls output_ref/grids/2014*); do
 	name=$(basename ${fichier})
 	numdiff -s', \t\n' -r ${PREC} --speed-large-files output_ref/grids/${name} output/grids/${name} | grep "+++"
 done
 
-#cleanup, but keep the POI for further testing
-rm -f output/grids/20*; rm -f output/snowfiles/*
+#cleanup, but keep the POI and one timestep of grids for further testing
+rm -f output/snowfiles/*
+ls output/grids/2014* | grep -v "201412231200" | xargs -i rm {}

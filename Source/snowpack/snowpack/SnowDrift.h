@@ -39,7 +39,7 @@ class SnowDrift {
 	public:
 		SnowDrift(const SnowpackConfig& i_cfg);
 
-		double compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& cumu_psum) const;
+		void compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& cumu_psum) const;
 
 		static const double schmidt_drift_fudge;
 
@@ -54,6 +54,7 @@ class SnowDrift {
 		const bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)
 		const double sn_dt;        //Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
 		const double fetch_length;
+		const double erosion_limit;
 		static const bool msg_erosion;
 		static const double redeposit_avg_depth;
 		std::string forcing;

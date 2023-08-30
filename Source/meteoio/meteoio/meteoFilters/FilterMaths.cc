@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
 /***********************************************************************************/
@@ -24,8 +25,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMaths::FilterMaths(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name) :
-        ProcessingBlock(vecArgs, name), logic_equations(), substitutions(),
+FilterMaths::FilterMaths(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg) :
+        ProcessingBlock(vecArgs, name, cfg), logic_equations(), substitutions(),
         formula(""), formula_else(""), connective("AND"), assign_param(""), skip_nodata(false)
 {
 	parse_args(vecArgs);
@@ -48,7 +49,7 @@ void FilterMaths::process(const unsigned int& param, const std::vector<MeteoData
 	te_variable *te_vars = new te_variable[substitutions.size()]; //substitutions are built in constructor
 	initExpressionVars(te_vars); //build te_variables from substitution vectors
 	te_expr *expr_formula = compileExpression(formula, te_vars, substitutions.size()); //main formula
-	te_expr *expr_formula_else = NULL; //only compile if available
+	te_expr *expr_formula_else = nullptr; //only compile if available
 	if (!formula_else.empty()) {
 		try {
 			expr_formula_else = compileExpression(formula_else, te_vars, substitutions.size());
@@ -220,13 +221,13 @@ std::map<std::string, double> FilterMaths::parseBracketExpression(std::string& l
 	static const std::string prefix("meteo(");
 	static const size_t len = prefix.length();
 
-	size_t pos1 = 0, pos2;
+	size_t pos1 = 0;
 
 	while (true) {
 		pos1 = line.find(prefix, pos1);
 		if (pos1 == std::string::npos)
 			break; //done
-		pos2 = line.find(")", pos1 + len);
+		const size_t pos2 = line.find(")", pos1 + len);
 		if (pos2 == std::string::npos || pos2-pos1-len == 0) //no closing bracket
 			throw InvalidArgumentException("Missing closing bracket in meteo(...) substitution for " + where, AT);
 
@@ -361,7 +362,7 @@ void FilterMaths::initExpressionVars(te_variable* vars)
 		vars[cc].name = it->first.c_str();
 		vars[cc].address = &it->second;
 		vars[cc].type = 0;
-		vars[cc].context = 0;
+		vars[cc].context = nullptr;
 		cc++;
 	}
 }

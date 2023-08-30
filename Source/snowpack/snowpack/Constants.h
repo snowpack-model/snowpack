@@ -63,8 +63,9 @@ namespace Constants {
 	/// @name Albedo (1)
 	//@{
 	const double min_albedo = 0.3;
-	const double max_albedo = 0.99;
+	const double max_albedo = 0.9;
 	const double glacier_albedo = 0.3;
+	const double blueice_albedo = 0.6;
 	//@}
 	/// @name Emissivity (1)
 	//@{

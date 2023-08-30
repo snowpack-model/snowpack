@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 SET(spatialInterpolations_sources
@@ -26,4 +27,5 @@ SET(spatialInterpolations_sources
 	spatialInterpolations/WinstralAlgorithm.cc
 	spatialInterpolations/WinstralListonAlgorithm.cc
 	spatialInterpolations/WinstralListonDriftAlgorithm.cc
+	spatialInterpolations/SnowlineAlgorithm.cc
 )

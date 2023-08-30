@@ -44,7 +44,7 @@ class SmetIO : public SnowpackIOInterface {
 		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-		                            const ZwischenData& Zdata, const bool& forbackup=false);
+		                            const ZwischenData& Zdata, const size_t& forbackup=0);
 
 		virtual void writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata,
 		                             const ProcessDat& Hdata, const double wind_trans24);
@@ -60,7 +60,7 @@ class SmetIO : public SnowpackIOInterface {
 
 	private:
 		std::string getFilenamePrefix(const std::string& fnam, const std::string& path, const bool addexp=true) const;
-		void writeSnoFile(const std::string& snofilename, const mio::Date& date, const SnowStation& Xdata, const ZwischenData& Zdata, const bool& write_pref_flow) const;
+		void writeSnoFile(const std::string& snofilename, const mio::Date& date, const SnowStation& Xdata, const ZwischenData& Zdata, const bool& write_pref_flow, const bool& write_ice_reservoir) const;
 		mio::Date read_snosmet(const std::string& snofilename, const std::string& stationID, SN_SNOWSOIL_DATA& SSdata, const bool& read_salinity) const;
 		mio::Date read_snosmet_header(const smet::SMETReader& sno_reader, const std::string& stationID,
 		                              SN_SNOWSOIL_DATA& SSdata) const;
@@ -72,7 +72,7 @@ class SmetIO : public SnowpackIOInterface {
 		static void setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer);
 		static void setSnoSmetHeader(const SnowStation& Xdata, const mio::Date& date, smet::SMETWriter& smet_writer);
 		static void setFormatting(const size_t& nr_solutes,
-		                   std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_sea_ice);
+		                   std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_ice_reservoir, const bool& write_sea_ice);
 
 		static bool keyExists(const smet::SMETReader& reader, const std::string& key);
 		static double get_doubleval(const smet::SMETReader& reader, const std::string& keyname);
@@ -85,13 +85,15 @@ class SmetIO : public SnowpackIOInterface {
 		std::string metamorphism_model, variant, sw_mode;
 		const RunInfo info;
 		std::map<std::string, smet::SMETWriter*> tsWriters; ///< for each filename, we keep an associated SMETWriter
+		mio::ACDD acdd;
 		double in_dflt_TZ;
 		double calculation_step_length, ts_days_between;
 		double min_depth_subsurf;
-		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope;
+		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope, haz_write;
 		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_dhs, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool enable_pref_flow;
+		bool enable_ice_reservoir;
 		bool read_dsm;
 };
 

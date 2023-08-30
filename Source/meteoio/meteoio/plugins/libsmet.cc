@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -16,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/libsmet.h>
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <limits>
@@ -46,9 +47,7 @@ set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 SMETException::SMETException(const std::string& message, const std::string& position)
               : msg( (position.empty())? "At unknown position: " + message : position + ": " + message + "\n") {}
 
-SMETException::~SMETException() throw() {}
-
-const char* SMETException::what() const throw()
+const char* SMETException::what() const noexcept
 {
 	return msg.c_str();
 }
@@ -69,6 +68,7 @@ bool SMETCommon::initStaticData()
 
 	all_optional_header_keys.insert("station_name");
 	all_optional_header_keys.insert("tz");
+	all_optional_header_keys.insert("column_delimiter");
 	all_optional_header_keys.insert("creation");
 	all_optional_header_keys.insert("source");
 	all_optional_header_keys.insert("units_offset");
@@ -151,9 +151,14 @@ void SMETCommon::copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
+std::string SMETCommon::strToLower(std::string str) {
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+	return str;
+}
+
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
-	char* conversion_end = NULL;
+	char* conversion_end = nullptr;
 	const double conversion_value = strtod(in_string.c_str(), &conversion_end);
 
 	if (*conversion_end == '\0') {
@@ -168,6 +173,15 @@ int SMETCommon::convert_to_int(const std::string& in_string)
 	istringstream ss(in_string);
 	int value;
 	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to int", SMET_AT);
+
+	return value;
+}
+
+char SMETCommon::convert_to_char(const std::string& in_string)
+{
+	istringstream ss(in_string);
+	char value;
+	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to char", SMET_AT);
 
 	return value;
 }
@@ -190,15 +204,8 @@ void SMETCommon::trim(std::string& str)
 bool SMETCommon::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
                                   std::map<std::string,std::string>& out_map)
 {
-	//size_t pos = in_line.find(delimiter); //first occurence of '='
-
-	size_t pos = std::string::npos;
-	if ((delimiter==" ") || (delimiter=="\t")) {
-		pos = in_line.find_first_of(" \t", 0);
-	} else {
-		pos = in_line.find(delimiter); //first occurence of '='
-	}
-
+	const bool delim_is_ws = (delimiter==" ") || (delimiter=="\t");
+	const size_t pos = (delim_is_ws)? in_line.find_first_of(" \t", 0) : in_line.find(delimiter);
 
 	if (pos != std::string::npos) { //ignore in_lines that are empty or without '='
 		std::string key = in_line.substr(0, pos);
@@ -279,35 +286,54 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 	vec_string.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
 
-	std::string tmp_string;
+	std::string word;
 	while (!iss.eof()) {
-		iss >> std::skipws >> tmp_string;
+		iss >> std::skipws >> word;
 
-		if (!tmp_string.empty()) {
-			vec_string.push_back( tmp_string );
+		if (!word.empty()) {
+			vec_string.push_back( word );
 		}
-		tmp_string.clear();
+		word.clear();
 	}
 
 	return vec_string.size();
 }
 
+size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
+{
+	vecString.clear();
+	std::istringstream iss(line_in); //construct inputstream with the string line as input
+
+	std::string word;
+	while (getline(iss, word, delim)){
+		vecString.push_back(word);
+	}
+
+	if (!line_in.empty()) {
+		const char lastChar = line_in[ line_in.length() - 1 ];
+		if (lastChar==delim) vecString.push_back( "" );
+	}
+
+	return vecString.size();
+}
 
 ////////////////////////////////////////////////////////////
 //// SMETWriter class
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
-             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
+             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), separator(' '),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(false), append_possible(false) {}
+             timestamp_present(false), julian_present(false), file_is_binary(false), 
+             append_mode(false), append_possible(false), comment_headers(false) {}
 
 SMETWriter::SMETWriter(const std::string& in_filename, const std::string& in_fields, const double& in_nodata)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(),
              filename(in_filename), nodata_string(), smet_type(ASCII), nodata_value(in_nodata), nr_of_fields(0),
-             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0),
+             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), separator(' '),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false), append_mode(true), append_possible(false)
+             timestamp_present(false), julian_present(false), file_is_binary(false), 
+             append_mode(true), append_possible(false), comment_headers(false)
 {
 	std::vector<std::string> vecFields;
 	SMETCommon::readLineToVec(in_fields, vecFields);
@@ -492,23 +518,24 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 
 		//check if location is in data and if timestamp is present
 		for (size_t ii = 0; ii<tmp_vec.size(); ii++){
-			if (tmp_vec[ii] == "latitude") count_wgs84++;
-			else if (tmp_vec[ii] == "longitude") count_wgs84++;
-			else if (tmp_vec[ii] == "easting") count_epsg++;
-			else if (tmp_vec[ii] == "northing") count_epsg++;
+			const std::string field_name = SMETCommon::strToLower( tmp_vec[ii] );
+			if (field_name == "latitude") count_wgs84++;
+			else if (field_name == "longitude") count_wgs84++;
+			else if (field_name == "easting") count_epsg++;
+			else if (field_name == "northing") count_epsg++;
 
-			if (tmp_vec[ii] == "altitude") {
+			if (field_name == "altitude") {
 				count_wgs84++;
 				count_epsg++;
 			}
 
-			if (tmp_vec[ii] == "timestamp"){
+			if (field_name == "timestamp"){
 				if (timestamp_present) return false; //no duplicate timestamp field allowed
 				timestamp_present = true;
 				timestamp_field = ii;
 			}
 
-			if (tmp_vec[ii] == "julian"){
+			if (field_name == "julian"){
 				if (julian_present) return false; //no duplicate julian field allowed
 				julian_present = true;
 				julian_field = ii;
@@ -549,7 +576,7 @@ bool SMETWriter::valid_header()
 	return false;
 }
 
-void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
+void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data, const mio::ACDD& acdd)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
@@ -578,7 +605,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	std::ofstream fout(filename.c_str(), mode_flags);
 	if (fout.fail())
 		throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
-	if (write_headers) write_header(fout); //Write the header info, always in ASCII format
+	if (write_headers) write_header(fout, acdd); //Write the header info, always in ASCII format
 	
 
 	if (vec_timestamp.empty() || data.empty() || nr_of_fields == 0) {//the header has been written, nothing to add
@@ -624,7 +651,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	fout.close();
 }
 
-void SMETWriter::write(const std::vector<double>& data)
+void SMETWriter::write(const std::vector<double>& data, const mio::ACDD& acdd)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
@@ -635,7 +662,7 @@ void SMETWriter::write(const std::vector<double>& data)
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
-	write_header(fout); //Write the header info, always in ASCII format
+	write_header(fout, acdd); //Write the header info, always in ASCII format
 
 	if (nr_of_fields == 0){
 		fout.close();
@@ -670,10 +697,29 @@ void SMETWriter::write(const std::vector<double>& data)
 	fout.close();
 }
 
-void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream& fout) const
+void SMETWriter::printACDD(std::ofstream& fout, const std::string& prefix, const mio::ACDD& acdd) const
+{
+	//print ACDD headers
+	const size_t nr = acdd.getNrAttributes();
+	std::string header_field, value;
+	for (size_t ii=0; ii<nr; ii++) {
+		acdd.getAttribute(ii, header_field, value);
+		if (header_field.empty() || value.empty()) continue;
+		
+		if (!prefix.empty()) fout << prefix;
+		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
+		const std::streamsize width = fout.width(16);
+		fout << header_field << " = " << value << "\n";
+		fout.width(width);
+		fout.setf(flags);
+	}
+}
+
+void SMETWriter::print_if_exists(const std::string& header_field, const std::string& prefix, std::ofstream& fout) const
 {
 	const std::map<string,string>::const_iterator it = header.find(header_field);
 	if (it != header.end()) {
+		if (!prefix.empty()) fout << prefix;
 		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
 		const std::streamsize width = fout.width(16);
 		fout << header_field << " = " << it->second << "\n";
@@ -682,56 +728,60 @@ void SMETWriter::print_if_exists(const std::string& header_field, std::ofstream&
 	}
 }
 
-void SMETWriter::write_header(std::ofstream& fout)
+void SMETWriter::write_header(std::ofstream& fout, const mio::ACDD& acdd)
 {
 	if (!valid_header()) {
 		fout.close();
 		throw SMETException("The header data you supplied is not valid, file \""+filename+"\" cannot be written", SMET_AT);
 	}
+	
+	const std::string prefix = (comment_headers)? "#" : "";
 
 	//write signature
-	fout << "SMET " << SMETCommon::smet_version << " ";
+	fout << prefix << "SMET " << SMETCommon::smet_version << " ";
 	if (smet_type == ASCII) fout << "ASCII" << "\n";
 	else fout << "BINARY" << "\n";
 
-	fout << "[HEADER]" << "\n";
-	print_if_exists("station_id", fout);
-	print_if_exists("station_name", fout);
+	fout << prefix << "[HEADER]" << "\n";
+	print_if_exists("station_id", prefix, fout);
+	print_if_exists("station_name", prefix, fout);
+	print_if_exists("column_delimiter", prefix, fout);
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
-			print_if_exists("latitude", fout);
-			print_if_exists("longitude", fout);
-			print_if_exists("altitude", fout);
+			print_if_exists("latitude", prefix, fout);
+			print_if_exists("longitude", prefix, fout);
+			print_if_exists("altitude", prefix, fout);
 		}
 
 		if (location_epsg == 15){
-			print_if_exists("easting", fout);
-			print_if_exists("northing", fout);
+			print_if_exists("easting", prefix, fout);
+			print_if_exists("northing", prefix, fout);
 			if (location_wgs84 != 7)
-				print_if_exists("altitude", fout);
-			print_if_exists("epsg", fout);
+				print_if_exists("altitude", prefix, fout);
+			print_if_exists("epsg", prefix, fout);
 		}
 	} else {
 		if (location_in_data_epsg)
-			print_if_exists("epsg", fout);
+			print_if_exists("epsg", prefix, fout);
 	}
 
-	print_if_exists("nodata", fout);
+	print_if_exists("nodata", prefix, fout);
 
-	print_if_exists("tz", fout);
-	print_if_exists("creation", fout);
-	print_if_exists("source", fout);
-	print_if_exists("units_offset", fout);
-	print_if_exists("units_multiplier", fout);
-	print_if_exists("comment", fout);
+	print_if_exists("tz", prefix, fout);
+	print_if_exists("creation", prefix, fout);
+	print_if_exists("source", prefix, fout);
+	print_if_exists("units_offset", prefix, fout);
+	print_if_exists("units_multiplier", prefix, fout);
+	print_if_exists("comment", prefix, fout);
 
 	for (size_t ii=0; ii<other_header_keys.size(); ii++){
-		fout << std::left << std::setw(16) << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
+		fout << prefix << std::left << std::setw(16) << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
 	}
 
-	print_if_exists("fields", fout);
-	fout << "[DATA]" << endl;
+	print_if_exists("fields", prefix, fout);
+	if (acdd.isEnabled()) printACDD(fout, prefix, acdd);
+	fout << prefix << "[DATA]" << endl;
 }
 
 void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::ofstream& fout)
@@ -766,16 +816,17 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::of
 
 void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout)
 {
-	fout.fill(' ');
+	fout.fill(separator);
 	fout << right;
 	fout << fixed;
 
 	if ((data.empty()) && timestamp_present) fout << timestamp;
 
 	for (size_t ii = 0; ii < data.size(); ii++){
-		if (ii > 0) fout << " ";
-		if (timestamp_present && (timestamp_field == ii))	fout << timestamp << " ";
-		fout << setw(ascii_width[ii]) << setprecision(ascii_precision[ii]);
+		if (ii > 0) fout << separator;
+		if (timestamp_present && (timestamp_field == ii))	fout << timestamp << separator;
+		if (separator==' ') fout << setw(ascii_width[ii]);
+		fout << setprecision(ascii_precision[ii]);
 		if (data[ii] == nodata_value) fout << nodata_string; //to have a nicer representation
 		else fout << data[ii];
 	}
@@ -802,6 +853,16 @@ void SMETWriter::set_width(const std::vector<int>& vec_width)
 	ascii_width = vec_width;
 }
 
+void SMETWriter::set_separator(const char& i_separator)
+{
+	separator = i_separator;
+	if (i_separator==' ') {
+		set_header_value( "column_delimiter", "[:space:]" );
+	} else {
+		set_header_value( "column_delimiter", std::string(1,separator) );
+	}
+}
+
 void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 {
 	ascii_precision = vec_precision;
@@ -820,7 +881,7 @@ SMETReader::SMETReader(const std::string& in_fname)
               julian_start(0.), julian_end(5373483.5),
               nr_of_fields(0), timestamp_field(0), julian_field(0),
               location_wgs84(0), location_epsg(0), location_data_wgs84(0), location_data_epsg(0),
-              eoln('\n'),
+              eoln('\n'), separator(' '),
               timestamp_present(false), julian_present(false), isAscii(true), mksa(true),
               timestamp_interval(false), julian_interval(false)
 {
@@ -845,7 +906,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	cleanup(fin); //closes file
 }
 
-void SMETReader::cleanup(std::ifstream& fin) throw()
+void SMETReader::cleanup(std::ifstream& fin) noexcept
 {
 	if (fin.is_open()) //close fin if open
 		fin.close();
@@ -903,18 +964,19 @@ bool SMETReader::location_in_data(const LocationType& type) const
 
 void SMETReader::process_header()
 {
-	vector<string> tmp_vec;
-	set<string> obligatory_keys;
-	for (map<string,string>::iterator it = header.begin(); it != header.end(); ++it){
+	std::vector<string> tmp_vec;
+	std::set<string> obligatory_keys;
+	for (std::map<string,string>::iterator it = header.begin(); it != header.end(); ++it){
 		if (SMETCommon::all_mandatory_header_keys.find(it->first) != SMETCommon::all_mandatory_header_keys.end())
 			obligatory_keys.insert(it->first);
 
 		if (it->first == "fields"){
 			SMETCommon::readLineToVec(it->second, tmp_vec);
-			string newfields;
+			std::string newfields;
 			if (!tmp_vec.empty()){
 				for (size_t ii=0; ii<tmp_vec.size(); ii++){
-					if (tmp_vec[ii] == "timestamp"){
+					const std::string field_name = SMETCommon::strToLower( tmp_vec[ii] );
+					if (field_name == "timestamp"){
 						timestamp_present = true;
 						timestamp_field = ii;
 					} else {
@@ -924,20 +986,20 @@ void SMETReader::process_header()
 						nr_of_fields++;
 					}
 
-					if (tmp_vec[ii] == "julian"){
+					if (field_name == "julian"){
 						julian_present = true;
 						julian_field = ii;
 					}
 
 					//Using WGS_84 coordinate system
-					if (tmp_vec[ii] == "latitude")  location_data_wgs84 |= 1;
-					else if (tmp_vec[ii] == "longitude") location_data_wgs84 |= 2;
-					else if (tmp_vec[ii] == "altitude")  location_data_wgs84 |= 4;
+					if (field_name == "latitude")  location_data_wgs84 |= 1;
+					else if (field_name == "longitude") location_data_wgs84 |= 2;
+					else if (field_name == "altitude")  location_data_wgs84 |= 4;
 
 					//Using an EPSG coordinate system
-					if (tmp_vec[ii] == "easting")  location_data_epsg |= 1;
-					else if (tmp_vec[ii] == "northing") location_data_epsg |= 2;
-					else if (tmp_vec[ii] == "altitude") location_data_epsg |= 4;
+					if (field_name == "easting")  location_data_epsg |= 1;
+					else if (field_name == "northing") location_data_epsg |= 2;
+					else if (field_name == "altitude") location_data_epsg |= 4;
 				}
 				it->second = newfields;
 			}
@@ -945,6 +1007,11 @@ void SMETReader::process_header()
 
 		if (it->first == "nodata")
 			nodata_value = SMETCommon::convert_to_double(it->second);
+		
+		if (it->first == "column_delimiter") {
+			if (it->second=="[:space:]") separator=' ';
+			else separator = SMETCommon::convert_to_char(it->second);
+		}
 
 		//Using WGS_84 coordinate system
 		if (it->first == "latitude")  location_wgs84 |= 1;
@@ -1035,7 +1102,7 @@ void SMETReader::read_header(std::ifstream& fin)
 {
 	//1. Read signature
 	std::string line;
-	vector<string> tmpvec;
+	std::vector<string> tmpvec;
 	getline(fin, line, eoln); //read complete signature line
 	SMETCommon::stripComments(line);
 	SMETCommon::readLineToVec(line, tmpvec);
@@ -1295,7 +1362,7 @@ std::string SMETReader::getLastTimestamp() const
 
 	fin.seekg(0, std::ifstream::end);
 	const std::streamoff length = fin.tellg();
-	const int buff_size = 1024; //a better approach would be to loop over this buff_size in order to accomodate very different line lengths
+	static const int buff_size = 1024; //a better approach would be to loop over this buff_size in order to accomodate very different line lengths
 	if (buff_size<length)
 		fin.seekg(0-buff_size, fin.end);
 	else
@@ -1341,7 +1408,8 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 		SMETCommon::trim(line);
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 
-		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields) {
+		const size_t nr_fields_read = (separator==' ')? SMETCommon::readLineToVec(line, tmp_vec) : SMETCommon::readLineToVec(line, tmp_vec, separator);
+		if (nr_fields_read == nr_of_data_fields) {
 			const string& current_timestamp = tmp_vec[timestamp_field];
 			const size_t cmp_len = min(date_stop_len, current_timestamp.length());
 
@@ -1349,7 +1417,9 @@ void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin
 		} else {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
-			ss << "but this does not match the following line:\n" << line << "\n";
+			ss << "but this does not match the following line";
+			if (separator!=' ') ss << " (column delimiter: '" << separator << "')";
+			ss << ":\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);
 		}
 
@@ -1374,7 +1444,8 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		SMETCommon::trim(line);
 		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 
-		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields){
+		const size_t nr_fields_read = (separator==' ')? SMETCommon::readLineToVec(line, tmp_vec) : SMETCommon::readLineToVec(line, tmp_vec, separator);
+		if (nr_fields_read == nr_of_data_fields){
 			try {
 				size_t shift = 0;
 				if (julian_interval && julian_present){
@@ -1418,7 +1489,9 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		} else {
 			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
-			ss << "but this does not match the following line:\n" << line << "\n";
+			ss << "but this does not match the following line";
+			if (separator!=' ') ss << " (column delimiter: '" << separator << "')";
+			ss << ":\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);
 		}
 	}

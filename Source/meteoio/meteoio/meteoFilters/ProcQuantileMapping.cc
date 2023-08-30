@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2018 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -26,8 +27,8 @@ using namespace std;
 
 namespace mio {
 
-ProcQuantileMapping::ProcQuantileMapping(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
-        : ProcessingBlock(vecArgs, name), quantiles(), corrections(), root_path(i_root_path), period_duration(IOUtils::nodata), type('N'), write_quantiles(false)
+ProcQuantileMapping::ProcQuantileMapping(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+        : ProcessingBlock(vecArgs, name, cfg), quantiles(), corrections(), root_path(cfg.getConfigRootDir()), period_duration(IOUtils::nodata), type('N'), write_quantiles(false)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values

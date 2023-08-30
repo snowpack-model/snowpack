@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -29,15 +30,16 @@ namespace mio {
  * @details
  * Generate the surface temperature from the outgoing long wave (OLWR).
  * @code
- * TSS::generators = TS_OLWR
+ * [Generators]
+ * TSS::generator1 = TS_OLWR
  * @endcode
  */
 class TsGenerator : public GeneratorAlgorithm {
 	public:
-		TsGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		TsGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		static const double e_snow, e_soil;
 };

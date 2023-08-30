@@ -1,0 +1,53 @@
+#Cmake temporary files
+*CMakeFiles/*
+**/CMakeFiles/*
+_CPack_Packages/*
+/CMakeCache.txt
+/CMakeDoxyfile.in
+/CMakeDoxygenDefaults.cmake
+install_manifest.txt
+**/cmake_install.cmake
+**/cmake_uninstall.cmake
+**/Makefile
+
+#generated files
+/doc/html/*
+/snowpack/plugins/SnowpackIO.cc
+lib/*
+/bin/*
+*.aux
+*.log
+Testing
+CTest*
+Dart*
+.vscode/
+.DS_store
+
+#example files and binaries:
+/doc/examples/output/*
+
+#editor files:
+*.swp
+tags
+**/*~
+
+#profiling:
+callgrind.out.*
+massif.out.*
+
+#CPack generated files
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.deb
+*.rpm
+*.tar.gz
+*.exe
+*.dmg
+
+#Mac OS
+*.DS_Store
+
+#Tests
+tests/albedo/albedoTest
+tests/implicitsolver/implicitsolverTest
+tests/linearsolver/linearsolverTest

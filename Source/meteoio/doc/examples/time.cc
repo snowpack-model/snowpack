@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <iostream>
 #include <meteoio/MeteoIO.h>
 
@@ -22,16 +23,16 @@ int main(int argc, char** argv) {
 	std::cout << d1.toString() << "\n";
 
 	std::cout << "In timezone GMT" << std::showpos << TZ << std::noshowpos << ":\n";
-	d1.setTimeZone(TZ,false);
+	d1.setTimeZone(TZ);
 	std::cout << d1.toString() << "\n";
 
 	std::cout << "Same, directly read in timezone GMT" << std::showpos << TZ << std::noshowpos << ":\n";
-	d1.setTimeZone(TZ,false);
+	d1.setTimeZone(TZ);
 	IOUtils::convertString(d1,argv[1], TZ);
 	std::cout << d1.toString() << "\n";
 
 	std::cout << "And swapped back to timezone GMT+0:\n";
-	d1.setTimeZone(0.,false);
+	d1.setTimeZone(0.);
 	std::cout << d1.toString() << "\n";
 
 	return 0;

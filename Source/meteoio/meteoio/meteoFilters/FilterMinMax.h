@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -55,7 +56,7 @@ namespace mio {
 
 class FilterMinMax : public ProcessingBlock {
 	public:
-		FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		FilterMinMax(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

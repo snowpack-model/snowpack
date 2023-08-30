@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
 /***********************************************************************************/
@@ -19,9 +20,10 @@
 #ifndef FILTERMATHS_H
 #define FILTERMATHS_H
 
-#include <map>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
-#include <meteoio/tinyexpr.h>
+
+#include <meteoio/thirdParty/tinyexpr.h>
+#include <map>
 
 namespace mio {
 
@@ -29,7 +31,7 @@ namespace mio {
  * @class FilterMaths
  * @ingroup processing
  * @author Michael Reisecker
- * @date   2019-09-01
+ * @date 2019-09-01
  * @brief A filter that evaluates formulas dependent on conditions.
  * @details
  *
@@ -215,7 +217,7 @@ namespace mio {
 class FilterMaths : public ProcessingBlock {
 	public:
 		FilterMaths(const std::vector< std::pair<std::string, std::string> >& vecArgs,
-		    const std::string& name);
+		    const std::string& name, const Config& cfg);
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		    std::vector<MeteoData>& ovec);
 

@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 #############################
 ## Global Configuration    ##
 #############################
@@ -24,6 +25,7 @@ INCLUDE_DIRECTORIES(..)
 ###################
 ADD_SUBDIRECTORY(meteo_reading_interpol)
 ADD_SUBDIRECTORY(meteo_reading_no_interpol)
+ADD_SUBDIRECTORY(dataEditing)
 ADD_SUBDIRECTORY(sun)
 ADD_SUBDIRECTORY(dem_reading)
 ADD_SUBDIRECTORY(2D_interpolations)

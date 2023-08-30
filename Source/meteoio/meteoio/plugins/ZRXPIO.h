@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 Avalanche Warning Service Tyrol                  LWD-TIROL      */
 /***********************************************************************************/
@@ -31,7 +32,7 @@ namespace mio {
  *
  * @ingroup plugins
  * @author Michael Reisecker
- * @date   2018-12
+ * @date 2018-12
  */
 class ZRXPIO : public IOInterface {
 	public:

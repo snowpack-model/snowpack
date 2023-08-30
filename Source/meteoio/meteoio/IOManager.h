@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -43,6 +44,7 @@ class IOManager {
 		void readDEM(DEMObject& dem_out) {gdm1.readDEM(dem_out);}
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out) {gdm1.readAssimilationData(date_in, da_out);}
 		void readLanduse(Grid2DObject& landuse_out) {gdm1.readLanduse(landuse_out);}
+		void readGlacier(Grid2DObject& glacier_out) {gdm1.readGlacier(glacier_out);}
 		void readPOI(std::vector<Coords>& pts) {iohandler.readPOI(pts);}
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") {gdm1.write2DGrid(grid_in, options);}
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write2DGrid(grid_in, parameter, date);}
@@ -221,20 +223,27 @@ class IOManager {
 		 */
 		void clear_cache();
 
+	private:
 		/**
-		 * @brief Returns the mode to be used for the IOManager
+		 * @brief Returns the mode to be used for the IOManager for TimeSeries
 		 * @param i_cfg configuration object
 		 * @return mode as of IOUtils::OperationMode
 		 */
-		static IOUtils::OperationMode getIOManagerMode(const Config& i_cfg);
+		static IOUtils::OperationMode getIOManagerTSMode(const Config& i_cfg);
 
-	private:
+		/**
+		 * @brief Returns the mode to be used for the IOManager for Grids
+		 * @param i_cfg configuration object
+		 * @return mode as of IOUtils::OperationMode
+		 */
+		static IOUtils::OperationMode getIOManagerGridMode(const Config& i_cfg);
+
 		void initVirtualStations();
 		std::vector<METEO_SET> getVirtualStationsData(const DEMObject& dem, const Date& dateStart, const Date& dateEnd);
 		void initIOManager();
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
-		const IOUtils::OperationMode mode;
+		const IOUtils::OperationMode ts_mode;
 		IOHandler iohandler;
 		TimeSeriesManager tsm1, tsm2;
 		GridsManager gdm1;
@@ -243,6 +252,7 @@ class IOManager {
 		std::vector<size_t> v_params, grids_params; ///< Parameters for virtual stations
 		std::vector<StationData> v_stations, v_gridstations; ///< metadata for virtual stations
 		unsigned int vstations_refresh_rate, vstations_refresh_offset; ///< when using virtual stations, how often should the data be spatially re-interpolated? (in seconds)
+		bool write_resampled_grids = false; ///< Output all temporally resampled grids to the file system?
 };
 } //end namespace
 #endif

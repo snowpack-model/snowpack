@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -37,9 +38,9 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
 * <i>"Performance of Japanese precipitation gauges in winter"</i>, K. Yokoyama, H. Ohno, Y. Kominami, S. Inoue and T. Kawakata, Seppyo, <b>65</b>, 2003, pp 303-316 (in Japanese with English summary). The correction for the Chinese Standard Precipitation Gauge is from <i>"A Bias-Corrected Precipitation Climatology for China"</i>, B. Ye, Y. Daqing, D. Yongjian, H. Tianding, K. Toshio, 2004, Journal of Hydrometeorology, <b>5</b>, 1147–1160.
  *
  * These correction methods process pure snow and mixed precipitation differently, with the following thresholds:
- * - pure snow below -2 C
- * - mixed precipitation between -2 and +2 C
- * - pure rain above 2 C
+ * - pure snow below -2 °C
+ * - mixed precipitation between -2 and +2 °C
+ * - pure rain above 2 °C
  *
  * They also depend on the usage of a shield around the gauge as well as the type of rain gauge that does the measurements,
  * therefore this type must be specified as an argument. The coefficients are not always available both for shielded and
@@ -59,8 +60,8 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  *     - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data;
  * - SNOW: constant factor for solid precipitation for the CST type (mandatory);
  * - MIXED: constant factor for mixed precipitation for the CST type (mandatory);
- * - T_SNOW: solid precipitation temperature threshold for the CST type (in K, optional);
- * - T_RAIN: liquid precipitation temperature threshold for the CST type (in K, optional);
+ * - T_SNOW: solid precipitation temperature threshold for the CST type (in K, default -2 °C);
+ * - T_RAIN: liquid precipitation temperature threshold for the CST type (in K, default +2 °C);
  *
  * @code
  * PSUM::filter1     = undercatch_wmo
@@ -72,7 +73,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
 
 class ProcUndercatch_WMO : public ProcessingBlock {
 	public:
-		ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		ProcUndercatch_WMO(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

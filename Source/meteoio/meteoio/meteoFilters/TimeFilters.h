@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2017 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -18,6 +19,7 @@
 #ifndef TIMEFILTERS_H
 #define TIMEFILTERS_H
 
+#include <meteoio/IOUtils.h>
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
@@ -30,17 +32,20 @@ namespace mio {
  */
 class TimeProcStack {
 	public:
-		TimeProcStack(const Config& cfg);
+		TimeProcStack(const Config& i_cfg);
+		TimeProcStack(const TimeProcStack& source);
 		~TimeProcStack() {for (size_t ii=0; ii<filter_stack.size(); ii++) delete filter_stack[ii];}
 		
 		void process(std::vector< std::vector<MeteoData> >& ivec);
 		void process(Date &dateStart, Date &dateEnd);
 
+		TimeProcStack& operator=(const TimeProcStack& source);
 		static void checkUniqueTimestamps(std::vector<METEO_SET> &vecVecMeteo);
 		static const std::string timeParamName;
 		
 	private:
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
+		bool enable_time_filtering;
 };
 
 /**
@@ -49,17 +54,22 @@ class TimeProcStack {
  * @brief Timesteps suppression filter.
  * @details
  * This filter deletes some timesteps based on the provided arguments:
- *  - CLEANUP: suppress duplicated and out-of-order timestamps if set to true (a warning will be emitted anyway for each problematic timestamp). Duplicated timestamps are merged to the first encountered one.
- *  - SUPPR: provide a file that contains a list of station ID's and timesteps that should be suppressed;
- *  - FRAC: suppress a given fraction of the data at random. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
+ *  - TYPE: defines the strategy to delete timesteps. It is one of:
+ *       - CLEANUP: merge duplicated and out-of-order timestamps (a warning will be emitted anyway for the problematic timestamp). Merge are only performed when they don't conflict (two identical fields with different, non-nodata value is a conflict)
+ *       - BYDATES: delete specific timesteps
+ *       - FRAC: suppress a given fraction of the data at random
+ *  - FILE: when type=BYDATE, a file that contains a list of station ID's and timesteps that should be suppressed;
+ *  - FRAC: when type=FRAC, the fraction of data to suppress. For example, <i>0.5</i> would ensure that at least <i>50%</i> of the
  * data set's points are deleted.
+ *  - WIDTH: when type=FRAC, the width of data gaps to create (in seconds). If not set, individual data points are deleted.
  *
  * @code
  * TIME::filter1     = suppr
- * TIME::arg1::cleanup = true
+ * TIME::arg1::type = cleanup
  * 
  * TIME::filter2     = suppr
- * TIME::arg2::suppr = ./input/meteo/suppr.dat
+ * TIME::arg2::type = bydates
+ * TIME::arg2::file = ./input/meteo/suppr.dat
  * @endcode
  * 
  * The file <i>suppr.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE):
@@ -76,52 +86,61 @@ class TimeProcStack {
  */
 class TimeSuppr : public ProcessingBlock {
 	public:
-		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
 	private:
 		//possible modes of operation
-		typedef enum MODE {
+		typedef enum SUPPR_MODE {
 		            NONE,
 		            BYDATES,
 		            FRAC,
 		            CLEANUP
-		} Mode;
+		} suppr_mode;
+		
 		void supprByDates(std::vector<MeteoData>& ovec) const;
 		void supprFrac(std::vector<MeteoData>& ovec) const;
 		void supprInvalid(std::vector<MeteoData>& ovec) const;
 		
-		std::map< std::string, std::vector<dates_range> > suppr_dates;
-		double range;
-		Mode op_mode;
+		std::map< std::string, std::vector<DateRange> > suppr_dates;
+		double range, width;
+		suppr_mode op_mode;
 };
 
 /**
- * @class  TimeUnDST
+ * @class  TimeShift
  * @ingroup processing
- * @brief Timesteps Daylight Saving Time correction.
+ * @brief Time corrections.
  * @details
- * This filter removes the <A HREF="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight Saving Time</A> in order to bring the timestamps back to Winter time only (or "Standard Time", as it should always be!). In order to
- * do so, a correction file has to be provided that contains on each line an ISO formatted timestamp as well as an offset (in seconds) to apply
- * to the timestamps starting at the provided time. 
+ * This filter add offsets to the time at specified timestamps. This is for example usefull to remove the 
+ * <A HREF="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight Saving Time</A> in order to bring 
+ * the timestamps back to Winter time only (or "Standard Time", as it should always be!) or to correct 
+ * a clock that has drifted in a data logger. 
+ * 
+ * In order to do so, a correction file has to be provided that contains on each line an ISO formatted 
+ * timestamp as well as an offset (in seconds) to apply to the timestamps starting at the provided time
+ * (always assumed to be in the input timezone + a potential previous offset).
  *
  * @code
- * TIME::filter1     = UnDST
+ * TIME::filter1     = SHIFT
  * TIME::arg1::CORRECTIONS = ./input/meteo/dst.dat
  * @endcode
  * 
- * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in Input::TIME_ZONE, with or without the DST):
+ * The file <i>dst.dat</i> would look like this (the time is given in the timezone declared in 
+ * Input::TIME_ZONE, first without offset and with -3600s offset for the second one):
  * @code
  * 2016-03-27T02:00 -3600
  * 2016-10-30T03:00 0
  * @endcode
- * Where the first change point is in Winter time while the second one is in Summer time.
  * 
+ * @note The current implementation does not handle data conflicts if a shifted timestep conflicts with another timestep. In
+ * such a case, an error message "[E] timestamp error for station..." will be returned and you will have to manually decide 
+ * in your input data which timestep to keep.
  */
-class TimeUnDST : public ProcessingBlock {
+class TimeShift : public ProcessingBlock {
 	public:
-		TimeUnDST(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& root_path, const double& TZ);
+		TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
@@ -144,7 +163,7 @@ class TimeUnDST : public ProcessingBlock {
  */
 class TimeSort : public ProcessingBlock {
 	public:
-		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 };
@@ -177,7 +196,7 @@ class TimeSort : public ProcessingBlock {
  */
 class TimeLoop : public ProcessingBlock {
 	public:
-		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const double& TZ);
+		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 		void process(Date &dateStart, Date &dateEnd);

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -26,8 +27,8 @@ using namespace std;
 
 namespace mio {
 
-ProcMult::ProcMult(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const std::string& i_root_path)
-         : ProcAdd(vecArgs, name, i_root_path)
+ProcMult::ProcMult(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+         : ProcAdd(vecArgs, name, cfg)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -73,7 +74,7 @@ void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& 
 			}
 		}
 	} else if (type=='n') { //noise
-		srand( static_cast<unsigned int>(time(NULL)) );
+		srand( static_cast<unsigned int>(time(nullptr)) );
 		if (distribution=='u') {
 			uniform_noise(param, ovec);
 		} else if (distribution=='n') {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,7 +23,7 @@ namespace mio {
 
 double NoneAlgorithm::getQualityRating(const Date& /*i_date*/)
 {
-	return 1e-6;
+	return 1e-12;
 }
 
 void NoneAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)

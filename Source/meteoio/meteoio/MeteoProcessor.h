@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -70,6 +71,24 @@ class MeteoProcessor {
 		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
+		
+		/**
+		 * @brief built the set of station IDs that a filter should be applied to or excluded from
+		 * @param[in] vecArgs All filter arguments
+		 * @param[in] keyword Argument keyword (ex. EXCLUDE or ONLY)
+		 * @return set of station IDs provided in argument by the provided keyword
+		 */
+		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		
+		/**
+		 * @brief built the set of time ranges to apply a certain processing to
+		 * @param[in] vecArgs All filter arguments
+		 * @param[in] keyword Argument keyword (ex. WHEN)
+		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "Filter Min")
+		 * @param[in] TZ time zone to use when building Date objects
+		 * @return set of time ranges to apply the processing to
+		 */
+		static std::vector<DateRange> initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ);
 
  	private:
 		static std::set<std::string> getParameters(const Config& cfg);
@@ -77,7 +96,34 @@ class MeteoProcessor {
 
 		Meteo1DInterpolator mi1d;
 		std::map<std::string, ProcessingStack*> processing_stack;
+		bool enable_meteo_filtering;
 };
+
+/** 
+ * @class RestrictionsIdx
+ * @brief Convenience class for processing data with time restriction periods.
+ * @details Given a vector of DateRange and a vector of MeteoData, compute which start/end indices
+ * fit within the time restriction periods. Then repeatedly calling getStart() / getEnd() will provide
+ * these indices while calling the \b ++ operator increment the time restriction period. 
+ * Once isValid() returns false, there are no time restriction periods left.
+ * @author Mathias Bavay
+ */
+class RestrictionsIdx {
+	public:
+		RestrictionsIdx() : start(), end(), index(IOUtils::npos) {}
+		RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions);
+		
+		bool isValid() const {return (index != IOUtils::npos);}
+		size_t getStart() const;
+		size_t getEnd() const;
+		RestrictionsIdx& operator++();
+		const std::string toString() const;
+		
+	private:
+		std::vector<size_t> start, end;
+		size_t index;
+};
+
 } //end namespace
 
 #endif

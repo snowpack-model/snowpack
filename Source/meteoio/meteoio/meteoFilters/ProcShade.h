@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -27,7 +28,7 @@
 namespace mio {
 
 /**
- * @class  ProcShade
+ * @class ProcShade
  * @ingroup processing
  * @brief Apply a shading mask to the Incoming or Reflected Short Wave Radiation
  * @details
@@ -36,23 +37,28 @@ namespace mio {
  * This mask will be linearly interpolated between the provided points in order to be applied to the true sun position.
  * 
  * When providing the shading mask in a separate file, the same mask will be applied to all stations. It simply need to
- * contain the horizon elevation (in deg.) as a function of azimuth (in deg.):
+ * contain the horizon elevation (in deg.) as a function of azimuth (in deg.), prefixed by either a stationID or "*" as fallback 
+ * wildcard for all stationIDs:
  * @code
- * 0	5
- * 15	25
- * 45	12
- * 180	30
- * 270	20
+ * DAV1	0	5
+ * DAV1	15	25
+ * DAV1	45	12
+ * DAV1	180	30
+ * DAV1	270	20
+ * SLF2	0	7.5
+ * SLF2	180	10
+ * *	0	5
+ * *	180	5
  * @endcode
  *
  * Therefore, the filter supports the following arguments:
- *  - FILE: file (and path) to read the mask from (optional);
- *  - DUMP_MASK: if set to TRUE, each mask will be printed on the screen as it is computed (optional).
+ *  - INFILE: file (and path) to read the mask from (optional);
+ *  - OUTFILE: file (and path) to write the mask to (optional, this is usefull if some masks have been computed from the DEM).
  * 
  * Then the filter is declared with the file name containing the horizon mask as argument:
  * @code
  * ISWR::filter1    = SHADE
- * ISWR::arg1::file = ../input/iswr_mask.dat
+ * ISWR::arg1::infile = ../input/iswr_mask.dat
  * @endcode
  *
  * If no arguments are provided, then it will compute the mask from the Digital Elevation Model. In such as case, 
@@ -63,21 +69,20 @@ namespace mio {
 class ProcShade : public ProcessingBlock {
 	public:
 		ProcShade(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &i_cfg);
+		~ProcShade();
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
-		
-		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd, const bool& dump_mask=false);
 
 	private:
-		static std::vector< std::pair<double,double> > readMask(const std::string& filter, const std::string& filename);
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
-		double getMaskElevation(const std::vector< std::pair<double,double> > &mask, const double& azimuth) const;
+		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
 
 		const Config &cfg;
 		DEMObject dem;
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
-		bool write_mask_out;
+		std::string horizons_outfile;
+		bool has_dem;
 
 		static const double diffuse_thresh;
 };

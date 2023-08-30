@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009, 2010 WSL Institute for Snow and Avalanche Research   SLF-DAVOS */
 /***********************************************************************************/
@@ -38,6 +39,13 @@ namespace mio {
  * @section imis_format Format
  * This plugin reads data directly from the IMIS network database (Oracle database).
  * It retrieves standard IMIS data as well as ENETZ and ANETZ data.
+ * 
+ * In order to compile this plugin, you need to install Oracle's OCCI which is bundled with some versions
+ * of the <a href="https://www.oracle.com/database/technologies/instant-client.html">instant client</a>. By
+ * default when compiling, MeteoIO will search for the dynamic library in the PATH environment variable (on Windows) or
+ * in subdirectories of the path pointed to by the ORACLE_HOME environment variable (Linux, MacOS). Please be aware that
+ * the development version of occi must be installed (so it contains the headers) as well as libaio (from your package
+ * manager on Linux).
  *
  * @section imis_units Units
  * The units are assumed to be the following:
@@ -59,8 +67,8 @@ namespace mio {
  * - DBUSER: user name to use when connecting to the database
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
- * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations if no local precipitation has been found (either nodata or 0).
- * - USE_IMIS_PSUM: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedPSUM to detect snow melting in the rain gauge. ANETZ stations are unaffected (their precipitation is always used).
+ * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations if no local precipitation has been found (either nodata or 0), default: false.
+ * - USE_IMIS_PSUM: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedPSUM to detect snow melting in the rain gauge. ANETZ stations are unaffected (their precipitation is always used), default: false.
  * - USE_SNOWPACK_PSUM: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute PSUM. Data gaps greater than 3 hours on SWE will lead to unchanged psum while all data that can properly be computed will <b>overwrite</b> psum. (default=false)
  *
  * It is possible to use both USE_IMIS_PSUM and USE_SNOWPACK_PSUM to create composite PSUM (from SNOWPACK in the snow season and from IMIS otherwise).
@@ -263,12 +271,12 @@ void ImisIO::openDBConnection(oracle::occi::Environment*& env, oracle::occi::Con
 void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn) const
 {
 	try {
-		if (conn != NULL)
+		if (conn != nullptr)
 			env->terminateConnection(conn);
-		if (env != NULL)
+		if (env != nullptr)
 			Environment::terminateEnvironment(env); // static OCCI function
-		conn = NULL;
-		env = NULL;
+		conn = nullptr;
+		env = nullptr;
 	} catch (const exception&){
 		Environment::terminateEnvironment(env); // static OCCI function
 	}
@@ -279,8 +287,8 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation.clear();
 
 	if (vecStationMetaData.empty()){//Imis station meta data cannot change between time steps
-		Environment *env = NULL;
-		Connection *conn = NULL;
+		Environment *env = nullptr;
+		Connection *conn = nullptr;
 
 		try {
 			openDBConnection(env, conn);
@@ -403,9 +411,9 @@ std::vector<std::string> ImisIO::readStationIDs()
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	Environment *env = NULL;
-	Connection *conn = NULL;
-	Statement *stmt = NULL;
+	Environment *env = nullptr;
+	Connection *conn = nullptr;
+	Statement *stmt = nullptr;
 
 	try {
 		if (vecStationMetaData.empty()) {
@@ -421,7 +429,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		vecMeteo.clear();
 		vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 
-		if ((env == NULL) || (conn == NULL))
+		if ((env == nullptr) || (conn == nullptr))
 			openDBConnection(env, conn);
 		stmt = conn->createStatement();
 
@@ -437,7 +445,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//read Anetz Data, convert it to PSUMs at XX:00 and XX:30
 			std::vector< std::vector< std::pair<Date, double> > > vecPsum( vecAnetzStation.size() );
-			vector< vector<MeteoData> > vecMeteoAnetz( vecAnetzStation.size() ); //holds the meteo data of the ANETZ stations
+			std::vector< std::vector<MeteoData> > vecMeteoAnetz( vecAnetzStation.size() ); //holds the meteo data of the ANETZ stations
 			const Date AnetzStart( dateStart-1./24. ); //to be sure that we can resample the ANETZ data
 			const Date AnetzEnd( dateEnd+1./24. );
 			for (size_t ii=0; ii<vecAnetzStation.size(); ii++) {
@@ -583,7 +591,7 @@ void ImisIO::findAnetzStations(std::map<std::string, size_t>& mapAnetzNames,
 	}
 
 	size_t pp = 0;
-	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ii++){
+	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ++ii){
 		mapAnetzNames[*ii] = pp;
 		pp++;
 

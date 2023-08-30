@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   if (Kt != NULL) {
     ds_Solve(ReleaseMatrixData, (SD_MATRIX_DATA*) Kt, 0);
   }
-  ds_Initialize(nN, (SD_MATRIX_DATA**) &Kt);
+  ds_Initialize(static_cast<int>(nN), (SD_MATRIX_DATA**) &Kt);
   for (size_t e = 0; e < nE; e++) {
     int Nodes[2] = { (int) e, (int) e + 1 };
     ds_DefineConnectivity((SD_MATRIX_DATA*) Kt, 2, Nodes, 1, 0);

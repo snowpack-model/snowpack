@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2015 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -19,7 +20,7 @@
 #include <meteoio/plugins/libsmet.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <string.h>
 #include <sstream>
@@ -107,7 +108,7 @@ void ALPUG::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	const std::string in_meteo = cfg.get("METEO", "Input", "");
+	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo == "ALPUG") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		vecIDs.clear();

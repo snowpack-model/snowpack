@@ -1,4 +1,4 @@
-
+#SPDX-License-Identifier: LGPL-3.0-or-later
 ## Test Coords
 # generate executable
 ADD_EXECUTABLE(coordinates coordinates.cc)

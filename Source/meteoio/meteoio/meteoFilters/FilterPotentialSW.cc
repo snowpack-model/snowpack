@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -22,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name), min_coeff(0.03), max_coeff(1.1), mean_period(IOUtils::nodata), is_soft(false), use_toa(true)
+FilterPotentialSW::FilterPotentialSW(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg), min_coeff(0.03), max_coeff(1.1), mean_period(IOUtils::nodata), is_soft(false), use_toa(true)
 {
 	parse_args(vecArgs);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -53,7 +54,7 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 		double TA = ovec[ii](MeteoData::TA);
 		double RH = ovec[ii](MeteoData::RH);
 		const double P = ovec[ii](MeteoData::P);
-		if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		if (TA==IOUtils::nodata || TA<180. || TA>330. || RH==IOUtils::nodata || RH<0.01 || RH>1.) {
 			TA = 274.98;
 			RH = 0.666;
 		}
@@ -104,6 +105,7 @@ void FilterPotentialSW::parse_args(const std::vector< std::pair<std::string, std
 				use_toa = false;
 		} else if (vecArgs[ii].first=="MEAN_PERIOD") {
 			IOUtils::parseArg(vecArgs[ii], where, mean_period);
+			mean_period /= 60.;
 		}
 	}
 

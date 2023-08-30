@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2012 Mountain-eering Srl, Trento/Bolzano, Italy                      */
 /***********************************************************************************/
@@ -58,9 +59,9 @@ class PSQLIO : public IOInterface {
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input=true);
 		void add_meta_data(const unsigned int& index, const StationData& sd);
-		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
-		void parse_row(PGresult* result, const int& row, const int& cols,
-		               MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
+		static void map_parameters(const PGresult* result, MeteoData& md, std::vector<size_t>& index);
+		void parse_row(const PGresult* result, const int& row, const int& cols,
+		               MeteoData& md, const std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo) const;
 		void close_connection(PGconn *conn);
 		static bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		static size_t checkExistence(const std::vector<StationData>& vec_stations, const StationData& sd);
@@ -83,6 +84,7 @@ class PSQLIO : public IOInterface {
 		std::vector<std::string> vecFixedStationID, vecMobileStationID;
 		std::string sql_meta, sql_data;
 
+		static const std::string sqlInsertMetadata, sqlInsertSensor, sqlInsertMeasurement;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 

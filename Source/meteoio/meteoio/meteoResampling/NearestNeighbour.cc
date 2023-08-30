@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -28,17 +29,18 @@ NearestNeighbour::NearestNeighbour(const std::string& i_algoname, const std::str
                  : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="WINDOW_SIZE") {
-			IOUtils::parseArg(vecArgs[ii], where, window_size);
+
+	for (const auto& arg : vecArgs) {
+		if (arg.first=="WINDOW_SIZE") {
+			IOUtils::parseArg(arg, where, window_size);
 			window_size /= 86400.; //user uses seconds, internally julian day is used
 			if (window_size<=0.) {
 				std::ostringstream ss;
 				ss << "Invalid accumulation period (" << window_size << ") for \"" << where << "\"";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
-		} else if (vecArgs[ii].first=="EXTRAPOLATE") {
-			IOUtils::parseArg(vecArgs[ii], where, extrapolate);
+		} else if (arg.first=="EXTRAPOLATE") {
+			IOUtils::parseArg(arg, where, extrapolate);
 		}
 	}
 }

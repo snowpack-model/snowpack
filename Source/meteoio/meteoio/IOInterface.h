@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -29,6 +30,60 @@
 #include <string>
 
 namespace mio {
+
+/**
+ * @class LinesRange
+ * @brief A class to represent and handle ranges of lines. They can be sorted, 
+ * checked for uniqueness and a line number can be compared to the range (is it 
+ * before or after?).
+ *
+ * @author Mathias Bavay
+ */
+class LinesRange {
+	public:
+		LinesRange() : start(), end() {}
+		LinesRange(const size_t& l1, const size_t& l2) : start(l1), end(l2) {}
+		
+		/**
+		 * @brief Is the provided line number within the current range?
+		 * @param[in] ll line number to check
+		 * @return true if the line number is within the current range, false otherwise
+		 */
+		bool in(const size_t& ll) const {
+			return (ll >= start && ll <= end);
+		}
+		
+		/**
+		 * @brief Is the provided line number before the *end* of the range?
+		 * @param[in] ll line number to check
+		 * @return true if the line number is less than the end of the current range, false otherwise
+		 */
+		bool operator<(const size_t& ll) const {
+			return end < ll;
+		}
+		
+		/**
+		 * @brief Is the provided line number after the *start* of the range?
+		 * @param[in] ll line number to check
+		 * @return true if the line number is greater than the end of the current range, false otherwise
+		 */
+		bool operator>(const size_t& ll) const {
+			return start > ll;
+		}
+		
+		bool operator<(const LinesRange& ll) const { //needed for "sort"
+			if (start==ll.start) return end < ll.end;
+			return start < ll.start;
+		}
+		
+		bool operator==(const LinesRange& ll) const { //needed to check for uniqueness
+			return (start==ll.start) && (end==ll.end);
+		}
+		
+		const std::string toString() const {std::ostringstream os; os << "[" << start << " - " << end << "]"; return os.str();}
+		
+		size_t start, end;
+};
 
 /**
  * @class IOInterface
@@ -72,6 +127,16 @@ class IOInterface {
 		* @param date date of the data to read
 		*/
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+
+		/**
+		* @brief Read the given meteo parameter into a vector for a list of points.
+		* Each plugin has its own logic for finding the requested meteo parameter grid relative to GRID2DPATH for most plugins
+		* @param data A double vector to hold the data
+		* @param parameter The meteo parameter grid type to return (ie: air temperature, wind component, etc)
+		* @param date date of the data to read
+		* @param Pts vector of points to read from the grid
+		*/
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
 
 		/**
 		* @brief A generic function for parsing 3D grids into a Grid3DObject. The string parameter shall be used for addressing the
@@ -226,8 +291,8 @@ class IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_out, const std::string& options="");
 
 		/**
-		* @brief Write a Grid2DObject comtaining a known meteorological parameter
-		* A filename is build relative to GRID2DPATH for most plugins.
+		* @brief Write a Grid2DObject containing a known meteorological parameter
+		* A filename is built relative to GRID2DPATH for most plugins.
 		* @param grid_out (Grid2DObject) The grid to write
 		* @param parameter The meteo parameter grid type of the provided grid object (ie: air temperature, wind component, etc)
 		* @param date date of the data to write
@@ -251,9 +316,28 @@ class IOInterface {
 		*/
 		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
-
 		static void set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon);
 		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
+		
+		/**
+		 * @brief built the set of line ranges to read or skip.
+		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
+		 * Obviously this can not be implemented by every plugin! The line ranges are given as a comma delimited list of 
+		 * either single line numbers or ranges (line numbers delimited by a "-" character). Extra spaces can be given for more clarity
+		 * in the input.
+		 * @param[in] args the textual representation of the line ranges or lines to parse
+		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
+		 * @param[in] negate take the negation of the provided ranges (converting a "ONLY" statement into an "EXCLUDE" statement)
+		 * @return set of line ranges
+		 */
+		static std::vector< LinesRange > initLinesRestrictions(const std::string& args, const std::string& where, const bool& negate);
+		
+	protected: 
+		/**
+		 * @brief Merge potentially overlaping line ranges
+		 * @param[in] lines_specs sorted, unique and non-overlapping set of line ranges
+		 */
+		static void mergeLinesRanges(std::vector< LinesRange >& lines_specs);
 };
 
 } //end namespace

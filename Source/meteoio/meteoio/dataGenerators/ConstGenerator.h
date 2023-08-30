@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -29,16 +30,17 @@ namespace mio {
  * @details
  * Generate a constant value for this parameter, as provided with the VALUE argument (please remember that it must be in SI units).
  * @code
- * RH::generators = Cst
- * RH::Cst::value = .7
+ * [Generators]
+ * RH::generator1  = Cst
+ * RH::arg1::value = .7
  * @endcode
  */
 class ConstGenerator : public GeneratorAlgorithm {
 	public:
-		ConstGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), constant(IOUtils::nodata) { parse_args(vecArgs); }
+		ConstGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), constant(IOUtils::nodata) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		double constant;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -42,7 +43,7 @@ namespace mio {
 class TEMPLATE : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
 //class TEMPLATE : public WindowedFilter { //use this one for filters relying on a data window, for example std_dev
 	public:
-		TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name);
+		TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

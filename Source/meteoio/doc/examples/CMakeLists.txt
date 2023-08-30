@@ -1,8 +1,11 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+#SPDX-License-Identifier: LGPL-3.0-or-later
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 #in case the user has copied the examples directory, we fallback on to the local copy of FindMeteoIO
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../../tools/cmake/" "${CMAKE_SOURCE_DIR}/cmake")
 
 PROJECT(meteoio_examples)
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED True)
 
 FIND_PACKAGE(MeteoIO)
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${METEOIO_INCLUDE_DIR})

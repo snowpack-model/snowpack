@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*                   Copyright GridGroup, EIA-FR 2010                              */
 /*  Copyright 2010-2013 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   */
@@ -22,11 +23,15 @@
 	#include <windows.h>
 	#undef max
 	#undef min
+	#include <threadpoollegacyapiset.h>
 #else
 	#include <sys/time.h>
+	#include <unistd.h>
+	#include <signal.h>
 #endif
 
-#include "Timer.h"
+#include <meteoio/Timer.h>
+#include <meteoio/IOUtils.h>
 
 namespace mio {
 
@@ -109,12 +114,10 @@ long double Timer::getCurrentTime() {
 #else
 long double Timer::getCurrentTime() {
 	timeval tp;
-	gettimeofday(&tp,NULL);
+	gettimeofday(&tp,nullptr);
 	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6L;
 	return t;
 }
-
-
 #endif
 
 #if !defined _WIN32 && !defined __MINGW32__
@@ -192,6 +195,44 @@ void UsageTimer::getElapsedTimes()
 	user_time = static_cast<double>( end_user_time - start_user_time );
 	sys_time = static_cast<double>( end_sys_time - start_sys_time );
 	elapsed = static_cast<double>( sys_time + user_time );
+}
+#endif
+
+
+#ifdef _WIN32
+/* function called when the timer expires */
+void CALLBACK TimerProc(void* /*parameters*/, BOOLEAN /*timerCalled*/)
+{
+	std::cerr << "Timeout: aborting after receiving signal SIGALRM" << std::endl;
+	exit( EXIT_FAILURE );
+}
+
+WatchDog::WatchDog(const unsigned int& seconds)
+{
+	HANDLE m_hTimer = NULL;
+	CreateTimerQueueTimer(&m_hTimer, NULL, TimerProc, this, seconds*1000, 0, WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE);
+}
+#else
+/* function called when a SIGALRM signal is caught */
+static void signal_handler( int signal_num )
+{
+	throw TimeOutException("Timeout: aborting after receiving signal "+IOUtils::toString(signal_num), AT);
+}
+
+static void signals_catching(const int& SIG)
+{
+	struct sigaction catch_signal;
+	catch_signal.sa_handler = signal_handler;
+	sigemptyset(&catch_signal.sa_mask); // We don't want to block any other signals
+	catch_signal.sa_flags = 0;
+
+	sigaction(SIG, &catch_signal, nullptr);
+}
+
+WatchDog::WatchDog(const unsigned int& seconds)
+{
+	alarm(seconds);
+	signals_catching( SIGALRM );
 }
 #endif
 

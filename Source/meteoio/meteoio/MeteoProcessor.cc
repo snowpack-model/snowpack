@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -23,8 +24,11 @@ using namespace std;
 
 namespace mio {
 
-MeteoProcessor::MeteoProcessor(const Config& cfg, const char& rank, const IOUtils::OperationMode &mode) : mi1d(cfg, rank, mode), processing_stack()
+MeteoProcessor::MeteoProcessor(const Config& cfg, const char& rank, const IOUtils::OperationMode &mode) : mi1d(cfg, rank, mode), processing_stack(), enable_meteo_filtering(true)
 {
+	//ENABLE_METEO_FILTERING is documented in meteoFilters/ProcessingBlock.cc
+	cfg.getValue("ENABLE_METEO_FILTERING", "Filters", enable_meteo_filtering, IOUtils::nothrow);
+	
 	//Parse [Filters] section, create processing stack for each configured parameter
 	const std::set<std::string> set_of_used_parameters( getParameters(cfg) );
 
@@ -93,12 +97,74 @@ void MeteoProcessor::process(std::vector< std::vector<MeteoData> >& ivec,
                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	std::swap(ivec, ovec);
-	if (processing_stack.empty()) return;
+	if (processing_stack.empty() || !enable_meteo_filtering) return;
 	
 	for (std::map<std::string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
 		std::swap(ovec, ivec);
 		(*(it->second)).process(ivec, ovec, second_pass);
 	}
+}
+
+std::set<std::string> MeteoProcessor::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
+{
+	std::set<std::string> results;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first==keyword) {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results.insert(word);
+			}
+		}
+	}
+
+	return results;
+}
+
+std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword, const std::string& where, const double& TZ)
+{
+	std::vector<DateRange> dates_specs;
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first==keyword) {
+			std::vector<std::string> vecString;
+			const size_t nrElems = IOUtils::readLineToVec(vecArgs[ii].second, vecString, ',');
+			
+			for (size_t jj=0; jj<nrElems; jj++) {
+				Date d1, d2;
+				const size_t delim_pos = vecString[jj].find(" - ");
+				if (delim_pos==std::string::npos) {
+					if (!IOUtils::convertString(d1, vecString[jj], TZ))
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj]+" for "+where, AT);
+					dates_specs.push_back( DateRange(d1, d1) );
+				} else {
+					if (!IOUtils::convertString(d1, vecString[jj].substr(0, delim_pos), TZ))
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
+					if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
+						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+					dates_specs.push_back( DateRange(d1, d2) );
+				}
+			}
+		}
+	}
+	
+	if (dates_specs.empty()) return dates_specs;
+	
+	//now sort the vector and merge overlapping ranges
+	std::sort(dates_specs.begin(), dates_specs.end()); //in case of identical start dates, the oldest end date comes first
+	for (size_t ii=0; ii<(dates_specs.size()-1); ii++) {
+		if (dates_specs[ii]==dates_specs[ii+1]) {
+			//remove exactly identical ranges
+			dates_specs.erase(dates_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
+			ii--; //we must redo the current element
+		} else if (dates_specs[ii].start==dates_specs[ii+1].start || dates_specs[ii].end >= dates_specs[ii+1].start) {
+			//remove overlapping ranges. Since the vector is sorted on (start, end), the overlap criteria is very simplified!
+			dates_specs[ii].end = std::max(dates_specs[ii].end, dates_specs[ii+1].end);
+			dates_specs.erase(dates_specs.begin()+ii+1);
+			ii--; //we must redo the current element
+		}
+	}
+	
+	return dates_specs;
 }
 
 const std::string MeteoProcessor::toString() const {
@@ -114,5 +180,75 @@ const std::string MeteoProcessor::toString() const {
 	os << "</MeteoProcessor>\n";
 	return os.str();
 }
+
+
+RestrictionsIdx::RestrictionsIdx(const METEO_SET& vecMeteo, const std::vector<DateRange>& time_restrictions)
+                : start(), end(), index(0)
+{
+	if (time_restrictions.empty()) {
+		start.push_back( 0 );
+		end.push_back( vecMeteo.size() );
+	} else {
+		const Date start_dt( vecMeteo.front().date ), end_dt( vecMeteo.back().date );
+		
+		size_t ts_idx = 0;
+		while (ts_idx < time_restrictions.size()) {
+			if (time_restrictions[ts_idx].end < start_dt) { //this time_restrictions is before vecMeteo, look for the next one!
+				ts_idx++;
+				continue;
+			}
+			if (time_restrictions[ts_idx].start > end_dt) break; //no more time_restrictions applicable to vecMeteo
+			
+			size_t jj=0;
+			//look for time_restriction start
+			while (jj<vecMeteo.size() && vecMeteo[jj].date < time_restrictions[ts_idx].start) jj++;
+			start.push_back( jj );
+			
+			//look for time_restriction end
+			while (jj<vecMeteo.size() && vecMeteo[jj].date <= time_restrictions[ts_idx].end) jj++;
+			end.push_back( jj );
+			
+			//move to next time restriction period
+			ts_idx++;
+		}
+		
+		//no applicable time_restrictions found for vecMeteo
+		if (start.empty()) index = IOUtils::npos;
+	}
+}
+
+size_t RestrictionsIdx::getStart() const
+{
+	if (index == IOUtils::npos) return IOUtils::npos;
+	return start[ index ];
+}
+
+size_t RestrictionsIdx::getEnd() const
+{
+	if (index == IOUtils::npos) return IOUtils::npos;
+	return end[ index ];
+}
+
+RestrictionsIdx& RestrictionsIdx::operator++()
+{
+	if (index!=IOUtils::npos) {
+		index++;
+		if (index >= start.size()) index=IOUtils::npos;
+	}
+	
+	return *this;
+}
+
+const std::string RestrictionsIdx::toString() const
+{
+	std::ostringstream os;
+	os << "[ ";
+	for (size_t ii=0; ii<start.size(); ii++)
+		os << "(" << start[ii] << "," << end[ii] << ") ";
+	
+	os << "]";
+	return os.str();
+}
+
 
 } //namespace

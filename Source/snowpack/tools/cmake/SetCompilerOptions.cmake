@@ -4,7 +4,7 @@
 # It can also edit CMAKE_SHARED_LINKER_FLAGS and CMAKE_EXE_LINKER_FLAGS
 
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 MACRO (SET_COMPILER_OPTIONS)
 	###########################################################
@@ -160,9 +160,16 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Rpass=.* for static analysis
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS -flto")
-		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
-			SET(ARCH_SAFE  "-march=nocona -mtune=nocona")
-		ENDIF()
+		IF(APPLE)
+			OPTION(BUILD_FAT_BINARIES "Compile fat binaries, for x86_64 and arm64" OFF)
+			IF(BUILD_FAT_BINARIES)
+				SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+			ENDIF()
+		ELSE(APPLE)
+			IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
+				SET(ARCH_SAFE "-march=nocona -mtune=nocona")
+			ENDIF()
+		ENDIF(APPLE)
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
 		

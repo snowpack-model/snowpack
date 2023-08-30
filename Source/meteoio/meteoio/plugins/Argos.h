@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2019 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -39,11 +40,12 @@ class ArgosStation {
 
 		std::vector<size_t> fields_idx; ///< vector of MeteoData field index
 		std::vector<double> units_offset, units_multiplier;
+		std::vector<size_t> fields_idx2; ///< vector of MeteoData field index
+		std::vector<double> units_offset2, units_multiplier2;
 		MeteoData md_template;
 		double TZ;
 		float nodata;
-		size_t year_idx, month_idx, hour_idx, jdn_idx;
-		bool validStation, debug;
+		bool validStation, debug, wsl_hack;
 };
 
 

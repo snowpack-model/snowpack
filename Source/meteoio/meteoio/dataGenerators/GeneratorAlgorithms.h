@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -69,7 +70,7 @@ namespace mio {
  * start by making a copy of the dataGenerators/template.cc (or .h) that you rename according to your generator. Please make sure
  * to update the header guard (the line "#ifndef GENERATORTEMPLATE_H" in the header) to reflect your generator name.
  * Three methods need to be implemented:
- * - the constructor with (const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo)
+ * - the constructor with (const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
  * - bool generate(const size_t& param, MeteoData& md)
  * - bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
  *
@@ -112,18 +113,42 @@ class GeneratorAlgorithm {
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station. This is used by the dataGenerators
 		virtual bool generate(const size_t& param, MeteoData& md) = 0;
-		//fill one time series of MeteoData for one station. This is used by the dataCreators
-		virtual bool create(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
 
+		/**
+		* @brief Fill one time series of MeteoData for one station. 
+		* @details This is used by the dataCreators to create a new parameter in one go for the whole timeseries.
+		* @param[in] param meteo parameter to generate
+		* @param[in] ii_min minimum index to apply it to in vecMeteo
+		* @param[in] ii_max maximum index to apply it to in vecMeteo
+		* @param[in] vecMeteo meteo timeseries to process
+		* @return true if all missing data points for the given parameter could be generated, false otherwise
+		*/
+		virtual bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) = 0;
+
+		/**
+		* @brief Should this station be skipped, based on user-provided station ID restrictions?
+		* @param[in] station_id ID of the current station
+		* @return true if the provided station ID should be skipped
+		*/
 		bool skipStation(const std::string& station_id) const;
+		
+		/**
+		* @brief Should this timestep be skipped, based on user-provided time restrictions?
+		* @param[in] dt current timestep
+		* @return true the provided timestep should be skipped
+		*/
+		bool skipTimeStep(const Date& dt) const;
+		
+		std::vector<DateRange> getTimeRestrictions() const {return time_restrictions;}
 		std::string getAlgo() const {return algo;}
  	protected:
-		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo); ///< protected constructor only to be called by children
+		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ); ///< protected constructor only to be called by children
 		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/) {}
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
 
+		const std::vector<DateRange> time_restrictions;
 		const std::set<std::string> excluded_stations, kept_stations;
-		const std::string algo;
+		const std::string algo, section;
 		
 		//These are used by several generators in order work with radiation data by looking at HS and deciding which albedo should be used
 		static const double soil_albedo, snow_albedo, snow_thresh;
@@ -131,7 +156,7 @@ class GeneratorAlgorithm {
 
 class GeneratorAlgorithmFactory {
 	public:
-		static GeneratorAlgorithm* getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static GeneratorAlgorithm* getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::string& i_section, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 };
 
 } //end namespace mio

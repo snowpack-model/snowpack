@@ -50,7 +50,7 @@ for k in points:
     for m in range(len(config_fn)):
         file = open(path_out + config_fn[m] + "_" + str(k) + ".ini","w")
         file.write("[General]\n") ################################################################# [General] ##########
-        file.write("BUFF_CHUNK_SIZE = 370\n")
+        file.write("BUFFER_SIZE = 370\n")
         file.write("BUFF_BEFORE = 1.5\n") 
         file.write("\n")    
         file.write("[Input]\n") ##################################################################### [Input] ##########

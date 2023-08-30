@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -73,8 +74,6 @@ class Grid2DObject {
 
 		Grid2DObject(const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
-		virtual ~Grid2DObject() {}
-
 		/**
 		* @brief constructs an object as a subset of another grid object
 		* @param i_grid2Dobj initial grid object
@@ -139,6 +138,12 @@ class Grid2DObject {
 		*/
 		void rescale(const double& i_cellsize);
 
+		/**
+		 @brief Spatially average the grid over a given radius
+		 @param[in] radius radius in meters over which to spatially average
+		*/
+		void compute_spatial_mean(const double& radius);
+	
 		void size(size_t& o_ncols, size_t& o_nrows) const;
 		size_t size() const;
 		size_t getNx() const;
@@ -155,6 +160,8 @@ class Grid2DObject {
 		*/
 		bool empty() const;
 
+		bool allNodata() const;
+
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
 		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT
@@ -165,17 +172,24 @@ class Grid2DObject {
 		bool isSameGeolocalization(const Grid2DObject& target) const;
 
 		/**
-		* @brief Partitional algorithm to classify each point of the grid.
-		* The classification is given by a list of growing thresholds, the 'clusters' are then a simple
-		* range of values. Each cluster comes with an 'id' that replaces the values of the points.
-		*
-		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a cluster
+		* @brief Partitional algorithm to classify each point of the grid into a 'bin'.
+		* The classification is given by a list of growing thresholds, the 'bins' are then a simple
+		* range of values. Threshold values will be put into the next higher bin.
+		* Each bin comes with an 'id' that replaces the values of the points.
+		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a bin.
 		* @param ids (const std::vector<double>&) clusters Ids to be used. clustersId.size()=thresholds.size()+1
-		* @return true if clusturization was succesfull
+		* The first id will replace all values between 0 and the first threshold, and the last id will replace all
+		* values greater than the last threshold. Hence, you need one more id than threshold values.
 		*/
-		bool clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids);
+		void binning(const std::vector<double>& thresholds, const std::vector<double>& ids);
 
-		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
+		/**
+		* @brief extract point values from grid
+		* @param Pts (const std::vector< std::pair<size_t, size_t> >) vector of pairs consisting of column, row to read
+		* @return vector of doubles holding the values of the points provided in Pts.
+		*/
+		std::vector< double > extractPoints(const std::vector< std::pair<size_t, size_t> >& Pts) const;
+
 		Grid2DObject& operator=(const double& value); ///<Assignement operator
 
 		Grid2DObject& operator+=(const double& rhs);

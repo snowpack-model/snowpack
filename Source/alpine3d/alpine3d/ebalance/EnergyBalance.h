@@ -25,6 +25,7 @@ class SnowpackInterface;
 
 #include <alpine3d/ebalance/RadiationField.h>
 #include <alpine3d/ebalance/TerrainRadiationAlgorithm.h>
+#include <alpine3d/ebalance/SolarPanel.h>
 #include <alpine3d/SnowpackInterface.h>
 
 /**
@@ -77,9 +78,14 @@ class EnergyBalance
 		void setSnowPack(SnowpackInterface &mysnowpack );
 		void setAlbedo( const mio::Grid2DObject &in_albedo );
 
-		void setMeteo(const mio::Grid2DObject& in_ilwr,
-		              const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Date timestamp);
+		void compute(const mio::Grid2DObject& in_ilwr,
+		             const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p,
+		             const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
+		             const mio::Date timestamp);
 
+		void writeSP(const unsigned int max_steps); //write Solar Panels information
+
+		bool hasSP(){return terrain_radiation->hasSP();} //are Solar Panels defined?
 		void setStations(const std::vector<mio::MeteoData>& in_vecMeteo);
 		double getTiming() const;
 		void Destroy();
@@ -88,15 +94,16 @@ class EnergyBalance
 	private:
 		SnowpackInterface *snowpack;
 		TerrainRadiationAlgorithm *terrain_radiation;
-		std::vector<RadiationField*> radfields;
+		std::vector<RadiationField> radfields;
 		mio::DEMObject dem;
 		std::vector<mio::MeteoData> vecMeteo;
 		mio::Grid2DObject albedo;
-		mio::Array2D<double> direct, diffuse, reflected;
+		mio::Array2D<double> direct_unshaded_horizontal, direct, diffuse, reflected; //FELIX: direct_unshaded_horizontal
 		mio::Timer timer;
-
+		const mio::Config& cfg;
 		size_t dimx, dimy;
 		unsigned int nbworkers;
+		bool dataFromGrids;
 };
 
 #endif

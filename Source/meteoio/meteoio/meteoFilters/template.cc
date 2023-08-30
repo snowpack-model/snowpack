@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -21,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name)
-          : ProcessingBlock(vecArgs, name) //this has to match the class you are inheriting from! ie ProcessingBlock or WindowedFilter
+TEMPLATE::TEMPLATE(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
+          : ProcessingBlock(vecArgs, name, cfg) //this has to match the class you are inheriting from! ie ProcessingBlock or WindowedFilter
 {
 	parse_args(vecArgs);
 	//the filters can be called at two points: before the temporal resampling (first stage, ProcessingProperties::first)

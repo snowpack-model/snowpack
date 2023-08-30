@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009-2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
@@ -86,6 +87,7 @@
 
 //skip all plugins' implementations header files
 #include <meteoio/plugins/libsmet.h>
+#include <meteoio/plugins/libacdd.h>
 
 #include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>

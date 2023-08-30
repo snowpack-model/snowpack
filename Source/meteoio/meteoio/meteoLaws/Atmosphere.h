@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -67,6 +68,8 @@ class Atmosphere {
 		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness);
 		static double Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness);
+		static double Carmona_emissivity(const double& RH, const double& TA, const double& cloudiness);
+		static double Carmona_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month, const double& cloudiness=IOUtils::nodata);
 		static double Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
@@ -75,8 +78,14 @@ class Atmosphere {
 		static double Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
 		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
+		static double Lhomme_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness);
+		static double Lhomme_ilwr(const double& lat, const double& lon, const double& altitude,
+		                            const double& julian, const double& TZ,
+		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
 		static double Kasten_clearness(const double& cloudiness);
 		static double Kasten_cloudiness(const double& solarIndex);
+		static double Lhomme_clearness(const double& cloudiness);
+		static double Lhomme_cloudiness(const double& solarIndex);
 		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
 		                                const double& julian, const double& TZ,
 		                                const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
@@ -88,6 +97,8 @@ class Atmosphere {
 
 		static double blkBody_Emissivity(const double& lwr, const double& T);
 		static double blkBody_Radiation(const double& ea, const double& T);
+		
+		static const double day_iswr_thresh; //threhold on ISWR above which it is considered to be daylight
 };
 
 } //end namespace

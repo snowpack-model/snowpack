@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -321,6 +322,17 @@ void SunMeeus::reset() {;
 	private_init();
 }
 
+double SunMeeus::getSolarElevation() const {
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+		return SolarElevation; //this is the TRUE elevation, not the apparent!
+	} else {
+		std::ostringstream os;
+		os << "Please set ALL required parameters to get Sun's position!! ";
+		os << "(julian_gmt=" << julian_gmt << " TZ=" << TZ << " latitude=" << latitude << " longitude=" << longitude << ")\n";
+		throw InvalidArgumentException(os.str(), AT);
+	}
+}
+
 void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation) const {
 	double eccentricity;
 	getHorizontalCoordinates(azimuth, elevation, eccentricity);
@@ -332,7 +344,10 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 		elevation = SolarElevation; //this is the TRUE elevation, not the apparent!
 		eccentricity = eccentricityEarth;
 	} else {
-		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
+		std::ostringstream os;
+		os << "Please set ALL required parameters to get Sun's position!! ";
+		os << "(julian_gmt=" << julian_gmt << " TZ=" << TZ << " latitude=" << latitude << " longitude=" << longitude << ")\n";
+		throw InvalidArgumentException(os.str(), AT);
 	}
 }
 
@@ -342,7 +357,10 @@ void SunMeeus::getDaylight(double& sunrise, double& sunset, double& MeeusDayligh
 		sunset = SunSet;
 		MeeusDaylight = SunlightDuration/(60.*24.);
 	} else {
-		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
+		std::ostringstream os;
+		os << "Please set ALL required parameters to get Sun's position!! ";
+		os << "(julian_gmt=" << julian_gmt << " TZ=" << TZ << " latitude=" << latitude << " longitude=" << longitude << ")\n";
+		throw InvalidArgumentException(os.str(), AT);
 	}
 }
 
@@ -351,7 +369,10 @@ void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declina
 		right_ascension = SunRightAscension;
 		declination = SunDeclination;
 	} else {
-		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
+		std::ostringstream os;
+		os << "Please set ALL required parameters to get Sun's position!! ";
+		os << "(julian_gmt=" << julian_gmt << " TZ=" << TZ << " latitude=" << latitude << " longitude=" << longitude << ")\n";
+		throw InvalidArgumentException(os.str(), AT);
 	}
 }
 

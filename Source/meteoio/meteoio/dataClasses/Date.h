@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -24,7 +25,9 @@
 #include <sstream>
 #include <map>
 
+//uncomment below to support negative julian dates
 //#define NEGATIVE_JULIAN
+
 namespace mio {
 
 /**
@@ -36,18 +39,20 @@ namespace mio {
  * it can not be automatically calculated. Therefore, it has to be provided by the caller: when the dst flag
  * is set, the dst time shift is automatically applied. When the dst flag ceases to be set, the dst time shift
  * is no longer applied. This is very crude, but please keep in mind that using DST for monitoring data is
- * usually a bad idea... Finally, we assume that dates are positive. If this would not be the case, this
+ * usually a bad idea... Finally, we assume that **dates are positive**. If this would not be the case, this
  * class has to be recompiled with the proper define.
  *
  * Internally, the date is stored as true julian date in GMT.
- * The maximal precision is 1 second (however with the limitation that leap seconds are currently not handled).
+ * The maximal precision is 0.01 second (however with the limitation that leap seconds are currently not handled).
  *
+ * \anchor decimal_date_representation
  * Please see Date::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
  * the various date representation definitions. The following date representation are currently supported:
  * - julian date, see Date::getJulian
  * - modified julian date, see Date::getModifiedJulianDate
  * - truncated julian date, see Date::getTruncatedJulianDate
- * - Unix date, see Date::getUnixDate
+ * - RFC868, see Date::getRFC868Date
+ * - Unix date, assumed to always be UTC+0, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
  *
  * \anchor date_formats
@@ -109,35 +114,35 @@ class Date {
 		static const double epsilon_sec;
 
 		Date();
-		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
-		Date(const time_t&, const bool& in_dst=false);
-		Date(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst=false);
+		Date(const double& in_timezone);
+		Date(const double& julian_in, const double& in_timezone);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone);
+		Date(const time_t&);
+		Date(const int& year, const double& jdn, const double& in_timezone);
 
 		void setFromSys();
-		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
+		void setTimeZone(const double& in_timezone);
 		void setDate(const Date& in_date);
-		void setDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const int& year, const double& jdn, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const time_t& in_time, const bool& in_dst=false);
-		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		void setRFC868Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
-		void setUnixDate(const time_t& in_time, const bool& in_dst=false);
-		void setExcelDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
-		void setMatlabDate(const double matlab_in, const double& in_timezone, const bool& in_dst=false);
-		void setUndef(const bool& flag);
+		void setDate(const double& julian_in, const double& in_timezone);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone);
+		void setDate(const int& year, const double& jdn, const double& in_timezone);
+		void setDate(const time_t& in_time);
+		void setModifiedJulianDate(const double& julian_in, const double& in_timezone);
+		void setRFC868Date(const double& julian_in, const double& in_timezone);
+		void setUnixDate(const time_t& in_time);
+		void setExcelDate(const double excel_in, const double& in_timezone);
+		void setMatlabDate(const double matlab_in, const double& in_timezone);
+		void setUndef(const bool& flag=true);
 
 		bool isUndef() const {return undef;}
 		double getTimeZone() const;
-		bool getDST() const;
 		double getJulian(const bool& gmt=false) const;
 		double getModifiedJulianDate(const bool& gmt=false) const;
 		double getTruncatedJulianDate(const bool& gmt=false) const;
@@ -221,8 +226,61 @@ class Date {
 		static const bool __init;
 		double timezone;
 		double gmt_julian;
-		bool dst;
 		bool undef;
+};
+
+/**
+ * @class DateRange
+ * @brief A class to represent and handle date ranges. They can be sorted, 
+ * checked for uniqueness and a date can be compared to the range (is it 
+ * before or after?).
+ *
+ * @author Mathias Bavay
+ */
+class DateRange {
+	public:
+		DateRange() : start(), end() {}
+		DateRange(const Date& d1, const Date& d2) : start(d1), end(d2) {}
+		
+		/**
+		 * @brief Is the provided date within the current range?
+		 * @param[in] a Date to check
+		 * @return true if the date is within the current range, false otherwise
+		 */
+		bool in(const Date& a) const {
+			return (a >= start && a <= end);
+		}
+		
+		/**
+		 * @brief Is the provided date before the *end* of the range?
+		 * @param[in] a Date to check
+		 * @return true if the date is less than the end of the current range, false otherwise
+		 */
+		bool operator<(const Date& a) const {
+			return end < a;
+		}
+		
+		/**
+		 * @brief Is the provided date after the *start* of the range?
+		 * @param[in] a Date to check
+		 * @return true if the date is greater than the end of the current range, false otherwise
+		 */
+		bool operator>(const Date& a) const {
+			return start > a;
+		}
+		
+		bool operator<(const DateRange& a) const { //needed for "sort"
+			if (start==a.start) return end < a.end;
+			return start < a.start;
+		}
+		
+		bool operator==(const DateRange& a) const { //needed to check for uniqueness
+			return (start==a.start) && (end==a.end);
+		}
+		
+		const std::string toString() const {std::ostringstream os; os << "[" << start.toString(Date::ISO) << " - " << end.toString(Date::ISO) << "]"; return os.str();}
+		
+		Date start, end;
 };
 
 typedef Date Duration; //so that later, we can implement a true Interval/Duration class

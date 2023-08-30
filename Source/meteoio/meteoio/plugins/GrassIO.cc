@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 EPFL                                                            */
 /***********************************************************************************/
@@ -64,13 +65,6 @@ GrassIO::GrassIO(const Config& cfgreader)
 
 void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
-
-	int _nx, _ny;
-	double north, east, south, west;
-	double tmp_val;
-	vector<string> tmpvec;
-	std::string line;
-
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
 
@@ -79,7 +73,12 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		throw AccessException(filename, AT);
 	}
 
-	char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
+	int _nx, _ny;
+	double north, east, south, west;
+	double tmp_val;
+	vector<string> tmpvec;
+	std::string line;
+	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {

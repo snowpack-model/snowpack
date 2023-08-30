@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -24,15 +25,21 @@ namespace mio {
 
 ListonWindAlgorithm::ListonWindAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm)
                                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), trend(vecArgs, i_algo, i_param), vecDataVW(), vecDataDW(),
-                                   scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
+                                   eta(IOUtils::nodata), scale(1e3), alpha(1.), param_idx(MeteoData::firstparam), inputIsAllZeroes(false)
 {
 	const std::string where( "Interpolations2D::"+i_param+"::"+i_algo );
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="SCALE") {
+		if (vecArgs[ii].first=="ETA") {
+			IOUtils::parseArg(vecArgs[ii], where, eta);
+		} else if (vecArgs[ii].first=="SCALE") {
 			IOUtils::parseArg(vecArgs[ii], where, scale);
 		} else if (vecArgs[ii].first=="ALPHA") {
 			IOUtils::parseArg(vecArgs[ii], where, alpha);
 		}
+	}
+
+	if (param != "VW" && param != "VW_MAX" && param != "VW_DRIFT" && param != "DW") {
+		throw InvalidArgumentException("Trying to use "+i_algo+" interpolation on " + i_param + " but it can only be applied to VW, VW_MAX, VW_DRIFT or DW!!", AT);
 	}
 }
 
@@ -45,8 +52,10 @@ double ListonWindAlgorithm::getQualityRating(const Date& i_date)
 	tsmanager.getMeteoData(date, vecMeteo);
 	if (!vecMeteo.empty()) param_idx = vecMeteo[0].getParameterIndex( param );
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
-			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
+		size_t VW = MeteoData::VW;	// first guess for the wind speed parameter. In case of interpolating DW, use VW.
+		if (param == "VW_DRIFT" || param == "VW_MAX") VW = vecMeteo[ii].getParameterIndex(param);	// override VW when other wind speed parameter is requested
+		if ((vecMeteo[ii](VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
+			vecDataVW.push_back(vecMeteo[ii](VW));
 			vecDataDW.push_back(vecMeteo[ii](MeteoData::DW));
 			vecMeta.push_back(vecMeteo[ii].meta);
 		}
@@ -77,15 +86,16 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		return;
 	}
 
-	if (param_idx==MeteoData::VW) {
-		Grid2DObject DW;
-		simpleWindInterpolate(dem, grid, DW);
-		Interpol2D::ListonWind(dem, grid, DW);
-	}
 	if (param_idx==MeteoData::DW) {
+		// Direction
 		Grid2DObject VW;
 		simpleWindInterpolate(dem, VW, grid);
-		Interpol2D::ListonWind(dem, VW, grid);
+		Interpol2D::ListonWind(dem, VW, grid, eta);
+	} else {
+		// If not direction, it must be a type of wind speed
+		Grid2DObject DW;
+		simpleWindInterpolate(dem, grid, DW);
+		Interpol2D::ListonWind(dem, grid, DW, eta);
 	}
 }
 
@@ -95,11 +105,11 @@ void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObje
 	if (vecDataVW.size() != vecDataDW.size())
 		throw InvalidArgumentException("VW and DW vectors should have the same size!", AT);
 
-	//compute U,v
+	//compute U,V
 	std::vector<double> Ve(vecDataVW.size()), Vn(vecDataVW.size());
 	for (size_t ii=0; ii<vecDataVW.size(); ii++) {
-		Ve[ii] = vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad);
-		Vn[ii] = vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad);
+		Ve[ii] = IOUtils::VWDW_TO_U(vecDataVW[ii], vecDataDW[ii]);
+		Vn[ii] = IOUtils::VWDW_TO_V(vecDataVW[ii], vecDataDW[ii]);
 	}
 
 	//spatially interpolate U,V
@@ -125,7 +135,7 @@ void ListonWindAlgorithm::simpleWindInterpolate(const DEMObject& dem, Grid2DObje
 
 		if (ve!=IOUtils::nodata && vn!=IOUtils::nodata) {
 			VW(ii) = Optim::fastSqrt_Q3(ve*ve + vn*vn);
-			DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+			DW(ii) = IOUtils::UV_TO_DW(ve, vn);
 		}
 	}
 }
