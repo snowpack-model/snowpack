@@ -415,18 +415,17 @@
  * @subsection lus_input Land Cover model
  * \image html LUS.png "Example of a Land Cover grid"
  * \image latex LUS.eps "Example of a Land Cover grid" width=0.9\textwidth
- * For each cell of the domain, a land cover code must be provided. This must be using the exact same geolocalization as the DEM.
- * Such data are usually available in various classifications depending on the country (such as
- * <A HREF="http://www.eea.europa.eu/publications/COR0-landcover">CORINE</A> for Europe,
- * the <A HREF="http://landcover.usgs.gov/">US National Land Cover Dataset</A> for the USA,
- * the <A HREF="http://www.countrysidesurvey.org.uk/">countryside survey</A> for the UK,
- * <A HREF="https://www.bfs.admin.ch/bfs/de/home/statistiken/raum-umwelt/nomenklaturen/arealstatistik/noas2004.html">Arealstatistik NOAS04</A> for Switzerland,
- * <A HREF="http://data.ess.tsinghua.edu.cn/">GLC</A> for a 30m resolution global land cover or
- * <A HREF="http://data.fao.org/map?entryId=6c34ec8b-f31e-4976-9344-fd11b738a850">FAO GeoNetwork</A> for multiple land cover data sets including a 30" resolution global land cover).
+ *
+ * For each cell of the domain, a land cover code must be provided. This must be using the exact same geolocalization as the DEM. You can create you own LUS file based on aerial photography (see in section \ref tools "simulation tools") or find such data for your area of interest. Such data are usually available in various classifications
+ * depending on the country, for example:
+ *     + <A HREF="http://www.eea.europa.eu/publications/COR0-landcover">CORINE</A> for Europe;
+ *     + the <A HREF="http://landcover.usgs.gov/">US National Land Cover Dataset</A> for the USA;
+ *     + the <A HREF="http://www.countrysidesurvey.org.uk/">countryside survey</A> for the UK;
+ *     + <A HREF="https://www.bfs.admin.ch/bfs/de/home/statistiken/raum-umwelt/nomenklaturen/arealstatistik/noas2004.html">Arealstatistik NOAS04</A> for Switzerland;
+ *     + <A HREF="http://data.ess.tsinghua.edu.cn/">GLC</A> for a 30m resolution global land cover or <A HREF="http://data.fao.org/map?entryId=6c34ec8b-f31e-4976-9344-fd11b738a850">FAO GeoNetwork</A> for multiple land cover data sets including a 30 arcsec resolution global land cover.
  * 
  * Currently, Alpine3D improperly calls the Land Cover Model <i>"Land Use"</i>, abbreviated as LUS and uses an ARC ascii file
- * (see <A HREF="https://meteoio.slf.ch/doc-release/html/arc.html">MeteoIO's documentation</A>) with PREVAH landuse codes 
- * that have the format 1LLDC where:
+ * (see <A HREF="https://meteoio.slf.ch/doc-release/html/arc.html">MeteoIO's documentation</A>) with PREVAH landuse codes that have the format 1LLDC where:
  * - LL is the land use code as given in the table given below
  * - D is the soil depth (unused)
  * - C is the field capacity (unused)
@@ -574,13 +573,32 @@
 
 /**
  * @page tools Simulation tools
- * Several tools are available to help using Alpine3D. As for SNOWPACK, it is possible to use <A HREF="https://inishell.slf.ch">inishell</A> to
- * configure the simulations. There is also another java tool, "view" in the "Interface" sub directory, that can be used to visualize ARC ASCII grids as
- * well as to visualize DEM and LUS files in this format. This can also be used to generate a LUS file by opening an aerial picture and manually tagging
- * the pixels (one by one, along lines or within polygons). Finally, this tool can also generate a POI (points of interest) file for more detailed
- * outputs at some specific points.
+ * Several tools are available to help using Alpine3D, several are also shared between MeteoIO, Snowpack and Alpine3D.
+ *
+ * @section Simulation_config Simulation configuration
+ * As for SNOWPACK, it is possible to use <A HREF="https://inishell.slf.ch">inishell</A> to configure the simulations. Simply load the "alpine3d" application
+ * in Inishell and start configuring your simulation! Please note that as Alpine3D and Snowpack share many of their configuration keys, it is often a good idea
+ * to start by configuring a Snowpack simulation (for example on a single station of your data set), make sure everything seems to work as expected and then
+ * expand this configuration for Alpine3D (loading the exact same ini file in Inishell but with the "alpine3d" application selected). Currently, one
+ * limitation is that it is not possible to start an Alpine3D simulation from within Inishell, you have to run it from the command line.
+ *
+ * @section Results_visualization Visualizing simulation results
+ * There is also a java tool, "view" in the Alpine3D "Interface" sub directory that can be used to visualize ARC ASCII grids as well as to visualize
+ * DEM and LUS files in this format.
  * \image html view_tool.png "\"View\" application for visualizing grids"
  * \image latex view_tool.eps "\"View\" application for visualizing grids" width=0.9\textwidth
+ *
+ * @section Creating_lus_files Creating Land Use files
+ * The "view" java tool in the Alpine3D "Interface" sub directory, can be used to generate a LUS file by opening an aerial picture and manually
+ * tagging the pixels (one by one, along lines or within polygons). This tool can also generate a POI (points of interest) file for more
+ * detailed outputs at some specific points.
+ *     + open your DEM file;
+ *     + open an image file that has a <a href="https://en.wikipedia.org/wiki/World_file">world file</a>, such as jpg+jpw or png+pnw;
+ *     + open "Edit" > "create surface code"
+ *     + Select the pixels of interest (by polygone, one by one, etc) and convert previous surface codes into new ones (at start, the whole raster is filled with nodata)
+ *     + in the end, save your new LUS file!
+ * \image html view_tool_lus.jpg "\"View\" for creating a LUS file"
+ * \image latex view_tool_lus.eps "\"View\" for creating a LUS file" width=0.9\textwidth
  */
 
 /**

@@ -76,5 +76,7 @@ class WaterTransport {
 		double hoar_density_buried, hoar_density_surf, hoar_min_size_buried;
 		double minimum_l_element, comb_thresh_l;
 		bool useSoilLayers, water_layer, jam;
+
+		bool enable_vapour_transport;
 };
 #endif //End of WaterTransport.h

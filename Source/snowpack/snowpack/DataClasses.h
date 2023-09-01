@@ -223,7 +223,7 @@ class LayerData {
 		double hr;                  ///< Surface hoar Mass in kg m-2
 		double CDot;                ///< Stress rate (Pa s-1), that is the LAST overload change rate
 		double metamo;              ///< keep track of metamorphism
-		double salinity;            ///< salinity (kg/kg)
+		double salinity;            ///< bulk salinity (g/kg)
 		double h;                   ///< capillary pressure head (m)
 		double dsm;                 ///< dry snow metamorphism factor
 };
@@ -355,7 +355,7 @@ class ElementData {
 		size_t mk;                 ///< grain marker (history dependent)
 		unsigned short int type;   ///< grain class
 		double metamo;             ///< keep track of metamorphism
-		double salinity;           ///< salinity (PSU, which is g/kg)
+		double salinity;           ///< bulk salinity (PSU, which is g/kg)
 		double dth_w;              ///< Subsurface Melting & Freezing Data: change of water content
 		double res_wat_cont;       ///< Residual water content
 		double Qmf;                ///< Subsurface Melting & Freezing Data: change of energy due to phase changes (melt-freeze)
@@ -387,13 +387,20 @@ class ElementData {
 
 		unsigned short int ID;    ///< Element ID used to track elements
 		static const unsigned short int noID;
+
+		double rhov;                ///< vapor density...(kg/m^3)
+		double Qmm;                ///< Heat source/sink due to phase changes in the case of vapor transport (W/m^3)
+		double vapTrans_fluxDiff;  ///< vapor dissusion flux in the case of vapor transport (W/m^2/s)
+		double vapTrans_snowDenChangeRate;  ///< snow density change rate in the case of vapor transport (kg/m^3/s)
+		double vapTrans_cumulativeDenChange;  ///< cumulative density change  in the case of vapor transport (kg/m^3)
+		double vapTrans_underSaturationDegree;  ///< the degree of undersaturation, (rhov-rohv_sat)/rhov_sat (-)
 };
 
 /// @brief NODAL DATA used as a pointer in the SnowStation structure
 class NodeData {
 	public:
 		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.), S_n(0.), S_s(0.), ssi(6.), hoar(0.),
-		             dsm(0.), S_dsm(0.), Sigdsm(0.), rime(0.), soil_lysimeter(0.) {} //HACK: set ssi to max_stability!
+		             dsm(0.), S_dsm(0.), Sigdsm(0.), rime(0.), water_flux(0.), rhov(0.) {} //HACK: set ssi to max_stability!
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const NodeData& data);
@@ -415,7 +422,9 @@ class NodeData {
 		double Sigdsm;
 		double rime;
 
-		double soil_lysimeter; ///< Water flowing through the node
+		double water_flux; ///< Water flowing through the node (kg/m2). Positive values denote downward fluxes.
+
+		double rhov;    ///< nodal vapor density in kg/m^3
 };
 
 /**
@@ -624,6 +633,9 @@ class SnowStation {
 		void compSoilInternalEnergyChange(const double& sn_dt);
 		double getLiquidWaterIndex() const;
 		double getModelledTemperature(const double& z) const;
+		double getTotalLateralFlowSnow() const;
+		double getTotalLateralFlowSoil() const;
+		void resetSlopeParFlux();
 
 		size_t getNumberOfElements() const;
 		size_t getNumberOfNodes() const;
@@ -633,7 +645,7 @@ class SnowStation {
 
 		size_t find_tag(const size_t& tag) const;
 
-		void reset_lysimeters();
+		void reset_water_fluxes();
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const SnowStation& data);
@@ -754,7 +766,8 @@ class SurfaceFluxes {
 			MS_SNOWPACK_RUNOFF,///< The mass loss of snowpack from snow melt due to water transport (virtual lysimeter)
 			MS_SURFACE_MASS_FLUX, ///< The total mass loss of snowpack due to water transport (virtual lysimeter)
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
-			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
+			MS_FLOODING,       ///< The mass gain due to adding ocean water to snow- seaice by flodding process
+			MS_ICEBASE_MELTING_FREEZING,       ///< The mass gain/loss of the ice base due to melting-freezing
 			MS_SNOW_DHS,       ///< Snow height change due to snowfall (m)
 			MS_SETTLING_DHS,   ///< Snow height change due to settling, and element removal (m)
 			MS_SUBL_DHS,       ///< Snow height change due to sublimation (m)

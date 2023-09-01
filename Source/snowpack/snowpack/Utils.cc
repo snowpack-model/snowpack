@@ -50,14 +50,14 @@ std::string getLibVersion() {
  * - "msg-" : [i] []      \<msg> \<n>
  * @author Charles Fierz \n Mathias Bavay
  * @version 11.02
- * @param *theFile
+ * @param *fileAndPath
  * @param theLine
  * @param *msg_type See above
  * @param date_in Use Date() if date_in is not available.
  * @param *format Format for message
  * @param ... Variable number of parameters to format
  */
-void prn_msg(const char *theFile, const int theLine, const char *msg_type, const mio::Date& date_in, const char *format, ...)
+void prn_msg(const char *fileAndPath, const int theLine, const char *msg_type, const mio::Date& date_in, const char *format, ...)
 {
 	va_list argptr; // get an arg ptr
 	int msg_ok = 0;
@@ -74,6 +74,18 @@ void prn_msg(const char *theFile, const int theLine, const char *msg_type, const
 	} else {
 		currentdate = date_in.toString(Date::ISO);
 	}
+
+	//doing it pure c for performance
+#if defined _WIN32
+	#if !defined __CYGWIN__
+		const char *delim = strrchr(fileAndPath, '\\');
+	#else
+		const char *delim = strrchr(fileAndPath, '/');
+	#endif
+#else
+	const char *delim = strrchr(fileAndPath, '/');
+#endif
+	const char *theFile = delim ? delim + 1 : fileAndPath;
 
 	//print message
 	//printf("¬"); //if we need multiline output, use a special char as bloc delimiter

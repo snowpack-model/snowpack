@@ -31,6 +31,11 @@
 using namespace std;
 using namespace mio;
 
+/**
+ * @page technical_snow Technical snow
+ *
+ */
+
 TechSnow::TechSnow(const SnowpackConfig& cfg)
         : grooming_week_start(cfg.get("GROOMING_WEEK_START", "TechSnow")), grooming_week_end(cfg.get("GROOMING_WEEK_END", "TechSnow")),
           grooming_hour(cfg.get("GROOMING_HOUR", "TechSnow")), min_depth( cfg.get("GROOMING_DEPTH_START", "TechSnow")),

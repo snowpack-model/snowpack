@@ -91,6 +91,8 @@ namespace mio {
  *     - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  *     - GRID2DPATH: if this directory contains files, they will be used for reading the input from; [Input] and [Output] section
  *     - GRID2DFILE: force reading the data from a single file within GRID2DPATH or specify the output file name; [Input] and [Output] section
+ *     - NETCDF_SPLIT_BY_YEAR: create a new file for each year of data, the precise naming being based on GRID2DFILE (default: false); [Output]
+ *     - NETCDF_SPLIT_BY_VAR: create a new file for each variable, the precise naming being based on GRID2DFILE (default: false); [Output]
  * - Time series handling:
  *     - STATION#: if provided, only the given station IDs will be kept in the input data (this is specially useful when reading a file containing multiple stations); [Input]
  *     - METEOPATH: meteo files directory where to read the meteofiles from; [Input] section. Two modes are available when reading input files:
@@ -226,12 +228,20 @@ namespace mio {
  * Ideally, download the hourly data and select the following fields:
  * 10 metre U wind component, 10 metre V wind component, 2 metre dewpoint temperature, 2 metre temperature, Near IR albedo for direct radiation, Skin temperature, Snow density, Snow depth, Soil temperature level 1, Surface pressure, Mean surface downward short-wave radiation flux, Mean surface downward long-wave radiation flux, Total precipitation
  *
- * Here we have included the *albedo* so the RSWR can be computed from ISWR. You should download the altitude separately (it is in the
- * "others" section on the bottom of the page where you select the data to download).
+ * Here we have included the *albedo* so the RSWR can be computed from ISWR. You should download the altitude separately, it is available as variable:
+ * 'geopotential'. You need an additional python script where you download it for a single point in time so it is readable as a DEM.
  *
  * @note The reanalysis runs offer the mean fluxes over the last hour as well as accumulated precipitation over the last hour, making it very easy to work with.
  *
- * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, the request would be the following:
+ * With the <A HREF="https://pypi.org/project/cdsapi/">cdsapi Python Library</A>, you can use the code provided below to request the necessary data. Before
+ * using this Python code, you need to write your user ID and API key into the cdsapi configuration file:
+ *    + go to <a href="https://cds.climate.copernicus.eu/user">Copernicus.eu</a> and click on your user name to find your credentials (UID and API key);
+ *    + create a new file (in your home directory on Linux) named <i>".cdsapirc"</i> with the following content:
+ *    <pre>
+ *    url: https://cds.climate.copernicus.eu/api/v2
+ *    key: {UID}:{API key}
+ *    verify: 0
+ *    </pre>
  *
  * @code
  * #!/usr/bin/env python
@@ -328,14 +338,14 @@ namespace mio {
  */
 
 NetCDFIO::NetCDFIO(const std::string& configfile)
-         : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
+         : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema_grid("CF-1.6"), out_schema_grid("CF-1.6"), in_schema_meteo("CF-1.6"), out_schema_meteo("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
          out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
 {
 	parseInputOutputSection();
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader)
-         : cfg(cfgreader), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema("CF-1.6"), out_schema("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
+         : cfg(cfgreader), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema_grid("CF-1.6"), out_schema_grid("CF-1.6"), in_schema_meteo("CF-1.6"), out_schema_meteo("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
          out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
 {
 	parseInputOutputSection();
@@ -346,12 +356,12 @@ void NetCDFIO::parseInputOutputSection()
 	const std::string in_grid2d = IOUtils::strToUpper( cfg.get("GRID2D", "Input", "") );
 	if (in_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
-		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
+		cfg.getValue("NETCDF_SCHEMA_GRID", "Input", in_schema_grid, IOUtils::nothrow); IOUtils::toUpper(in_schema_grid);
 
 		const std::string grid2d_in_file = cfg.get("GRID2DFILE", "Input", "");
 		if (!grid2d_in_file.empty()) {
 			if (!FileUtils::fileExists(grid2d_in_file)) throw AccessException(grid2d_in_file, AT); //prevent invalid filenames
-			ncFiles file(grid2d_in_file, ncFiles::READ, cfg, in_schema, debug);
+			ncFiles file(grid2d_in_file, ncFiles::READ, cfg, in_schema_grid, debug);
 			cache_grid_files.push_back( make_pair(file.getDateRange(), file) );
 		} else {
 			cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
@@ -361,7 +371,7 @@ void NetCDFIO::parseInputOutputSection()
 
 	const std::string out_grid2d = IOUtils::strToUpper( cfg.get("GRID2D", "Output", "") );
 	if (out_grid2d=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
+		cfg.getValue("NETCDF_SCHEMA_GRID", "Output", out_schema_grid, IOUtils::nothrow); IOUtils::toUpper(out_schema_grid);
 		cfg.getValue("GRID2DPATH", "Output", out_grid2d_path);
 		cfg.getValue("GRID2DFILE", "Output", grid2d_out_file);
 		cfg.getValue("NETCDF_SPLIT_BY_YEAR", "Output", split_by_year, IOUtils::nothrow);
@@ -371,7 +381,7 @@ void NetCDFIO::parseInputOutputSection()
 	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
-		cfg.getValue("NETCDF_SCHEMA", "Input", in_schema, IOUtils::nothrow); IOUtils::toUpper(in_schema);
+		cfg.getValue("NETCDF_SCHEMA_METEO", "Input", in_schema_meteo, IOUtils::nothrow); IOUtils::toUpper(in_schema_meteo);
 		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
 
 		std::vector<std::string> vecFilenames;
@@ -385,7 +395,7 @@ void NetCDFIO::parseInputOutputSection()
 				const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+in_nc_ext;
 				if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException(file_and_path, AT);
 
-				cache_inmeteo_files.push_back( ncFiles(file_and_path, ncFiles::READ, cfg, in_schema, debug) );
+				cache_inmeteo_files.push_back( ncFiles(file_and_path, ncFiles::READ, cfg, in_schema_meteo, debug) );
 			}
 		} else { //no filenames provided, so get all the files within METEOPATH having the right extension
 			bool is_recursive = false;
@@ -395,7 +405,7 @@ void NetCDFIO::parseInputOutputSection()
 			
 			for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
 				if (!FileUtils::validFileAndPath( *it )) throw InvalidNameException( *it , AT);
-				cache_inmeteo_files.push_back( ncFiles(inpath+"/"+*it, ncFiles::READ, cfg, in_schema, debug) );
+				cache_inmeteo_files.push_back( ncFiles(inpath+"/"+*it, ncFiles::READ, cfg, in_schema_meteo, debug) );
 			}
 		}
 		
@@ -409,7 +419,7 @@ void NetCDFIO::parseInputOutputSection()
 
 	const std::string out_meteo = IOUtils::strToUpper( cfg.get("METEO", "Output", "") );
 	if (out_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("NETCDF_SCHEMA", "Output", out_schema, IOUtils::nothrow); IOUtils::toUpper(out_schema);
+		cfg.getValue("NETCDF_SCHEMA_METEO", "Output", out_schema_meteo, IOUtils::nothrow); IOUtils::toUpper(out_schema_meteo);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
 		cfg.getValue("NC_SINGLE_FILE", "Output", out_single_file, IOUtils::nothrow);
 		if (out_single_file) cfg.getValue("METEOFILE", "Output", out_meteo_file);
@@ -428,7 +438,7 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 	while ((it != dirlist.end())) {
 		const std::string filename( in_path + "/" + *it );
 		if (!FileUtils::fileExists(filename)) throw AccessException(filename, AT); //prevent invalid filenames
-		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
+		ncFiles file(filename, ncFiles::READ, cfg, in_schema_grid, debug);
 		if (file.hasDimension(ncpp::TIME))
 			nc_files.push_back( make_pair(file.getDateRange(), file) );
 		++it;
@@ -474,10 +484,10 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 	IOUtils::readLineToVec(arguments, vec_argument, ':');
 
 	if (vec_argument.size() == 2) {
-		ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema, debug);
+		ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema_grid, debug);
 		grid_out = file.read2DGrid(vec_argument[1]);
 	} else if (vec_argument.size() == 1) {
-		ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema, debug);
+		ncFiles file(vec_argument[0], ncFiles::READ, cfg, in_schema_grid, debug);
 		grid_out = file.read2DGrid("");
 	} else {
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::read2DGrid is filename:varname", AT);
@@ -511,7 +521,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 	} else {
 		const std::string filename = cfg.get("GRID2DFILE", "Input");
 		if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT); //prevent invalid filenames
-		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
+		ncFiles file(filename, ncFiles::READ, cfg, in_schema_grid, debug);
 		grid_out = file.read2DGrid(parameter, date);
 	}
 }
@@ -543,7 +553,7 @@ void NetCDFIO::readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::P
 	} else {
 		const std::string filename = cfg.get("GRID2DFILE", "Input");
 		if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT); //prevent invalid filenames
-		ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
+		ncFiles file(filename, ncFiles::READ, cfg, in_schema_grid, debug);
 		data = file.readPointsIn2DGrid(parameter, date, Pts);
 	}
 }
@@ -552,9 +562,10 @@ void NetCDFIO::readDEM(DEMObject& dem_out)
 {
 	const std::string filename = cfg.get("DEMFILE", "Input");
 	const std::string varname = cfg.get("DEMVAR", "Input", "");
+	const std::string in_schema_dem = cfg.get("NETCDF_SCHEMA_DEM","Input");
 
 	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
-	ncFiles file(filename, ncFiles::READ, cfg, in_schema, debug);
+	ncFiles file(filename, ncFiles::READ, cfg, in_schema_dem, debug);
 	const Grid2DObject grid = (varname.empty())? file.read2DGrid(MeteoGrids::DEM, Date()) : file.read2DGrid(varname);
 	dem_out = DEMObject( grid ); //we can not directly assign a Grid2DObject to a DEMObject
 }
@@ -588,7 +599,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 
 	if (cache_grids_out.find(file_and_path) == cache_grids_out.end()) {
 		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
-		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema, debug)));
+		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema_grid, debug)));
 	}
 	cache_grids_out.at(file_and_path).write2DGrid(grid_in, IOUtils::npos, vec_argument[0], date);
 }
@@ -610,7 +621,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 
 	if (cache_grids_out.find(file_and_path) == cache_grids_out.end()) {
 		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
-		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema, debug)));
+		cache_grids_out.insert(std::pair<std::string, ncFiles> (file_and_path,ncFiles(file_and_path, file_mode, cfg, out_schema_grid, debug)));
 	}
 	
 	if (parameter==MeteoGrids::DEM || parameter==MeteoGrids::SHADE || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
@@ -627,7 +638,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 		if (FileUtils::fileExists(file_and_path)) throw IOException("Appending data to timeseries is currently non-functional for NetCDF, please delete file "+file_and_path, AT);
 
 		const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
-		ncFiles file(file_and_path, file_mode, cfg, out_schema, debug);
+		ncFiles file(file_and_path, file_mode, cfg, out_schema_meteo, debug);
 		file.writeMeteo(vecMeteo);
 	} else {
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
@@ -637,7 +648,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 			if (FileUtils::fileExists(file_and_path)) throw IOException("Appending data to timeseries is currently non-functional for NetCDF, please delete file "+file_and_path, AT);
 
 			const ncFiles::Mode file_mode = (FileUtils::fileExists(file_and_path))? ncFiles::READ : ncFiles::WRITE;
-			ncFiles file(file_and_path, file_mode, cfg, out_schema, debug);
+			ncFiles file(file_and_path, file_mode, cfg, out_schema_meteo, debug);
 			file.writeMeteo(vecMeteo, ii);
 		}
 	}
@@ -1275,7 +1286,7 @@ std::vector<StationData> ncFiles::readStationData()
 	if (hasDimension(ncpp::STATION)) { //multiple stations per file or one station but still with STATION dimension
 		//the gelocalisation must be available
 		if ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth)))
-			throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
+			throw InvalidFormatException("No station geolocalization found in file "+file_and_path+", either missing lat/lon or altitude", AT);
 
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
@@ -1321,9 +1332,10 @@ std::vector<StationData> ncFiles::readStationData()
 		}
 
 	} else { //only one station, no station dimension
+		if (dimensions_map[ncpp::LONGITUDE].length > 1 || dimensions_map[ncpp::EASTING].length > 1)
+			throw InvalidFormatException("Expecting one position, found multiple ones in file "+file_and_path+". Are you attempting to read gridded data as stations? If so, please look at \"spatial resampling\" in the documentation!", AT);
 		if (!allow_missing_coords && ((!hasVariable(MeteoGrids::DEM) || (!hasLatLon && !hasEastNorth))))
-			throw InvalidFormatException("No station geolocalization found in file "+file_and_path, AT);
-
+			throw InvalidFormatException("No station geolocalization found in file " + file_and_path+" (either missing lat/lon or altitude)", AT);
 		if (ncid==-1) {
 			ncpp::open_file(file_and_path, NC_NOWRITE, ncid);
 			nc_filename = file_and_path;

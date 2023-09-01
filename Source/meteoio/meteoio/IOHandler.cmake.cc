@@ -202,6 +202,7 @@ namespace mio {
 IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) const
 {
 	IOUtils::toUpper( plugin_name );
+	if (plugin_name == "NONE") throw IOException("NONE plugin specified, but a functioning plugin was requested. Make sure you are not trying to read timeseries data with this plugin.");
 #ifdef PLUGIN_ALPUG
 	if (plugin_name == "ALPUG") return new ALPUG(i_cfg);
 #endif

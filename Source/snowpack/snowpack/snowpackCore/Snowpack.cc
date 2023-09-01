@@ -239,6 +239,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
 
+
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
 	* - If VW_DENDRICITY is set, new snow dendricity is f(vw)
@@ -539,6 +540,13 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Add the source/sink term resulting from phase changes
 	Fe[1] += Edata.Qph_up * 0.5 * Edata.L;
 	Fe[0] += Edata.Qph_down * 0.5 * Edata.L;
+
+	// Add the source/sink term resulting from phase changes (due to water vapor transport)
+	Fe[1] += Edata.Qmm * 1.0 * Edata.L;
+	Fe[0] += Edata.Qmm * 1.0 * Edata.L;
+
+	//Se[1][1] += Edata.Qmm*Edata.L/Edata.Te;
+	//Fe[1] += Edata.Qmm*Edata.L;
 
 	return true;
 }
@@ -2121,7 +2129,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
 			// Run sea ice module
-			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt);
+			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt, Sdata);
 			// Remesh when necessary
 			Xdata.splitElements(2. * comb_thresh_l, comb_thresh_l);
 		}
@@ -2270,6 +2278,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 		// and creep solution routines will not pick up the new mesh boolean.
 		double ql = Bdata.ql;	// Variable to keep track of how latent heat is used
 		watertransport.compTransportMass(Mdata, Xdata, Sdata, ql);
+
 		vapourtransport.compTransportMass(Mdata, ql, Xdata, Sdata);
 
 		// See if any SUBSURFACE phase changes are occuring due to updated water content (infiltrating rain/melt water in cold snow layers)

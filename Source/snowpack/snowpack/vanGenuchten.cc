@@ -51,7 +51,7 @@ vanGenuchten::vanGenuchten(const vanGenuchten& c) :
 /**
  * @brief Assignment operator \n
  * @author Nander Wever
- * @param c Class to assign
+ * @param source Class to assign
  */
 vanGenuchten& vanGenuchten::operator=(const vanGenuchten& source) {
 	if(this != &source) {
@@ -86,16 +86,16 @@ std::iostream& operator<<(std::iostream& os, const vanGenuchten& data)
 
 std::iostream& operator>>(std::iostream& is, vanGenuchten& data)
 {
-	is.write(reinterpret_cast<const char*>(&data.EMS), sizeof(data.EMS));
-	is.write(reinterpret_cast<const char*>(&data.theta_r), sizeof(data.theta_r));
-	is.write(reinterpret_cast<const char*>(&data.theta_s), sizeof(data.theta_s));
-	is.write(reinterpret_cast<const char*>(&data.alpha), sizeof(data.alpha));
-	is.write(reinterpret_cast<const char*>(&data.n), sizeof(data.n));
-	is.write(reinterpret_cast<const char*>(&data.m), sizeof(data.m));
-	is.write(reinterpret_cast<const char*>(&data.h_e), sizeof(data.h_e));
-	is.write(reinterpret_cast<const char*>(&data.Sc), sizeof(data.Sc));
-	is.write(reinterpret_cast<const char*>(&data.ksat), sizeof(data.ksat));
-	is.write(reinterpret_cast<const char*>(&data.defined), sizeof(data.defined));
+	is.read(reinterpret_cast<char*>(&data.EMS), sizeof(data.EMS));
+	is.read(reinterpret_cast<char*>(&data.theta_r), sizeof(data.theta_r));
+	is.read(reinterpret_cast<char*>(&data.theta_s), sizeof(data.theta_s));
+	is.read(reinterpret_cast<char*>(&data.alpha), sizeof(data.alpha));
+	is.read(reinterpret_cast<char*>(&data.n), sizeof(data.n));
+	is.read(reinterpret_cast<char*>(&data.m), sizeof(data.m));
+	is.read(reinterpret_cast<char*>(&data.h_e), sizeof(data.h_e));
+	is.read(reinterpret_cast<char*>(&data.Sc), sizeof(data.Sc));
+	is.read(reinterpret_cast<char*>(&data.ksat), sizeof(data.ksat));
+	is.read(reinterpret_cast<char*>(&data.defined), sizeof(data.defined));
 	return is;
 }
 
@@ -381,6 +381,7 @@ double vanGenuchten::dtheta_dh(const double h) {
  * @param VGModelTypeSnow van Genuchten model parameterization to use
  * @param K_PARAM hydraulic conductivity parameterization to use
  * @param matrix true: set parameters for matrix domain. false: set parameters for preferential flow domain
+ * @param seaice if true: use some tweaks for sea ice.
  */
 void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelTypeSnow, const K_Parameterizations K_PARAM, const bool& matrix, const bool& seaice)
 {
@@ -534,6 +535,51 @@ void vanGenuchten::SetVGParamsSnow(const VanGenuchten_ModelTypesSnow VGModelType
 	return;
 }
 
+
+/**
+ * @brief Enforce thermal equilibrium in the soil layers\n
+ * @param fixTemp If true, keep element temperature fixed and repartition theta[ICE] and theta[WATER]. If false, keep theta[ICE] and theta[WATER] fixed, and calculate element temperature. The latter approach is prone to singularities. For example, a soil layer with a temperature below Constants::meltfreeze_tk, but with only water and no ice, cannot be properly initialized (i.e., there is no solution that satisfies thermal equilibrium).
+ * @return True: element state was modified by this function, false: element state was not modified by this function
+ * @author Nander Wever
+ */
+bool vanGenuchten::enforceThermalEquilibrium(const bool fixTemp)
+{
+	const double h_d = -1E10;
+	if(EMS->theta[SOIL] > 0. && EMS->Te < Constants::meltfreeze_tk) {
+		// If this is a soil layer with temperatures below the freezing point of water
+		const double hw0 = fromTHETAtoHforICE(EMS->theta[WATER], h_d, EMS->theta[ICE]);
+		EMS->meltfreeze_tk = Constants::meltfreeze_tk + ((Constants::g*Constants::meltfreeze_tk) / Constants::lh_fusion) * hw0;
+		if (fixTemp) {
+			// Keep temperature fixed, repartition ice and water according to prescribed temperature
+			if (EMS->Te >= EMS->meltfreeze_tk) {
+				// Above freezing point, only water
+				const double theta_w_new = fromHtoTHETA(hw0);
+				static const double theta_ice_new = 0.;
+				EMS->theta[ICE] = theta_ice_new;
+				EMS->theta[WATER] = theta_w_new;
+				EMS->theta[AIR] = 1. - EMS->theta[WATER] - EMS->theta[WATER_PREF] - EMS->theta[ICE] - EMS->theta[SOIL];
+			} else {
+				// Freezing conditions
+				const double theta_w_new = fromHtoTHETA(hw0 + (Constants::lh_fusion / (Constants::g * EMS->meltfreeze_tk)) * (EMS->Te - EMS->meltfreeze_tk));
+				const double theta_ice_new = (fromHtoTHETA(hw0) - theta_w_new) / (Constants::density_ice/Constants::density_water);
+				EMS->theta[ICE] = theta_ice_new;
+				EMS->theta[WATER] = theta_w_new;
+				EMS->theta[AIR] = 1. - EMS->theta[WATER] - EMS->theta[WATER_PREF] - EMS->theta[ICE] - EMS->theta[SOIL];
+			}
+		} else {
+			// Keep theta[ICE] and theta[WATER] constant, and recalculate element temperature
+			double Te_new = Constants::meltfreeze_tk;
+			if (EMS->theta[ICE] > 0.) {
+				Te_new = (fromTHETAtoH(EMS->theta[WATER], h_d) - hw0) * ((Constants::g * EMS->meltfreeze_tk) / Constants::lh_fusion) + EMS->meltfreeze_tk;
+				//throw mio::UnknownValueException("Not implemented yet.", AT);
+			}
+			EMS->Te = Te_new;
+		}
+		return true;
+	} else {
+		return false;
+	}
+}
 
 /**
  * @brief Initialize van Genuchten model for soil layers, based on index approach via grain size\n

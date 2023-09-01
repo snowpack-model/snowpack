@@ -38,6 +38,11 @@
  *    -# \subpage getting_started "Getting Started"
  *    -# Model principles
  *        -# \subpage general "General concepts"
+ *        -# Submodels documentation
+ *            -# \subpage water_transport "Water Transport"
+ *            -# \subpage water_vapor_transport "Water Vapor Transport"
+ *            -# \subpage sea_ice "Sea Ice"
+ *            -# \subpage technical_snow "Technical snow"
  *        -# \subpage references "References"
  *        -# \subpage uses "Use cases"
  *    -# Inputs / Outputs
@@ -89,7 +94,7 @@
  *    the last command line it contains into a terminal). You can also manually run %Snowpack, by typing something like
  *    <i>snowpack -c {ini file with path} -e {simulation end date in ISO format}</i>.
  * -# Once the simulation is finished, the results are available in the \b output directory. This directory \b must exist before you run the simulation!
- * -# The results can be visualized using the \ref sngui_config "sngui tool" by opening the <b>.pro</b> file that was generated in \b output.
+ * -# The results can be visualized using the <a href="https://run.niviz.org">niViz tool</a> and opening the <b>.pro</b> file that was generated in \b output.
  *
  * @section Running_own_simulation Running your own simulation
  * Once you have been able to run an example simulation, you can try to run your own simulation. This involves the following steps:
@@ -102,7 +107,7 @@
  * -# Then, run the simulation from a terminal (after going to the directory where your simulation is) with a command line such as
  *    <i>snowpack -c {ini file with path} -e {simulation end date in ISO format}</i>.
  * -# Once the simulation is finished, the results are available in the \b output directory. This directory \b must exist before you run the simulation!
- * -# The results can be visualized using the \ref sngui_config "sngui tool" by opening the <b>.pro</b> file that was generated in \b output.
+ * -# The results can be visualized using the <a href="https://run.niviz.org">niViz tool</a> and opening the <b>.pro</b> file that was generated in \b output.
  *
  * @section model_workflow Simulation workflow
  * When running a simulation, it is important to keep in mind that the model is organized as several modules that interract together. It is possible to configure
@@ -252,7 +257,7 @@
  *
  * @subsection model_ebalance Energy Balance
  * The figure below shows the various fluxes that are part of the energy balance of the SNOWPACK model. These are available in the output files as well as
- * through the sngui interface.
+ * through the <a href="https://niviz.org">niViz</a> interface.
  *
  * \image html energy_balance.png "Energy Balance components of the SNOWPACK model"
  * \image latex energy_balance.eps "Energy Balance components of the SNOWPACK model" width=0.9\textwidth
@@ -441,7 +446,7 @@
  * label the columns as TS1, TS2, TS3, etc. If you use the snio format, refer to the documentation.
  * User defined positions (m) should be provided in the SnowpackAdvanced section of the \em "io.ini" file,
  *   for example, FIXED_POSITIONS = "0.25 0.50 -0.10":
- *   - positive values refer to heigths measured from the ground surface (snow only)
+ *   - positive values refer to heights measured from the ground surface (snow only)
  *   - negative values refer to depths measured from either the ground surface or the snow surface in case no soil
  *       layers are present
  *   - A sensor must at least be covered by MIN_DEPTH_SUBSURF (m) snow for its temperature to be output.
@@ -496,6 +501,30 @@
  * The %Snowpack_advanced section contains settings that previously required to edit the source code and recompile the model. Since these settings
  * deeply transform the operation of the model, please <b>refrain from using them</b> if you are not absolutely sure of what you are doing.
  *
+ * @section soil_hydraulic_properties Setting soil hydraulic properties with Richards Equation
+ * When selecting `WATERTRANSPORTMODEL_SOIL = RICHARDSEQUATION`, the grain size (`rg`) of the soil layers in the `*.sno` file is used to determine the water retention properties of the soil, according to the following values:
+ * <table>
+ * <caption id="multi_row">Soil type definitions</caption>
+ * <tr><th>Soil type   <th>rg
+ * <tr><td>ORGANIC<td>0.2
+ * <tr><td>CLAY<td>0.5
+ * <tr><td>CLAYLOAM<td>1.5
+ * <tr><td>LOAM<td>2.5
+ * <tr><td>LOAMYSAND<td>3.5
+ * <tr><td>SAND<td>4.5
+ * <tr><td>SANDYCLAY<td>5.5
+ * <tr><td>SANDYCLAYLOAM<td>6.5
+ * <tr><td>SANDYLOAM<td>7.5
+ * <tr><td>SILT<td>8.5
+ * <tr><td>SILTYCLAY<td>9.5
+ * <tr><td>SILTYCLAYLOAM<td>10.5
+ * <tr><td>SILTLOAM<td>11.5
+ * <tr><td>WFJGRAVELSAND<td>12.5
+ * </table>
+ * Notes:
+ * - Here, the soil types refer to the <a href="https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/">ROSETTA Class Average Hydraulic Parameters</a>.
+ * - When using Richards equation, theta[SOIL] is set according to the soil type and the values specified in the *.sno file will be ignored.
+ * - WFJGRAVELSAND is a special type created for initial simulations for Weissfluhjoch. In later simulations, LOAMYSAND has been used for Weissfluhjoch.
  */
 
 /**
@@ -504,7 +533,7 @@
  * (see section \subpage snowpackio "Snowpack file formats"). These files can be processed with some scripts, relying on GNU plot or R for generating graphs
  * but are usually viewed with a graphical application such as the open source, online niViz application.
  * 
- * @section snopviz The SnopViz tool
+ * @section snopviz The niViz tool
  * This javascript application work in any sufficiently recent web browser ( firefox >= 33.0, Safari >= 5.1, Internet Explorer >= 11.0, 
  * Chrome >= 38). You can either use it <a href="https://run.niviz.org">online</a> and then open your profile to visualize or you can 
  * <a href="https://code.wsl.ch/snow-models/niviz/-/wikis/home">download</a> a pre-packaged version that can be installed for offline use on your computer.
