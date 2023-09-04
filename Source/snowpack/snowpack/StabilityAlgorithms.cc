@@ -923,7 +923,7 @@ bool StabilityAlgorithms::classifyType_SchweizerLuetschg(SnowStation& Xdata)
 	vector<NodeData>& NDS = Xdata.Ndata;
 
 	//temporary vectors
-	vector<double> z_el(nE_s, 0.0);                            // Vertical element heigth (m)
+	vector<double> z_el(nE_s, 0.0);                            // Vertical element height (m)
 	vector<double> L_el(nE_s, 0.0);                            // Vertical element thickness (m)
 	vector<double> hard(nE_s, 0.0);                            // Hardness in N
 	vector<double> red_hard(nE_s, 0.0);                        // Reduced hardness in N

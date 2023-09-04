@@ -92,6 +92,7 @@ class SmetIO : public SnowpackIOInterface {
 		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope, haz_write;
 		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_dhs, out_t, out_load, out_stab, out_canopy, out_soileb;
+		bool useRichardsEq;
 		bool enable_pref_flow;
 		bool enable_ice_reservoir;
 		bool read_dsm;

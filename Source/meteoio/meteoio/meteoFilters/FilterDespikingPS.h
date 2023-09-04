@@ -102,25 +102,25 @@ class FilterDespikingPS : public ProcessingBlock {
 
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
-		std::vector<int> findSpikesGoring(const std::vector<double>& timeVec, const std::vector<double>& ivec, unsigned int& nNewSpikes);
-		std::vector<int> findSpikesMori(const std::vector<double>& timeVec, const std::vector<double>& ivec, unsigned int& nNewSpikes);
-		void replaceSpikes(const std::vector<double>& timeVec, std::vector<double>& uVec, std::vector<int>& spikesVec);
+		std::vector<int> findSpikesGoring(const std::vector<double>& timeVec, const std::vector<double>& ivec, unsigned int& nNewSpikes) const;
+		std::vector<int> findSpikesMori(const std::vector<double>& timeVec, const std::vector<double>& ivec, unsigned int& nNewSpikes) const;
+		void replaceSpikes(const std::vector<double>& timeVec, std::vector<double>& uVec, std::vector<int>& spikesVec) const;
 
-		std::vector<double> calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec);
-		double calculateCrossCorrelation(const std::vector<double>& aVec,const std::vector<double>& bVec);
-		unsigned int nNodataElements(const std::vector<double>& iVec);
-		void findPointsOutsideEllipse(const std::vector<double>& xVec,const std::vector<double>& yVec,
+		static std::vector<double> calculateDerivatives(const std::vector<double>& ivec, const std::vector<double>& timeVec);
+		static double calculateCrossCorrelation(const std::vector<double>& aVec,const std::vector<double>& bVec);
+		static unsigned int nNodataElements(const std::vector<double>& iVec);
+		static void findPointsOutsideEllipse(const std::vector<double>& xVec,const std::vector<double>& yVec,
                                       const double a,const double b,const double theta, std::vector<int>& outsideVec);
-		void findPointsOutsideEllipsoid(const std::vector<double>& xVec,const std::vector<double>& yVec, const std::vector<double>& zVec,
+		static void findPointsOutsideEllipsoid(const std::vector<double>& xVec,const std::vector<double>& yVec, const std::vector<double>& zVec,
                                                 const double a,const double b,const double c, std::vector<int>& outsideVec);
 		void getWindowForInterpolation(const size_t index,const std::vector<double>& timeVec, const std::vector<double>& uVec,
-                                       const std::vector<int>& spikesVec, std::vector<double>& xVec, std::vector<double>& yVec);
-		bool checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,const unsigned int minPoints,
+                                       const std::vector<int>& spikesVec, std::vector<double>& xVec, std::vector<double>& yVec) const;
+		static bool checkIfWindowForInterpolationIsSufficient(const std::vector<double>& xVec,const double time,const unsigned int minPoints,
                                                        const bool avoidExtrapolation);
 		//helper functions:
-		void solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x);
-		const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec, const unsigned int& param);
-		const std::vector<double> helperGetTimeVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec);
+		static void solve2X2LinearEquations(const double* a, const double* b, const double* c, double* x);
+		static const std::vector<double> helperGetDoubleVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec, const unsigned int& param);
+		static const std::vector<double> helperGetTimeVectorOutOfMeteoDataVector(const std::vector<MeteoData>& ivec);
 
 		double sensitivityParam; //this parameter controls the sensitivity of the filter. standard value: 1
 		implementation_type methodParam; //this parameter controls which implementation of the filter is used: according to Mori or Goring

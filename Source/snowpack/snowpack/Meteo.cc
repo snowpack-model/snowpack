@@ -162,7 +162,7 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 double Meteo::windspeedProfile(const CurrentMeteo& Mdata, const double& target_z, const double& source_vw) {
 	const double d_pump = 0.;
 	const double z_ratio = log((target_z - d_pump) / Mdata.z0);
-	const double ustar_corr = (source_vw < 0. || Mdata.vw < 0.) ? (Mdata.ustar) : (Mdata.ustar * (source_vw / Mdata.vw));
+	const double ustar_corr = (source_vw < 0. || Mdata.vw <= 0.) ? (Mdata.ustar) : (Mdata.ustar * (source_vw / Mdata.vw));
 	const double vw_corr = (ustar_corr / Constants::karman) * (z_ratio - Mdata.psi_m);
 	return vw_corr;
 }

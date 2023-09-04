@@ -238,6 +238,9 @@ void SMETIO::parseInputOutputSection()
 			outputIsAscii = true;
 		else
 			throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
+
+		if (allowOverwrite && allowAppend)
+			throw InvalidFormatException("Cannot allow both SMET_APPEND and SMET_OVERWRITE", AT);
 	}
 }
 

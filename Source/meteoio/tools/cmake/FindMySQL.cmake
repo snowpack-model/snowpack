@@ -52,15 +52,15 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 IF(MySQL_LIBRARY)
-	#build MySQL_ROOT so we can provide a hint for searching for the matching header file
-	GET_FILENAME_COMPONENT(MySQL_ROOT ${MySQL_LIBRARY} DIRECTORY) #get PATH
-	GET_FILENAME_COMPONENT(MySQL_ROOT ${MySQL_ROOT} DIRECTORY) #go up one level
+	#build MySQL_ROOT_PATH so we can provide a hint for searching for the matching header file
+	GET_FILENAME_COMPONENT(MySQL_ROOT_PATH ${MySQL_LIBRARY} DIRECTORY) #get PATH
+	GET_FILENAME_COMPONENT(MySQL_ROOT_PATH ${MySQL_ROOT_PATH} DIRECTORY) #go up one level
 
 	# locate main header file
 	FIND_PATH(MySQL_INCLUDE_DIR
 	NAMES mysql.h
 	HINTS
-		"${MySQL_ROOT}/include"
+		"${MySQL_ROOT_PATH}/include"
 		"~/usr/include/mysql"
 		"/usr/local/include/mysql"
 		"/usr/include/mysql"

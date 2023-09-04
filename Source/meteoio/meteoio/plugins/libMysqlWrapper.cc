@@ -42,10 +42,10 @@ SQL_FIELD::SQL_FIELD(const mio::Date& i_dt, const std::string& i_param, const un
 
 void SQL_FIELD::resetDate() 
 {
-	dt.year = 0; 
-	dt.month = 0; 
-	dt.day = 0; 
-	dt.hour = 0; 
+	dt.year   = 0;
+	dt.month  = 0;
+	dt.day    = 0;
+	dt.hour   = 0;
 	dt.minute = 0; 
 	dt.second = 0; 
 	dt.second_part = 0;
@@ -99,10 +99,10 @@ void SQL_FIELD::setDouble(const double& i_val)
 
 mio::Date SQL_FIELD::getDate(const double& TZ) const 
 {
-	const int year = static_cast<int>(dt.year);
-	const int month = static_cast<int>(dt.month);
-	const int day = static_cast<int>(dt.day);
-	const int hour = static_cast<int>(dt.hour);
+	const int year   = static_cast<int>(dt.year);
+	const int month  = static_cast<int>(dt.month);
+	const int day    = static_cast<int>(dt.day);
+	const int hour   = static_cast<int>(dt.hour);
 	const int minute = static_cast<int>(dt.minute);
 	const double seconds = static_cast<double>(dt.second) + static_cast<double>(dt.second_part)*1e-6;
 	
@@ -179,6 +179,7 @@ void bindResults(MYSQL_STMT **stmt, std::vector<SQL_FIELD> &result_fields)
 {
 	MYSQL_RES *prepare_meta_result = mysql_stmt_result_metadata(*stmt);
 	if (!prepare_meta_result) throw IOException("Error executing meta statement", AT);
+
 	const size_t column_count = static_cast<size_t>( mysql_num_fields(prepare_meta_result) );
 	if (column_count!=result_fields.size()) throw InvalidArgumentException("Wrong number of columns returned", AT);
 	mysql_free_result(prepare_meta_result);

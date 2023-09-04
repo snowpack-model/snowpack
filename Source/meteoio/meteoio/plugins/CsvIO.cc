@@ -200,7 +200,18 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * matching your parameter.
  * 
  * @section csvio_examples Examples
+ * This section contains some examplary CSV files together with the INI configuration to read them.
+ * 
  * In order to read a bulletin file downloaded from IDAWEB, you need the following configuration:
+ * 
+ * CSV
+ * @code
+ * "COLUMN TO SKIP" "TIMESTAMP" "COL 1" "COL 2" "COL 3" "COL TO SKIP" "COL TO SKIP" "COL 4" "COL TO SKIP" "COL TO SKIP" "COL 5"
+ * 000 2023082201 1 2 3 000 000 4 000 000 5
+ * 000 2023082202 1 2 3 000 000 4 000 000 5
+ * 000 2023082203 1 2 3 000 000 4 000 000 5
+ * @endcode
+ * INI
  * @code
  * METEO = CSV
  * METEOPATH = ./input/meteo
@@ -209,7 +220,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_COLUMNS_HEADERS = 1
  * CSV_DATETIME_SPEC = YYYYMMDDHH24
  * CSV_NODATA = -
- * 
+ *
  * STATION1 = IDA_station1.csv
  * POSITION1 = latlon (46.80284, 9.77726, 2418)
  * CSV1_NAME = TEST
@@ -218,8 +229,21 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV1_UNITS_OFFSET = 0 0 0 0 273.15 0 0 0 0 0 0
  * CSV1_UNITS_MULTIPLIER = 1 1 0.01 1 1 1 1 0.01 1 1 1
  * @endcode
- * 
+ *
  * In order to read a CSV file produced by a Campbell data logger with Swiss-formatted timestamps, you need the following configuration:
+ * 
+ * CSV
+ * @code
+ * An arbitrary header line
+ * "Some","Information","About","the","data","arbitrary","no of columns","not used for parsing"
+ * "TIMESTAMP","COLUMN_NAME 1","COLUMN_NAME 2","COLUMN_NAME 3","COLUMN_NAME 4","COLUMN_NAME 5","COLUMN_NAME 6"
+ * "TS","unit 1","unit 2","unit 3","unit 4","unit 5","unit 6"
+ * 04.05.2023 13:00:00,0,300,600,900,1200,1500
+ * 04.05.2023 14:00:00,0,300,600,900,1200,1500
+ * 04.05.2023 15:00:00,0,300,600,900,1200,1500
+ * 04.05.2023 16:00:00,0,300,600,900,1200,1500
+ * @endcode
+ * INI
  * @code
  * METEO = CSV
  * METEOPATH = ./input/meteo
@@ -228,12 +252,47 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_UNITS_HEADERS = 3
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
  * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
- * 
+ *
  * STATION1 = DisMa_DisEx.csv
  * POSITION1 = latlon 46.810325 9.806657 2060
  * CSV1_ID = DIS4
  * @endcode
  *
+ * For a logger produced csv file with repeating headers and quoted timestamps, you need the following configuration:
+ * 
+ * CSV
+ * @code
+ * # a information header line that is skipped
+ * "Some","Information","About","the","data","arbitrary","no of columns","not used for parsing"
+ * "TIMESTAMP","COLUMN_NAME 1","COLUMN_NAME 2","COLUMN_NAME 3","COLUMN_NAME 4","COLUMN_NAME 5","COLUMN_NAME 6"
+ * "TS","unit 1","unit 2","unit 3","unit 4","unit 5","unit 6"
+ * "2023-01-11 13:30:00",0,300,600,900,1200,1500
+ * "2023-01-11 13:40:00",0,300,600,900,1200,1500
+ * "2023-01-11 13:50:00",0,300,600,900,1200,1500
+ * "2023-01-11 14:00:00",0,300,600,900,1200,1500
+ * # a information header line that is skipped
+ * "Some","Information","About","the","data","arbitrary","no of columns","not used for parsing"
+ * "TIMESTAMP","COLUMN_NAME 1","COLUMN_NAME 2","COLUMN_NAME 3","COLUMN_NAME 4","COLUMN_NAME 5","COLUMN_NAME 6"
+ * "TS","unit 1","unit 2","unit 3","unit 4","unit 5","unit 6"
+ * "2023-01-11 15:40:00",0,300,600,900,1200,1500
+ * "2023-01-11 15:50:00",0,300,600,900,1200,1500
+ * "2023-01-11 16:00:00",0,300,600,900,1200,1500
+ * @endcode
+ * INI
+ * @code
+ * METEO = CSV
+ * METEOPATH = /path/to/input
+ * CSV_DELIMITER = ,
+ * CSV_NR_HEADERS = 3
+ * CSV_HEADER_REPEAT_MK = #
+ * CSV_UNITS_SOURCE = FROM HEADERS
+ * CSV_UNITS_HEADERS = 3
+ * CSV_COLUMNS_HEADERS = 2
+ * CSV_TIMESTAMP = COMBINED
+ * CSV_DATETIME_SPEC = "YYYY-MM-DD HH24:MI:SS"
+ * POSITION = xy(198754, 723458,2200)
+ * @endcode
+ * 
  * In order to read a set of files each containing only one parameter and merge them together (see \ref data_editing "input data editing" for more
  * on the merge feature), extracting the station ID, name and meteorological parameter from the filename:
  *@code

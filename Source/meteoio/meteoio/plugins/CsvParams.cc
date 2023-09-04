@@ -292,7 +292,7 @@ bool CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
 	return false;
 }
 
-int CsvDateTime::castToInt(const double &val)
+int CsvDateTime::castToInt(const float &val)
 {
 	const int ival = (int)val;
 	if ((float)ival!=val) return IOUtils::inodata;
@@ -572,19 +572,21 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 //Given a list of fields to skip, fill the skip_fields set
 void CsvParameters::setSkipFields(const std::string& skipFieldSpecs, const bool& negate)
 {
+	const std::string where = (negate)? "INPUT::CSV#_ONLY_FIELDS" : "INPUT::CSV#_SKIP_FIELDS";
 	//HACK temportarily look for old, space delimited syntax
 	static const std::regex old_syntax_regex("[^;|#]*[0-9]+(\\s+)[0-9]+.*"); //space delimited list of ints
 	if (std::regex_match(skipFieldSpecs, old_syntax_regex))
-		throw InvalidArgumentException("Using old, space delimited list for CSV#_SKIP_FIELDS. It should now be a comma delimited list (ranges are also supported)", AT);
+		throw InvalidArgumentException("Using old, space delimited list for " + where + ". It should now be a comma delimited list (ranges are also supported)", AT);
 
-	const std::vector< LinesRange > fieldRange( IOInterface::initLinesRestrictions(skipFieldSpecs, "INPUT::CSV#_SKIP_FIELDS", negate) );
+	const std::vector< LinesRange > fieldRange( IOInterface::initLinesRestrictions(skipFieldSpecs, where, negate) );
 	
+	//keep single fields as such, enumerate ranges so "1, 12-15" will generate "1 12 13 14 15"
 	for (const auto& skipField : fieldRange) {
 		if (skipField.end==static_cast<size_t>(-1)) { //convert an open-ended skip to last_allowed_field 
 			last_allowed_field = skipField.start - 2;	//last valid position is -1, real idx start at 0, so -1 again
 			continue;
 		}
-		//keep single fields as such, enumerate ranges so "1, 12-15" will generate "1 12 13 14 15"
+
 		for (size_t ii=skipField.start; ii<=skipField.end; ii++)
 			skip_fields.insert( ii-1 );
 	}
