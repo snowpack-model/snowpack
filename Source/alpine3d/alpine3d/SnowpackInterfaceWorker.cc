@@ -75,14 +75,14 @@ inline double getSnowDensityDepth(const SnowStation& pixel, const double& depth)
 
 //This is a function to retrieve soil runoff at a given depth (measured from
 //the soil surface, not from the snow surface) for output purposes.
-inline double getSoilRunoff(const SnowStation& pixel, const double& depth)
+inline double getSoilRunoff(const SnowStation& pixel, const SurfaceFluxes& surfaceFlux, const double& depth)
 {
 	if(pixel.getNumberOfNodes() == 0) {
 		return IOUtils::nodata;
-	} else if(depth < 1e-5) {//we want the temperature at the soil surface
-		return pixel.Ndata[pixel.SoilNode].soil_lysimeter;
-	} else if(depth >= pixel.Ground) {//we want the temperature below the lowest node
-		return pixel.Ndata.front().soil_lysimeter;
+	} else if(depth < 1e-5) {//we want the water flux at the soil surface
+		return surfaceFlux.mass[SurfaceFluxes::MS_SURFACE_MASS_FLUX];
+	} else if(depth >= pixel.Ground) {//we want the water flux below the lowest node
+		return pixel.Ndata.front().water_flux;
 	} else {
 		const double height( pixel.Ground - depth );
 
@@ -93,11 +93,11 @@ inline double getSoilRunoff(const SnowStation& pixel, const double& depth)
 
 		const NodeData& aboveNode( pixel.Ndata[iNode] );
 		if(aboveNode.z == height) {//exact match
-			return aboveNode.soil_lysimeter;
+			return aboveNode.water_flux;
 		} else {//compute linear interpolation between the two nodes
 			const NodeData& belowNode( pixel.Ndata[iNode-1] );
-			const double a = (aboveNode.soil_lysimeter - belowNode.soil_lysimeter)/(aboveNode.z - belowNode.z);
-			return a*(height - belowNode.z) + belowNode.soil_lysimeter;
+			const double a = (aboveNode.water_flux - belowNode.water_flux)/(aboveNode.z - belowNode.z);
+			return a*(height - belowNode.z) + belowNode.water_flux;
 		}
 	}
 }
@@ -184,8 +184,8 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
                                                  const size_t offset_in,
                                                  const std::vector<std::string>& grids_not_computed_in_worker)
- : sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), sn_techsnow(sn_cfg), dem(dem_in),
-   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations), SnowStationsCoord(snow_stations_coord),
+ : SnowStationsCoord(snow_stations_coord), sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), sn_techsnow(sn_cfg), dem(dem_in),
+   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations),
    isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
    surface_flux(), soil_temp_depths(), soil_runoff_depths(), snow_density_depths(), calculation_step_length(0.), height_of_wind_value(0.),
    snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
@@ -213,20 +213,20 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
 
 	//handle the soil temperatures, runoff and snow densities
 	io_cfg.getValue("SOIL_TEMPERATURE_DEPTHS", "Output", soil_temp_depths, IOUtils::nothrow);
-	for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
-		if(ii==soil_temp_depths.size()-1){
+	static const size_t n_tsoil_depths = SnGrids::TSOIL_MAX - SnGrids::TSOIL1 + 1;
+	for (size_t ii=0; ii<std::min(soil_temp_depths.size(), n_tsoil_depths); ii++) {
+		if(ii==n_tsoil_depths-1) {
 			params.push_back("TSOIL_MAX");
-		}
-		else{
+		} else {
 			params.push_back( "TSOIL"+mio::IOUtils::toString(ii+1) );
 		}
 	}
 	sn_cfg.getValue("SOIL_RUNOFF_DEPTHS", "Output", soil_runoff_depths, IOUtils::nothrow);
-	for (size_t ii=0; ii<soil_runoff_depths.size(); ii++) {
-		if(ii==soil_runoff_depths.size()-1){
+	static const size_t n_runoffdepths = SnGrids::SOIL_RUNOFF_MAX - SnGrids::SOIL_RUNOFF1 + 1;
+	for (size_t ii=0; ii<std::min(soil_runoff_depths.size(), n_runoffdepths); ii++) {
+		if(ii==n_runoffdepths-1) {
 			params.push_back("SOIL_RUNOFF_MAX");
-		}
-		else{
+		} else {
 			params.push_back( "SOIL_RUNOFF"+mio::IOUtils::toString(ii+1) );
 		}
 	}
@@ -489,7 +489,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				}
 				else if (it->first>=SnGrids::SOIL_RUNOFF1 && it->first<=SnGrids::SOIL_RUNOFF_MAX) //dealing with soil runoff
 				{
-					value = (soil_runoff_depths.empty())? IOUtils::nodata : getSoilRunoff(snowPixel,
+					value = (soil_runoff_depths.empty())? IOUtils::nodata : getSoilRunoff(snowPixel, surfaceFlux,
                                                                   soil_runoff_depths[ it->first - SnGrids::SOIL_RUNOFF1 ])/ snowPixel.cos_sl;
 				}
 				else if (it->first>=SnGrids::RHO1 && it->first<=SnGrids::RHO5) //dealing with snow densities
@@ -636,7 +636,7 @@ void SnowpackInterfaceWorker::runModel(const mio::Date &date,
 		//compute ustar, psi_s, z0
 		meteo.compMeteo(meteoPixel, snowPixel, true, adjust_height_of_wind_value);
 		SurfaceFluxes surfaceFlux;
-		snowPixel.reset_lysimeters();
+		snowPixel.reset_water_fluxes();
 		// run snowpack model itself
 		double dIntEnergy = 0.; //accumulate the dIntEnergy over the snowsteps
 		const unsigned int nr_snowsteps = (unsigned int)(dt_main/M_TO_S(calculation_step_length));

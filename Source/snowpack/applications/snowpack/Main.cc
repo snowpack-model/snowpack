@@ -423,11 +423,18 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	Mdata.iswr   = md(MeteoData::ISWR);
 	Mdata.rswr   = md(MeteoData::RSWR);
 
+	//if ea was parametrized in SnLaws::AirEmissivity without either TAU_CLD or ISWR, it is of bad quality
+	Mdata.ea  = md("EA");
+	if (md(MeteoData::ILWR)!=IOUtils::nodata || md(MeteoData::TAU_CLD)!=IOUtils::nodata || md(MeteoData::ISWR)!=IOUtils::nodata) {
+		Mdata.poor_ea = false;
+	} else {
+		Mdata.poor_ea = true;
+	}
 	if (md.param_exists("NET_LW")) {
 		Mdata.ea = 1.;
+		Mdata.poor_ea = false;
 		Mdata.lw_net = md("NET_LW");
 	} else {
-		Mdata.ea = md("EA");
 		Mdata.lw_net = IOUtils::nodata;
 	}
 	Mdata.tss = md(MeteoData::TSS);
@@ -497,7 +504,6 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 		Mdata.p = md("P");
 	else
 		Mdata.p = mio::IOUtils::nodata;
-
 }
 
 inline double getHS_last3hours(mio::IOManager &io, const mio::Date& current_date)
@@ -557,7 +563,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
                             SunObject &sun,
                             double& precip, const double& lw_in, const double hs_a3hl6,
                             double& tot_mass_in,
-                            const std::string& variant, const bool& iswr_is_net)
+                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo)
 {
 	SnowStation &currentSector = vecXdata[slope.sector]; //alias: the current station
 	const bool isMainStation = (slope.sector == slope.mainStation);
@@ -566,8 +572,6 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 	if (Mdata.tss == mio::IOUtils::nodata) {
 		cfg.addKey("MEAS_TSS", "Snowpack", "false");
 	}
-
-	Meteo meteo(cfg);
 
 	// Reset Surface and Canopy Data to zero if you seek current values
 	const bool avgsum_time_series = cfg.get("AVGSUM_TIME_SERIES", "Output");
@@ -578,7 +582,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 			currentSector.Cdata->reset(cumsum_mass);
 		if(!cumsum_mass) {
 			for(auto station:vecXdata) {
-				station.reset_lysimeters();
+				station.reset_water_fluxes();
 			}
 		}
 		const bool mass_balance = cfg.get("MASS_BALANCE", "SnowpackAdvanced");
@@ -832,7 +836,7 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 	const std::string variant = cfg.get("VARIANT", "SnowpackAdvanced");
 
 	// Add keys to perform running mean in Antarctic variant
-	if (variant == "ANTARCTICA") {
+	if (variant == "ANTARCTICA" || variant == "POLAR") {
 		cfg.addKey("*::edit999", "InputEditing", "COPY");
 		cfg.addKey("*::arg999::dest", "InputEditing", "VW_AVG");
 		cfg.addKey("*::arg999::src", "InputEditing", "VW");
@@ -1025,6 +1029,7 @@ inline void real_main (int argc, char *argv[])
 	parseCmdLine(argc, argv, begin_date_str, end_date_str);
 	SnowpackConfig cfg(cfgfile);
 	addSpecialKeys(cfg);
+	Meteo meteo(cfg);
 
 	mio::Timer meteoRead_timer;
 	mio::Timer run_timer;
@@ -1263,7 +1268,7 @@ inline void real_main (int argc, char *argv[])
 				slope.setSlope(slope_sequence, vecXdata, Mdata.dw_drift);
 				dataForCurrentTimeStep(Mdata, surfFluxes, vecXdata, slope, tmpcfg,
                                        sun, cumsum.precip, lw_in, hs_a3hl6,
-                                       tot_mass_in, variant, iswr_is_net);
+                                       tot_mass_in, variant, iswr_is_net, meteo);
 
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;
@@ -1487,6 +1492,8 @@ inline void real_main (int argc, char *argv[])
 							prn_msg(__FILE__, __LINE__, "msg+", current_date, "Mass error at end of time step!");
 					}
 				}
+
+				if (tswrite && mn_ctrl.TsDump) vecXdata[slope.sector].resetSlopeParFlux();
 			} //end loop on slopes
 			computed_one_timestep = true;
 		} while ((dateEnd.getJulian() - current_date.getJulian()) > calculation_step_length/(2.*1440));

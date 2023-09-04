@@ -110,12 +110,12 @@ bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& i_vecMeteo
 
 double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& i_vecMeteo, const std::string& i_ref_station)
 {
-	for (const auto& md : i_vecMeteo) {
-		if (md.meta.stationID==i_ref_station)
-			return md(MeteoData::DW);
-	}
-
-	return IOUtils::nodata;
+	const std::vector<MeteoData>::const_iterator it = std::find_if(i_vecMeteo.begin(), i_vecMeteo.end(), [&](const MeteoData& md){ return md.meta.stationID == i_ref_station; });
+	
+	if (it!=i_vecMeteo.end())
+		return it->operator()(MeteoData::DW);
+	else 
+		return IOUtils::nodata;
 }
 
 //this method scans a square centered on the station for summmits

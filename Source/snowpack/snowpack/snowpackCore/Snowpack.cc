@@ -360,6 +360,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
 
+
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
 	* - If VW_DENDRICITY is set, new snow dendricity is f(vw)
@@ -623,10 +624,11 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Find the conductivity of the element TODO: check thresholds
 	double Keff;    // the effective thermal conductivity
 	if (Edata.theta[SOIL] > 0.0) {
-		Keff = SnLaws::compSoilThermalConductivity(Edata, dvdz,soil_thermal_conductivity);
+		Keff = SnLaws::compSoilThermalConductivity(Edata, dvdz, soil_thermal_conductivity);
 	} else if (Edata.theta[ICE] > 0.55 || Edata.theta[ICE] < min_ice_content) {
+		// Note: no soil when inside this if-block.
 		Keff = Edata.theta[AIR] * Constants::conductivity_air + Edata.theta[ICE] * Constants::conductivity_ice +
-		           (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * Constants::conductivity_water + Edata.theta[SOIL] * Edata.soil[SOIL_K];
+		           (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * Constants::conductivity_water;
 	} else {
 		Keff = SnLaws::compSnowThermalConductivity(Edata, dvdz, !alpine3d); //do not show the warning for Alpine3D
 	}
@@ -661,6 +663,13 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Add the source/sink term resulting from phase changes
 	Fe[1] += Edata.Qph_up * 0.5 * Edata.L;
 	Fe[0] += Edata.Qph_down * 0.5 * Edata.L;
+
+	// Add the source/sink term resulting from phase changes (due to water vapor transport)
+	Fe[1] += Edata.Qmm * 1.0 * Edata.L;
+	Fe[0] += Edata.Qmm * 1.0 * Edata.L;
+
+	//Se[1][1] += Edata.Qmm*Edata.L/Edata.Te;
+	//Fe[1] += Edata.Qmm*Edata.L;
 
 	return true;
 }
@@ -2177,7 +2186,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
  * @param Bdata
  * @param Sdata
  */
-void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
+void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
                                 BoundCond& Bdata, SurfaceFluxes& Sdata)
 {
 #ifdef SNOWPACK_OPTIM
@@ -2280,7 +2289,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
 			// Run sea ice module
-			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt);
+			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt, Sdata);
 			// Remesh when necessary
 			Xdata.splitElements(2. * comb_thresh_l, comb_thresh_l);
 		}
@@ -2306,14 +2315,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 		}
 
-		Meteo M(cfg);
+		Meteo meteo(cfg);
 		do {
 			// After the first sub-time step, update Meteo object to reflect on the new stability state
 			if (ii >= 1){
 				// ADJUST_HEIGHT_OF_WIND_VALUE is checked at each call to allow different
 				// cfg values for different pixels in Alpine3D
 				cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
-				M.compMeteo(Mdata, Xdata, false, adjust_height_of_wind_value);
+				meteo.compMeteo(Mdata, Xdata, false, adjust_height_of_wind_value);
 			}
 			// Reinitialize and compute the initial meteo heat fluxes
 			Bdata.reset();
@@ -2445,6 +2454,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		vapourtransport->compTransportMass(Mdata, ql, Xdata, Sdata);
 #else
 		watertransport.compTransportMass(Mdata, Xdata, Sdata, ql);
+
 		vapourtransport.compTransportMass(Mdata, ql, Xdata, Sdata);
 #endif
 

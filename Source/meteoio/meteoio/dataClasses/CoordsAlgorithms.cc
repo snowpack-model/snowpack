@@ -26,10 +26,10 @@
 #include <cstdio> //for sscanf
 #include <iomanip> //for setprecision
 
-#ifdef PROJ4
+#if defined(PROJ4)
 	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
-#elif PROJ
+#elif defined(PROJ)
 	#include <proj.h>
 #endif
 
@@ -77,7 +77,7 @@ std::string CoordsAlgorithms::printLatLon(const double& latitude, const double& 
 * @return coordinate in decimal
 */
 double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
-	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata, decimal=IOUtils::nodata;
+	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata;
 
 	if 	((sscanf(dms.c_str(), "%lf°%lf'%lf\"", &d, &m ,&s) < 3) &&
 		(sscanf(dms.c_str(), "%lf° %lf' %lf\"", &d, &m ,&s) < 3) &&
@@ -95,7 +95,7 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 			throw InvalidFormatException("Can not parse given latitude or longitude: "+dms,AT);
 	}
 
-	decimal = std::abs(d);
+	double decimal = std::abs(d);
 	if (m!=IOUtils::nodata) decimal += m/60.;
 	if (s!=IOUtils::nodata) decimal += s/3600.;
 
@@ -819,7 +819,7 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 */
 void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
-#ifdef PROJ4
+#if defined(PROJ4)
 	static const std::string src_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	const std::string dest_param("+init=epsg:"+coordparam);
 	projPJ pj_latlong, pj_dest;
@@ -845,7 +845,7 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 	north_out = y;
 	pj_free(pj_latlong);
 	pj_free(pj_dest);
-#elif PROJ
+#elif defined(PROJ)
 	static const std::string src_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
 	const std::string dest_param("EPSG:"+coordparam);
 
@@ -887,7 +887,7 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 */
 void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
 {
-#ifdef PROJ4
+#if defined(PROJ4)
 	const std::string src_param("+init=epsg:"+coordparam);
 	static const std::string dest_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	projPJ pj_latlong, pj_src;
@@ -913,7 +913,7 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 	lat_out = y*RAD_TO_DEG;
 	pj_free(pj_latlong);
 	pj_free(pj_src);
-#elif PROJ
+#elif defined(PROJ)
 	const std::string src_param("EPSG:"+coordparam);
 	static const std::string dest_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
 

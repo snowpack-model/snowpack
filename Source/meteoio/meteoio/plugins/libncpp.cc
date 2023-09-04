@@ -49,6 +49,7 @@ inline std::vector<std::string> initDimensionNames()
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
 	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
 	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("DATESTRLEN");
 	tmp.push_back("ZREF"); tmp.push_back("UREF");
 	
 	return tmp;
@@ -779,6 +780,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "west_east") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::DATESTRLEN, "DateStrLen") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
@@ -942,7 +944,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "U at 10 M", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "V at 10 M", "m/s", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::W, "W10", "10-meter wind speed", "W at 10 M", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
 	
 	//METEOCH schema

@@ -52,10 +52,10 @@ namespace mio {
  *    + RESAMPLING_STRATEGY set to VSTATIONS;
  *    + VSTATION# : provide the lat, lon and altitude or easting, northing and altitude for a virtual station (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#);
+ *    + VNAME# : provide the station name for a given VSTATION (optional, default: Virtual_Station_#);
  *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds (default: 0);
- *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  * 
  * @note Please keep in mind that the WINDOW_SIZE in the [Interpolations1D] section and BUFFER_SIZE in the [General] section have a direct influence on the success 
  * (or lack of) the virtual stations: they will contribute to define how much raw data should be read and can lead to an exception being thrown when working with
@@ -86,7 +86,8 @@ namespace mio {
  * RESAMPLING_STRATEGY = VSTATIONS
  * VSTATION1 = latlon 46.793029 9.821343 1987
  * VSTATION2 = latlon 46.793031 9.831572 1577
- * VID2 = Mattenwald
+ * VID2 = MAT
+ * VNAME2 = Mattenwald
  * Virtual_parameters = TA RH PSUM ILWR P VW RSWR
  * VSTATIONS_REFRESH_RATE = 21600
  * VSTATIONS_REFRESH_OFFSET = 3600
@@ -130,7 +131,6 @@ namespace mio {
  *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
- *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  *
  * @code
  * [Input]

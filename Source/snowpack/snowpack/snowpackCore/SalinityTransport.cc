@@ -110,6 +110,8 @@ void SalinityTransport::SetDomainSize(size_t nE) {
 Here, $f=1$ results in the fully implicit scheme, whereas $f=0.5$ corresponds to the Crank-Nicolson scheme. The implicit scheme is first order accurate, whereas the Crank-Nicolson scheme is second order accurate. Furthermore, both are unconditionally stable and suffer only minimal numerical diffusion for the advection part. As with many other common schemes, the advection part is not perfectly conserving sharp transitions. Futhermore, the reason to not use the fully implicit or the Crank Nicolson scheme is the occurrence of spurious oscillations in the solution, which negatively impact the accuracy of the simulations more than the negative effect on computational efficiency imposed by the CFL criterion required for the explicit method (see SalinityTransport::SolveSalinityTransportEquationExcplicit).
  * @param dt Time step (s)
  * @param DeltaSal Result vector (change in salinity over time step)
+ * @param f Set to 0.5 for Crank-Nicolson, or to 1.0 for fully implicit
+ * @param DonorCell If true, use mass-conserving donor-cell scheme (upwind). If false, use default implicit discretization
  * @return false on error, true otherwise
  */
 bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, std::vector <double> &DeltaSal, const double f, const bool DonorCell) {

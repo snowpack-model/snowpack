@@ -33,7 +33,7 @@ void listFields(matvar_t *matvar)
 	const unsigned int nrFields = Mat_VarGetNumberOfFields(matvar);
 	char * const *fields = Mat_VarGetStructFieldnames(matvar);
 	for (unsigned int ii=0; ii<nrFields; ii++)
-		printf("field[%d] = %s\n", ii, fields[ii]);
+		printf("field[%u] = %s\n", ii, fields[ii]);
 }
 
 void printStructure(matvar_t *matvar)

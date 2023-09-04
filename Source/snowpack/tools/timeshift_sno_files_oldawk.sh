@@ -10,7 +10,7 @@ if [ $# -lt 2 ]; then
 	echo "each time taking the output *.sno file and using it as initial" > /dev/stderr
 	echo "state for the next spinup iteration." > /dev/stderr
 	echo "" > /dev/stderr
-	echo "Invoke with: ./timeshift_sno_files.sh <sno-file> <date>" > /dev/stderr
+	echo "Invoke with: ./timeshift_sno_files_oldawk.sh <sno-file> <date>" > /dev/stderr
 	echo "Profile will be written to stdout and can be redirected as wished." > /dev/stderr
 	echo "" > /dev/stderr
 	echo "Example: ./timeshift_sno_files_oldawk.sh WFJ2.sno 1990-10-01T00:00 > WFJ2_new.sno" > /dev/stderr

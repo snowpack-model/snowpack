@@ -42,7 +42,7 @@ namespace mio {
  */
 class DataGenerator {
 	public:
-		DataGenerator(const Config& cfg);
+		DataGenerator(const Config& cfg, const std::set<std::string>& params_to_generate = std::set<std::string>());
 		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), data_qa_logs(c.data_qa_logs)  {}
 		virtual ~DataGenerator();
 

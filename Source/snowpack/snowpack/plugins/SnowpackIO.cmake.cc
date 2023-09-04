@@ -152,6 +152,7 @@ SnowpackIO::~SnowpackIO()
 	if (asciiio != NULL) delete asciiio;
 	if (caamlio != NULL) delete caamlio;
 	if (imisdbio != NULL) delete imisdbio;
+	locale::global(locale("C"));  //To suppress "still reachable" reports by valgrind, set locale back to default
 }
 
 std::vector<std::string> SnowpackIO::getExtensions()

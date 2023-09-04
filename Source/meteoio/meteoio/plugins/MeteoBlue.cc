@@ -51,8 +51,8 @@ namespace mio {
  * - METEOBLUE_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s);
  * - METEOBLUE_DEBUG: print more information in order to better understand when something does not work as expected (default: false);
  * - STATION\#: provide the lat, lon and altitude or easting, northing and altitude for a station to get the data from (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). If your don't have the elevation of your station of interest, you can use <a href="https://latlongdata.com/elevation/">latlongdata.com</a> (mandatory);
- *    - STATION\#_ID: provide an ID for the declared station (default: "STAT\#");
- *    - STATION\#_NAME: provide a name for the declared station (default: "STATION\#");
+ *    - STATION\#_ID: provide an ID for the declared station (default: "STAT#");
+ *    - STATION\#_NAME: provide a name for the declared station (default: "STATION#");
  * 
  * @note You can only get (at most) data from NOW-3days up to NOW+8days with the non-historical packages and the packages API as used here.
  * Depending on the forecast length, various sources of data are used in the numerical models (see this 
@@ -173,14 +173,14 @@ void MeteoBlue::init()
 	
 	//reading the stations' coordinates to retrieve
 	const std::vector< std::pair<std::string, std::string> > vecStationSpecs( cfg.getValues("STATION", "Input") );
-	for (size_t ii=0; ii<vecStationSpecs.size(); ii++) {
-		if (vecStationSpecs[ii].first.find('_') != std::string::npos) continue; //so we skip the other station#_xxx parameters
+	for (const auto& station : vecStationSpecs) {
+		if (station.first.find('_') != std::string::npos) continue; //so we skip the other station#_xxx parameters
 		
 		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
-		const Coords curr_point(coordin, coordinparam, vecStationSpecs[ii].second);
+		const Coords curr_point(coordin, coordinparam, station.second);
 		if (curr_point.isNodata()) continue;
 		
-		const std::string id_num( vecStationSpecs[ii].first.substr(std::string("STATION").length()) );
+		const std::string id_num( station.first.substr(std::string("STATION").length()) );
 		const bool has_id = cfg.keyExists("STATION"+id_num+"_ID", "Input");
 		const std::string stat_id = (has_id)? cfg.get("STATION"+id_num+"_ID", "Input"): "STAT"+id_num;
 		const bool has_name = cfg.keyExists("STATION"+id_num+"_NAME", "Input");

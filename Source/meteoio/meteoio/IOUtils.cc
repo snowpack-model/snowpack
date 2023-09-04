@@ -451,7 +451,7 @@ static const char NUM[] = "0123456789";
 template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
-	t =str;
+	t = str;
 	trim(t); //delete trailing and leading whitespaces and tabs
 	return true;
 }

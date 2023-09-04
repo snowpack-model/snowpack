@@ -27,7 +27,7 @@ RadiationField::RadiationField()
                 dem_mean_altitude(0.), cellsize(0.), dem_dimx(0), band_dimx(0), dimy(0), startx(0),
                 day(true), night(false) {}
 
-RadiationField::RadiationField(const mio::Config& cfg_in, const mio::DEMObject& in_dem, const size_t& in_startx, const size_t& in_nx)
+RadiationField::RadiationField(const mio::DEMObject& in_dem, const size_t& in_startx, const size_t& in_nx)
               : date(), dem(), dem_band(), direct(), diffuse(), Sun(),
                 vecMeta(), vecMd(), vecCorr(), timestamp(),
                 dem_mean_altitude(0.), cellsize(0.), dem_dimx(0), band_dimx(0), dimy(0), startx(0),
@@ -198,14 +198,15 @@ void RadiationField::setMeteo(const mio::Grid2DObject& in_ta, const mio::Grid2DO
 }
 
 void RadiationField::setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
-                              const mio::Grid2DObject& in_albedo, const mio::Date timestamp)
+                              const mio::Grid2DObject& in_albedo, const mio::Date timestamp_in)
 {
 	//check that we can proceed
 	if (dem.empty())
 		throw mio::InvalidArgumentException("[E] Please set DEM before setting meteo grids!", AT);
 
+	timestamp = timestamp_in;
 	Sun.resetAltitude( dem_mean_altitude ); //it has been reset when computing the cells
-  Sun.setDate(timestamp.getJulian(false), timestamp.getTimeZone()); //we have at least one station
+	Sun.setDate(timestamp.getJulian(false), timestamp.getTimeZone()); //we have at least one station
 	//get solar position for shading
 	double solarAzimuth, solarElevation;
 	Sun.position.getHorizontalCoordinates(solarAzimuth, solarElevation);
@@ -229,11 +230,9 @@ void RadiationField::setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::G
 				direct(i_band,jj) = 0.;
 				diffuse(i_band,jj) = in_iswr_diff(i_band,jj);
 			} else {
-				const double slope_azi=dem.azi(i_dem,jj);
-				const double slope_angle=dem.slope(i_dem,jj);
 				diffuse(i_band,jj) = in_iswr_diff(i_band,jj);
 				direct(i_band,jj) = in_iswr_dir(i_band,jj);
-				//cell_direct = mio::SunTrajectory::projectHorizontalToSlope( solarAzimuth, solarElevation, slope_azi, slope_angle, cell_direct );
+				//cell_direct = mio::SunTrajectory::projectHorizontalToSlope( solarAzimuth, solarElevation, dem.azi(i_dem,jj), dem.slope(i_dem,jj), cell_direct );
 			}
 			direct_unshaded_horizontal(i_band,jj)=0;
 		}

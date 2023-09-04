@@ -591,7 +591,7 @@ void ImisIO::findAnetzStations(std::map<std::string, size_t>& mapAnetzNames,
 	}
 
 	size_t pp = 0;
-	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ii++){
+	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ++ii){
 		mapAnetzNames[*ii] = pp;
 		pp++;
 

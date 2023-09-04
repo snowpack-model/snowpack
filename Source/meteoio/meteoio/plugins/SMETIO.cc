@@ -28,7 +28,7 @@ namespace mio {
  * @page smetio SMET
  * @section smetio_format Format
  * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its
- * <a href="../SMET_specifications.pdf">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG,
+ * <a href="https://code.wsl.ch/snow-models/meteoio/-/package_files/433/download">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG,
  * RH, VW, DW, ISWR, RSWR, ILWR, OLWR, PINT, PSUM, HS). For PINT, it is assumed that the intensity (in mm/h) is valid for the whole period between the actual
  * time step and the previous one so a PSUM signal can be reconstructed by multiplying PINT by the previous timestep duration (see ProcAggregate).
  * 
@@ -238,6 +238,9 @@ void SMETIO::parseInputOutputSection()
 			outputIsAscii = true;
 		else
 			throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
+
+		if (allowOverwrite && allowAppend)
+			throw InvalidFormatException("Cannot allow both SMET_APPEND and SMET_OVERWRITE", AT);
 	}
 }
 

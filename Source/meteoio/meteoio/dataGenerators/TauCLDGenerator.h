@@ -56,12 +56,25 @@ namespace mio {
  * in this specific scenario.
  * 
  * Please not that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
- * INFILE will be computed from DEM. If none is available, a fixed 5 degrees threshold is used.
+ * INFILE will be computed from DEM. It is also possible to define wildcard station ID in the horizon file. If SHADE_FROM_DEM has been set
+ * to false and no INFILE has been provided, a fixed 5 degrees threshold is used.
  *
  * @code
  * [Generators]
  * TAU_CLD::generator1     = TAU_CLD
  * TAU_CLD::arg1::use_rswr = false
+ * @endcode
+ *
+ * The horizon file contains on each line a station ID followed by an azimuth (in degrees, starting from North) and an elevation above the
+ * horizontal (also in degrees). It is possible to define a wildcard station ID '*' to be used as fallback. The elevation for any given azimuth
+ * will be linearly interpolated between the provided horizons before and after. If only one azimuth is given for a station ID, its horizon
+ * elevation is assumed to be constant. See below an example horizon file, defining two station IDs (SLF2 and FLU2):
+ * @code
+ * SLF2 0 5
+ * SLF2 45 25
+ * SLF2 180 30
+ * SLF2 245 10
+ * FLU2 0 7
  * @endcode
  */
 class TauCLDGenerator : public GeneratorAlgorithm {
@@ -82,6 +95,7 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
 		double getClearness(const double& cloudiness) const;
 		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
+		double getHorizon(const MeteoData& md, const double& sun_azi);
 		
 		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
@@ -90,7 +104,7 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		DEMObject dem;
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
-		bool write_mask_out, has_dem;
+		bool write_mask_out, use_horizons, from_dem;
 };
 
 } //end namespace mio

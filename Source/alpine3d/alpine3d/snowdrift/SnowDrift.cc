@@ -778,7 +778,7 @@ void SnowDriftA3D::setMeteo (const unsigned int& steps, const Grid2DObject& new_
                              const mio::Grid2DObject& new_psum_ph, const Grid2DObject& new_p,
                              Grid2DObject& new_vw, Grid2DObject& dw,
                              const Grid2DObject& new_rh, const Grid2DObject& new_ta, const Grid2DObject& new_tsg,
-                             const mio::Date& calcDate, const std::vector<mio::MeteoData>& vecMeteo)
+                             const std::vector<mio::MeteoData>& vecMeteo)
 {
 	if (vecMeteo.empty())
 		throw mio::NoDataException("No meteo data!", AT);

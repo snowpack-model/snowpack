@@ -36,7 +36,8 @@ const double Atmosphere::day_iswr_thresh = 5.;
  * @param T   surface temperature of the body (K)
  * @return black body emissivity (0-1)
  */
-double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
+double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T)
+{
 	const double T2 = T*T;
 	const double ea = lwr / (Cst::stefan_boltzmann * (T2*T2));
 	return std::min(ea, 1.);
@@ -48,7 +49,8 @@ double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
  * @param T   surface temperature of the body (K)
  * @return black body radiation (W/m^2)
  */
-double Atmosphere::blkBody_Radiation(const double& ea, const double& T) {
+double Atmosphere::blkBody_Radiation(const double& ea, const double& T)
+{
 	const double T2 = T*T;
 	return ( ea * (Cst::stefan_boltzmann * (T2*T2)) );
 }
@@ -64,7 +66,8 @@ double Atmosphere::blkBody_Radiation(const double& ea, const double& T) {
 * @param altitude altitude above sea level (m)
 * @return standard pressure (Pa)
 */
-double Atmosphere::stdAirPressure(const double& altitude) {
+double Atmosphere::stdAirPressure(const double& altitude)
+{
 	static const double expo = Cst::gravity / (Cst::mean_adiabatique_lapse_rate * Cst::gaz_constant_dry_air);
 	const double p = Cst::std_press * pow( 1. - ( (Cst::mean_adiabatique_lapse_rate * Cst::earth_R0 * altitude) / (Cst::std_temp * (Cst::earth_R0 + altitude)) ), expo );
 	return p;
@@ -85,7 +88,8 @@ double Atmosphere::stdAirPressure(const double& altitude) {
  * @param latitude The station's latitude (degrees)
  * @return Reduced atmospheric pressure (Pa)
  */
-double Atmosphere::reducedAirPressure(const double& pressure, const double& altitude, const double& latitude) {
+double Atmosphere::reducedAirPressure(const double& pressure, const double& altitude, const double& latitude)
+{
 	const double pp = pressure / pow( 1. - Cst::mean_adiabatique_lapse_rate * altitude / Cst::std_temp,
 	    (Cst::dry_air_mol_mass * Atmosphere::gravity( altitude, latitude )) /
 	    (Cst::gaz_constant * Cst::mean_adiabatique_lapse_rate) );
@@ -98,7 +102,8 @@ double Atmosphere::reducedAirPressure(const double& pressure, const double& alti
  * @param latitude latitude in degrees
  * @return acceleration due to gravity (m/s2)
  */
-double Atmosphere::gravity(const double& altitude, const double& latitude) {
+double Atmosphere::gravity(const double& altitude, const double& latitude)
+{
 	const double lat = latitude*Cst::to_rad;
 	const double g = 9.780356 * (1. + 0.0052885*Optim::pow2(sin(lat)) - 0.0000059*Optim::pow2(sin(2.*lat))) - 0.003086 * altitude*1e-3;
 	return g;
@@ -110,7 +115,8 @@ double Atmosphere::gravity(const double& altitude, const double& latitude) {
 * @param temperature air temperature (K)
 * @return standard pressure (Pa)
 */
-double Atmosphere::stdDryAirDensity(const double& altitude, const double& temperature) {
+double Atmosphere::stdDryAirDensity(const double& altitude, const double& temperature)
+{
 	return stdAirPressure(altitude)/(Cst::gaz_constant_dry_air*temperature);
 }
 
@@ -120,7 +126,8 @@ double Atmosphere::stdDryAirDensity(const double& altitude, const double& temper
 * @param VaporPressure water vapor pressure (Pa)
 * @return water vapor density (kg/m^3)
 */
-double Atmosphere::waterVaporDensity(const double& Temperature, const double& VaporPressure) {
+double Atmosphere::waterVaporDensity(const double& Temperature, const double& VaporPressure)
+{
 	return (Cst::water_molecular_mass*VaporPressure)/(Cst::gaz_constant*Temperature);
 }
 
@@ -290,12 +297,17 @@ double Atmosphere::vaporSaturationPressure(const double& T)
 {
 	double c2, c3; // varying constants
 
+	static const double sat_vapor_pressure_ice_a = 21.88;
+	static const double sat_vapor_pressure_ice_b = 7.66;
+	static const double sat_vapor_pressure_water_a = 17.27;
+	static const double sat_vapor_pressure_water_b = 35.86;
+
 	if ( T < Cst::t_water_triple_pt ) { // for a flat ice surface
-		c2 = 21.88;
-		c3 = 7.66;
+		c2 = sat_vapor_pressure_ice_a;
+		c3 = sat_vapor_pressure_ice_b;
 	} else { // for a flat water surface
-		c2 = 17.27;
-		c3 = 35.86;
+		c2 = sat_vapor_pressure_water_a;
+		c3 = sat_vapor_pressure_water_b;
 	}
 	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
 
@@ -312,8 +324,10 @@ double Atmosphere::vaporSaturationPressure(const double& T)
 */
 double Atmosphere::vaporSaturationPressureWater(const double& T) 
 {
-	static const double c2=17.27, c3=35.86; // varying constants
-	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
+	static const double sat_vapor_pressure_water_a = 17.27;
+	static const double sat_vapor_pressure_water_b = 35.86;
+
+	const double exp_p_sat = sat_vapor_pressure_water_a * (T - Cst::t_water_triple_pt) / (T - sat_vapor_pressure_water_b); //exponent
 
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
 }

@@ -148,7 +148,6 @@ bool PGMIO::readGridded(std::ifstream& fin, const std::string& full_name, const 
 
 void PGMIO::readColumn(std::ifstream& fin, const std::string& full_name, const double& scale_factor, const double& val_min, Grid2DObject& grid_out)
 {
-	std::vector<std::string> tmpvec;
 	std::string line;
 	double tmp_val;
 	const size_t nr_cells = grid_out.size();

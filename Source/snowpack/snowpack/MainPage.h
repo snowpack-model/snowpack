@@ -38,6 +38,11 @@
  *    -# \subpage getting_started "Getting Started"
  *    -# Model principles
  *        -# \subpage general "General concepts"
+ *        -# Submodels documentation
+ *            -# \subpage water_transport "Water Transport"
+ *            -# \subpage water_vapor_transport "Water Vapor Transport"
+ *            -# \subpage sea_ice "Sea Ice"
+ *            -# \subpage technical_snow "Technical snow"
  *        -# \subpage references "References"
  *        -# \subpage uses "Use cases"
  *    -# Inputs / Outputs
@@ -89,7 +94,7 @@
  *    the last command line it contains into a terminal). You can also manually run %Snowpack, by typing something like
  *    <i>snowpack -c {ini file with path} -e {simulation end date in ISO format}</i>.
  * -# Once the simulation is finished, the results are available in the \b output directory. This directory \b must exist before you run the simulation!
- * -# The results can be visualized using the \ref sngui_config "sngui tool" by opening the <b>.pro</b> file that was generated in \b output.
+ * -# The results can be visualized using the <a href="https://run.niviz.org">niViz tool</a> and opening the <b>.pro</b> file that was generated in \b output.
  *
  * @section Running_own_simulation Running your own simulation
  * Once you have been able to run an example simulation, you can try to run your own simulation. This involves the following steps:
@@ -102,7 +107,7 @@
  * -# Then, run the simulation from a terminal (after going to the directory where your simulation is) with a command line such as
  *    <i>snowpack -c {ini file with path} -e {simulation end date in ISO format}</i>.
  * -# Once the simulation is finished, the results are available in the \b output directory. This directory \b must exist before you run the simulation!
- * -# The results can be visualized using the \ref sngui_config "sngui tool" by opening the <b>.pro</b> file that was generated in \b output.
+ * -# The results can be visualized using the <a href="https://run.niviz.org">niViz tool</a> and opening the <b>.pro</b> file that was generated in \b output.
  *
  * @section model_workflow Simulation workflow
  * When running a simulation, it is important to keep in mind that the model is organized as several modules that interract together. It is possible to configure
@@ -156,20 +161,41 @@
  * [Input]
  * METEO      = SMET
  *
- * PSUM_S::MOVE = MS_Snow
- * PSUM_L::MOVE = MS_Rain
- * HS::MOVE    = HS_meas	;so we can still compare measured vs modelled snow height
- * TSG::MOVE   = T_bottom	;so we can compare the ground temperatures
- * TSS::MOVE   = TSS_meas	;so we can compare the surface temperatures
- *
- * WFJ2::KEEP = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
- *
- * PSUM_PH::create     = PRECSPLITTING
- * PSUM_PH::PRECSPLITTING::type   = THRESH
- * PSUM_PH::PRECSPLITTING::snow   = 274.35
- * PSUM::create     = PRECSPLITTING
- * PSUM::PRECSPLITTING::type   = THRESH
- * PSUM::PRECSPLITTING::snow   = 274.35
+ * [InputEditing]
+ * *::EDIT1 = MOVE
+ * *::ARG1::DEST = PSUM_S
+ * *::ARG1::SRC = MS_Snow
+ * 
+ * *::EDIT2 = MOVE
+ * *::ARG2::DEST = PSUM_L
+ * *::ARG2::SRC = MS_Rain
+ * 
+ * *::EDIT3 = MOVE
+ * *::ARG3::DEST = HS
+ * *::ARG3::SRC = HS_meas
+ * 
+ * *::EDIT4 = MOVE
+ * *::ARG4::DEST = TSG
+ * *::ARG4::SRC = T_bottom
+ * 
+ * *::EDIT5 = MOVE
+ * *::ARG5::DEST = TSS
+ * *::ARG5::SRC = TSS_meas
+ * 
+ * *::EDIT6 = KEEP
+ * *::ARG6::PARAMS = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH
+ * 
+ * *::EDIT7 = CREATE
+ * *::ARG7::PARAM = PSUM_PH
+ * *::ARG7::ALGORITHM = PRECSPLITTING
+ * *::ARG7::TYPE = THRESH
+ * *::ARG7::SNOW = 274.35
+ * 
+ * *::EDIT8 = CREATE
+ * *::ARG8::PARAM = PSUM
+ * *::ARG8::ALGORITHM = PRECSPLITTING
+ * *::ARG8::TYPE = THRESH
+ * *::ARG8::SNOW = 274.35
  *
  * [SNOWPACK]
  * ENFORCE_MEASURED_SNOW_HEIGHTS = FALSE
@@ -231,7 +257,7 @@
  *
  * @subsection model_ebalance Energy Balance
  * The figure below shows the various fluxes that are part of the energy balance of the SNOWPACK model. These are available in the output files as well as
- * through the sngui interface.
+ * through the <a href="https://niviz.org">niViz</a> interface.
  *
  * \image html energy_balance.png "Energy Balance components of the SNOWPACK model"
  * \image latex energy_balance.eps "Energy Balance components of the SNOWPACK model" width=0.9\textwidth
@@ -350,7 +376,7 @@
  * - relative humidity (RH)
  * - wind speed (VW)
  * - incoming short wave radiation (ISWR) <i>and/or</i> reflected short wave radiation (RSWR) <i>or</i> net short wave radiation (it must be called NET_SW in Smet files).
- * - incoming long wave radiation (ILWR) <i>and/or</i> surface temperature (TSS)
+ * - incoming long wave radiation (ILWR) <i>and/or</i> surface temperature (TSS) [*]
  * - precipitation (PSUM) <i>and/or</i> snow height (HS)
  * - ground temperature (TSG, if available. Otherwise, you will have to use <a href="https://meteoio.slf.ch">MeteoIO</A>'s 
  * data generators to generate a value) <i>or</i> geothermal heat flux
@@ -359,6 +385,15 @@
  * These parameters <b>should best</b> be available at a hourly time step and preferably in MKSA units 
  * (please check the MeteoIO plugins documentation for specific cases, like GRIB, NetCDF... that are automatically handled). Please have a look 
  * at the \ref snowpackio "other input parameters" that are required to run your simulation!
+ * 
+ * [*] Please note that it is possible to parametrize the incoming long wave radiation (ILWR) from the short wave radiation, obviously 
+ * with reduced performance compared to measured ILWR. This is achieved by configuring a 
+ * <a href="https://meteoio.slf.ch/doc-release/html/generators.html">data generator</a> in <a href="https://meteoio.slf.ch">MeteoIO</A> such as an
+ * <a href="https://meteoio.slf.ch/doc-release/html/classmio_1_1AllSkyLWGenerator.html">all sky</a> parametrization. if ISWR is available, 
+ * this is straightforward: the clearness index <i>iswr_meas / iswr_pot</i> gives the cloudiness which is used by a <i>ilwr parametrization</i>. 
+ * If only RSWR is available, at each timestep Snowpack computes the matching iswr based on its modelled albedo <i>iswr = rswr / albedo_mod</i> and 
+ * then calls all data generator that you may have defined for ILWR (which now have access to ISWR). It is also possible to use such a
+ * data generator directly on rswr (thus based on a fixed soil or snow albedo to internally compute iswr) but this is less performant...
  *
  * @section data_preparation Data preparation
  * In order to help %Snowpack handle the (sometimes broken) data sets to be used in a simulation, the <a href="https://meteoio.slf.ch">MeteoIO library</a> is used.
@@ -411,7 +446,7 @@
  * label the columns as TS1, TS2, TS3, etc. If you use the snio format, refer to the documentation.
  * User defined positions (m) should be provided in the SnowpackAdvanced section of the \em "io.ini" file,
  *   for example, FIXED_POSITIONS = "0.25 0.50 -0.10":
- *   - positive values refer to heigths measured from the ground surface (snow only)
+ *   - positive values refer to heights measured from the ground surface (snow only)
  *   - negative values refer to depths measured from either the ground surface or the snow surface in case no soil
  *       layers are present
  *   - A sensor must at least be covered by MIN_DEPTH_SUBSURF (m) snow for its temperature to be output.
@@ -432,10 +467,10 @@
  * the section <i>"Available data generators and usage"</i> for the full list of available generators):
  * @code
  * [Generators]
- * PSUM_PH::generators   = PPHASE
- * PSUM_PH::pphase::type = RANGE
- * PSUM_PH::pphase::snow = 273.35
- * PSUM_PH::pphase::rain = 275.35
+ * PSUM_PH::GENERATOR1 = PRECSPLITTING
+ * PSUM_PH::ARG1::TYPE = RANGE
+ * PSUM_PH::ARG1::SNOW = 273.35
+ * PSUM_PH::ARG1::RAIN = 275.35
  * @endcode
  * 
  */
@@ -466,24 +501,42 @@
  * The %Snowpack_advanced section contains settings that previously required to edit the source code and recompile the model. Since these settings
  * deeply transform the operation of the model, please <b>refrain from using them</b> if you are not absolutely sure of what you are doing.
  *
+ * @section soil_hydraulic_properties Setting soil hydraulic properties with Richards Equation
+ * When selecting `WATERTRANSPORTMODEL_SOIL = RICHARDSEQUATION`, the grain size (`rg`) of the soil layers in the `*.sno` file is used to determine the water retention properties of the soil, according to the following values:
+ * <table>
+ * <caption id="multi_row">Soil type definitions</caption>
+ * <tr><th>Soil type   <th>rg
+ * <tr><td>ORGANIC<td>0.2
+ * <tr><td>CLAY<td>0.5
+ * <tr><td>CLAYLOAM<td>1.5
+ * <tr><td>LOAM<td>2.5
+ * <tr><td>LOAMYSAND<td>3.5
+ * <tr><td>SAND<td>4.5
+ * <tr><td>SANDYCLAY<td>5.5
+ * <tr><td>SANDYCLAYLOAM<td>6.5
+ * <tr><td>SANDYLOAM<td>7.5
+ * <tr><td>SILT<td>8.5
+ * <tr><td>SILTYCLAY<td>9.5
+ * <tr><td>SILTYCLAYLOAM<td>10.5
+ * <tr><td>SILTLOAM<td>11.5
+ * <tr><td>WFJGRAVELSAND<td>12.5
+ * </table>
+ * Notes:
+ * - Here, the soil types refer to the <a href="https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/">ROSETTA Class Average Hydraulic Parameters</a>.
+ * - When using Richards equation, theta[SOIL] is set according to the soil type and the values specified in the *.sno file will be ignored.
+ * - WFJGRAVELSAND is a special type created for initial simulations for Weissfluhjoch. In later simulations, LOAMYSAND has been used for Weissfluhjoch.
  */
 
 /**
  * @page snowpack_visualization Visualization tools
  * The simulation outputs are usually saved in \a ".pro" files for the time resolved profiles and \a ".met" files for the meteorological data time series
  * (see section \subpage snowpackio "Snowpack file formats"). These files can be processed with some scripts, relying on GNU plot or R for generating graphs
- * but are usually viewed with a graphical application. Two such applications are currently available: the legacy SnGUI Java tool and the newly developed 
- * SnopViz javascript tool.
+ * but are usually viewed with a graphical application such as the open source, online niViz application.
  * 
- * @section sngui_config The sngui tool
- * This deprecated java application can be  <a href="https://models.slf.ch/p/sngui/">downloaded</a> after registering (and requesting access) on the web site.
- * \image html sngui_overview_small.png "sngui overview"
- * \image latex sngui_overview.eps "sngui overview" width=0.9\textwidth
- *
- * @section snopviz The SnopViz tool
+ * @section snopviz The niViz tool
  * This javascript application work in any sufficiently recent web browser ( firefox >= 33.0, Safari >= 5.1, Internet Explorer >= 11.0, 
  * Chrome >= 38). You can either use it <a href="https://run.niviz.org">online</a> and then open your profile to visualize or you can 
- * <a href="https://gitlabext.wsl.ch/snow-models/niviz/-/wikis/home">download</a> a pre-packaged version that can be installed for offline use on your computer.
+ * <a href="https://code.wsl.ch/snow-models/niviz/-/wikis/home">download</a> a pre-packaged version that can be installed for offline use on your computer.
  * \image html snopviz_small.png "SnopViz overview"
  * \image latex snopviz.eps "SnopVizi overview" width=0.9\textwidth
  * 

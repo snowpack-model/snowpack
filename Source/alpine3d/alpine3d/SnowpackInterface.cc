@@ -188,7 +188,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			throw InvalidArgumentException("Too many snow densities requested", AT);
 		for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
 			std::stringstream ss;
-			if(ii == soil_temp_depths.size() -1) {
+			if(ii == max_Tsoil - 1) {
 				ss << "_MAX";
 			} else {
 				ss << (ii+1);
@@ -199,7 +199,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		}
 		for (size_t ii=0; ii<soil_runoff_depths.size(); ii++) {
 			std::stringstream ss;
-			if(ii == soil_runoff_depths.size() -1) {
+			if(ii == max_runoff - 1) {
 				ss << "_MAX";
 			} else {
 				ss << (ii+1);
@@ -216,7 +216,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			output_grids.push_back( "RHO"+ii_str );
 		}
 		SnowpackInterfaceWorker::uniqueOutputGrids(output_grids);
-		for(const auto gr: output_grids){
+		for(const auto& gr: output_grids){
 			std::cout << gr << " ";
 		}
 		std::cout << std::endl;
@@ -1247,7 +1247,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
  * When this is for a normal "cold" start, the file names are built based on the landuse code. For restarts, the
  * file names are built based on the cell (ii,jj) indices, for example:
  * 	+ {station_name}_{landuse_code}.{ext} for a "cold" start;
- * 	+ {ii}_{jj}_{station_name}.{ext} for a restart;
+ * 	+ {ii}_{jj}_{station_name}.{ext} for a restart (*ii* being in the *x* direction and *jj* in the *y* direction, referenced by the lower left corner);
  *
  * The station name is given in the [Output] section as "EXPERIMENT" key. The other keys controlling the process (including
  * the file extension) are:
@@ -1514,7 +1514,6 @@ void SnowpackInterface::calcLateralFlow()
 	// Send back SnowStations to the workers
 	#pragma omp parallel for schedule(dynamic, 1) reduction(+: errCount)
 	for (size_t ii = 0; ii < workers.size(); ii++) {
-		size_t k=0;
 		std::vector<SnowStation*> snow_pixel_out;					// Construct vector to send snow stations to the associated worker
 		for (size_t k = 0; k <  workers[ii]->SnowStationsCoord.size(); k++) {					// Cycle over y
 			const size_t idx = workers[ii]->SnowStationsCoord[k].first + workers[ii]->SnowStationsCoord[k].second * dimx;				// Index of snow pixel

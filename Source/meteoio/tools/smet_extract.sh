@@ -93,7 +93,7 @@ if [ "$2" = "gaps" ]; then
 			return sprintf("%s", strftime("%FT%H:%m", ts))
 		}
 		function getSec(ts){
-			gsub(/\-|\:|T/," ", ts); split(ts,d," ");
+			gsub(/\-|:|T/," ", ts); split(ts,d," ");
 			date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
 			return mktime(date)
 		}
@@ -211,7 +211,7 @@ awk '
 		} else {
 			if (isJulian==0) datum=$1
 			else datum=getISO($1)
-			gsub(/\-|\:|T/," ", datum); split(datum,d," ");
+			gsub(/\-|:|T/," ", datum); split(datum,d," ");
 			key=sprintf("%s-%s-01", d[1], d[2])
 			
 			if (agg_type=="AVG") {
