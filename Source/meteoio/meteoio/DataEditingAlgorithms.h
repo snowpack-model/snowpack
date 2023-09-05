@@ -113,17 +113,18 @@ class EditingSwap : public EditingBlock {
 
 
 /** 
- * @class EditingMove
+ * @class EditingRename
  * @ingroup processing
- * @brief MOVE input editing command
+ * @brief RENAME input editing command
  * @details
- * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take 
- * multiple source names that will be processed in the order of declaration. Original names that are not found in the current
- * dataset will silently be ignored, so it is safe to provide a list that contain many possible names:
+ * It is possible to rename a meteorological parameter thanks to the RENAME key. This key can take
+ * multiple source names that will be processed in the order of declaration and renamed into a single 
+ * destination name. Original names that are not found in the current dataset will silently be ignored, 
+ * so it is safe to provide a list that contain many possible names:
  * 
  * @code
  * [InputEditing]
- * SLF2::edit1      = MOVE
+ * SLF2::edit1      = RENAME
  * SLF2::arg1::dest = TA
  * SLF2::arg1::src  = air_temp air_temperature temperature_air
  * @endcode
@@ -131,10 +132,13 @@ class EditingSwap : public EditingBlock {
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
  * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in
  * the list to have a value has the priority).
+ *
+ * @note This editing command was previously MOVE. It has been renamed into RENAME so in the future a new MOVE command will be implemented to move
+ * parameters between stations.
  */
-class EditingMove : public EditingBlock {
+class EditingRename : public EditingBlock {
 	public:
-		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		EditingRename(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
 		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
 		
@@ -160,7 +164,7 @@ class EditingMove : public EditingBlock {
  * 
  * SLF2::edit1         = EXCLUDE
  * SLF2::arg3::params  = *
- * SLF2::arg3::when    = 2020-09-01 - 2020-09-03
+ * SLF2::arg3::when    = 2020-09-01 - 2020-09-03 , 2020-11-01T04:00
  * @endcode
  */
 class EditingExclude : public EditingBlock {
@@ -221,7 +225,7 @@ class EditingKeep : public EditingBlock {
  * parameter has priority). Please also note that which timestamps will be merged depends on the chosen merge 
  * strategy with the MERGE_STRATEGY option (see MeteoData::Merge_Type, by default it is MeteoData::EXPAND_MERGE). The handling 
  * of merge conflicts can be configured with the MERGE_CONFLICTS optional argument (see MeteoData::Merge_Conflicts, 
- * by default it is MeteoData::CONFLICTS_PRIORITY). Furthermore, a station can be merged into multiple other stations, 
+ * by default it is MeteoData::CONFLICTS_PRIORITY_FIRST). Furthermore, a station can be merged into multiple other stations,
  * but circular dependencies are prohibited (and checked for).
  *
  * @code

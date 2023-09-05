@@ -102,7 +102,7 @@ class ncFiles {
 		bool strict_schema, lax_schema, debug, isLatLon;
 		std::string nc_filename;
 		int ncid;
-		bool keep_input_files_open, keep_output_files_open;
+		bool keep_input_files_open, keep_output_files_open, allow_missing_coords;
 };
 
 /**
@@ -143,7 +143,7 @@ class NetCDFIO : public IOInterface {
 		std::vector< ncFiles > cache_inmeteo_files; //cache of meteo files in input METEOPATH
 		std::set<std::string> in_stations; ///< only the stations IDs listed here will be returned by a call to readMeteoData/readStationData
 		std::vector<MeteoGrids::Parameters> available_params;
-		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
+		std::string in_schema_grid, out_schema_grid, in_schema_meteo, out_schema_meteo, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, out_meteo_file;
 		bool debug, out_single_file;
 		bool split_by_year, split_by_var;

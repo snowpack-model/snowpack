@@ -39,7 +39,7 @@ namespace mio {
  *
  * \anchor Coordinate_types
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
- * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
+ * (that becomes part of MeteoIO) or through the use of an external library, Proj [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
  * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf] (epsg codes, respectively 21781 and 2056)
  * - <a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system">UTM</a> for UTM coordinates, the zone must be specified in the parameters, for example 31T [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf] (epsg codes as 32600+zoneNumber in the northern hemisphere or as 32700+zoneNumber in the southern hemisphere)
@@ -52,11 +52,11 @@ namespace mio {
  * COORDPARAM	= 31T
  * @endcode
  *
- * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj4</a> library for handling the coordinate conversion, the EPSG codes of
- * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
+ * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj</a> library for handling the coordinate conversion, the EPSG codes of
  * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
+ * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * @code
- * COORDSYS	= PROJ4
+ * COORDSYS	= PROJ
  * COORDPARAM	= 21781
  * @endcode
  *
@@ -341,7 +341,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 }
 
 /**
-* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* @brief Local projection constructor: this constructor is only suitable for building a local projection.
 * Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
 * @param[in] in_lat_ref latitude of the reference point
@@ -497,7 +497,7 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 */
 void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) 
 {
-	if ((in_latitude!=IOUtils::nodata && fabs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && fabs(in_longitude)>360.)) {
+	if ((in_latitude!=IOUtils::nodata && std::abs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && std::abs(in_longitude)>360.)) {
 		std::ostringstream ss;
 		ss << "(" << in_latitude << "," << in_longitude << ")";
 		throw InvalidArgumentException("Invalid latitude/longitude: "+ss.str(), AT);
@@ -590,8 +590,8 @@ void Coords::setAltitude(const double in_altitude, const bool in_update) {
 */
 void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) 
 {
-	if (in_coordinatesystem=="PROJ4" && in_parameters=="4326")
-		throw InvalidArgumentException("Please define a cartesian coordinate system, not a spehrical one!", AT);
+	if (in_coordinatesystem=="PROJ" && in_parameters=="4326")
+		throw InvalidArgumentException("Please define a cartesian coordinate system, not a spherical one!", AT);
 
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
@@ -799,9 +799,9 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 		else if (coordsystem=="CH1903") CoordsAlgorithms::CH1903_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if (coordsystem=="CH1903+") CoordsAlgorithms::CH1903_to_WGS84(i_easting-2.e6, i_northing-1.e6, o_latitude, o_longitude);
 		else if (coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
-		else if (coordsystem=="PROJ4") CoordsAlgorithms::PROJ4_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
+		else if (coordsystem=="PROJ") CoordsAlgorithms::PROJ_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
 		else if (coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
-		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
+		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\". Please notice that PROJ4 has been renamed into PROJ!", AT);
 	} else {
 		o_latitude = IOUtils::nodata;
 		o_longitude = IOUtils::nodata;
@@ -827,9 +827,9 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 			o_northing += 1.e6;
 		}
 		else if (coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
-		else if (coordsystem=="PROJ4") CoordsAlgorithms::WGS84_to_PROJ4(i_latitude, i_longitude, coordparam, o_easting, o_northing);
+		else if (coordsystem=="PROJ") CoordsAlgorithms::WGS84_to_PROJ(i_latitude, i_longitude, coordparam, o_easting, o_northing);
 		else if (coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
-		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
+		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\". Please notice that PROJ4 has been renamed into PROJ!", AT);
 	} else {
 		o_easting = IOUtils::nodata;
 		o_northing = IOUtils::nodata;
@@ -866,14 +866,12 @@ void Coords::distance(const Coords& destination, double& o_distance, double& o_b
 */
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
-	double alpha;
-	double dist;
-
 	if ((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
 		east_out = IOUtils::nodata;
 		north_out = IOUtils::nodata;
 		//throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
 	} else {
+		double alpha, dist;
 		switch(distance_algo) {
 			case GEO_COSINE:
 				dist = CoordsAlgorithms::cosineDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);

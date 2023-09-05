@@ -23,6 +23,7 @@
 
 #include <matio.h>
 #include <algorithm>
+#include <regex>
 
 using namespace std;
 
@@ -33,7 +34,7 @@ namespace mio {
  * networks IMIS/ANETZ stations as preprocessed by the
  * <A HREF="www.wsl.ch/fe/gebirgshydrologie/schnee_hydro/oshd/index_EN">Operational Snow-Hydrological Service</A>
  * of the <A HREF="www.wsl.ch">WSL/SLF</A>. The data is written as Matlab
- * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per meteorological parameter and per timestep, 
+ * <A HREF="http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf">binary files (.mat)</A>, one per timestep for all stations and meteorological parameters, 
  * available on an access-controlled server after each new <A HREF="www.cosmo-model.org/">COSMO</A> run. It therefore requires a third party 
  * library to read this file format: the Open Source <A HREF="https://sourceforge.net/projects/matio/">MatIO</A> library. This can be installed directly from
  * the default repositories under Linux or installed by downloading the proper package for Windows or OsX.
@@ -44,22 +45,24 @@ namespace mio {
  * ommitting the 'UTF8' option) to the (<A HREF="http://blog.omega-prime.co.uk/?p=150">partial</A>) UTF-8  encoding of Matlab.
  * 
  * @section oshd_data_structure Data structure
- * The files are named with the following schema: <i>{parameter}_{timestep}_{cosmo model version}_{mode}_{run time}.mat</i> with the following possible values:
- *     + *parameter* is one of idfc, idrc, albd, ilwc, pair, prec, rcor, tcor, wcor, wdir;
+ * The files are named with the following schema: <i>COSMODATA_{timestep}_{cosmo model version}{mode}_{runtime}.{meteo_ext}</i> with the following possible values:
  *     + *timestep* is written as purely numeric ISO with minute resolution;
- *     + *cosmo model version* could be any of cosmo7, cosmo2, cosmo1, cosmoE;
- *     + *mode* is a one letter code (F for Forecast, A for Analysis);
- *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset.
+ *     + *cosmo model version* is currently C1E;
+ *     + *mode* is a one letter code (FC for Forecast);
+ *     + *run time* is the purely numeric ISO date and time of when COSMO produced the dataset;
+ *     + *meteo_ext* is currently .mat.
  * 
- * The station data files have the following internal data structure (represented as "name {data type}"):
+ * The station data files have the following internal data structure (represented as "name {data type}" and with meteo parameter as one of prcs, wnss, wnds, wnsc, lwrc, sdri, sdrd, sdfd, tais, taic, rhus, pais, pail):
  * @verbatim
-      stat {1x1 struct}
-        ├── time {1x1 array of doubles}
-        ├── data {1x623 array of doubles}
-        ├── acro {1x623 array of arrays of char}
-        ├── dunit {array of char}
-        ├── type {array of char}
-        └── name {array of char}
+        ├── acro {1x688 array of arrays of char variable}
+        ├── NODATA_value {1x1 double variable}
+        ├── meteo parameter {struct}
+        │   ├── data {1x688 array of doubles variable}
+        │   ├── name {array of char variable}
+        │   ├── unit {array of char variable}
+        │   └── source {array of char variable}
+        ├── … more meteo parameters
+        └── time {1x2 array of doubles variable}
   @endverbatim
  * 
  * The stations' acronyms follow a fixed order but their coordinates must be provided in a separate file, given as *METAFILE* key (see below). 
@@ -67,11 +70,12 @@ namespace mio {
  * This file must have the following structure (the *x* and *y* coordinates being the CH1903 easting and northing, respectively): 
  * @verbatim
       statlist {1x1 struct}
-        ├── acro {1x623 array of arrays of char}
-        ├── name {1x623 array of arrays of char}
-        ├── x {1x623 array of doubles}
-        ├── y {1x623 array of doubles}
-        └── z {1x623 array of doubles}
+        ├── acro {1x688 array of arrays of char variable}
+        ├── name {1x688 array of arrays of char variable}
+        ├── x {1x688 array of doubles variable}
+        ├── y {1x688 array of doubles variable}
+        ├── z {1x688 array of doubles variable}
+        └── … various other arrays
   @endverbatim
  *
  * The gridded data have the following structure:
@@ -94,7 +98,7 @@ namespace mio {
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: directory containing all the data files with the proper file naming schema; [Input] section
  * - METEOPATH_RECURSIVE: should *meteopath* be searched recursively for files? (default: false); [Input] section
- * - STATION#: input stations' IDs (in METEOPATH). As many meteofiles as needed may be specified
+ * - STATION#: input stations' IDs (in METEOPATH). As many stations' IDs as needed may be specified
  * - METAFILE: file containing the stations' IDs, names and location; [Input] section (either within METEOPATH if not path is 
  provided or within the provided path)
  * - DEMFILE: for reading the data as a DEMObject
@@ -115,19 +119,19 @@ namespace mio {
  *
  */
 
-const char* OshdIO::meteo_ext = ".mat";
+const char* OshdIO::meteo_ext = "mat";
 const double OshdIO::in_dflt_TZ = 0.; //COSMO data is always GMT
-std::vector< std::pair<MeteoData::Parameters, std::string> > OshdIO::params_map;
+std::map< std::string, MeteoGrids::Parameters > OshdIO::params_map;
 std::map< MeteoGrids::Parameters, std::string > OshdIO::grids_map;
 const bool OshdIO::__init = OshdIO::initStaticData();
 
-OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
+OshdIO::OshdIO(const std::string& configfile) : cfg(configfile), cache_meteo_files(), cache_grid_files(), vecMeta(), statIDs(),
                coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), nrMetadata(0), debug(false)
 {
 	parseInputOutputSection();
 }
 
-OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), cache_grid_files(), vecMeta(), vecIDs(), vecIdx(),
+OshdIO::OshdIO(const Config& cfgreader) : cfg(cfgreader), cache_meteo_files(), cache_grid_files(), vecMeta(), statIDs(),
                coordin(), coordinparam(), grid2dpath_in(), in_meteopath(), in_metafile(), nrMetadata(0), debug(false)
 {
 	parseInputOutputSection();
@@ -141,7 +145,10 @@ void OshdIO::parseInputOutputSection()
 	
 	const std::string meteo_in = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (meteo_in == "OSHD") {//keep it synchronized with IOHandler.cc for plugin mapping!!
+		std::vector< std::string > vecIDs;
 		cfg.getValues("STATION", "INPUT", vecIDs);
+		for (auto& ID : vecIDs) statIDs.push_back( station_index( ID ) );
+		
 		cfg.getValue("METEOPATH", "Input", in_meteopath);
 		const bool is_recursive = cfg.get("METEOPATH_RECURSIVE", "Input", false);
 		cache_meteo_files = scanMeteoPath(in_meteopath, is_recursive);
@@ -171,13 +178,15 @@ void OshdIO::parseInputOutputSection()
 
 bool OshdIO::initStaticData()
 {
-	params_map.push_back( std::make_pair(MeteoData::ILWR, "ilwc") );
-	params_map.push_back( std::make_pair(MeteoData::P, "pair") );
-	params_map.push_back( std::make_pair(MeteoData::PSUM, "prec") ); //in mm/ts
-	params_map.push_back( std::make_pair(MeteoData::RH, "rcor") ); //old: rhum
-	params_map.push_back( std::make_pair(MeteoData::TA, "tcor") ); //old:tair
-	params_map.push_back( std::make_pair(MeteoData::VW, "wcor") ); //old: wind
-	params_map.push_back( std::make_pair(MeteoData::DW, "wdir") );
+	params_map[ "lwrc" ] = MeteoGrids::ILWR;
+	params_map[ "pail" ] = MeteoGrids::P;
+	params_map[ "prcs" ] = MeteoGrids::PSUM;
+	params_map[ "rhus" ] = MeteoGrids::RH;
+	params_map[ "tais" ] = MeteoGrids::TA;
+	params_map[ "wnsc" ] = MeteoGrids::VW;
+	params_map[ "wnds" ] = MeteoGrids::DW;
+	params_map[ "sdrd" ] = MeteoGrids::ISWR_DIR;
+	params_map[ "sdfd" ] = MeteoGrids::ISWR_DIFF;
 
 	grids_map[ MeteoGrids::ILWR ] = "ilwc";
 	grids_map[ MeteoGrids::P ] = "pair";
@@ -194,33 +203,24 @@ bool OshdIO::initStaticData()
 }
 
 //This builds an index of which timesteps are provided by which files, always keeping the most recent run when
-//multiple files provide the same timesteps. The file names are read as: {prec}_{timestep}_XXX_{runtime}.{meteo_ext}
+//multiple files provide the same timesteps. The file names are read as: COSMODATA_{timestep}_C1EFC_{runtime}.{meteo_ext}
 std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive)
 {
+	//matching file names such as COSMODATA_202211022300_C1EFC_202211010300.mat
+	//dirty trick: make sure that {meteo_ext} does not contain unescaped regex special chars!!
+	static const std::regex filename_regex("COSMODATA_([0-9]{12})_C1EFC_([0-9]{12})\\." + std::string(meteo_ext));
+	std::smatch filename_matches;
+	
 	std::vector< struct OshdIO::file_index > data_files;
-	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "prec", is_recursive) ); //we consider that if we have found one parameter, the others are also there
+	const std::list<std::string> dirlist( FileUtils::readDirectory(meteopath_in, "COSMODATA", is_recursive) );
 
 	std::map<std::string, size_t> mapIdx; //make sure each timestamp only appears once, ie remove duplicates
-	for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
-		const std::string file_and_path( *it );
+	for (const auto& file_and_path : dirlist) {
 		const std::string filename( FileUtils::getFilename(file_and_path) );
-
-		//we need to split the file name into its components: parameter, date, run_date
-		const std::string::size_type rundate_end = filename.rfind('.');
-		if (rundate_end==string::npos) continue;
-		const std::string ext( filename.substr(rundate_end) );
-		if (ext!=meteo_ext) continue;
-		const std::string::size_type pos_param = filename.find('_');
-		if (pos_param==string::npos) continue;
-		const std::string::size_type date_start = filename.find_first_of("0123456789");
-		if (date_start==string::npos) continue;
-		const std::string::size_type date_end = filename.find('_', date_start);
-		if (date_end==string::npos) continue;
-		const std::string::size_type rundate_start = filename.rfind('_');
-		if (rundate_start==string::npos) continue;
-
-		const std::string date_str( filename.substr(date_start, date_end-date_start) );
-		const std::string run_date( filename.substr(rundate_start+1, rundate_end-rundate_start-1) );
+		
+		if (!std::regex_match(filename, filename_matches, filename_regex)) continue;
+		const std::string date_str( filename_matches.str(1) );
+		const std::string run_date( filename_matches.str(2) );
 
 		//do we already have an entry for this date?
 		size_t idx = IOUtils::npos;
@@ -234,7 +234,7 @@ std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string
 		const std::string path( FileUtils::getPath(file_and_path) );
 		Date date;
 		IOUtils::convertString(date, date_str, in_dflt_TZ);
-		const file_index elem(date, path, filename.substr(pos_param), run_date);
+		const file_index elem(date, path, filename, run_date);
 		if (idx==IOUtils::npos) {
 			data_files.push_back( elem );
 			mapIdx[ date_str ] = data_files.size()-1;
@@ -258,9 +258,8 @@ bool OshdIO::list2DGrids(const Date& start, const Date& end, std::map<Date, std:
 		if (date>end) break;
 		
 		//we consider that all parameters are present at all timesteps
-		std::map< MeteoGrids::Parameters, std::string >::const_iterator it;
-		for (it=grids_map.begin(); it!=grids_map.end(); ++it) {
-			results[date].insert( it->first );
+		for (auto const& grid : grids_map) {
+			results[date].insert( grid.first );
 		}
 	}
 	
@@ -279,7 +278,7 @@ size_t OshdIO::getFileIdx(const std::vector< struct file_index >& cache, const D
 		}
 	}
 
-	//not found, we take the closest timestamp we have (ie very eginning or very end)
+	//not found, we take the closest timestamp we have (ie very beginning or very end)
 	if (start_date<cache.front().date) return 0;
 	else return cache.size()-1;
 }
@@ -300,145 +299,109 @@ void OshdIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (station_date>dateEnd || cache_meteo_files.back().date<dateStart) return; //the requested period is NOT in the available files
 
 	const size_t nr_files = cache_meteo_files.size();
-	const size_t nrIDs = vecIDs.size();
+	const size_t nrIDs = statIDs.size();
 	
 	if (vecMeta.empty()) fillStationMeta(); //this also fills vecIdx
 	vecMeteo.resize( nrIDs );
 	do {
 		//create empty MeteoData for the current timestep
 		for (size_t jj=0; jj<nrIDs; jj++) {
-			const MeteoData md( station_date, vecMeta[jj] );
+			MeteoData md( station_date, vecMeta[jj] );
+			md.addParameter("ISWR_DIFF");
+			md.addParameter("ISWR_DIR");
 			vecMeteo[jj].push_back( md );
 		}
 		
-		//read the data and fill vecMeteo
-		const std::string file_suffix( cache_meteo_files[ file_idx ].file_suffix );
+		//read all stations and all parameters for the current time step
 		const std::string path( in_meteopath + "/" + cache_meteo_files[ file_idx ].path );
-		for (size_t ii=0; ii<params_map.size(); ii++) {
-			const MeteoData::Parameters param( params_map[ii].first );
-			const std::string filename( path + "/" + params_map[ii].second + file_suffix );
-			const std::vector<double> vecData( readFromFile(filename, param, station_date) );
-
-			for (size_t jj=0; jj<nrIDs; jj++)
-				vecMeteo[jj].back()( param ) =  vecData[jj];
-		}
+		const std::string file_and_path( path + "/" + cache_meteo_files[ file_idx ].filename );
+		readFromFile(file_and_path, station_date, vecMeteo);
 		
-		readSWRad(station_date, path, file_suffix, nrIDs, vecMeteo); //the short wave radiation is a little different...
-		readPPhase(station_date, path, file_suffix, nrIDs, vecMeteo); //the precipitation phase is a little different...
-
+		//for convenience, we directly compute ISWR global from DIR and DIFF
+		for (size_t jj=0; jj<nrIDs; jj++) 
+			vecMeteo[jj].back()( MeteoData::ISWR ) = vecMeteo[jj].back()( "ISWR_DIR" ) + vecMeteo[jj].back()( "ISWR_DIFF" );
+		
 		file_idx++;
 		station_date = ((file_idx)<nr_files)? cache_meteo_files[file_idx].date : dateEnd+1.;
 	} while (file_idx<nr_files && station_date<=dateEnd);
 }
 
-void OshdIO::readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
+void OshdIO::readFromFile(const std::string& file_and_path, const Date& in_timestep, std::vector< std::vector<MeteoData> >& vecMeteo) const
 {
-	const std::string filename_dir( path + "/" + grids_map[MeteoGrids::ISWR_DIR] + file_suffix );
-	const std::vector<double> vecDir( readFromFile(filename_dir, MeteoData::ISWR, station_date) );
-	
-	const std::string filename_diff( path + "/" + grids_map[MeteoGrids::ISWR_DIFF] + file_suffix );
-	const std::vector<double> vecDiff( readFromFile(filename_diff, MeteoData::ISWR, station_date) );
+	if (debug) matWrap::printFileStructure(file_and_path, in_dflt_TZ);
+	mat_t *matfp = Mat_Open(file_and_path.c_str(), MAT_ACC_RDONLY);
+	if ( nullptr == matfp ) throw AccessException(file_and_path, AT);
 
-	const std::string filename_albd( path + "/" + grids_map[MeteoGrids::ALB] + file_suffix );
-	if (FileUtils::fileExists(filename_albd)) {
-		const std::vector<double> vecAlbd( readFromFile(filename_albd, MeteoData::RSWR, station_date) ); //We read ALBD and use it to build RSWR
-		for (size_t jj=0; jj<nrIDs; jj++) {
-			vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
-			vecMeteo[jj].back()( MeteoData::RSWR ) =  (vecDir[jj]+vecDiff[jj])*vecAlbd[jj];
+	//open the file 
+	matvar_t *matvar = nullptr;
+	const size_t nrIDs = statIDs.size();
+	double nodata = -999.;
+	std::vector<std::string> vecAcro;
+	
+	//extract each parameter one by one for the selected stations
+	while ( (matvar = Mat_VarReadNextInfo(matfp)) != nullptr ) {
+		const std::string varName( matvar->name );
+		
+		if (varName=="NODATA_value") {
+			nodata = matWrap::readDouble(file_and_path, "NODATA_value", matfp, matvar);
+			continue;
 		}
-	} else {
-		for (size_t jj=0; jj<nrIDs; jj++) {
-			vecMeteo[jj].back()( MeteoData::ISWR ) =  vecDir[jj]+vecDiff[jj];
+		
+		if (varName=="time") {
+			const std::vector<double> vecTime( matWrap::readDoubleVector(file_and_path, "time", matfp, matvar) );
+			//vecTime is a vector of two elements: begin date and end date of timestep
+			if (vecTime.size()!=2) {
+				throw InvalidFormatException("Two time step must be present in the 'time' vector: runtime and simulation time", AT);
+			}
+			Date timestep;
+			timestep.setMatlabDate( vecTime[0], in_dflt_TZ ); //take the begin date
+			if (in_timestep!=timestep) throw InvalidArgumentException("the in-file timestep and the filename time step don't match for for '"+file_and_path+"'", AT);
+			continue;
 		}
-	}
-}
-
-void OshdIO::readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const
-{
-	const std::string filename( path + "/" + "snfl" + file_suffix );
-	if (FileUtils::fileExists(filename)) {
-		static const double half_elevation_band = 50.;  //we consider that there are mixed precip in the elevation range snow_line ± half_elevation_band
-		const std::vector<double> vecSnowLine( readFromFile(filename, MeteoData::PSUM_PH, station_date) );
-
-		for (size_t jj=0; jj<nrIDs; jj++) {
-			const double altitude = vecMeteo[jj].front().meta.getAltitude();
-			if (altitude>(vecSnowLine[jj]+half_elevation_band))
-				vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 0.;
-			else if (altitude<(vecSnowLine[jj]-half_elevation_band))
-				vecMeteo[jj].back()( MeteoData::PSUM_PH ) = 1.;
-			else
-				vecMeteo[jj].back()( MeteoData::PSUM_PH ) = .5;
+		
+		if (varName=="acro") {
+			vecAcro = matWrap::readStringVector(file_and_path, "acro", matfp, matvar);
+			if (vecAcro.size()!=nrMetadata) {
+				std::ostringstream ss;
+				ss << "the number of stations changes between the metadata file (" << nrMetadata << ") and the data file '";
+				ss << FileUtils::getFilename( file_and_path ) << "' (" << vecAcro.size() << ")\n";
+				throw IndexOutOfBoundsException(ss.str(), AT);
+			}
+			for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
+				if (statIDs[ii].oshd_acro != vecAcro[ statIDs[ii].idx ]) {
+					throw InvalidFormatException("station '"+statIDs[ii].id+"' is not listed in the same position as previously in file '"+file_and_path+"'", AT);
+				}
+			}
+			continue;
 		}
-	}
-}
+		
+		//processing of meteo parameters
+		const std::map< std::string, MeteoGrids::Parameters>::iterator it = params_map.find( varName );
+		if (it==params_map.end()) continue;
+		
+		const std::string parname( MeteoGrids::getParameterName( it->second ) );
+		const size_t parindex = vecMeteo.back().back().getParameterIndex( parname );
+		const std::string units( matWrap::readString(file_and_path, "unit", matfp, matvar) );
+		const std::vector<double> vecRaw( matWrap::readDoubleVector(file_and_path, "data", matfp, matvar) );
+		if (vecAcro.size() != vecRaw.size()) throw InvalidFormatException("'acro' and 'data' arrays don't match in file '"+file_and_path+"'", AT);
+		
+		for (size_t ii=0; ii<nrIDs; ii++) {
+			const double raw_value = vecRaw[ statIDs[ii].idx ];
+			if (raw_value!=nodata) { //otherwise it keeps its initial value of IOUtils::nodata
+				vecMeteo[ii].back()( parindex ) = convertUnits( raw_value, units, parindex, file_and_path);
+			}
+		}
 
-std::vector<double> OshdIO::readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep) const
-{
-	if (debug) matWrap::printFileStructure(filename, in_dflt_TZ);
-	mat_t *matfp = Mat_Open(filename.c_str(), MAT_ACC_RDONLY);
-	if ( nullptr == matfp ) throw AccessException(filename, AT);
-
-	//open the file and read some metadata
-	matvar_t *matvar = Mat_VarReadInfo(matfp, "stat");
-	if (matvar==nullptr) throw NotFoundException("structure 'stat' not found in file '"+filename+"'", AT);
-	if (matvar->class_type!=MAT_C_STRUCT) throw InvalidFormatException("The matlab file should contain 1 structure", AT);
-	
-	const std::string type( matWrap::readString(filename, "type", matfp, matvar) );
-	checkFieldType(param, type);
-
-	//check that the timestep is as expected
-	const std::vector<double> vecTime( matWrap::readDoubleVector(filename, "time", matfp, matvar) );
-	if (vecTime.size()!=1) throw InvalidFormatException("one and only one time step must be present in the 'time' vector", AT);
-	Date timestep;
-	timestep.setMatlabDate( vecTime[0], in_dflt_TZ );
-	if (in_timestep!=timestep) throw InvalidArgumentException("the in-file timestep and the filename time step don't match for for '"+filename+"'", AT);
-	
-	//check that each station is still at the same index, build the index cache if necessary
-	const std::vector<std::string> vecAcro( matWrap::readStringVector(filename, "acro", matfp, matvar) );
-	if (vecAcro.size()!=nrMetadata) {
-		std::ostringstream ss;
-		ss << "the number of stations changes between the metadata file (" << nrMetadata << ") and the data file '";
-		ss << FileUtils::getFilename( filename ) << "' (" << vecAcro.size() << ")\n";
-		throw IndexOutOfBoundsException(ss.str(), AT);
-	}
-	const size_t nrIDs = vecIDs.size();
-	for (size_t ii=0; ii<nrIDs; ii++) { //check that the IDs still match
-		if (vecIDs[ii] != vecAcro[ vecIdx[ii] ])
-			throw InvalidFormatException("station '"+vecIDs[ii]+"' is not listed in the same position as previously in file '"+filename+"'", AT);
+		//cleanup pointers before looping to avoid memory leaks
+		Mat_VarFree(matvar);
+		matvar = nullptr;
 	}
 	
-	//extract the data for the selected stations
-	const std::string units( matWrap::readString(filename, "dunit", matfp, matvar) );
-	const std::vector<double> vecRaw( matWrap::readDoubleVector(filename, "data", matfp, matvar) );
-	if (vecAcro.size() != vecRaw.size()) throw InvalidFormatException("'acro' and 'data' arrays don't match in file '"+filename+"'", AT);
-
-	std::vector<double> vecData(nrIDs, IOUtils::nodata);
-	for (size_t ii=0; ii<nrIDs; ii++)
-		vecData[ii] = convertUnits( vecRaw[ vecIdx[ii] ], units, param, filename);
-	
-	Mat_VarFree(matvar);
 	Mat_Close(matfp);
-	return vecData;
-}
-
-void OshdIO::checkFieldType(const MeteoData::Parameters& param, const std::string& type)
-{
-	if (param==MeteoData::TA && type=="TA") return;
-	if (param==MeteoData::RH && type=="RH") return;
-	if (param==MeteoData::PSUM && type=="PREC") return;
-	if (param==MeteoData::VW && type=="WS") return;
-	if (param==MeteoData::DW && type=="WD") return;
-	if (param==MeteoData::ILWR && type=="LWR") return;
-	if (param==MeteoData::ISWR && type=="SWR") return;
-	if (param==MeteoData::P && type=="other") return;
-	if (param==MeteoData::PSUM_PH && type=="other") return;
-	if (param==MeteoData::RSWR && type=="other") return; //this is in fact ALBD
-	
-	throw InvalidArgumentException("trying to read "+MeteoData::getParameterName(param)+" but found '"+type+"'", AT);
 }
 
 //NOTE It seems that recent versions contain multibyte encoding and this is not supported by matio, leading to trucated units (at best)
-double OshdIO::convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param, const std::string& filename)
+double OshdIO::convertUnits(const double& val, const std::string& units, const size_t& param, const std::string& filename)
 {
 	if (units=="%") return val/100.;
 	if (units=="m") return val;
@@ -452,6 +415,8 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 	if (units=="\xB0" && param==MeteoData::TA) return val+Cst::t_water_freezing_pt; //ISO-8859-1 hex for '°'
 	if (units=="\x3F" && param==MeteoData::DW) return val; //unknown encoding hex for '°'
 	if (units=="\xB0" && param==MeteoData::DW) return val; //ISO-8859-1 hex for '°'
+	if (units=="deg") return val;
+	if (units=="K") return val;
 	if (units.empty()) return val;
 	if (units=="Pa") return val;
 	if (units=="W/m2") return val;
@@ -468,8 +433,14 @@ double OshdIO::convertUnits(const double& val, const std::string& units, const M
 
 void OshdIO::fillStationMeta()
 {
+	//the STATION_LIST.mat file contains entries formated such as:
+	//acro="SLF.WFJ2", name="WeissfluhjochSchneestation (ENET)"
+	//regex for removing appended networks names
+	static const std::regex name_regex("([^\\(\\)]+) (\\([a-zA-Z]+\\))(.*)");
+	std::smatch name_matches;
+
 	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
-	vecMeta.resize( vecIDs.size(), StationData() );
+	vecMeta.resize( statIDs.size(), StationData() );
 	mat_t *matfp = Mat_Open(in_metafile.c_str(), MAT_ACC_RDONLY);
 	if ( nullptr == matfp ) throw AccessException(in_metafile, AT);
 
@@ -492,39 +463,66 @@ void OshdIO::fillStationMeta()
 	}
 	
 	buildVecIdx(vecAcro);
-	for (size_t ii=0; ii<vecIdx.size(); ii++) {
-		const size_t idx = vecIdx[ii];
+	for (size_t ii=0; ii<statIDs.size(); ii++) {
+		const size_t idx = statIDs[ii].idx;
 		Coords location(coordin, coordinparam);
 		location.setXY(easting[idx], northing[idx], altitude[idx]);
-		std::string name( vecNames[idx] );
-
+		
 		//if the network name has been appended, remove it. We also remove spaces, just in case
-		const size_t netz_pos = name.find(" (");
-		if (netz_pos!=std::string::npos) name.erase(netz_pos);
-		std::replace( name.begin(), name.end(), ' ', '_');
+		std::string name( vecNames[idx] );
+		if (std::regex_match(name, name_matches, name_regex)) {
+			name = name_matches.str(1);
+		}
 
-		const StationData sd(location, vecAcro[idx], name);
+		const StationData sd(location, statIDs[ii].id, name);
 		vecMeta[ii] = sd;
 	}
 }
 
-void OshdIO::buildVecIdx(const std::vector<std::string>& vecAcro)
+//Fill vecIdx so it contains for all IDs in the order of their appearance in the ini file, their index in the .mat files
+//the STATION_LIST.mat file contains entries formated such as:
+//acro="SLF.WFJ2", name="WeissfluhjochSchneestation (ENET)"
+void OshdIO::buildVecIdx(std::vector<std::string> vecAcro)
 {
-	const size_t nrIDs = vecIDs.size();
+	const size_t nrIDs = statIDs.size();
 	if (nrIDs==0) throw InvalidArgumentException("Please provide at least one station ID to read!", AT);
-	vecIdx.resize( nrIDs, 0 );
 	
-	for (size_t ii=0; ii<nrIDs; ii++) {
-		bool found = false;
-		for (size_t jj=0; jj<vecAcro.size(); jj++) {
-			if (vecIDs[ii]==vecAcro[jj]) {
-				vecIdx[ii] = jj;
-				found = true;
+	const size_t nrAcro = vecAcro.size();
+	//regex for correcting the stations' Acro into the correct ones: matching things like 'SLF.WFJ2'
+	static const std::regex acro_regex("([a-zA-Z]+)\\.([a-zA-Z]+)([0-9]*)");
+	std::smatch acro_matches;
+	
+	//cleaning up all stations IDs and looking for the user requested station IDs
+	for (size_t jj=0; jj<nrAcro; jj++) {
+		std::string cleanAcro = vecAcro[jj];
+		
+		if (std::regex_match(vecAcro[jj], acro_matches, acro_regex)) {
+			//rules applied by oshd: stations like '*WFJ' have been renamed as 'MCH.WFJ2'
+			//stations  like '#DOL' have been renamed as 'MCH.DOL1', stations in AUT, DE, FR, IT have been added
+			const std::string provider( acro_matches.str(1) );
+			if (provider=="MCH") {
+				const std::string st_nr( acro_matches.str(3) );
+				if (st_nr=="2") cleanAcro = "*" + acro_matches.str(2);
+				if (st_nr=="1") cleanAcro = "#" + acro_matches.str(2);
+			} else {
+				cleanAcro = acro_matches.str(2) + acro_matches.str(3);
+			}
+		}
+		
+		//does the cleaned station ID match a user-requested station ID?
+		for (size_t ii=0; ii<nrIDs; ii++) {
+			if (statIDs[ii].id==cleanAcro) {
+				statIDs[ii].idx = jj;
+				statIDs[ii].oshd_acro = vecAcro[jj];
 				break;
 			}
 		}
-		if (!found) 
-			throw NotFoundException("station ID '"+vecIDs[ii]+"' could not be found in the provided metadata", AT);
+	}
+	
+	//making sure all user requested station IDs have been found
+	for (size_t ii=0; ii<nrIDs; ii++) {
+		if (statIDs[ii].idx==IOUtils::npos)
+			throw NotFoundException("station ID '"+statIDs[ii].id+"' could not be found in the provided metadata", AT);
 	}
 }
 
@@ -561,7 +559,7 @@ void OshdIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	if (grid_date!=date) return; //the requested date is NOT in the available files
 
 	//build the proper file name
-	const std::string file_suffix( cache_grid_files[ file_idx ].file_suffix );
+	const std::string file_suffix( cache_grid_files[ file_idx ].filename );
 	const std::string path( grid2dpath_in + "/" + cache_grid_files[ file_idx ].path );
 
 	if (grids_map.find(parameter)!=grids_map.end()) {

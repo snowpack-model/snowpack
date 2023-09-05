@@ -24,6 +24,7 @@
 #include <limits>
 #include <iomanip>
 #include <sstream>
+#include <algorithm> //for set_difference
 
 using namespace std;
 namespace mio {
@@ -38,43 +39,44 @@ const bool MeteoGrids::__init = MeteoGrids::initStaticData();
 bool MeteoGrids::initStaticData()
 {
 	//the order must be the same as in the enum
-	paramname.push_back("TA");					description.push_back("Air Temperature");						units.push_back("K");
-	paramname.push_back("RH");					description.push_back("Relative Humidity");					units.push_back("-");
-	paramname.push_back("QI");					description.push_back("Specific Humidity");					units.push_back("g/g");
-	paramname.push_back("TD");					description.push_back("Dew Point Temperature");			units.push_back("K");
-	paramname.push_back("VW");				description.push_back("Wind Velocity");							units.push_back("m/s");
-	paramname.push_back("DW");				description.push_back("Wind Direction");						units.push_back("°");
+	paramname.push_back("TA");			description.push_back("Air Temperature");						units.push_back("K");
+	paramname.push_back("RH");			description.push_back("Relative Humidity");					units.push_back("-");
+	paramname.push_back("QI");			description.push_back("Specific Humidity");					units.push_back("g/g");
+	paramname.push_back("TD");			description.push_back("Dew Point Temperature");			units.push_back("K");
+	paramname.push_back("VW");			description.push_back("Wind Velocity");							units.push_back("m/s");
+	paramname.push_back("DW");			description.push_back("Wind Direction");						units.push_back("°");
 	paramname.push_back("VW_MAX");		description.push_back("Gust Wind Velocity");					units.push_back("m/s");
-	paramname.push_back("ISWR");				description.push_back("Incoming Short Wave Radiation");				units.push_back("W/m2");
-	paramname.push_back("RSWR");			description.push_back("Reflected Short Wave Radiation");				units.push_back("W/m2");
-	paramname.push_back("ISWR_DIFF");		description.push_back("Incoming Diffuse Short Wave Radiation");	units.push_back("W/m2");
-	paramname.push_back("ISWR_DIR");		description.push_back("Incoming Direct Short Wave Radiation");	units.push_back("W/m2");
-	paramname.push_back("ILWR");				description.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
-	paramname.push_back("OLWR");			description.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("ISWR");		description.push_back("Incoming Short Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("RSWR");		description.push_back("Reflected Short Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("ISWR_DIFF");	description.push_back("Incoming Diffuse Short Wave Radiation");	units.push_back("W/m2");
+	paramname.push_back("ISWR_DIR");	description.push_back("Incoming Direct Short Wave Radiation");	units.push_back("W/m2");
+	paramname.push_back("ILWR");		description.push_back("Incoming Long Wave Radiation");				units.push_back("W/m2");
+	paramname.push_back("OLWR");		description.push_back("Outgoing Long Wave Radiation");				units.push_back("W/m2");
 	paramname.push_back("LWR_NET");                 description.push_back("Net Long Wave Radiation");                               units.push_back("W/m2");
 	paramname.push_back("TAU_CLD");		description.push_back("Atmospheric Transmissivity");					units.push_back("-");
-	paramname.push_back("HS");					description.push_back("Snow Height");							units.push_back("m");
-	paramname.push_back("PSUM");			description.push_back("Precipitation Sum");					units.push_back("kg/m2");
+	paramname.push_back("CLD");			description.push_back("Total cloud cover");					units.push_back("okta");
+	paramname.push_back("HS");			description.push_back("Snow Height");							units.push_back("m");
+	paramname.push_back("PSUM");		description.push_back("Precipitation Sum");					units.push_back("kg/m2");
 	paramname.push_back("PSUM_PH");		description.push_back("Precipitation Phase");					units.push_back("-");
-	paramname.push_back("PSUM_L");			description.push_back("Precipitation Sum of the Liquid Phase");	units.push_back("kg/m2");
+	paramname.push_back("PSUM_L");		description.push_back("Precipitation Sum of the Liquid Phase");	units.push_back("kg/m2");
 	paramname.push_back("PSUM_LC");                  description.push_back("Precipitation Sum of the Liquid Convection"); units.push_back("kg/m2");
-	paramname.push_back("PSUM_S");			description.push_back("Precipitation Sum of the Solid Phase");		units.push_back("kg/m2");
-	paramname.push_back("TSG");				description.push_back("Ground Surface Temperature");					units.push_back("K");
-	paramname.push_back("TSS");				description.push_back("Surface Temperature");				units.push_back("K");
-	paramname.push_back("TSOIL");			description.push_back("Soil Temperature");					units.push_back("K");
-	paramname.push_back("P");					description.push_back("Air Pressure");							units.push_back("Pa");
-	paramname.push_back("P_SEA");			description.push_back("Air Pressure at Sea Level");		units.push_back("Pa");
-	paramname.push_back("U");					description.push_back("Wind Velocity East Component");				units.push_back("m/s");
-	paramname.push_back("V");					description.push_back("Wind Velocity North Component");			units.push_back("m/s");
-	paramname.push_back("W");					description.push_back("Wind Velocity Vertical Component");			units.push_back("m/s");
-	paramname.push_back("SWE");				description.push_back("Snow Water Equivalent");			units.push_back("kg/m2");
-	paramname.push_back("RSNO");			description.push_back("Snow Mean Density");				units.push_back("kg/m3");
-	paramname.push_back("ROT");				description.push_back("Total generated runoff");			units.push_back("gk/m2");
-	paramname.push_back("ALB");				description.push_back("Albedo");									units.push_back("-");
-	paramname.push_back("DEM");				description.push_back("Altitude above Sea Level");		units.push_back("m");
-	paramname.push_back("SHADE");			description.push_back("Hillshade");								units.push_back("-");
-	paramname.push_back("SLOPE");			description.push_back("Slope Angle");							units.push_back("degree");
-	paramname.push_back("AZI");				description.push_back("Slope Aspect");							units.push_back("degree");
+	paramname.push_back("PSUM_S");		description.push_back("Precipitation Sum of the Solid Phase");		units.push_back("kg/m2");
+	paramname.push_back("TSG");			description.push_back("Ground Surface Temperature");					units.push_back("K");
+	paramname.push_back("TSS");			description.push_back("Surface Temperature");				units.push_back("K");
+	paramname.push_back("TSOIL");		description.push_back("Soil Temperature");					units.push_back("K");
+	paramname.push_back("P");			description.push_back("Air Pressure");							units.push_back("Pa");
+	paramname.push_back("P_SEA");		description.push_back("Air Pressure at Sea Level");		units.push_back("Pa");
+	paramname.push_back("U");			description.push_back("Wind Velocity East Component");				units.push_back("m/s");
+	paramname.push_back("V");			description.push_back("Wind Velocity North Component");			units.push_back("m/s");
+	paramname.push_back("W");			description.push_back("Wind Velocity Vertical Component");			units.push_back("m/s");
+	paramname.push_back("SWE");			description.push_back("Snow Water Equivalent");			units.push_back("kg/m2");
+	paramname.push_back("RSNO");		description.push_back("Snow Mean Density");				units.push_back("kg/m3");
+	paramname.push_back("ROT");			description.push_back("Total generated runoff");			units.push_back("gk/m2");
+	paramname.push_back("ALB");			description.push_back("Albedo");									units.push_back("-");
+	paramname.push_back("DEM");			description.push_back("Altitude above Sea Level");		units.push_back("m");
+	paramname.push_back("SHADE");		description.push_back("Hillshade");								units.push_back("-");
+	paramname.push_back("SLOPE");		description.push_back("Slope Angle");							units.push_back("degree");
+	paramname.push_back("AZI");			description.push_back("Slope Aspect");							units.push_back("degree");
 
 	return true;
 }
@@ -182,6 +184,20 @@ size_t MeteoData::getStaticParameterIndex(const std::string& parname)
 	return IOUtils::npos; //parameter not a part of MeteoData
 }
 
+MeteoGrids::Parameters MeteoData::findGridParam(const MeteoData::Parameters& mpar)
+{
+	const std::string parname( MeteoData::getParameterName(mpar) );
+	const size_t idx = MeteoGrids::getParameterIndex(parname);
+	return static_cast<MeteoGrids::Parameters>(idx);
+}
+
+MeteoData::Parameters MeteoData::findMeteoParam(const MeteoGrids::Parameters& gpar)
+{
+	const std::string parname( MeteoGrids::getParameterName(gpar) );
+	const size_t idx = MeteoData().getParameterIndex(parname);
+	return static_cast<MeteoData::Parameters>(idx);
+}
+
 /************************************************************
  * non-static section                                       *
  ************************************************************/
@@ -238,6 +254,11 @@ MeteoData::MeteoData(const Date& date_in)
            resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
 { }
 
+MeteoData::MeteoData(const StationData& meta_in)
+         : date(0.0, 0.), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
+           resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
+{ }
+
 MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
          : date(date_in), meta(meta_in), extra_param_name(), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters),
            resampled(false), flags(MeteoData::nrOfParameters, zero_flag)
@@ -270,8 +291,8 @@ bool MeteoData::operator==(const MeteoData& in) const
 		return false;
 
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		//const double epsilon_rel = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * std::numeric_limits<double>::epsilon(); // Hack not working...
-		//const double epsilon_rel = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * 0.0000001; // Hack not working with 0 == 0 ....
+		//const double epsilon_rel = (std::abs(data[ii]) < std::abs(in.data[ii]) ? std::abs(in.data[ii]) : std::abs(data[ii])) * std::numeric_limits<double>::epsilon(); // Hack not working...
+		//const double epsilon_rel = (std::abs(data[ii]) < std::abs(in.data[ii]) ? std::abs(in.data[ii]) : std::abs(data[ii])) * 0.0000001; // Hack not working with 0 == 0 ....
 		if ( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) ) return false;
 	}
 
@@ -464,7 +485,8 @@ MeteoData::Merge_Type MeteoData::getMergeType(std::string merge_type)
 MeteoData::Merge_Conflicts MeteoData::getMergeConflicts(std::string merge_conflicts)
 {
 	IOUtils::toUpper( merge_conflicts );
-	if (merge_conflicts=="CONFLICTS_PRIORITY") return CONFLICTS_PRIORITY;
+	if (merge_conflicts=="CONFLICTS_PRIORITY_FIRST") return CONFLICTS_PRIORITY_FIRST;
+	else if (merge_conflicts=="CONFLICTS_PRIORITY_LAST") return CONFLICTS_PRIORITY_LAST;
 	else if (merge_conflicts=="CONFLICTS_AVERAGE") return CONFLICTS_AVERAGE;
 	else
 		throw UnknownValueException("Unknown merge conflicts type '"+merge_conflicts+"'", AT);
@@ -660,7 +682,7 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 	if (date.isUndef()) date=meteo2.date; //we don't accept different dates, see above
 	if (meteo2.resampled==true ) resampled=true;
 	
-	if (conflicts_strategy==CONFLICTS_PRIORITY) {
+	if (conflicts_strategy==CONFLICTS_PRIORITY_FIRST) {
 		//merge standard parameters
 		for (size_t ii=0; ii<nrOfParameters; ii++) {
 			if (data[ii]==IOUtils::nodata) {
@@ -679,6 +701,30 @@ bool MeteoData::merge(const MeteoData& meteo2, const Merge_Conflicts& conflicts_
 				data[new_idx] = meteo2.data[nrOfParameters+ii];
 				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
 			} else if (data[extra_param_idx]==IOUtils::nodata) {
+				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
+				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
+			}
+		}
+		return true;
+	} else if (conflicts_strategy==CONFLICTS_PRIORITY_LAST) {
+		//merge standard parameters
+		for (size_t ii=0; ii<nrOfParameters; ii++) {
+			if (meteo2.data[ii]!=IOUtils::nodata) {
+				data[ii] = meteo2.data[ii];
+				flags[ii] = meteo2.flags[ii];
+			}
+		}
+
+		//for each meteo2 extra parameter, check if a matching parameter exist
+		const size_t nrExtra2 = meteo2.nrOfAllParameters - nrOfParameters;
+		for (size_t ii=0; ii<nrExtra2; ii++) {
+			const std::string extra_name( meteo2.extra_param_name[ii] );
+			const size_t extra_param_idx = getParameterIndex(extra_name);
+			if (extra_param_idx==IOUtils::npos) { //no such parameter in current object
+				const size_t new_idx = addParameter( extra_name );
+				data[new_idx] = meteo2.data[nrOfParameters+ii];
+				flags[new_idx] = meteo2.flags[nrOfParameters+ii];
+			} else if (meteo2.data[nrOfParameters+ii]!=IOUtils::nodata) {
 				data[extra_param_idx] = meteo2.data[nrOfParameters+ii];
 				flags[extra_param_idx] = meteo2.flags[nrOfParameters+ii];
 			}
@@ -751,17 +797,57 @@ bool MeteoData::hasConflicts(const MeteoData& meteo2) const
 std::set<std::string> MeteoData::listAvailableParameters(const std::vector<MeteoData>& vecMeteo)
 {
 	std::set<std::string> results;
-	std::set<size_t> tmp; //for efficiency, we assume that through the vector, the indices remain identical for any given parameter
-
+	
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		for (size_t jj=0; jj<vecMeteo[ii].getNrOfParameters(); jj++)
-			if (vecMeteo[ii](jj) != IOUtils::nodata && tmp.count(jj)==0) { //for efficiency, we compare on the index
-				tmp.insert( jj );
-				results.insert( vecMeteo[ii].getNameForParameter(jj) );
-			}
+		for (const std::string& parname : MeteoData::s_default_paramname)
+			if (vecMeteo[ii](parname) != IOUtils::nodata) results.insert( parname );
+		
+		for (const std::string& parname : vecMeteo[ii].extra_param_name)
+			if (vecMeteo[ii](parname) != IOUtils::nodata) results.insert( parname );
 	}
-
+	
 	return results;
 }
+
+void MeteoData::unifyMeteoData(METEO_SET &vecMeteo)
+{
+	const size_t nElems = vecMeteo.size();
+	if (nElems<2) return;
+	
+	std::vector<std::string> extra_params_ref( vecMeteo.front().extra_param_name );
+	
+	for (size_t ii=0; ii<nElems; ii++) {
+		//easy case: exactly the same vectors
+		if (vecMeteo[ii].extra_param_name == extra_params_ref) continue;
+		
+		//maybe the same parameters are present, but in a different order?
+		std::set<std::string> ref_params(extra_params_ref.begin(), extra_params_ref.end());
+		std::set<std::string> new_params(vecMeteo[ii].extra_param_name.begin(), vecMeteo[ii].extra_param_name.end());
+		if (ref_params == new_params) { //yes, it is only in a different order
+			//most probably the new order will remain from now on
+			extra_params_ref = vecMeteo[ii].extra_param_name;
+			continue;
+		}
+		
+		//now comes the hard work: we need set the whole vector to the same extra_param_name
+		//first, we add all new elements to the begining of the vector until now
+		std::vector<std::string> new_elems;
+		std::set_difference(new_params.begin(), new_params.end(), ref_params.begin(), ref_params.end(), std::inserter(new_elems, new_elems.end()));
+		for (size_t jj=0; jj<ii; jj++) {
+			for(const auto &new_param : new_elems) vecMeteo[jj].addParameter( new_param );
+		}
+		
+		//then, we add all past elements to the rest of the vector starting now and until the end
+		std::vector<std::string> past_elems;
+		std::set_difference(ref_params.begin(), ref_params.end(), new_params.begin(), new_params.end(), std::inserter(past_elems, past_elems.end()));
+		for (size_t jj=ii; jj<nElems; jj++) {
+			for(const auto &new_param : past_elems) vecMeteo[jj].addParameter( new_param );
+		}
+
+		//reset the reference parameters list to contain all potentially new elements
+		extra_params_ref = vecMeteo[ii].extra_param_name;
+	}
+}
+
 
 } //namespace

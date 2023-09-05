@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -41,7 +40,7 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
- * - special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
+ * - \anchor config_special_syntax special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
  *       - environment variables are called by using the following syntax: ${env:my_env_var};
  *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key} (make sure to prefix the key with its section if it refers to another section!)
  *       - evaluating an arithmetic expression: ${{arithm. expression}}
@@ -335,6 +334,9 @@ class Config {
 		
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
+		 * @details Please not that if the keys are postfixed by integral numbers (ie build as <i>{common string}{integral number}</i>, such as *STATION12*)
+		 * then the keys will be sorted in ascending order based on this integral number. As soon as a key does not fit this pattern, the sort will be
+		 * purely alphabetical (therefore *STATION11_a* would appear **before** *STATION2_a*).
 		 * @param[in] keymatch std::string representing a pattern for the key in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
@@ -346,8 +348,8 @@ class Config {
 			IOUtils::toUpper(section);
 			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key( section + "::" + vecKeys[ii] );
+			for (const std::string& key : vecKeys) {
+				const std::string full_key( section + "::" + key );
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -365,8 +367,8 @@ class Config {
 			IOUtils::toUpper(section);
 			vecKeys = getKeys(keymatch, section);
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key = section + "::" + vecKeys[ii];
+			for (const std::string& key : vecKeys) {
+				const std::string full_key = section + "::" + key;
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -377,6 +379,8 @@ class Config {
 			}
 		}
 
+		std::vector< std::pair<std::string, std::string> > getValuesRegex(std::string regex_str, std::string section) const;
+		
 		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
 
 		/**
@@ -436,6 +440,19 @@ class Config {
 		* @return All arguments for this command, as vector of key / value pairs, {argument_name} / {value}
 		*/
 		std::vector< std::pair<std::string, std::string> > parseArgs(const std::string& section, const std::string& cmd_id, const unsigned int& cmd_nr, const std::string& arg_pattern) const;
+
+		/**
+		 * @brief retrieve the resampling algorithm to be used for the 1D interpolation of meteo parameters.
+		 * The potential arguments are also extracted.
+		 * @param parname meteo parameter to deal with
+		 * @param algorithm algorithm name
+		 * @param section INI section to look into
+		 * @return vector of named arguments
+		 */
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm,
+			const std::string& section = "Interpolations1d") const;
+
+
 
 	private:
 		std::map<std::string, std::string> properties; ///< Save key value pairs

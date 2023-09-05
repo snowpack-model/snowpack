@@ -255,7 +255,7 @@ double SphericVario::f(const double& x) const {
 	const double cs = Lambda.at(1);
 	const double as = Lambda.at(2);
 
-	const double abs_x = fabs(x);
+	const double abs_x = std::abs(x);
 	if (abs_x>0 && abs_x<=as) {
 		const double val = abs_x/as;
 		const double y = c0 + cs * ( 1.5*val - 0.5*Optim::pow3(val) );
@@ -278,7 +278,7 @@ double LinVario::f(const double& x) const {
 		//c0>=0, b1>=0
 		const double c0 = Lambda.at(0);
 		const double bl = Lambda.at(1);
-		const double y = c0 + bl * abs(x);
+		const double y = c0 + bl * std::abs(x);
 		return y;
 	}
 }
@@ -390,7 +390,7 @@ void Quadratic::setDefaultGuess() {
 * @param[in] vecPreds predictors (for example, altitude, easting, northing)
 * @param[out] obs observed value
 */
-void FitMult::addData(const std::vector<double>& vecPreds, const double& obs)
+void FitLinClosedForm::addData(const std::vector<double>& vecPreds, const double& obs)
 {
 	const size_t nrInputPreds = vecPreds.size();
 	if (nPreds!=0 && nPreds!=nrInputPreds)
@@ -408,7 +408,7 @@ void FitMult::addData(const std::vector<double>& vecPreds, const double& obs)
 	observations.push_back( obs );
 }
 
-bool FitMult::fit()
+bool FitLinClosedForm::fit()
 {
 	//The Beta0 is handled by considering that it is B0*Z_j where Z_j=1 for all j
 	const size_t nObs = predictors.size();
@@ -422,22 +422,22 @@ bool FitMult::fit()
 		return false;
 	}
 
-	//build the Y and Z matrix
+	//build the Y and X matrix
 	//we know that observations and predictors do not contain nodata values
-	Matrix Z(nObs, nPreds+1);
+	Matrix X(nObs, nPreds+1);
 	Matrix Y(nObs, static_cast<size_t>(1));
 	for (size_t jj=0; jj<nObs; jj++) {
 		Y(jj+1, 1) = observations[jj];
 
-		Z(jj+1, 1) = 1.;
+		X(jj+1, 1) = 1.;
 		for (size_t ii=0; ii<nPreds; ii++)
-			Z(jj+1, ii+2) = predictors[jj][ii];
+			X(jj+1, ii+2) = predictors[jj][ii];
 	}
 
 	//compute the Betas
-	const Matrix Z_T( Z.getT() );
+	const Matrix X_T( X.getT() );
 	Beta.resize(nPreds+1, 1);
-	Beta = (Z_T * Z).getInv() * Z_T * Y;
+	Beta = (X_T * X).getInv() * X_T * Y;
 	fit_ready = true;
 
 	//compute R2
@@ -459,7 +459,7 @@ bool FitMult::fit()
 	return true;
 }
 
-double FitMult::f(const std::vector<double>& x) const
+double FitLinClosedForm::f(const std::vector<double>& x) const
 {
 	if (!fit_ready)
 		throw InvalidArgumentException("The regression has not yet been computed!", AT);
@@ -475,7 +475,7 @@ double FitMult::f(const std::vector<double>& x) const
 	return sum;
 }
 
-std::vector<double> FitMult::getParams() const
+std::vector<double> FitLinClosedForm::getParams() const
 {
 	if (!fit_ready)
 		throw InvalidArgumentException("The regression has not yet been computed!", AT);
@@ -487,10 +487,10 @@ std::vector<double> FitMult::getParams() const
 	return coefficients;
 }
 
-std::string FitMult::toString() const
+std::string FitLinClosedForm::toString() const
 {
 	std::ostringstream os;
-	os << "<FitMult>\n";
+	os << "<FitLinClosedForm>\n";
 	if (!fit_ready) {
 		os << regname << " model, not initialized\n";
 	} else {
@@ -499,12 +499,12 @@ std::string FitMult::toString() const
 		for (size_t ii=Beta.getNy(); ii>=1; ii--) os << Beta(ii, 1) << " ";
 		os << "\n";
 	}
-	os << "</FitMult>\n";
+	os << "</FitLinClosedForm>\n";
 
 	return os.str();
 }
 
-FitMult& FitMult::operator =(const FitMult& source)
+FitLinClosedForm& FitLinClosedForm::operator =(const FitLinClosedForm& source)
 {
 	if (this != &source) {
 		predictors = source.predictors;

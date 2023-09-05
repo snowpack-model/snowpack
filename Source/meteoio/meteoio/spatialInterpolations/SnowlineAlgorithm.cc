@@ -398,7 +398,7 @@ double SnowlineAlgorithm::calculateRate(const double& snowline)
 	double max_alt = -999.;
 	double HS = IOUtils::nodata;
 
-	for (size_t ii = 0.; ii < vecData.size(); ++ii) {
+	for (size_t ii = 0; ii < vecData.size(); ++ii) {
 		if (vecMeta[ii].position.getAltitude() > max_alt) {
 			max_alt = vecMeta[ii].position.getAltitude();
 			HS = vecData[ii];

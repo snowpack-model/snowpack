@@ -38,7 +38,7 @@ PROJECT_NAME           = MeteoIODoc
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = MeteoIODoc-2.9.0
+PROJECT_NUMBER         = $(MIO_VERSION)
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -762,7 +762,9 @@ INPUT                  = ./meteoio \
                          ./meteoio/meteoFilters \
                          ./meteoio/meteoResampling \
                          ./meteoio/spatialInterpolations \
-                         ./meteoio/meteoStats
+                         ./meteoio/gridResampling \
+                         ./meteoio/meteoStats \
+                         ./applications
                          
 
 # This tag can be used to specify the character encoding of the source files

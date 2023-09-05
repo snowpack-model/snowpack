@@ -79,16 +79,24 @@ void ACDD::defaultInit()
 	now.setFromSys();
 	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
 	addAttribute("creator_name", mio::IOUtils::getLogName(), "ACDD_CREATOR");
-	addAttribute("creator_email", "", "ACDD_EMAIL");
-	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true));
+	addAttribute("creator_email", "", "ACDD_CREATOR_EMAIL");
+	addAttribute("creator_institution", mio::IOUtils::getDomainName(), "ACDD_CREATOR_INSTITUTION");
+	addAttribute("creator_url", mio::IOUtils::getDomainName(), "ACDD_CREATOR_URL");
+	addAttribute("creator_type", "person", "ACDD_CREATOR_TYPE");
+	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
+	addAttribute("publisher_name", mio::IOUtils::getLogName(), "ACDD_PUBLISHER");
+	addAttribute("publisher_email", "", "ACDD_PUBLISHER_EMAIL");
+	addAttribute("publisher_url", mio::IOUtils::getDomainName(), "ACDD_PUBLISHER_URL");
+	addAttribute("publisher_type", "person", "ACDD_PUBLISHER_TYPE");
+	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true), "ACDD_SOURCE");
 	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
-	addAttribute("keywords_vocabulary", "AGU Index Terms");
+	addAttribute("keywords_vocabulary", "AGU Index Terms", "ACDD_KEYWORDS_VOCABULARY");
 	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "ACDD_KEYWORDS");
 	addAttribute("title", "", "ACDD_TITLE");
-	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
 	addAttribute("project", "", "ACDD_PROJECT");
 	addAttribute("program", "", "ACDD_PROGRAM");
 	addAttribute("id", "", "ACDD_ID");
+	addAttribute("references", "", "ACDD_REFERENCES");
 	addAttribute("naming_authority", "", "ACDD_NAMING_AUTHORITY");
 	addAttribute("processing_level", "", "ACDD_PROCESSING_LEVEL");
 	addAttribute("summary", "", "ACDD_SUMMARY"); //special handling, see setUserConfig()
@@ -97,6 +105,9 @@ void ACDD::defaultInit()
 	addAttribute("metadata_link", "", "ACDD_METADATA_LINK");
 	addAttribute("license", "", "ACDD_LICENSE");
 	addAttribute("product_version", "1.0", "ACDD_PRODUCT_VERSION");
+	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
+	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
+	addAttribute("wmo__wsi", "", "WIGOS_ID");
 }
 
 /**
@@ -262,7 +273,6 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
-	bool found = false;
 	for (size_t ii=0; ii<vecLocation.size(); ii++) {
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
@@ -281,33 +291,29 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 
 		const double curr_lat = vecLocation[ii].getLat();
 		const double curr_lon = vecLocation[ii].getLon();
-		found = true;
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;
 		if (lon_max<curr_lon) lon_max = curr_lon;
 	}
-	if (!found) return;
-	
-	const bool singlePoint = (lat_min==lat_max && lon_min==lon_max);
 	
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
 		std::ostringstream os;
 		os << epsg;
 		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
 		
+		const bool singlePoint = (lat_min==lat_max && lon_min==lon_max);
 		if (singlePoint)
 			addAttribute("geospatial_bounds", "Point ("+multiPts+")");
 		else
 			addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
 	}
-	if (!singlePoint) {
-		addAttribute("geospatial_lat_min", lat_min);
-		addAttribute("geospatial_lat_max", lat_max);
-		addAttribute("geospatial_lon_min", lon_min);
-		addAttribute("geospatial_lon_max", lon_max);
-	}
+	
+	addAttribute("geospatial_lat_min", lat_min);
+	addAttribute("geospatial_lat_max", lat_max);
+	addAttribute("geospatial_lon_min", lon_min);
+	addAttribute("geospatial_lon_max", lon_max);
 }
 
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
@@ -327,6 +333,10 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 	}
 	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
 	addAttribute("geospatial_bounds", "Point ("+geometry+")");
+	addAttribute("geospatial_lat_min", location.getLat());
+	addAttribute("geospatial_lat_max", location.getLat());
+	addAttribute("geospatial_lon_min", location.getLon());
+	addAttribute("geospatial_lon_max", location.getLon());
 }
 
 void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)

@@ -48,7 +48,7 @@ using namespace mio;
 static int steps = 0; //how many hours to simulate
 static Date startdate;
 
-static bool enable_eb=false, enable_drift=false, enable_runoff=false, enable_da=false, nocompute=false, restart=false;
+static bool restart=false;
 static int npsnowpack=1, npebalance=1;
 
 inline void Usage(char *prog)
@@ -57,11 +57,7 @@ inline void Usage(char *prog)
 	cout << "\t-a, --startdate=YYYY-MM-DDTHH:MM (e.g.:2008-08-11T09:00)\n";
 	cout << "\t-z, --enddate=YYYY-MM-DDTHH:MM (e.g.:2008-08-11T09:00) OR ";
 	cout << "-n, --steps=<number of timesteps>\n";
-	cout << "\t[--enable-eb] (default:off)\n";
-	cout << "\t[--enable-runoff] (default:off)\n";
-	cout << "\t[--enable-drift] (default:off)\n";
-	cout << "\t[--enable-da] (default:off)\n";
-	cout << "\t[--no-compute] Don't compute the simulation, only parse and validate the inputs (default:off)\n";
+	//cout << "\t[--enable-da] (default:off)\n";
 	cout << "\t[--restart] Restart simulation from previous .sno files (default:off)\n";
 	cout << "\t[-p, --np-snowpack=<number of processors for SnowPack>]\n";
 	cout << "\t[-b, --np-ebalance=<number of processors for Ebalance>]\n";
@@ -82,11 +78,14 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 	const struct option long_options[] =
 	{
 		/* These options set a flag. */
+		// To be deletead at some point, now trowing warnings or errors
+		{"enable-runoff",		no_argument,&ero, 1},
 		{"enable-eb",		no_argument,&eeb, 1},
-		{"enable-drift",	no_argument,&edr, 1},
-		{"enable-runoff",	no_argument,&ero, 1},
+		{"enable-drift",		no_argument,&edr, 1},
+		{"nocumpute",		no_argument,&nco, 1},
+		// DA is currently not implemented (08.2022)
 		{"enable-da",		no_argument,&eda, 1},
-		{"no-compute",		no_argument,&nco, 1},
+
 		{"restart",		no_argument,&rst, 1},
 
 		/* These options don't set a flag.
@@ -147,6 +146,26 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 		}
 	}
 
+	if(ero) {
+		cerr << "\nERROR: enable-runoff is no longer supported. Use MS_SNOWPACK, MS_SURFACE_RUNOFF, and MS_SOIL_RUNOFF in grids parameters in the OUTOUT section of the cfg file, or VIRTUAL LYSIMETERS in the OUTOUT section of the cfg file\n";
+		Usage(argv[0]);
+	}
+	if(edr) {
+		cerr << "\nERROR: SNOWDRIFT should now be activated using the ENABLE key of the SNOWDRIFT section of the cfg file\n";
+		Usage(argv[0]);
+	}
+	if(eeb) {
+		std::cout << "\n[W] enable-eb is not required anymore. In the future this will throw an error.\n";
+	}
+	if(eda) {
+		cerr << "\nERROR: DATA ASSIMILATION is no longer implemented\n";
+		Usage(argv[0]);
+	}
+	if(nco) {
+		cerr << "\nERROR: NOCOMPUTE is no longer implemented\n";
+		Usage(argv[0]);
+	}
+
 	//check that the minimum flags have been provided by the user
 	if (!((setStart && setSteps) || (setStart && setEnd)) && MPIControl::instance().master()) {
 		cout << "\nERROR: You must at least specify the 'startdate' and the 'steps' parameters"
@@ -154,11 +173,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 		Usage(argv[0]);
 	}
 
-	enable_eb	= (eeb!=0);
-	enable_drift	= (edr!=0);
-	enable_runoff	= (ero!=0);
-	enable_da	= (eda!=0);
-	nocompute	= (nco!=0);
+	// enable_da	= (eda!=0);
 	restart		= (rst!=0);
 
 	//now, we read the config file and set the start and end dates
@@ -251,23 +266,23 @@ inline void setStaticData(const Config &cfg, IOManager& io, DEMObject &dem, Grid
 	MPIControl::instance().broadcast(vec_pts);
 }
 
-inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, const Grid2DObject &landuse, const std::vector<Coords> &vec_pts, SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack, DataAssimilation*& da, Runoff*& runoff)
+inline void setModules(const Config &cfg, const DEMObject &dem, const Grid2DObject &landuse, const std::vector<Coords> &vec_pts, SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack)
 {
 	const bool isMaster = MPIControl::instance().master(); // Check if this process is the master (always true for non-parallel mode)
 
 	//EBALANCE
-	if (enable_eb && !nocompute) {
-		try {
-			eb = new EnergyBalance(npebalance, cfg, dem);
-		} catch(std::exception& e) {
-			std::cout << "[E] Exception in EnergyBalance constructor\n";
-			cout << e.what() << endl;
-			throw;
-		}
+	try {
+		eb = new EnergyBalance(npebalance, cfg, dem);
+	} catch(std::exception& e) {
+		std::cout << "[E] Exception in EnergyBalance constructor\n";
+		cout << e.what() << endl;
+		throw;
 	}
 
+	const bool enable_drift = cfg.get("ENABLE", "SNOWDRIFT", false);
+
 	//SNOWDRIFT
-	if (enable_drift && !nocompute && isMaster) {
+	if (enable_drift && isMaster) {
 		try {
 			drift = new SnowDriftA3D(dem, cfg);
 		} catch(std::exception& e) {
@@ -277,75 +292,55 @@ inline void setModules(const Config &cfg, IOManager& io, const DEMObject &dem, c
 		}
 	}
 
+	// If to be re-implemented, note that enable_da does not exist anymore, this should be
+	// read from a cfg key
 	//DATA ASSIMILATION
-	if (enable_da && !nocompute && isMaster) {
-		da = new DataAssimilation(io);
-	}
-
-	//RUNOFF
-	if (enable_runoff) {
-		SnowpackConfig sn_cfg( cfg ); //so we also get the default value of "THRESH_RAIN"
-		const double thresh_rain = sn_cfg.get("THRESH_RAIN", "SnowpackAdvanced");
-		runoff = new Runoff (cfg, dem, IOUtils::C_TO_K(thresh_rain));
-	}
+	// if (enable_da && isMaster) {
+	// 	da = new DataAssimilation(io);
+	// }
 
 	//SNOWPACK
-	const bool glacier_katabatic_flow = cfg.get("GLACIER_KATABATIC_FLOW", "Alpine3D", false);
-	if (!nocompute || glacier_katabatic_flow){
-		try {
-			std::string grids_requirements;
-			if (enable_eb) grids_requirements = grids_requirements+" "+eb->getGridsRequirements();
-			if (enable_drift) grids_requirements = grids_requirements+" "+drift->getGridsRequirements();
-			if (enable_da) grids_requirements = grids_requirements+" "+da->getGridsRequirements();
-			if (enable_runoff) grids_requirements = grids_requirements+" "+runoff->getGridsRequirements();
-			snowpack = new SnowpackInterface(cfg, npsnowpack, dem, landuse, vec_pts, startdate, grids_requirements, restart);
-		} catch(std::exception& e) {
-			std::cout << "[E] Exception in SnowpackInterface constructor\n";
-			cout << e.what() << endl;
-			throw;
-		}
+	try{
+		std::string grids_requirements;
+		grids_requirements = grids_requirements+" "+eb->getGridsRequirements();
+		if (drift) grids_requirements = grids_requirements+" "+drift->getGridsRequirements();
+		//if (da) grids_requirements = grids_requirements+" "+da->getGridsRequirements();
+		snowpack = new SnowpackInterface(cfg, npsnowpack, dem, landuse, vec_pts, startdate, grids_requirements, restart);
+	} catch(std::exception& e) {
+		std::cout << "[E] Exception in SnowpackInterface constructor\n";
+		cout << e.what() << endl;
+		throw;
 	}
+
 
 	//set callback pointers
-	if (!nocompute) {
-		if (drift) {
-			snowpack->setSnowDrift(*drift);
-			drift->setSnowPack(*snowpack);
-			if (eb) drift->setEnergyBalance(*eb);
-			if (isMaster) cout << "[i] Snowpack and Snowdrift interfaces exchanged\n";
-		}
-
-		if (eb) {
-			snowpack->setEnergyBalance(*eb);
-			eb->setSnowPack(*snowpack);
-			if (isMaster) cout << "[i] Snowpack and Ebalance interfaces exchanged\n";
-		}
-
-		if (da) {
-			snowpack->setDataAssimilation(*da);
-			da->setSnowPack(*snowpack);
-			if (isMaster) cout << "[i] Snowpack and Ebalance interfaces exchanged\n";
-		}
-
-		if (runoff) {
-			snowpack->setRunoff(*runoff);
-			runoff->setSnowPack(*snowpack);
-			if (isMaster) cout << "[i] Snowpack and Ebalance interfaces exchanged\n";
-		}
+	if (drift) {
+		snowpack->setSnowDrift(*drift);
+		drift->setSnowPack(*snowpack);
+		if (isMaster) cout << "[i] Snowpack and Snowdrift interfaces exchanged\n";
 	}
+
+	snowpack->setEnergyBalance(*eb);
+	eb->setSnowPack(*snowpack);
+	if (isMaster) cout << "[i] Snowpack and Ebalance interfaces exchanged\n";
+
+		// if (da) {
+		// 	snowpack->setDataAssimilation(*da);
+		// 	da->setSnowPack(*snowpack);
+		// 	if (isMaster) cout << "[i] Snowpack and Ebalance interfaces exchanged\n";
+		// }
 }
 
-inline void cleanDestroyAll(SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack, DataAssimilation*& da, Runoff*& runoff)
+inline void cleanDestroyAll(SnowDriftA3D*& drift, EnergyBalance*& eb, SnowpackInterface*& snowpack)
 {
-	if (da) da->Destroy();
-	if (eb) eb->Destroy();
+	//if (da) da->Destroy();
+	eb->Destroy();
 	if (drift) drift->Destroy();
 
-	if (da) delete da;
-	if (eb) delete eb;
+	//if (da) delete da;
+	delete eb;
 	if (drift) delete drift;
-	if (runoff) delete runoff;
-	if (snowpack) delete snowpack;
+	delete snowpack;
 }
 
 inline void start_message(int argc, char **argv)
@@ -390,8 +385,7 @@ inline void real_main(int argc, char **argv)
 	SnowDriftA3D *drift(NULL);
 	EnergyBalance *eb(NULL);
 	SnowpackInterface *snowpack(NULL);
-	DataAssimilation* da(NULL);
-	Runoff* runoff(NULL);
+	//DataAssimilation* da(NULL);
 
 	DEMObject dem;
 	Grid2DObject landuse;
@@ -409,21 +403,27 @@ inline void real_main(int argc, char **argv)
 		//setStaticData(cfg, io, dem, landuse, vec_pts);
 		//FELIX:
 		setStaticData(cfg, io, dem, landuse, vec_pts);
-		setModules(cfg, io, dem, landuse, vec_pts, drift, eb, snowpack, da, runoff);
-		AlpineControl control(snowpack, drift, eb, da, runoff, cfg, dem);
-		control.setNoCompute(nocompute);
+		setModules(cfg, dem, landuse, vec_pts, drift, eb, snowpack);
+		AlpineControl control(snowpack, drift, eb, cfg, dem);
 		control.Run(startdate, steps);
 	} catch (std::exception& e) {
 		cerr << "[E] exception thrown: " << e.what() << endl;
-		cleanDestroyAll(drift, eb, snowpack, da, runoff);
+		cleanDestroyAll(drift, eb, snowpack);
 		throw;
 	} catch (...) {
-		cout << "[E] exception thrown!" << endl;
-		cleanDestroyAll(drift, eb, snowpack, da, runoff);
+		cout << "[E] exception thrown!!!" << endl;
+		cleanDestroyAll(drift, eb, snowpack);
+		auto expPtr = std::current_exception();
+		try {
+			if(expPtr) std::rethrow_exception(expPtr);
+		}
+		catch(const std::exception& e) {
+			std::cout << e.what();
+		}
 		throw;
 	}
 
-	cleanDestroyAll(drift, eb, snowpack, da, runoff);
+	cleanDestroyAll(drift, eb, snowpack);
 	const time_t  end = time(NULL);
 	if (mpicontrol.master()) {
 		printf("\n");

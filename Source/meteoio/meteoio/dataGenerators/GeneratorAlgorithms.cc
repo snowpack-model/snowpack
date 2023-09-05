@@ -76,9 +76,9 @@ namespace mio {
  * [InputEditing]
  * #calling the parametrizations very early on, just after reading the raw data
  * *::edit1            = CREATE
- * *::arg1::algorithgm = CST
+ * *::arg1::algorithm  = CST
  * *::arg1::param      = TAU_CLD	;create a new TAU_CLD parameter set at constant 0.5
- * *::arg1::param      = 0.5
+ * *::arg1::value      = 0.5
  *
  * [Generators]
  * #calling the parametrizations after everything else happened 
@@ -155,7 +155,7 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, c
 	} else if (algoname == "HUMIDITY"){
 		return new HumidityGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "TAU_CLD"){
-		return new TauCLDGenerator(vecArgs, i_algoname, i_section, TZ);
+		return new TauCLDGenerator(vecArgs, i_algoname, i_section, TZ, cfg);
 	} else if (algoname == "TS_OLWR"){
 		return new TsGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "ISWR_ALBEDO"){
@@ -163,7 +163,7 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, c
 	} else if (algoname == "CLEARSKY_LW"){
 		return new ClearSkyLWGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "ALLSKY_LW"){
-		return new AllSkyLWGenerator(vecArgs, i_algoname, i_section, TZ);
+		return new AllSkyLWGenerator(vecArgs, i_algoname, i_section, TZ, cfg);
 	} else if (algoname == "ALLSKY_SW"){
 		return new AllSkySWGenerator(vecArgs, i_algoname, i_section, TZ);
 	} else if (algoname == "CLEARSKY_SW"){

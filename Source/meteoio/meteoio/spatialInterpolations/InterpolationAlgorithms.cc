@@ -146,9 +146,10 @@ namespace mio {
  *
  * A list of supported options controlling the lapse rates is given in Trend::Trend().
  *
- * @section interpol2D_dev_use Developer usage
- * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its
- * IOManager::getMeteoData method with an elevation model and a grid.
+ * @section interpol2D_dev_use Usage
+ * From the users's point of view, all that has to be done is instantiate an IOManager object and call its
+ * IOManager::getMeteoData method with an elevation model and a grid. The spatial interpolation will then be done according to the settings in the INI file. 
+ * The following lines show an example of the workflow:
  * @code
  * 	Config cfg("io.ini");
  * 	IOManager io(cfg);

@@ -20,10 +20,10 @@
 
 using namespace mio;
 
-TerrainRadiationSimple::TerrainRadiationSimple(const mio::Config& i_cfg, const mio::DEMObject& dem_in, const std::string& method)
-					  : TerrainRadiationAlgorithm(method),
-						albedo_grid(dem_in.getNx(), dem_in.getNy(), IOUtils::nodata), sky_vf(dem_in.getNx(), dem_in.getNy(), 0),
-						dimx(dem_in.getNx()), dimy(dem_in.getNy()), startx(0), endx(dimx)
+TerrainRadiationSimple::TerrainRadiationSimple(const mio::Config& /*i_cfg*/, const mio::DEMObject& dem_in, const std::string& method)
+                       : TerrainRadiationAlgorithm(method),
+                         albedo_grid(dem_in.getNx(), dem_in.getNy(), IOUtils::nodata), sky_vf(dem_in.getNx(), dem_in.getNy(), 0),
+                         dimx(dem_in.getNx()), dimy(dem_in.getNy()), startx(0), endx(dimx)
 {
 	// In case we're running with MPI enabled, calculate the slice this process is responsible for
 	size_t nx = dimx;
@@ -36,16 +36,16 @@ TerrainRadiationSimple::TerrainRadiationSimple(const mio::Config& i_cfg, const m
 
 TerrainRadiationSimple::~TerrainRadiationSimple() {}
 
-void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& direct,
+void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& /*direct*/,
                                           mio::Array2D<double>& diffuse, mio::Array2D<double>& terrain,
                                           const mio::Array2D<double>& direct_unshaded_horizontal,
-                                          const mio::Array2D<double>& total_ilwr, mio::Array2D<double>& sky_ilwr,
-                                          mio::Array2D<double>& terrain_ilwr,
-                                          double solarAzimuth, double solarElevation)
+                                          const mio::Array2D<double>& /*total_ilwr*/, mio::Array2D<double>& /*sky_ilwr*/,
+                                          mio::Array2D<double>& /*terrain_ilwr*/,
+                                          double /*solarAzimuth*/, double /*solarElevation*/)
 {
 	MPIControl& mpicontrol = MPIControl::instance();
-	terrain.resize(dimx, dimy, 0.);  //so allreduce_sum works properly when it sums full grids
-	Array2D<double> diff_corr(dimx, dimy, 0.); //so allreduce_sum works properly when it sums full grids
+	terrain.resize(dimx, dimy, 0.);  //so reduce_sum works properly when it sums full grids
+	Array2D<double> diff_corr(dimx, dimy, 0.); //so reduce_sum works properly when it sums full grids
 
 	if (mpicontrol.master()) {
 		std::cout << "[i] Calculating terrain radiation with simple method, using " << mpicontrol.size();
@@ -56,7 +56,7 @@ void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& direct,
 	#pragma omp parallel for collapse(2)
 	for (size_t jj=0; jj<dimy; jj++) {
 		for (size_t ii=startx; ii<endx; ii++) {
-			if (sky_vf(ii,jj) == IOUtils::nodata) {
+			if (sky_vf(ii,jj) == IOUtils::nodata || getAlbedo(ii,jj) == IOUtils::nodata) {
 				terrain(ii,jj) = IOUtils::nodata;
 				diff_corr(ii,jj) = IOUtils::nodata;
 			} else {
@@ -68,8 +68,8 @@ void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& direct,
 		}
 	}
 
-	mpicontrol.allreduce_sum(terrain);
-	mpicontrol.allreduce_sum(diff_corr);
+	mpicontrol.reduce_sum(terrain);
+	mpicontrol.reduce_sum(diff_corr);
 	diffuse = diff_corr; //return the corrected diffuse radiation
 }
 
@@ -108,7 +108,7 @@ void TerrainRadiationSimple::setMeteo(const mio::Array2D<double>& albedo, const 
 
 void TerrainRadiationSimple::getSkyViewFactor(mio::Array2D<double> &o_sky_vf) {
 	o_sky_vf = sky_vf;
-	MPIControl::instance().allreduce_sum(o_sky_vf);
+	MPIControl::instance().reduce_sum(o_sky_vf);
 }
 
 void TerrainRadiationSimple::initSkyViewFactor(const mio::DEMObject &dem)

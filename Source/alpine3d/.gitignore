@@ -1,0 +1,42 @@
+#Cmake temporary files
+*CMakeFiles/*
+**/CMakeFiles/*
+_CPack_Packages/*
+/CMakeCache.txt
+/CMakeDoxyfile.in
+/CMakeDoxygenDefaults.cmake
+install_manifest.txt
+**/cmake_install.cmake
+**/cmake_uninstall.cmake
+**/Makefile
+
+#generated files
+/doc/html/*
+lib/*
+/bin/*
+*.aux
+*.log
+
+#editor files:
+*.swp
+tags
+**/*~
+
+#profiling:
+callgrind.out.*
+massif.out.*
+
+#CPack generated files
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.deb
+*.rpm
+*.tar.gz
+*.exe
+*.dmg
+*.DS_Store*
+
+#examples generated files
+doc/examples/Stillberg/output/grids/*
+doc/examples/Stillberg/output/9*
+doc/examples/Stillberg/output/io.ini

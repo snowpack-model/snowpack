@@ -36,7 +36,7 @@ namespace mio {
  * edition commands in the [InputEditing] section that can be stacked at will, per station ID. This is similar to the way that 
  * filters (\ref processing "processing elements") are also stacked together. In order to rectrict any editing to a 
  * specific set of time ranges, use the **when** option followed by a comma delimited list of date intervals (represented 
- * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash), similarly to 
+ * by two ISO formatted dates seperated by ' - ', ie with a space on both sides of the dash) or individual dates, similarly to 
  * the \ref processing "Filters". The general syntax is ('#' represent a number, so each key remains unique):
  * @code
  * {stationID}::edit#            = {command}
@@ -46,7 +46,7 @@ namespace mio {
  * [InputEditing]
  * WFJ2::edit1         = EXCLUDE
  * WFJ2::arg1::params  = VW DW ISWR RSWR
- * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30
+ * WFJ2::arg1::when    = 2019-12-01T13:00 - 2019-12-25 , 2020-03-05 - 2020-04-15T12:30 , 2020-07-11T04:00
  * @endcode
  * 
  * It is also possible to apply a stack of edits to all stations by using the '*' wildcard instead of the station ID 
@@ -59,7 +59,7 @@ namespace mio {
  * The following Input Data Editing commands are available:
  *     - NONE: this is used when importing another ini file to overwrite a command with an empty one
  *     - SWAP: swap two parameters, see EditingSwap
- *     - MOVE: rename one or more parameters into a new name, see EditingMove
+ *     - RENAME: rename one or more parameters into a new name, see EditingRename
  *     - EXCLUDE: delete a list of parameters, see EditingExclude
  *     - KEEP: only keep a list of parameters and reject the others, see EditingKeep
  *     - AUTOMERGE: merge together stations sharing the same station ID, see EditingAutoMerge
@@ -70,6 +70,9 @@ namespace mio {
  *
  * @note It is possible to turn off all input editing for timeseries by setting the *Enable_Timeseries_Editing* key to 
  * false in the [InputEditing] section.
+ *
+ * @note The legacy MOVE command has been renamed into RENAME. In the future, a new MOVE command will be implemented
+ * to move parameters between stations.
  */
 
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
@@ -125,8 +128,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 {
 	if (name == "SWAP"){
 		return new EditingSwap(i_stationID, vecArgs, name, cfg);
-	} else if (name == "MOVE"){
-		return new EditingMove(i_stationID, vecArgs, name, cfg);
+	} else if (name == "RENAME"){
+		return new EditingRename(i_stationID, vecArgs, name, cfg);
 	} else if (name == "EXCLUDE"){
 		return new EditingExclude(i_stationID, vecArgs, name, cfg);
 	} else if (name == "KEEP"){
@@ -141,6 +144,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 		return new EditingCreate(i_stationID, vecArgs, name, cfg);
 	} else if (name == "METADATA"){
 		return new EditingMetadata(i_stationID, vecArgs, name, cfg);
+	} else if (name == "MOVE"){ //HACK keep this for a while until every user of MOVE has migrated
+		throw IOException("The MOVE data editing block '"+name+"' has been renamed into RENAME! Please note that in the near future, a new MOVE editing will be implemented to move parameters between stations." , AT);
 	} else {
 		throw IOException("The input data editing block '"+name+"' does not exist! " , AT);
 	}
@@ -223,13 +228,13 @@ void EditingSwap::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 
 ////////////////////////////////////////////////// MOVE
-EditingMove::EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+EditingRename::EditingRename(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
             : EditingBlock(i_stationID, vecArgs, name, cfg), src_params(), dest_param()
 {
 	parse_args(vecArgs);
 }
 
-void EditingMove::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+void EditingRename::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
 	bool has_dest=false, has_src=false;
@@ -242,6 +247,8 @@ void EditingMove::parse_args(const std::vector< std::pair<std::string, std::stri
 		} else if (vecArgs[ii].first=="SRC") {
 			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), src_params);
 			has_src = true;
+		} else { //HACK keep this until all users of MOVE have migrated
+			throw InvalidArgumentException("Unsupported argument '"+vecArgs[ii].first+"' for "+where+". Keep in mind that the legacy MOVE filter has been renamed into RENAME and a new MOVE filter will later be implemented to move parameters between stations!", AT);
 		}
 	}
 
@@ -249,7 +256,7 @@ void EditingMove::parse_args(const std::vector< std::pair<std::string, std::stri
 	if (!has_src || src_params.empty()) throw InvalidArgumentException("Please provide a valid SRC value for "+where, AT);
 }
 
-void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
+void EditingRename::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	for (size_t station=0; station<vecMeteo.size(); ++station) { //for each station
 		if (skipStation(vecMeteo[station])) continue;
@@ -385,15 +392,13 @@ void EditingKeep::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// AUTOMERGE
 EditingAutoMerge::EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merge_strategy(MeteoData::FULL_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY_FIRST)
 {
 	parse_args(vecArgs);
 }
 
 void EditingAutoMerge::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
-
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="MERGE_STRATEGY") {
 			merge_strategy = MeteoData::getMergeType( vecArgs[ii].second );
@@ -492,7 +497,7 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 
 ////////////////////////////////////////////////// MERGE
 EditingMerge::EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-            : EditingBlock(i_stationID, vecArgs, name, cfg), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merged_stations(), merged_params(), merge_strategy(MeteoData::EXPAND_MERGE), merge_conflicts(MeteoData::CONFLICTS_PRIORITY_FIRST)
 {
 	if (i_stationID=="*")
 		throw InvalidArgumentException("It is not possible to do a MERGE on the '*' stationID", AT);
@@ -524,7 +529,7 @@ void EditingMerge::parse_args(const std::vector< std::pair<std::string, std::str
 	//check that the station does not merge with itself
 	if (tmp.count(stationID)>0)
 		throw InvalidArgumentException("A station can not merge with itself! Wrong argument in "+where, AT);
-	
+
 	if (merged_stations.empty()) throw InvalidArgumentException("Please provide a valid MERGE value for "+where, AT);
 }
 
@@ -567,7 +572,7 @@ void EditingMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	
 	for (size_t jj=0; jj<merged_stations.size(); jj++) {
 		const std::string fromStationID( IOUtils::strToUpper( merged_stations[jj] ) );
-		
+
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
 			if (IOUtils::strToUpper(vecMeteo[ii].front().getStationID()) != fromStationID) continue;
@@ -784,7 +789,7 @@ void EditingMetadata::mergeMigratedData(std::vector<METEO_SET>& vecMeteo, const 
 	}
 	
 	for (size_t station=0; station<vecTmp.size(); ++station) {
-		MeteoData::mergeTimeSeries(vecMeteo[new_station_pos], vecTmp[station], MeteoData::FULL_MERGE, MeteoData::CONFLICTS_PRIORITY);
+		MeteoData::mergeTimeSeries(vecMeteo[new_station_pos], vecTmp[station], MeteoData::FULL_MERGE, MeteoData::CONFLICTS_PRIORITY_FIRST);
 	}
 }
 

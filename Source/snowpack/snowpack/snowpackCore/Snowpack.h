@@ -58,7 +58,7 @@ class Snowpack {
 		~Snowpack();					///< Class destructor
 #endif
 
-		void runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
+		void runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                      BoundCond& Bdata, SurfaceFluxes& Sdata);
 
 		/**
@@ -161,7 +161,7 @@ class Snowpack {
 		bool allow_adaptive_timestepping;
 		bool research_mode, useCanopyModel, enforce_measured_snow_heights, detect_grass;
 		bool soil_flux, useSoilLayers;
-		bool useNewPhaseChange;
+		bool coupled_phase_changes;
 		bool combine_elements;
 		int reduce_n_elements;
 		bool force_add_snowfall;
@@ -170,6 +170,7 @@ class Snowpack {
 		bool vw_dendricity;
 		bool enhanced_wind_slab; ///< to use an even stronger wind slab densification than implemented by default
 		std::string snow_erosion;
+		bool redeposit_keep_age;
 		bool alpine3d; ///< triggers various tricks for Alpine3D (including reducing the number of warnings)
 		bool ageAlbedo; ///< use the age of snow in the albedo parametrizations? default: true
 		double soot_ppmv; ///< Impurity content in ppmv for albedo calculatoins

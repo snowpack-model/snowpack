@@ -204,31 +204,43 @@ void MPIControl::gather(const int& send_value, std::vector<int>& receive_vector,
 	MPI_Gather(&value, 1, MPI_INT, recv_data, 1, MPI_INT, static_cast<int>(root), MPI_COMM_WORLD);
 }
 
-void MPIControl::allreduce_max(double& value)
+void MPIControl::reduce_max(double& value, const bool all)
 {
 	double buffer;
-	MPI_Allreduce(&value, &buffer, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	if (all)
+		MPI_Allreduce(&value, &buffer, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	else
+		MPI_Reduce(&value, &buffer, 1, MPI_DOUBLE, MPI_MAX, master_rank(), MPI_COMM_WORLD);
 	value = buffer;
 }
 
-void MPIControl::allreduce_min(double& value)
+void MPIControl::reduce_min(double& value, const bool all)
 {
 	double buffer;
-	MPI_Allreduce(&value, &buffer, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	if (all)
+		MPI_Allreduce(&value, &buffer, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	else
+		MPI_Reduce(&value, &buffer, 1, MPI_DOUBLE, MPI_MIN, master_rank(), MPI_COMM_WORLD);
 	value = buffer;
 }
 
-void MPIControl::allreduce_sum(double& value)
+void MPIControl::reduce_sum(double& value, const bool all)
 {
 	double buffer;
-	MPI_Allreduce(&value, &buffer, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	if (all)
+		MPI_Allreduce(&value, &buffer, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	else
+		MPI_Reduce(&value, &buffer, 1, MPI_DOUBLE, MPI_SUM, master_rank(), MPI_COMM_WORLD);
 	value = buffer;
 }
 
-void MPIControl::allreduce_sum(int& value)
+void MPIControl::reduce_sum(int& value, const bool all)
 {
 	int buffer;
-	MPI_Allreduce(&value, &buffer, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	if (all)
+		MPI_Allreduce(&value, &buffer, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	else
+		MPI_Reduce(&value, &buffer, 1, MPI_INT, MPI_SUM, master_rank(), MPI_COMM_WORLD);
 	value = buffer;
 }
 
@@ -268,10 +280,10 @@ MPIControl::MPIControl() : rank_(0), size_(1), name_( getHostName() )
 
 MPIControl::~MPIControl() {}
 void MPIControl::barrier() const {}
-void MPIControl::allreduce_max(double&) {}
-void MPIControl::allreduce_min(double&) {}
-void MPIControl::allreduce_sum(double&) {}
-void MPIControl::allreduce_sum(int&) {}
+void MPIControl::reduce_max(double&, bool) {}
+void MPIControl::reduce_min(double&, bool) {}
+void MPIControl::reduce_sum(double&, bool) {}
+void MPIControl::reduce_sum(int&, bool) {}
 void MPIControl::gather(const int& val, std::vector<int>& vec, const size_t&) { vec.resize(1, val); }
 #endif
 

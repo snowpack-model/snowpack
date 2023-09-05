@@ -94,6 +94,9 @@ namespace mio {
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
+ * - STATION\#: provide the lat, lon and altitude or easting, northing and altitude for a station to get the data from (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). The **altitude will be
+ * replaced** by the one coming from the DEM, so feel free to use "-1" for example to make it obvious that it will be discarded. Finally, if a
+ * point leads to duplicate grid points, it will be removed from the list (mandatory);
  * - GRIB_DEBUG: output more information about the grib files in order to help fix potential problems (default: false).
  *
  * @code
@@ -101,9 +104,9 @@ namespace mio {
  * METEO           = GRIB
  * METEOPATH       = ./input
  * METEOEXT        = none
- * STATION1        = 779932 188182 21781 ;WFJ
- * STATION2        = 788889 192513 21781 ;Kloster
- * STATION3        = 793274 183770 21781 ;Weisshorn
+ * STATION1        = xy (779932, 188182, -1) ;WFJ
+ * STATION2        = xy (788889, 192513, -1) ;Kloster
+ * STATION3        = xy (793274, 183770, -1) ;Weisshorn
  *
  * GRID2D          = GRIB
  * GRID2DPATH      = ./input
@@ -402,7 +405,7 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 		double cellsize_x, cellsize_y;
 		llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this is the center cell
 		cellsize = (double)Optim::round( std::min(cellsize_x, cellsize_y) * 100. ) / 100.; // round to 1cm precision for numerical stability
-		if ( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
+		if ( std::abs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
 			factor_x = cellsize_x / cellsize;
 			factor_y = cellsize_y / cellsize;
 		}
@@ -744,7 +747,7 @@ void GRIBIO::scanMeteoPath()
 		const std::pair<Date,std::string> tmp(date, filename);
 
 		cache_meteo_files.push_back(tmp);
-		it++;
+		++it;
 	}
 }
 
@@ -833,7 +836,7 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats,
 	}
 
 	//we need to erase from the end in order to keep the index unchanged...
-	for (size_t ii=deletions.size(); ii>0; ii--) {
+	for (size_t ii=deletions.size(); ii-- >0; ) {
 		const size_t index=deletions[ii-1];
 		vecPoints.erase(vecPoints.begin()+index);
 	}
@@ -874,10 +877,10 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 	//retrieve nearest points
 	double *outlats = (double*)malloc(npoints*sizeof(double));
 	double *outlons = (double*)malloc(npoints*sizeof(double));
-	double *values = (double*)malloc(npoints*sizeof(double));
+	double *altitudes = (double*)malloc(npoints*sizeof(double));
 	double *distances = (double*)malloc(npoints*sizeof(double));
 	int *indexes = (int *)malloc(npoints*sizeof(int));
-	if (grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+	if (grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, altitudes, distances, indexes)!=0) {
 		grib_handle_delete(h);
 		cleanup();
 		throw IOException("Errro when searching for nearest points in DEM", AT);
@@ -885,7 +888,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 
 	//remove potential duplicates
 	if (removeDuplicatePoints(vecPoints, outlats, outlons)==true) {
-		free(outlats); free(outlons); free(values); free(distances); free(indexes);
+		free(outlats); free(outlons); free(altitudes); free(distances); free(indexes);
 		grib_handle_delete(h);
 		return false;
 	}
@@ -896,7 +899,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		sd.position.setProj(coordin, coordinparam);
 		double true_lat, true_lon;
 		CoordsAlgorithms::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
-		sd.position.setLatLon(true_lat, true_lon, values[ii]);
+		sd.position.setLatLon(true_lat, true_lon, altitudes[ii]);
 		sd.stationID = "Point_" + IOUtils::toString(indexes[ii]);
 		ostringstream ss2;
 		ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
@@ -904,7 +907,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		stations.push_back(sd);
 	}
 
-	free(outlats); free(outlons); free(values); free(distances); free(indexes);
+	free(outlats); free(outlons); free(altitudes); free(distances); free(indexes);
 	grib_handle_delete(h);
 	return true;
 }

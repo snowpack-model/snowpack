@@ -26,8 +26,11 @@
 #include <cstdio> //for sscanf
 #include <iomanip> //for setprecision
 
-#ifdef PROJ4
+#if defined(PROJ4)
+	#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 	#include <proj_api.h>
+#elif defined(PROJ)
+	#include <proj.h>
 #endif
 
 namespace mio {
@@ -74,7 +77,7 @@ std::string CoordsAlgorithms::printLatLon(const double& latitude, const double& 
 * @return coordinate in decimal
 */
 double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
-	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata, decimal=IOUtils::nodata;
+	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata;
 
 	if 	((sscanf(dms.c_str(), "%lf°%lf'%lf\"", &d, &m ,&s) < 3) &&
 		(sscanf(dms.c_str(), "%lf° %lf' %lf\"", &d, &m ,&s) < 3) &&
@@ -92,7 +95,7 @@ double CoordsAlgorithms::dms_to_decimal(const std::string& dms) {
 			throw InvalidFormatException("Can not parse given latitude or longitude: "+dms,AT);
 	}
 
-	decimal = fabs(d);
+	double decimal = std::abs(d);
 	if (m!=IOUtils::nodata) decimal += m/60.;
 	if (s!=IOUtils::nodata) decimal += s/3600.;
 
@@ -139,7 +142,7 @@ void CoordsAlgorithms::parseLatLon(const std::string& coordinates, double &lat, 
 */
 std::string CoordsAlgorithms::decimal_to_dms(const double& decimal) {
 	std::ostringstream dms;
-	const double abs_dec = fabs(decimal);
+	const double abs_dec = std::abs(decimal);
 	const int d = (int)floor(abs_dec);
 	const int m = (int)floor( (abs_dec - (double)d)*60. );
 	const double s = 3600.*(abs_dec - (double)d) - 60.*(double)m;
@@ -163,7 +166,7 @@ double CoordsAlgorithms::lat_degree_lenght(const double& latitude) {
 	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*(1.-e2)) / ( 180.*pow(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad)), 1.5) );
-	return fabs( degree_length );
+	return std::abs( degree_length );
 }
 
 /**
@@ -179,7 +182,7 @@ double CoordsAlgorithms::lon_degree_lenght(const double& latitude) {
 	static const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*cos(latitude*Cst::to_rad)) / ( 180.*sqrt(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad))) );
-	return fabs( degree_length );
+	return std::abs( degree_length );
 }
 
 /**
@@ -336,7 +339,7 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 			return (5042);
 		}
 	}
-	if (coordsystem=="PROJ4") {
+	if (coordsystem=="PROJ") {
 		const int tmp = atoi(coordparam.c_str());
 		if (tmp<0 || tmp>32767) {
 			std::ostringstream ss;
@@ -422,8 +425,8 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		return;
 	}
 	
-	//anything else has to be processed by proj4
-	coordsystem.assign("PROJ4");
+	//anything else has to be processed by proj
+	coordsystem.assign("PROJ");
 	std::ostringstream osstream;
 	osstream << epsg;
 	coordparam=osstream.str();
@@ -708,7 +711,7 @@ void CoordsAlgorithms::WGS84_to_UPS(const double& lat_in, const double& long_in,
 
 	static const double e = sqrt(e2);
 	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
-	const double lat_abs = fabs(lat_in); //since the computation assumes positive latitudes even for the Antarctis
+	const double lat_abs = std::abs(lat_in); //since the computation assumes positive latitudes even for the Antarctis
 	const double tan_Z2 = pow( (1.+e*sin(lat_abs*Cst::to_rad))/(1.-e*sin(lat_abs*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_abs*Cst::to_rad/2.);
 	const double R = k0*C0*tan_Z2;
 
@@ -765,11 +768,11 @@ void CoordsAlgorithms::UPS_to_WGS84(const double& east_in, const double& north_i
 	//computing latitude
 	double R;
 	if (Delta_N==0.) {
-		R = fabs(Delta_E);
+		R = std::abs(Delta_E);
 	} else if (Delta_E==0.) {
-		R = fabs(Delta_N);
+		R = std::abs(Delta_N);
 	} else {
-		R = (Delta_N>Delta_E)? fabs( Delta_N / cos(long_out*Cst::to_rad)) : fabs( Delta_E / sin(long_out*Cst::to_rad) );
+		R = (Delta_N>Delta_E)? std::abs( Delta_N / cos(long_out*Cst::to_rad)) : std::abs( Delta_E / sin(long_out*Cst::to_rad) );
 	}
 	static const double e = sqrt(e2), e4=e2*e2;
 	static const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
@@ -805,7 +808,7 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 }
 
 /**
-* @brief Coordinate conversion: from WGS84 Lat/Long to proj4 parameters
+* @brief Coordinate conversion: from WGS84 Lat/Long to proj parameters
 * @param[in] lat_in Decimal Latitude
 * @param[in] long_in Decimal Longitude
 * @param[in] coordparam Extra parameters necessary for the conversion (such as UTM zone, etc)
@@ -814,9 +817,9 @@ void CoordsAlgorithms::parseUTMZone(const std::string& zone_info, char& zoneLett
 * 
 * \note Using libproj is currently not thread safe (see https://trac.osgeo.org/proj/wiki/ThreadSafety)
 */
-void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
+void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
-#ifdef PROJ4
+#if defined(PROJ4)
 	static const std::string src_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	const std::string dest_param("+init=epsg:"+coordparam);
 	projPJ pj_latlong, pj_dest;
@@ -824,45 +827,67 @@ void CoordsAlgorithms::WGS84_to_PROJ4(const double& lat_in, const double& long_i
 
 	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+src_param, AT);
 	}
 
 	const int p = pj_transform(pj_latlong, pj_dest, 1, 1, &x, &y, NULL );
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_dest);
-		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	}
 	east_out = x;
 	north_out = y;
 	pj_free(pj_latlong);
 	pj_free(pj_dest);
+#elif defined(PROJ)
+	static const std::string src_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
+	const std::string dest_param("EPSG:"+coordparam);
+
+	PJ_CONTEXT* pj_context = proj_context_create();
+	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("PROJ: Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+
+	double x=long_in, y=lat_in;
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("PROJ: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	east_out = x;
+	north_out = y;
+	proj_destroy(pj_trans);
+	proj_context_destroy(pj_context);
 #else
 	(void)lat_in;
 	(void)long_in;
 	(void)coordparam;
 	(void)east_out;
 	(void)north_out;
-	throw IOException("Not compiled with PROJ4 support", AT);
+	throw IOException("Not compiled with PROJ support", AT);
 #endif
 }
 
 /**
-* @brief Coordinate conversion: from proj4 parameters to WGS84 Lat/Long
+* @brief Coordinate conversion: from proj parameters to WGS84 Lat/Long
 * @param east_in easting coordinate (Swiss system)
 * @param north_in northing coordinate (Swiss system)
 * @param[in] coordparam Extra parameters necessary for the conversion (such as UTM zone, etc)
 * @param lat_out Decimal Latitude
 * @param long_out Decimal Longitude
 */
-void CoordsAlgorithms::PROJ4_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
+void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
 {
-#ifdef PROJ4
+#if defined(PROJ4)
 	const std::string src_param("+init=epsg:"+coordparam);
 	static const std::string dest_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
 	projPJ pj_latlong, pj_src;
@@ -870,31 +895,53 @@ void CoordsAlgorithms::PROJ4_to_WGS84(const double& east_in, const double& north
 
 	if ( !(pj_src = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_src);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+src_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
 	}
 
 	const int p = pj_transform(pj_src, pj_latlong, 1, 1, &x, &y, NULL );
 	if (p!=0) {
 		pj_free(pj_latlong);
 		pj_free(pj_src);
-		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
 	}
 	long_out = x*RAD_TO_DEG;
 	lat_out = y*RAD_TO_DEG;
 	pj_free(pj_latlong);
 	pj_free(pj_src);
+#elif defined(PROJ)
+	const std::string src_param("EPSG:"+coordparam);
+	static const std::string dest_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
+
+	PJ_CONTEXT* pj_context = proj_context_create();
+	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), dest_param.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("PROJ: Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+
+	double x=east_in, y=north_in;
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("PROJ: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	long_out = x;
+	lat_out = y;
+	proj_destroy(pj_trans);
+	proj_context_destroy(pj_context);
 #else
 	(void)east_in;
 	(void)north_in;
 	(void)coordparam;
 	(void)lat_out;
 	(void)long_out;
-	throw IOException("Not compiled with PROJ4 support", AT);
+	throw IOException("Not compiled with PROJ support", AT);
 #endif
 }
 
@@ -1006,7 +1053,7 @@ double CoordsAlgorithms::VincentyDistance(const double& lat1, const double& lon1
 			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*Optim::pow2(cos_2sigma_m)) )
 			);
 		n++;
-	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
+	} while ( (n<n_max) && (std::abs(lambda - lambda_p) > thresh) );
 
 	if (n>n_max) {
 		throw IOException("Distance calculation not converging", AT);
@@ -1067,7 +1114,7 @@ void CoordsAlgorithms::VincentyInverse(const double& lat_ref, const double& lon_
 	static double sigma_p = 2.*Cst::PI;
 	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
 
-	while (fabs(sigma - sigma_p) > thresh) {
+	while (std::abs(sigma - sigma_p) > thresh) {
 		cos2sigma_m = cos( 2.*sigma1 + sigma );
 		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * (
 			cos(sigma)*(-1.+2.*cos2sigma_m*cos2sigma_m)

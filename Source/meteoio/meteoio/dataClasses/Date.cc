@@ -117,9 +117,20 @@ Date::Date() : timezone(0.), gmt_julian(0.), undef(true)
 }
 
 /**
+* @brief Current date constructor: the object is created with the current system date and time
+* @param in_timezone timezone as an offset to GMT (in hours)
+*/
+Date::Date(const double& in_timezone)
+         : timezone(0.), gmt_julian(0.), undef(true)
+{
+	setTimeZone(in_timezone);
+	setFromSys();
+}
+
+/**
 * @brief Julian date constructor.
 * @param julian_in julian date to set
-* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_timezone timezone as an offset to GMT (in hours)
 */
 Date::Date(const double& julian_in, const double& in_timezone)
          : timezone(0.), gmt_julian(0.), undef(true)
@@ -201,7 +212,6 @@ void Date::setFromSys() {
 /**
 * @brief Set timezone and Daylight Saving Time flag.
 * @param in_timezone timezone as an offset to GMT (in hours)
-* @param in_dst is it DST?
 */
 void Date::setTimeZone(const double& in_timezone) {
 //please keep in mind that timezone might be fractional (ie: 15 minutes, etc)
@@ -909,7 +919,7 @@ bool Date::operator==(const Date& indate) const {
 		return( undef==true && indate.isUndef() );
 	}
 
-	return (fabs(gmt_julian - indate.gmt_julian) <= epsilon);
+	return (std::abs(gmt_julian - indate.gmt_julian) <= epsilon);
 }
 
 bool Date::operator!=(const Date& indate) const {

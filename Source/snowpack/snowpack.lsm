@@ -6,7 +6,7 @@ Description:    SNOWPACK model ([Bartelt 2002], [Lehning 2002a], [Lehning 2002b]
 Keywords:       snow pack model
 Author:         bavay@slf.ch (Mathias Bavay)
 Maintained-by:  bavay@slf.ch (Mathias Bavay)
-Primary-site:   http://models.slf.ch p/snowpack/downloads/313/get/
+Primary-site:   https://code.wsl.ch/snow-models/snowpack/-/releases
                 12.25 M Snowpack-3.4.5-src.tar.gz
 Platforms:      Linux and other Unices, Windows, OsX
 Copying-policy: GNU Lesser Public License version 3

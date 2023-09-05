@@ -38,11 +38,13 @@ using namespace mio;
 ************************************************************/
 
 Meteo::Meteo(const SnowpackConfig& cfg)
-       : canopy(cfg), roughness_length_parametrization("CONST"), roughness_length(0.), height_of_wind_value(0.), stability(MO_MICHLMAYR),
-         research_mode(false), useCanopyModel(false)
+       : canopy(cfg), dataGenerator(nullptr), roughness_length_parametrization("CONST"), roughness_length(0.), height_of_wind_value(0.),
+         variant(), stability(MO_HOLTSLAG), research_mode(false), useCanopyModel(false)
 {
 	const std::string stability_model = cfg.get("ATMOSPHERIC_STABILITY", "Snowpack");
 	stability = getStability(stability_model);
+	
+	cfg.getValue("VARIANT", "SnowpackAdvanced", variant);
 
 	// Check if we use ROUGHNESS_LENGTH parametrization
 	const std::string tmp_z0_string = "";
@@ -60,6 +62,29 @@ Meteo::Meteo(const SnowpackConfig& cfg)
 	cfg.getValue("HEIGHT_OF_WIND_VALUE", "Snowpack", height_of_wind_value);
 
 	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
+}
+
+Meteo::Meteo(const Meteo& mt)
+       : canopy(mt.canopy), dataGenerator(nullptr), roughness_length_parametrization(mt.roughness_length_parametrization), roughness_length(mt.roughness_length), height_of_wind_value(mt.height_of_wind_value),
+         variant(mt.variant), stability(mt.stability), research_mode(mt.research_mode), useCanopyModel(mt.useCanopyModel) {}
+
+Meteo& Meteo::operator=(const Meteo& mt)
+{
+	canopy = mt.canopy;
+	dataGenerator = nullptr;
+	roughness_length = mt.roughness_length;
+	height_of_wind_value = mt.height_of_wind_value;
+	variant = mt.variant;
+	stability = mt.stability;
+	research_mode = mt.research_mode;
+	useCanopyModel = mt.useCanopyModel;
+
+	return *this;
+}
+
+Meteo::~Meteo()
+{
+	if (dataGenerator!=nullptr) delete dataGenerator;
 }
 
 /**
@@ -128,7 +153,7 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 
 /**
  * @brief Applies the logarithmic wind profile to adjust provided wind speed to another height above surface.
- * Wind pumping is ignored. NOTE THAT THE FUNCTION IS DEACTIVATED AND WILL RETURN WIND SPEED FROM INPUT!!!
+ * Wind pumping is ignored.
  * @param Mdata
  * @param target_z target height above surface (m) to translate the windspeed to.
  * @param source_vw (optional) Wind speed to use to scale ustar(Mdata.vw). If omitted, Mdata.vw is taken.
@@ -137,7 +162,7 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 double Meteo::windspeedProfile(const CurrentMeteo& Mdata, const double& target_z, const double& source_vw) {
 	const double d_pump = 0.;
 	const double z_ratio = log((target_z - d_pump) / Mdata.z0);
-	const double ustar_corr = (source_vw < 0. || Mdata.vw < 0.) ? (Mdata.ustar) : (Mdata.ustar * (source_vw / Mdata.vw));
+	const double ustar_corr = (source_vw < 0. || Mdata.vw <= 0.) ? (Mdata.ustar) : (Mdata.ustar * (source_vw / Mdata.vw));
 	const double vw_corr = (ustar_corr / Constants::karman) * (z_ratio - Mdata.psi_m);
 	return vw_corr;
 }
@@ -185,13 +210,14 @@ void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, 
 			}
 
 			case MO_STEARNS: {
-			// Stearns & Weidner, 1993
+			// Stearns & Weidner, 1993, eq (9), note ln x^2 in the paper is ln(x^2) not ln^2(x)
 			const double dummy1 = pow((1. + 5. * stab_ratio), 0.25);
-			psi_m = log(1. + dummy1) * log(1. + dummy1) + log(1. + Optim::pow2(dummy1))
-					- 2. * atan(dummy1) - 1.3333;
+			psi_m = log(Optim::pow2(1. + dummy1)) + log(1. + Optim::pow2(dummy1))
+					- 2. * atan(dummy1) - 4./3. * Optim::pow3(dummy1) + 0.8247;
+			// Stearns & Weidner, 1993, eq (10), note ln x^2 in the paper is ln(x^2) not ln^2(x)
 			const double dummy2 = Optim::pow2(dummy1);
-			psi_s = log(1. + dummy2) * log(1. + dummy2)
-					- 2. * dummy2 - 0.66667 * Optim::pow3(dummy2) + 1.2804;
+			psi_s = log(Optim::pow2(1. + dummy2))
+					- 2. * dummy2 - 2./3. * Optim::pow3(dummy2) + 1.2804;
 			return;
 			}
 
@@ -241,9 +267,9 @@ void Meteo::MOStability(const ATM_STABILITY& use_stability, const double& ta_v, 
 		const double dummy1 = pow((1. - 15. * stab_ratio), 0.25);
 		psi_m = 2. * log(0.5 * (1. + dummy1)) + log(0.5 * (1. + Optim::pow2(dummy1)))
 				- 2. * atan(dummy1) + 0.5 * Constants::pi;
-		// Stearns & Weidner, 1993, for scalars
-		const double dummy2 = pow((1. - 22.5 * stab_ratio), 0.33333);
-		psi_s = pow(log(1. + dummy2 + Optim::pow2(dummy2)), 1.5) - 1.732 * atan(0.577 * (1. + 2. * dummy2)) + 0.1659;
+		// Stearns & Weidner, 1993, eq (8) for scalars, note ln x^2 in the paper is ln(x^2) not ln^2(x)
+		const double dummy2 = pow((1. - 22.5 * stab_ratio), 1./3.);
+		psi_s = log(pow(1. + dummy2 + Optim::pow2(dummy2), 1.5)) - 1.732 * atan(0.577 * (1. + 2. * dummy2)) + 0.1659;
 	}
 }
 
@@ -335,7 +361,7 @@ void Meteo::MicroMet(const SnowStation& Xdata, CurrentMeteo &Mdata, const bool& 
 	}
 
 	// Save the values in the global Mdata data structure to use it later
-	Mdata.ustar = ustar;
+	Mdata.ustar = Constants::karman * vw / (z_ratio - psi_m);
 	Mdata.z0 = rough_len;
 	Mdata.psi_s = psi_s;
 	Mdata.psi_m = psi_m;
@@ -461,6 +487,22 @@ void Meteo::compRadiation(const SnowStation &station, mio::SunObject &sun, Snowp
 				Mdata.rswr = 0.;
 			cfg.addKey("SW_MODE", "Snowpack", "BOTH");  // as both Mdata.iswr and Mdata.rswr were reset
 		}
+	}
+	
+	//if needed and possible, recompute ilwr and ea now that we have a good iswr (computed from rswr with a good parametrized albedo)
+	if (Mdata.poor_ea) {
+		if (dataGenerator==nullptr) dataGenerator = new mio::DataGenerator(cfg, std::set<std::string>({"ILWR"}));
+		mio::MeteoData md(Mdata.date, station.meta);
+		md("TA") = Mdata.ta;
+		md("TSS") = Mdata.tss;
+		md("RH") = Mdata.rh;
+		md("HS") = Mdata.hs;
+		md("ISWR") = Mdata.iswr;
+		md("RSWR") = Mdata.rswr;
+		std::vector<mio::MeteoData> vecMeteo( {md} );
+		
+		dataGenerator->fillMissing( vecMeteo );
+		Mdata.ea = SnLaws::AirEmissivity(vecMeteo.front(), variant);
 	}
 
 	Mdata.diff = diff;

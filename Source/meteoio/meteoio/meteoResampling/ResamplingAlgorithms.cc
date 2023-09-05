@@ -33,7 +33,7 @@ namespace mio {
  * The goal of this page is to give an overview of the available resampling algorithms and their usage.
  *
  * @section resampling_section Resampling section
- * The resampling is specified for each parameter in the [Interpol1D] section. This section contains
+ * The resampling is specified for each parameter in the [Interpolations1D] section. This section contains
  * a list of the various meteo parameters with their associated choice of resampling algorithm and
  * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
  * assumed. An example of such section is given below:
@@ -344,7 +344,7 @@ size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, c
 		if (hour1==0 && min1==0)
 			indexP1=IOUtils::npos;
 		else { //otherwise, this means multiple daily sums have been found for the same day
-			const std::string msg = "More than one daily sum of solar radiation found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
+			const std::string msg = "More than one daily value found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
 			throw IOException(msg, AT);
 		}
 	}

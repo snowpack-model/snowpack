@@ -99,6 +99,7 @@ class Meteo1DInterpolator {
 		* @param[in] mode spatial resampling operation mode (see IOUtils::OperationMode), default IOUtils::STD
 		*/
 		Meteo1DInterpolator(const Config& in_cfg, const char& rank=1, const IOUtils::OperationMode &mode=IOUtils::STD);
+		Meteo1DInterpolator(const Meteo1DInterpolator& org) = default;
 
 		~Meteo1DInterpolator();
 

@@ -52,26 +52,23 @@ class AlpineControl
 		AlpineControl(SnowpackInterface *mysnowpack,
 		              SnowDriftA3D *mysnowdrift,
 		              EnergyBalance *myeb,
-		              DataAssimilation *myda,
-		              Runoff *myrunoff,
 		              const mio::Config& cfg,
 		              const mio::DEMObject& in_dem);
 		void Run(mio::Date i_startdate, const unsigned int max_steps);
 		void setNoCompute(bool i_nocompute) {nocompute = i_nocompute;}
 
 	private:
-		MeteoObj meteo;
 		const mio::DEMObject& dem;
+		MeteoObj meteo;
 
 		SnowpackInterface *snowpack;
 		SnowDriftA3D *snowdrift;
 		EnergyBalance *eb;
-		DataAssimilation* da;
-		Runoff* runoff;
+		//DataAssimilation* da;
 		double snow_days_between;
 		double max_run_time;
-		bool enable_simple_snow_drift, enable_explicit_snow_drift;
-		bool nocompute, out_snow, correct_meteo_grids_HS; // no computation, only parse inputs (check mode)
+		bool enable_simple_snow_drift, enable_snowdrift2d;;
+		bool nocompute, out_snow, correct_meteo_grids_HS, dataFromGrids; // no computation, only parse inputs (check mode)
 };
 
 #endif

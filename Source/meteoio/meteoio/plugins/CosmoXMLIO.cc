@@ -234,7 +234,7 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 		const std::pair<Date,std::string> tmp(date, meteopath_in+"/"+filename);
 
 		meteo_files.push_back(tmp);
-		it++;
+		++it;
 	}
 }
 

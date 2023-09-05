@@ -250,7 +250,7 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 
 /**
  * @name THERMAL CONDUCTIVITY OF ICE
- * @brief Based on master thesis of Tobias Hipp, who used relationships by Ling & Yhang (2005).
+ * @brief Based on master thesis of Tobias Hipp, who used relationships by Ling & Zhang (2004).
  * @version 11.03
  * @param Temperature Temperature (K)
  * @return Thermal conductivity of ice
@@ -263,7 +263,7 @@ double SnLaws::conductivity_ice(const double& Temperature)
 
 /**
  * @name THERMAL CONDUCTIVITY OF WATER
- * @brief Based on master thesis of Tobias Hipp, who used relationships by Ling & Yhang (2005).
+ * @brief Based on master thesis of Tobias Hipp, who used relationships by Ling & Zhang (2004).
  * @version 11.03
  * @param Temperature Temperature (K)
  * @return Thermal conductivity of water
@@ -304,7 +304,6 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 	double Alb = Constants::min_albedo;
 	const double Ta = Mdata.ta;
 	double age = (ageAlbedo)? Mdata.date.getJulian() - Edata.depositionDate.getJulian() : 0.;
-
 	if (i_snow_albedo == "FIXED") {
 		Alb = i_albedo_fixedValue;
 	} else if ((ageAlbedo && (age > 365.)) || Xdata.isGlacier(false)) {
@@ -536,7 +535,6 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		prn_msg(__FILE__, __LINE__, "err", Date(), "Albedo parameterization %s not implemented yet!", i_albedo_parameterization.c_str());
 		throw IOException("The required snow albedo model is not implemented yet!", AT);
 	}
-
 	return(Alb);
 }
 
@@ -902,7 +900,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 
 	// Compute cross-sectional areas of conduction paths (m2)
 	const double Ap = Metamorphism::csPoreArea(Edata); // (mm2)
-	const double Aiw = std::max(0., Edata.theta[WATER] * (1. / C1 - rg) / C1 * (Ap + Constants::pi * rg*rg));
+	const double Aiw = std::max(0., Edata.theta[WATER] * (1. / C1)/(1. / C1 - rg) * (Ap + Constants::pi * rg*rg));
 	const double Aip = std::max(0., Constants::pi * (rg*rg - rb*rb) - Aiw);
 
 	/*
@@ -1121,7 +1119,7 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
 			const double vw_avg_ref = Meteo::windspeedProfile(Mdata, z_ref_vw, Mdata.vw_avg);
 			if ((vw_avg_ref >= event_wind_lowlim) && (vw_avg_ref <= event_wind_highlim)) {
 				static const double rho_0=361., rho_1=33.;
-				return (vw_avg_ref == 0.) ? (rho_1) : (std::max(rho_1, rho_0*log10(vw_avg_ref)) + rho_1);
+				return (vw_avg_ref == 0.) ? (rho_1) : (std::max(rho_1, rho_0*log10(vw_avg_ref) + rho_1));
 			} else
 				return Constants::undefined;
 		}
@@ -1235,7 +1233,7 @@ double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const d
  * 	- event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
  * - MEASURED: Use measured new snow density read from meteo input
  * 	-Note: Set HN_DENSITY_FIXEDVALUE to 1. to use surface snow density as a "measured" value in case of missing values
- * - FIXED: Use a fixed new snow density by assigning HN_DENSITY-FIXEDVALUE a value (default: 100 kg m-3, at least min_hn_density)
+ * - FIXED: Use a fixed new snow density by assigning HN_DENSITY_FIXEDVALUE a value (default: 100 kg m-3, at least min_hn_density)
  * @param i_hn_density type of density computation
  * @param i_hn_density_parameterization to use
  * @param i_hn_density_fixedValue to use
@@ -1271,9 +1269,11 @@ double SnLaws::compNewSnowDensity(const std::string& i_hn_density, const std::st
 		} else {
 			rho = Constants::undefined;
 		}
-	} else { // "FIXED"
+	} else if (i_hn_density == "FIXED") {
 		rho = (i_hn_density_fixedValue != Constants::undefined) ? i_hn_density_fixedValue : Xdata.Edata[Xdata.getNumberOfElements()-1].Rho;
 		rho = std::max(min_hn_density, rho);
+	} else {
+		throw UnknownValueException("Unknown new snow density option (HN_DENSITY) selected!", AT);
 	}
 
 	return rho;
@@ -1316,7 +1316,8 @@ double SnLaws::NewSnowViscosityLehning(const ElementData& Edata)
  */
 double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 {
-	const double Q = 67000.; // Activation energy for defects in ice (J mol-1)
+	// Max Stevens concluded in presentation at AGU 2021 that models with activation energy 60 kJ/mol worked best for South Pole (see https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/947354)
+	const double Q = (current_variant == "POLAR" || current_variant == "ANTARCTICA") ? (60000.) :(67000.); // Activation energy for defects in ice (J mol-1)
 
 	switch (SnLaws::t_term) {
 	case t_term_arrhenius_critical:
@@ -1692,15 +1693,14 @@ double SnLaws::ArrheniusLaw(const double ActEnergy, const double T, const double
  */
 double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
 {
-	const double ILWR = (md(MeteoData::ILWR)>1.)? md(MeteoData::ILWR) : IOUtils::nodata;
+	const double ILWR = md(MeteoData::ILWR);
 
 	if (ILWR!=IOUtils::nodata)
 		return AirEmissivity(ILWR, md(MeteoData::TA), variant);
 	else {
-		const double cloudiness = (md(MeteoData::ILWR)>0. && md(MeteoData::ILWR)<=1.)? md(MeteoData::ILWR) : IOUtils::nodata;
 		const double ilwr_p = Atmosphere::ILWR_parametrized(md.meta.position.getLat(), md.meta.position.getLon(), md.meta.position.getAltitude(),
 	                                        md.date.getJulian(), md.date.getTimeZone(),
-	                                        md(MeteoData::RH), md(MeteoData::TA), md(MeteoData::ISWR), cloudiness);
+	                                        md(MeteoData::RH), md(MeteoData::TA), md(MeteoData::ISWR), md(MeteoData::TAU_CLD));
 
 		return AirEmissivity(ilwr_p, md(MeteoData::TA), variant);
 	}

@@ -31,11 +31,11 @@ DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_p
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="RANGE") {
-			IOUtils::parseArg(vecArgs[ii], where, range);
-		} else if (vecArgs[ii].first=="PHASE") {
-			IOUtils::parseArg(vecArgs[ii], where, phase);
+	for (const auto& arg : vecArgs) {
+		if (arg.first=="RANGE") {
+			IOUtils::parseArg(arg, where, range);
+		} else if (arg.first=="PHASE") {
+			IOUtils::parseArg(arg, where, phase);
 			phase *= -1; //shift the minimum *later* in the day
 		}
 	}
@@ -108,17 +108,17 @@ void DailyAverage::resample(const std::string& /*stationHash*/, const size_t& in
 
 	double val = val1;
 	if (frac_day!=0.5) { //at noon, we purely take val1
-		const double w1 = 1./Optim::pow2( std::abs(.5-frac_day) );
+		const double w1 = 1. / Optim::pow2( std::abs(.5-frac_day) );
 		double norm = w1;
 		val *= w1;
 
 		if (val0!=IOUtils::nodata) {
-			const double w0 = 1./Optim::pow2( frac_day+0.5 );
+			const double w0 = 1. / Optim::pow2( frac_day+0.5 );
 			val += w0*val0;
 			norm += w0;
 		}
 		if (val2!=IOUtils::nodata) {
-			const double w2 = 1./Optim::pow2( 1.5-frac_day );
+			const double w2 = 1. / Optim::pow2( 1.5-frac_day );
 			val += w2*val2;
 			norm += w2;
 		}
@@ -130,11 +130,11 @@ void DailyAverage::resample(const std::string& /*stationHash*/, const size_t& in
 	//HACK this means that this should be implemented as a data creator so it could be filtered afterward
 	//HACK or we could one more pass of filtering *after* the resampling
 	if (paramindex==MeteoData::RH) {
-		if (md(paramindex)<0.01) md(paramindex)=0.01;
-		if (md(paramindex)>1.) md(paramindex)=1.;
+		if (md(paramindex)<0.01) md(paramindex) = 0.01;
+		if (md(paramindex)>1.) md(paramindex) = 1.;
 	} else if (paramindex==MeteoData::TA ||  paramindex==MeteoData::VW ||  paramindex==MeteoData::VW_MAX || paramindex==MeteoData::ISWR || paramindex==MeteoData::RSWR || paramindex==MeteoData::ILWR || paramindex==MeteoData::TSG || paramindex==MeteoData::TSS || paramindex==MeteoData::TAU_CLD) {
 		if (md(paramindex)<0.)
-			md(paramindex)=0.;
+			md(paramindex) = 0.;
 	}
 
 	md.setResampled(true);

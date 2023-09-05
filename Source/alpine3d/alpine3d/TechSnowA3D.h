@@ -36,7 +36,7 @@ class SnowpackInterfaceWorker;
  * the ski season, snow is only produced when the slopes are closed to the public.
  * 
  * This module works hand in hand with the Snowpack TechSnow module, so it also uses the configuration keys defined in 
- * <a href="https://models.slf.ch/docserver/snowpack/html/classTechSnow.html">Snowpack::TechSnow</a> to control the grooming.
+ * <a href="https://snowpack.slf.ch/doc-release/html/classTechSnow.html">Snowpack::TechSnow</a> to control the grooming.
  *
  * Then, it relies on the following configuration keys, all in the [TechSnow] section:
  *  - SNOW_PRODUCTION: if set to true, enables this module (default: false);

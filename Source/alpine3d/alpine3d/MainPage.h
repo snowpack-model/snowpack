@@ -21,9 +21,9 @@
  /**
  * @mainpage Table of content
  * -# External Links
- *    -# <A HREF="https://models.slf.ch/p/alpine3d/">Alpine3D's home page</A>
- *          -# <A HREF="https://models.slf.ch/p/alpine3d/page/Getting-started/">Installation, compilation</A>
- *          -# <A HREF="https://models.slf.ch/p/alpine3d/page/Running-a-simulation/">Running a simulation</A>
+ *    -# <A HREF="https://alpine3d.slf.ch">Alpine3D's home page</A>
+ *          -# <A HREF="https://alpine3d.slf.ch/Getting-started">Installation, compilation</A>
+ *          -# <A HREF="https://alpine3d.slf.ch/Running-a-simulation">Running a simulation</A>
  * -# End User documentation
  *     -# General principles
  *        -# \subpage model_principles "Model principles"
@@ -46,12 +46,12 @@
  * <p>
  * Alpine3D is a spatially distributed (surface), three dimensional (atmospheric) model for
  * analyzing and predicting dynamics of snow-dominated surface processes in mountainous topography.
- * It includes models for snow cover (<A HREF="https://models.slf.ch/p/snowpack/">SNOWPACK</A>),
+ * It includes models for snow cover (<A HREF="https://snowpack.slf.ch">SNOWPACK</A>),
  * vegetation and soil, snow transport, radiation transfer and runoff which can be enabled or disabled on demand.
  *
  * The model supports a variety of input options including interpolation of meteorological weather stations,
  * input from a meteorological model or from remote sensing data
- * (<A HREF="https://models.slf.ch/p/meteoio">MeteoIO</A>) and has been parallelized
+ * (<A HREF="https://meteoio.slf.ch">MeteoIO</A>) and has been parallelized
  * in order to run on computing grids or clusters
  * (using <A HREF="https://en.wikipedia.org/wiki/Message_Passing_Interface">MPI</A> and <A HREF="http://openmp.org/wp/">OpenMP</A>).
  *
@@ -74,14 +74,14 @@
  * @subsection model_workflow Simulation workflow
  * When running a simulation, it is important to keep in mind that the model is organized as several modules that interract together. It is possible to configure
  * some parameters for the various modules and to enable/disable modules. Some modules can be used outside of Alpine3D (like
- * <A HREF="https://models.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by the standalone
- * <A HREF="https://models.slf.ch">Snowpack</A> model) .
+ * <A HREF="https://meteoio.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by the standalone
+ * <A HREF="https://snowpack.slf.ch">Snowpack</A> model) .
  *
  * \image html simulation_workflow.png "Simulation workflow"
  * \image latex simulation_workflow.eps "Simulation workflow" width=0.9\textwidth
  *
  * @subsection installing Installing Alpine3D
- * Please follow the instructions given on <a href="https://models.slf.ch/p/alpine3d/page/Getting-started/">the forge</a> in order to download Alpine3D (from svn, from source or from a
+ * Please follow the instructions given on <a href="https://alpine3d.slf.ch/Getting-started/">the forge</a> in order to download Alpine3D (from git, from source or from a
  * binary package) and its dependencies (Snowpack and MeteoIO, knowing that binary packages might already contain all the required dependencies). If you've
  * downloaded a binary package, there is nothing special to do, just install it on your system.
  *
@@ -93,7 +93,7 @@
  * (in cmake) to a directory where you can write (it is *highly* recommended to set it to '${HOME}/usr'), make sure this directory exists and is writable and then install by
  * typing '*make install*' in a terminal opened at Alpine3D's source root folder. Make sure that CMAKE_INSTALL_PREFIX/bin is in your PATH and that CMAKE_INSTALL_PREFIX/lib
  * is recognized as a library path (variables PATH and LD_LIBRARY_PATH for Linux, PATH and DYLD_FALLBACK_LIBRARY_PATH for osX,
- * see <a href="https://models.slf.ch/p/snowpack/page/Getting-started/#wikititle_4">Getting Started</a> on the forge).
+ * see <a href="https://snowpack.slf.ch/Getting-started">Getting Started</a> on the forge).
  *
  * After Alpine3D has been installed, you can check that it works by opening a terminal and typing "alpine3d". Alpine3D should be found and display its help message.
  *
@@ -158,8 +158,8 @@
  * @endcode
  * Then run the simulation as laid out in the previous section.
  *
- * \image html mpi_scaling.png "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation)"
- * \image latex mpi_scaling.eps "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation)" width=0.9\textwidth
+ * \image html mpi_scaling.png "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)"
+ * \image latex mpi_scaling.eps "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)" width=0.9\textwidth
  * 
  * \note Please make sure that the environment variables $TEMPDIR, $TEMP and $TMP (if defined) don't point to a shared drive (such as an NFS mounted home directory), 
  * otherwise MPI might run very slowly.
@@ -213,7 +213,7 @@
  * @subsection snowpack_coupling Coupling with Snowpack
  * Alpine3D needs spatially interpolated forcings for each grid points. Unfortunately, it limits the choice of forcing parameters: for some parameters
  * (such as HS or RSWR), there are no reliable interpolation methods. One way to make use of the existing measurements that could not be easily
- * interpolated is to run a <A HREF="https://models.slf.ch/p/snowpack">Snowpack</A> simulation at the stations that provided these measurements,
+ * interpolated is to run a <A HREF="https://snowpack.slf.ch">Snowpack</A> simulation at the stations that provided these measurements,
  * then use alternate, computed parameters (such as PSUM or ISWR) as inputs to Alpine3D.
  *
  * This process is made easier by writing Snowpack's outputs in the smet format and making sure all the necessary parameters are written out.
@@ -248,20 +248,41 @@
  * METEOPATH  = ../input/meteo
  * STATION1   = WFJ2
  *
- * PSUM_S::MOVE = MS_Snow
- * PSUM_L::MOVE = MS_Rain
- * HS::MOVE    = HS_meas	;so we can still compare measured vs modelled snow height
- * TSG::MOVE   = T_bottom	;so we can compare the ground temperatures
- * TSS::MOVE   = TSS_meas	;so we can compare the surface temperatures
- *
- * WFJ2::KEEP = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH	;so we do not keep all kind of unnecessary parameters
- *
- * PSUM_PH::create     = PRECSPLITTING
- * PSUM_PH::PRECSPLITTING::type   = THRESH
- * PSUM_PH::PRECSPLITTING::snow   = 274.35
- * PSUM::create     = PRECSPLITTING
- * PSUM::PRECSPLITTING::type   = THRESH
- * PSUM::PRECSPLITTING::snow   = 274.35
+ * [InputEditing]
+ * *::EDIT1 = MOVE
+ * *::ARG1::DEST = PSUM_S
+ * *::ARG1::SRC = MS_Snow
+ * 
+ * *::EDIT2 = MOVE
+ * *::ARG2::DEST = PSUM_L
+ * *::ARG2::SRC = MS_Rain
+ * 
+ * *::EDIT3 = MOVE              ;so we can still compare measured vs modelled snow height
+ * *::ARG3::DEST = HS
+ * *::ARG3::SRC = HS_meas
+ * 
+ * *::EDIT4 = MOVE              ;so we can compare the ground temperatures
+ * *::ARG4::DEST = TSG
+ * *::ARG4::SRC = T_bottom
+ * 
+ * *::EDIT5 = MOVE              ;so we can compare the surface temperatures
+ * *::ARG5::DEST = TSS
+ * *::ARG5::SRC = TSS_meas
+ * 
+ * *::EDIT6 = KEEP
+ * *::ARG6::PARAMS = TA TSS TSG RH ISWR ILWR HS VW DW PSUM_S PSUM_L PSUM PSUM_PH    ;so we do not keep all kind of unnecessary parameters
+ * 
+ * *::EDIT7 = CREATE
+ * *::ARG7::PARAM = PSUM_PH
+ * *::ARG7::ALGORITHM = PRECSPLITTING
+ * *::ARG7::TYPE = THRESH
+ * *::ARG7::SNOW = 274.35
+ * 
+ * *::EDIT8 = CREATE
+ * *::ARG8::PARAM = PSUM
+ * *::ARG8::ALGORITHM = PRECSPLITTING
+ * *::ARG8::TYPE = THRESH
+ * *::ARG8::SNOW = 274.35
  *
  * [SNOWPACK]
  * ENFORCE_MEASURED_SNOW_HEIGHTS = FALSE
@@ -286,7 +307,7 @@
  * @subsection principles_snowpack Distributed 1D soil/snow/canopy column
  * \image html distributed_sn.png "Distributed SNOWPACK over the domain taking into account the land cover"
  * \image latex distributed_sn.eps "Distributed SNOWPACK over the domain taking into account the land cover" width=0.9\textwidth
- * At the core of the model, is the <A HREF="http://models.slf.ch/p/snowpack/">SNOWPACK</A> model, a physically based,
+ * At the core of the model, is the <A HREF="https://snowpack.slf.ch">SNOWPACK</A> model, a physically based,
  * energy balance model for a 1D soil/snow/canopy column.
  * This gives us a very detailed description of the snow stratigraphy and a very good evaluation of the mass and energy balance (therefore also of
  * quantities such as Snow Water Equivalent (SWE) or temperature profile). This 1D energy balance is performed for each pixel of the domain
@@ -299,7 +320,7 @@
  * In order to perform a SNOWPACK simulation at every pixel of the domain, it is necessary to get the meteorological forcing for each pixel.
  * But the measured meteorological parameters are usually measured by a set of stations, which means that the data is available at a set of points.
  * Interpolating these points measurements to every pixels of the domain is performed by the means of statistical interpolations with
- * <A HREF="http://models.slf.ch/p/meteoio">MeteoIO</A>. if the forcing data is coming out of another model (such as a meteorological model),
+ * <A HREF="https://meteoio.slf.ch">MeteoIO</A>. if the forcing data is coming out of another model (such as a meteorological model),
  * most probably the input grids have a resolution that is very insufficient for Alpine3D and therefore need downscaling. If the downscaling factor
  * is very large, we often end up with only a few points from the meteorological model that are part of the Alpine3D domain, therefore such points
  * can be considered as "virtual stations" and spatially interpolated similarly to weather stations.
@@ -394,18 +415,17 @@
  * @subsection lus_input Land Cover model
  * \image html LUS.png "Example of a Land Cover grid"
  * \image latex LUS.eps "Example of a Land Cover grid" width=0.9\textwidth
- * For each cell of the domain, a land cover code must be provided. This must be using the exact same geolocalization as the DEM.
- * Such data are usually available in various classifications depending on the country (such as
- * <A HREF="http://www.eea.europa.eu/publications/COR0-landcover">CORINE</A> for Europe,
- * the <A HREF="http://landcover.usgs.gov/">US National Land Cover Dataset</A> for the USA,
- * the <A HREF="http://www.countrysidesurvey.org.uk/">countryside survey</A> for the UK,
- * <A HREF="https://www.bfs.admin.ch/bfs/de/home/statistiken/raum-umwelt/nomenklaturen/arealstatistik/noas2004.html">Arealstatistik NOAS04</A> for Switzerland,
- * <A HREF="http://data.ess.tsinghua.edu.cn/">GLC</A> for a 30m resolution global land cover or
- * <A HREF="http://data.fao.org/map?entryId=6c34ec8b-f31e-4976-9344-fd11b738a850">FAO GeoNetwork</A> for multiple land cover data sets including a 30" resolution global land cover).
+ *
+ * For each cell of the domain, a land cover code must be provided. This must be using the exact same geolocalization as the DEM. You can create you own LUS file based on aerial photography (see in section \ref tools "simulation tools") or find such data for your area of interest. Such data are usually available in various classifications
+ * depending on the country, for example:
+ *     + <A HREF="http://www.eea.europa.eu/publications/COR0-landcover">CORINE</A> for Europe;
+ *     + the <A HREF="http://landcover.usgs.gov/">US National Land Cover Dataset</A> for the USA;
+ *     + the <A HREF="http://www.countrysidesurvey.org.uk/">countryside survey</A> for the UK;
+ *     + <A HREF="https://www.bfs.admin.ch/bfs/de/home/statistiken/raum-umwelt/nomenklaturen/arealstatistik/noas2004.html">Arealstatistik NOAS04</A> for Switzerland;
+ *     + <A HREF="http://data.ess.tsinghua.edu.cn/">GLC</A> for a 30m resolution global land cover or <A HREF="http://data.fao.org/map?entryId=6c34ec8b-f31e-4976-9344-fd11b738a850">FAO GeoNetwork</A> for multiple land cover data sets including a 30 arcsec resolution global land cover.
  * 
  * Currently, Alpine3D improperly calls the Land Cover Model <i>"Land Use"</i>, abbreviated as LUS and uses an ARC ascii file
- * (see <A HREF="https://models.slf.ch/docserver/meteoio/html/arc.html">MeteoIO's documentation</A>) with PREVAH landuse codes 
- * that have the format 1LLDC where:
+ * (see <A HREF="https://meteoio.slf.ch/doc-release/html/arc.html">MeteoIO's documentation</A>) with PREVAH landuse codes that have the format 1LLDC where:
  * - LL is the land use code as given in the table given below
  * - D is the soil depth (unused)
  * - C is the field capacity (unused)
@@ -475,8 +495,8 @@
  * must be dated from before the simulation starts.
  *
  * There are two possibilities for assigning these files to each cell of the simulation domain (see \subpage reading_snow_files "reading snow files"):
- *     - by land cover classes. In this case, every cell receives an initial soil/snow profile based on its land cover class. The files must be named as {LAND_USE_CLASS}_{EXPERIMENT_NAME}.{ext};
- *     - independently for each (i,j) pixel. In this case, the files must be named as {i_index}_{j_index}_{EXPERIMENT_NAME}.{ext};
+ *     - by land cover classes. In this case, every cell receives an initial soil/snow profile based on its land cover class. The files must be named as <i>{LAND_USE_CLASS}_{EXPERIMENT_NAME}.{ext}</i>;
+ *     - independently for each (i,j) pixel (*i* being in the *x* direction and *j* in the *y* direction, referenced by the lower left corner). In this case, the files must be named as <i>{i_index}_{j_index}_{EXPERIMENT_NAME}.{ext}</i>;
  *
  * @note In any case, you MUST set the key "EXPERIMENT_NAME" in the [Output] section.
  *
@@ -553,13 +573,32 @@
 
 /**
  * @page tools Simulation tools
- * Several tools are available to help using Alpine3D. As for SNOWPACK, it is possible to use <A HREF="https://models.slf.ch/p/inishell">inishell</A> to
- * configure the simulations. There is also another java tool, "view" in the "Interface" sub directory, that can be used to visualize ARC ASCII grids as
- * well as to visualize DEM and LUS files in this format. This can also be used to generate a LUS file by opening an aerial picture and manually tagging
- * the pixels (one by one, along lines or within polygons). Finally, this tool can also generate a POI (points of interest) file for more detailed
- * outputs at some specific points.
+ * Several tools are available to help using Alpine3D, several are also shared between MeteoIO, Snowpack and Alpine3D.
+ *
+ * @section Simulation_config Simulation configuration
+ * As for SNOWPACK, it is possible to use <A HREF="https://inishell.slf.ch">inishell</A> to configure the simulations. Simply load the "alpine3d" application
+ * in Inishell and start configuring your simulation! Please note that as Alpine3D and Snowpack share many of their configuration keys, it is often a good idea
+ * to start by configuring a Snowpack simulation (for example on a single station of your data set), make sure everything seems to work as expected and then
+ * expand this configuration for Alpine3D (loading the exact same ini file in Inishell but with the "alpine3d" application selected). Currently, one
+ * limitation is that it is not possible to start an Alpine3D simulation from within Inishell, you have to run it from the command line.
+ *
+ * @section Results_visualization Visualizing simulation results
+ * There is also a java tool, "view" in the Alpine3D "Interface" sub directory that can be used to visualize ARC ASCII grids as well as to visualize
+ * DEM and LUS files in this format.
  * \image html view_tool.png "\"View\" application for visualizing grids"
  * \image latex view_tool.eps "\"View\" application for visualizing grids" width=0.9\textwidth
+ *
+ * @section Creating_lus_files Creating Land Use files
+ * The "view" java tool in the Alpine3D "Interface" sub directory, can be used to generate a LUS file by opening an aerial picture and manually
+ * tagging the pixels (one by one, along lines or within polygons). This tool can also generate a POI (points of interest) file for more
+ * detailed outputs at some specific points.
+ *     + open your DEM file;
+ *     + open an image file that has a <a href="https://en.wikipedia.org/wiki/World_file">world file</a>, such as jpg+jpw or png+pnw;
+ *     + open "Edit" > "create surface code"
+ *     + Select the pixels of interest (by polygone, one by one, etc) and convert previous surface codes into new ones (at start, the whole raster is filled with nodata)
+ *     + in the end, save your new LUS file!
+ * \image html view_tool_lus.jpg "\"View\" for creating a LUS file"
+ * \image latex view_tool_lus.eps "\"View\" for creating a LUS file" width=0.9\textwidth
  */
 
 /**

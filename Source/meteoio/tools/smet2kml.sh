@@ -1,17 +1,27 @@
 #!/bin/bash
-#from a list of SMET files, this generates a KML file that can be read in google earth or map.geo.admin
-#to represent on a map where the stations are
-#see https://developers.google.com/kml/documentation/kml_tut for more on kml
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# from SMET files, this generates a KML file that can be read in google earth or map.geo.admin
+# to represent on a map where the stations are
+# see https://developers.google.com/kml/documentation/kml_tut for more on kml
+# This only takes zero or one argument. If the given argument is a directory, it will run on all smet files found in the given
+# directory and provide a KML file containing all smet files. If it is a filename, it will only run on this file name.
+# if no argument is given, it runs in the current directory and produces a KML file containing the metadata of all the
+# smet files found in the current directory.
 
 if [ $# -lt 1 ]; then
-	INPUT_DIR="."
+	INPUT_FILES=`ls ./*.smet`
 else
-	INPUT_DIR=$1
+	if [ -d "$1" ]; then
+		INPUT_DIR=$1
+		INPUT_FILES=`ls "$1"/*.smet`
+	else
+		INPUT_FILES=$1
+	fi
 fi
 
 cs2cs=`which cs2cs`
 
-ls ${INPUT_DIR}/*.smet | xargs -i head -50 {} | awk '
+awk '
 	BEGIN {
 		printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
 		printf("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
@@ -40,7 +50,7 @@ ls ${INPUT_DIR}/*.smet | xargs -i head -50 {} | awk '
 		printf("</Placemark>\n")
 		latitude=-99
 		easting=-99
-		#nextfile
+		nextfile
 	}
 	/station_id/ {
 		gsub(/\r/, "")
@@ -79,5 +89,4 @@ ls ${INPUT_DIR}/*.smet | xargs -i head -50 {} | awk '
 	END {
 		printf("</Folder>\n</kml>\n")
 	}
-' 
-
+' ${INPUT_FILES}

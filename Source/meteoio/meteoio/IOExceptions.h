@@ -40,10 +40,10 @@ namespace mio {
 class IOException : public std::exception {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
-		virtual const char* what() const noexcept;
+		virtual const char* what() const noexcept override;
 
 	protected:
-	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+	#if defined(__GLIBC__)
 		std::string resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const;
 	#endif
 		std::string msg, full_output;
@@ -156,6 +156,16 @@ class NoDataException : public IOException
 	public:
 		NoDataException(const std::string& message="",
 		                         const std::string& position="") : IOException("NoData: " + message, position){}
+};
+
+/**
+ * @class TimeOutException
+ * @brief thrown when an operation does not complete in the foreseen time
+ */
+class TimeOutException : public IOException {
+	public:
+		TimeOutException(const std::string& filename="",
+		                      const std::string& position="") : IOException("NotFound: " + filename, position){}
 };
 } //end namespace
 

@@ -21,6 +21,7 @@
 #include <meteoio/IOUtils.h>
 
 #include <cerrno>
+#include <cstring>
 #include <string.h>
 #include <fstream>
 

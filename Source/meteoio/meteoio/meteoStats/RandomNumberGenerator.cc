@@ -725,7 +725,7 @@ double RandomNumberGenerator::cdfGauss(const double& xx) const
 { //cumulative distribution function for a Gauss curve at point xx
 	const double mean = DistributionParameters[0];
 	const double sigma = DistributionParameters[1];
-	const double xabs = fabs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
+	const double xabs = std::abs(xx - mean) / sigma; //formula is for mu=0 and sigma=1 --> transform
 	
 	static const double bb[5] = { //|error| < 7.5e-8
 	    0.319381530, 
@@ -944,7 +944,15 @@ uint32_t RngPcg::int32()
 	//permutation function of a tuple as output function:
 	const uint32_t xorshifted = (uint32_t)( ((oldstate >> 18u) ^ oldstate) >> 27u );
 	const uint32_t rot = (uint32_t)(oldstate >> 59u);
-	return  (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+#ifdef _MSC_VER
+#pragma warning( push ) //for Visual C++
+#pragma warning(disable:4146) //Visual C++ rightfully complains... but this behavior is what we want!
+#endif
+	const uint32_t result = (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
+#ifdef _MSC_VER
+#pragma warning( pop ) //for Visual C++, restore previous warnings behavior
+#endif
+	return  result;
 }
 //---------- End Apache license
 

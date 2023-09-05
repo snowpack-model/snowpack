@@ -1,10 +1,11 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 #Set different variables according to the detected compiler and processor
 #based on $CMAKE_CXX_COMPILER_ID it sets the following variables:
 # WARNINGS, EXTRA_WARNINGS, EXTRA, OPTIM, ARCH, DEBUG, _VERSION, PROFILING
 # It can also edit CMAKE_SHARED_LINKER_FLAGS and CMAKE_EXE_LINKER_FLAGS
 
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
-BuildVersion()
+BuildVersionGIT()
 
 MACRO (SET_COMPILER_OPTIONS)
 	SET(USER_COMPILER_OPTIONS "" CACHE STRING "Provide some extra compiler options")
@@ -22,6 +23,7 @@ MACRO (SET_COMPILER_OPTIONS)
 		#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs" FORCE)
 		SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions /w35045: inform about Spectre mitigation
 		#SET(EXTRA_WARNINGS "/Wp64") #/Wall
+		SET(WARNINGS "${WARNINGS} /experimental:external /external:I c:/Windows /external:W0")
 		SET(OPTIM "/O2 /DNDEBUG /DEBUG:FASTLINK /MD /DNOSAFECHECKS")
 		SET(ARCH_OPTIM "/arch:AVX2")
 		SET(ARCH_SAFE "")
@@ -122,9 +124,8 @@ MACRO (SET_COMPILER_OPTIONS)
 					SET(USE_LTO_OPTIMIZATIONS ON CACHE BOOL "Use Link Time Optmizations when compiling (memory heavy while compiling)")
 					MARK_AS_ADVANCED(FORCE USE_LTO_OPTIMIZATIONS)
 					IF(USE_LTO_OPTIMIZATIONS)
-						SET(OPTIM "${OPTIM} -flto") 
+						SET(OPTIM "${OPTIM} -flto=auto -fno-fat-lto-objects")
 					ENDIF()
-					SET( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -fno-fat-lto-objects" )
 					SET( CMAKE_AR "${CMAKE_GCC_AR}" )
 					SET( CMAKE_NM "${CMAKE_GCC_NM}" )
 					SET( CMAKE_RANLIB "${CMAKE_GCC_RANLIB}" )
@@ -163,9 +164,16 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Rpass=.* for static analysis
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS -flto")
-		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
-			SET(ARCH_SAFE "-march=nocona -mtune=nocona")
-		ENDIF()
+		IF(APPLE)
+			OPTION(BUILD_FAT_BINARIES "Compile fat binaries, for x86_64 and arm64" OFF)
+			IF(BUILD_FAT_BINARIES)
+				SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+			ENDIF()
+		ELSE(APPLE)
+			IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
+				SET(ARCH_SAFE "-march=nocona -mtune=nocona")
+			ENDIF()
+		ENDIF(APPLE)
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
 		SET(_VERSION "-D_VERSION=${_versionString}")
 		

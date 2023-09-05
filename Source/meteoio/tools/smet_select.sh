@@ -1,6 +1,7 @@
 #!/bin/bash
-#return the list of SMET files in the given directory that have the given parameter. Optionaly, it is possible
-#to provide a date range to make sure that the said parameter is not "nodata" in the period of interest
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# return the list of SMET files in the given directory that have the given parameter. Optionaly, it is possible
+# to provide a date range to make sure that the said parameter is not "nodata" in the period of interest
 
 function simpleSelect {
 	files=`find ${INPUT_DIR}/* -maxdepth 0 -type f -name "*.smet"`

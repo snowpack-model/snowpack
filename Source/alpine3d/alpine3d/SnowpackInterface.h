@@ -25,21 +25,20 @@
 
 class SnowpackInterfaceWorker;
 class SnowDriftA3D;
-class Runoff; // forward declaration, cyclic header include
 
 #include <alpine3d/DataAssimilation.h>
-#include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
+#include <alpine3d/SnowDrift2D.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/Glaciers.h>
 #include <alpine3d/TechSnowA3D.h>
 
 /**
  * @page snowpack Snowpack
- * This module call the Snowpack energy balance model on each relevant cell of the domain (see \ref principles_snowpack). The cells that are excluded
+ * This module calls the Snowpack energy balance model on each relevant cell of the domain (see \ref principles_snowpack). The cells that are excluded
  * are the following:
- *     - cells those altitude is nodata (in the dem);
- *     - cells those land cover is undefined/nodata (in the lus);
+ *     - cells whose altitude is nodata (in the dem);
+ *     - cells whose land cover is undefined/nodata (in the lus);
  *     - cells marked as "water body".
  *
  * During a parallel simulation, it is often more efficient (but not always possible) to let each node perform its I/O on its local disk instead
@@ -53,9 +52,9 @@ class Runoff; // forward declaration, cyclic header include
  * Several types of outputs are supported: gridded outputs and full snowpack stratigraphy.
  *
  * @section gridded_outputs Gridded outputs
- * The gridded outputs are written out for all requested the parameters every GRIDS_DAYS_BETWEEN (in days), starting at GRIDS_START
+ * The gridded outputs are written out for all requested parameters every GRIDS_DAYS_BETWEEN (in days), starting at GRIDS_START
  * (in days, <i>0</i> being noon). The available parameters are provided in SnGrids::Parameters and should be written as a space delimited
- * list of parameters as GRIDS_PARAMETERS key (in the [Output] section).
+ * list of parameters using the GRIDS_PARAMETERS key (in the [Output] section).
  *
  * It is possible to mask the glaciated areas (in order to keep a relevant scaling
  * on snow water equivalent or similar parameters) either statically (performed once and for all at the begining of the run) or dynamically
@@ -86,7 +85,7 @@ class Runoff; // forward declaration, cyclic header include
  * @endcode
  *
  * @subsection output_new_grids Writing new grids out
- * If the parameters you want to write out do not already exist in  SnGrids::Parameters, then you have a few extra steps to perform:
+ * If the parameters you want to write out do not already exist in SnGrids::Parameters, then you have a few extra steps to perform:
  *     -# add the parameter in SnGrids::Parameters as well as its string representation in SnGrids::initStaticData()
  *     -# add the proper code (similarly as for the already existing parameters) in SnowpackInterfaceWorker::fillGrids() (in some rare cases, this must be done in SnowpackInterface::getGrid() ie for parameters that only exist in SnowpackInterface);
  *     -# after recompiling, it will be possible to specify the newly created grid as explained in \ref gridded_outputs.
@@ -127,7 +126,7 @@ class Runoff; // forward declaration, cyclic header include
  class SnowpackInterface
   {
 	public:
-		// Methods for accessing Snopack Interface Manager
+		// Methods for accessing Snowpack Interface Manager
 		SnowpackInterface(const mio::Config &io_cfg, const size_t& nbworkers,
 		                  const mio::DEMObject& dem_in,
 		                  const mio::Grid2DObject& landuse_in, const std::vector<mio::Coords>& vec_pts,
@@ -135,7 +134,7 @@ class Runoff; // forward declaration, cyclic header include
 		SnowpackInterface(const SnowpackInterface&);
 		~SnowpackInterface();
 
-		SnowpackInterface& operator=(const SnowpackInterface&); ///<Assignement operator, required because of pointer member
+		SnowpackInterface& operator=(const SnowpackInterface&); ///<Assignment operator, required because of pointer member
 
 		double getTiming() const;
 		void writeOutput(const mio::Date& julian);
@@ -145,37 +144,38 @@ class Runoff; // forward declaration, cyclic header include
 		void setSnowDrift(SnowDriftA3D& drift);
 		void setEnergyBalance(EnergyBalance& myeb);
 		void setDataAssimilation(DataAssimilation& init_da);
-		void setRunoff(Runoff& init_runoff);
 
 		// Methods to communicate with other modules
+		void setSnowDrift();
+		void setEnergyBalance();
 		void assimilate(const mio::Grid2DObject& daData, const mio::Date& timestamp);
 		void setSnowMassChange(const mio::Grid2DObject& new_mns, const mio::Date& timestamp);
 		void setMeteo(const mio::Grid2DObject& new_psum,
-		                const mio::Grid2DObject& new_psum_ph,
-		                const mio::Grid2DObject& new_vw,
-		                const mio::Grid2DObject& new_dw,
-		                const mio::Grid2DObject& new_rh,
-		                const mio::Grid2DObject& new_ta,
-		                const mio::Grid2DObject& new_tsg,
-		                const mio::Date& timestamp);
+		              const mio::Grid2DObject& new_psum_ph,
+		              const mio::Grid2DObject& new_vw,
+		              const mio::Grid2DObject& new_dw,
+		              const mio::Grid2DObject& new_rh,
+		              const mio::Grid2DObject& new_ta,
+		              const mio::Grid2DObject& new_tsg,
+		              const mio::Date& timestamp);
 		void setVwDrift(const mio::Grid2DObject& new_vw_drift,
 		                const mio::Date& timestamp);
 		void setRadiationComponents(const mio::Array2D<double>& shortw,
 		                            const mio::Array2D<double>& longwave,
 		                            const mio::Array2D<double>& diff,
-                                const mio::Array2D<double>& terrain_shortwave_in,
-                                const mio::Array2D<double>& terrain_longwave_in,
+		                            const mio::Array2D<double>& terrain_shortwave_in,
+		                            const mio::Array2D<double>& terrain_longwave_in,
 		                            const double& solarElevation,
 		                            const mio::Date& timestamp);
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
+		void calcNextStep();
 
 	private:
-    static const std::vector<std::string> grids_not_computed_in_worker;
+		static const std::vector<std::string> grids_not_computed_in_worker;
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
-		void calcNextStep();
 		void setInitGlacierHeight();
 		SN_SNOWSOIL_DATA getIcePixel(const double glacier_height, const std::stringstream& GRID_sno, const bool seaIce);
 		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
@@ -190,8 +190,6 @@ class Runoff; // forward declaration, cyclic header include
 		                              const std::vector<SurfaceFluxes*>& surface_flux);
 		void write_special_points();
 		void calcLateralFlow();
-		void calcSimpleSnowDrift(const mio::Grid2DObject& ErodedMass, mio::Grid2DObject& psum);
-		mio::Grid2DObject calcExplicitSnowDrift(const mio::Grid2DObject& ErodedMass);
 
 		RunInfo run_info;
 
@@ -203,16 +201,17 @@ class Runoff; // forward declaration, cyclic header include
 		const mio::DEMObject dem;
 
 		// Config dependent information
-		bool is_restart, useCanopy, enable_simple_snow_drift, enable_explicit_snow_drift, enable_lateral_flow, a3d_view;
+		bool is_restart, useCanopy, enable_simple_snow_drift, enable_snowdrift2d, enable_lateral_flow, a3d_view;
 		bool do_io_locally; // if false all I/O will only be done on the master process
 		std::string station_name; // value for the key OUTPUT::EXPERIMENT
 		bool glacier_katabatic_flow, snow_production, snow_grooming;
 		// Output
 		std::vector<std::string> Tsoil_idx; //TSOIL names in order to build the "field" header of the smet output
+		std::vector<std::string> soil_runoff_idx; // Runoff depths names in order to build the "field" header of the smet output
 		double grids_start, grids_days_between; //gridded outputs
 		double ts_start, ts_days_between; //time series outputs
 		double prof_start, prof_days_between; //profiles outputs
-		bool grids_write, ts_write, prof_write, snow_write, snow_poi_written, glacier_from_grid;
+		bool grids_write, ts_write, prof_write, snow_write, write_poi_meteo, snow_poi_written, glacier_from_grid;
 		std::string meteo_outpath;
 		std::string outpath;
 		bool mask_glaciers; //mask glaciers in outputs?
@@ -237,19 +236,19 @@ class Runoff; // forward declaration, cyclic header include
 		std::vector<SnowpackInterfaceWorker*> workers;
 		std::vector<size_t> worker_startx; // stores offset for each workers slice
 		std::vector<size_t> worker_deltax; // stores size for each workers slize
-		std::vector<std::vector<std::pair<size_t,size_t> > > worker_stations_coord; // ttores te grid coordiante of each worker
+		std::vector<std::vector<std::pair<size_t,size_t> > > worker_stations_coord; // stores the grid coordinates of each worker
 		// time relevant
-		mio::Timer timer; // used to mesure calc time of one step
+		mio::Timer timer; // used to measure calc time of one step
 		mio::Date nextStepTimestamp;
 		double timeStep; // size of timestep
 
-		bool dataMeteo2D, dataDa, dataSnowDrift, dataRadiation; // say, if data are present for the actuall step
+		bool dataMeteo2D, dataDa, dataSnowDrift, dataRadiation; // say, if data are present for the actual step
 
 		// ==== other Modules ====
 		SnowDriftA3D *drift;
+		SnowDrift2D *snowdrift2d;
 		EnergyBalance *eb;
 		DataAssimilation *da;
-		Runoff *runoff;
 
 		Glaciers *glaciers;
 		TechSnowA3D *techSnow;

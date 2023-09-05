@@ -49,6 +49,7 @@ inline std::vector<std::string> initDimensionNames()
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
 	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
 	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("DATESTRLEN");
 	tmp.push_back("ZREF"); tmp.push_back("UREF");
 	
 	return tmp;
@@ -247,7 +248,10 @@ void close_file(const std::string& filename, const int& ncid)
 * @param[in] var variable to read
 * @param[in] pos time index in the file
 * @param[in] nrows number of rows
-* @param[in] ncols number of longitudes
+* @param[in] ncols number of columns
+* @param[in] pos_i dimension index of time
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data(const int& ncid, const nc_variable& var,
@@ -275,8 +279,10 @@ void read_data(const int& ncid, const nc_variable& var,
 * @brief Read grid point in 2D gridded data for non time dependent data
 * @param[in] ncid file ID
 * @param[in] var variable to read
-* @param[in] row
-* @param[in] col
+* @param[in] row row index to read
+* @param[in] col column index to read
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data_point(const int& ncid, const nc_variable& var,
@@ -297,8 +303,11 @@ void read_data_point(const int& ncid, const nc_variable& var,
 * @param[in] ncid file ID
 * @param[in] var variable to read
 * @param[in] pos time index in the file
-* @param[in] row
-* @param[in] col
+* @param[in] row row index to read
+* @param[in] col column index to read
+* @param[in] pos_i dimension index of time
+* @param[in] row_i dimension index of the rows
+* @param[in] col_i dimension index of the columns
 * @param[out] data data extracted from the file
 */
 void read_data_point(const int& ncid, const nc_variable& var,
@@ -370,8 +379,12 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	
-	if (readTimeTransform)
+	if (readTimeTransform) {
+		//trying to be more robust as some might misplace the time units
+		if (var.attributes.units.empty()) 
+			ncpp::getAttribute(ncid, var, "description", var.attributes.units);
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
+	}
 }
 
 /**
@@ -767,6 +780,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "west_east") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::DATESTRLEN, "DateStrLen") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
@@ -930,7 +944,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "U at 10 M", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "V at 10 M", "m/s", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::W, "W10", "10-meter wind speed", "W at 10 M", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
 	
 	//METEOCH schema

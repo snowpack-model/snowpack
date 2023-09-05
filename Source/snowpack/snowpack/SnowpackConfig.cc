@@ -51,6 +51,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ALBEDO_AVERAGE_SCHMUCKI"] = "ALL_DATA";
 	advancedConfig["ALBEDO_AGING"] = "true";
 	advancedConfig["SOOT_PPMV"] = "0.0";
+	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
@@ -83,6 +84,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["PERP_TO_SLOPE"] = "false";
 	advancedConfig["PLASTIC"] = "false";
 	advancedConfig["PREVAILING_WIND_DIR"] = "0.";
+	advancedConfig["REDEPOSIT_KEEP_AGE"] = "false";
 	advancedConfig["RESEARCH"] = "true";
 	advancedConfig["SNOW_ALBEDO"] = "PARAMETERIZED";
 	advancedConfig["SNOW_EROSION"] = "false";
@@ -105,12 +107,14 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["WATERTRANSPORTMODEL_SOIL"]="BUCKET";
 	advancedConfig["LB_COND_WATERFLUX"]="FREEDRAINAGE";				// Only for use with RE.
 	advancedConfig["AVG_METHOD_HYDRAULIC_CONDUCTIVITY"]="ARITHMETICMEAN";		// Only for use with RE.
+	advancedConfig["HYDRAULIC_CONDUCTIVITY_FROZEN_SOIL"]="IGNORE";			// Only for use with RE.
 	advancedConfig["PREF_FLOW" ] = "false";						// Only for use with RE.
 	advancedConfig["PREF_FLOW_PARAM_TH"] = "0.1";					// Only for use with RE and preferential flow.
 	advancedConfig["PREF_FLOW_PARAM_N"] = "0.0";					// Only for use with RE and preferential flow.
 	advancedConfig["PREF_FLOW_PARAM_HETEROGENEITY_FACTOR"] = "1.0";			// Only for use with RE and preferential flow.
 	advancedConfig["PREF_FLOW_RAIN_INPUT_DOMAIN" ] = "MATRIX";			// Only for use with RE.
 	advancedConfig["ICE_RESERVOIR" ] = "false";					// Only for use with RE and preferential flow.
+	advancedConfig["REQ_INITIALIZE_SOIL" ] = "false";				// Only for use with RE.
 	advancedConfig["ADJUST_HEIGHT_OF_METEO_VALUES"] = "true";
 	advancedConfig["ADJUST_HEIGHT_OF_WIND_VALUE"] = "true";
 	advancedConfig["WIND_SCALING_FACTOR"] = "1.0";
@@ -168,6 +172,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["PROF_FORMAT"] = "PRO";
 	outputConfig["PROF_DAYS_BETWEEN"] = "1";
 	outputConfig["PROF_START"] = "0";
+	outputConfig["PROF_ID_OR_MK"] = "ID";
 	outputConfig["SNOW_WRITE"] = "true";
 	outputConfig["SNOW"] = "SMET";
 	outputConfig["HAZ_WRITE"] = "true";

@@ -19,13 +19,13 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string.h>
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
-	#include <execinfo.h> //needed for the backtracing of the stack
-	#if defined(__GNUC__)
+#if defined(__linux)
+	#if defined(__GLIBC__)
+		#include <execinfo.h> //needed for the backtracing of the stack
 		#include <sstream>
 		#include <cxxabi.h>
 	#endif
-	#if defined(MSG_BOX)
+	#if defined(MSG_BOX) && !defined(ANDROID) && !defined(__CYGWIN__)
 		#include <meteoio/MessageBoxX11.h>
 	#endif
 #endif
@@ -58,7 +58,7 @@ void inline messageBox(const std::string& msg) {
 				kCFUserNotificationAlertMessageKey };
 		const void* values[] = { CFSTR("Oops, something went wrong!"),
 					CFStringCreateWithCString(nullptr, box_msg.c_str(), kCFStringEncodingMacRoman) };
-		CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
+		CFDictionaryRef dict = CFDictionaryCreate(nullptr, keys, values,
 				sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		SInt32 error = 0;
 		CFUserNotificationCreate(nullptr, 0, kCFUserNotificationStopAlertLevel, &error, dict);
@@ -66,10 +66,9 @@ void inline messageBox(const std::string& msg) {
 }
 #endif
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__GLIBC__)
 std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const
 {
-#ifdef __GNUC__
 	found_main=false;
 	std::ostringstream ss;
 	char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
@@ -103,23 +102,25 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 	}
 
 	return ss.str();
-#else
-	return "\tat " + std::string(symbols);
-#endif
 }
 #endif
 
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 {
-#if defined _WIN32 && !defined __MINGW32__ && !defined __CYGWIN__
-	const char *delim = strrchr(position.c_str(), '\\');
+	//we don't call FileUtils::getFilename() in order to avoid calling too many libraries while in exception handling
+#if defined _WIN32
+	#if !defined __CYGWIN__
+		const char *delim = strrchr(position.c_str(), '\\');
+	#else
+		const char *delim = strrchr(position.c_str(), '/');
+	#endif
 #else
 	const char *delim = strrchr(position.c_str(), '/');
 #endif
 	const std::string where = (position.empty())? "unknown position" : ((delim)? delim+1 : position);
 	msg = "[" + where + "] " + message;
 
-#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
+#if defined(__GLIBC__)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings

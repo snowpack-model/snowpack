@@ -197,11 +197,52 @@ void RadiationField::setMeteo(const mio::Grid2DObject& in_ta, const mio::Grid2DO
 	}
 }
 
+void RadiationField::setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
+                              const mio::Grid2DObject& in_albedo, const mio::Date timestamp_in)
+{
+	//check that we can proceed
+	if (dem.empty())
+		throw mio::InvalidArgumentException("[E] Please set DEM before setting meteo grids!", AT);
+
+	timestamp = timestamp_in;
+	Sun.resetAltitude( dem_mean_altitude ); //it has been reset when computing the cells
+	Sun.setDate(timestamp.getJulian(false), timestamp.getTimeZone()); //we have at least one station
+	//get solar position for shading
+	double solarAzimuth, solarElevation;
+	Sun.position.getHorizontalCoordinates(solarAzimuth, solarElevation);
+	const double tan_sun_elev = tan(solarElevation*mio::Cst::to_rad);
+
+	direct.set(in_iswr_dir, 0.); //reset to a band size (the "night" case might have set to the full dem)
+	diffuse.set(in_iswr_dir, 0.); //reset to a band size (the "night" case might have set to the full dem)
+	direct_unshaded_horizontal.set(in_iswr_dir, 0.); //reset to a band size (the "night" case might have set to the full dem)
+
+	for (size_t jj = 0; jj < dimy; jj++ ) {
+		for (size_t i_dem = startx; i_dem < (startx+band_dimx); i_dem++ ) {
+			const size_t i_band = i_dem - startx;
+			if (in_albedo(i_band,jj)==mio::IOUtils::nodata || dem(i_dem,jj)==mio::IOUtils::nodata) {
+				diffuse(i_band,jj) = mio::IOUtils::nodata;
+				direct(i_band,jj) = mio::IOUtils::nodata;
+				direct_unshaded_horizontal(i_band,jj) = mio::IOUtils::nodata;
+				continue;
+			}
+			const double tan_horizon = mio::DEMAlgorithms::getHorizon(dem, i_dem, jj, solarAzimuth);
+			if ( tan_sun_elev<tan_horizon ) { //cell is shaded
+				direct(i_band,jj) = 0.;
+				diffuse(i_band,jj) = in_iswr_diff(i_band,jj);
+			} else {
+				diffuse(i_band,jj) = in_iswr_diff(i_band,jj);
+				direct(i_band,jj) = in_iswr_dir(i_band,jj);
+				//cell_direct = mio::SunTrajectory::projectHorizontalToSlope( solarAzimuth, solarElevation, dem.azi(i_dem,jj), dem.slope(i_dem,jj), cell_direct );
+			}
+			direct_unshaded_horizontal(i_band,jj)=0;
+		}
+	}
+}
+
+
+
 void RadiationField::getPositionSun(double& o_solarAzimuth, double& o_solarElevation) const
 {
-	if (vecMd.empty())
-		throw mio::InvalidArgumentException("[E] Please set radiation station before getting Sun's position!", AT);
-
 	Sun.position.getHorizontalCoordinates(o_solarAzimuth, o_solarElevation);
 }
 

@@ -34,7 +34,6 @@
 class ElementData;
 
 class vanGenuchten {
-	ElementData *EMS;	// Reference to the ElementData where the vanGenuchten class belongs to
 
 	public:
 		vanGenuchten(ElementData &pEMS);
@@ -43,13 +42,14 @@ class vanGenuchten {
 		vanGenuchten& operator=(const vanGenuchten&); ///<Assignement operator
 		friend std::iostream& operator<<(std::iostream& os, const vanGenuchten& data);
 		friend std::iostream& operator>>(std::iostream& is, vanGenuchten& data);
+		ElementData *EMS;	// Reference to the ElementData where the vanGenuchten class belongs to
 
 		//Soil types
 		enum SoilTypes{ORGANIC, CLAY, CLAYLOAM, LOAM, LOAMYSAND, SAND, SANDYCLAY, SANDYCLAYLOAM, SANDYLOAM, SILT, SILTYCLAY, SILTYCLAYLOAM, SILTLOAM, WFJGRAVELSAND};
 		//Van genuchten model types
 		enum VanGenuchten_ModelTypesSnow{YAMAGUCHI2012, YAMAGUCHI2010, YAMAGUCHI2010_ADAPTED, DAANEN};
 		//Hydraulic conductivity parameterizations
-		enum K_Parameterizations{SHIMIZU, CALONNE};
+		enum K_Parameterizations{CALONNE, KOZENYCARMAN, SHIMIZU};
 
 		// Functions
 		static double AirEntryPressureHead(double MaximumPoreSize, double Temperature);
@@ -64,6 +64,7 @@ class vanGenuchten {
 		// Functions to initialize the van Genuchten model
 		void SetVGParamsSnow(VanGenuchten_ModelTypesSnow VGModelTypeSnow, K_Parameterizations K_PARAM, const bool& matrix, const bool& seaice);
 		void SetVGParamsSoil();
+		bool enforceThermalEquilibrium(const bool fixTemp=true);
 
 		double theta_r;	//Soil property, residual water content.
 		double theta_s;	//Soil property, saturation water content.

@@ -1,5 +1,6 @@
 #!/bin/sh
-#prints min/max/mean for a given parameter in all smet files
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# prints min/max/mean for a given parameter in all smet files
 
 if [ $# -lt 2 ]; then
 	me=`basename $0`
@@ -41,7 +42,7 @@ if [ "${param}" = "time" ]; then
 					return sprintf("%s", strftime("%FT%H:%m:00", (ts-2440587.5)*24*3600))
 				}
 				function getSec(ts){
-					gsub(/\-|\:|T/," ", ts); split(ts,d," ");
+					gsub(/\-|:|T/," ", ts); split(ts,d," ");
 					date=sprintf("%04d %02d %02d %02d %02d 00",d[1],d[2],d[3],d[4],d[5]); 
 					return mktime(date)
 				}
@@ -59,15 +60,15 @@ if [ "${param}" = "time" ]; then
 					else
 						 period=0
 					if (period<299 && period!=60 && period!=120 && period!=180 && period!=240)
-						sampling=sprintf("%3.0f s  ", period)
+						sampling=sprintf("%4.0f s  ", period)
 					else if (period<60*60)
-						sampling=sprintf("%3.0f min", period/60)
+						sampling=sprintf("%4.0f min", period/60)
 					else if (period<24*3600)
-						sampling=sprintf("%3.0f h  ", period/3600)
+						sampling=sprintf("%4.0f h  ", period/3600)
 					else {
 						period_days=period/(3600*24)
-						if (period_days==1) sampling=sprintf("%3.0f day", period_days)
-						else sampling=sprintf("%3.0f days", period_days)
+						if (period_days==1) sampling=sprintf("%4.0f day", period_days)
+						else sampling=sprintf("%4.0f days", period_days)
 					}
 					printf( "%04d m\t[ %s - %s ]\t~%s\t(%s)\n", "'"${ALT}"'", ISO_start, ISO_end, sampling, "'"${NAME}"'")
 				}'

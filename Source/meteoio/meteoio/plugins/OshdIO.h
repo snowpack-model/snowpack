@@ -51,8 +51,8 @@ class OshdIO : public IOInterface {
 
 	private:
 		struct file_index {
-			file_index(const Date& i_date, const std::string& i_path, const std::string& i_file_suffix, const std::string& i_run_date)
-			                : date(i_date), run_date(i_run_date), path(i_path), file_suffix(i_file_suffix) {}
+			file_index(const Date& i_date, const std::string& i_path, const std::string& i_filename, const std::string& i_run_date)
+			                : date(i_date), run_date(i_run_date), path(i_path), filename(i_filename) {}
 			bool operator<(const file_index& a) const {
 				return date < a.date;
 			}
@@ -60,38 +60,44 @@ class OshdIO : public IOInterface {
 				return date > a.date;
 			}
 			std::string toString() const {
-				return "<"+date.toString(Date::ISO)+" - "+run_date+" "+path+" "+file_suffix+">";
+				return "<"+date.toString(Date::ISO)+" - "+run_date+" "+path+" "+filename+">";
 			}
 			Date date;
 			std::string run_date;
 			std::string path;
-			std::string file_suffix;
+			std::string filename;
 		};
+		
+		struct station_index {
+			station_index(const std::string& i_id) 
+			             : id(i_id), oshd_acro(), idx(IOUtils::npos) {}
+			station_index(const std::string& i_id, const std::string& acro, const size_t& i_idx) 
+			             : id(i_id), oshd_acro(acro), idx(i_idx) {}
+			std::string id, oshd_acro;
+			size_t idx;
+		};
+		
 		void parseInputOutputSection();
-		void readSWRad(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
-		void readPPhase(const Date& station_date, const std::string& path, const std::string& file_suffix, const size_t& nrIDs, std::vector< std::vector<MeteoData> >& vecMeteo) const;
-		std::vector<double> readFromFile(const std::string& filename, const MeteoData::Parameters& param, const Date& in_timestep) const;
-		void buildVecIdx(const std::vector<std::string>& vecAcro);
+		void readFromFile(const std::string& file_and_path, const Date& in_timestep, std::vector< std::vector<MeteoData> >& vecMeteo) const;
+		void buildVecIdx(std::vector<std::string> vecAcro);
 		void fillStationMeta();
 		
 		static size_t getFileIdx(const std::vector< struct file_index >& cache, const Date& start_date);
 		static std::vector< struct file_index > scanMeteoPath(const std::string& meteopath_in, const bool& is_recursive);
-		static void checkFieldType(const MeteoData::Parameters& param, const std::string& type);
-		static double convertUnits(const double& val, const std::string& units, const MeteoData::Parameters& param, const std::string& filename);
+		static double convertUnits(const double& val, const std::string& units, const size_t& param, const std::string& filename);
 		
 		const Config cfg;
 		std::vector< struct file_index > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::vector< struct file_index > cache_grid_files; //cache of meteo files in METEOPATH
 		std::vector<StationData> vecMeta;
-		std::vector<std::string> vecIDs; ///< IDs of the stations that have to be read
-		std::vector<size_t> vecIdx; ///< index of each ID that should be read within the 'acro', 'names' and 'data' vectors
+		std::vector< struct station_index > statIDs;
 		std::string coordin, coordinparam; //projection parameters
 		std::string grid2dpath_in, in_meteopath, in_metafile;
 		size_t nrMetadata; ///< How many stations have been provided in the metadata file
 		bool debug; ///< write out extra information to help understand what is being read
 		
 		static const char* meteo_ext; //for the file naming scheme
-		static std::vector< std::pair<MeteoData::Parameters, std::string> > params_map; ///< parameters to extract from the files
+		static std::map< std::string, MeteoGrids::Parameters > params_map; ///< parameters to extract from the files
 		static std::map< MeteoGrids::Parameters, std::string > grids_map; ///< parameters to extract from the gridded data
 		static const double in_dflt_TZ;     //default time zone, should be visible to matio for debugging
 		static const bool __init;    ///<helper variable to enable the init of static collection data

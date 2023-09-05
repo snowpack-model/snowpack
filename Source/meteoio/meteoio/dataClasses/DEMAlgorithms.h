@@ -33,8 +33,11 @@ class DEMAlgorithms {
 	public:
 		static Grid2DObject getHillshade(const DEMObject& dem, const double& elev, const double& azimuth);
 		static double getHorizon(const DEMObject& dem, const size_t& ix1, const size_t& iy1, const double& bearing);
-		static double getHorizon(const DEMObject& dem, const Coords& point, const double& bearing);
-		static void getHorizon(const DEMObject& dem, const Coords& point, const double& increment, std::vector< std::pair<double,double> >& horizon);
+		static double getHorizon(const DEMObject& dem, Coords point, const double& bearing);
+		static std::vector< std::pair<double,double> > getHorizonScan(const DEMObject& dem, Coords point, const double& increment);
+		static std::map< std::string, std::vector< std::pair<double,double> > > readHorizonScan(const std::string& where, const std::string& filename);
+		static double getHorizon(const std::vector< std::pair<double,double> > &horizon, const double& azimuth);
+		static void writeHorizons(const std::map< std::string, std::vector< std::pair<double,double> > >& horizon, const std::string& filename);
         static double getCellSkyViewFactor(const DEMObject& dem, const size_t& ii, const size_t& jj);
 
 	private:

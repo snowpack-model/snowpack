@@ -84,8 +84,8 @@ public:
 	static void UTM_to_WGS84(double east_in, double north_in, const std::string& coordparam, double& lat_out, double& long_out);
 	static void WGS84_to_UPS(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
 	static void UPS_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out);
-	static void WGS84_to_PROJ4(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
-	static void PROJ4_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out);
+	static void WGS84_to_PROJ(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out);
+	static void PROJ_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out);
 
 	static int getUTMZone(const double& latitude, const double& longitude, std::string& zone_out);
 	static void parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber);

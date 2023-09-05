@@ -33,6 +33,7 @@ namespace mio {
 
 static inline bool IsUndef (const MeteoData& md) { return md.date.isUndef(); }
 
+////////////////////////////////////////////////// SUPPR
 TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg), suppr_dates(), range(IOUtils::nodata), width(IOUtils::nodata), op_mode(NONE)
 {
@@ -183,18 +184,17 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
 	Date start_ooo_period;
-	size_t count_ooo_points = 0, previous_idx = 0;
+	size_t count_ooo_points = 0;
 	
 	//Generate the warnings for non-chronological order
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date>previous_date) {
 			if (!start_ooo_period.isUndef()) {
-				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " points\n";
+				std::cerr << "[W] " << stationID << ", after " << previous_date.toString(Date::ISO) << " jumping back to " << start_ooo_period.toString(Date::ISO) << " for " << count_ooo_points << " timestamp(s)\n";
 				start_ooo_period.setUndef(true);
 			}
 			previous_date = current_date;
-			previous_idx = ii;
 		} else if (current_date<previous_date) {
 			if (start_ooo_period.isUndef()) {
 				start_ooo_period = current_date;
@@ -211,7 +211,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	previous_date = ovec.front().date;
 	Date start_conflicts_period;
 	size_t nr_conflict_free_pts = 0, nr_conflicts_pts = 0;
-	previous_idx = 0;
+	size_t previous_idx = 0;
 	for (size_t ii=1; ii<ovec.size(); ++ii) {
 		const Date current_date( ovec[ii].date );
 		if (current_date!=previous_date) {
@@ -219,7 +219,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 			previous_idx = ii;
 			nr_conflict_free_pts++;
 			if (!start_conflicts_period.isUndef() && nr_conflict_free_pts>1) {
-				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+				std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " timestamp(s)\n";
 				start_conflicts_period.setUndef(true);
 			}
 		} else {
@@ -241,7 +241,7 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 	
 	//print any remaining conflicts, if any
 	if (!start_conflicts_period.isUndef()) {
-		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " point(s)\n";
+		std::cerr << "[E] " << stationID << ", conflicts while merging duplicated timestamps starting at " << start_conflicts_period.toString(Date::ISO) << " for " << nr_conflicts_pts << " timestamp(s)\n";
 	}
 	
 	//now really remove the points from the vector
@@ -249,41 +249,61 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 }
 
 
+////////////////////////////////////////////////// SHIFT
 TimeShift::TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-        : ProcessingBlock(vecArgs, name, cfg), dst_changes()
+        : ProcessingBlock(vecArgs, name, cfg), dst_changes(), offset(0.), has_offset(false)
 {
 	const std::string where( "Filters::"+block_name );
+	static const double sec2Jul = 1./(24.*3600.);
 	properties.stage = ProcessingProperties::second;
-	const size_t nrArgs = vecArgs.size();
+	bool has_corrections = false;
 	
-	if (nrArgs!=1)
-		throw InvalidArgumentException("Wrong number of arguments for " + where, AT);
+	for (const auto& arg : vecArgs) {
+		if (arg.first=="CORRECTIONS") {
+			has_corrections = true;
+			const std::string in_filename( arg.second );
+			const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : cfg.getConfigRootDir()+"/";
+			const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
+			const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
 
-	if (vecArgs[0].first=="CORRECTIONS") {
-		const std::string in_filename( vecArgs[0].second );
-		const std::string prefix = ( FileUtils::isAbsolutePath(in_filename) )? "" : cfg.getConfigRootDir()+"/";
-		const std::string path( FileUtils::getPath(prefix+in_filename, true) );  //clean & resolve path
-		const std::string filename( path + "/" + FileUtils::getFilename(in_filename) );
-
-		dst_changes = ProcessingBlock::readCorrections(block_name, filename, cfg.get("TIME_ZONE", "Input"), 2);
-		if (dst_changes.empty())
-			throw InvalidArgumentException("Please provide at least one time shift for " + where, AT);
-	} else
-		throw UnknownValueException("Unknown option '"+vecArgs[0].first+"' for "+where, AT);
+			dst_changes = ProcessingBlock::readCorrections(block_name, filename, cfg.get("TIME_ZONE", "Input"), 2);
+			if (dst_changes.empty())
+				throw InvalidArgumentException("Please provide at least one time shift for " + where, AT);
+		} if (arg.first=="OFFSET") {
+			has_offset = true;
+			if (!IOUtils::convertString(offset, arg.second))
+				throw InvalidArgumentException("Invalid offset \""+arg.second+"\" specified for "+where, AT);
+			offset *= sec2Jul;
+		}
+	}
+	
+	if (has_corrections && has_offset)
+		throw InvalidArgumentException("It is not possible to provide both a correction file and a fixed offset for "+where, AT);
+	if (!has_corrections && !has_offset)
+		throw InvalidArgumentException("Please provide either a correction file or a fixed offset for "+where, AT);
 }
 
 void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
 {
 	if (param!=IOUtils::unodata)
 		throw InvalidArgumentException("The filter "+block_name+" can only be applied to TIME", AT);
-
-	static const double sec2Jul = 1./(24.*3600.);
+	
 	ovec = ivec;
 	if (ovec.empty()) return;
 	
+	if (has_offset) 
+		process_offset(ovec);
+	else
+		process_corrections(ovec);
+}
+
+void TimeShift::process_corrections(std::vector<MeteoData>& ovec) const
+{
+	static const double sec2Jul = 1./(24.*3600.);
+	
 	const size_t Nset = dst_changes.size(); //we know there is at least one
 	size_t next_idx=Nset;
-	double offset = 0.;
+	double local_offset = 0.;
 	Date prev_date = ovec[0].date - 1.; //so we are sure to be < when checking if timestamps are increasing
 	size_t ii=0;
 
@@ -298,30 +318,38 @@ void TimeShift::process(const unsigned int& param, const std::vector<MeteoData>&
 		
 		//when reverting back to winter time, timestamps are not in increasing order for an overlap period
 		if (ovec[ii].date<=prev_date) {
-			const double overlap = (dst_changes[next_idx].offset*sec2Jul-offset);
+			const double overlap = (dst_changes[next_idx].value*sec2Jul-local_offset);
 			if (ovec[ii].date>=(dst_changes[next_idx].date - overlap))
 				apply_change = true;
 		}
 		
 		if (apply_change) {
-			offset = dst_changes[next_idx].offset * sec2Jul;
+			local_offset = dst_changes[next_idx].value * sec2Jul;
 			next_idx++;
 			if (next_idx==Nset) break; //no more new corrections to expect
 		}
 		
 		prev_date = ovec[ii].date;
-		if (offset!=0.) ovec[ii].date += offset;
+		if (local_offset!=0.) ovec[ii].date += local_offset;
 	}
 	
-	if (offset==0) return; //no more corrections to apply
+	if (local_offset==0) return; //no more corrections to apply
 	
 	//if some points remained after the last DST correction date, process them
 	for (; ii<ovec.size(); ii++) {
-		ovec[ii].date += offset;
+		ovec[ii].date += local_offset;
 	}
 }
 
 
+void TimeShift::process_offset(std::vector<MeteoData>& ovec) const
+{
+	for (auto& meteo : ovec)
+		meteo.date += offset;
+}
+
+
+////////////////////////////////////////////////// SORT
 TimeSort::TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg)
 {
@@ -345,6 +373,7 @@ void TimeSort::process(const unsigned int& param, const std::vector<MeteoData>& 
 }
 
 
+////////////////////////////////////////////////// LOOP
 TimeLoop::TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
         : ProcessingBlock(vecArgs, name, cfg), req_start(), req_end(), match_date(), ref_start(), ref_end()
 {
@@ -471,9 +500,6 @@ void TimeProcStack::process(Date &dateStart, Date &dateEnd)
 {
 	const size_t nr_of_filters = filter_stack.size();
 	for (size_t jj=0; jj<nr_of_filters; jj++) {
-		if (!filter_stack[jj]->noStationsRestrictions())
-			throw InvalidArgumentException("Filter "+filter_stack[jj]->getName()+" is not allowed to have restrictions on StationIDs", AT);
-
 		//only first stage filters have to be called to edit the requested time range
 		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
 		if ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none))

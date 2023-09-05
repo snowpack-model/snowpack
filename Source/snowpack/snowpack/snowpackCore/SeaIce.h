@@ -37,6 +37,7 @@ class ElementData;
 class SnowStation;
 class CurrentMeteo;
 class BoundCond;
+class SurfaceFluxes;
 
 class SeaIce {
 	public:
@@ -44,6 +45,7 @@ class SeaIce {
 		~SeaIce();
 		void ConfigSeaIce(const SnowpackConfig& i_cfg);
 		SeaIce& operator=(const SeaIce&); ///<Assignement operator
+		constexpr SeaIce(const SeaIce& org) = default;
 
 		//SeaIce(const SnowpackConfig& i_cfg);
 		static double compSeaIceHeatCapacity(const double& T, const double& Sal);
@@ -74,6 +76,7 @@ class SeaIce {
 		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
 		double TotalFloodingBucket;		//Total flooding with Bucket scheme (kg / m^2)
 
+		bool check_initial_conditions;
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
 		salinityprofiles salinityprofile;
 
@@ -84,17 +87,17 @@ class SeaIce {
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
-		void compFlooding(SnowStation& Xdata);
-		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
-		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM);
+		void compFlooding(SnowStation& Xdata, SurfaceFluxes& Sdata);
+		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, SurfaceFluxes& Sdata);
+		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM, SurfaceFluxes& Sdata);
 
 		double getAvgBulkSalinity(const SnowStation& Xdata);
 		double getAvgBrineSalinity(const SnowStation& Xdata);
 		double getTotSalinity(const SnowStation& Xdata);
 
-		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt);
-	private:
+		void InitSeaIce(SnowStation& Xdata);
 
+		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt, SurfaceFluxes& Sdata);
 
 }; //end class Snowpack
 
