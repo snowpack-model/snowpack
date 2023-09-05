@@ -67,7 +67,7 @@ class AlpineControl
 		//DataAssimilation* da;
 		double snow_days_between;
 		double max_run_time;
-		bool enable_simple_snow_drift, enable_snowdrift2d;;
+		bool enable_simple_snow_drift, enable_snowdrift2d;
 		bool nocompute, out_snow, correct_meteo_grids_HS, dataFromGrids; // no computation, only parse inputs (check mode)
 };
 
