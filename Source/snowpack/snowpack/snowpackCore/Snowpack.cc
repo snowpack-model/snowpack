@@ -911,9 +911,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		exit(EXIT_FAILURE);
 	}
 
-	if (surfaceCode == DIRICHLET_BC || forcing=="MASSBAL") {
-		I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
-	}
+	if (forcing=="MASSBAL") I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
 
 	// ABSORPTION OF SOLAR RADIATION WITHIN THE SNOWPACK
 	// Simple treatment of radiation absorption in snow: Beer-Lambert extinction (single or multiband).
@@ -1515,6 +1513,9 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	} else {
 		elem.meltfreeze_tk = Constants::meltfreeze_tk;
 	}
+
+	double p_vapor = Atmosphere::vaporSaturationPressure(elem.Te);
+	elem.rhov = Atmosphere::waterVaporDensity(elem.Te, p_vapor);
 }
 
 /**
@@ -1874,6 +1875,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[nOldN-1].hoar = 0.0;
 				// Now fill nodal data for upper hoar node
 				NDS[nOldN].T = t_surf;              // The temperature of the new node
+				double p_vapor = Atmosphere::vaporSaturationPressure(NDS[nOldN].T);
+				NDS[nOldN].rhov = Atmosphere::waterVaporDensity(NDS[nOldN].T, p_vapor);
 				// The new nodal position;
 				NDS[nOldN].z = NDS[nOldN-1].z + NDS[nOldN-1].u + hoar/hoar_density_buried;
 				NDS[nOldN].u = 0.0;                 // Initial displacement is 0
