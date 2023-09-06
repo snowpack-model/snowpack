@@ -1279,7 +1279,6 @@ void Canopy::CanopyTurbulentExchange(const CurrentMeteo& Mdata, const double& re
                                         double& ce_interception, double& ce_condensation) const
 {
 	const double karman = 0.4;
-	CanopyData *Cdata = Xdata.Cdata;
 	const size_t nE = Xdata.getNumberOfElements();
 
 	// check wind speed to be at least 0.1 m/s

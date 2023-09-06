@@ -98,8 +98,8 @@ Snowpack::Snowpack(const Snowpack& c) :					///< Copy constructor
             allow_adaptive_timestepping(c.allow_adaptive_timestepping), research_mode(c.research_mode), useCanopyModel(c.useCanopyModel), enforce_measured_snow_heights(c.enforce_measured_snow_heights), detect_grass(c.detect_grass),
             soil_flux(c.soil_flux), useSoilLayers(c.useSoilLayers), coupled_phase_changes(c.coupled_phase_changes), combine_elements(c.combine_elements), reduce_n_elements(c.reduce_n_elements), force_add_snowfall(c.force_add_snowfall), max_simulated_hs(c.max_simulated_hs),
             change_bc(c.change_bc), meas_tss(c.meas_tss), vw_dendricity(c.vw_dendricity),
-            enhanced_wind_slab(c.enhanced_wind_slab), snow_erosion(c.snow_erosion), alpine3d(c.alpine3d), ageAlbedo(c.ageAlbedo), soot_ppmv(c.soot_ppmv), adjust_height_of_meteo_values(c.adjust_height_of_meteo_values), advective_heat(c.advective_heat), heat_begin(c.heat_begin), heat_end(c.heat_end),
-            temp_index_degree_day(c.temp_index_degree_day), temp_index_swr_factor(c.temp_index_swr_factor), forestfloor_alb(c.forestfloor_alb), rime_index(c.rime_index), newsnow_lwc(c.newsnow_lwc), read_dsm(c.read_dsm), soil_evaporation(c.soil_evaporation) {
+            enhanced_wind_slab(c.enhanced_wind_slab), snow_erosion(c.snow_erosion), redeposit_keep_age(c.redeposit_keep_age), alpine3d(c.alpine3d), ageAlbedo(c.ageAlbedo), soot_ppmv(c.soot_ppmv), adjust_height_of_meteo_values(c.adjust_height_of_meteo_values), adjust_height_of_wind_value(c.adjust_height_of_wind_value), advective_heat(c.advective_heat), heat_begin(c.heat_begin), heat_end(c.heat_end),
+            temp_index_degree_day(c.temp_index_degree_day), temp_index_swr_factor(c.temp_index_swr_factor), forestfloor_alb(c.forestfloor_alb), rime_index(c.rime_index), newsnow_lwc(c.newsnow_lwc), read_dsm(c.read_dsm), soil_evaporation(c.soil_evaporation), soil_thermal_conductivity(c.soil_thermal_conductivity) {
 	watertransport = NULL;
 	vapourtransport = NULL;
 	metamorphism = NULL;
@@ -174,10 +174,12 @@ Snowpack& Snowpack::operator=(const Snowpack& source) {			///< Assignment operat
 		vw_dendricity = source.vw_dendricity;
 		enhanced_wind_slab = source.enhanced_wind_slab;
 		snow_erosion = source.snow_erosion;
+		redeposit_keep_age = source.redeposit_keep_age;
 		alpine3d = source.alpine3d;
 		ageAlbedo = source.ageAlbedo;
 		soot_ppmv = source.soot_ppmv;
 		adjust_height_of_meteo_values = source.adjust_height_of_meteo_values;
+		adjust_height_of_wind_value = source.adjust_height_of_wind_value;
 		advective_heat = source.advective_heat;
 		heat_begin = source.heat_begin;
 		heat_end = source.heat_end;
@@ -188,6 +190,7 @@ Snowpack& Snowpack::operator=(const Snowpack& source) {			///< Assignment operat
 		newsnow_lwc = source.newsnow_lwc;
 		read_dsm = source.read_dsm;
 		soil_evaporation = source.soil_evaporation;
+		soil_thermal_conductivity = source.soil_thermal_conductivity;
 	}
 	return *this;
 }

@@ -283,11 +283,11 @@ void Hazard::compMeltFreezeCrust(const SnowStation& Xdata, ProcessDat& Hdata, Pr
  * @param Mdata
  * @param Sdata
  */
+#ifndef SNOWPACK_CORE
 void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
                                       ZwischenData& Zdata, const double& newDrift, const bool stationDriftIndex,
                                       const SnowStation& Xdata, const CurrentMeteo& Mdata, const SurfaceFluxes& Sdata)
 {
-#ifndef SNOWPACK_CORE
 	const size_t nE = Xdata.getNumberOfElements();
 	const double cos_sl = cos(Xdata.meta.getSlopeAngle()*mio::Cst::to_rad);
 	const double hs = Xdata.cH / cos_sl;
@@ -493,8 +493,14 @@ void Hazard::getHazardDataMainStation(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 
 	if (stationDriftIndex)
 		getDriftIndex(Hdata, Hdata_ind, Zdata.drift24, newDrift, Xdata.cos_sl);
-#endif
 }
+#else
+void Hazard::getHazardDataMainStation(ProcessDat& /*Hdata*/, ProcessInd& /*Hdata_ind*/,
+                                      ZwischenData& /*Zdata*/, const double& /*newDrift*/, const bool /*stationDriftIndex*/,
+                                      const SnowStation& /*Xdata*/, const CurrentMeteo& /*Mdata*/, const SurfaceFluxes& /*Sdata*/)
+{
+}
+#endif
 
 /**
  * @brief Compute Hdata from virtual slope data

@@ -1489,7 +1489,9 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	if (aggregate) {
 		Aggregate::aggregate(Pdata);
 	}
+#ifndef SNOWPACK_CORE
 	const double cos_sl = Xdata.cos_sl;
+#endif
 	const size_t nL = Pdata.size();
 	ofs << nL << "," << setprecision(1) << Pdata[nL-1].height << "," << Xdata.swe << "," << Xdata.lwc_sum << ",";
 	ofs << Pdata[nL-1].T << "," << IOUtils::K_TO_C(Xdata.Ndata[Xdata.SoilNode].T) << "\n";

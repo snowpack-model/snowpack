@@ -905,7 +905,11 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 }
 
 void SmetIO::setFormatting(const size_t& nr_solutes,
+#ifndef SNOWPACK_CORE
                            std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_ice_reservoir, const bool& write_sea_ice)
+#else
+                           std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& /*write_ice_reservoir*/, const bool& write_sea_ice)
+#endif
 {
 	/*
 	 * When writing a SNOW SMET file each written parameter may have a different
