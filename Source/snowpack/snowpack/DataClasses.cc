@@ -425,13 +425,6 @@ void SurfaceFluxes::collectSurfaceFluxes(const BoundCond& Bdata,
 	mass[MS_WATER_SOIL] = Xdata.lwc_sum_soil;
 	mass[MS_ICE_SOIL] = Xdata.swc_sum_soil;
 
-	if (Xdata.Seaice != NULL) {
-		mass[MS_FLOODING] += Xdata.Seaice->TotalFloodingBucket;
-		Xdata.Seaice->TotalFloodingBucket = 0.;
-	} else {
-		mass[MS_FLOODING] = Constants::undefined;
-	}
-
 	// 7) Melt and refreeze mass
 	meltMass += Xdata.meltMassTot;
 	refreezeMass += Xdata.refreezeMassTot;

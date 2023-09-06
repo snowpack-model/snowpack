@@ -183,18 +183,18 @@ Grid2DObject USERInterpolation::resample(const DEMObject& dem, const Grid2DObjec
 	// Loop over coordinates in output grid
 	for (size_t jj=0; jj<o_grid.getNy(); jj++) {
 		// map y-coordinate from o_grid in i_grid
-		const double j2 = ((jj*o_grid_cz + o_grid_ll_north) - i_grid_ll_north) / i_grid_cz;
+		const double j2 = (((double)jj*o_grid_cz + o_grid_ll_north) - i_grid_ll_north) / i_grid_cz;
 		const int j2i = (int)j2;
 		const double y = j2 - (double)j2i; //normalized y, between 0 and 1
 		for (size_t ii=0; ii<o_grid.getNx(); ii++) {
 			// map x-coordinate from o_grid in i_grid
-			const double i2 = ((ii*o_grid_cz + o_grid_ll_east) - i_grid_ll_east) / i_grid_cz;
+			const double i2 = (((double)ii*o_grid_cz + o_grid_ll_east) - i_grid_ll_east) / i_grid_cz;
 			const int i2i = (int)i2;
-			if (i2i < 0 || j2i < 0 || i2i > i_grid.getNx()-1 || j2i > i_grid.getNy()-1) {
+			if (i2i < 0 || j2i < 0 || i2i > (int)i_grid.getNx()-1 || j2i > (int)i_grid.getNy()-1) {
 				o_grid(ii,jj) = IOUtils::nodata;
 			} else {
 				const double x = i2 - (double)i2i; //normalized x, between 0 and 1
-				o_grid(ii,jj) = bilinear_pixel(i_grid.grid2D, i2, j2, i_grid.getNx(), i_grid.getNy(), x, y);
+				o_grid(ii,jj) = bilinear_pixel(i_grid.grid2D, static_cast<size_t>(i2), static_cast<size_t>(j2), i_grid.getNx(), i_grid.getNy(), x, y);
 			}
 		}
 	}
