@@ -1218,6 +1218,7 @@ inline void real_main (int argc, char *argv[])
 #ifdef SNOWPACK_OPTIM
 		// Get meteo data to determine meteo_step_length
 		vector<mio::MeteoData> vecMyMeteo;
+		meteoRead_timer.start();
 		io.getMeteoData(current_date + calculation_step_length/1440, vecMyMeteo);
 		if(meteo_step_length<0.) {
 			std::stringstream ss2;
@@ -1225,6 +1226,7 @@ inline void real_main (int argc, char *argv[])
 			ss2 << "" << meteo_step_length;
 			cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss2.str());
 		}
+		meteoRead_timer.stop();
 		SnowpackConfig tmpcfg(cfg);
 		Snowpack snowpack(tmpcfg); //the snowpack model to use
 #endif
