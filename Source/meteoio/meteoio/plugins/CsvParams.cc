@@ -543,10 +543,19 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), last_allowed_field(IOUtils::npos)
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), exclusion_last_linenr(0), last_allowed_field(IOUtils::npos)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
+}
+
+std::string CsvParameters::toString() const
+{
+	std::ostringstream os;
+	os << "<CsvParameters>\n";
+	os << "\t" << file_and_path << " - " << name << " - " << id << " - " << location.toString(Coords::FULL) << " - " << date_cols.toString() << "\n";
+	os << "</CsvParameters>\n";
+	return os.str();
 }
 
 //parse the user provided special headers specification. It is stored as <line_nr, <column, field_type>> in a multimap
@@ -844,18 +853,21 @@ void CsvParameters::setPurgeChars(const std::string& chars_to_purge)
 bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
 {
 	//As an optimimzation, we reuse the exclusion periods index over calls.
-	//Since line numbers should always be increasing, this should not be a problem
-	
+	//as long as line numbers are always increasing, this is OK.
+	//So we check that this is the case with exclusion_last_linenr
+	if (linenr<exclusion_last_linenr) exclusion_idx=0;
+	exclusion_last_linenr = linenr;
+
 	if (linesExclusions.empty() || linenr>linesExclusions.back().end) {
 		hasExclusions = false;
 		return false; //no more exclusions to handle
 	}
 	
 	for (; exclusion_idx<linesExclusions.size(); exclusion_idx++) {
-		if (linesExclusions[ exclusion_idx ].in( linenr )) {
+		if (linesExclusions[ exclusion_idx ].in( linenr ))
 			return true;
-		}
-		if (linenr<linesExclusions[ exclusion_idx ].start) break;
+		if (linenr<linesExclusions[ exclusion_idx ].start)
+			break;
 	}
 	
 	return false;

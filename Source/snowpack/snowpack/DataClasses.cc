@@ -2602,9 +2602,20 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].M = Edata[e].Rho * Edata[e].L0;
 			assert(Edata[e].M >= (-Constants::eps2)); //mass must be positive
 
-			// Check if pore space is available when water would freeze
+			// Check initial volumetric content of element
+			if ( !Edata[e].checkVolContent() ) {
+				prn_msg(__FILE__, __LINE__, "err", Date(), "wrong volumetric content upon initialization of layer %d. ice: %lf, water: %lf, water_pref: %lf, air: %lf, soil: %lf\n",
+				        e, Edata[e].theta[ICE], Edata[e].theta[WATER], Edata[e].theta[WATER_PREF], Edata[e].theta[AIR], Edata[e].theta[SOIL]);
+				throw IOException("Snowpack Initialization failed", AT);
+			}
+			// Check if sufficient pore space is available when water would freeze. Only allow small corrections.
 			const double porespace = (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]) * (Constants::density_ice / Constants::density_water);
 			if(Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] > porespace) {
+				if(Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] - porespace > 1.e-4) {
+					prn_msg(__FILE__, __LINE__, "err", Date(), "Insufficient pore space available in layer %d when water would refreeze and thereby expand. Available: %lf, required: %lf\n",
+					        e, (1. - Edata[e].theta[ICE] - Edata[e].theta[SOIL]), (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice));
+					throw IOException("Snowpack Initialization failed", AT);
+				}
 				const double tmp_sum = Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF];
 				Edata[e].theta[WATER] *= porespace / tmp_sum;
 				Edata[e].theta[WATER_PREF] *= porespace / tmp_sum;

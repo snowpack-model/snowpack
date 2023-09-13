@@ -401,9 +401,9 @@ std::map<std::string,std::string> readKeyValueHeader(std::istream& fin, const si
 
 
 //below, the file indexer implementation
-void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
+void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos, const size_t& linenr)
 {
-	const file_index elem(i_date, i_pos);
+	const file_index elem(i_date, i_pos, linenr);
 
 	//check if we can simply append the new index
 	if (vecIndex.empty() || elem>vecIndex.back()) {
@@ -419,17 +419,17 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 	}
 }
 
-void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos)
+void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos, const size_t& linenr)
 {
 	Date tmpdate;
 	IOUtils::convertString(tmpdate, i_date, 0.);
-	setIndex(tmpdate, i_pos);
+	setIndex(tmpdate, i_pos, linenr);
 }
 
-void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos)
+void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos, const size_t& linenr)
 {
 	const Date tmpdate(i_date, 0.);
-	setIndex(tmpdate, i_pos);
+	setIndex(tmpdate, i_pos, linenr);
 }
 
 std::streampos FileIndexer::getIndex(const Date& i_date) const
@@ -452,6 +452,32 @@ std::streampos FileIndexer::getIndex(const double& i_date) const
 	return getIndex(tmpdate);
 }
 
+std::streampos FileIndexer::getIndex(const Date& i_date, size_t& o_linenr) const
+{
+	const size_t foundIdx = binarySearch(i_date);
+	if (foundIdx==static_cast<size_t>(-1))
+		return static_cast<std::streampos>(-1);
+
+	if (vecIndex[foundIdx].linenr == static_cast<size_t>(-1))
+		throw UnknownValueException("It is not possible to retrieve the line count from an indexed file if this has not been set when first reading the file. Please report it to the developers!", AT);
+
+	o_linenr = vecIndex[foundIdx].linenr;
+	return vecIndex[foundIdx].pos;
+}
+
+std::streampos FileIndexer::getIndex(const std::string& i_date, size_t& o_linenr) const
+{
+	Date tmpdate;
+	IOUtils::convertString(tmpdate, i_date, 0.);
+	return getIndex(tmpdate, o_linenr);
+}
+
+std::streampos FileIndexer::getIndex(const double& i_date, size_t& o_linenr) const
+{
+	const Date tmpdate(i_date, 0.);
+	return getIndex(tmpdate, o_linenr);
+}
+
 size_t FileIndexer::binarySearch(const Date& soughtdate) const
 {//perform binary search, return the first element that is GREATER than the provided value
 	if (vecIndex.empty()) return static_cast<size_t>(-1);
@@ -469,8 +495,15 @@ const std::string FileIndexer::toString() const
 {
 	std::ostringstream os;
 	os << "<FileIndexer>\n";
-	for (size_t ii=0; ii<vecIndex.size(); ii++)
-		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << vecIndex[ii].pos << std::dec << "\n";
+	for (size_t ii=0; ii<vecIndex.size(); ii++) {
+		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO);
+		if (vecIndex[ii].linenr==static_cast<size_t>(-1))
+			os << " - no linenr";
+		else
+			os << " - " << vecIndex[ii].linenr;
+		os << " -> #" << std::hex << vecIndex[ii].pos <<
+		std::dec << "\n";
+	}
 	os << "</FileIndexer>\n";
 	return os.str();
 }
