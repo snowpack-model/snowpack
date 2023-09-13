@@ -154,9 +154,9 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
                             const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
                             double& R_direct, double& R_diffuse) const
 {
-	if (ta<0. || rh<0.) 
-		throw InvalidArgumentException("When calling SunObject::getClearSky(), TA and RH must be >0, currently TA="+IOUtils::toString(ta)+", RH="+IOUtils::toString(rh), AT);
-	
+	if (ta<0. || rh<0. || pressure<0.)
+		throw InvalidArgumentException("When calling SunObject::getClearSky(), TA, RH and P must be >0, currently TA="+IOUtils::toString(ta)+", RH="+IOUtils::toString(rh)+", P="+IOUtils::toString(pressure), AT);
+
 	//these pow cost us a lot here, but replacing them by fastPow() has a large impact on accuracy (because of the exp())
 	static const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
 	static const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))

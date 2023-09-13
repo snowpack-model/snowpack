@@ -184,7 +184,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 			throw InvalidArgumentException("Too many snow densities requested", AT);
 		for (size_t ii=0; ii<soil_temp_depths.size(); ii++) {
 			std::stringstream ss;
-			if(ii == soil_temp_depths.size() -1) {
+			if(ii == max_Tsoil - 1) {
 				ss << "_MAX";
 			} else {
 				ss << (ii+1);
@@ -195,7 +195,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		}
 		for (size_t ii=0; ii<soil_runoff_depths.size(); ii++) {
 			std::stringstream ss;
-			if(ii == soil_runoff_depths.size() -1) {
+			if(ii == max_runoff - 1) {
 				ss << "_MAX";
 			} else {
 				ss << (ii+1);

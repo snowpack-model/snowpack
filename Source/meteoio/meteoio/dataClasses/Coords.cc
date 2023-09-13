@@ -53,8 +53,8 @@ namespace mio {
  * @endcode
  *
  * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj</a> library for handling the coordinate conversion, the EPSG codes of
- * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
+ * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * @code
  * COORDSYS	= PROJ
  * COORDPARAM	= 21781
@@ -341,7 +341,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 }
 
 /**
-* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* @brief Local projection constructor: this constructor is only suitable for building a local projection.
 * Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
 * @param[in] in_lat_ref latitude of the reference point

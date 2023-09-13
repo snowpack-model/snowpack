@@ -900,7 +900,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 
 	// Compute cross-sectional areas of conduction paths (m2)
 	const double Ap = Metamorphism::csPoreArea(Edata); // (mm2)
-	const double Aiw = std::max(0., Edata.theta[WATER] * (1. / C1 - rg) / C1 * (Ap + Constants::pi * rg*rg));
+	const double Aiw = std::max(0., Edata.theta[WATER] * (1. / C1)/(1. / C1 - rg) * (Ap + Constants::pi * rg*rg));
 	const double Aip = std::max(0., Constants::pi * (rg*rg - rb*rb) - Aiw);
 
 	/*

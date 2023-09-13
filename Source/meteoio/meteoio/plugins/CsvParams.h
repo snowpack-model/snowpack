@@ -68,7 +68,7 @@ class CsvDateTime {
 		bool parseTime(const std::string& time_str, float args[3], double& tz) const;
 		double parseTime(const std::string& time_str, double& tz) const;
 		
-		static int castToInt(const double &val);
+		static int castToInt(const float &val);
 		static void checkSpecString(const std::string& spec_string, const size_t& nr_params);
 		
 		std::vector<size_t> datetime_idx;		///< order of the datetime fields for use in parseDate: Year Month Day Hour Minutes Seconds

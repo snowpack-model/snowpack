@@ -216,12 +216,12 @@ void MYSQLIO::readStationMetaData()
 			std::string station_name;
 			double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope=IOUtils::nodata, azi=IOUtils::nodata;
 			for (const auto& meta : metaDataFields) { //this is given by the metadata parsing vector metaDataFields
-				if (meta.param=="STATNAME") station_name = meta.str;
-				else if (meta.param=="LAT") lat = meta.val;
-				else if (meta.param=="LON") lon = meta.val;
-				else if (meta.param=="ALT") alt = meta.val;
+				if (meta.param=="STATNAME")   station_name = meta.str;
+				else if (meta.param=="LAT")   lat = meta.val;
+				else if (meta.param=="LON")   lon = meta.val;
+				else if (meta.param=="ALT")   alt = meta.val;
 				else if (meta.param=="SLOPE") slope = meta.val;
-				else if (meta.param=="AZI") azi = meta.val;
+				else if (meta.param=="AZI")   azi = meta.val;
 			}
 			
 			Coords location(coordin,coordinparam);

@@ -239,6 +239,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
 
+
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
 	* - If VW_DENDRICITY is set, new snow dendricity is f(vw)
@@ -539,6 +540,13 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Add the source/sink term resulting from phase changes
 	Fe[1] += Edata.Qph_up * 0.5 * Edata.L;
 	Fe[0] += Edata.Qph_down * 0.5 * Edata.L;
+
+	// Add the source/sink term resulting from phase changes (due to water vapor transport)
+	Fe[1] += Edata.Qmm * 1.0 * Edata.L;
+	Fe[0] += Edata.Qmm * 1.0 * Edata.L;
+
+	//Se[1][1] += Edata.Qmm*Edata.L/Edata.Te;
+	//Fe[1] += Edata.Qmm*Edata.L;
 
 	return true;
 }
@@ -903,9 +911,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		exit(EXIT_FAILURE);
 	}
 
-	if (surfaceCode == DIRICHLET_BC || forcing=="MASSBAL") {
-		I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
-	}
+	if (forcing=="MASSBAL") I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
 
 	// ABSORPTION OF SOLAR RADIATION WITHIN THE SNOWPACK
 	// Simple treatment of radiation absorption in snow: Beer-Lambert extinction (single or multiband).
@@ -1513,6 +1519,9 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	} else {
 		elem.meltfreeze_tk = Constants::meltfreeze_tk;
 	}
+
+	double p_vapor = Atmosphere::vaporSaturationPressure(elem.Te);
+	elem.rhov = Atmosphere::waterVaporDensity(elem.Te, p_vapor);
 }
 
 /**
@@ -1872,6 +1881,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[nOldN-1].hoar = 0.0;
 				// Now fill nodal data for upper hoar node
 				NDS[nOldN].T = t_surf;              // The temperature of the new node
+				double p_vapor = Atmosphere::vaporSaturationPressure(NDS[nOldN].T);
+				NDS[nOldN].rhov = Atmosphere::waterVaporDensity(NDS[nOldN].T, p_vapor);
 				// The new nodal position;
 				NDS[nOldN].z = NDS[nOldN-1].z + NDS[nOldN-1].u + hoar/hoar_density_buried;
 				NDS[nOldN].u = 0.0;                 // Initial displacement is 0
@@ -2127,7 +2138,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
 			// Run sea ice module
-			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt);
+			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt, Sdata);
 			// Remesh when necessary
 			Xdata.splitElements(2. * comb_thresh_l, comb_thresh_l);
 		}
@@ -2276,6 +2287,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 		// and creep solution routines will not pick up the new mesh boolean.
 		double ql = Bdata.ql;	// Variable to keep track of how latent heat is used
 		watertransport.compTransportMass(Mdata, Xdata, Sdata, ql);
+
 		vapourtransport.compTransportMass(Mdata, ql, Xdata, Sdata);
 
 		// See if any SUBSURFACE phase changes are occuring due to updated water content (infiltrating rain/melt water in cold snow layers)

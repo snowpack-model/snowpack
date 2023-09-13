@@ -56,6 +56,8 @@ class ReSolver1d {
 		enum watertransportmodels{UNDEFINED, BUCKET, NIED, RICHARDSEQUATION};
 		//K_Average types
 		enum K_AverageTypes{ARITHMETICMEAN, LOGMEAN, GEOMETRICMEAN, HARMONICMEAN, MINIMUMVALUE, UPSTREAM};
+		//K_frozen_soil types
+		enum K_frozen_soilTypes{IGNORE, OMEGA, LIQUIDPORESPACE};
 		//Solvers
 		enum SOLVERS{DGESVD, DGTSV, TDMA};
 		//Boundary conditions
@@ -68,16 +70,18 @@ class ReSolver1d {
 		std::string watertransportmodel_snow;
 		std::string watertransportmodel_soil;
 		BoundaryConditions BottomBC;			//Bottom boundary condition (recommended choice either DIRICHLET with saturation (lower boundary in water table) or FREEDRAINAGE (lower boundary not in water table))
-		K_AverageTypes K_AverageType;			//Implemented choices: ARITHMETICMEAN (recommended), HARMONICMEAN, GEOMETRICMEAN, MINIMUMVALUE, UPSTREAM
+		K_AverageTypes K_AverageType;			//Implemented choices: ARITHMETICMEAN (recommended), LOGMEAN, GEOMETRICMEAN, HARMONICMEAN, MINIMUMVALUE, UPSTREAM
+		K_frozen_soilTypes K_frozen_soilType;		//Implemented choices: IGNORE (recommended), OMEGA, LIQUIDPORESPACE
+		double omega;					//The value of omega to use when K_frozen_soilType == OMEGA.
 		bool enable_pref_flow;				//true: dual domain approach, false: classic Richards equation.
 		double pref_flow_param_th;			//Tuning parameter: saturation threshold in preferential flow
 		double pref_flow_param_N;			//Tuning parameter: number of preferential flow paths for heat exchange
 		double pref_flow_param_heterogeneity_factor;	//Tuning parameter: heterogeneity factor for grain size
 		bool enable_ice_reservoir;			// Ice reservoir or not
+		bool runSoilInitializer;			// Run the function that initializes the soil in thermal equilibrium upon first function call
 
 		double sn_dt;					//SNOWPACK time step
 		bool allow_surface_ponding;			//boolean to switch on/off the formation of surface ponds in case prescribed infiltration flux exceeds matrix capacity
-		bool lateral_flow;				//boolean if lateral flow should be calculated
 		bool matrix;					//boolean to define if water transport is calculated for matrixflow or preferential flow
 		SalinityTransport::SalinityTransportSolvers SalinityTransportSolver;	//How to solve salinity transport?
 

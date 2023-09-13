@@ -118,9 +118,12 @@ class TimeSuppr : public ProcessingBlock {
  * the timestamps back to Winter time only (or "Standard Time", as it should always be!) or to correct 
  * a clock that has drifted in a data logger. 
  * 
- * In order to do so, a correction file has to be provided that contains on each line an ISO formatted 
+ * This takes either a fixed offset or a correction file that contains on each line an ISO formatted 
  * timestamp as well as an offset (in seconds) to apply to the timestamps starting at the provided time
- * (always assumed to be in the input timezone + a potential previous offset).
+ * (always assumed to be in the input timezone + a potential previous offset). So the supported arguments 
+ * are:
+ *    + CORRECTIONS: the correction file (optional);
+ *    + OFFSET: the fixe offset (in seconds) to add to the time (optional).
  *
  * @code
  * TIME::filter1     = SHIFT
@@ -145,7 +148,11 @@ class TimeShift : public ProcessingBlock {
 		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
 
 	private:
+		void process_corrections(std::vector<MeteoData>& ovec) const;
+		void process_offset(std::vector<MeteoData>& ovec) const;
 		std::vector<offset_spec> dst_changes;
+		double offset;
+		bool has_offset;
 };
 
 /**

@@ -19,7 +19,6 @@ build:
     - mkdir build && cd build
     - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
       -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
-      -D CPACK_BUNDLE_ALL:BOOL=ON
     - make -j 2
     # cleanup to avoid limits in GitLab
     - find . -name "*.o" -type f -delete
@@ -96,8 +95,9 @@ Debian release build:
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies: []
+  before_script:
+    - apt-get update && apt-get -y install cmake doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
   script:
-    - apt-get -y install doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
     - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
@@ -111,12 +111,15 @@ Debian release build:
     # Documentation only package
     - mv doc MeteoIO-${METEOIO_VERSION}-doc
     - tar -czvf MeteoIO-${METEOIO_VERSION}-doc.tar.gz MeteoIO-${METEOIO_VERSION}-doc
+    - echo "MeteoIO-$METEOIO_VERSION compiled for Debian"
+    # Useful for debugging, just in case
+    - ls MeteoIO-*
   artifacts:
     expire_in: 1h
     paths:
-      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz
-      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb
-      - MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz
+      - MeteoIO-*-x86_64.tar.gz
+      - MeteoIO-*-x86_64.deb
+      - MeteoIO-*-doc.tar.gz
 
 Fedora release build:
   stage: release build
@@ -141,18 +144,18 @@ Fedora release build:
   artifacts:
     expire_in: 1h
     paths:
-      - MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm
+      - MeteoIO-*-x86_64.rpm
 
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  before_script: # overrides global before_script
-    - apk add --no-cache curl
   rules:
     - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
   dependencies:
     - Debian release build
     - Fedora release build
+  before_script: # overrides global before_script
+    - apk add --no-cache curl
   script:
     - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
     - echo "Uploading MeteoIO-${METEOIO_VERSION} packages to
@@ -172,15 +175,15 @@ release:
     ref: '$CI_COMMIT_TAG'
     assets:
       links:
-        - name: 'Linux Debian binary tarball'
+        - name: 'Linux Debian binary tarball (x86_64)'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz'
           link_type: 'other'
-        - name: 'Linux Fedora RPM binary package'
+        - name: 'Linux Fedora RPM binary package (x86_64)'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm'
-          link_type: 'other'
-        - name: 'Linux Debian DEB binary package'
+          link_type: 'package'
+        - name: 'Linux Debian DEB binary package (x86_64)'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb'
-          link_type: 'other'
+          link_type: 'package'
         - name: 'Documentation only package'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz'
           link_type: 'other'

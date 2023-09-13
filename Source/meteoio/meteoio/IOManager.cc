@@ -56,7 +56,6 @@ namespace mio {
  *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds (default: 0);
- *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  * 
  * @note Please keep in mind that the WINDOW_SIZE in the [Interpolations1D] section and BUFFER_SIZE in the [General] section have a direct influence on the success 
  * (or lack of) the virtual stations: they will contribute to define how much raw data should be read and can lead to an exception being thrown when working with
@@ -132,7 +131,6 @@ namespace mio {
  *    + VIRTUAL_PARAMETERS: space delimited list of MeteoData::Parameters that have to be interpolated to populate the virtual stations;
  *    + VSTATIONS_REFRESH_RATE: how often to rebuild the spatial interpolations, in seconds;
  *    + VSTATIONS_REFRESH_OFFSET: time offset to the stations' refresh rate, in seconds;
- *    + INTERPOL_USE_FULL_DEM: should the spatial interpolations be performed on the whole DEM? (this is necessary for some algorithms, for example WINSTRAL).
  *
  * @code
  * [Input]

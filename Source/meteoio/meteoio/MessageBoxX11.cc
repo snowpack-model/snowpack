@@ -155,6 +155,7 @@ void MessageBoxX11( const char* title, const char* text ) {
 				} else {
 					offset = 0;
 				}
+				break;
 
 			case Expose:
 			case MapNotify:
