@@ -200,20 +200,20 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 	if (args.empty()) return lines_specs;
 	
 	std::vector<std::string> vecString;
-	const size_t nrElems = IOUtils::readLineToVec(args, vecString, ',');
+	IOUtils::readLineToVec(args, vecString, ',');
 	
-	for (size_t ii=0; ii<nrElems; ii++) {
+	for (const std::string& restr_spec : vecString) {
 		size_t l1;
-		const size_t delim_pos = vecString[ii].find("-");
+		const size_t delim_pos = restr_spec.find("-");
 		if (delim_pos==std::string::npos) {
-			const std::string arg1( vecString[ii] );
+			const std::string arg1( restr_spec );
 			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
 				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
 			lines_specs.push_back( LinesRange(l1, l1) );
 		} else {
 			size_t l2;
-			const std::string arg1( vecString[ii].substr(0, delim_pos) );
-			const std::string arg2( vecString[ii].substr(delim_pos+1) );
+			const std::string arg1( restr_spec.substr(0, delim_pos) );
+			const std::string arg2( restr_spec.substr(delim_pos+1) );
 			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
 				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
 			if (!IOUtils::convertString(l2, IOUtils::trim(arg2) ))
@@ -233,13 +233,14 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 		//if negate, then compute the negation of the lines ranges
 		//trick: remember that a [] ONLY range is converted to a ][ EXCLUDE range!
 		std::vector<LinesRange> negative_lines_specs;
-		size_t ii_exclude_start = 1;
+		size_t ii_exclude_start = 0;
 		
-		for (size_t ii=0; ii<lines_specs.size(); ii++) {
-			const size_t only_start = lines_specs[ii].start;
+		for (const auto& spec : lines_specs) {
+			const size_t only_start = spec.start;
 			if (only_start>1)
 				negative_lines_specs.push_back( LinesRange(ii_exclude_start, only_start-1) );
-			ii_exclude_start = lines_specs[ii].end+1;
+
+			ii_exclude_start = spec.end+1;
 		}
 		negative_lines_specs.push_back( LinesRange(ii_exclude_start, static_cast<size_t>(-1)) );
 		

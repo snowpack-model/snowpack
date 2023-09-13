@@ -673,7 +673,6 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		throw InvalidFormatException(msg, AT);
 	}
 	
-
 	const MeteoData template_md( createTemplate(params) );
 
 	//now open the file
@@ -689,7 +688,7 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 	
 	std::string line;
 	size_t linenr=0;
-	streampos fpointer = indexer_map[filename].getIndex(dateStart);
+	streampos fpointer = indexer_map[filename].getIndex(dateStart, linenr);
 	if (fpointer!=static_cast<streampos>(-1) && params.asc_order) {
 		fin.seekg(fpointer); //a previous pointer was found, jump to it
 	} else {
@@ -750,13 +749,20 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 				continue;
 			} else throw InvalidFormatException(ss.str(), AT);
 		}
-		
+
 		const Date dt( getDate(params, tmp_vec, silent_errors, filename, linenr) );
 		if (dt.isUndef() && silent_errors) continue;
+		if (!prev_dt.isUndef()) {
+			if (dt==prev_dt)
+				std::cerr << "File \'" << filename << "\' has duplicated timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
+			if (dt<prev_dt)
+				std::cerr << "File \'" << filename << "\' has out of order timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
+		}
+		prev_dt = dt;
 
 		if (linenr % streampos_every_n_lines == 0) {
 			fpointer = fin.tellg();
-			if (fpointer != static_cast<streampos>(-1)) indexer_map[filename].setIndex(dt, fpointer);
+			if (fpointer != static_cast<streampos>(-1)) indexer_map[filename].setIndex(dt, fpointer, linenr);
 		}
 		if (params.asc_order) {
 			if (dt<dateStart) continue;

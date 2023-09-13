@@ -199,7 +199,8 @@ class SnowDriftA3D;
 
 		std::vector< std::pair<size_t,size_t> > pts; //special points
 
-		const mio::DEMObject dem;
+		const mio::DEMObject dem;	// full DEM
+		mio::DEMObject omp_dem;		// DEM shared by OMP workers (after MPI slicing)
 
 		// Config dependent information
 		bool is_restart, useCanopy, enable_simple_snow_drift, enable_lateral_flow, enforce_hydrostatic_balance, a3d_view;
@@ -226,7 +227,7 @@ class SnowDriftA3D;
 
 		size_t dimx, dimy;
 		size_t mpi_offset, mpi_nx;
-		mio::Grid2DObject landuse;
+		mio::Grid2DObject landuse, omp_landuse;	// full land use map, and land use map shared by OMP workers (after MPI slicing)
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse, terrain_shortwave, terrain_longwave;
 		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
