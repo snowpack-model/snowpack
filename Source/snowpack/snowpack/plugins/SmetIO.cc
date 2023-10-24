@@ -1080,6 +1080,24 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_color << "0x3300FF 0x3300FF 0x3300FF 0x3300FF 0x0000FF 0x99CCCC 0x3333 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF 0xFF0000 0x0000FF" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
+		if (useRichardsEq && Xdata.meta.getSlopeAngle() > 0.) {
+			plot_description << "lateral_flow_snow" << " ";
+			plot_units << "kg/m2" << " ";
+			units_offset << "0" << " ";
+			units_multiplier << "1" << " ";
+			plot_color << "#A3A3CC" << " ";
+			plot_min << "" << " ";
+			plot_max << "" << " ";
+			if (useSoilLayers) {
+				plot_description << "lateral_flow_soil" << " ";
+				plot_units << "kg/m2" << " ";
+				units_offset << "0" << " ";
+				units_multiplier << "1" << " ";
+				plot_color << "#CCA3A3" << " ";
+				plot_min << "" << " ";
+				plot_max << "" << " ";
+			}
+		}
 	}
 	if (out_dhs) {
 		//"MS_Sublimation_dHS MS_Settling_dHS MS_Redeposit_dHS MS_Redeposit_dRHO"
