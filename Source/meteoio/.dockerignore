@@ -75,3 +75,4 @@ tests/meteo_reading_no_interpol/meteo_reading_no_int
 tests/sun/sun
 .gitignore
 tests/stats/stats
+

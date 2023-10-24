@@ -1,10 +1,8 @@
 FROM alpine AS builder
-RUN apk update && apk add  --no-cache git g++ make cmake netcdf-dev proj-dev curl
-RUN mkdir -p /root/usr && \
-    mkdir -p /root/src && \
-    cd /root/src && \
-    git clone https://gitlabext.wsl.ch/snow-models/meteoio.git && \
-    cd meteoio && \
+RUN apk update && apk add  --no-cache git g++ make cmake netcdf-dev proj-dev curl && \
+    mkdir -p /root/usr
+COPY . /root/src/meteoio
+RUN cd /root/src/meteoio && \
     cmake -D CMAKE_INSTALL_PREFIX:PATH=/root/usr -D DEST:STRING=optimized -D PLUGIN_NETCDFIO:BOOL=ON -D PLUGIN_DBO:BOOL=ON -D VERSION_FROM_GIT:BOOL=ON -D PROJ:BOOL=ON && \
     make -j 2 && \
     make install

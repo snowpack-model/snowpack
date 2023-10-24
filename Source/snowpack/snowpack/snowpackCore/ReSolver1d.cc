@@ -2218,7 +2218,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					if(EMS[i].salinity < 0. && TimeAdvance > 900. - Constants::eps2) {
 						EMS[i].salinity = tol;
 					}
-					Xdata.Edata[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
+					Xdata.Edata[i].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(Salinity.BrineSal[i]);
 				}
 
 				if (SALINITY_MIXING != NONE) {
@@ -2248,7 +2248,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					if(EMS[i].salinity < 0. && TimeAdvance > 900. - Constants::eps2) {
 						EMS[i].salinity = tol;
 					}
-					EMS[i].meltfreeze_tk = -SeaIce::mu * Salinity.BrineSal[i] + Constants::meltfreeze_tk;
+					EMS[i].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(Salinity.BrineSal[i]);
 					EMS[i].updDensity();
 					EMS[i].M=EMS[i].L*EMS[i].Rho;
 				}
@@ -2694,7 +2694,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 	if(matrix==true) {
 		for (i = lowernode; i <= uppernode; i++) {
 			if(EMS[i].theta[SOIL]<Constants::eps2) {
-				EMS[i].meltfreeze_tk=((Xdata.Seaice!=NULL)?(-SeaIce::mu*EMS[i].salinity+Constants::meltfreeze_tk):(Constants::meltfreeze_tk));
+				EMS[i].meltfreeze_tk=((Xdata.Seaice!=NULL)?(Xdata.Seaice->calculateMeltingTemperature(EMS[i].salinity)):(Constants::meltfreeze_tk));
 			} else {
 				//For soil layers solved with Richards Equation, everything (water transport and phase change) is done in this routine, except calculating the heat equation.
 				//To suppress phase changes in PhaseChange.cc, set the melting and freezing temperature equal to the element temperature:

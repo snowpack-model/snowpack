@@ -139,7 +139,7 @@ void SMETCommon::copy_file(const std::string& src, const std::string& dest)
 	if (fin.fail()) throw SMETException("Failed to open file '"+src+"'", AT);
 
 	if (!validFileAndPath(dest)) throw SMETException("Destination file name '"+dest+"' is invalid", AT);
-	std::ofstream fout(dest.c_str(), std::ios::binary);
+	mio::ofilestream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
 		throw SMETException("Failed to open destination file '"+dest+"'", AT);
@@ -602,7 +602,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 		}
 	}
 	
-	std::ofstream fout(filename.c_str(), mode_flags);
+	mio::ofilestream fout(filename.c_str(), mode_flags);
 	if (fout.fail())
 		throw SMETException("Error opening file \"" + filename + "\" for writing, possible reason: " + std::string(std::strerror(errno)), SMET_AT);
 	if (write_headers) write_header(fout, acdd); //Write the header info, always in ASCII format
@@ -655,7 +655,7 @@ void SMETWriter::write(const std::vector<double>& data, const mio::ACDD& acdd)
 {
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
-	std::ofstream fout(filename.c_str(), ios::binary);
+	mio::ofilestream fout(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		std::ostringstream ss;
 		ss << "Error opening file \"" << filename << "\" for writing, possible reason: " << std::strerror(errno);
@@ -697,7 +697,7 @@ void SMETWriter::write(const std::vector<double>& data, const mio::ACDD& acdd)
 	fout.close();
 }
 
-void SMETWriter::printACDD(std::ofstream& fout, const std::string& prefix, const mio::ACDD& acdd) const
+void SMETWriter::printACDD(mio::ofilestream& fout, const std::string& prefix, const mio::ACDD& acdd) const
 {
 	//print ACDD headers
 	const size_t nr = acdd.getNrAttributes();
@@ -715,7 +715,7 @@ void SMETWriter::printACDD(std::ofstream& fout, const std::string& prefix, const
 	}
 }
 
-void SMETWriter::print_if_exists(const std::string& header_field, const std::string& prefix, std::ofstream& fout) const
+void SMETWriter::print_if_exists(const std::string& header_field, const std::string& prefix, mio::ofilestream& fout) const
 {
 	const std::map<string,string>::const_iterator it = header.find(header_field);
 	if (it != header.end()) {
@@ -728,7 +728,7 @@ void SMETWriter::print_if_exists(const std::string& header_field, const std::str
 	}
 }
 
-void SMETWriter::write_header(std::ofstream& fout, const mio::ACDD& acdd)
+void SMETWriter::write_header(mio::ofilestream& fout, const mio::ACDD& acdd)
 {
 	if (!valid_header()) {
 		fout.close();
@@ -784,7 +784,7 @@ void SMETWriter::write_header(std::ofstream& fout, const mio::ACDD& acdd)
 	fout << prefix << "[DATA]" << endl;
 }
 
-void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::ofstream& fout)
+void SMETWriter::write_data_line_binary(const std::vector<double>& data, mio::ofilestream& fout)
 {
 	const char eoln = '\n';
 
@@ -814,7 +814,7 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data, std::of
 	fout.write((const char*)&eoln, sizeof(char));
 }
 
-void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout)
+void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, mio::ofilestream& fout)
 {
 	fout.fill(separator);
 	fout << right;
@@ -1158,7 +1158,7 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 	}
 
 	const std::string filename_tmp( filename + ".tmp" );
-	std::ofstream fout(filename_tmp.c_str(), ios::out|ios::binary); //for the tmp file
+	mio::ofilestream fout(filename_tmp.c_str(), ios::out|ios::binary); //for the tmp file
 	if (fout.fail()) {
 		std::ostringstream ss;
 		ss << "Error opening temporary file \"" << filename_tmp << "\" for reading, possible reason: " << std::strerror(errno);
@@ -1182,7 +1182,7 @@ void SMETReader::truncate_file(const std::string& date_stop) const
 	}
 }
 
-void SMETReader::copy_file_header(std::ifstream& fin, std::ofstream& fout) const
+void SMETReader::copy_file_header(std::ifstream& fin, mio::ofilestream& fout) const
 {
 	std::string line;
 	while (!fin.eof()){ //Read until end of file or break
@@ -1390,7 +1390,7 @@ std::string SMETReader::getLastTimestamp() const
 }
 
 //copy fin to fout until encountering date_stop or the end of the file
-void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout) const
+void SMETReader::copy_file_data(const std::string& date_stop, std::ifstream& fin, mio::ofilestream& fout) const
 {
 	//either ascii or binary
 	if (!isAscii) throw SMETException("Truncating binary SMET files is currently not supported", AT);

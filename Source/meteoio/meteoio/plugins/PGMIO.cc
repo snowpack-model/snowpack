@@ -18,6 +18,7 @@
 #include <meteoio/plugins/PGMIO.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/IOExceptions.h>
 
 #include <iostream>
@@ -295,7 +296,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	static const unsigned int nr_colors = 256;
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name, AT);
 	errno = 0;
-	std::ofstream fout;
+	ofilestream fout;
 	fout.open(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		std::ostringstream ss;

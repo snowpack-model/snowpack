@@ -19,6 +19,7 @@
 #include <meteoio/meteoFilters/ProcShift.h>
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 
 #include <cerrno>
 #include <cstring>
@@ -72,7 +73,7 @@ void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoD
 	
 	//if the filter runs multiple times (because of rebuffering for example), we need to append the results
 	//so the output file has been deleted in the constructor
-	std::ofstream fout(offsets_file.c_str(), std::ofstream::out | std::ios_base::app | ios::binary);
+	ofilestream fout(offsets_file.c_str(), std::ofstream::out | std::ios_base::app | ios::binary);
 	if (fout.fail())
 		throw AccessException("Error opening file \"" + offsets_file + "\" for writing, possible reason: " + std::string(std::strerror(errno)), AT);
 	

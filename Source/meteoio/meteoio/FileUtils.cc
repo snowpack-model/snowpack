@@ -19,8 +19,10 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include <sys/stat.h>
 
 #if defined _WIN32 || defined __MINGW32__
 	#ifndef NOMINMAX
@@ -38,6 +40,8 @@
 
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FStream.h>
+#include <regex>
 
 namespace mio {
 namespace FileUtils {
@@ -53,7 +57,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	if (fin.fail()) throw AccessException(src, AT);
 
 	if (!validFileAndPath(dest)) throw InvalidNameException(dest, AT);
-	std::ofstream fout(dest.c_str(), std::ios::binary);
+	ofilestream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
 		throw AccessException(dest, AT);
@@ -141,6 +145,15 @@ std::string getFilename(const std::string& path)
 		return path;
 }
 
+std::string getDateTime()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm = *std::localtime(&t);
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%m%d_%H%M");
+	return oss.str();
+}
+
 bool validFileAndPath(const std::string& filename)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
@@ -177,6 +190,56 @@ std::list<std::string> readDirectory(const std::string& path, const std::string&
 	readDirectoryPrivate(path, "", dirlist, pattern, isRecursive);
 	return dirlist;
 }
+
+bool directoryExists(const std::string &path) {
+	struct stat sb;
+	if (stat(path.c_str(), &sb) == 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool isWindowsPath(const std::string& path) {
+	const std::regex e("^[a-zA-Z]:\\/");
+	return std::regex_search(path, e);
+}
+
+void createDirectories(const std::string &path, const bool verbose)
+{
+	if (path.empty())
+		throw mio::IOException("Can not create empty directory", AT);
+	std::stringstream ps(path);
+
+	std::string tmp_path = "";
+	std::string item;
+
+	// recursively go through the path and create nonexisting directories
+	while (std::getline(ps, item, '/'))
+	{
+		tmp_path += item.empty() ? "/" : item;
+		// check if path already exists
+		if (directoryExists(tmp_path))
+		{
+			if (tmp_path != "/") tmp_path += "/";
+			continue;
+		}
+		else
+		{
+			bool check_creation = mkdir(tmp_path.c_str(), 0777);
+			if (verbose)
+			{
+				if (!check_creation)
+					std::cout << "Directory " << tmp_path << " created" << std::endl;
+				if (check_creation)
+					std::cout << "Directory " << tmp_path << " could not be created" << std::endl;
+			}
+			tmp_path += "/";
+		}
+	}
+}
+
+
 
 #if defined _WIN32 || defined __MINGW32__
 std::string getCWD()

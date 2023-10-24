@@ -139,17 +139,22 @@ echo "${columns}" | awk '
 #create data sets data
 file_index=0
 for smet_file in "$@"; do
-	nb_sets=$(head -100 ${smet_file} | grep "fields" | wc -w)
+	nodata=$(head -100 ${smet_file} | grep -E "^nodata\s+=" | cut -d'=' -f2 | tr -d ' ')
+	nb_sets=$(head -100 ${smet_file} | grep fields | wc -w)
 	for ii in $(seq 4 ${nb_sets}); do
 		f=$(( file_index+ii-4 ))
 		printf "@target G0.S${f}\n@type xy\n"
 		awk '
 		BEGIN {
 			field='${ii}'-2
+			nodata='${nodata}'
 		}
 		/^[[:space:]]*[0-9\-]+/ {
-			printf("%s %s\n",$1, $(field))
-			}' ${smet_file}
+			val=$(field)
+			if (val==nodata) next
+			printf("%s %s\n",$1, val)
+		}
+		' ${smet_file}
 		printf "&\n"
 	done
 	file_index=$(( file_index+nb_sets-4+1 ))

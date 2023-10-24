@@ -20,6 +20,7 @@
 #define LIBSMET_H
 
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/plugins/libacdd.h>
 
 #include <string>
@@ -182,11 +183,11 @@ class SMETWriter {
 		
 	private:
 		void setAppendMode(std::vector<std::string> vecFields);
-		void print_if_exists(const std::string& header_field, const std::string& prefix, std::ofstream& fout) const;
-		void printACDD(std::ofstream& fout, const std::string& prefix, const mio::ACDD& acdd) const;
-		void write_header(std::ofstream& fout, const mio::ACDD& acdd); //only writes when all necessary header values are set
-		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, std::ofstream& fout);
-		void write_data_line_binary(const std::vector<double>& data, std::ofstream& fout);
+		void print_if_exists(const std::string& header_field, const std::string& prefix, mio::ofilestream& fout) const;
+		void printACDD(mio::ofilestream& fout, const std::string& prefix, const mio::ACDD& acdd) const;
+		void write_header(mio::ofilestream& fout, const mio::ACDD& acdd); //only writes when all necessary header values are set
+		void write_data_line_ascii(const std::string& timestamp, const std::vector<double>& data, mio::ofilestream& fout);
+		void write_data_line_binary(const std::vector<double>& data, mio::ofilestream& fout);
 		bool check_fields(const std::string& key, const std::string& value);
 		void check_formatting();
 		bool valid_header_pair(const std::string& key, const std::string& value);
@@ -339,8 +340,8 @@ class SMETReader {
 		
 	private:
 		void truncate_file(const std::string& date_stop) const;
-		void copy_file_header(std::ifstream& fin, std::ofstream& fout) const;
-		void copy_file_data(const std::string& date_stop, std::ifstream& fin, std::ofstream& fout) const;
+		void copy_file_header(std::ifstream& fin, mio::ofilestream& fout) const;
+		void copy_file_data(const std::string& date_stop, std::ifstream& fin, mio::ofilestream& fout) const;
 		std::string getLastTimestamp() const;
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 		void read_data_binary(std::ifstream& fin, std::vector<double>& vec_data);

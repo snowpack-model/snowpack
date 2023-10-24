@@ -2539,7 +2539,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 		for (size_t e = nElems; e -->0; ) {
 			const double br_sal = (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF] == 0.) ? (0.) : (Edata[e].salinity / (Edata[e].theta[WATER] + Edata[e].theta[WATER_PREF]));
 			if (Edata[e].salinity > 0.) {
-				Edata[e].meltfreeze_tk = -SeaIce::mu * br_sal + Constants::meltfreeze_tk;
+				Edata[e].meltfreeze_tk = Seaice->calculateMeltingTemperature(br_sal);
 			}
 			if (Edata[e].h == Constants::undefined) {
 				Edata[e].h = Seaice->SeaLevel - .5 * (Ndata[e].z + Ndata[e+1].z);

@@ -18,7 +18,7 @@ INPUT=$1
 
 if [ $# -eq 1 ]; then
 	if [ -d ${1} ]; then
-		head -50 ${1}/*.smet | awk '
+		head -100 ${1}/*.smet | awk '
 			BEGIN {
 				name_length=17
 			}
@@ -68,7 +68,7 @@ if [ $# -eq 1 ]; then
 		exit 0
 	fi
 
-	head -50 ${INPUT} | grep --binary-files=text "fields" | cut -d'=' -f2 | tr -s '  \t' ' ' | xargs -i echo "Available fields: {}"
+	head -100 ${INPUT} | grep --binary-files=text "fields" | cut -d'=' -f2 | tr -s '  \t' ' ' | xargs -i echo "Available fields: {}"
 	exit 0
 fi
 
@@ -169,7 +169,7 @@ if [ $# -eq 3 ]; then
 fi
 
 #create data sets metadata
-field_nr=$(head -50 ${INPUT} | grep "fields" | awk '
+field_nr=$(head -100 ${INPUT} | grep "fields" | awk '
 	/fields/ {
 		found=2
 		for(ii=1; ii<=NF; ii++) {
@@ -184,15 +184,17 @@ if [ ${field_nr} -eq 0 ]; then
 fi
 
 #get generic info
-stat_id=`head -50 ${INPUT} | grep --binary-files=text "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-stat_name=`head -50 ${INPUT} | grep --binary-files=text "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lat=`head -50 ${INPUT} | grep --binary-files=text "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lon=`head -50 ${INPUT} | grep --binary-files=text "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-alt=`head -50 ${INPUT} | grep --binary-files=text "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-JULIAN=`head -50 "${INPUT}" | grep --binary-files=text fields | grep julian`
+stat_id=`head -100 "${INPUT}" | grep --binary-files=text "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_name=`head -100 "${INPUT}" | grep --binary-files=text "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lat=`head -100 "${INPUT}" | grep --binary-files=text "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lon=`head -100 "${INPUT}" | grep --binary-files=text "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+alt=`head -100 "${INPUT}" | grep --binary-files=text "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+JULIAN=`head -100 "${INPUT}" | grep --binary-files=text fields | grep julian`
+nodata=`head -100 "${INPUT}" | grep --binary-files=text -E "^nodata\s+=" | cut -d'=' -f2 | tr -d ' '`
 
 awk '
 	BEGIN {
+		nodata='${nodata}'
 		field="'"${field_nr}"'"
 		agg_type="'"${AGG_TYPE}"'"
 		if ("'"${JULIAN}"'"!="") isJulian=1
@@ -204,10 +206,12 @@ awk '
 		return sprintf("%s", strftime("%FT%H:%M:%S", int(nr_secs+0.5))) #rounding to nearest second
 	}
 	/^[0-9][0-9][0-9][0-9]/ {
+		val=$(field)
+		if (val==nodata) next
 		if (agg_type=="") {
 			if (isJulian==0) datum=$1
 			else datum=getISO($1)
-			printf("%s %s\n", datum, $(field))
+			printf("%s %s\n", datum, val)
 		} else {
 			if (isJulian==0) datum=$1
 			else datum=getISO($1)
@@ -215,13 +219,13 @@ awk '
 			key=sprintf("%s-%s-01", d[1], d[2])
 			
 			if (agg_type=="AVG") {
-				agg[key] += $(field)
+				agg[key] += val
 				count[key]++
 			} else if (agg_type=="MIN") {
-				if ($(field)<agg[key] || count[key]==0) agg[key]=$(field)
+				if (val<agg[key] || count[key]==0) agg[key]=val
 				count[key]++
 			} else if (agg_type=="MAX") {
-				if ($(field)>agg[key] || count[key]==0) agg[key]=$(field)
+				if (val>agg[key] || count[key]==0) agg[key]=val
 				count[key]++
 			}
 		}

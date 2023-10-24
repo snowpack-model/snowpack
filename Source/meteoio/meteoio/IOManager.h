@@ -51,6 +51,7 @@ class IOManager {
 		void write3DGrid(const Grid3DObject& grid_in, const std::string& options="") {gdm1.write3DGrid(grid_in, options);}
 		void write3DGrid(const Grid3DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) {gdm1.write3DGrid(grid_in, parameter, date);}
 		bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list){return iohandler.list2DGrids(start,end,list);}
+		void setOfstreamDefault(const Config& i_cfg);
 		//end legacy support
 
 		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
