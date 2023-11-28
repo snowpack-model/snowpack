@@ -20,7 +20,8 @@
 #include <meteoio/meteoFilters/FilterParticle.h>
 #include <meteoio/meteoStats/libfit1D.h>
 
-#include <fstream> //for the dump files
+#include <meteoio/FStream.h> //for the dump files
+#include <fstream>
 #include <limits>
 #include <sstream> //for readLineToVec
 #include <cerrno>
@@ -380,7 +381,7 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
  */
 void FilterParticle::dumpInternalStates(Matrix& particles, Matrix& weights) const
 { //using this, we are able to resume our filter without having to recalculate the past if new data arrives
-	std::ofstream oss(dump_states_file.c_str(), std::ofstream::out);
+	ofilestream oss(dump_states_file.c_str(), std::ofstream::out);
 	if (oss.fail()) {
 		std::ostringstream ss;
 		ss << "Particle filter could not dump internal states to \"" << dump_states_file;
@@ -438,7 +439,7 @@ bool FilterParticle::readInternalStates(Matrix& particles, Matrix& weights) cons
  */
 void FilterParticle::dumpParticlePaths(Matrix& particles) const
 { //to plot paths and kernel density outside of MeteoIO
-	std::ofstream oss(dump_particles_file.c_str(), std::ofstream::out);
+	ofilestream oss(dump_particles_file.c_str(), std::ofstream::out);
 	if (oss.fail()) {
 		std::ostringstream ss;
 		ss << "Particle filter could not dump particle paths states to \"" << dump_states_file;

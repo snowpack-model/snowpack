@@ -165,9 +165,9 @@ unsigned int Slope::getSectorDir(const double& dir_or_expo) const
  * @param vecXdata
  * @param wind_dir direction of wind
  **/
+#ifndef SNOWPACK_CORE
 void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vecXdata, double& wind_dir)
 {
-#ifndef SNOWPACK_CORE
 	mainStationDriftIndex = false;
 	luvDriftIndex = false;
 	switch (slope_sequence) {
@@ -199,13 +199,16 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 	}
 	north = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 0.);
 	south = (vecXdata[sector].meta.getSlopeAngle() > 0. && vecXdata[sector].meta.getAzimuth() == 180.);
+}
 #else
+void Slope::setSlope(const unsigned int /*slope_sequence*/, vector<SnowStation>& vecXdata, double& /*wind_dir*/)
+{
 	for (size_t kk=0; kk<nSlopes; kk++) {
 		vecXdata[kk].rho_hn   = 0.;
 		vecXdata[kk].hn       = 0.;
 	}
-#endif
 }
+#endif
 
 Cumsum::Cumsum(const unsigned int nSlopes)
         : precip(0.),
@@ -561,9 +564,20 @@ inline void setShortWave(CurrentMeteo& Mdata, const SnowStation& Xdata, const bo
 inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxes, vector<SnowStation>& vecXdata,
                             const Slope& slope, SnowpackConfig& cfg,
                             SunObject &sun,
-                            double& precip, const double& lw_in, const double hs_a3hl6,
+                            double& precip,
+#ifndef SNOWPACK_CORE
+                            const double& lw_in,
+#else
+                            const double& /*lw_in*/,
+#endif
+                            const double hs_a3hl6,
                             double& tot_mass_in,
-                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo)
+#ifndef SNOWPACK_CORE
+                            const std::string& variant,
+#else
+                            const std::string& /*variant*/,
+#endif
+                            const bool& iswr_is_net, Meteo &meteo)
 {
 	SnowStation &currentSector = vecXdata[slope.sector]; //alias: the current station
 	const bool isMainStation = (slope.sector == slope.mainStation);
@@ -1079,7 +1093,9 @@ inline void real_main (int argc, char *argv[])
 		throw;
 	}
 #endif
+#ifndef SNOWPACK_CORE
 	const bool classify_profile = cfg.get("CLASSIFY_PROFILE", "Output");
+#endif
 	const bool profwrite = cfg.get("PROF_WRITE", "Output");
 	const double profstart = cfg.get("PROF_START", "Output");
 	const double profdaysbetween = cfg.get("PROF_DAYS_BETWEEN", "Output");
@@ -1200,7 +1216,7 @@ inline void real_main (int argc, char *argv[])
 		}
 		
 #ifdef SNOWPACK_OPTIM
-		// Get meteo data
+		// Get meteo data to determine meteo_step_length
 		vector<mio::MeteoData> vecMyMeteo;
 		meteoRead_timer.start();
 		io.getMeteoData(current_date + calculation_step_length/1440, vecMyMeteo);
@@ -1210,6 +1226,7 @@ inline void real_main (int argc, char *argv[])
 			ss2 << "" << meteo_step_length;
 			cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss2.str());
 		}
+		meteoRead_timer.stop();
 		SnowpackConfig tmpcfg(cfg);
 		Snowpack snowpack(tmpcfg); //the snowpack model to use
 #endif
@@ -1221,7 +1238,11 @@ inline void real_main (int argc, char *argv[])
 			mn_ctrl.nAvg++;
 
 			// Get meteo data
+#ifdef SNOWPACK_OPTIM
+			vecMyMeteo.clear();
+#else
 			vector<mio::MeteoData> vecMyMeteo;
+#endif
 			meteoRead_timer.start();
 			io.getMeteoData(current_date, vecMyMeteo);
 			if (vecMyMeteo.empty()) {
@@ -1230,12 +1251,14 @@ inline void real_main (int argc, char *argv[])
 				current_date -= calculation_step_length/1440;
 				break;
 			}
+#ifndef SNOWPACK_OPTIM
 			if(meteo_step_length<0.) {
 				std::stringstream ss2;
 				meteo_step_length = io.getAvgSamplingRate();
 				ss2 << "" << meteo_step_length;
 				cfg.addKey("METEO_STEP_LENGTH", "Snowpack", ss2.str());
 			}
+#endif
 			meteoRead_timer.stop();
 			editMeteoData(vecMyMeteo[i_stn], variant, thresh_rain);
 			if (!validMeteoData(vecMyMeteo[i_stn], vecStationIDs[i_stn], variant, enforce_snow_height, advective_heat, soil_flux, slope.nSlopes)) {

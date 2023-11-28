@@ -905,7 +905,11 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 }
 
 void SmetIO::setFormatting(const size_t& nr_solutes,
+#ifndef SNOWPACK_CORE
                            std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_ice_reservoir, const bool& write_sea_ice)
+#else
+                           std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& /*write_ice_reservoir*/, const bool& write_sea_ice)
+#endif
 {
 	/*
 	 * When writing a SNOW SMET file each written parameter may have a different
@@ -1006,7 +1010,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	if (out_meteo)
 		os << "TA TSS_mod TSS_meas T_bottom RH VW VW_drift DW MS_Snow HS_mod HS_meas" << " "; //Air temperature, snow surface temperature (modeled and measured), temperature at bottom of snow/soil pack (degC)
 	if (out_haz)
-		os << "hoar_size wind_trans24 HN24 HN72_24" << " ";//surface hoar size (mm), 24h drift index (cm), height of new snow HN (cm), 3d sum of daily new snow depths (cm)
+		os << "hoar_size wind_trans24 HN3 HN6 HN12 HN24 HN72_24 PSUM24" << " ";//surface hoar size (mm), 24h drift index (cm), 3 hours height of new snow HN (cm), 6 hours HN, 12 hours HN, 24 hours HN, 3d sum of daily new snow depths (cm), 24 h new snow water equivalent (kg m-2)
 	if (out_soileb)
 		os << "dIntEnergySoil meltFreezeEnergySoil ColdContentSoil" << " ";
 	if (out_mass) {
@@ -1099,12 +1103,12 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_max << "" << " ";
 	}
 	if (out_haz) {
-		//"hoar_size wind_trans24 HN24 HN72_24"
-		plot_description << "hoar_size  24h_wind_drift  24h_height_of_new_snow  3d_sum_of_daily_height_of_new_snow" << " ";
-		plot_units << "m m m m" << " ";
-		units_offset << "0 0 0 0" << " ";
-		units_multiplier << "0.001 0.01 0.01 0.01" << " ";
-		plot_color << "0x9933FF 0x99FFCC 0x006699 0x33CCCC" << " ";
+		//"hoar_size wind_trans24 HN3 HN6 HN12 HN24 HN72_24 PSUM24(WC24)"
+		plot_description << "hoar_size  24h_wind_drift 3h_height_of_new_snow 6h_height_of_new_snow 12h_height_of_new_snow 24h_height_of_new_snow 3d_sum_of_daily_height_of_new_snow 24h_percipitation" << " ";
+		plot_units << "m m m m m m m m" << " ";
+		units_offset << "0 0 0 0 0 0 0 0" << " ";
+		units_multiplier << "0.001 0.01 0.01 0.01 0.01 0.01 0.01 0.001" << " ";
+		plot_color << "0x9933FF 0x99FFCC 0x006699 0x006699 0x006699 0x006699 0x33CCCC 0x006699" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 	}
@@ -1127,6 +1131,24 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_color << "0x3300FF 0x3300FF 0x3300FF 0x3300FF 0x0000FF 0x99CCCC 0x3333 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF 0xFF0000 0x0000FF" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
+		if (useRichardsEq && Xdata.meta.getSlopeAngle() > 0.) {
+			plot_description << "lateral_flow_snow" << " ";
+			plot_units << "kg/m2" << " ";
+			units_offset << "0" << " ";
+			units_multiplier << "1" << " ";
+			plot_color << "#A3A3CC" << " ";
+			plot_min << "" << " ";
+			plot_max << "" << " ";
+			if (useSoilLayers) {
+				plot_description << "lateral_flow_soil" << " ";
+				plot_units << "kg/m2" << " ";
+				units_offset << "0" << " ";
+				units_multiplier << "1" << " ";
+				plot_color << "#CCA3A3" << " ";
+				plot_min << "" << " ";
+				plot_max << "" << " ";
+			}
+		}
 	}
 	if (out_dhs) {
 		//"MS_Sublimation_dHS MS_Settling_dHS MS_Redeposit_dHS MS_Redeposit_dRHO"
@@ -1138,7 +1160,7 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_min << "" << " ";
 		plot_max << "" << " ";
 		if (useRichardsEq && Xdata.meta.getSlopeAngle() > 0.) {
-			plot_description << "later_flow_snow" << " ";
+			plot_description << "lateral_flow_snow" << " ";
 			plot_units << "kg/m2" << " ";
 			units_offset << "0" << " ";
 			units_multiplier << "1" << " ";
@@ -1146,7 +1168,7 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 			plot_min << "" << " ";
 			plot_max << "" << " ";
 			if (useSoilLayers) {
-				plot_description << "later_flow_soil" << " ";
+				plot_description << "lateral_flow_soil" << " ";
 				plot_units << "kg/m2" << " ";
 				units_offset << "0" << " ";
 				units_multiplier << "1" << " ";
@@ -1290,8 +1312,13 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 	if (out_haz) {
 		data.push_back( Hdata.hoar_size ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
 		data.push_back( wind_trans24 ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
+		data.push_back( (perp_to_slope? Hdata.hn3/cos_sl : Hdata.hn3) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
+		data.push_back( (perp_to_slope? Hdata.hn6/cos_sl : Hdata.hn6) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
+		data.push_back( (perp_to_slope? Hdata.hn12/cos_sl : Hdata.hn12) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
 		data.push_back( (perp_to_slope? Hdata.hn24/cos_sl : Hdata.hn24) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
 		data.push_back( (perp_to_slope? Hdata.hn72_24/cos_sl : Hdata.hn72_24) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
+		data.push_back( (perp_to_slope? Hdata.psum24/cos_sl : Hdata.psum24) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
+
 	}
 
 	if (out_soileb) {

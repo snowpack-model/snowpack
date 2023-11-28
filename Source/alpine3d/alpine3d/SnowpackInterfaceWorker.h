@@ -86,12 +86,12 @@ class SnowpackInterfaceWorker
 		Stability stability;
 		TechSnow sn_techsnow;
 
-		const mio::DEMObject dem;
+		const mio::DEMObject& dem;
 		const size_t dimx, dimy, offset;
 		std::vector<SnowStation*> SnowStations; // Save different Pixel values
 		std::vector<bool> isSpecialPoint;
 
-		const mio::Grid2DObject landuse;
+		const mio::Grid2DObject& landuse;
 		mio::Grid2DObject store;
 		mio::Grid2DObject erodedmass;
 		std::map< SnGrids::Parameters, mio::Grid2DObject > grids;

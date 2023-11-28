@@ -104,6 +104,7 @@ class CsvParameters {
 		void setDateTimeSpecs(const std::string &datetime_spec, const std::string &date_spec, const std::string &time_spec, const std::string &decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& i_auto_wrap) {date_cols.setFixedYear(i_year, i_auto_wrap);}
 		
+		std::string toString() const;
 		std::string getFilename() const {return file_and_path;}
 		StationData getStation() const;
 		Date getDate(const std::vector<std::string>& vecFields) {return date_cols.parseDate(vecFields);}
@@ -143,6 +144,7 @@ class CsvParameters {
 		std::string name, id;
 		double slope, azi;
 		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
+		size_t exclusion_last_linenr; ///< pointer to the last line number that has been checked for exclusions
 		size_t last_allowed_field;	///< index of the last allowed field (as set by the user with setSkipFields(negate=true)
 };
 

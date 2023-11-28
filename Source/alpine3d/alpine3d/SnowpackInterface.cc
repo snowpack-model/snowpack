@@ -236,15 +236,15 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	mpicontrol.getArraySliceParamsOptim(dimx, mpi_offset, mpi_nx,dem,landuse);
 	std::cout << "[i] MPI instance "<< mpicontrol.rank() <<" for solving snowpack : grid range = ["
 	<< mpi_offset << " to " << mpi_offset+mpi_nx-1 << "] " << mpi_nx << " columns\n";
-	//Cut DEM and landuse in MPI domain, MPI domain are computed
-	//by trying to havve the same number of cell to compute per domain
-	const DEMObject mpi_sub_dem(dem_in, mpi_offset, 0, mpi_nx, dimy, false);
-	const Grid2DObject mpi_sub_landuse(landuse_in, mpi_offset, 0, mpi_nx, dimy);
+	//Cut DEM and landuse in MPI domain, which are shared among OMP workers
+	omp_dem = mio::DEMObject(dem_in, mpi_offset, 0, mpi_nx, dimy, false);
+	omp_landuse = mio::Grid2DObject(landuse_in, mpi_offset, 0, mpi_nx, dimy);
 	std::vector<std::vector<size_t> > omp_snow_stations_ind;
 	//The OMP slicing for snowpack computation is not based on rectangular domain.
 	//It return a table of pixel to compute and coordiantes to have the same
 	//number of pixel per slice.
-	OMPControl::getArraySliceParamsOptim(nbworkers,snow_stations,mpi_sub_dem, mpi_sub_landuse,omp_snow_stations_ind);
+	OMPControl::getArraySliceParamsOptim(nbworkers,snow_stations,omp_dem,omp_landuse,omp_snow_stations_ind);
+
 	// construct slices and workers
 	#pragma omp parallel for schedule(static)
 	for (size_t ii=0; ii<nbworkers; ii++) {
@@ -259,11 +259,6 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 				sub_pts.back().first -= mpi_offset;
 			}
 		}
-		// In this  implementation, all OMP workers see the whole MPI grid
-		// This could be change but with this when passing the meteo grids
-		// Only one slicing and copy is necessary per MPI, insetead of one per OMP
-		const DEMObject sub_dem(mpi_sub_dem);
-		const Grid2DObject sub_landuse(mpi_sub_landuse);
 
 		// Generate workers
 		std::vector<SnowStation*> thread_stations;
@@ -279,7 +274,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 		OMPControl::getArraySliceParams(mpi_nx, nbworkers, ii, omp_offset, omp_nx);
 		const size_t offset = mpi_offset + omp_offset;
 
-		workers[ii] = new SnowpackInterfaceWorker(sn_cfg, sub_dem, sub_landuse, sub_pts,
+		workers[ii] = new SnowpackInterfaceWorker(sn_cfg, omp_dem, omp_landuse, sub_pts,
                                               thread_stations, thread_stations_coord,
                                               offset, grids_not_computed_in_worker);
 

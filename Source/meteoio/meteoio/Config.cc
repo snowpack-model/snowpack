@@ -18,6 +18,7 @@
 */
 #include <meteoio/Config.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/thirdParty/tinyexpr.h>
 
 #include <algorithm>
@@ -367,7 +368,7 @@ std::vector<std::string> Config::getKeys(std::string keymatch,
 void Config::write(const std::string& filename) const
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
-	std::ofstream fout(filename.c_str(), ios::out);
+	ofilestream fout(filename.c_str(), ios::out);
 	if (fout.fail()) throw AccessException(filename, AT);
 
 	try {

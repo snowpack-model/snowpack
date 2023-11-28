@@ -255,6 +255,7 @@ void SnowpackConfig::setDefaults()
 		}
 	}
 
+
 	if ((variant.empty()) || (variant == "DEFAULT")) {
 		// Use default settings
 	} else if (variant == "JAPAN") {

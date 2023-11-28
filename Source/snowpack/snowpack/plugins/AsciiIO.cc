@@ -976,7 +976,7 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 	const double ReferenceLevel = (  Xdata.findMarkedReferenceLayer()==Constants::undefined || !useReferenceLayer  )  ?  (  (Xdata.Seaice==NULL)?(0.):(Xdata.Seaice->SeaLevel)  )  :  (Xdata.findMarkedReferenceLayer()  - Xdata.Ground);
 
 	//  501: height [> 0: top, < 0: bottom of elem.] (cm)
-	const size_t nz = (useSoilLayers)? nN : nE;
+	const size_t nz = (useSoilLayers || SeaIce)? nN : nE;
 	if(nE==0) {
 		fout << "\n0501,1,0";
 		fout.close();
@@ -1489,7 +1489,9 @@ void AsciiIO::writeProfilePrf(const mio::Date& dateOfProfile, const SnowStation&
 	if (aggregate) {
 		Aggregate::aggregate(Pdata);
 	}
+#ifndef SNOWPACK_CORE
 	const double cos_sl = Xdata.cos_sl;
+#endif
 	const size_t nL = Pdata.size();
 	ofs << nL << "," << setprecision(1) << Pdata[nL-1].height << "," << Xdata.swe << "," << Xdata.lwc_sum << ",";
 	ofs << Pdata[nL-1].T << "," << IOUtils::K_TO_C(Xdata.Ndata[Xdata.SoilNode].T) << "\n";

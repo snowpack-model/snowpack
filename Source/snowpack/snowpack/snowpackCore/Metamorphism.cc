@@ -754,9 +754,9 @@ void Metamorphism::metamorphismDEFAULT(const CurrentMeteo& Mdata, SnowStation& X
  * @param Mdata
  * @param Xdata
  */
+#ifndef SNOWPACK_CORE
 void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdata) const
 {
-#ifndef SNOWPACK_CORE
 	double rgDot;        // Grain growth rate (mm d-1)
 	double rbDot;        // Bond growth rate (mm d-1)
 	double rgDotMax, rbDotMax;  // Maximum grain and bond growth rates
@@ -1012,10 +1012,13 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 
 		EMS[e].snowType();
 	}
-#else
-	throw InvalidArgumentException("Metamorphism model: "+metamorphism_model+" not available in the SNOWPACK_CORE version.", AT);
-#endif
 }
+#else
+void Metamorphism::metamorphismNIED(const CurrentMeteo& /*Mdata*/, SnowStation& /*Xdata*/) const
+{
+	throw InvalidArgumentException("Metamorphism model: "+metamorphism_model+" not available in the SNOWPACK_CORE version.", AT);
+}
+#endif
 
 void Metamorphism::runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) const throw()
 {

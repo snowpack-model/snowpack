@@ -645,13 +645,9 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 					if(e==nE-1) {
 						NDS[e+1].T+=EMS[e].Te-i_Te;
 						retTopNodeT=NDS[e+1].T;
-					} else if (e==Xdata.SoilNode-1) {
-						NDS[e+1].T=(EMS[e].Te + EMS[e+1].Te)/2.0;
-					} else {
-						// Do nothing, keep upper node of element untouched
 					}
-					// Adjust lower node of element
-					NDS[e].T=2.*EMS[e].Te - NDS[e+1].T;
+					// Adjust lower node of element. A bit of an ad-hoc solution to only have the lower node absorb the energy change, but it's difficult to find a good, consistent solution here.
+					NDS[e].T+=(EMS[e].Te-i_Te);
 				} else {
 					// In case we use Richards equation for soil, phase changes will be calculated in ReSolver1d::SolveRichardsEquation
 					// Nevertheless, we need to make sure to define the return value:
