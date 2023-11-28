@@ -52,10 +52,11 @@ namespace mio {
  *    - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
  * stand in a place where it is shaded by the surrounding terrain at some point during the day. This would lead to an overestimation 
  * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
- * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
- * in this specific scenario.
+ * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation (with shading 
+ * computed from DEM) but improves things in this specific scenario, when no shading is available.
  * 
- * Please not that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
+ * \note
+ * Please note that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
  * INFILE will be computed from DEM. It is also possible to define wildcard station ID in the horizon file. If SHADE_FROM_DEM has been set
  * to false and no INFILE has been provided, a fixed 5 degrees threshold is used.
  *
@@ -76,6 +77,11 @@ namespace mio {
  * SLF2 245 10
  * FLU2 0 7
  * @endcode
+ * 
+ * \note 
+ * In order to pre-compute the horizons for multiple stations, write an ini file reading all stations of interest, declare a dataGenerator 
+ * that relies on TauCLDGenerator and run meteoio_timeseries on it for at least one time step. This will be enough to create the horizon file
+ * for all stations...
  */
 class TauCLDGenerator : public GeneratorAlgorithm {
 	public:

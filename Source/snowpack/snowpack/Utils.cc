@@ -478,6 +478,7 @@ double forcedErosion(const double hs, SnowStation& Xdata)
  * @param Xdata
  * @param dhs_corr Correction on calculated snow depth (m)
  * @param mass_corr Mass correction (kg m-2)
+ * @param prn_check If set to true, output an information message when correcting for a missed erosion event or wrong settling
  */
 void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_corr, double& mass_corr, const bool &prn_check)
 {

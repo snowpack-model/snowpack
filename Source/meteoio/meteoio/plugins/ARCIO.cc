@@ -19,6 +19,7 @@
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/IOExceptions.h>
 
 #include <cerrno>
@@ -338,7 +339,7 @@ void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string&
 	const std::string full_name( grid2dpath_out+"/"+name );
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
 	errno = 0;
-	std::ofstream fout(full_name.c_str(), ios::out);
+	ofilestream fout(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		std::ostringstream ss;
 		ss << "Error opening file \"" << full_name << "\", possible reason: " << std::strerror(errno);

@@ -34,6 +34,11 @@ namespace mio {
  *  - MIN: minimum permissible rate of change (per seconds, optional);
  *  - MAX: either the absolute value of the maximum permissible rate of change (per seconds) if no other argument is provided, or maximum
  * permissible rate of change (per seconds) if a MIN was provided.
+ *  - METHOD: which points are taken into account when computing the rate of change (optional, default is LEFT). It can be either one of:
+ *      - LEFT: looking for the rate of change on the left of the current point, ie between the last valid point and the current one (default);
+ *      - RIGHT: looking for the rate of change on the right of the current point, ie between the current point and the next valid one;
+ *      - LEFT_AND_RIGHT: excluding a point if the rate of change exceeds MAX or MIN both on the left **and** on the right of the current point;
+ *      - LEFT_OR_RIGHT: excluding a point if the rate of change exceeds MAX or MIN either on the left **or** on the right of the current point;
  *
  * So depending if MIN and MAX were provided or only MAX, every point where the local rate of change is outside <em>[ MIN , MAX]</em> or
  * every point outside  <em>[ -MAX , MAX]</em> is rejected.
@@ -52,8 +57,20 @@ class FilterRate : public ProcessingBlock {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
+         typedef enum IMPLEMENTATION_TYPE {
+			LEFT,
+			RIGHT,
+            LEFT_AND_RIGHT,
+            LEFT_OR_RIGHT
+		} implementation_type;
+
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+        static size_t findNextPoint(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& start_idx);
+        static double getRate(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& idx, const size_t& cmp_idx);
+        bool filterOut(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& idx, const size_t& last_good, const size_t& next_good) const;
+
 		double min_rate_of_change, max_rate_of_change;
+        implementation_type methodParam; ///< controls which implementation of the filter is used
 };
 
 } //end namespace

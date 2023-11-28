@@ -568,7 +568,7 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 			if (station_id.empty()) station_id = "UNKNOWN";
 			const std::string output_name( outpath + "/" + station_id + ".inp" );
 			if (!FileUtils::validFileAndPath(output_name)) throw InvalidNameException(output_name,AT);
-			std::ofstream fout;
+			ofilestream fout;
 			if ( !FileUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
 				fout << "MTO <" << station_id << "> " << vecMeteo[ii].size() << "\n";
@@ -581,7 +581,7 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	}
 }
 
-void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name, std::ofstream& fout)
+void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name, ofilestream& fout)
 { //write out the data for 1 station
 	unsigned int failure_count = 0;
 	unsigned int Dirichlet_failure_count = 0;

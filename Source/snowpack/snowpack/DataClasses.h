@@ -708,16 +708,16 @@ class SnowStation {
 #ifndef SNOWPACK_CORE
 		char S_class1;               ///< Stability class based on hand hardness, grain class ...
 		char S_class2;               ///< Stability class based on hand hardness, grain class ...
-		double S_d;                 ///< Minimum Direct Action Stability Index  ...
-		double z_S_d;               ///< Depth of Minimum Direct Action Stability
-		double S_n;                 ///< Minimum Natural Stability Index
-		double z_S_n;               ///< Depth of Minimum Natural Stability
-		double S_s;                 ///< Minimum Skier Stability Index (SSI)
-		double z_S_s;               ///< Depth of Minimum SSI
-		double S_4;                 ///< stab_index4
-		double z_S_4;               ///< Depth of stab_index4
-		double S_5;                 ///< stab_index5
-		double z_S_5;               ///< Depth of stab_index5
+		double S_d;                 ///< Minimum deformation rate stability index
+		double z_S_d;               ///< Depth of Minimum S_d
+		double S_n;                 ///< Minimum natural stability index
+		double z_S_n;               ///< Depth of Minimum S_n
+		double S_s;                 ///< Minimum skier stability index sk38 (Sk38)
+		double z_S_s;               ///< Depth of Minimum S_s
+		double S_4;                 ///< placeholder - currently Minimum structural stability index (SSI)
+		double z_S_4;               ///< Depth of Minimum S_4
+		double S_5;                 ///< placeholder
+		double z_S_5;               ///< Depth of Minimum S_5
 #endif
 		std::vector<NodeData> Ndata;    ///< pointer to nodal data array (e.g. T, z, u, etc..)
 		std::vector<ElementData> Edata; ///< pointer to element data array (e.g. Te, L, Rho, etc..)
@@ -736,7 +736,6 @@ class SnowStation {
 		double WindScalingFactor;   ///< Local scaling factor for wind at drift station
 		double TimeCountDeltaHS;    ///< Time counter tracking erroneous settlement in operational mode
 #endif
-
 		static const double comb_thresh_l_ratio, comb_thresh_ice, comb_thresh_water;
 		static const double comb_thresh_dd, comb_thresh_sp, comb_thresh_rg;
 		static const double thresh_moist_snow, thresh_moist_soil;

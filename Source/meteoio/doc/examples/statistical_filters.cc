@@ -23,7 +23,6 @@
  */
 
 #include <meteoio/MeteoIO.h>
-
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -54,7 +53,7 @@ int main(/* int argc, char** argv */)
 	mio::IOUtils::convertString(edate, "2018-12-31T23:50", 1.);
 	static const double time_step = 1./24./6.;
 
-	std::ofstream oss("./input/meteo/model.dat", std::ofstream::out);
+	mio::ofilestream oss("./input/meteo/model.dat", std::ofstream::out);
 	if (oss.fail())
 		throw "File open operation failed.";
 	oss << "# date model_no_noise observation control_signal speed\n"; //print header

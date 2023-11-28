@@ -18,10 +18,10 @@
     along with Snowpack.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file Snowpack.cc
- * @version 11.06
+ * @file SeaIce.cc
+ * @version 23.09
  * @bug     -
- * @brief This module contains the driving routines for the 1d snowpack model
+ * @brief This module contains the sea ice specific routines for the 1d snowpack model
  */
 
 #include <snowpack/Constants.h>
@@ -577,7 +577,6 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 		}
 	} else {
 		// dM < 0: Mass loss
-
 		while (dM < 0. && nE > 0) {
 			if(EMS[Xdata.SoilNode].theta[ICE] * Constants::density_ice * EMS[Xdata.SoilNode].L + dM > Constants::eps2) {
 				// Reduce element length

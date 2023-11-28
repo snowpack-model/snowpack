@@ -19,8 +19,10 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include <sys/stat.h>
 
 #if defined _WIN32 || defined __MINGW32__
 	#ifndef NOMINMAX
@@ -38,6 +40,25 @@
 
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FStream.h>
+#include <regex>
+
+//helper functions in file-scope only
+void make_directory(const std::string &path)
+{
+	errno = 0;
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
+    const int status = mkdir(path.c_str());
+#else
+    const int status =  mkdir(path.c_str(), 0777);
+#endif
+	if (status==-1) {
+		std::ostringstream oss;
+		oss << "Creating directory \'" << path << "\' failed. Reason: " << std::strerror(errno) << "\n";
+		throw mio::IOException(oss.str(), AT);
+	}
+}
+
 
 namespace mio {
 namespace FileUtils {
@@ -53,7 +74,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	if (fin.fail()) throw AccessException(src, AT);
 
 	if (!validFileAndPath(dest)) throw InvalidNameException(dest, AT);
-	std::ofstream fout(dest.c_str(), std::ios::binary);
+	ofilestream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
 		throw AccessException(dest, AT);
@@ -65,7 +86,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(std::string in_path, const bool& resolve)
+std::string cleanPath(std::string in_path, const bool& resolve, const bool& silent)
 {
 	if (!resolve) { //do not resolve links, relative paths, etc
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
@@ -91,7 +112,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 			free(real_path);
 			return tmp;
 		} else {
-			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
+			if (!silent) std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif
@@ -141,6 +162,15 @@ std::string getFilename(const std::string& path)
 		return path;
 }
 
+std::string getDateTime()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm = *std::localtime(&t);
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%m%d_%H%M");
+	return oss.str();
+}
+
 bool validFileAndPath(const std::string& filename)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
@@ -176,6 +206,43 @@ std::list<std::string> readDirectory(const std::string& path, const std::string&
 	std::list<std::string> dirlist;
 	readDirectoryPrivate(path, "", dirlist, pattern, isRecursive);
 	return dirlist;
+}
+
+bool directoryExists(const std::string &path) {
+	struct stat sb;
+	if (stat(path.c_str(), &sb) == 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool isWindowsPath(const std::string& path) {
+	const std::regex e("^[a-zA-Z]:\\/");
+	return std::regex_search(path, e);
+}
+
+void createDirectories(const std::string &path)
+{
+	if (path.empty())
+		throw mio::IOException("Can not create empty directory", AT);
+	std::stringstream ps(path);
+
+	std::string tmp_path = "";
+	std::string item;
+
+	// recursively go through the path and create nonexisting directories
+	while (std::getline(ps, item, '/'))	{
+		tmp_path += item.empty() ? "/" : item;
+		// check if path already exists
+		if (directoryExists(tmp_path)) {
+			if (tmp_path != "/") tmp_path += "/";
+			continue;
+		} else {
+			make_directory( tmp_path );
+			tmp_path += "/";
+		}
+	}
 }
 
 #if defined _WIN32 || defined __MINGW32__
