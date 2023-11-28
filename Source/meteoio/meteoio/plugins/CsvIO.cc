@@ -73,7 +73,7 @@ namespace mio {
  *    - CSV\#_UNITS_MULTIPLIER: factor to multiply each value by, in order to convert it to SI (if also providing CSV\#_UNITS, would be applied afterwards); optional
  * - <b>Data parsing restrictions</b>
  *    - CSV\#_COMMENTS_MK: a single character to use as comments delimiter, everything after this char until the end of the line will be skipped (default: no comments);
- *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 " ;
+ *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 \" ;
  *    - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash) or line numbers to exclude from parsing (ie the lines within these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES and that additional spaces (for more clarity in the input, as in the provided example) can be used although they are not mandatory.
  *    - CSV\#_ONLY_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to restrict the parsing to (ie the lines outside of these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
  * - <b>Fields parsing</b>

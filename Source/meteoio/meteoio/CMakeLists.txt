@@ -36,6 +36,7 @@ SET(meteoio_sources
 	IOExceptions.cc
 	IOUtils.cc
 	FileUtils.cc
+	FStream.cc
 	Graphics.cc
 	GridsManager.cc
 	TimeSeriesManager.cc

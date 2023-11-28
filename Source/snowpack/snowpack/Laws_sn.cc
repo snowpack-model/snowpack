@@ -1193,6 +1193,22 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 	} else if (i_hn_model == "NIED") {
 		rho_hn = 62. + 3.6 * VW - 0.2 * TA;
 
+	} else if (i_hn_model == "VANKAMPENHOUT") {
+		// van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988
+		// Eq. 4 in van Kampenhout et al. (2017):
+		const double rho_w = 266.861 * (pow((0.5 * (1. + tanh( VW / 5. ))), 8.8));
+		double rho_t = 0.;
+		// Eq. 3 in van Kampenhout et al. (2017):
+		if (TA > 2.) {
+			rho_t = 50. + 1.7 * pow(17., 1.5);
+		} else if (TA > -15. && TA <= 2.) {
+			rho_t = 50. + 1.7 * pow((TA + 15.), 1.5);
+		} else {
+			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
+		}
+		// Eq. 2 in van Kampenhout et al. (2017):
+		rho_hn = rho_t + rho_w;
+
 	} else {
 		prn_msg(__FILE__, __LINE__, "err", Date(),
 		        "New snow density parameterization '%s' not available",

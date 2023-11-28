@@ -36,7 +36,7 @@
  *          -# <A HREF="https://snowpack.slf.ch/GettingHelp">Getting help</A>
  * -# End User documentation
  *    -# \subpage getting_started "Getting Started"
- *    -# Model principles
+ *    -# Model principles & configuration
  *        -# \subpage general "General concepts"
  *        -# Submodels documentation
  *            -# \subpage water_transport "Water Transport"
@@ -48,6 +48,7 @@
  *    -# Inputs / Outputs
  *        -# \subpage requirements "Data requirements"
  *        -# \subpage snowpackio "Data file formats"
+ *        -# \subpage advanced_setups "Advanced simulation setup"
  *    -# Simulation tools
  *        -# \subpage configuration "Configuring a simulation"
  *        -# \subpage snowpack_visualization "Visualization of the results"
@@ -78,7 +79,7 @@
  */
 
 /**
- * @page getting_started Getting Started
+ * @page getting_started Simple simulations
  * After you installed a binary package or compiled and installed %Snowpack, you can run your first simulation.
  * Please make sure you properly set the proper environement variables for your operating system:
  *      - on osX: set \em PATH and \em DYLD_FALLBACK_LIBRARY_PATH
@@ -112,11 +113,17 @@
  * @section model_workflow Simulation workflow
  * When running a simulation, it is important to keep in mind that the model is organized as several modules that interract together. It is possible to configure
  * some parameters for the various modules and to enable/disable modules. Some modules can be used outside of Snowpack (like
- * <A HREF="https://meteoio.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by <A HREF="https://alpine3d.slf.ch">Alpine3D</A>) .
+ * <A HREF="https://meteoio.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by <A HREF="https://alpine3d.slf.ch">Alpine3D</A>).
+ *  More complex simulation workflows (such as spatial resampling or one-way coupling with other numerical models) are presented in the
+ * \subpage advanced_setups "Advanced simulation setup" page.
  *
  * \image html simulation_workflow.png "Simulation workflow"
  * \image latex simulation_workflow.eps "Simulation workflow" width=0.9\textwidth
- * 
+ */
+
+ /**
+ * @page advanced_setups Advanced simulation setup
+ *
  * @section virtual_stations Spatial resampling
  * Through MeteoIO, it is possible to force Snowpack with data that has not been measured locally. The forcings are then extracted for example from gridded data (such as the outputs of
  * weather forecasting models or reanalysis models) or by spatially interpolating stations' data to the point of interest. For the data extraction or interpolation, please
@@ -533,12 +540,12 @@
  * (see section \subpage snowpackio "Snowpack file formats"). These files can be processed with some scripts, relying on GNU plot or R for generating graphs
  * but are usually viewed with a graphical application such as the open source, online niViz application.
  * 
- * @section snopviz The niViz tool
+ * @section niviz The niViz tool
  * This javascript application work in any sufficiently recent web browser ( firefox >= 33.0, Safari >= 5.1, Internet Explorer >= 11.0, 
  * Chrome >= 38). You can either use it <a href="https://run.niviz.org">online</a> and then open your profile to visualize or you can 
  * <a href="https://code.wsl.ch/snow-models/niviz/-/wikis/home">download</a> a pre-packaged version that can be installed for offline use on your computer.
- * \image html snopviz_small.png "SnopViz overview"
- * \image latex snopviz.eps "SnopVizi overview" width=0.9\textwidth
+ * \image html niviz.png "niViz overview"
+ * \image latex niviz.eps "niViz overview" width=0.9\textwidth
  * 
  */
 

@@ -21,6 +21,8 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
+
 
 #include <string>
 
@@ -49,7 +51,7 @@ class SNIO : public IOInterface {
 
 	private:
 		static std::string file_pos(const std::string& filename, const size_t& linenr);
-		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name, std::ofstream& fout);
+		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name, ofilestream& fout);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		double cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness );

@@ -272,7 +272,9 @@ void FilterDespikingPS::findPointsOutsideEllipse(const std::vector<double>& xVec
  */
 std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& timeVec, const std::vector<double>& uVec, unsigned int& nNewSpikes) const
 {
-	if (uVec.empty()) return std::vector<int>();
+	nNewSpikes=0;
+	std::vector<int> spikesVec(uVec.size(), 0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
+	if (uVec.empty()) return spikesVec;
 
 	//step 1: calculate the first and second derivatives:
 	const std::vector<double> duVec( calculateDerivatives(uVec,timeVec) );
@@ -282,6 +284,7 @@ std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& 
 	const double uStdDev = Interpol1D::std_dev( uVec );
 	const double duStdDev = Interpol1D::std_dev( duVec );
 	const double du2StdDev = Interpol1D::std_dev( du2Vec );
+	if (uStdDev==0. || duStdDev==0. || du2StdDev==0.) return spikesVec;
 
 	//step 3: calculate the rotation angle of the principal axis of du2Vec versus uVec:
 	const double crossCorrelation = calculateCrossCorrelation(du2Vec, uVec);
@@ -309,13 +312,11 @@ std::vector<int> FilterDespikingPS::findSpikesGoring(const std::vector<double>& 
 	double b3 = sqrt(x_[1]);
 
 	//step 5: identify the points that lie outside the ellipses:
-	std::vector<int> spikesVec(uVec.size(), 0); //this vector has the same length as uVec. 0 means no spike, 1 means here is a spike.
 	findPointsOutsideEllipse(uVec,duVec,a1,b1,0,spikesVec);
 	findPointsOutsideEllipse(duVec,du2Vec,a2,b2,0,spikesVec);
 	findPointsOutsideEllipse(uVec,du2Vec,a3,b3,theta,spikesVec);
 
 	//step 6: count number of detected spikes:
-	nNewSpikes=0;
 	for (const int& spike : spikesVec) nNewSpikes += spike;
 
 	return spikesVec;

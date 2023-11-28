@@ -616,23 +616,6 @@ bool ds_Solve(const SD_MATRIX_WHAT& Code, SD_MATRIX_DATA *pMat, double *X)
 
 }  /* ds_Solve */
 
-/**
- * @brief This function assemble the element matrix for one element and must be called for each
- * (finite) element after the element connectivity have been assembled and the matrix symbolic
- * factorized. To perform this task we also newly require the element incidences. The
- * variable: Dim specifies the dimension of the matrix: Mat which is not required to be equal
- * to the numer of element incidences: nEq.
- * ATTENTION: This function do not generate a run time error if the specified incidences have
- * not been previously defined.
- * NOTE: If the matrix has been specified as symmetric we always use only the upper part of
- * the element matrix.
- * @param [in] pMat0 SD_MATRIX_DATA
- * @param [in] nEq int
- * @param [in] Eq int
- * @param [in] Dim int
- * @param [in] ElMat double
- * @return int
- */
 int ds_AssembleMatrix(SD_MATRIX_DATA *pMat0, const int& nEq, int Eq[], const int& Dim, const double *ElMat)
 {
 	SD_BLOCK_MATRIX_DATA *pMat=NULL;
@@ -1404,13 +1387,11 @@ static void  MmdNumbering(int neqns, int *perm, int *invp, int *qsize, int *nsiz
 *   for marking nodes.
 * Output parameters --
  *  @param nsize -- number of supernodes.
- *  @param perm -- the minimum degree ordering.
- *  @param invp -- the inverse of perm.
+ *  @param perm -- the minimum degree ordering -- used temporarily for degree backward link.
+ *  @param invp -- the inverse of perm -- used temporarily for degree forward link.
  *  @param ncsub -- an upper bound on the number of nonzero subscripts for the compressed storage scheme.
 *  Working parameters --
  *  @param head -- vector for head of degree lists.
- *  @param invp -- used temporarily for degree forward link.
- *  @param perm -- used temporarily for degree backward link.
  *  @param qsize -- vector for size of supernodes.
  *  @param list -- vector for temporary linked lists.
  *  @param marker -- a temporary marker vector.
@@ -1878,17 +1859,6 @@ int ReleaseBlockMatrix( SD_BLOCK_MATRIX_DATA *pMat )
 
 }  // ReleaseBlockMatrix
 
-/**
-* @brief This function assemble the element connnectivity for one or more elements in order to build
-* a sparse matrix format. Of course we only store the upper part of the connectivity matrix
-* because we only consider structure symmetric matrices.
- * @param pMat0 SD_MATRIX_DATA
- * @param nEq int
- * @param Eq (int [])
- * @param nEl int
- * @param Dim int
- * @return int
-*/
 int ds_DefineConnectivity(SD_MATRIX_DATA *pMat0, const int& nEq, int Eq[], const int& nEl, const int& Dim )
 {
 	int e, i, j;

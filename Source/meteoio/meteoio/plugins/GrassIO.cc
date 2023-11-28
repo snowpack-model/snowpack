@@ -19,6 +19,7 @@
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/IOExceptions.h>
 
 #include <sstream>
@@ -188,7 +189,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& option
 {
 	const std::string name( options ); //HACK this should append the default extension
 	if (!FileUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
-	std::ofstream fout;
+	ofilestream fout;
 	fout.open(name.c_str(), ios::out);
 	if (fout.fail()) {
 		throw AccessException(name, AT);

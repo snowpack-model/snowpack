@@ -124,6 +124,16 @@ SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PLUGIN_SYNTHIO ON CACHE BOOL "Compilation SYNTHIO ON or OFF")
 SET(PLUGIN_ZRXPIO OFF CACHE BOOL "Compilation ZRXPIO ON or OFF")
 SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
+###########################################################
+## Additional Options
+###########################################################
+SET(LIMIT_OUT_ACCESS OFF CACHE BOOL "Limit write access of the library to CWD")
+# SET(LIMIT_BASE_DIR ".")
+IF(LIMIT_OUT_ACCESS)
+	add_compile_definitions(LIMIT_WRITE_ACCESS)
+ENDIF()
+SET(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
+add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"")
 
 ###########################################################
 #finally, SET compile flags

@@ -71,6 +71,59 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 			}
 		}
 	}
+	checkMultiValueConsistency();
+}
+
+int findAllCommas(const std::string& str) 
+{
+	size_t index = 0;
+	int occurrences = 0;
+    while ((index = str.find(',', index)) != std::string::npos) {
+        index++;
+		occurrences++;
+    }
+
+	return occurrences;
+}
+
+
+void ACDD::checkMultiValueConsistency()
+{
+	static const std::vector<std::string> creator_keys{"creator_name", "creator_email", "creator_institution", "creator_url"};//, "creator_type"};
+	static const std::vector<std::string> publisher_keys{"publisher_name", "publisher_email", "publisher_url"};//, "publisher_type"};
+
+	std::vector<std::string> creator, publisher;
+
+	bool is_list_creator = false;
+	bool is_list_publisher = false;
+
+	for (size_t ii=0; ii<creator_keys.size(); ii++) {
+		const size_t pos = find( creator_keys[ii] );
+		if (pos!=mio::IOUtils::npos) {
+			creator.push_back( value[pos] );
+			if (value[pos].find(',') != std::string::npos) is_list_creator = true;	
+		}
+		if (ii<publisher_keys.size()) {
+			const size_t pos_p = find(publisher_keys[ii]);
+			if (pos_p != mio::IOUtils::npos) {
+				publisher.push_back(value[pos_p]);
+				if (value[pos].find(',') != std::string::npos) is_list_publisher = true;	
+			}
+		}
+	}
+
+	if (!creator.empty() && is_list_creator) {
+		const int num_creators = findAllCommas(creator[0]);
+		for (size_t ii = 0; ii<creator.size();ii++){
+			if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of creators and " +creator_keys[ii]+" do not match.");
+		}
+	}
+	if (!publisher.empty() && is_list_publisher) {
+		const int num_publishers = findAllCommas(publisher[0]);
+		for (size_t ii = 0; ii<publisher.size();ii++){
+			if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of publishers and " +publisher_keys[ii]+" do not match.");
+		}
+	}
 }
 
 void ACDD::defaultInit()
@@ -108,6 +161,7 @@ void ACDD::defaultInit()
 	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
 	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
 	addAttribute("wmo__wsi", "", "WIGOS_ID");
+	checkMultiValueConsistency();
 }
 
 /**
@@ -225,26 +279,26 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
 	bool found = false;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (vecMeteo[ii].empty()) continue;
+	for (const std::vector<mio::MeteoData>& timeseries : vecMeteo) {
+		if (timeseries.empty()) continue;
 
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
 		if (isLatLon) {
-			ss  << std::fixed << std::setprecision(10) << "(" << vecMeteo[ii].front().meta.position.getLon() << " " << vecMeteo[ii].front().meta.position.getLat() << ")";
+			ss  << std::fixed << std::setprecision(10) << "(" << timeseries.front().meta.position.getLon() << " " << timeseries.front().meta.position.getLat() << ")";
 		} else {
-			ss  << std::fixed << std::setprecision(0) << "(" << vecMeteo[ii].front().meta.position.getEasting() << " " << vecMeteo[ii].front().meta.position.getNorthing() << ")";
+			ss  << std::fixed << std::setprecision(0) << "(" << timeseries.front().meta.position.getEasting() << " " << timeseries.front().meta.position.getNorthing() << ")";
 		}
 		if (epsg==-1) { //first valid point
-			epsg = (isLatLon)? 4326 : vecMeteo[ii].front().meta.position.getEPSG();
+			epsg = (isLatLon)? 4326 : timeseries.front().meta.position.getEPSG();
 			multiPts = ss.str();
 		} else {
-			if (!isLatLon && epsg!=vecMeteo[ii].front().meta.position.getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
+			if (!isLatLon && epsg!=timeseries.front().meta.position.getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
 			multiPts += ", "+ss.str();
 		}
 
-		const double curr_lat = vecMeteo[ii].front().meta.position.getLat();
-		const double curr_lon = vecMeteo[ii].front().meta.position.getLon();
+		const double curr_lat = timeseries.front().meta.position.getLat();
+		const double curr_lon = timeseries.front().meta.position.getLon();
 		found = true;
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
@@ -273,24 +327,24 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
-	for (size_t ii=0; ii<vecLocation.size(); ii++) {
+	for (const mio::Coords& location : vecLocation) {
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
 		if (isLatLon) {
-			ss  << std::fixed << std::setprecision(10) << "(" << vecLocation[ii].getLon() << " " << vecLocation[ii].getLat() << ")";
+			ss  << std::fixed << std::setprecision(10) << "(" << location.getLon() << " " << location.getLat() << ")";
 		} else {
-			ss  << std::fixed << std::setprecision(0) << "(" << vecLocation[ii].getEasting() << " " << vecLocation[ii].getNorthing() << ")";
+			ss  << std::fixed << std::setprecision(0) << "(" << location.getEasting() << " " << location.getNorthing() << ")";
 		}
 		if (epsg==-1) { //first valid point
-			epsg = (isLatLon)? 4326 : vecLocation[ii].getEPSG();
+			epsg = (isLatLon)? 4326 : location.getEPSG();
 			multiPts = ss.str();
 		} else {
-			if (!isLatLon && epsg!=vecLocation[ii].getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
+			if (!isLatLon && epsg!=location.getEPSG()) epsg = 0; //we use 0 as a marker for non-consistent epsg between points
 			multiPts += ", "+ss.str();
 		}
 
-		const double curr_lat = vecLocation[ii].getLat();
-		const double curr_lon = vecLocation[ii].getLon();
+		const double curr_lat = location.getLat();
+		const double curr_lon = location.getLon();
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
@@ -346,14 +400,14 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 	mio::Date set_start( vecMeteo[0].front().date );
 	mio::Date set_end( vecMeteo[0].back().date );
 	int sampling_period = -1;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) { //we must redo station 0 in order to get sampling_period
-		if (vecMeteo[ii].empty()) continue;
-		const mio::Date curr_start( vecMeteo[ii].front().date );
-		const mio::Date curr_end( vecMeteo[ii].back().date );
+	for (const std::vector<mio::MeteoData>& timeseries : vecMeteo) { //we must redo station 0 in order to get sampling_period
+		if (timeseries.empty()) continue;
+		const mio::Date curr_start( timeseries.front().date );
+		const mio::Date curr_end( timeseries.back().date );
 		if (set_start>curr_start) set_start = curr_start;
 		if (set_end<curr_end) set_end = curr_end;
 		
-		const size_t npts = vecMeteo[ii].size();
+		const size_t npts = timeseries.size();
 		if (npts>1) {
 			const int curr_sampling = static_cast<int>( (curr_end.getJulian() - curr_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
 			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;

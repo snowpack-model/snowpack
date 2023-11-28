@@ -20,6 +20,7 @@
 #include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <fstream>
@@ -624,7 +625,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 {
 	const std::string world_file( FileUtils::removeExtension(filename)+".pnw" );
 	if (!FileUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
-	std::ofstream fout(world_file.c_str(), ios::out);
+	ofilestream fout(world_file.c_str(), ios::out);
 	if (fout.fail()) throw AccessException(world_file, AT);
 
 	const double cellsize = grid_in.cellsize;

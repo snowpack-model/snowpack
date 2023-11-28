@@ -18,6 +18,7 @@
 */
 
 #include <meteoio/IOManager.h>
+#include <meteoio/FStream.h>
 
 using namespace std;
 
@@ -265,6 +266,7 @@ void IOManager::initIOManager()
 	if (ts_mode!=IOUtils::STD) initVirtualStations();
 
 	cfg.getValue("write_resampled_grids", "GridInterpolations1D", write_resampled_grids, IOUtils::nothrow);
+	setOfstreamDefault(cfg);
 }
 
 void IOManager::initVirtualStations()
@@ -305,6 +307,12 @@ void IOManager::clear_cache()
 	tsm1.clear_cache( TimeSeriesManager::ALL );
 	tsm2.clear_cache( TimeSeriesManager::ALL );
 	gdm1.clear_cache();
+}
+
+void IOManager::setOfstreamDefault(const Config& i_cfg)
+{
+	ofilestream::write_directories_default = i_cfg.get("WRITE_DIRECTORIES", "Output", true);
+	ofilestream::keep_old_files = i_cfg.get("KEEP_OLD_FILES", "Output", false);
 }
 
 size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)

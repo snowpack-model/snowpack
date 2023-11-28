@@ -298,7 +298,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	//Watertransport models
 	cfg.getValue("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", watertransportmodel_snow);
 	cfg.getValue("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", watertransportmodel_soil);
-	if (variant!="SEAICE" && coupled_phase_changes && watertransportmodel_soil=="RICHARDSEQUATION")
+	if (variant!="SEAICE" && coupled_phase_changes && useSoilLayers && watertransportmodel_soil=="RICHARDSEQUATION")
 		throw IOException("COUPLEDPHASECHANGES cannot be set to true when WATERTRANSPORTMODEL_SOIL == RICHARDSEQUATION! Please correct your ini file.", AT);
 
 	//Indicate if the meteo values can be considered at constant height above the snow surface (e.g., Col de Porte measurement method)
@@ -737,9 +737,14 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
 		}
 
 		// Net longwave radiation: NON-linear dependence on snow surface temperature
-		const double delta = SnLaws::compLWRadCoefficient( T_iter, T_air, Mdata.ea);
-		Se[1][1] += delta;
-		Fe[1] += delta * pow( Mdata.ea, 0.25 ) * T_air;
+		if (Mdata.lw_net == IOUtils::nodata) {
+			const double delta = SnLaws::compLWRadCoefficient( T_iter, T_air, Mdata.ea);
+			Se[1][1] += delta;
+			Fe[1] += delta * pow( Mdata.ea, 0.25 ) * T_air;
+		} else {
+			// When NET_LW is provided, we force explicitly
+			Fe[1] += Bdata.lw_net;
+		}
 
 		// Because of the implicit time integration, must subtract this term from the flux ....
 		Fe[1] -= Se[1][1] * T_snow;
@@ -1013,7 +1018,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	}
 	// Now treat sea ice variant, in which ocean heat flux is used already at this point to build or destroy sea ice based on the net energy balance, so just set the temperature of the lowest node to melting.
 	if (variant == "SEAICE") {
-		NDS[0].T = SeaIce::calculateMeltingTemperature(Xdata.Seaice->OceanSalinity);
+		NDS[0].T = Xdata.Seaice->calculateMeltingTemperature(Xdata.Seaice->OceanSalinity);
 	}
 
 	// Copy Temperature at time0 into First Iteration
@@ -1155,7 +1160,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
 					const double ThetaWater_new = (Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * (Constants::density_ice / Constants::density_water));
 					const double BrineSal_new = (ThetaWater_new == 0.) ? (0.) : (Xdata.Edata[e].salinity / ThetaWater_new);
-					Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+					Xdata.Edata[e].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(BrineSal_new);
 				}
 			}
 			EL_INCID( static_cast<int>(e), Ie );
@@ -1512,13 +1517,7 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	elem.h = Constants::undefined;	//Pressure head not initialized yet
 
 	//Initial snow salinity
-	if (variant == "SEAICE" ) {
-		elem.salinity = SeaIce::InitSnowSalinity;
-		const double BrineSal_new = (elem.theta[WATER] == 0.) ? (0.) : (elem.salinity / elem.theta[WATER]);
-		elem.meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
-	} else {
-		elem.meltfreeze_tk = Constants::meltfreeze_tk;
-	}
+	if (variant == "SEAICE" ) elem.salinity = SeaIce::InitSnowSalinity;
 
 	double p_vapor = Atmosphere::vaporSaturationPressure(elem.Te);
 	elem.rhov = Atmosphere::waterVaporDensity(elem.Te, p_vapor);
@@ -1611,7 +1610,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 					EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
 					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
 				}
-
+				EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
 				Xdata.ColdContent += EMS[e].coldContent(); //update cold content
 
 				// Now adjust default new element values to technical snow (mk = 6)
@@ -1927,6 +1926,13 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 					EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
 					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
 				}
+				if (variant == "SEAICE" ) {
+					const double BrineSal_new = (EMS[e].theta[WATER] == 0.) ? (0.) : (EMS[e].salinity / EMS[e].theta[WATER]);
+					EMS[e].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(BrineSal_new);
+				} else {
+					EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
+				}
+
 				Xdata.ColdContent += EMS[e].coldContent(); //update cold content
 			}   // End elements
 
@@ -2240,7 +2246,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 						if (Xdata.Seaice != NULL) {
 							// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
 							const double BrineSal_new = (Xdata.Edata[e].theta[WATER] == 0.) ? (0.) : (Xdata.Edata[e].salinity / Xdata.Edata[e].theta[WATER]);
-							Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+							Xdata.Edata[e].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(BrineSal_new);
 						}
 					}
 				}

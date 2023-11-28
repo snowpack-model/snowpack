@@ -35,36 +35,44 @@ namespace mio {
  * @details A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
  * the whole process as simple as possible. It is however possible to provide some of these attributes in the INI configuration file, using the
  * following keys (all in the [Output] section):
- *  - ACDD_CREATOR: the name of the creator of the data set (default: login name);
- *  - ACDD_CREATOR_EMAIL: the email of the creator;
- *  - ACDD_CREATOR_INSTITUTION: the institution of the creator; should uniquely identify the creator's institution;
- *  - ACDD_CREATOR_URL: the URL of the creator principally responsible for creating this data;
- *  - ACDD_CREATOR_TYPE: either person, group, institution, or position (default: person);
- *  - ACDD_INSTITUTION: the institution providing the data set (default: domain name);
- *  - ACDD_PUBLISHER: the name of the person / entity responsible for publishing the data file or product to users, with its current metadata and format;
- *  - ACDD_PUBLISHER_EMAIL: the email of the person / entity responsible for publishing the data file or product to users;
- *  - ACDD_PUBLISHER_URL: the url of the person / entity responsible for publishing the data file or product to users;
- *  - ACDD_PUBLISHER_TYPE: either person, group, institution, or position (default: person);
- *  - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
- *  - ACDD_KEYWORDS_VOCABULARY: the unique name or identifier of the vocabulary from which keywords are taken (default: AGU);
- *  - ACDD_TITLE: a short title for the data set;
- *  - ACDD_PROJECT: the scientific project that created the data;
- *  - ACDD_PROGRAM: The overarching program(s) of which the dataset is a part;
- *  - ACDD_SOURCE: The method of production of the original data;
- *  - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
- *  - ACDD_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
- *  - ACDD_PROCESSING_LEVEL: a textual description of the processing level
- *  - ACDD_SUMMARY: a paragraph describing the dataset;
- *  - ACDD_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present;
- *  - ACDD_COMMENT: miscellaneous informartion about the dataset;
- *  - ACDD_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
- *  - ACDD_METADATA_LINK: A URL/DOI that gives more complete metadata;
- *  - ACDD_REFERENCES: Published or web-based references that describe the data or methods used to produce it;
- *  - ACDD_LICENSE: describes the license applicable to the dataset;
- *  - ACDD_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0);
- *  - ACDD_ACTIVITY_TYPE: Activity types are used to identify the origin of the dataset. Pick one from this <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type">controlled vocabulary</a>;
- *  - ACDD_OPERATIONAL_STATUS: The current operational status of the product. Choose from the <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status">controlled vocabulary</a>;
- *  - WIGOS_ID: although this is not an ACDD key, it can be very useful in linking datasets together through their <a href="https://oscar.wmo.int/surface/#/">WIGOS ID</a>.
+ *  - Overview of the dataset
+ *     - ACDD_TITLE: a short title for the data set;
+ *     - ACDD_SUMMARY: a paragraph describing the dataset;
+ *     - ACDD_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present;
+ *     - ACDD_COMMENT: miscellaneous informartion about the dataset;
+ *     - ACDD_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
+ *     - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
+ *     - ACDD_KEYWORDS_VOCABULARY: the unique name or identifier of the vocabulary from which keywords are taken (default: AGU);
+ *  - Linking the dataset to other resources and metadata
+ *     - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
+ *     - ACDD_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
+ *     - ACDD_METADATA_LINK: A URL/DOI that gives more complete metadata;
+ *     - ACDD_REFERENCES: Published or web-based references that describe the data or methods used to produce it;
+ *     - WIGOS_ID: although this is not an ACDD key, it can be very useful in linking datasets together through their <a href="https://oscar.wmo.int/surface/#/">WIGOS ID</a>.
+ *  - Origin of the data
+ *     - ACDD_PROJECT: the scientific project that created the data;
+ *     - ACDD_PROGRAM: The overarching program(s) of which the dataset is a part;
+ *     - ACDD_SOURCE: The method of production of the original data;
+ *     - ACDD_ACTIVITY_TYPE: Activity types are used to identify the origin of the dataset. Pick one from this <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type">controlled vocabulary</a>;
+ *  - Contact information regarding the data set
+ *     - ACDD_INSTITUTION: the institution providing the data set (default: domain name);
+ *     - The following can be a list of comma-delimited values but must be kept in-sync (ie if providing two creators, then two emails must also be provided, etc):
+ *        - ACDD_CREATOR: the name of the creator of the data set (default: login name);
+ *        - ACDD_CREATOR_EMAIL: the email of the creator;
+ *        - ACDD_CREATOR_INSTITUTION: the institution of the creator; should uniquely identify the creator's institution;
+ *        - ACDD_CREATOR_URL: the URL of the creator principally responsible for creating this data;
+ *        - ACDD_CREATOR_TYPE: either person, group, institution, or position (default: person);
+ *     - The following can be a list of comma-delimited values but must be kept in-sync (ie if providing two publishers, then two emails must also be provided, etc):
+ *        - ACDD_PUBLISHER: the name of the person / entity responsible for publishing the data file or product to users, with its current metadata and format;
+ *        - ACDD_PUBLISHER_EMAIL: the email of the person / entity responsible for publishing the data file or product to users;
+ *        - ACDD_PUBLISHER_URL: the url of the person / entity responsible for publishing the data file or product to users;
+ *        - ACDD_PUBLISHER_TYPE: either person, group, institution, or position (default: person);
+ *  - Miscellaneous
+ *     - ACDD_PROCESSING_LEVEL: a textual description of the processing level
+ *     - ACDD_LICENSE: describes the license applicable to the dataset;
+ *     - ACDD_PRODUCT_VERSION: Version identifier of the data file or product as assigned by the data creator (default: 1.0);
+ *     - ACDD_OPERATIONAL_STATUS: The current operational status of the product. Choose from the <a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status">controlled vocabulary</a>;
+ *
  * 
  * This list contains all mandatory ACDD fields as listed at the <a href="https://adc.met.no/node/4">Arctic Data Centre</a> as well as most of the 
  * optional fields (please note that the geospatial and time coverage are automatically generated based on the data itself and the history is 
@@ -135,6 +143,7 @@ class ACDD {
 	private:
 		void defaultInit();
 		size_t find(const std::string& search_name) const;
+		void checkMultiValueConsistency();
 		
 		std::vector<std::string> name, cfg_key, value;
 		bool enabled; //helper boolean for callers to know if this object should be used or not
