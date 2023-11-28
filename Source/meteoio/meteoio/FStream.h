@@ -23,34 +23,43 @@
 #include <fstream>
 #include <meteoio/IOManager.h>
 
-
 namespace mio {
 
+/**
+* @class ofilestream
+* @brief A class that extends std::ofstream, adding some output functionality. Limiting the write access of the software, 
+*        writing non-existing output directories, and adding a timestamp to output filenames.
+*
+* @author Patrick Leibersperger
+* @date   2023-11-21
+*/
 class ofilestream : public std::ofstream
 {
     public:
-        ofilestream(): warn_abs_path(true) {}
+        ofilestream() {}
         ofilestream(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const char* filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, std::ios_base::openmode mode = std::ios_base::out);
         ofilestream(const std::string filename, const Config& cfgreader, std::ios_base::openmode mode = std::ios_base::out);
-        ofilestream(const char* filename, bool write_directories, std::ios_base::openmode mode = std::ios_base::out);
-        void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
 
-        bool getDefault();
+
+        void open(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+        static void createDirectoriesOfFile(const char* filename);
+
+        static bool getDefault();
+        static std::string getLimitBaseDir();
 
     private:
-		std::string initialize(const char* filename);
-        std::string initialize(const char* filename, const Config& cfgreader);
-        std::string initialize(const char* filename, bool write_directories);
+        static std::string initializeFilesystem(const char* filename, const Config& cfgreader);
+        static std::string initializeFilesystem(const char* filename, bool write_directories);
         static bool write_directories_default;
         static bool keep_old_files;
         friend void IOManager::setOfstreamDefault(const Config& i_cfg);
 
-        std::string cutPathToCWD(const std::string &path);
-        std::string limitAccess(std::string path, const bool& write_directories);
+        static std::string cutPathToLimitDir(const std::string &path);
+        static std::string limitAccess(std::string path, const bool& write_directories);
 
-        bool warn_abs_path;
+        static bool warn_abs_path;
 };
 }
 

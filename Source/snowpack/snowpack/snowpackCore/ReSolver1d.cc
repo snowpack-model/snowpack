@@ -1479,7 +1479,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 								s[i]=tmp;					//Reset source/sink term to original value
 								solver_result=-1;				//Trigger rewind
 							} else {
-								std::cout << "[W] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied with dt=" << dt << ". Term reduced from " << tmp << " to " << s[i] << ".\n";
+								std::cout << "[W] [" << date.toString(mio::Date::ISO) << "] ReSolver1d.cc: for layer " << i << ", prescribed source/sink term could not be applied with dt=" << dt << ". Term reduced from " << tmp << " to " << s[i] << ".\n";
 							}
 						}
 					}
@@ -1785,28 +1785,14 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 									std::cout << "BEFORE [" << i << std::fixed << std::setprecision(15) << "]; theta_w: " << theta_np1_mp1[i] << " theta_i_np1_m: " << theta_i_np1_m[i] << " theta_s: " << EMS[i].VG.theta_s << std::setprecision(3) << "  T: " << tmp_T << std::setprecision(8) << "  rho: " << tmp_rho << "  cp: " << tmp_c_p << " ColdC: " << tmp_rho * tmp_c_p * tmp_T * EMS[i].L << "\n" << std::setprecision(6);
 								}
 
-								//Determine maximum possible change in ice content, which should be between 0, and theta_water > theta_d (all possible water freezes). Then maximum ice content is determined based on the temperature difference between element and EMS[i].meltfreeze_tk.
-								//const double max_delta_ice=(std::min((theta_np1_mp1[i]-theta_d[i])*(Constants::density_ice/Constants::density_water), std::max(0., EMS[i].meltfreeze_tk-(EMS[i].Te/*+delta_Te*/)) * ((EMS[i].c[TEMPERATURE] * EMS[i].Rho) / ( Constants::density_ice * Constants::lh_fusion ))));
-								double max_delta_ice;
-								if((EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i]) > EMS[i].meltfreeze_tk) {
-									// Melt: either all ice will disappear, or a fraction based on available energy
-									max_delta_ice=-1.*theta_i_n[i];
-								} else {
-									// Freeze: either all available water will freeze, or a fraction based on available energy.
-									max_delta_ice=(theta_np1_mp1[i]-0.)*(Constants::density_water/Constants::density_ice);
-								}
-
 								bool BS_converged=false;
 								double ak=0., bk=0., ck=0.;	//These are values for changes in ice content.
 								double delta_Te_ak=0., delta_Te_bk=0., delta_Te_ck=0., delta_w_ak=0., delta_w_bk=0., delta_w_ck=0.;
 								double ck1=0, delta_Te_ck1=0., delta_w_ck1=0.;
-								if(max_delta_ice>0.) {
-									ak=0.;
-									bk=max_delta_ice;
-								} else {
-									ak=max_delta_ice;
-									bk=0.;
-								}
+
+								ak=-1.*theta_i_np1_m[i];							// Left starting point = all ice melts
+								bk=(theta_np1_mp1[i]-0.)*(Constants::density_water/Constants::density_ice);	// Right starting point = all water freezes
+
 								// Deal with special cases:
 								// 1) So much energy available that all ice will melt (note: this case will not be properly solved by Bisection-Secant method.)
 								if((EMS[i].meltfreeze_tk-(EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i])) * ((tmp_c_p * tmp_rho) / ( Constants::density_ice * Constants::lh_fusion )) < -1.*theta_i_n[i] && BS_converged==false) {
@@ -1815,7 +1801,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 									delta_Te_ck=((theta_i_np1_m[i] - theta_i_n[i]) + ck) / ((tmp_c_p * tmp_rho) / ( Constants::density_ice * Constants::lh_fusion ));	//Change in element temperature associated with change in ice content
 									if(WriteDebugOutput) {
 										const double tmp_T = EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_i[i] + delta_Te_ck;
-										std::cout << "BS_ITER [" << BS_iter << std::scientific << "], case 2: a=" << ak << " b=" << bk << " c=" << ck << " (max: " << max_delta_ice << ") " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
+										std::cout << "BS_ITER [" << BS_iter << std::scientific << "], case 2: a=" << ak << " b=" << bk << " c=" << ck << " " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
 									}
 									BS_converged=true;
 								}
@@ -1830,7 +1816,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 									}
 									if(WriteDebugOutput) {
 										const double tmp_T = EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_i[i] + delta_Te_ck;
-										std::cout << "BS_ITER [" << BS_iter << std::scientific << "], case 1: a=" << ak << " b=" << bk << " c=" << ck << " (max: " << max_delta_ice << ") " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
+										std::cout << "BS_ITER [" << BS_iter << std::scientific << "], case 1: a=" << ak << " b=" << bk << " c=" << ck << " " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
 									}
 									BS_converged=true;
 								}
@@ -1849,32 +1835,48 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 									delta_Te_ck=((theta_i_np1_m[i] - theta_i_n[i]) + ck) / ((tmp_c_p * tmp_rho) / ( Constants::density_ice * Constants::lh_fusion ));			//Change in element temperature associated with change in ice content
 									delta_w_ck=(EMS[i].VG.fromHtoTHETA(hw0+(Constants::lh_fusion/(Constants::g*EMS[i].meltfreeze_tk))*std::min(0., (EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_ck)-EMS[i].meltfreeze_tk))) - theta_np1_mp1[i];
 									//Now check if bisect or secant is a better approximation
-									if(fabs(delta_w_ck + ck*(Constants::density_ice/Constants::density_water))>fabs(delta_w_ck1+ck1*(Constants::density_ice/Constants::density_water))) {
+									const double err_ak = EMS[i].VG.fromHtoTHETA(hw0+(Constants::lh_fusion/(Constants::g*EMS[i].meltfreeze_tk))*((EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_ak)-EMS[i].meltfreeze_tk))   +   (((theta_i_np1_m[i] - theta_i_n[i]) + ak)*(Constants::density_ice/Constants::density_water))   -   EMS[i].VG.fromHtoTHETA(hw0);
+									const double err_bk = EMS[i].VG.fromHtoTHETA(hw0+(Constants::lh_fusion/(Constants::g*EMS[i].meltfreeze_tk))*((EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_bk)-EMS[i].meltfreeze_tk))   +   (((theta_i_np1_m[i] - theta_i_n[i]) + bk)*(Constants::density_ice/Constants::density_water))   -   EMS[i].VG.fromHtoTHETA(hw0);
+									const double err_ck = EMS[i].VG.fromHtoTHETA(hw0+(Constants::lh_fusion/(Constants::g*EMS[i].meltfreeze_tk))*((EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_ck)-EMS[i].meltfreeze_tk))   +   (((theta_i_np1_m[i] - theta_i_n[i]) + ck)*(Constants::density_ice/Constants::density_water))   -   EMS[i].VG.fromHtoTHETA(hw0);
+									const double err_ck1 = EMS[i].VG.fromHtoTHETA(hw0+(Constants::lh_fusion/(Constants::g*EMS[i].meltfreeze_tk))*((EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_ck1)-EMS[i].meltfreeze_tk))   +   (((theta_i_np1_m[i] - theta_i_n[i]) + ck1)*(Constants::density_ice/Constants::density_water))   -   EMS[i].VG.fromHtoTHETA(hw0);
+									double err_c = err_ck;
+									//if(fabs(err_ck) > fabs(err_ck1)) {	// For now, only consider bisect. Secant calculation needs verification.
 										ck=ck1;
 										delta_Te_ck=delta_Te_ck1;
 										delta_w_ck=delta_w_ck1;
-									}
+										err_c = err_ck1;
+									//}
 									if(WriteDebugOutput) {
 										const double tmp_T = EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_i[i] + delta_Te_ck;
-										std::cout << "BS_ITER [" << BS_iter << std::scientific << "]: a=" << ak << " b=" << bk << " c=" << ck << " (max: " << max_delta_ice << ") " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
+										std::cout << "BS_ITER [" << BS_iter << std::scientific << "]: a=" << ak << " b=" << bk << " c=" << ck << " " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
 									}
 									//Now check if convergence is achieved
-									if(fabs(delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) < SF_epsilon) {
+									if(fabs(err_c) < SF_epsilon) {
 										delta_w_ck=-1.*(ck*(Constants::density_ice/Constants::density_water));	//Make delta in water equal to ice, so we keep mass-balance.
 										BS_converged=true;
-									} else if(fabs(delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) < SF_epsilon) {
+									} else if(fabs(err_ak) < SF_epsilon) {
 										ck=ak;
 										delta_w_ck=-1.*(ck*(Constants::density_ice/Constants::density_water));	//Make delta in water equal to ice, so we keep mass-balance.
 										delta_Te_ck=delta_Te_ak;
 										BS_converged=true;
-									} else if(fabs(delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) < SF_epsilon) {
+									} else if(fabs(err_bk) < SF_epsilon) {
 										ck=bk;
 										delta_w_ck=-1.*(ck*(Constants::density_ice/Constants::density_water));	//Make delta in water equal to ice, so we keep mass-balance.
 										delta_Te_ck=delta_Te_bk;
 										BS_converged=true;
+									} else if(err_ak * err_bk > 0.) {    //Multiply to check if same sign. If so, the root is outside of the search interval interval.
+										BS_converged=true;
+										if(fabs(err_ak) < fabs(err_bk)) {
+											ck=ak;
+											delta_Te_ck=delta_Te_ak;
+										} else {
+											ck=bk;
+											delta_Te_ck=delta_Te_bk;
+										}
+										delta_w_ck=-1.*(ck*(Constants::density_ice/Constants::density_water));	//Make delta in water equal to ice, so we keep mass-balance.
 									} else {
 										//And determine whether to update the left or right point
-										if((delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) * (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) > 0.) {	//Multiply to check if same sign
+										if(err_ak * err_c > 0.) {    //Multiply to check if same sign
 											ak=ck;
 										} else {
 											bk=ck;
@@ -1882,10 +1884,10 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 									}
 								}
 								if(BS_converged==false) {
-									if(WriteDebugOutput) std::cout << "[W] ReSolver1d.cc: Bisect-Secant method failed to converge in soil freezing with dt = " << dt << ".\n";
+									std::cout << "[W] [" << date.toString(mio::Date::ISO) << "] ReSolver1d.cc: Bisect-Secant method failed to converge in soil freezing with dt = " << dt << ".\n";
 									if(WriteDebugOutput) {
 										const double tmp_T = EMS[i].Te + delta_Te_adv[i] + delta_Te_adv_i[i] + delta_Te[i] + delta_Te_i[i] + delta_Te_ck;
-										std::cout << "  -- BS_ITER [" << BS_iter << std::scientific << "]: a=" << ak << " b=" << bk << " c=" << ck << " (max: " << max_delta_ice << ") " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
+										std::cout << "  -- BS_ITER [" << BS_iter << std::scientific << "]: a=" << ak << " b=" << bk << " c=" << ck << " " << delta_w_ck << " " << tmp_T << " " << EMS[i].meltfreeze_tk << ": fa: " << (delta_w_ak + ak*(Constants::density_ice/Constants::density_water)) << " fb: " << (delta_w_bk + bk*(Constants::density_ice/Constants::density_water)) << " fc: " << (delta_w_ck + ck*(Constants::density_ice/Constants::density_water)) << "\n" << std::fixed;
 										std::cout << "  -- " << std::setprecision(15) << EMS[i].meltfreeze_tk << " " << EMS[i].Te << " " << delta_Te_adv[i] << " " << delta_Te_adv_i[i] << " " << delta_Te[i] << "   " << EMS[i].theta[WATER] << " " << EMS[i].theta[ICE] << "\n" << std::setprecision(6);
 									}
 									max_delta_h=2.*MAX_ALLOWED_DELTA_H;
@@ -2066,10 +2068,10 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 					DoThrow=true;
 				} else {
 					if(seq_safemode>3) {
-						std::cout << "[E] ERROR in Richards-Equation solver: no convergence! SafeMode was not able to continue simulation!\n";
+						std::cout << "[E] [" << date.toString(mio::Date::ISO) << "] ERROR in Richards-Equation solver: no convergence! SafeMode was not able to continue simulation!\n";
 						DoThrow=true;
 					} else {
-						std::cout << "[W] WARNING in Richards-Equation solver: no convergence! SafeMode was used to continue simulation! [" << seq_safemode << ", stn=" << Xdata.meta.stationID << "].\n";
+						std::cout << "[W] [" << date.toString(mio::Date::ISO) << "] WARNING in Richards-Equation solver: no convergence! SafeMode was used to continue simulation! [" << seq_safemode << ", stn=" << Xdata.meta.stationID << "].\n";
 					}
 				}
 				std::cout << "    POSSIBLE SOLUTIONS:\n  ========================================================================================\n";

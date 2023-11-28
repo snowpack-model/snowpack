@@ -43,6 +43,23 @@
 #include <meteoio/FStream.h>
 #include <regex>
 
+//helper functions in file-scope only
+void make_directory(const std::string &path)
+{
+	errno = 0;
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
+    const int status = mkdir(path.c_str());
+#else
+    const int status =  mkdir(path.c_str(), 0777);
+#endif
+	if (status==-1) {
+		std::ostringstream oss;
+		oss << "Creating directory \'" << path << "\' failed. Reason: " << std::strerror(errno) << "\n";
+		throw mio::IOException(oss.str(), AT);
+	}
+}
+
+
 namespace mio {
 namespace FileUtils {
 //we don't want to expose this function to the user, so we keep it local
@@ -69,7 +86,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(std::string in_path, const bool& resolve)
+std::string cleanPath(std::string in_path, const bool& resolve, const bool& silent)
 {
 	if (!resolve) { //do not resolve links, relative paths, etc
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
@@ -95,7 +112,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 			free(real_path);
 			return tmp;
 		} else {
-			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
+			if (!silent) std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif
@@ -205,7 +222,7 @@ bool isWindowsPath(const std::string& path) {
 	return std::regex_search(path, e);
 }
 
-void createDirectories(const std::string &path, const bool verbose)
+void createDirectories(const std::string &path)
 {
 	if (path.empty())
 		throw mio::IOException("Can not create empty directory", AT);
@@ -215,31 +232,18 @@ void createDirectories(const std::string &path, const bool verbose)
 	std::string item;
 
 	// recursively go through the path and create nonexisting directories
-	while (std::getline(ps, item, '/'))
-	{
+	while (std::getline(ps, item, '/'))	{
 		tmp_path += item.empty() ? "/" : item;
 		// check if path already exists
-		if (directoryExists(tmp_path))
-		{
+		if (directoryExists(tmp_path)) {
 			if (tmp_path != "/") tmp_path += "/";
 			continue;
-		}
-		else
-		{
-			bool check_creation = mkdir(tmp_path.c_str(), 0777);
-			if (verbose)
-			{
-				if (!check_creation)
-					std::cout << "Directory " << tmp_path << " created" << std::endl;
-				if (check_creation)
-					std::cout << "Directory " << tmp_path << " could not be created" << std::endl;
-			}
+		} else {
+			make_directory( tmp_path );
 			tmp_path += "/";
 		}
 	}
 }
-
-
 
 #if defined _WIN32 || defined __MINGW32__
 std::string getCWD()

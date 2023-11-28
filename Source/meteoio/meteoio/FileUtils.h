@@ -60,9 +60,8 @@ namespace FileUtils {
 	 * @brief creates the directory tree for the given path, including missing intermediate directories
 	 * (gives only rw permissions), only takes paths delimited with '/'
 	 * @param path directory tree to create, cannot include filenames
-	 * @param verbose print additional information about the creation of directories (default=false)
 	 */
-	void createDirectories(const std::string &path, const bool verbose=false);
+	void createDirectories(const std::string &path);
 
 	bool validFileAndPath(const std::string& filename);
 
@@ -74,7 +73,7 @@ namespace FileUtils {
 	* @param in_path the path string to cleanup
 	* @param resolve resolve links, convert relative paths, etc? (default=false)
 	*/
-	std::string cleanPath(std::string in_path, const bool& resolve=false);
+	std::string cleanPath(std::string in_path, const bool& resolve=false, const bool& silent=false);
 
 	/**
 	* @brief returns the extension part of a given filename.

@@ -550,7 +550,9 @@ std::istream& operator>>(std::istream& is, SurfaceFluxes& data)
  * @brief Initialize all the CData elements value with values by default or
  *with values read from the SNO file.
  *This function is called in SnowStation::initialize, whch is called by XXX in the main().
- * @param snow soil data SN_SNOWSOIL_DATA& SSdata created in the main.
+ * @param SSdata soil data SN_SNOWSOIL_DATA& SSdata created in the main.
+ * @param useCanopyModel set to true if the canopy model is used
+ * @param isAlpine3D set to true when calling from Alpine3D in order to prevent the generation of warnings
  * @author Adrien Michel
  */
 
@@ -577,8 +579,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 
 	/// RADIATION BALANCE
 	can_alb_dry = SSdata.Canopy_alb_dry;  // Albedo of dry canopy (calibr: 0.09, Alptal)
-	if(useCanopyModel &&  (can_alb_dry < 0.0 || can_alb_dry> 1.0 || can_alb_dry == mio::IOUtils::nodata ))
-{
+	if(useCanopyModel &&  (can_alb_dry < 0.0 || can_alb_dry> 1.0 || can_alb_dry == mio::IOUtils::nodata )) {
 		if(!isAlpine3D){
 			std::stringstream msg;
 			msg << "Value provided for CanopyAlbedoDry (" << can_alb_dry << ") in soil file is not valid, the default value of 0.11 will be used.";
@@ -588,8 +589,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	}
 
 	can_alb_wet = SSdata.Canopy_alb_wet;  // Albedo of wet canopy (calibr: 0.09, Alptal)
-	if(useCanopyModel &&  (can_alb_wet < 0.0 || can_alb_wet > 1.0 ||  can_alb_wet == mio::IOUtils::nodata ))
-	{
+	if(useCanopyModel &&  (can_alb_wet < 0.0 || can_alb_wet > 1.0 ||  can_alb_wet == mio::IOUtils::nodata )) {
 		if(!isAlpine3D){
 			std::stringstream msg;
 			msg << "Value provided for CanopyAlbedoWet (" << can_alb_wet << ") in soil file is not valid, the default value of 0.11 will be used.";
@@ -599,8 +599,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	}
 
 	can_alb_snow = SSdata.Canopy_alb_snow;  // Albedo of snow covered albedo (calibr: 0.35, Alptal)
-	if(useCanopyModel &&  (can_alb_snow < 0.0 || can_alb_snow > 1.0 || can_alb_snow == mio::IOUtils::nodata ))
-	{
+	if(useCanopyModel &&  (can_alb_snow < 0.0 || can_alb_snow > 1.0 || can_alb_snow == mio::IOUtils::nodata )) {
 		if(!isAlpine3D){
 			std::stringstream msg;
 			msg << "Value provided for CanopyAlbedoSnow (" << can_alb_snow << ") in soil file is not valid, the default value of 0.35 will be used.";
@@ -612,8 +611,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	krnt_lai = .75;       // Radiation transmissivity parameter, in the range 0.4-0.8 if the true LAI is used; higher if optical LAI is used.
 	// (calibrated on Alptal)
 	can_diameter = SSdata.Canopy_diameter;  // average canopy (tree) diameter [m], parameter in the new radiation transfer model
-	if(!isAlpine3D && useCanopyModel &&  (can_diameter < 0.0 || can_diameter == mio::IOUtils::nodata ))
-	{
+	if(!isAlpine3D && useCanopyModel &&  (can_diameter < 0.0 || can_diameter == mio::IOUtils::nodata )) {
 		if(!isAlpine3D){
 			std::stringstream msg;
 			msg << "Value provided for CanopyDiameter (" << can_diameter << ") in soil file is not valid, the default value of 1.0 will be used.";
@@ -628,8 +626,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	biomass_density = 900.;		// from Linroth et al., 2013 (Kg m-3)
 
 	lai_frac_top_default = SSdata.Canopy_lai_frac_top_default;	// fraction of total LAI that is attributed to the uppermost layer. Here calibrated for Alptal.
-	if(!isAlpine3D && useCanopyModel &&  (lai_frac_top_default < 0.0 || lai_frac_top_default > 1.0 || lai_frac_top_default == mio::IOUtils::nodata ))
-	{
+	if(!isAlpine3D && useCanopyModel &&  (lai_frac_top_default < 0.0 || lai_frac_top_default > 1.0 || lai_frac_top_default == mio::IOUtils::nodata )) {
 		if(!isAlpine3D){
 			std::stringstream msg;
 			msg << "Value provided for CanopyFracLAIUpperLayer (" << lai_frac_top_default << ") in soil file is not valid, the default value of 0.5 will be used.";
@@ -688,8 +685,7 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	ec = 1.0; ///< longwave emissivity (1)
 // parameters
 	lai = SSdata.Canopy_LAI;
-	if(useCanopyModel && (lai < 0.0 || lai == mio::IOUtils::nodata ))
-	{
+	if(useCanopyModel && (lai < 0.0 || lai == mio::IOUtils::nodata )) {
 		std::stringstream msg;
 		msg << "Value provided for LAI (" << lai << ") in soil file is not valid.";
 		throw UnknownValueException(msg.str(), AT);
@@ -700,16 +696,14 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	zdispl = height*0.66;
 
 	height = SSdata.Canopy_Height;
-	if(useCanopyModel && (height < 0.0 || height == mio::IOUtils::nodata ))
-	{
+	if(useCanopyModel && (height < 0.0 || height == mio::IOUtils::nodata )) {
 		std::stringstream msg;
 		msg << "Value provided for height (" << height << ") in soil file is not ialid.";
 		throw UnknownValueException(msg.str(), AT);
 	}
 
 	direct_throughfall = SSdata.Canopy_Direct_Throughfall;
-	if(useCanopyModel && (direct_throughfall < 0.0 || direct_throughfall >1.0 || direct_throughfall == mio::IOUtils::nodata ))
-	{
+	if(useCanopyModel && (direct_throughfall < 0.0 || direct_throughfall >1.0 || direct_throughfall == mio::IOUtils::nodata )) {
 		std::stringstream msg;
 		msg << "Value provided for direct throughfall (" << direct_throughfall << ") in soil file is not valid.";
 		throw UnknownValueException(msg.str(), AT);
@@ -762,9 +756,8 @@ void CanopyData::initialize(const SN_SNOWSOIL_DATA& SSdata, const bool useCanopy
 	QStrunks = 0.; ///< sensible heat flux from trunks (>0 if heat lost from trunk)
 	forestfloor_alb = 0.; ///< albedo of the forest floor
 	BasalArea = SSdata.Canopy_BasalArea; ///< basal area of trees on the stand
-	if(useCanopyModel && (BasalArea < 0.0 || BasalArea == mio::IOUtils::nodata ))
-	{
-		if(!isAlpine3D){
+	if(useCanopyModel && (BasalArea < 0.0 || BasalArea == mio::IOUtils::nodata )) {
+		if(!isAlpine3D) {
 			std::stringstream msg;
 			msg << "Value provided for CanopyBasalArea (" << BasalArea << ") in soil file is not valid, the default value of 	0.004 will be used.";
 			prn_msg(__FILE__, __LINE__, "wrn", Date(),msg.str().c_str());
@@ -1398,7 +1391,7 @@ bool ElementData::checkVolContent()
 	for (unsigned int i = 0; i < N_COMPONENTS; i++) {
 		sum += theta[i];
 	}
-	if (sum <= 1. - Constants::eps || sum >= 1. + Constants::eps) {
+	if (sum < 1. - 2.*Constants::eps || sum > 1. + 2.*Constants::eps) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "SUM of volumetric contents = %1.4f", sum);
 		ret = false;
 	}

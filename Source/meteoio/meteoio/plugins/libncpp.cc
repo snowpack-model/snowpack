@@ -57,7 +57,7 @@ inline std::vector<std::string> initDimensionNames()
 const std::vector<std::string> dimnames( initDimensionNames() );
 
 void open_file(const std::string& filename, const int& omode, int& ncid)
-{
+{	
 	const int status = nc_open(filename.c_str(), omode, &ncid);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not open netcdf file '" + filename + "': " + nc_strerror(status), AT);
@@ -65,6 +65,7 @@ void open_file(const std::string& filename, const int& omode, int& ncid)
 
 void create_file(const std::string& filename, const int& cmode, int& ncid)
 {
+	mio::ofilestream::createDirectoriesOfFile(filename.c_str());
 	const int status = nc_create(filename.c_str(), cmode, &ncid);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not create netcdf file '" + filename + "': " + nc_strerror(status), AT);

@@ -129,19 +129,8 @@ namespace mio {
  * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
  * 
- * Some general output options exist:
- *  - WRITE_DIRECTORIES, writes any missing directories in a file path, allowing arbitrary file locations (might lead to weird locations if you use a copied INI File, default: true)
- *  - KEEP_OLD_FILES, puts a timestamp to the end of the filename, s.t. files that would be overwritten by a new run are kept (default: false)
  * 
- * 
- * @code
- * [Output]
- * WRITE_DIRECTORIES = TRUE
- * KEEP_OLD_FILES = FALSE
- * @endcode
- * 
- * The file write access can be limited by setting LIMIT_OUT_ACCESS to ON during the configuration of compilation. The output directories will then be only 
- * created in the CWD.
+ * Writing a file happens via a wrapper for std::ofstream \subpage ofstream_wrapper "ofilestream" that adds some functionality, like limiting the write access.
  *
  * Please have a look at the support for \subpage coords "coordinate systems".
  *
