@@ -27,7 +27,7 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 
-std::vector< std::vector<MeteoData> > read_data(const std::string& io_file, const bool& write_data)
+static std::vector< std::vector<MeteoData> > read_data(const std::string& io_file, const bool& write_data)
 {
 	Config cfg(io_file);
 	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
@@ -75,7 +75,7 @@ std::vector< std::vector<MeteoData> > read_data(const std::string& io_file, cons
 	return vecMeteo;
 }
 
-void compare_data(const std::vector<MeteoData> &ref, const std::vector<MeteoData> &test)
+static void compare_data(const std::vector<MeteoData> &ref, const std::vector<MeteoData> &test)
 {
 	if (test == ref) return;
 	
@@ -117,7 +117,7 @@ void compare_data(const std::vector<MeteoData> &ref, const std::vector<MeteoData
 	std::cout << "\n";
 }
 
-bool compare_data(const std::vector< std::vector<MeteoData> > &ref, const std::vector< std::vector<MeteoData> > &test)
+static bool compare_data(const std::vector< std::vector<MeteoData> > &ref, const std::vector< std::vector<MeteoData> > &test)
 {
 	if (test==ref) return true;
 	if (test.size()==0) return true; //we enforce ref.size()==test.size() later

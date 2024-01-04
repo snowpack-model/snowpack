@@ -327,7 +327,7 @@ namespace mio {
  * @endcode
  *
  * @subsection netcdf_renaming Saving the day when a file is not standard compliant
- * Unfortunatelly, the naming of the parameters and dimensions within the files is not always standard nor consistent. In order to handle the parameters names,
+ * Unfortunately, the naming of the parameters and dimensions within the files is not always standard nor consistent. In order to handle the parameters names,
  * simply run *ncdump {my_netcdf_file} | more* and use the name mapping facility of this plugin to map the non-standard parameters to our internal names
  * (see the \ref netcdf_keywords "plugin keywords"). When the dimensions are not standard (for example the time axis being called "TIME_T"),
  * use first the <A HREF="http://linux.die.net/man/1/ncrename">ncrename</A> tool that is part of the
@@ -1246,7 +1246,7 @@ void ncFiles::writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData>
 	if (schema.name=="CF-1.6") acdd.addAttribute("standard_name_vocabulary", "CF-1.6");
 	acdd.addAttribute("cdm_data_type", "Station");
 	acdd.addAttribute("featureType", "timeSeries");
-	acdd.addAttribute("keywords", "Time series analysis", "", ACDD::APPEND);
+	acdd.addAttribute("keywords", "Time series analysis", ACDD::APPEND);
 
 	if (station_idx==IOUtils::npos) { //multiple stations per file
 		if (vecMeteo.size()<30) {

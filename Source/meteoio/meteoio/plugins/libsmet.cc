@@ -700,10 +700,9 @@ void SMETWriter::write(const std::vector<double>& data, const mio::ACDD& acdd)
 void SMETWriter::printACDD(mio::ofilestream& fout, const std::string& prefix, const mio::ACDD& acdd) const
 {
 	//print ACDD headers
-	const size_t nr = acdd.getNrAttributes();
-	std::string header_field, value;
-	for (size_t ii=0; ii<nr; ii++) {
-		acdd.getAttribute(ii, header_field, value);
+	for (auto it = acdd.cbegin(); it!=acdd.cend(); ++it) {
+		const std::string header_field( it->second.getName() );
+		const std::string value( it->second.getValue() );
 		if (header_field.empty() || value.empty()) continue;
 		
 		if (!prefix.empty()) fout << prefix;

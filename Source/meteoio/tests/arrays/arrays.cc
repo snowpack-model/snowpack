@@ -5,10 +5,10 @@
 using namespace std;
 using namespace mio;
 
-bool array1d(const unsigned int& n) {
+static bool array1d(const unsigned int& n) {
 	cout << "Testing Array1D<double>\n";
 	bool status = true;
-	srand((unsigned)time(0));
+	srand((unsigned)time(nullptr));
 	const double range = 10.;
 
 	Array1D<double> grid1(n);
@@ -48,10 +48,10 @@ bool array1d(const unsigned int& n) {
 	return status;
 }
 
-bool grid2d(const unsigned int& n) {
+static bool grid2d(const unsigned int& n) {
 	cout << "Testing Grid2DObject\n";
 	bool status = true;
-	srand((unsigned)time(0));
+	srand((unsigned)time(nullptr));
 	const double range = 10.;
 	Coords llcorner("CH1903","");
 	llcorner.setXY(785425. , 191124., 1400.);
@@ -95,10 +95,10 @@ bool grid2d(const unsigned int& n) {
 	return status;
 }
 
-bool grid3d(const unsigned int& n) {
+static bool grid3d(const unsigned int& n) {
 	cout << "Testing Grid3DObject\n";
 	bool status = true;
-	srand((unsigned)time(0));
+	srand((unsigned)time(nullptr));
 	const double range = 10.;
 	Coords llcorner("CH1903","");
 	llcorner.setXY(785425. , 191124., 1400.);
@@ -144,7 +144,7 @@ bool grid3d(const unsigned int& n) {
 	return status;
 }
 
-bool matrix(const size_t& n) {
+static bool matrix(const size_t& n) {
 	cout << "Testing Matrix\n";
 	bool status=true;
 	Matrix I(n,1.); //build an n*n identity matrix
