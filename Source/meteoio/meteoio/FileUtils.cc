@@ -44,7 +44,7 @@
 #include <regex>
 
 //helper functions in file-scope only
-void make_directory(const std::string &path)
+static void make_directory(const std::string &path)
 {
 	errno = 0;
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__

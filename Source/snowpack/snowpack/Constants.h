@@ -41,7 +41,7 @@
 #endif
 
 /// @brief Initial value for stability parameter
-#define INIT_STABILITY 999.
+#define INIT_STABILITY -999.
 
 namespace Constants {
 	const double undefined = -999.; ///<This is the snowpack undefined value

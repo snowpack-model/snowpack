@@ -632,7 +632,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
-	const bool reduce_pressure = (tmpmd.meta.stationID!="STB2")? true : false; //unfortunatelly, there is no metadata to know this...
+	const bool reduce_pressure = (tmpmd.meta.stationID!="STB2")? true : false; //unfortunately, there is no metadata to know this...
 	vecMeteo[stationindex].resize( vecResult.size() );
 	for (size_t ii=0; ii<vecResult.size(); ii++) {
 		parseDataSet(vecResult[ii], tmpmd, fullStation);

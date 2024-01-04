@@ -33,7 +33,7 @@ const double res_Met_13 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
-bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
+static bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 
 	const double epsilon = 1.0e-7; // accuracy of the double tests
 	bool status = true;

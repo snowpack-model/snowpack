@@ -199,16 +199,24 @@ void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
  */
 void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql)
 {
+	// First consider surface sublimation
+	compSurfaceSublimation(Mdata, ql, Xdata, Sdata);
+
 	const size_t nN = Xdata.getNumberOfNodes();
 	size_t nE = nN-1;
 	vector<NodeData>& NDS = Xdata.Ndata;
 	vector<ElementData>& EMS = Xdata.Edata;
 	std::vector<double> deltaM(nE, 0.);			// calculate the limited layer mass change
 
-	if (enable_vapour_transport)
-	{
-
-		compSurfaceSublimation(Mdata, ql, Xdata, Sdata);
+	if (!enable_vapour_transport) {
+		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
+		const double topFlux = -ql / Constants::lh_sublimation;										//top layer flux (kg m-2 s-1)
+		const double dM = std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
+		// Correct latent heat flux, which should become 0. at this point. HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
+		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
+		ql -= dM / sn_dt * Constants::lh_sublimation;
+		deltaM[nE-1] += dM;
+	} else {
 		ql=0;
 
 		size_t e = nE;
@@ -418,15 +426,6 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 			NDS[nN-1].hoar = 0.;
 		}
 
-	} else {
-		compSurfaceSublimation(Mdata, ql, Xdata, Sdata);
-		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
-		const double topFlux = -ql / Constants::lh_sublimation;										//top layer flux (kg m-2 s-1)
-		const double dM = std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
-		// Correct latent heat flux, which should become 0. at this point. HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
-		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
-		ql -= dM / sn_dt * Constants::lh_sublimation;
-		deltaM[nE-1] += dM;
 	}
 }
 
