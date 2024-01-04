@@ -35,7 +35,7 @@ inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<
 CsvDateTime::CsvDateTime(const double& tz_in) 
            : max_dt_col(0), auto_wrap(false), datetime_idx(), date_idx(), time_idx(), datetime_format(), date_format(), time_format(),
            decimal_date_type(JULIAN), csv_tz(tz_in), 
-           idx_decimal_date(IOUtils::npos), idx_date_time_str(IOUtils::npos), idx_date_str(IOUtils::npos), idx_time_str(IOUtils::npos), idx_year(IOUtils::npos), idx_jdn(IOUtils::npos), idx_month(IOUtils::npos), idx_day(IOUtils::npos), idx_ntime(IOUtils::npos), idx_hours(IOUtils::npos), idx_minutes(IOUtils::npos), idx_seconds(IOUtils::npos), year_cst(IOUtils::inodata), 
+           idx_decimal_date(IOUtils::npos), idx_date_time_str(IOUtils::npos), idx_date_str(IOUtils::npos), idx_time_str(IOUtils::npos), idx_year(IOUtils::npos), idx_jdn(IOUtils::npos), idx_month(IOUtils::npos), idx_day(IOUtils::npos), idx_ntime(IOUtils::npos), idx_hours(IOUtils::npos), idx_minutes(IOUtils::npos), idx_seconds(IOUtils::npos), year_cst(IOUtils::inodata), hour_cst(IOUtils::inodata),
            has_tz(false), dt_as_decimal(false), dt_2digits_year(false)
 {}
 
@@ -69,6 +69,11 @@ int CsvDateTime::getFixedYear(const int& i_month)
 	return year_cst;
 }
 
+int CsvDateTime::getFixedHour()
+{
+	return hour_cst;
+}
+
 bool CsvDateTime::isSet() const 
 {
 	//date and time strings
@@ -81,7 +86,7 @@ bool CsvDateTime::isSet() const
 	const bool has_component_date = (idx_year!=IOUtils::npos || year_cst!=IOUtils::inodata) && ((idx_month!=IOUtils::npos && idx_day!=IOUtils::npos) || (idx_jdn!=IOUtils::npos));
 	const bool has_date = has_component_date || idx_date_str!=IOUtils::npos;
 	const bool has_component_time = (idx_hours!=IOUtils::npos) || (idx_ntime!=IOUtils::npos);
-	const bool has_time = has_component_time || idx_time_str!=IOUtils::npos;
+	const bool has_time = has_component_time || idx_time_str!=IOUtils::npos || hour_cst!=IOUtils::inodata ;
 	if (has_date && has_time) return true;
 
 	return false;
@@ -237,6 +242,11 @@ void CsvDateTime::setFixedYear(const int& i_year, const bool& i_auto_wrap)
 {
 	year_cst = i_year;
 	auto_wrap = i_auto_wrap;
+}
+
+void CsvDateTime::setFixedHour(const int& i_hour)
+{
+	hour_cst = i_hour;
 }
 
 // return true if the field must be skiped (all special fields are marked as SKIP since they are read in a special way)
@@ -481,6 +491,11 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 		else year += 1900;
 	}
 	
+	//specaial handling of time: fixed hour provided by the user
+	if (hour==IOUtils::inodata && hour_cst!=IOUtils::inodata) {
+		hour = getFixedHour();
+	}
+
 	//special handling of numerical time
 	if (ntime!=IOUtils::nodata) {
 		hour = (int)( ntime / 100. );
@@ -526,6 +541,7 @@ std::string CsvDateTime::toString() const
 	if (idx_year!=IOUtils::npos) os << "idx_year→" << idx_year << " ";
 	if (dt_2digits_year) os << "(cutoff_year=" << cutoff_year << ") ";
 	if (year_cst!=IOUtils::nodata) os << "year_cst→" << year_cst << " ";
+	if (hour_cst!=IOUtils::nodata) os << "hour_cst→" << hour_cst << " ";
 	if (idx_jdn!=IOUtils::npos) os << "idx_jdn→" << idx_jdn << " ";
 	if (idx_month!=IOUtils::npos) os << "idx_month→" << idx_month << " ";
 	if (idx_day!=IOUtils::npos) os << "idx_day→" << idx_day << " ";

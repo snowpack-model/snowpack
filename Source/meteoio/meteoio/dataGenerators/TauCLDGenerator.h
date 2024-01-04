@@ -48,7 +48,7 @@ namespace mio {
  *    - INFILE: a file containing the horizon for some or all stations (see the ProcShade filter for the format);
  *    - OUTFILE: a file to write the computed horizons to. If some horizons have been read from INFILE, they will also be written out in OUTFILE;
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
- * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
+ * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunately, this is not very precise... (thus default is false)
  *    - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
  * stand in a place where it is shaded by the surrounding terrain at some point during the day. This would lead to an overestimation 
  * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness

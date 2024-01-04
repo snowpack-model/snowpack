@@ -45,6 +45,7 @@ class CsvDateTime {
 		void updateMaxCol();
 		int getFixedYear(const double& i_jdn);
 		int getFixedYear(const int& i_month);
+		int getFixedHour();
 		bool isSet() const;
 		
 		void setDateTimeSpec(const std::string& datetime_spec);
@@ -52,6 +53,7 @@ class CsvDateTime {
 		void setTimeSpec(const std::string& time_spec);
 		void setDecimalDateType(std::string i_decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& i_auto_wrap);
+		void setFixedHour(const int& i_hour);
 		bool parseField(const std::string& fieldname, const size_t &ii);
 		Date parseDate(const std::vector<std::string>& vecFields);
 		std::string toString() const;
@@ -80,7 +82,7 @@ class CsvDateTime {
 		//time is a field that contains numerical time, for example 0920
 		size_t idx_decimal_date, idx_date_time_str, idx_date_str, idx_time_str, idx_year, idx_jdn, idx_month, idx_day, idx_ntime, idx_hours, idx_minutes, idx_seconds;
 		static const int cutoff_year = 40;
-		int year_cst; ///< When the year is not provided as such but set from the folder name as "fallback year"
+		int year_cst, hour_cst; ///< When the year/hour is not provided as such but set from the folder name as "fallback year"
 		bool has_tz;		///< does the user-provided date/time format contains a TZ?
 		bool dt_as_decimal;	///< is date provided as a single decimal number?
 		bool dt_2digits_year;	///< is the year only provided with 2 digits?
@@ -103,6 +105,7 @@ class CsvParameters {
 		void setSlope(const double& i_slope, const double& i_azimuth) {slope=i_slope; azi=i_azimuth;}
 		void setDateTimeSpecs(const std::string &datetime_spec, const std::string &date_spec, const std::string &time_spec, const std::string &decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& i_auto_wrap) {date_cols.setFixedYear(i_year, i_auto_wrap);}
+		void setFixedHour(const int& i_hour) {date_cols.setFixedHour(i_hour);}
 		
 		std::string toString() const;
 		std::string getFilename() const {return file_and_path;}

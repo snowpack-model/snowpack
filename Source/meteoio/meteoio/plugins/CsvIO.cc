@@ -383,7 +383,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * @endcode
  *
  * @section csvio_debugging Debugging CSV files reading
- * Unfortunatelly, there are some cases when the data in one or multiple files does not match the expected field content. This can happen with
+ * Unfortunately, there are some cases when the data in one or multiple files does not match the expected field content. This can happen with
  * the data being spread over multiple files and the column order changing between files or even with the column order changing within
  * a given file. Depending on the amount of data and the number of files, this can be quite cumbersome to correct, if even possible at all.
  * Here is some rough procedure to help correcting such issues:
@@ -573,13 +573,18 @@ void CsvIO::parseInputOutputSection()
 		tmp_csv.setDateTimeSpecs(datetime_spec, date_spec, time_spec, decimaldate_type);
 		
 		int fixed_year=IOUtils::inodata;
+		int fixed_hour=IOUtils::inodata;
 		if (cfg.keyExists(pre+"FALLBACK_YEAR", "Input")) cfg.getValue(pre+"FALLBACK_YEAR", "Input", fixed_year);
 		else cfg.getValue(dflt+"FALLBACK_YEAR", "Input", fixed_year, IOUtils::nothrow);
 		bool auto_wrap_year=true;
 		if (cfg.keyExists(pre+"FALLBACK_AUTO_WRAP", "Input")) cfg.getValue(pre+"FALLBACK_AUTO_WRAP", "Input", auto_wrap_year);
 		else cfg.getValue(dflt+"FALLBACK_AUTO_WRAP", "Input", auto_wrap_year, IOUtils::nothrow);
 		if (fixed_year!=IOUtils::inodata) tmp_csv.setFixedYear( fixed_year, auto_wrap_year );
-		
+
+		if (cfg.keyExists(pre+"FALLBACK_TIME", "Input")) cfg.getValue(pre+"FALLBACK_TIME", "Input", fixed_hour);
+		else cfg.getValue(dflt+"FALLBACK_TIME", "Input", fixed_hour, IOUtils::nothrow);
+		if (fixed_hour!=IOUtils::inodata) tmp_csv.setFixedHour( fixed_hour );
+
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);

@@ -135,6 +135,11 @@ ENDIF()
 SET(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
 add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"")
 
+SET(IN_WEBSERVICE OFF CACHE BOOL "Use meteoio as a webservice")
+IF(IN_WEBSERVICE)
+	add_compile_definitions(WEBSERVICE)
+ENDIF()
+
 ###########################################################
 #finally, SET compile flags
 SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)

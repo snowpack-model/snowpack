@@ -108,6 +108,9 @@ class Grid3DObject{
 		size_t getNx() const;
 		size_t getNy() const;
 		size_t getNz() const;
+		double getMin() const;
+		double getMax() const;
+		double getMean() const;
 
 		/**
 		* @brief deletes the data, but keeps geolocalization
