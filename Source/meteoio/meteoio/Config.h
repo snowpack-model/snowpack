@@ -486,6 +486,7 @@ class ConfigParser {
 	private:
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
+		static bool onlyOneEqual(const std::string& str);
 		static void processEnvVars(std::string& value);
 		static void processExpr(std::string& value);
 		bool processVars(std::string& value, const std::string& section);

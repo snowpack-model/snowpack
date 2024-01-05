@@ -367,6 +367,18 @@ size_t Grid3DObject::getNz() const {
 	return grid3D.getNz();
 }
 
+double Grid3DObject::getMin() const {
+	return grid3D.getMin();
+}
+
+double Grid3DObject::getMax() const {
+	return grid3D.getMax();
+}
+
+double Grid3DObject::getMean() const {
+	return grid3D.getMean();
+}
+
 void Grid3DObject::clear() {
 	grid3D.clear();
 }

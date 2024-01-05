@@ -28,10 +28,153 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
+#include <algorithm>
+
 
 using namespace std;
 
 namespace mio {
+
+/**
+* @brief Set the available ACDD attributes, their matching INI config key and if possible a default value
+* @return a map of <acdd_attribute_name, acdd_attrs structure>
+*/
+std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
+{
+	std::map<std::string, acdd_attrs> tmp;
+	mio::Date now; 
+	now.setFromSys();
+	
+	tmp["date_created"] = ACDD_ATTR("date_created", "", now.toString(mio::Date::ISO_DATE));
+	tmp["institution"] = ACDD_ATTR("institution", "ACDD_INSTITUTION", mio::IOUtils::getDomainName());
+	
+	tmp["creator_name"] = ACDD_ATTR("creator_name", "ACDD_CREATOR", mio::IOUtils::getLogName());
+	tmp["creator_email"] = ACDD_ATTR("creator_email", "ACDD_CREATOR_EMAIL");
+	tmp["creator_institution"] = ACDD_ATTR("creator_institution", "ACDD_CREATOR_INSTITUTION", mio::IOUtils::getDomainName());
+	tmp["creator_url"] = ACDD_ATTR("creator_url", "ACDD_CREATOR_URL", mio::IOUtils::getDomainName());
+	tmp["creator_type"] = ACDD_ATTR("creator_type", "ACDD_CREATOR_TYPE", "person");
+	tmp["contributor_name"] = ACDD_ATTR("contributor_name", "ACDD_CONTRIBUTOR");
+	tmp["contributor_role"] = ACDD_ATTR("contributor_role", "ACDD_CONTRIBUTOR_ROLE");
+	tmp["publisher_name"] = ACDD_ATTR("publisher_name", "ACDD_PUBLISHER");
+	tmp["publisher_email"] = ACDD_ATTR("publisher_email", "ACDD_PUBLISHER_EMAIL");
+	tmp["publisher_url"] = ACDD_ATTR("publisher_url", "ACDD_PUBLISHER_URL");
+	tmp["publisher_type"] = ACDD_ATTR("publisher_type", "ACDD_PUBLISHER_TYPE");
+	
+	tmp["source"] = ACDD_ATTR("source", "ACDD_SOURCE", "MeteoIO-" + mio::getLibVersion(true));
+	tmp["history"] = ACDD_ATTR("history", "", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
+	tmp["keywords_vocabulary"] = ACDD_ATTR("keywords_vocabulary", "ACDD_KEYWORDS_VOCABULARY", "AGU Index Terms");
+	tmp["keywords"] = ACDD_ATTR("keywords", "ACDD_KEYWORDS", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology");
+	
+	tmp["title"] = ACDD_ATTR("title", "ACDD_TITLE");
+	tmp["project"] = ACDD_ATTR("project", "ACDD_PROJECT");
+	tmp["program"] = ACDD_ATTR("program", "ACDD_PROGRAM");
+	tmp["id"] = ACDD_ATTR("id", "ACDD_ID");
+	tmp["references"] = ACDD_ATTR("references", "ACDD_REFERENCES");
+	tmp["naming_authority"] = ACDD_ATTR("naming_authority", "ACDD_NAMING_AUTHORITY");
+	tmp["processing_level"] = ACDD_ATTR("processing_level", "ACDD_PROCESSING_LEVEL");
+	tmp["summary"] = ACDD_ATTR("summary", "ACDD_SUMMARY"); //special handling, see setUserConfig()
+	tmp["comment"] = ACDD_ATTR("comment", "ACDD_COMMENT");
+	tmp["acknowledgement"] = ACDD_ATTR("acknowledgement", "ACDD_ACKNOWLEDGEMENT");
+	tmp["metadata_link"] = ACDD_ATTR("metadata_link", "ACDD_METADATA_LINK");
+	tmp["license"] = ACDD_ATTR("license", "ACDD_LICENSE");
+	tmp["product_version"] = ACDD_ATTR("product_version", "ACDD_PRODUCT_VERSION", "1.0");
+	tmp["activity_type"] = ACDD_ATTR("activity_type", "ACDD_ACTIVITY_TYPE");
+	tmp["operational_status"] = ACDD_ATTR("operational_status", "ACDD_OPERATIONAL_STATUS");
+	tmp["wmo__wsi"] = ACDD_ATTR("wmo__wsi", "WIGOS_ID");
+	
+	return tmp;
+}
+
+/**
+* @brief Declare the attributes that support multiple, comma delimited valuesd and in this case must have the same number of elements
+* @return a set of pairs of <group_name, acdd_attribute_name>
+*/
+std::set< std::pair< std::string, std::set<std::string> > > ACDD::initLinks()
+{
+	static const std::set<std::string> creators( {"creator_name", "creator_email", "creator_institution", "creator_url", "creator_type"} );
+	static const std::set<std::string> publishers( {"publisher_name", "publisher_email", "publisher_url", "publisher_type"} );
+	static const std::set<std::string> contributors( {"contributor_name", "contributor_role"} );
+	
+	static const std::set< std::pair< std::string, std::set<std::string> > > tmp( {std::make_pair("CREATOR", creators), std::make_pair("PUBLISHER", publishers), std::make_pair("CONTRIBUTOR", contributors)} );
+	return tmp;
+}
+
+void ACDD::acdd_attrs::readFromFile(std::string& value, const mio::Config& cfg, const std::string& cfg_key, const std::string& section, const bool& allow_multi_line)
+{
+	const std::string input_file = cfg.get(cfg_key, section, "");
+	std::string buffer;
+	
+	if (!input_file.empty()) {
+		std::ifstream fin( input_file.c_str() );
+		if (fin.fail())
+			throw mio::AccessException("Error opening "+cfg_key+" \""+input_file+"\", possible reason: "+std::strerror(errno), AT);
+
+		const char eoln = mio::FileUtils::getEoln(fin); //get the end of line character for the file
+		try {
+			do {
+				std::string line;
+				getline(fin, line, eoln); //read complete line
+				if (allow_multi_line) buffer.append(line+"\n");
+				else buffer.append(line+" ");
+			} while (!fin.eof());
+			fin.close();
+		} catch (const std::exception&){
+			if (fin.is_open()) fin.close();
+			throw;
+		}
+		
+		value = buffer;
+	}
+}
+
+/**
+* @brief Set the value of the attribute, either from a config file key, or from an environment variable of the same name or
+* some hard-coded default value (in this order of priorities). The key "ACDD_SUMMARY" is handled in a special way: if
+* an "ACDD_SUMMARY_FILE" key is found, the file pointed to by the later will be read and copied into ACDD_SUMMARY. Line
+* breaks are either kept as such or converted to a single white space, depending on the parameter <i>allow_multi_line</i>
+* @param[in] cfg The configuration file to read the keys from (for the attributes that can be set from such a config key)
+* @param[in] section Section in the configuration file to read the keys from
+* @param[in] allow_multi_line If an "ACDD_SUMMARY_FILE" is set, either keep line breaks in the file it points to or replace them by spaces.
+*/
+void ACDD::acdd_attrs::setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line)
+{
+	if (!cfg_key.empty()) {
+		//first priority: read from cfg file
+		cfg.getValue(cfg_key, section, value, mio::IOUtils::nothrow);
+		if (cfg_key=="ACDD_SUMMARY") { //overwrite with the content of summary_file if available
+			readFromFile(value, cfg, "ACDD_SUMMARY_FILE", section, allow_multi_line);
+		}
+		
+		//second priority: read from env. var
+		if (value.empty()) {
+			char *tmp = getenv( cfg_key.c_str() );
+			if (tmp!=nullptr) value = std::string(tmp);
+		}
+	}
+	
+	//last priority: set from default
+	if (value.empty() && !default_value.empty()) {
+		std::cout << name << " is Default\n";
+		value = default_value;
+		Default = true;
+	} else {
+		Default = false;
+	}
+}
+
+void ACDD::acdd_attrs::setValue(const std::string& i_value, const Mode& mode)
+{
+	if (mode==MERGE) {
+		if (value.empty()) value = i_value;
+	} else if (mode==APPEND) {
+		if (value.empty()) value = i_value;
+		else value = value + ", " + i_value;
+	} else if (mode==REPLACE) {
+		value = i_value;
+	}
+	
+	Default = false;
+}
 
 /**
 * @brief Read all config keys from the selected section and apply some special processing for some keys.
@@ -42,126 +185,79 @@ namespace mio {
 */
 void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line)
 {
-	for (size_t ii=0; ii<name.size(); ii++) {
-		cfg.getValue(cfg_key[ii], section, value[ii], mio::IOUtils::nothrow);
+	for (auto& acdd_attribute : attributes) {
+		acdd_attribute.second.setUserConfig(cfg, section, allow_multi_line);
+	}
+	
+	if (attributes.empty()) attributes = initAttributes();
+	if (linked_attributes.empty()) {
+		linked_attributes = initLinks();
+		checkLinkedAttributes();
+	}
+}
 
-		if (cfg_key[ii]=="ACDD_SUMMARY") { //overwrite with the content of summary_file if available
-			const std::string summary_file = cfg.get("ACDD_SUMMARY_FILE", section, "");
-			if (!summary_file.empty()) {
-				std::string buffer;
-				std::ifstream fin( summary_file.c_str() );
-				if (fin.fail())
-					throw mio::AccessException("Error opening ACDD_SUMMARY_FILE \""+summary_file+"\", possible reason: "+std::strerror(errno), AT);
+void ACDD::setEnabled(const bool& i_enable)
+{
+	enabled = i_enable; 
+	if (attributes.empty()) attributes = initAttributes();
+	if (linked_attributes.empty()) {
+		linked_attributes = initLinks();
+		checkLinkedAttributes();
+	}
+}
 
-				const char eoln = mio::FileUtils::getEoln(fin); //get the end of line character for the file
-				try {
-					do {
-						std::string line;
-						getline(fin, line, eoln); //read complete line
-						if (allow_multi_line) buffer.append(line+"\n");
-						else buffer.append(line+" ");
-					} while (!fin.eof());
-					fin.close();
-				} catch (const std::exception&){
-					if (fin.is_open()) fin.close();
-					throw;
-				}
-				
-				value[ii] = buffer;
+size_t ACDD::countCommas(const std::string& str)
+{
+	const size_t count = std::count_if( str.begin(), str.end(), []( const char& c ){return c ==',';});
+	return count;
+}
+
+void ACDD::checkLinkedAttributes()
+{
+	for (const std::pair< std::string, std::set<std::string> >& attr_group : linked_attributes) {
+		std::set< std::string > tweakDefaults;
+		
+		//check if all non-default attributes have the same number of sub-elements
+		size_t min_count = IOUtils::npos, max_count = IOUtils::npos;
+		
+		for (const auto& attr : attr_group.second) {
+			if (attributes.count(attr)==0) continue;
+			
+			const auto& attribute( attributes[attr] );
+			const std::string& value( attribute.getValue() );
+			if (value.empty()) continue;
+			if (attribute.isDefault()) {
+				tweakDefaults.insert( attribute.getName() );
+				continue;
 			}
+			
+			const size_t num_elems = countCommas( value ) + 1;
+			if (max_count==IOUtils::npos || num_elems>max_count) max_count = num_elems;
+			if (min_count==IOUtils::npos || num_elems<min_count) min_count = num_elems;
 		}
-	}
-	checkMultiValueConsistency();
-}
-
-int findAllCommas(const std::string& str) 
-{
-	size_t index = 0;
-	int occurrences = 0;
-    while ((index = str.find(',', index)) != std::string::npos) {
-        index++;
-		occurrences++;
-    }
-
-	return occurrences;
-}
-
-
-void ACDD::checkMultiValueConsistency()
-{
-	static const std::vector<std::string> creator_keys{"creator_name", "creator_email", "creator_institution", "creator_url"};//, "creator_type"};
-	static const std::vector<std::string> publisher_keys{"publisher_name", "publisher_email", "publisher_url"};//, "publisher_type"};
-
-	std::vector<std::string> creator, publisher;
-
-	bool is_list_creator = false;
-	bool is_list_publisher = false;
-
-	for (size_t ii=0; ii<creator_keys.size(); ii++) {
-		const size_t pos = find( creator_keys[ii] );
-		if (pos!=mio::IOUtils::npos) {
-			creator.push_back( value[pos] );
-			if (value[pos].find(',') != std::string::npos) is_list_creator = true;	
-		}
-		if (ii<publisher_keys.size()) {
-			const size_t pos_p = find(publisher_keys[ii]);
-			if (pos_p != mio::IOUtils::npos) {
-				publisher.push_back(value[pos_p]);
-				if (value[pos].find(',') != std::string::npos) is_list_publisher = true;	
-			}
-		}
-	}
-
-	if (!creator.empty() && is_list_creator) {
-		const int num_creators = findAllCommas(creator[0]);
-		for (size_t ii = 0; ii<creator.size();ii++){
-			if (num_creators != findAllCommas(creator[ii])) throw mio::InvalidFormatException("Number of creators and " +creator_keys[ii]+" do not match.");
-		}
-	}
-	if (!publisher.empty() && is_list_publisher) {
-		const int num_publishers = findAllCommas(publisher[0]);
-		for (size_t ii = 0; ii<publisher.size();ii++){
-			if (num_publishers != findAllCommas(publisher[ii])) throw mio::InvalidFormatException("Number of publishers and " +publisher_keys[ii]+" do not match.");
+		
+		if (min_count!=max_count) throw mio::InvalidFormatException("Please configure the same number of fields for each comma-delimited ACDD fields of type '"+attr_group.first+"'", AT);
+		
+		//copy more default values if necessary
+		for (const std::string& attr : tweakDefaults) {
+			const std::string& value( attributes[attr].getValue() );
+			std::string tmp( value );
+			for (size_t ii=1; ii<max_count; ii++) tmp += ", "+value;
+			attributes[attr].setValue( tmp, REPLACE );
 		}
 	}
 }
 
-void ACDD::defaultInit()
+std::string ACDD::toString() const
 {
-	mio::Date now; 
-	now.setFromSys();
-	addAttribute("date_created", now.toString(mio::Date::ISO_DATE));
-	addAttribute("creator_name", mio::IOUtils::getLogName(), "ACDD_CREATOR");
-	addAttribute("creator_email", "", "ACDD_CREATOR_EMAIL");
-	addAttribute("creator_institution", mio::IOUtils::getDomainName(), "ACDD_CREATOR_INSTITUTION");
-	addAttribute("creator_url", mio::IOUtils::getDomainName(), "ACDD_CREATOR_URL");
-	addAttribute("creator_type", "person", "ACDD_CREATOR_TYPE");
-	addAttribute("institution", mio::IOUtils::getDomainName(), "ACDD_INSTITUTION");
-	addAttribute("publisher_name", mio::IOUtils::getLogName(), "ACDD_PUBLISHER");
-	addAttribute("publisher_email", "", "ACDD_PUBLISHER_EMAIL");
-	addAttribute("publisher_url", mio::IOUtils::getDomainName(), "ACDD_PUBLISHER_URL");
-	addAttribute("publisher_type", "person", "ACDD_PUBLISHER_TYPE");
-	addAttribute("source", "MeteoIO-" + mio::getLibVersion(true), "ACDD_SOURCE");
-	addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
-	addAttribute("keywords_vocabulary", "AGU Index Terms", "ACDD_KEYWORDS_VOCABULARY");
-	addAttribute("keywords", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology", "ACDD_KEYWORDS");
-	addAttribute("title", "", "ACDD_TITLE");
-	addAttribute("project", "", "ACDD_PROJECT");
-	addAttribute("program", "", "ACDD_PROGRAM");
-	addAttribute("id", "", "ACDD_ID");
-	addAttribute("references", "", "ACDD_REFERENCES");
-	addAttribute("naming_authority", "", "ACDD_NAMING_AUTHORITY");
-	addAttribute("processing_level", "", "ACDD_PROCESSING_LEVEL");
-	addAttribute("summary", "", "ACDD_SUMMARY"); //special handling, see setUserConfig()
-	addAttribute("comment", "", "ACDD_COMMENT");
-	addAttribute("acknowledgement", "", "ACDD_ACKNOWLEDGEMENT");
-	addAttribute("metadata_link", "", "ACDD_METADATA_LINK");
-	addAttribute("license", "", "ACDD_LICENSE");
-	addAttribute("product_version", "1.0", "ACDD_PRODUCT_VERSION");
-	addAttribute("activity_type", "", "ACDD_ACTIVITY_TYPE");
-	addAttribute("operational_status", "", "ACDD_OPERATIONAL_STATUS");
-	addAttribute("wmo__wsi", "", "WIGOS_ID");
-	checkMultiValueConsistency();
+	std::ostringstream os;
+	os << "<ACDD attributes>\n";
+	for (auto acdd_attribute : attributes) {
+		os << "[" << acdd_attribute.first << " -> " << acdd_attribute.second.getValue() << "]\n";
+	}
+	os << "</ACDD attributes>\n";
+
+	return os.str();
 }
 
 /**
@@ -169,75 +265,43 @@ void ACDD::defaultInit()
 * @details This allows to create or edit attributes. For the MERGE or APPEND modes, if the attribute name is not found, it will be created.
 * @param[in] att_name attribute name
 * @param[in] att_value attribute value
-* @param[in] att_cfg_key associated configuration key (to read user provided values from a mio::Config object)
 * @param[in] mode write mode: MERGE (currently empty values will be replaced by the given arguments), APPEND (the value content will be expanded by
 * what is provided in att_value, separated by ", ", REPLACE (the current attribute will be fully replaced by the provided arguments)
 */
-void ACDD::addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key, Mode mode)
+void ACDD::addAttribute(const std::string& att_name, const std::string& att_value, const Mode& mode)
 {
 	if (att_name.empty())
 		throw mio::InvalidFormatException("The attribute name must be provided", AT);
-	
-	if (mode==MERGE) {
-		const size_t pos = find( att_name );
-		if (pos==mio::IOUtils::npos) {
-			mode = REPLACE;
+
+	if (mode==MERGE || mode==APPEND) {
+		if (attributes.count(att_name)==0) {
+			attributes[att_name] = acdd_attrs(att_name, att_value, "", "");
 		} else {
-			if (!att_value.empty()) value[pos] = att_value;
-			if (!att_cfg_key.empty()) cfg_key[pos] = att_cfg_key;
-			return;
+			attributes[att_name].setValue(att_value, mode);
 		}
-	} else if (mode==APPEND) {
-		const size_t pos = find( att_name );
-		if (pos==mio::IOUtils::npos) {
-			mode = REPLACE;
-		} else {
-			value[pos] = value[pos] + ", " + att_value;
-			return;
-		}
+	} else if (mode==REPLACE) {
+		attributes[att_name] = acdd_attrs(att_name, att_value, "", "");
 	}
-	
-	if (mode==REPLACE) {
-		name.push_back( att_name );
-		value.push_back( att_value );
-		cfg_key.push_back( att_cfg_key );
-		return;
-	}
-	
-	//we should not have come here -> throw
-	throw mio::InvalidFormatException("The specified write mode does not exists", AT);
 }
 
-void ACDD::addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key, const Mode& mode)
+void ACDD::addAttribute(const std::string& att_name, const double& att_value, const Mode& mode)
 {
 	std::ostringstream os;
 	os << att_value;
-	addAttribute(att_name, os.str(), att_cfg_key, mode);
-}
-
-void ACDD::getAttribute(const size_t ii, std::string &att_name, std::string & att_value) const
-{
-	if (ii<name.size()) {
-		att_name=name[ii];
-		att_value=value[ii];
-	} else {
-		att_name="";
-		att_value="";
-	}
+	addAttribute(att_name, os.str(), mode);
 }
 
 /**
-* @brief Given an attribute name, return its associated index (or IOUtils::npos if it does not exists)
-* @param[in] search_name attribute name to get the index for
-* @return attribute index or IOUtils::npos
+* @brief Given an attribute name, return its associated value (or an empty string if it does not exists)
+* @param[in] att_name attribute name to get the value for
+* @return attribute value or empty string
 */
-size_t ACDD::find(const std::string& search_name) const
+std::string ACDD::getAttribute(std::string &att_name) const
 {
-	for (size_t ii=0; ii<name.size(); ii++) {
-		if (name[ii]==search_name) return ii;
-	}
-	
-	return mio::IOUtils::npos;
+	const auto& it = attributes.find( att_name );
+	if (it==attributes.end()) return "";
+
+	return it->second.getValue();
 }
 
 void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
@@ -269,6 +333,18 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 	
 	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
 	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
+
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	const double min_val = grid.getMin();
+	if (min_val!=IOUtils::nodata) {
+		//if there is a min_val, there is also a max_val
+		addAttribute("geospatial_vertical_min", min_val);
+		const double max_val = grid.getMax();
+		addAttribute("geospatial_vertical_max", max_val);
+	}
+
+
 }
 
 void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
@@ -278,6 +354,7 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
+	double alt_min=std::numeric_limits<double>::max(), alt_max=-std::numeric_limits<double>::max();
 	bool found = false;
 	for (const std::vector<mio::MeteoData>& timeseries : vecMeteo) {
 		if (timeseries.empty()) continue;
@@ -299,12 +376,15 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 
 		const double curr_lat = timeseries.front().meta.position.getLat();
 		const double curr_lon = timeseries.front().meta.position.getLon();
+		const double curr_alt = timeseries.front().meta.position.getAltitude();
 		found = true;
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;
 		if (lon_max<curr_lon) lon_max = curr_lon;
+		if (alt_min>curr_alt) alt_min = curr_alt;
+		if (alt_max<curr_alt) alt_max = curr_alt;
 	}
 	if (!found) return;
 	
@@ -318,6 +398,13 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	addAttribute("geospatial_lat_max", lat_max);
 	addAttribute("geospatial_lon_min", lon_min);
 	addAttribute("geospatial_lon_max", lon_max);
+
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	if (alt_min!=IOUtils::nodata) {
+		addAttribute("geospatial_vertical_min", alt_min);
+		addAttribute("geospatial_vertical_max", alt_max);
+	}
 }
 
 void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool& isLatLon)
@@ -327,6 +414,8 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 	std::string multiPts;
 	short int epsg = -1;
 	double lat_min=90., lat_max=-90., lon_min=360., lon_max=-360.;
+	double alt_min=std::numeric_limits<double>::max(), alt_max=-std::numeric_limits<double>::max();
+	
 	for (const mio::Coords& location : vecLocation) {
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
@@ -345,11 +434,14 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 
 		const double curr_lat = location.getLat();
 		const double curr_lon = location.getLon();
+		const double curr_alt = location.getAltitude();
 		
 		if (lat_min>curr_lat) lat_min = curr_lat;
 		if (lat_max<curr_lat) lat_max = curr_lat;
 		if (lon_min>curr_lon) lon_min = curr_lon;
 		if (lon_max<curr_lon) lon_max = curr_lon;
+		if (alt_min>curr_alt) alt_min = curr_alt;
+		if (alt_max<curr_alt) alt_max = curr_alt;
 	}
 	
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
@@ -368,6 +460,13 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 	addAttribute("geospatial_lat_max", lat_max);
 	addAttribute("geospatial_lon_min", lon_min);
 	addAttribute("geospatial_lon_max", lon_max);
+	
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	if (alt_min!=IOUtils::nodata) {
+		addAttribute("geospatial_vertical_min", alt_min);
+		addAttribute("geospatial_vertical_max", alt_max);
+	}
 }
 
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
@@ -391,6 +490,11 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 	addAttribute("geospatial_lat_max", location.getLat());
 	addAttribute("geospatial_lon_min", location.getLon());
 	addAttribute("geospatial_lon_max", location.getLon());
+	
+	addAttribute("geospatial_vertical_positive", "up");
+	addAttribute("geospatial_vertical_units", "m");
+	addAttribute("geospatial_vertical_min", location.getAltitude());
+	addAttribute("geospatial_vertical_max", location.getAltitude());
 }
 
 void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)

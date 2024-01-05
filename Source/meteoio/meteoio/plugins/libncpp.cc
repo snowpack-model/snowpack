@@ -130,11 +130,11 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 */
 void writeACDDAttributes(const int& ncid, const mio::ACDD& acdd)
 {
-	const size_t nr = acdd.getNrAttributes();
-	std::string name, value;
-	for (size_t ii=0; ii<nr; ii++) {
-		acdd.getAttribute(ii, name, value);
+	for (auto it = acdd.cbegin(); it!=acdd.cend(); ++it) {
+		const std::string name( it->second.getName() );
+		const std::string value( it->second.getValue() );
 		if (name.empty() || value.empty()) continue;
+		
 		ncpp::add_attribute(ncid, NC_GLOBAL, name, value);
 	}
 }

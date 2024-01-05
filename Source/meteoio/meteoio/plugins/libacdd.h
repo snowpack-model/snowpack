@@ -67,6 +67,9 @@ namespace mio {
  *        - ACDD_PUBLISHER_EMAIL: the email of the person / entity responsible for publishing the data file or product to users;
  *        - ACDD_PUBLISHER_URL: the url of the person / entity responsible for publishing the data file or product to users;
  *        - ACDD_PUBLISHER_TYPE: either person, group, institution, or position (default: person);
+ *     - The following can be a list of comma-delimited values but must be kept in-sync (ie if providing two contributors, then two roles must also be provided, etc):
+ *        - ACDD_CONTRIBUTOR: the name of the individuals, instutitions or projects that have contributed to the data set (default: login name);
+ *        - ACDD_CONTRIBUTOR_ROLE: the role of the contributor;
  *  - Miscellaneous
  *     - ACDD_PROCESSING_LEVEL: a textual description of the processing level
  *     - ACDD_LICENSE: describes the license applicable to the dataset;
@@ -76,7 +79,13 @@ namespace mio {
  * 
  * This list contains all mandatory ACDD fields as listed at the <a href="https://adc.met.no/node/4">Arctic Data Centre</a> as well as most of the 
  * optional fields (please note that the geospatial and time coverage are automatically generated based on the data itself and the history is 
- * also automatically handled).
+ * also automatically handled). 
+ * 
+ * Please note that it is possible to export environment variables with the exact same name as any of the above 
+ * mentionned ACDD configuration keys in order to provide a default value. The final value of any acdd field is provided by three sources, any attempts
+ * stops as soon as some value has been found: 1. the INI configuration key; 2. the matching environment variable; 3. some hard-coded 
+ * defaults (whenever possible). It is therefore possible to define relevant default values system-wide by setting an environment variable of the 
+ * same name as the INI configuration key. Individual configuration files might still overwrite this default by explicitely setting the configuration key.
  * 
  * Example of ACDD configuration for a NetCDF file generated for the <a href="https://public.wmo.int/en">WMO</a>'s 
  * <a href="https://globalcryospherewatch.org/">Global Cryosphere Watch</a> (GCW) <a href="https://gcw.met.no/metsis/search">data portal</a>:
@@ -106,30 +115,53 @@ namespace mio {
 class ACDD {
 	public:
 		enum Mode {MERGE, REPLACE, APPEND};
+
+		typedef struct ACDD_ATTR {
+			ACDD_ATTR() : name(), value(), cfg_key(), default_value(), Default(true) {}
+			ACDD_ATTR(const std::string& i_name, const std::string& i_cfg_key, const std::string& i_default_value="") : name(i_name), value(), cfg_key(i_cfg_key), default_value(i_default_value), Default(i_name.empty()) {}
+			ACDD_ATTR(const std::string& i_name, const std::string& i_value, const std::string& i_cfg_key, const std::string& i_default_value) : name(i_name), value(i_value), cfg_key(i_cfg_key), default_value(i_default_value), Default(false) {}
+
+			std::string getValue() const {return value;}
+			std::string getName() const {return name;}
+			void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line);
+			void setValue(const std::string& i_value, const Mode& mode=MERGE);
+			bool isDefault() const {return Default;}
+
+		private:
+			static void readFromFile(std::string& value, const mio::Config& cfg, const std::string& cfg_key, const std::string& section, const bool& allow_multi_line);
+
+			std::string name, value, cfg_key, default_value;
+			bool Default;
+		} acdd_attrs;
 		
 		/**
 		* @brief Constructor, the argument allows the object to know if the acdd metadata should be written out or not
 		* @param[in] set_enable enable ACDD support?
 		*/
-		ACDD(const bool& set_enable) : name(), cfg_key(), value(), enabled(set_enable) {defaultInit();}
+		ACDD(const bool& set_enable) : attributes(), linked_attributes(), enabled(set_enable) {}
+		
+		//defining some iterators so the callers can loop over all available attributes
+		using const_iterator = std::map<std::string, acdd_attrs>::const_iterator;
+		const_iterator cbegin() const noexcept { return attributes.cbegin(); }
+		const_iterator cend() const noexcept { return attributes.cend(); }
 		
 		/**
-		* @brief Set an internal boolean as a helper for the caller to know if ACDD support should be enabled or not
+		* @brief Set an internal boolean as a helper for the caller to know if ACDD support should be enabled or not. Moreover, it
+		* initializes the attributes map if not already done.
 		* @param[in] i_enable enable ACDD support?
 		*/
-		void setEnabled(const bool& i_enable)  {enabled=i_enable;}
+		void setEnabled(const bool& i_enable);
 		void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line=true);
 		
-		void addAttribute(const std::string& att_name, const std::string& att_value, const std::string& att_cfg_key="", Mode mode=MERGE);
-		void addAttribute(const std::string& att_name, const double& att_value, const std::string& att_cfg_key="", const Mode& mode=MERGE);
+		void addAttribute(const std::string& att_name, const std::string& att_value, const Mode& mode=MERGE);
+		void addAttribute(const std::string& att_name, const double& att_value, const Mode& mode=MERGE);
 
 		/**
 		* @brief Get an internal boolean as a helper for the caller to know if ACDD support should be enabled or not
 		* @return enable ACDD support from the caller side?
 		*/
 		bool isEnabled() const {return enabled;}
-		void getAttribute(const size_t ii, std::string &att_name, std::string & att_value) const;
-		size_t getNrAttributes() const {if(enabled) return name.size(); else return 0;}
+		std::string getAttribute(std::string &att_name) const;
 		
 		void setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon);
 		void setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon);
@@ -139,13 +171,17 @@ class ACDD {
 		void setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo);
 		void setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo);
 		void setTimeCoverage(const std::vector<std::string>& vec_timestamp, const double& TZ);
+
+		std::string toString() const;
 		
 	private:
-		void defaultInit();
-		size_t find(const std::string& search_name) const;
-		void checkMultiValueConsistency();
+		static std::map<std::string, acdd_attrs> initAttributes();
+		static std::set< std::pair< std::string, std::set<std::string> > > initLinks();
+		static size_t countCommas(const std::string& str);
+		void checkLinkedAttributes();
 		
-		std::vector<std::string> name, cfg_key, value;
+		std::map<std::string, acdd_attrs> attributes; //all the ACDD attributes with their properties
+		std::set< std::pair< std::string, std::set<std::string> > > linked_attributes; //attribute names that are linked together, ie must have the same number of sub-elements (comma delimited)
 		bool enabled; //helper boolean for callers to know if this object should be used or not
 };
 

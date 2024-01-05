@@ -450,6 +450,18 @@ size_t Grid2DObject::getNy() const {
 	return grid2D.getNy();
 }
 
+double Grid2DObject::getMin() const {
+	return grid2D.getMin();
+}
+
+double Grid2DObject::getMax() const {
+	return grid2D.getMax();
+}
+
+double Grid2DObject::getMean() const {
+	return grid2D.getMean();
+}
+
 
 void Grid2DObject::clear() {
 	grid2D.clear();

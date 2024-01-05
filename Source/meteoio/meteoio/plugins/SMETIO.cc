@@ -110,7 +110,7 @@ const char* SMETIO::dflt_extension = ".smet";
 const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
 
 SMETIO::SMETIO(const std::string& configfile)
-        : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ), 
+        : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputVersioning(NO_VERSIONING), outputCommentedHeaders(false),
@@ -120,7 +120,7 @@ SMETIO::SMETIO(const std::string& configfile)
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ), 
+        : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputVersioning(NO_VERSIONING), outputCommentedHeaders(false),
