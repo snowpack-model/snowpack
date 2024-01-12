@@ -595,7 +595,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		if (useCanopyModel)
 			currentSector.Cdata->reset(cumsum_mass);
 		if(!cumsum_mass) {
-			for(auto station:vecXdata) {
+			for(auto& station:vecXdata) {
 				station.reset_water_fluxes();
 			}
 		}

@@ -7,6 +7,8 @@
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
 BuildVersionGIT()
 
+#TODO: replace all defs such as /D__DEBUG or -DDEBUG_ARITHM by add_compile_definitions() once moving to cmake >=3.12 (released 11.2018)
+
 MACRO (SET_COMPILER_OPTIONS)
 	SET(USER_COMPILER_OPTIONS "" CACHE STRING "Provide some extra compiler options")
 	MARK_AS_ADVANCED(FORCE USER_COMPILER_OPTIONS)

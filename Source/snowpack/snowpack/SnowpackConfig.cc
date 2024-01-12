@@ -173,6 +173,7 @@ bool SnowpackConfig::initStaticData()
 	outputConfig["PROF_DAYS_BETWEEN"] = "1";
 	outputConfig["PROF_START"] = "0";
 	outputConfig["PROF_ID_OR_MK"] = "ID";
+	outputConfig["PROF_AGE_OR_DATE"] = "AGE";
 	outputConfig["SNOW_WRITE"] = "true";
 	outputConfig["SNOW"] = "SMET";
 	outputConfig["HAZ_WRITE"] = "true";

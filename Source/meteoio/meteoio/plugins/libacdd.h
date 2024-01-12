@@ -32,9 +32,13 @@ namespace mio {
  * @class ACDD
  * @brief This class contains and handles NetCDF Attribute Conventions Dataset Discovery attributes (see 
  * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">ACDD</A>).
- * @details A few attributes can get their default value automatically from the data. For the others, some "best efforts" are made in order to keep
- * the whole process as simple as possible. It is however possible to provide some of these attributes in the INI configuration file, using the
- * following keys (all in the [Output] section):
+ * @details The final value of any acdd field is provided by three sources, any attempts
+ * stops as soon as some value has been found: 1. the INI configuration key; 2. reading the matching environment variable; 3. some hard-coded
+ * defaults (whenever it makes sense and is possible). It is therefore possible to define relevant default values system-wide by setting an environment variable of the
+ * same name as the INI configuration key and individual configuration files might still overwrite this default by explicitely setting the configuration key.
+ *
+ * The
+ * following keys are supported to define %ACDD attribues (all in the [Output] section):
  *  - Overview of the dataset
  *     - ACDD_TITLE: a short title for the data set;
  *     - ACDD_SUMMARY: a paragraph describing the dataset;
@@ -80,12 +84,6 @@ namespace mio {
  * This list contains all mandatory ACDD fields as listed at the <a href="https://adc.met.no/node/4">Arctic Data Centre</a> as well as most of the 
  * optional fields (please note that the geospatial and time coverage are automatically generated based on the data itself and the history is 
  * also automatically handled). 
- * 
- * Please note that it is possible to export environment variables with the exact same name as any of the above 
- * mentionned ACDD configuration keys in order to provide a default value. The final value of any acdd field is provided by three sources, any attempts
- * stops as soon as some value has been found: 1. the INI configuration key; 2. the matching environment variable; 3. some hard-coded 
- * defaults (whenever possible). It is therefore possible to define relevant default values system-wide by setting an environment variable of the 
- * same name as the INI configuration key. Individual configuration files might still overwrite this default by explicitely setting the configuration key.
  * 
  * Example of ACDD configuration for a NetCDF file generated for the <a href="https://public.wmo.int/en">WMO</a>'s 
  * <a href="https://globalcryospherewatch.org/">Global Cryosphere Watch</a> (GCW) <a href="https://gcw.met.no/metsis/search">data portal</a>:
