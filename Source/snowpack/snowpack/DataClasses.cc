@@ -2338,7 +2338,7 @@ bool SnowStation::hasSoilLayers() const
 void SnowStation::reset_water_fluxes()
 {
 	if (Ndata.size() == 0) return;
-	for(size_t i=0; i <= SoilNode; i++){
+	for(size_t i=0; i < Ndata.size(); i++){
 		Ndata[i].water_flux = 0.;
 	}
 }
