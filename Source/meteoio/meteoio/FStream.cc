@@ -108,10 +108,10 @@ std::string ofilestream::limitAccess(std::string path, const bool& write_directo
 		}
 		if (FileUtils::isAbsolutePath(path)) {
 			if (warn_abs_path) {
-				std::cerr << "Output path is absolute, i.e. trying to access home directory or similar, which is not allowed."<<std::endl;
-				std::cerr << "Creating directory at " << cutPathToLimitDir(FileUtils::cleanPath(path,true, true)) << std::endl;
+				std::cerr << "Output path is absolute, i.e. trying to access home directory or similar, which is not allowed." << std::endl;
+				std::cerr << "Creating directory at " << cutPathToLimitDir(FileUtils::cleanPath(path, true, true)) << std::endl;
 			}
-			path = cutPathToLimitDir(FileUtils::cleanPath(path,true, true));
+			path = cutPathToLimitDir(FileUtils::cleanPath(path, true, true));
 		}
 		else {
 			path = cutPathToLimitDir(path);
@@ -213,7 +213,11 @@ bool ofilestream::getDefault()
 
 std::string ofilestream::getLimitBaseDir()
 {
+#if defined  LIMIT_BASE_DIR
 	return LIMIT_BASE_DIR;
+#else
+	return ".";
+#endif
 }
 
 void ofilestream::createDirectoriesOfFile(const char* filename)

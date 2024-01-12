@@ -154,7 +154,6 @@ void ACDD::acdd_attrs::setUserConfig(const mio::Config& cfg, const std::string& 
 	
 	//last priority: set from default
 	if (value.empty() && !default_value.empty()) {
-		std::cout << name << " is Default\n";
 		value = default_value;
 		Default = true;
 	} else {
@@ -477,7 +476,7 @@ void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 		std::ostringstream ss;
 		ss << std::fixed << std::setprecision(10) << location.getLon() << " " << location.getLat();
 		geometry = ss.str();
-	}else {
+	} else {
 		std::ostringstream os;
 		os << location.getEPSG();
 		epsg_str = os.str();

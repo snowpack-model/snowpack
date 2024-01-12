@@ -72,6 +72,7 @@ namespace FileUtils {
 	* links, convert relative paths to absolute paths, etc
 	* @param in_path the path string to cleanup
 	* @param resolve resolve links, convert relative paths, etc? (default=false)
+	* @param silent do not print error messages if set to true (only useful to send another error message later)
 	*/
 	std::string cleanPath(std::string in_path, const bool& resolve=false, const bool& silent=false);
 

@@ -162,7 +162,7 @@ const bool AsciiIO::t_gnd = false;
  * 0502,nElems,element density (kg m-3)
  * 0503,nElems,element temperature (degC)
  * 0504,nElems,element ID    -- or --    element mk (see key PROF_ID_OR_MK)
- * 0505,nElems,element age (days)
+ * 0505,nElems,element age (days)    -- or --    element deposition date (see key PROF_AGE_OR_DATE)
  * 0506,nElems,liquid water content by volume (%)
  * 0507,nElems,liquid preferential flow water content by volume (%)
  * 0508,nElems,dendricity (1)
@@ -326,7 +326,7 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
            min_depth_subsurf(0.), hoar_density_surf(0.), hoar_min_size_surf(0.), useRichardsEq(false), enable_pref_flow(false), enable_ice_reservoir(false), enable_vapour_transport(false),
            avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), useReferenceLayer(false),
            out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_t(false),
-           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false), prof_ID_or_MK("ID")
+           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), r_in_n(false), prof_ID_or_MK("ID"), prof_AGE_or_DATE("AGE")
 {
 	//Defines how heights/depths of snow or/and soil temperatures are read in and output \n
 	// Snowpack section
@@ -363,6 +363,10 @@ AsciiIO::AsciiIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("PROF_ID_OR_MK", "Output", prof_ID_or_MK);
 	if (prof_ID_or_MK != "ID" && prof_ID_or_MK != "MK") {
 		throw InvalidArgumentException("Unknown value for PROF_ID_OR_MK: "+prof_ID_or_MK+". Please specify if element 0504 in *.pro file should contain \"ID\" or \"MK\"", AT);
+	}
+	cfg.getValue("PROF_AGE_OR_DATE", "Output", prof_AGE_or_DATE);
+	if (prof_AGE_or_DATE != "AGE" && prof_AGE_or_DATE != "DATE") {
+		throw InvalidArgumentException("Unknown value for PROF_AGE_OR_DATE: "+prof_AGE_or_DATE+". Please specify if element 0505 in *.pro file should contain \"AGE\" or \"DATE\"", AT);
 	}
 	cfg.getValue("AGGREGATE_PRF", "Output", aggregate_prf);
 	cfg.getValue("USEREFERENCELAYER", "Output", useReferenceLayer, IOUtils::nothrow);
@@ -994,8 +998,13 @@ void AsciiIO::writeProfilePro(const mio::Date& i_date, const SnowStation& Xdata,
 		fout << "," << std::fixed << std::setprecision(0) << ((prof_ID_or_MK == "ID") ? (EMS[e].ID) : (EMS[e].mk));
 	// 0505: element age
 	fout << "\n0505," << nE;
-	for (size_t e = 0; e < nE; e++)
-		fout << "," << std::fixed << std::setprecision(2) << i_date.getJulian() - EMS[e].depositionDate.getJulian();
+	for (size_t e = 0; e < nE; e++) {
+		if (prof_AGE_or_DATE == "AGE") {
+			fout << "," << std::fixed << std::setprecision(2) << (i_date.getJulian() - EMS[e].depositionDate.getJulian());
+		} else {
+			fout << "," << EMS[e].depositionDate.toString(Date::ISO);
+		}
+	}
 	// 0506: liquid water content by volume (%)
 	fout << "\n0506," << nE;
 	for (size_t e = 0; e < nE; e++)
@@ -2445,7 +2454,11 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	} else {
 		fout << "\n0504,nElems,element mk (1)";
 	}
-	fout << "\n0505,nElems,element age (days)";
+	if (prof_AGE_or_DATE == "AGE") {
+		fout << "\n0505,nElems,element age (days)";
+	} else {
+		fout << "\n0505,nElems,element deposition date (ISO)";
+	}
 	fout << "\n0506,nElems,liquid water content by volume (%)";
 	if(enable_pref_flow) fout << "\n0507,nElems,liquid preferential flow water content by volume (%)";
 	fout << "\n0508,nElems,dendricity (1)";

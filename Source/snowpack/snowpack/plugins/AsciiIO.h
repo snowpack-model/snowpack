@@ -119,6 +119,7 @@ class AsciiIO : public SnowpackIOInterface {
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool r_in_n;
 		std::string prof_ID_or_MK;
+		std::string prof_AGE_or_DATE;
 
 		static const bool t_srf, t_gnd;
 };

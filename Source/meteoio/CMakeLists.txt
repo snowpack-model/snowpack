@@ -130,15 +130,19 @@ SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
 SET(LIMIT_OUT_ACCESS OFF CACHE BOOL "Limit write access of the library to CWD")
 # SET(LIMIT_BASE_DIR ".")
 IF(LIMIT_OUT_ACCESS)
-	add_compile_definitions(LIMIT_WRITE_ACCESS)
+	IF(MSVC)	#TODO: replace by add_compile_definitions(LIMIT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/LIMIT_WRITE_ACCESS)
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DLIMIT_WRITE_ACCESS)
+	ENDIF(MSVC)
+	SET(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
+	IF(MSVC)	#TODO: replace by add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"") when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\")
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DLIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\")
+	ENDIF(MSVC)
 ENDIF()
-SET(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
-add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"")
 
-SET(IN_WEBSERVICE OFF CACHE BOOL "Use meteoio as a webservice")
-IF(IN_WEBSERVICE)
-	add_compile_definitions(WEBSERVICE)
-ENDIF()
 
 ###########################################################
 #finally, SET compile flags
