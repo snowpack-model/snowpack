@@ -12,13 +12,13 @@ This workflow currently provides templates for MERRA-2, CESM, ERA5, COSMO and RA
 ```
 bash setup.sh
 ```
-3. Runtime: Now, there are three ways to generate the \*.smet files:
+5. Runtime: Now, there are three ways to generate the \*.smet files:
     - Submit workflow as a Slurm or PBS job by executing:
 
         ```sbatch job.sbatch```
 
-        Make sure to edit appropriate Slurm/PBS settings! Particularly, count the number of lines *n* in `to_exec.lst`, for example using `wc -l to_exec.lst`, and modify the job array specification: `#SBATCH --array=1-n`
-    - Use the tool ```parallel. For example, when having *n* cores available, execute:
+        Make sure to edit appropriate Slurm/PBS settings! **Particularly, count the number of lines *n* in `to_exec.lst`**, for example using `wc -l to_exec.lst`, **and modify the job array specification: `#SBATCH --array=1-n`**
+    - Use the tool `parallel`. For example, when having *n* cores available, execute:
 
         ```parallel -j n < to_exec.lst```
 
@@ -26,7 +26,7 @@ bash setup.sh
 
         ```bash to_exec.lst```
 
-4. Postprocessing: Concatenate and zip individual yearly atmospheric forcing files into a continous time series located at `output/smet_forcing.zip`. `postprocess.sh` requires the atmospheric model as an argument, for example:
+6. Postprocessing: Concatenate and zip individual yearly atmospheric forcing files into a continous time series located at `output/smet_forcing.zip`. `postprocess.sh` requires the atmospheric model as an argument, for example:
 ```
 bash postprocess.sh MERRA-2
 ```
