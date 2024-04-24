@@ -102,7 +102,7 @@ bool PrecSplitting::create(const size_t& param, const size_t& ii_min, const size
 	return all_filled;
 }
 
-bool PrecSplitting::generate(const size_t& param, MeteoData& md)
+bool PrecSplitting::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value!=IOUtils::nodata) return true;

@@ -538,7 +538,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 #endif
 				EMS[Xdata.SoilNode].hard = 0.;
 #ifndef SNOWPACK_CORE
-				EMS[Xdata.SoilNode].S_dr = INIT_STABILITY;
+				EMS[Xdata.SoilNode].S_dr = IOUtils::nodata;
 				EMS[Xdata.SoilNode].crit_cut_length = Constants::undefined;
 #endif
 				EMS[Xdata.SoilNode].VG.theta_r = 0.;
@@ -556,8 +556,8 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				NDS[Xdata.SoilNode].udot = 0.;                  // Settlement rate is also 0
 				NDS[Xdata.SoilNode].f = 0.;                     // Unbalanced forces are 0
 #ifndef SNOWPACK_CORE
-				NDS[Xdata.SoilNode].S_n = INIT_STABILITY;
-				NDS[Xdata.SoilNode].S_s = INIT_STABILITY;
+				NDS[Xdata.SoilNode].S_n = IOUtils::nodata;
+				NDS[Xdata.SoilNode].S_s = IOUtils::nodata;
 #endif
 				NDS[Xdata.SoilNode].z = 0.;
 

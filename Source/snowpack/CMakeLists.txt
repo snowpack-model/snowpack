@@ -98,6 +98,19 @@ SET(PROFEVAL OFF CACHE BOOL "Compilation PROFEVAL ON or OFF")
 SET(ENABLE_LAPACK OFF CACHE BOOL "Compile with the CLAPACK library?")
 SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISDBIO ON or OFF - only relevant for SLF")
 SET(PLUGIN_CAAMLIO ON CACHE BOOL "Compilation CAAMLIO ON or OFF to read CAAML profiles")
+###########################################################
+## Additional Options
+###########################################################
+IF(GCC_VERSION VERSION_GREATER 5.0 OR GCC_VERSION VERSION_EQUAL 5.0)
+	IF(PLUGIN_IMISIO) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
+		SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
+	ELSE(PLUGIN_IMISIO)
+		SET(FORCE_C03_ABI OFF CACHE BOOL "Compatibility with Oracle's OCCI")
+		IF (FORCE_C03_ABI)
+			SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
+		ENDIF(FORCE_C03_ABI)
+	ENDIF(PLUGIN_IMISIO)
+ENDIF()
 
 ###########################################################
 #finally, SET compile flags

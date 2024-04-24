@@ -25,6 +25,7 @@
 #include <meteoio/meteoResampling/NearestNeighbour.h>
 #include <meteoio/meteoResampling/NoResampling.h>
 #include <meteoio/meteoResampling/SolarResampling.h>
+#include <meteoio/meteoResampling/ARIMAResampling.h>
 
 namespace mio {
 /**
@@ -34,21 +35,29 @@ namespace mio {
  *
  * @section resampling_section Resampling section
  * The resampling is specified for each parameter in the [Interpolations1D] section. This section contains
- * a list of the various meteo parameters with their associated choice of resampling algorithm and
+ * a list of the various meteo parameters with their associated choice of resampling algorithm stacks and
  * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
- * assumed. An example of such section is given below:
+ * assumed. The Resampling is done by using a stack of resampling algorithms, with optional specifications of 
+ * the maximum data gap that the respective algorithm should be used for.
+ * (The default for the maximum gap size is -999 = internal nodata value, meaning that the algorithm should be used for all gaps).
+ * 
+ * An example of such section is given below:
  * @code
  * [Interpolations1D]
  * WINDOW_SIZE     = 86400
- * TA::resample    = linear
+ * TA::RESAMPLE1    = linear
  *
- * RH::resample            = linear
- * RH::linear::window_size = 172800
+ * RH::RESAMPLE1            = linear
+ * RH::LINEAR::window_size = 172800
+ * RH::LINEAR::MAX_GAP_SIZE = 86400 # 1 day in seconds
  *
- * VW::resample             = nearest
+ * VW::resample1             = nearest
  * VW::nearest::extrapolate = true
+ * VW::nearest::max_gap_size = 3600
+ * VW::resample2			 = linear
+ * 
  *
- * PSUM::resample           = accumulate
+ * PSUM::resample1           = accumulate
  * PSUM::accumulate::period = 3600
  * @endcode
  *
@@ -70,6 +79,7 @@ namespace mio {
  * - solar: resample solar radiation by interpolating an atmospheric loss factor, see Solar
  * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
  * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
+ * - ARIMA: resample using the ARIMA model, see ARIMAResampling
  *
  * @note By default a linear resampling will be performed. It is possible to turn off all resampling by setting the *Enable_Resampling* key
  * to *false* in the [Interpolations1D] section.
@@ -93,6 +103,8 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 		return new Daily_solar(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "DAILY_AVG") {
 		return new DailyAverage(algoname, parname, dflt_window_size, vecArgs);
+	} else if (algoname == "ARIMA") {
+		return new ARIMAResampling(algoname, parname, dflt_window_size, vecArgs);
 	} else {
 		throw IOException("The resampling algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -234,6 +246,21 @@ size_t ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos
 		last_gap.extend(ii-1, vecM);
 		return IOUtils::npos;
 	}
+}
+
+ResamplingAlgorithms::gap_info ResamplingAlgorithms::findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
+					 const double& i_window_size) {
+	ResamplingAlgorithms::gap_info last_gap;
+	size_t indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size);
+	size_t indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size, indexP1);
+
+	if (indexP1 == IOUtils::npos) {
+		last_gap.setStart(0, vecM);
+	}
+	if (indexP2 == IOUtils::npos) {
+		last_gap.setEnd(vecM.size()-1, vecM);
+	}
+	return last_gap;
 }
 
 /**

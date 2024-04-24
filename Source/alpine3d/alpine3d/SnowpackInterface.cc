@@ -108,7 +108,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
                   landuse(landuse_in), mns(dem_in, IOUtils::nodata), shortwave(dem_in, IOUtils::nodata), longwave(dem_in, IOUtils::nodata), diffuse(dem_in, IOUtils::nodata),
                   terrain_shortwave(dem_in, IOUtils::nodata), terrain_longwave(dem_in, IOUtils::nodata),
                   psum(dem_in, IOUtils::nodata), psum_ph(dem_in, IOUtils::nodata), psum_tech(dem_in, IOUtils::nodata), grooming(dem_in, IOUtils::nodata),
-                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata), tsg(dem_in, IOUtils::nodata), init_glaciers_height(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
+                  vw(dem_in, IOUtils::nodata), vw_drift(dem_in, IOUtils::nodata), dw(dem_in, IOUtils::nodata), rh(dem_in, IOUtils::nodata), ta(dem_in, IOUtils::nodata), tsg(dem_in, IOUtils::nodata), init_glaciers_thickness(dem_in, IOUtils::nodata), winderosiondeposition(dem_in, 0),
                   solarElevation(0.), output_grids(), workers(nbworkers), worker_startx(nbworkers), worker_deltax(nbworkers), worker_stations_coord(nbworkers),
                   timer(), nextStepTimestamp(startTime), timeStep(dt_main/86400.), dataMeteo2D(false), dataDa(false), dataSnowDrift(false), dataRadiation(false),
                   drift(NULL), eb(NULL), da(NULL), glaciers(NULL), techSnow(NULL)
@@ -118,19 +118,16 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	std::vector<SnowStation*> snow_stations;
 	std::vector<std::pair<size_t,size_t> > snow_stations_coord;
 
-	// Check if glacier height should be obtained from a grid.
+	// Check if glacier thickness should be obtained from a grid.
 	// This option overwrite landuse information.
 	// To use it the following set of keys should be provided:
 	//   GLACIER_FROM_GRID = TRUE
 	//   GLACIER = ARC (for now no other plugin is supported)
 	//   GLACIERFILE = path_to_glacier_file
-	// The glacier file (grid simmilar to the DEM) should contain glacier height in meters,
+	// The glacier file (grid simmilar to the DEM) should contain glacier thickness in meters,
 	// and 0 or nodata for glacier free pixels.
 	sn_cfg.getValue("GLACIER_FROM_GRID", "input", glacier_from_grid,IOUtils::nothrow);
-	if(glacier_from_grid)
-	{
-		setInitGlacierHeight();
-	}
+	if (glacier_from_grid) setInitGlacierThickness();
 
 	readInitalSnowCover(snow_stations,snow_stations_coord);
 
@@ -1141,26 +1138,26 @@ void SnowpackInterface::write_SMET(const CurrentMeteo& met, const mio::StationDa
 }
 
 /**
- * @brief Read glacier height map and store values in init_glaciers_height
+ * @brief Read glacier thickness map and store values in init_glaciers_thickness
  * @author Adrien Michel
  */
-void SnowpackInterface::setInitGlacierHeight()
+void SnowpackInterface::setInitGlacierThickness()
 {
-	io.readGlacier(init_glaciers_height);
-	if (!init_glaciers_height.isSameGeolocalization(dem))
-		throw IOException("The glacier initial height map and the provided DEM don't have the same geolocalization!", AT);
+	io.readGlacier(init_glaciers_thickness);
+	if (!init_glaciers_thickness.isSameGeolocalization(dem))
+		throw IOException("The glacier initial thickness map and the provided DEM don't have the same geolocalization!", AT);
 }
 
 
 
 /**
  * @brief Return a SN_SNOWSOIL_DATA pixel initialized witht the provided glacier height
- * @param glacier_height The hight of ice to initialze the glacier with
- * @param glacier_height GRID_sno of the corresponding pixel
+ * @param glacier_thickness The thickness of ice to initialze the glacier with
+ * @param GRID_sno GRID_sno of the corresponding pixel
  * @param seaIce Is this pixel sea ice
  * @author Adrien Michel
  */
-SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, const std::stringstream& GRID_sno, const bool seaIce)
+SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_thickness, const std::stringstream& GRID_sno, const bool seaIce)
 {
 
 	SN_SNOWSOIL_DATA snow_soil_tmp;
@@ -1182,19 +1179,23 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 	// Create ice layers
 	double layer_height=2;
 	double total_height=0;
-	while (total_height < glacier_height-0.1){
-		ldata.hl=layer_height;
+	while (total_height < glacier_thickness-0.1) {
+		ldata.hl = layer_height;
 		snow_soil_tmp.Ldata.push_back(ldata);
 		total_height += layer_height;
-		if(glacier_height-total_height<0.5){layer_height=0.1;}
-		else if(glacier_height-total_height<2){layer_height=0.2;}
-		else if(glacier_height-total_height<4){layer_height=1.;}
+		if (glacier_thickness-total_height<0.5) {
+			layer_height=0.1;
+		} else if(glacier_thickness-total_height<2) {
+			layer_height=0.2;
+		} else if(glacier_thickness-total_height<4) {
+			layer_height=1.;
+		}
 	}
 
 	// Add last layer
-	const double remaining = glacier_height-total_height;
-	if(remaining>0.02){
-		ldata.hl=remaining;
+	const double remaining = glacier_thickness-total_height;
+	if (remaining>0.02) {
+		ldata.hl = remaining;
 		snow_soil_tmp.Ldata.push_back(ldata);
 		total_height += remaining;
 	}
@@ -1286,17 +1287,14 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_height, con
 
 					// Change pixel value if galciers are forced from grids
 					if(glacier_from_grid) {
-						if(init_glaciers_height(ix,iy)>0) {
-							snow_soil=getIcePixel(init_glaciers_height(ix,iy),GRID_sno,(snowPixel.Seaice!=NULL));
-							if(SnowpackInterfaceWorker::round_landuse(landuse.grid2D(ix,iy))!=11400)
-							{
+						if(init_glaciers_thickness(ix,iy)>0) {
+							snow_soil = getIcePixel(init_glaciers_thickness(ix,iy), GRID_sno, (snowPixel.Seaice!=NULL));
+							if(SnowpackInterfaceWorker::round_landuse(landuse.grid2D(ix,iy))!=11400) {
 								std::cerr << "[W] Pixel [" << ix << "," << iy << "] was declared as glacier glacier height map but not in the landuse file. Pixel changed to glacier.\n";
 								landuse.grid2D(ix,iy)=11400;
 							}
-						}
-						// If was glaccier in LUS but not in glacier height --> set pixel to rock
-						else if(SnowpackInterfaceWorker::round_landuse(landuse.grid2D(ix,iy))==11400)
-						{
+						} else if(SnowpackInterfaceWorker::round_landuse(landuse.grid2D(ix,iy))==11400) {
+							// If was glacier in LUS but not in glacier height --> set pixel to rock
 							ZwischenData zwischenData; //not used by Alpine3D but necessary for Snowpack
 							std::stringstream LUS_sno_tmp;
 							LUS_sno_tmp << station_name << "_" << "11500";

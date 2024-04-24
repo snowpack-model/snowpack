@@ -22,11 +22,6 @@
 
 namespace mio {
 
-void WindComponents::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
-{
-	if (!vecArgs.empty()) throw InvalidArgumentException("The "+where+" generator does not take any arguments", AT);
-}
-
 std::string WindComponents::findUComponent(const MeteoData& md)
 {
 	if (md.param_exists("U")) return "U";
@@ -46,7 +41,7 @@ std::string WindComponents::findVComponent(const MeteoData& md)
 }
 
 
-bool WindComponents::generate(const size_t& param, MeteoData& md)
+bool WindComponents::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	if (param!=MeteoData::VW && param!=MeteoData::DW)
 		throw InvalidArgumentException("The "+where+" generator can only be applied to VW and/or DW", AT);

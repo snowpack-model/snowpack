@@ -78,6 +78,9 @@ BEGIN { \
 			} else if($1==503) { \
 				# Read temperatures
 				for(i=1; i<=$2; i++) {Te[i]=$(i+2)+273.15} \
+			} else if($1==505) { \
+				# Read layer ages
+				for(i=1; i<=$2; i++) {age[i]=$(i+2)} \
 			} else if($1==506) { \
 				# Read LWC
 				for(i=1; i<=$2; i++) {th_water[i]=$(i+2)/100.} \
@@ -91,10 +94,10 @@ BEGIN { \
 				# Read theta[AIR] (i.e., pore space)
 				for(i=1; i<=$2; i++) {th_air[i]=$(i+2)/100.} \
 				# Print header
-				if(printheader==0) {printheader=1; print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)"} \
+				if(printheader==0) {printheader=1; print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"} \
 				# Write output
 				for(i=nEsnow; i>=bottomsnowelement; i--) {
-					printf "%f %f %f %f %f %f %f %f %f %f\n", z[nEsnow+1]-z[i+1], z[nEsnow+1]-z[i], z[nEsnow+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], th_ice[i], th_water[i], th_air[i]; \
+					printf "%f %f %f %f %f %f %f %f %f %f %f\n", z[nEsnow+1]-z[i+1], z[nEsnow+1]-z[i], z[nEsnow+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], th_ice[i], th_water[i], th_air[i], age[i]; \
 				} \
 				exit; \
 			} \

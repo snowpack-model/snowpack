@@ -42,6 +42,7 @@
 #cmakedefine PLUGIN_METEOBLUE
 #cmakedefine PLUGIN_MYSQLIO
 #cmakedefine PLUGIN_NETCDFIO
+#cmakedefine PLUGIN_iCSVIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_PGMIO
 #cmakedefine PLUGIN_PNGIO
@@ -53,19 +54,61 @@
 #cmakedefine PLUGIN_SYNTHIO
 #cmakedefine PLUGIN_ZRXPIO
 
+#ifdef PLUGIN_ALPUG
 #include <meteoio/plugins/ALPUG.h>
+#endif
+
+#ifdef PLUGIN_ARCIO
 #include <meteoio/plugins/ARCIO.h>
+#endif
+
+#ifdef PLUGIN_ARGOSIO
 #include <meteoio/plugins/Argos.h>
+#endif
+
+#ifdef PLUGIN_ARPSIO
 #include <meteoio/plugins/ARPSIO.h>
+#endif
+
+#ifdef PLUGIN_A3DIO
 #include <meteoio/plugins/A3DIO.h>
+#endif
+
+#ifdef PLUGIN_CSVIO
 #include <meteoio/plugins/CsvIO.h>
+#endif
+
+#ifdef PLUGIN_GEOTOPIO
 #include <meteoio/plugins/GeotopIO.h>
+#endif
+
+#ifdef PLUGIN_GOESIO
 #include <meteoio/plugins/Goes.h>
+#endif
+
+#ifdef PLUGIN_GRASSIO
 #include <meteoio/plugins/GrassIO.h>
+#endif
+
+#ifdef PLUGIN_iCSVIO
+#include <meteoio/plugins/iCSVIO.h>
+#endif
+
+#ifdef PLUGIN_PGMIO
 #include <meteoio/plugins/PGMIO.h>
+#endif
+
+#ifdef PLUGIN_SMETIO
 #include <meteoio/plugins/SMETIO.h>
+#endif
+
+#ifdef PLUGIN_SNIO
 #include <meteoio/plugins/SNIO.h>
+#endif
+
+#ifdef PLUGIN_SYNTHIO
 #include <meteoio/plugins/SyntheticIO.h>
+#endif
 
 //now for the plugins that bring special includes
 #ifdef PLUGIN_DBO
@@ -170,8 +213,9 @@ namespace mio {
  * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td></td>		<td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
-* <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
+ * <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
+ * <tr><td>\subpage icsvio "iCSV"</td><td>meteo, poi</td><td>meteo</td>		<td>iCSV data files</td><td></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>grid2d</td>		<td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pmodio "PMOD"</td><td>meteo</td><td></td>		<td>Raw data files from Pmod/Wrc (experimental!)</td><td></td></tr>
@@ -253,6 +297,9 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #endif
 #ifdef PLUGIN_NETCDFIO
 	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
+#endif
+#ifdef PLUGIN_iCSVIO
+	if (plugin_name == "iCSV") return new iCSVIO(i_cfg);
 #endif
 #ifdef PLUGIN_OSHDIO
 	if (plugin_name == "OSHD") return new OshdIO(i_cfg);

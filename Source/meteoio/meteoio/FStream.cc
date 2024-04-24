@@ -101,6 +101,7 @@ std::string ofilestream::cutPathToLimitDir(const std::string &path)
 */
 std::string ofilestream::limitAccess(std::string path, const bool& write_directories)
 {
+	path = FileUtils::cleanPath(path, false);
 	if (write_directories) {
 #ifdef LIMIT_WRITE_ACCESS
 		if (!FileUtils::directoryExists(getLimitBaseDir())) { 

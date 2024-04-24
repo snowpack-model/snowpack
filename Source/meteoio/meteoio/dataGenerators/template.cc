@@ -23,6 +23,8 @@ namespace mio {
 
 void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
+	//Non-processed arguments can be provided, for example for stations' restrictions.
+	//Therefore, accept arguments that are not handled by the generator itself!
 	//Get the optional arguments for the algorithm. For example, process 1 argument
 	/*const std::string where( section+"::"+algo );
 	bool has_val=false; //so we can check the syntax
@@ -39,7 +41,7 @@ void TEMPLATE::parse_args(const std::vector< std::pair<std::string, std::string>
 	*/
 }
 
-bool TEMPLATE::generate(const size_t& param, MeteoData& md)
+bool TEMPLATE::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -57,7 +59,7 @@ bool TEMPLATE::create(const size_t& param, const size_t& ii_min, const size_t& i
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		//either call generate() on each point or process the vector in one go.
 		//when working on the whole vector, some optimizations might be implemented.
-		const bool status = generate(param, vecMeteo[ii]);
+		const bool status = generate(param, vecMeteo[ii], vecMeteo);
 		if (status==false) all_filled=false;
 	}
 

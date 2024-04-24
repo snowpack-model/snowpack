@@ -723,7 +723,7 @@ void WaterTransport::adjustDensity(SnowStation& Xdata, SurfaceFluxes& Sdata)
 	const double cH_old = Xdata.cH;
 	Xdata.cH = NDS[Xdata.getNumberOfNodes()-1].z + NDS[Xdata.getNumberOfNodes()-1].u;
 	Sdata.mass[SurfaceFluxes::MS_SETTLING_DHS] += Xdata.cH - cH_old;
-	Xdata.mH -= (cH_old - Xdata.cH);
+	if (Xdata.mH!=Constants::undefined) Xdata.mH -= (cH_old - Xdata.cH);
 }
 
 /**
@@ -788,7 +788,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 				EMS[nE-1].sp = 1.;
 				EMS[nE-1].rg = 1.0;
 				EMS[nE-1].rb = 0.5;
-				Xdata.cH = Xdata.mH = NDS[nN-1].z + NDS[nN-1].u;
+				Xdata.cH = NDS[nN-1].z + NDS[nN-1].u;
+				if (Xdata.mH != IOUtils::nodata) Xdata.mH = Xdata.cH;
 			} else if (water_layer && iwatertransportmodel_snow != RICHARDSEQUATION && iwatertransportmodel_soil != RICHARDSEQUATION && (Store > 0.)
 			               && ((useSoilLayers && (nE == Xdata.SoilNode+1) && (EMS[nE-2].theta[SOIL] > 0.95))
 			                       || ((nE > 1) && (EMS[nE-2].theta[ICE] > 0.95)))) {
@@ -800,7 +801,8 @@ void WaterTransport::transportWater(const CurrentMeteo& Mdata, SnowStation& Xdat
 				EMS[nE-1].L0 = EMS[nE-1].L = (NDS[nN-1].z + NDS[nN-1].u) - (NDS[nN-2].z + NDS[nN-2].u);
 				EMS[nE-1].M = EMS[nE-1].L0 * EMS[nE-1].Rho;
 				assert(EMS[nE-1].M >= (-Constants::eps2)); //mass must be positive
-				Xdata.cH = Xdata.mH = NDS[nN-1].z + NDS[nN-1].u;
+				Xdata.cH = NDS[nN-1].z + NDS[nN-1].u;
+				if (Xdata.mH != IOUtils::nodata) Xdata.mH = Xdata.cH;
 			}
 
 			//Put rain water in the layers, starting from the top element.

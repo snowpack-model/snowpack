@@ -552,7 +552,7 @@ void SnLaws::compShortWaveAbsorption(const std::string& i_sw_absorption_scheme, 
 	if (nE==0) return;
 
 	const size_t bottom_element = (Xdata.SoilNode > 0)? Xdata.SoilNode - 1 : Xdata.SoilNode;
-	for (size_t e = bottom_element; e < nE; e++)
+	for (size_t e = 0; e < nE; e++)
 		EMS[e].sw_abs = 0.;
 
 	// Compute absorbed radiation
@@ -1825,7 +1825,7 @@ double SnLaws::SnowViscosityMSU(const ElementData& Edata)
 			Vis = (L/(2.*rg + L)) * epdot * exp( (Q/R)*(1./Tref - 1./T) );
 			Vis = 1. / (Vis * Optim::pow2(S) * Optim::pow3(Vis1));
 		} else { // NOT YIELDING, linear
-			// This viscocity is not a function of stress and is therefore a linear viscosity.  Its value
+			// This viscosity is not a function of stress and is therefore a linear viscosity.  Its value
 			// depends on rb, rg, N3, theta_i and T. The expression  ((N3*theta_i)/(4.))*(rb/rg)^2
 			// determines the neck stress relative to the snow stress. The expression   ((rg + L)/(3.*L))
 			// relates the neck strains to the global volumetric strains. The term MONTANA_V_FUDGE is a

@@ -1636,7 +1636,7 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 
 	//Initialise the Stability Index for ml_st_CheckStability routine
 #ifndef SNOWPACK_CORE
-	elem.S_dr = INIT_STABILITY;
+	elem.S_dr = IOUtils::nodata;
 #endif
 	elem.hard = IOUtils::nodata;
 
@@ -1702,8 +1702,8 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 			NDS[n].udot = 0.0;                  // Settlement rate is also 0
 			NDS[n].f = 0.0;                     // Unbalanced forces are 0
 #ifndef SNOWPACK_CORE
-			NDS[n].S_n = INIT_STABILITY;
-			NDS[n].S_s = INIT_STABILITY;
+			NDS[n].S_n = IOUtils::nodata;
+			NDS[n].S_s = IOUtils::nodata;
 #endif
 			z0 += Ln;
 	}
@@ -2021,8 +2021,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[nOldN].udot = 0.0;               // Settlement rate is also 0
 				NDS[nOldN].f = 0.0;                 // Unbalanced forces is 0
 #ifndef SNOWPACK_CORE
-				NDS[nOldN].S_n = INIT_STABILITY;
-				NDS[nOldN].S_s = INIT_STABILITY;
+				NDS[nOldN].S_n = IOUtils::nodata;
+				NDS[nOldN].S_s = IOUtils::nodata;
 #endif
 			} else { // Make sure top node surface hoar mass is removed
 				NDS[nOldN-1].hoar = 0.0;
@@ -2041,8 +2041,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[n].udot = 0.0;                  // Settlement rate is also 0
 				NDS[n].f = 0.0;                     // Unbalanced forces are 0
 #ifndef SNOWPACK_CORE
-				NDS[n].S_n = INIT_STABILITY;
-				NDS[n].S_s = INIT_STABILITY;
+				NDS[n].S_n = IOUtils::nodata;
+				NDS[n].S_s = IOUtils::nodata;
 #endif
 				z0 += Ln;
 			}
