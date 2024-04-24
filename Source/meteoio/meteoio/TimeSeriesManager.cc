@@ -308,24 +308,32 @@ size_t TimeSeriesManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		data = &raw_buffer.getBuffer();
 	}
 
+	//vector to match indices between data (all stations) and vecMeteo (only stations that could provide data at the requested date)
+	std::vector<size_t> stations_idx((*data).size(), IOUtils::npos);
+
 	if ((IOUtils::resampled & processing_level) == IOUtils::resampled) { //resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			if ((*data)[ii].empty()) continue;
 			const std::string stationHash( IOUtils::toString(ii)+"-"+(*data)[ii].front().meta.getHash() );
 			MeteoData md;
 			const bool success = meteoprocessor.resample(i_date, stationHash, (*data)[ii], md);
-			if (success) vecMeteo.push_back( md );
+			if (success) {
+				vecMeteo.push_back( md );
+				stations_idx[ ii ] = vecMeteo.size()-1;
+			}
 		}
 	} else { //no resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			const size_t index = IOUtils::seek(i_date, (*data)[ii], true); //needs to be an exact match
-			if (index != IOUtils::npos)
+			if (index != IOUtils::npos) {
 				vecMeteo.push_back( (*data)[ii][index] ); //Insert station into vecMeteo
+				stations_idx[ ii ] = vecMeteo.size()-1;
+			}
 		}
 	}
 
 	if ((IOUtils::generated & processing_level) == IOUtils::generated)
-		dataGenerator.fillMissing(vecMeteo);
+		dataGenerator.fillMissing(vecMeteo, *data, stations_idx);
 
 	add_to_points_cache(i_date, vecMeteo); //Store result in the local cache
 

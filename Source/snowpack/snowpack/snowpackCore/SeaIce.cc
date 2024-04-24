@@ -535,7 +535,7 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				EMS[Xdata.SoilNode].ps2rb = 0.;
 				EMS[Xdata.SoilNode].s_strength = 0.;
 				EMS[Xdata.SoilNode].hard = 0.;
-				EMS[Xdata.SoilNode].S_dr = INIT_STABILITY;
+				EMS[Xdata.SoilNode].S_dr = IOUtils::nodata;
 				EMS[Xdata.SoilNode].crit_cut_length = Constants::undefined;
 				EMS[Xdata.SoilNode].VG.theta_r = 0.;
 				EMS[Xdata.SoilNode].lwc_source = 0.;
@@ -549,8 +549,8 @@ void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& M
 				NDS[Xdata.SoilNode].hoar = 0.;                  // The new snow surface hoar is set to zero
 				NDS[Xdata.SoilNode].udot = 0.;                  // Settlement rate is also 0
 				NDS[Xdata.SoilNode].f = 0.;                     // Unbalanced forces are 0
-				NDS[Xdata.SoilNode].S_n = INIT_STABILITY;
-				NDS[Xdata.SoilNode].S_s = INIT_STABILITY;
+				NDS[Xdata.SoilNode].S_n = IOUtils::nodata;
+				NDS[Xdata.SoilNode].S_s = IOUtils::nodata;
 				NDS[Xdata.SoilNode].z = 0.;
 
 				BottomSalFlux += EMS[Xdata.SoilNode].salinity * dL;

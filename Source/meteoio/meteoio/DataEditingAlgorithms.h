@@ -438,6 +438,63 @@ class EditingMetadata : public EditingBlock {
 		bool edit_in_place;
 };
 
+/** 
+ * @class EditingRegFill
+ * @ingroup processing
+ * @brief RegFill input editing command
+ * @details
+ * 
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit1        = EXCLUDE
+ * STB::arg1::params = ILWR PSUM
+ * 
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
+ *
+ * STB::edit2       = REGFILL
+ * STB::arg2::merge = WFJ2 WFJ1
+ * 
+ * DAV1::edit1        = REGFILL
+ * DAV1::arg1::merge  = WFJ2
+ * DAV1::arg1::params = HS RSWR PSUM
+ * @endcode
+ * 
+ * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
+ * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
+ * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
+ * the start of the first station to the start of the second station)
+ */
+class EditingRegFill : public EditingBlock {
+	public: 
+		enum RegressionType {
+			LINEAR,
+			QUADRATIC,
+			CUBIC,
+		};
+
+	public:
+		EditingRegFill(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void fillTimeseries(METEO_SET& vecMeteo1, const METEO_SET& vecMeteo2);
+		std::vector< std::string > source_stations;
+		std::set< std::string > params_to_merge;
+		RegressionType regtype;
+};
+
 class EditingBlockFactory {
 	public:
 		static EditingBlock* getBlock(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);

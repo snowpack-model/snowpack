@@ -10,4 +10,7 @@ SET(meteoResampling_sources
 	meteoResampling/NearestNeighbour.cc
 	meteoResampling/NoResampling.cc
 	meteoResampling/SolarResampling.cc
+	meteoResampling/ARIMAutils.cc
+	meteoResampling/InterpolARIMA.cc
+	meteoResampling/ARIMAResampling.cc
 )

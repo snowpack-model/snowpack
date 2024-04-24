@@ -140,6 +140,8 @@ class TimeSuppr : public ProcessingBlock {
  * @note The current implementation does not handle data conflicts if a shifted timestep conflicts with another timestep. In
  * such a case, an error message "[E] timestamp error for station..." will be returned and you will have to manually decide 
  * in your input data which timestep to keep.
+ * 
+ * @note The correction file supports comments (everything behind ';' or '#' is a comment) and empty lines.
  */
 class TimeShift : public ProcessingBlock {
 	public:

@@ -98,7 +98,7 @@ bool FilterRate::filterOut(const std::vector<MeteoData>& vecM, const unsigned in
 		}
 	}
 
-	return false;
+	// return false;
 }
 
 void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>& ivec,

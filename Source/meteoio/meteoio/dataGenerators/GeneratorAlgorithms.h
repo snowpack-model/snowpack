@@ -112,7 +112,7 @@ class GeneratorAlgorithm {
 	public:
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station. This is used by the dataGenerators
-		virtual bool generate(const size_t& param, MeteoData& md) = 0;
+		virtual bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) = 0;
 
 		/**
 		* @brief Fill one time series of MeteoData for one station. 

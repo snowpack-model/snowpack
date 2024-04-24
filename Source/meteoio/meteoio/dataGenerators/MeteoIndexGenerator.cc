@@ -120,7 +120,7 @@ bool MeteoIndex::WBGT_index(const size_t& param, MeteoData& md)
 	return true;
 }
 
-bool MeteoIndex::generate(const size_t& param, MeteoData& md)
+bool MeteoIndex::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -139,7 +139,7 @@ bool MeteoIndex::create(const size_t& param, const size_t& ii_min, const size_t&
 
 	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		const bool status = generate(param, vecMeteo[ii]);
+		const bool status = generate(param, vecMeteo[ii], vecMeteo);
 		if (status==false) all_filled=false;
 	}
 

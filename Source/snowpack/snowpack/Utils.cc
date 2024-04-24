@@ -482,6 +482,10 @@ double forcedErosion(const double hs, SnowStation& Xdata)
  */
 void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_corr, double& mass_corr, const bool &prn_check)
 {
+	if (Xdata.mH == IOUtils::nodata) {
+		cerr << "[E] No measured snow height: cannot execute ALLOW_INFLATE!" << endl;
+		throw;
+	}
 	const size_t nE = Xdata.getNumberOfElements(), soil_node = Xdata.SoilNode;
 	const double cH = Xdata.cH - Xdata.Ground;    // Calculated snow depth
 	const double mH = Xdata.mH - Xdata.Ground;    // Enforced snow depth

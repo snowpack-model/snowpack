@@ -213,7 +213,7 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 	}
 }
 
-std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(std::string regex_str, std::string section) const
+std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(const std::string& regex_str, std::string section) const
 {
 	//regex for selecting the keys
 	static const std::regex user_regex(regex_str);
@@ -348,6 +348,19 @@ std::vector< std::pair<std::string, std::string> > Config::getValues(std::string
 		}
 	}
 
+	return vecResult;
+}
+
+
+std::vector<std::string> Config::getKeysRegex(const std::string& regex_str, std::string section) const
+{
+	const std::vector< std::pair<std::string, std::string> > vecKeys( getValuesRegex(regex_str, section) );
+	std::vector<std::string> vecResult;
+	
+	for (const auto& key_record : vecKeys) {
+		vecResult.push_back( key_record.first );
+	}
+	
 	return vecResult;
 }
 

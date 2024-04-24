@@ -228,10 +228,22 @@ bool SMETCommon::readKeyValuePair(const std::string& in_line, const std::string&
 
 void SMETCommon::stripComments(std::string& str)
 {
-	const size_t found = str.find_first_of("#;");
-	if (found != std::string::npos){
-		str.erase(found); //rest of line disregarded
-	}
+	size_t pos = 0;
+	do {
+		//find_first_of searches for any of the given chars while find search for an exact match...
+		const size_t pound_found_idx = str.find('#', pos);
+		const size_t semi_found_idx = str.find(';', pos);
+		pos = std::min(pound_found_idx, semi_found_idx);
+		
+		if (pos != std::string::npos) {
+			if (pos>0 && str[pos-1]=='\\') {
+				str.erase(pos-1, 1); //remove the escape character
+				continue;
+			}
+			str.erase(pos); //rest of line disregarded
+			return;
+		}
+	} while (pos != std::string::npos);
 }
 
 void SMETCommon::toUpper(std::string& str)

@@ -46,7 +46,8 @@ class DataGenerator {
 		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), data_qa_logs(c.data_qa_logs)  {}
 		virtual ~DataGenerator();
 
-		void fillMissing(METEO_SET& vecMeteo) const;
+		void fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET>& fullDataset, const std::vector<size_t>& stations_idx) const;
+		void fillMissing(METEO_SET& vecMeteo) const; //simplified call similar to above
 		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
 
 		DataGenerator& operator=(const DataGenerator& source);

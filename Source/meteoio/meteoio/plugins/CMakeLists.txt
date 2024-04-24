@@ -91,6 +91,11 @@ IF(PLUGIN_NETCDFIO)
 	SET(plugins_sources ${plugins_sources} plugins/NetCDFIO.cc)
 ENDIF(PLUGIN_NETCDFIO)
 
+IF(PLUGIN_iCSVIO)
+	set(plugins_sources ${plugins_sources} plugins/iCSVHelper.cc)
+	set(plugins_sources ${plugins_sources} plugins/iCSVIO.cc)
+ENDIF(PLUGIN_iCSVIO)
+
 IF(PLUGIN_OSHDIO)
 	FIND_PACKAGE(Matio REQUIRED)
 	INCLUDE_DIRECTORIES(SYSTEM "${Matio_INCLUDE_DIR}")

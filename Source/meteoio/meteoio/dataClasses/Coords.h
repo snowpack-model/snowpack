@@ -21,6 +21,7 @@
 
 #include <string>
 #include <iostream>
+#include <set>
 
 namespace mio {
 /**
@@ -135,6 +136,8 @@ class Coords {
 		void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);
 		void setLatLon(const std::string& in_coordinates, const double in_altitude, const bool in_update=true);
 		void setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update=true);
+		void setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude);
+		void setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude, const int epsg);
 		void setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool setValid=false);
 		void setAltitude(const double in_altitude, const bool in_update=true);
 		void setProj(const std::string& in_coordinatesystem, const std::string& in_parameters="");
@@ -175,6 +178,11 @@ class Coords {
 
 		std::string coordsystem, coordparam;
 		geo_distances distance_algo;
+	
+	public:
+		static const std::set<int> latlon_epsgs;
+
+
 };
 } //end namespace
 

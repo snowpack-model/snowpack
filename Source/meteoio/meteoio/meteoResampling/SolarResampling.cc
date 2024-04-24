@@ -123,12 +123,20 @@ double Solar::interpolateLossFactor(const double& resampling_jul, const Points &
 	return 1.;
 }
 
-void Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+void Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
+	if (position == ResamplingAlgorithms::exact_match) {
+		const double value = vecM[index](paramindex);
+		if (value != IOUtils::nodata) {
+			md(paramindex) = value; // propagate value
+			return;
+		}
+	}
+	
 	const double pot_pt = getPotentialH( md );
 	if (pot_pt==IOUtils::nodata) return;
 

@@ -73,17 +73,34 @@ DataGenerator& DataGenerator::operator=(const DataGenerator& source)
  * @brief generate data to fill missing data points.
  * This relies on data generators defined by the user for each meteo parameters.
  * This loops over the defined generators and stops as soon as all missing points
- * have been successfully replaced.
- * @param vecMeteo vector containing one point for each station
+ * have been successfully replaced. With this version of the call, there is no ability to
+ * look for existing data point before/after the point to generate is missing point.
+ * @param vecMeteo vector containing one point for each station (stations that don't have anything are excluded)
  */
 void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 {
+	fillMissing(vecMeteo, std::vector<METEO_SET>(), std::vector<size_t>());
+}
+
+/**
+ * @brief generate data to fill missing data points.
+ * This relies on data generators defined by the user for each meteo parameters.
+ * This loops over the defined generators and stops as soon as all missing points
+ * have been successfully replaced.
+ * @param vecMeteo vector containing one point for each station (stations that don't have anything are excluded)
+ * @param fullDataset full dataset for all stations, for generators that might need to look at data before/after
+ * @param stations_idx mapping of the indices between vecMeteo (only relevant stations) and fullDataset (all stations)
+ */
+void DataGenerator::fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET>& fullDataset, const std::vector<size_t>& stations_idx) const
+{
 	if (mapAlgorithms.empty()) return; //no generators defined by the end user
+	const bool has_fullDataset = (!fullDataset.empty() && !stations_idx.empty());
 
 	for (auto const& it : mapAlgorithms) { //map< paraname, algorithms_stack>
 		const std::vector<GeneratorAlgorithm*> vecGenerators( it.second );
 
-		for (MeteoData& station : vecMeteo) {
+		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+			MeteoData& station( vecMeteo[ii] );
 			size_t param = station.getParameterIndex( it.first );
 			if (param==IOUtils::npos) param = station.addParameter( it.first );
 
@@ -97,7 +114,13 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
 				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipTimeStep( vecMeteo.front().date ) ) {
-					status = vecGenerators[jj]->generate(param, station);
+					const size_t station_idx = (has_fullDataset)? stations_idx[ii] : IOUtils::npos;
+
+					if (station_idx!=IOUtils::npos)
+						status = vecGenerators[jj]->generate(param, station, fullDataset[ stations_idx[ii] ]);
+					else
+						status = vecGenerators[jj]->generate(param, station, std::vector<MeteoData>());
+
 					if (station(param) != old_val) {
 						station.setGenerated(param);
 						if (data_qa_logs) {

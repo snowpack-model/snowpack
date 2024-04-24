@@ -79,8 +79,11 @@ namespace mio {
  */
 class AllSkyLWGenerator : public TauCLDGenerator {
 	public:
-		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
-		bool generate(const size_t& param, MeteoData& md);
+		//TauCLDGenerator will do its own arguments parsing, then AllSkyLWGenerator
+		//so make sure that we don't use here the same name as an argument to TauCLDGenerator!
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg) : TauCLDGenerator(vecArgs, i_algo, i_section, TZ, i_cfg), model(OMSTEDT) {parse_args(vecArgs); }
+		
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -94,7 +97,6 @@ class AllSkyLWGenerator : public TauCLDGenerator {
 			UNSWORTH
 		} parametrization;
 
-		SunObject sun;
 		parametrization model;
 };
 
