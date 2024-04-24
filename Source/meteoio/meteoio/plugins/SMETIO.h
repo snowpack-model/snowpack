@@ -111,6 +111,7 @@ class SMETIO : public IOInterface {
 		VersioningType outputVersioning; //this is usefull when generating multiple versions of the same dataset, for example with forecast data
 		bool outputCommentedHeaders;   //prefix all headers with a '#' for easy import into dbs but breaks SMET conformance
 		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
+		// the default values of allowOverwrite and allowAppend should be kept as they are, to allow backward compatibility
 };
 
 } //namespace

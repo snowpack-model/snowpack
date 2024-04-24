@@ -1004,6 +1004,10 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
 */
 inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, double &time_count_deltaHS, const CurrentMeteo &Mdata, const double &sn_dt, const size_t &i_hz, const bool &prn_check)
 {
+	if (Xdata.mH == IOUtils::nodata) {
+		cerr << "[E] No measured snow height: cannot execute ALLOW_INFLATE!" << endl;
+		throw;
+	}
 	const double cH = Xdata.cH - Xdata.Ground;
 	const double mH = Xdata.mH - Xdata.Ground;
 	// Look for missed erosion or not strong enough settling ...

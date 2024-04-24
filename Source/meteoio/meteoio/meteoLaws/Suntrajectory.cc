@@ -316,13 +316,15 @@ void SunMeeus::setAll(const double& i_latitude, const double& i_longitude, const
 	update();
 }
 
-void SunMeeus::reset() {;
+void SunMeeus::reset() 
+{
 	julian_gmt = TZ = IOUtils::nodata;
 	latitude = longitude = IOUtils::nodata;
 	private_init();
 }
 
-double SunMeeus::getSolarElevation() const {
+double SunMeeus::getSolarElevation() const 
+{
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		return SolarElevation; //this is the TRUE elevation, not the apparent!
 	} else {
@@ -333,12 +335,26 @@ double SunMeeus::getSolarElevation() const {
 	}
 }
 
-void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation) const {
+double SunMeeus::getSolarAzimuth() const 
+{
+	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+		return SolarAzimuthAngle;
+	} else {
+		std::ostringstream os;
+		os << "Please set ALL required parameters to get Sun's position!! ";
+		os << "(julian_gmt=" << julian_gmt << " TZ=" << TZ << " latitude=" << latitude << " longitude=" << longitude << ")\n";
+		throw InvalidArgumentException(os.str(), AT);
+	}
+}
+
+void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation) const 
+{
 	double eccentricity;
 	getHorizontalCoordinates(azimuth, elevation, eccentricity);
 }
 
-void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const {
+void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const 
+{
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		azimuth = SolarAzimuthAngle;
 		elevation = SolarElevation; //this is the TRUE elevation, not the apparent!
@@ -351,7 +367,8 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 	}
 }
 
-void SunMeeus::getDaylight(double& sunrise, double& sunset, double& MeeusDaylight) {
+void SunMeeus::getDaylight(double& sunrise, double& sunset, double& MeeusDaylight) 
+{
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		sunrise = SunRise;
 		sunset = SunSet;
@@ -364,7 +381,8 @@ void SunMeeus::getDaylight(double& sunrise, double& sunset, double& MeeusDayligh
 	}
 }
 
-void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declination) {
+void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declination) 
+{
 	if (julian_gmt!=IOUtils::nodata && TZ!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		right_ascension = SunRightAscension;
 		declination = SunDeclination;
@@ -376,7 +394,8 @@ void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declina
 	}
 }
 
-void SunMeeus::getEquatorialSunVector(double& sunx, double& suny, double& sunz) {
+void SunMeeus::getEquatorialSunVector(double& sunx, double& suny, double& sunz) 
+{
 	double azi_Sacw;
 
 	// Convert to angle measured from South, counterclockwise (rad)
@@ -400,19 +419,12 @@ double SunMeeus::SideralToLocal(const double& JD)
 	return theta_0;
 }
 
-void SunMeeus::update() {
-	//calculating various time representations
-	const double julian = julian_gmt;
-	const double lst_TZ = longitude*1./15.;
-	const double gmt_time = ((julian + 0.5) - floor(julian + 0.5))*24.; //in hours
-	const double lst_hours=(gmt_time+longitude*1./15.); //Local Sidereal Time
-	const double julian_century = (julian - 2451545.)/36525.;
-
-	//parameters of the orbits of the Earth and Sun
+double SunMeeus::getEquationOfTime(const double& julian_century)
+{
 	const double geomMeanLongSun = fmod( 280.46646 + julian_century*(36000.76983 + julian_century*0.0003032) , 360.);
 	const double geomMeanAnomSun = 357.52911 + julian_century*(35999.05029 - 0.0001537*julian_century);
 	eccentricityEarth = 0.016708634 - julian_century*(0.000042037 + 0.0000001267*julian_century);
-	const double SunEqOfCtr =   sin(1.*geomMeanAnomSun*Cst::to_rad)*( 1.914602-julian_century*(0.004817+0.000014*julian_century))
+	const double SunEqOfCtr = sin(1.*geomMeanAnomSun*Cst::to_rad)*( 1.914602-julian_century*(0.004817+0.000014*julian_century))
 	             + sin(2.*geomMeanAnomSun*Cst::to_rad)*(0.019993 - 0.000101*julian_century)
 	             + sin(3.*geomMeanAnomSun*Cst::to_rad)*(0.000289);
 
@@ -444,6 +456,20 @@ void SunMeeus::update() {
 	                 - 0.5*var_y*var_y*sin(4.*geomMeanLongSun*Cst::to_rad)
 	                 - 1.25*eccentricityEarth*eccentricityEarth*sin(2.*geomMeanAnomSun*Cst::to_rad)
 	                 )*Cst::to_deg;
+	
+	return EquationOfTime;
+}
+
+void SunMeeus::update() 
+{
+	//calculating various time representations
+	const double julian = julian_gmt;
+	const double lst_TZ = longitude*1./15.;
+	const double gmt_time = ((julian + 0.5) - floor(julian + 0.5))*24.; //in hours
+	const double lst_hours=(gmt_time+longitude*1./15.); //Local Sidereal Time
+	const double julian_century = (julian - 2451545.)/36525.;
+	
+	const double EquationOfTime = getEquationOfTime(julian_century);
 
 	SolarNoon = (720. - 4.*longitude - EquationOfTime + TZ*60.)/1440.; //in days, in LST time
 

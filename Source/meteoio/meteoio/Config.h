@@ -379,9 +379,20 @@ class Config {
 			}
 		}
 
-		std::vector< std::pair<std::string, std::string> > getValuesRegex(std::string regex_str, std::string section) const;
-		
+		/**
+		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
+		 *         it returns all the \<keys,value\> pairs that match (partial matches are considered) into a vector.
+		 * @param[in] keymatch A string representing the beginning of a key to search for
+		 * @param[in] section A string defining which section to search through (default: GENERAL)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
+		 * @return a vector of all \<keys,value\> pairs that partially match *keymatch*
+		 * @code
+		 *  const std::vector< std::pair<std::string, std::string> > myVec( cfg.getValues("TA::", "Filters") );
+		 * @endcode
+		 */
 		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
+		
+		std::vector< std::pair<std::string, std::string> > getValuesRegex(const std::string& regex_str, std::string section) const;
 
 		/**
 		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
@@ -391,11 +402,11 @@ class Config {
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
-		 *  const std::vector<std::string> myVec( cfg.findKeys("TA::", "Filters") );
+		 *  const std::vector<std::string> myVec( cfg.getKeys("TA::", "Filters") );
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
-		
+		std::vector<std::string> getKeysRegex(const std::string& regex_str, std::string section) const;
 		/**
 		 * @brief Returns all the sections that are present in the config object
 		 * @return a set that holds all the sections names

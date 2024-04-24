@@ -26,7 +26,7 @@ namespace mio {
 const double TsGenerator::e_snow = .983; //snow emissivity (0.969 - 0.997)
 const double TsGenerator::e_soil = .9805; //grass emissivity (0.975 - 0.986)
 
-bool TsGenerator::generate(const size_t& param, MeteoData& md)
+bool TsGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -52,7 +52,7 @@ bool TsGenerator::create(const size_t& param, const size_t& ii_min, const size_t
 
 	bool status = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		if (!generate(param, vecMeteo[ii]))
+		if (!generate(param, vecMeteo[ii], vecMeteo))
 			status = false;
 	}
 

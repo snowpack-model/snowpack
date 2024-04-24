@@ -167,8 +167,8 @@ void Coords::moveByBearing(const double& i_bearing, const double& i_distance) {
 * @brief Simple merge strategy.
 * If some fields of the first argument are empty, they will be filled by the matching field from the
 * second argument.
-* @param coord1 first Coords to merge, highest priority
-* @param coord2 second Coords to merge, lowest priority
+* @param[in] coord1 first Coords to merge, highest priority
+* @param[in] coord2 second Coords to merge, lowest priority
 * @return new Coords object
 */
 Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
@@ -181,7 +181,7 @@ Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
 * @brief Simple merge strategy.
 * If some fields of the current object are empty, they will be filled by the matching field from the
 * provided argument.
-* @param coord2 extra Coords to merge, lowest priority
+* @param[in] coord2 extra Coords to merge, lowest priority
 */
 void Coords::merge(const Coords& coord2) {
 	if (altitude==IOUtils::nodata) altitude=coord2.altitude;
@@ -218,6 +218,7 @@ void Coords::merge(const Coords& coord2) {
 /**
 * @brief Print the content of the Coords object (useful for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
+* @param[in] type how to format the output (see FORMATS)
 */
 const std::string Coords::toString(const FORMATS& type) const 
 {
@@ -537,6 +538,41 @@ void Coords::setXY(const double in_easting, const double in_northing, const doub
 	grid_i = grid_j = grid_k = IOUtils::inodata;
 	validIndex = false;
 }
+
+const std::set<int> Coords::latlon_epsgs = {4326};
+
+/**
+* @brief Set coordinates based on the previously defined EPSG code
+* If the EPSG code is 4326 (which represents WGS84 latitude-longitude), it sets latitude and longitude.
+* @param[in] in_x_or_lat latitude or easting to set based on the EPSG code
+* @param[in] in_y_or_lon longitude or northing to set based on the EPSG code
+* @param[in] in_altitude altitude to set
+*/
+void Coords::setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude) {
+	if (latlon_epsgs.find(getEPSG()) != latlon_epsgs.end()) {
+		setLatLon(in_x_or_lat, in_y_or_lon, in_altitude,true);
+	} else {
+		setXY(in_x_or_lat, in_y_or_lon, in_altitude, true);
+	}
+}
+
+/**
+* @brief Set coordinates based on a given EPSG code
+* If the EPSG code is 4326 (which represents WGS84 latitude-longitude), it sets latitude and longitude.
+* @param[in] in_x_or_lat latitude or easting to set based on the EPSG code
+* @param[in] in_y_or_lon longitude or northing to set based on the EPSG code
+* @param[in] in_altitude altitude to set
+* @param[in] epsg epsg code of the coordinates
+*/
+void Coords::setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude, const int epsg) {
+	if (latlon_epsgs.find(epsg) != latlon_epsgs.end()) {
+		setLatLon(in_x_or_lat, in_y_or_lon, in_altitude,true);
+	} else {
+		setEPSG(epsg);
+		setXY(in_x_or_lat, in_y_or_lon, in_altitude, true);
+	}
+}
+
 
 /**
 * @brief Set grid indices

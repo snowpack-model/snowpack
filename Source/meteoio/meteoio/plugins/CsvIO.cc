@@ -81,19 +81,19 @@ namespace mio {
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below (see also the \ref csvio_special_fields "special field names" for more); optional
  *    - CSV\#_FILTER_ID: if the data contains an "ID" column, which ID should be kept (all others will be rejected); default: station ID
  *    - CSV\#_UNITS: one line providing space delimited units for each column (including the timestamp), no units is represented as "-". This is an alternative to relying on a units line in the file itself or relying on units_offset / units_multiplier. Please keep in mind that the choice of recognized units is very limited... (C, degC, cm, in, ft, F, deg, pc, % and a few others). If CSV\#UNITS_OFFSET / MULTIPLIER were also provided, CSV\#_UNITS would be applied first.
- *    - CSV\#_SKIP_FIELDS: a comma-delimited list of field to skip (first field is numbered 1, ranges such as <i>12 - 17</i> are supported as well). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
- *    - CSV\#_ONLY_FIELDS: a comma-delimited list of field to keep, all others will be skipped (so this is the opposite of CSV\#_SKIP_FIELDS. Please note that if using both CSV\#_SKIP_FIELDS and CSV\#_ONLY_FIELDS, the most restrictive interpretation will be applied: only fields that are included in the ONLY list and NOT in the SKIP list will be kept); optional
+ *    - CSV\#_SKIP_FIELDS: a comma-delimited list of fields to skip (first field is numbered 1, ranges such as <i>12 - 17</i> are supported as well). Keep in mind that when using parameters such as UNITS_OFFSET, the skipped field MUST be taken into consideration (since even if a field is skipped, it is still present in the file!); optional
+ *    - CSV\#_ONLY_FIELDS: a comma-delimited list of fields to keep, all others will be skipped (so this is the opposite of CSV\#_SKIP_FIELDS. Please note that if using both CSV\#_SKIP_FIELDS and CSV\#_ONLY_FIELDS, the most restrictive interpretation will be applied: only fields that are included in the ONLY list and NOT in the SKIP list will be kept); optional
  *    - CSV\#_NUMBER_FIELDS: prefix every given field name by its column index in the original file (this is useful to "debug" CSV files when the columns' content don't match what was expected. Please note that special fields related to date/time, station ID or SKIP are left unchanged); optional
  *    - CSV\#_FIELDS_POSTFIX: postfix every given field name by the provided string (this is also to "debug" CSV files); optional
  * - <b>Date/Time parsing</b>. There are several possibilities: the date/time is provided as one or two strings; as a purely decimal number following a given representation; as each component as a separate column.
  *    - Date/Time as string(s):
- *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (defaultis ISO_8601: YYYY-MM-DDTHH24:MI:SS);
+ *       - CSV\#_DATETIME_SPEC: mixed date and time format specification (default is ISO_8601: YYYY-MM-DDTHH24:MI:SS);
  *       - CSV\#_DATE_SPEC: date format specification (default: YYYY_MM_DD);
  *       - CSV\#_TIME_SPEC: time format specification (default: HH24:MI:SS);
  *    - Date/Time decimal representation:
  *       - CSV\#_DECIMALDATE_TYPE: the numerical representation that is used, one of EXCEL, JULIAN, MJULIAN, MATLAB, RFC868 or UNIX (see \ref decimal_date_representation "decimal date representations");
  *    - Date/Time as separate components: 
- *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, YEAR_2DIGITS (only the last 2 digits of the year, numbers before 40 will be converted to years after 2000), JDAY (number of days since the begining of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero). See \ref csvio_special_fields "special field names" for accepted synonyms;
+ *       - the fields must be named (either from the headers or through the CSV\#_FIELDS key) as YEAR, YEAR_2DIGITS (only the last 2 digits of the year, numbers before 40 will be converted to years after 2000), JDAY (number of days since the beginning of the year), MONTH, DAY, NTIME (numerical representation of time, for example 952 for 09:52), HOURS, MINUTES, SECONDS (if minutes or seconds are missing, they will be assumed to be zero). See \ref csvio_special_fields "special field names" for accepted synonyms;
  *       - if/when no year component is provided, it is possible to define a fallback year with the CSV\#_FALLBACK_YEAR key;
  *       - when using CSV\#_FALLBACK_YEAR, it will by default assume that all data for times greater than 1st October that appear 
  * before data belonging to times before 1st of October are actually data from the year before. Please set CSV\#_FALLBACK_AUTO_WRAP to false if this is not desired.
@@ -169,7 +169,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - PARAM (the extracted metadata will replace the PARAM field either as found in the file's headers or in the CSV_FIELDS user configuration key);
  * - SKIP or - (skip this field).
  * 
- * If ID or NAME appear more than once in one specification string, their mutliple values will be appended.
+ * If ID or NAME appear more than once in one specification string, their multiple values will be appended.
  *
  * @subsection csvio_special_headers Header metadata extraction
  * This is performed with the "CSV#_SPECIAL_HEADERS" configuration key. This key is followed by as many metadata 
@@ -195,12 +195,12 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * Moreover, it is possible to set \em "AUTOMERGE" to "true" in the [InputEditing] section, so all files leading to the same station ID will be merged together
  * into one single station.
  * 
- * @note Obviously, the {PARAM} metadata field type can only be used for files that contain the time information (either as datetime or seperate date and time) and one
+ * @note Obviously, the {PARAM} metadata field type can only be used for files that contain the time information (either as datetime or separate date and time) and one
  * meteorological parameter. If there are multiple (potentially unimportant) parameters in your file you have to set CSV_SINGLE_PARAM_INDEX to the column number
  * matching your parameter.
  * 
  * @section csvio_examples Examples
- * This section contains some examplary CSV files together with the INI configuration to read them.
+ * This section contains some exemplary CSV files together with the INI configuration to read them.
  * 
  * In order to read a bulletin file downloaded from IDAWEB, you need the following configuration:
  * 

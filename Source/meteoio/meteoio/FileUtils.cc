@@ -230,12 +230,11 @@ void createDirectories(const std::string &path)
 
 	std::string tmp_path = "";
 	std::string item;
-
 	// recursively go through the path and create nonexisting directories
 	while (std::getline(ps, item, '/'))	{
 		tmp_path += item.empty() ? "/" : item;
 		// check if path already exists
-		if (directoryExists(tmp_path)) {
+		if (directoryExists(tmp_path + "/")) { // Will falsely return false on windows otherwise
 			if (tmp_path != "/") tmp_path += "/";
 			continue;
 		} else {

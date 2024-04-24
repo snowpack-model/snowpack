@@ -176,8 +176,8 @@ class SnowDriftA3D;
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
-		void setInitGlacierHeight();
-		SN_SNOWSOIL_DATA getIcePixel(const double glacier_height, const std::stringstream& GRID_sno, const bool seaIce);
+		void setInitGlacierThickness();
+		SN_SNOWSOIL_DATA getIcePixel(const double glacier_thickness, const std::stringstream& GRID_sno, const bool seaIce);
 		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
                              std::vector<std::pair<size_t,size_t> >& snow_stations_coord);
 		void readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const bool& is_special_point,
@@ -229,7 +229,7 @@ class SnowDriftA3D;
 		mio::Grid2DObject landuse, omp_landuse;	// full land use map, and land use map shared by OMP workers (after MPI slicing)
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse, terrain_shortwave, terrain_longwave;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_thickness;
 		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 

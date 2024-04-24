@@ -288,6 +288,9 @@ namespace IOUtils {
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim);
 	
+	std::vector<std::string> split(const std::string& str, char delim);
+	std::vector<std::string> split(const std::string& str, std::string delim);
+
 	template <class T> std::string toString(const T& t) {
 		std::ostringstream os;
 		os << t;

@@ -22,7 +22,7 @@
 
 namespace mio {
 
-bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
+bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {

@@ -40,7 +40,7 @@ void HumidityGenerator::parse_args(const std::vector< std::pair<std::string, std
 	}
 }
 
-bool HumidityGenerator::generate(const size_t& param, MeteoData& md)
+bool HumidityGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value != IOUtils::nodata) return true;
@@ -59,7 +59,7 @@ bool HumidityGenerator::create(const size_t& param, const size_t& ii_min, const 
 
 	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		if (!generate(param, vecMeteo[ii])) all_filled=false;
+		if (!generate(param, vecMeteo[ii], vecMeteo)) all_filled=false;
 	}
 
 	return all_filled;

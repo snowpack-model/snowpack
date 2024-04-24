@@ -1509,8 +1509,7 @@ void ElementData::updDensity()
 	const double brine_salinity = ((theta[WATER] + theta[WATER_PREF]) > 0.) ? (salinity / (theta[WATER] + theta[WATER_PREF])) : (0.); //salinity = bulk salinity
 	// Calculate element density
 	Rho = theta[ICE] * Constants::density_ice +
-              (theta[WATER] + theta[WATER_PREF]) * Constants::density_water +
-              brine_salinity * SeaIce::betaS +
+              (theta[WATER] + theta[WATER_PREF]) * (Constants::density_water + brine_salinity * SeaIce::betaS) +
               theta[SOIL] * soil[SOIL_RHO];
 	M = Rho * L;
 	return;
@@ -1981,7 +1980,7 @@ SnowStation::SnowStation(const bool i_useCanopyModel, const bool i_useSoilLayers
                          const bool i_useSeaIceModule) :
 	meta(), cos_sl(1.), sector(0), Cdata(NULL), Seaice(NULL), pAlbedo(0.), Albedo(0.),
 	SoilAlb(0.), SoilEmissivity(0.), BareSoil_z0(0.), SoilNode(0), Ground(0.),
-	cH(0.), mH(0.), mass_sum(0.), swe(0.), lwc_sum(0.), lwc_sum_soil(0.), swc_sum_soil(0), hn(0.), rho_hn(0.),
+	cH(0.), mH(IOUtils::nodata), mass_sum(0.), swe(0.), lwc_sum(0.), lwc_sum_soil(0.), swc_sum_soil(0), hn(0.), rho_hn(0.),
 #ifndef SNOWPACK_CORE
 	rime_hn(0.),
 #endif
@@ -2478,7 +2477,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 	cos_sl = cos(meta.getSlopeAngle()*mio::Cst::to_rad);
 	sector = i_sector;
 
-	mH = cH = SSdata.Height;
+	cH = SSdata.Height;
 
 	nNodes = SSdata.nN;
 	nElems = SSdata.nN-1;
@@ -2516,8 +2515,8 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Ndata[n].f = 0.;
 			Ndata[n].udot = 0.;
 #ifndef SNOWPACK_CORE
-			Ndata[n].S_n = INIT_STABILITY;   // Static natural stability index
-			Ndata[n].S_s = INIT_STABILITY;   // Alternative Stability Index (skier stability)
+			Ndata[n].S_n = IOUtils::nodata;   // Static natural stability index
+			Ndata[n].S_s = IOUtils::nodata;   // Alternative Stability Index (skier stability)
 #endif
 		}
 	}
@@ -2590,7 +2589,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
 			Edata[e].h = SSdata.Ldata[ll].h;
 #ifndef SNOWPACK_CORE
 			Edata[e].dsm = SSdata.Ldata[ll].dsm;
-			Edata[e].S_dr = INIT_STABILITY;
+			Edata[e].S_dr = IOUtils::nodata;
 #endif
 			Edata[e].hard = IOUtils::nodata;
 			Edata[e].M = Edata[e].Rho * Edata[e].L0;

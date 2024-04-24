@@ -89,7 +89,7 @@ class DBO : public IOInterface {
 		std::vector<DBO::tsMeta> getTsProperties() const;
 		std::vector<DBO::tsData> getTimeSerie(const size_t& tsID, const double& factor, const double& offset) const;
 		static void setUnitsConversion(DBO::tsMeta& ts);
-		static std::string getParameter(const std::string& param_str, const std::string& agg_type);
+		std::string getParameter(const std::string& param_str, const std::string& agg_type) const;
 		void mergeTimeSeries(const MeteoData& md_pattern, const size_t& param, const std::vector<DBO::tsData>& vecData, std::vector<MeteoData>& vecMeteo) const;
 		void initDBOConnection(const Config& cfg);
 		

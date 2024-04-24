@@ -794,7 +794,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "PA", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3"};
+	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "PA", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3", "DB", "DBM"};
 
 	std::vector<std::string> units;
 	if (delim!=' ') 
@@ -811,11 +811,11 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 		if (tmp.empty() || tmp=="1" || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1" || tmp=="??") continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
 		
-		if (tmp=="%" || tmp=="pc" || tmp=="CM") units_multiplier[ii] = 0.01;
+		if (tmp=="%" || tmp=="PC" || tmp=="CM") units_multiplier[ii] = 0.01;
 		else if (tmp=="‰") units_multiplier[ii] = 0.001;
 		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C" || tmp=="°C") units_offset[ii] = Cst::t_water_freezing_pt;
 		else if (tmp=="HPA") units_multiplier[ii] = 1e2;
-		else if (tmp=="MM" || tmp=="MV" || tmp=="MA") units_multiplier[ii] = 1e-3;
+		else if (tmp=="MM" || tmp=="MV" || tmp=="MA" || tmp=="MS") units_multiplier[ii] = 1e-3;
 		else if (tmp=="MIN") units_multiplier[ii] = 60.;
 		else if (tmp=="IN") units_multiplier[ii] = 0.0254;
 		else if (tmp=="FT") units_multiplier[ii] = 0.3048;

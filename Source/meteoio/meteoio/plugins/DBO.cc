@@ -33,6 +33,7 @@ namespace mio {
  * @section dbo_format Format
  * This plugin reads meteorological data from DBO
  * via the RESTful web service. To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
+ * \warning This plugin is for SLF's internal use only!
  *
  * You can have a look at the stations that are available through this web service on <a href="https://map.geo.admin.ch/?zoom=5&lang=en&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=KML%7C%7Chttps:%2F%2Fstationdocu.slf.ch%2Fkml%2Fnetwork-map.kml&E=2782095.39&N=1179586.56">this map</a>.
  * Please keep in mind that some stations might be overlaid on top of each other and will require you to zoom in quite a lot in order to differentiate them!
@@ -303,11 +304,15 @@ std::vector<DBO::tsMeta> DBO::getTsProperties() const
 * @param[in] agg_type DBO aggregation type
 * @return standardized parameter name or empty string
 */
-std::string DBO::getParameter(const std::string& param_str, const std::string& agg_type)
+std::string DBO::getParameter(const std::string& param_str, const std::string& agg_type) const
 {
+	//not mapped yet: wet bulb temperature TPSY
+
 	if (param_str=="P") return "P";
+	else if (param_str=="PASL") return "P_SEA";
 	else if (param_str=="TA") return "TA";
 	else if (param_str=="RH") return "RH";
+	else if (param_str=="TDP") return "TD";
 	else if (param_str=="TS0") return "TSG";
 	else if (param_str=="TSS") return "TSS";
 	else if (param_str=="HS") return "HS";
@@ -317,14 +322,16 @@ std::string DBO::getParameter(const std::string& param_str, const std::string& a
 	else if (param_str=="RSWR") return "RSWR";
 	else if (param_str=="ISWR") return "ISWR";
 	else if (param_str=="ILWR") return "ILWR";
-	else if (param_str=="RRI") return "PSUM";
+	else if (param_str=="RR") return "PSUM";
 	else if (param_str=="TS25") return "TS1";
 	else if (param_str=="TS50") return "TS2";
 	else if (param_str=="TS100") return "TS3";
 	else if (param_str=="TG10") return "TSOIL10";
 	else if (param_str=="TG30") return "TSOIL30";
 	else if (param_str=="TG50") return "TSOIL50";
-	else return "";
+
+	if (dbo_debug) return param_str;
+	return "";
 }
 
 /**
