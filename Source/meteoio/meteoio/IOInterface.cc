@@ -39,7 +39,7 @@ namespace mio {
  * Finally, plugins must properly handle time zones. The Date class provides everything that is necessary, but the plugin developer must still properly set the time zone to each Date object (using the "TZ" key in the io.ini configuration file at least as a default value and afterwards overwriting with a plugin specified time zone specification if available). The time zone should be set \em before setting the date (so that the date that is given is understood as a date within the specified time zone).
  *
  * The meteorological data must be returned in a vector of vectors of MeteoData (and similarly, of StationData in order to provide the metadata). This consists of building a vector of MeteoData objects, each containing a set of measurements for a given timestamp, at a given location. This vector that contains the time series at one specific location is then added to a vector (pushed) that will then contain all locations.
- * \image html vector_vector.png "vector of vector structure"
+ * \image html vector_vector.svg "vector of vector structure" width=900px
  * \image latex vector_vector.eps "vector of vector structure" width=0.9\textwidth
  *
  * Various classes from MeteoIO can prove convenient for use by plugins: for example the Coords class should be used for geographic coordinates conversions, while the Config class should be used for getting configuration information from the user's configuration file. Please do NOT implement your own version of this kind of feature in your plugin but exclusively rely on the matching classes of MeteoIO, extending them if necessary.

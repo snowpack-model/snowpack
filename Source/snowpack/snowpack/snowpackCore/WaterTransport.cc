@@ -32,6 +32,54 @@ using namespace mio;
 
 /**
  * @page water_transport Water Transport
+ * It is important to realize that snow is really a three phases medium: it might contain at the same time water in its solid phase (the ice crystals matrix),
+ * in its liquid phase (interstitial water) and in its gaseous phase (water vapor in the pore space). As the liquid water can move through the
+ * ice matrix, it transports mass as well as potentially energy. Depending on the conditions, it might also significantly alter the microstructure of
+ * the snow pack. Therefore it is very important to be able to simulate how this liquid water moves through the snow layers.
+ *
+ * @section matrix_vs_pref Matrix flow and preferential flow
+ * Liquid water can move through the snow pack in two distinct ways: through <i>matrix flow</i> or through <i>preferential flow</i>. They are fundamentally different and
+ * have very different time scales.
+ *
+ * @subsection matrix_flow Matrix flow
+ * Matrix flow represents how the liquid water moves through the pore space of the ice matrix. This capillary motion is dominated by surface tension effects. Such a flow
+ * is highly dependent on the tortuosity of the ice matrix, the water column pressure head and changes of such properties which can lead to capillary barriers. The kind
+ * of flow moves the bulk of the mass in a gradual process.
+ *
+ * @subsection preferential_flow Preferential flow
+ * A second kind of liquid water transport mechanism is through preferential flow. This is a 2 dimensional effect where at some places the liquid water is able to locally
+ * flow much deeper into the snow pack. Although highly relevant for its impact on the snow microstructure and for its impact on snow stability, this transport mechanism
+ * only carries a minority of the liquid water mass. But by providing liquid water in deeper layers much faster, it can contribute to triggering a weak layer or accumulate
+ * liquid water at a capillary barrier (<i>ponding</i>) that could later refreeze and build an ice layer.
+ *
+ * @subsection wt_modeling Modeling
+ * In %Snowpack, water transport can currently either be modeled with the bucket approach or by solving the Richards equations.
+ *
+ * @subsubsection Bucket scheme
+ * In the bucket scheme, each layer has an irreducible liquid water content. When liquid water content exceeds this value, it is moved to the next layer instantaneously (as if
+ * it is an overflowing bucket). This scheme is computationally very efficient, but does not reproduce certain flow features like capillary barriers, while also assuming
+ * infinite flow rates. For snow layers, the irreducible water content is determined following <A HREF="https://doi.org/10.3189/1998AoG26-1-64-68">Coleou and Lesaffre (1998)</A>.
+ * For soil, the irreducible water content is determined following the function in soilFieldCapacity(), where it is parameterized as a function of grain size.
+ *
+ * @subsubsection Richards equation
+ * When using Richards equation, the Darcy flow for unsaturated media is solved (<A HREF="https://doi.org/10.5194/tc-8-257-2014">Wever et al., 2014</A>). This approach reproduces
+ * several flow features in a more physics-based way. For example, capillary barriers can inhibit downward percolation, and the percolation speed is more realistically simulated.
+ * To determine water retention, the van Genuchten parameterization is used for the relationship between pressure head and liquid water content. For snow, the model used is based
+ * on <A HREF="https://doi.org/10.3189/2012AoG61A001">Yamaguchi et al. (2012)</A>. Note that it is possible to specify another model by modifying the source code. To
+ * determine the saturated hydraulic conductivity, the parameterization by <A HREF="https://doi.org/10.5194/tc-6-939-2012">Calonne et al. (2012)</A> for permeability
+ * is used. The unsaturated hydraulic conductivity is subsequently determined from the saturated hydraulic conductivity using the Mualem model.
+ *
+ * For soil, the soil type is specified using grain size, according to the following table: https://snowpack.slf.ch/Soil-with-Richards-equation/. The soil type sets
+ * the van Genuchten parameters, the saturated hydraulic conductivity as well as porosity.
+ *
+ * Notes:
+ *   - When using Richards equation for soil, the hydraulic properties are determined from the grain size specified in the *sno file. This also overwrites porosity! This
+ *     means that the theta[SOIL] specified in the *sno file is overwritten!!!
+ *   - When soil is freezing, thermal equilibrium is assumed between liquid and ice. This can be tricky to initialize in the *sno file, and if not properly initialized,
+ *     large phase changes can occur at the first time step. To enforce thermal equilibrium in the soil, the key REQ_INITIALIZE_SOIL can be set to true. This then repartitions
+ *     the ICE and WATER content of the layer, while keeping the temperature constant, at the first time step after initialization.
+ *
+ * @section snowpack_wt_keys Configuration keys
  *
  */
 

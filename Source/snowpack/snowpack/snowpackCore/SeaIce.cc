@@ -294,6 +294,7 @@ double SeaIce::findIceSurface(SnowStation& Xdata)
  * @brief Apply flooding\n
  * @version 16.08
  * @param Xdata SnowStation object to use in calculation
+ * @param Sdata
  */
 void SeaIce::compFlooding(SnowStation& Xdata, SurfaceFluxes& Sdata)
 {
@@ -414,6 +415,7 @@ double SeaIce::compSeaIceLatentHeatFusion(const ElementData& Edata)
  * @param Xdata SnowStation object to use in calculation
  * @param Mdata Meteo data
  * @param sn_dt Time step (s)
+ * @param Sdata
  */
 void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, SurfaceFluxes& Sdata)
 {
@@ -455,6 +457,7 @@ void SeaIce::bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, c
  * @param Xdata
  * @param Mdata
  * @param dM: mass change from phase changes at the bottom of the sea ice (kg/m^2), positive=gain, negative=loss. Note, dM only concerns change in ice mass.
+ * @param Sdata
  */
 void SeaIce::ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM, SurfaceFluxes& Sdata)
 {
@@ -735,6 +738,7 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
  * @param Mdata
  * @param Bdata
  * @param sn_dt SNOWPACK time step (s)
+ * @param Sdata
  */
 void SeaIce::runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt, SurfaceFluxes& Sdata)
 {

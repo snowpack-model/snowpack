@@ -117,8 +117,19 @@
  *  More complex simulation workflows (such as spatial resampling or one-way coupling with other numerical models) are presented in the
  * \subpage advanced_setups "Advanced simulation setup" page.
  *
- * \image html simulation_workflow.png "Simulation workflow"
+ * \image html simulation_workflow.svg "Simulation workflow" width=900px
  * \image latex simulation_workflow.eps "Simulation workflow" width=0.9\textwidth
+ *
+ * We provide various tools to help you manage this simulation workflow:
+ *    - <a href="https://meteoio.slf.ch">MeteoIO</a> for preparing the forcings (basically you can take the raw data out of the data
+ *      logger and do everything you need with MeteoIO all the way to providing the data to Snowpack;
+ *    - <a href="https://inishell.slf.ch">Inishell</a> to prepare your configuration files;
+ *    - <a href="https://niviz.org">niViz</a> to visualize the simulation outputs or prepare customized input profiles;
+ *    - <a href="https://code.wsl.ch/patrick.leibersperger/snowpat">snowpat</a> as Python modules for handling smet meterological forcings
+ *      and pro snowpack outputs;
+ *    - and even a new file format (an evolution of SMET to make it more generic and more formaly standardized), the
+ *      <a href="https://code.wsl.ch/EnviDat/icsv">interoperable CSV (iCSV)</a> format!
+ *
  */
 
  /**
@@ -130,7 +141,7 @@
  * refer to MeteoIO's documentation section "Spatial resampling" (see for example the current stable release 
  * <a href="https://meteoio.slf.ch/doc-release/html/spatial_resampling.html">documentation</a>). 
  * 
- * \image html virtual_stations.png "Spatial resampling"
+ * \image html virtual_stations.svg "Spatial resampling" width=900px
  * \image latex virtual_stations.eps "Spatial resampling" width=0.9\textwidth
  * 
  * The SLOPE_FROM_SNO configuration key in the [Input] section controls whether slope angle and azimuth are taken from the sno file or from
@@ -218,7 +229,7 @@
  * calculations for arctic areas (Meirold-Mautner and Lehning, 2003) and calculations of chemical solute transport in snow (Waldner et al., 2003).
  *
  * @section physical_processes Physical processes
- * \image html physical_processes.png "Principal physical processes included in the SNOWPACK model"
+ * \image html physical_processes.svg "Principal physical processes included in the SNOWPACK model" width=900px
  * \image latex physical_processes.eps "Principal physical processes included in the SNOWPACK model" width=0.9\textwidth
  *
  * A graphical review of the physical processes described by the SNOWPACK model is given in the above figure. SNOWPACK is based on a Lagrangian
@@ -229,7 +240,7 @@
  *
  * @section model_structure Structure of the physical modeling
  * @subsection model_foundations Model Foundations
- * \image html snowpack_column.png "The SNOWPACK soil/snow/canopy column"
+ * \image html snowpack_column.svg "The SNOWPACK soil/snow/canopy column" width=300px
  * \image latex snowpack_column.eps "The SNOWPACK soil/snow/canopy column" width=0.5\textwidth
  * The SNOWPACK model is built around a 1D soil/snow/canopy column (see figure above). This in effect neglects lateral transfers and only considers vertical
  * gradients and transfers. The snow is modeled as a three phase porous medium (ice/liquid water/water vapor) but can also contain an arbitrary amount of soil
@@ -256,7 +267,7 @@
  *      an albedo and short wave absorption parametrization and a snowdrift model.
  *    - some post-processing models will be added to provide more relevant outputs: a hardness model, several snow stability index, a snow classification.
  *
- * \image html snowpack_physics.png "Structure of the SNOWPACK model"
+ * \image html snowpack_physics.svg "Structure of the SNOWPACK model" width=1000px
  * \image latex snowpack_physics.eps "Structure of the SNOWPACK model" width=0.9\textwidth
  *
  * The user can configure variants of these basic model concepts. The way of interaction is primarily through a configuration file but also changes to the source code by
@@ -266,7 +277,7 @@
  * The figure below shows the various fluxes that are part of the energy balance of the SNOWPACK model. These are available in the output files as well as
  * through the <a href="https://niviz.org">niViz</a> interface.
  *
- * \image html energy_balance.png "Energy Balance components of the SNOWPACK model"
+ * \image html energy_balance.svg "Energy Balance components of the SNOWPACK model" width=900px
  * \image latex energy_balance.eps "Energy Balance components of the SNOWPACK model" width=0.9\textwidth
  *
  */
@@ -435,7 +446,7 @@
  * done with great care (the model performing various checks on the physical consistency of the input data, it \b will exclude data points that are not consistent
  * with the other parameters. For example, precipitation occuring simultaneously with quite dry air will be refused).
  *
- * \image html clear_sky.png "Data consistency check"
+ * \image html clear_sky.svg "Data consistency check" width=500px
  * \image latex clear_sky.eps "Data consistency check" width=0.9\textwidth
  * For example, the figure above allows to check the following points:
  * - the (solid) precipitation are synchronized with the major snow height increase - this is consistent;
@@ -510,24 +521,18 @@
  *
  * @section soil_hydraulic_properties Setting soil hydraulic properties with Richards Equation
  * When selecting `WATERTRANSPORTMODEL_SOIL = RICHARDSEQUATION`, the grain size (`rg`) of the soil layers in the `*.sno` file is used to determine the water retention properties of the soil, according to the following values:
- * <table>
+ * <center><table>
  * <caption id="multi_row">Soil type definitions</caption>
- * <tr><th>Soil type   <th>rg
- * <tr><td>ORGANIC<td>0.2
- * <tr><td>CLAY<td>0.5
- * <tr><td>CLAYLOAM<td>1.5
- * <tr><td>LOAM<td>2.5
- * <tr><td>LOAMYSAND<td>3.5
- * <tr><td>SAND<td>4.5
- * <tr><td>SANDYCLAY<td>5.5
- * <tr><td>SANDYCLAYLOAM<td>6.5
- * <tr><td>SANDYLOAM<td>7.5
- * <tr><td>SILT<td>8.5
- * <tr><td>SILTYCLAY<td>9.5
- * <tr><td>SILTYCLAYLOAM<td>10.5
- * <tr><td>SILTLOAM<td>11.5
- * <tr><td>WFJGRAVELSAND<td>12.5
- * </table>
+ * <tr><th>Soil type   </th><th>rg</th><th>Soil type   </th><th>rg</th></tr>
+ * <tr><td>ORGANIC</td><td>0.2</td><td>SANDYCLAYLOAM</td><td>6.5</td></tr>
+ * <tr><td>CLAY</td><td>0.5</td><td>SANDYLOAM</td><td>7.5</td></tr>
+ * <tr><td>CLAYLOAM</td><td>1.5</td><td>SILT</td><td>8.5</td></tr>
+ * <tr><td>LOAM</td><td>2.5</td><td>SILTYCLAY</td><td>9.5</td></tr>
+ * <tr><td>LOAMYSAND</td><td>3.5</td><td>SILTYCLAYLOAM</td><td>10.5</td></tr>
+ * <tr><td>SAND</td><td>4.5</td><td>SILTLOAM</td><td>11.5</td></tr>
+ * <tr><td>SANDYCLAY</td><td>5.5</td><td>WFJGRAVELSAND</td><td>12.5</td></tr>
+ * </table></center>
+ *
  * Notes:
  * - Here, the soil types refer to the <a href="https://www.ars.usda.gov/pacific-west-area/riverside-ca/agricultural-water-efficiency-and-salinity-research-unit/docs/model/rosetta-class-average-hydraulic-parameters/">ROSETTA Class Average Hydraulic Parameters</a>.
  * - When using Richards equation, theta[SOIL] is set according to the soil type and the values specified in the *.sno file will be ignored.
