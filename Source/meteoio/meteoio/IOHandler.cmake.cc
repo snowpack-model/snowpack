@@ -299,7 +299,7 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
 #endif
 #ifdef PLUGIN_iCSVIO
-	if (plugin_name == "iCSV") return new iCSVIO(i_cfg);
+	if (plugin_name == "ICSV") return new iCSVIO(i_cfg);
 #endif
 #ifdef PLUGIN_OSHDIO
 	if (plugin_name == "OSHD") return new OshdIO(i_cfg);

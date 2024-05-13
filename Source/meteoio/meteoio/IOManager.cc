@@ -39,7 +39,7 @@ namespace mio {
  * 
  * For VSTATIONS and GRID_SMART, it is necessary to provide a hint on how often the data should be extracted versus temporally interpolated between extracted 
  * points. This is done by providing a refresh rate and an offset (both in seconds, with the VSTATIONS_REFRESH_RATE and VSTATIONS_REFRESH_OFFSET keywords, respectively)
- * \image html vstations_sampling.png "Resampling workflow"
+ * \image html vstations_sampling.svg "Resampling workflow" width=500px
  * \image latex vstations_sampling.eps "Resampling workflow" width=0.9\textwidth
  * 
  * Behind the scene, this is a two stages setup: the IOManager uses either a TimeSeriesManager or a GridsManager object to retrieve the real data

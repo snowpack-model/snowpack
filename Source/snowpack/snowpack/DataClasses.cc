@@ -1596,46 +1596,43 @@ double ElementData::snowResidualWaterContent(const double& theta_i)
 double ElementData::soilFieldCapacity() const
 {
 	double fc;
-  if (VG.defined == true)
-  {
-    fc=VG.field_capacity;
-  }
-  else{
-  	if (!(rg > 0.)) {
-  		fc = std::min(SnLaws::field_capacity_soil, (1. - theta[SOIL]) * 0.1);
-  	} else {
-  		//Follow implementation by Tobias Hipp master thesis.
-  		//Note that the value of 0.0976114 is more precise and the value of 60.8057 is
-  		//slightly different from what is mentioned in thesis, to make the function continuous over rg.
-  		if(rg<17.0) {
-  			fc = std::min(0.95, 0.32 / sqrt(rg) + 0.02);
-  		} else {
-  			if(rg<60.8057) {
-  				fc=0.0976114-0.002*(rg-17.0);
-  			} else {
-  				fc=0.01;
-  			}
-  		}
-  	}
-  }
+	if (VG.defined == true) {
+		fc=VG.field_capacity;
+	} else {
+		if (!(rg > 0.)) {
+			fc = std::min(SnLaws::field_capacity_soil, (1. - theta[SOIL]) * 0.1);
+		} else {
+			//Follow implementation by Tobias Hipp master thesis.
+			//Note that the value of 0.0976114 is more precise and the value of 60.8057 is
+			//slightly different from what is mentioned in thesis, to make the function continuous over rg.
+			if(rg<17.0) {
+				fc = std::min(0.95, 0.32 / sqrt(rg) + 0.02);
+			} else {
+				if(rg<60.8057) {
+					fc=0.0976114-0.002*(rg-17.0);
+				} else {
+					fc=0.01;
+				}
+			}
+		}
+	}
 	return std::min(1. - theta[SOIL], fc);		// Ensure that the field capacity does not exceed the pore space.
 }
 
 /**
- * @brief RelativeHumidity
- * @author Nander Wever et al.
+ * @brief soilRelativeHumidity
+ * @author Margaux Couttet and Nander Wever
  * @brief Relative humidity in soil.
  * The formulation is based on Saito et al., 2006 "Numerical analysis of
  * coupled water vapor and heat transport in the vadose zone".
  * Calculated from the pressure head using a thermodynamic relationship
  * between liquid water and water vapor in soil pores (Philip and de Vries, 1957)
- * @author Margaux Couttet
  * @param Edata element data
  * @param Temperature temperature (K)
  * @return Soil relative humidity (-)
  */
 
-double ElementData::RelativeHumidity() const
+double ElementData::soilRelativeHumidity() const
 {
 	if (VG.defined == true) {
 		return (std::max(0., std::min(1., exp(h * Constants::g / (Constants::gas_constant * Te))))); //see eq. [18] from Saito et al., 2006

@@ -1,0 +1,822 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-04-26 11:01:56 -->
+
+<!-- Magnification: 0.84 -->
+
+<svg
+   width="389pt"
+   height="405pt"
+   viewBox="2757 442 7716 8033"
+   version="1.1"
+   id="svg12875"
+   sodipodi:docname="vstations_sampling.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title13185">Spatial resampling operation</title>
+  <defs
+     id="defs12879">
+    <defs
+       id="defs12693">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 647,4122 -255,-30 212,-145 -269,148 5,21 z"
+           id="path12690" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12702">
+      <clipPath
+         id="cp1">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 2701,4006 -246,70 139,-215 -191,240 13,17 z"
+           id="path12699" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12711">
+      <clipPath
+         id="cp2">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 4312,3861 139,215 -246,-70 285,112 13,-17 z"
+           id="path12708" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12720">
+      <clipPath
+         id="cp3">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 6302,3947 212,145 -255,30 307,-6 5,-21 z"
+           id="path12717" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12729">
+      <clipPath
+         id="cp4">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 7444,7733 38,60 -38,60 257,-42 v -36 z"
+           id="path12726" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12756">
+      <clipPath
+         id="cp5">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 7444,4313 38,60 -38,60 257,-42 v -36 z"
+           id="path12753" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12783">
+      <clipPath
+         id="cp6">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3543,2175 -90,240 -90,-240 65,334 h 51 z"
+           id="path12780" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12792">
+      <clipPath
+         id="cp7">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3543,2175 -90,240 -90,-240 65,334 h 51 z"
+           id="path12789" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12801">
+      <clipPath
+         id="cp8">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3543,2175 -90,240 -90,-240 65,334 h 51 z"
+           id="path12798" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12810">
+      <clipPath
+         id="cp9">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3543,2175 -90,240 -90,-240 65,334 h 51 z"
+           id="path12807" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12819">
+      <clipPath
+         id="cp10">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3543,5685 -90,240 -90,-240 65,334 h 51 z"
+           id="path12816" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12836">
+      <clipPath
+         id="cp11">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 2994,7422 -230,113 99,-237 -145,270 15,15 z"
+           id="path12833" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12845">
+      <clipPath
+         id="cp12">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3486,7295 -118,228 -61,-249 44,303 21,3 z"
+           id="path12842" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12854">
+      <clipPath
+         id="cp13">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 3773,7271 21,256 -184,-179 198,234 19,-9 z"
+           id="path12851" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs12863">
+      <clipPath
+         id="cp14">
+        <path
+           clip-rule="evenodd"
+           d="m 2757,442 h 7716 V 8475 H 2757 Z m 4683,7355 170,192 -254,-33 298,68 10,-18 z"
+           id="path12860" />
+      </clipPath>
+    </defs>
+  </defs>
+  <sodipodi:namedview
+     id="namedview12877"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="1.1925926"
+     inkscape:cx="219.27019"
+     inkscape:cy="269.58075"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg12875" />
+  <rect
+     x="4635"
+     y="3015"
+     width="3240"
+     height="675"
+     fill="#eff8ff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12650" />
+  <rect
+     x="4635"
+     y="6480"
+     width="3240"
+     height="675"
+     fill="#eff8ff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12652" />
+  <polyline
+     points=" 5490,8415 5490,8055"
+     stroke="#008f8f"
+     stroke-width="15px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline12654"
+     style="fill:none" />
+  <polyline
+     points=" 6570,8415 6570,8055"
+     stroke="#008f8f"
+     stroke-width="15px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline12656"
+     style="fill:none" />
+  <polyline
+     points=" 7650,8415 7650,8055"
+     stroke="#008f8f"
+     stroke-width="15px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline12658"
+     style="fill:none" />
+  <polyline
+     points=" 6120,8415 6120,8055"
+     stroke="#008f8f"
+     stroke-width="15px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline12660"
+     style="fill:none" />
+  <g
+     id="g13339"
+     transform="translate(250.93851)">
+    <g
+       transform="rotate(30,1828.1764,10816.142)"
+       id="g12664"
+       style="fill:none">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#555555"
+         font-family="Courier"
+         font-style="normal"
+         font-weight="bold"
+         font-size="96px"
+         text-anchor="start"
+         id="text12662">6692d179032205</text>
+    </g>
+    <g
+       transform="rotate(30,1508.488,10921.802)"
+       id="g12668"
+       style="fill:none">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#555555"
+         font-family="Courier"
+         font-style="normal"
+         font-weight="bold"
+         font-size="96px"
+         text-anchor="start"
+         id="text12666">b4116a96425a7f</text>
+    </g>
+    <g
+       transform="rotate(30,1193.9598,10972.079)"
+       id="g12672"
+       style="fill:none">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#555555"
+         font-family="Courier"
+         font-style="normal"
+         font-weight="bold"
+         font-size="96px"
+         text-anchor="start"
+         id="text12670">ecc2ef51af1740</text>
+    </g>
+    <g
+       transform="rotate(30,885.06563,11050.847)"
+       id="g12676"
+       style="fill:none">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#555555"
+         font-family="Courier"
+         font-style="normal"
+         font-weight="bold"
+         font-size="96px"
+         text-anchor="start"
+         id="text12674">959d3b6d07bce4</text>
+    </g>
+    <g
+       transform="rotate(30,534.25285,11144.847)"
+       id="g12680"
+       style="fill:none">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#555555"
+         font-family="Courier"
+         font-style="normal"
+         font-weight="bold"
+         font-size="96px"
+         text-anchor="start"
+         id="text12678">fa9f2af29814d9</text>
+    </g>
+    <g
+       transform="rotate(30,170.3061,11182.367)"
+       id="g12684"
+       style="fill:none">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#555555"
+         font-family="Courier"
+         font-style="normal"
+         font-weight="bold"
+         font-size="96px"
+         text-anchor="start"
+         id="text12682">82592e77a204a8</text>
+    </g>
+  </g>
+  <text
+     xml:space="preserve"
+     x="6255"
+     y="3420"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12686"
+     style="-inkscape-font-specification:'Times, Bold';font-family:Times;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:277.697px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">Process + spatialize Data</text>
+  <text
+     xml:space="preserve"
+     x="6255"
+     y="6885"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12688"
+     style="-inkscape-font-specification:'Times, Bold';font-family:Times;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:277.697px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">Temporal resampling</text>
+  <polyline
+     points=" 6210,3780 3105,4545"
+     clip-path="url(#cp0)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12695"
+     style="fill:none" />
+  <polyline
+     points=" 3404,4564 3149,4534 3361,4389"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12697"
+     style="fill:none" />
+  <polyline
+     points=" 6210,3780 5175,4545"
+     clip-path="url(#cp1)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12704"
+     style="fill:none" />
+  <polyline
+     points=" 5458,4448 5212,4518 5351,4303"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12706"
+     style="fill:none" />
+  <polyline
+     points=" 6210,3780 7245,4545"
+     clip-path="url(#cp2)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12713"
+     style="fill:none" />
+  <polyline
+     points=" 7069,4303 7208,4518 6962,4448"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12715"
+     style="fill:none" />
+  <polyline
+     points=" 6210,3780 9315,4545"
+     clip-path="url(#cp3)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12722"
+     style="fill:none" />
+  <polyline
+     points=" 9059,4389 9271,4534 9016,4564"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12724"
+     style="fill:none" />
+  <polyline
+     points=" 2790,8235 10440,8235"
+     clip-path="url(#cp4)"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12731"
+     style="fill:none" />
+  <polygon
+     points="10201,8295 10389,8235 10201,8175 10239,8235 "
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     fill="#000000"
+     id="polygon12733" />
+  <polyline
+     points=" 3105,8055 3105,8415"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12735"
+     style="fill:none" />
+  <polyline
+     points=" 5175,8055 5175,8415"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12737"
+     style="fill:none" />
+  <polyline
+     points=" 7245,8055 7245,8415"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12739"
+     style="fill:none" />
+  <polyline
+     points=" 9315,8055 9315,8415"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12741"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="10305"
+     y="8055"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="end"
+     id="text12743"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:277.697px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:end;fill:#000000">time</text>
+  <text
+     xml:space="preserve"
+     x="3150"
+     y="8460"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12745"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">01:00</text>
+  <text
+     xml:space="preserve"
+     x="5220"
+     y="8460"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12747"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">07:00</text>
+  <text
+     xml:space="preserve"
+     x="7290"
+     y="8460"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12749"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">13:00</text>
+  <text
+     xml:space="preserve"
+     x="9360"
+     y="8460"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12751"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">19:00</text>
+  <polyline
+     points=" 2790,4815 10440,4815"
+     clip-path="url(#cp5)"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12758"
+     style="fill:none" />
+  <polygon
+     points="10201,4875 10389,4815 10201,4755 10239,4815 "
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     fill="#000000"
+     id="polygon12760" />
+  <polyline
+     points=" 3105,4635 3105,4995"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12762"
+     style="fill:none" />
+  <polyline
+     points=" 5175,4635 5175,4995"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12764"
+     style="fill:none" />
+  <polyline
+     points=" 7245,4635 7245,4995"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12766"
+     style="fill:none" />
+  <polyline
+     points=" 9315,4635 9315,4995"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12768"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="10305"
+     y="4680"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="end"
+     id="text12770"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:277.697px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:end;fill:#000000">time</text>
+  <text
+     xml:space="preserve"
+     x="3150"
+     y="5040"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12772"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">01:00</text>
+  <text
+     xml:space="preserve"
+     x="5220"
+     y="5040"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12774"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">07:00</text>
+  <text
+     xml:space="preserve"
+     x="7290"
+     y="5040"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12776"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">13:00</text>
+  <text
+     xml:space="preserve"
+     x="9360"
+     y="5040"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="144px"
+     text-anchor="start"
+     id="text12778"
+     style="-inkscape-font-specification:'Times, Bold Italic';font-family:Times;font-weight:bold;font-style:italic;font-stretch:normal;font-variant:normal;font-size:238.0256976px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">19:00</text>
+  <polyline
+     points=" 6210,2295 6210,2925"
+     clip-path="url(#cp6)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline12785"
+     style="fill:none" />
+  <polyline
+     points=" 6300,2617 6210,2857 6120,2617"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline12787"
+     style="fill:none" />
+  <polyline
+     points=" 6210,2295 6210,2925"
+     clip-path="url(#cp7)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline12794"
+     style="fill:none" />
+  <polyline
+     points=" 6300,2617 6210,2857 6120,2617"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline12796"
+     style="fill:none" />
+  <polyline
+     points=" 6210,2295 6210,2925"
+     clip-path="url(#cp8)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline12803"
+     style="fill:none" />
+  <polyline
+     points=" 6300,2617 6210,2857 6120,2617"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline12805"
+     style="fill:none" />
+  <polyline
+     points=" 6210,2295 6210,2925"
+     clip-path="url(#cp9)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline12812"
+     style="fill:none" />
+  <polyline
+     points=" 6210,5805 6210,6435"
+     clip-path="url(#cp10)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline12821"
+     style="fill:none" />
+  <polyline
+     points=" 6300,6127 6210,6367 6120,6127"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline12823"
+     style="fill:none" />
+  <polyline
+     points=" 6210,5850 3105,5085"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12825"
+     style="fill:none" />
+  <polyline
+     points=" 6210,5850 5175,5085"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12827"
+     style="fill:none" />
+  <polyline
+     points=" 6210,5850 7245,5085"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12829"
+     style="fill:none" />
+  <polyline
+     points=" 6210,5850 9315,5085"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12831"
+     style="fill:none" />
+  <polyline
+     points=" 6210,7245 5490,8010"
+     clip-path="url(#cp11)"
+     stroke="#008f8f"
+     stroke-width="15px"
+     id="polyline12838"
+     style="fill:none" />
+  <polyline
+     points=" 5751,7864 5521,7977 5620,7740"
+     stroke="#008f8f"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12840"
+     style="fill:none" />
+  <polyline
+     points=" 6210,7245 6120,8010"
+     clip-path="url(#cp12)"
+     stroke="#008f8f"
+     stroke-width="15px"
+     id="polyline12847"
+     style="fill:none" />
+  <polyline
+     points=" 6243,7737 6125,7965 6064,7716"
+     stroke="#008f8f"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12849"
+     style="fill:none" />
+  <polyline
+     points=" 6210,7245 6570,8010"
+     clip-path="url(#cp13)"
+     stroke="#008f8f"
+     stroke-width="15px"
+     id="polyline12856"
+     style="fill:none" />
+  <polyline
+     points=" 6530,7713 6551,7969 6367,7790"
+     stroke="#008f8f"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12858"
+     style="fill:none" />
+  <polyline
+     points=" 6210,7245 7650,8010"
+     clip-path="url(#cp14)"
+     stroke="#008f8f"
+     stroke-width="15px"
+     id="polyline12865"
+     style="fill:none" />
+  <polyline
+     points=" 7440,7797 7610,7989 7356,7956"
+     stroke="#008f8f"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12867"
+     style="fill:none" />
+  <polyline
+     points=" 6210,5850 9315,5085"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline12869"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="6265.4727"
+     y="2205"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="240px"
+     text-anchor="middle"
+     id="text12871"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.368px;font-family:Times;-inkscape-font-specification:'Times, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">raw data</text>
+  <metadata
+     id="metadata13183">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Spatial resampling operation</dc:title>
+        <dc:date>2024-04-26</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>https://code.wsl.ch/snow-models/meteoio</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

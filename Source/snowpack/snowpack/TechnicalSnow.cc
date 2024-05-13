@@ -33,6 +33,29 @@ using namespace mio;
 
 /**
  * @page technical_snow Technical snow
+ * The technical snow module contains everything that is required to simulate the technical snow management as
+ * performed in ski resorts. This includes both <a href="https://en.wikipedia.org/wiki/Snow_grooming">snow grooming</a> and
+ * <a href="https://en.wikipedia.org/wiki/Snowmaking">technical snow production</a>.
+ * In order to keep the configuration quite simple and to reduce the need for detailed operational data, the grooming operations are simplified: it
+ * is assumed that snow grooming is performed between a specific calendar week, everyday at a specific time and ends at another given calendar week. In contrast,
+ * there is more flexibility regarding snow production: it is triggered when the forcing data contains positive values in the <i>psum_tech</i> field.
+ *
+ * @section snow_grooming Snow grooming
+ * The densification and mixing of the upper layers of the snow are simulated by the snow grooming module (see TechSnow::preparation). it is configured with the following keys:
+ *   - GROOMING_WEEK_START: calendar week when to start grooming operations;
+ *   - GROOMING_WEEK_END: calendar week when to end grooming operations;
+ *   - GROOMING_HOUR: at what time of the day is snow grooming performed;
+ *   - GROOMING_DEPTH_START: minimum snow height necessary for groooming (if there is less than GROOMING_DEPTH_START, grooming will be skipped);
+ *   - GROOMING_DEPTH_IMPACT: maximum grooming depth on the snow. Snow layers deeper than GROOMING_DEPTH_IMPACT are left unchanged.
+ *
+ * @section snow_production Snow production
+ * When a meteorological forcing named <i>psum_tech</i> has a positive value, snow production will be triggered. The mass of produced snow is given by <i>psum_tech</i>
+ * while other properties (such as snow temperature and liquid water content as well as the partition between solid and liquid precipitation) are computed based
+ * on the local <a href="https://en.wikipedia.org/wiki/Wet-bulb_temperature"wet bulb temperature</a>. Average values of water losses due to wind and
+ * evaporation are assumed together with an average wind speed suitable for snow production (this means that the true, local wind speed is not used, instead
+ * it is assumed that the snow production has been triggered because the wind speed was not too high).
+ *
+ * More details are given in TechSnow::productionPpt.
  *
  */
 

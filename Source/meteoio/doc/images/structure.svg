@@ -1,0 +1,1925 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-04-26 10:48:31 -->
+
+<!-- Magnification: 0.619 -->
+
+<svg
+   width="991pt"
+   height="429pt"
+   viewBox="-4972 -2137 26639 11519"
+   version="1.1"
+   id="svg10051"
+   sodipodi:docname="structure.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title10116">MeteoIO's simplified class structure</title>
+  <defs
+     id="defs10055">
+    <defs
+       id="defs9607">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z M 60,2262 15,2442 -30,2262 5,2486 h 21 z"
+           id="path9604" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9616">
+      <clipPath
+         id="cp1">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 7717,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9613" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9625">
+      <clipPath
+         id="cp2">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 8617,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9622" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9634">
+      <clipPath
+         id="cp3">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 9517,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9631" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9643">
+      <clipPath
+         id="cp4">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 10417,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9640" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9652">
+      <clipPath
+         id="cp5">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 11317,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9649" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9661">
+      <clipPath
+         id="cp6">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 12217,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9658" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9670">
+      <clipPath
+         id="cp7">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 13117,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9667" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9679">
+      <clipPath
+         id="cp8">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 14017,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9676" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9688">
+      <clipPath
+         id="cp9">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 14917,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9685" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9697">
+      <clipPath
+         id="cp10">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 15817,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9694" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9706">
+      <clipPath
+         id="cp11">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 6817,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9703" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9715">
+      <clipPath
+         id="cp12">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 5917,4399 -45,180 -45,-180 35,224 h 21 z"
+           id="path9712" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9766">
+      <clipPath
+         id="cp13">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 8347,9100 45,-180 45,180 -34,-223 h -21 z"
+           id="path9763" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9775">
+      <clipPath
+         id="cp14">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 8347,9100 45,-180 45,180 -34,-223 h -21 z"
+           id="path9772" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9788">
+      <clipPath
+         id="cp15">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 7042,10225 45,-180 45,180 -34,-223 h -21 z"
+           id="path9785" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9799">
+      <clipPath
+         id="cp16">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 9922,10270 45,-180 45,180 -34,-223 h -21 z"
+           id="path9796" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9822">
+      <clipPath
+         id="cp17">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 4252,9100 45,-180 45,180 -34,-223 h -21 z"
+           id="path9819" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9833">
+      <clipPath
+         id="cp18">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 4252,7975 45,-180 45,180 -34,-223 h -21 z"
+           id="path9830" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9856">
+      <clipPath
+         id="cp19">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 13664,6590 186,8 -168,80 212,-78 -4,-20 z"
+           id="path9853" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9865">
+      <clipPath
+         id="cp20">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 8863,6677 -168,-79 185,-10 -226,-8 -4,20 z"
+           id="path9862" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9874">
+      <clipPath
+         id="cp21">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 16255,5062 -180,-45 180,-45 -223,35 v 21 z"
+           id="path9871" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9883">
+      <clipPath
+         id="cp22">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 19372,3274 -45,180 -45,-180 35,224 h 21 z"
+           id="path9880" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9892">
+      <clipPath
+         id="cp23">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 19372,3274 -45,180 -45,-180 35,224 h 21 z"
+           id="path9889" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9901">
+      <clipPath
+         id="cp24">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 19372,4444 -45,180 -45,-180 35,224 h 21 z"
+           id="path9898" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9910">
+      <clipPath
+         id="cp25">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 13837,7975 45,-180 45,180 -34,-223 h -21 z"
+           id="path9907" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9919">
+      <clipPath
+         id="cp26">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 8707,5614 -45,180 -45,-180 35,224 h 21 z"
+           id="path9916" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9928">
+      <clipPath
+         id="cp27">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 11035,6232 -180,-45 180,-45 -223,35 v 21 z"
+           id="path9925" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9937">
+      <clipPath
+         id="cp28">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 13837,9100 45,-180 45,180 -34,-223 h -21 z"
+           id="path9934" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9946">
+      <clipPath
+         id="cp29">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 16255,8617 -180,-45 180,-45 -223,35 v 21 z"
+           id="path9943" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9959">
+      <clipPath
+         id="cp30">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 19282,9100 45,-180 45,180 -34,-223 h -21 z"
+           id="path9956" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9970">
+      <clipPath
+         id="cp31">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 19282,10225 45,-180 45,180 -34,-223 h -21 z"
+           id="path9967" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9985">
+      <clipPath
+         id="cp32">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 22117,10225 45,-180 45,180 -34,-223 h -21 z"
+           id="path9982" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs9996">
+      <clipPath
+         id="cp33">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 16255,7492 -180,-45 180,-45 -223,35 v 21 z"
+           id="path9993" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs10005">
+      <clipPath
+         id="cp34">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 6334,6142 180,45 -180,45 224,-34 v -21 z"
+           id="path10002" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs10014">
+      <clipPath
+         id="cp35">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 8347,7975 45,-180 45,180 -34,-223 h -21 z"
+           id="path10011" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs10025">
+      <clipPath
+         id="cp36">
+        <path
+           clip-rule="evenodd"
+           d="M -4972,-2137 H 21667 V 9382 H -4972 Z m 3364,7402 180,45 -180,45 224,-34 v -21 z"
+           id="path10022" />
+      </clipPath>
+    </defs>
+  </defs>
+  <sodipodi:namedview
+     id="namedview10053"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="1.0799697"
+     inkscape:cx="616.22098"
+     inkscape:cy="285.65616"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg10051" />
+  <rect
+     x="11385"
+     y="-630"
+     width="10260"
+     height="9990"
+     rx="165"
+     stroke="#b0b0b0"
+     stroke-width="15px"
+     stroke-dasharray="60, 60"
+     id="rect9514"
+     style="fill:none" />
+  <rect
+     x="-2475"
+     y="-630"
+     width="13860"
+     height="9990"
+     rx="165"
+     stroke="#b0b0b0"
+     stroke-width="15px"
+     stroke-dasharray="60, 60"
+     id="rect9516"
+     style="fill:none" />
+  <rect
+     x="-2475"
+     y="-2115"
+     width="24120"
+     height="1485"
+     rx="165"
+     stroke="#b0b0b0"
+     stroke-width="15px"
+     stroke-dasharray="60, 60"
+     id="rect9518"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="11025"
+     y="-270"
+     fill="#b0b0b0"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="275px"
+     text-anchor="end"
+     id="text9520">Data manipulation classes</text>
+  <text
+     xml:space="preserve"
+     x="11700"
+     y="-225"
+     fill="#b0b0b0"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="275px"
+     text-anchor="start"
+     id="text9522">Data structures classes</text>
+  <text
+     xml:space="preserve"
+     x="11160"
+     y="-1800"
+     fill="#b0b0b0"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9524">Helper classes</text>
+  <rect
+     x="1575"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9526"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,1912.5,-22.5)"
+     id="g9530"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9528">GSN</text>
+  </g>
+  <rect
+     x="2475"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9532"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,2385,-450)"
+     id="g9536"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9534">SNOWPACK</text>
+  </g>
+  <rect
+     x="3375"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9538"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,2812.5,-922.5)"
+     id="g9542"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9540">Alpine3D</text>
+  </g>
+  <rect
+     x="4275"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9544"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,3262.5,-1372.5)"
+     id="g9548"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9546">GEOTop</text>
+  </g>
+  <rect
+     x="5175"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9550"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,3757.5,-1822.5)"
+     id="g9554"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9552">SMET</text>
+  </g>
+  <rect
+     x="6075"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9556"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,4162.5,-2272.5)"
+     id="g9560"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9558">ARC</text>
+  </g>
+  <rect
+     x="6975"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9562"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,4657.5,-2722.5)"
+     id="g9566"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9564">GRASS</text>
+  </g>
+  <rect
+     x="7875"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9568"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,5085,-3150)"
+     id="g9572"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9570">ARPS</text>
+  </g>
+  <rect
+     x="8775"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9574"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,5535,-3600)"
+     id="g9578"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9576">PGM</text>
+  </g>
+  <rect
+     x="9675"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9580"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,5985,-4050)"
+     id="g9584"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9582">BormaXML</text>
+  </g>
+  <rect
+     x="10530"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9586"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,6435,-4500)"
+     id="g9590"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9588">IMIS</text>
+  </g>
+  <rect
+     x="675"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9592"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,1462.5,427.5)"
+     id="g9596"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9594">GRIB</text>
+  </g>
+  <rect
+     x="-210"
+     y="225"
+     width="540"
+     height="1800"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9598"
+     style="fill:none" />
+  <g
+     transform="rotate(-90,1020,870)"
+     id="g9602"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="275px"
+       text-anchor="start"
+       id="text9600">PNG</text>
+  </g>
+  <polyline
+     points=" 15,2025 15,2475"
+     clip-path="url(#cp0)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9609"
+     style="fill:none" />
+  <polyline
+     points=" 60,2262 15,2442 -30,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9611"
+     style="fill:none" />
+  <polyline
+     points=" 2700,2025 2700,2475"
+     clip-path="url(#cp1)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9618"
+     style="fill:none" />
+  <polyline
+     points=" 2745,2262 2700,2442 2655,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9620"
+     style="fill:none" />
+  <polyline
+     points=" 3600,2025 3600,2475"
+     clip-path="url(#cp2)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9627"
+     style="fill:none" />
+  <polyline
+     points=" 3645,2262 3600,2442 3555,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9629"
+     style="fill:none" />
+  <polyline
+     points=" 4500,2025 4500,2475"
+     clip-path="url(#cp3)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9636"
+     style="fill:none" />
+  <polyline
+     points=" 4545,2262 4500,2442 4455,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9638"
+     style="fill:none" />
+  <polyline
+     points=" 5400,2025 5400,2475"
+     clip-path="url(#cp4)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9645"
+     style="fill:none" />
+  <polyline
+     points=" 5445,2262 5400,2442 5355,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9647"
+     style="fill:none" />
+  <polyline
+     points=" 6300,2025 6300,2475"
+     clip-path="url(#cp5)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9654"
+     style="fill:none" />
+  <polyline
+     points=" 6345,2262 6300,2442 6255,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9656"
+     style="fill:none" />
+  <polyline
+     points=" 7200,2025 7200,2475"
+     clip-path="url(#cp6)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9663"
+     style="fill:none" />
+  <polyline
+     points=" 7245,2262 7200,2442 7155,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9665"
+     style="fill:none" />
+  <polyline
+     points=" 8100,2025 8100,2475"
+     clip-path="url(#cp7)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9672"
+     style="fill:none" />
+  <polyline
+     points=" 8145,2262 8100,2442 8055,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9674"
+     style="fill:none" />
+  <polyline
+     points=" 9000,2025 9000,2475"
+     clip-path="url(#cp8)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9681"
+     style="fill:none" />
+  <polyline
+     points=" 9045,2262 9000,2442 8955,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9683"
+     style="fill:none" />
+  <polyline
+     points=" 9900,2025 9900,2475"
+     clip-path="url(#cp9)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9690"
+     style="fill:none" />
+  <polyline
+     points=" 9945,2262 9900,2442 9855,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9692"
+     style="fill:none" />
+  <polyline
+     points=" 10800,2025 10800,2475"
+     clip-path="url(#cp10)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9699"
+     style="fill:none" />
+  <polyline
+     points=" 10845,2262 10800,2442 10755,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9701"
+     style="fill:none" />
+  <polyline
+     points=" 1800,2025 1800,2475"
+     clip-path="url(#cp11)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9708"
+     style="fill:none" />
+  <polyline
+     points=" 1845,2262 1800,2442 1755,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9710"
+     style="fill:none" />
+  <polyline
+     points=" 900,2025 900,2475"
+     clip-path="url(#cp12)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9717"
+     style="fill:none" />
+  <polyline
+     points=" 945,2262 900,2442 855,2262"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9719"
+     style="fill:none" />
+  <rect
+     x="-217"
+     y="2520"
+     width="11279"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-dasharray="60, 60"
+     id="rect9721"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="5450"
+     y="2970"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="bold"
+     font-size="240px"
+     text-anchor="middle"
+     id="text9723">IOInterface</text>
+  <rect
+     x="11520"
+     y="225"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9725"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="12735"
+     y="675"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9727">Coords</text>
+  <rect
+     x="14940"
+     y="225"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9729"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="16245"
+     y="675"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9731">Date</text>
+  <rect
+     x="13140"
+     y="1350"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9733"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="14310"
+     y="1800"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9735">StationData</text>
+  <rect
+     x="13140"
+     y="2520"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9737"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="14355"
+     y="2970"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9739">MeteoData</text>
+  <rect
+     x="6840"
+     y="6075"
+     width="4230"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9741"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="8910"
+     y="6480"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9743">Meteo2DInterpolator</text>
+  <rect
+     x="6840"
+     y="7200"
+     width="4230"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9745"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="8910"
+     y="7605"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9747">InterpolationAlgorithms</text>
+  <rect
+     x="13140"
+     y="4950"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9749"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="14310"
+     y="5400"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9751">Config</text>
+  <rect
+     x="15525"
+     y="-1665"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9753"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="16740"
+     y="-1215"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9755">IOExceptions</text>
+  <rect
+     x="7380"
+     y="-1665"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9757"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="8550"
+     y="-1260"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9759">IOUtils</text>
+  <rect
+     x="2205"
+     y="6075"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9761"
+     style="fill:none" />
+  <polyline
+     points=" 4995,7245 4995,7110 3420,7110 3420,6750"
+     clip-path="url(#cp13)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9768"
+     style="fill:none" />
+  <polyline
+     points=" 3375,6963 3420,6783 3465,6963"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9770"
+     style="fill:none" />
+  <polyline
+     points=" 2115,7200 2115,7110 3420,7110 3420,6750"
+     clip-path="url(#cp14)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9777"
+     style="fill:none" />
+  <polyline
+     points=" 3375,6963 3420,6783 3465,6963"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9779"
+     style="fill:none" />
+  <rect
+     x="1035"
+     y="8325"
+     width="2160"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9781"
+     style="fill:none" />
+  <rect
+     x="1035"
+     y="7200"
+     width="2160"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9783"
+     style="fill:none" />
+  <polyline
+     points=" 2115,8325 2115,7875"
+     clip-path="url(#cp15)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9790"
+     style="fill:none" />
+  <polyline
+     points=" 2070,8088 2115,7908 2160,8088"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9792"
+     style="fill:none" />
+  <rect
+     x="3645"
+     y="7245"
+     width="2745"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9794"
+     style="fill:none" />
+  <polyline
+     points=" 4995,8370 4995,7920"
+     clip-path="url(#cp16)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9801"
+     style="fill:none" />
+  <polyline
+     points=" 4950,8133 4995,7953 5040,8133"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9803"
+     style="fill:none" />
+  <rect
+     x="3645"
+     y="8370"
+     width="2745"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9805"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="3420"
+     y="6525"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9807">MeteoProcessor</text>
+  <text
+     xml:space="preserve"
+     x="2115"
+     y="8775"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9809">ProcessingBlock</text>
+  <text
+     xml:space="preserve"
+     x="2115"
+     y="7605"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9811">ProcessingStack</text>
+  <text
+     xml:space="preserve"
+     x="5040"
+     y="7695"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9813">Meteo1DInterpolator</text>
+  <text
+     xml:space="preserve"
+     x="5040"
+     y="8775"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9815">ResamplingAlgorithms</text>
+  <rect
+     x="-1980"
+     y="7200"
+     width="2610"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9817"
+     style="fill:none" />
+  <polyline
+     points=" -675,7200 -675,6750"
+     clip-path="url(#cp17)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9824"
+     style="fill:none" />
+  <polyline
+     points=" -720,6963 -675,6783 -630,6963"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9826"
+     style="fill:none" />
+  <rect
+     x="-1980"
+     y="6075"
+     width="2610"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9828"
+     style="fill:none" />
+  <polyline
+     points=" -675,6075 -675,5625"
+     clip-path="url(#cp18)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9835"
+     style="fill:none" />
+  <polyline
+     points=" -720,5838 -675,5658 -630,5838"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9837"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="-630"
+     y="6480"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9839">DataGenerator</text>
+  <text
+     xml:space="preserve"
+     x="-675"
+     y="7605"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9841">GeneratorAlgorithms</text>
+  <rect
+     x="-4950"
+     y="4950"
+     width="1800"
+     height="675"
+     stroke="#8f0000"
+     stroke-width="15px"
+     id="rect9843"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="-4050"
+     y="5355"
+     fill="#8f0000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9845">User API</text>
+  <rect
+     x="-1755"
+     y="-1575"
+     width="1800"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9847"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="-810"
+     y="-1125"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text9849">IOPlugin</text>
+  <rect
+     x="1575"
+     y="3690"
+     width="4275"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9851"
+     style="fill:none" />
+  <polyline
+     points=" 6435,4950 8910,4455"
+     clip-path="url(#cp19)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9858"
+     style="fill:none" />
+  <polyline
+     points=" 8692,4453 8878,4461 8710,4541"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9860"
+     style="fill:none" />
+  <polyline
+     points=" 6255,4950 3690,4455"
+     clip-path="url(#cp20)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9867"
+     style="fill:none" />
+  <polyline
+     points=" 3891,4540 3723,4461 3908,4451"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9869"
+     style="fill:none" />
+  <polyline
+     points=" 13140,2880 11070,2880"
+     clip-path="url(#cp21)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9876"
+     style="fill:none" />
+  <polyline
+     points=" 11283,2925 11103,2880 11283,2835"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9878"
+     style="fill:none" />
+  <polyline
+     points=" 12600,900 12600,990 14355,990 14355,1350"
+     clip-path="url(#cp22)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9885"
+     style="fill:none" />
+  <polyline
+     points=" 14400,1137 14355,1317 14310,1137"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9887"
+     style="fill:none" />
+  <polyline
+     points=" 16155,900 16155,990 14355,990 14355,1350"
+     clip-path="url(#cp23)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9894"
+     style="fill:none" />
+  <polyline
+     points=" 14400,1137 14355,1317 14310,1137"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9896"
+     style="fill:none" />
+  <polyline
+     points=" 14355,2070 14355,2520"
+     clip-path="url(#cp24)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9903"
+     style="fill:none" />
+  <polyline
+     points=" 14400,2307 14355,2487 14310,2307"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9905"
+     style="fill:none" />
+  <polyline
+     points=" 8910,6075 8910,5625"
+     clip-path="url(#cp25)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9912"
+     style="fill:none" />
+  <polyline
+     points=" 8865,5838 8910,5658 8955,5838"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9914"
+     style="fill:none" />
+  <polyline
+     points=" 3690,3240 3690,3690"
+     clip-path="url(#cp26)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9921"
+     style="fill:none" />
+  <polyline
+     points=" 3735,3477 3690,3657 3645,3477"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9923"
+     style="fill:none" />
+  <polyline
+     points=" 6705,4050 5850,4050"
+     clip-path="url(#cp27)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9930"
+     style="fill:none" />
+  <polyline
+     points=" 6063,4095 5883,4050 6063,4005"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9932"
+     style="fill:none" />
+  <polyline
+     points=" 8910,7200 8910,6750"
+     clip-path="url(#cp28)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9939"
+     style="fill:none" />
+  <polyline
+     points=" 8865,6963 8910,6783 8955,6963"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9941"
+     style="fill:none" />
+  <polyline
+     points=" 13140,6435 11070,6435"
+     clip-path="url(#cp29)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9948"
+     style="fill:none" />
+  <polyline
+     points=" 11283,6480 11103,6435 11283,6390"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9950"
+     style="fill:none" />
+  <rect
+     x="6750"
+     y="3690"
+     width="4320"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9952"
+     style="fill:none" />
+  <rect
+     x="13140"
+     y="6075"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9954"
+     style="fill:none" />
+  <polyline
+     points=" 14355,7200 14355,6750"
+     clip-path="url(#cp30)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9961"
+     style="fill:none" />
+  <polyline
+     points=" 14310,6963 14355,6783 14400,6963"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9963"
+     style="fill:none" />
+  <rect
+     x="13140"
+     y="7200"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9965"
+     style="fill:none" />
+  <polyline
+     points=" 14355,8325 14355,7875"
+     clip-path="url(#cp31)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9972"
+     style="fill:none" />
+  <polyline
+     points=" 14310,8088 14355,7908 14400,8088"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9974"
+     style="fill:none" />
+  <rect
+     x="13140"
+     y="8325"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9976"
+     style="fill:none" />
+  <rect
+     x="15975"
+     y="7200"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9978"
+     style="fill:none" />
+  <rect
+     x="15975"
+     y="8325"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9980"
+     style="fill:none" />
+  <polyline
+     points=" 17190,8325 17190,7875"
+     clip-path="url(#cp32)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9987"
+     style="fill:none" />
+  <polyline
+     points=" 17145,8088 17190,7908 17235,8088"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline9989"
+     style="fill:none" />
+  <rect
+     x="18810"
+     y="8325"
+     width="2475"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect9991"
+     style="fill:none" />
+  <polyline
+     points=" 13140,5310 11070,5310"
+     clip-path="url(#cp33)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline9998"
+     style="fill:none" />
+  <polyline
+     points=" 11283,5355 11103,5310 11283,5265"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline10000"
+     style="fill:none" />
+  <polyline
+     points=" -900,-900 -900,4050 1575,4050"
+     clip-path="url(#cp34)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline10007"
+     style="fill:none" />
+  <polyline
+     points=" 1362,4005 1542,4050 1362,4095"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline10009"
+     style="fill:none" />
+  <polyline
+     points=" 3420,6075 3420,5625"
+     clip-path="url(#cp35)"
+     stroke="#000000"
+     stroke-width="15px"
+     id="polyline10016"
+     style="fill:none" />
+  <polyline
+     points=" 3375,5838 3420,5658 3465,5838"
+     stroke="#000000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline10018"
+     style="fill:none" />
+  <rect
+     x="-1350"
+     y="4950"
+     width="12420"
+     height="675"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect10020"
+     style="fill:none" />
+  <polyline
+     points=" -3150,5310 -1395,5310"
+     clip-path="url(#cp36)"
+     stroke="#8f0000"
+     stroke-width="15px"
+     id="polyline10027"
+     style="fill:none" />
+  <polyline
+     points=" -1608,5265 -1428,5310 -1608,5355"
+     stroke="#8f0000"
+     stroke-width="15px"
+     stroke-miterlimit="8"
+     id="polyline10029"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="8820"
+     y="4140"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10031">BufferedIOHandler</text>
+  <text
+     xml:space="preserve"
+     x="3690"
+     y="4140"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10033">IOHandler</text>
+  <text
+     xml:space="preserve"
+     x="14355"
+     y="6480"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10035">DEMObject</text>
+  <text
+     xml:space="preserve"
+     x="14355"
+     y="7605"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10037">Grid2DObject</text>
+  <text
+     xml:space="preserve"
+     x="14355"
+     y="8730"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10039">Array2D</text>
+  <text
+     xml:space="preserve"
+     x="17190"
+     y="7650"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10041">Grid3DObject</text>
+  <text
+     xml:space="preserve"
+     x="17190"
+     y="8730"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10043">Array3D</text>
+  <text
+     xml:space="preserve"
+     x="20115"
+     y="8730"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10045">Array</text>
+  <text
+     xml:space="preserve"
+     x="4770"
+     y="5400"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="275px"
+     text-anchor="middle"
+     id="text10047">IOManager</text>
+  <metadata
+     id="metadata10114">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>MeteoIO's simplified class structure</dc:title>
+        <dc:date>2024-04-26</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>https://code.wsl.ch/snow-models/meteoio</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
