@@ -338,9 +338,9 @@ class iCSVFile {
             return nodat;
         }
         double getTimeZone() const { return METADATA.timezone == default_nodata ? IOUtils::nodata : METADATA.timezone; }
-        std::vector<std::vector<double>> getRowData() const { return row_data; }
-        std::vector<Date> getAllDatesInFile() const { return dates_in_file; }
-        std::vector<geoLocation> getAllLocationsInData() const { return locations_in_data; }
+        const std::vector<std::vector<double>>& getRowData() const { return row_data; } 
+        const std::vector<Date>& getAllDatesInFile() const { return dates_in_file; }
+        const std::vector<geoLocation>& getAllLocationsInData() const { return locations_in_data; }
         geoLocation getLocationAt(size_t index) const {
             if (index >= locations_in_data.size()) {
                 throw std::out_of_range("Index out of range for locations");

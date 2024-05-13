@@ -310,7 +310,7 @@ class ElementData {
 		void snowResidualWaterContent();
 		static double snowResidualWaterContent(const double& theta_i);
 		double soilFieldCapacity() const;
-		double RelativeHumidity() const;
+		double soilRelativeHumidity() const;
 
 		double snowElasticity() const;
 		double neckStressEnhancement() const;

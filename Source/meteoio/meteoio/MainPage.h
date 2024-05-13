@@ -113,12 +113,12 @@ namespace mio {
  * is needed to make the libSnowpack usable by an end user as a standalone application, here called "snowpack-app"). Therefore the same components
  * can be used in other models (the same engine might be used in several cars while the same bodywork might contain different engines).
  *
- * \image html library_analogy.png "Software library analogy: a software is made of several components (libraries)"
+ * \image html library_analogy.svg "Software library analogy: a software is made of several components (libraries)" width=400px
  * \image latex library_analogy.eps "Software library analogy: a software is made of several components (libraries)" width=0.4\textwidth
  *
  * @section MeteoIO_structure General MeteoIO structure
  * @anchor general_structure
- * \image html meteoio_workflow.png "MeteoIO workflow"
+ * \image html meteoio_workflow.svg "MeteoIO workflow" width=500px
  * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
@@ -135,7 +135,7 @@ namespace mio {
  * of coordinates) and very often you will also need to provide a Digital Elevation Model.
  *
  * @section typical_setup Typical setup
- * \image html typical_setup.png "typical setup of MeteoIO for operational applications"
+ * \image html typical_setup.svg "typical setup of MeteoIO for operational applications" width=1200px
  * \image latex typical_setup.eps "typical setup of MeteoIO for operational applications" width=0.9\textwidth
  * MeteoIO has been designed to accomodate both the needs of carefully crafted simulations for a specific purpose/study and for the needs of operational
  * simulations that run automatically and unattended. A typical setup for such operational applications consists of a data acquisition system
@@ -282,7 +282,7 @@ namespace mio {
  /**
  * @page workflow Workflow
  * Here is a workflow example showing how meteorological data is requested by the user's application and delivered. This is a simplified view, in order to show the general structure. Requesting grids (2D grids, DEM, etc) is very similar but does not perfom filtering or resampling.
- * \image html workflow_meteoreading.png "simplified meteo reading workflow"
+ * \image html workflow_meteoreading.svg "simplified meteo reading workflow" width=1200px
  * \image latex workflow_meteoreading.eps "simplified meteo reading workflow" width=0.9\textwidth
  */
 
@@ -291,7 +291,7 @@ namespace mio {
  * This library contains various classes that have been designed to deal with various sets of problems. This page shows the different sets of problems and what kind of functionnality the library offers to tackle them.
  *
  * @section class_structure Class structure
- * \image html structure.png "simplified class structure"
+ * \image html structure.svg "simplified class structure" width=1200px
  * \image latex structure.eps "simplified class structure" width=0.9\textwidth
  *
  * @section iohandler_sec Data reading

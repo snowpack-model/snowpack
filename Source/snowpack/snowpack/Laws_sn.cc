@@ -747,6 +747,7 @@ double SnLaws::soilVaporDiffusivity(const ElementData& Edata)
  * temperature gradients in the air phase.
  * @author Margaux Couttet
  * @param Edata element data
+ * @param clay_fraction fraction of clay in the soil
  * @return Enhancement factor (-)
  */
 double SnLaws::compEnhanceWaterVaporTransportSoil(const ElementData& Edata, const double& clay_fraction)
@@ -770,13 +771,14 @@ double SnLaws::compEnhanceWaterVaporTransportSoil(const ElementData& Edata, cons
 * @param Edata_top element data
 * @param Te_bot lower element temperature (K)
 * @param Te_top upper element temperature (K)
+* @param clay_fraction fraction of clay in the soil
 * @return thermal vapor hydraulic conductivity (m2 K-1 s-1)
 */
 double SnLaws::compSoilThermalVaporConductivity(const ElementData& Edata_bot, const ElementData& Edata_top, const double& Te_bot, const double& Te_top, const double& clay_fraction)
 {
 	//Determine the nodal values by averaging between top and bottom elements
 	const double nodal_diffusivity = .5 * (SnLaws::soilVaporDiffusivity(Edata_top) + SnLaws::soilVaporDiffusivity(Edata_bot)); //(m2 s-1)
-	const double nodal_HR = .5 * (Edata_top.RelativeHumidity() + Edata_bot.RelativeHumidity()); //(-)
+	const double nodal_HR = .5 * (Edata_top.soilRelativeHumidity() + Edata_bot.soilRelativeHumidity()); //(-)
 	const double nodal_enhancement = .5 * (SnLaws::compEnhanceWaterVaporTransportSoil(Edata_top,clay_fraction)
 	+ SnLaws::compEnhanceWaterVaporTransportSoil(Edata_bot,clay_fraction)); // (-)
 
@@ -807,7 +809,7 @@ double SnLaws::compSoilIsothermalVaporConductivity(const ElementData& Edata_bot,
 	const double nodal_diffusivity = .5*(SnLaws::soilVaporDiffusivity(Edata_top) + SnLaws::soilVaporDiffusivity(Edata_bot)); //(m2 s-1)
 	const double nodal_vaporDensity = .5*(Atmosphere::waterVaporDensity(Te_top, Atmosphere::vaporSaturationPressure(Te_top))
 	                                   + Atmosphere::waterVaporDensity(Te_bot, Atmosphere::vaporSaturationPressure(Te_bot))); //(kg m-3)
-	const double nodal_HR = .5*(Edata_top.RelativeHumidity() + Edata_bot.RelativeHumidity()); //(-)
+	const double nodal_HR = .5*(Edata_top.soilRelativeHumidity() + Edata_bot.soilRelativeHumidity()); //(-)
 
 	return (nodal_diffusivity/Constants::density_water * nodal_vaporDensity * Constants::g/(Constants::gas_constant * T_node)) * nodal_HR;
 }
@@ -1011,7 +1013,7 @@ double SnLaws::compLatentHeat_Rh(const std::string soil_evaporation,
 			 * in snowpackCore/Snowpack.h
 			*/
 			if (soil_evaporation=="EVAP_RELATIVE_HUMIDITY") {
-				eS = Vp2 * Xdata.Edata[Xdata.SoilNode-1].RelativeHumidity();
+				eS = Vp2 * Xdata.Edata[Xdata.SoilNode-1].soilRelativeHumidity();
 			} else {
 				eS = Vp2;
 			}
@@ -1101,8 +1103,8 @@ double SnLaws::compLWRadCoefficient(const double& t_snow, const double& t_atm, c
 
 /**
  * @brief Event driven new-snow density
- * @param i_event:
- * - event_wind: rho = 250.3 kg m-3 @ 4 m s-1; rho = 338 kg m-3 @ 7 m s-1 Antarctica
+ * @param variant Snowpack variant (such as DEFAULT, POLAR...)
+ * @param i_event - event_wind: rho = 250.3 kg m-3 @ 4 m s-1; rho = 338 kg m-3 @ 7 m s-1 Antarctica
  * @param Mdata  Meteorological input
  */
 double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::EventType& i_event,
@@ -1138,7 +1140,7 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
  * @param RH  Relative air humidity (1)
  * @param VW  Mean wind velocity (m s-1)
  * @param HH  Altitude a.s.l. (m)
- * @param model Parameterization to be used
+ * @param i_hn_model Parameterization to be used
  * @return New snow density (kg m-3)
  */
 double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
@@ -1238,7 +1240,7 @@ double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const d
  * @name New snow density
  * @brief Computes the density of new snow. The options for HN_DENSITY are:
  * - PARAMETERIZED (default is LEHNING_NEW):
- * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007
+ * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
  * 	- LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
  * 	- LEHNING_OLD: First model by M. Lehning
  *       @note {models by M. Lehning can be augmented with a parameterization for winds > 2.9 m s-1

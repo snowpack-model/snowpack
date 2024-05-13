@@ -1,0 +1,3662 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-04-26 10:31:44 -->
+
+<!-- Magnification: 0.735 -->
+
+<svg
+   width="1035pt"
+   height="326pt"
+   viewBox="-2362 653 23455 7379"
+   version="1.1"
+   id="svg6606"
+   sodipodi:docname="typical_setup.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title6671">Typical operational data workflow</title>
+  <defs
+     id="defs6610" />
+  <sodipodi:namedview
+     id="namedview6608"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="1.034058"
+     inkscape:cx="643.58094"
+     inkscape:cy="217.10582"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6606" />
+  <g
+     fill="none"
+     id="g6604">
+    <!-- Line -->
+    <rect
+       x="-2340"
+       y="1980"
+       width="7740"
+       height="4905"
+       rx="450"
+       fill="#e7f5ff"
+       stroke="#00008f"
+       stroke-width="15px"
+       id="rect5549" />
+    <!-- Line -->
+    <polygon
+       points=" -585,5579 -585,5621 -591,5627 -610,5609 -786,5756 -793,5794 -804,5805 -804,5762 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5551" />
+    <!-- Line -->
+    <polygon
+       points=" -927,5571 -927,5615 -920,5623 -911,5609 -821,5750 -817,5794 -804,5805 -804,5762 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5553" />
+    <!-- Line -->
+    <polygon
+       points=" -704,5025 -697,5022 -648,5127 -656,5129 -705,5025"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polygon5555" />
+    <!-- Line -->
+    <polygon
+       points=" -697,5020 -687,5017 -638,5121 -648,5125 -696,5022"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5557" />
+    <!-- Line -->
+    <polygon
+       points=" -754,4702 -777,4713 -795,4702 -773,4692 -752,4702"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5559" />
+    <!-- Line -->
+    <polygon
+       points=" -927,5571 -585,5579 -804,5762"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5561" />
+    <!-- Line -->
+    <polygon
+       points=" -315,3644 -315,3686 -321,3692 -340,3674 -516,3821 -523,3859 -534,3870 -534,3827 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5563" />
+    <!-- Line -->
+    <polygon
+       points=" -657,3636 -657,3680 -650,3688 -641,3674 -551,3815 -547,3859 -534,3870 -534,3827 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5565" />
+    <!-- Line -->
+    <polygon
+       points=" -434,3090 -427,3087 -378,3192 -386,3194 -435,3090"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polygon5567" />
+    <!-- Line -->
+    <polygon
+       points=" -427,3085 -417,3082 -368,3186 -378,3190 -426,3087"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5569" />
+    <!-- Line -->
+    <polygon
+       points=" -484,2767 -507,2778 -525,2767 -503,2757 -482,2767"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5571" />
+    <!-- Line -->
+    <polygon
+       points=" -657,3636 -315,3644 -534,3827"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5573" />
+    <!-- Line -->
+    <polygon
+       points=" 1620,3194 1620,3236 1614,3242 1595,3224 1419,3371 1412,3409 1401,3420 1401,3377 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5575" />
+    <!-- Line -->
+    <polygon
+       points=" 1278,3186 1278,3230 1285,3238 1294,3224 1384,3365 1388,3409 1401,3420 1401,3377 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5577" />
+    <!-- Line -->
+    <polygon
+       points=" 1501,2640 1508,2637 1557,2742 1549,2744 1500,2640"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polygon5579" />
+    <!-- Line -->
+    <polygon
+       points=" 1508,2635 1518,2632 1567,2736 1557,2740 1509,2637"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5581" />
+    <!-- Line -->
+    <polygon
+       points=" 1451,2317 1428,2328 1410,2317 1432,2307 1453,2317"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5583" />
+    <!-- Line -->
+    <polygon
+       points=" 1278,3186 1620,3194 1401,3377"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5585" />
+    <!-- Line -->
+    <polygon
+       points=" 1305,6299 1305,6341 1299,6347 1280,6329 1104,6476 1097,6514 1086,6525 1086,6482 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5587" />
+    <!-- Line -->
+    <polygon
+       points=" 963,6291 963,6335 970,6343 979,6329 1069,6470 1073,6514 1086,6525 1086,6482 "
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5589" />
+    <!-- Line -->
+    <polygon
+       points=" 1186,5745 1193,5742 1242,5847 1234,5849 1185,5745"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polygon5591" />
+    <!-- Line -->
+    <polygon
+       points=" 1193,5740 1203,5737 1252,5841 1242,5845 1194,5742"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5593" />
+    <!-- Line -->
+    <polygon
+       points=" 1136,5422 1113,5433 1095,5422 1117,5412 1138,5422"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5595" />
+    <!-- Line -->
+    <polygon
+       points=" 963,6291 1305,6299 1086,6482"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5597" />
+    <!-- Line -->
+    <polygon
+       points=" -685,5046 -685,5058 -698,5052"
+       fill="#b2b2b2"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5599" />
+    <!-- Line -->
+    <polygon
+       points=" -814,4971 -862,5009 -906,4985 -851,4946"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5601" />
+    <!-- Line -->
+    <polygon
+       points=" -795,4702 -795,5648 -777,5660 -777,4713"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5603" />
+    <!-- Line -->
+    <polygon
+       points=" -777,4713 -752,4702 -752,5648 -777,5660"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5605" />
+    <!-- Line -->
+    <polygon
+       points=" -415,3111 -415,3123 -428,3117"
+       fill="#b2b2b2"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5607" />
+    <!-- Line -->
+    <polygon
+       points=" -544,3036 -592,3074 -636,3050 -581,3011"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5609" />
+    <!-- Line -->
+    <polygon
+       points=" -525,2767 -525,3713 -507,3725 -507,2778"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5611" />
+    <!-- Line -->
+    <polygon
+       points=" -507,2778 -482,2767 -482,3713 -507,3725"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5613" />
+    <!-- Line -->
+    <polygon
+       points=" 1520,2661 1520,2673 1507,2667"
+       fill="#b2b2b2"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5615" />
+    <!-- Line -->
+    <polygon
+       points=" 1391,2586 1343,2624 1299,2600 1354,2561"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5617" />
+    <!-- Line -->
+    <polygon
+       points=" 1410,2317 1410,3263 1428,3275 1428,2328"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5619" />
+    <!-- Line -->
+    <polygon
+       points=" 1428,2328 1453,2317 1453,3263 1428,3275"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5621" />
+    <!-- Line -->
+    <polygon
+       points=" 1205,5766 1205,5778 1192,5772"
+       fill="#b2b2b2"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5623" />
+    <!-- Line -->
+    <polygon
+       points=" 1076,5691 1028,5729 984,5705 1039,5666"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5625" />
+    <!-- Line -->
+    <polygon
+       points=" 1095,5422 1095,6368 1113,6380 1113,5433"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5627" />
+    <!-- Line -->
+    <polygon
+       points=" 1113,5433 1138,5422 1138,6368 1113,6380"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="round"
+       id="polygon5629" />
+    <!-- Line -->
+    <polygon
+       points=" -955,4892 -685,5046 -704,5058 -973,4898"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5631" />
+    <!-- Line -->
+    <polygon
+       points=" -685,2957 -415,3111 -434,3123 -703,2963"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5633" />
+    <!-- Line -->
+    <polygon
+       points=" 1250,2507 1520,2661 1501,2673 1232,2513"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5635" />
+    <!-- Line -->
+    <polygon
+       points=" 935,5612 1205,5766 1186,5778 917,5618"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5637" />
+    <!-- Arc -->
+    <path
+       d="M -911,4978 A 62 62 0 0 0 -826 4978"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5639" />
+    <!-- Line -->
+    <polygon
+       points=" -911,4930 -911,4978 -899,4985 -881,4991 -856,4991 -844,4985 -826,4978 -826,4935 "
+       fill="#e5e5e5"
+       id="polygon5641" />
+    <!-- Arc -->
+    <path
+       d="M -641,3043 A 62 62 0 0 0 -556 3043"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5643" />
+    <!-- Line -->
+    <polygon
+       points=" -641,2995 -641,3043 -629,3050 -611,3056 -586,3056 -574,3050 -556,3043 -556,3000 "
+       fill="#e5e5e5"
+       id="polygon5645" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2593 A 62 62 0 0 0 1379 2593"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5647" />
+    <!-- Line -->
+    <polygon
+       points=" 1294,2545 1294,2593 1306,2600 1324,2606 1349,2606 1361,2600 1379,2593 1379,2550 "
+       fill="#e5e5e5"
+       id="polygon5649" />
+    <!-- Arc -->
+    <path
+       d="M 979,5698 A 62 62 0 0 0 1064 5698"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5651" />
+    <!-- Line -->
+    <polygon
+       points=" 979,5650 979,5698 991,5705 1009,5711 1034,5711 1046,5705 1064,5698 1064,5655 "
+       fill="#e5e5e5"
+       id="polygon5653" />
+    <!-- Arc -->
+    <path
+       d="M -911,4971 A 55 55 0 0 0 -826 4971"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5655" />
+    <!-- Arc -->
+    <path
+       d="M -911,4966 A 57 57 0 0 0 -826 4966"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5657" />
+    <!-- Arc -->
+    <path
+       d="M -911,4960 A 59 59 0 0 0 -826 4960"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5659" />
+    <!-- Arc -->
+    <path
+       d="M -911,4954 A 62 62 0 0 0 -826 4954"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5661" />
+    <!-- Arc -->
+    <path
+       d="M -911,4946 A 55 55 0 0 0 -826 4946"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5663" />
+    <!-- Arc -->
+    <path
+       d="M -911,4942 A 59 59 0 0 0 -826 4942"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5665" />
+    <!-- Line -->
+    <polyline
+       points=" -911,4935 -911,4978"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5667" />
+    <!-- Line -->
+    <polyline
+       points=" -826,4935 -826,4978"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5669" />
+    <!-- Arc -->
+    <path
+       d="M -641,3036 A 55 55 0 0 0 -556 3036"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5671" />
+    <!-- Arc -->
+    <path
+       d="M -641,3031 A 57 57 0 0 0 -556 3031"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5673" />
+    <!-- Arc -->
+    <path
+       d="M -641,3025 A 59 59 0 0 0 -556 3025"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5675" />
+    <!-- Arc -->
+    <path
+       d="M -641,3019 A 62 62 0 0 0 -556 3019"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5677" />
+    <!-- Arc -->
+    <path
+       d="M -641,3011 A 55 55 0 0 0 -556 3011"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5679" />
+    <!-- Arc -->
+    <path
+       d="M -641,3007 A 59 59 0 0 0 -556 3007"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5681" />
+    <!-- Line -->
+    <polyline
+       points=" -641,3000 -641,3043"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5683" />
+    <!-- Line -->
+    <polyline
+       points=" -556,3000 -556,3043"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5685" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2586 A 55 55 0 0 0 1379 2586"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5687" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2581 A 57 57 0 0 0 1379 2581"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5689" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2575 A 59 59 0 0 0 1379 2575"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5691" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2569 A 62 62 0 0 0 1379 2569"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5693" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2561 A 55 55 0 0 0 1379 2561"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5695" />
+    <!-- Arc -->
+    <path
+       d="M 1294,2557 A 59 59 0 0 0 1379 2557"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5697" />
+    <!-- Line -->
+    <polyline
+       points=" 1294,2550 1294,2593"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5699" />
+    <!-- Line -->
+    <polyline
+       points=" 1379,2550 1379,2593"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5701" />
+    <!-- Arc -->
+    <path
+       d="M 979,5691 A 55 55 0 0 0 1064 5691"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5703" />
+    <!-- Arc -->
+    <path
+       d="M 979,5686 A 57 57 0 0 0 1064 5686"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5705" />
+    <!-- Arc -->
+    <path
+       d="M 979,5680 A 59 59 0 0 0 1064 5680"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5707" />
+    <!-- Arc -->
+    <path
+       d="M 979,5674 A 62 62 0 0 0 1064 5674"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5709" />
+    <!-- Arc -->
+    <path
+       d="M 979,5666 A 55 55 0 0 0 1064 5666"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5711" />
+    <!-- Arc -->
+    <path
+       d="M 979,5662 A 59 59 0 0 0 1064 5662"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5713" />
+    <!-- Line -->
+    <polyline
+       points=" 979,5655 979,5698"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5715" />
+    <!-- Line -->
+    <polyline
+       points=" 1064,5655 1064,5698"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5717" />
+    <!-- Circle -->
+    <circle
+       cx="7536"
+       cy="6392"
+       r="437"
+       fill="#ffffff"
+       id="circle5719" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="-869"
+       cy="4933"
+       rx="43"
+       ry="21"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5721" />
+    <!-- Line -->
+    <polygon
+       points=" -862,5058 -789,5100 -789,5212 -862,5169"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5723" />
+    <!-- Line -->
+    <polygon
+       points=" -789,5100 -765,5089 -765,5194 -789,5212"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5725" />
+    <!-- Line -->
+    <polygon
+       points=" -789,5100 -765,5089 -838,5046 -862,5058"
+       fill="#ebebeb"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5727" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="-599"
+       cy="2998"
+       rx="43"
+       ry="21"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5729" />
+    <!-- Line -->
+    <polygon
+       points=" -592,3123 -519,3165 -519,3277 -592,3234"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5731" />
+    <!-- Line -->
+    <polygon
+       points=" -519,3165 -495,3154 -495,3259 -519,3277"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5733" />
+    <!-- Line -->
+    <polygon
+       points=" -519,3165 -495,3154 -568,3111 -592,3123"
+       fill="#ebebeb"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5735" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="1336"
+       cy="2548"
+       rx="43"
+       ry="21"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5737" />
+    <!-- Line -->
+    <polygon
+       points=" 1343,2673 1416,2715 1416,2827 1343,2784"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5739" />
+    <!-- Line -->
+    <polygon
+       points=" 1416,2715 1440,2704 1440,2809 1416,2827"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5741" />
+    <!-- Line -->
+    <polygon
+       points=" 1416,2715 1440,2704 1367,2661 1343,2673"
+       fill="#ebebeb"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5743" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="1021"
+       cy="5653"
+       rx="43"
+       ry="21"
+       fill="#e5e5e5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5745" />
+    <!-- Line -->
+    <polygon
+       points=" 1028,5778 1101,5820 1101,5932 1028,5889"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5747" />
+    <!-- Line -->
+    <polygon
+       points=" 1101,5820 1125,5809 1125,5914 1101,5932"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5749" />
+    <!-- Line -->
+    <polygon
+       points=" 1101,5820 1125,5809 1052,5766 1028,5778"
+       fill="#ebebeb"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon5751" />
+    <!-- Line -->
+    <rect
+       x="6135"
+       y="675"
+       width="4680"
+       height="7335"
+       rx="450"
+       fill="#e7f5ff"
+       stroke="#00008f"
+       stroke-width="15px"
+       id="rect5753" />
+    <!-- Line -->
+    <rect
+       x="11295"
+       y="1980"
+       width="4455"
+       height="4905"
+       rx="450"
+       fill="#e7f5ff"
+       stroke="#00008f"
+       stroke-width="15px"
+       id="rect5755" />
+    <!-- Line -->
+    <rect
+       x="16425"
+       y="675"
+       width="4635"
+       height="7335"
+       rx="450"
+       fill="#e7f5ff"
+       stroke="#00008f"
+       stroke-width="15px"
+       id="rect5757" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="-869"
+       cy="4928"
+       rx="32"
+       ry="19"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5759" />
+    <!-- Line -->
+    <polyline
+       points=" -733,4781 -807,4880 -729,4930 -655,4830 -733,4781"
+       fill="#6f6f6f"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5761" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="-599"
+       cy="2993"
+       rx="32"
+       ry="19"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5763" />
+    <!-- Line -->
+    <polyline
+       points=" -463,2846 -537,2945 -459,2995 -385,2895 -463,2846"
+       fill="#6f6f6f"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5765" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="1336"
+       cy="2543"
+       rx="32"
+       ry="19"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5767" />
+    <!-- Line -->
+    <polyline
+       points=" 1472,2396 1398,2495 1476,2545 1550,2445 1472,2396"
+       fill="#6f6f6f"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5769" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="1021"
+       cy="5648"
+       rx="32"
+       ry="19"
+       fill="#dfdfdf"
+       stroke="#000000"
+       stroke-width="8px"
+       id="ellipse5771" />
+    <!-- Line -->
+    <polyline
+       points=" 1157,5501 1083,5600 1161,5650 1235,5550 1157,5501"
+       fill="#6f6f6f"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline5773" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19813"
+       cy="5933"
+       rx="22"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5775" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19682"
+       cy="6622"
+       rx="33"
+       ry="68"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5777" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19541"
+       cy="6746"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5779" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19679"
+       cy="6754"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5781" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19816"
+       cy="6748"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5783" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19543"
+       cy="6824"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5785" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19678"
+       cy="6833"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5787" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19815"
+       cy="6826"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5789" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19810"
+       cy="6903"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5791" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19678"
+       cy="6911"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5793" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19547"
+       cy="6901"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5795" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19550"
+       cy="6979"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5797" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19679"
+       cy="6988"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5799" />
+    <!-- Ellipse -->
+    <ellipse
+       cx="19806"
+       cy="6981"
+       rx="53"
+       ry="28"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5801" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19556,7036) rotate(-343)"
+       rx="3"
+       ry="23"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5803" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19543,7031) rotate(-343)"
+       rx="2"
+       ry="15"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5805" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19745,6010) rotate(-342)"
+       rx="6"
+       ry="52"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5807" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19685,6001) rotate(-342)"
+       rx="5"
+       ry="42"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5809" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19628,5995) rotate(-342)"
+       rx="5"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5811" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19829,6679) rotate(-18)"
+       rx="39"
+       ry="19"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5813" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19528,6676) rotate(-342)"
+       rx="39"
+       ry="19"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5815" />
+    <!-- Line -->
+    <polyline
+       points=" 19526,5597 19532,5591 19541,5589 19564,5586 19579,5586 19590,5586 19607,5588  19620,5594 19623,5600 19623,5619 19626,5664 19633,5781 19634,5820 19634,5823  19634,5828 19637,5831 19637,5855 19638,5863 19645,5865 19719,5867 19764,5869  19819,5875 19867,5882 19880,5885 19883,5891 19885,5916 19889,5955 19894,6003  19898,6052 19902,6146 19908,6302 19909,6351 19911,6470 19911,6619 19906,6768  19898,6921 19893,6995 19888,7061 19885,7078 19882,7083 19876,7084 19871,7086  19855,7088 19828,7088 19784,7091 19728,7092 19650,7092 19614,7090 19568,7088  19494,7085 19475,7083 19471,7078 19467,7047 19463,6993 19459,6933 19456,6833  19452,6712 19449,6570 19450,6422 19456,6247 19468,6042 19468,6034 19466,6027  19467,6014 19467,6005 19467,5994 19464,5987 19461,5980 19459,5978 19467,5968  19468,5964 19472,5939 19474,5925 19477,5923 19479,5920 19481,5897 19484,5887  19488,5881 19493,5877 19494,5870 19493,5867 19494,5855 19494,5852 19494,5848  19493,5848 19499,5801 19505,5739 19513,5670 19522,5608 19527,5597 19532,5591 "
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5817" />
+    <!-- Line -->
+    <polyline
+       points=" 19718,5876 19730,5876 19730,5884 19724,5894 19721,5901 19716,5903 19713,5902  19712,5898 19712,5890 19715,5884 19716,5879 19716,5876"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5819" />
+    <!-- Line -->
+    <polyline
+       points=" 19801,5923 19810,5920 19820,5916 19823,5916 19823,5919 19823,5921 19820,5922  19802,5929 19800,5929 19799,5928 19798,5924 19801,5924"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5821" />
+    <!-- Line -->
+    <polyline
+       points=" 19801,5922"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5823" />
+    <!-- Line -->
+    <polyline
+       points=" 19802,5935 19811,5932 19820,5928 19823,5927 19823,5929 19823,5932 19822,5933  19806,5939 19802,5941 19800,5939 19802,5937 19799,5937"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5825" />
+    <!-- Line -->
+    <polyline
+       points=" 19801,5948 19803,5946 19810,5944 19821,5939 19823,5938 19824,5940 19824,5944  19817,5946 19804,5952 19801,5951 19801,5950 19801,5947"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5827" />
+    <!-- Line -->
+    <polyline
+       points=" 19529,6190 19534,6187 19552,6184 19608,6180 19790,6183 19830,6188 19836,6191  19837,6239 19838,6335 19837,6411 19835,6443 19824,6449 19783,6451 19647,6451  19607,6451 19534,6447 19529,6443 19524,6438 19523,6350 19523,6205 19523,6192  19530,6187"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5829" />
+    <!-- Line -->
+    <polyline
+       points=" 19498,6160 19534,6142 19559,6132 19599,6121 19661,6113 19707,6113 19767,6122  19814,6135 19868,6160 19871,6284 19872,6385 19867,6482 19795,6499 19734,6504  19663,6505 19608,6503 19527,6486 19492,6474 19491,6335 19494,6210 19495,6158 "
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5831" />
+    <!-- Line -->
+    <polyline
+       points=" 19492,6476 19494,6585"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5833" />
+    <!-- Line -->
+    <polyline
+       points=" 19867,6483 19863,6586"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5835" />
+    <!-- Line -->
+    <polyline
+       points=" 19664,6513 19698,6513"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5837" />
+    <!-- Line -->
+    <polyline
+       points=" 19476,5926 19479,5927 19478,5955 19477,5980 19476,6006 19475,6021 19474,6024  19470,6030 19468,6031"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5839" />
+    <!-- Line -->
+    <polyline
+       points=" 19631,6583 19630,6583 19627,6583 19620,6584 19613,6586 19603,6589 19594,6593  19590,6595 19588,6597 19584,6599 19578,6604 19574,6608 19572,6610 19571,6611  19571,6613 19570,6618 19571,6624 19571,6628 19572,6630 19574,6633 19577,6639  19580,6643 19582,6645 19585,6646 19591,6649 19600,6653 19605,6656 19609,6657  19614,6659 19622,6662 19626,6663 19629,6664 19630,6664 19630,6663 19631,6663  19633,6662 19634,6662 19635,6661 19635,6660 19635,6659 19635,6658 19635,6657  19634,6654 19633,6652 19632,6651 19631,6649 19630,6644 19629,6639 19629,6637  19629,6636 19629,6634 19629,6626 19630,6617 19630,6611 19630,6608 19631,6603  19632,6595 19633,6590 19634,6588 19635,6589 19636,6587 19636,6586 19636,6585  19636,6584 19635,6584 19634,6583 19633,6583 19632,6583 19631,6583"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5841" />
+    <!-- Line -->
+    <polyline
+       points=" 19728,6583 19729,6583 19732,6584 19738,6585 19745,6586 19755,6590 19764,6594  19768,6596 19771,6598 19774,6600 19781,6605 19785,6609 19787,6611 19788,6612  19789,6614 19789,6619 19788,6625 19787,6629 19786,6631 19785,6634 19781,6640  19778,6644 19776,6646 19775,6646 19773,6647 19767,6650 19759,6654 19753,6656  19750,6657 19745,6659 19737,6662 19731,6664 19729,6664 19726,6663 19725,6662  19724,6662 19723,6661 19723,6660 19723,6659 19723,6657 19724,6654 19725,6652  19726,6651 19727,6649 19728,6644 19729,6639 19730,6637 19730,6636 19730,6633  19730,6626 19730,6617 19729,6612 19729,6609 19728,6604 19727,6596 19726,6590  19725,6589 19724,6590 19724,6589 19723,6587 19723,6585 19723,6584 19724,6583  19725,6583 19726,6583 19727,6583 19727,6584 19728,6584"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5843" />
+    <!-- Line -->
+    <polyline
+       points=" 19663,6506 19663,6507 19663,6508 19663,6509 19663,6512 19662,6515 19662,6516  19661,6516 19661,6517 19659,6521 19657,6525 19656,6527 19655,6529 19654,6531  19653,6535 19652,6539 19652,6542 19653,6544 19653,6545"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5845" />
+    <!-- Line -->
+    <polyline
+       points=" 19696,6505 19697,6507 19698,6510 19699,6514 19700,6518 19701,6522 19701,6523  19701,6525 19702,6528 19703,6532 19704,6533 19705,6534 19706,6536 19707,6539  19708,6542 19708,6544 19707,6545 19707,6546"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5847" />
+    <!-- Line -->
+    <polyline
+       points=" 19495,6587 19495,6588 19495,6593 19495,6601 19496,6611 19496,6620 19497,6629  19497,6630 19497,6631 19497,6632 19498,6633 19498,6634 19498,6635 19497,6635  19497,6634 19497,6633 19496,6633 19496,6632 19496,6631 19497,6631 19498,6631  19499,6631 19500,6631 19505,6631 19509,6631 19510,6630 19515,6630 19524,6631  19534,6633 19538,6634 19540,6634 19545,6636 19557,6641 19569,6647 19576,6651  19579,6653 19582,6656 19589,6660 19601,6668 19612,6675 19618,6679 19620,6681  19621,6683 19626,6686 19635,6691 19644,6696 19648,6697 19651,6698 19659,6700  19667,6702 19670,6703 19672,6703 19675,6704 19682,6704 19689,6704 19691,6704  19694,6703 19701,6701 19709,6698 19711,6697 19712,6696 19716,6694 19727,6688  19738,6681 19745,6677 19749,6674 19753,6672 19760,6667 19773,6660 19785,6653  19791,6650 19793,6649 19795,6648 19800,6645 19810,6641 19820,6637 19824,6635  19825,6635 19829,6634 19837,6632 19845,6631 19849,6632 19851,6633 19854,6634  19859,6634 19860,6634 19861,6633 19862,6633 19863,6633 19863,6634 19862,6634  19862,6633 19862,6632 19862,6630 19863,6629 19863,6627 19864,6619 19864,6613  19865,6608 19865,6604 19865,6597 19865,6590 19865,6589 19865,6587 19865,6586  19865,6585 19865,6584 19865,6585 19865,6586 19864,6586 19863,6586 19862,6586  19858,6586 19856,6586 19855,6587 19853,6587 19845,6587 19836,6586 19832,6586  19831,6585 19826,6584 19813,6581 19801,6577 19793,6575 19790,6573 19787,6572  19779,6569 19764,6564 19749,6559 19740,6556 19735,6555 19730,6554 19723,6551  19711,6548 19701,6545 19699,6544 19700,6544 19699,6544 19694,6543 19689,6542  19687,6542 19686,6542 19685,6542 19680,6542 19675,6542 19673,6542 19671,6542  19666,6543 19662,6544 19662,6543 19664,6543 19663,6543 19652,6546 19642,6549  19633,6551 19627,6553 19622,6554 19618,6555 19611,6557 19601,6560 19588,6564  19573,6569 19566,6571 19563,6572 19561,6573 19556,6575 19545,6578 19534,6581  19530,6582 19527,6583 19518,6584 19509,6585 19502,6586 19497,6586 19495,6586  19494,6586"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5849" />
+    <!-- Arc -->
+    <path
+       d="M 19287,2108 A 44 44 0 0 0 19319 2167"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5851" />
+    <!-- Arc -->
+    <path
+       d="M 19372,2316 A 44 44 0 0 0 19405 2376"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5853" />
+    <!-- Arc -->
+    <path
+       d="M 19287,2302 A 43 43 0 0 0 19319 2361"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5855" />
+    <!-- Arc -->
+    <path
+       d="M 19287,2202 A 43 43 0 0 0 19319 2261"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5857" />
+    <!-- Arc -->
+    <path
+       d="M 19287,2401 A 44 44 0 0 0 19319 2461"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5859" />
+    <!-- Arc -->
+    <path
+       d="M 19372,2121 A 44 44 0 0 0 19405 2181"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5861" />
+    <!-- Arc -->
+    <path
+       d="M 19457,2136 A 43 43 0 0 0 19490 2195"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5863" />
+    <!-- Arc -->
+    <path
+       d="M 19372,2216 A 44 44 0 0 0 19405 2276"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5865" />
+    <!-- Arc -->
+    <path
+       d="M 19543,2244 A 44 44 0 0 0 19576 2304"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5867" />
+    <!-- Arc -->
+    <path
+       d="M 19457,2330 A 42 42 0 0 0 19490 2389"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5869" />
+    <!-- Arc -->
+    <path
+       d="M 19457,2430 A 44 44 0 0 0 19490 2490"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5871" />
+    <!-- Arc -->
+    <path
+       d="M 19543,2345 A 44 44 0 0 0 19576 2404"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5873" />
+    <!-- Arc -->
+    <path
+       d="M 19372,2416 A 43 43 0 0 0 19405 2475"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5875" />
+    <!-- Arc -->
+    <path
+       d="M 19543,2444 A 44 44 0 0 0 19576 2504"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5877" />
+    <!-- Arc -->
+    <path
+       d="M 19457,2231 A 43 43 0 0 0 19490 2290"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path5879" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19472,2461) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5881" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19472,2261) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5883" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19386,2152) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5885" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19472,2167) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5887" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19300,2138) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5889" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19300,2232) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5891" />
+    <!-- Circle -->
+    <circle
+       cx="19227"
+       cy="2100"
+       r="14"
+       stroke="#000000"
+       stroke-width="8px"
+       id="circle5893" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19557,2176) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5895" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19386,2247) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5897" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19300,2333) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5899" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19386,2347) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5901" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19557,2276) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5903" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19472,2361) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5905" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19300,2432) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5907" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19386,2447) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5909" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19557,2376) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5911" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(19557,2475) rotate(-355)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse5913" />
+    <!-- Line -->
+    <polygon
+       points=" 19177,1544 19179,2069 19201,2067 19198,1541"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon5915" />
+    <!-- Line -->
+    <polyline
+       points=" 19626,1591 19201,1556"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5917" />
+    <!-- Line -->
+    <polygon
+       points=" 19227,1591 19291,1596 19288,1627 19227,1622 19227,1603"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon5919" />
+    <!-- Line -->
+    <polygon
+       points=" 19678,1603 20317,1432 20320,1403 19676,1570"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon5921" />
+    <!-- Line -->
+    <polygon
+       points=" 19676,1570 19189,1539 19894,1394 20320,1403"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon5923" />
+    <!-- Line -->
+    <polygon
+       points=" 19678,2668 20317,2288 20317,1439 19678,1610 19678,2347"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon5925" />
+    <!-- Line -->
+    <polygon
+       points=" 19669,2116 19629,2140 19624,1599 19664,1577"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon5927" />
+    <!-- Line -->
+    <polyline
+       points=" 19612,1594 19612,2081"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5929" />
+    <!-- Line -->
+    <polyline
+       points=" 19678,2671 19654,2664"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5931" />
+    <!-- Line -->
+    <polyline
+       points=" 19621,2685 19654,2659 19654,2124"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5933" />
+    <!-- Line -->
+    <polyline
+       points=" 19198,2062 19201,2592 19617,2683 19612,2109 19609,2115"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5935" />
+    <!-- Line -->
+    <polyline
+       points=" 19618,2112 19621,2143 19629,2143"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5937" />
+    <!-- Line -->
+    <polyline
+       points=" 19614,2109 19626,2109"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline5939" />
+    <!-- Line -->
+    <polyline
+       points=" 19206,2031 19210,2032 19216,2033 19227,2036 19240,2039 19255,2042 19271,2046  19289,2049 19309,2053 19331,2057 19356,2061 19371,2063 19378,2064 19379,2064  19380,2064 19387,2065 19402,2066 19427,2069 19449,2071 19466,2073 19478,2074  19486,2075 19491,2076 19497,2076 19504,2077 19516,2078 19532,2079 19552,2081  19574,2083 19591,2083 19603,2084 19612,2084 19619,2084 19624,2084 19626,2084 "
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5941" />
+    <!-- Line -->
+    <polyline
+       points=" 19203,2055 19206,2056 19211,2057 19219,2059 19230,2062 19242,2065 19255,2068  19270,2071 19288,2075 19308,2079 19328,2083 19342,2086 19352,2087 19357,2088  19359,2089 19362,2089 19367,2090 19376,2091 19390,2093 19409,2096 19432,2099  19446,2101 19453,2101 19456,2102 19459,2102 19466,2102 19481,2103 19505,2105  19525,2106 19544,2107 19560,2108 19574,2108 19588,2108 19599,2109 19608,2109  19614,2109 19617,2109"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5943" />
+    <!-- Line -->
+    <polyline
+       points=" 19726,2644 19727,2644 19731,2644 19738,2645 19747,2645 19759,2645 19773,2644  19786,2643 19794,2642 19797,2641 19800,2641 19806,2640 19816,2637 19825,2634  19828,2632 19828,2631 19830,2629 19835,2625 19840,2622 19842,2621 19844,2621  19845,2620 19847,2616 19847,2612 19847,2609 19847,2607 19846,2606 19845,2603  19842,2599 19838,2595 19837,2594 19836,2594 19833,2593 19828,2592 19822,2591  19816,2591 19812,2592 19810,2592 19809,2592"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5945" />
+    <!-- Line -->
+    <polyline
+       points=" 19688,2668 19689,2668 19692,2669 19699,2670 19709,2671 19720,2672 19735,2673  19749,2674 19757,2674 19761,2674 19764,2674 19772,2674 19785,2673 19797,2672  19803,2671 19805,2671 19807,2671 19812,2669 19821,2666 19830,2662 19834,2659  19836,2658 19839,2655 19844,2649 19847,2643 19849,2640 19849,2638 19848,2637  19848,2634 19849,2628 19849,2621 19849,2617 19848,2613 19847,2611"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5947" />
+    <!-- Line -->
+    <polyline
+       points=" 20153,2390 20154,2390 20158,2391 20164,2393 20173,2395 20183,2396 20195,2398  20207,2399 20211,2399 20212,2399 20217,2398 20227,2398 20237,2397 20242,2397  20243,2397 20247,2397 20258,2395 20269,2393 20275,2393 20278,2392 20283,2391  20291,2388 20295,2385 20298,2384 20298,2383 20298,2382 20299,2379 20300,2374  20301,2364 20300,2355 20299,2346 20298,2341 20298,2340"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5949" />
+    <!-- Line -->
+    <polyline
+       points=" 20175,2376 20176,2376 20180,2376 20187,2377 20196,2377 20208,2377 20222,2376  20235,2375 20243,2374 20246,2373 20249,2373 20255,2372 20265,2369 20274,2366  20277,2364 20277,2363 20279,2361 20284,2357 20289,2353 20291,2352 20293,2352  20294,2351 20296,2347 20296,2343 20296,2340 20296,2339 20295,2337 20294,2335  20291,2331 20288,2328 20286,2327 20285,2326 20283,2326 20281,2325 20276,2324  20270,2323 20265,2323 20261,2324 20258,2324"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline5951" />
+    <!-- Text -->
+    <g
+       transform="translate(19234,1751) rotate(-355)"
+       id="g5955">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#000000"
+         font-family="Times"
+         font-style="normal"
+         font-weight="normal"
+         font-size="24"
+         text-anchor="start"
+         id="text5953">Primergy</text>
+    </g>
+    <!-- Arc -->
+    <path
+       d="M 19172,4375 A 10 10 0 1 0 19192 4377"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5957" />
+    <!-- Arc -->
+    <path
+       d="M 19214,4399 A 11 11 0 1 0 19235 4402"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5959" />
+    <!-- Arc -->
+    <path
+       d="M 19237,4416 A 11 11 0 1 0 19258 4419"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5961" />
+    <!-- Arc -->
+    <path
+       d="M 19261,4430 A 11 11 0 1 0 19281 4432"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5963" />
+    <!-- Arc -->
+    <path
+       d="M 19284,4443 A 11 11 0 1 0 19304 4446"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5965" />
+    <!-- Arc -->
+    <path
+       d="M 19306,4458 A 10 10 0 1 0 19325 4460"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5967" />
+    <!-- Arc -->
+    <path
+       d="M 19407,4514 A 10 10 0 1 0 19426 4517"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5969" />
+    <!-- Arc -->
+    <path
+       d="M 19387,4500 A 11 11 0 1 0 19408 4503"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5971" />
+    <!-- Arc -->
+    <path
+       d="M 19367,4490 A 11 11 0 1 0 19387 4492"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5973" />
+    <!-- Arc -->
+    <path
+       d="M 19343,4476 A 11 11 0 1 0 19364 4479"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5975" />
+    <!-- Arc -->
+    <path
+       d="M 19616,4636 A 10 10 0 1 0 19635 4639"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5977" />
+    <!-- Arc -->
+    <path
+       d="M 19596,4624 A 11 11 0 1 0 19616 4626"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5979" />
+    <!-- Arc -->
+    <path
+       d="M 19575,4613 A 11 11 0 1 0 19596 4615"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5981" />
+    <!-- Arc -->
+    <path
+       d="M 19555,4601 A 11 11 0 1 0 19575 4603"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5983" />
+    <!-- Arc -->
+    <path
+       d="M 19526,4581 A 11 11 0 1 0 19546 4584"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5985" />
+    <!-- Arc -->
+    <path
+       d="M 19505,4569 A 10 10 0 1 0 19524 4571"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5987" />
+    <!-- Arc -->
+    <path
+       d="M 19482,4554 A 11 11 0 1 0 19502 4557"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5989" />
+    <!-- Arc -->
+    <path
+       d="M 19461,4544 A 10 10 0 1 0 19480 4547"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5991" />
+    <!-- Arc -->
+    <path
+       d="M 19441,4533 A 11 11 0 1 0 19461 4536"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5993" />
+    <!-- Arc -->
+    <path
+       d="M 19399,4678 A 11 11 0 1 0 19419 4680"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5995" />
+    <!-- Arc -->
+    <path
+       d="M 19376,4667 A 11 11 0 1 0 19397 4669"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5997" />
+    <!-- Arc -->
+    <path
+       d="M 19353,4652 A 10 10 0 1 0 19372 4655"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path5999" />
+    <!-- Arc -->
+    <path
+       d="M 19325,4636 A 11 11 0 1 0 19345 4639"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6001" />
+    <!-- Arc -->
+    <path
+       d="M 19119,4518 A 11 11 0 1 0 19139 4520"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6003" />
+    <!-- Arc -->
+    <path
+       d="M 19092,4499 A 10 10 0 1 0 19111 4502"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6005" />
+    <!-- Arc -->
+    <path
+       d="M 19064,4484 A 11 11 0 1 0 19084 4486"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6007" />
+    <!-- Arc -->
+    <path
+       d="M 19559,4680 A 11 11 0 1 0 19579 4683"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6009" />
+    <!-- Arc -->
+    <path
+       d="M 19532,4665 A 11 11 0 1 0 19552 4668"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6011" />
+    <!-- Arc -->
+    <path
+       d="M 19502,4647 A 11 11 0 1 0 19522 4649"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6013" />
+    <!-- Arc -->
+    <path
+       d="M 19542,4647 A 11 11 0 1 0 19563 4650"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6015" />
+    <!-- Arc -->
+    <path
+       d="M 19570,4665 A 11 11 0 1 0 19591 4668"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6017" />
+    <!-- Arc -->
+    <path
+       d="M 19517,4631 A 11 11 0 1 0 19537 4634"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6019" />
+    <!-- Arc -->
+    <path
+       d="M 19478,4722 A 11 11 0 1 0 19498 4724"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6021" />
+    <!-- Arc -->
+    <path
+       d="M 19453,4708 A 11 11 0 1 0 19473 4711"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6023" />
+    <!-- Arc -->
+    <path
+       d="M 19431,4694 A 11 11 0 1 0 19452 4697"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6025" />
+    <!-- Arc -->
+    <path
+       d="M 19474,4694 A 11 11 0 1 0 19495 4697"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6027" />
+    <!-- Arc -->
+    <path
+       d="M 19581,4776 A 11 11 0 1 0 19602 4779"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6029" />
+    <!-- Arc -->
+    <path
+       d="M 19554,4763 A 11 11 0 1 0 19574 4765"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6031" />
+    <!-- Arc -->
+    <path
+       d="M 19524,4746 A 11 11 0 1 0 19545 4748"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6033" />
+    <!-- Arc -->
+    <path
+       d="M 19647,4751 A 11 11 0 1 0 19668 4753"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6035" />
+    <!-- Arc -->
+    <path
+       d="M 19668,4732 A 11 11 0 1 0 19689 4735"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6037" />
+    <!-- Arc -->
+    <path
+       d="M 19599,4760 A 11 11 0 1 0 19619 4763"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6039" />
+    <!-- Arc -->
+    <path
+       d="M 19620,4739 A 11 11 0 1 0 19641 4741"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6041" />
+    <!-- Arc -->
+    <path
+       d="M 19643,4719 A 11 11 0 1 0 19663 4722"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6043" />
+    <!-- Arc -->
+    <path
+       d="M 19571,4746 A 11 11 0 1 0 19591 4748"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6045" />
+    <!-- Arc -->
+    <path
+       d="M 19594,4729 A 10 10 0 1 0 19614 4731"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6047" />
+    <!-- Arc -->
+    <path
+       d="M 19616,4707 A 10 10 0 1 0 19635 4709"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6049" />
+    <!-- Arc -->
+    <path
+       d="M 19545,4730 A 11 11 0 1 0 19565 4732"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6051" />
+    <!-- Arc -->
+    <path
+       d="M 19569,4714 A 11 11 0 1 0 19589 4717"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6053" />
+    <!-- Arc -->
+    <path
+       d="M 19591,4696 A 11 11 0 1 0 19612 4698"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6055" />
+    <!-- Arc -->
+    <path
+       d="M 19391,4647 A 11 11 0 1 0 19411 4649"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6057" />
+    <!-- Arc -->
+    <path
+       d="M 19366,4631 A 11 11 0 1 0 19386 4634"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6059" />
+    <!-- Arc -->
+    <path
+       d="M 19338,4614 A 11 11 0 1 0 19358 4616"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6061" />
+    <!-- Arc -->
+    <path
+       d="M 19312,4595 A 11 11 0 1 0 19332 4597"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6063" />
+    <!-- Arc -->
+    <path
+       d="M 19286,4581 A 11 11 0 1 0 19307 4584"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6065" />
+    <!-- Arc -->
+    <path
+       d="M 19258,4567 A 11 11 0 1 0 19279 4569"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6067" />
+    <!-- Arc -->
+    <path
+       d="M 19234,4552 A 11 11 0 1 0 19254 4554"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6069" />
+    <!-- Arc -->
+    <path
+       d="M 19207,4538 A 11 11 0 1 0 19227 4541"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6071" />
+    <!-- Arc -->
+    <path
+       d="M 19180,4525 A 10 10 0 1 0 19200 4527"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6073" />
+    <!-- Arc -->
+    <path
+       d="M 19153,4507 A 11 11 0 1 0 19173 4509"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6075" />
+    <!-- Arc -->
+    <path
+       d="M 19124,4490 A 11 11 0 1 0 19144 4492"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6077" />
+    <!-- Arc -->
+    <path
+       d="M 19097,4471 A 10 10 0 1 0 19116 4474"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6079" />
+    <!-- Arc -->
+    <path
+       d="M 19116,4451 A 11 11 0 1 0 19137 4453"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6081" />
+    <!-- Arc -->
+    <path
+       d="M 19143,4431 A 11 11 0 1 0 19163 4433"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6083" />
+    <!-- Arc -->
+    <path
+       d="M 19115,4417 A 11 11 0 1 0 19136 4420"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6085" />
+    <!-- Arc -->
+    <path
+       d="M 19411,4630 A 11 11 0 1 0 19431 4633"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6087" />
+    <!-- Arc -->
+    <path
+       d="M 19430,4610 A 11 11 0 1 0 19451 4613"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6089" />
+    <!-- Arc -->
+    <path
+       d="M 19144,4470 A 11 11 0 1 0 19164 4473"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6091" />
+    <!-- Arc -->
+    <path
+       d="M 19168,4489 A 11 11 0 1 0 19188 4492"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6093" />
+    <!-- Arc -->
+    <path
+       d="M 19192,4504 A 11 11 0 1 0 19212 4507"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6095" />
+    <!-- Arc -->
+    <path
+       d="M 19220,4520 A 11 11 0 1 0 19240 4523"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6097" />
+    <!-- Arc -->
+    <path
+       d="M 19247,4533 A 10 10 0 1 0 19266 4536"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6099" />
+    <!-- Arc -->
+    <path
+       d="M 19271,4549 A 11 11 0 1 0 19292 4552"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6101" />
+    <!-- Arc -->
+    <path
+       d="M 19294,4564 A 11 11 0 1 0 19314 4566"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6103" />
+    <!-- Arc -->
+    <path
+       d="M 19320,4579 A 11 11 0 1 0 19341 4581"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6105" />
+    <!-- Arc -->
+    <path
+       d="M 19347,4593 A 11 11 0 1 0 19367 4596"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6107" />
+    <!-- Arc -->
+    <path
+       d="M 19377,4608 A 11 11 0 1 0 19397 4611"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6109" />
+    <!-- Arc -->
+    <path
+       d="M 19397,4595 A 11 11 0 1 0 19418 4597"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6111" />
+    <!-- Arc -->
+    <path
+       d="M 19371,4579 A 10 10 0 1 0 19391 4581"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6113" />
+    <!-- Arc -->
+    <path
+       d="M 19341,4561 A 11 11 0 1 0 19361 4564"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6115" />
+    <!-- Arc -->
+    <path
+       d="M 19315,4544 A 11 11 0 1 0 19336 4547"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6117" />
+    <!-- Arc -->
+    <path
+       d="M 19289,4528 A 11 11 0 1 0 19309 4530"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6119" />
+    <!-- Arc -->
+    <path
+       d="M 19266,4513 A 11 11 0 1 0 19286 4515"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6121" />
+    <!-- Arc -->
+    <path
+       d="M 19239,4497 A 10 10 0 1 0 19258 4500"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6123" />
+    <!-- Arc -->
+    <path
+       d="M 19214,4481 A 11 11 0 1 0 19234 4484"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6125" />
+    <!-- Arc -->
+    <path
+       d="M 19190,4468 A 10 10 0 1 0 19209 4470"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6127" />
+    <!-- Arc -->
+    <path
+       d="M 19167,4453 A 11 11 0 1 0 19187 4455"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6129" />
+    <!-- Arc -->
+    <path
+       d="M 19451,4593 A 10 10 0 1 0 19470 4596"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6131" />
+    <!-- Arc -->
+    <path
+       d="M 19420,4579 A 11 11 0 1 0 19441 4581"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6133" />
+    <!-- Arc -->
+    <path
+       d="M 19392,4564 A 11 11 0 1 0 19413 4566"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6135" />
+    <!-- Arc -->
+    <path
+       d="M 19364,4547 A 11 11 0 1 0 19384 4549"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6137" />
+    <!-- Arc -->
+    <path
+       d="M 19336,4530 A 11 11 0 1 0 19356 4533"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6139" />
+    <!-- Arc -->
+    <path
+       d="M 19310,4514 A 11 11 0 1 0 19330 4517"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6141" />
+    <!-- Arc -->
+    <path
+       d="M 19286,4497 A 11 11 0 1 0 19307 4499"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6143" />
+    <!-- Arc -->
+    <path
+       d="M 19261,4485 A 11 11 0 1 0 19281 4487"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6145" />
+    <!-- Arc -->
+    <path
+       d="M 19239,4469 A 10 10 0 1 0 19258 4471"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6147" />
+    <!-- Arc -->
+    <path
+       d="M 19212,4453 A 11 11 0 1 0 19232 4456"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6149" />
+    <!-- Arc -->
+    <path
+       d="M 19188,4438 A 11 11 0 1 0 19209 4441"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6151" />
+    <!-- Arc -->
+    <path
+       d="M 19164,4421 A 11 11 0 1 0 19185 4424"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6153" />
+    <!-- Arc -->
+    <path
+       d="M 19141,4406 A 10 10 0 1 0 19160 4409"
+       stroke="#000000"
+       stroke-width="8px"
+       id="path6155" />
+    <!-- Line -->
+    <polyline
+       points=" 19620,4866 19768,4746 19769,4774"
+       fill="#aeaeae"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6157" />
+    <!-- Line -->
+    <polygon
+       points=" 19614,4866 19786,4729 19785,4694 19616,4836"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6159" />
+    <!-- Line -->
+    <polyline
+       points=" 19616,4868 19009,4517 19005,4488 19183,4348 19786,4694"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6161" />
+    <!-- Line -->
+    <polyline
+       points=" 19616,4840 19005,4488"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6163" />
+    <!-- Line -->
+    <polyline
+       points=" 19036,4486 19410,4702 19501,4611"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6165" />
+    <!-- Line -->
+    <polyline
+       points=" 19162,4381 19183,4396 19203,4381"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6167" />
+    <!-- Line -->
+    <polyline
+       points=" 19206,4409 19312,4475 19328,4458"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6169" />
+    <!-- Line -->
+    <polyline
+       points=" 19332,4484 19416,4534 19439,4517"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6171" />
+    <!-- Line -->
+    <polyline
+       points=" 19433,4543 19535,4600 19552,4586"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6173" />
+    <!-- Line -->
+    <polyline
+       points=" 19513,4758 19614,4815 19705,4736"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6175" />
+    <!-- Line -->
+    <polyline
+       points=" 19546,4611 19625,4657 19643,4640"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6177" />
+    <!-- Line -->
+    <polyline
+       points=" 19490,4657 19569,4702 19603,4668"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6179" />
+    <!-- Line -->
+    <polyline
+       points=" 19410,4702 19490,4747 19513,4724"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6181" />
+    <!-- Line -->
+    <polyline
+       points=" 19062,4461 19062,4462 19063,4464 19064,4467 19065,4470 19066,4471 19068,4472  19069,4472 19071,4472 19074,4471 19076,4470 19079,4468 19083,4465 19090,4460  19098,4453 19104,4446 19106,4445"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polyline6183" />
+    <!-- Line -->
+    <polyline
+       points=" 19416,4655 19416,4656 19417,4658 19418,4661 19419,4664 19420,4665 19422,4666  19423,4666 19425,4666 19428,4665 19430,4664 19433,4662 19437,4660 19442,4656  19448,4650 19455,4644 19460,4640 19461,4639"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polyline6185" />
+    <!-- Line -->
+    <polyline
+       points=" 19607,4791 19607,4792 19608,4794 19609,4797 19609,4799 19611,4800 19612,4801  19614,4801 19617,4801 19620,4800 19623,4798 19627,4795 19632,4791 19638,4786  19645,4780 19650,4776 19651,4775"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polyline6187" />
+    <!-- Line -->
+    <polyline
+       points=" 19152,4530 19151,4532 19151,4534 19150,4535 19150,4537 19150,4539 19152,4541  19157,4546 19164,4551 19176,4559 19183,4564 19192,4569 19202,4575 19213,4581  19225,4588 19237,4595 19248,4601 19259,4607 19268,4612 19276,4616 19288,4623  19297,4627 19304,4629 19307,4630 19309,4630 19311,4630 19312,4629 19314,4628  19315,4627 19316,4626 19316,4625 19317,4623 19317,4622 19317,4620 19316,4619  19316,4618 19315,4617 19313,4615 19312,4613"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polyline6189" />
+    <!-- Line -->
+    <polygon
+       points=" 19913,4592 19909,4592 19904,4592 19899,4593 19895,4594 19891,4596 19887,4598  19884,4600 19880,4603 19876,4606 19873,4609 19870,4612 19867,4616 19864,4620  19862,4624 19860,4628 19858,4631 19857,4635 19856,4640 19855,4644 19855,4648  19854,4651 19854,4656 19855,4660 19855,4664 19856,4667 19857,4670 19859,4673  19862,4676 19865,4678 19868,4680 19872,4682 19876,4683 19881,4684 19886,4686  19892,4686 19897,4687 19903,4688 19909,4688 19915,4688 19920,4687 19923,4687  19926,4686 19928,4685 19931,4683 19933,4681 19935,4679 19937,4676 19939,4673  19941,4670 19944,4666 19946,4663 19949,4660 19952,4657 19955,4654 19958,4651  19961,4649 19964,4646 19967,4643 19970,4640 19972,4637 19974,4634 19975,4631  19977,4627 19978,4624 19978,4620 19978,4617 19977,4614 19975,4611 19972,4608  19969,4606 19966,4604 19963,4602 19960,4600 19956,4599 19953,4597 19950,4596  19946,4595 19943,4595 19940,4594 19936,4593 19933,4593 19930,4592 19925,4592  19921,4592 19917,4592"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polygon6191" />
+    <!-- Line -->
+    <polyline
+       points=" 19864,4681 19865,4682 19870,4687 19876,4692 19881,4696 19886,4699 19890,4701  19896,4703 19902,4704 19907,4705 19913,4705 19918,4705 19924,4704 19930,4703  19935,4702 19940,4700 19945,4698 19950,4696 19954,4693 19959,4689 19962,4686  19965,4683 19968,4679 19971,4676 19973,4672 19976,4669 19978,4666 19981,4663  19984,4660 19987,4657 19991,4654 19994,4651 19998,4649 20002,4646 20006,4643  20009,4641 20012,4639 20014,4637 20016,4635 20017,4632 20018,4630 20018,4626  20019,4622 20019,4618 20018,4614 20018,4610 20017,4606 20016,4603 20014,4599  20012,4596 20010,4593 20008,4591 20005,4589 20001,4587 19998,4585 19994,4583  19991,4582 19988,4580 19984,4578 19980,4577 19976,4576 19972,4575 19967,4575  19962,4575 19958,4576 19954,4577 19950,4578 19945,4581 19940,4584 19936,4587  19935,4588"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6193" />
+    <!-- Line -->
+    <polyline
+       points=" 19731,4324 19728,3908"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6195" />
+    <!-- Line -->
+    <polyline
+       points=" 19834,3810 19301,3507"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6197" />
+    <!-- Line -->
+    <polyline
+       points=" 19255,4195 19258,3541"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6199" />
+    <!-- Line -->
+    <polyline
+       points=" 19788,4509 19785,3844"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6201" />
+    <!-- Line -->
+    <polyline
+       points=" 19788,4505 19837,4479 19834,3813"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6203" />
+    <!-- Line -->
+    <polyline
+       points=" 19656,3495 19913,3390 19996,3435"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6205" />
+    <!-- Line -->
+    <polyline
+       points=" 20223,3541 20219,3572 20329,3636 20337,4025 19913,4256 19901,4282"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6207" />
+    <!-- Line -->
+    <polyline
+       points=" 20329,3639 19921,3836 19921,3851 19906,3866"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6209" />
+    <!-- Line -->
+    <polyline
+       points=" 19909,3862 19909,4275"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6211" />
+    <!-- Line -->
+    <polyline
+       points=" 20268,4066 20265,4135"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6213" />
+    <!-- Line -->
+    <polyline
+       points=" 19713,4409 19713,4381 19682,4367 19682,4396"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6215" />
+    <!-- Line -->
+    <polyline
+       points=" 19662,4384 19663,4377 19665,4377 19668,4387"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6217" />
+    <!-- Line -->
+    <polyline
+       points=" 19312,4154 19338,4176 19338,4195"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6219" />
+    <!-- Line -->
+    <polyline
+       points=" 19389,4256 19389,4262 19394,4262"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6221" />
+    <!-- Line -->
+    <polyline
+       points=" 19409,4267 19409,4274 19413,4274"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6223" />
+    <!-- Line -->
+    <polyline
+       points=" 19428,4280 19428,4286 19433,4286"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6225" />
+    <!-- Line -->
+    <polyline
+       points=" 19446,4291 19446,4298 19451,4298"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6227" />
+    <!-- Line -->
+    <polyline
+       points=" 19464,4303 19464,4309 19469,4309"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6229" />
+    <!-- Line -->
+    <polyline
+       points=" 19483,4314 19483,4320 19488,4320"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6231" />
+    <!-- Line -->
+    <polyline
+       points=" 19501,4326 19501,4331 19506,4331"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6233" />
+    <!-- Line -->
+    <polyline
+       points=" 19522,4337 19522,4342 19527,4342"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6235" />
+    <!-- Line -->
+    <polyline
+       points=" 19541,4345 19541,4352 19546,4352"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6237" />
+    <!-- Line -->
+    <polyline
+       points=" 19563,4357 19563,4363 19568,4363"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6239" />
+    <!-- Line -->
+    <polyline
+       points=" 19255,3541 19256,3539 19259,3535 19264,3530 19270,3524 19279,3517 19291,3510  19308,3503 19323,3498 19336,3494 19344,3492 19349,3491 19353,3490 19356,3490  19362,3489 19372,3488 19387,3486 19407,3484 19427,3482 19443,3482 19452,3481  19457,3481 19459,3482 19461,3482 19466,3482 19477,3483 19495,3483 19519,3484  19540,3485 19559,3486 19573,3487 19582,3488 19588,3489 19593,3490 19597,3490  19603,3491 19613,3492 19627,3493 19646,3494 19668,3495 19694,3496 19713,3496  19725,3496 19732,3496 19736,3496 19740,3496 19746,3496 19756,3495 19772,3495  19792,3495 19814,3495 19828,3495 19833,3495 19835,3496 19836,3496 19841,3496  19852,3495 19868,3492 19884,3488 19895,3485 19900,3483 19903,3481 19905,3479  19910,3476 19919,3472 19932,3466 19947,3458 19955,3454 19957,3452 19959,3450  19965,3447 19978,3440 19991,3434 20001,3430 20009,3427 20015,3425 20018,3424  20019,3424"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6241" />
+    <!-- Line -->
+    <polyline
+       points=" 19785,3844 19786,3844 19789,3841 19795,3838 19803,3832 19814,3826 19829,3817  19844,3809 19852,3804 19857,3803 19860,3801 19869,3797 19883,3787 19896,3777  19902,3772 19903,3770 19905,3769 19910,3763 19921,3750 19930,3739 19935,3731  19938,3726 19939,3723 19940,3720 19943,3715 19949,3707 19958,3696 19969,3683  19975,3677 19975,3676 19976,3675 19983,3670 20000,3658 20015,3648 20026,3642  20032,3639 20034,3638 20037,3637 20044,3634 20060,3626 20084,3613 20102,3603  20120,3594 20137,3585 20152,3577 20167,3569 20180,3562 20193,3555 20204,3549  20212,3545 20217,3542 20219,3541"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6243" />
+    <!-- Line -->
+    <polyline
+       points=" 20219,3541 20216,3539 20211,3534 20204,3528 20194,3519 20182,3510 20169,3500  20155,3489 20137,3478 20117,3466 20097,3455 20079,3447 20064,3440 20050,3435  20039,3431 20028,3428 20020,3426 20015,3425 20012,3424"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6245" />
+    <!-- Line -->
+    <polyline
+       points=" 19788,3848 19786,3847 19783,3846 19777,3843 19767,3839 19755,3833 19741,3827  19724,3819 19705,3811 19686,3801 19665,3791 19643,3781 19621,3770 19597,3757  19571,3744 19544,3729 19515,3713 19485,3696 19453,3677 19423,3659 19397,3642  19375,3627 19355,3614 19337,3601 19320,3589 19306,3578 19292,3568 19281,3559  19271,3551 19264,3545 19259,3541 19256,3539 19255,3538"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6247" />
+    <!-- Line -->
+    <polyline
+       points=" 19788,4505 19787,4505 19782,4503 19772,4499 19759,4493 19744,4487 19730,4480  19715,4472 19701,4464 19695,4460 19691,4457 19690,4455 19692,4454 19695,4455  19699,4456 19704,4457 19709,4459 19713,4460 19715,4459 19715,4458 19711,4454  19703,4449 19690,4441 19674,4432 19658,4423 19643,4415 19631,4409 19620,4404  19612,4400 19604,4396 19596,4393 19586,4389 19575,4383 19560,4376 19542,4366  19520,4355 19497,4342 19471,4328 19451,4316 19437,4307 19428,4301 19422,4297  19419,4294 19416,4291 19412,4288 19405,4283 19394,4277 19380,4268 19364,4259  19339,4246 19330,4243 19330,4245 19330,4247 19324,4246 19308,4237 19295,4228  19283,4220 19274,4213 19266,4205 19259,4199 19255,4195 19252,4192"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6249" />
+    <!-- Line -->
+    <polyline
+       points=" 19743,3911 19741,3910 19737,3909 19730,3906 19720,3903 19708,3898 19693,3892  19676,3885 19658,3878 19639,3870 19619,3861 19598,3851 19575,3840 19551,3828  19524,3814 19497,3799 19467,3781 19440,3764 19417,3749 19397,3735 19379,3722  19364,3710 19350,3699 19338,3688 19327,3679 19319,3672 19313,3667 19310,3663  19308,3662"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6251" />
+    <!-- Line -->
+    <polyline
+       points=" 19335,4097 19335,4095 19334,4089 19333,4081 19332,4069 19330,4054 19328,4036  19327,4017 19325,3997 19323,3976 19322,3953 19321,3927 19320,3899 19319,3870  19319,3837 19319,3808 19320,3783 19322,3762 19323,3744 19325,3727 19326,3713  19328,3701 19329,3693 19330,3688 19330,3685"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6253" />
+    <!-- Line -->
+    <polyline
+       points=" 19728,4320 19726,4319 19722,4318 19715,4315 19706,4311 19693,4305 19678,4299  19662,4292 19645,4284 19626,4276 19607,4267 19587,4257 19565,4246 19542,4234  19518,4221 19493,4207 19462,4188 19436,4172 19414,4157 19396,4144 19380,4132  19367,4122 19356,4112 19347,4104 19341,4098 19337,4095 19335,4093"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6255" />
+    <!-- Line -->
+    <polyline
+       points=" 20272,4135 20270,4136 20265,4139 20257,4144 20244,4151 20228,4160 20209,4171  20188,4183 20165,4197 20141,4210 20117,4224 20093,4238 20069,4252 20045,4266  20021,4280 19998,4294 19975,4308 19955,4320 19947,4325 19940,4329 19933,4333  19928,4337 19923,4340 19919,4342 19916,4345 19914,4346 19912,4347 19911,4348  19910,4348 19911,4348 19912,4347 19914,4346 19915,4345 19917,4344 19919,4343  19921,4342 19923,4341 19925,4339 19927,4338 19929,4337 19931,4336 19932,4335  19934,4334 19935,4334 19937,4333 19938,4333 19939,4333 19939,4334 19939,4336  19938,4337 19937,4338 19936,4340 19935,4342 19928,4354 19924,4362 19923,4367  19922,4371 19918,4380 19909,4396 19900,4412 19895,4420 19893,4424 19891,4427  19886,4435 19875,4448 19863,4460 19853,4468 19845,4473 19838,4477 19835,4479  19834,4479"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6257" />
+    <!-- Line -->
+    <polyline
+       points=" 19436,4320 19436,4323 19435,4329 19434,4338 19433,4349 19433,4362 19434,4375  19437,4389 19443,4405 19452,4422 19463,4437 19473,4448 19481,4455 19485,4458  19489,4460 19493,4461 19499,4464 19508,4468 19523,4476 19542,4486 19562,4495  19577,4501 19587,4505 19592,4507 19595,4508 19598,4509 19604,4511 19615,4513  19633,4516 19656,4520 19680,4523 19699,4524 19711,4525 19718,4526 19723,4526  19727,4526 19734,4526 19747,4525 19767,4523 19792,4520 19817,4515 19837,4511  19849,4508 19857,4506 19862,4504 19866,4503 19873,4500 19884,4495 19901,4488  19921,4479 19943,4467 19958,4459 19965,4455 19967,4453 19970,4451 19974,4447  19984,4436 19996,4419 20006,4400 20013,4383 20016,4367 20018,4353 20019,4341  20019,4332 20019,4328 20019,4327"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6259" />
+    <!-- Line -->
+    <polyline
+       points=" 19436,4396 19437,4399 19438,4404 19441,4412 19445,4422 19450,4433 19458,4445  19468,4458 19482,4471 19501,4486 19519,4497 19535,4506 19547,4512 19555,4516  19561,4519 19565,4520 19570,4522 19576,4523 19586,4526 19601,4530 19621,4534  19645,4539 19669,4542 19690,4544 19705,4546 19715,4546 19721,4546 19725,4546  19729,4545 19735,4545 19745,4544 19759,4542 19779,4539 19803,4536 19830,4531  19851,4526 19864,4523 19872,4521 19876,4519 19880,4518 19887,4515 19898,4510  19915,4501 19935,4490 19954,4477 19968,4465 19979,4454 19988,4444 19995,4434  20000,4425 20004,4418 20006,4413 20007,4411"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6261" />
+    <!-- Line -->
+    <polyline
+       points=" 19735,4430 19733,4429 19729,4427 19722,4424 19712,4419 19699,4413 19683,4406  19666,4398 19648,4390 19629,4381 19609,4371 19588,4360 19565,4349 19541,4337  19516,4323 19490,4309 19462,4293 19437,4279 19416,4266 19398,4255 19383,4245  19369,4236 19357,4228 19347,4221 19339,4215 19332,4210 19327,4206 19324,4204  19323,4203"
+       stroke="#000000"
+       stroke-width="8px"
+       stroke-linejoin="bevel"
+       id="polyline6263" />
+    <!-- Arc -->
+    <path
+       d="M 7908,2153 A 44 44 0 0 1 7876 2212"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6265" />
+    <!-- Arc -->
+    <path
+       d="M 7823,2361 A 44 44 0 0 1 7790 2421"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6267" />
+    <!-- Arc -->
+    <path
+       d="M 7908,2347 A 43 43 0 0 1 7876 2406"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6269" />
+    <!-- Arc -->
+    <path
+       d="M 7908,2247 A 43 43 0 0 1 7876 2306"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6271" />
+    <!-- Arc -->
+    <path
+       d="M 7908,2446 A 44 44 0 0 1 7876 2506"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6273" />
+    <!-- Arc -->
+    <path
+       d="M 7823,2166 A 44 44 0 0 1 7790 2226"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6275" />
+    <!-- Arc -->
+    <path
+       d="M 7738,2181 A 43 43 0 0 1 7705 2240"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6277" />
+    <!-- Arc -->
+    <path
+       d="M 7823,2261 A 44 44 0 0 1 7790 2321"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6279" />
+    <!-- Arc -->
+    <path
+       d="M 7652,2289 A 44 44 0 0 1 7619 2349"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6281" />
+    <!-- Arc -->
+    <path
+       d="M 7738,2375 A 42 42 0 0 1 7705 2434"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6283" />
+    <!-- Arc -->
+    <path
+       d="M 7738,2475 A 44 44 0 0 1 7705 2535"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6285" />
+    <!-- Arc -->
+    <path
+       d="M 7652,2390 A 44 44 0 0 1 7619 2449"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6287" />
+    <!-- Arc -->
+    <path
+       d="M 7823,2461 A 43 43 0 0 1 7790 2520"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6289" />
+    <!-- Arc -->
+    <path
+       d="M 7652,2489 A 44 44 0 0 1 7619 2549"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6291" />
+    <!-- Arc -->
+    <path
+       d="M 7738,2276 A 43 43 0 0 1 7705 2335"
+       stroke="#000000"
+       stroke-width="15px"
+       id="path6293" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7723,2506) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6295" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7723,2306) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6297" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7809,2197) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6299" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7723,2212) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6301" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7895,2183) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6303" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7895,2277) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6305" />
+    <!-- Circle -->
+    <circle
+       cx="7968"
+       cy="2145"
+       r="14"
+       stroke="#000000"
+       stroke-width="8px"
+       id="circle6307" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7638,2221) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6309" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7809,2292) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6311" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7895,2378) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6313" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7809,2392) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6315" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7638,2321) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6317" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7723,2406) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6319" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7895,2477) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6321" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7809,2492) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6323" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7638,2421) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6325" />
+    <!-- Ellipse -->
+    <ellipse
+       transform="translate(7638,2520) rotate(-5)"
+       rx="33"
+       ry="38"
+       stroke="#000000"
+       stroke-width="15px"
+       id="ellipse6327" />
+    <!-- Line -->
+    <polygon
+       points=" 8018,1589 8016,2114 7994,2112 7997,1586"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6329" />
+    <!-- Line -->
+    <polyline
+       points=" 7569,1636 7994,1601"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6331" />
+    <!-- Line -->
+    <polygon
+       points=" 7968,1636 7904,1641 7907,1672 7968,1667 7968,1648"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6333" />
+    <!-- Line -->
+    <polygon
+       points=" 7517,1648 6878,1477 6875,1448 7519,1615"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6335" />
+    <!-- Line -->
+    <polygon
+       points=" 7519,1615 8006,1584 7301,1439 6875,1448"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6337" />
+    <!-- Line -->
+    <polygon
+       points=" 7517,2713 6878,2333 6878,1484 7517,1655 7517,2392"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6339" />
+    <!-- Line -->
+    <polygon
+       points=" 7526,2161 7566,2185 7571,1644 7531,1622"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polygon6341" />
+    <!-- Line -->
+    <polyline
+       points=" 7583,1639 7583,2126"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6343" />
+    <!-- Line -->
+    <polyline
+       points=" 7517,2716 7541,2709"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6345" />
+    <!-- Line -->
+    <polyline
+       points=" 7574,2730 7541,2704 7541,2169"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6347" />
+    <!-- Line -->
+    <polyline
+       points=" 7997,2107 7994,2637 7578,2728 7583,2154 7586,2160"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6349" />
+    <!-- Line -->
+    <polyline
+       points=" 7577,2157 7574,2188 7566,2188"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6351" />
+    <!-- Line -->
+    <polyline
+       points=" 7581,2154 7569,2154"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline6353" />
+    <!-- Line -->
+    <polyline
+       points=" 7989,2076 7985,2077 7979,2078 7968,2081 7955,2084 7940,2087 7924,2091 7906,2094  7886,2098 7864,2102 7839,2106 7824,2108 7817,2109 7816,2109 7815,2109 7808,2110  7793,2111 7768,2114 7746,2116 7729,2118 7717,2119 7709,2120 7704,2121 7698,2121  7691,2122 7679,2123 7663,2124 7643,2126 7621,2128 7604,2128 7592,2129 7583,2129  7576,2129 7571,2129 7569,2129"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6355" />
+    <!-- Line -->
+    <polyline
+       points=" 7992,2100 7989,2101 7984,2102 7976,2104 7965,2107 7953,2110 7940,2113 7925,2116  7907,2120 7887,2124 7867,2128 7853,2131 7843,2132 7838,2133 7836,2134 7833,2134  7828,2135 7819,2136 7805,2138 7786,2141 7763,2144 7749,2146 7742,2146 7739,2147  7736,2147 7729,2147 7714,2148 7690,2150 7670,2151 7651,2152 7635,2153 7621,2153  7607,2153 7596,2154 7587,2154 7581,2154 7578,2154"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6357" />
+    <!-- Line -->
+    <polyline
+       points=" 7469,2689 7468,2689 7464,2689 7457,2690 7448,2690 7436,2690 7422,2689 7409,2688  7401,2687 7398,2686 7395,2686 7389,2685 7379,2682 7370,2679 7367,2677 7367,2676  7365,2674 7360,2670 7355,2667 7353,2666 7351,2666 7350,2665 7348,2661 7348,2657  7348,2654 7348,2652 7349,2651 7350,2648 7353,2644 7357,2640 7358,2639 7359,2639  7362,2638 7367,2637 7373,2636 7379,2636 7383,2637 7385,2637 7386,2637"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6359" />
+    <!-- Line -->
+    <polyline
+       points=" 7507,2713 7506,2713 7503,2714 7496,2715 7486,2716 7475,2717 7460,2718 7446,2719  7438,2719 7434,2719 7431,2719 7423,2719 7410,2718 7398,2717 7392,2716 7390,2716  7388,2716 7383,2714 7374,2711 7365,2707 7361,2704 7359,2703 7356,2700 7351,2694  7348,2688 7346,2685 7346,2683 7347,2682 7347,2679 7346,2673 7346,2666 7346,2662  7347,2658 7348,2656"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6361" />
+    <!-- Line -->
+    <polyline
+       points=" 7042,2435 7041,2435 7037,2436 7031,2438 7022,2440 7012,2441 7000,2443 6988,2444  6984,2444 6983,2444 6978,2443 6968,2443 6958,2442 6953,2442 6952,2442 6948,2442  6937,2440 6926,2438 6920,2438 6917,2437 6912,2436 6904,2433 6900,2430 6897,2429  6897,2428 6897,2427 6896,2424 6895,2419 6894,2409 6895,2400 6896,2391 6897,2386  6897,2385"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6363" />
+    <!-- Line -->
+    <polyline
+       points=" 7020,2421 7019,2421 7015,2421 7008,2422 6999,2422 6987,2422 6973,2421 6960,2420  6952,2419 6949,2418 6946,2418 6940,2417 6930,2414 6921,2411 6918,2409 6918,2408  6916,2406 6911,2402 6906,2398 6904,2397 6902,2397 6901,2396 6899,2392 6899,2388  6899,2385 6899,2384 6900,2382 6901,2380 6904,2376 6907,2373 6909,2372 6910,2371  6912,2371 6914,2370 6919,2369 6925,2368 6930,2368 6934,2369 6937,2369"
+       stroke="#000000"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline6365" />
+    <!-- Text -->
+    <g
+       transform="translate(7961,1796) rotate(-5)"
+       id="g6369">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#000000"
+         font-family="Times"
+         font-style="normal"
+         font-weight="normal"
+         font-size="24"
+         text-anchor="end"
+         id="text6367">Primergy</text>
+    </g>
+    <!-- Line -->
+    <polygon
+       points=" 7817,6728 7639,6516 7656,6502 7666,6487 7675,6473 7914,6612 7891,6651 7852,6694 "
+       fill="#ff7fff"
+       id="polygon6371" />
+    <!-- Line -->
+    <polygon
+       points=" 7686,6804 7591,6543 7612,6536 7627,6526 7639,6516 7816,6728 7782,6756 7731,6784 "
+       fill="#ffff7f"
+       id="polygon6373" />
+    <!-- Line -->
+    <polygon
+       points=" 7914,6612 7675,6473 7686,6454 7691,6437 7694,6421 7966,6470 7957,6514 7937,6567 "
+       fill="#7fffff"
+       id="polygon6375" />
+    <!-- Line -->
+    <polygon
+       points=" 7254,6057 7432,6270 7416,6284 7406,6298 7397,6312 7158,6172 7182,6135 7219,6092 "
+       fill="#ff7fff"
+       id="polygon6377" />
+    <!-- Line -->
+    <polygon
+       points=" 7387,5982 7482,6242 7461,6250 7446,6260 7432,6270 7256,6057 7291,6029 7342,6001 "
+       fill="#ffff7f"
+       id="polygon6379" />
+    <!-- Line -->
+    <polygon
+       points=" 7157,6173 7397,6312 7386,6332 7382,6348 7377,6365 7105,6318 7115,6272 7135,6218 "
+       fill="#7fffff"
+       id="polygon6381" />
+    <!-- Line -->
+    <polygon
+       points=" 7536,6831 7536,6553 7557,6553 7575,6548 7591,6544 7686,6805 7642,6818 7585,6827 "
+       fill="#7fe87f"
+       id="polygon6383" />
+    <!-- Line -->
+    <polygon
+       points=" 7536,5955 7536,6232 7514,6232 7497,6237 7481,6242 7387,5982 7430,5967 7487,5958 "
+       fill="#7fe87f"
+       id="polygon6385" />
+    <!-- Line -->
+    <polygon
+       points=" -733,4799 -789,4868 -729,4905 -675,4836"
+       fill="#79bae5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6387" />
+    <!-- Line -->
+    <polygon
+       points=" -463,2864 -519,2933 -459,2970 -405,2901"
+       fill="#79bae5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6389" />
+    <!-- Line -->
+    <polygon
+       points=" 1472,2414 1416,2483 1476,2520 1530,2451"
+       fill="#79bae5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6391" />
+    <!-- Line -->
+    <polygon
+       points=" 1157,5519 1101,5588 1161,5625 1215,5556"
+       fill="#79bae5"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6393" />
+    <!-- Line -->
+    <rect
+       x="12150"
+       y="3990"
+       width="2475"
+       height="675"
+       stroke="#000000"
+       stroke-width="15px"
+       id="rect6395" />
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="13410"
+       y="4440"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6397">Numerical model</text>
+    <!-- Line -->
+    <rect
+       x="12645"
+       y="2505"
+       width="2475"
+       height="675"
+       stroke="#000000"
+       stroke-width="15px"
+       id="rect6399" />
+    <!-- Line -->
+    <rect
+       x="11700"
+       y="2505"
+       width="945"
+       height="675"
+       stroke="#000000"
+       stroke-width="15px"
+       id="rect6401" />
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="13905"
+       y="2955"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6403">MeteoIO</text>
+    <!-- Text -->
+    <g
+       transform="translate(12150,2925) rotate(-330)"
+       id="g6407">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#000000"
+         font-family="Times"
+         font-style="normal"
+         font-weight="bold"
+         font-size="228"
+         text-anchor="middle"
+         id="text6405">plugins</text>
+    </g>
+    <!-- Line -->
+    <rect
+       x="12735"
+       y="5430"
+       width="2475"
+       height="675"
+       stroke="#000000"
+       stroke-width="15px"
+       id="rect6409" />
+    <!-- Line -->
+    <rect
+       x="11790"
+       y="5430"
+       width="945"
+       height="675"
+       stroke="#000000"
+       stroke-width="15px"
+       id="rect6411" />
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="13995"
+       y="5880"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6413">MeteoIO</text>
+    <!-- Text -->
+    <g
+       transform="translate(12240,5850) rotate(-330)"
+       id="g6417">
+      <text
+         xml:space="preserve"
+         x="0"
+         y="0"
+         fill="#000000"
+         font-family="Times"
+         font-style="normal"
+         font-weight="bold"
+         font-size="228"
+         text-anchor="middle"
+         id="text6415">plugins</text>
+    </g>
+    <!-- Line -->
+    <defs
+       id="defs6422">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 11281,4170 11521,4320 11281,4470 11861,4436 11861,4205z"
+           id="path6419" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 10665,4320 11745,4320"
+       clip-path="url(#cp0)"
+       stroke="#00008f"
+       stroke-width="225px"
+       id="polyline6424" />
+    <!-- Forward arrow to point 11745,4320 -->
+    <polyline
+       points=" 11281,4170 11521,4320 11281,4470"
+       stroke="#00008f"
+       stroke-width="225px"
+       stroke-miterlimit="8"
+       id="polyline6426" />
+    <!-- Line -->
+    <defs
+       id="defs6431">
+      <clipPath
+         id="cp1">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 13433,3662 13365,3842 13298,3662 13347,3906 13383,3906z"
+           id="path6428" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 13365,3225 13365,3888"
+       clip-path="url(#cp1)"
+       stroke="#00008f"
+       stroke-width="30px"
+       id="polyline6433" />
+    <!-- Forward arrow to point 13365,3888 -->
+    <polyline
+       points=" 13433,3662 13365,3842 13298,3662"
+       stroke="#00008f"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6435" />
+    <!-- Line -->
+    <defs
+       id="defs6440">
+      <clipPath
+         id="cp2">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 13433,5147 13365,5327 13298,5147 13347,5391 13383,5391z"
+           id="path6437" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 13365,4710 13365,5373"
+       clip-path="url(#cp2)"
+       stroke="#00008f"
+       stroke-width="30px"
+       id="polyline6442" />
+    <!-- Forward arrow to point 13365,5373 -->
+    <polyline
+       points=" 13433,5147 13365,5327 13298,5147"
+       stroke="#00008f"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6444" />
+    <!-- Line -->
+    <defs
+       id="defs6449">
+      <clipPath
+         id="cp3">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 16231,4215 16471,4365 16231,4515 16811,4481 16811,4250z"
+           id="path6446" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 15615,4365 16695,4365"
+       clip-path="url(#cp3)"
+       stroke="#00008f"
+       stroke-width="225px"
+       id="polyline6451" />
+    <!-- Forward arrow to point 16695,4365 -->
+    <polyline
+       points=" 16231,4215 16471,4365 16231,4515"
+       stroke="#00008f"
+       stroke-width="225px"
+       stroke-miterlimit="8"
+       id="polyline6453" />
+    <!-- Line -->
+    <defs
+       id="defs6458">
+      <clipPath
+         id="cp4">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 18584,4298 18764,4365 18584,4433 18828,4383 18828,4347z"
+           id="path6455" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 16965,4365 18810,4365"
+       clip-path="url(#cp4)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6460" />
+    <!-- Forward arrow to point 18810,4365 -->
+    <polyline
+       points=" 18584,4298 18764,4365 18584,4433"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6462" />
+    <!-- Line -->
+    <defs
+       id="defs6467">
+      <clipPath
+         id="cp5">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 19041,6193 19135,6361 18954,6297 19172,6415 19195,6388z"
+           id="path6464" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 16920,4500 19170,6390"
+       clip-path="url(#cp5)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6469" />
+    <!-- Forward arrow to point 19170,6390 -->
+    <polyline
+       points=" 19041,6193 19135,6361 18954,6297"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6471" />
+    <!-- Line -->
+    <defs
+       id="defs6476">
+      <clipPath
+         id="cp6">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 18954,2433 19135,2369 19041,2537 19195,2342 19172,2315z"
+           id="path6473" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 16920,4230 19170,2340"
+       clip-path="url(#cp6)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6478" />
+    <!-- Forward arrow to point 19170,2340 -->
+    <polyline
+       points=" 18954,2433 19135,2369 19041,2537"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6480" />
+    <!-- Line -->
+    <defs
+       id="defs6485">
+      <clipPath
+         id="cp7">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 10304,4253 10484,4320 10304,4388 10548,4338 10548,4302z"
+           id="path6482" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 8115,4320 10530,4320"
+       clip-path="url(#cp7)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6487" />
+    <!-- Forward arrow to point 10530,4320 -->
+    <polyline
+       points=" 10304,4253 10484,4320 10304,4388"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6489" />
+    <!-- Line -->
+    <defs
+       id="defs6494">
+      <clipPath
+         id="cp8">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 10442,3811 10540,3976 10357,3916 10578,4030 10600,4002z"
+           id="path6491" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 8115,2025 10575,4005"
+       clip-path="url(#cp8)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6496" />
+    <!-- Forward arrow to point 10575,4005 -->
+    <polyline
+       points=" 10442,3811 10540,3976 10357,3916"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6498" />
+    <!-- Line -->
+    <defs
+       id="defs6503">
+      <clipPath
+         id="cp9">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 10354,4671 10539,4617 10435,4779 10600,4594 10579,4565z"
+           id="path6500" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 8115,6435 10575,4590"
+       clip-path="url(#cp9)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6505" />
+    <!-- Forward arrow to point 10575,4590 -->
+    <polyline
+       points=" 10354,4671 10539,4617 10435,4779"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6507" />
+    <!-- Line -->
+    <defs
+       id="defs6512">
+      <clipPath
+         id="cp10">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 5791,4170 6031,4320 5791,4470 6371,4436 6371,4205z"
+           id="path6509" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 5175,4320 6255,4320"
+       clip-path="url(#cp10)"
+       stroke="#00008f"
+       stroke-width="225px"
+       id="polyline6514" />
+    <!-- Forward arrow to point 6255,4320 -->
+    <polyline
+       points=" 5791,4170 6031,4320 5791,4470"
+       stroke="#00008f"
+       stroke-width="225px"
+       stroke-miterlimit="8"
+       id="polyline6516" />
+    <!-- Line -->
+    <rect
+       x="2250"
+       y="3960"
+       width="2475"
+       height="675"
+       stroke="#000000"
+       stroke-width="15px"
+       id="rect6518" />
+    <!-- Line -->
+    <defs
+       id="defs6523">
+      <clipPath
+         id="cp11">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 2093,4113 2173,4288 1998,4208 2205,4345 2230,4320z"
+           id="path6520" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 1440,3555 2205,4320"
+       clip-path="url(#cp11)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6525" />
+    <!-- Forward arrow to point 2205,4320 -->
+    <polyline
+       points=" 2093,4113 2173,4288 1998,4208"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6527" />
+    <!-- Line -->
+    <defs
+       id="defs6532">
+      <clipPath
+         id="cp12">
+        <path
+           clip-rule="evenodd"
+           d="M -2362,653 H 21093 V 8032 H -2362 z   M 1995,4427 2172,4351 2088,4525 2230,4321 2206,4295z"
+           id="path6529" />
+      </clipPath>
+    </defs>
+    <polyline
+       points=" 1215,5265 2205,4320"
+       clip-path="url(#cp12)"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6534" />
+    <!-- Forward arrow to point 2205,4320 -->
+    <polyline
+       points=" 1995,4427 2172,4351 2088,4525"
+       stroke="#000000"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline6536" />
+    <!-- Line -->
+    <polyline
+       points=" -315,3825 2205,4320"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6538" />
+    <!-- Line -->
+    <polyline
+       points=" -540,5175 2197,4317"
+       stroke="#000000"
+       stroke-width="30px"
+       id="polyline6540" />
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="-495"
+       y="4410"
+       fill="#000000"
+       font-family="Times"
+       font-style="italic"
+       font-weight="normal"
+       font-size="228"
+       text-anchor="middle"
+       id="text6542">Automatic Weather Stations</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="3510"
+       y="4905"
+       fill="#000000"
+       font-family="Times"
+       font-style="italic"
+       font-weight="normal"
+       font-size="228"
+       text-anchor="middle"
+       id="text6544">submission scripts</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="3510"
+       y="5175"
+       fill="#000000"
+       font-family="Times"
+       font-style="italic"
+       font-weight="normal"
+       font-size="228"
+       text-anchor="middle"
+       id="text6546">data logging</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="7440"
+       y="5490"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6548">Database</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="7440"
+       y="1305"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6550">Web Service</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="7530"
+       y="7155"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6552">XML/ASCII/... Files</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="19755"
+       y="7335"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6554">Mobile application</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="19800"
+       y="5085"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6556">User application</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="19755"
+       y="2925"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6558">Web Portal</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="3510"
+       y="4410"
+       fill="#000000"
+       font-family="Times"
+       font-style="normal"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="middle"
+       id="text6560">Data Acquisition</text>
+    <!-- Line -->
+    <polygon
+       points=" 7541,3417 7208,3564 6947,3520 7332,3399"
+       fill="#87cfff"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6562" />
+    <!-- Line -->
+    <polygon
+       points=" 7215,3560 7757,3600 7973,3461 7537,3421"
+       fill="#8e8f8e"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6564" />
+    <!-- Line -->
+    <polygon
+       points=" 7204,3564 6951,3523 6951,5019 7208,5055"
+       fill="#0000ff"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6566" />
+    <!-- Line -->
+    <polygon
+       points=" 7749,3604 7757,3901 7200,3868 7200,3560"
+       fill="#0000ff"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6568" />
+    <!-- Line -->
+    <polygon
+       points=" 7753,5157 7208,5055 7208,3872 7753,3897"
+       fill="#000000"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6570" />
+    <!-- Line -->
+    <polygon
+       points=" 7749,4916 7973,4473 7973,3454 7753,3604"
+       fill="#8e8f8e"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6572" />
+    <!-- Line -->
+    <polygon
+       points=" 7969,4480 7977,4542 7761,4963 7757,4905"
+       fill="#000000"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6574" />
+    <!-- Line -->
+    <polygon
+       points=" 7757,4967 7757,5157 7977,4641 7977,4535"
+       fill="#8e8f8e"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polygon6576" />
+    <!-- Circle -->
+    <circle
+       cx="7536"
+       cy="6392"
+       r="162"
+       fill="#ffffff"
+       stroke="#000000"
+       stroke-width="15px"
+       id="circle6578" />
+    <!-- Line -->
+    <polyline
+       points=" 7742,3853 7197,3810"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6580" />
+    <!-- Line -->
+    <polyline
+       points=" 7742,3791 7197,3747"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6582" />
+    <!-- Line -->
+    <polyline
+       points=" 7742,3723 7197,3678"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6584" />
+    <!-- Line -->
+    <polyline
+       points=" 7742,3660 7197,3615"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6586" />
+    <!-- Line -->
+    <polyline
+       points=" 7394,3579 7394,3872"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6588" />
+    <!-- Line -->
+    <polyline
+       points=" 7614,3600 7614,3893"
+       stroke="#000000"
+       stroke-width="8px"
+       id="polyline6590" />
+    <!-- Circle -->
+    <circle
+       cx="7536"
+       cy="6392"
+       r="46"
+       stroke="#000000"
+       stroke-width="8px"
+       id="circle6592" />
+    <!-- Circle -->
+    <circle
+       cx="7536"
+       cy="6392"
+       r="437"
+       stroke="#000000"
+       stroke-width="15px"
+       id="circle6594" />
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="6570"
+       y="7920"
+       fill="#00008f"
+       font-family="Times"
+       font-style="italic"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="start"
+       id="text6596">Data Sources</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="11835"
+       y="6750"
+       fill="#00008f"
+       font-family="Times"
+       font-style="italic"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="start"
+       id="text6598">Application</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="-1845"
+       y="6750"
+       fill="#00008f"
+       font-family="Times"
+       font-style="italic"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="start"
+       id="text6600">Data Acquisition</text>
+    <!-- Text -->
+    <text
+       xml:space="preserve"
+       x="16875"
+       y="7920"
+       fill="#00008f"
+       font-family="Times"
+       font-style="italic"
+       font-weight="bold"
+       font-size="228"
+       text-anchor="start"
+       id="text6602">Publication</text>
+  </g>
+  <metadata
+     id="metadata6669">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Typical operational data workflow</dc:title>
+        <dc:date>2024-04-26</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>https://code.wsl.ch/snow-models/meteoio</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
