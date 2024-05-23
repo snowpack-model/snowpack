@@ -84,9 +84,21 @@ BEGIN { \
 			} else if($1==506) { \
 				# Read LWC
 				for(i=1; i<=$2; i++) {th_water[i]=$(i+2)/100.} \
+			} else if($1==508) { \
+				# Read dendricity
+				for(i=1; i<=$2; i++) {dd[i]=$(i+2)} \
+			} else if($1==509) { \
+				# Read sphericity
+				for(i=1; i<=$2; i++) {sp[i]=$(i+2)} \
+			} else if($1==511) { \
+				# Read bond size
+				for(i=1; i<=$2; i++) {bs[i]=$(i+2)} \
 			} else if($1==512) { \
 				# Read grain size
 				for(i=1; i<=$2; i++) {gs[i]=$(i+2)} \
+			} else if($1==513) { \
+				# Read grain type
+				for(i=1; i<=$2; i++) {gt[i]=$(i+2)} \
 			} else if($1==515) { \
 				# Read theta[ICE]
 				for(i=1; i<=$2; i++) {th_ice[i]=$(i+2)/100.} \
@@ -94,10 +106,10 @@ BEGIN { \
 				# Read theta[AIR] (i.e., pore space)
 				for(i=1; i<=$2; i++) {th_air[i]=$(i+2)/100.} \
 				# Print header
-				if(printheader==0) {printheader=1; print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"} \
+				if(printheader==0) {printheader=1; print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   bond_size_(mm)   dd_(-)   sp_(-)   gt_(swiss_code_F1F2F3)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"} \
 				# Write output
 				for(i=nEsnow; i>=bottomsnowelement; i--) {
-					printf "%f %f %f %f %f %f %f %f %f %f %f\n", z[nEsnow+1]-z[i+1], z[nEsnow+1]-z[i], z[nEsnow+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], th_ice[i], th_water[i], th_air[i], age[i]; \
+					printf "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", z[nEsnow+1]-z[i+1], z[nEsnow+1]-z[i], z[nEsnow+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], bs[i], dd[i], sp[i], gt[i], th_ice[i], th_water[i], th_air[i], age[i]; \
 				} \
 				exit; \
 			} \
