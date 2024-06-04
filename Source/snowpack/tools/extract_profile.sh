@@ -56,22 +56,22 @@ BEGIN { \
 	if(start_reading==1) { \
 		if($1==500) { \
 			datum=sprintf("%04d-%02d-%02dT%02d:%02d:%02d", substr($2,7,4), substr($2,4,2), substr($2,1,2), substr($2,12,2), substr($2,15,2), substr($2,18,2)); \
-			if(substr(datum,1,16) > substr(tdate,1,16)) {found_date=1; print "# Date=", datum} \
+			if(substr(datum,1,16) >= substr(tdate,1,16)) {found_date=1; print "# Date=", datum} \
 		}; \
 		if (found_date==1) { \
 			if($1==501) { \
 				if($3 > 0) { \
-					# This is necessary in case no soil is present
+					# Insert z=0 at the bottom. This is necessary in case no soil is present, when z=0 is not printed in the *pro file
 					bottomsnowelement=1; z[1]=0; offset=1; nE=$2; nEsnow=nE; \
 				} else { \
-					# Case with soil layers
+					# Case with negative z: either soil layers or sea ice
 					offset=0; nE=$2-1; \
 				}; \
 				for(i=1;i<=$2;i++) { \
 					# Read domain coordinates
 					z[i+offset]=$(i+2)/100.; \
 					if(z[i+offset]==0) {bottomsnowelement=i} \
-				}; nEsnow=nE-bottomsnowelement+1; \
+				}; \
 			} else if($1==502) { \
 				# Read densities
 				for(i=1; i<=$2; i++) {rho[i]=$(i+2)} \
@@ -105,11 +105,16 @@ BEGIN { \
 			} else if($1==516) { \
 				# Read theta[AIR] (i.e., pore space)
 				for(i=1; i<=$2; i++) {th_air[i]=$(i+2)/100.} \
+			} else if($1==519) { \
+				# When there is no soil
+				soil=0; nEsnow=nE; \
+				# Check theta[SOIL], then adjust parameters such that only snow part is shown
+				for(i=1; i<bottomsnowelement; i++) {if($(i+2)/100. > 0) {soil=1; nEsnow=nE-bottomsnowelement+1; break;}} \
 				# Print header
 				if(printheader==0) {printheader=1; print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   bond_size_(mm)   dd_(-)   sp_(-)   gt_(swiss_code_F1F2F3)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"} \
 				# Write output
-				for(i=nEsnow; i>=bottomsnowelement; i--) {
-					printf "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", z[nEsnow+1]-z[i+1], z[nEsnow+1]-z[i], z[nEsnow+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], bs[i], dd[i], sp[i], gt[i], th_ice[i], th_water[i], th_air[i], age[i]; \
+				for(i=nE; i>=((soil)?(bottomsnowelement):(1)); i--) {
+					printf "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", z[nE+1]-z[i+1], z[nE+1]-z[i], z[nE+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], bs[i], dd[i], sp[i], gt[i], th_ice[i], th_water[i], th_air[i], age[i]; \
 				} \
 				exit; \
 			} \
