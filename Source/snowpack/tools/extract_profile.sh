@@ -1,9 +1,10 @@
 #!/bin/bash
 # This script extract a vertical profile for a specific time stamp, for temperature, density, grain size, and volumetric ice, water and air content.
 #
-# Use extract_profile.sh <pro-file> <date>
+# Use extract_profile.sh <pro-file> <date> [absolute]
 #  <pro file>: specify *.pro file
 #  <date>    : specify date to extract profile for. The script takes the first profile on or after this date to produce the output.
+#  <abolute> : [optional] if absolute is set, absolute z-values are provided (height increasing upward), if absolute is omitted, the snow surface is set at 0, with depth increasing downward
 #
 #  Output: writes profile with depth (i.e., z=0 is surface) to stdout
 #
@@ -11,6 +12,7 @@
 #  ===============
 #
 #  	bash extract_profile.sh WFJ2.pro 2016-08-01
+#  	bash extract_profile.sh WFJ2.pro 2016-02-01T12:15 absolute
 #
 #
 #  Integration example in python, read output in numpy array:
@@ -38,9 +40,13 @@ if [ -n "$2" ]; then
 else
 	echo "Specify date on command line!"
 fi
+if [ -n "$3" ]; then
+	absolute=1
+else
+	echo "Specify date on command line!"
+fi
 
-
-awk -F, -v tdate=${d} '\
+awk -F, -v tdate=${d} -v absolute=${absolute} '\
 BEGIN { \
 	meta=0; \
 	printheader=0; \
@@ -111,10 +117,20 @@ BEGIN { \
 				# Check theta[SOIL], then adjust parameters such that only snow part is shown
 				for(i=1; i<bottomsnowelement; i++) {if($(i+2)/100. > 0) {soil=1; nEsnow=nE-bottomsnowelement+1; break;}} \
 				# Print header
-				if(printheader==0) {printheader=1; print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   bond_size_(mm)   dd_(-)   sp_(-)   gt_(swiss_code_F1F2F3)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"} \
+				if(printheader==0) {printheader=1; \
+					if(!absolute) { \
+						print "# depth_top_(m)   depth_bottom_(m)   depth_mid_(m)   thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   bond_size_(mm)   dd_(-)   sp_(-)   gt_(swiss_code_F1F2F3)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"; \
+					} else { \
+						print "# height_top_(m)  height_bottom_(m)  height_mid_(m)  thickness_(m)   temperature_(K)   density_(kg/m^3)   grain_size_(mm)   bond_size_(mm)   dd_(-)   sp_(-)   gt_(swiss_code_F1F2F3)   theta_ice_(m^3/m^3)   theta_water_(m^3/m^3)   theta_air_(m^3/m^3)   age_(days)"; \
+					} \
+				} \
 				# Write output
 				for(i=nE; i>=((soil)?(bottomsnowelement):(1)); i--) {
-					printf "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", z[nE+1]-z[i+1], z[nE+1]-z[i], z[nE+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], bs[i], dd[i], sp[i], gt[i], th_ice[i], th_water[i], th_air[i], age[i]; \
+					if(!absolute) {
+						printf "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", z[nE+1]-z[i+1], z[nE+1]-z[i], z[nE+1]-0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], bs[i], dd[i], sp[i], gt[i], th_ice[i], th_water[i], th_air[i], age[i]; \
+					} else {
+						printf "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", z[i+1], z[i], 0.5*(z[i+1]+z[i]), (z[i+1]-z[i]), Te[i], rho[i], gs[i], bs[i], dd[i], sp[i], gt[i], th_ice[i], th_water[i], th_air[i], age[i]; \
+					}
 				} \
 				exit; \
 			} \
