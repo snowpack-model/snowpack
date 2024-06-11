@@ -1,0 +1,1571 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-05-24 12:07:02 -->
+
+<!-- Magnification: 1.05 -->
+
+<svg
+   width="648.73212pt"
+   height="429.65115pt"
+   viewBox="1243 3195 10298 6805.7936"
+   version="1.1"
+   id="svg371"
+   sodipodi:docname="ebalance.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title1675">Solar radiation balance</title>
+  <defs
+     id="defs375">
+    <defs
+       id="defs165">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="m 1243,3195 h 10334 v 6843 H 1243 Z m 4628,4869 43,141 -134,-62 158,117 27,-23 z"
+           id="path162" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs174">
+      <clipPath
+         id="cp1">
+        <path
+           clip-rule="evenodd"
+           d="m 1243,3195 h 10334 v 6843 H 1243 Z m 5103,5006 -147,15 88,-120 -147,132 18,32 z"
+           id="path171" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs183">
+      <clipPath
+         id="cp2">
+        <path
+           clip-rule="evenodd"
+           d="m 1243,3195 h 10334 v 6843 H 1243 Z m 7653,2952 111,97 -146,18 196,15 10,-34 z"
+           id="path180" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs192">
+      <clipPath
+         id="cp3">
+        <path
+           clip-rule="evenodd"
+           d="m 1243,3195 h 10334 v 6843 H 1243 Z m 5341,1585 127,75 -141,44 196,-19 4,-36 z"
+           id="path189" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs201">
+      <clipPath
+         id="cp4">
+        <path
+           clip-rule="evenodd"
+           d="m 1243,3195 h 10334 v 6843 H 1243 Z m 7800,2720 62,134 -141,-44 173,95 23,-27 z"
+           id="path198" />
+      </clipPath>
+    </defs>
+  </defs>
+  <sodipodi:namedview
+     id="namedview373"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="1.1180556"
+     inkscape:cx="432"
+     inkscape:cy="287.5528"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg371"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <polyline
+     points=" 1276,7192 1501,7282 1726,7507 1951,7552 2176,7462 2446,7732 5596,8677 5776,8722  6091,8767 6361,8677 6631,8902 6901,9037 7261,9127 7531,9217 7801,9307 8116,9397  8476,9487 8746,9622 9061,9712 9421,9802 9691,9892 10051,9982"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline2"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 1546,7192 1681,7192 1906,7327 2131,7417 2356,7417 2626,7507 2851,7597 3121,7687  5101,8272 5371,8362 5596,8407 5911,8497 6226,8407 6451,8362 6766,8587 7036,8857  7351,8902 7621,8992 7936,9127 8251,9172 8521,9262 8836,9397 9196,9487 9466,9577  9826,9622 10141,9667"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline4"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 1685,7035 1896,7133 2130,7171 2318,7262 2537,7299 2793,7360 2997,7427 3253,7518  5017,8008 5258,8083 5514,8053 5770,8204 6057,8317 6306,8287 6585,8023 6886,8483  7157,8633 7451,8716 7738,8807 8047,8905 8333,8973 8665,9063 8936,9131 9260,9259  9585,9282 9909,9448 10225,9448"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline6"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 1866,6915 2077,6983 2296,7051 2522,7111 2725,7096 2929,7224 3185,7231 3426,7345  3683,7412 3894,7503 4142,7571 4399,7631 4640,7714 4881,7789 5137,7850 5394,7910  5680,8008 5899,8076 6177,8091 6441,8098 6720,7721 7052,8038 7293,8407 7557,8520  7873,8618 8145,8701 8461,8739 8748,8852 9095,8649 9396,8731 9713,8882 10029,8935  10338,9033"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline8"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2039,6757 2250,6824 2431,6885 2635,6847 2891,6787 3110,6915 3358,7111 3585,7201  4519,7488 4775,7540 5017,7593 5281,7646 5537,7714 5786,7759 6072,7857 6321,7917  6615,7834 6848,7646 7127,7925 7459,7940 7700,8347 7964,8453 8235,8498 8537,8596  8989,8385 9193,8317 9502,8324 9818,8377 10120,8475 10459,8626"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline10"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2183,6644 2386,6704 2620,6726 2793,6802 2891,6794 3095,6907 3283,6907 3524,7005  3735,7066 4436,7247 4685,7314 4919,7397 5122,7435 5409,7277 5650,7390 5914,7405  6185,7533 6426,7616 6758,7563 7074,7646 7429,7857 7602,8000 7843,8174 8115,8264  8386,8324 8695,8309 9019,8355 9343,8234 9607,8332 9894,8324 10255,8076 10564,8159 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline12"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2356,6470 2567,6553 2763,6613 3057,6666 3238,6711 3471,6787 3667,6862 4549,7088  4813,7149 5054,7231 5288,7231 5424,7149 5605,7066 5770,7118 6027,7186 6298,7322  6569,7480 6773,7405 6969,7345 7210,7435 7451,7601 7730,7616 7987,7827 8265,7880  8559,7978 8861,8038 9110,8106 9449,7963 9735,7902 10067,7789 10391,7638 10753,7382 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline14"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7444,7880 7647,7895 7919,7985 8190,8061 8446,8128 8748,8196 9095,8113 9321,8226  9683,8030 10014,8038 10361,7819 10670,7752"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline16"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2537,6357 3351,6621 3585,6659 3841,6689 4052,6764 4278,6832 4466,6900 4738,6900  4926,6990 5183,7073 5416,7043 5627,7073"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline18"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2703,6236 2861,6289 3049,6334 3275,6410 3532,6448 3743,6515 3954,6576 4142,6644  4391,6689 4700,6666 4873,6576 5062,6644 5303,6824 5574,6824 5778,6870 6147,6832  6434,7103 6735,7412"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline20"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2853,6116 2997,6169 3170,6138 3238,6123 3434,6184 3660,6319 3894,6402 4090,6448  4308,6508 4497,6546 4745,6576 4911,6538 5145,6553 5228,6613 5439,6696 5672,6621  5906,6576 6162,6470 6426,6334 6667,6681 6924,6937 7157,6892 7436,7103 7693,7299  7971,7360 8190,7503 8461,7578 8733,7638 9019,7684 9291,7646 9630,7571 9931,7412  10293,7088 10579,7149 10964,6809"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline22"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5672,7096 5921,6862 6117,6824 6291,6613 6539,6885 6848,7209 7052,7247 7316,7375  7610,7405 7858,7480 8137,7669 8363,7729 8657,7797 8921,7872 9230,7857 9502,7850  9848,7623 10157,7518 10482,7375 10851,7133"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline24"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2974,5973 3170,6040 3381,6056 3585,6033 3803,6101 3999,6252 4248,6334 4444,6365  4640,6417 4926,6470 5250,6568 5348,6417 5559,6425 5778,6342 6027,6169 6253,6184  6524,6267 6773,6342 7044,6606 7278,6628 7542,6711 7821,7043 8062,7254 8326,7345  8552,7397 8831,7488 9117,7533 9426,7435 9683,7427 10007,7096 10323,6885 10670,6847  10964,6817"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline26"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3125,5882 3298,5912 3494,5882 3698,5882 3939,5852 4142,6018 4384,6206 4602,6229  4821,6282 5047,6372 5258,6417 5605,6221 5914,6236 6079,6063 6343,6086 6381,6033  6622,6048 6886,6169 7142,6327 7414,6327 7655,6417 7941,6953 8152,7149 8401,7201  8650,7269 8936,7329 9208,7397 9487,7345 9765,7179 10052,7005 10346,6832 10700,6764  10994,6696"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline28"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3245,5641 3411,5498 3622,5520 3796,5611 4037,5777 4293,5995 4512,6086 4723,6116  4941,6169 5160,6169 5341,6138 5559,6221 5688,6025 5951,6138 6034,5973 6170,6040  6275,5943 6524,5935 6743,5754 7007,5935 7240,6018 7482,6184 7768,6319 8024,6742  8243,6983 8492,7058 8748,7118 9034,7179 9275,7216 9577,7216 9909,7020 10157,6907  10482,6621 10798,6448 11130,6410"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline30"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3818,5611 3931,5543 4195,5551 4444,5822 4625,5950 4866,5973 5062,6048 5258,6040  5409,6003 5657,5965 5906,5912 6238,5950 6554,5769 6652,5694 6886,5724 7022,5943 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline32"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3389,5468 3667,5400 3954,5392 4135,5324 4331,5415 4572,5694 4753,5845 4979,5890  5152,5927 5439,5980"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline34"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3630,5535 3871,5528"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline36"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3502,5317 3667,5392"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline38"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3630,4948 3796,4970 4037,5219 4203,5287 4474,5302 4700,5588 4881,5709 5092,5762  5318,5807 5514,5860 5801,5897 6110,5935 6313,5897 6524,5709 6735,5588 6901,5626  7090,5837 7353,5829 7602,6063 7851,6236 8100,6387 8371,6696 8620,6900 9079,7013  9373,7073 9645,7028 9946,6742 10225,6644 10474,6644 10836,6440 11119,6440"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline40"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7342,5818 7677,5927 7956,5927 8198,6169 8454,6530 8680,6764 8951,6847 9162,6877  9441,6930 9690,6885 9961,6636 10150,6523 10308,6538 10564,6440 10775,6365 10926,6350  11152,6365"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline42"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3773,4638 3939,4676 4142,4842 4361,5091 4579,5317 4798,5513 5002,5558 5205,5649  5394,5686 5620,5731 5808,5784 6034,5829 6321,5890"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline44"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7708,5860 8107,5814 8311,5995 8537,6372 8748,6613 8989,6681 9253,6719 9502,6794  9856,6734 10127,6515 10346,6470 10640,6319 10768,6267 11002,6282 11228,6221"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline46"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3871,4578 4127,4850"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline48"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3992,4450 4195,4646 4482,4963 4700,5098 4866,5279 5100,5257 5341,5513 5544,5528  5748,5400 5951,5453 6185,5694 6509,5724"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline50"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4105,4299 4293,4495 4497,4601 4723,4571 4934,4714 5100,4797 5303,4654 5537,4691  5725,4812 5921,4759 6125,4948 6343,5076 6607,5355 6796,5377 7022,5392 7316,5324  7572,5257 7836,5392 8062,5513 8318,5603 8514,5792 8703,5980 8944,6191 9162,6365  9411,6478 9698,6372 9924,6387 10165,6350 10444,6380 10753,6259 11009,6274 11167,6206  11439,6161"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline52"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8183,5860 8386,5973 8612,6154 8861,6455 9095,6546 9313,6598 9585,6666 9992,6636 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline54"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4368,4797 4557,4782 4806,4782 5009,4985 5190,5113 5386,5151 5620,5219 5816,5113  6034,5106 6268,5332 6494,5543 6735,5581 7097,5626 7293,5535 7489,5633 7738,5731  7956,5709 8228,5784 8522,5792"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline56"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4240,4194 4414,4269 4602,4239 4760,4307 5002,4503 5213,4337 5394,4322 5627,4247  5831,4224 6064,4495 6260,4691 6456,4842 6683,5008 6894,4985 7142,5068 7353,5091  7557,5242 7896,5257 8017,5264 8145,5385 8378,5535 8605,5460 8884,5460 9132,5573  9358,5671 9607,5875 9841,5822 10090,6010 10368,6093 10564,6123 10783,6244 11054,6199  11258,6221 11394,6146 11476,6191"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline58"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8574,5837 8763,5882 9004,5935 9245,6025 9487,6108 9750,6184 9984,6259 10270,6259  10579,6138 10783,6063 11062,6093 11258,6048 11424,6093 11537,6071"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline60"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4391,4149 4564,4186 4655,4156 4858,4247 5122,4194 5318,4262 5522,4088 5695,4156  5899,4133 6132,4231 6358,4571 6554,4616 6796,4638 6999,4834 7210,4887 7429,4955  7670,4917 7873,4925 8085,4970 8333,5030 8567,5106 8823,4948 9049,5000 9275,5136  9517,5279 9758,5385 9992,5498 10218,5649 10459,5912 10693,6071 10753,5973 10889,6025  11032,5980 11190,6056 11529,6078"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline62"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7919,5264 8363,5264 8469,5234 8718,5302 8966,5226 9200,5294 9434,5460 9705,5566  9909,5671 10157,5814 10391,5980 10557,6138"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline64"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4602,4088 4791,4051 4934,4020 5092,4066 5386,3945 5605,3870 5801,3892 6034,4073  6238,4141 6434,4329 6667,4194 6894,4141 7105,4337 7316,4691 7549,4646 7738,4676  7956,4729 8175,4736 8386,4827 8650,4925 8921,4721 9087,4797 9373,4827 9600,5000  9833,5174 10074,5302 10263,5505 10512,5829 10738,5980 11002,6025 11288,6063 11522,6071 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline66"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3057,6659 3245,6900"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline68"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4602,4088 4904,4020 5085,3907 5326,3855 5476,3772 5703,3689 5944,3628 6147,3779  6298,3900 6539,3945 6758,3870 6961,3862 7195,4028 7391,4390 7602,4488 7806,4571  7979,4503 8213,4714 8424,4691 8695,4691 8884,4699 9095,4782 9336,4812 9607,4872  9901,4895 10142,5181 10353,5453 10572,5762 10798,5875 11039,5988 11529,6056"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline70"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 10059,10005 10150,9666 10233,9425 10338,9025 10557,8128 10753,7405 10949,6817  11115,6425 11213,6282 11416,6334 11454,6176 11522,6138 11544,6040"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline72"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 9713,9900 9796,9613 9916,9440 9999,8920 10120,8460 10263,8068 10331,7819 10429,7608  10474,7390 10549,7126 10655,6885 10715,6742 10813,6463 10889,6350 10987,6244  11077,6191 11273,6025"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline74"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 9426,9794 9479,9591 9577,9282 9713,8867 9826,8362 9931,8317 9984,8038 10059,7774  10157,7503 10293,7088 10353,6892 10406,6802 10421,6644 10564,6576 10549,6440  10700,6297 10904,6236 11024,5965"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline76"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 9049,9696 9170,9485 9253,9267 9381,8739 9517,8324 9600,8317 9675,8038 9909,7397  10022,7073 10165,6900 10233,6621 10308,6530 10451,6470 10542,6138 10640,6108  10783,5875"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline78"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8740,9628 8816,9372 8951,9116 9079,8626 9155,8317 9396,8234 9434,7955 9554,7834  9622,7571 9660,7405 9758,7171 9878,7035 9916,6787 10127,6546 10225,6334 10301,6244  10338,6063 10399,5988 10436,5875 10512,5829 10557,5724"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline80"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8461,9500 8492,9274 8665,9048 8740,8829 8876,8468 8982,8339 9042,8128 9170,8083  9215,7842 9306,7631 9404,7443 9509,7322 9539,7224 9645,7005 9698,6870 9765,6749  9841,6636 9924,6372 9976,6259 10097,5988 10150,5837 10203,5626 10248,5558 10361,5453 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline82"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8145,9395 8461,8731 8574,8581 8657,8324 8763,8181 8838,8038 8914,7887 9291,7224  9449,6930 9600,6659 9833,5829 9894,5656 10044,5294 10142,5204"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline84"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7813,9312 9027,7156 9072,6998 9200,6885 9238,6711 9366,6598 9404,6478 9675,5558  9811,5159 9886,4917"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline86"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7527,9206 8921,6824 8959,6674 9110,6538 9132,6334 9245,6025 9336,5701 9426,5453  9494,5272 9592,5015 9652,4895"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline88"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7240,9131 7806,8151 7889,7970 7994,7834 8409,7201 8492,7066 8582,6885 8680,6772  8718,6598 8861,6440 8929,6184 9034,5920 9117,5558 9177,5279 9268,5144 9373,4842  9471,4850"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline90"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6909,9040 7301,8385 7406,7925 7647,7902 7760,7601 7934,7367 8069,7254 8250,6975  8333,6674 8544,6380 8567,6123 8672,5973 8801,5890 8868,5475 8966,5234 9019,5000  9072,4759"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline92"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6615,8912 6728,8588 6878,8513 7022,8015 7127,7917 7218,7759 7421,7850 7451,7593  7693,7277 7806,7020 7926,6915 8024,6726 8077,6365 8183,6184 8265,5935 8378,5958  8507,5777 8620,5437 8718,5294 8808,4963 8899,4714"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline94"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6366,8694 6585,8030 6675,7789 6848,7654 7090,7669 7218,7435 7346,7360 7542,6704  7655,6417 7836,6221 7926,5935 7941,5716 8085,5490 8250,5249 8326,4993 8401,4850  8416,4706"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline96"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8175,5860 8303,5611 8363,5520 8476,5242 8574,5083 8672,4902 8695,4691"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline98"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6140,8762 6177,8415 6306,8264 6554,7895 6652,7601 6811,7593 6961,7337 7067,7239  7157,6885 7293,6613 7399,6319 7625,6063 7685,5935 7753,5731 7851,5422 7873,5249  8009,5257 8107,4955 8198,4714"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline100"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5778,8701 6072,8294 6185,8098 6313,7910 6434,7623 6554,7480 6720,7405 6818,7164  6931,6922 7142,6304 7233,6033 7338,5807 7436,5837 7489,5626 7572,5242 7813,5242  7881,4902 7956,4721 7994,4548"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline102"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5492,8649 6072,7865 6170,7518 6404,7103 6667,6689 6781,6350 7022,5943 7105,5829  7218,5792 7195,5641 7286,5535 7361,5309 7579,5234 7791,4563 7851,4548"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline104"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5228,8543 5378,8347 5499,8053 5665,8000 5793,7744 5906,7390 6034,7179 6132,6824  6291,6606 6411,6319 6517,6274 6622,6056 6698,5724 6856,5626 7074,5400 7301,5309  7338,5068 7451,4940 7542,4654 7602,4480"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline106"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7095,5380 7067,5618"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline108"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7391,4397 7210,4895 7120,5076 7007,5400 6818,5596"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline110"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7195,4043 7097,4322 6999,4827 6856,5023 6781,5385 6713,5596"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline112"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4919,8475 5258,8068 5529,7714 5642,7367 5801,7111 5936,6817 6027,6824 6177,6455  6275,6169 6411,6018 6615,5852 6630,5649"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline114"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4662,8400 5017,7978 5265,7661 5416,7247 5439,7133 5695,7051 5778,6855 5914,6546  6019,6154 6125,6040"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline116"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6931,3892 6886,4156 6781,4638 6683,5008 6607,5324 6494,5520 6366,5686 6298,5920 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline118"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6720,3885 6652,4231 6547,4623 6471,4834 6351,5091 6253,5332 6177,5709 6049,5829  5989,5920"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline120"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5778,5890 5846,5784 5914,5430 6027,5106 6125,4955 6253,4684 6358,4556 6419,4299  6539,3945"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline122"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6291,3907 6223,4141 6140,4224 6042,4480 5914,4767 5816,5113 5718,5415 5620,5724  5416,5988 5250,6040 5032,6365 4858,6561"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline124"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5401,6003 5333,6161 5250,6417 5175,6530"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline126"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5770,6365 5688,6613 5582,6809 5446,7035 5288,7216 5250,7367 4421,8332"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline128"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4150,8249 5198,7073 5303,6839 5461,6666 5552,6410 5816,6229"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline130"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5228,6598 5047,6651 4941,7005 3894,8174"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline132"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4813,6583 4738,6915 3637,8091"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline134"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4587,6689 4474,6877 3396,8023"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline136"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3170,7948 4263,6839 4406,6696 4662,6417 4828,6267 4941,6184 5069,6025 5167,5927  5424,5686 5514,5520 5635,5196 5733,4804 5823,4231 5951,4133 6049,4051 6110,3734 "
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline138"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5910,3632 5801,3907 5695,4156 5574,4277 5514,4691 5416,5166 5326,5490 5198,5633  2891,7872"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline140"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2695,7804 3019,7435 3185,7224 3539,7005 3856,6681 4105,6463 4240,6357 4376,6206  4512,6078 4632,5958 4783,5822 5017,5551 5092,5242 5198,5113 5288,4654 5401,4314  5522,4088 5590,3870 5725,3674"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline142"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2461,7744 2627,7518 2801,7375 2951,7224 3095,6922 3313,6915 3464,6787 3607,6644  3886,6395 4007,6244 4127,6018 4323,6003 4429,5814 4579,5686 4693,5573 4836,5535  4866,5264 5024,5008 5092,4774 5190,4360 5318,4247 5409,3930 5502,3757"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline144"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5303,3870 5152,4073 5085,4209 5002,4503 4926,4721 4798,4804 4670,5083 4572,5294  4459,5294 4316,5430 4188,5558 4052,5784 3924,5875 3781,6101 3660,6319 3358,6628  3208,6696 3042,6659 2884,6802 2755,7096 2522,7322 2333,7405 2190,7480"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline146"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2054,7518 2183,7420 2333,7269 2522,7111 2635,6824 2914,6787 3155,6561 3298,6410  3441,6191 3524,6040 3690,5897 3811,5626 3969,5535 4142,5309 4263,5272 4353,5106  4482,4970 4557,4782 4685,4571 4798,4352 4889,4254 5085,4051 5122,3900"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline148"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4873,4020 4625,4156 4595,4269 4504,4593 4399,4812"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline150"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 4587,4096 4497,4171 4399,4292 4278,4480 4180,4646 4120,4872 3999,5196 3916,5400  3841,5520 3592,5528 3524,5867 3389,6056 3208,6123 3064,6319 2801,6613 2597,6711  2476,6870 2273,7051 2145,7171 1941,7337 1745,7510"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline152"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 1482,7284 1677,7194 1896,7133 2054,6983 2250,6832 2394,6696 2559,6546 2748,6417  2884,6282 3004,6161 3170,6033 3328,5897 3404,5483 3720,5377 3796,4955 3924,4654  3878,4578 3863,4586"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline154"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 1286,7209 1549,7201 1693,7043 1851,6922 2039,6757 2205,6628 2348,6455 2544,6350  2695,6221 2861,6108 2997,5958 3125,5890 3260,5566 3524,5317 3690,4669 3863,4616  3976,4443 4120,4307 4195,4179 4361,4111 4466,4179 4610,4073 4783,4035"
+     stroke="#c3c3c3"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline156"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5985,6300 7650,7290"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-dasharray="80, 80"
+     id="polyline158"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3600,4815 5940,6255"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline160"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3285,5175 5940,8235"
+     clip-path="url(#cp0)"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline167"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5871,8064 5914,8205 5780,8143"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline169"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3510,5085 6480,8055 6165,8235"
+     clip-path="url(#cp1)"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline176"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6346,8201 6199,8216 6287,8096"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline178"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3735,4635 9045,6255"
+     clip-path="url(#cp2)"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline185"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8896,6147 9007,6244 8861,6262"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline187"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3735,4500 6750,4860"
+     clip-path="url(#cp3)"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline194"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6584,4780 6711,4855 6570,4899"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline196"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8415,5445 9135,6075"
+     clip-path="url(#cp4)"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline203"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 9043,5915 9105,6049 8964,6005"
+     stroke="#8c8c8c"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline205"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9276,7065 9276,7022 9495,6839 9495,6881 9489,6887 9470,6869 9294,7016 9287,7054 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="round"
+     id="polygon207"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9276,7065 9276,7022 9153,6831 9153,6875 9160,6883 9169,6869 9259,7010 9263,7054 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="round"
+     id="polygon209"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9383,6282 9432,6387 9424,6389 9375,6285 9376,6285 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="bevel"
+     id="polygon211"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9393,6277 9442,6381 9432,6385 9384,6282 9383,6280 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon213"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9303,5973 9285,5962 9307,5952 9328,5962 9326,5962 "
+     fill="#ffffff"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="round"
+     id="polygon215"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9153,6831 9495,6839 9276,7022 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="round"
+     id="polygon217"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9395,6306 9395,6318 9382,6312 "
+     fill="#b2b2b2"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon219"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9174,6245 9229,6206 9266,6231 9218,6269 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon221"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9303,6920 9303,5973 9285,5962 9285,6908 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="round"
+     id="polygon223"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9328,6908 9303,6920 9303,5973 9328,5962 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-linejoin="round"
+     id="polygon225"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9376,6318 9107,6158 9125,6152 9395,6306 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon227"
+     transform="translate(-18,-11.992905)" />
+  <path
+     d="m 9151,6226.0071 a 62,62 0 0 0 85,0"
+     fill="#e5e5e5"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path229" />
+  <polygon
+     points="9254,6238 9254,6195 9169,6190 9169,6238 9181,6245 9199,6251 9224,6251 9236,6245 "
+     fill="#e5e5e5"
+     id="polygon231"
+     transform="translate(-18,-11.992905)" />
+  <path
+     d="m 9151,6219.0071 a 55,55 0 0 0 85,0"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path233"
+     style="fill:none" />
+  <path
+     d="m 9151,6214.0071 a 57,57 0 0 0 85,0"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path235"
+     style="fill:none" />
+  <path
+     d="m 9151,6208.0071 a 59,59 0 0 0 85,0"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path237"
+     style="fill:none" />
+  <path
+     d="m 9151,6202.0071 a 62,62 0 0 0 85,0"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path239"
+     style="fill:none" />
+  <path
+     d="m 9151,6194.0071 a 55,55 0 0 0 85,0"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path241"
+     style="fill:none" />
+  <path
+     d="m 9151,6190.0071 a 59,59 0 0 0 85,0"
+     stroke="#000000"
+     stroke-width="8px"
+     id="path243"
+     style="fill:none" />
+  <polyline
+     points=" 9169,6195 9169,6238"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polyline245"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 9254,6195 9254,6238"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polyline247"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 6819,4252 6931,4230 7100,4131 7225,3938 7235,3715 7135,3512 6998,3409 6784,3362  6565,3419 6418,3563 6356,3721 6348,3564 6259,3367 6032,3231 5805,3234 5603,3355  5496,3542 5495,3600 5349,3542 5149,3586 5023,3711 4985,3843 4850,3960 4835,4145  4935,4283 4995,4319 5085,4318 5115,4485 5256,4627 5401,4667 5559,4638 5666,4561  5726,4430 5837,4463 5967,4418 6011,4372 6083,4483 6224,4553 6338,4556 6431,4508  6530,4630 6670,4658 6832,4584 6888,4458 6876,4323 6832,4268"
+     fill="#d6e7e7"
+     id="polyline249"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 8799,5062 8911,5040 9080,4941 9205,4748 9215,4525 9115,4322 8978,4219 8764,4172  8545,4229 8398,4373 8336,4531 8328,4374 8239,4177 8012,4041 7785,4044 7583,4165  7476,4352 7475,4410 7329,4352 7129,4396 7003,4521 6965,4653 6830,4770 6815,4955  6915,5093 6975,5129 7065,5128 7095,5295 7236,5437 7381,5477 7539,5448 7646,5371  7706,5240 7817,5273 7947,5228 7991,5182 8063,5293 8204,5363 8318,5366 8411,5318  8510,5440 8650,5468 8812,5394 8868,5268 8856,5133 8812,5078"
+     fill="#d6e7e7"
+     id="polyline251"
+     transform="translate(-18,-11.992905)" />
+  <circle
+     cx="2940"
+     cy="4518.0073"
+     r="186"
+     fill="#ffff52"
+     stroke="#ffd600"
+     stroke-width="30px"
+     id="circle253" />
+  <polyline
+     points=" 3453,4035 3167,4321"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline255"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3149,4721 3435,5007"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline257"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2958,4800 2958,5205"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline259"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2767,4721 2481,5007"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline261"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2688,4530 2283,4530"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline263"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2767,4339 2481,4053"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline265"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2958,4260 2958,3855"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline267"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3613,4530 3209,4530"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline269"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3247,4425 3412,4356"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline271"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3237,4660 3402,4728"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline273"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3063,4819 3132,4984"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline275"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2828,4809 2760,4974"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline277"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2669,4635 2504,4704"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline279"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2679,4400 2514,4332"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline281"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 2853,4241 2784,4076"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline283"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 3088,4251 3156,4086"
+     stroke="#ffd600"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="polyline285"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <path
+     d="m 5868,4036.0071 a 281,281 0 0 1 491,26"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path287"
+     style="fill:none" />
+  <path
+     d="m 5571,3803.0071 a 240,240 0 0 1 440,117"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path289"
+     style="fill:none" />
+  <path
+     d="m 5726,3907.0071 a 262,262 0 0 0 -465,129"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path291"
+     style="fill:none" />
+  <path
+     d="m 6340,3708.0071 a 444,444 0 1 1 456,531"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path293"
+     style="fill:none" />
+  <path
+     d="m 6340,3708.0071 a 436.35565,436.35565 0 0 0 -864,-123"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path295"
+     style="fill:none" />
+  <path
+     d="m 5476,3585.0071 a 337,337 0 0 0 -506,246"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path297"
+     style="fill:none" />
+  <path
+     d="m 5069,4313.0071 a 251,251 0 0 1 -99,-482"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path299"
+     style="fill:none" />
+  <path
+     d="m 5711,4424.0071 a 330,330 0 0 1 -642,-111"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path301"
+     style="fill:none" />
+  <path
+     d="m 5994,4362.0071 a 251,251 0 0 1 -283,62"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path303"
+     style="fill:none" />
+  <path
+     d="m 6414,4498.0071 a 290,290 0 0 1 -420,-136"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path305"
+     style="fill:none" />
+  <path
+     d="m 6796,4239.0071 a 236,236 0 1 1 -382,259"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path307"
+     style="fill:none" />
+  <ellipse
+     cx="9193"
+     cy="6181.0073"
+     rx="43"
+     ry="21"
+     fill="#e5e5e5"
+     stroke="#000000"
+     stroke-width="8px"
+     id="ellipse309" />
+  <polygon
+     points="9291,6472 9218,6429 9218,6318 9291,6360 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon311"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9315,6454 9291,6472 9291,6360 9315,6349 "
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon313"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9242,6306 9218,6318 9291,6360 9315,6349 "
+     fill="#ebebeb"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon315"
+     transform="translate(-18,-11.992905)" />
+  <path
+     d="m 7848,4846.0071 a 281,281 0 0 1 491,26"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path317"
+     style="fill:none" />
+  <path
+     d="m 7551,4613.0071 a 240,240 0 0 1 440,117"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path319"
+     style="fill:none" />
+  <path
+     d="m 7706,4717.0071 a 262,262 0 0 0 -465,129"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path321"
+     style="fill:none" />
+  <path
+     d="m 8320,4518.0071 a 444,444 0 1 1 456,531"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path323"
+     style="fill:none" />
+  <path
+     d="m 8320,4518.0071 a 436.35565,436.35565 0 0 0 -864,-123"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path325"
+     style="fill:none" />
+  <path
+     d="m 7456,4395.0071 a 337,337 0 0 0 -506,246"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path327"
+     style="fill:none" />
+  <path
+     d="m 7049,5123.0071 a 251,251 0 0 1 -99,-482"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path329"
+     style="fill:none" />
+  <path
+     d="m 7691,5234.0071 a 330,330 0 0 1 -642,-111"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path331"
+     style="fill:none" />
+  <path
+     d="m 7974,5172.0071 a 251,251 0 0 1 -283,62"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path333"
+     style="fill:none" />
+  <path
+     d="m 8394,5308.0071 a 290,290 0 0 1 -420,-136"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path335"
+     style="fill:none" />
+  <path
+     d="m 8776,5049.0071 a 236,236 0 1 1 -382,259"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-linecap="round"
+     id="path337"
+     style="fill:none" />
+  <ellipse
+     cx="9193"
+     cy="6176.0073"
+     rx="32"
+     ry="19"
+     fill="#dfdfdf"
+     stroke="#000000"
+     stroke-width="8px"
+     id="ellipse339" />
+  <polyline
+     points=" 9347,6041 9273,6140 9351,6190 9425,6090 9347,6041"
+     fill="#6f6f6f"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polyline341"
+     transform="translate(-18,-11.992905)" />
+  <polygon
+     points="9351,6165 9405,6096 9347,6059 9291,6128 "
+     fill="#79bae5"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polygon343"
+     transform="translate(-18,-11.992905)" />
+  <text
+     xml:space="preserve"
+     x="9432"
+     y="6498.0073"
+     fill="#000000"
+     font-family="Helvetica"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="start"
+     id="text345"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:222.237px;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">reference</text>
+  <text
+     xml:space="preserve"
+     x="9432"
+     y="6768.0073"
+     fill="#000000"
+     font-family="Helvetica"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="start"
+     id="text347"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:222.237px;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">station</text>
+  <text
+     xml:space="preserve"
+     x="6012"
+     y="8583.0068"
+     fill="#000000"
+     font-family="Helvetica"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="middle"
+     id="text349"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:222.237px;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">terrain reflections</text>
+  <g
+     transform="rotate(17,-16589.366,29814.364)"
+     id="g353"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#8c8c8c"
+       font-family="Helvetica"
+       font-style="italic"
+       font-weight="bold"
+       font-size="144px"
+       text-anchor="middle"
+       id="text351"
+       style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:222.237px;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#8c8c8c">direct</text>
+  </g>
+  <g
+     transform="rotate(41,-3541.2297,14328.939)"
+     id="g357"
+     style="fill:none">
+    <text
+       xml:space="preserve"
+       x="0"
+       y="0"
+       fill="#8c8c8c"
+       font-family="Helvetica"
+       font-style="italic"
+       font-weight="bold"
+       font-size="144px"
+       text-anchor="middle"
+       id="text355"
+       style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:222.237px;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#8c8c8c">diffuse</text>
+  </g>
+  <text
+     xml:space="preserve"
+     x="7632"
+     y="7548.0073"
+     fill="#000000"
+     font-family="Helvetica"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="middle"
+     id="text359"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:222.237px;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">topographic shading</text>
+  <polyline
+     points=" 6075,8235 5985,8325"
+     stroke="#d10000"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline361"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 5985,8235 6075,8325"
+     stroke="#d10000"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline363"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7695,7245 7605,7335"
+     stroke="#d10000"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline365"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <polyline
+     points=" 7605,7245 7695,7335"
+     stroke="#d10000"
+     stroke-width="30px"
+     stroke-linejoin="round"
+     id="polyline367"
+     style="fill:none"
+     transform="translate(-18,-11.992905)" />
+  <metadata
+     id="metadata1673">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Solar radiation balance</dc:title>
+        <dc:date>2024-05-24</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>https://code.wsl.ch/snow-models/alpine3d</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

@@ -19,6 +19,9 @@
 
 #include <meteoio/IOManager.h>
 #include <meteoio/FStream.h>
+#include <set>
+#include <unordered_set>
+#include <iostream>
 
 using namespace std;
 
@@ -332,10 +335,59 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 	return vecStation.size();
 }
 
+static bool isValidSeries(const METEO_SET& vecMeteo)
+{
+	//check for duplicate dates
+	std::set<Date> setDate;
+
+	for (const MeteoData& meteo : vecMeteo) {
+		const auto result( setDate.insert( meteo.date ) );
+		if (!result.second) return false;
+	}
+	return true;
+}
+
+struct StationHash {
+    std::size_t operator()(const StationData& meta) const {
+        return std::hash<std::string>()(meta.getStationID());
+    }
+};
+
+static bool isValidStationSet(const METEO_SET& vecMeteo) {
+	std::unordered_set<StationData, StationHash> vecStation;
+
+	for (const MeteoData& meteo : vecMeteo) {
+		const auto result( vecStation.insert( meteo.meta ) );
+		if (!result.second){
+			return false;		
+		} 
+	}
+	return true;
+
+}
+
+static bool isValidDataSet(const std::vector<METEO_SET>& vecvecMeteo)
+{
+	// checks duplicate dates, and duplicate stations
+	std::unordered_set<StationData, StationHash> vecStation;
+
+	//for (size_t ii=0; ii<vecvecMeteo.size(); ii++) {
+	for (const auto& vecMeteo : vecvecMeteo) {
+		if (!isValidSeries(vecMeteo)) return false;
+		const auto result( vecStation.insert( vecMeteo[0].meta ) );
+		if (!result.second) throw IOException("Duplicate Stations in MeteoData: " + result.first->getStationID(), AT);
+	}
+	return true;
+}
+
 //TODO: smarter rebuffer! (ie partial)
 size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo) 
 {
-	if (ts_mode==IOUtils::STD || ts_mode==IOUtils::GRID_1DINTERPOLATE) return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+	if (ts_mode==IOUtils::STD || ts_mode==IOUtils::GRID_1DINTERPOLATE) {
+		size_t nrRead = tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData", AT);
+		return nrRead;
+	}
 	
 	if (ts_mode>=IOUtils::GRID_EXTRACT && ts_mode!=IOUtils::GRID_SMART) {
 		const Date bufferStart( tsm1.getBufferStart( TimeSeriesManager::RAW ) );
@@ -345,8 +397,9 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 			vecVecMeteo = gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS));
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, vecVecMeteo);
 		}
-		
-		return tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		bool nrRead = tsm1.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData, when extracting from grid", AT);
+		return nrRead;
 	}
 	
 	if (ts_mode==IOUtils::GRID_SMART) {
@@ -356,8 +409,9 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd));
 			tsm2.push_meteo_data(IOUtils::raw, dateStart, dateEnd, getVirtualStationsData(source_dem, dateStart, dateEnd));
 		}
-		
-		return tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		bool nrRead = tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		if (!isValidDataSet(vecVecMeteo)) throw IOException("Duplicate Dates in MeteoData, while using Grid Smart", AT); //remove
+		return nrRead;
 	}
 	
 	if (ts_mode==IOUtils::VSTATIONS) {
@@ -366,8 +420,8 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 		if (bufferStart.isUndef() || dateStart<bufferStart || dateEnd>bufferEnd) {
 			tsm2.push_meteo_data(IOUtils::raw, dateStart, dateEnd, getVirtualStationsData(source_dem, dateStart, dateEnd));
 		}
-		
-		return tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		bool nrRead = tsm2.getMeteoData(dateStart, dateEnd, vecVecMeteo);
+		return nrRead;
 	}
 	
 	throw InvalidArgumentException("Unsupported operation_mode", AT);
@@ -380,7 +434,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	vecMeteo.clear();
 
 	if (ts_mode==IOUtils::STD) {
-		return tsm1.getMeteoData(i_date, vecMeteo);
+		bool nrRead = tsm1.getMeteoData(i_date, vecMeteo);
+		if (!isValidStationSet(vecMeteo) ) throw IOException("Duplicate Stations in MeteoData for station: "+vecMeteo.front().meta.getStationID(), AT); // TODO: this is a vector of stations 
+		return nrRead;
 	}
 	
 	if (ts_mode>=IOUtils::GRID_EXTRACT && ts_mode!=IOUtils::GRID_SMART) {
@@ -394,7 +450,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			const Date dateEnd( i_date - buffer_before + buffer_size );
 			tsm1.push_meteo_data(IOUtils::raw, dateStart, dateEnd, gdm1.getVirtualStationsFromGrid(source_dem, grids_params, v_gridstations, dateStart, dateEnd, (ts_mode==IOUtils::GRID_EXTRACT_PTS)));
 		}
-		return tsm1.getMeteoData(i_date, vecMeteo);
+		bool nrRead = tsm1.getMeteoData(i_date, vecMeteo);
+		if (!isValidStationSet(vecMeteo)) throw IOException("Duplicate Stations in MeteoData when extracting from grid for station: "+vecMeteo.front().meta.getStationID(), AT);
+		return nrRead;
 	}
 	
 	if (ts_mode==IOUtils::GRID_SMART) {
@@ -416,8 +474,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			const Date dateEnd2( i_date - buffer_before + buffer_size );
 			tsm2.push_meteo_data(IOUtils::raw, dateStart2, dateEnd2, getVirtualStationsData(source_dem, dateStart2, dateEnd2));
 		}
-		
-		return tsm2.getMeteoData(i_date, vecMeteo);
+		bool nrRead = tsm2.getMeteoData(i_date, vecMeteo);
+		if (!isValidStationSet(vecMeteo)) throw IOException("Duplicate Stations in MeteoData when using grid smart for station: "+vecMeteo.front().meta.getStationID(), AT);
+		return nrRead;
 	}
 	
 	if (ts_mode==IOUtils::VSTATIONS) {
@@ -434,8 +493,8 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			const Date dateEnd( i_date - buffer_before + buffer_size );
 			tsm2.push_meteo_data(IOUtils::raw, buff_start, dateEnd, getVirtualStationsData(source_dem, buff_start, dateEnd));
 		}
-		
-		return tsm2.getMeteoData(i_date, vecMeteo);
+		bool nrRead = tsm2.getMeteoData(i_date, vecMeteo);
+		return nrRead;
 	}
 	
 	throw InvalidArgumentException("Unsuppported operation_mode", AT);
@@ -590,9 +649,11 @@ std::vector<METEO_SET> IOManager::getVirtualStationsData(const DEMObject& dem, c
 			}
 		}
 	}
-	
+
 	return vecvecMeteo;
 }
+
+
 
 const std::string IOManager::toString() const {
 	ostringstream os;

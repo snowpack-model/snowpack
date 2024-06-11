@@ -36,6 +36,8 @@ namespace mio {
             MLE,
             CSS,
         };
+        extern const std::map<ObjectiveFunction, std::string> ObjectiveFunctionMap;
+        
         enum OptimizationMethod {
             Nelder_Mead,
             Newton_Line_Search,
@@ -46,6 +48,7 @@ namespace mio {
             LBFGS,
             BFGS_MTM,
         };
+        extern const std::map<OptimizationMethod, std::string> OptimizationMethodMap;
 
         // a struct to hold the coefficients for normalization and denormalization of a time series, cannot be used 
         // for multiple time series
@@ -70,7 +73,7 @@ namespace mio {
                 double std;
                 double min;
                 double max;
-                Mode mode = MinMax;
+                Mode mode = Nothing;
             };
 
         // slice a vector from start to start+N

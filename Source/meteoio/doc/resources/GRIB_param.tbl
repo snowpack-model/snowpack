@@ -1,0 +1,127 @@
+# This is the default setting that is used, to read GRIB files. To read parameters differently than specified here, 
+# just copy this file, and edit the respective part, and hint to it with the GRIB_TABLE ini-key.
+
+# Empty lines and lines starting with '#' or ' ' will be skipped.
+# Comments cannot be placed at the end of a line!
+# Be careful to not accidentally include whitespaces at the beginning of lines.
+
+# The reading was implemented edition independent, so GRIB1 and GRIB2 keys can be used.
+
+# Please do not change:
+# - how the parameters are specified, as a strict layout is assumed.
+# - the default Names of the parameter names, as this will lead MetoIO to assume it is a new parameter.
+
+# All listed parameters will be attmpted to read, if they are not available they are skipped. If you want to skip some from the beginning, just remove them.
+# However it is not possible to read parameters that are not known to MeteoIO, so you cannot add your own parameter name
+
+# The indexes to be used to find the parameters (first token needs to be index, the other two can be chosen as desired)
+# Default: the ECMWF paramId (https://codes.ecmwf.int/grib/param-db/) is used to identify the parameters, and the level type (https://codes.ecmwf.int/grib/format/edition-independent/3/) is used to identify the vertical layering. 
+# Vertical levels will be read with the "level" key.
+
+
+index:paramId:typeOfLevel
+
+
+# When using a different index key to identify parameters (e.g. marsParam) the Id can have a different type.
+# paramId is given as a string, marsParam as a double, others as long, therefore this has to be specified
+# as: paramIdType:[double|string|long]. Again do not change the first token!
+
+
+paramIdType:long
+
+
+# Now the actual parameter identification. All pre defined MeteoIO parameters are listed here, with their default specification.
+# If you need to read additional parameters, just add them to the bottom of the list, with the same schema.
+
+# The paramId can be easily found by using the metview library from ECMWF installable with conda, and the command metview -e grib [filename] and looking 
+# Namespaces->paramater->paramId for the respective messages.
+# another option is using the ecCodes library by ECMWF with the grib_ls -p paramId [filename] which will print all the different paramIds in a file.
+
+# Per default (when available) the ERA5 paramId is used.
+
+# The specification is as follows:
+# parameterName:parameterId:levelType:levelNumber
+# If your levelType is surface, or something that does not need a levelNumber (i.e. height, or depth...) than just set it to 0
+
+
+# Meteo Data
+
+
+# Digital Elevation Model (read from geopotential per default)
+DEM:129:surface:0
+
+# Pressure at the surface
+P:134:surface:0
+
+# Air Temperature at 2m
+TA:167:surface:0
+
+# Snow Surface Temperature
+TSS:238:surface:0
+
+# Ground Temperature (copernicus skin Temperature)
+TSG:235:surface:0
+
+# Relative Humidity (in %) at 2m
+RH:157:heightAboveGround:2
+
+# Water equivalent of precipitation (total precipitation) ---- is unit m correct?
+PSUM:228:surface:0
+
+# Snow height
+HS:3066:surface:0
+
+# Snow Density 
+RSNO:33:surface:0
+
+# Snow Water Equivalent (should be kg/m2) (read from snow depth water equivalent by default)
+SWE:141:surface:0
+
+# Incoming Short Wave radiation (downward) ------  (why is ISWR filled twice?)
+ISWR:169:surface:0
+
+# Incoming Long Wave radiation (downward)
+ILWR:175:surface:0
+
+# Maximum Wind Velocity at 10m
+VW_MAX:201187:heightAboveGround:10
+
+# Wind Direction at 10m
+DW:3031:heightAboveGround:10
+
+# Wind speed
+VW:10:heightAboveGround:10
+
+# Cloud Cover (0-1)
+TAU_CLD:164:surface:0
+
+
+# Grid Specific Data
+
+
+# Total Runoff
+ROT:205:surface:0
+
+# Surface Albedo (0-1) (forecast albedo per default)
+ALB:243:surface:0
+
+# Slope Angle
+SLOPE:163:surface:0
+
+# Slope Azimuth (eastward angle in radiant)
+AZI:162:surface:0
+
+# Vertical Wind Velocity
+W:135:hybrid:10
+
+# Wind north component (Can also be used as a fallback for wind direction and wind speed)
+V:166:surface:0
+
+# Wind east component (Can also be used as a fallback for wind direction and wind speed)
+U:165:surface:0
+
+# Dew Point Temperture
+TD:3017:heightAboveGround:2
+
+# Reflected Short Wave Radiation ---- should i work with albedo?
+# RSWR: 

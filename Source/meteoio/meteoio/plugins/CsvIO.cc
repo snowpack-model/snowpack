@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/plugins/CsvIO.h>
+#include <meteoio/plugins/plugin_utils.h>
 
 #include <algorithm>
 #include <fstream>
@@ -28,6 +29,7 @@
 using namespace std;
 
 namespace mio {
+	using namespace PLUGIN;
 /**
  * @page csvio CsvIO
  * @section csvio_format Format
@@ -426,16 +428,14 @@ void CsvIO::parseInputOutputSection()
 	std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
 
 	if (vecFilenames.empty()) { //scan all of the data path for a given file extension if no stations are specified
-		bool is_recursive = false;
 		std::string csvext(".csv");
-		cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
 		cfg.getValue("CSV_FILE_EXTENSION", "Input", csvext, IOUtils::nothrow); 
 		
-		std::list<std::string> dirlist( FileUtils::readDirectory(meteopath, csvext, is_recursive) );
-		dirlist.sort();
+		std::vector<std::string> tmpFilenames;
+		scanMeteoPath(cfg, meteopath, tmpFilenames, csvext);
 
 		size_t hit = 0; //human readable iterator
-		for (const std::string& filename : dirlist)	{
+		for (const std::string& filename : tmpFilenames)	{
 			hit++;
 			std::stringstream ss;
 			ss << "STATION" << hit; //assign alphabetically ordered ID to station

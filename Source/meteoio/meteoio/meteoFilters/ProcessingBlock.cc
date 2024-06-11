@@ -85,7 +85,9 @@ namespace mio {
  * It is also possible to rectrict any filter to a specific set of time ranges, using the **when** option followed by a comma delimited list of
  * date intervals (represented by two ISO formatted dates seperated by ' - ') or individual dates (also ISO formatted).
  * 
- * A special kind of processing is available on the timestamps themselves and takes place before any other processing (see below in \ref processing_available "Available processing elements").
+ * The processing is normally defined per meteorological parameter (either from the \ref MeteoData::Parameters "list of standard parameter names" or 
+ * any other name of your choice). A special kind of processing is available on the timestamps themselves and takes place before any 
+ * other processing (see below in \ref processing_available "Available processing elements").
  *
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains

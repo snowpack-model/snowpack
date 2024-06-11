@@ -18,12 +18,15 @@
 */
 #include <meteoio/plugins/SMETIO.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/plugins/plugin_utils.h>
+
 #include <cstdio>
 #include <ctime>
 
 using namespace std;
 
 namespace mio {
+	using namespace PLUGIN;
 /**
  * @page smetio SMET
  * @section smetio_format Format
@@ -174,22 +177,12 @@ void SMETIO::parseInputOutputSection()
 		std::vector<std::string> vecFilenames;
 		cfg.getValues("STATION", "INPUT", vecFilenames);
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
-			bool is_recursive = false;
-			cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, dflt_extension, is_recursive) );
-			dirlist.sort();
-			vecFilenames.reserve( dirlist.size() );
-			std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
+			scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension);
 		} 
-		
-		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-			const std::string filename( vecFilenames[ii] );
-			const std::string extension( FileUtils::getExtension(filename) );
-			const std::string file_and_path = (!extension.empty())? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
-			if (!FileUtils::validFileAndPath(file_and_path)) //Check whether filename is valid
-				throw InvalidNameException(file_and_path, AT);
-			vecFiles.push_back(file_and_path);
+		vecFiles =  getFilesWithPaths(vecFilenames, inpath, dflt_extension);
+		
+		for (const std::string& file_and_path : vecFiles) {
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
 		}
 	}

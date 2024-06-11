@@ -514,7 +514,10 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->ncoeff = p + q + P + Q + M ;
 
 	//aa_ret_summary(fit);
-
+	// This is a meteoIO fix
+	if (xreg == NULL && obj->r != 0) {
+		obj->r = 0;
+	}
 	aa_ret_free(fit);
 }
 
@@ -715,23 +718,35 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 	rr = r;
 
 	if (diffs == 1 && constant == 1) {
-		if (xreg== NULL) {
-			imean = 0;
-			fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,0,imean,N);
-			sarimax_setMethod(fit->sarimax,rmethod);
-			sarimax_exec(fit->sarimax,x,NULL);
-		} else {
-			imean = 1;
-			rr++;
-			xreg2 = (double*)malloc(sizeof(double)*N*rr);
-			for(i = 0; i < N;++i) {
-				xreg2[i] = (double) (i+1);
-			}
-			memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
-			fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
-			sarimax_exec(fit->sarimax,x,xreg2);
-			free(xreg2);
-			}
+		imean = 1;
+		rr++;
+		xreg2 = (double*)malloc(sizeof(double)*N*rr);
+		for(i = 0; i < N;++i) {
+			xreg2[i] = (double) (i+1);
+		}
+		memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
+		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
+		sarimax_exec(fit->sarimax,x,xreg2);
+		free(xreg2);
+		
+		// this fixes the wrong return of r > 0 but finds wrong models
+		// if (xreg== NULL) {
+		// 	imean = 0;
+		// 	fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,0,imean,N);
+		// 	sarimax_setMethod(fit->sarimax,rmethod);
+		// 	sarimax_exec(fit->sarimax,x,NULL);
+		// } else {
+		// 	imean = 1;
+		// 	rr++;
+		// 	xreg2 = (double*)malloc(sizeof(double)*N*rr);
+		// 	for(i = 0; i < N;++i) {
+		// 		xreg2[i] = (double) (i+1);
+		// 	}
+		// 	memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
+		// 	fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
+		// 	sarimax_exec(fit->sarimax,x,xreg2);
+		// 	free(xreg2);
+		// 	}
 		//sarimax_summary(fit->sarimax);
 	} else {
 		imean = constant;
@@ -2081,14 +2096,14 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		printf("Warning : Stepwise search was stopped early due to reaching the model number limit: %d \n",models);
 	}
 
-	// if (verbose == 1) {
-	// 	for(i = 0; i < k; ++i) {
-	// 		printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",(int)results[i*8],(int)results[i*8+1],(int)results[i*8+2],(int)results[i*8+3],
-	// 		(int)results[i*8+4], (int)results[i*8+5],(int)results[i*8+6],results[i*8+7]);
-	// 	}
+	if (verbose == 1) {
+		for(i = 0; i < k; ++i) {
+			printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",(int)results[i*8],(int)results[i*8+1],(int)results[i*8+2],(int)results[i*8+3],
+			(int)results[i*8+4], (int)results[i*8+5],(int)results[i*8+6],results[i*8+7]);
+		}
 		
-	// 	//mdisplay(results,k,8);
-	// }
+		//mdisplay(results,k,8);
+	}
 
 	// Delete the previous best model
 

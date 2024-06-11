@@ -64,6 +64,7 @@ namespace mio {
  *         -# <A HREF="https://meteoio.slf.ch">MeteoIO's home page</A>
  *               -# <A HREF="https://meteoio.slf.ch/Getting-started">Installation, compilation</A>
  *               -# <A HREF="https://meteoio.slf.ch/GettingHelp">Getting help</A>
+ *    -# \subpage credits "Credits & funding"
  * -# Processing steps documentation
  *    -# \subpage data_sources "Data sources, input/output"
  *    -# \subpage data_editing "Input Data Editing"
@@ -278,6 +279,29 @@ namespace mio {
  * The application that you are using might also need its own section(s), check this with your application.
  *
  */
+
+/**
+ * @page credits Credits & funding
+ * MeteoIO has received contributions from various individuals since its start in 2008. Thomas Egger and Mathias Bavay implemented the very first version and kept on working on MeteoIO many years later. Moustapha Mbengue
+ * implemented the first database plugin (for IMIS stations), David Zanella worked on the first build and Continuous Integration toolchain that would later be fully overhauled by Benjamin Bürgisser years later. Thiemo Theile,
+ * Michael Reisecker and Patrick Leibersperger contributed some quite advanced algotithms and plugins while Nander Wever and Adrien Michel contributed over various parts of the code.
+ *
+ *
+ * On the funding side, MeteoIO has mostly been self-funded by the SLF as well as "on the side" as a way to achieve the goals of other projects. It has therefore been indirectly and sometimes directly, funded or motivated by the following projects:
+ *  - our work in support of the <a href="https://www.slf.ch/en/about-the-slf/organisation/research-units/snow-avalanches-and-prevention/avalanche-warning/">SLF avalanche warning</a> applications (as part of our mandate with
+ * the <a href="https://snowpack.slf.ch">Snowpack</a> snow cover model) has provided a strong motivation for the <a href="https://arc.lib.montana.edu/snow-science/objects/ISSW2018_O08.2.pdf">development of MeteoIO</a>;
+ *  - a <a href="https://www.innosuisse.ch">KTI</a> (now Innosuisse) project in 2008-2009;
+ *  - the <a href="https://lsds.hesge.ch/smscg/">Swiss Multi-Science Computing Grid</a> (SMSCG) project funded by <a href="https://help.switch.ch/aai/">AAI-Switch</a> in 2008-2013 and in 2013-2013 for its SMSCG-2 follow-up project;
+ *  - the European Union <a href="https://interreg.eu/about-interreg/">Interreg</a> project <a href="https://www.gr.ch/DE/institutionen/verwaltung/diem/awn/dokumentenliste_afw/3_1_10_4_IRKIS_Endbericht.pdf">Interregionales Kriseninformationssystem</a> (IRKIS) in 2007-2013;
+ *  - the European Union project <a href="https://cordis.europa.eu/project/id/224416">Hydrosys</a> (grant number 224416) in 2008-2011;
+ *  - the <a href="https://lsds.hesge.ch/smscg/">Swiss Multi-Science Computing Grid 2</a> (SMSCG2) follow-up project funded by <a href="https://help.switch.ch/aai/">AAI-Switch</a> in 2013;
+ *  - the European Union <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en">Horizon2020</a> project <a href="https://cordis.europa.eu/project/id/730203/fr">ProSnow</a> (grant number 730203) in 2017-2020;
+ *  - the <a href="https://wmo.int/">World Meteorological Organisation</a> (WMO) <a href="https://account.datascience.codata.org/index.php/up-j-dsj/article/view/dsj-2020-006/935">Data Access Made Easy</a> (DAME) project in 2020 (agreement number 01061/2019-1.0 OBS);
+ *  - the <a href="https://www.caritas.ch/en/tajikistan/">Caritas</a> and <a href="https://www.eda.admin.ch/deza/en/home/countries/central-asia.html/content/dezaprojects/SDC/en/2021/7F09825/phase1">Swiss Agency for Development and Cooperation</a> project <a href="https://www.caritas.ch/en/tajikistan-adapts-to-a-changing-climate/">Weather, water and climate services</a> (WWCS) in 2021-2025;
+ *  - the European Union <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en">Horizon2020</a> project <a href="https://cordis.europa.eu/project/id/101003472">Arctic Passion</a> (grant number 101003472) in 2021-2025;
+ *
+ */
+
 
  /**
  * @page workflow Workflow

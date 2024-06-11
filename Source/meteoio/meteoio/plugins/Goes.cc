@@ -18,6 +18,7 @@
 */
 #include <meteoio/plugins/Goes.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/plugins/plugin_utils.h>
 
 #include <iostream>
 #include <fstream>
@@ -30,6 +31,7 @@
 using namespace std;
 
 namespace mio {
+	using namespace PLUGIN;
 /**
  * @page goesio GoesIO
  * This plugin deals with data that has been transmitted through the
@@ -128,11 +130,7 @@ void GoesIO::parseInputOutputSection(const Config& cfg)
 	cfg.getValues("METEOFILE", "Input", vecFilenames);
 	if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 		const std::string dflt_extension = cfg.get("GOES_EXT", "Input", "raw");
-		const bool is_recursive = cfg.get("METEOPATH_RECURSIVE", "Input", false);
-		std::list<std::string> dirlist( FileUtils::readDirectory(meteopath, dflt_extension, is_recursive) );
-		dirlist.sort();
-		vecFilenames.reserve( dirlist.size() );
-		std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
+		scanMeteoPath(cfg, meteopath, vecFilenames, dflt_extension);
 	}
 }
 

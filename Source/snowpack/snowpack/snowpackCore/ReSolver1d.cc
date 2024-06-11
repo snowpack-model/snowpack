@@ -2304,7 +2304,7 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 			//Determine (estimate) flux across boundaries (downward ==> positive flux):
 			//This is an additional check for the boundaries.
 			actualtopflux+=TopFluxRate*dt;
-			Xdata.Ndata[nN-1].water_flux += TopFluxRate*dt;
+			Xdata.Ndata[uppernode+1].water_flux += TopFluxRate*dt;
 			refusedtopflux+=(surfacefluxrate-TopFluxRate)*dt;
 			if(aBottomBC==DIRICHLET) {
 				if(uppernode > 0) {
@@ -2325,8 +2325,8 @@ void ReSolver1d::SolveRichardsEquation(SnowStation& Xdata, SurfaceFluxes& Sdata,
 				actualbottomflux+=BottomFluxRate*dt;
 				Xdata.Ndata[0].water_flux += BottomFluxRate*dt*Constants::density_water;
 			}
-			if(nN > 2) {		// Note: top and bottom node have been filled above, so only execute loop when 3 or more nodes are present.
-				for(size_t node_i=1; node_i < nN-1; node_i++) {
+			if((uppernode - lowernode) > 0) {		// Note: top and bottom node have been filled above, so only execute loop when 3 or more nodes are present.
+				for(size_t node_i=1; node_i < (uppernode - lowernode) + 1; node_i++) {
 					Xdata.Ndata[node_i].water_flux += (1./rho[node_i])*((((h_n[node_i]*rho[node_i]-h_n[node_i-1]*rho[node_i-1])/dz_up[node_i-1])+Xdata.cos_sl*rho[node_i])*k_np1_m_ip12[node_i-1]*dt)*Constants::density_water;
 				}
 			}
