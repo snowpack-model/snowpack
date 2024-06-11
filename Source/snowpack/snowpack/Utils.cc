@@ -519,10 +519,9 @@ void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_c
 				const double surf_date = EMS[nE-1].depositionDate.getJulian();
 				const double current_layer_date = EMS[e].depositionDate.getJulian();
 				const double first_snow_date = EMS[soil_node].depositionDate.getJulian();
-				double age_fraction = (surf_date - current_layer_date) / (surf_date - first_snow_date);
-				// Rounding errors could produce very small negative numbers ...
-				if (age_fraction < 0.) {
-					age_fraction = 0.;
+				double age_fraction = 0.;
+				if (surf_date > first_snow_date) {
+					age_fraction = std::max(0., (surf_date - current_layer_date) / (surf_date - first_snow_date)); // Rounding errors could produce very small negative numbers ...
 				}
 				sum_total_correction += EMS[e].L * (1. - sqrt(age_fraction) );
 			}
@@ -542,10 +541,9 @@ void deflateInflate(const CurrentMeteo& Mdata, SnowStation& Xdata, double& dhs_c
 				const double surf_date = EMS[nE-1].depositionDate.getJulian();
 				const double current_layer_date = EMS[e].depositionDate.getJulian();
 				const double first_snow_date = EMS[soil_node].depositionDate.getJulian();
-				double age_fraction = (surf_date - current_layer_date) / (surf_date - first_snow_date);
-				// Rounding errors could produce very small negative numbers ...
-				if (age_fraction < 0.) {
-					age_fraction = 0.;
+				double age_fraction = 0.;
+				if (surf_date > first_snow_date) {
+					age_fraction = std::max(0., (surf_date - current_layer_date) / (surf_date - first_snow_date)); // Rounding errors could produce very small negative numbers ...
 				}
 				ddL = EMS[e].L * std::max(-0.9, std::min(0.9, factor_corr * (1. - sqrt(age_fraction))));
 			} else {

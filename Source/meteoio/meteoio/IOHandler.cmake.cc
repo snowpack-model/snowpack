@@ -31,9 +31,10 @@
 #cmakedefine PLUGIN_ARGOSIO
 #cmakedefine PLUGIN_ARPSIO
 #cmakedefine PLUGIN_A3DIO
-#cmakedefine PLUGIN_DBO
+#cmakedefine PLUGIN_BUFRIO
 #cmakedefine PLUGIN_COSMOXMLIO
 #cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_DBO
 #cmakedefine PLUGIN_GEOTOPIO
 #cmakedefine PLUGIN_GOESIO
 #cmakedefine PLUGIN_GRASSIO
@@ -123,6 +124,11 @@
 #include <meteoio/plugins/GRIBIO.h>
 #endif
 
+#ifdef PLUGIN_BUFRIO
+#include <meteoio/plugins/BUFRIO.h>
+#endif
+
+
 #ifdef PLUGIN_IMISIO
 #include <meteoio/plugins/ImisIO.h>
 #endif
@@ -210,7 +216,7 @@ namespace mio {
  * <tr><td>\subpage geotop "GEOTOP"</td><td>meteo</td><td>meteo</td>		<td>GeoTop meteo files</td><td></td></tr>
  * <tr><td>\subpage goesio "GOES"</td><td>meteo</td><td></td>		<td>Meteo files transmitted by the GOES satellites</td><td></td></tr>
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>Grass grid files</td><td></td></tr>
- * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
+ * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="https://confluence.ecmwf.int/display/ECC/ecCodes+Home">ecCodes</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td></td>		<td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
@@ -271,7 +277,10 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_CSVIO
 	if (plugin_name == "CSV") return new CsvIO(i_cfg);
 #endif
-	#ifdef PLUGIN_DBO
+#ifdef PLUGIN_BUFRIO
+	if (plugin_name == "BUFR") return new BUFRIO(i_cfg);
+#endif
+#ifdef PLUGIN_DBO
 	if (plugin_name == "DBO") return new DBO(i_cfg);
 #endif
 #ifdef PLUGIN_GEOTOPIO

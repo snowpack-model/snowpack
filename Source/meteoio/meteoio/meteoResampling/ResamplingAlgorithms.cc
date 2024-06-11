@@ -35,7 +35,8 @@ namespace mio {
  *
  * @section resampling_section Resampling section
  * The resampling is specified for each parameter in the [Interpolations1D] section. This section contains
- * a list of the various meteo parameters with their associated choice of resampling algorithm stacks and
+ * a list of the various meteo parameters (either from the \ref MeteoData::Parameters "list of standard parameter names" or 
+ * any other name of your choice) with their associated choice of resampling algorithm stacks and
  * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
  * assumed. The Resampling is done by using a stack of resampling algorithms, with optional specifications of 
  * the maximum data gap that the respective algorithm should be used for.

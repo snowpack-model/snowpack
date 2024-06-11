@@ -64,6 +64,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("TSG");			description.push_back("Ground Surface Temperature");					units.push_back("K");
 	paramname.push_back("TSS");			description.push_back("Surface Temperature");				units.push_back("K");
 	paramname.push_back("TSOIL");		description.push_back("Soil Temperature");					units.push_back("K");
+	paramname.push_back("TSNOW");		description.push_back("Snow Temperature");					units.push_back("K");
 	paramname.push_back("P");			description.push_back("Air Pressure");							units.push_back("Pa");
 	paramname.push_back("P_SEA");		description.push_back("Air Pressure at Sea Level");		units.push_back("Pa");
 	paramname.push_back("U");			description.push_back("Wind Velocity East Component");				units.push_back("m/s");
@@ -139,6 +140,8 @@ bool MeteoData::initStaticData()
 	s_default_paramname.push_back("QI");
 	s_default_paramname.push_back("TSG");
 	s_default_paramname.push_back("TSS");
+	s_default_paramname.push_back("TSOIL");
+	s_default_paramname.push_back("TSNOW");
 	s_default_paramname.push_back("HS");
 	s_default_paramname.push_back("VW");
 	s_default_paramname.push_back("DW");

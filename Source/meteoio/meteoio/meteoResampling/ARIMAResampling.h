@@ -57,7 +57,10 @@ namespace mio {
      * essentially the mean of many simulations, including a standard deviation (see Figure 1). As interpolated values, we only use the
      * mean, as
      * this is the most likely missing value, and not subject to a possible random divergence.
-     *
+     * 
+     * @note The automatic search for the correct ARIMA model can be varyingly successfull. If it does not work, try setting the parameters manually.
+     * 
+     * @section params Parameters
      * Mandatory parameters:
      * - `BEFORE_WINDOW` : The time before a gap that will be used to accumulate data to fit the ARIMA model.
      * - `AFTER_WINDOW` : The time after a gap that will be used to accumulate data to fit the ARIMA model.
@@ -90,12 +93,12 @@ namespace mio {
      *      - `Conjugate_Gradient` : Conjugate Gradient
      *      - `LBFGS` : Limited Memory BFGS
      *      - `BFGS_MTM` : BFGS Using More Thuente Method
-     * - `STEPWISE` : Whether to use stepwise search of the best ARIMA model. Default: true (faster)
+     * - `STEPWISE` : Whether to use stepwise search of the best ARIMA model. Default: true (faster and more robust)
      * - `APPROXIMATION` : Whether to use approximation to determin the Information Criteria and the Likelihood. Default: true
      * - `NUM_MODELS` : The number of models to try when using stepwise search. Default: 94
      * - `SEASONAL` : Whether to use a seasonal component in the ARIMA model. Default: true
      * - `STATIONARY` : Whether to use a stationary ARIMA model. Default: false
-     * - `NORMALIZATION` : The normalization method used to fit the ARIMA model. Default: MinMax\n
+     * - `NORMALIZATION` : The normalization method used to fit the ARIMA model. Default: Nothing\n
      *     Options are:
      *      - `MINMAX` : Min-Max Normalization
      *      - `ZSCORE` : Z-Score Normalization
@@ -117,6 +120,10 @@ namespace mio {
      * 
      * @note When setting the parameters manually, please provide a seasonal period, as this will now not be estimated anymore, and per default assumed to be 0.
      * 
+     * @note BEWARE: The algorithm will accumulate all available data in the before and after window, so if there is another gap in this window, which might also be outside of the 
+     * specified resampling area, it will just linearly interpolate the data.
+     * 
+     * @note The accumulation window of the data, i.e. the BEFORE_WINDOW and AFTER_WINDOW, should be chosen carefully. It has a big impact on the performance, as this will be what the ARIMA model will see.
      *
      *
      * @code
@@ -130,7 +137,7 @@ namespace mio {
      * @note In the case that only random/random walk arima models are found, the missing values will not be filled (It would be just the
      * mean otherwise)
      *
-     * @section introduction Introduction
+     * @section intro_arima Introduction to ARIMA
      *
      * Autoregressive Integrated Moving Average (ARIMA) is a method for forecasting on historic data. It assumes a stochastic process, with
      * errors that are uncorrelated and have a mean of zero. The ARIMA model is a generalization of an autoregressive moving average (ARMA)
@@ -341,7 +348,7 @@ namespace mio {
         bool stepwise = true, approximation = true;
         int num_models = 94;
         bool seasonal = true, stationary = false;
-        Normalization::Mode normalize = Normalization::Mode::MinMax;
+        Normalization::Mode normalize = Normalization::Mode::Nothing;
 
         bool set_arima_manual = false;
         bool fill_backward_manual = false;
@@ -367,13 +374,12 @@ namespace mio {
         void checkZeroPossibility(const std::vector<MeteoData> &vecM, size_t paramindex);
         bool processKnownGaps(const Date &resampling_date, const size_t paramindex,
                               const ResamplingAlgorithms::ResamplingPosition &position, const std::vector<MeteoData> &vecM, MeteoData &md);
-        void setEndGap(ARIMA_GAP &new_gap, Date &data_start_date, Date &data_end_date, const std::vector<MeteoData> &vecM,
-                       const Date &resampling_date);
         double interpolVecAt(const std::vector<MeteoData> &vecM, const size_t &idx, const Date &date, const size_t &paramindex);
         double interpolVecAt(const std::vector<double> &data, const std::vector<Date> &dates, const size_t &pos, const Date &date);
+        double interpolVecAt(std::vector<MeteoData> &vecMet, const Date &date, const size_t &paramindex);
         void resampleInterpolationData(size_t &length_gap_interpol, size_t &endIdx_interpol, size_t &startIdx_interpol,
                                        const ARIMA_GAP &new_gap, const Date &data_start_date, const Date &data_end_date,
-                                       const std::vector<MeteoData> &data_vec_before, const std::vector<MeteoData> &data_vec_after,
+                                       std::vector<MeteoData> &data_vec_before, std::vector<MeteoData> &data_vec_after,
                                        bool has_data_before, bool has_data_after, size_t paramindex, std::vector<double> &data,
                                        std::vector<Date> &dates, size_t length);
         std::vector<double> getInterpolatedData(std::vector<double> &data, size_t size_before, size_t size_after, size_t startIdx_interpol,

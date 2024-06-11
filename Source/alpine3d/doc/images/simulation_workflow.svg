@@ -1,0 +1,4141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-05-24 14:13:10 -->
+
+<!-- Magnification: 0.84 -->
+
+<svg
+   width="1015.6058pt"
+   height="705.77521pt"
+   viewBox="-33 -1610 20149.5 14000.866"
+   version="1.1"
+   id="svg1024"
+   sodipodi:docname="simulation_workflow.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title2911">Alpine3D simulation workflow</title>
+  <defs
+     id="defs1028">
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile31"
+       id="pattern2907"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile30"
+       id="pattern2905"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile29"
+       id="pattern2903"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile28"
+       id="pattern2901"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile27"
+       id="pattern2899"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile26"
+       id="pattern2897"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile25"
+       id="pattern2895"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile24"
+       id="pattern2893"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile23"
+       id="pattern2891"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile22"
+       id="pattern2889"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile21"
+       id="pattern2887"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile20"
+       id="pattern2885"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile19"
+       id="pattern2883"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile18"
+       id="pattern2881"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile17"
+       id="pattern2879"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile16"
+       id="pattern2877"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile15"
+       id="pattern2875"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile14"
+       id="pattern2873"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile13"
+       id="pattern2871"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile12"
+       id="pattern2869"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile11"
+       id="pattern2867"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile10"
+       id="pattern2865"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile9"
+       id="pattern2863"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile8"
+       id="pattern2861"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile7"
+       id="pattern2859"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile6"
+       id="pattern2857"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile5"
+       id="pattern2855"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile4"
+       id="pattern2853"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile3"
+       id="pattern2851"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile2"
+       id="pattern2849"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile1"
+       id="pattern2847"
+       patternTransform="translate(33,18.818061)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#tile0"
+       id="pattern2845"
+       patternTransform="translate(33,18.818061)" />
+    <defs
+       id="defs36">
+      <polygon
+         points="17960,3340 18032,3303 18153,3367 18214,3260 18335,3318 18408,3224 18481,3073 18375,3018 18423,2909 18508,2776 18562,2736 18638,2612 18762,2651 18805,2555 18844,2512 18860,2427 18981,2473 19026,2400 19162,2442 19262,2473 19381,2460 19462,2436 19505,2397 19547,2330 19390,2336 19305,2330 19166,2379 19047,2321 18957,2258 18920,2370 18866,2424 18775,2342 18735,2403 18681,2473 18635,2609 18535,2509 18493,2582 18435,2642 18381,2758 18272,2670 18235,2779 18105,2733 17996,2706 17951,2806 17866,2836 17744,2767 17642,2715 17526,2682 17451,2660 17348,2642 17296,2715 17281,2788 17208,2885 17299,2918 17520,2967 17657,3009 17766,3033 17872,3006 17799,3127 17753,3203 17702,3273 17690,3382 17687,3418 17790,3382 17914,3482 "
+         id="p0" />
+      <pattern
+         id="tile0"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff66cc"
+           fill="none"
+           id="g33">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path31" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs48">
+      <polygon
+         points="19308,3476 19157,3406 19017,3367 19044,3218 19147,3176 19181,3155 19181,3070 19235,2991 19262,2885 19296,2809 19308,2721 19344,2658 19393,2630 19408,2524 19514,2403 19635,2364 19651,2330 19542,2324 19508,2391 19420,2455 19308,2518 19278,2624 19229,2727 19190,2794 19120,2918 19081,3012 19057,3112 18996,3127 18975,3245 18926,3288 18862,3467 18832,3560 19005,3603 19099,3655 19242,3658 19399,3733 19505,3740 19542,3736 19596,3542 19442,3494 "
+         id="p1" />
+      <pattern
+         id="tile1"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff66cc"
+           fill="none"
+           id="g45">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path43" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs60">
+      <polygon
+         points="17308,2533 17369,2479 17414,2370 17529,2267 17587,2270 17660,2194 17696,2182 17748,2133 17751,2103 17696,2133 17590,2124 17490,2142 17351,2167 17272,2185 17253,2240 17314,2227 17284,2340 17335,2349 17260,2430 17214,2412 17108,2409 17069,2449 17051,2567 17142,2618 17251,2649 17375,2630 17463,2651 17478,2649 17511,2551 17423,2540 "
+         id="p2" />
+      <pattern
+         id="tile2"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff66cc"
+           fill="none"
+           id="g57">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path55" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs72">
+      <polygon
+         points="16451,2249 16553,2315 16611,2206 16705,2270 16772,2179 16844,2167 16744,2073 16684,2109 16578,2106 16484,2109 16484,2112 16448,2176 16351,2221 "
+         id="p3" />
+      <pattern
+         id="tile3"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff66cc"
+           fill="none"
+           id="g69">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path67" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs84">
+      <polygon
+         points="17393,1951 17493,1903 17596,1909 17696,2015 17648,2088 17535,2064 17426,2042 17360,2030 17251,2000 17178,1973 17172,1960 17211,1824 17314,1940 "
+         id="p4" />
+      <pattern
+         id="tile4"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff66cc"
+           fill="none"
+           id="g81">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path79" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs96">
+      <polygon
+         points="17857,2030 17942,1976 17844,1951 17793,2018 17787,2036 17757,2118 17835,2079 "
+         id="p5" />
+      <pattern
+         id="tile5"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff66cc"
+           fill="none"
+           id="g93">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path91" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs108">
+      <polygon
+         points="16711,1809 16778,1627 16878,1749 16929,1691 16881,1630 16902,1603 16990,1606 17087,1612 17135,1588 17205,1618 17302,1551 17399,1567 17502,1621 17581,1597 17684,1685 17784,1745 17835,1645 17932,1706 18023,1706 18081,1627 18169,1655 18275,1694 18387,1673 18478,1682 18581,1697 18672,1721 18717,1645 18823,1667 18787,1755 18896,1694 18990,1709 19114,1773 19214,1833 19320,1888 19351,1773 19451,1851 19508,1794 19690,2049 19660,2094 19629,2160 19511,2076 19481,2167 19372,2088 19253,2106 19217,2218 18772,2079 18696,2142 18629,2115 18642,2160 18587,2288 18569,2340 18538,2515 18490,2585 18451,2627 18326,2488 18205,2449 18142,2582 18029,2585 17926,2479 17808,2658 17678,2545 17633,2549 17705,2364 17742,2260 17802,2179 17947,2060 17947,2027 18035,1976 18114,2000 18111,1888 18072,1879 17893,1867 17838,1951 17744,1855 17699,2027 17587,1909 17502,1888 17408,1951 17453,1809 17351,1782 17308,1942 17217,1833 17123,1830 17099,1842 17020,1745 16978,1840 16826,1840 16772,1860 16681,1891 16578,1891 16520,1870 16487,1855 16538,1682 16620,1700 "
+         id="p6" />
+      <pattern
+         id="tile6"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#cc99ff"
+           fill="none"
+           id="g105">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path103" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs120">
+      <polygon
+         points="19420,3218 19442,3085 19508,2855 19581,2651 19623,2530 19626,2467 19693,2427 19693,2370 19766,2297 19869,2270 20008,2270 20114,2236 20078,2321 19993,2294 19947,2333 19938,2382 19884,2491 19869,2540 19817,2694 19775,2827 19735,2970 19684,3155 19647,3342 19638,3360 19490,3291 19351,3236 "
+         id="p7" />
+      <pattern
+         id="tile7"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#cc99ff"
+           fill="none"
+           id="g117">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path115" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs132">
+      <polygon
+         points="16838,1473 16902,1367 16978,1373 17075,1406 17166,1476 17275,1394 17348,1400 17438,1373 17544,1360 17642,1470 17693,1364 17778,1500 17820,1397 17917,1349 17875,1521 17978,1542 18084,1624 18172,1655 18205,1560 18257,1436 18351,1479 18435,1512 18520,1488 18632,1579 18599,1594 18505,1594 18366,1555 18287,1570 18211,1570 18172,1655 18081,1636 17981,1545 17881,1536 17781,1521 17742,1576 17642,1476 17581,1606 17502,1624 17408,1567 17302,1555 17205,1612 17253,1421 17175,1482 17144,1579 17042,1515 16953,1521 16844,1488 16799,1545 16781,1630 16681,1555 16651,1530 16708,1467 16766,1397 "
+         id="p8" />
+      <pattern
+         id="tile8"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#6699ff"
+           fill="none"
+           id="g129">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path127" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs182">
+      <polygon
+         points="17896,1867 17987,1879 18078,1885 18117,1897 18108,1991 18023,1985 17962,2030 17938,2079 17902,2115 17833,2140 17772,2209 17733,2258 17702,2376 17638,2533 17684,2540 17808,2667 17869,2567 17923,2470 18035,2591 18135,2576 18208,2458 18326,2494 18442,2630 18387,2742 18260,2658 18229,2794 18105,2740 17987,2700 17953,2806 17875,2842 17751,2764 17638,2709 17529,2682 17472,2651 17526,2555 17420,2549 17317,2545 17378,2473 17417,2355 17544,2260 17629,2245 17681,2188 17757,2121 17835,2076 17844,2036 17951,1979 17838,1955 17784,2030 17729,2027 17708,2021 17742,1845 17835,1942 "
+         id="p9" />
+      <pattern
+         id="tile9"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff99ff"
+           fill="none"
+           id="g179">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path177" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs194">
+      <polygon
+         points="17442,1812 17369,1782 17360,1782 17314,1940 17393,1955 "
+         id="p10" />
+      <pattern
+         id="tile10"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff99ff"
+           fill="none"
+           id="g191">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path189" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs206">
+      <polygon
+         points="16523,1945 16629,1991 16699,1945 16802,1970 16869,1906 16938,1849 16972,1842 17026,1740 17111,1833 17220,1830 17184,1964 17090,1949 17020,1979 16969,2024 16902,2082 16866,2167 16738,2076 16669,2106 16581,2106 16490,2112 16399,2124 16342,2115 16323,2106 16375,1973 16442,1940 "
+         id="p11" />
+      <pattern
+         id="tile11"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff99ff"
+           fill="none"
+           id="g203">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path201" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs218">
+      <polygon
+         points="18657,2140 18702,2145 18762,2076 18887,2115 18987,2136 19099,2176 19226,2224 19253,2106 19369,2085 19481,2164 19514,2082 19617,2160 19644,2112 19678,2079 19702,2033 19802,2109 19890,2155 20132,2194 20105,2249 20014,2260 19920,2276 19860,2291 19787,2291 19708,2345 19687,2370 19702,2430 19614,2467 19623,2536 19608,2576 19569,2667 19508,2840 19457,2976 19432,3082 19408,3215 19347,3249 19499,3297 19657,3360 19584,3542 19444,3503 19308,3479 19160,3409 19023,3367 19057,3233 19172,3170 19184,3058 19253,2973 19272,2876 19293,2797 19323,2706 19390,2633 19411,2521 19508,2397 19657,2358 19657,2333 19535,2321 19405,2342 19308,2333 19166,2370 19042,2324 18957,2245 18923,2358 18862,2427 18772,2340 18732,2394 18690,2467 18642,2609 18562,2515 18538,2494 18569,2333 18620,2240 "
+         id="p12" />
+      <pattern
+         id="tile12"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff99ff"
+           fill="none"
+           id="g215">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path213" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs230">
+      <polygon
+         points="16660,1888 16772,1860 16817,1845 16929,1845 16860,1900 16793,1964 16675,1955 16626,1994 16548,1955 16469,1940 16390,1964 16411,1936 16496,1855 16560,1888 "
+         id="p13" />
+      <pattern
+         id="tile13"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff99ff"
+           fill="none"
+           id="g227">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path225" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs242">
+      <polygon
+         points="17402,1300 17475,1321 17593,1321 17633,1285 17723,1318 17808,1403 17926,1349 18020,1327 18123,1397 18208,1555 18257,1427 18178,1279 18051,1185 17951,1200 17862,1233 17753,1209 17663,1133 17581,1085 17481,1118 17381,1151 17287,1194 17269,1242 17253,1267 17348,1227 17435,1203 "
+         id="p14" />
+      <pattern
+         id="tile14"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#0099ff"
+           fill="none"
+           id="g239">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path237" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs254">
+      <polygon
+         points="16348,2727 16423,2667 16499,2624 16393,2582 16281,2470 16172,2449 16081,2482 16163,2524 16075,2558 16057,2624 16044,2664 16142,2658 16226,2718 "
+         id="p15" />
+      <pattern
+         id="tile15"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g251">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path249" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs266">
+      <polygon
+         points="15869,2812 15948,2740 16048,2758 16169,2785 16087,2855 16017,2960 15884,2833 15787,2870 15672,2858 15572,2751 15478,2709 15572,2706 15608,2706 15663,2709 15769,2773 "
+         id="p16" />
+      <pattern
+         id="tile16"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g263">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path261" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs278">
+      <polygon
+         points="17326,3236 17466,3264 17548,3179 17642,3215 17599,3297 17523,3400 17681,3421 17702,3273 17748,3206 17805,3121 17874,3019 17879,3004 17775,3027 17651,3012 17587,3109 17453,3070 17351,3030 17342,3027 17281,3112 17208,3191 "
+         id="p17" />
+      <pattern
+         id="tile17"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g275">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path273" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs290">
+      <polygon
+         points="16360,2215 16457,2251 16569,2312 16614,2212 16720,2285 16775,2176 16848,2164 16908,2091 16975,2030 17033,1976 17102,1949 17175,1964 17253,2000 17199,2058 17108,2033 17060,2094 16999,2142 16933,2203 16833,2312 16723,2285 16669,2342 16599,2397 16502,2370 16393,2351 16287,2321 16208,2294 16272,2227 16333,2179 16387,2136 16384,2124 16484,2118 16433,2194 "
+         id="p18" />
+      <pattern
+         id="tile18"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g287">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path285" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs302">
+      <polygon
+         points="17360,2027 17287,2006 17253,2003 17311,1936 17390,1951 "
+         id="p19" />
+      <pattern
+         id="tile19"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g299">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path297" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs314">
+      <polygon
+         points="17757,2118 17678,2136 17626,2130 17638,2091 17648,2085 17711,2018 17787,2033 "
+         id="p20" />
+      <pattern
+         id="tile20"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g311">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path309" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs326">
+      <polygon
+         points="17151,2236 17099,2291 17181,2330 17278,2355 17242,2406 17278,2430 17323,2351 17305,2336 17287,2324 17326,2227 17244,2245 17275,2176 17329,2170 17357,2164 17248,2127 17193,2185 "
+         id="p21" />
+      <pattern
+         id="tile21"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g323">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path321" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs338">
+      <polygon
+         points="17111,2412 17069,2451 17051,2582 17144,2618 17084,2682 16969,2660 16866,2630 16929,2560 16978,2482 16911,2476 16960,2415 17005,2367 17020,2355 17135,2382 17233,2406 "
+         id="p22" />
+      <pattern
+         id="tile22"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g335">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path333" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs350">
+      <polygon
+         points="18157,3367 18038,3549 17942,3497 17899,3488 17957,3336 18032,3306 "
+         id="p23" />
+      <pattern
+         id="tile23"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g347">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path345" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs362">
+      <polygon
+         points="18462,2842 18505,2782 18557,2730 18666,2776 18578,2930 18508,3021 18475,3067 18375,3021 18417,2906 "
+         id="p24" />
+      <pattern
+         id="tile24"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g359">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path357" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs374">
+      <polygon
+         points="19002,3133 18862,3160 18747,3140 18690,3227 18651,3303 18784,3349 18744,3406 18838,3455 18866,3464 18929,3282 18978,3233 "
+         id="p25" />
+      <pattern
+         id="tile25"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g371">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path369" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs386">
+      <polygon
+         points="19035,2409 19144,2440 19257,2470 19362,2458 19435,2451 19332,2512 19287,2570 19269,2636 19232,2724 19193,2776 19175,2815 19114,2912 19078,3012 19057,3112 19017,3127 18917,3085 19066,2809 19169,2636 19220,2521 19099,2497 18984,2479 18960,2497 18951,2551 18872,2521 18842,2515 18860,2433 18969,2482 "
+         id="p26" />
+      <pattern
+         id="tile26"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#ff3399"
+           fill="none"
+           id="g383">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path381" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs398">
+      <polygon
+         points="18084,2142 18020,2036 17944,2024 17938,2045 17938,2055 17902,2191 18020,2249 "
+         id="p27" />
+      <pattern
+         id="tile27"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#9999ff"
+           fill="none"
+           id="g395">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path393" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs410">
+      <polygon
+         points="16763,1636 16884,1745 16923,1691 16851,1612 16926,1615 17084,1612 17148,1579 17205,1621 17299,1558 17396,1570 17493,1624 17578,1606 17678,1679 17778,1740 17838,1645 17929,1709 18023,1709 18084,1640 18172,1660 18269,1685 18390,1673 18481,1670 18578,1691 18672,1718 18717,1636 18832,1670 18784,1767 18899,1685 18996,1706 19108,1767 19211,1830 19323,1885 19357,1776 19462,1842 19499,1794 19393,1664 19281,1664 19262,1712 19162,1633 19023,1612 18947,1585 18851,1570 18729,1570 18617,1588 18502,1585 18405,1567 18329,1551 18211,1564 18175,1655 18081,1633 17987,1545 17881,1530 17793,1512 17738,1570 17644,1467 17590,1597 17490,1621 17396,1560 17302,1545 17214,1603 17253,1433 17172,1482 17138,1573 17026,1515 16942,1521 16835,1473 16802,1549 16769,1633 16675,1558 16657,1518 16569,1558 16544,1670 16538,1691 16614,1691 16714,1788 "
+         id="p28" />
+      <pattern
+         id="tile28"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#9999ff"
+           fill="none"
+           id="g407">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path405" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs422">
+      <polygon
+         points="19960,2330 19857,2318 19817,2373 19775,2467 19772,2506 19896,2476 19942,2367 "
+         id="p29" />
+      <pattern
+         id="tile29"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#9999ff"
+           fill="none"
+           id="g419">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path417" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs434">
+      <polygon
+         points="19181,1636 19166,1640 19260,1709 19290,1658 "
+         id="p30" />
+      <pattern
+         id="tile30"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#6699ff"
+           fill="none"
+           id="g431">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path429" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs446">
+      <polygon
+         points="16981,1370 17087,1412 17169,1479 17287,1400 17357,1400 17448,1373 17542,1358 17644,1476 17684,1367 17784,1521 17814,1400 17917,1345 17866,1540 17978,1549 18084,1633 18175,1658 18223,1551 18114,1397 18026,1321 17920,1349 17808,1409 17720,1324 17623,1288 17575,1330 17481,1318 17402,1294 17435,1197 17342,1233 17238,1273 17302,1194 17211,1212 17120,1258 17053,1273 16978,1294 16933,1330 16872,1306 16808,1330 16775,1382 16766,1400 16842,1473 16908,1370 "
+         id="p31" />
+      <pattern
+         id="tile31"
+         patternUnits="userSpaceOnUse"
+         x="0"
+         y="0"
+         width="134"
+         height="134">
+        <g
+           stroke-width="7.5"
+           stroke="#3399ff"
+           fill="none"
+           id="g443">
+          <path
+             d="m63,-4 67,67 -67,67 20,20"
+             id="path441" />
+        </g>
+      </pattern>
+    </defs>
+    <defs
+       id="defs669">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4062,4222 -62,164 -62,-164 37,258 h 51 z"
+           id="path666" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs678">
+      <clipPath
+         id="cp1">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4062,5146 -62,164 -62,-164 37,258 h 51 z"
+           id="path675" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs687">
+      <clipPath
+         id="cp2">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4062,6069 -62,164 -62,-164 37,258 h 51 z"
+           id="path684" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs696">
+      <clipPath
+         id="cp3">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4062,7024 -62,164 -62,-164 37,258 h 51 z"
+           id="path693" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs747">
+      <clipPath
+         id="cp4">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4062,7024 -62,164 -62,-164 37,258 h 51 z M 23,5356 90,5176 158,5356 108,5112 H 72 Z"
+           id="path744" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs756">
+      <clipPath
+         id="cp5">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 1157,8833 180,67 -180,68 244,-50 v -36 z M 23,5356 90,5176 158,5356 108,5112 H 72 Z"
+           id="path753" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs811">
+      <clipPath
+         id="cp6">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 1157,8833 180,67 -180,68 244,-50 v -36 z m 9851,2243 67,-180 68,180 -50,-244 h -36 z"
+           id="path808" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs820">
+      <clipPath
+         id="cp7">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 14099,13351 180,67 -180,68 244,-50 v -36 z m -3091,-2275 67,-180 68,180 -50,-244 h -36 z"
+           id="path817" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs833">
+      <clipPath
+         id="cp8">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 14099,13351 180,67 -180,68 244,-50 v -36 z m -8055,-1400 67,-180 68,180 -50,-244 h -36 z"
+           id="path830" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs842">
+      <clipPath
+         id="cp9">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 9038,13386 180,67 -180,68 244,-50 v -36 z m -2994,-1435 67,-180 68,180 -50,-244 h -36 z"
+           id="path839" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs855">
+      <clipPath
+         id="cp10">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 9038,13386 180,67 -180,68 244,-50 v -36 z m -6065,-1949 67,-180 68,180 -50,-244 h -36 z"
+           id="path852" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs864">
+      <clipPath
+         id="cp11">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4074,13304 180,67 -180,68 244,-50 v -36 z m -1101,-1867 67,-180 68,180 -50,-244 h -36 z"
+           id="path861" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs881">
+      <clipPath
+         id="cp12">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4074,13304 180,67 -180,68 244,-50 v -36 z m 11457,-5497 67,-180 68,180 -50,-244 h -36 z"
+           id="path878" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs890">
+      <clipPath
+         id="cp13">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 18525,9242 180,67 -180,68 244,-50 v -36 z m -2994,-1435 67,-180 68,180 -50,-244 h -36 z"
+           id="path887" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs903">
+      <clipPath
+         id="cp14">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 5620,8495 240,90 -240,90 334,-64 v -51 z m 9911,-688 67,-180 68,180 -50,-244 h -36 z"
+           id="path900" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs912">
+      <clipPath
+         id="cp15">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 6873,2832 -90,240 -90,-240 65,334 h 51 z m 8658,4975 67,-180 68,180 -50,-244 h -36 z"
+           id="path909" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs921">
+      <clipPath
+         id="cp16">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 4083,2832 -90,240 -90,-240 65,334 h 51 z m 11448,4975 67,-180 68,180 -50,-244 h -36 z"
+           id="path918" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs930">
+      <clipPath
+         id="cp17">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 2830,3635 240,90 -240,90 334,-64 v -51 z m 12701,4172 67,-180 68,180 -50,-244 h -36 z"
+           id="path927" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs939">
+      <clipPath
+         id="cp18">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 8088,10572 -90,240 -90,-240 65,334 h 51 z m 7443,-2765 67,-180 68,180 -50,-244 h -36 z"
+           id="path936" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs948">
+      <clipPath
+         id="cp19">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 12948,10572 -90,240 -90,-240 65,334 h 51 z m 2583,-2765 67,-180 68,180 -50,-244 h -36 z"
+           id="path945" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs957">
+      <clipPath
+         id="cp20">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 3633,10572 -90,240 -90,-240 65,334 h 51 z m 11898,-2765 67,-180 68,180 -50,-244 h -36 z"
+           id="path954" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs966">
+      <clipPath
+         id="cp21">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 15070,3545 240,90 -240,90 334,-64 v -51 z m 461,4262 67,-180 68,180 -50,-244 h -36 z"
+           id="path963" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs975">
+      <clipPath
+         id="cp22">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 15025,8405 240,90 -240,90 334,-64 v -51 z m 506,-598 67,-180 68,180 -50,-244 h -36 z"
+           id="path972" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs984">
+      <clipPath
+         id="cp23">
+        <path
+           clip-rule="evenodd"
+           d="M -33,-1610 H 20164 V 12435 H -33 Z m 12228,2832 -90,240 -90,-240 65,334 h 51 z m 3303,4975 67,-180 68,180 -50,-244 h -36 z"
+           id="path981" />
+      </clipPath>
+    </defs>
+  </defs>
+  <sodipodi:namedview
+     id="namedview1026"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="0.96478129"
+     inkscape:cx="676.83734"
+     inkscape:cy="471.09123"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1024" />
+  <rect
+     x="2577"
+     y="1061.1819"
+     width="11250"
+     height="7065"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect20" />
+  <rect
+     x="5592"
+     y="1511.1819"
+     width="4725"
+     height="6210"
+     fill="#edf7ff"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect22" />
+  <rect
+     x="10632"
+     y="1511.1819"
+     width="2925"
+     height="5085"
+     fill="#fff2f2"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect24" />
+  <rect
+     x="5862"
+     y="1916.1819"
+     width="2160"
+     height="4365"
+     fill="#fcfdf9"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-dasharray="10, 60"
+     id="rect26"
+     style="stroke-width:30;stroke-miterlimit:4;stroke-dasharray:30, 30;stroke-dashoffset:0" />
+  <rect
+     x="2892"
+     y="1511.1819"
+     width="2160"
+     height="5220"
+     fill="#edebf5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect28" />
+  <rect
+     x="6073"
+     y="4905.1821"
+     width="1693"
+     height="461"
+     fill="#e4efcf"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect138" />
+  <rect
+     x="6073"
+     y="4005.1819"
+     width="1693"
+     height="461"
+     fill="#e4efcf"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect140" />
+  <rect
+     x="6073"
+     y="3117.1819"
+     width="1693"
+     height="461"
+     fill="#e4efcf"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect142" />
+  <rect
+     x="6073"
+     y="2172.1819"
+     width="1693"
+     height="461"
+     fill="#e4efcf"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect144" />
+  <rect
+     x="3103"
+     y="3749.1819"
+     width="1693"
+     height="461"
+     fill="#e9dbff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect146" />
+  <rect
+     x="3103"
+     y="4703.1821"
+     width="1693"
+     height="462"
+     fill="#e9dbff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect148" />
+  <rect
+     x="3103"
+     y="5627.1821"
+     width="1693"
+     height="461"
+     fill="#e9dbff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect150" />
+  <rect
+     x="3103"
+     y="2825.1819"
+     width="1693"
+     height="462"
+     fill="#e9dbff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect152" />
+  <rect
+     x="3103"
+     y="1902.1819"
+     width="1693"
+     height="461"
+     fill="#e9dbff"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect154" />
+  <rect
+     x="8368"
+     y="5805.1821"
+     width="1693"
+     height="461"
+     fill="#d7dfe5"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect156" />
+  <rect
+     x="8368"
+     y="3890.1819"
+     width="1693"
+     height="461"
+     fill="#d7dfe5"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect158" />
+  <rect
+     x="8368"
+     y="1976.1819"
+     width="1693"
+     height="461"
+     fill="#d7dfe5"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect160" />
+  <rect
+     x="5877"
+     y="6701.1821"
+     width="4170"
+     height="480"
+     fill="#d7dfe5"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect162" />
+  <rect
+     x="11143"
+     y="1840.1819"
+     width="2083"
+     height="427"
+     fill="#ffd8d8"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect164" />
+  <rect
+     x="11143"
+     y="3038.1819"
+     width="2083"
+     height="426"
+     fill="#ffd8d8"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect166" />
+  <rect
+     x="11143"
+     y="4236.1821"
+     width="2083"
+     height="427"
+     fill="#ffd8d8"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect168" />
+  <rect
+     x="11143"
+     y="5435.1821"
+     width="2083"
+     height="427"
+     fill="#ffd8d8"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect170" />
+  <g
+     id="g2579"
+     transform="translate(-33,-18.818061)">
+    <use
+       xlink:href="#p0"
+       fill="#ff66cc"
+       id="use38"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p0"
+       fill="url(#tile0)"
+       stroke="#ff66cc"
+       stroke-width="15px"
+       id="use40"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2845)" />
+    <use
+       xlink:href="#p1"
+       fill="#ff66cc"
+       id="use50"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p1"
+       fill="url(#tile1)"
+       stroke="#ff66cc"
+       stroke-width="15px"
+       id="use52"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2847)" />
+    <use
+       xlink:href="#p2"
+       fill="#ff66cc"
+       id="use62"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p2"
+       fill="url(#tile2)"
+       stroke="#ff66cc"
+       stroke-width="15px"
+       id="use64"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2849)" />
+    <use
+       xlink:href="#p3"
+       fill="#ff66cc"
+       id="use74"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p3"
+       fill="url(#tile3)"
+       stroke="#ff66cc"
+       stroke-width="15px"
+       id="use76"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2851)" />
+    <use
+       xlink:href="#p4"
+       fill="#ff66cc"
+       id="use86"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p4"
+       fill="url(#tile4)"
+       stroke="#ff66cc"
+       stroke-width="15px"
+       id="use88"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2853)" />
+    <use
+       xlink:href="#p5"
+       fill="#ff66cc"
+       id="use98"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p5"
+       fill="url(#tile5)"
+       stroke="#ff66cc"
+       stroke-width="15px"
+       id="use100"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2855)" />
+    <use
+       xlink:href="#p6"
+       fill="#cc99ff"
+       id="use110"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p6"
+       fill="url(#tile6)"
+       stroke="#cc99ff"
+       stroke-width="15px"
+       id="use112"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2857)" />
+    <use
+       xlink:href="#p7"
+       fill="#cc99ff"
+       id="use122"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p7"
+       fill="url(#tile7)"
+       stroke="#cc99ff"
+       stroke-width="15px"
+       id="use124"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2859)" />
+    <use
+       xlink:href="#p8"
+       fill="#6699ff"
+       id="use134"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p8"
+       fill="url(#tile8)"
+       stroke="#6699ff"
+       stroke-width="15px"
+       id="use136"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2861)" />
+    <polygon
+       points="17523,3397 17651,3218 17533,3173 17466,3279 17326,3236 17211,3206 17348,3033 17472,3070 17584,3112 17663,3000 17526,2970 17405,2945 17290,2915 17196,2897 17275,2785 17284,2715 17353,2640 17248,2658 17138,2612 17090,2685 16981,2660 16875,2640 16923,2573 16978,2473 16902,2476 16963,2415 17017,2349 17133,2382 17235,2403 17281,2345 17175,2324 17087,2294 17151,2230 17187,2185 17242,2130 17357,2160 17520,2133 17587,2127 17626,2130 17635,2088 17444,2040 17353,2027 17248,2000 17202,2055 17114,2027 17005,2140 16933,2209 16884,2245 16829,2315 16720,2285 16675,2336 16611,2394 16514,2376 16393,2349 16290,2327 16193,2294 16251,2240 16333,2176 16399,2124 16320,2112 16253,2145 16202,2209 16120,2270 16053,2321 15966,2367 15899,2449 15826,2509 15744,2579 15672,2633 15620,2688 15599,2703 15660,2700 15769,2779 15872,2812 15963,2733 16172,2785 16087,2855 16017,2955 "
+       fill="#ff0066"
+       stroke="#ff0066"
+       stroke-width="15px"
+       id="polygon172" />
+    <polygon
+       points="18644,2603 18751,2645 18805,2567 18844,2515 18944,2540 18972,2470 19090,2497 19214,2530 19199,2573 19120,2709 19072,2791 19005,2915 18957,3006 18911,3088 19014,3121 18869,3164 18747,3133 18705,3209 18653,3312 18784,3349 18732,3412 18869,3455 18832,3549 18957,3591 19105,3640 19251,3655 19402,3724 19544,3736 19496,3845 19469,3982 19314,3942 19175,3897 18990,3845 18857,3809 18735,3751 18596,3715 18314,3627 18078,3551 18038,3540 18208,3260 18344,3312 18393,3227 18481,3060 18593,2906 18672,2770 18562,2733 "
+       fill="#ff0066"
+       stroke="#ff0066"
+       stroke-width="15px"
+       id="polygon174" />
+    <use
+       xlink:href="#p9"
+       fill="#ff99ff"
+       id="use184"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p9"
+       fill="url(#tile9)"
+       stroke="#ff99ff"
+       stroke-width="15px"
+       id="use186"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2863)" />
+    <use
+       xlink:href="#p10"
+       fill="#ff99ff"
+       id="use196"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p10"
+       fill="url(#tile10)"
+       stroke="#ff99ff"
+       stroke-width="15px"
+       id="use198"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2865)" />
+    <use
+       xlink:href="#p11"
+       fill="#ff99ff"
+       id="use208"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p11"
+       fill="url(#tile11)"
+       stroke="#ff99ff"
+       stroke-width="15px"
+       id="use210"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2867)" />
+    <use
+       xlink:href="#p12"
+       fill="#ff99ff"
+       id="use220"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p12"
+       fill="url(#tile12)"
+       stroke="#ff99ff"
+       stroke-width="15px"
+       id="use222"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2869)" />
+    <use
+       xlink:href="#p13"
+       fill="#ff99ff"
+       id="use232"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p13"
+       fill="url(#tile13)"
+       stroke="#ff99ff"
+       stroke-width="15px"
+       id="use234"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2871)" />
+    <use
+       xlink:href="#p14"
+       fill="#0099ff"
+       id="use244"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p14"
+       fill="url(#tile14)"
+       stroke="#0099ff"
+       stroke-width="15px"
+       id="use246"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2873)" />
+    <use
+       xlink:href="#p15"
+       fill="#ff3399"
+       id="use256"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p15"
+       fill="url(#tile15)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use258"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2875)" />
+    <use
+       xlink:href="#p16"
+       fill="#ff3399"
+       id="use268"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p16"
+       fill="url(#tile16)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use270"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2877)" />
+    <use
+       xlink:href="#p17"
+       fill="#ff3399"
+       id="use280"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p17"
+       fill="url(#tile17)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use282"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2879)" />
+    <use
+       xlink:href="#p18"
+       fill="#ff3399"
+       id="use292"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p18"
+       fill="url(#tile18)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use294"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2881)" />
+    <use
+       xlink:href="#p19"
+       fill="#ff3399"
+       id="use304"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p19"
+       fill="url(#tile19)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use306"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2883)" />
+    <use
+       xlink:href="#p20"
+       fill="#ff3399"
+       id="use316"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p20"
+       fill="url(#tile20)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use318"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2885)" />
+    <use
+       xlink:href="#p21"
+       fill="#ff3399"
+       id="use328"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p21"
+       fill="url(#tile21)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use330"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2887)" />
+    <use
+       xlink:href="#p22"
+       fill="#ff3399"
+       id="use340"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p22"
+       fill="url(#tile22)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use342"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2889)" />
+    <use
+       xlink:href="#p23"
+       fill="#ff3399"
+       id="use352"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p23"
+       fill="url(#tile23)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use354"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2891)" />
+    <use
+       xlink:href="#p24"
+       fill="#ff3399"
+       id="use364"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p24"
+       fill="url(#tile24)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use366"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2893)" />
+    <use
+       xlink:href="#p25"
+       fill="#ff3399"
+       id="use376"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p25"
+       fill="url(#tile25)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use378"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2895)" />
+    <use
+       xlink:href="#p26"
+       fill="#ff3399"
+       id="use388"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p26"
+       fill="url(#tile26)"
+       stroke="#ff3399"
+       stroke-width="15px"
+       id="use390"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2897)" />
+    <use
+       xlink:href="#p27"
+       fill="#9999ff"
+       id="use400"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p27"
+       fill="url(#tile27)"
+       stroke="#9999ff"
+       stroke-width="15px"
+       id="use402"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2899)" />
+    <use
+       xlink:href="#p28"
+       fill="#9999ff"
+       id="use412"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p28"
+       fill="url(#tile28)"
+       stroke="#9999ff"
+       stroke-width="15px"
+       id="use414"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2901)" />
+    <use
+       xlink:href="#p29"
+       fill="#9999ff"
+       id="use424"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p29"
+       fill="url(#tile29)"
+       stroke="#9999ff"
+       stroke-width="15px"
+       id="use426"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2903)" />
+    <use
+       xlink:href="#p30"
+       fill="#6699ff"
+       id="use436"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p30"
+       fill="url(#tile30)"
+       stroke="#6699ff"
+       stroke-width="15px"
+       id="use438"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2905)" />
+    <use
+       xlink:href="#p31"
+       fill="#3399ff"
+       id="use448"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%" />
+    <use
+       xlink:href="#p31"
+       fill="url(#tile31)"
+       stroke="#3399ff"
+       stroke-width="15px"
+       id="use450"
+       x="0"
+       y="0"
+       width="100%"
+       height="100%"
+       style="fill:url(#pattern2907)" />
+    <polyline
+       points=" 15598,2708 15659,2708 15762,2769 15864,2810 15966,2810 16089,2851 16191,2892  16314,2933 17214,3199 17337,3240 17439,3260 17582,3301 17725,3260 17828,3240  17971,3342 18093,3465 18237,3485 18359,3526 18502,3587 18646,3608 18768,3649  18912,3710 19075,3751 19198,3792 19362,3812 19505,3833"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline452"
+       style="fill:none" />
+    <polyline
+       points=" 15661,2636 15757,2681 15863,2698 15949,2740 16048,2756 16165,2784 16258,2815  16374,2856 17176,3079 17285,3113 17402,3099 17518,3168 17648,3219 17762,3205  17888,3085 18025,3295 18148,3363 18282,3400 18412,3442 18553,3486 18683,3517  18834,3558 18957,3589 19104,3647 19252,3658 19399,3733 19543,3733"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline454"
+       style="fill:none" />
+    <polyline
+       points=" 15743,2582 15839,2613 15939,2644 16042,2671 16134,2664 16227,2722 16343,2725  16453,2777 16569,2808 16665,2849 16778,2880 16895,2907 17004,2945 17114,2979  17230,3007 17347,3034 17477,3079 17577,3110 17703,3116 17823,3120 17950,2948  18101,3092 18210,3260 18330,3311 18474,3356 18597,3394 18741,3411 18872,3462  19029,3370 19166,3407 19310,3476 19454,3500 19594,3545"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline456"
+       style="fill:none" />
+    <polyline
+       points=" 15822,2510 15918,2540 16000,2568 16093,2551 16209,2524 16309,2582 16422,2671  16525,2712 16949,2842 17066,2866 17176,2890 17296,2914 17412,2945 17525,2965  17655,3010 17768,3037 17902,3000 18008,2914 18135,3041 18286,3048 18395,3233  18515,3281 18638,3301 18776,3346 18981,3250 19074,3219 19214,3222 19358,3246  19495,3291 19649,3360"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline458"
+       style="fill:none" />
+    <polyline
+       points=" 15888,2459 15980,2486 16086,2496 16165,2530 16209,2527 16302,2578 16388,2578  16497,2623 16593,2650 16912,2733 17025,2763 17131,2801 17223,2818 17354,2746  17463,2798 17583,2805 17707,2863 17816,2900 17967,2876 18111,2914 18272,3010  18351,3075 18460,3154 18584,3195 18707,3222 18847,3215 18995,3236 19142,3181  19262,3226 19392,3222 19557,3110 19697,3147"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline460"
+       style="fill:none" />
+    <polyline
+       points=" 15966,2380 16062,2417 16151,2445 16285,2469 16367,2489 16473,2524 16562,2558  16963,2660 17083,2688 17193,2725 17299,2725 17361,2688 17443,2650 17518,2674  17635,2705 17758,2767 17881,2839 17974,2805 18063,2777 18172,2818 18282,2894  18409,2900 18526,2996 18652,3020 18786,3065 18923,3092 19036,3123 19190,3058  19320,3030 19471,2979 19618,2910 19783,2794"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline462"
+       style="fill:none" />
+    <polyline
+       points=" 18279,3020 18371,3027 18495,3068 18618,3103 18734,3133 18872,3164 19029,3126  19132,3178 19297,3089 19447,3092 19605,2993 19745,2962"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline464"
+       style="fill:none" />
+    <polyline
+       points=" 16048,2328 16418,2448 16525,2465 16641,2479 16737,2513 16840,2544 16925,2575  17049,2575 17134,2616 17251,2654 17357,2640 17453,2654"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline466"
+       style="fill:none" />
+    <polyline
+       points=" 16124,2273 16196,2297 16281,2318 16384,2352 16501,2370 16597,2400 16693,2428  16778,2459 16891,2479 17032,2469 17110,2428 17196,2459 17306,2540 17429,2540  17522,2561 17689,2544 17820,2667 17957,2808"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline468"
+       style="fill:none" />
+    <polyline
+       points=" 16192,2219 16258,2243 16336,2229 16367,2222 16456,2250 16559,2311 16665,2349  16754,2370 16853,2397 16939,2414 17052,2428 17128,2410 17234,2417 17272,2445  17368,2482 17473,2448 17580,2428 17696,2380 17816,2318 17926,2475 18042,2592  18148,2571 18275,2667 18392,2756 18518,2784 18618,2849 18741,2883 18865,2910  18995,2931 19118,2914 19272,2880 19409,2808 19574,2660 19704,2688 19879,2534 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline470"
+       style="fill:none" />
+    <polyline
+       points=" 17473,2664 17587,2558 17676,2540 17755,2445 17867,2568 18008,2715 18101,2733  18221,2791 18354,2805 18467,2839 18594,2925 18697,2952 18830,2983 18950,3017  19091,3010 19214,3007 19372,2904 19512,2856 19660,2791 19827,2681"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline472"
+       style="fill:none" />
+    <polyline
+       points=" 16247,2154 16336,2184 16432,2191 16525,2181 16624,2212 16713,2280 16826,2318  16915,2332 17004,2355 17134,2380 17282,2424 17326,2355 17422,2359 17522,2321  17635,2243 17738,2250 17861,2287 17974,2321 18097,2441 18203,2451 18323,2489  18450,2640 18560,2736 18680,2777 18782,2801 18909,2842 19039,2863 19180,2818  19297,2815 19444,2664 19587,2568 19745,2551 19879,2537"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline474"
+       style="fill:none" />
+    <polyline
+       points=" 16316,2112 16394,2126 16483,2112 16576,2112 16686,2099 16778,2174 16888,2260  16987,2270 17087,2294 17189,2335 17285,2355 17443,2266 17583,2273 17658,2195  17778,2205 17796,2181 17905,2188 18025,2243 18142,2315 18265,2315 18375,2355  18505,2599 18601,2688 18714,2712 18827,2743 18957,2770 19081,2801 19207,2777  19334,2702 19464,2623 19598,2544 19759,2513 19892,2482"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline476"
+       style="fill:none" />
+    <polyline
+       points=" 16370,2003 16446,1938 16542,1948 16621,1989 16730,2065 16847,2164 16946,2205  17042,2219 17141,2243 17241,2243 17323,2229 17422,2266 17481,2177 17600,2229  17638,2154 17700,2184 17748,2140 17861,2136 17960,2054 18080,2136 18186,2174  18296,2250 18426,2311 18542,2503 18642,2613 18755,2647 18872,2674 19002,2702  19111,2719 19248,2719 19399,2630 19512,2578 19660,2448 19803,2370 19954,2352 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline478"
+       style="fill:none" />
+    <polyline
+       points=" 16631,1989 16682,1958 16802,1962 16915,2085 16998,2143 17107,2154 17196,2188  17285,2184 17354,2167 17467,2150 17580,2126 17731,2143 17874,2061 17919,2027  18025,2040 18087,2140"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline480"
+       style="fill:none" />
+    <polyline
+       points=" 16436,1924 16562,1893 16693,1890 16775,1859 16864,1900 16973,2027 17056,2095  17158,2116 17237,2133 17368,2157"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline482"
+       style="fill:none" />
+    <polyline
+       points=" 16545,1955 16655,1951"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline484"
+       style="fill:none" />
+    <polyline
+       points=" 16487,1855 16562,1890"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline486"
+       style="fill:none" />
+    <polyline
+       points=" 16545,1688 16621,1698 16730,1811 16806,1842 16929,1849 17032,1979 17114,2034  17210,2058 17313,2078 17402,2102 17532,2119 17673,2136 17765,2119 17861,2034  17957,1979 18032,1996 18118,2092 18237,2088 18351,2195 18464,2273 18577,2342  18700,2482 18813,2575 19022,2626 19156,2654 19279,2633 19416,2503 19543,2459  19656,2459 19821,2366 19949,2366"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline488"
+       style="fill:none" />
+    <polyline
+       points=" 18232,2083 18385,2133 18512,2133 18622,2243 18738,2407 18841,2513 18964,2551  19060,2565 19187,2589 19300,2568 19423,2455 19509,2404 19581,2410 19697,2366  19793,2332 19862,2325 19964,2332"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline490"
+       style="fill:none" />
+    <polyline
+       points=" 16610,1547 16686,1564 16778,1640 16878,1753 16977,1855 17076,1945 17169,1965  17261,2006 17347,2023 17450,2044 17535,2068 17638,2088 17768,2116"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline492"
+       style="fill:none" />
+    <polyline
+       points=" 18399,2102 18580,2081 18673,2164 18776,2335 18872,2445 18981,2475 19101,2493  19214,2527 19375,2500 19498,2400 19598,2380 19732,2311 19790,2287 19896,2294  19999,2266"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline494"
+       style="fill:none" />
+    <polyline
+       points=" 16655,1520 16771,1643"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline496"
+       style="fill:none" />
+    <polyline
+       points=" 16710,1461 16802,1550 16933,1695 17032,1756 17107,1838 17213,1828 17323,1945  17415,1951 17508,1893 17600,1917 17707,2027 17854,2040"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline498"
+       style="fill:none" />
+    <polyline
+       points=" 16761,1393 16847,1482 16939,1530 17042,1516 17138,1581 17213,1619 17306,1554  17412,1571 17498,1626 17587,1602 17679,1688 17778,1746 17898,1873 17984,1883  18087,1890 18221,1859 18337,1828 18457,1890 18560,1945 18676,1985 18765,2071  18851,2157 18961,2253 19060,2332 19173,2383 19303,2335 19406,2342 19516,2325  19642,2339 19783,2284 19899,2290 19971,2260 20095,2239"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline500"
+       style="fill:none" />
+    <polyline
+       points=" 18615,2102 18707,2154 18810,2236 18923,2373 19029,2414 19128,2438 19252,2469  19437,2455"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline502"
+       style="fill:none" />
+    <polyline
+       points=" 16881,1619 16967,1612 17080,1612 17172,1705 17254,1763 17343,1780 17450,1811  17539,1763 17638,1760 17744,1862 17847,1958 17957,1975 18121,1996 18210,1955  18299,1999 18412,2044 18512,2034 18635,2068 18769,2071"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline504"
+       style="fill:none" />
+    <polyline
+       points=" 16823,1345 16902,1379 16987,1365 17059,1396 17169,1485 17265,1410 17347,1403  17453,1369 17546,1359 17652,1482 17741,1571 17830,1640 17933,1715 18029,1705  18142,1742 18237,1753 18330,1821 18484,1828 18539,1831 18597,1886 18703,1955  18807,1920 18933,1920 19046,1972 19149,2016 19262,2109 19368,2085 19482,2170  19608,2208 19697,2222 19797,2277 19920,2256 20012,2266 20074,2232 20112,2253 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline506"
+       style="fill:none" />
+    <polyline
+       points=" 18792,2092 18878,2112 18988,2136 19097,2177 19207,2215 19327,2250 19433,2284  19563,2284 19704,2229 19797,2195 19923,2208 20012,2188 20088,2208 20139,2198 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline508"
+       style="fill:none" />
+    <polyline
+       points=" 16891,1325 16970,1341 17011,1328 17103,1369 17223,1345 17313,1376 17405,1297  17484,1328 17577,1317 17683,1362 17785,1516 17874,1537 17984,1547 18077,1636  18172,1660 18272,1691 18382,1674 18474,1677 18570,1698 18683,1725 18789,1760  18906,1688 19008,1711 19111,1773 19221,1838 19331,1886 19437,1938 19540,2006  19649,2126 19756,2198 19783,2154 19845,2177 19910,2157 19982,2191 20136,2201 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline510"
+       style="fill:none" />
+    <polyline
+       points=" 18495,1831 18697,1831 18745,1818 18858,1849 18971,1814 19077,1845 19183,1920  19307,1969 19399,2016 19512,2081 19618,2157 19694,2229"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline512"
+       style="fill:none" />
+    <polyline
+       points=" 16987,1297 17073,1280 17138,1266 17210,1287 17343,1232 17443,1198 17532,1208  17638,1290 17731,1321 17820,1406 17926,1345 18029,1321 18125,1410 18221,1571  18327,1550 18412,1564 18512,1588 18611,1591 18707,1633 18827,1677 18950,1585  19026,1619 19156,1633 19259,1711 19365,1790 19474,1849 19560,1941 19673,2088  19776,2157 19896,2177 20026,2195 20132,2198"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline514"
+       style="fill:none" />
+    <polyline
+       points=" 16285,2465 16370,2575"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline516"
+       style="fill:none" />
+    <polyline
+       points=" 16987,1297 17124,1266 17207,1215 17316,1191 17384,1153 17488,1115 17597,1088  17689,1156 17758,1211 17867,1232 17967,1198 18059,1194 18166,1270 18255,1434  18351,1479 18443,1516 18522,1485 18628,1581 18724,1571 18847,1571 18933,1575  19029,1612 19139,1626 19262,1653 19396,1664 19505,1794 19601,1917 19701,2058  19803,2109 19913,2160 20136,2191"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline518"
+       style="fill:none" />
+    <polyline
+       points=" 19467,3986 19509,3832 19547,3723 19594,3541 19694,3133 19783,2805 19872,2537  19947,2359 19992,2294 20084,2318 20102,2246 20132,2229 20142,2184"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline520"
+       style="fill:none" />
+    <polyline
+       points=" 19310,3939 19348,3808 19402,3730 19440,3493 19495,3284 19560,3106 19591,2993  19636,2897 19656,2798 19690,2678 19738,2568 19766,2503 19810,2376 19845,2325  19889,2277 19930,2253 20019,2177"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline522"
+       style="fill:none" />
+    <polyline
+       points=" 19180,3890 19204,3798 19248,3658 19310,3469 19362,3240 19409,3219 19433,3092  19467,2972 19512,2849 19574,2660 19601,2571 19625,2530 19632,2459 19697,2428  19690,2366 19759,2301 19852,2273 19906,2150"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline524"
+       style="fill:none" />
+    <polyline
+       points=" 19008,3846 19063,3750 19101,3651 19159,3411 19221,3222 19259,3219 19293,3092  19399,2801 19451,2654 19516,2575 19547,2448 19581,2407 19646,2380 19687,2229  19732,2215 19797,2109"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline526"
+       style="fill:none" />
+    <polyline
+       points=" 18868,3815 18902,3699 18964,3582 19022,3360 19057,3219 19166,3181 19183,3055  19238,3000 19269,2880 19286,2805 19331,2698 19385,2636 19402,2524 19498,2414  19543,2318 19577,2277 19594,2195 19622,2160 19639,2109 19673,2088 19694,2040 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline528"
+       style="fill:none" />
+    <polyline
+       points=" 18741,3757 18755,3654 18834,3551 18868,3452 18930,3288 18978,3229 19005,3133  19063,3113 19084,3003 19125,2907 19170,2822 19217,2767 19231,2722 19279,2623  19303,2561 19334,2506 19368,2455 19406,2335 19430,2284 19485,2160 19509,2092  19533,1996 19553,1965 19605,1917"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline530"
+       style="fill:none" />
+    <polyline
+       points=" 18597,3709 18741,3407 18792,3339 18830,3222 18878,3157 18912,3092 18947,3024  19118,2722 19190,2589 19259,2465 19365,2088 19392,2010 19461,1845 19505,1804 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline532"
+       style="fill:none" />
+    <polyline
+       points=" 18447,3671 18998,2691 19019,2620 19077,2568 19094,2489 19152,2438 19170,2383  19293,1965 19355,1784 19389,1674"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline534"
+       style="fill:none" />
+    <polyline
+       points=" 18317,3623 18950,2540 18967,2472 19036,2410 19046,2318 19097,2177 19139,2030  19180,1917 19211,1835 19255,1718 19282,1664"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline536"
+       style="fill:none" />
+    <polyline
+       points=" 18186,3589 18443,3144 18481,3061 18529,3000 18717,2712 18755,2650 18796,2568  18841,2517 18858,2438 18923,2366 18954,2250 19002,2130 19039,1965 19067,1838  19108,1777 19156,1640 19200,1643"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline538"
+       style="fill:none" />
+    <polyline
+       points=" 18036,3548 18214,3250 18262,3041 18371,3030 18422,2894 18502,2787 18563,2736  18645,2609 18683,2472 18779,2339 18789,2222 18837,2154 18896,2116 18926,1927  18971,1818 18995,1711 19019,1602"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline540"
+       style="fill:none" />
+    <polyline
+       points=" 17902,3490 17953,3342 18022,3308 18087,3082 18135,3037 18176,2965 18268,3007  18282,2890 18392,2746 18443,2630 18498,2582 18542,2496 18567,2332 18615,2250  18652,2136 18703,2147 18762,2065 18813,1910 18858,1845 18899,1695 18940,1581 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline542"
+       style="fill:none" />
+    <polyline
+       points=" 17789,3390 17888,3089 17929,2979 18008,2918 18118,2925 18176,2818 18234,2784  18323,2486 18375,2355 18457,2266 18498,2136 18505,2037 18570,1934 18645,1825  18680,1708 18714,1643 18721,1578"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline544"
+       style="fill:none" />
+    <polyline
+       points=" 18611,2102 18669,1989 18697,1948 18748,1821 18792,1749 18837,1667 18847,1571 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline546"
+       style="fill:none" />
+    <polyline
+       points=" 17686,3421 17703,3264 17762,3195 17874,3027 17919,2894 17991,2890 18059,2774  18107,2729 18148,2568 18210,2445 18258,2311 18361,2195 18388,2136 18419,2044  18464,1903 18474,1825 18536,1828 18580,1691 18622,1581"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline548"
+       style="fill:none" />
+    <polyline
+       points=" 17522,3394 17655,3209 17707,3120 17765,3034 17820,2904 17874,2839 17950,2805  17994,2695 18046,2585 18142,2304 18183,2181 18231,2078 18275,2092 18299,1996  18337,1821 18447,1821 18477,1667 18512,1585 18529,1506"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline550"
+       style="fill:none" />
+    <polyline
+       points=" 17392,3370 17655,3014 17700,2856 17806,2667 17926,2479 17977,2325 18087,2140  18125,2088 18176,2071 18166,2003 18207,1955 18241,1852 18340,1818 18437,1513  18464,1506"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline552"
+       style="fill:none" />
+    <polyline
+       points=" 17272,3322 17340,3233 17395,3099 17470,3075 17528,2959 17580,2798 17638,2702  17683,2540 17755,2441 17809,2311 17857,2290 17905,2191 17940,2040 18012,1996  18111,1893 18214,1852 18231,1742 18282,1684 18323,1554 18351,1475"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline554"
+       style="fill:none" />
+    <polyline
+       points=" 18120,1884 18107,1992"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline556"
+       style="fill:none" />
+    <polyline
+       points=" 18255,1437 18172,1664 18132,1746 18080,1893 17994,1982"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline558"
+       style="fill:none" />
+    <polyline
+       points=" 18166,1276 18121,1403 18077,1633 18012,1722 17977,1886 17947,1982"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline560"
+       style="fill:none" />
+    <polyline
+       points=" 17131,3291 17285,3106 17408,2945 17460,2787 17532,2671 17593,2537 17635,2540  17703,2373 17748,2243 17809,2174 17902,2099 17909,2006"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline562"
+       style="fill:none" />
+    <polyline
+       points=" 17014,3257 17176,3065 17288,2921 17357,2733 17368,2681 17484,2644 17522,2555  17583,2414 17631,2236 17679,2184"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline564"
+       style="fill:none" />
+    <polyline
+       points=" 18046,1208 18025,1328 17977,1547 17933,1715 17898,1859 17847,1948 17789,2023  17758,2130"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline566"
+       style="fill:none" />
+    <polyline
+       points=" 17950,1205 17919,1362 17871,1540 17837,1636 17782,1753 17738,1862 17703,2034  17645,2088 17618,2130"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline568"
+       style="fill:none" />
+    <polyline
+       points=" 17522,2116 17553,2068 17583,1907 17635,1760 17679,1691 17738,1568 17785,1510  17813,1393 17867,1232"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline570"
+       style="fill:none" />
+    <polyline
+       points=" 17755,1215 17724,1321 17686,1359 17642,1475 17583,1605 17539,1763 17494,1900  17450,2040 17357,2160 17282,2184 17183,2332 17103,2421"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline572"
+       style="fill:none" />
+    <polyline
+       points=" 17350,2167 17319,2239 17282,2355 17248,2407"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline574"
+       style="fill:none" />
+    <polyline
+       points=" 17518,2332 17481,2445 17433,2534 17371,2636 17299,2719 17282,2787 16905,3226 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline576"
+       style="fill:none" />
+    <polyline
+       points=" 16782,3188 17258,2654 17306,2547 17378,2469 17419,2352 17539,2270"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline578"
+       style="fill:none" />
+    <polyline
+       points=" 17272,2438 17189,2462 17141,2623 16665,3154"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline580"
+       style="fill:none" />
+    <polyline
+       points=" 17083,2431 17049,2582 16548,3116"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline582"
+       style="fill:none" />
+    <polyline
+       points=" 16980,2479 16929,2565 16439,3085"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline584"
+       style="fill:none" />
+    <polyline
+       points=" 16336,3051 16833,2547 16898,2482 17014,2355 17090,2287 17141,2250 17199,2177  17244,2133 17361,2023 17402,1948 17457,1800 17501,1622 17542,1362 17600,1317  17645,1280 17673,1136"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline586"
+       style="fill:none" />
+    <polyline
+       points=" 17582,1090 17532,1215 17484,1328 17429,1383 17402,1571 17357,1787 17316,1934  17258,1999 16209,3017"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline588"
+       style="fill:none" />
+    <polyline
+       points=" 16120,2986 16268,2818 16343,2722 16504,2623 16648,2475 16761,2376 16823,2328  16884,2260 16946,2201 17001,2147 17069,2085 17176,1962 17210,1821 17258,1763  17299,1554 17350,1400 17405,1297 17436,1198 17498,1109"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline590"
+       style="fill:none" />
+    <polyline
+       points=" 16014,2959 16089,2856 16168,2791 16237,2722 16302,2585 16401,2582 16470,2524  16535,2459 16662,2345 16717,2277 16771,2174 16860,2167 16908,2081 16977,2023  17028,1972 17093,1955 17107,1831 17179,1715 17210,1609 17254,1420 17313,1369  17354,1225 17396,1146"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline592"
+       style="fill:none" />
+    <polyline
+       points=" 17306,1198 17237,1290 17207,1352 17169,1485 17134,1585 17076,1622 17018,1749  16973,1845 16922,1845 16857,1907 16799,1965 16737,2068 16679,2109 16614,2212  16559,2311 16422,2451 16353,2482 16278,2465 16206,2530 16148,2664 16042,2767  15956,2805 15891,2839"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline594"
+       style="fill:none" />
+    <polyline
+       points=" 15829,2856 15888,2811 15956,2743 16042,2671 16093,2540 16220,2524 16329,2421  16394,2352 16459,2253 16497,2184 16573,2119 16628,1996 16699,1955 16778,1852  16833,1835 16874,1760 16933,1698 16967,1612 17025,1516 17076,1417 17118,1372  17207,1280 17223,1211"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline596"
+       style="fill:none" />
+    <polyline
+       points=" 17110,1266 16998,1328 16984,1379 16943,1526 16895,1626"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline598"
+       style="fill:none" />
+    <polyline
+       points=" 16980,1300 16939,1335 16895,1390 16840,1475 16795,1550 16768,1653 16713,1800  16675,1893 16641,1948 16528,1951 16497,2105 16436,2191 16353,2222 16288,2311  16168,2445 16076,2489 16021,2561 15928,2644 15870,2698 15778,2774 15688,2852 "
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline600"
+       style="fill:none" />
+    <polyline
+       points=" 15569,2750 15658,2709 15757,2681 15829,2613 15918,2544 15983,2482 16058,2414  16144,2355 16206,2294 16261,2239 16336,2181 16408,2119 16443,1931 16586,1883  16621,1691 16679,1554 16658,1520 16651,1523"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline602"
+       style="fill:none" />
+    <polyline
+       points=" 15480,2715 15599,2712 15665,2640 15737,2585 15822,2510 15898,2451 15963,2373  16052,2325 16120,2266 16196,2215 16258,2147 16316,2116 16377,1969 16497,1855  16573,1561 16651,1537 16703,1458 16768,1396 16802,1338 16878,1307 16925,1338  16991,1290 17069,1273"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline604"
+       style="fill:none" />
+    <polyline
+       points=" 15475,2708 15578,2749 15680,2851 15782,2871 15884,2830 16007,2953 17439,3383  17521,3403 17664,3424 17787,3383 17909,3485 18032,3546 18196,3587 18318,3628  18441,3669 18584,3710 18748,3751 18871,3812 19014,3853 19177,3894 19300,3935  19464,3976"
+       stroke="#c3c3c3"
+       stroke-width="15px"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="polyline606"
+       style="fill:none" />
+  </g>
+  <polyline
+     points=" 44,2679 847,2679 848,1991 787,1855 733,1813 579,1781 534,1770 534,1519 493,1467  421,1437 345,1424 34,1424"
+     fill="#f3eed3"
+     id="polyline608"
+     transform="translate(-33,-18.818061)" />
+  <polygon
+     points="763,1820 614,1621 536,1508 536,1766 "
+     fill="#f3eed3"
+     id="polygon610"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 520,1495 815,1897"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline612"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 175,1425 40,1425 40,2685 850,2685 850,2055"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline614"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 40,1425 41,1425 46,1425 57,1425 75,1425 96,1425 118,1425 140,1425 159,1425 176,1425  192,1425 206,1425 220,1425 234,1425 248,1425 263,1425 278,1425 293,1426 309,1426  324,1427 339,1427 354,1428 367,1430 380,1431 393,1433 407,1435 421,1438 435,1441  450,1446 463,1451 476,1456 487,1463 497,1470 506,1477 513,1485 518,1494 523,1503  527,1514 530,1527 532,1540 533,1553 534,1567 535,1580 535,1593 535,1605 535,1617  535,1630 535,1643 535,1657 535,1670 535,1683 535,1696 535,1707 535,1716 535,1725  535,1733 535,1740 536,1747 537,1754 538,1759 540,1764 543,1769 547,1772 552,1775  558,1778 564,1779 572,1781 582,1782 593,1784 605,1785 617,1786 629,1788 641,1789  652,1791 663,1793 673,1795 683,1798 693,1801 704,1805 714,1810 724,1815 734,1820  743,1826 752,1831 760,1838 768,1844 777,1851 786,1860 794,1869 803,1880 811,1892  818,1905 825,1919 830,1934 835,1950 838,1964 841,1980 843,1997 845,2014 847,2032  848,2050 849,2067 849,2082 850,2096 850,2107 850,2116 850,2123 850,2127 850,2125  850,2117 850,2102 850,2083 850,2066 850,2057 850,2055"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline616"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="109"
+     y="2436.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text618"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="109"
+     y="2346.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text620"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="109"
+     y="2256.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text622"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="109"
+     y="2166.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text624"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="109"
+     y="2076.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text626"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="109"
+     y="1986.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text628"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="109"
+     y="1896.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text630"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 449,2409 1252,2409 1253,1721 1192,1585 1138,1543 984,1511 939,1500 939,1249  898,1197 826,1167 750,1154 439,1154"
+     fill="#f3eed3"
+     id="polyline632"
+     transform="translate(-33,-18.818061)" />
+  <polygon
+     points="1168,1550 1019,1351 941,1238 941,1496 "
+     fill="#f3eed3"
+     id="polygon634"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6985,-1451 6985,-1143 7015,-1102 7286,-1051"
+     fill="#dedede"
+     id="polyline640"
+     transform="translate(-33,-18.818061)" />
+  <polygon
+     points="6982,-1130 6970,-1471 6921,-1530 6788,-1570 6638,-1576 6317,-1576 6324,118 7404,116 7404,-831 7308,-1020 7248,-1051 6997,-1105 "
+     fill="#f3eed3"
+     id="polygon642"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="6935"
+     y="5182.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text656"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Solver</text>
+  <text
+     xml:space="preserve"
+     x="6935"
+     y="4282.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text658"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Metamorphism</text>
+  <text
+     xml:space="preserve"
+     x="6935"
+     y="3394.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text660"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Water Transport</text>
+  <text
+     xml:space="preserve"
+     x="6935"
+     y="2449.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text662"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Phase Change</text>
+  <text
+     xml:space="preserve"
+     x="7932"
+     y="6146.1821"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="end"
+     id="text664"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">SnowpackCore</text>
+  <polyline
+     points=" 3967,2413 3967,2844"
+     clip-path="url(#cp0)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline671"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 4029,2612 3967,2776 3905,2612"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline673"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 3967,3337 3967,3768"
+     clip-path="url(#cp1)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline680"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 4029,3536 3967,3700 3905,3536"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline682"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 3967,4260 3967,4691"
+     clip-path="url(#cp2)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline689"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 4029,4459 3967,4623 3905,4459"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline691"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 3967,5215 3967,5646"
+     clip-path="url(#cp3)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline698"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 4029,5414 3967,5578 3905,5414"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline700"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="3903"
+     y="4057.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text702"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Filter Data</text>
+  <text
+     xml:space="preserve"
+     x="3965"
+     y="4980.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text704"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Resample Data</text>
+  <text
+     xml:space="preserve"
+     x="3903"
+     y="5904.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text706"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Generate Data</text>
+  <text
+     xml:space="preserve"
+     x="3965"
+     y="3102.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text708"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Raw data editing</text>
+  <text
+     xml:space="preserve"
+     x="3965"
+     y="2179.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text710"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">MeteoIO plugin</text>
+  <text
+     xml:space="preserve"
+     x="9230"
+     y="6082.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text712"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Canopy</text>
+  <text
+     xml:space="preserve"
+     x="9230"
+     y="4167.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text714"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Stability</text>
+  <text
+     xml:space="preserve"
+     x="9230"
+     y="2253.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text716"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Drift</text>
+  <text
+     xml:space="preserve"
+     x="8022"
+     y="7001.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text718"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">Snowpack Plugins</text>
+  <polyline
+     points=" 925,1225 1220,1627"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline720"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 580,1155 445,1155 445,2415 1255,2415 1255,1785"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline722"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 445,1155 446,1155 451,1155 462,1155 480,1155 501,1155 523,1155 545,1155 564,1155  581,1155 597,1155 611,1155 625,1155 639,1155 653,1155 668,1155 683,1155 698,1156  714,1156 729,1157 744,1157 759,1158 772,1160 785,1161 798,1163 812,1165 826,1168  840,1171 855,1176 868,1181 881,1186 892,1193 902,1200 911,1207 918,1215 923,1224  928,1233 932,1244 935,1257 937,1270 938,1283 939,1297 940,1310 940,1323 940,1335  940,1347 940,1360 940,1373 940,1387 940,1400 940,1413 940,1426 940,1437 940,1446  940,1455 940,1463 940,1470 941,1477 942,1484 943,1489 945,1494 948,1499 952,1502  957,1505 963,1508 969,1509 977,1511 987,1512 998,1514 1010,1515 1022,1516 1034,1518  1046,1519 1057,1521 1068,1523 1078,1525 1088,1528 1098,1531 1109,1535 1119,1540  1129,1545 1139,1550 1148,1556 1157,1561 1165,1568 1173,1574 1182,1581 1191,1590  1199,1599 1208,1610 1216,1622 1223,1635 1230,1649 1235,1664 1240,1680 1243,1694  1246,1710 1248,1727 1250,1744 1252,1762 1253,1780 1254,1797 1254,1812 1255,1826  1255,1837 1255,1846 1255,1853 1255,1857 1255,1855 1255,1847 1255,1832 1255,1813  1255,1796 1255,1787 1255,1785"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline724"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="514"
+     y="2166.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text726"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="514"
+     y="2076.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text728"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="514"
+     y="1986.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text730"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="514"
+     y="1896.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text732"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="514"
+     y="1806.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text734"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="514"
+     y="1716.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text736"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="514"
+     y="1626.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text738"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="822"
+     y="3536.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text740"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">meteorological</text>
+  <text
+     xml:space="preserve"
+     x="822"
+     y="3806.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text742"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">forcings</text>
+  <g
+     id="g2627"
+     transform="translate(-33,-18.818061)">
+    <polyline
+       points=" 270,7290 270,7110 540,7110 540,6930 450,6930 450,6750 675,6750 675,6570 810,6570  810,6390 540,6390 540,6210 990,6210 990,6030 720,6030 720,5850 855,5850 855,5670  900,5670 900,5490 1125,5490 1125,5310 1260,5310"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline636"
+       style="fill:none" />
+    <polyline
+       points=" 180,7290 180,7287 181,7281 182,7270 184,7252 187,7229 191,7199 195,7164 200,7125  205,7082 211,7038 216,6993 222,6949 227,6906 233,6864 238,6825 243,6789 248,6755  253,6723 258,6693 262,6666 267,6640 271,6615 276,6592 280,6569 285,6548 291,6523  297,6498 303,6474 309,6450 316,6426 323,6403 330,6379 337,6356 345,6333 352,6310  360,6288 368,6266 375,6245 383,6224 390,6204 397,6185 404,6167 411,6149 417,6131  423,6115 429,6099 435,6083 442,6063 448,6043 455,6024 462,6003 468,5983 475,5962  482,5941 489,5919 496,5898 503,5877 510,5856 518,5836 525,5817 532,5798 540,5780  547,5763 555,5746 563,5730 571,5714 579,5698 589,5682 598,5666 609,5650 620,5634  631,5617 643,5601 656,5585 668,5570 681,5555 693,5540 706,5526 718,5513 730,5501  742,5489 754,5478 765,5468 778,5456 791,5445 805,5434 819,5423 835,5411 853,5399  872,5386 892,5373 913,5359 934,5346 953,5333 969,5323 980,5316 987,5312 990,5310 "
+       stroke="#00008f"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline638"
+       style="fill:none" />
+    <polyline
+       points=" 90,5130 90,7335"
+       clip-path="url(#cp4)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline749"
+       style="fill:none" />
+    <polyline
+       points=" 23,5356 90,5176 158,5356"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline751"
+       style="fill:none" />
+    <polyline
+       points=" 0,7290 1350,7290"
+       clip-path="url(#cp5)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline758"
+       style="fill:none" />
+    <polyline
+       points=" 1124,7223 1304,7290 1124,7358"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline760"
+       style="fill:none" />
+  </g>
+  <text
+     xml:space="preserve"
+     x="641"
+     y="7766.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text762"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">initial</text>
+  <text
+     xml:space="preserve"
+     x="641"
+     y="8036.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text764"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">snow profile</text>
+  <polyline
+     points=" 6501,-1577 6320,-1577 6320,115 7408,115 7408,-731"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline766"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6965,-1483 7361,-943"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline768"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6320,-1577 6321,-1577 6325,-1577 6335,-1577 6352,-1577 6374,-1577 6400,-1577  6425,-1577 6450,-1577 6473,-1577 6494,-1577 6513,-1577 6530,-1577 6546,-1577  6562,-1577 6578,-1577 6594,-1577 6610,-1577 6628,-1577 6645,-1577 6663,-1576  6681,-1576 6699,-1575 6716,-1574 6733,-1573 6749,-1572 6764,-1570 6779,-1569  6793,-1567 6809,-1565 6825,-1561 6841,-1558 6857,-1554 6873,-1549 6888,-1543  6902,-1536 6915,-1529 6927,-1522 6937,-1514 6946,-1506 6954,-1497 6960,-1487  6966,-1476 6970,-1465 6974,-1452 6977,-1438 6980,-1423 6982,-1408 6983,-1393  6983,-1378 6984,-1363 6984,-1349 6984,-1335 6984,-1321 6984,-1307 6984,-1292  6984,-1277 6984,-1262 6984,-1247 6984,-1233 6984,-1219 6984,-1206 6984,-1194  6984,-1184 6984,-1174 6984,-1165 6984,-1157 6985,-1149 6985,-1142 6986,-1135  6988,-1128 6991,-1122 6994,-1117 6998,-1113 7002,-1109 7008,-1106 7014,-1104  7024,-1101 7035,-1099 7047,-1097 7062,-1096 7078,-1094 7094,-1092 7111,-1091  7127,-1089 7142,-1086 7156,-1084 7167,-1081 7179,-1078 7190,-1075 7202,-1071  7214,-1066 7226,-1061 7237,-1055 7248,-1049 7259,-1043 7269,-1036 7278,-1030  7288,-1023 7297,-1016 7306,-1008 7316,-999 7326,-989 7336,-978 7345,-966 7354,-952  7363,-938 7370,-922 7377,-906 7383,-890 7388,-872 7392,-855 7395,-838 7398,-819  7400,-799 7402,-779 7404,-758 7405,-737 7406,-718 7407,-700 7407,-683 7408,-669  7408,-657 7408,-647 7408,-640 7408,-634 7408,-636 7408,-647 7408,-667 7408,-693  7408,-716 7408,-729 7408,-731"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline770"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-1184.8181"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text772"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">KEY=value</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-1071.8181"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text774"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">KEY2=value</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-958.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text776"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">...</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-731.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text778"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">KEY=value</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-618.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text780"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">ANOTHER_KEY=value</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-1297.8181"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text782"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">[Input]</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-844.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text784"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">[Filters]</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-505.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text786"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">...</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-391.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text788"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">[Interpolations1D]</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-278.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text790"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">...</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-165.81805"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text792"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">[Interpolations2D]</text>
+  <text
+     xml:space="preserve"
+     x="6357"
+     y="-51.818062"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="72px"
+     text-anchor="start"
+     id="text794"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:99.1994px;font-family:Times;-inkscape-font-specification:'Times, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">...</text>
+  <text
+     xml:space="preserve"
+     x="7527"
+     y="-823.81805"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="start"
+     id="text796"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">configuration</text>
+  <text
+     xml:space="preserve"
+     x="7527"
+     y="-511.81805"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="start"
+     id="text798"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">file &quot;io.ini&quot;</text>
+  <text
+     xml:space="preserve"
+     x="12184"
+     y="2137.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="180px"
+     text-anchor="middle"
+     id="text800"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Snowdrift</text>
+  <text
+     xml:space="preserve"
+     x="12184"
+     y="3335.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="180px"
+     text-anchor="middle"
+     id="text802"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">EBalance</text>
+  <text
+     xml:space="preserve"
+     x="12184"
+     y="4532.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="180px"
+     text-anchor="middle"
+     id="text804"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">runoff</text>
+  <text
+     xml:space="preserve"
+     x="12184"
+     y="5711.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="normal"
+     font-weight="bold"
+     font-size="180px"
+     text-anchor="middle"
+     id="text806"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:247.999px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">SnowpackInterface</text>
+  <g
+     id="g2601"
+     transform="translate(-33,-18.818061)">
+    <polygon
+       points="11292,11298 11321,10771 11356,10952 11403,11041 11435,11089 11435,10921 11460,10972 11496,11016 11505,10984 11550,11016 11622,11048 11626,10958 11658,10978 11661,10898 11695,10933 11712,10648 11730,10750 11737,10480 11749,10498 11759,10594 11791,10654 11816,10448 11835,10524 11879,10549 11889,10206 11914,10365 11946,10448 11968,10467 11984,10365 12028,10470 12124,10527 12206,10549 12231,10464 12291,10505 12327,10524 12339,10495 12393,10505 12406,10289 12428,10378 12469,10410 12479,9985 12489,10130 12507,10197 12526,10213 12529,9791 12539,9699 12561,9864 12586,9953 12625,10058 12672,10102 12720,10127 12717,9972 12751,10042 12784,10096 12841,10159 12847,9905 12872,9991 12904,10061 12955,10115 12980,9452 12992,9664 13012,9785 13063,9864 13085,9868 13097,9569 13110,9727 13158,9778 13221,9842 13244,9848 13275,9512 13284,9667 13332,9741 13405,9972 13418,11797 11077,11806 11083,11590 11093,11612 11118,11336 11140,11434 11191,11485 11235,11545 11277,11559 "
+       fill="#00d100"
+       stroke="#00d100"
+       stroke-width="8px"
+       id="polygon2" />
+    <polygon
+       points="11391,11368 11423,11384 11417,11222 11388,11156 11363,10994 11442,11089 11499,11130 11502,11012 11689,11105 11692,11022 11765,11105 11854,11139 11851,10994 11882,11019 11863,10918 11825,10844 11803,10746 11851,10807 11902,10832 11911,10705 11996,10753 11990,10696 11965,10600 11962,10502 11946,10467 12025,10552 12028,10480 12136,10530 12200,10543 12263,10566 12266,10492 12342,10530 12387,10546 12384,10502 12460,10549 12460,10416 12543,10473 12600,10534 12597,10438 12580,10372 12586,10283 12615,10308 12615,10245 12590,10153 12615,10166 12615,10130 12600,10102 12603,10010 12672,10112 12723,10153 12745,10156 12739,10112 12847,10181 12898,10197 12904,10086 12955,10140 13018,10194 13116,10245 13100,10169 13097,10070 13053,10001 13028,9883 13066,9848 13110,9931 13113,9868 13116,9794 13123,9744 13205,9823 13418,9985 13453,11790 11137,11783 11153,11502 11153,11460 11210,11520 11283,11574 11366,11596 11369,11434 11394,11448 "
+       fill="#87cfff"
+       stroke="#87cfff"
+       stroke-width="8px"
+       id="polygon4" />
+    <polygon
+       points="13139,10838 13139,10879 13383,10911 13482,10924 13488,10768 13367,10765 13180,10733 13025,10692 12885,10667 12682,10635 12546,10588 12412,10527 12409,10540 12273,10495 12282,10524 12352,10540 12345,10588 12266,10569 12162,10543 12076,10502 12079,10527 12257,10588 12285,10606 12276,10645 12054,10581 12054,10588 12054,10632 12146,10648 12263,10683 12263,10721 12374,10724 12697,10768 12935,10800 "
+       fill="#0000ff"
+       stroke="#0000ff"
+       stroke-width="8px"
+       id="polygon6" />
+    <polygon
+       points="13386,10489 13241,10448 13164,10416 13060,10365 12983,10318 12834,10274 12838,10305 12996,10362 13123,10429 13123,10448 13298,10505 13392,10527 13500,10543 13494,10492 "
+       fill="#0000ff"
+       stroke="#0000ff"
+       stroke-width="8px"
+       id="polygon8" />
+    <polygon
+       points="13253,11295 13421,11311 13536,11304 13522,11279 13377,11286 13091,11273 12850,11253 12597,11244 12387,11232 12133,11225 11930,11200 11813,11159 11715,11092 11622,11051 11550,11022 11499,11025 11556,11076 11698,11114 11806,11178 11968,11222 12146,11238 12444,11253 12720,11263 13028,11279 "
+       fill="#0000ff"
+       stroke="#0000ff"
+       stroke-width="8px"
+       id="polygon10" />
+    <polygon
+       points="12409,11207 12600,11196 12609,11174 12498,11171 12409,11156 12406,11108 12549,11124 12514,11073 12514,11038 12495,11009 12365,11006 12238,10972 12155,10958 11987,10921 11867,10870 11873,10886 11876,11012 11987,11060 11981,11111 11835,11063 11838,11130 11981,11168 12187,11190 "
+       fill="#ffbfbf"
+       stroke="#ffbfbf"
+       stroke-width="8px"
+       id="polygon12" />
+    <polygon
+       points="12774,10350 12694,10308 12603,10242 12586,10271 12571,10274 12526,10172 12529,10172 12536,10220 12577,10328 12637,10381 12755,10426 12809,10441 12805,10410 12771,10391 "
+       fill="#ffbfbf"
+       stroke="#ffbfbf"
+       stroke-width="8px"
+       id="polygon14" />
+    <polygon
+       points="13180,10086 13072,9982 13046,9950 13034,9911 13031,9947 13072,10016 13091,10086 13104,10172 13107,10245 13380,10359 13370,10178 "
+       fill="#ffbfbf"
+       stroke="#ffbfbf"
+       stroke-width="8px"
+       id="polygon16" />
+    <polygon
+       points="12847,11729 13316,11739 13437,11729 13443,11786 14059,11793 13922,10784 13770,10620 13735,10562 13735,10438 13703,10362 13675,10274 13605,10232 13516,10143 13424,10070 13424,9979 13377,9858 13355,9763 13284,9667 13278,9750 13335,9829 13348,9886 13351,9972 13278,9915 13230,9842 13120,9734 13120,9753 13167,9839 13177,9880 13116,9817 13097,9772 13094,9801 13161,9886 13218,9925 13227,9994 13116,9922 13056,9854 13053,9880 13009,9741 12999,9814 13028,9874 13034,9918 13072,10001 13170,10070 13272,10130 13367,10178 13377,10251 13377,10362 13113,10257 13018,10184 12913,10112 12888,10083 12885,10153 12946,10188 12942,10220 12904,10213 12793,10163 12742,10112 12745,10153 12758,10188 12790,10203 12796,10229 12888,10260 13034,10328 13136,10394 13316,10448 13389,10476 13389,10724 13408,10743 13405,10972 13412,11238 13421,11502 13421,11625 13129,11625 12663,11612 12121,11609 11772,11599 11499,11584 11391,11574 11283,11542 11273,11565 11238,11555 11188,11523 11172,11505 11169,11545 11216,11584 11219,11609 11232,11701 11530,11726 11784,11726 12393,11729 "
+       fill="#ff0000"
+       stroke="#ff0000"
+       stroke-width="8px"
+       id="polygon18" />
+    <polyline
+       points=" 11042,9240 11042,11943"
+       clip-path="url(#cp6)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline813"
+       style="fill:none" />
+    <polyline
+       points=" 10975,9466 11042,9286 11110,9466"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline815"
+       style="fill:none" />
+    <polyline
+       points=" 10952,11808 14292,11808"
+       clip-path="url(#cp7)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline822"
+       style="fill:none" />
+    <polyline
+       points=" 14066,11741 14246,11808 14066,11876"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline824"
+       style="fill:none" />
+  </g>
+  <text
+     xml:space="preserve"
+     x="12589"
+     y="12131.182"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text826"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">snow profiles</text>
+  <text
+     xml:space="preserve"
+     x="12589"
+     y="12379.182"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text828"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">timeline</text>
+  <g
+     id="g2611"
+     transform="translate(-33,-18.818061)">
+    <polyline
+       points=" 6075,11380 6076,11376 6079,11369 6083,11355 6090,11336 6098,11313 6107,11286  6117,11258 6127,11230 6136,11203 6145,11179 6154,11157 6162,11138 6169,11121  6176,11107 6183,11094 6189,11083 6196,11074 6202,11065 6209,11057 6216,11050  6223,11044 6230,11039 6238,11035 6245,11032 6253,11029 6261,11028 6268,11027  6275,11028 6282,11029 6289,11030 6295,11033 6301,11036 6307,11039 6312,11043  6318,11048 6328,11059 6338,11072 6347,11086 6356,11099 6363,11110 6370,11117  6375,11118 6380,11114 6383,11108 6385,11099 6388,11088 6391,11074 6395,11058  6398,11041 6402,11023 6407,11006 6411,10989 6416,10974 6422,10960 6428,10949  6437,10937 6447,10928 6457,10920 6469,10912 6481,10906 6494,10900 6505,10893  6515,10886 6524,10877 6532,10868 6537,10859 6541,10849 6544,10838 6547,10825  6550,10811 6553,10796 6555,10780 6557,10764 6559,10748 6561,10732 6563,10716  6565,10701 6567,10686 6570,10672 6573,10656 6576,10641 6580,10626 6585,10612  6590,10599 6595,10587 6601,10577 6607,10569 6612,10564 6617,10560 6622,10560  6627,10561 6631,10565 6635,10571 6640,10580 6644,10591 6649,10604 6653,10619  6658,10636 6662,10653 6667,10670 6671,10687 6675,10704 6679,10721 6684,10737  6688,10753 6693,10770 6698,10787 6703,10805 6709,10822 6714,10838 6719,10854  6723,10869 6727,10882 6730,10895 6734,10906 6736,10917 6739,10927 6741,10937  6744,10947 6747,10957 6751,10966 6756,10975 6761,10983 6767,10990 6774,10997  6782,11003 6791,11009 6801,11014 6814,11019 6827,11024 6842,11029 6858,11033  6874,11035 6890,11037 6905,11038 6919,11037 6931,11036 6942,11032 6950,11028  6957,11022 6962,11014 6966,11005 6969,10994 6970,10981 6971,10967 6971,10953  6971,10938 6971,10923 6972,10908 6972,10894 6974,10880 6976,10866 6980,10852  6984,10837 6990,10823 6997,10808 7005,10793 7014,10778 7023,10765 7033,10752  7044,10740 7055,10729 7066,10718 7078,10708 7090,10699 7104,10690 7118,10681  7133,10674 7148,10667 7163,10661 7178,10657 7192,10655 7204,10654 7216,10654  7227,10656 7236,10660 7246,10665 7255,10672 7263,10681 7272,10691 7280,10702  7287,10715 7294,10727 7301,10741 7307,10754 7312,10766 7318,10779 7323,10790  7328,10800 7333,10811 7338,10822 7344,10832 7350,10841 7356,10850 7362,10857  7368,10864 7374,10868 7380,10871 7386,10872 7392,10871 7398,10869 7405,10864  7411,10858 7418,10849 7425,10838 7433,10826 7441,10812 7449,10796 7457,10779  7466,10761 7474,10742 7481,10724 7489,10706 7496,10687 7503,10669 7509,10653  7516,10637 7522,10621 7528,10604 7535,10586 7542,10569 7549,10551 7556,10533  7563,10516 7569,10499 7576,10483 7583,10467 7589,10453 7595,10439 7601,10426  7607,10414 7615,10399 7623,10384 7631,10370 7639,10357 7648,10344 7657,10333  7665,10324 7673,10316 7681,10309 7689,10305 7696,10302 7702,10301 7711,10302  7721,10306 7731,10313 7741,10322 7751,10331 7761,10341 7770,10349 7780,10357  7787,10360 7794,10363 7801,10365 7809,10367 7817,10367 7825,10366 7833,10365  7840,10362 7847,10359 7853,10355 7858,10350 7863,10344 7869,10334 7874,10322  7878,10310 7882,10298 7885,10288 7889,10282 7892,10280 7897,10282 7900,10287  7904,10294 7908,10304 7913,10316 7917,10331 7923,10348 7928,10366 7933,10385  7937,10405 7941,10426 7945,10446 7949,10466 7951,10481 7953,10497 7955,10513  7956,10530 7958,10547 7960,10565 7962,10583 7963,10602 7965,10620 7967,10638  7968,10656 7970,10672 7972,10689 7974,10704 7977,10719 7979,10734 7982,10750  7986,10766 7990,10782 7995,10799 8000,10815 8006,10832 8012,10849 8019,10865  8026,10881 8033,10896 8040,10910 8048,10924 8055,10937 8063,10950 8072,10964  8082,10979 8093,10993 8104,11008 8116,11022 8127,11035 8139,11047 8150,11058  8160,11068 8169,11075 8177,11081 8184,11085 8191,11088 8198,11088 8204,11087  8210,11083 8217,11078 8223,11071 8231,11063 8239,11053 8248,11044 8258,11034  8268,11025 8279,11017 8292,11007 8306,10998 8320,10989 8336,10981 8351,10974  8366,10968 8381,10964 8394,10961 8405,10960 8416,10961 8427,10964 8437,10970  8446,10979 8455,10988 8464,10999 8473,11010 8482,11019 8492,11028 8502,11034  8514,11037 8525,11038 8537,11037 8551,11035 8566,11032 8581,11027 8597,11022  8613,11017 8628,11012 8643,11007 8656,11004 8667,11001 8677,11001 8685,11001  8692,11004 8699,11008 8704,11014 8709,11022 8713,11032 8717,11042 8720,11054  8724,11067 8727,11080 8731,11093 8735,11107 8739,11119 8743,11132 8748,11146  8754,11160 8760,11175 8767,11191 8775,11206 8782,11221 8790,11236 8798,11250  8806,11262 8814,11274 8821,11285 8829,11295 8835,11302 8841,11308 8847,11314  8853,11320 8859,11325 8866,11329 8872,11333 8879,11336 8886,11339 8892,11340  8898,11341 8904,11341 8910,11340 8915,11338 8921,11336 8925,11332 8930,11328  8934,11323 8940,11316 8945,11307 8950,11296 8955,11284 8960,11270 8964,11255  8969,11239 8974,11222 8978,11205 8982,11187 8987,11170 8991,11153 8995,11137  8999,11121 9003,11104 9007,11088 9012,11071 9016,11054 9022,11036 9027,11018  9033,11000 9039,10982 9044,10964 9050,10947 9056,10930 9062,10914 9068,10899  9074,10884 9079,10869 9086,10854 9092,10838 9100,10821 9108,10802 9117,10781  9127,10758 9138,10734 9148,10711 9158,10691 9165,10676 9169,10667 9171,10663  9171,10662"
+       stroke="#00008f"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline644"
+       style="fill:none" />
+    <polyline
+       points=" 6085,11728 6088,11727 6095,11725 6107,11721 6124,11716 6144,11710 6166,11704  6189,11698 6211,11692 6232,11686 6251,11682 6269,11678 6286,11674 6303,11672  6319,11669 6336,11667 6350,11666 6366,11664 6382,11663 6399,11662 6416,11661  6434,11661 6453,11660 6473,11660 6492,11659 6512,11659 6532,11659 6552,11659  6571,11659 6590,11658 6608,11658 6626,11658 6644,11658 6661,11658 6679,11658  6696,11657 6714,11657 6732,11656 6751,11655 6770,11654 6790,11653 6810,11652  6830,11651 6850,11650 6869,11649 6889,11647 6908,11646 6926,11645 6944,11643  6962,11641 6979,11640 6996,11638 7015,11636 7034,11634 7054,11632 7074,11630  7095,11627 7116,11624 7137,11621 7159,11618 7179,11614 7200,11610 7219,11606  7238,11601 7256,11596 7272,11592 7288,11587 7303,11581 7320,11575 7336,11567  7352,11559 7368,11551 7383,11541 7398,11531 7413,11520 7427,11509 7441,11497  7453,11485 7464,11474 7475,11462 7484,11450 7493,11438 7502,11426 7510,11414  7518,11400 7526,11386 7534,11372 7542,11357 7549,11341 7557,11325 7565,11310  7572,11295 7579,11280 7586,11266 7593,11252 7600,11239 7607,11225 7615,11212  7623,11198 7631,11184 7640,11170 7649,11157 7659,11143 7669,11130 7679,11118  7688,11107 7698,11096 7707,11087 7715,11079 7724,11072 7734,11064 7744,11057  7755,11052 7766,11046 7778,11042 7790,11038 7803,11035 7815,11032 7827,11030  7840,11029 7852,11027 7864,11026 7876,11025 7890,11024 7904,11022 7919,11021  7934,11019 7950,11018 7967,11017 7983,11015 7999,11014 8014,11013 8028,11012  8042,11011 8056,11010 8070,11009 8085,11008 8100,11006 8115,11005 8130,11003  8145,11002 8159,11000 8173,10998 8186,10995 8198,10993 8210,10990 8221,10987  8233,10984 8245,10980 8257,10975 8269,10971 8281,10966 8293,10960 8305,10955  8317,10950 8328,10944 8339,10939 8350,10934 8360,10929 8371,10924 8383,10918  8395,10913 8408,10907 8421,10902 8434,10897 8447,10893 8459,10889 8471,10885  8482,10882 8493,10880 8506,10879 8520,10877 8534,10877 8548,10878 8563,10879  8578,10880 8593,10883 8607,10885 8620,10888 8634,10891 8645,10894 8656,10897  8668,10901 8681,10905 8695,10909 8708,10915 8722,10920 8736,10927 8749,10933  8762,10941 8775,10948 8787,10957 8797,10964 8808,10973 8819,10982 8831,10992  8843,11002 8856,11013 8869,11025 8881,11036 8894,11048 8906,11059 8918,11070  8930,11080 8942,11089 8953,11099 8966,11109 8980,11119 8994,11128 9008,11138  9022,11147 9037,11156 9051,11164 9064,11172 9077,11179 9088,11184 9098,11189  9108,11194 9120,11199 9131,11204 9143,11208 9155,11212 9167,11215 9176,11218  9181,11219 9182,11219"
+       stroke="#008f8f"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline646"
+       style="fill:none" />
+    <polyline
+       points=" 6241,11862 6241,11859 6242,11851 6244,11838 6246,11819 6249,11793 6253,11761  6257,11726 6262,11688 6267,11648 6272,11609 6276,11571 6281,11536 6285,11502  6289,11471 6292,11442 6296,11416 6299,11391 6302,11368 6305,11346 6308,11325  6311,11305 6314,11283 6317,11261 6321,11240 6324,11218 6328,11196 6331,11174  6335,11152 6339,11130 6343,11108 6346,11086 6350,11064 6354,11043 6358,11021  6362,11001 6366,10981 6370,10961 6373,10942 6377,10923 6381,10904 6385,10885  6388,10867 6392,10847 6396,10828 6400,10808 6404,10787 6409,10766 6413,10745  6418,10723 6422,10701 6427,10679 6432,10657 6437,10635 6441,10615 6446,10594  6451,10575 6455,10556 6460,10538 6464,10521 6469,10505 6473,10489 6478,10470  6484,10451 6489,10433 6496,10414 6502,10395 6510,10374 6518,10352 6526,10329  6535,10306 6544,10283 6552,10263 6559,10246 6564,10234 6567,10226 6568,10223  6569,10222 6573,10213 6580,10198 6590,10180 6599,10165 6607,10155 6614,10149  6621,10148 6626,10149 6633,10152 6640,10159 6649,10168 6659,10180 6670,10194  6680,10208 6687,10218 6690,10222 6691,10223 6692,10226 6695,10234 6700,10246  6707,10263 6715,10283 6724,10306 6733,10329 6741,10352 6749,10374 6757,10395  6763,10414 6770,10433 6775,10451 6781,10470 6786,10489 6790,10505 6795,10521  6799,10538 6804,10556 6808,10575 6813,10594 6818,10615 6822,10635 6827,10657  6832,10679 6837,10701 6841,10723 6846,10745 6850,10766 6855,10787 6859,10808  6863,10828 6867,10847 6871,10867 6875,10885 6878,10904 6882,10923 6886,10942  6889,10961 6893,10981 6897,11001 6901,11021 6905,11043 6909,11064 6913,11086  6916,11108 6920,11130 6924,11152 6928,11174 6931,11196 6935,11218 6938,11240  6942,11261 6945,11283 6948,11305 6951,11325 6954,11346 6957,11368 6960,11391  6963,11416 6967,11442 6970,11471 6974,11502 6978,11536 6983,11571 6987,11609  6992,11648 6997,11688 7002,11726 7006,11761 7010,11793 7013,11819 7015,11838  7017,11851 7018,11859 7018,11862"
+       stroke="#ffd600"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline648"
+       style="fill:none" />
+    <polyline
+       points=" 8726,11835 8726,11832 8725,11824 8723,11811 8721,11792 8718,11766 8714,11734  8710,11699 8705,11661 8700,11621 8695,11582 8691,11544 8686,11509 8682,11475  8678,11444 8675,11415 8671,11389 8668,11364 8665,11341 8662,11319 8659,11298  8656,11278 8653,11256 8650,11234 8646,11213 8643,11191 8639,11169 8636,11147  8632,11125 8628,11103 8624,11081 8621,11059 8617,11037 8613,11016 8609,10994  8605,10974 8601,10954 8597,10934 8594,10915 8590,10896 8586,10877 8583,10858  8579,10840 8575,10820 8571,10801 8567,10781 8563,10760 8558,10739 8554,10718  8549,10696 8545,10674 8540,10652 8535,10630 8530,10608 8526,10588 8521,10567  8516,10548 8512,10529 8507,10511 8503,10494 8498,10478 8494,10462 8489,10443  8483,10424 8478,10406 8471,10387 8465,10368 8457,10347 8449,10325 8441,10302  8432,10279 8423,10256 8415,10236 8408,10219 8403,10207 8400,10199 8399,10196  8398,10195 8394,10186 8387,10171 8377,10153 8368,10138 8360,10128 8353,10122  8347,10121 8341,10122 8334,10125 8327,10132 8318,10141 8308,10153 8297,10167  8287,10181 8280,10191 8277,10195 8276,10196 8275,10199 8272,10207 8267,10219  8260,10236 8252,10256 8243,10279 8234,10302 8226,10325 8218,10347 8210,10368  8204,10387 8197,10406 8192,10424 8186,10443 8181,10462 8177,10478 8172,10494  8168,10511 8163,10529 8159,10548 8154,10567 8149,10588 8145,10608 8140,10630  8135,10652 8130,10674 8126,10696 8121,10718 8117,10739 8112,10760 8108,10781  8104,10801 8100,10820 8096,10840 8093,10858 8089,10877 8085,10896 8081,10915  8078,10934 8074,10954 8070,10974 8066,10994 8062,11016 8058,11037 8054,11059  8051,11081 8047,11103 8043,11125 8039,11147 8036,11169 8032,11191 8029,11213  8025,11234 8022,11256 8019,11278 8016,11298 8013,11319 8010,11341 8007,11364  8004,11389 8000,11415 7997,11444 7993,11475 7989,11509 7984,11544 7980,11582  7975,11621 7970,11661 7965,11699 7961,11734 7957,11766 7954,11792 7952,11811  7950,11824 7949,11832 7949,11835"
+       stroke="#ffd600"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline650"
+       style="fill:none" />
+    <polyline
+       points=" 6078,10115 6078,11888"
+       clip-path="url(#cp8)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline835"
+       style="fill:none" />
+    <polyline
+       points=" 6011,10341 6078,10161 6146,10341"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline837"
+       style="fill:none" />
+    <polyline
+       points=" 5988,11843 9231,11843"
+       clip-path="url(#cp9)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline844"
+       style="fill:none" />
+    <polyline
+       points=" 9005,11776 9185,11843 9005,11911"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline846"
+       style="fill:none" />
+  </g>
+  <text
+     xml:space="preserve"
+     x="7577"
+     y="12133.182"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text848"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">fluxes</text>
+  <text
+     xml:space="preserve"
+     x="7577"
+     y="12379.182"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text850"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">time series</text>
+  <g
+     id="g2619"
+     transform="translate(-33,-18.818061)">
+    <polyline
+       points=" 3187,11761 3187,11581 3457,11581 3457,11401 3367,11401 3367,11221 3592,11221  3592,11041 3727,11041 3727,10861 3457,10861 3457,10681 3907,10681 3907,10501  3637,10501 3637,10321 3772,10321 3772,10141 3817,10141 3817,9961 4042,9961 4042,9781  4177,9781"
+       stroke="#000000"
+       stroke-width="15px"
+       id="polyline652"
+       style="fill:none" />
+    <polyline
+       points=" 3097,11761 3097,11758 3098,11752 3099,11741 3101,11723 3104,11700 3108,11670  3112,11635 3117,11596 3122,11553 3128,11509 3133,11464 3139,11420 3144,11377  3150,11335 3155,11296 3160,11260 3165,11226 3170,11194 3175,11164 3179,11137  3184,11111 3188,11086 3193,11063 3197,11040 3202,11019 3208,10994 3214,10969  3220,10945 3226,10921 3233,10897 3240,10874 3247,10850 3254,10827 3262,10804  3269,10781 3277,10759 3285,10737 3292,10716 3300,10695 3307,10675 3314,10656  3321,10638 3328,10620 3334,10602 3340,10586 3346,10570 3352,10554 3359,10534  3365,10514 3372,10495 3379,10474 3385,10454 3392,10433 3399,10412 3406,10390  3413,10369 3420,10348 3427,10327 3435,10307 3442,10288 3449,10269 3457,10251  3464,10234 3472,10217 3480,10201 3488,10185 3496,10169 3506,10153 3515,10137  3526,10121 3537,10105 3548,10088 3560,10072 3573,10056 3585,10041 3598,10026  3610,10011 3623,9997 3635,9984 3647,9972 3659,9960 3671,9949 3682,9939 3695,9927  3708,9916 3722,9905 3736,9894 3752,9882 3770,9870 3789,9857 3809,9844 3830,9830  3851,9817 3870,9804 3886,9794 3897,9787 3904,9783 3907,9781"
+       stroke="#00008f"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline654"
+       style="fill:none" />
+    <polyline
+       points=" 3007,9601 3007,11806"
+       clip-path="url(#cp10)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline857"
+       style="fill:none" />
+    <polyline
+       points=" 2940,9827 3007,9647 3075,9827"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline859"
+       style="fill:none" />
+    <polyline
+       points=" 2917,11761 4267,11761"
+       clip-path="url(#cp11)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline866"
+       style="fill:none" />
+    <polyline
+       points=" 4041,11694 4221,11761 4041,11829"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline868"
+       style="fill:none" />
+  </g>
+  <text
+     xml:space="preserve"
+     x="3559"
+     y="12078.182"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text870"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">final</text>
+  <text
+     xml:space="preserve"
+     x="3559"
+     y="12334.182"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text872"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">snow profile</text>
+  <text
+     xml:space="preserve"
+     x="17063"
+     y="7989.1821"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text874"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">runoff</text>
+  <text
+     xml:space="preserve"
+     x="17063"
+     y="8235.1816"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text876"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">time series</text>
+  <g
+     id="g2586"
+     transform="translate(-33,-18.818061)">
+    <polyline
+       points=" 15565,5971 15565,7744"
+       clip-path="url(#cp12)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline883"
+       style="fill:none" />
+    <polyline
+       points=" 15498,6197 15565,6017 15633,6197"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline885"
+       style="fill:none" />
+    <polyline
+       points=" 15475,7699 18718,7699"
+       clip-path="url(#cp13)"
+       stroke="#808080"
+       stroke-width="30px"
+       id="polyline892"
+       style="fill:none" />
+    <polyline
+       points=" 18492,7632 18672,7699 18492,7767"
+       stroke="#808080"
+       stroke-width="30px"
+       stroke-miterlimit="8"
+       id="polyline894"
+       style="fill:none" />
+    <polyline
+       points=" 15601,7187 15602,7185 15607,7177 15616,7161 15627,7144 15637,7129 15644,7119  15650,7113 15655,7112 15660,7115 15663,7121 15667,7130 15670,7142 15672,7155  15674,7169 15676,7183 15678,7197 15679,7209 15680,7222 15682,7233 15683,7244  15685,7253 15687,7259 15688,7262 15690,7262 15692,7260 15695,7256 15698,7250  15701,7243 15704,7238 15708,7233 15711,7232 15715,7234 15718,7239 15722,7248  15726,7260 15730,7273 15734,7287 15739,7299 15743,7309 15747,7316 15753,7320  15759,7320 15766,7316 15773,7311 15780,7308 15785,7308 15789,7311 15793,7316  15797,7323 15802,7333 15806,7343 15810,7354 15814,7364 15818,7374 15822,7381  15826,7387 15830,7394 15834,7400 15839,7406 15844,7410 15849,7414 15855,7417  15860,7419 15865,7420 15873,7420 15883,7418 15893,7415 15904,7412 15914,7410  15924,7411 15931,7413 15939,7416 15947,7421 15955,7427 15963,7435 15971,7442  15978,7450 15985,7458 15991,7467 15998,7475 16006,7484 16013,7493 16020,7501  16028,7508 16035,7513 16041,7517 16048,7520 16055,7521 16064,7522 16072,7523  16081,7523 16091,7523 16100,7524 16110,7526 16120,7528 16131,7531 16144,7535  16157,7540 16170,7545 16182,7550 16193,7555 16204,7560 16214,7564 16224,7568  16234,7572 16246,7575 16257,7579 16269,7582 16282,7585 16295,7588 16305,7590  16315,7591 16327,7593 16339,7595 16353,7597 16367,7599 16381,7601 16396,7603  16410,7604 16424,7606 16438,7607 16451,7609 16465,7610 16478,7611 16493,7612  16508,7613 16523,7614 16540,7614 16557,7615 16573,7616 16590,7616 16607,7617  16624,7617 16641,7618 16654,7618 16667,7618 16681,7618 16697,7618 16713,7619  16729,7619 16747,7619 16765,7619 16783,7619 16801,7619 16820,7619 16838,7619  16856,7619 16873,7619 16891,7618 16908,7618 16925,7618 16943,7618 16962,7618  16981,7618 17000,7617 17019,7617 17039,7616 17058,7615 17077,7614 17094,7613  17111,7611 17127,7610 17141,7608 17154,7606 17166,7603 17176,7601 17194,7595  17208,7588 17219,7580 17228,7573 17235,7566 17239,7561 17242,7557 17245,7556  17246,7557 17247,7557 17248,7558 17250,7559 17251,7561 17252,7562 17254,7564  17255,7565 17257,7567 17258,7568 17260,7569 17261,7570 17263,7570 17264,7570  17266,7569 17267,7568 17268,7566 17269,7563 17270,7560 17272,7556 17273,7548  17275,7537 17276,7524 17277,7510 17279,7494 17280,7478 17281,7462 17283,7447  17284,7433 17286,7421 17287,7411 17289,7404 17294,7397 17300,7398 17307,7401  17313,7399 17318,7386 17319,7378 17320,7367 17322,7355 17323,7340 17324,7324  17325,7307 17327,7290 17328,7272 17329,7254 17330,7238 17332,7222 17333,7209  17334,7197 17336,7188 17338,7177 17341,7169 17344,7163 17348,7156 17352,7149  17355,7139 17359,7127 17362,7110 17365,7088 17368,7061 17369,7046 17370,7029  17371,7011 17372,6991 17373,6969 17374,6946 17375,6922 17376,6896 17377,6869  17378,6841 17379,6812 17380,6783 17382,6754 17383,6725 17384,6696 17385,6668  17386,6641 17387,6615 17389,6590 17390,6566 17391,6543 17393,6521 17395,6493  17397,6466 17400,6440 17402,6415 17405,6392 17408,6370 17412,6350 17415,6332  17419,6316 17422,6302 17426,6291 17430,6282 17433,6276 17437,6271 17440,6269  17444,6270 17448,6273 17453,6279 17458,6288 17463,6299 17468,6313 17473,6328  17479,6344 17484,6359 17488,6374 17493,6387 17497,6397 17501,6406 17508,6417  17515,6421 17522,6421 17529,6422 17536,6426 17542,6437 17545,6445 17549,6456  17552,6469 17556,6483 17560,6499 17564,6515 17568,6530 17572,6545 17576,6557  17580,6568 17583,6575 17587,6580 17592,6582 17598,6578 17604,6570 17610,6559  17617,6548 17623,6538 17628,6532 17634,6532 17638,6535 17643,6542 17647,6553  17652,6566 17657,6581 17662,6596 17667,6611 17671,6625 17675,6637 17680,6646  17685,6654 17690,6658 17695,6660 17701,6660 17706,6659 17711,6658 17716,6658  17720,6660 17723,6665 17727,6672 17731,6681 17735,6691 17739,6702 17744,6712  17748,6721 17753,6728 17759,6732 17765,6736 17772,6740 17779,6743 17785,6748  17792,6754 17797,6763 17802,6774 17804,6783 17806,6794 17808,6807 17810,6821  17812,6836 17814,6851 17816,6867 17817,6882 17819,6895 17821,6908 17823,6918  17825,6927 17829,6938 17834,6945 17840,6951 17846,6956 17853,6960 17860,6965  17866,6971 17872,6979 17876,6988 17880,6999 17885,7012 17889,7026 17894,7041  17898,7055 17902,7069 17906,7081 17910,7090 17914,7097 17919,7102 17924,7104  17929,7104 17935,7102 17940,7099 17946,7097 17951,7096 17956,7097 17961,7100  17966,7106 17972,7114 17978,7124 17984,7133 17991,7141 17997,7147 18003,7151  18012,7152 18021,7150 18031,7146 18041,7144 18050,7144 18057,7149 18061,7157  18065,7168 18069,7181 18074,7196 18078,7211 18084,7223 18090,7233 18096,7238  18104,7240 18114,7239 18125,7236 18136,7233 18148,7230 18158,7229 18167,7232  18175,7240 18180,7250 18184,7263 18188,7279 18191,7296 18194,7315 18197,7333  18200,7349 18203,7362 18206,7371 18210,7376 18216,7376 18222,7369 18230,7359  18239,7345 18248,7331 18257,7319 18265,7311 18272,7308 18277,7310 18282,7315  18288,7324 18293,7336 18298,7349 18303,7362 18307,7375 18312,7386 18316,7395  18321,7400 18328,7403 18336,7399 18346,7391 18355,7382 18365,7376 18374,7376  18379,7379 18384,7385 18389,7393 18395,7405 18402,7421 18410,7439 18418,7460  18425,7480 18432,7497 18436,7508 18438,7513 18438,7514"
+       stroke="#00008f"
+       stroke-width="15px"
+       stroke-linejoin="bevel"
+       id="polyline896"
+       style="fill:none" />
+  </g>
+  <text
+     xml:space="preserve"
+     x="17775"
+     y="4016.1819"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text898"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">gridded data</text>
+  <polyline
+     points=" 1530,6975 5895,6975"
+     clip-path="url(#cp14)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline905"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 5587,6885 5827,6975 5587,7065"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline907"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6750,180 6750,1530"
+     clip-path="url(#cp15)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline914"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6840,1222 6750,1462 6660,1222"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline916"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6750,180 6750,900 3960,900 3960,1530"
+     clip-path="url(#cp16)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline923"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 4050,1222 3960,1462 3870,1222"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline925"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 1530,2115 3105,2115"
+     clip-path="url(#cp17)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline932"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 2797,2025 3037,2115 2797,2205"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline934"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 7965,7830 7965,9270"
+     clip-path="url(#cp18)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline941"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 8055,8962 7965,9202 7875,8962"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline943"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 7965,7830 7965,8730 12825,8730 12825,9270"
+     clip-path="url(#cp19)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline950"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 12915,8962 12825,9202 12735,8962"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline952"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 7965,7245 7965,8730 3510,8730 3510,9270"
+     clip-path="url(#cp20)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline959"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 3600,8962 3510,9202 3420,8962"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline961"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 13635,3915 14715,3915 14715,2025 15345,2025"
+     clip-path="url(#cp21)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline968"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 15037,1935 15277,2025 15037,2115"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline970"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 13635,3915 14715,3915 14715,6885 15300,6885"
+     clip-path="url(#cp22)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline977"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 14992,6795 15232,6885 14992,6975"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline979"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 6750,180 6750,900 12105,900 12105,1530"
+     clip-path="url(#cp23)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline986"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 12195,1222 12105,1462 12015,1222"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline988"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="4962"
+     y="6596.1821"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="end"
+     id="text990"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">MeteoIO</text>
+  <text
+     xml:space="preserve"
+     x="10227"
+     y="7586.1821"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="end"
+     id="text992"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libSnowpack</text>
+  <text
+     xml:space="preserve"
+     x="2667"
+     y="8036.1821"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="start"
+     id="text994"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Alpine3D</text>
+  <text
+     xml:space="preserve"
+     x="13467"
+     y="6461.1821"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="end"
+     id="text996"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:277.758px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libAlpine3D</text>
+  <polyline
+     points=" 629,3174 1432,3174 1433,2486 1372,2350 1318,2308 1164,2276 1119,2265 1119,2014  1078,1962 1006,1932 930,1919 619,1919"
+     fill="#f3eed3"
+     id="polyline998"
+     transform="translate(-33,-18.818061)" />
+  <polygon
+     points="1348,2315 1199,2116 1121,2003 1121,2261 "
+     fill="#f3eed3"
+     id="polygon1000"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 1105,1990 1400,2392"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline1002"
+     style="fill:none"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 760,1920 625,1920 625,3180 1435,3180 1435,2550"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline1004"
+     transform="translate(-33,-18.818061)" />
+  <polyline
+     points=" 625,1920 626,1920 631,1920 642,1920 660,1920 681,1920 703,1920 725,1920 744,1920  761,1920 777,1920 791,1920 805,1920 819,1920 833,1920 848,1920 863,1920 878,1921  894,1921 909,1922 924,1922 939,1923 952,1925 965,1926 978,1928 992,1930 1006,1933  1020,1936 1035,1941 1048,1946 1061,1951 1072,1958 1082,1965 1091,1972 1098,1980  1103,1989 1108,1998 1112,2009 1115,2022 1117,2035 1118,2048 1119,2062 1120,2075  1120,2088 1120,2100 1120,2112 1120,2125 1120,2138 1120,2152 1120,2165 1120,2178  1120,2191 1120,2202 1120,2211 1120,2220 1120,2228 1120,2235 1121,2242 1122,2249  1123,2254 1125,2259 1128,2264 1132,2267 1137,2270 1143,2273 1149,2274 1157,2276  1167,2277 1178,2279 1190,2280 1202,2281 1214,2283 1226,2284 1237,2286 1248,2288  1258,2290 1268,2293 1278,2296 1289,2300 1299,2305 1309,2310 1319,2315 1328,2321  1337,2326 1345,2333 1353,2339 1362,2346 1371,2355 1379,2364 1388,2375 1396,2387  1403,2400 1410,2414 1415,2429 1420,2445 1423,2459 1426,2475 1428,2492 1430,2509  1432,2527 1433,2545 1434,2562 1434,2577 1435,2591 1435,2602 1435,2611 1435,2618  1435,2622 1435,2620 1435,2612 1435,2597 1435,2578 1435,2561 1435,2552 1435,2550 "
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline1006"
+     transform="translate(-33,-18.818061)" />
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2931.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1008"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2841.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1010"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2751.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1012"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2661.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1014"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2571.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1016"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2481.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1018"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="694"
+     y="2391.1819"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text1020"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:59.5196px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <metadata
+     id="metadata2909">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Alpine3D simulation workflow</dc:title>
+        <dc:date>2024-05-24</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>https://code.wsl.ch/snow-models/alpine3d</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

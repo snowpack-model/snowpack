@@ -89,6 +89,7 @@ class Cumsum {
 
 		double precip;
 		double drift, snow, runoff, rain;
+		double dhs_corr, mass_corr; // inflate/deflate variables
 		vector<double> erosion; // Cumulated eroded mass; dumped to file as rate
 		vector<double> erosion_length; // Cumulated eroded length
 		vector<double> redeposition; // Cumulated eroded mass
@@ -202,7 +203,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 
 Cumsum::Cumsum(const unsigned int nSlopes)
         : precip(0.),
-          drift(0.), snow(0.), runoff(0.), rain(0.),
+          drift(0.), snow(0.), runoff(0.), rain(0.), dhs_corr(0.), mass_corr(0.),
           erosion(nSlopes, 0.), erosion_length(nSlopes, 0.), redeposition(nSlopes, 0.), redeposition_length(nSlopes, 0.)
 {}
 
@@ -1340,6 +1341,9 @@ inline void real_main (int argc, char *argv[])
 						if (slope.mainStationDriftIndex)
 							cumsum.drift = 0.;
 						surfFluxes.hoar = 0.;
+						// Inflate/deflate sums
+						cumsum.dhs_corr += qr_Hdata.at(i_hz).dhs_corr;
+						cumsum.mass_corr += qr_Hdata.at(i_hz).mass_corr;
 					}
 					// New snow water equivalent (kg m-2), rain was dealt with in Watertransport.cc
 					surfFluxes.mass[SurfaceFluxes::MS_HNW] += vecXdata[slope.mainStation].hn
@@ -1410,8 +1414,11 @@ inline void real_main (int argc, char *argv[])
 					if (slope.mainStationDriftIndex)
 						i_hz0 = i_hz;
 					const double wind_trans24 = (slope.sector == slope.mainStation) ? qr_Hdata.at(i_hz0).wind_trans24 : qr_Hdata.at(i_hz).wind_trans24;
+					ProcessDat tmpHdata = qr_Hdata.at(i_hz);			// Temporary ProcessDat object for output
+					tmpHdata.dhs_corr = cumsum.dhs_corr; cumsum.dhs_corr = 0.;	// overwrite the inflate/deflate variables
+					tmpHdata.mass_corr = cumsum.mass_corr; cumsum.mass_corr = 0.;
 					snowpackio.writeTimeSeries(vecXdata[slope.sector], surfFluxes, Mdata,
-					                           qr_Hdata.at(i_hz), wind_trans24);
+					                           tmpHdata, wind_trans24);
 
 					if (avgsum_time_series) {
 						surfFluxes.reset(cumsum_mass);

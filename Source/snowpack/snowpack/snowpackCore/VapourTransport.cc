@@ -357,75 +357,73 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 		for (size_t i = 0; i < nE; i++) {
 			EMS[i].vapTrans_fluxDiff = -D_[i] * (NDS[i+1].rhov-NDS[i].rhov) / EMS[i].L;
 		}
+	}
+	double dHoar = 0.;
+	for (size_t e = 0; e < nE; e++) {
+		EMS[e].Qmm = 0.0;
 
-		double dHoar = 0.;
-		for (e = 0; e < nE; e++) {
-			EMS[e].Qmm = 0.0;
+		if (deltaM[e] < 0.) {
+			// Mass loss: apply mass change first to water, then to ice, based on energy considerations
+			// We can only do this partitioning here in this "simple" way, without checking if the mass is available, because we already limited dM above, based on available ICE + WATER.
+			const double dTh_water = std::max((EMS[e].VG.theta_r * (1. + Constants::eps) - EMS[e].theta[WATER]),
+											  deltaM[e] / (Constants::density_water * EMS[e].L));
+			const double dTh_ice = ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L);
+			EMS[e].theta[WATER] += dTh_water;
+			EMS[e].theta[ICE] += dTh_ice;
 
-			if (deltaM[e] < 0.) {
-				// Mass loss: apply mass change first to water, then to ice, based on energy considerations
-				// We can only do this partitioning here in this "simple" way, without checking if the mass is available, because we already limited dM above, based on available ICE + WATER.
-				const double dTh_water = std::max((EMS[e].VG.theta_r * (1. + Constants::eps) - EMS[e].theta[WATER]),
-												  deltaM[e] / (Constants::density_water * EMS[e].L));
-				const double dTh_ice = ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L);
-				EMS[e].theta[WATER] += dTh_water;
-				EMS[e].theta[ICE] += dTh_ice;
+			Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += dTh_water * Constants::density_water * EMS[e].L;
+			Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dTh_ice * Constants::density_ice * EMS[e].L;
+			EMS[e].M += dTh_water * Constants::density_water * EMS[e].L+dTh_ice * Constants::density_ice * EMS[e].L;
+			assert(EMS[e].M >= (-Constants::eps2)); // mass must be positive
 
-				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dTh_water * Constants::density_water * EMS[e].L;
-				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dTh_ice * Constants::density_ice * EMS[e].L;
-				EMS[e].M += dTh_water * Constants::density_water * EMS[e].L+dTh_ice * Constants::density_ice * EMS[e].L;
-				assert(EMS[e].M >= (-Constants::eps2)); // mass must be positive
+			EMS[e].Qmm += (dTh_water * Constants::density_water * Constants::lh_vaporization
+						   + dTh_ice * Constants::density_ice * Constants::lh_sublimation
+						  ) / sn_dt; // [w/m^3]
 
-				EMS[e].Qmm += (dTh_water * Constants::density_water * Constants::lh_vaporization
-							   + dTh_ice * Constants::density_ice * Constants::lh_sublimation
-							  ) / sn_dt; // [w/m^3]
-
-				// If present at surface, surface hoar is sublimated away
-				if (e == nE-1 && deltaM[e]<0) {
-					dHoar = std::max(-NDS[nN-1].hoar, deltaM[e]);
-				}
-			} else {  // Mass gain: add water in case temperature at or above melting point, ice otherwise
-				if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
-					EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
-					EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
-					Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[e];
-				} else {
-					EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
-					EMS[e].Qmm += (deltaM[e]*Constants::lh_sublimation)/sn_dt/EMS[e].L;	// [w/m^3]
-					Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[e];
-				}
-				EMS[e].M += deltaM[e];
-				assert(EMS[e].M >= (-Constants::eps2)); // mass must be positive
+			// If present at surface, surface hoar is sublimated away
+			if (e == nE-1 && deltaM[e]<0) {
+				dHoar = std::max(-NDS[nN-1].hoar, deltaM[e]);
 			}
-
-
-			EMS[e].theta[AIR] = std::max(1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL], 0.);
-			if (std::fabs(EMS[e].theta[AIR]) < 1.e-15) {
-				EMS[e].theta[AIR] = 0;
+		} else {  // Mass gain: add water in case temperature at or above melting point, ice otherwise
+			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
+				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
+				EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
+				Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += deltaM[e];
+			} else {
+				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+				EMS[e].Qmm += (deltaM[e]*Constants::lh_sublimation)/sn_dt/EMS[e].L;	// [w/m^3]
+				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[e];
 			}
-			EMS[e].updDensity();
-			assert(EMS[e].Rho > 0 || EMS[e].Rho == IOUtils::nodata); // density must be positive
-			if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR] >= 0. && EMS[e].theta[WATER] <= 1. + Constants::eps && EMS[e].theta[ICE] <= 1. + Constants::eps)) {
-					prn_msg(__FILE__, __LINE__, "err", Date(),
-						"Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf soil=%lf air=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE],
-							EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[SOIL], EMS[e].theta[AIR]);
-					throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
-			}
-
-			// some useful output in case of vapor transport
-			double sVaporDown = Atmosphere::waterVaporDensity(NDS[e].T, Atmosphere::vaporSaturationPressure(NDS[e].T));
-			double sVaporUp = Atmosphere::waterVaporDensity(NDS[e+1].T, Atmosphere::vaporSaturationPressure(NDS[e+1].T));
-			EMS[e].vapTrans_underSaturationDegree = (0.5*(NDS[e].rhov-sVaporDown)+0.5*(NDS[e+1].rhov-sVaporUp))/(0.5*sVaporDown+0.5*sVaporUp);
-			EMS[e].vapTrans_cumulativeDenChange += deltaM[e]/EMS[e].L;
-			EMS[e].vapTrans_snowDenChangeRate = deltaM[e]/EMS[e].L/sn_dt;
+			EMS[e].M += deltaM[e];
+			assert(EMS[e].M >= (-Constants::eps2)); // mass must be positive
 		}
 
-		Sdata.hoar += dHoar;
-		NDS[nN-1].hoar += dHoar;
-		if (NDS[nN-1].hoar < 0.) {
-			NDS[nN-1].hoar = 0.;
+
+		EMS[e].theta[AIR] = std::max(1. - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL], 0.);
+		if (std::fabs(EMS[e].theta[AIR]) < 1.e-15) {
+			EMS[e].theta[AIR] = 0;
+		}
+		EMS[e].updDensity();
+		assert(EMS[e].Rho > 0 || EMS[e].Rho == IOUtils::nodata); // density must be positive
+		if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR] >= 0. && EMS[e].theta[WATER] <= 1. + Constants::eps && EMS[e].theta[ICE] <= 1. + Constants::eps)) {
+				prn_msg(__FILE__, __LINE__, "err", Date(),
+					"Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf soil=%lf air=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE],
+						EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[SOIL], EMS[e].theta[AIR]);
+				throw IOException("Cannot evaluate mass balance in vapour transport LayerToLayer routine", AT);
 		}
 
+		// some useful output in case of vapor transport
+		double sVaporDown = Atmosphere::waterVaporDensity(NDS[e].T, Atmosphere::vaporSaturationPressure(NDS[e].T));
+		double sVaporUp = Atmosphere::waterVaporDensity(NDS[e+1].T, Atmosphere::vaporSaturationPressure(NDS[e+1].T));
+		EMS[e].vapTrans_underSaturationDegree = (0.5*(NDS[e].rhov-sVaporDown)+0.5*(NDS[e+1].rhov-sVaporUp))/(0.5*sVaporDown+0.5*sVaporUp);
+		EMS[e].vapTrans_cumulativeDenChange += deltaM[e]/EMS[e].L;
+		EMS[e].vapTrans_snowDenChangeRate = deltaM[e]/EMS[e].L/sn_dt;
+	}
+
+	Sdata.hoar += dHoar;
+	NDS[nN-1].hoar += dHoar;
+	if (NDS[nN-1].hoar < 0.) {
+		NDS[nN-1].hoar = 0.;
 	}
 }
 

@@ -115,7 +115,7 @@ namespace mio {
  * @note The internal parameter index that is passed as `CNR` may change within MeteoIO for special parameters,
  * hence you can turn it off aswell and make sure WISKI does not use it.
  *
- * @section Example
+ * @section eg Examples
  * Putting ZRXP as the METEO output plugin will produce .(z)rxp-files:
  * @code
  * [Output]

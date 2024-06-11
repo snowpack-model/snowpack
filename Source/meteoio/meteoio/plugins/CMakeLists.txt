@@ -4,6 +4,8 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cmake.cc ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cc )
 
+SET(plugins_sources ${plugins_sources} plugins/plugin_utils.cc)
+
 IF(PLUGIN_ALPUG)
 	SET(plugins_sources ${plugins_sources} plugins/ALPUG.cc)
 ENDIF(PLUGIN_ALPUG)
@@ -23,6 +25,23 @@ ENDIF(PLUGIN_A3DIO)
 IF(PLUGIN_ARPSIO)
 	SET(plugins_sources ${plugins_sources} plugins/ARPSIO.cc)
 ENDIF(PLUGIN_ARPSIO)
+
+IF(PLUGIN_BUFRIO OR PLUGIN_GRIBIO)
+	FIND_PACKAGE(ecCodes REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM "${ecCodes_INCLUDE_DIRS}")
+	SET(plugin_libs ${plugin_libs} "${ecCodes_LIBRARIES}")
+	SET(plugins_sources ${plugins_sources} plugins/libcodes.cc)
+
+	IF(PLUGIN_BUFRIO)
+		SET(plugins_sources ${plugins_sources} plugins/BUFRFile.cc)
+		SET(plugins_sources ${plugins_sources} plugins/BUFRIO.cc )
+	ENDIF(PLUGIN_BUFRIO)
+
+	IF(PLUGIN_GRIBIO)
+		SET(plugins_sources ${plugins_sources} plugins/GRIBFile.cc)
+		SET(plugins_sources ${plugins_sources} plugins/GRIBIO.cc)
+	ENDIF(PLUGIN_GRIBIO)
+ENDIF(PLUGIN_BUFRIO OR PLUGIN_GRIBIO)
 
 IF(PLUGIN_COSMOXMLIO)
 	FIND_PACKAGE(LibXml2 REQUIRED)
@@ -50,12 +69,6 @@ IF(PLUGIN_GRASSIO)
 	SET(plugins_sources ${plugins_sources} plugins/GrassIO.cc)
 ENDIF(PLUGIN_GRASSIO)
 
-IF(PLUGIN_GRIBIO)
-	FIND_PACKAGE(ecCodes REQUIRED)
-	INCLUDE_DIRECTORIES(SYSTEM "${ecCodes_INCLUDE_DIRS}")
-	SET(plugin_libs ${plugin_libs} "${ecCodes_LIBRARIES}")
-	SET(plugins_sources ${plugins_sources} plugins/GRIBIO.cc)
-ENDIF(PLUGIN_GRIBIO)
 
 IF(PLUGIN_GEOTOPIO)
 	SET(plugins_sources ${plugins_sources} plugins/GeotopIO.cc)

@@ -224,6 +224,7 @@ class IOManager {
 		 */
 		void clear_cache();
 
+
 	private:
 		/**
 		 * @brief Returns the mode to be used for the IOManager for TimeSeries

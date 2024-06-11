@@ -69,6 +69,7 @@ class MeteoGrids {
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
 				TSOIL, ///< Temperature within the soil, at a given depth
+				TSNOW, ///< Temperature within the snow, at a given depth
 				P, ///< Air pressure
 				P_SEA, ///< Sea level air pressure
 				U, ///< East component of wind
@@ -119,7 +120,7 @@ class MeteoData {
 		* When the two stations both have data at a given time step, only the parameters that are *not* present
 		* in station1 will be taken from station2 (ie. station1 has priority).
 		*
-		* \image html merging_strategies.png "Merging strategies for two stations with different sampling rates"
+		* \image html merging_strategies.svg "Merging strategies for two stations with different sampling rates" width=600px
 		* \image latex merging_strategies.eps "Merging strategies for two stations with different sampling rates" width=0.9\textwidth
 		* @note Keep in mind that if a station is moving (ie. if its location might change in time) merge strategies other than STRICT_MERGE
 		* will introduce potentially invalid metadata (since the new position can not be reconstructed).
@@ -150,6 +151,8 @@ class MeteoData {
 		                 QI, ///< Specific humidity
 		                 TSG, ///< Temperature of the ground surface
 		                 TSS, ///< Temperature of the snow surface
+		                 TSOIL, ///< Temperature within the soil
+		                 TSNOW, ///< Temperature within the snow
 		                 HS, ///< Height of snow
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
