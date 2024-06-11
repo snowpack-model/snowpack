@@ -136,6 +136,10 @@ class StationData {
 	private:
 		double slope; ///<Local slope at the station, in degrees, between 0 and 90 degrees
 		double azi; ///<Azimuth at the local slope at the station, in degrees, 0 at north, compass orientation
+
+	public:
+		bool isValid() const;
+		bool isEmpty() const;
 };
 
 typedef std::vector<StationData> STATIONS_SET;

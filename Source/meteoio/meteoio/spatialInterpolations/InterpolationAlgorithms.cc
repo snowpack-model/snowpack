@@ -60,8 +60,8 @@ namespace mio {
  *
  * First, an interpolation method has to be selected for each variable which needs interpolation. Then the class computes
  * the interpolation for each 2D grid point, combining the inputs provided by the available data sources.
- * Any parameter of MeteoData can be interpolated, using the names given by \ref meteoparam. One has to keep
- * in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
+ * Any parameter of MeteoData can be interpolated, using the names given by the \ref MeteoData::Parameters "list of standard parameter names". 
+ * One has to keep in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
  * memory of (eventual) previous time steps is kept. This means that all parameters and variables that are
  * automatically calculated get recalculated anew for each time step.
  * 

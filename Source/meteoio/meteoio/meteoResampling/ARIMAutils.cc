@@ -23,9 +23,26 @@
 #include <numeric>
 #include <algorithm>
 
+static const double NODATA = 1e-20; // needs to be 0 so arima doesnt care
+
 namespace mio {
 
 namespace ARIMAutils {
+const std::map<ObjectiveFunction,std::string> ObjectiveFunctionMap = {
+            {CSS_MLE, "CSS_MLE"},
+            {MLE, "MLE"},
+            {CSS, "CSS"},
+        };
+const std::map<OptimizationMethod, std::string> OptimizationMethodMap = {
+            {Nelder_Mead, "Nelder_Mead"},
+            {Newton_Line_Search, "Newton_Line_Search"},
+            {Newton_Trust_Region_Hook_Step, "Newton_Trust_Region_Hook_Step"},
+            {Newton_Trust_Region_Double_Dog_Leg, "Newton_Trust_Region_Double_Dog_Leg"},
+            {Conjugate_Gradient, "Conjugate_Gradient"},
+            {BFGS, "BFGS"},
+            {LBFGS, "LBFGS"},
+            {BFGS_MTM, "BFGS_MTM"},
+        };
 
 Normalization::Normalization(): mean(0), std(0), min(0), max(0) {}
 
@@ -35,27 +52,50 @@ Normalization::Normalization(std::vector<double>& data, Mode new_mode): mean(cal
 
 std::vector<double> Normalization::normalize(const std::vector<double>& data) {
 	std::vector<double> normalizedData = data; // Create a copy of data
+	if (mode == Mode::Nothing) {
+		for (size_t i = 0; i < normalizedData.size(); i++) {
+			if (normalizedData[i] == IOUtils::nodata)
+				normalizedData[i] = 0.0;
+		}
+		return normalizedData;
+	}
 	if (mode == Mode::ZScore) {
 		for (size_t i = 0; i < normalizedData.size(); i++) {
-			normalizedData[i] = (normalizedData[i] - mean) / std;
+			if (normalizedData[i] != IOUtils::nodata)
+				normalizedData[i] = (normalizedData[i] - mean) / std;
+			else	
+				normalizedData[i] = NODATA;
 		}
 	} else if (mode == Mode::MinMax) {
 		for (size_t i = 0; i < normalizedData.size(); i++) {
-			normalizedData[i] = (normalizedData[i] - min) / (max - min);
+			if (normalizedData[i] != IOUtils::nodata)
+				normalizedData[i] = (normalizedData[i] - min) / (max - min);
+			else
+				normalizedData[i] = NODATA;
 		}
 	}
 	return normalizedData; // Return the modified data
 }
 
 std::vector<double> Normalization::denormalize(const std::vector<double>& data) {
+	if (std::all_of(data.begin(), data.end(), [](double val) { return val == 0.0; })) {
+		return data; // we do not want to accidentally set a vector of zeros to the mean (we do not use random walks)
+	}
+
 	std::vector<double> denormalizedData = data; // Create a copy of data
 	if (mode == Mode::ZScore) {
 		for (size_t i = 0; i < denormalizedData.size(); i++) {
-			denormalizedData[i] = denormalizedData[i] * std + mean;
+			if (denormalizedData[i] != NODATA)
+				denormalizedData[i] = denormalizedData[i] * std + mean;
+			else
+				denormalizedData[i] = IOUtils::nodata;
 		}
 	} else if (mode == Mode::MinMax) {
 		for (size_t i = 0; i < denormalizedData.size(); i++) {
-			denormalizedData[i] = denormalizedData[i] * (max - min) + min;
+			if (denormalizedData[i] != NODATA)
+				denormalizedData[i] = denormalizedData[i] * (max - min) + min;
+			else
+				denormalizedData[i] = IOUtils::nodata;
 		}
 	}
 	return denormalizedData; // Return the modified data
@@ -89,17 +129,29 @@ std::vector<double> arange(size_t start, size_t N) {
 
 //calculate the mean of a vector
 double calcVecMean(const std::vector<double>& vec) {
-    double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
-    return sum / static_cast<double>(vec.size());
+	double sum = 0.0;
+	int count = 0;
+	for (const auto& val : vec) {
+		if (val != IOUtils::nodata) {
+			sum += val;
+			++count;
+		}
+	}
+	return count > 0 ? sum / static_cast<double>(count) : 0;
 }
+
 //calculate the standard deviation of a vector
 double stdDev(const std::vector<double>& vec) {
 	double mean_vec = calcVecMean(vec);
 	double sum = 0;
-	for (size_t i = 0; i < vec.size(); i++) {
-		sum += (vec[i] - mean_vec)*(vec[i] - mean_vec);
+	int count = 0;
+	for (const auto& val : vec) {
+		if (val != IOUtils::nodata) {
+			sum += (val - mean_vec)*(val - mean_vec);
+			++count;
+		}
 	}
-	return std::sqrt(sum/static_cast<double>(vec.size()));
+	return count > 0 ? std::sqrt(sum/static_cast<double>(count)) : 0;
 }
 
 // converts a vector of MeteoData to a vector of doubles
@@ -281,7 +333,16 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 
 	if (indexP1 == IOUtils::npos  && indexP2 == 0) {
 		last_gap.startDate = resampling_date;
+		last_gap.start = 0;
+		last_gap.end = 0;
 		indexP1 = 0;
+	} else if (indexP1 == vecM.size() - 2 && indexP2 == vecM.size() - 1) {
+		last_gap.startDate = vecM[vecM.size() - 1].date;
+		last_gap.start = vecM.size() - 1;
+		last_gap.endDate = last_gap.startDate + window_size;
+		last_gap.end = vecM.size() - 1;
+		indexP1 = vecM.size() - 1;
+		indexP2 = vecM.size() - 1;
 	} else if (indexP1 == IOUtils::npos || indexP2 == IOUtils::npos) {
         std::cout << "Could not pinpoint the gap "<< last_gap.toString() << std::endl;
         std::cout << "Gap start: " << last_gap.startDate.toString(Date::ISO) << "("<< indexP1 <<")" << std::endl;
@@ -295,6 +356,10 @@ void computeARIMAGap(ARIMA_GAP &last_gap, const size_t& pos, const size_t& param
 	checkWindowSize(last_gap, vecM, resampling_date, data_start_date, data_end_date, window_size);
 	last_gap.sampling_rate = computeSamplingRate(data_start_date, data_end_date, vecM);
 	adjustDataStartDate(last_gap, vecM, resampling_date, data_start_date, data_end_date);
+	if ((indexP1 == vecM.size()-1) && (indexP2 == vecM.size()-1)){
+		last_gap.endDate = last_gap.startDate + MAX_ARIMA_EXTRAPOLATION / last_gap.sampling_rate;
+		data_end_date = last_gap.endDate;
+	}
 }
 
 // returns the most often accuring value in a vector
@@ -335,11 +400,12 @@ static Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, co
 
     for (const auto& data : vecM) {
         if (data.date < data_start_date || data.date > data_end_date) {
-            continue;
+			continue;
         }
         double diff = std::abs((data.date - data_start_date).getJulian(true));
         if (diff <= 1.5 / sampling_rate) {
-            minDiff = std::min(minDiff, diff);
+			
+			minDiff = std::min(minDiff, diff);
             closestDate = data.date;
         }
     }
@@ -347,7 +413,7 @@ static Date findFirstDateWithSamplingRate(const std::vector<MeteoData>& vecM, co
 }
 
 Date adjustStartDate(const std::vector<MeteoData>& vecM, const ARIMA_GAP& last_gap, Date data_start_date, const Date& data_end_date) {
-    const Date neededDate = findFirstDateWithSamplingRate(vecM, last_gap.sampling_rate, data_start_date, data_end_date);	
+    const Date neededDate = findFirstDateWithSamplingRate(vecM, last_gap.sampling_rate, data_start_date, data_end_date);
     if (data_start_date == neededDate) {
         return data_start_date;
     }

@@ -77,7 +77,7 @@
  * <A HREF="https://meteoio.slf.ch">MeteoIO</A> that is used in various applications or libSnowpack that is used by the standalone
  * <A HREF="https://snowpack.slf.ch">Snowpack</A> model) .
  *
- * \image html simulation_workflow.png "Simulation workflow"
+ * \image html simulation_workflow.svg "Simulation workflow" width=1000px
  * \image latex simulation_workflow.eps "Simulation workflow" width=0.9\textwidth
  *
  * @subsection installing Installing Alpine3D
@@ -158,7 +158,7 @@
  * @endcode
  * Then run the simulation as laid out in the previous section.
  *
- * \image html mpi_scaling.png "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)"
+ * \image html mpi_scaling.svg "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)" width=650px
  * \image latex mpi_scaling.eps "Scaling of Alpine3D with the number of processors when using MPI (Gemstock_1m, 1 year simulation, 18500 cells on a 2010 computer)" width=0.9\textwidth
  * 
  * \note Please make sure that the environment variables $TEMPDIR, $TEMP and $TMP (if defined) don't point to a shared drive (such as an NFS mounted home directory), 
@@ -192,7 +192,7 @@
  * Depending on the meteorological data availability, the meteorological data quality as well as convenience (if the raw data is difficult to access, for example), there
  * are different data strategies that can be used. This is illustrated in the figure below.
  *
- * \image html data_strategies.png "Meteorological data strategies"
+ * \image html data_strategies.svg "Meteorological data strategies" width=800px
  * \image latex data_strategies.eps "Meteorological data strategies" width=0.9\textwidth
  *
  * The simplest case is <b>1</b>: the meteorological forcings are directly read and processed by Alpine3D. Since it embbeds MeteoIO, it can perform the whole
@@ -305,7 +305,7 @@
  * Here we expose the very foundations of Alpine3D. These remain valid independently of which modules are enabled when running the model.
  *
  * @subsection principles_snowpack Distributed 1D soil/snow/canopy column
- * \image html distributed_sn.png "Distributed SNOWPACK over the domain taking into account the land cover"
+ * \image html distributed_sn.svg "Distributed SNOWPACK over the domain taking into account the land cover" width=800px
  * \image latex distributed_sn.eps "Distributed SNOWPACK over the domain taking into account the land cover" width=0.9\textwidth
  * At the core of the model, is the <A HREF="https://snowpack.slf.ch">SNOWPACK</A> model, a physically based,
  * energy balance model for a 1D soil/snow/canopy column.
@@ -315,7 +315,7 @@
  * out of the simulation can be written out from this module.
  *
  * @subsection distributed_meteo Distributed meteo fields
- * \image html 2d_interpolations.png "Spatially interpolating the meteorological fields"
+ * \image html 2d_interpolations.svg "Spatially interpolating the meteorological fields" width=650px
  * \image latex 2d_interpolations.eps "Spatially interpolating the meteorological fields" width=0.9\textwidth
  * In order to perform a SNOWPACK simulation at every pixel of the domain, it is necessary to get the meteorological forcing for each pixel.
  * But the measured meteorological parameters are usually measured by a set of stations, which means that the data is available at a set of points.
@@ -334,7 +334,7 @@
  * - the runoff module that collects the precipitation and/or melt water at each pixel to transfer it to an hydrological routing module
  *
  * @subsection principles_ebalance Radiation balance
- * \image html ebalance.png "Radiation balance with shading and terrain reflections"
+ * \image html ebalance.svg "Radiation balance with shading and terrain reflections" width=650px
  * \image latex ebalance.eps "Radiation balance with shading and terrain reflections" width=0.9\textwidth
  * Once the albedo of each pixels of the domain have been initialized or taken from the last time step, the radiation balance is computed. First, the
  * incoming short wave radiation measured at one reference station is used to compute the splitting (between direct and diffuse, see
@@ -348,7 +348,7 @@
  * Finally, the direct and diffuse radiation fields are returned.
  *
  * @subsection principles_snowdrift Snowdrift
- * \image html snowdrift.png "Snowdrift: saltation, suspension, sublimation"
+ * \image html snowdrift.svg "Snowdrift: saltation, suspension, sublimation" width=650px
  * \image latex snowdrift.eps "Snowdrift: saltation, suspension, sublimation" width=0.9\textwidth
  * Externally computed wind fields (for example with <A HREF="http://arps.ou.edu/">ARPS</A>) are assigned to each time steps.
  * If the surface shear stress exceeds a given threshold at a given pixel, the saltation will be computed. This in turn can feed the suspension
@@ -356,7 +356,7 @@
  * C. D. Groot Zwaaftink et al. <i>"Drifting snow sublimation: A high‐resolution 3‐D model with temperature and moisture feedbacks"</i>, Journal of Geophysical Research: Atmospheres (1984–2012), \b 116.D16, 2011).
  *
  * @subsection principles_runoff Runoff
- * \image html runoff.png "Runoff: simple bucket approach with PREVAH or sub-catchments sums"
+ * \image html runoff.svg "Runoff: simple bucket approach with PREVAH or sub-catchments sums" width=650px
  * \image latex runoff.eps "Runoff: simple bucket approach with PREVAH or sub-catchments sums" width=0.9\textwidth
  * Several options are available for collecting the melt water or precipitation running out of each pixel. The historical approach relies on the
  * PREVAH hydrological modeling system (
@@ -486,7 +486,7 @@
  * 2, 5, 6 would receive the code 2^2+2^5+2^6=100. Finally, this grid must have the same geolocalization as the dem.
  *
  * @section sno_input Snow cover and soil data
- * \image html soil.png "Initial soil and snow definition"
+ * \image html soil.svg "Initial soil and snow definition" width=600px
  * \image latex soil.eps "Initial soil and snow definition" width=0.9\textwidth
  * Either each cell must be assigned an initial soil and snow profile (as well as a few Canopy parameters). Usually, to make things easier, the simulation starts
  * at a time when no snow is present in the domain, making the snow profile empty. The same file also contains potential

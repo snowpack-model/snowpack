@@ -1311,7 +1311,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_thickness, 
 						throw IOException("Can not read snow files", AT);
 					}
 
-					// Change pixel value if galciers are forced from grids
+					// Change pixel value if glaciers are forced from grids
 					if(glacier_from_grid) {
 						if(init_glaciers_thickness(ix,iy)>0) {
 							snow_soil = getIcePixel(init_glaciers_thickness(ix,iy), GRID_sno, (snowPixel.Seaice!=NULL));

@@ -135,7 +135,7 @@ class Matrix {
 		* It first performs LU decomposition (Dolittle algorithm) and then computes the inverse by
 		* backward and forward solving of LU * A-1 = I. This inversion is in O(n³).
 		* see Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
-		* \image html matrix_inv.png "matrix inversion performance with the matrix dimension (running on a single core of a Intel i7-9750H)"
+		* \image html matrix_inv.svg "matrix inversion performance with the matrix dimension (running on a single core of a Intel i7-9750H)" width=600px
 		* \image latex matrix_inv.eps "matrix inversion performance with the matrix dimension (running on a single core of a Intel i7-9750H)" width=0.9\textwidth
 		* 
 		* @return inversed matrix

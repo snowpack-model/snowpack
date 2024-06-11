@@ -19,6 +19,7 @@
 #include <fstream>
 #include <iostream>
 #include <meteoio/FStream.h>
+#include <meteoio/plugins/plugin_utils.h>
 #include <meteoio/plugins/iCSVIO.h>
 #include <regex>
 
@@ -36,7 +37,7 @@ namespace mio {
 * data repositories but can also support a much broader use as very few metadata are mandatory (but many are available). Being
 * a text format, it should remain easily readable in decades to come, thus supporting long term data preservation.
 * For comprehensive details about the format, refer to its
-* <a href="https://code.wsl.ch/EnviDat/icsv/-/blob/master/README.org">official format documentation</a>.
+* <a href="http://envidat.gitlab-pages.wsl.ch/icsv/">official format documentation</a>.
 *
 * When using iCSV with MeteoIO, the following additional MetaData is required:
 * - Timestamp or Julian field: This represents the timestamps of the measurement in ISO format.
@@ -70,10 +71,10 @@ namespace mio {
 * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
 * - iCSV_SEPARATOR: choice of field delimiter, options are: [,;:|/\]; [Output] section
 * 
-* @note There is a python package available to read iCSV files, see <a href="https://github.com/GEUS-Glaciology-and-Climate/pyiCSV/tree/main">pyiCSV</a>
+* @note There is a python module available to read iCSV files, see <a href="http://patrick.leibersperger.gitlab-pages.wsl.ch/snowpat/">snowpat</a>
 * 
 */
-
+using namespace PLUGIN;
 // clang-format off
 static const std::string dflt_extension_iCSV = ".icsv";
 const double iCSVIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
@@ -130,38 +131,6 @@ static std::vector<Coords> getUniqueLocations(iCSVFile &file) {
     return locations;
 }
 
-/**
-* @brief Get the file names together with paths and check for validity
-*
-* @param vecFilenames The vector of filenames to check.
-* @param inpath The input path
-* @return std::vector<std::string> The vector of filenames together with paths
-* @throw InvalidNameException if a filename is invalid
-*
-*/
-static std::vector<std::string> getFilesWithPaths(const std::vector<std::string> &vecFilenames, const std::string &inpath) {
-    std::vector<std::string> all_files_and_paths;
-    for (const std::string& filename : vecFilenames) {
-        const std::string extension(FileUtils::getExtension(filename));
-        const std::string file_and_path =
-            (!extension.empty()) ? inpath + "/" + filename : inpath + "/" + filename + dflt_extension_iCSV;
-
-        if (!FileUtils::validFileAndPath(file_and_path)) // Check whether filename is valid
-            throw InvalidNameException(file_and_path, AT);
-        all_files_and_paths.push_back(file_and_path);
-    }
-    return all_files_and_paths;
-}
-
-static void scanMeteoPath(const Config &cfg, const std::string &inpath, std::vector<std::string> &vecFilenames) {
-    bool is_recursive = false;
-    cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
-    std::list<std::string> dirlist(FileUtils::readDirectory(inpath, dflt_extension_iCSV, is_recursive));
-    dirlist.sort();
-    vecFilenames.reserve(dirlist.size());
-    std::copy(dirlist.begin(), dirlist.end(), std::back_inserter(vecFilenames));
-}
-
 using namespace iCSV;
 
 // ----------------- iCSVIO -----------------
@@ -196,9 +165,9 @@ void iCSVIO::parseInputSection() {
         cfg.getValues("STATION", "INPUT", vecFilenames);
 
         if (vecFilenames.empty())
-            scanMeteoPath(cfg, inpath, vecFilenames);
+            scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_iCSV);
 
-        const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath);
+        const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath, dflt_extension_iCSV);
         read_sequential = !areFilesWithinLimit(all_files_and_paths);
         for (auto &filename : all_files_and_paths)
             stations_files.push_back(iCSVFile(filename, read_sequential));

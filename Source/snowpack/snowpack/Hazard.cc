@@ -86,9 +86,14 @@ Hazard::Hazard(const SnowpackConfig& cfg, const double duration)
 	* It is a matter of consitency. If you change this, a big mess will result!!!
 	*/
 	cfg.getValue("HAZARD_STEPS_BETWEEN", "Output", hazard_steps_between);
-	if (duration<=0.) throw InvalidArgumentException("Hazard duration must be >0", AT);
-	nHz = static_cast<unsigned int>( floor( (duration / (static_cast<double>(hazard_steps_between) * sn_dt)) ) + 2 );
-	if (nHz == 0) nHz = 1;
+	if (hazard_steps_between < 1) {
+		std::cerr << "[W] HAZARD_STEPS_BETWEEN less than 1. HAZARD data may be inconsistent! " << AT << std::endl;
+		nHz = 1; // Force output interval
+	} else {
+		if (duration<=0.) throw InvalidArgumentException("Hazard duration must be >0", AT);
+		nHz = static_cast<unsigned int>( floor( (duration / (static_cast<double>(hazard_steps_between) * sn_dt)) ) + 2 );
+		if (nHz == 0) nHz = 1;
+	}
 }
 
 /**
@@ -112,8 +117,8 @@ void Hazard::actOnVector(std::vector<double>& oldVector, const double& newValue,
 			break;
 		case noAction:
 			break;
-    default:
-      InvalidArgumentException("Unknown action provided to actOnVector", AT);
+		default:
+			throw InvalidArgumentException("Unknown action provided to actOnVector", AT);
 	}
 }
 
