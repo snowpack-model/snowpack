@@ -148,7 +148,7 @@ void Meteo::projectPrecipitations(const double& slope_angle, double& precips, do
 {
 	const double cos_sl = cos(slope_angle*mio::Cst::to_rad);
 	precips *= cos_sl;
-	hs *= cos_sl;
+	if (hs != IOUtils::nodata) hs *= cos_sl;
 }
 
 /**

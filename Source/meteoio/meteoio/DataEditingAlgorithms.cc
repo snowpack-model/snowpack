@@ -23,6 +23,7 @@
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 #include <meteoio/MeteoProcessor.h> //needed for the time restrictions
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h> //required for the CREATE editing
+#include <meteoio/meteoLaws/Meteoconst.h> //required for dbl_min and dbl_max
 #include <unordered_map>
 #include <meteoio/meteoStats/libfit1D.h>
 
@@ -64,6 +65,7 @@ namespace mio {
  *     - RENAME: rename one or more parameters into a new name, see EditingRename
  *     - EXCLUDE: delete a list of parameters, see EditingExclude
  *     - KEEP: only keep a list of parameters and reject the others, see EditingKeep
+ *     - COMBINE: combine several parameters into a composite parameter, see EditingCombine
  *     - AUTOMERGE: merge together stations sharing the same station ID, see EditingAutoMerge
  *     - MERGE: merge together one or more stations, see EditingMerge
  *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
@@ -87,7 +89,7 @@ std::set<std::string> EditingBlock::initStationSet(const std::vector< std::pair<
 	std::set<std::string> results;
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first==keyword) {
-			std::istringstream iss(vecArgs[ii].second);
+			std::istringstream iss( vecArgs[ii].second );
 			std::string word;
 			while (iss >> word){
 				results.insert( IOUtils::strToUpper(word) );
@@ -136,6 +138,8 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 		return new EditingExclude(i_stationID, vecArgs, name, cfg);
 	} else if (name == "KEEP"){
 		return new EditingKeep(i_stationID, vecArgs, name, cfg);
+	} else if (name == "COMBINE"){
+		return new EditingCombine(i_stationID, vecArgs, name, cfg);
 	} else if (name == "MERGE"){
 		return new EditingMerge(i_stationID, vecArgs, name, cfg);
 	} else if (name == "AUTOMERGE"){
@@ -495,6 +499,173 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 		if (toStationIdx==IOUtils::npos) return;
 		//stations before toStationIdx are not == stationID, see above
 		mergeMeteo(toStationIdx, vecMeteo);
+	}
+}
+
+
+////////////////////////////////////////////////// MERGE
+EditingCombine::EditingCombine(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
+            : EditingBlock(i_stationID, vecArgs, name, cfg), merged_params(), dest_param(), type(FIRST), replace(false)
+{
+	parse_args(vecArgs);
+}
+
+void EditingCombine::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
+{
+	//TODO: add combine strategy: FIRST, MIN, AVG, MAX
+	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
+	bool has_dest=false, has_src=false;
+
+	for (const auto& arg : vecArgs) {
+		if (arg.first=="SRC") {
+			IOUtils::readLineToVec( arg.second, merged_params);
+			has_src = true;
+		} else if (arg.first=="DEST") {
+			IOUtils::parseArg(arg, where, dest_param);
+			has_dest = true;
+		} else if (arg.first=="TYPE") {
+			std::string typestring;
+			IOUtils::parseArg(arg, where, typestring);
+			if (typestring=="FIRST") type = FIRST;
+			else if (typestring=="MIN") type = MIN;
+			else if (typestring=="AVG") type = AVG;
+			else if (typestring=="MAX") type = MAX;
+			else throw NotFoundException("Type  "+typestring+" not implemented in "+where, AT);
+		} else if (arg.first=="REPLACE") {
+			IOUtils::parseArg(arg, where, replace);
+		} 
+	}
+	
+	if (!has_dest) throw InvalidArgumentException("Please provide a DEST value for "+where, AT);
+	if (!has_src) throw InvalidArgumentException("Please provide an SRC value for "+where, AT);
+	
+	//check that each parameter to combine from is only included once
+	const std::set<std::string> tmp(merged_params.begin(), merged_params.end());
+	if (tmp.size()<merged_params.size())
+		throw InvalidArgumentException("Each meteo parameter to merge from can only appear once in the list for "+where, AT);
+}
+
+void EditingCombine::processFIRST(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const
+{
+	for (size_t jj=startIdx; jj<endIdx; ++jj) {//loop over the timesteps
+		MeteoData& md( vecMeteo[jj] );
+
+		const size_t dest_index = md.addParameter( dest_param ); //either add or just return the proper index
+		bool replace_value = (replace || md(dest_index)==IOUtils::nodata);
+		
+		for(const std::string& param : merged_params) {				
+			if (md.param_exists(param) && md(param)!=IOUtils::nodata) {
+				if (replace_value) {
+					md(dest_index) = md(param);
+					replace_value = false;
+				}
+				
+				//erasing merged parameters
+				md(param) = IOUtils::nodata;
+			}
+		}
+	}
+}
+
+void EditingCombine::processMIN(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const
+{
+	for (size_t jj=startIdx; jj<endIdx; ++jj) {//loop over the timesteps
+		MeteoData& md( vecMeteo[jj] );
+
+		const size_t dest_index = md.addParameter( dest_param ); //either add or just return the proper index
+		const bool destIsNodata = md(dest_index)==IOUtils::nodata;
+		const bool replace_value = (replace || destIsNodata);
+		double min = Cst::dbl_max;
+		
+		for(const std::string& param : merged_params) {				
+			if (md.param_exists(param) && md(param)!=IOUtils::nodata) {
+				if (replace_value && md(param)<min) min = md(param);
+				
+				//erasing merged parameters
+				md(param) = IOUtils::nodata;
+			}
+		}
+		
+		if (replace_value && min!=Cst::dbl_max) { //include the current value of md(dest_index)
+			if (destIsNodata || (!destIsNodata && md(dest_index)>min)) md(dest_index) = min;
+		}
+	}
+}
+
+void EditingCombine::processAVG(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const
+{
+	for (size_t jj=startIdx; jj<endIdx; ++jj) {//loop over the timesteps
+		MeteoData& md( vecMeteo[jj] );
+
+		const size_t dest_index = md.addParameter( dest_param ); //either add or just return the proper index
+		const bool replace_value = (replace || md(dest_index)==IOUtils::nodata);
+		unsigned int count = 0;
+		double sum = 0.;
+		
+		for(const std::string& param : merged_params) {				
+			if (md.param_exists(param) && md(param)!=IOUtils::nodata) {
+				if (replace_value) {
+					sum += md(param);
+					count++;
+				}
+				
+				//erasing merged parameters
+				md(param) = IOUtils::nodata;
+			}
+		}
+		
+		if (replace_value && count>0) { //include the current value of md(dest_index)
+			if (md(dest_index)!=IOUtils::nodata) {
+				sum += md(dest_index);
+				count++;
+			}
+			md(dest_index) = sum / (double)count;
+		}
+	}
+}
+
+void EditingCombine::processMAX(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const
+{
+	for (size_t jj=startIdx; jj<endIdx; ++jj) {//loop over the timesteps
+		MeteoData& md( vecMeteo[jj] );
+
+		const size_t dest_index = md.addParameter( dest_param ); //either add or just return the proper index
+		const bool destIsNodata = md(dest_index)==IOUtils::nodata;
+		const bool replace_value = (replace || destIsNodata);
+		double max = Cst::dbl_min;
+		
+		for(const std::string& param : merged_params) {				
+			if (md.param_exists(param) && md(param)!=IOUtils::nodata) {
+				if (replace_value && md(param)>max) max = md(param);
+				
+				//erasing merged parameters
+				md(param) = IOUtils::nodata;
+			}
+		}
+		
+		if (replace_value && max!=Cst::dbl_min) { //include the current value of md(dest_index)
+			if (destIsNodata || (!destIsNodata && md(dest_index)<max)) md(dest_index) = max;
+		}
+	}
+}
+
+void EditingCombine::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
+{
+	for (auto& meteoStation : vecMeteo) { //for each station
+		if (skipStation(meteoStation)) continue;
+		
+		//the next two lines are required to offer time restrictions
+		for (RestrictionsIdx editPeriod(meteoStation, time_restrictions); editPeriod.isValid(); ++editPeriod) {
+			if (type==FIRST) {
+				processFIRST(meteoStation, editPeriod.getStart(), editPeriod.getEnd());
+			} else if (type==MIN) {
+				processMIN(meteoStation, editPeriod.getStart(), editPeriod.getEnd());
+			} else if (type==AVG) {
+				processAVG(meteoStation, editPeriod.getStart(), editPeriod.getEnd());
+			} else if (type==MAX) {
+				processMAX(meteoStation, editPeriod.getStart(), editPeriod.getEnd());
+			}
+		}
 	}
 }
 

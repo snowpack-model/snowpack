@@ -325,7 +325,7 @@ void SeaIce::calculateMeltingTemperature(ElementData& Edata)
 {
 	// See: Bitz, C. M., and W. H. Lipscomb (1999), An energy-conserving thermodynamic model of sea ice, J. Geophys. Res., 104(C7), 15669–15677, doi:10.1029/1999JC900100.
 	//      who is citing: Assur, A., Composition of sea ice and its tensile strength, in Arctic Sea Ice, N.  A.  S. N.  R.  C. Publ., 598, 106-138, 1958.
-	Edata.meltfreeze_tk = (Edata.theta[WATER] + Edata.theta[WATER_PREF] > 0.) ? (SeaIce::calculateMeltingTemperature(Edata.salinity / (Edata.theta[WATER] + Edata.theta[WATER_PREF]))) : (Constants::meltfreeze_tk);
+	Edata.meltfreeze_tk = (Edata.theta[WATER] + Edata.theta[WATER_PREF] > Constants::eps2 && Edata.salinity > Constants::eps2) ? (SeaIce::calculateMeltingTemperature(Edata.salinity / (Edata.theta[WATER] + Edata.theta[WATER_PREF]))) : (Constants::meltfreeze_tk);
 	return;
 }
 
@@ -694,6 +694,7 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
 
 	// Set thermodynamical properties consistently (temperature, salinity, etc):
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		std::cout << "[i] Initializing sea ice layer " << e << ". Original values: " << " h=" << Xdata.Edata[e].h << " theta[ICE]=" << Xdata.Edata[e].theta[ICE] << " theta[WATER]=" << Xdata.Edata[e].theta[WATER] << " theta[AIR]=" << Xdata.Edata[e].theta[AIR] << " Bulk salinity: " << Xdata.Edata[e].salinity << std::endl;
 		// If a layer is reported as dry, no salinity can be present:
 		if (Xdata.Edata[e].theta[WATER]<Constants::eps) {
 			Xdata.Edata[e].salinity = 0.;
@@ -718,6 +719,10 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
 		Xdata.Edata[e].h = (hbottom - Xdata.Edata[e].VG.h_e) - z;
 		z += Xdata.Edata[e].L;
+	}
+
+	for (size_t e = Xdata.SoilNode; e < nE; e++) {
+		std::cout << "[i] Initializing sea ice layer " << e << ". Initialized values: " << " h=" << Xdata.Edata[e].h << " theta[ICE]=" << Xdata.Edata[e].theta[ICE] << " theta[WATER]=" << Xdata.Edata[e].theta[WATER] << " theta[AIR]=" << Xdata.Edata[e].theta[AIR] << " Bulk salinity: " << Xdata.Edata[e].salinity << std::endl;
 	}
 }
 

@@ -202,6 +202,9 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 	// First consider surface sublimation
 	compSurfaceSublimation(Mdata, ql, Xdata, Sdata);
 
+	// In case all snow elements sublimated away in the step above, and there are no soil layers
+	if (!useSoilLayers && Xdata.getNumberOfNodes() == Xdata.SoilNode+1) return;
+
 	const size_t nN = Xdata.getNumberOfNodes();
 	size_t nE = nN-1;
 	vector<NodeData>& NDS = Xdata.Ndata;
