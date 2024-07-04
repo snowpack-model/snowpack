@@ -873,7 +873,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 
 	const double rg = MM_TO_M(Edata.rg); //Grain radius (m)
 	const double rb = MM_TO_M(Edata.rb); //Bond radius (m)
-	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk); //Element temperature (K)
+	const double Te = std::min(Edata.Te, Constants::meltfreeze_tk); //Element temperature (K)
 
 	// Check for elements with no ice and assume they contain only water
 	if (Edata.theta[ICE] < Snowpack::min_ice_content)
@@ -929,7 +929,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 	const double C5 = (Constants::conductivity_ice * Constants::conductivity_water * Aiw)
 	                  / (rg * Constants::conductivity_water  + (1./C1 - rg) * Constants::conductivity_ice);
 
-	double C_eff  = SnLaws::montana_c_fudge * C1 * (C2 + C3 + C4 + C5) * (2.0 - Edata.dd) * (1.0 + pow(Edata.theta[ICE], 1.7)) * (0.5 + Optim::pow2(Te/Edata.meltfreeze_tk) );
+	double C_eff  = SnLaws::montana_c_fudge * C1 * (C2 + C3 + C4 + C5) * (2.0 - Edata.dd) * (1.0 + pow(Edata.theta[ICE], 1.7)) * (0.5 + Optim::pow2(Te/Constants::meltfreeze_tk) );
 
 	if (!((C_eff < 5.*Constants::conductivity_ice) && (C_eff > 0.2*Constants::conductivity_air)) && show_warnings) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Conductivity out of range (0.2*Constants::conductivity_air=%.3lf, 5.*Constants::conductivity_ice=%.3lf):", 0.2 * Constants::conductivity_air, 5. * Constants::conductivity_ice);
@@ -1714,13 +1714,13 @@ double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
 	const double ILWR = md(MeteoData::ILWR);
 
 	if (ILWR!=IOUtils::nodata)
-		return AirEmissivity(ILWR, md(MeteoData::TA), variant);
+		return AirEmissivity(ILWR, md(MeteoData::TA), variant, false); // Do not enforce max limit on ea, to maintain original ILWR
 	else {
 		const double ilwr_p = Atmosphere::ILWR_parametrized(md.meta.position.getLat(), md.meta.position.getLon(), md.meta.position.getAltitude(),
 	                                        md.date.getJulian(), md.date.getTimeZone(),
 	                                        md(MeteoData::RH), md(MeteoData::TA), md(MeteoData::ISWR), md(MeteoData::TAU_CLD));
 
-		return AirEmissivity(ilwr_p, md(MeteoData::TA), variant);
+		return AirEmissivity(ilwr_p, md(MeteoData::TA), variant, true); // Since ILWR has been parameterized, enforce limits on ea
 	}
 }
 
@@ -1737,13 +1737,13 @@ double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
  * 	- Antarctica: 0.31 (from 2006/2007 data of Dome C)
  * @return air emissivity in range [MIN_AIR_EMISSIVITY,1.] (1)
  */
-double SnLaws::AirEmissivity(const double& ilwr, const double& ta, const std::string& variant)
+double SnLaws::AirEmissivity(const double& ilwr, const double& ta, const std::string& variant, const bool& max_limit)
 {
 	const double min_emissivity = (variant != "ANTARCTICA" && variant != "POLAR") ? 0.55 : 0.31;
 
 	if(ilwr==IOUtils::nodata || ta==IOUtils::nodata) return min_emissivity;
 
-	const double ea = Atmosphere::blkBody_Emissivity(ilwr, ta); //return 1 if >1
+	const double ea = Atmosphere::blkBody_Emissivity(ilwr, ta, max_limit);
 	if (ea<min_emissivity) return min_emissivity;
 	return ea;
 }

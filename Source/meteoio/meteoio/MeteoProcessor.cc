@@ -19,6 +19,7 @@
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <algorithm>
+#include <regex>
 
 using namespace std;
 
@@ -40,27 +41,28 @@ MeteoProcessor::MeteoProcessor(const Config& cfg, const char& rank, const IOUtil
 
 MeteoProcessor::~MeteoProcessor()
 {
-	//clean up heap memory
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it)
-		delete it->second;
+	//clean up heap memory, processing_stack is std::map<std::string, ProcessingStack*>
+	//call delete on the Stack of each parameter
+	for (auto& paramStack : processing_stack) delete paramStack.second;
 }
 
 std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 {
+	//regex for selecting the parameter out of the key
+	static const std::regex param_regex("^([^:]+)(::?)[^:]+$"); //the second group is in order to detect using ':' instead of '::'
+	std::smatch param_matches;
 	const std::vector<std::string> vec_keys( cfg.getKeys(std::string(), "Filters") );
 
 	std::set<std::string> set_parameters;
-	for (size_t ii=0; ii<vec_keys.size(); ++ii){
-		const size_t found = vec_keys[ii].find_first_of(":");
-		if (found != std::string::npos){
-			if (vec_keys[ii].length()<=(found+2))
-				throw InvalidFormatException("Invalid syntax: \""+vec_keys[ii]+"\"", AT);
-			if (vec_keys[ii][found+1]!=':')
-				throw InvalidFormatException("Missing ':' in \""+vec_keys[ii]+"\"", AT);
-				
-			const std::string tmp( vec_keys[ii].substr(0,found) );
-			if (tmp==TimeProcStack::timeParamName) continue; //exclude the TIME filters (they are processed earlier)
-			set_parameters.insert(tmp);
+	for (const std::string& key : vec_keys) {
+		if (std::regex_match(key, param_matches, param_regex)) { //extract the parameter out of the key
+			const std::string param( param_matches.str(1) );
+			//catching some common syntax errors
+			if (param_matches.str(2)!="::") throw InvalidFormatException("Missing ':' in \""+key+"\"", AT);
+			//exclude the TIME filters (they are processed earlier)
+			if (param==TimeProcStack::timeParamName) continue;
+
+			set_parameters.insert(param);
 		}
 	}
 
@@ -71,8 +73,8 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties) const
 {
 	ProcessingProperties tmp;
 
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it){
-		(*(it->second)).getWindowSize(tmp);
+	for (auto& paramStack : processing_stack) {
+		paramStack.second->getWindowSize(tmp);
 		compareProperties(tmp, o_properties);
 	}
 
@@ -98,10 +100,10 @@ void MeteoProcessor::process(std::vector< std::vector<MeteoData> >& ivec,
 {
 	std::swap(ivec, ovec);
 	if (processing_stack.empty() || !enable_meteo_filtering) return;
-	
-	for (std::map<std::string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it) {
+
+	for (auto& paramStack : processing_stack) {
 		std::swap(ovec, ivec);
-		(*(it->second)).process(ivec, ovec, second_pass);
+		paramStack.second->process(ivec, ovec, second_pass);
 	}
 }
 

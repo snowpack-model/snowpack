@@ -692,8 +692,8 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 
 		// B) Check whether to use incoming longwave as estimated from station field
 		const bool meas_incoming_longwave = cfg.get("MEAS_INCOMING_LONGWAVE", "SnowpackAdvanced");
-		if (!meas_incoming_longwave) {
-			Mdata.ea = SnLaws::AirEmissivity(lw_in, Mdata.ta, variant);
+		if (!meas_incoming_longwave && lw_in!=IOUtils::nodata) {
+			Mdata.ea = SnLaws::AirEmissivity(lw_in, Mdata.ta, variant, true); // In this case, lw_in is an estimate, and we enforce max limit on ea.
 		}
 	}
 #endif

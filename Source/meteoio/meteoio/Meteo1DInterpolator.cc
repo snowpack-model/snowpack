@@ -73,8 +73,12 @@ namespace mio {
                                                 const char &rank) {
         for (size_t ii = 0; ii < vecAlgos.size(); ii++) {
             std::string algo_name(IOUtils::strToUpper(vecAlgos[ii].second));
-            if (algo_name == "NONE")
-                algo_name = "LINEAR"; // default value
+            if (algo_name == "NONE" || algo_name == "NO") {
+                std::vector<std::pair<std::string, std::string>> vecArgs;
+                std::shared_ptr<ResamplingAlgorithms> algo_ptr(ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs));
+                mapAlgorithms[parname].addAlgorithm(algo_ptr, IOUtils::nodata);
+                continue;
+            }
             double max_gap_size = cfg.get(parname + "::" + algo_name + "::MAX_GAP_SIZE", interpol_section, IOUtils::nodata);
             if (max_gap_size != IOUtils::nodata) {
                 if (max_gap_size < 0.)

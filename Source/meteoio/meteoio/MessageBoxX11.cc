@@ -37,38 +37,38 @@ void MessageBoxX11( const char* title, const char* text ) {
 	static const char* wmDeleteWindow = "WM_DELETE_WINDOW";
 
 	/* Open a display */
-	Display* dpy = XOpenDisplay(0);
+	Display* dpy( XOpenDisplay(0) );
 	if (!dpy) return;
 
 	/* Get us a white and black color */
 	const unsigned long black = BlackPixel( dpy, DefaultScreen(dpy) );
 	const unsigned long white = WhitePixel( dpy, DefaultScreen(dpy) );
 	static const char grey[] = "#dcdad5";
-	Colormap colormap = DefaultColormap(dpy, 0);
+	Colormap colormap( DefaultColormap(dpy, 0) );
 	XColor color;
 	XParseColor(dpy, colormap, grey, &color);
 	XAllocColor(dpy, colormap, &color);
 
 	/* Create a window with the specified title */
-	Window w = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy), 0, 0, 100, 100,
-				0, black, color.pixel );
+	Window w( XCreateSimpleWindow( dpy, DefaultRootWindow(dpy), 0, 0, 100, 100, 0, black, color.pixel ) );
 	XSelectInput( dpy, w, ExposureMask | StructureNotifyMask |
 				KeyReleaseMask | PointerMotionMask |
 				ButtonPressMask | ButtonReleaseMask   );
 	XMapWindow( dpy, w );
 	XStoreName( dpy, w, title );
 
-	Atom wmDelete = XInternAtom( dpy, wmDeleteWindow, True );
+	Atom wmDelete( XInternAtom( dpy, wmDeleteWindow, True ) );
 	XSetWMProtocols( dpy, w, &wmDelete, 1 );
 
 	/* Create a graphics context for the window */
-	GC gc = XCreateGC( dpy, w, 0, 0 );
+	GC gc( XCreateGC( dpy, w, 0, 0 ) );
 	XSetForeground( dpy, gc, black );
 	XSetBackground( dpy, gc, white );
 
 	/* Split the text down into a list of lines */
 	char **strvec = nullptr;
-	size_t strvec_size = 0, text_len = strlen(text)+1;
+	static const size_t text_len = strlen(text)+1;
+	size_t strvec_size = 0;
 	char *temp = (char *)malloc( text_len );
 	strncpy( temp, text, text_len );
 
@@ -83,7 +83,7 @@ void MessageBoxX11( const char* title, const char* text ) {
 	free( temp );
 
 	/* Compute the printed length and height of the longest and the tallest line */
-	XFontStruct* font = XQueryFont( dpy, XGContextFromGC(gc));
+	XFontStruct* font( XQueryFont( dpy, XGContextFromGC(gc)) );
 	if (!font) return;
 
 	int length=0, height=0, direction, ascent, descent;
@@ -116,7 +116,7 @@ void MessageBoxX11( const char* title, const char* text ) {
 
 	/* Make the window non resizeable */
 	XUnmapWindow( dpy, w );
-	XSizeHints* hints = XAllocSizeHints( );
+	XSizeHints* hints( XAllocSizeHints( ) );
 	hints->flags      = PSize | PMinSize | PMaxSize;
 	hints->min_width  = hints->max_width  = hints->base_width  = W;
 	hints->min_height = hints->max_height = hints->base_height = H;

@@ -193,7 +193,7 @@ double SunTrajectory::getSolarTime() const
  * Since the Sun reaches its zenith at a time different than the local noon, the solar noon
  * does not happen at 12:00 local time. This defines a solar time that has a negative or positive offset
  * with the local time, depending on the seasons (see http://www.jaloxa.eu/resources/daylighting/sunpath.shtml).
- * @return actual solar time of day, ie between 0 and 24
+ * @return actual solar time of day, ie between 0 and 1
  */
 double SunTrajectory::getSolarTimeOfDay() const
 {

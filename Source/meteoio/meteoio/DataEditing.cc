@@ -39,6 +39,10 @@ DataEditing::DataEditing(const Config& cfgreader)
 {
 	//ENABLE_TIMESERIES_EDITING is documented in DataEditingAlgorithms.cc
 	cfgreader.getValue("ENABLE_TIMESERIES_EDITING", cmd_section, enable_ts_editing, IOUtils::nothrow);
+
+	const std::string old_automerge = cfgreader.get( "AUTOMERGE", cmd_section, "" );
+	if (!old_automerge.empty())
+		throw InvalidArgumentException("The syntax for AUTOMERGE has changed, please declare it either per stationID or as \"*::EDIT1 = AUTOMERGE\" for any stationID", AT);
 	
 	const std::set<std::string> editableStations( getEditableStations(cfgreader) );
 	for (const auto &station : editableStations) {
@@ -296,7 +300,7 @@ void DataEditing::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 	
 	//remove trailing pure nodata MeteoData elements (if any)
-	purgeTrailingNodata(vecMeteo); //HACK using "create" might fill pure nodata elements with something...
+	purgeTrailingNodata(vecMeteo); //because using "create" might fill pure nodata elements with something...
 
 	timeproc.process(vecMeteo);
 	TimeProcStack::checkUniqueTimestamps(vecMeteo);

@@ -50,6 +50,7 @@
 #include <meteoio/meteoFilters/ProcMult.h>
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <meteoio/meteoFilters/ProcWMASmoothing.h>
+#include <meteoio/meteoFilters/ProcRadProj.h>
 #include <meteoio/meteoFilters/ProcReducePressure.h>
 #include <meteoio/meteoFilters/ProcRHWaterToIce.h>
 #include <meteoio/meteoFilters/ProcTransformWindVector.h>
@@ -169,6 +170,7 @@ namespace mio {
  * - REDUCE_PRESSURE: reduce local pressure to sea level pressure, see ProcReducePressure
  * - RHWATERTOICE: correct relative humidity over water to over ice in case temperature is below freezing, see ProcRHWaterToIce
  * - TRANSFORMWINDVECTOR: transform wind direction and/or wind speed components, see ProcTransformWindVector
+ * - PROJECT_RADIATION: project short wave radiation from one inclination to another one, see RadProj
  *
  * A few filters can be applied to the timestamps themselves:
  * - SUPPR: delete whole timesteps (based on a list or other criteria such as removing duplicates, etc), see TimeSuppr
@@ -250,6 +252,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcUndercatch_Hamon(vecArgs, blockname, cfg);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vecArgs, blockname, cfg);
+	} else if (blockname == "PROJECT_RADIATION"){
+		return new RadProj(vecArgs, blockname, cfg);
 	} else if (blockname == "PSUM_DISTRIBUTE"){
 		return new ProcPSUMDistribute(vecArgs, blockname, cfg);
 	} else if (blockname == "SHADE"){
