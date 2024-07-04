@@ -490,7 +490,7 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 		} else  {
 			STATIONS_SET vectmp;
 			plugin->readStationData(date, vectmp);
-			for (size_t jj=0; jj<vectmp.size(); jj++) vecStation.push_back( vectmp[jj] );
+			for (const auto& station : vectmp) vecStation.push_back( station );
 		}
 	}
 	
@@ -515,7 +515,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		} else  {
 			std::vector<METEO_SET> vectmp;
 			plugin->readMeteoData(fakeStart, fakeEnd, vectmp);
-			for (size_t jj=0; jj<vectmp.size(); jj++) vecMeteo.push_back( vectmp[jj] );
+			for (const auto& station_meteo : vectmp) vecMeteo.push_back( station_meteo );
 		}
 	}
 

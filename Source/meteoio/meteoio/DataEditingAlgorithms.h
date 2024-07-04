@@ -125,8 +125,8 @@ class EditingSwap : public EditingBlock {
  * @code
  * [InputEditing]
  * SLF2::edit1      = RENAME
- * SLF2::arg1::dest = TA
  * SLF2::arg1::src  = air_temp air_temperature temperature_air
+ * SLF2::arg1::dest = TA
  * @endcode
  * 
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
@@ -208,6 +208,72 @@ class EditingKeep : public EditingBlock {
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::set< std::string > keep_params;
+};
+
+/** 
+ * @class EditingCombine
+ * @ingroup processing
+ * @brief COMBINE input editing command
+ * @details
+ * This algorithm allows combining several parameters into a single parameter for gap filling or to create 
+ * a new, composite parameter. This is useful, for example in order to fill gaps in a 2m air temperature 
+ * with air temperatures from other sensors or from other heights. Several methods to combine the parameters 
+ * are available with the TYPE argument and an arbitrary number of source parameters can be provided. 
+ * Please note that after processing, the source parameters will be deleted! It takes the following arguments:
+ *     - SRC: the source parameters providing the data (space delimited list);
+ *     - DEST: the destination parameter (it will be created if it does not already exist);
+ *     - TYPE: how to generate the data provided by the source parameters (default: FIRST):
+ *            - FIRST: take the first valid data (in the order that is given by the SRC argument);
+ *            - MIN: take the minimum of all valid data;
+ *            - AVG: take the average of all valid data;
+ *            - MAX: take the maximum of all valid data;
+ *     - REPLACE: if set to TRUE, even valid DEST data points will be replaced, otherwise only data gaps 
+ *                in DEST will be filled with new data (default: false).
+ * 
+ * Please note that for MIN/AVG/MAX, the current value of DEST is included if it is a valid value! If you 
+ * want to replace valid values of DEST with for example the average of several other parameters excluding itself, 
+ * first declare a KEEP or EXCLUDE algorithm for the period of interest in order to delete DEST.
+ *
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit2      = COMBINE
+ * STB::arg2::src  = TA_THY TA_ROT TA@100
+ * STB::arg2::dest = TA
+ * @endcode
+ * 
+ * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
+ * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
+ * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
+ * the start of the first station to the start of the second station)
+ */
+class EditingCombine : public EditingBlock {
+	public:
+		enum CombineType {
+			FIRST,	///< take the first valid data
+			MIN,	///< take the MIN of all valid data
+			AVG,	///< take the average of all valid data
+			MAX		///< take the MAX of all valid data
+		};
+	public:
+		EditingCombine(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void processFIRST(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		void processMIN(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		void processAVG(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		void processMAX(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		std::vector< std::string > merged_params; //as vector since order is important
+		std::string dest_param;
+		CombineType type;
+		bool replace;
 };
 
 /** 
@@ -479,7 +545,7 @@ class EditingRegFill : public EditingBlock {
 		enum RegressionType {
 			LINEAR,
 			QUADRATIC,
-			CUBIC,
+			CUBIC
 		};
 
 	public:

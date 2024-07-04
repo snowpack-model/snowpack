@@ -34,13 +34,14 @@ const double Atmosphere::day_iswr_thresh = 5.;
  * @brief Calculate the black body emissivity
  * @param lwr longwave radiation emitted by the body (W m-2)
  * @param T   surface temperature of the body (K)
+ * @param max_limit enforce an emissivity between 0 and 1? (default: true)
  * @return black body emissivity (0-1)
  */
-double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T)
+double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T, const bool& max_limit)
 {
 	const double T2 = T*T;
 	const double ea = lwr / (Cst::stefan_boltzmann * (T2*T2));
-	return std::min(ea, 1.);
+	return ( (max_limit) ? (std::min(ea, 1.)) : (ea) );
 }
 
 /**

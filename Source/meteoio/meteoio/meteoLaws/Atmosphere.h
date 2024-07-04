@@ -95,7 +95,7 @@ class Atmosphere {
 		static double specToRelHumidity(const double& altitude, const double& TA, const double& qi);
 		static double relToSpecHumidity(const double& altitude, const double& TA, const double& RH);
 
-		static double blkBody_Emissivity(const double& lwr, const double& T);
+		static double blkBody_Emissivity(const double& lwr, const double& T, const bool& max_limit=true);
 		static double blkBody_Radiation(const double& ea, const double& T);
 		
 		static const double day_iswr_thresh; //threhold on ISWR above which it is considered to be daylight

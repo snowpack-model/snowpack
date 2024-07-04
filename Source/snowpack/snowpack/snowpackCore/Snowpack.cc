@@ -1492,7 +1492,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	if (coupled_phase_changes) {
 		// Ensure that when top element consists of ice, its upper node does not exceed melting temperature
 		// This is to have consistent surface energy balance calculation and for having good looking output
-		if (nE > 0 && Xdata.Edata[nE-1].theta[ICE] > Constants::eps) NDS[nE].T=std::min(Xdata.Edata[nE-1].meltfreeze_tk, NDS[nE].T);
+		// Note: for sea ice, the effect of salinity is such that this doesn't work...
+		if (nE > 0 && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].salinity > Constants::eps2) NDS[nE].T=std::min(Xdata.Edata[nE-1].meltfreeze_tk, NDS[nE].T);
 	}
 
 	return TempEqConverged;
@@ -2063,8 +2064,7 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
 				}
 				if (variant == "SEAICE" ) {
-					const double BrineSal_new = (EMS[e].theta[WATER] == 0.) ? (0.) : (EMS[e].salinity / EMS[e].theta[WATER]);
-					EMS[e].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(BrineSal_new);
+					Xdata.Seaice->calculateMeltingTemperature(EMS[e]);
 				} else {
 					EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
 				}
