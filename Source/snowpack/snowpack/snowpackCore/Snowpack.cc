@@ -1564,58 +1564,58 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	const double Ln = (hn / (double)nAddE);               // New snow element length
 	double z0 = NDS[nOldN-1].z + NDS[nOldN-1].u + Ln; // Position of lowest new node
 	for (size_t n = nOldN; n < nNewN; n++) { //loop over the nodes
-			NDS[n].T = Tw;                  // t_surf Temperature of the new node
-			NDS[n].z = z0;                      // New nodal position
-			NDS[n].u = 0.0;                     // Initial displacement is 0
-			NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
-			NDS[n].udot = 0.0;                  // Settlement rate is also 0
-			NDS[n].f = 0.0;                     // Unbalanced forces are 0
-			NDS[n].S_n = IOUtils::nodata;
-			NDS[n].S_s = IOUtils::nodata;
-			z0 += Ln;
+		NDS[n].T = Tw;                      // t_surf Temperature of the new node
+		NDS[n].z = z0;                      // New nodal position
+		NDS[n].u = 0.0;                     // Initial displacement is 0
+		NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
+		NDS[n].udot = 0.0;                  // Settlement rate is also 0
+		NDS[n].f = 0.0;                     // Unbalanced forces are 0
+		NDS[n].S_n = IOUtils::nodata;
+		NDS[n].S_s = IOUtils::nodata;
+		z0 += Ln;
 	}
 
 	// Fill the element data
 	for (size_t e = nOldE; e < nNewE; e++) { //loop over the elements
-				const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
-				fillNewSnowElement(Mdata, length, rho_hn, false, Xdata.number_of_solutes, EMS[e]);
+		const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
+		fillNewSnowElement(Mdata, length, rho_hn, false, Xdata.number_of_solutes, EMS[e]);
 
-				// Now give specific properties for technical snow, consider liquid water
-				// Assume that the user does not specify unreasonably high liquid water contents.
-				// This depends also on the density of the solid fraction - print a warning if it looks bad
-				EMS[e].theta[WATER] += theta_w;
+		// Now give specific properties for technical snow, consider liquid water
+		// Assume that the user does not specify unreasonably high liquid water contents.
+		// This depends also on the density of the solid fraction - print a warning if it looks bad
+		EMS[e].theta[WATER] += theta_w;
 
-				if ( (EMS[e].theta[WATER] + EMS[e].theta[ICE]) > 0.7)
-					prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
-				          "Too much liquid water specified or density too high! Dry density =%.3f kg m-3  Water Content = %.3f %", rho_hn, theta_w);
+		if ( (EMS[e].theta[WATER] + EMS[e].theta[ICE]) > 0.7)
+			prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
+		          "Too much liquid water specified or density too high! Dry density =%.3f kg m-3  Water Content = %.3f %", rho_hn, theta_w);
 
-				EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
+		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
 
-				if (EMS[e].theta[AIR] < 0.) {
-					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Error in technical snow input - no void fraction left");
-					throw IOException("Runtime error in runSnowpackModel", AT);
-					}
+		if (EMS[e].theta[AIR] < 0.) {
+			prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Error in technical snow input - no void fraction left");
+			throw IOException("Runtime error in runSnowpackModel", AT);
+			}
 
-				// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
-				// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.
-				// Note that we use the same branching condition as in the function Snowpack::neumannBoundaryConditions(...)
-				const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
-				if(nOldE > 0 && EMS[nOldE-1].theta[WATER] > theta_r + Constants::eps && EMS[nOldE-1].theta[ICE] > Constants::eps) {
-					EMS[e].theta[WATER]+=(2.*Constants::eps);
-					EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
-					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
-				}
-				EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
-				Xdata.ColdContent += EMS[e].coldContent(); //update cold content
+		// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
+		// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.
+		// Note that we use the same branching condition as in the function Snowpack::neumannBoundaryConditions(...)
+		const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+		if(nOldE > 0 && EMS[nOldE-1].theta[WATER] > theta_r + Constants::eps && EMS[nOldE-1].theta[ICE] > Constants::eps) {
+			EMS[e].theta[WATER]+=(2.*Constants::eps);
+			EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
+			EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
+		}
+		EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
+		Xdata.ColdContent += EMS[e].coldContent(); //update cold content
 
-				// Now adjust default new element values to technical snow (mk = 6)
-				EMS[e].mk = 6;
-				EMS[e].dd = 0.;
-				EMS[e].sp = 1.;
-				EMS[e].rg = 0.2; // Have to adapt after some tests
-				EMS[e].rb = EMS[e].rg/3.;
+		// Now adjust default new element values to technical snow (mk = 6)
+		EMS[e].mk = 6;
+		EMS[e].dd = 0.;
+		EMS[e].sp = 1.;
+		EMS[e].rg = 0.2; // Have to adapt after some tests
+		EMS[e].rb = EMS[e].rg/3.;
 
-			}   // End elements
+	}   // End elements
 
 	// Finally, update the computed snowpack height
 	Xdata.cH = NDS[nNewN-1].z + NDS[nNewN-1].u;
