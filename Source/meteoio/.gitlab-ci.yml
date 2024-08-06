@@ -10,6 +10,7 @@ stages:
   - edit release
   - build
   - test
+  - docker
   - test coverage
   - release build
   - release
@@ -34,22 +35,7 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
 
-build latest image:
-  stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-  image: docker:24.0.6
-  services:
-    - name: docker:24.0.6-dind
-      alias: docker
-  script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER -password-stdin $CI_REGISTRY
-    - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
-    - echo $REALEASE_DATE
-    - docker build --build-arg METEOIO_VERSION=unstable --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:latest
-  allow_failure: true
-  when: manual
+
 
 
 .test_base:
@@ -220,23 +206,6 @@ release:
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz'
           link_type: 'other'
 
-release docker image:
-  stage: release
-  image: docker:24.0.6
-  services:
-    - docker:24.0.6-dind
-  rules:
-    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
-  dependencies: []
-  script:
-    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
-    - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
-    - echo $METEOIO_VERSION $REALEASE_DATE
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
-    - docker build --build-arg METEOIO_VERSION=$METEOIO_VERSION --build-arg REALEASE_DATE=$REALEASE_DATE -t $CI_REGISTRY_IMAGE:$METEOIO_VERSION .
-    - docker push $CI_REGISTRY_IMAGE:$METEOIO_VERSION    
-  allow_failure: true
-  when: manual
 
 
 # need to do the exporting of METEOFILE every single time to have the variables available
@@ -398,6 +367,44 @@ manuel-add MAC to release:
               "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/MeteoIO-${METEOIO_VERSION}/assets/links"'
   allow_failure: true
 
+
+release latest image:
+  stage: docker
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
+  before_script:
+  script:
+    - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
+    - echo $REALEASE_DATE
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:test"
+      --build-arg METEOIO_VERSION=unstable
+      --build-arg REALEASE_DATE=$REALEASE_DATE
+  allow_failure: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+release docker image:
+  stage: docker
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
+  before_script:
+  script:
+    - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo $METEOIO_VERSION $REALEASE_DATE
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:test"
+      --build-arg METEOIO_VERSION=$METEOIO_VERSION
+      --build-arg REALEASE_DATE=$REALEASE_DATE
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
 
 update pages:
   stage: pages

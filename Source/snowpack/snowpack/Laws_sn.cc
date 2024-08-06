@@ -680,7 +680,7 @@ double SnLaws::compWindGradientSnow(const ElementData& Edata, double& v_pump)
  * @version 12.0: thermal conductivity model is now defined by a key SOIL_THERMAL_CONDUCTIVITY in SNOWPACK_ADVANCED
  * @param[in] Edata
  * @param[in] dvdz Wind velocity gradient (s-1)
- * @param[in] soil_thermal_conductivity Thermal conductivity model to use (either "FITTED" or any other string)
+ * @param[in] soil_thermal_conductivity Thermal conductivity model to use (either "FITTED", "COSENZA2003", or "RAW")
  * @return Soil thermal conductivity (W K-1 m-1)
  */
 double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const double& dvdz,
@@ -689,22 +689,32 @@ double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const doubl
 	double C_eff_soil;
 
 	//0 means no soil, 10000 means rock
-	if ((Edata.rg > 0.) && (Edata.rg < 10000.) && soil_thermal_conductivity == "FITTED") {
-		static const double c_clay = 1.3, c_sand = 0.27;
-		static const double beta1 = 6., beta2 = 4.978, c_mineral = 2.9;
-		const double weight = (c_clay - Edata.soil[SOIL_K]) / (c_clay - c_sand);
-		const double C_eff_soil_max = Edata.theta[SOIL] * c_mineral + (Edata.theta[WATER]+Edata.theta[WATER_PREF])
-		                              * SnLaws::conductivity_water(Edata.Te) + Edata.theta[ICE]
-		                              * SnLaws::conductivity_ice(Edata.Te);
+	if ((Edata.rg > 0.) && (Edata.rg < 10000.) && soil_thermal_conductivity != "RAW") {
+		if (soil_thermal_conductivity == "FITTED") {
+			static const double c_clay = 1.3, c_sand = 0.27;
+			static const double beta1 = 6., beta2 = 4.978, c_mineral = 2.9;
+			const double weight = (c_clay - Edata.soil[SOIL_K]) / (c_clay - c_sand);
+			const double C_eff_soil_max = Edata.theta[SOIL] * c_mineral + (Edata.theta[WATER]+Edata.theta[WATER_PREF])
+			                              * SnLaws::conductivity_water(Edata.Te) + Edata.theta[ICE]
+			                              * SnLaws::conductivity_ice(Edata.Te);
 
-		C_eff_soil = (beta1 + weight * beta2) * Edata.theta[ICE];
-		if ((Edata.theta[WATER]+Edata.theta[WATER_PREF]) > SnowStation::thresh_moist_soil) {
-			static const double alpha1 = 0.389, alpha2 = 0.3567, alpha3 = 61.61;
-			C_eff_soil += std::max( 0.27, (alpha1 + alpha2 * weight) * log(alpha3 * (Edata.theta[WATER]+Edata.theta[WATER_PREF])) );
+			C_eff_soil = (beta1 + weight * beta2) * Edata.theta[ICE];
+			if ((Edata.theta[WATER]+Edata.theta[WATER_PREF]) > SnowStation::thresh_moist_soil) {
+				static const double alpha1 = 0.389, alpha2 = 0.3567, alpha3 = 61.61;
+				C_eff_soil += std::max( 0.27, (alpha1 + alpha2 * weight) * log(alpha3 * (Edata.theta[WATER]+Edata.theta[WATER_PREF])) );
+			} else {
+				C_eff_soil += 0.27;
+			}
+			C_eff_soil = std::min(C_eff_soil_max, C_eff_soil);
+		} else if (soil_thermal_conductivity == "COSENZA2003") {
+			// Eq. 12 in Cosenza et al. (2003): Relationship between thermal conductivity and water content of soils using numerical modelling. https://doi.org/10.1046/j.1365-2389.2003.00539.x
+			const double n = 1. - Edata.theta[SOIL];	// n = porosity in Cosenza et al. (2003)
+			C_eff_soil = (0.8908 - 1.0959 * n) * Edata.soil[SOIL_K] + (1.2236 - 0.3485 * n) * (Edata.theta[WATER]+Edata.theta[WATER_PREF]);
+			// Now add ice contribution
+			C_eff_soil += Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te);
 		} else {
-			C_eff_soil += 0.27;
+			throw UnknownValueException("Unknown soil thermal conductivity model (SOIL_THERMAL_CONDUCTIVITY) selected!", AT);
 		}
-		C_eff_soil = std::min(C_eff_soil_max, C_eff_soil);
 	} else {
 		C_eff_soil = Edata.soil[SOIL_K] + (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * SnLaws::conductivity_water(Edata.Te)
                        + Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te);
@@ -1278,7 +1288,7 @@ double SnLaws::compNewSnowDensity(const std::string& i_hn_density, const std::st
 		if (Mdata.rho_hn != Constants::undefined) {
 			rho = Mdata.rho_hn; // New snow density as read from input file
 		} else if (Mdata.psum > 0. && (Mdata.psum_ph==IOUtils::nodata || Mdata.psum_ph<1.)) {
-			if (i_hn_density_fixedValue > 0. && i_hn_density_fixedValue > min_hn_density) // use density of surface snowpack
+			if (i_hn_density_fixedValue > 0. && i_hn_density_fixedValue > min_hn_density && Xdata.getNumberOfElements()-Xdata.SoilNode > 0) // use density of surface snowpack
 				rho = Xdata.Edata[Xdata.getNumberOfElements()-1].Rho;
 			else
 				rho = newSnowDensityPara(i_hn_density_parameterization,

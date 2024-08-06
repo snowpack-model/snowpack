@@ -441,6 +441,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("SOIL_EVAP_MODEL", "SnowpackAdvanced", soil_evaporation);
 	/* Get the soil thermal conductivity model to be used
 	*  - FITTED: Use fit values for soil thermal conductivity, see snLaws::compSoilThermalConductivity()
+	*  - COSENZA2003: Use the soil thermal conductivity model by Cosenza et al. (2003)
 	*  - RAW: Use simply Edata.soil[SOIL_K] + Edata.theta[WATER] * SnLaws::conductivity_water(Edata.Te)
 	                    + Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te) */
 	cfg.getValue("SOIL_THERMAL_CONDUCTIVITY", "SnowpackAdvanced", soil_thermal_conductivity);

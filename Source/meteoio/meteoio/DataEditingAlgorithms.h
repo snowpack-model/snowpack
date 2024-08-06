@@ -163,8 +163,8 @@ class EditingRename : public EditingBlock {
  * FLU2::arg3::params  = TA RH TSS TSG
  * 
  * SLF2::edit1         = EXCLUDE
- * SLF2::arg3::params  = *
- * SLF2::arg3::when    = 2020-09-01 - 2020-09-03 , 2020-11-01T04:00
+ * SLF2::arg1::params  = *
+ * SLF2::arg1::when    = 2020-09-01 - 2020-09-03 , 2020-11-01T04:00
  * @endcode
  */
 class EditingExclude : public EditingBlock {
@@ -559,6 +559,99 @@ class EditingRegFill : public EditingBlock {
 		std::vector< std::string > source_stations;
 		std::set< std::string > params_to_merge;
 		RegressionType regtype;
+};
+
+/** 
+ * @class EditingMove
+ * @ingroup processing
+ * @brief MOVE input editing command
+ * @details
+ * 
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit1         = EXCLUDE
+ * STB::arg1::params  = ILWR PSUM
+ * 
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
+ *
+ * SLF2::edit2        = MOVE
+ * SLF2::arg2::params = TA RH
+ * SLF2::arg2::dest   = *DAV
+ * @endcode
+ */
+class EditingMove : public EditingBlock {
+	public: 
+
+	public:
+		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		std::set<std::string> dest_stations;
+		std::set< std::string > params_to_move;
+
+		std::vector<MeteoData> createFullTimeSeries(const std::vector<MeteoData>& source, const std::vector<MeteoData>& dest) const;
+		bool isDestination(const std::string& stationID) const;
+
+		bool param_wildcard;
+		bool station_wildcard;
+		bool station_glob;
+};
+
+/** 
+ * @class EditingSplit
+ * @ingroup processing
+ * @brief Split input editing command
+ * @details
+ * 
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit1         = EXCLUDE
+ * STB::arg1::params  = ILWR PSUM
+ * 
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
+ *
+ * DAV1::edit1        = SPLIT
+ * DAV1::arg1::params = TSS HS
+ * DAV1::arg1::dest   = DAV_CRYO
+ * @endcode
+ */
+class EditingSplit : public EditingBlock {
+	public: 
+
+	public:
+		EditingSplit(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		std::string dest_station_id;
+		std::set< std::string > params_to_move;
+
+		std::vector<MeteoData> splitTimeSeries(std::vector<MeteoData>& source);
 };
 
 class EditingBlockFactory {

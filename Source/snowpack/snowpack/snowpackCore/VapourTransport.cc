@@ -20,6 +20,7 @@
 
 
 #include <snowpack/snowpackCore/VapourTransport.h>
+#include <snowpack/snowpackCore/WaterTransport.h>
 #include <snowpack/vanGenuchten.h>
 #include <snowpack/snowpackCore/Snowpack.h>
 #include <snowpack/Constants.h>
@@ -172,6 +173,7 @@ void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
 	try {
 		LayerToLayer(Mdata, Xdata, Sdata, ql);
 		WaterTransport::adjustDensity(Xdata, Sdata);
+		WaterTransport::mergingElements(Xdata, Sdata);
 	} catch(const exception&) {
 		prn_msg( __FILE__, __LINE__, "err", Mdata.date, "Error in transportVapourMass()");
 		throw;
@@ -214,10 +216,15 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 	if (!enable_vapour_transport) {
 		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
 		const double topFlux = -ql / Constants::lh_sublimation;										//top layer flux (kg m-2 s-1)
-		const double dM = std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
-		// Correct latent heat flux, which should become 0. at this point. HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
-		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
-		ql -= dM / sn_dt * Constants::lh_sublimation;
+		double dM = -(topFlux * sn_dt);
+		if (EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L) < (topFlux * sn_dt)) {
+			dM = - EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L);
+			ql = 0.;
+		} else {
+			// Correct latent heat flux, which should become 0. at this point. HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
+			// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
+			ql -= dM / sn_dt * Constants::lh_sublimation;
+		}
 		deltaM[nE-1] += dM;
 	} else {
 		ql=0;
@@ -370,7 +377,7 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 			// We can only do this partitioning here in this "simple" way, without checking if the mass is available, because we already limited dM above, based on available ICE + WATER.
 			const double dTh_water = std::max((EMS[e].VG.theta_r * (1. + Constants::eps) - EMS[e].theta[WATER]),
 											  deltaM[e] / (Constants::density_water * EMS[e].L));
-			const double dTh_ice = ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L);
+			const double dTh_ice = std::max(-EMS[e].theta[ICE], ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L));
 			EMS[e].theta[WATER] += dTh_water;
 			EMS[e].theta[ICE] += dTh_ice;
 
@@ -410,9 +417,9 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 		EMS[e].updDensity();
 		assert(EMS[e].Rho > 0 || EMS[e].Rho == IOUtils::nodata); // density must be positive
 		if (!(EMS[e].Rho > Constants::eps
-		      && EMS[e].theta[AIR] >= 0.
+		      && EMS[e].theta[AIR] >= 0. && EMS[e].theta[ICE] >= 0. && EMS[e].theta[WATER] >= 0.
 		      && EMS[e].theta[WATER] <= 1. + Constants::eps && EMS[e].theta[ICE] <= 1. + Constants::eps
-		      && (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF] + EMS[e].theta[ICE] + EMS[e].theta[SOIL] + EMS[e].theta[AIR] + EMS[e].theta[SOIL] - 1) < 1.e-12)) {
+		      && (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF] + EMS[e].theta[ICE] + EMS[e].theta[SOIL] + EMS[e].theta[AIR] - 1.) < 1.e-12)) {
 				prn_msg(__FILE__, __LINE__, "err", Date(),
 					"Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf soil=%lf air=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE],
 						EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[SOIL], EMS[e].theta[AIR]);
