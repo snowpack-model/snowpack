@@ -20,6 +20,7 @@
 
 
 #include <snowpack/snowpackCore/VapourTransport.h>
+#include <snowpack/snowpackCore/WaterTransport.h>
 #include <snowpack/vanGenuchten.h>
 #include <snowpack/snowpackCore/Snowpack.h>
 #include <snowpack/Constants.h>
@@ -172,6 +173,7 @@ void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
 	try {
 		LayerToLayer(Mdata, Xdata, Sdata, ql);
 		WaterTransport::adjustDensity(Xdata, Sdata);
+		WaterTransport::mergingElements(Xdata, Sdata);
 	} catch(const exception&) {
 		prn_msg( __FILE__, __LINE__, "err", Mdata.date, "Error in transportVapourMass()");
 		throw;
@@ -214,10 +216,15 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 	if (!enable_vapour_transport) {
 		// Only deal with the remaining ql (i.e., latent heat exchange at the surface)
 		const double topFlux = -ql / Constants::lh_sublimation;										//top layer flux (kg m-2 s-1)
-		const double dM = std::max(-EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L), -(topFlux * sn_dt));
-		// Correct latent heat flux, which should become 0. at this point. HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
-		// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
-		ql -= dM / sn_dt * Constants::lh_sublimation;
+		double dM = -(topFlux * sn_dt);
+		if (EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L) < (topFlux * sn_dt)) {
+			dM = - EMS[nE-1].theta[ICE] * (Constants::density_ice * EMS[nE-1].L);
+			ql = 0.;
+		} else {
+			// Correct latent heat flux, which should become 0. at this point. HACK: note that if we cannot satisfy the ql at this point, we overestimated the latent heat from soil.
+			// We will not get mass from deeper layers, as to do that, one should work with enable_vapour_transport == true.
+			ql -= dM / sn_dt * Constants::lh_sublimation;
+		}
 		deltaM[nE-1] += dM;
 	} else {
 		ql=0;
@@ -370,7 +377,7 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 			// We can only do this partitioning here in this "simple" way, without checking if the mass is available, because we already limited dM above, based on available ICE + WATER.
 			const double dTh_water = std::max((EMS[e].VG.theta_r * (1. + Constants::eps) - EMS[e].theta[WATER]),
 											  deltaM[e] / (Constants::density_water * EMS[e].L));
-			const double dTh_ice = ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L);
+			const double dTh_ice = std::max(-EMS[e].theta[ICE], ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L));
 			EMS[e].theta[WATER] += dTh_water;
 			EMS[e].theta[ICE] += dTh_ice;
 
@@ -388,6 +395,7 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 				dHoar = std::max(-NDS[nN-1].hoar, deltaM[e]);
 			}
 		} else {  // Mass gain: add water in case temperature at or above melting point, ice otherwise
+			// FIXME: the code below is prone to errors, as more volumetric content can be added than available, resulting in a sum of volumetric content exceeding 1.
 			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
 				EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
@@ -408,7 +416,10 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 		}
 		EMS[e].updDensity();
 		assert(EMS[e].Rho > 0 || EMS[e].Rho == IOUtils::nodata); // density must be positive
-		if (!(EMS[e].Rho > Constants::eps && EMS[e].theta[AIR] >= 0. && EMS[e].theta[WATER] <= 1. + Constants::eps && EMS[e].theta[ICE] <= 1. + Constants::eps)) {
+		if (!(EMS[e].Rho > Constants::eps
+		      && EMS[e].theta[AIR] >= 0. && EMS[e].theta[ICE] >= 0. && EMS[e].theta[WATER] >= 0.
+		      && EMS[e].theta[WATER] <= 1. + Constants::eps && EMS[e].theta[ICE] <= 1. + Constants::eps
+		      && (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF] + EMS[e].theta[ICE] + EMS[e].theta[SOIL] + EMS[e].theta[AIR] - 1.) < 1.e-12)) {
 				prn_msg(__FILE__, __LINE__, "err", Date(),
 					"Volume contents: e=%d nE=%d rho=%lf ice=%lf wat=%lf wat_pref=%lf soil=%lf air=%le", e, nE, EMS[e].Rho, EMS[e].theta[ICE],
 						EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[SOIL], EMS[e].theta[AIR]);
@@ -472,11 +483,12 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 		if (Tss < meltfreeze_tk) { // Add Ice
 			dM = ql*sn_dt/Constants::lh_sublimation;
 			// If rh is very close to 1, vw too high or ta too high, surface hoar is destroyed and should not be formed
-			if (!((Mdata.rh > hoar_thresh_rh) || (Mdata.vw > hoar_thresh_vw) || (Mdata.ta >= IOUtils::C_TO_K(hoar_thresh_ta)))) {
-				// Under these conditions, form surface hoar
+			const bool formSurfaceHoar = !((Mdata.rh > hoar_thresh_rh) || (Mdata.vw > hoar_thresh_vw) || (Mdata.ta >= IOUtils::C_TO_K(hoar_thresh_ta)));
+			if (formSurfaceHoar || !enable_vapour_transport) {
 				ql = 0.;
 				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dM;
-				dHoar = dM;
+				// If conditions are met, form surface hoar
+				if (formSurfaceHoar) dHoar = dM;
 
 				// In this case adjust properties of element, keeping snow density constant
 				const double L_top = EMS[nE-1].L;
@@ -684,26 +696,19 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 	// otherwise for the effective water vapor diffusivity in snow eps_=1.
 	// for now Deff,s is available so eps_=1
 	std::vector<double> eps_(nN, 1.0);
-	for(size_t i=0; i<nN; i++)
-	{
-		if(i==0)
-		{
+	for(size_t i=0; i<nN; i++) {
+		if(i==0) {
 			eps_[i]=std::max(EMS[i].theta[AIR],1.0);
-		}
-		else if(i==nN-1)
-		{
+		} else if(i==nN-1) {
 			eps_[i]=0.5*std::max(EMS[i-1].theta[AIR],1.0)+0.5;
-		}
-		else
-		{
+		} else {
 			eps_[i]=std::max(EMS[i].theta[AIR],1.0);
 		}
 	}
 
-	double error_max = 0;
-	do
-	{
-		error_max = 0;
+	double error_max = 0.;
+	do {
+		error_max = 0.;
 
 		// The lower B.C.
 		if(bottomDirichletBCtype){
@@ -764,18 +769,41 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 		tripletList.clear();
 		A.makeCompressed();
 
+		// Solver settings
+		solver.setTolerance(Constants::eps2);
+		solver.setMaxIterations(10*nE);
+
 		solver.compute(A);
-		if (solver.info() != Success) {
+		if (solver.info() != Eigen::Success) {
 			std::ostringstream err_msg;
-			err_msg << "Error computing 'A' with Eigen: " << Mdata.date << solver.info();
+			err_msg << "[E] [" <<  Mdata.date.toString(Date::ISO) << "] Error computing 'A' with Eigen: ";
+			if (solver.info() == Eigen::NumericalIssue) {
+				err_msg << "Numerical issue" << std::endl;
+			} else if (solver.info() == Eigen::NoConvergence) {
+				err_msg << "No convergence" << std::endl;
+			} else if (solver.info() == Eigen::InvalidInput) {
+				err_msg << "Invalid input" << std::endl;
+			}
+			err_msg << std::endl;
 			throw mio::IOException(err_msg.str(), AT);
 		}
 
 		// Solve the equation
 		xx = solver.solve(b);
-		if (solver.info() != Success) {
+		if (solver.info() != Eigen::Success) {
 			std::ostringstream err_msg;
-			err_msg << "Error solving 'b' with Eigen: " << Mdata.date << solver.info();
+			err_msg << "[E] [" <<  Mdata.date.toString(Date::ISO) << "] Error solving 'b' with Eigen: ";
+			if (solver.info() == Eigen::NumericalIssue) {
+				err_msg << "Numerical issue" << std::endl;
+			} else if (solver.info() == Eigen::NoConvergence) {
+				Eigen::JacobiSVD<Eigen::MatrixXd> svd(A);
+				double cond = svd.singularValues()(0) / svd.singularValues()(svd.singularValues().size() - 1);
+				err_msg << "No convergence (condition number A: " << cond << ", latest residual norm: " << solver.error() << ", required: " << solver.tolerance() << ")" << std::endl;
+				err_msg << "    ---> Try increasing solver Tolerance or MaxIterations." << std::endl;
+			} else if (solver.info() == Eigen::InvalidInput) {
+				err_msg << "Invalid input" << std::endl;
+			}
+			err_msg << std::endl;
 			throw mio::IOException(err_msg.str(), AT);
 		}
 
@@ -785,7 +813,7 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 			double error = std::abs(NDS[k].rhov-oldVaporDenNode[k]);
 			if(NDS[k].rhov<0) {
 				std::ostringstream err_msg;
-				err_msg << "Error, rhov is below zero (" << NDS[k].rhov << "). Can not proceed.";
+				err_msg << "[E] [" <<  Mdata.date.toString(Date::ISO) << "] Error, rhov is below zero (" << NDS[k].rhov << "). Can not proceed.";
 				throw mio::IOException(err_msg.str(), AT);
 			}
 			error_max = std::max(error_max, error);
