@@ -39,6 +39,7 @@ lib/*
 tags
 **/*~
 .vscode/
+.cache/
 
 #profiling:
 callgrind.out.*

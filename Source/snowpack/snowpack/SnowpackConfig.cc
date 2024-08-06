@@ -126,7 +126,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["CANOPY_TRANSMISSION"] = "true";
 	advancedConfig["FORESTFLOOR_ALB"] = "true";
 	advancedConfig["SOIL_EVAP_MODEL"] = "EVAP_RESISTANCE";
-	advancedConfig["SOIL_THERMAL_CONDUCTIVITY"] = "FITTED";
+	advancedConfig["SOIL_THERMAL_CONDUCTIVITY"] = "COSENZA2003";
 
 	//temporary keys for Stability until we decide for a permanent solution
 	advancedConfig["MULTI_LAYER_SK38"] = "false";

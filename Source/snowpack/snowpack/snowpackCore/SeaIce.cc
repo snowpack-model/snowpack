@@ -28,6 +28,7 @@
 #include <snowpack/Utils.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/SeaIce.h>
+#include <snowpack/snowpackCore/Snowpack.h>
 #include <snowpack/snowpackCore/ReSolver1d.h>
 
 #include <assert.h>
@@ -693,6 +694,7 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
 	double totM = 0.;	// Tracks total mass
 
 	// Set thermodynamical properties consistently (temperature, salinity, etc):
+	bool inconsistent_layer = false;
 	for (size_t e = Xdata.SoilNode; e < nE; e++) {
 		std::cout << "[i] Initializing sea ice layer " << e << ". Original values: " << " h=" << Xdata.Edata[e].h << " theta[ICE]=" << Xdata.Edata[e].theta[ICE] << " theta[WATER]=" << Xdata.Edata[e].theta[WATER] << " theta[AIR]=" << Xdata.Edata[e].theta[AIR] << " Bulk salinity: " << Xdata.Edata[e].salinity << std::endl;
 		// If a layer is reported as dry, no salinity can be present:
@@ -701,6 +703,10 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
 		} else {
 			// A given temperature corresponds to a specific brine salinity
 			const double BrineSal = (Xdata.Edata[e].Te - Constants::meltfreeze_tk) / -SeaIce::mu;
+			if (BrineSal <= 0. && Xdata.Edata[e].salinity > 0.) {
+				prn_msg( __FILE__, __LINE__, "err", Date(), "Inconsistent initial condition at layer %d / %d.\n    For the initial layer temperature (%lf), brine salinity is %lf, while prescribed bulk salinity is %lf. This cannot be made consistent.", e, nE, Xdata.Edata[e].Te, BrineSal, Xdata.Edata[e].salinity);
+				inconsistent_layer=true;
+			}
 			// Given brine salinity and provided bulk salinity, we can derive theta[WATER]
 			const double theta_water_new = Xdata.Edata[e].salinity / BrineSal;
 			// We can now estimate theta[ICE]
@@ -708,9 +714,18 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
 			Xdata.Edata[e].theta[ICE] = theta_ice_new;
 			Xdata.Edata[e].theta[WATER] = theta_water_new;
 			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[ICE];
+			if (Xdata.Edata[e].theta[ICE] < Snowpack::min_ice_content) {
+				prn_msg( __FILE__, __LINE__, "err", Date(), "Inconsistent initial condition at layer %d / %d.\n    For the initial layer temperature (%lf), brine salinity is %lf, while prescribed bulk salinity is %lf. This would require theta[WATER] = %lf, which for this layer results in a too low ice content of %lf.", e, nE, Xdata.Edata[e].Te, BrineSal, Xdata.Edata[e].salinity, Xdata.Edata[e].theta[WATER], Xdata.Edata[e].theta[ICE]);
+				inconsistent_layer=true;
+			}
 		}
 		Xdata.Edata[e].updDensity();
 		totM += Xdata.Edata[e].M;
+	}
+
+	if (inconsistent_layer) {
+		prn_msg( __FILE__, __LINE__, "err", Date(), "Inconsistent initial conditions. See error message(s) above for details.");
+		throw;
 	}
 
 	// Set pressure head consistently:
