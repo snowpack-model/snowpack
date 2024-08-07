@@ -2123,8 +2123,9 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
 	enforce_measured_snow_heights = false;
 	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
-	if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
-	if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+	// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
+	Mdata.vw_avg = Mdata.vw;
+	Mdata.rh_avg = Mdata.rh;
 	Xdata.hn = 0.;
 	if (Xdata.ErosionAge != Constants::undefined && redeposit_keep_age) {
 		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());
