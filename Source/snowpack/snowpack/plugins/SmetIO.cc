@@ -715,8 +715,10 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 	if (write_pref_flow) {
 		// Header in case preferential flow is used
 		if (write_ice_reservoir) {
+#ifndef SNOWPACK_CORE
 			// Header in case ice reservoir is used
 			ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_IR  Vol_Frac_CIR  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S";
+#endif
 		} else {
 			ss << "timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP  Vol_Frac_V  Vol_Frac_S Rho_S"; //8
 		}
@@ -726,7 +728,9 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 	}
 	ss << " Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo";
 	if (metamorphism_model == "NIED") {
+#ifndef SNOWPACK_CORE
 		ss << " dsm";
+#endif
 	}
 
 	if (Xdata.Seaice != NULL) ss << " Sal h";
@@ -1337,6 +1341,9 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( (perp_to_slope? Hdata.psum24/cos_sl : Hdata.psum24) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
 #ifndef SNOWPACK_CORE
 		const double penetrationDepth = StabilityAlgorithms::compPenetrationDepth(Xdata);
+		data.push_back( penetrationDepth ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
+#else
+		const double penetrationDepth = IOUtils::nodata;
 		data.push_back( penetrationDepth ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
 #endif
 		
