@@ -25,6 +25,8 @@
 #include <sstream>
 #include <ctime>
 
+#include <regex>
+
 #ifdef _MSC_VER
 	/*
 	This software contains code under BSD license (namely, getopt for Visual C++).
@@ -424,6 +426,7 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	} else {
 		Mdata.poor_ea = true;
 	}
+
 	if (md.param_exists("NET_LW")) {
 		Mdata.ea = 1.;
 		Mdata.poor_ea = false;
@@ -699,16 +702,9 @@ inline void getOutputControl(MainControl& mn_ctrl, const mio::Date& step, const 
 		// Hazard data, every half-hour
 		mn_ctrl.HzDump = booleanTime(Dstep, 0.5/24., 0.0, calculation_step_length);
 		// Time series (*.met)
-		double bool_start = H_TO_D(tsstart);
-		if ( bool_start > 0. )
-			bool_start += Dsno_step;
-		mn_ctrl.TsDump = booleanTime(Dstep, tsdaysbetween, bool_start, calculation_step_length);
+		mn_ctrl.TsDump = booleanTime(Dstep, tsdaysbetween, ((tsstart > 0.) ? (tsstart + Dsno_step) : (0.)), calculation_step_length);
 		// Profile (*.pro)
-		bool_start = H_TO_D(profstart);
-		if ( bool_start > 0. )
-			bool_start += Dsno_step;
-		mn_ctrl.PrDump = booleanTime(Dstep, profdaysbetween, bool_start, calculation_step_length);
-
+		mn_ctrl.PrDump = booleanTime(Dstep, profdaysbetween, ((profstart > 0.) ? (profstart + Dsno_step) : (0.)), calculation_step_length);
 	}
 
 	// Additional Xdata backup (*.<JulianDate>sno)
@@ -906,12 +902,25 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 	//warn the user if the precipitation miss proper re-accumulation
 	const bool HS_driven = cfg.get("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack");
 	if (mode != "OPERATIONAL" && !HS_driven) {
-		const bool psum_key_exists = cfg.keyExists("PSUM::resample", "Interpolations1D");
-		const std::string psum_resampling = (psum_key_exists)? IOUtils::strToUpper( cfg.get("PSUM::resample", "Interpolations1D") ) : "LINEAR";
-		if (psum_resampling!="ACCUMULATE") {
+		int psum_resampling_index = IOUtils::inodata;
+		const std::vector<std::pair<std::string, std::string>> vecAlgos( cfg.getValues("PSUM::RESAMPLE", "Interpolations1D") );
+		for (const auto key : vecAlgos) {
+			if (IOUtils::strToUpper(key.second) == "ACCUMULATE") {
+				std::regex pattern ("PSUM::RESAMPLE(\\d+)$", std::regex::icase);
+				std::smatch match;
+				if (std::regex_search(key.first, match, pattern)) { // first is the original key
+					psum_resampling_index = std::stoi(match[1]);
+					break;
+				} else {
+					throw IOException("ACCUMULATE key " + key.first + " does not contain a valid index; I.e. it does not match the pattern PARAM::resample#",AT);
+				}
+			}
+		}
+
+		if (psum_resampling_index == IOUtils::nodata) {
 			std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH, not doing it is most probably an error!\n";
 		} else {
-			const double psum_accumulate = cfg.get("PSUM::accumulate::period", "Interpolations1D");
+			const double psum_accumulate = cfg.get("PSUM::arg"+std::to_string(psum_resampling_index)+"::period", "Interpolations1D");
 			const double sn_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
 			if (sn_step_length*60. != psum_accumulate)
 				std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH (currently, over " <<  psum_accumulate << "s)\n";
@@ -1152,10 +1161,14 @@ inline void real_main (int argc, char *argv[])
 
 		memset(&mn_ctrl, 0, sizeof(MainControl));
 		if (mode == "RESEARCH") {
-			mn_ctrl.resFirstDump = true; //HACK to dump the initial state in research mode
+			if (!restart) {
+				mn_ctrl.resFirstDump = true;  //HACK to dump the initial state in research mode
+				current_date -= calculation_step_length/(24.*60.); //Do a first time step to fill all output fields
+			} else {
+				mn_ctrl.resFirstDump = false; //No initial state dump when doing a restart
+			}
 			deleteOldOutputFiles(outpath, experiment, vecStationIDs[i_stn], slope.nSlopes, snowpackio.getExtensions());
 			cfg.write(outpath + "/" + vecStationIDs[i_stn] + "_" + experiment + ".ini"); //output config
-			if (!restart) current_date -= calculation_step_length/(24.*60.);
 		} else {
 			const std::string db_name = cfg.get("DBNAME", "Output", "");
 			if (db_name == "sdbo" || db_name == "sdbt")

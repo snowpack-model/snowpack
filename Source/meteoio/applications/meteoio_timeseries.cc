@@ -69,12 +69,20 @@ using namespace mio; //The MeteoIO namespace is called mio
  *    * the output sampling rate in minutes with the "-s" option;
  *    * a progressive writing out of the data by specifying how many timesteps to buffer before writing
  * with the "-o" option;
- *    * some progress indicator with the "-p" option.
+ *    * some progress indicator with the "-p" option;
+ *    * the possibility to generate spatially distributed data (gridded data) with the "--2d" option.
  * 
  * For example, in order to output data from the 1st of September 2004 at noon until the 3rd of April 2008 with 
  * half-hourly values, using the ini file "io_myStation.ini" in the "cfgfiles" sub-directory:
  * @code
  * meteoio_timeseries -c cfgfiles/io_myStation.ini -b 2004-09-01T12:00 -e 2008-04-03 -s 30
+ * @endcode
+ * Or to generate hourly air temperature grids (in this case, you need to define the spatial interpolations 
+ * in the [Interpolations2D] section as well as list which meteorological parameters to interpolate in the [Output] 
+ * section with the key "GRID2D_OUTPUT_PARAMS". Please also note that computing gridded data is much more 
+ * time consuming than point-wise timeseries!):
+ * @code
+ * meteoio_timeseries -c cfgfiles/io_myStation.ini -b 2004-09-01T12:00 -e 2008-04-03 -s 60 --2d
  * @endcode
  * 
  * @subsection Inishell The Inishell Graphical User Interface
@@ -175,16 +183,17 @@ inline void Usage(const std::string& programname)
 	Version();
 
 	std::cout << "Usage: " << programname << std::endl
-		<< "\t[-b, --begindate=YYYY-MM-DDTHH:MM] (e.g.:2007-08-11T09:00)\n"
-		<< "\t[-e, --enddate=YYYY-MM-DDTHH:MM] (e.g.:2008-08-11T09:00 or NOW)\n"
-		<< "\t[-d, --duration=<in days>] (e.g.: 30)\n"
-		<< "\t[-c, --config=<ini file>] (e.g. io.ini)\n"
-		<< "\t[-s, --sampling-rate=<sampling rate in minutes>] (default: 60)\n"
-		<< "\t[-o, --output-buffer=<output buffer size in number of timesteps>] (e.g. 24, requires APPEND mode enabled in output plugin)\n"
-		<< "\t[-p, --progress] Show progress\n"
-		<< "\t[-t, --timeout] Kill the process after that many seconds if still running\n"
-		<< "\t[-v, --version] Print the version number\n"
-		<< "\t[-h, --help] Print help message and version information\n\n";
+		<< "\t[-b YYYY-MM-DDTHH:MM] Begin date, ISO formatted (e.g.:2007-08-11T09:00)\n"
+		<< "\t[-e YYYY-MM-DDTHH:MM] End date, ISO formatted (e.g.:2008-08-11T09:00 or NOW)\n"
+		<< "\t[-d <days>] Duration from the begin date, in days (e.g.: 30)\n"
+		<< "\t[-c <ini file>] Configuration file to use (e.g. io.ini)\n"
+		<< "\t[-s <minutes>] Output sampling rate, in minutes (default: 60)\n"
+		<< "\t[-o <number of timesteps>] Output buffer size, in number of timesteps (e.g. 24, requires APPEND mode enabled in output plugin)\n"
+		<< "\t[-p] Show progress\n"
+		<< "\t[-t <seconds>] Kill the process after that many seconds if still running\n"
+		<< "\t[--2d] Generate spatially interpolated data (2D grids) instead of point-wise timeseries (default: false)\n"
+		<< "\t[-v] Print the version number\n"
+		<< "\t[-h] Print help message and version information\n\n";
 
 	std::cout << "If the key DATA_QA_LOGS in the [General] section is set to true, you can also provide a list of\n";
 	std::cout << "meteo parameters to check for valid values in the QA_CHECK_MISSING key of the [General] section.\n";
@@ -207,11 +216,12 @@ inline Date getDate(const std::string& date_str, const double& TZ)
 	return parsedDate;
 }
 
-inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, Date& end_date, bool& showProgress)
+inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, Date& end_date, bool& showProgress, bool& generate2D)
 {
 	std::string begin_date_str, end_date_str;
 	double duration = IOUtils::nodata;
 	int longindex=0, opt=-1;
+	int output2D = (generate2D)? 0 : 1;
 	bool setStart = false, setEnd = false, setDuration = false;
 	
 	if (argc==1) { //no arguments provided
@@ -221,22 +231,13 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 
 	const struct option long_options[] =
 	{
-		{"begindate", required_argument, nullptr, 0},
-		{"enddate", required_argument, nullptr, 0},
-		{"duration", required_argument, nullptr, 0},
-		{"config", required_argument, nullptr, 0},
-		{"sampling-rate", required_argument, nullptr, 0},
-		{"output-buffer", required_argument, nullptr, 0},
-		{"progress", no_argument, nullptr, 0},
-		{"timeout", no_argument, nullptr, 0},
-		{"version", no_argument, nullptr, 0},
-		{"help", no_argument, nullptr, 0},
+		{"2d", no_argument, &output2D, 0},
 		{nullptr, 0, nullptr, 0}
 	};
 
 	while ((opt=getopt_long( argc, argv, "b:e:d:c:s:o:t:pvh", long_options, &longindex)) != -1) {
 		switch (opt) {
-		case 0:
+		case 0: // getopt_long() set a variable
 			break;
 		case 'b':
 			begin_date_str = std::string(optarg); //we don't know yet the time zone, conversion will be done later
@@ -289,6 +290,9 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 			exit(1);
 		}
 	}
+	
+	//synchronize with our boolean
+	generate2D = (output2D==0);
 
 	const bool validDateRange = (setStart && setEnd && !setDuration) || (setStart && !setEnd && setDuration) || (!setStart && setEnd && setDuration);
 	if (!validDateRange) {
@@ -348,24 +352,14 @@ static void validMeteoData(const std::vector<std::string>& enforce_variables, co
 	}
 }
 
-static void real_main(int argc, char* argv[])
+static void generatePointTimeseries(const Config& cfg, const Date& dateBegin, const Date& dateEnd, const bool& showProgress)
 {
-	bool showProgress = false;
-	std::vector<std::string> enforce_variables;
-	Config cfg;
-	Date dateBegin, dateEnd;
-	parseCmdLine(argc, argv, cfg, dateBegin, dateEnd, showProgress);
-	if (timeout_secs!=0) WatchDog watchdog(timeout_secs); //set to kill itself after that many seconds
+	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
 	
 	IOManager io(cfg);
 	const bool data_qa = cfg.get("DATA_QA_LOGS", "General", false);
+	std::vector<std::string> enforce_variables;
 	if (data_qa) cfg.getValue("QA_CHECK_MISSING", "General", enforce_variables, IOUtils::nothrow);
-	
-	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
-	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
-
-	Timer timer;
-	timer.start();
 
 	std::map<std::string, size_t> mapIDs; //over a large time range, the number of stations might change... this is the way to make it work
 	std::vector<MeteoData> Meteo; //we need some intermediate storage, for storing data sets for 1 timestep
@@ -414,11 +408,57 @@ static void real_main(int argc, char* argv[])
 	std::cout << "Writing output data" << std::endl;
 	//handle extra parameters changing over time
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) MeteoData::unifyMeteoData( vecMeteo[ii] );
+	
 	io.writeMeteoData(vecMeteo);
-
-	timer.stop();
 	std::cout << "Number of timesteps: " << count << "\n";
-	std::cout << "Done!! in " << timer.getElapsed() << " s" << std::endl;
+}
+
+static void generate2DTimeseries(const Config& cfg, const Date& dateBegin, const Date& dateEnd, const bool& showProgress)
+{
+	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
+	
+	//reading which parameters the user wants
+	std::vector< std::string > output_variables;
+	cfg.getValue("GRID2D_OUTPUT_PARAMS", "output", output_variables, IOUtils::nothrow);
+	std::map< MeteoData::Parameters, MeteoGrids::Parameters > std_variables;
+	std::set< std::string > extra_variables;
+	for (auto& var : output_variables) {
+		const size_t var_idx = MeteoData::getStaticParameterIndex( var );
+		if ( var_idx != IOUtils::npos ) {
+			std_variables[ static_cast<MeteoData::Parameters>(var_idx) ] = MeteoData::findGridParam( static_cast<MeteoData::Parameters>(var_idx) );
+		} else {
+			extra_variables.insert( var );
+		}
+	}
+	
+	IOManager io(cfg);
+	
+	//reading the dem (necessary for several spatial interpolations algoritms)
+	DEMObject dem;
+	dem.setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE | DEMObject::NORMAL | DEMObject::CURVATURE));
+	io.readDEM(dem);
+	Grid2DObject grid;
+	
+	//running the time loop
+	size_t count = 0;
+	for (Date d=dateBegin; d<=dateEnd; d+=samplingRate) { //time loop
+		if (showProgress) std::cout << d.toString(Date::ISO) << "\n";
+		count++;
+		
+		//for parameters listed in MeteoData::Parameters
+		for (auto& var : std_variables) {
+			io.getMeteoData(d, dem, var.first, grid);
+			io.write2DGrid(grid, var.second, d);
+		}
+		
+		for (auto& var : extra_variables) {
+			io.getMeteoData(d, dem, var, grid);
+			const std::string argument( var+"@"+d.toString(Date::ISO) );
+			io.write2DGrid(grid, argument);
+		}
+	}
+	
+	std::cout << "Number of timesteps: " << count << "\n";
 }
 
 int main(int argc, char** argv)
@@ -430,11 +470,29 @@ int main(int argc, char** argv)
 #endif
 	signals_catching(); //trigger call stack print in case of SIGTERM
 	
+	bool generate2D = false;
+	bool showProgress = false;
+	Config cfg;
+	Date dateBegin, dateEnd;
+	parseCmdLine(argc, argv, cfg, dateBegin, dateEnd, showProgress, generate2D);
+	if (timeout_secs!=0) WatchDog watchdog(timeout_secs); //set to kill itself after that many seconds
+	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
+	
+	Timer timer;
+	timer.start();
+	
 	try {
-		real_main(argc, argv);
+		if (!generate2D) {
+			generatePointTimeseries( cfg, dateBegin, dateEnd, showProgress );
+		} else {
+			generate2DTimeseries( cfg, dateBegin, dateEnd, showProgress );
+		}
 	} catch(const std::exception &e) {
 		std::cerr << e.what();
 		exit(1);
 	}
+	
+	timer.stop();
+	std::cout << "Done!! in " << timer.getElapsed() << " s" << std::endl;
 	return 0;
 }

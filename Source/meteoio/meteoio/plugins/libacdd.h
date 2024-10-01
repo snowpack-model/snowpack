@@ -45,11 +45,11 @@ namespace mio {
  *     - ACDD_SUMMARY_FILE: a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present;
  *     - ACDD_COMMENT: miscellaneous informartion about the dataset;
  *     - ACDD_ACKNOWLEDGEMENT: acknowledgement for the various types of support for the project that produced this data;
- *     - ACDD_KEYWORDS: a list of AGU Index Terms (default: hard-coded list);
- *     - ACDD_KEYWORDS_VOCABULARY: the unique name or identifier of the vocabulary from which keywords are taken (default: AGU);
+ *     - ACDD_KEYWORDS: a list of comma delimited keywords, for example from the <a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/">GCMD Science Keywords</a> (GCMDSK) with their full path (default: hard-coded list);
+ *     - ACDD_KEYWORDS_VOCABULARY: the unique name or identifier of the vocabulary from which keywords are taken (default: GCMDSK);
  *  - Linking the dataset to other resources and metadata
  *     - ACDD_ID: an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces
- *     - ACDD_NAMING_AUTHORITY: The organization that provides the initial id (see above) for the dataset
+ *     - ACDD_NAMING_AUTHORITY: The organization that provides the initial dataset id (see above) for the dataset
  *     - ACDD_METADATA_LINK: A URL/DOI that gives more complete metadata;
  *     - ACDD_REFERENCES: Published or web-based references that describe the data or methods used to produce it;
  *     - WIGOS_ID: although this is not an ACDD key, it can be very useful in linking datasets together through their <a href="https://oscar.wmo.int/surface/#/">WIGOS ID</a>.
@@ -104,6 +104,8 @@ namespace mio {
  * ACDD_NAMING_AUTHORITY = SLF
  * ACDD_TITLE = Meteo station at Laret val/cal site
  * ACDD_SUMMARY = Meteo station at Laret val/cal site
+ * ACDD_KEYWORDS = EARTH SCIENCE > CRYOSPHERE > SNOW/ICE, EARTH SCIENCE > ATMOSPHERE
+ * ACDD_KEYWORDS_VOCABULARY = GCMDSK
  * ACDD_LICENSE = CC-BY-NC
  * ACDD_PROCESSING_LEVEL = raw
  * ACDD_ACTIVITY_TYPE = in situ land-based station
@@ -113,30 +115,14 @@ namespace mio {
 class ACDD {
 	public:
 		enum Mode {MERGE, REPLACE, APPEND};
-
-		typedef struct ACDD_ATTR {
-			ACDD_ATTR() : name(), value(), cfg_key(), default_value(), Default(true) {}
-			ACDD_ATTR(const std::string& i_name, const std::string& i_cfg_key, const std::string& i_default_value="") : name(i_name), value(), cfg_key(i_cfg_key), default_value(i_default_value), Default(i_name.empty()) {}
-			ACDD_ATTR(const std::string& i_name, const std::string& i_value, const std::string& i_cfg_key, const std::string& i_default_value) : name(i_name), value(i_value), cfg_key(i_cfg_key), default_value(i_default_value), Default(false) {}
-
-			std::string getValue() const {return value;}
-			std::string getName() const {return name;}
-			void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line);
-			void setValue(const std::string& i_value, const Mode& mode=MERGE);
-			bool isDefault() const {return Default;}
-
-		private:
-			static void readFromFile(std::string& value, const mio::Config& cfg, const std::string& cfg_key, const std::string& section, const bool& allow_multi_line);
-
-			std::string name, value, cfg_key, default_value;
-			bool Default;
-		} acdd_attrs;
+		struct ACDD_ATTR; //forward declaration
+		typedef struct ACDD_ATTR acdd_attrs;
 		
 		/**
 		* @brief Constructor, the argument allows the object to know if the acdd metadata should be written out or not
 		* @param[in] set_enable enable ACDD support?
 		*/
-		ACDD(const bool& set_enable) : attributes(), linked_attributes(), enabled(set_enable) {}
+		ACDD(const bool& set_enable);
 		
 		//defining some iterators so the callers can loop over all available attributes
 		using const_iterator = std::map<std::string, acdd_attrs>::const_iterator;
@@ -181,6 +167,35 @@ class ACDD {
 		std::map<std::string, acdd_attrs> attributes; //all the ACDD attributes with their properties
 		std::set< std::pair< std::string, std::set<std::string> > > linked_attributes; //attribute names that are linked together, ie must have the same number of sub-elements (comma delimited)
 		bool enabled; //helper boolean for callers to know if this object should be used or not
+};
+
+
+/**
+ * @struct ACDD::ACDD_ATTR
+ * @brief This structure provides low level functions to handle and store individual ACDD fields.
+ * @details
+ * It is designed to retrieve ACDD values from configuration keys (including from a file pointed to by such
+ * a key), from a default value provided to the constructor or as provided by the user. Several modes
+ * of combining these different sources can be chosen from.
+ */
+struct ACDD::ACDD_ATTR {
+	ACDD_ATTR() : name(), value(), cfg_key(), default_value(), Default(true) {}
+
+	ACDD_ATTR(const std::string& i_name, const std::string& i_cfg_key, const std::string& i_default_value="") : name(i_name), value(), cfg_key(i_cfg_key), default_value(i_default_value), Default(i_name.empty()) {}
+
+	ACDD_ATTR(const std::string& i_name, const std::string& i_value, const std::string& i_cfg_key, const std::string& i_default_value) : name(i_name), value(i_value), cfg_key(i_cfg_key), default_value(i_default_value), Default(false) {}
+
+	std::string getValue() const {return value;}
+	std::string getName() const {return name;}
+	void setUserConfig(const mio::Config& cfg, const std::string& section, const bool& allow_multi_line);
+	void setValue(const std::string& i_value, const Mode& mode=MERGE);
+	bool isDefault() const {return Default;}
+
+private:
+	static void readFromFile(std::string& value, const mio::Config& cfg, const std::string& cfg_key, const std::string& section, const bool& allow_multi_line);
+
+	std::string name, value, cfg_key, default_value;
+	bool Default;
 };
 
 } //namespace

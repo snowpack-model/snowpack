@@ -38,10 +38,9 @@ namespace mio {
      * @brief This namespace handles all the low level manipulation of GRIB and BUFR files with ecCodes
      *
      * @section codes_intro Introduction
-     * This namespace provides a set of functions to handle GRIB and BUFR files using the ecCodes C library by the ECMWF (https://confluence.ecmwf.int/display/ECC/ecCodes+installation) at least in version 2.27.0.
-     * Either a file is indexed (contained in CodesIndexPtr) and messages (contained as CodesHandlePtr) are read from this index by using key/value pairs.
-     * Or all messages are read from a file directly, without any additional information.
-     * The index does not use much memory, the handles do??. Therefore, the handles should be deleted as soon as they are not needed anymore.
+     * This namespace provides a set of functions to handle GRIB and BUFR files using the ecCodes C library by the ECMWF (https://confluence.ecmwf.int/display/ECC/ecCodes+installation) at least in
+     * version 2.27.0. Either a file is indexed (contained in CodesIndexPtr) and messages (contained as CodesHandlePtr) are read from this index by using key/value pairs. Or all messages are read from
+     * a file directly, without any additional information. The index does not use much memory, the handles do??. Therefore, the handles should be deleted as soon as they are not needed anymore.
      *
      *
      * @ingroup plugins
@@ -51,36 +50,107 @@ namespace mio {
      */
     namespace codes {
 
-        // ------------------- BUFR -------------------
+        // ------------------- BUFR CONSTANTS -------------------
 
+        const std::string BUFR_HEIGHT_KEY = "height"; // TODO: change the key to the correct one when it is available
         // mapping of BUFR parameters to MeteoIO parameters
         const std::map<std::string, std::string> BUFR_PARAMETER{
             {"P", "pressure"},
             {"TA", "airTemperatureAt2M"}, // Can also be found as airTemperature under heightOfSensor(somthing like this) = 2
             {"RH", "relativeHumidity"},
             {"TSG", "groundTemperature"},
-            {"TSS", "snowTemperature"},
-            {"HS", "totalSnowDepth"},
+            {"TSOIL", "soilTemperature"},
+            {"TSS", "skinTemperature"}, // workaround as there is no snow surface temperature kw
+            {"TSNOW", "snowTemperature"},
+            {"HS", "totalSnowDepth"}, // TODO: CHANGE TO THE CORRECT VALUE WHEN AVAILABLE
             {"VW", "windSpeed"},
             {"DW", "windDirection"},
             {"VW_MAX", "maximumWindGustSpeed"},
-            {"RSWR", ""},                           // TODO: there is no parameter for it, should we save albedo? --> also need to find descriptor
+            {"RSWR", ""}, // TODO: there is no parameter for it, should we save albedo? --> also need to find descriptor
             {"ISWR", "instantaneousShortWaveRadiation"},
             {"ILWR", "instantaneousLongWaveRadiation"},
             {"TAU_CLD", "cloudCoverTotal	"},
             {"PSUM", "totalPrecipitationOrTotalWaterEquivalent	"},
-            {"PSUM_PH", "precipitationType"} // should the type be mapped to the phase?
+            {"PSUM_PH", "precipitationType"}, // should the type be mapped to the phase?
+            // Cryo specific
+            {"SURFACEQUALIFIER","surfaceQualifierForTemperatureData"},
+            {"TSURFACE","skinTemperature"},
+            {"ICE_THICKNESS","iceThickness"},
+            {"GROUNDSTATE","stateOfGround"},
+            {"SENSORTYPE","temperatureSensorType"},
+            {"TICE","iceSurfaceTemperature"}, // TODO: Change to the correct value when available
+            {"TWATER","waterTemperature"}
         };
 
         // an alternative mapping of BUFR parameters to MeteoIO parameters
-        const std::map<std::string, std::string> BUFR_PARAMETER_ALT { 
-            {"TA", "airTemperature"}
-        };
+        const std::map<std::string, std::string> BUFR_PARAMETER_ALT{{"TA", "airTemperature"}};
 
         // flags for the possible reference systems are 0-4
         const std::vector<int> FLAG_TO_EPSG = {4326, 4258, 4269, 4314};
 
-        // ------------------- GRIB -------------------
+        // Surface qualifier for snow
+        const long SNOW_SURFACE_QUALIFIER = 6;
+
+        // TODO: exchange the cryos Parameters when available
+        // the descriptors should only be available in this file
+        static const std::map<std::string, long> BUFR_DESCRIPTORS{
+            {"Date", 301011},
+            {"Time", 301013},
+            {"StationId", 1018},
+            {"StationNumber", 1002},
+            {"StationName", 1015},
+            {"LatLon", 301021},
+            {"Alt", 7030},
+            {"TA2m", 12004},
+            {"TSG", 12120},
+            {"TSOIL", 12130},
+            {"HS", 13013},// TODO: USE CORRECT VALUE WHEN AVAILABLE: 13119
+            {"VW", 11012},
+            {"DW", 11011},
+            {"VW_MAX", 11041},
+            {"ILWR", 14017},
+            {"ISWR", 14018},
+            {"TAU_CLD", 20010},
+            {"PSUM", 13011},
+            {"PSUM_PH", 20021},
+            {"TSNOW", 12131},
+            {"TSS", 12161}, // we need to set this with surface qualifier and skin temperature, as there is no snow surface temperature kw
+            {"P", 7004},
+            {"TA", 12101},
+            {"RH", 13003},
+            {"HSensor", 7007}, // TODO: USE CORRECT VALUE WHEN AVAILABLE: 7034
+            // Cryos specific
+            {"WIGOS_ID", 301150},
+            {"LongStationName", 1019},
+            {"StationType", 2001},
+            {"SurfType", 8029},
+            {"IceThickness", 13115},
+            {"GroundState", 20062},
+            {"SnoDepthMethod", 2177},
+            {"SurfQualifier", 8010},
+            {"TSkin", 12161}, // TSURFACE
+            {"SensorType", 2096},
+            {"ChangeDataWidth", 201131},
+            {"ChangeScale", 202129},
+            {"TIce", 12132}, // TODO: USE CORRECT VALUE WHEN AVAILABLE: 12133
+            {"TWater", 13082}};
+
+        static long getDescriptor(const std::string &key) {
+            if (BUFR_DESCRIPTORS.find(key) == BUFR_DESCRIPTORS.end()) {
+                throw InvalidArgumentException("Descriptor for " + key + " not found", AT);
+            }
+            return BUFR_DESCRIPTORS.at(key);
+        }
+
+        static std::vector<long> getDescriptors(std::vector<std::string> keys) {
+            std::vector<long> descriptors;
+            for (const std::string &key : keys) {
+                descriptors.push_back(getDescriptor(key));
+            }
+            return descriptors;
+        }
+
+        // ------------------- GRIB CONSTANTS-------------------
         // TODO: Find out how to incorporate RSWR, PSUM_PH
         const long NOPARAMID = -1;
         const std::map<std::string, long> GRIB_DEFAULT_PARAM_TABLE{{"DEM", 129}, {"P", 134},       {"TA", 167},  {"TSS", 228},        {"TSG", 235},          {"RH", 157},        {"PSUM", 228},
@@ -271,11 +341,9 @@ namespace mio {
             return handles;
         }
 
-        void unpackMessage(CodesHandlePtr &m) {
-            /* We need to instruct ecCodes to expand the descriptors
-            i.e. unpack the data values */
-            CODES_CHECK(codes_set_long(m.get(), "unpack", 1), 0);
-        }
+        // ************************
+        // GRIB
+        // ************************
 
         // Return the timepoint a message is valid for
         Date getMessageDateGrib(CodesHandlePtr &h, const double &tz_in) {
@@ -290,46 +358,6 @@ namespace mio {
 
             return base;
         }
-
-        /**
-         * Returns either an empty string or a prefix to index the subset in BUFR messages.
-         * As /subsetNumber=id/ where a key can follow. If no subset is present, an empty string is returned.
-         *
-         * @param subsetNumber The subset number.
-         * @return The subset prefix as a string.
-         */
-        std::string getSubsetPrefix(const size_t &subsetNumber) {
-            if (subsetNumber > 0) {
-                return "/subsetNumber=" + std::to_string(subsetNumber) + "/";
-            }
-            return "";
-        }
-
-        // assumes UTC 0, need to convert to local time after
-        Date getMessageDateBUFR(CodesHandlePtr &h, const size_t &subsetNumber, const double &tz_in) {
-            std::string subset_prefix = getSubsetPrefix(subsetNumber);
-            std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute"}; // second is optional
-            std::vector<int> values(6, -1);                                                   // year, month, day, hour, minute, second
-
-            for (size_t i = 0; i < parameters.size(); ++i) {
-                getParameter(h, subset_prefix + parameters[i], values[i]);
-            }
-
-            int second;
-            bool success = getParameter(h, subset_prefix + "second", second, IOUtils::nothrow);
-            if (!success) {
-                second = -1; // second is optional, and if not present is set to weird number
-            }
-            values[5] = second;
-
-            if (values[0] == -1 || values[1] == -1 || values[2] == -1 || values[3] == -1 || values[4] == -1)
-                return Date();
-            if (values[5] == -1)
-                return Date(values[0], values[1], values[2], values[3], values[4], tz_in);
-
-            Date base(values[0], values[1], values[2], values[3], values[4], values[5], tz_in);
-            return base;
-        };
 
         std::map<std::string, double> getGridParameters(CodesHandlePtr &h_unique) {
             // getting transformation parameters
@@ -408,6 +436,56 @@ namespace mio {
                         0);
         }
 
+        // ************************
+        // BUFR
+        // ************************
+
+        void unpackMessage(CodesHandlePtr &m) {
+            /* We need to instruct ecCodes to expand the descriptors
+            i.e. unpack the data values */
+            CODES_CHECK(codes_set_long(m.get(), "unpack", 1), 0);
+        }
+
+        /**
+         * Returns either an empty string or a prefix to index the subset in BUFR messages.
+         * As /subsetNumber=id/ where a key can follow. If no subset is present, an empty string is returned.
+         *
+         * @param subsetNumber The subset number.
+         * @return The subset prefix as a string.
+         */
+        std::string getSubsetPrefix(const size_t &subsetNumber) {
+            if (subsetNumber > 0) {
+                return "/subsetNumber=" + std::to_string(subsetNumber) + "/";
+            }
+            return "";
+        }
+
+        // assumes UTC 0, need to convert to local time after
+        Date getMessageDateBUFR(CodesHandlePtr &h, const size_t &subsetNumber, const double &tz_in) {
+            std::string subset_prefix = getSubsetPrefix(subsetNumber);
+            std::vector<std::string> parameters = {"year", "month", "day", "hour", "minute"}; // second is optional
+            std::vector<int> values(6, -1);                                                   // year, month, day, hour, minute, second
+
+            for (size_t i = 0; i < parameters.size(); ++i) {
+                getParameter(h, subset_prefix + parameters[i], values[i]);
+            }
+
+            int second;
+            bool success = getParameter(h, subset_prefix + "second", second, IOUtils::nothrow);
+            if (!success) {
+                second = -1; // second is optional, and if not present is set to weird number
+            }
+            values[5] = second;
+
+            if (values[0] == -1 || values[1] == -1 || values[2] == -1 || values[3] == -1 || values[4] == -1)
+                return Date();
+            if (values[5] == -1)
+                return Date(values[0], values[1], values[2], values[3], values[4], tz_in);
+
+            Date base(values[0], values[1], values[2], values[3], values[4], values[5], tz_in);
+            return base;
+        };
+
         // ------------------- SETTERS -------------------
         void setMissingValue(CodesHandlePtr &message, double missingValue) { CODES_CHECK(codes_set_double(message.get(), "missingValue", missingValue), 0); }
 
@@ -425,48 +503,171 @@ namespace mio {
             codes_write_message(h.get(), filename.c_str(), "a");
         }
 
-        CodesHandlePtr createBUFRMessageFromSample() {
+        static void setHeader(codes_handle *ibufr, long num_subsets) {
+            CODES_CHECK(codes_set_long(ibufr, "edition", 4), 0);
+            CODES_CHECK(codes_set_long(ibufr, "masterTableNumber", 0), 0);
+            CODES_CHECK(codes_set_long(ibufr, "masterTablesVersionNumber", 40), 0);
+            CODES_CHECK(codes_set_long(ibufr, "dataCategory", 0), 0);
+            CODES_CHECK(codes_set_long(ibufr, "internationalDataSubCategory", 2), 0);
+            CODES_CHECK(codes_set_long(ibufr, "dataSubCategory", 2), 0);
+            CODES_CHECK(codes_set_long(ibufr, "numberOfSubsets", num_subsets), 0);
+        }
+
+        // ------------------- HELPERS -------------------
+        // adds the descriptors to the list of descriptors
+        static void addDescriptors(std::vector<long> &descriptors, const std::vector<long> &to_add) { descriptors.insert(descriptors.end(), to_add.begin(), to_add.end()); }
+
+        // adds the number of repitions to the repeated descriptors (not using delayed descriptors, as we know the number of repitions already and it shouldnt be too much)
+        static void addRepeatedDescriptors(std::vector<long> &descriptors, std::vector<long> &replication_factors_in_subset, const std::vector<long> &repeated_descriptors, long num) {
+            if (num > 0) {
+                replication_factors_in_subset.push_back(num);
+                addDescriptors(descriptors, repeated_descriptors);
+            }
+        }
+
+        // adds the standard descriptor, if it found in the available params and not repeated
+        static void addStandardDescriptors(std::vector<long> &descriptors, long num, const std::set<std::string> &available_params, const std::string &param, long descriptor) {
+            if (num == 0 || (num > 0 && available_params.find(param) != available_params.end())) {
+                descriptors.push_back(descriptor);
+            }
+        }
+
+        // ------------------- BUFR MESSAGE CREATION -------------------
+        static void setCryosDescriptors(std::vector<long> &descriptors, std::vector<long> &replication_factors_in_subset, long num_heights) {
+            // even though it seems similar we need to have to functions setting the descriptors, to later allow for the cryos sequence
+            std::vector<long> info_descriptors(getDescriptors({"WIGOS_ID", "LongStationName", "StationType", "Date", "Time", "LatLon", "Alt"}));
+            std::vector<long> single_occurence_descriptors(getDescriptors({"SurfType", "IceThickness", "GroundState", "HS", "SnoDepthMethod", "SurfQualifier", "TSkin"}));
+            std::vector<long> repeated_descriptors = {109000,
+                                                      31001,
+                                                      getDescriptor("HSensor"),
+                                                      getDescriptor("SensorType"),
+                                                      getDescriptor("TA"),
+                                                      getDescriptor("TSNOW"),
+                                                      getDescriptor("TIce"),
+                                                      getDescriptor("TWater"),
+                                                      getDescriptor("ChangeDataWidth"),
+                                                      getDescriptor("ChangeScale"),
+                                                      getDescriptor("TSOIL")};
+
+            addDescriptors(descriptors, info_descriptors);
+            addDescriptors(descriptors, single_occurence_descriptors);
+
+            addRepeatedDescriptors(descriptors, replication_factors_in_subset, repeated_descriptors, num_heights);
+        }
+
+        static void setMeteoIODesrciptors(std::vector<long> &descriptors, std::vector<long> &replication_factors_in_subset, const std::map<MeteoParam, size_t> &multi_param_occurences,
+                                          const std::set<std::string> &available_params, const std::vector<MeteoParam> &POSSIBLE_MULTIPLE_PARAMETERS) {
+            // these are all the descriptors needed to include the meteoio parameters
+            std::vector<long> info_descriptors(getDescriptors({"Date", "Time", "StationId", "StationNumber", "StationName", "LatLon", "Alt"}));
+            std::vector<long> single_occurence_descriptors(getDescriptors({"TA2m", "TSG", "SurfQualifier", "TSS", "HS", "VW", "DW", "VW_MAX", "ILWR", "ISWR", "TAU_CLD", "PSUM", "PSUM_PH"}));
+            std::vector<long> repeated_descriptors_p = {102000, 31001, getDescriptor("HSensor"), getDescriptor("P")};
+            std::vector<long> repeated_descriptors_ta = {102000, 31001, getDescriptor("HSensor"), getDescriptor("TA")};
+            std::vector<long> repeated_descriptors_rh = {102000, 31001, getDescriptor("HSensor"), getDescriptor("RH")};
+            std::vector<long> repeated_descriptors_tsoil = {102000, 31001, getDescriptor("HSensor"), getDescriptor("TSOIL")};
+            std::vector<long> repeated_descriptors_tsnow = {102000, 31001, getDescriptor("HSensor"), getDescriptor("TSNOW")};
+
+            // this is to avoid wrong ordering of the descriptors
+            // the descriptors need to be hardcoded, so to avoid any confusion with setting new parameters or similar i do this wrapper
+            std::map<MeteoParam, std::vector<long> *> repeated_descriptors_mapping = {{MeteoParam::P, &repeated_descriptors_p},
+                                                                                      {MeteoParam::TA, &repeated_descriptors_ta},
+                                                                                      {MeteoParam::RH, &repeated_descriptors_rh},
+                                                                                      {MeteoParam::TSOIL, &repeated_descriptors_tsoil},
+                                                                                      {MeteoParam::TSNOW, &repeated_descriptors_tsnow}};
+
+            addDescriptors(descriptors, info_descriptors);
+            addDescriptors(descriptors, single_occurence_descriptors);
+
+            // need to add those before the replications, cause otherwise it looks horrible
+            addStandardDescriptors(descriptors, multi_param_occurences.at(MeteoParam::P), available_params, "P", 7004);
+            addStandardDescriptors(descriptors, multi_param_occurences.at(MeteoParam::RH), available_params, "RH", 13003);
+
+            // we use delayed descriptors, so that the number of repitions can easily be read
+            for (const MeteoParam &param : POSSIBLE_MULTIPLE_PARAMETERS) {
+                if (repeated_descriptors_mapping.find(param) == repeated_descriptors_mapping.end()) {
+                    throw InvalidArgumentException("The parameter " + std::to_string(static_cast<int>(param)) + " does not have a descriptor mapping", AT);
+                }
+                addRepeatedDescriptors(descriptors, replication_factors_in_subset, *repeated_descriptors_mapping.at(param), multi_param_occurences.at(param));
+            }
+        }
+
+        // repeats the replication factors for all subsets
+        static void setReplicationFactors(codes_handle *ibufr, const std::vector<long> &replication_factors_in_subset, long num_subsets) {
+            if (!replication_factors_in_subset.empty()) {
+                std::vector<long> all_replication_factors;
+                for (int i = 0; i < num_subsets; i++) {
+                    all_replication_factors.insert(all_replication_factors.end(), replication_factors_in_subset.begin(), replication_factors_in_subset.end());
+                }
+                codes_set_long_array(ibufr, "inputDelayedDescriptorReplicationFactor", all_replication_factors.data(), all_replication_factors.size());
+            }
+        }
+
+        CodesHandlePtr createBUFRMessageFromSample(long num_subsets, const std::map<MeteoParam, size_t> &multi_param_occurences, const std::set<std::string> &available_params,
+                                                   const std::vector<MeteoParam> &POSSIBLE_MULTIPLE_PARAMETERS, const bool &write_cryos_station, const long &num_cryo_heights) {
+
+            if (write_cryos_station && num_cryo_heights == 0) {
+                throw InvalidArgumentException("The number of cryo heights needs to be greater than 0, to write a Cryo Station File", AT);
+            }
+
+            std::cout << "Creating BUFR message with " << num_subsets << " subsets" << std::endl;
             codes_handle *ibufr = codes_handle_new_from_samples(NULL, "BUFR4");
             if (!ibufr) {
                 throw IOException("Unable to create handle from sample", AT);
             }
-            CODES_CHECK(codes_set_long(ibufr, "edition", 4),0);
-            CODES_CHECK(codes_set_long(ibufr, "masterTableNumber", 0),0);
-            CODES_CHECK(codes_set_long(ibufr, "masterTablesVersionNumber", 40),0);
-            CODES_CHECK(codes_set_long(ibufr, "dataCategory", 0),0);
-            CODES_CHECK(codes_set_long(ibufr, "internationalDataSubCategory", 2), 0);
-            CODES_CHECK(codes_set_long(ibufr, "dataSubCategory", 2),0);
-            // these are all the descriptors needed to include the meteoio parameters
-            std::vector<long> descriptors = {301011, 301013, 1018,1002, 1015, 301021, 7030, 7004,12004,13003,12120,12131,13013,11012,11011,11041,14017,14018,20010,13011,20021};
-            CODES_CHECK(codes_set_long_array(ibufr, "unexpandedDescriptors", descriptors.data(), descriptors.size()),0);
+            setHeader(ibufr, num_subsets);
+
+            std::vector<long> descriptors;
+            std::vector<long> replication_factors_in_subset;
+
+
+            if (write_cryos_station)
+                setCryosDescriptors(descriptors, replication_factors_in_subset, num_cryo_heights);
+            else
+                setMeteoIODesrciptors(descriptors, replication_factors_in_subset, multi_param_occurences, available_params, POSSIBLE_MULTIPLE_PARAMETERS);
+
+            // the snow profile replication factors need to be accounted here.
+
+            setReplicationFactors(ibufr, replication_factors_in_subset, num_subsets);
+
+            CODES_CHECK(codes_set_long_array(ibufr, "unexpandedDescriptors", descriptors.data(), descriptors.size()), 0);
             return makeUnique(ibufr);
         }
 
-        void setTime(CodesHandlePtr &ibufr, const Date &date) {
+        void setTime(CodesHandlePtr &ibufr, const Date &date, const std::string &subset_prefix) {
             int year, month, day, hour, minute, second;
             date.getDate(year, month, day, hour, minute, second);
-            CODES_CHECK(codes_set_long(ibufr.get(), "typicalYear", year),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "year", year),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "typicalMonth", month),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "month", month),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "typicalDay", day),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "day", day),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "typicalHour", hour),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "hour", hour),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "typicalMinute", minute),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "minute", minute),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "typicalSecond", second),0);
-            CODES_CHECK(codes_set_long(ibufr.get(), "second", second),0);
+            CODES_CHECK(codes_set_long(ibufr.get(), (subset_prefix + "year").c_str(), year), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), (subset_prefix + "month").c_str(), month), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), (subset_prefix + "day").c_str(), day), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), (subset_prefix + "hour").c_str(), hour), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), (subset_prefix + "minute").c_str(), minute), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), (subset_prefix + "second").c_str(), second), 0);
         }
 
-        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const double &parameterValue) { 
-            int err = codes_set_double(ibufr.get(), parameterName.c_str(), parameterValue); 
+        void setTypicalTime(CodesHandlePtr &ibufr, const Date &date) {
+            int year, month, day, hour, minute, second;
+            date.getDate(year, month, day, hour, minute, second);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalYear", year), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalMonth", month), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalDay", day), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalHour", hour), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalMinute", minute), 0);
+            CODES_CHECK(codes_set_long(ibufr.get(), "typicalSecond", second), 0);
+        }
+
+        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const double &parameterValue) {
+            int err = codes_set_double(ibufr.get(), parameterName.c_str(), parameterValue);
             return err == 0;
         }
         bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const long &parameterValue) {
-            int err =  codes_set_long(ibufr.get(), parameterName.c_str(), parameterValue); 
+            int err = codes_set_long(ibufr.get(), parameterName.c_str(), parameterValue);
             return err == 0;
         }
+
+        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const std::vector<long> &parameterValues) {
+            int err = codes_set_long_array(ibufr.get(), parameterName.c_str(), parameterValues.data(), parameterValues.size());
+            return err == 0;
+        }
+
         bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const std::string &parameterValue) {
             size_t len = parameterValue.size();
             int err = codes_set_string(ibufr.get(), parameterName.c_str(), parameterValue.c_str(), &len);

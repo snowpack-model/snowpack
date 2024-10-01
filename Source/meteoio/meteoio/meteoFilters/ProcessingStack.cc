@@ -68,7 +68,6 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) const
 bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const std::vector<MeteoData>& ivec, std::vector<MeteoData> &ovec)
 {
 	const std::vector<DateRange> time_restrictions( filter_stack[jj]->getTimeRestrictions() );
-	
 	if (time_restrictions.empty()) {
 		filter_stack[jj]->process(static_cast<unsigned int>(param), ivec, ovec);
 		return true;
@@ -119,80 +118,97 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 {
 	bool filterApplied = false;
 	
-	//pick one element and check whether the param_name parameter exists
-	const size_t param = ivec.front().getParameterIndex(param_name);
-	if (param == IOUtils::npos) return filterApplied;
+	// TODO: To parse the filters for different heights, add a parsing of parameters here, i.e. give TA@15... as param to apply filter
+	// TODO: then loop over all available heights for the parameters, including the default parameter.
+	// TODO: ProcessingBlock then needs a skipHeight function, that checks, if a filter should be run for a filter at said height.
+	// TODO: The information about which filter should run at which height is given as arg to a single filter, and the parameters are looped over here.
+	// TODO: TimeFilters do not need this
+	std::vector<double> heights_for_parameter(ivec.front().getHeightsForParameter(param_name));
+	for (auto& height : heights_for_parameter) {
+		std::string full_paramname = param_name;
+		if (height != IOUtils::nodata) {
+			full_paramname = full_paramname + "@" + MeteoData::convertHeightToString(height);
+		} else {
+			height = ProcessingBlock::default_height; // change the default to a more user friendly height instead of -999
+		}
 	
-	const size_t nr_of_filters = filter_stack.size();
-	const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
-
-	//Now call the filters one after another for the current station and parameter
-	for (size_t jj=0; jj<nr_of_filters; jj++) {
-		if (filter_stack[jj]->skipStation( statID ))
-			continue;
-
-		const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
-		if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
-			continue;
-		if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
-			continue;
-
-		//if the filter has not been applied (ie time restriction), move to the next one directly
-		if (!applyFilter(param, jj, ivec, ovec[stat_idx])) continue;
+		//pick one element and check whether the param_name parameter exists
+		const size_t param = ivec.front().getParameterIndex(full_paramname);
+		if (param == IOUtils::npos) continue;
 		
-		filterApplied = true; //at least one filter has been applied in the whole stack
-		const size_t output_size = ovec[stat_idx].size();
+		const size_t nr_of_filters = filter_stack.size();
+		const std::string statID( ivec.front().meta.getStationID() ); //we know there is at least 1 element (we've already skipped empty vectors)
 
-		if (ivec.size() == output_size) {
-			for (size_t kk=0; kk<ivec.size(); kk++) {
-				const double orig = ivec[kk](param);
-				const double filtered = ovec[stat_idx][kk](param);
-				if (orig!=filtered) {
-					ovec[stat_idx][kk].setFiltered(param);
-					if (data_qa_logs) {
-						const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
-						const std::string stat = (!statID.empty())? statID : statName;
-						const std::string filtername( (*filter_stack[jj]).getName() );
-						cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
-					}
-				}
-			}
-		} else { //filters such as SHIFT might change the number of points
-			size_t kk_out=0;
-			for (size_t kk=0; kk<ivec.size(); kk++) {
-				while (kk_out<output_size && ovec[stat_idx][kk_out].date < ivec[kk].date) { //new points inserted
-					ovec[stat_idx][kk_out].setFiltered(param);
-					if (data_qa_logs) {
-						const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
-						const std::string stat = (!statID.empty())? statID : statName;
-						const std::string filtername( (*filter_stack[jj]).getName() );
-						cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
-					}
-					kk_out++;
-				}
-				if (kk_out==output_size) break;
-				
-				if (ovec[stat_idx][kk_out].date == ivec[kk].date) {
+		//Now call the filters one after another for the current station and parameter
+		for (size_t jj=0; jj<nr_of_filters; jj++) {
+			if (filter_stack[jj]->skipStation( statID ))
+				continue;
+
+			if (filter_stack[jj]->skipHeight(height))
+				continue;
+
+			const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
+			if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+				continue;
+			if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
+				continue;
+
+			//if the filter has not been applied (ie time restriction), move to the next one directly
+			if (!applyFilter(param, jj, ivec, ovec[stat_idx])) continue;
+			
+			filterApplied = true; //at least one filter has been applied in the whole stack
+			const size_t output_size = ovec[stat_idx].size();
+
+			if (ivec.size() == output_size) {
+				for (size_t kk=0; kk<ivec.size(); kk++) {
 					const double orig = ivec[kk](param);
-					const double filtered = ovec[stat_idx][kk_out](param);
+					const double filtered = ovec[stat_idx][kk](param);
 					if (orig!=filtered) {
+						ovec[stat_idx][kk].setFiltered(param);
+						if (data_qa_logs) {
+							const std::string statName( ovec[stat_idx][kk].meta.getStationName() );
+							const std::string stat = (!statID.empty())? statID : statName;
+							const std::string filtername( (*filter_stack[jj]).getName() );
+							cout << "[DATA_QA] Filtering " << stat << "::" << full_paramname << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+						}
+					}
+				}
+			} else { //filters such as SHIFT might change the number of points
+				size_t kk_out=0;
+				for (size_t kk=0; kk<ivec.size(); kk++) {
+					while (kk_out<output_size && ovec[stat_idx][kk_out].date < ivec[kk].date) { //new points inserted
 						ovec[stat_idx][kk_out].setFiltered(param);
 						if (data_qa_logs) {
 							const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
 							const std::string stat = (!statID.empty())? statID : statName;
 							const std::string filtername( (*filter_stack[jj]).getName() );
-							cout << "[DATA_QA] Filtering " << stat << "::" << param_name << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+							cout << "[DATA_QA] Filtering " << stat << "::" << full_paramname << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+						}
+						kk_out++;
+					}
+					if (kk_out==output_size) break;
+					
+					if (ovec[stat_idx][kk_out].date == ivec[kk].date) {
+						const double orig = ivec[kk](param);
+						const double filtered = ovec[stat_idx][kk_out](param);
+						if (orig!=filtered) {
+							ovec[stat_idx][kk_out].setFiltered(param);
+							if (data_qa_logs) {
+								const std::string statName( ovec[stat_idx][kk_out].meta.getStationName() );
+								const std::string stat = (!statID.empty())? statID : statName;
+								const std::string filtername( (*filter_stack[jj]).getName() );
+								cout << "[DATA_QA] Filtering " << stat << "::" << full_paramname << "::" << filtername << " " << ivec[kk].date.toString(Date::ISO_TZ) << " [" << ivec[kk].date.toString(Date::ISO_WEEK) << "]\n";
+							}
 						}
 					}
 				}
 			}
-		}
 
-		if ((jj+1) != nr_of_filters) {//not necessary after the last filter
-			ivec = ovec[stat_idx];
+			if ((jj+1) != nr_of_filters) {//not necessary after the last filter
+				ivec = ovec[stat_idx];
+			}
 		}
 	}
-
 	return filterApplied;
 }
 

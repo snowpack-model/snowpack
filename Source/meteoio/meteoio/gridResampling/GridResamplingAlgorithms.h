@@ -57,7 +57,7 @@ class GridResamplingAlgorithm {
 class GridResamplingAlgorithmsFactory {
 	public:
 		static GridResamplingAlgorithm* getAlgorithm(const std::string& i_algorithm, const std::string& parname,
-			const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+			const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 };
 
 } //end namespace

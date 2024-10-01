@@ -208,7 +208,7 @@ std::vector< struct OshdIO::file_index > OshdIO::scanMeteoPath(const std::string
 {
 	//matching file names such as COSMODATA_202211022300_C1EFC_202211010300.mat
 	//dirty trick: make sure that {meteo_ext} does not contain unescaped regex special chars!!
-	static const std::regex filename_regex("COSMODATA_([0-9]{12})_C1EFC_([0-9]{12})\\." + std::string(meteo_ext));
+	static const std::regex filename_regex("COSMODATA_([0-9]{12})_C1EFC_([0-9]{12})\\." + std::string(meteo_ext), std::regex::optimize);
 	std::smatch filename_matches;
 	
 	std::vector< struct OshdIO::file_index > data_files;
@@ -436,7 +436,7 @@ void OshdIO::fillStationMeta()
 	//the STATION_LIST.mat file contains entries formated such as:
 	//acro="SLF.WFJ2", name="WeissfluhjochSchneestation (ENET)"
 	//regex for removing appended networks names
-	static const std::regex name_regex("([^\\(\\)]+) (\\([a-zA-Z]+\\))(.*)");
+	static const std::regex name_regex("([^\\(\\)]+) (\\([a-z]+\\))(.*)", std::regex::icase | std::regex::optimize);
 	std::smatch name_matches;
 
 	if (debug) matWrap::printFileStructure(in_metafile, in_dflt_TZ);
@@ -489,7 +489,7 @@ void OshdIO::buildVecIdx(std::vector<std::string> vecAcro)
 	
 	const size_t nrAcro = vecAcro.size();
 	//regex for correcting the stations' Acro into the correct ones: matching things like 'SLF.WFJ2'
-	static const std::regex acro_regex("([a-zA-Z]+)\\.([a-zA-Z]+)([0-9]*)");
+	static const std::regex acro_regex("([a-z]+)\\.([a-z]+)([0-9]*)", std::regex::icase | std::regex::optimize);
 	std::smatch acro_matches;
 	
 	//cleaning up all stations IDs and looking for the user requested station IDs

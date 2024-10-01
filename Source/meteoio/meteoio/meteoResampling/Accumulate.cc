@@ -19,21 +19,22 @@
 
 #include <meteoio/meteoResampling/Accumulate.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/Config.h>
 
 #include <sstream>
 
 namespace mio {
 
-Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-           : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs),
+Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
+           : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs),
              accumulate_period(IOUtils::nodata), strict(false)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 	bool has_period=false;
 
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="PERIOD") {
-			IOUtils::parseArg(vecArgs[ii], where, accumulate_period);
+	for (const auto& arg : vecArgs) {
+		if (arg.first=="PERIOD") {
+			IOUtils::parseArg(arg, where, accumulate_period);
 			accumulate_period /= 86400.; //user uses seconds, internally julian day is used
 			if (accumulate_period<=0.) {
 				std::ostringstream ss;
@@ -41,12 +42,22 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 			has_period = true;
-		} else if (vecArgs[ii].first=="STRICT") {
-			IOUtils::parseArg(vecArgs[ii], where, strict);
+		} else if (arg.first=="STRICT") {
+			IOUtils::parseArg(arg, where, strict);
 		}
 	}
 
 	if (!has_period) throw InvalidArgumentException("Please provide a PERIOD for "+where, AT);
+
+	//Checking if any MERGE has been configured as this could lead to unexpected results
+	if (cfg.get("ENABLE_TIMESERIES_EDITING", "InputEditing", true)) {
+		std::vector< std::pair<std::string, std::string> > editing_types( cfg.getValuesRegex(".*::EDIT[0-9]+", "InputEditing") );
+		for (const auto& value : editing_types) {
+			if (value.second=="MERGE") {
+				std::cerr << "[W] using MERGE with the ACCUMULATE resampling could lead to unexpected results if the sampling rates differ\n";
+			}
+		}
+	}
 }
 
 std::string Accumulate::toString() const
@@ -121,7 +132,7 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 	return sum;
 }
 
-//index is the first element AFTER the resampling_date
+//WARNING: index is the first element AFTER the resampling_date
 void Accumulate::resample(const std::string& /*stationHash*/, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                           const std::vector<MeteoData>& vecM, MeteoData& md)
 {
@@ -137,8 +148,7 @@ void Accumulate::resample(const std::string& /*stationHash*/, const size_t& inde
 	const Date dateStart( resampling_date.getJulian() - accumulate_period, resampling_date.getTimeZone() );
 	const size_t start_idx = findStartOfPeriod(vecM, index, dateStart);
 	if (start_idx==IOUtils::npos) {//No acceptable starting point found
-		std::cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
-		std::cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
+		std::cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
 		return;
 	}
 

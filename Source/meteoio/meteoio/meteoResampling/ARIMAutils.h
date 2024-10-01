@@ -25,7 +25,7 @@
 
 static const double DATE_TOLERANCE = 1e-6;
 static const int MIN_ARIMA_DATA_POINTS = 8;
-static const int MAX_ARIMA_EXTRAPOLATION = 100;
+static const int MAX_ARIMA_EXTRAPOLATION = 48; // is two days with hourly data
 
 namespace mio {
 

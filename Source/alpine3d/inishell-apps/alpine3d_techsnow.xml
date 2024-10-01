@@ -1,0 +1,89 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software ALPINE3D.
+https://alpine3d.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: TechSnow -->
+	<parameter key="SNOW_PRODUCTION" type="alternative" default="FALSE" section="TechSnow">
+		<option value="TRUE">
+			<reference name="TECH_SNOW_GENERAL"/>
+			<parameter key="PRIO#" type="grid" replicate="true">
+				<option>
+					<reference name="TECH_SNOW_PRIO"/>
+				</option>
+			</parameter>
+		</option>
+		<option value="FALSE"/>
+		<help>This module simulates technical snow production. Slopes are tagged in a provided 2D grid (same geolocalization as the DEM) where each pixel either has its slope number or nodata. Then three different snow production priorities are available and can be attributed to the individual ski slopes (see the &lt;a href="https://alpine3d.slf.ch/doc-release/html/techsnow.html"&gt;online documentation&lt;/a&gt;)</help>
+	</parameter>
+
+	<parametergroup name="TECH_SNOW_GENERAL">
+		<parameter key="SKIRUNS_FILE" type="file" mode="input" optional="false">
+			<help>the grid where all the pixels are tagged either with their slope number or nodata (relying on the Input::GRID2D plugin)</help>
+		</parameter>
+		<parameter key="SLOPE_CONDITIONS" type="file" mode="input" optional="false">
+			<option extension="Comma separated files (*.csv *.CSV)"/>
+			<option extension="All files (*.*)"/>
+			<help>file giving the technical parameters for snow production for each slope</help>
+		</parameter>
+		<parameter key="MAX_SNOWGUN_WATER" type="number" format="decimal" unit="l/s" min="0" precision="1" default="4.0" optional="false">
+			<help>maximum water flow (l/s) that a snogun can provide</help>
+		</parameter>
+		<parameter key="SEASON_OPENING" type="text" optional="false">
+			<help>Ski resort opening dates of the skiing season</help>
+		</parameter>
+		<parameter key="SEASON_CLOSING" type="text" optional="false">
+			<help>Ski resort closing dates of the skiing season</help>
+		</parameter>
+		<parameter key="SLOPE_OPEN" type="number" format="integer+" max="24" default="8" optional="false" notoggle="true">
+			<help>at what local time do the slopes open to the public?</help>
+		</parameter>
+		<parameter key="SLOPE_CLOSED" type="number" format="integer+" max="24" default="16" optional="false" notoggle="true">
+			<help>at what local time do the slopes close to the public?</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="TECH_SNOW_PRIO">
+		<!--<frame caption="Priority #">-->
+			<parameter key="PRIO#::start_prod" type="text" optional="false">
+				<help>start of snow season production</help>
+			</parameter>
+			<parameter key="PRIO#::end_prod" type="text" optional="false">
+				<help>end of snow season production</help>
+			</parameter>
+			<parameter key="PRIO#::start_aim" type="number" format="decimal" precision="2" min="0" default="0.30" unit="m" optional="false">
+				<help>Snow production aim in snow height [m] until ski resort opening (factor x snow_prod_min)</help>
+			</parameter>
+			<parameter key="PRIO#::end_aim" type="number" format="decimal" precision="2" min="0" default="1.00" unit="m" optional="false">
+				<help>Snow production aim in snow height [m] until ski resort ending (factor x snow_prod_min)</help>
+			</parameter>
+			<parameter key="PRIO#::gun_operation" type="number" format="decimal" precision="2" default="1.00" unit="" optional="false">
+				<help>Fraction of snow gun operation [0-1]</help>
+			</parameter>
+			<parameter type="spacer" height="10" section="TechSnow"/>
+		<!--</frame>-->
+	</parametergroup>
+
+</inishell_include>

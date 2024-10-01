@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace mio {
-	using namespace PLUGIN;
+using namespace PLUGIN;
 /**
  * @page smetio SMET
  * @section smetio_format Format

@@ -44,34 +44,51 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
+ * - GRID2DPATH: meteo grids directory where to read/write the grids; [Input] and [Output] sections
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - GLACIER: for interpreting the data as glacier height map
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
+const std::string GrassIO::default_extension = ".asc";
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 GrassIO::GrassIO(const std::string& configfile)
-        : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam()
+        : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getGridPaths();
 }
 
 GrassIO::GrassIO(const Config& cfgreader)
-        : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam()
+        : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getGridPaths();
+}
+
+void GrassIO::getGridPaths()
+{
+	grid2dpath_in.clear();
+	grid2dpath_out.clear();
+	const std::string grid_in = IOUtils::strToUpper( cfg.get("GRID2D", "Input", "") );
+	if (grid_in == "GRASS") //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+	const std::string grid_out = IOUtils::strToUpper( cfg.get("GRID2D", "Output", "") );
+	if (grid_out == "GRASS") //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 }
 
 void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
-	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
-	if (!FileUtils::fileExists(filename)) throw NotFoundException(filename, AT);
+	const std::string file_and_path(grid2dpath_in+"/"+filename);
+	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException(file_and_path, AT);
+	if (!FileUtils::fileExists(file_and_path)) throw NotFoundException(file_and_path, AT);
 
-	std::ifstream fin(filename.c_str(), ifstream::in);
+	std::ifstream fin(file_and_path.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw AccessException(filename, AT);
+		throw AccessException(file_and_path, AT);
 	}
 
 	int _nx, _ny;
@@ -99,10 +116,10 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		west = IOUtils::standardizeNodata(west, plugin_nodata);
 
 		if ((_nx==0) || (_ny==0)) {
-			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
+			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + file_and_path, AT);
 		}
 		if ((_nx<0) || (_ny<0)) {
-			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
+			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + file_and_path, AT);
 		}
 		const size_t ncols = (size_t)_nx;
 		const size_t nrows = (size_t)_ny;
@@ -122,7 +139,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			getline(fin, line, eoln); //read complete line
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				throw InvalidFormatException("Premature End " + filename, AT);
+				throw InvalidFormatException("Premature End " + file_and_path, AT);
 			}
 
 			for (size_t ll=0; ll < ncols; ll++){
@@ -130,7 +147,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 					tmp_val = plugin_nodata;
 				} else {
 					if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
-						throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
+						throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + file_and_path, AT);
 					}
 				}
 
@@ -151,21 +168,21 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 void GrassIO::readDEM(DEMObject& dem_out)
 {
-	string filename;
+	std::string filename;
 	cfg.getValue("DEMFILE", "Input", filename);
 	read2DGrid(dem_out, filename);
 }
 
 void GrassIO::readLanduse(Grid2DObject& landuse_out)
 {
-	string filename;
+	std::string filename;
 	cfg.getValue("LANDUSEFILE", "Input", filename);
 	read2DGrid(landuse_out, filename);
 }
 
 void GrassIO::readGlacier(Grid2DObject& glacier_out)
 {
-	string filename;
+	std::string filename;
 	cfg.getValue("GLACIERFILE", "Input", filename);
 	read2DGrid(glacier_out, filename);
 }
@@ -174,7 +191,7 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	int yyyy, MM, dd, hh, mm;
 	date_in.getDate(yyyy, MM, dd, hh, mm);
-	string filepath;
+	std::string filepath;
 
 	cfg.getValue("DAPATH", "Input", filepath);
 
@@ -187,12 +204,23 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 {
-	const std::string name( options ); //HACK this should append the default extension
-	if (!FileUtils::validFileAndPath(name)) throw InvalidNameException(name, AT);
+	
+	// options is a string of the format varname@Date
+	std::vector<std::string> vec_options;
+	if (IOUtils::readLineToVec(options, vec_options, '@')  != 2)
+		throw InvalidArgumentException("The format for the options to GrassIO::write2DGrid is varname@Date, received instead '"+options+"'", AT);
+
+	mio::Date date;
+	if(!mio::IOUtils::convertString(date, vec_options[1], cfg.get("TIME_ZONE","input"))) {
+		throw InvalidArgumentException("Unable to convert date '"+vec_options[1]+"'", AT);
+	}
+	
+	const std::string filename( grid2dpath_out+"/"+date.toString(Date::NUM)+vec_options[0]+default_extension );
+	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename, AT);
 	ofilestream fout;
-	fout.open(name.c_str(), ios::out);
+	fout.open(filename.c_str(), ios::out);
 	if (fout.fail()) {
-		throw AccessException(name, AT);
+		throw AccessException(filename, AT);
 	}
 
 	Coords llcorner=grid_in.llcorner;

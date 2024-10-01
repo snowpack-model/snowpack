@@ -23,9 +23,9 @@
 #include <regex>
 
 // clang-format off
-static const std::regex POINT("^POINT\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s*\\)$");
-static const std::regex FALSEPOINT("^POINT\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s*\\)$");
-static const std::regex POINTZ("^POINTZ\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s*\\)$");
+static const std::regex POINT("^POINT\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s*\\)$", std::regex::optimize);
+static const std::regex FALSEPOINT("^POINT\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s*\\)$", std::regex::optimize);
+static const std::regex POINTZ("^POINTZ\\s*\\(\\s*-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s+-?\\d+(\\.\\d+)?\\s*\\)$", std::regex::optimize);
 // clang-format on
 
 /**
@@ -67,8 +67,9 @@ static bool isValidFirstLine(const std::string &firstline) {
 /**
 * @brief Extracts values out of geometry strings.
 */
-static std::vector<double> extractMatches(const std::string &match) {
-    static const std::regex coord_regex("-?\\d+(\\.\\d+)?");
+static std::vector<double> extractMatches(const std::string &match) 
+{
+    static const std::regex coord_regex("-?\\d+(\\.\\d+)?", std::regex::optimize);
     auto words_begin = std::sregex_iterator(match.begin(), match.end(), coord_regex);
     auto words_end = std::sregex_iterator();
 
@@ -106,8 +107,9 @@ static geoLocation processGeometryRegexes(const std::string &geometry, const std
 * @param epsgStr The string containing the EPSG code.
 * @return The extracted EPSG code as a string.
 */
-static std::string extractEpsgCode(const std::string &epsgStr) {
-    static const std::regex pattern("^EPSG:(\\d{4,5})$");
+static std::string extractEpsgCode(const std::string &epsgStr) 
+{
+    static const std::regex pattern("^EPSG:(\\d{4,5})$", std::regex::optimize);
     std::smatch matches;
 
     if (std::regex_search(epsgStr, matches, pattern) && matches.size() > 1) {

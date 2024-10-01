@@ -18,8 +18,6 @@
 */
 
 /**
- * @todo Maybe we cannot save all messages in memory, but need to read them one by one
- *
  * @note For reading profiles, it will be possible to read all iterations in a subset (only way to allow subsets)
  **/
 

@@ -53,9 +53,13 @@ class GrassIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options);
 
 	private:
+		void getGridPaths();
 		const Config cfg;
-		static const double plugin_nodata;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string grid2dpath_in, grid2dpath_out;
+		
+		static const std::string default_extension;
+		static const double plugin_nodata;
 };
 
 } //end namespace mio

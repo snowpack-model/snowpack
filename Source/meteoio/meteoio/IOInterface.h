@@ -181,7 +181,7 @@ class IOInterface {
 		*/
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
-    /**
+		/**
 		* @brief Parse the input glacier grid into the Grid2DObject
 		*
 		* Example Usage:

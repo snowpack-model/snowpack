@@ -97,16 +97,10 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		
 		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo);
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+
 	protected:
-
-		typedef struct CLOUDCACHE {
-			CLOUDCACHE() : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) {}
-			CLOUDCACHE(const double& julian_gmt, const double& cloudiness) : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) { addCloudiness(julian_gmt, cloudiness); }
-
-			void addCloudiness(const double& julian_gmt, const double& cloudiness);
-
-			std::pair<double, double> last_valid;
-		} cloudCache;
+		struct CLOUDCACHE; //forward declaration
+		typedef struct CLOUDCACHE cloudCache;
 
 		double interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const;
 		double getCloudiness(const MeteoData& md);
@@ -124,6 +118,20 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
 		bool write_mask_out, use_horizons, from_dem;
+};
+
+
+/**
+ * @struct TauCLDGenerator::CLOUDCACHE
+ * @brief This is a small helper structure to store pairs of <timestamp, cloudiness> values for caching
+ */
+struct TauCLDGenerator::CLOUDCACHE {
+	CLOUDCACHE() : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) {}
+	CLOUDCACHE(const double& julian_gmt, const double& cloudiness) : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) { addCloudiness(julian_gmt, cloudiness); }
+
+	void addCloudiness(const double& julian_gmt, const double& cloudiness);
+
+	std::pair<double, double> last_valid;
 };
 
 } //end namespace mio

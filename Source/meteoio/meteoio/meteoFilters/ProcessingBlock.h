@@ -92,12 +92,16 @@ class ProcessingBlock {
 		bool skipStation(const std::string& station_id) const;
 		bool noStationsRestrictions() const {return excluded_stations.empty() && kept_stations.empty();}
 		const std::vector<DateRange> getTimeRestrictions() const {return time_restrictions;}
+		bool skipHeight(const double& height) const;
 
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y);
 		static void readCorrections(const std::string& filter, const std::string& filename, std::vector<double> &X, std::vector<double> &Y1, std::vector<double> &Y2);
 		static std::vector<double> readCorrections(const std::string& filter, const std::string& filename, const size_t& col_idx, const char& c_type, const double& init);
 		static std::vector<offset_spec> readCorrections(const std::string& filter, const std::string& filename, const double& TZ, const size_t& col_idx=2);
 		static std::map< std::string, std::vector<DateRange> > readDates(const std::string& filter, const std::string& filename, const double& TZ);
+
+		static const double default_height; // the height that default values get asigned to to have equal parsing (TA..)
+
 
 	protected:
 		ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg); ///< protected constructor only to be called by children
@@ -109,10 +113,15 @@ class ProcessingBlock {
 		
 		const std::set<std::string> excluded_stations, kept_stations;
 		const std::vector<DateRange> time_restrictions;
+		std::set<double> included_heights, excluded_heights;
+		bool all_heights;
 		ProcessingProperties properties;
 		const std::string block_name;
 
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
+
+	private:
+		void initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs);
 };
 
 class BlockFactory {

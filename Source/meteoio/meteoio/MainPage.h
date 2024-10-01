@@ -264,9 +264,9 @@ namespace mio {
  *
  * - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
  *                         to be able to take in data at any sampling rate and to extract values at any user given time step
- *                         according to the resampling specifications of the user. The search window size can be given with
- *                         key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
- *                         re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point).
+ *                         according to the resampling specifications of the user. The maximum gap size can be given with
+ *                         key MAX_GAP_SIZE that expresses (in seconds) how far a valid point can be searched for when
+ *                         re-interpolating a missing value (up to MAX_GAP_SIZE/2 before and after the requested point).
  *                         See \ref resampling .
  *
  * - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided

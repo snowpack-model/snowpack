@@ -1,0 +1,291 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for MeteoIO temporal interpolations
+-->
+
+<inishell_include>
+
+	<parametergroup name="1D_INTERPOLATIONS">
+		<parameter key="ENABLE_RESAMPLING" label="ENABLE_RESAMPLING" caption="Interpolate data" type="checkbox" default="TRUE">
+			<section name="Interpolations1D"/>
+			<help>Should the data be resampled to the timesteps requested from outside (it is very strongly suggested to keep it set to TRUE for most applications)</help>
+		</parameter>
+		<parameter key="MAX_GAP_SIZE" type="number" format="integer+" min="1" default="86400" unit="s">
+			<section name="Interpolations1D"/>
+			<help>Default width of the biggest data gap that can be filled by temporal interpolation (in seconds: 1/2 day=43200, 1 day=86400, 1 week=604800)</help>
+		</parameter>
+	
+		<parameter label="Add/Remove 1D interpolation" type="selector">
+			<section name="Interpolations1D"/>
+			<parameter key="%::RESAMPLE#" type="alternative" replicate="true" template="true" pre-generate="false" bold="true">
+				<reference name="RESAMPLING_NONE"/>
+				<reference name="RESAMPLING_NEAREST"/>
+				<reference name="RESAMPLING_LINEAR"/>
+				<reference name="RESAMPLING_ACCUMULATE"/>
+				<reference name="RESAMPLING_SOLAR"/>
+				<reference name="RESAMPLING_DAILY_SOLAR"/>
+				<reference name="RESAMPLING_DAILY_AVG"/>
+				<reference name="RESAMPLING_ARIMA"/>
+				<help> Select the resampling method for the given parameter</help>
+				<rephelp>Add a method to the Resampling Stack, methods will be used in order, until a valid value is found</rephelp>
+			</parameter>
+			<reference name="METEOPARAMETERS"/>
+		</parameter>
+	</parametergroup>
+
+	<!-- 1D RESAMPLING -->
+	<parametergroup name="RESAMPLING_NONE">
+		<option caption="No Interpolation" value="NONE">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" min="1" optional="true" unit="s">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1NoResampling.html&quot;&gt;No interpolation&lt;/a&gt; (can be useful to overwrite imported INIs)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_NEAREST">
+		<option caption="Nearest Neighbour" value="NEAREST">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<parameter key="%::ARG#::EXTRAPOLATE" caption="Extrapolate data" type="checkbox">
+				<help>If "extrapolate" is added, then data outside of the original date range can be interpolated. Otherwise, a data point will only be calculated between the original date range.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1NearestNeighbour.html&quot;&gt;Nearest neighbor interpolation&lt;/a&gt; between missing points</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_LINEAR">
+		<option caption="Linear" value="LINEAR">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<parameter key="%::ARG#::EXTRAPOLATE" caption="Extrapolate data" type="checkbox">
+				<help>If "extrapolate" is added, then data &lt;i&gt;outside&lt;/i&gt; of the original date range can be interpolated. Otherwise, a data point will only be calculated between the original date range.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1LinearResampling.html&quot;&gt;Linear interpolation&lt;/a&gt; between missing points</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_ACCUMULATE">
+		<option caption="Accumulate" value="ACCUMULATE">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<parameter key="%::ARG#::PERIOD" label="Accumulation period:" type="number" format="integer+" min="1" default="900" optional="false" unit="s">
+				<help>Accumulation period (in seconds). This must usually match the model time step. It is assumed that the measured accumulation period is equal to the data timesteps.</help>
+			</parameter>
+			<parameter key="%::ARG#::STRICT" caption="Strict nodatda propagation" type="checkbox">
+				<help>if enabling "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). Otherwise, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1Accumulate.html&quot;&gt;Accumulation&lt;/a&gt; over a user given period (filter argument, in seconds - should coincide with your calculation step!).</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_SOLAR">
+		<option caption="Solar" value="SOLAR">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<parameter key="%::ARG#::EXTRAPOLATE" caption="Extrapolate data" type="checkbox">
+				<help>If "extrapolate" is added, then data &lt;i&gt;outside&lt;/i&gt; of the original date range can be interpolated. Otherwise, a data point will only be calculated between the original date range.</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1Solar.html&quot;&gt;Resample solar radiation&lt;/a&gt; by interpolating an atmospheric loss factor.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_DAILY_SOLAR">
+		<option caption="Solar daily sum" value="DAILY_SOLAR">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1Daily__solar.html&quot;&gt;Distribute a daily sum of solar radiation&lt;/a&gt; over the whole day.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_DAILY_AVG">
+		<option caption="Sinusoidal Daily Average" value="DAILY_AVG">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day)</help>
+			</parameter>
+			<parameter key="%::ARG#::RANGE" label="DAILY_AVG Range:" type="number" format="decimal" min="0" default="10.00" optional="false">
+				<help>How much should the value change around the average?</help>
+			</parameter>
+			<parameter key="%::ARG#::PHASE" label="DAILY_AVG Phase:" type="number" format="decimal" min="0" default="0.25" optional="false" unit="days">
+				<help>Where should the minimum value be, from the begining of the day (in days)?</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1DailyAverage.html&quot;&gt;This&lt;/a&gt; considers that the single daily value is the daily average of a sinusoidal variation.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="RESAMPLING_ARIMA">
+		<option caption="ARIMA" value="ARIMA">
+			<parameter key="%::ARG#::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer+" unit="s" min="1" optional="true">
+				<help>Maximum gap size that can be filled by this method (in seconds); Default: 86400 (1 Day).</help>
+			</parameter>
+			<parameter key="%::ARG#::BEFORE_WINDOW" label="ARIMA 1st data window:" type="number" format="decimal" min="0" default="86400" optional="false" unit="s">
+				<help> The size of the data window before a gap, that is used to train the ARIMA model</help>
+			</parameter>
+			<parameter key="%::ARG#::AFTER_WINDOW" label="ARIMA 2nd data window:" type="number" format="decimal" min="0" default="86400" optional="false" unit="s">
+				<help> The size of the data window after a gap, that is used to train the ARIMA model</help>
+			</parameter>
+			<frame caption="Auto ARIMA parameters" collapsed="true">
+				<parameter key="%::ARG#::VERBOSE" label="Verbose output during fit" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to true, there will be additional output during the fitting process (default: false)</help>
+				</parameter>
+				<parameter key="%::ARG#::MAX_P" label="Maximum order of the AR model:" type="number" format="integer+" min="0" optional="true">
+					<help> Highest possible order of the AR part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::MAX_D" label="Maximum order of differencing" type="number" format="integer+" min="0" optional="true">
+					<help> Highest possible order of differencing of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::MAX_Q" label="Maximum order of the MA model:" type="number" format="integer+" min="0" optional="true">
+					<help> Highest possible order of the MA part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::MAX_P_SEASONAL" label="Maximum order of the seasonal AR model:" type="number" format="integer+" min="0" optional="true">
+					<help> Highest possible order of the seasonal AR part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::MAX_D_SEASONAL" label="Maximum order of seasonal differencing" type="number" format="integer+" min="0" optional="true">
+					<help> Highest possible order of seasonal differencing of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::MAX_Q_SEASONAL" label="Maximum order of the seasonal MA model:" type="number" format="integer+" min="0" optional="true">
+					<help> Highest possible order of the seasonal MA part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::SEASONAL_PERIOD" label="Seasonal period:" type="number" format="integer+" min="0" optional="true" unit="s">
+					<help> The seasonal period of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::LIKELIHOOD_METHOD" label="Method for likelihood estimation:" type="alternative" optional="true">
+					<option caption="Conditional Sum of Squares" value="CSS">
+					</option>
+					<option caption="Maximum Likelihood Estimation" value="MLE">
+					</option>
+					<option caption="Conditional Sum of Squares with MLE (default)" value="CSS_ML">
+					</option>
+				</parameter>
+				<parameter key="%::ARG#::OPTIMIZATION_METHOD" label="Optimization method:" type="alternative" optional="true">
+					<option caption="BFGS (default)" value="BFGS">
+					</option>
+					<option value="Nelder-Mead">
+					</option>
+					<option value="Newton_Line_Search">
+					</option>
+					<option value="Newton_Trust_Region_Hook_Step">
+					</option>
+					<option value="Newton_Trust_Region_Double_Dog_Leg">
+					</option>
+					<option value="Conjugate_Gradient">
+					</option>
+					<option value="LBFGS">
+					</option>
+					<option value="BFGS_MTM">
+					</option>
+				</parameter>
+				<parameter key="%::ARG#::STEPWISE" label="Stepwise model selection:" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to true, the ARIMA model will be selected using stepwise model selection (default: true)</help>
+				</parameter>
+				<parameter key="%::ARG#::APPROXIMATION" label="Approximation of the likelihood function and Informetion Criteria:" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to true, the Likelihood Function and the Information Criteria will be approximated (default: false)</help>
+				</parameter>
+				<parameter key="%::ARG#::NUM_MODELS" label="Maximum number of models to try:" type="number" format="integer+" min="0" default="94" optional="true">
+					<help> The maximum number of models to try during stepwise model selection</help>
+				</parameter>
+				<parameter key="%::ARG#::SEASONAL" label="Seasonal model:" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to false, the ARIMA model will be non-seasonal (default: true)</help>
+				</parameter>
+				<parameter key="%::ARG#::STATIONARY" label="Stationary model:" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to true, the ARIMA model will be stationary (default: false)</help>
+				</parameter>
+				<parameter key="%::ARG#::NORMALIZATION" label="Normalization of the data:" type="alternative" optional="true">
+					<option value="MINMAX">
+					</option>
+					<option value="ZSCORE">
+					</option>
+					<option value="NOTHING">
+					</option>
+					<help> The type of Data adjustment to use (Normalization, Standardization, None) (default: MINMAX)</help>
+				</parameter>
+			</frame>
+			<frame caption="Manual ARIMA Model" collapsed="true">
+				<parameter type = "helptext" wrap="true">
+					<help>Set the Parameters of a SARIMA Model manually. </help>
+				</parameter>
+				<parameter key="%::ARG#::SET_MANUAL" label="Set Manual ARIMA Model" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to true, the ARIMA model will be set manually (default: false)</help>
+				</parameter>
+				<parameter key="%::ARG#::P" label="Order of the AR model:" type="number" format="integer+" min="0" optional="true">
+					<help> Order of the AR part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::D" label="Order of differencing" type="number" format="integer+" min="0" optional="true">
+					<help> Order of differencing of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::Q" label="Order of the MA model:" type="number" format="integer+" min="0" optional="true">
+					<help> Order of the MA part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::P_SEASONAL" label="Order of the seasonal AR model:" type="number" format="integer+" min="0" optional="true">
+					<help> Order of the seasonal AR part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::D_SEASONAL" label="Order of seasonal differencing" type="number" format="integer+" min="0" optional="true">
+					<help> Order of seasonal differencing of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::Q_SEASONAL" label="Order of the seasonal MA model:" type="number" format="integer+" min="0" optional="true">
+					<help> Order of the seasonal MA part of the ARIMA model</help>
+				</parameter>
+				<parameter key="%::ARG#::SEASONAL_PERIOD" label="Seasonal period:" type="number" format="integer+" min="0" optional="true" unit="s">
+					<help> The seasonal period of the ARIMA model, for the manual ARIMA model this is needed.</help>
+				</parameter>
+				<parameter key="%::ARG#::FILL_BACKWARD" label="Use auto arima to fill gaps in backwards additionally" type="alternative" optional="true">
+					<option value="TRUE">
+					</option>
+					<option value="FALSE">
+					</option>
+					<help> If set to true,Attempts to fill a gap backward as well, be careful as this might cause problems if there is not enough data (default: false)</help>
+				</parameter>
+			</frame>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ARIMA.html&quot;&gt;Resample data using an ARIMA model&lt;/a&gt;.</help>
+		</option>
+	</parametergroup>			
+
+</inishell_include>

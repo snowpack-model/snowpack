@@ -1,0 +1,57 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: TechSnow -->
+	<parameter key="SNOW_GROOMING" type="alternative" default="FALSE" section="TechSnow">
+		<option value="TRUE">
+			<reference name="GROOMING"/>
+		</option>
+		<option value="FALSE"/>
+		<help>Should the snow grooming module be enabled?</help>
+	</parameter>
+
+	<parametergroup name="GROOMING">
+		<frame caption="Grooming">
+			<parameter key="GROOMING_DEPTH_START" type="number" format="decimal" unit="m" min="0" precision="2" default="0.40" optional="false">
+				<help>minimum depth of snow to allow for grooming (m)</help>
+			</parameter>
+			<parameter key="GROOMING_DEPTH_IMPACT" type="number" format="decimal" unit="m" min="0" precision="2" default="0.40" optional="false">
+				<help></help>
+			</parameter>
+			<parameter key="GROOMING_WEEK_START" type="number" format="integer+" max="53" default="40" optional="false">
+				<help>ISO week of the year when to start slopes grooming</help>
+			</parameter>
+			<parameter key="GROOMING_WEEK_END" type="number" format="integer+" max="53" default="17" optional="false">
+				<help>ISO week of the year when to stop slopes grooming</help>
+			</parameter>
+			<parameter key="GROOMING_HOUR" type="number" format="integer+" max="24" default="21" optional="false" notoggle="true">
+				<help>hour when grooming is performed</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+</inishell_include>

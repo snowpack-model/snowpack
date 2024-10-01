@@ -64,7 +64,7 @@ namespace mio {
  *
  * Moreover, when writing NetCDF files with MeteoIO, all the generated files will contain as much of the Attribute Conventions Dataset Discovery
  * <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> metadata as (automatically) possible,
- * but some fields must be filled by the user for full compliance. This is detailed in section \ref netcdf_editing "Editing" below.
+ * but some fields must be filled by the user for full compliance (see the ACDD class). This is detailed in section \ref netcdf_editing "Editing" below.
  *
  * If you want to better understand the structure of the NetCDF file format, you are highly encouraged to read about
  * its <A HREF="https://www.unidata.ucar.edu/software/netcdf/docs/netcdf_data_set_components.html">components</A>.
@@ -105,6 +105,8 @@ namespace mio {
  *     - NC_STRICT_SCHEMA: only write out parameters that are specifically described in the chosen schema (default: false, all parameters in
  * MeteoGrids::Parameters are also written out); [Output]
  *     - NC_LAX_SCHEMA: write out all provided parameters even if no metadata can be associated with them (default: false); [Output]
+ *     - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
+ * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: true, [Output])
  *     - For some applications, some extra information must be provided for meteorological time series (for example, for Crocus), in the [Output] section:
  *          - ZREF: the reference height for meteorological measurements;
  *          - UREF: the reference height for wind measurements;
@@ -365,7 +367,7 @@ void NetCDFIO::parseInputOutputSection()
 			cache_grid_files.push_back( make_pair(file.getDateRange(), file) );
 		} else {
 			cfg.getValue("GRID2DPATH", "Input", in_grid2d_path);
-			cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
+			cfg.getValue("NC_EXT", "Input", in_nc_ext, IOUtils::nothrow);
 		}
 	}
 
@@ -380,12 +382,12 @@ void NetCDFIO::parseInputOutputSection()
 
 	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo=="NETCDF") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("NC_DEBUG", "INPUT", debug, IOUtils::nothrow);
+		cfg.getValue("NC_DEBUG", "Input", debug, IOUtils::nothrow);
 		cfg.getValue("NETCDF_SCHEMA_METEO", "Input", in_schema_meteo, IOUtils::nothrow); IOUtils::toUpper(in_schema_meteo);
-		cfg.getValue("NC_EXT", "INPUT", in_nc_ext, IOUtils::nothrow);
+		cfg.getValue("NC_EXT", "Input", in_nc_ext, IOUtils::nothrow);
 
 		std::vector<std::string> vecFilenames;
-		cfg.getValues("METEOFILE", "INPUT", vecFilenames);
+		cfg.getValues("METEOFILE", "Input", vecFilenames);
 		const std::string inpath = cfg.get("METEOPATH", "Input");
 
 		if (!vecFilenames.empty()) {
@@ -413,7 +415,7 @@ void NetCDFIO::parseInputOutputSection()
 				throw InvalidArgumentException("No valid input meteo files, either provide a list of files or check that there are files within METEOPATH with the NC_EXT="+in_nc_ext+" extension", AT);
 		
 		std::vector<std::string> vecTmp;
-		cfg.getValues("STATION", "INPUT", vecTmp);
+		cfg.getValues("STATION", "Input", vecTmp);
 		in_stations = std::set<std::string>(vecTmp.begin(), vecTmp.end());
 	}
 
@@ -712,7 +714,7 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 	cfg.getValue("DEFAULT_AZI", "Output", dflt_azi, IOUtils::nothrow);
 	cfg.getValue("NC_KEEP_FILES_OPEN", "Output", keep_output_files_open, IOUtils::nothrow);
 	cfg.getValue("NC_KEEP_FILES_OPEN", "Input", keep_input_files_open, IOUtils::nothrow);
-	cfg.getValue("NC_ALLOW_MISSING_COORDS", "INPUT", allow_missing_coords, IOUtils::nothrow);
+	cfg.getValue("NC_ALLOW_MISSING_COORDS", "Input", allow_missing_coords, IOUtils::nothrow);
 	schema.initFromSchema(vars, dimensions_map);
 
 	if (mode==WRITE) {
@@ -720,7 +722,14 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 		cfg.getValue("NC_LAX_SCHEMA", "Output", lax_schema, IOUtils::nothrow);
 		if (strict_schema && lax_schema)
 			throw InvalidArgumentException("It is not possible to have NC_STRICT_SCHEMA and NC_LAX_SCHEMA true at the same time!", AT);
-		acdd.setUserConfig( cfg, "Output" );
+		
+		//some ACDD metadata will be written anyway, but at least we can skip user-provided fields
+		bool write_acdd = true;
+		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
+		if (write_acdd) {
+			acdd.setUserConfig( cfg, "Output", false );
+		}
+				
 		if (FileUtils::fileExists(filename)) initFromFile(filename);
 	} else if (mode==READ) {
 		initFromFile(filename);

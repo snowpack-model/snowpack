@@ -35,9 +35,6 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
 
-
-
-
 .test_base:
   stage: test
   script:
@@ -380,7 +377,7 @@ release latest image:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:test"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
       --build-arg METEOIO_VERSION=unstable
       --build-arg REALEASE_DATE=$REALEASE_DATE
   allow_failure: true
@@ -400,7 +397,7 @@ release docker image:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:test"
+      --destination "${CI_REGISTRY_IMAGE}:${METEOIO_VERSION}"
       --build-arg METEOIO_VERSION=$METEOIO_VERSION
       --build-arg REALEASE_DATE=$REALEASE_DATE
   rules:

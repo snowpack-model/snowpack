@@ -171,6 +171,9 @@ class MeteoData {
 		                 PSUM_LC, ///< Water equivalent of liquid convective precipitation
 		                 PSUM_S, ///< Water equivalent of solid precipitation
 		                 lastparam=PSUM_S};
+		
+		static Parameters toParameter(const std::string& paramStr);
+		static std::string parToString(const Parameters& param);
 
 		static const std::string& getParameterName(const size_t& parindex);
 
@@ -253,6 +256,20 @@ class MeteoData {
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const {return nrOfAllParameters;}
+		size_t getOccurencesOfParameter(const Parameters& par, const std::set<std::string>& additional_parameters = std::set<std::string>()) const;
+		std::vector<double> getHeightsForParameter(const std::string& in_parname, bool include_default = true, const std::set<std::string>& additional_parameters = std::set<std::string>()) const;
+		size_t listUnknownParameters(const std::set<std::string>& additional_params = std::set<std::string>()) const;
+		static std::string convertHeightToString(const double& height);
+
+
+		static bool getTypeAndNo(const std::string& parname, std::string& par, double& number, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static bool sameParameterType(const std::string& par1, const std::string& par2, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::vector<std::string> retrieveAllHeightsForParam(const std::set<std::string>& available_parameters, const std::string& parname, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::vector<std::string> retrieveAllParametersAtHeight(const std::set<std::string>& available_parameters, const double& height, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::set<double> retrieveAllHeights(const std::set<std::string>& available_parameters, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::set<std::string> retriveUniqueParameters(const std::set<std::string>& available_parameters, const std::set<std::string>& additional_parameters=std::set<std::string>());
+		static std::vector<std::string> sortListByParams(const std::vector<std::string>& param_list, const std::set<std::string>& available_parameters = std::set<std::string>());
+
 
 		static MeteoGrids::Parameters findGridParam(const Parameters& mpar);
 		static Parameters findMeteoParam(const MeteoGrids::Parameters& gpar);
@@ -370,6 +387,7 @@ class MeteoData {
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
 		
+
 		/**
 		 * @brief Ensure all elements in a METEO_SET have the same parameters.
 		 * @details This should be called before writing out the METEO_SET with a plugin such as smet

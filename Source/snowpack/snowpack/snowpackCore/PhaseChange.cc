@@ -692,7 +692,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 						EMS[e_CIR].theta[ICE] += EMS[e_CIR].theta_i_reservoir_cumul - reservoir_residual_ice; // Transfer ice from the cumulated ice reservoir to the matrix at lowest layer
 						EMS[e_CIR].theta[AIR] = 1. - (EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]);
 						EMS[e_CIR].theta_i_reservoir = reservoir_residual_ice; // Leave only potential residual ice in the reservoir
-						cout << "TRANSFER OF RESERVOIR ICE";
+						//cout << "TRANSFER OF RESERVOIR ICE\n";	//keep it commented out for debug
 					}
 				}
 			} else { // Case CIR_to_fill==false

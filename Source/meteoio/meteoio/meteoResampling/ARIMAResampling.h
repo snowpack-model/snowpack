@@ -59,12 +59,12 @@ namespace mio {
      * this is the most likely missing value, and not subject to a possible random divergence.
      * 
      * @note The automatic search for the correct ARIMA model can be varyingly successfull. If it does not work, try setting the parameters manually.
+     * @note You might get asked to increase the window size by a big amount, mostly when extrapolation should be done, because then the maximum of possible extrapolation steps is calculated, which might be bigger than your window size
      * 
      * @section params Parameters
      * Mandatory parameters:
      * - `BEFORE_WINDOW` : The time before a gap that will be used to accumulate data to fit the ARIMA model.
      * - `AFTER_WINDOW` : The time after a gap that will be used to accumulate data to fit the ARIMA model.
-     * (BEFORE_WINDOW + AFTER_WINDOW < window_size)
      *
      * Optional parameters:
      * - `MAX_P` : The maximum number of AR coefficients to use in the ARIMA model. Default: 8
@@ -319,7 +319,7 @@ namespace mio {
      */
     class ARIMAResampling : public ResamplingAlgorithms {
     public:
-        ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_window_size,
+        ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_max_gap_size,
                         const std::vector<std::pair<std::string, std::string>> &vecArgs);
 
         // Performs ARIMA interpolation the first time it is called, as this is also the first time the data is available

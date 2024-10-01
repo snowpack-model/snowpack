@@ -33,11 +33,12 @@ namespace mio {
  * @param[in] i_parname The current meteo parameter's identifier.
  * @param[in] dflt_window_size The default grid resampling window size.
  * @param[in] vecArgs Vector of arguments (user settings) for this algorithm. Note that settings must
+ * @param[in] in_cfg Config object in order to be able to read configuration keys.
  * be given for this algorithm's name (e. g. TA::TIMESERIES::EXTRAPOLATE = T for TA::TIMESERIES::ALGORITHM = LINEAR).
  */
 GridTimeseriesResampling::GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname,
-	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_window_size, vecArgs), vecArgs_(vecArgs),
+	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &in_cfg)
+	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_window_size, vecArgs), vecArgs_(vecArgs), cfg(in_cfg),
 	base_algorithm_("LINEAR")
 {
 	for (size_t ii = 0; ii < vecArgs.size(); ++ii) {
@@ -70,7 +71,7 @@ void GridTimeseriesResampling::resample(const Date& date, const std::map<Date, G
 {
 	//retrieve an algorithm from the time series resampling algorithm factory:
 	resampled_grid.set(all_grids.begin()->second, IOUtils::nodata);
-	ResamplingAlgorithms* ts_interpolator = ResamplingAlgorithmsFactory::getAlgorithm(base_algorithm_, parname, 86400., vecArgs_);
+	ResamplingAlgorithms* ts_interpolator = ResamplingAlgorithmsFactory::getAlgorithm(base_algorithm_, parname, 86400., vecArgs_, cfg);
 
 	StationData point_meta; //fill this object with what's available of grid point metadata
 

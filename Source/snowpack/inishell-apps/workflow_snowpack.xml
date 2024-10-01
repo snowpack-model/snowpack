@@ -1,0 +1,53 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is the workflow panel that SNOWPACK builds
+-->
+
+<inishell_include>
+	<workflow>
+		<section caption="SNOWPACK">
+			<element type="label" caption="&lt;b&gt;Run experiment"/>
+			<element type="label" caption="Start date:"/>
+			<element id="start_date" type="datetime"/>
+			<element type="label" caption="End date:"/>
+			<element id="end_date" type="datetime"/>
+			<!--<element type="label" caption="INI file:"/>
+			<element id="ini" type="text" default="${inifile}"/>-->
+			<element caption="Run SNOWPACK" type="button">
+				<command>setpath(%smetpath, ${key:OUTPUT::METEOPATH})</command>
+				<command>snowpack -b %start_date -e %end_date -c "${inifile}"</command>
+			</element>
+			<element type="label" caption="&lt;br&gt;&lt;b&gt;Visualize results&lt;/b&gt;"/>
+			<element type="label" caption="Open niViz in Browser to import and visualize snowpack output files (.pro, .smet):"/>
+			<element id="visualize" caption="Open niViz" type="button">
+				<command>setpath(%smetpath, ${key:OUTPUT::METEOPATH})</command>
+				<command>openurl(https://run.niviz.org)</command>
+			</element>
+			<element type="label" caption="Then drag your desired output file into niViz from below:"/>
+			<element type="path" id="smetpath"/>
+			<element type="label" caption="&lt;i&gt;.smet&lt;/i&gt; files for 1D timeseries, &lt;i&gt;.pro&lt;/i&gt; files for simulated snow profiles"/>
+			<element caption="Show Snowpack version" type="button">
+				<command>snowpack -v</command>
+			</element>		
+		</section>
+	</workflow>
+</inishell_include>

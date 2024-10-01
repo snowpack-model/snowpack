@@ -208,7 +208,7 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 */
 void DBO::fillStationMeta()
 {
-	static const std::regex stat_id_regex("([^:]+)::([^:]+)");
+	static const std::regex stat_id_regex("([^:]+)::([^:]+)", std::regex::optimize);
 	std::smatch stat_id_matches;
 
 	vecMeta.clear();

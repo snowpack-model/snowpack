@@ -23,8 +23,8 @@
 
 namespace mio {
 
-TEMPLATE::TEMPLATE(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-             : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs)
+TEMPLATE::TEMPLATE(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+             : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs)
 {
 	/*implement here the arguments parsing
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );

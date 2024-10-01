@@ -1162,8 +1162,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 					tz_min = -static_cast<int>( (timezone + (double)tz_h)*60. + .5 ); //round to closest
 					tmpstr << "-";
 				}
-				tmpstr << setw(2) << setfill('0') << tz_h << ":"
-				<< setw(2) << setfill('0') << tz_min;
+				tmpstr << setw(2) << setfill('0') << tz_h << ":" << setw(2) << setfill('0') << tz_min;
 			}
 			break;
 		case(ISO_DATE):

@@ -24,8 +24,8 @@
 
 namespace mio {
 
-RegressionFill::RegressionFill(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-             : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), regression_coefficients(), verbose(false), reg_type(LINEAR)
+RegressionFill::RegressionFill(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+             : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs), regression_coefficients(), verbose(false), reg_type(LINEAR)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 	for (const auto& arg : vecArgs){
@@ -62,7 +62,7 @@ std::string RegressionFill::toString() const
 bool RegressionFill::findValueAt(const std::vector<MeteoData>& support_station, const Date& date, const size_t& paramindex, double& value)
 {
 	for (const MeteoData& md : support_station) {
-		if ((md.date-date).getJulian(true)>window_size || (md.date-date).getJulian(true)<(-1*window_size)) continue;
+		if ((md.date-date).getJulian(true)>max_gap_size || (md.date-date).getJulian(true)<(-1*max_gap_size)) continue;
 
 		if (md.date == date) {
 			value = md(paramindex);

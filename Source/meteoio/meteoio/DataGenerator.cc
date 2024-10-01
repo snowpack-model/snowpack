@@ -201,7 +201,7 @@ std::set<std::string> DataGenerator::getParameters(const Config& cfg)
 	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, cmd_section, true) );
 	
 	//extracting the parameter names from keys such as 'ILWR::GENERATOR1'
-	static const std::regex param_regex("([^:]+)"+cmd_pattern+"[0-9]+$");
+	static const std::regex param_regex("([^:]+)"+cmd_pattern+"[0-9]+$", std::regex::optimize);
 	std::smatch param_matches;
 
 	std::set<std::string> set_params;

@@ -1,0 +1,153 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for gridded input / output plugin definitions
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: GRID2D_OUT -->
+	<parametergroup name="GRID2D_OUT">
+		<parameter type="helptext" wrap="true">
+			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+		</parameter>
+		<section name="Output"/>
+		<parameter key="GRID2D" label="Select GRID2D plugin:" type="alternative" pre-generate="false">
+			<option value="ARC">
+				<reference name="ARC_OUT"/>
+			</option>
+			<option value="NETCDF" bold="true" italic="true">
+				<reference name="NETCDF_GRID_OUT"/>
+				<help>NetCDF grids</help>
+			</option>
+			<option value="PNG" italic="true">
+				<reference name="PNG"/>
+			</option>
+			<help>Choose plugin for 2D gridded data</help>
+		</parameter>
+		<parameter key="GRID2D_OUTPUT_PARAMS" type="text" optional="true">
+		<help>Provide a list of variables that will be spatially interpolated into gridded outputs</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- ARC -->
+	<parametergroup name="ARC_OUT">
+		<reference name="GRID2DPATH_OUT"/>
+		<parameter key="A3D_VIEW" type="alternative" optional="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Generate names compatible with Alpine3D's grid viewer?</help>
+		</parameter>
+		<parameter key="GRID2DEXT" type="text">
+			<help>Grid file extension, or none for no file extension (default: .asc)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- PNG -->
+	<parametergroup name="PNG">
+		<reference name="GRID2DPATH_OUT"/>
+		<parameter key="PNG_WORLD_FILE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Generate a world file for each output file? This file contains the geolocalization information</help>
+		</parameter>
+		<parameter key="PNG_LEGEND" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Generate a legend?</help>
+		</parameter>
+		<parameter key="PNG_AUTOSCALE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Autoscale color scale?</help>
+		</parameter>
+		<parameter key="PNG_SCALING" type="alternative">
+			<option value="nearest"/>
+			<option value="bilinear"/>
+			<help>Scaling algorithm (default=bilinear)</help>
+		</parameter>
+		<parameter key="PNG_MIN_SIZE" type="text" optional="false">
+			<help>Minimum dimensions of the PNG, like 640x480</help>
+		</parameter>
+		<parameter key="PNG_MAX_SIZE" type="text" optional="false">
+			<help>Maximum dimensions of the PNG, like 1024x768</help>
+		</parameter>
+		<parameter key="PNG_INDEXED" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Generate a color indexed file (default=true)</help>
+		</parameter>
+		<parameter key="PNG_SPEED_OPTIMIZE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Optimize for speed (default=false)</help>
+		</parameter>
+		<parameter key="PNG_NR_LEVELS" type="number" format="integer+" default="30" max="255" min="6" sign="true" notoggle="true">
+			<help>Number of colors in the palette (default=30)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- NETCDF -->
+	<parametergroup name="NETCDF_GRID_OUT">
+		<reference name="GRID2DPATH_OUT"/>
+		<parameter key="GRID2DFILE" type="file" optional="false">
+			<help>Output file name (in case of split by year or split by var, this will be used to built the final file name)</help>
+		</parameter>
+		<parameter key="NETCDF_SPLIT_BY_YEAR" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Create a new file for each year of data (default: false)</help>
+		</parameter>
+		<parameter key="NETCDF_SPLIT_BY_VAR" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Create a new file for each variable (default: false)</help>
+		</parameter>
+		<parameter key="NETCDF_SCHEMA_GRID" type="alternative" default="CF-1.6">
+			<option value="CF-1.6"/>
+			<option value="CROCUS"/>
+			<option value="AMUNDSEN"/>
+			<option value="ECMWF"/>
+			<option value="WRF"/>
+			<help>Data schema to use (i. e. mostly variables and dimensions naming)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- SHORTCUTS -->
+	<parametergroup name="DEMFILE">
+		<parameter key="DEMFILE" type="file" optional="false">
+			<help>For reading the data as a DEMObject</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="LANDUSEFILE">
+		<parameter key="LANDUSEFILE" type="file" optional="false">
+			<help>File containing a grid of landuse codes</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="GRID2DPATH_OUT">
+		<parameter key="GRID2DPATH" type="path" optional="false">
+			<help>String representing path where grid files should be read from</help>
+		</parameter>
+	</parametergroup>
+
+</inishell_include>
