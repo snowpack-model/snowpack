@@ -25,6 +25,8 @@
 #include <sstream>
 #include <ctime>
 
+#include <regex>
+
 #ifdef _MSC_VER
 	/*
 	This software contains code under BSD license (namely, getopt for Visual C++).
@@ -434,6 +436,7 @@ inline void copyMeteoData(const mio::MeteoData& md, CurrentMeteo& Mdata,
 	} else {
 		Mdata.poor_ea = true;
 	}
+
 	if (md.param_exists("NET_LW")) {
 		Mdata.ea = 1.;
 		Mdata.poor_ea = false;
@@ -623,6 +626,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		cfg.addKey("CHANGE_BC", "Snowpack", "false");
 		cfg.addKey("MEAS_TSS", "Snowpack", "false");
 		Mdata.tss = Constants::undefined;
+		Mdata.lw_net = Constants::undefined;
 		cfg.addKey("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack", "true");
 		cfg.addKey("DETECT_GRASS", "SnowpackAdvanced", "false");
 	}
@@ -640,6 +644,15 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 			meteo.projectPrecipitations(currentSector.meta.getSlopeAngle(), Mdata.psum, Mdata.hs);
 		}
 	}
+
+	// Check if ILWR can be derived from NET_LW and TSS
+	if (Mdata.lw_net != mio::IOUtils::nodata && Mdata.tss != mio::IOUtils::nodata) {
+		const double emmisivity = (vecXdata[slope.mainStation].getNumberOfElements() > vecXdata[slope.mainStation].SoilNode) ? Constants::emissivity_snow : vecXdata[slope.mainStation].SoilEmissivity;
+		const double ilwr = Mdata.lw_net + emmisivity * Constants::stefan_boltzmann * Optim::pow4(Mdata.tss);
+		Mdata.lw_net = IOUtils::nodata;
+		Mdata.ea = SnLaws::AirEmissivity(ilwr, Mdata.ta, variant);
+	}
+
 	bool adjust_height_of_wind_value;
 	cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
 	// Find the Wind Profile Parameters, w/ or w/o canopy; take care of canopy
@@ -724,16 +737,9 @@ inline void getOutputControl(MainControl& mn_ctrl, const mio::Date& step, const 
 		// Hazard data, every half-hour
 		mn_ctrl.HzDump = booleanTime(Dstep, 0.5/24., 0.0, calculation_step_length);
 		// Time series (*.met)
-		double bool_start = H_TO_D(tsstart);
-		if ( bool_start > 0. )
-			bool_start += Dsno_step;
-		mn_ctrl.TsDump = booleanTime(Dstep, tsdaysbetween, bool_start, calculation_step_length);
+		mn_ctrl.TsDump = booleanTime(Dstep, tsdaysbetween, ((tsstart > 0.) ? (tsstart + Dsno_step) : (0.)), calculation_step_length);
 		// Profile (*.pro)
-		bool_start = H_TO_D(profstart);
-		if ( bool_start > 0. )
-			bool_start += Dsno_step;
-		mn_ctrl.PrDump = booleanTime(Dstep, profdaysbetween, bool_start, calculation_step_length);
-
+		mn_ctrl.PrDump = booleanTime(Dstep, profdaysbetween, ((profstart > 0.) ? (profstart + Dsno_step) : (0.)), calculation_step_length);
 	}
 
 	// Additional Xdata backup (*.<JulianDate>sno)
@@ -931,16 +937,32 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 	//warn the user if the precipitation miss proper re-accumulation
 	const bool HS_driven = cfg.get("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack");
 	if (mode != "OPERATIONAL" && !HS_driven) {
-		const bool psum_key_exists = cfg.keyExists("PSUM::resample", "Interpolations1D");
-		const std::string psum_resampling = (psum_key_exists)? IOUtils::strToUpper( cfg.get("PSUM::resample", "Interpolations1D") ) : "LINEAR";
-		if (psum_resampling!="ACCUMULATE") {
+		int psum_resampling_index = IOUtils::inodata;
+		const std::vector<std::pair<std::string, std::string>> vecAlgos( cfg.getValues("PSUM::RESAMPLE", "Interpolations1D") );
+		for (const auto key : vecAlgos) {
+			if (IOUtils::strToUpper(key.second) == "ACCUMULATE") {
+				std::regex pattern ("PSUM::RESAMPLE(\\d+)$", std::regex::icase);
+				std::smatch match;
+				if (std::regex_search(key.first, match, pattern)) { // first is the original key
+					psum_resampling_index = std::stoi(match[1]);
+					break;
+				} else {
+					throw IOException("ACCUMULATE key " + key.first + " does not contain a valid index; I.e. it does not match the pattern PARAM::resample#",AT);
+				}
+			}
+		}
+
+		if (psum_resampling_index == IOUtils::nodata) {
 			std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH, not doing it is most probably an error!\n";
 		} else {
-			const double psum_accumulate = cfg.get("PSUM::accumulate::period", "Interpolations1D");
+			const double psum_accumulate = cfg.get("PSUM::arg"+std::to_string(psum_resampling_index)+"::period", "Interpolations1D");
 			const double sn_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
 			if (sn_step_length*60. != psum_accumulate)
 				std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH (currently, over " <<  psum_accumulate << "s)\n";
 		}
+	}
+	if (detect_grass && !HS_driven) {
+		throw mio::IOException("[E] DETECT_GRASS is TRUE while ENFORCE_MEASURED_SNOW_HEIGHTS is FALSE. Cannot continue simulation, because snow height is used to detect grass.", AT);
 	}
 }
 
@@ -1185,10 +1207,14 @@ inline void real_main (int argc, char *argv[])
 
 		memset(&mn_ctrl, 0, sizeof(MainControl));
 		if (mode == "RESEARCH") {
-			mn_ctrl.resFirstDump = true; //HACK to dump the initial state in research mode
+			if (!restart) {
+				mn_ctrl.resFirstDump = true;  //HACK to dump the initial state in research mode
+				current_date -= calculation_step_length/(24.*60.); //Do a first time step to fill all output fields
+			} else {
+				mn_ctrl.resFirstDump = false; //No initial state dump when doing a restart
+			}
 			deleteOldOutputFiles(outpath, experiment, vecStationIDs[i_stn], slope.nSlopes, snowpackio.getExtensions());
 			cfg.write(outpath + "/" + vecStationIDs[i_stn] + "_" + experiment + ".ini"); //output config
-			if (!restart) current_date -= calculation_step_length/(24.*60.);
 		} else {
 			const std::string db_name = cfg.get("DBNAME", "Output", "");
 			if (db_name == "sdbo" || db_name == "sdbt")
@@ -1297,6 +1323,9 @@ inline void real_main (int argc, char *argv[])
 				dataForCurrentTimeStep(Mdata, surfFluxes, vecXdata, slope, tmpcfg,
                                        sun, cumsum.precip, lw_in, hs_a3hl6,
                                        tot_mass_in, variant, iswr_is_net, meteo);
+
+				// Store ea from main slope to be used on the virtual slopes (in case it was modified in copyMeteoData or dataForCurrentTimeStep)
+				if (slope.sector == slope.mainStation) vecMyMeteo[i_stn]("EA") = Mdata.ea;
 
 				// Notify user every fifteen days of date being processed
 				const double notify_start = floor(vecSSdata[slope.mainStation].profileDate.getJulian()) + 15.5;

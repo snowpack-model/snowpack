@@ -29,7 +29,7 @@ using namespace std;
  * @param mysnowdrift pointer to the initialized Snowdrift Manager
  * @param myeb pointer to the initialized radiation manager
  * @param cfg User configuration keys
- * @param dem DEM defining the simulation
+ * @param in_dem DEM defining the simulation
  */
 AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb,
                              const Config& cfg, const DEMObject& in_dem)

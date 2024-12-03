@@ -54,10 +54,9 @@ class SnowpackInterface;
  * in the [EBalance] section of the configuration file and is handled by a choice of various algorithms,
  * as chosen in the configuration file with the key Terrain_Radiation_Method that
  * can take any of the following choices:
- *     - SIMPLE : a very basic (but fast) guess, see TerrainRadiationSimple
- *     - FULL : a parallelized implementation of a radiosity algorithm, see TerrainRadiation
- *     - HELBIG : the original radiosity implementation, not parallelized, see TerrainRadiationHelbig
- *     - PETSC : a parallel implementation relying on PETSC for added performances, see TerrainRadiationPETSc
+ *     - SIMPLE: a very basic (but fast) guess, see TerrainRadiationSimple
+ *     - HELBIG: the original radiosity implementation, not parallelized, see TerrainRadiationHelbig
+ *     - COMPLEX: a complex modeling with anisotropic reflection of light on snow (forward scattering) and multiple reflections in the terrain, see TerrainRadiationComplex
  *
  * @code
  * [EBalance]

@@ -1,0 +1,480 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for MeteoIO spatial interpolations
+-->
+
+<inishell_include>
+
+	<parametergroup name="2D_INTERPOLATIONS">
+		<parameter label="Add/Remove 2D interpolation" type="selector">
+			<section name="Interpolations2D"/>
+			<parameter key="%::ALGORITHMS" label="Algorithms for %:" type="choice" template="true">
+				<reference name="INTERPOLATION_NONE"/>
+				<reference name="INTERPOLATION_STD_PRESS"/>
+				<reference name="INTERPOLATION_CST"/>
+				<reference name="INTERPOLATION_NEAREST"/>
+				<reference name="INTERPOLATION_AVG"/>
+				<reference name="INTERPOLATION_AVG_LAPSE"/>
+				<reference name="INTERPOLATION_IDW"/>
+				<reference name="INTERPOLATION_IDW_LAPSE"/>
+				<reference name="INTERPOLATION_IDW_SLOPES"/>
+				<reference name="INTERPOLATION_LIDW_LAPSE"/>
+				<reference name="INTERPOLATION_LISTON_RH"/>
+				<reference name="INTERPOLATION_ILWR_EPS"/>
+				<reference name="INTERPOLATION_SWRAD"/>
+				<reference name="INTERPOLATION_LISTON_WIND"/>
+				<reference name="INTERPOLATION_RYAN"/>
+				<reference name="INTERPOLATION_WINSTRAL"/>
+				<reference name="INTERPOLATION_PSUM_SNOW"/>
+				<reference name="INTERPOLATION_PPHASE"/>
+				<reference name="INTERPOLATION_ALS_SCALING"/>
+				<reference name="INTERPOLATION_SNOWLINE"/>
+				<reference name="INTERPOLATION_USER"/>
+				<reference name="INTERPOLATION_ODKRIG"/>
+				<reference name="INTERPOLATION_ODKRIG_LAPSE"/>
+			</parameter>
+			<reference name="METEOPARAMETERS"/>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_NONE">
+		<option value="NONE">
+			<help>Returns a nodata filled grid (this could be useful if an alternate strategy could provide the data at a latter stage)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_STD_PRESS">
+		<option value="STD_PRESS">
+			<frame caption="STD_PRESS" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>Generate a standard atmosphere pressure as a function of the cell's elevation; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1StandardPressureAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::STD_PRESS::USE_RESIDUALS" label="Use_residuals" type="alternative" default="FALSE">
+					<option value="TRUE">
+						<parameter key="%::STD_PRESS::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+						<parameter key="%::STD_PRESS::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+						<help>Parameters to control the IDW shape</help>
+					</option>
+					<option value="FALSE"/>
+					<help>Spatially interpolate the residuals?</help>
+				</parameter>
+			</frame>
+			<help>Generate a standard atmosphere pressure as a function of the cell's elevation</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_CST">
+		<option value="CST">
+			<frame caption="CST" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>Fill the grid with a user provided constant; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ConstAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::CST::VALUE" label="Value" type="number" format="decimal" default="0.0" precision="6" optional="false"/>
+			</frame>
+			<help>constant value in each cell</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_NEAREST">
+		<option value="NEAREST">
+			<help>the value at the closest station is taken for each cell</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_AVG">
+		<option value="AVG">
+			<help>average of the measurements in each cell</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_AVG_LAPSE">
+		<option value="AVG_LAPSE">
+			<frame caption="AVG_LAPSE" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The grid is filled with the average of the detrended measured values and then re-trended; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1AvgLapseRateAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::AVG_LAPSE::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::AVG_LAPSE::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::AVG_LAPSE::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::AVG_LAPSE::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::AVG_LAPSE::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::AVG_LAPSE::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+			</frame>
+			<help>average value reprojected to the elevation of the cell</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_IDW">
+		<option value="IDW">
+			<frame caption="IDW" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>Each cell receives the weighted average of the whole data set with weights being 1/r; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1IDWAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::IDW::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::IDW::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>Inverse Distance Weighted average</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_IDW_LAPSE">
+		<option value="IDW_LAPSE">
+			<frame caption="IDW_LAPSE" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The input data is detrended and the residuals are spatially interpolated using an Inverse Distance Weighting interpolation algorithm. Then, each value is reprojected to the real elevation of the relative cell (re-trending); see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1IDWLapseAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::IDW_LAPSE::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::IDW_LAPSE::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::IDW_LAPSE::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::IDW_LAPSE::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::IDW_LAPSE::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::IDW_LAPSE::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::IDW_LAPSE::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::IDW_LAPSE::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>Detrend the measured data, apply Inverse Distance Weighted average, reapply elevation trend</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_IDW_SLOPES">
+		<option value="IDW_SLOPES">
+			<frame caption="IDW_SLOPES" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>This is designed around the data produced by the Snowpack model where each station produces virtual slopes for each of the main 4 aspects. This algorithm interpolates each N/E/S/W group of stations separately (IDW with elevation lapse rate) and then recombines them with weights that depend on the cell's slope and aspect; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1IDWSlopesAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::IDW_SLOPES::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::IDW_SLOPES::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::IDW_SLOPES::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::IDW_SLOPES::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::IDW_SLOPES::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::IDW_SLOPES::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::IDW_SLOPES::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::IDW_SLOPES::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>Inverse Distance Weighting interpolation with splitted N/E/S/W slopes and flats</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_LIDW_LAPSE">
+		<option value="LIDW_LAPSE">
+			<frame caption="LIDW_LAPSE" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The closest n stations to each pixel are used to compute the local lapse rate, allowing to project the contributions of these n stations to the local pixel with an inverse distance weight; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1LocalIDWLapseAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::LIDW_LAPSE::NEIGHBORS" label="Neighbors" type="number" format="integer+" default="4" optional="false" notoggle="true"/>
+				<parameter key="%::LIDW_LAPSE::MAX_DISTANCE" label="Max_distance" type="number" format="decimal" optional="true" unit="m"><help>Maximum distance from the current point to any given station to be able to contribute to the interpolation (default: no limit)</help></parameter>
+				<parameter key="%::LIDW_LAPSE::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::LIDW_LAPSE::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::LIDW_LAPSE::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::LIDW_LAPSE::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::LIDW_LAPSE::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::LIDW_LAPSE::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::LIDW_LAPSE::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::LIDW_LAPSE::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>Same as IDW_LAPSE, but only considering a restricted number of neighboring stations</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_LISTON_RH">
+		<option value="LISTON_RH">
+			<frame caption="LISTON_RH" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>For each input point, the dew point temperature is calculated. Then, the dew point temperatures are spatially interpolated using IDWLapseAlgorithm (if only one station is available, no altitudinal trends will be applied). Finally, each local dew point temperature is converted back to a local relative humidity; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1RHListonAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::LISTON_RH::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::LISTON_RH::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::LISTON_RH::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::LISTON_RH::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::LISTON_RH::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::LISTON_RH::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::LISTON_RH::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::LISTON_RH::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>The dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_ILWR_EPS">
+		<option value="ILWR_EPS">
+			<frame caption="ILWR_EPS" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>Each ILWR is converted to an emissivity (using the local air temperature), interpolated using IDW_LAPSE and reconverted to ILWR. Please keep in mind that the interpolation parameters apply to the emissivity, not to the ILWR! See &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ILWREpsAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::ILWR_EPS::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::ILWR_EPS::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::ILWR_EPS::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::ILWR_EPS::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::ILWR_EPS::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::ILWR_EPS::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::ILWR_EPS::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::ILWR_EPS::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>The incoming long wave radiation is converted to emissivity and then interpolated</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_SWRAD">
+		<option value="SWRAD">
+			<frame caption="SWRAD" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The splitting coefficients and an atmospheric losses factors are computed at each station that provides ISWR and spatially interpolated with an Inverse Distance Weighting scheme. Then the potential radiation is computed at each pixel and scaled appropriately with the atmospheric loss factor for this pixel; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1SWRadInterpolation.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::SWRAD::SHADING" caption="Shading" type="checkbox" default="TRUE"/>
+				<parameter key="%::SWRAD::PROJECT_ON_SLOPE" caption="Project_on_slope" type="checkbox" default="FALSE"/>
+				<parameter key="%::SWRAD::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::SWRAD::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>The atmospheric attenuation and splitting coefficients are evaluated and used to compute the short wave radiation with topographic shading</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_LISTON_WIND">
+		<option value="LISTON_WIND">
+			<frame caption="LISTON_WIND" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The wind speed and direction are spatially interpolated using IDWLapseAlgorithm. Then, the wind speed and direction fields are altered by wind weighting factors and wind diverting factors (respectively) calculated from the local curvature and slope; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ListonWindAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::LISTON_WIND::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::LISTON_WIND::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::LISTON_WIND::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::LISTON_WIND::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::LISTON_WIND::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::LISTON_WIND::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::LISTON_WIND::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::LISTON_WIND::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>The wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_RYAN">
+		<option value="RYAN">
+			<frame caption="RYAN" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>Alters a wind field (that is first computed with IDW)) based on the DEM; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1RyanAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::RYAN::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::RYAN::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::RYAN::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::RYAN::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::RYAN::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::RYAN::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::RYAN::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
+				<parameter key="%::RYAN::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
+			</frame>
+			<help>The wind direction is interpolated using IDW and then altered depending on the local slope</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_WINSTRAL">
+		<option value="WINSTRAL">
+			<frame caption="WINSTRAL" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The DEM is used to compute wind exposure factors that are used to alter the precipitation fields (Winstral, 2002). By default, the base method is idw_lapse and switches to avg when there is only one station. You can also provide arguments for the base method separately; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1WinstralAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::WINSTRAL::BASE" label="Base" type="text" default="idw_lapse" size="small"><help>Method used to generate the initial distribution</help></parameter>
+				<parameter key="%::WINSTRAL::DMAX" label="dmax" type="number" format="integer+" default="300" unit="m"><help>Maximal search distance for the wind exposure calculation (m)</help></parameter>
+				<parameter key="%::WINSTRAL::TYPE" label="Type" type="alternative" default="AUTO">
+					<option value="AUTO"/>
+					<option value="FIXED">
+						<parameter key="%::WINSTRAL::DW_SYNOP" label="dw_synop" type="number" min="0" max="360" wrap="true" optional="false" unit="°" notoggle="true"><help>Enforce the provided synoptic wind direction</help></parameter>
+					</option>
+					<option value="REF_STATION">
+						<parameter key="%::WINSTRAL::REF_STATION" label="Ref station" type="text" size="small" optional="false"><help>Get the synoptic wind direction from this station</help></parameter>
+					</option>
+					<help>Select how to get the synoptic wind</help>
+				</parameter>
+			</frame>
+			<help>The solid precipitation is redistributed by wind according to (Winstral, 2002)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_PSUM_SNOW">
+		<option value="PSUM_SNOW">
+			<frame caption="PSUM_SNOW" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>By default, the base method is idw_lapse. You can also provide arguments for the base method separately; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1SnowPSUMInterpolation.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::PSUM_SNOW::BASE" label="Base" type="text" default="idw_lapse" size="small"><help>Method used to generate the initial distribution</help></parameter>
+			</frame>
+			<help>Precipitation interpolation according to (Magnusson, 2011)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_PPHASE">
+		<option value="PPHASE">
+			<frame caption="PPHASE" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>This does not interpolate any measured precipitation phase but generates it for each point based on parametrizations, similarly to the PPHASE generator; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1PPHASEInterpolation.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::PPHASE::TYPE" label="type" type="alternative" default="THRESH" optional="false">
+					<option value="THRESH">
+						<parameter key="%::PPHASE::SNOW" label="Snow:" type="number" format="decimal" default="274.35" precision="2" unit="K"><help>Pure solid precipitation temperature threshold (K)</help></parameter>
+					</option>
+					<option value="RANGE">
+						<parameter key="%::PPHASE::SNOW" label="Snow:" type="number" format="decimal" default="273.35" precision="2" unit="K"><help>Pure solid precipitation temperature threshold (K)</help></parameter>
+						<parameter key="%::PPHASE::RAIN" label="Rain:" type="number" format="decimal" default="275.35" precision="2" unit="K"><help>Pure liquid precipitation temperature threshold (K)</help></parameter>
+					</option>
+					<help>Precipitation splitting method</help>
+				</parameter>
+			</frame>
+			<help>Precipitation phase parametrization performed at each cell</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_ODKRIG">
+		<option value="ODKRIG">
+			<frame caption="ODKRIG" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>This implements ordinary Kriging with user-selectable variogram model; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1OrdinaryKrigingAlgorithm.html  &quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::ODKRIG::VARIO" label="Variogram model" type="choice">
+					<option value="LINVARIO"/>
+					<option value="EXPVARIO"/>
+					<option value="SPHERICVARIO"/>
+					<option value="RATQUADVARIO"/>
+					<help>Variogram model</help>
+				</parameter>
+			</frame>
+			<help>Ordinary kriging</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_ODKRIG_LAPSE">
+		<option value="ODKRIG_LAPSE">
+			<frame caption="ODKRIG" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>This implements ordinary Kriging with user-selectable variogram model but detrends the data before; see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1OrdinaryKrigingAlgorithm.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::ODKRIG_LAPSE::VARIO" label="Variogram model" type="choice">
+					<option value="LINVARIO"/>
+					<option value="EXPVARIO"/>
+					<option value="SPHERICVARIO"/>
+					<option value="RATQUADVARIO"/>
+					<help>Variogram model</help>
+				</parameter>
+				<parameter key="%::ODKRIG_LAPSE::RATE" label="Rate" type="number" format="decimal" precision="6"><help>Enforced lapse rate or fallback lapse rate (depending on the &lt;i&gt;soft&lt;/i&gt; value)</help></parameter>
+				<parameter key="%::ODKRIG_LAPSE::SOFT" caption="Soft" type="checkbox" default="TRUE"><help>If a lapse rate is provided, use it as a fallback if no lapse rate can be extracted from the data</help></parameter>
+				<parameter key="%::ODKRIG_LAPSE::FRAC" caption="Frac" type="checkbox"><help>The provided lapse rate is relative (i.e. in %)</help></parameter>
+				<parameter key="%::ODKRIG_LAPSE::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
+				<parameter key="%::ODKRIG_LAPSE::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
+				<parameter key="%::ODKRIG_LAPSE::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+			</frame>
+			<help>Ordinary kriging with detrending</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_USER">
+		<option value="USER">
+			<frame caption="USER" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>The files must be named according to the following schema: {numeric date with second resolution}_{capitalized meteo parameter}.{ext}, for example 20081201150000_TA.asc. If TIME_CONSTANT is set to true, the file naming follows this schema: {capitalized meteo parameter}.{ext} and the same grid is used for all timesteps. The meteo parameters can be found in &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;MeteoData&lt;/a&gt;, see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1USERInterpolation.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::USER::SUBDIR" label="Subdirectory:" type="path" mode="input" optional="false"><help>SUBDIR: look for grids in the provided subdirectory of GRID2DPATH</help></parameter>
+				<parameter key="%::USER::EXT" label="File extension:" type="text" default=".asc" size="small"><help>user provided grids to be read from disk</help></parameter>
+				<parameter key="%::USER::TIME_CONSTANT" type="alternative">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>if true, use the same grid for all timesteps</help>
+				</parameter>
+				<parameter key="%::USER::LOWEST_PRIORITY" type="alternative">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>if true, set the lowest priority to this algorithm instead of the highest so it can be used as a fallback for other algorithms</help>
+				</parameter>
+			</frame>
+		<help>Load user-provided grids</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_ALS_SCALING">
+		<option value="ALS_SCALING">
+			<frame caption="ALS_SCALING" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>In a first step, the precipitation are spatially distributed with a base method and in a second step the resulting grid is modified to reflect the spatial distribution of the provided snow height grid. Of course, these two steps happen automatically and transparently, see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ALS__Interpolation.html&quot;&gt;the online documentation&lt;/a&gt; for more</help>
+				</parameter>
+				<parameter key="%::ALS_SCALING::BASE" label="Base" type="text" default="idw_lapse" size="small"><help>Method used to generate the initial distribution</help></parameter>
+				<parameter key="%::ALS_SCALING::GRID" label="Gridded ALS data" type="file" mode="input" optional="false"><help>File containing the ALS data (to be read by the GRID2D plugin)</help></parameter>
+				<parameter key="%::ALS_SCALING::TA_THRESH" label="TA_thresh" type="number" format="decimal" precision="2" unit="K"><help>Air temperature threshold (in K) below which such redistribution occurs (so liquid precipitation is not redistributed)</help></parameter>
+			</frame>
+		<help>Scale and distribute the precipitation according to Airborn Laser Scans (ALS) grids</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="INTERPOLATION_SNOWLINE">
+		<option value="SNOWLINE">
+			<frame caption="SNOWLINE" collapsed="false">
+				<parameter type="helptext" wrap="true">
+					<help>This algorithm applies a base interpolation method and reads in snowline elevation information to be able to a) set snow heights below the snowline elevation to zero and b) check the lapse rate of the base algorithm, and if this is "reversed" inject one derived from the snowline elevation. Visit the &lt;a href="https://meteoio.slf.ch/doc-release/html/classmio_1_1SnowlineAlgorithm.html"&gt;help page&lt;/a&gt; for the complete documentation.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::BASE" label="BASE" type="text" default="IDW_LAPSE" size="small">
+					<help>Name of the base interpolation algorithm. Can be any 2d interpolation available. Of course, injecting a new rate only works if the base algorithm uses a lapse rate.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::SNOWLINEFILE" label="SNOWLINEFILE" type="file" mode="input">
+					<help>Text file containing the snowline elevation(s), potentially split up into multiple slope aspects.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::SNOWLINE" label="SNOWLINE" type="number" format="integer+" unit="m">
+					<help>The snowline elevation can be supplied in the ini file directly which is most useful for standalone experiments and testing (single aspect only).</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::ENFORCE_POSITIVE_RATE" caption="ENFORCE_POSITIVE_RATE" type="checkbox" default="FALSE">
+					<help>If the trend is "reversed", calculate it from the snowline elevation and the highest available station.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::CALC_BASE_RATE" caption="CALC_BASE_RATE" type="checkbox" default="FALSE">
+					<help>Use a lapse rate deduced from the snowline in any case, i. e. not only when it is "reversed" in the data.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::FALLBACK_RATE" label="FALLBACK_RATE" type="number">
+					<help>If the trend is reversed but no snowline information is available, use this lapse rate.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::METHOD" label="METHOD" type="alternative" default="CUTOFF">
+					<option value="CUTOFF">
+						<help>Hard cut to zero below snowline.</help>
+					</option>
+					<option value="BANDS">
+						<parameter key="%::SNOWLINE::BAND_NO" label="BAND_NO" type="number" format="integer+" default="10">
+							<help>Use this number of elevation bands.</help>
+						</parameter>
+						<parameter key="%::SNOWLINE::BAND_HEIGHT" label="BAND_HEIGHT" type="number" format="integer+" unit="m" default="10">
+							<help>Use elevation bands of this height.</help>
+						</parameter>
+						<help>Simple linear gradient from zero to the measured data.</help>
+					</option>
+					<option value="FORMULA">
+						<parameter key="%::SNOWLINE::FORMULA" label="FORMULA" type="text" lenient="true" size="large">
+							<help>Expression for FORMULA smoothing. The same mathematics as in FilterMaths are available. In addition, you can use the following substitutions: &lt;code&gt;snowline&lt;/code&gt; (the snowline elevation), &lt;code&gt;altitude&lt;/code&gt; (the pixel's altitude) and &lt;code&gt;param&lt;/code&gt; (the original value as calculated by the base algorithm).</help>
+						</parameter>
+						<help>Evaluate all pixels according to a custom formula.</help>
+					</option>
+					<help>Decide how to cut off snow below the snowline elevation.</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::VERBOSE" caption="VERBOSE" type="checkbox" default="TRUE">
+					<help>Print some info messages?</help>
+				</parameter>
+				<parameter key="%::SNOWLINE::SET" label="SET" type="number">
+					<help>Below the snow line, do not set snow to 0 but to this value.</help>
+				</parameter>
+			</frame>
+		<help>Assimilation of snowline elevation information into snow maps.</help>
+		</option>
+	</parametergroup>
+
+</inishell_include>

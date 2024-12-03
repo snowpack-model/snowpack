@@ -49,7 +49,7 @@ MeteoProcessor::~MeteoProcessor()
 std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)
 {
 	//regex for selecting the parameter out of the key
-	static const std::regex param_regex("^([^:]+)(::?)[^:]+$"); //the second group is in order to detect using ':' instead of '::'
+	static const std::regex param_regex("^([^:]+)(::?)[^:]+$", std::regex::optimize); //the second group is in order to detect using ':' instead of '::'
 	std::smatch param_matches;
 	const std::vector<std::string> vec_keys( cfg.getKeys(std::string(), "Filters") );
 

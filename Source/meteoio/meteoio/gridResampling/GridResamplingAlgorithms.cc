@@ -30,7 +30,7 @@ namespace mio {
  *
  * @section grid_resampling_section Grid resampling section
  * First, grid resampling must be enabled by setting the REGRIDDING_STRATEGY to GRID_1DINTERPOLATE in the [InputEditing] section.
- * Note that this currently forces the path through the temoral resampling (regridding) algorithms, and any spatial resampling
+ * Note that this currently forces the path through the temporal resampling (regridding) algorithms, and any spatial resampling
  * configured (from point timeseries) will not take action.
  * Then, grid resampling is configured in the [GridInterpolations1D] section for each meteo parameter separately.
  *
@@ -85,16 +85,17 @@ void GridResamplingAlgorithm::setWindowSize(const double& window_size)
  * @param[in] parname Meteo parameter to build the algorithm for.
  * @param[in] grid_window_size Standard window size for temporal grid resampling.
  * @param[in] vecArgs The algorithm's parameters as parsed from the user setings.
+ * @param[in] cfg Config object in order to be able to read configuration keys.
  * @return A resampling algorithm object for the desired parameter.
  */
 GridResamplingAlgorithm* GridResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algorithm, const std::string& parname,
-	const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+	const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
 	const std::string algorithm( IOUtils::strToUpper(i_algorithm) );
 	if (algorithm == "LINEAR")
 		return new GridLinearResampling(algorithm, parname, grid_window_size, vecArgs);
 	else if (algorithm == "TIMESERIES")
-		return new GridTimeseriesResampling(algorithm, parname, grid_window_size, vecArgs);
+		return new GridTimeseriesResampling(algorithm, parname, grid_window_size, vecArgs, cfg);
 	else
 		throw IOException("The temporal grid resampling algorithm '" + algorithm + "' is not implemented", AT);
 }

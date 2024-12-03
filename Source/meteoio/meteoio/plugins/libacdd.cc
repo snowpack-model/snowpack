@@ -34,6 +34,12 @@
 using namespace std;
 
 namespace mio {
+	
+ACDD::ACDD(const bool& set_enable) 
+     : attributes(), linked_attributes(), enabled(set_enable) 
+{
+	setEnabled(set_enable);
+}
 
 /**
 * @brief Set the available ACDD attributes, their matching INI config key and if possible a default value
@@ -62,9 +68,8 @@ std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
 	
 	tmp["source"] = ACDD_ATTR("source", "ACDD_SOURCE", "MeteoIO-" + mio::getLibVersion(true));
 	tmp["history"] = ACDD_ATTR("history", "", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
-	tmp["keywords_vocabulary"] = ACDD_ATTR("keywords_vocabulary", "ACDD_KEYWORDS_VOCABULARY", "AGU Index Terms");
-	tmp["keywords"] = ACDD_ATTR("keywords", "ACDD_KEYWORDS", "Cryosphere, Mass Balance, Energy Balance, Atmosphere, Land/atmosphere interactions, Climatology");
-	
+	tmp["keywords_vocabulary"] = ACDD_ATTR("keywords_vocabulary", "ACDD_KEYWORDS_VOCABULARY", "GCMDSK");
+	tmp["keywords"] = ACDD_ATTR("keywords", "ACDD_KEYWORDS", "EARTH SCIENCE > CRYOSPHERE,  EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > SURFACE MASS > MASS BALANCE, EARTH SCIENCE > CRYOSPHERE > SNOW/ICE > SNOW ENERGY BALANCE, CLIMATOLOGY/METEOROLOGY/ATMOSPHERE, Land-based Platforms > Permanent Land Sites > WEATHER STATIONS");
 	tmp["title"] = ACDD_ATTR("title", "ACDD_TITLE");
 	tmp["project"] = ACDD_ATTR("project", "ACDD_PROJECT");
 	tmp["program"] = ACDD_ATTR("program", "ACDD_PROGRAM");
@@ -99,6 +104,18 @@ std::set< std::pair< std::string, std::set<std::string> > > ACDD::initLinks()
 	return tmp;
 }
 
+/**
+* @brief Fill an ACDD value from the content of a file
+* @details
+* In the provided config file, a key will be read that provides a filename to read. This file will be opened and
+* used to fill the given ACDD value. This is used for example to fill the "summary" ACDD field from the content
+* of a file given in the ACDD_SUMMARY_FILE configuration key.
+* @param[out] value ACDD value to fill
+* @param[in] cfg Config object to parse in order to retrieve the filename to open
+* @param[in] cfg_key Configuration key giving the filename to open
+* @param[in] section Section where to find the confgiuration key in the cfg object
+* @param[in] allow_multi_line If set to true, read multi-lines content from the file
+*/
 void ACDD::acdd_attrs::readFromFile(std::string& value, const mio::Config& cfg, const std::string& cfg_key, const std::string& section, const bool& allow_multi_line)
 {
 	const std::string input_file = cfg.get(cfg_key, section, "");
@@ -161,6 +178,13 @@ void ACDD::acdd_attrs::setUserConfig(const mio::Config& cfg, const std::string& 
 	}
 }
 
+/**
+* @brief Set an ACDD value
+* @details Several modes of setting a value can be configured: MERGE (only set the provided value if
+* the variable was previously empty), APPEND, REPLACE (overwrite any previous value with the new one).
+* @param[in] i_value New value to set
+* @param[in] mode Chosen mode, either MERGE, APPEND or REPLACE
+*/
 void ACDD::acdd_attrs::setValue(const std::string& i_value, const Mode& mode)
 {
 	if (mode==MERGE) {

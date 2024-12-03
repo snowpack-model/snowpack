@@ -200,8 +200,6 @@ TerrainRadiationComplex::~TerrainRadiationComplex() {}
 
 /**
 * @brief Initializes set of Vectors that point to equal solid angels for horizontal hemisphere (BasicSet) [MT 2.1.1 Basic Set]
-* @param[in] -
-* @param[out] -
 *
 */
 void TerrainRadiationComplex::initBasicSetHorizontal()
@@ -234,8 +232,6 @@ void TerrainRadiationComplex::initBasicSetHorizontal()
 
 /**
 * @brief Rotates BasicSet in Plane of triangular Surface Object		[MT 2.1.3 View-List]
-* @param[in] -
-* @param[out] -
 *
 */
 void TerrainRadiationComplex::initBasicSetRotated()
@@ -273,8 +269,6 @@ void TerrainRadiationComplex::initBasicSetRotated()
 
 /**
 * @brief Assigns a pixel (or sky) to each space vector of each ProjectVectorToPlane		[MT 2.1.2 Surface Generation and 2.1.3 View-List]
-* @param[in] -
-* @param[out] -
 *
 */
 void TerrainRadiationComplex::initViewList()
@@ -367,8 +361,6 @@ void TerrainRadiationComplex::initViewList()
 /**
 * @brief +SPEEDUP+ Projects BRDF on Basic Set. Instead of Calculating/Intrapolating all the time
 * 					new BRDF factors, store discrete number covering whole hemisphere
-* @param[in] -
-* @param[out] -
 *
 */
 void TerrainRadiationComplex::initRList()
@@ -403,8 +395,6 @@ void TerrainRadiationComplex::initRList()
 /**
 * @brief +SPEEDUP+: For most terrain a large part of the basicSet points in the sky. SortList Stores land-pointing vectors only.
 * Only these need a iterative radiation computation. [not discussed in MT and somewhat confusing syntax in MT eq. 2.95, sorry. Better Look @ Paper ????]
-* @param[in] -
-* @param[out] -
 *
 */
 void TerrainRadiationComplex::initSortList()
@@ -452,8 +442,6 @@ void TerrainRadiationComplex::initSortList()
 
 /**
 * @brief Writes Viewlist to file, use SMET format only
-* @param[in] -
-* @param[out] -
 *
 */
 void TerrainRadiationComplex::WriteViewList()
@@ -502,8 +490,6 @@ void TerrainRadiationComplex::WriteViewList()
 
 /**
 * @brief Reads ViewList from file, use SMET format only
-* @param[in] -
-* @param[out] -
 *
 */
 bool TerrainRadiationComplex::ReadViewList()
@@ -608,9 +594,14 @@ bool TerrainRadiationComplex::ReadViewList()
 
 /**
 * @brief Computes direct, diffuse and terrain radiation for each gridpoint. Terrain radiation
-* @param[in] -
-* @param[out] -
-*
+* @param[out] direct Direct short wave radiation component
+* @param[out] diffuse Diffuse short wave radiation component
+* @param[out] terrain Terrain reflected short wave radiation component
+* @param[in] total_ilwr Total Incoming Long Wave radiation (unused)
+* @param[in] sky_ilwr Incoming Long Wave radiation coming from the sky (unused)
+* @param[in] terrain_ilwr Incoming Long Wave radiation emitted by the terrain (unused)
+* @param[in] solarAzimuth Azimuth of the Sun in the sky
+* @param[in] solarElevation Elevation of the Sun in the sky
 */
 void TerrainRadiationComplex::getRadiation(mio::Array2D<double> &direct, mio::Array2D<double> &diffuse,
 										   mio::Array2D<double> &terrain, const mio::Array2D<double> &direct_unshaded_horizontal, const mio::Array2D<double> &/*total_ilwr*/,

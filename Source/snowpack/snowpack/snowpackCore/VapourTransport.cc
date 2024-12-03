@@ -755,7 +755,7 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 					v_ij = 1.0;
 					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
 				} else {
-					b[k] = 0.0;
+					b[k] = Constants::eps2;    // Setting to 0. seems to lead to non-invertibility in some cases
 					v_ij = -1.0;
 					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
 

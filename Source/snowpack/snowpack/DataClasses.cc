@@ -1736,7 +1736,7 @@ unsigned short int ElementData::snowType(const double& dendricity, const double&
 	int a=-1,b=-1,c=0;
 
 	// Dry snow
-	if (dendricity > 0.) { // Dry dendritic (new) snow: dendricity and sphericityhericity determine the class
+	if (dendricity > 0.) { // Dry dendritic (new) snow: dendricity and sphericity determine the class
 		const int sw2 = (int)(sphericity*10.);
 		if (dendricity > 0.80 ) { // ori 0.90, 27 Nov 2007 sb
 			a = 1; b = 1; c = 0;
@@ -2416,9 +2416,17 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 				Ndata[eNew].S_s = Ndata[e+1].S_s;
 				Ndata[eNew].S_n = Ndata[e+1].S_n;
 #endif
+				//FIXME: when activating the lines below, there is a huge mass balance error. Thus, the nodal "z" repositioning must be off.
+				// Apparently, the nodal z positions are reconstructed at some point afterwards.
+				// If there is an element below, update its gradient, since we just modified its upper node
+				//if (eNew>0) {
+				//	Edata[eNew-1].L = Edata[eNew-1].L0 = Ndata[eNew].z - Ndata[eNew-1].z;
+				//	Edata[eNew-1].gradT = (Ndata[eNew].T - Ndata[eNew-1].T) / Edata[eNew-1].L;
+				//}
 			} else { // Removing elements for negative length L
 				// Under the condition of multiple element removals, Edata[e].L can occasionally represent a compounded element,
 				// such that it doesn't reflect the true height change. Better to use the nodal positions:
+				// FIXME: should this not be negative to account for elements that are completely removed?
 				dL += (Ndata[e+1].z - Ndata[e].z);
 			}
 		} else {
@@ -2433,6 +2441,10 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 			Ndata[eNew+1].S_s = Ndata[e+1].S_s;
 			Ndata[eNew+1].S_n = Ndata[e+1].S_n;
 #endif
+			//FIXME: when activating the lines below, there is a huge mass balance error. Thus, the nodal "z" repositioning must be off.
+			// Apparently, the nodal z positions are reconstructed at some point afterwards.
+			//Edata[eNew].L = Edata[eNew].L0 = Ndata[eNew+1].z - Ndata[eNew].z;
+			//Edata[eNew].gradT = (Ndata[eNew+1].T - Ndata[eNew].T) / Edata[eNew].L;
 			eNew++;
 		}
 	}

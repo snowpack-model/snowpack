@@ -52,7 +52,8 @@ class SeaIce {
 		static double compSeaIceThermalConductivity(const ElementData& Edata);
 		static double compSeaIceLatentHeatFusion(const ElementData& Edata);
 		static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
-		static double calculateMeltingTemperature(const double& Sal);
+		double calculateBrineSalinity(const double& T);
+		double calculateMeltingTemperature(const double& Sal);
 
 		const static double SeaWaterFreezingTemp;
 		const static double SeaIceDensity;
@@ -78,11 +79,15 @@ class SeaIce {
 		bool check_initial_conditions;
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
 		salinityprofiles salinityprofile;
+		enum thermalmodels{IGNORE, ASSUR1958, VANCOPPENOLLE2019, VANCOPPENOLLE2019_M};
+		thermalmodels thermalmodel;
+
 
 		friend std::iostream& operator<<(std::iostream& os, const SeaIce& data);
 		friend std::iostream& operator>>(std::iostream& is, SeaIce& data);
 
 		void calculateMeltingTemperature(ElementData& Edata);
+		std::pair<double, double>getMu(const double& Sal);
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);

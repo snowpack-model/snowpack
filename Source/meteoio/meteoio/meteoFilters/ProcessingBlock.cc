@@ -90,17 +90,30 @@ namespace mio {
  * any other name of your choice). A special kind of processing is available on the timestamps themselves and takes place before any 
  * other processing (see below in \ref processing_available "Available processing elements").
  *
+ * It is possible to apply filters to only specific heights/numbers of a parameter, when they are given as TA@15..., either 
+ * by specifying the ids for which the filter should be used (AT_HEIGHTS), or for which it should not be used (EXCLUDE_HEIGHTS).
+ * Per default a filter will run on all available heights, so every TA will be applied the same filter to.
+ * 
+ * The heights are given as a list of heights similar to the station IDs, if you have default parameters and 
+ * some that use a height, i.e. TA, TA@1, TA@10, the default parameter has no height, i.e. "NO" in the list to 
+ * include or exclude.
+ * 
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
  * a list of the various meteo parameters (see MeteoData) with their associated choice of filtering algorithms and
- * optional parameters.The filters are applied serially, in the order they are given in. An example of such section is given below:
+ * optional parameters.The filters are applied serially, in the order they are given in. 
+ * 
+ * 
+ * An example of such section is given below:
  * @code
  * [Filters]
  * TA::filter1   = min_max
+ * TA::arg1::AT_HEIGHTS = NO 1 
  * TA::arg1::min = 230
  * TA::arg1::max = 330
  *
  * RH::filter1   = min_max
+ * RH::arg1::EXCLUDE_HEIGHTS = 10
  * RH::arg1::min = -0.2
  * RH::arg1::max = 1.2
  * RH::filter2    = min_max
@@ -178,6 +191,8 @@ namespace mio {
  * - SORT: sort the timestamps in increasing order, see TimeSort
  * - TIMELOOP: loop over a specific time period (for example for model spin-ups), see TimeLoop
  */
+
+const double ProcessingBlock::default_height(IOUtils::nodata); // TODO: change if negative heights are supported
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
@@ -291,7 +306,61 @@ const double ProcessingBlock::snow_thresh = .1; //if snow height greater than th
 
 ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
                             : excluded_stations( MeteoProcessor::initStationSet(vecArgs, "EXCLUDE") ), kept_stations( MeteoProcessor::initStationSet(vecArgs, "ONLY") ), 
-                              time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), properties(), block_name(name) {}
+                              time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), included_heights(), excluded_heights(), all_heights(true), properties(), block_name(name) {
+	initHeightRestrictions(vecArgs);
+}
+
+void ProcessingBlock::initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs) {
+	std::set<std::string> results_include;
+	std::set<std::string> results_exclude;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first == "AT_HEIGHTS") {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results_include.insert(word);
+			}
+		}
+		else if (vecArgs[ii].first == "EXCLUDE_HEIGHTS") {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results_exclude.insert(word);
+			}
+		}
+	}
+
+	if (!results_exclude.empty() || !results_include.empty()) {
+		all_heights = false;
+	}
+
+	for (const auto& h_str : results_include) {
+		double height;
+		if (h_str == "NO") {
+			height = default_height;
+		} else {
+			height = std::stod(h_str);
+		}
+
+		if (!included_heights.insert(height).second) { 
+			throw IOException("Could not parse height of " + h_str + " for filter " + block_name);
+		}
+	}
+
+	for (const auto& h_str : results_exclude) {
+		double height;
+		if (h_str == "NO") {
+			height = default_height;
+		} else {
+			height = std::stod(h_str);
+		}
+
+		if (!excluded_heights.insert(height).second) { 
+			throw IOException("Could not parse height of " + h_str + " for filter " + block_name);
+		}
+	}
+}
 
 /**
  * @brief Should the provided station be skipped in the processing?
@@ -304,6 +373,21 @@ bool ProcessingBlock::skipStation(const std::string& station_id) const
 	if (kept_stations.empty()) return false; //there are no kept stations -> do not skip
 
 	return (kept_stations.count(station_id)==0);
+}
+
+/**
+ * @brief Should the provided height be skipped in the processing?
+ * @param[in] height height to test
+ * @return true if the startion should be skipped, false otherwise
+ */
+bool ProcessingBlock::skipHeight(const double& height) const {
+
+	if (all_heights) return false;
+
+	if (excluded_heights.count(height) != 0) return true;
+	if (included_heights.empty()) return false;
+
+	return (included_heights.count(height) == 0);
 }
 
 /**

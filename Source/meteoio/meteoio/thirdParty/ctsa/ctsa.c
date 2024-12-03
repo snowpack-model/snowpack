@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "ctsa.h"
 
 arima_object arima_init(int p, int d, int q, int N) {
@@ -438,7 +439,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		P = fit->Arima->sarimax->P;
 		D = fit->Arima->sarimax->D;
 		Q = fit->Arima->sarimax->Q;
-		r = fit->Arima->sarimax->r;
+		// r = fit->Arima->sarimax->r;
 		s = fit->Arima->sarimax->s;
 		M = fit->Arima->sarimax->M;
 		N = fit->Arima->sarimax->N;
@@ -467,7 +468,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		P = fit->myarima->sarimax->P;
 		D = fit->myarima->sarimax->D;
 		Q = fit->myarima->sarimax->Q;
-		r = fit->myarima->sarimax->r;
+		// r = fit->myarima->sarimax->r;
 		s = fit->myarima->sarimax->s;
 		M = fit->myarima->sarimax->M;
 		N = fit->myarima->sarimax->N;
@@ -489,6 +490,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 		obj->sigma2 = fit->myarima->sigma2;
 	}
 
+
 	obj->p = p;
 	obj->d = d;
 	obj->q = q;
@@ -499,8 +501,13 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->Q = Q;
 	obj->Nused = N - d - s*D;
 	obj->M = M;
-	obj->r = r;
+	// bug fix: do not set regressor
+	// to inner sarimax which can create it's own
+	// exogenous variables that do not necessairly align
+	// with exogenous variables defined in model obj
+	// obj->r = r;
 	obj->retval = retval;
+	
 
 	obj->phi = &obj->params[0];
 	obj->theta = &obj->params[p];
@@ -514,10 +521,7 @@ void auto_arima_exec(auto_arima_object obj, double *inp,double *xreg) {
 	obj->ncoeff = p + q + P + Q + M ;
 
 	//aa_ret_summary(fit);
-	// This is a meteoIO fix
-	if (xreg == NULL && obj->r != 0) {
-		obj->r = 0;
-	}
+
 	aa_ret_free(fit);
 }
 
@@ -604,7 +608,7 @@ sarimax_wrapper_object sarimax_wrapper(sarimax_wrapper_object model,double *y, i
 
 		rr = r;
 
-	
+		
 		if (drift == 1) {
 			obj->idrift = 1;
 			rr++;
@@ -728,25 +732,6 @@ myarima_object myarima(double *x, int N, int *order, int *seasonal, int constant
 		fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
 		sarimax_exec(fit->sarimax,x,xreg2);
 		free(xreg2);
-		
-		// this fixes the wrong return of r > 0 but finds wrong models
-		// if (xreg== NULL) {
-		// 	imean = 0;
-		// 	fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,0,imean,N);
-		// 	sarimax_setMethod(fit->sarimax,rmethod);
-		// 	sarimax_exec(fit->sarimax,x,NULL);
-		// } else {
-		// 	imean = 1;
-		// 	rr++;
-		// 	xreg2 = (double*)malloc(sizeof(double)*N*rr);
-		// 	for(i = 0; i < N;++i) {
-		// 		xreg2[i] = (double) (i+1);
-		// 	}
-		// 	memcpy(xreg2+N,xreg,sizeof(double)*N*(rr-1));
-		// 	fit->sarimax = sarimax_init(p,d,q,P,D,Q,s,rr,imean,N);
-		// 	sarimax_exec(fit->sarimax,x,xreg2);
-		// 	free(xreg2);
-		// 	}
 		//sarimax_summary(fit->sarimax);
 	} else {
 		imean = constant;
@@ -960,10 +945,15 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							order[1] = d;
 							order[2] = j;
 							
-							if (s == 0) {
+							// bug fix: still need to set PDQ or else carries over
+							// prior PDQ parameters in seasonal which may be non 0 but then attempt
+							// to optimize model with > 0 PDQ which can throw seg faults
+							// for example in emle.fcssx when mutating phi which assumes s is > 0 if P+Q is > 0
+							if (
+								s == 0 ||
+								(I == 0 && J == 0 && D == 0)
+							) {
 								seasonal[0] = seasonal[1] = seasonal[2] = seasonal[3] = 0;
-							} else if (I == 0 && J == 0 && D == 0) {
-								seasonal[3] = 0;
 							} else {
 								seasonal[0] = I;
 								seasonal[1] = D;
@@ -972,9 +962,9 @@ myarima_object search_arima(double *x, int N,int d, int D, int p_max, int q_max,
 							}
 
 							fit = myarima(x,N,order,seasonal, K, ic, trace, approximation, offset,xreg, r, NULL);
-							// if (verbose == 1) {
-							// 	printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,K,fit->ic);
-							// }
+							if (verbose == 1) {
+								printf("p: %d d: %d q: %d P: %d D: %d Q: %d Drift/Mean: %d ic: %g \n",fit->sarimax->p,d,fit->sarimax->q,fit->sarimax->P,D,fit->sarimax->Q,K,fit->ic);
+							}
 							
 							//myarima_summary(fit);
 
@@ -1066,6 +1056,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	int *icindex;
 
 	fit = (aa_ret_object) malloc (sizeof(struct aa_ret_set));
+
 	fit->otype = 0;
 
 	if (ordermax == NULL) {
@@ -1201,7 +1192,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		if (rnk < r) {
 			free(xx);
 			free(x);
-			if (verbose == 1) printf("Exogenous Variables are collinear. \n");
+			printf("Exogenous Variables are collinear. \n");
 			exit(-1);
 		}
 
@@ -1211,6 +1202,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 		//setIntercept(reg,0);
 		regress(reg,xreg,x,xx,varcovar,0.95);
+
 		free(varcovar);
 	}
 
@@ -1305,7 +1297,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[1] = order[2] = 0;
 				imean = 1;
 				idrift = 1;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			}
@@ -1316,7 +1308,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[2] = 0;
 				order[1] = d;
 				idrift = 0;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else if (d == 2) {
@@ -1326,7 +1318,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[2] = 0;
 				order[1] = d;
 				idrift = 0;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else if (d < 2) {
@@ -1336,7 +1328,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				order[0] = order[2] = 0;
 				order[1] = d;
 				idrift = 1;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,NULL,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,NULL,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else {
@@ -1351,7 +1343,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				seasonalorder[3] = m;
 				order[0] = order[2] = 0;
 				order[1] = d;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,xreg,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,xreg,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			} else {
@@ -1360,7 +1352,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 				seasonalorder[3] = 0;
 				order[0] = order[2] = 0;
 				order[1] = d;
-				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonal,xreg,r,idrift,imean,NULL,biasadj,amethod);
+				fit->Arima = sarimax_wrapper(NULL,x,N,order,seasonalorder,xreg,r,idrift,imean,NULL,biasadj,amethod);
 				fit->myarima = NULL;
 				fit->otype = 2;
 			}
@@ -1416,7 +1408,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 
 
 	if (!istepwise) {
-		if (verbose==1) printf("is not stepwise \n");
 		fit->otype = 1;
 		fit->Arima = NULL;
 
@@ -1580,7 +1571,6 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	}
 
 	startk = 0;
-
 
 	while (startk < k && k < models) {
 		startk = k;
@@ -2105,6 +2095,7 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 		//mdisplay(results,k,8);
 	}
 
+
 	// Delete the previous best model
 
 	myarima_free(bestfit);
@@ -2156,7 +2147,9 @@ aa_ret_object auto_arima1(double *y, int N, int *ordermax, int *seasonalmax,int 
 	}
 
 	// Refit The Best Model
+
 	fit->myarima = myarima(x,N,bestorder,bestseasonalorder,constant, ic, trace, iapprox, offset,xreg, r, NULL);
+
 	
 
 	free(x);
@@ -3089,7 +3082,6 @@ void auto_arima_predict(auto_arima_object obj, double *inp, double *xreg, int L,
 		}
 		resid[i] = obj->res[i];
 	}
-
 	for (i = 0; i < ir; ++i) {
 		phi[i] = theta[i] = 0.0;
 	}
@@ -3264,7 +3256,7 @@ void sarima_summary(sarima_object obj) {
 	int i,pq,t;
 	pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3282,7 +3274,7 @@ void sarima_summary(sarima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
 
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
@@ -3402,7 +3394,7 @@ void arima_summary(arima_object obj) {
 	int i, pq,t;
 	pq = obj->p + obj->q + obj->M;
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3531,7 +3523,7 @@ void sarimax_summary(sarimax_object obj) {
 	mean = obj->M - obj->r;
 	
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3558,7 +3550,7 @@ void sarimax_summary(sarimax_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q, obj->P,obj->D,obj->Q );
 	printf("\n");
 	//mdisplay(obj->vcov,pq,pq);
 	printf("%-20s%-20s%-20s \n\n", "Coefficients", "Value", "Standard Error");
@@ -3679,7 +3671,7 @@ void auto_arima_summary(auto_arima_object obj) {
 	mean = obj->M - obj->r;
 
 	if (obj->method == 0 || obj->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->retval);
 		printf("Exit Message : ");
 
@@ -3706,7 +3698,7 @@ void auto_arima_summary(auto_arima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q,
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->p,obj->d,obj->q,
 	 obj->P,obj->D,obj->Q );
 	printf("\n");
 	t = 0;
@@ -3805,7 +3797,7 @@ void auto_arima_summary(auto_arima_object obj) {
 	printf("Auto ARIMA Parameters ");
 	printf("\n\n");
 	printf("Approximation: %s \n", obj->approximation == 1 ? "TRUE" : "FALSE");
-	printf("Stepwise: %s", obj->stepwise == 1 ? "TRUE" : "FALSE");
+	printf("Stepwise: %s \n", obj->stepwise == 1 ? "TRUE" : "FALSE");
 }
 
 void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
@@ -3814,7 +3806,7 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 	mean = obj->sarimax->M - obj->sarimax->r;
 	
 	if (obj->sarimax->method == 0 || obj->sarimax->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->sarimax->retval);
 		printf("Exit Message : ");
 
@@ -3841,7 +3833,7 @@ void sarimax_wrapper_summary(sarimax_wrapper_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
 	 obj->sarimax->P,obj->sarimax->D,obj->sarimax->Q );
 	printf("\n");
 	//mdisplay(obj->vcov,pq,pq);
@@ -3944,7 +3936,7 @@ void myarima_summary(myarima_object obj) {
 	mean = obj->sarimax->M - obj->sarimax->r;
 	
 	if (obj->sarimax->method == 0 || obj->sarimax->method == 1) {
-		printf("\n\n Exit Status \n");
+		printf("\n\nExit Status \n");
 		printf("Return Code : %d \n", obj->sarimax->retval);
 		printf("Exit Message : ");
 
@@ -3971,7 +3963,7 @@ void myarima_summary(myarima_object obj) {
 		}
 	}
 	printf("\n\n");
-	printf("  ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
+	printf("ARIMA Seasonal Order : ( %d, %d, %d) * (%d, %d, %d) \n",obj->sarimax->p,obj->sarimax->d,obj->sarimax->q,
 	 obj->sarimax->P,obj->sarimax->D,obj->sarimax->Q );
 	printf("\n");
 	//mdisplay(obj->vcov,pq,pq);
@@ -4404,101 +4396,3 @@ void burg(double *x, int N, int p, double *phi, double *var) {
 void hr(double *x, int N, int p, int q, double *phi, double *theta, double *var) {
 	hralg(x, N, p, q, phi, theta, var);
 }
-
-auto_arima_object auto_arima_copy(auto_arima_object original) {
-	// Allocate a new auto_arima_set on the heap
-	int pqdmax[] = {original->pmax, original->dmax, original->qmax};
-	int PQDmax[] = {original->Pmax, original->Dmax, original->Qmax};
-	auto_arima_object copy = auto_arima_init(pqdmax, PQDmax, original->s, original->r, original->N);
-
-	// Copy the values from the original to the copy
-	copy->N = original->N;
-	copy->Nused = original->Nused;
-	copy->method = original->method;
-	copy->optmethod = original->optmethod;
-	copy->pmax = original->pmax;
-	copy->dmax = original->dmax;
-	copy->qmax = original->qmax;
-	copy->Pmax = original->Pmax;
-	copy->Dmax = original->Dmax;
-	copy->Qmax = original->Qmax;
-	copy->p = original->p;
-	copy->d = original->d;
-	copy->q = original->q;
-	copy->s = original->s;
-	copy->P = original->P;
-	copy->D = original->D;
-	copy->Q = original->Q;
-	copy->r = original->r;
-	copy->M = original->M;
-	copy->ncoeff = original->ncoeff;
-	copy->lvcov = original->lvcov;
-	copy->mean = original->mean;
-	copy->var = original->var;
-	copy->loglik = original->loglik;
-	copy->ic = original->ic;
-	copy->retval = original->retval;
-	copy->start = original->start;
-	copy->imean = original->imean;
-	copy->idrift = original->idrift;
-	copy->stationary = original->stationary;
-	copy->seasonal = original->seasonal;
-	copy->Order_max = original->Order_max;
-	copy->p_start = original->p_start;
-	copy->q_start = original->q_start;
-	copy->P_start = original->P_start;
-	copy->Q_start = original->Q_start;
-	copy->stepwise = original->stepwise;
-	copy->num_models = original->num_models;
-	copy->approximation = original->approximation;
-	copy->verbose = original->verbose;
-	copy->alpha_test = original->alpha_test;
-	copy->alpha_seas = original->alpha_seas;
-	copy->lambda = original->lambda;
-	copy->sigma2 = original->sigma2;
-	copy->aic = original->aic;
-	copy->bic = original->bic;
-	copy->aicc = original->aicc;
-
-	memcpy(copy->information_criteria, original->information_criteria, 10 * sizeof(int));
-	memcpy(copy->test, original->test, 10 * sizeof(int));
-	memcpy(copy->type, original->type, 10 * sizeof(int));
-	memcpy(copy->seas, original->seas, 10 * sizeof(int));
-	int res_size;
-	if (copy->P == 0 && copy->D == 0 && copy->Q==0) {
-		res_size = copy->N-copy->d;
-	} else {
-		res_size = copy->N-copy->D*copy->s-copy->d;
-	}
-	memcpy(copy->res, original->res, res_size * sizeof(double));
-
-	// If there are any members that are pointers (like phi, theta, etc.), you'll need to allocate new memory for them and copy the values
-	copy->phi = (double*)malloc(original->p * sizeof(double));
-	memcpy(copy->phi, original->phi, original->p * sizeof(double));
-	copy->theta = (double*)malloc(original->q * sizeof(double));
-	memcpy(copy->theta, original->theta, original->q * sizeof(double));
-	copy->PHI = (double*)malloc(original->P * sizeof(double));
-	memcpy(copy->PHI, original->PHI, original->P * sizeof(double));
-	copy->THETA = (double*)malloc(original->Q * sizeof(double));
-	memcpy(copy->THETA, original->THETA, original->Q * sizeof(double));
-	copy->exog = (double*)malloc(original->M * sizeof(double));
-	memcpy(copy->exog, original->exog, original->N*original->r * sizeof(double));
-	copy->vcov = (double*)malloc(copy->lvcov * sizeof(double));
-
-	int param_size;
-	if (copy->r == 0) {
-		if (copy->P == 0 && copy->D == 0 && copy->Q==0) {
-			param_size = copy->p + copy->q + res_size + copy->lvcov;
-		} else {
-			param_size = copy->p + copy->q + copy->P + copy->Q + res_size + copy->lvcov;
-		}
-	} else {
-		param_size = copy->p + copy->q + copy->P + copy->Q + copy->M + res_size + copy->lvcov; 
-	}
-	memcpy(copy->params, original->params, param_size * sizeof(double));
-
-	return copy;
-}
-
-
-

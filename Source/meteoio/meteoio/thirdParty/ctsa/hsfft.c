@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * hsfft.c
  *
@@ -1370,8 +1371,8 @@ static void mixed_radix_dit_rec(fft_data *op,fft_data *ip,const fft_object obj, 
 		M = (radix - 1 )/2;
 
 		for (i = 1; i < M+1;++i) {
-			c1[i-1] = cos(i*PIPOW2/radix);
-			s1[i-1] = sin(i*PIPOW2/radix);
+			c1[i-1] = cos(i*PI2/radix);
+			s1[i-1] = sin(i*PI2/radix);
 		}
 
 		for (i = 0; i < M;++i) {
@@ -1818,7 +1819,7 @@ int factors(int M, int* arr) {
 void twiddle(fft_data *vec,int N, int radix) {
 	int K,KL;
 	fft_type theta,theta2;
-	theta = PIPOW2/N;
+	theta = PI2/N;
 	KL = N/radix;
 	vec[0].re = 1.0;
 	vec[0].im = 0.0;
@@ -1839,7 +1840,7 @@ void longvectorN(fft_data *sig,int N, int *array, int tx) {
 	for (i = 0; i < tx; i++) {
 		L = L * array[tx-1-i];
 		Ls = L / array[tx-1-i];
-		theta = -1.0 * PIPOW2/L;
+		theta = -1.0 * PI2/L;
 		for (j = 0; j < Ls;j++) {
 			for (k = 0; k < array[tx-1-i] -1 ;k++) {
 				sig[ct].re = cos((k+1)*j*theta);

@@ -1,0 +1,71 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for general section
+-->
+
+<inishell_include>
+	<!-- GENERAL -->
+	<frame caption="Import files" collapsed="true">
+		<section name="General"/>
+		<parameter key="IMPORT_BEFORE" type="file" mode="input">
+			<option extension="INI files (*.ini *.INI)"/>
+			<option extension="All files (*.*)"/>
+			<help>It is possible to import another ini file before everything else and overwrite its settings with the current one. In order to do it, provide the file path and name.</help>
+		</parameter>
+		<parameter key="IMPORT_AFTER" type="file" mode="input">
+			<option extension="INI files (*.ini *.INI)"/>
+			<option extension="All files (*.*)"/>
+			<help>Import another ini file after everything else and overwrite the current settings with it. In order to do it, provide the file path and name.</help>
+		</parameter>
+	</frame>
+	<frame caption="Data buffering">
+		<section name="General"/>
+		<parameter key="BUFFER_SIZE" type="number" format="integer+" default="370" unit="days">
+			<help>Size in days of a chunk of data to read at once. Set approximately to your experiment length.</help>
+		</parameter>
+		<parameter key="BUFF_BEFORE" type="number" format="decimal" default="1.5" unit="days" precision="1">
+			<help>Alternate way of buffer centering: When rebuffering, the new date will be located &lt;code&gt;BUFF_BEFORE&lt;/code&gt; days from the
+				beginning of the buffer (therefore, it takes a value in days). Set approximately to your filter/generator/... window sizes.</help>
+		</parameter>
+		<parameter key="BUFF_GRIDS" type="number" format="integer" default="10" precision="1">
+			<help>Number of grids as read by the configured data input plugin to buffer internally (for speed).</help>
+		</parameter>
+	</frame>
+
+	<parameter key="DATA_QA_LOGS" type="alternative" optional="true">
+		<option value="TRUE">
+			<parameter key="QA_CHECK_MISSING" type="text" optional="true">
+			<help>Provide a list of variables those data gaps will be reported by the data QA</help>
+			</parameter>
+		</option>
+		<option value="FALSE"/>
+		<help>If set to TRUE, MeteoIO writes on the screen a line (with the timestamp, station ID, meteo parameter and reason) for each data point that gets modified (either filtered, resampled or generated). &lt;font color='#268bd2'&gt;Warning: this might generate very large logs!&lt;/font&gt;</help>
+	</parameter>
+
+	<frame caption="Software version" color="sl_blue">
+		<section name="General"/>
+		<parameter type="helptext" wrap="true">
+			<help>The version shown for MeteoIO refers to the INIshell configuration for Software version ... and not the Software itself. The Software has the version which you installed.</help>
+		</parameter>
+	</frame>
+
+</inishell_include>

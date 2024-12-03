@@ -26,6 +26,8 @@
 #include <sstream>
 #include <algorithm> //for set_difference
 
+#include <regex>
+
 using namespace std;
 namespace mio {
 
@@ -131,6 +133,67 @@ std::vector<std::string> MeteoData::s_default_paramname;
 const bool MeteoData::__init = MeteoData::initStaticData();
 MeteoData::flag_field MeteoData::zero_flag; //for easy initialization
 
+// Parameter helper
+MeteoData::Parameters MeteoData::toParameter(const std::string& paramStr) {
+	if (paramStr == "P") return MeteoData::Parameters::P;
+	else if (paramStr == "TA") return MeteoData::Parameters::TA;
+	else if (paramStr == "RH") return MeteoData::Parameters::RH;
+	else if (paramStr == "QI") return MeteoData::Parameters::QI;
+	else if (paramStr == "TSG") return MeteoData::Parameters::TSG;
+	else if (paramStr == "TSOIL") return MeteoData::Parameters::TSOIL;
+	else if (paramStr == "TSS") return MeteoData::Parameters::TSS;
+	else if (paramStr == "TSNOW") return MeteoData::Parameters::TSNOW;
+	else if (paramStr == "HS") return MeteoData::Parameters::HS;
+	else if (paramStr == "VW") return MeteoData::Parameters::VW;
+	else if (paramStr == "DW") return MeteoData::Parameters::DW;
+	else if (paramStr == "VW_MAX") return MeteoData::Parameters::VW_MAX;
+	else if (paramStr == "U") return MeteoData::Parameters::U;
+	else if (paramStr == "V") return MeteoData::Parameters::V;
+	else if (paramStr == "RSWR") return MeteoData::Parameters::RSWR;
+	else if (paramStr == "ISWR") return MeteoData::Parameters::ISWR;
+	else if (paramStr == "ILWR") return MeteoData::Parameters::ILWR;
+	else if (paramStr == "OLWR") return MeteoData::Parameters::OLWR;
+	else if (paramStr == "TAU_CLD") return MeteoData::Parameters::TAU_CLD;
+	else if (paramStr == "PSUM") return MeteoData::Parameters::PSUM;
+	else if (paramStr == "PSUM_PH") return MeteoData::Parameters::PSUM_PH;
+	else if (paramStr == "PSUM_L") return MeteoData::Parameters::PSUM_L;
+	else if (paramStr == "PSUM_LC") return MeteoData::Parameters::PSUM_LC;
+	else if (paramStr == "PSUM_S") return MeteoData::Parameters::PSUM_S;
+	else {
+		// Handle the error case, could also throw an exception
+		throw IOException("Unknown parameter: " + paramStr, AT);
+	}
+};
+
+// Parameter helper
+std::string MeteoData::parToString(const MeteoData::Parameters& param) {
+	if (param == MeteoData::Parameters::P) return "P";
+	else if (param == MeteoData::Parameters::TA) return "TA";
+	else if (param == MeteoData::Parameters::RH) return "RH";
+	else if (param == MeteoData::Parameters::QI) return "QI";
+	else if (param == MeteoData::Parameters::TSG) return "TSG";
+	else if (param == MeteoData::Parameters::TSOIL) return "TSOIL";
+	else if (param == MeteoData::Parameters::TSS) return "TSS";
+	else if (param == MeteoData::Parameters::TSNOW) return "TSNOW";
+	else if (param == MeteoData::Parameters::HS) return "HS";
+	else if (param == MeteoData::Parameters::VW) return "VW";
+	else if (param == MeteoData::Parameters::DW) return "DW";
+	else if (param == MeteoData::Parameters::VW_MAX) return "VW_MAX";
+	else if (param == MeteoData::Parameters::U) return "U";
+	else if (param == MeteoData::Parameters::V) return "V";
+	else if (param == MeteoData::Parameters::RSWR) return "RSWR";
+	else if (param == MeteoData::Parameters::ISWR) return "ISWR";
+	else if (param == MeteoData::Parameters::ILWR) return "ILWR";
+	else if (param == MeteoData::Parameters::OLWR) return "OLWR";
+	else if (param == MeteoData::Parameters::TAU_CLD) return "TAU_CLD";
+	else if (param == MeteoData::Parameters::PSUM) return "PSUM";
+	else if (param == MeteoData::Parameters::PSUM_PH) return "PSUM_PH";
+	else if (param == MeteoData::Parameters::PSUM_L) return "PSUM_L";
+	else if (param == MeteoData::Parameters::PSUM_LC) return "PSUM_LC";
+	else if (param == MeteoData::Parameters::PSUM_S) return "PSUM_S";
+	else throw IOException("Unknown parameter: " + std::to_string(param), AT);
+};
+
 bool MeteoData::initStaticData()
 {
 	//Since the parameters enum starts at 0, this is enough to associate an index with its name
@@ -175,6 +238,171 @@ const std::string& MeteoData::getParameterName(const size_t& parindex)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
 
 	return MeteoData::s_default_paramname[parindex];
+}
+
+// check that the height is given in a proper format and return it as a number
+static double parseInputHeight(const std::string& height_str) 
+{
+	std::vector<std::string> num_parts(IOUtils::split(height_str, '.'));
+	if (num_parts.size() > 2) throw InvalidArgumentException("Cannot parse decimal number: " + height_str);
+	if (num_parts.size() == 2) {
+		if (num_parts[1].size() != 2) throw InvalidArgumentException("Only exactly 2 decimal points is allowed, got: " + std::to_string(num_parts[1].size()) + ", in height: " + height_str);
+		if (num_parts[1] == "00") throw InvalidArgumentException("Do not use .00 as decimals, as this will be ignored, and lead to potential bad behaviour. In " + height_str);
+	}
+	if (height_str.back() == '.' ) throw InvalidArgumentException("A height ending with \".\" is not allowed: " + height_str);
+	return std::stod(height_str);
+}
+
+// parser for parameters of type TA@15 to be able to have multiple air temperatures...
+// returns true if it is a known parameter that could be parsed
+bool MeteoData::getTypeAndNo(const std::string& i_parname, std::string& parameter, double& number, const std::set<std::string>& additional_parameters) 
+{
+	if (getStaticParameterIndex(i_parname) != IOUtils::npos) {
+		parameter = i_parname;
+		number = IOUtils::nodata;
+		return true;
+	} else if (additional_parameters.find(i_parname) != additional_parameters.end()) {
+		parameter = i_parname;
+		number = IOUtils::nodata;
+		return true;
+	} else if (i_parname.find("@") == std::string::npos) {
+		// is not a known parameter without height, cannot be parsed
+		parameter = i_parname;
+		number = IOUtils::nodata;
+		return false;
+	}
+	bool is_known_parameter = false;
+
+	static const regex param_reg("^([A-Z]+)@(-?[0-9]{1,4}(\\.[0-9]{0,2})?)$", std::regex::icase | std::regex::optimize);
+	std::smatch matches;
+
+	parameter = "";
+	number = IOUtils::nodata;
+	
+	if (std::regex_search(i_parname, matches, param_reg)) {
+		const std::string param( matches[1].str() );
+		if (getStaticParameterIndex(param) != IOUtils::npos) {
+			is_known_parameter = true;
+		} else if (additional_parameters.find(param) != additional_parameters.end()) {
+			is_known_parameter = true;
+		}
+		parameter = param;
+		number = parseInputHeight(matches[2].str());
+
+		return is_known_parameter;
+	}
+	return is_known_parameter;
+}
+
+bool MeteoData::sameParameterType(const std::string& par1, const std::string& par2, const std::set<std::string>& additional_parameters) 
+{
+	std::string parameter1;
+	double number1;
+	std::string parameter2;
+	double number2;
+	if (getTypeAndNo(par1, parameter1, number1, additional_parameters) && getTypeAndNo(par2, parameter2, number2, additional_parameters)) {
+		return parameter1 == parameter2;
+	}
+	return false;
+}
+
+// casts to int or two decimal points when there is a decimal number, otherwise not allowed
+std::string MeteoData::convertHeightToString(const double& height) 
+{
+	std::string height_string;
+	if (height == IOUtils::nodata) {
+		std::cout << "Trying to convert NoData height to string, undefined behaviour!";
+		return "";
+	}
+	if (height == static_cast<int>(height)) {
+		// Height has no decimal part, cast to int
+		height_string = std::to_string(static_cast<int>(height));
+	} else {
+		// Height has a decimal part, round to two decimal places
+		std::stringstream stream;
+		stream << std::fixed << std::setprecision(2) << height;
+		height_string =  stream.str();
+	}
+	return height_string;
+}
+
+static bool comparePairOfHeightParam(const std::pair<double,std::string>& a, const std::pair<double,std::string>& b) 
+{
+	return a.first < b.first;
+}
+
+std::vector<std::string> MeteoData::sortListByParams(const std::vector<std::string>& param_list, const std::set<std::string>& additional_parameters) 
+{
+	std::map<std::string,std::vector<std::pair<double,std::string>>> params_with_heights;
+	std::vector<std::string> sorted_list;
+	for (const auto& par : param_list) {
+		std::string parameter;
+		double number;
+		if (getTypeAndNo(par, parameter, number, additional_parameters)) {
+			params_with_heights[parameter].push_back(std::make_pair(number, par));
+		}
+	}
+	for (auto& entry : params_with_heights) {
+		std::vector<std::pair<double,std::string>> par = entry.second;
+		std::sort(par.begin(), par.end(), comparePairOfHeightParam);
+		for (const auto& p : par) {
+			sorted_list.push_back(p.second);
+		}
+	}
+	return sorted_list;
+}
+
+std::vector<std::string> MeteoData::retrieveAllHeightsForParam(const std::set<std::string>& available_parameters, const std::string& param, const std::set<std::string>& additional_parameters) 
+{
+	std::vector<std::string> param_with_heights;
+	for (const auto& par : available_parameters) {
+		if (sameParameterType(par, param, additional_parameters)) {
+			param_with_heights.push_back(par);
+		}
+	}
+	return sortListByParams(param_with_heights);
+}
+
+std::set<double> MeteoData::retrieveAllHeights(const std::set<std::string>& available_parameters, const std::set<std::string>& additional_parameters) 
+{
+	std::set<double> heights;
+	for (const auto& par : available_parameters) {
+		std::string parameter;
+		double number;
+		if (getTypeAndNo(par, parameter, number, additional_parameters)) {
+			heights.insert(number);
+		}
+	}
+	return heights;
+}
+
+// no height: IOUtils::nodata
+std::vector<std::string> MeteoData::retrieveAllParametersAtHeight(const std::set<std::string>& available_parameters, const double& height, const std::set<std::string>& additional_parameters) 
+{
+	std::vector<std::string> param_at_height;
+	for (const auto& par : available_parameters) {
+		std::string parameter;
+		double number;
+		if (getTypeAndNo(par, parameter, number, additional_parameters)) {
+			if (number == height) {
+				param_at_height.push_back(par);
+			}
+		}
+	}
+	return param_at_height;
+}
+
+std::set<std::string> MeteoData::retriveUniqueParameters(const std::set<std::string>& available_parameters, const std::set<std::string>& additional_parameters) 
+{
+	std::set<std::string> unique_parameters;
+	for (const auto& par : available_parameters) {
+		std::string parameter;
+		double number;
+		if (getTypeAndNo(par, parameter, number, additional_parameters)) {
+			unique_parameters.insert(parameter);
+		}
+	}
+	return unique_parameters;
 }
 
 size_t MeteoData::getStaticParameterIndex(const std::string& parname)
@@ -294,8 +522,6 @@ bool MeteoData::operator==(const MeteoData& in) const
 		return false;
 
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		//const double epsilon_rel = (std::abs(data[ii]) < std::abs(in.data[ii]) ? std::abs(in.data[ii]) : std::abs(data[ii])) * std::numeric_limits<double>::epsilon(); // Hack not working...
-		//const double epsilon_rel = (std::abs(data[ii]) < std::abs(in.data[ii]) ? std::abs(in.data[ii]) : std::abs(data[ii])) * 0.0000001; // Hack not working with 0 == 0 ....
 		if ( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) ) return false;
 	}
 
@@ -351,6 +577,45 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 	}
 
 	return IOUtils::npos; //parameter not a part of MeteoData
+}
+
+// get all heights for parameter, default parameter is included by default, but given with nodata
+std::vector<double> MeteoData::getHeightsForParameter(const std::string& in_parname, bool include_default, const std::set<std::string>& additional_parameters) const
+{
+	std::string parameter;
+	double number;
+	std::vector<double> heights;
+	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+		getTypeAndNo(getNameForParameter(ii), parameter, number, additional_parameters);
+		if (parameter == in_parname) {
+			if (!include_default && number == IOUtils::nodata) {
+				continue; // skip default parameters,
+			}
+			heights.push_back(number);
+		}	
+	}
+	return heights;	
+}
+
+
+
+// counts the number of occurences of a reappearing parameter (default is excluded)
+size_t MeteoData::getOccurencesOfParameter(const Parameters& par, const std::set<std::string>& additional_parameters) const 
+{
+	const std::string in_parname = getParameterName(par);
+	std::string parameter;
+	double number;
+	int occurences = 0;
+	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+		getTypeAndNo(getNameForParameter(ii), parameter, number, additional_parameters);
+		if (parameter == in_parname) {
+			if (number == IOUtils::nodata) {
+				continue; // skip default parameters,
+			}
+			occurences++;
+		}	
+	}
+	return occurences;
 }
 
 bool MeteoData::isNodata() const
@@ -810,6 +1075,17 @@ std::set<std::string> MeteoData::listAvailableParameters(const std::vector<Meteo
 	}
 	
 	return results;
+}
+
+size_t MeteoData::listUnknownParameters(const std::set<std::string>& additional_params) const {
+	size_t result = 0;
+	std::string paramter;
+	double number;
+	for (const std::string& parname : extra_param_name) {
+		if (!getTypeAndNo(parname, paramter, number, additional_params)) 
+			result++;
+	}
+	return result;
 }
 
 void MeteoData::unifyMeteoData(METEO_SET &vecMeteo)

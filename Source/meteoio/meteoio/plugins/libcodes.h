@@ -37,6 +37,7 @@ namespace mio {
      * 
      */
     namespace codes {
+        using MeteoParam = MeteoData::Parameters;
 
         // ------------------------- POINTER HANDLING -------------------------
         struct HandleDeleter {
@@ -88,17 +89,22 @@ namespace mio {
 
         // ------------------------- WRITE -------------------------
         void writeToFile(CodesHandlePtr &h, const std::string &filename);
-        CodesHandlePtr createBUFRMessageFromSample();
-        void setTime(CodesHandlePtr& ibufr, const Date& date);
+        CodesHandlePtr createBUFRMessageFromSample(long num_subsets, const std::map<MeteoParam, size_t> &multi_param_occurences, const std::set<std::string> &available_params,
+                                                   const std::vector<MeteoParam> &POSSIBLE_MULTIPLE_PARAMETERS, const bool &write_cryos_station=false, const long& num_cryo_heights=0);
+        void setTime(CodesHandlePtr& ibufr, const Date& date, const std::string& subset_prefix);
+        void setTypicalTime(CodesHandlePtr& ibufr, const Date& date);
         bool setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const double& parameterValue);
         bool setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const long& parameterValue);
+        bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const std::vector<long> &parameterValues);
         bool setParameter(CodesHandlePtr& ibufr, const std::string& parameterName, const std::string& parameterValue);
         void packMessage(CodesHandlePtr &m);
 
         // ------------------------- CONSTANTS -------------------------
+        extern const std::string BUFR_HEIGHT_KEY;
         extern const std::map<std::string, std::string> BUFR_PARAMETER;
         extern const std::map<std::string, std::string> BUFR_PARAMETER_ALT;
         extern const std::vector<int> FLAG_TO_EPSG;
+        extern const long SNOW_SURFACE_QUALIFIER;
         extern const std::map<std::string, long> GRIB_DEFAULT_PARAM_TABLE;
         extern const std::map<std::string, std::string> GRIB_DEFAULT_LEVELTYPE_TABLE;
         extern const std::map<std::string, long> GRIB_DEFAULT_LEVELNO_TABLE;

@@ -593,6 +593,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 			            e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
 			throw IOException("Runtime Error in compSnowCreep()", AT);
 		}
+		EMS[e].gradT = (NDS[e+1].T - NDS[e].T) / EMS[e].L;
 	}
 	// Update computed snow depth
 	Xdata.cH = NDS[nN-1].z + NDS[nN-1].u;
@@ -1236,7 +1237,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 				if (Xdata.Seaice != NULL) {
 					// For sea ice, balance the meltfreeze_tk with assuming thermal equilibrium with the brine:
-					// (1): Xdata.Edata[e].meltfreeze_tk = Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+					// (1): Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
 					// (2): BrineSal_new = (Xdata.Edata[e].salinity /  (Xdata.Edata[e].theta[WATER] + deltaTheta));
 					// (3): deltaTheta = A * (0.5 * (U[e+1] + U[e]) - Xdata.Edata[e].meltfreeze_tk) * (Constants::density_water / Constants::density_ice);
 					// Balancing equations (1), (2) and (3) derived using wxmaxima:
@@ -1253,7 +1254,14 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					const double f = Constants::density_ice / Constants::density_water;
 					const double tmp_T = 0.5 * (U[e+1] + U[e]);
 					const double tmp_Theta = Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * f;
-					Xdata.Edata[e].meltfreeze_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * Constants::meltfreeze_tk) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * Constants::meltfreeze_tk * tmp_Theta + 4. * A * f * SeaIce::mu * Xdata.Edata[e].salinity + A * f * A * f * Constants::meltfreeze_tk * Constants::meltfreeze_tk) - A * f * tmp_T - tmp_Theta - A * f * Constants::meltfreeze_tk) / (2. * A * f);
+					const double BrineSal_new = (tmp_Theta == 0.) ? (0.) : (Xdata.Edata[e].salinity / tmp_Theta);
+
+					std::pair<double, double> mu = Xdata.Seaice->getMu(BrineSal_new);
+					if(mu.second < -Constants::eps2) {
+						Xdata.Edata[e].meltfreeze_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * mu.first) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * mu.first * tmp_Theta - 4. * A * f * mu.second * Xdata.Edata[e].salinity + A * f * A * f * mu.first * mu.first) - A * f * tmp_T - tmp_Theta - A * f * mu.first) / (2. * A * f);
+					} else {
+						Xdata.Edata[e].meltfreeze_tk = IOUtils::C_TO_K(0.);
+					}
 				}
 
 				dth_i_up[e] += A * (Xdata.Edata[e].meltfreeze_tk - U[e+1]);	// change in volumetric ice content in upper half of element
@@ -1852,16 +1860,20 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	} else {
 		snowed_in = ((Xdata.getNumberOfNodes() > Xdata.SoilNode+1)
 		            || (detect_grass &&
-		                (((Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
+		                (((Mdata.tss_a24h != IOUtils::nodata && Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
 		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
+		                 || ((Mdata.tss_a12h != IOUtils::nodata && Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
 		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
-		                    && (Mdata.hs_rate > HS_threshold_largeincrease))
+		                 || ((Mdata.tss_a12h != IOUtils::nodata && Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
+		                    && (Mdata.hs_rate != IOUtils::nodata && Mdata.hs_rate > HS_threshold_largeincrease))
 		                 )
 		               )
-		            || (Mdata.hs_rate > HS_threshold_verylargeincrease)
+		            || (Mdata.hs_rate != IOUtils::nodata && Mdata.hs_rate > HS_threshold_verylargeincrease)
 		);
+		// Additional check if snowed_in is still false with DETECT_GRASS due to missing TSS data
+		if (!snowed_in && detect_grass && (Mdata.hs_rate == IOUtils::nodata || Mdata.tss_a24h == IOUtils::nodata || Mdata.tss_a12h == IOUtils::nodata)) {
+			prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "DETECT_GRASS is TRUE, but insufficient HS and/or TSS data is available for the algorithm. Snowfall may be missed.");
+		}
 	}
 	if (variant == "SEAICE" && nOldE == 0) {
 		// Ignore snow fall on open ocean
@@ -2123,8 +2135,9 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
 	enforce_measured_snow_heights = false;
 	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
-	if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
-	if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+	// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
+	Mdata.vw_avg = Mdata.vw;
+	Mdata.rh_avg = Mdata.rh;
 	Xdata.hn = 0.;
 	if (Xdata.ErosionAge != Constants::undefined && redeposit_keep_age) {
 		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());

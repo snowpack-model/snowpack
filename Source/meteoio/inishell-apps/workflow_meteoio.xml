@@ -1,0 +1,52 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is the workflow panel that METEOIO builds
+-->
+
+<inishell_include>
+	<workflow>
+		<section caption="METEOIO">
+			<element type="label" caption="&lt;b&gt;Process data"/>
+			<element type="label" caption="Start date:"/>
+			<element id="start_date" type="datetime"/>
+			<element type="label" caption="End date:"/>
+			<element id="end_date" type="datetime"/>
+			<element type="label" caption="Sampling rate (minutes):"/>
+			<element id="sampling_rate" type="text" default="60" />
+			<element caption="Run meteoio_timeseries" type="button">
+				<command>meteoio_timeseries -b %start_date -e %end_date -s %sampling_rate -c "${inifile}"</command>
+				<command>setpath(%smetpath, ${key:OUTPUT::METEOPATH})</command>
+			</element>
+			<element type="label" caption="&lt;br&gt;&lt;b&gt;Visualize results&lt;/b&gt;"/>
+			<element type="label" caption="Open niViz in Browser to import and visualize smet output files:"/>
+			<element id="visualize" caption="Open niViz" type="button">
+				<command>setpath(%smetpath, ${key:OUTPUT::METEOPATH})</command>
+				<command>openurl(https://run.niviz.org)</command>
+			</element>
+			<element type="label" caption="Then drag your desired output file into niViz from below:"/>
+			<element type="path" id="smetpath"/>
+			<element caption="Show MeteoIO version" type="button">
+				<command>meteoio_timeseries -v</command>
+			</element>		
+		</section>
+	</workflow>
+</inishell_include>

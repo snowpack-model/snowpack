@@ -142,12 +142,13 @@ class Config {
 		std::string getConfigRootDir() const {return configRootDir;}
 
 		/**
-		 * @brief Return if a given key exists in a given section
+		 * @brief Return if a given key exists in a given section (matching is case insensitive)
 		 * @param[in] key string representing the key to be searched
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @return true if the key exists
 		 */
 		bool keyExists(std::string key, std::string section) const;
+		bool keyExistsRegex(std::string key_pattern, std::string section) const;
 
 		/**
 		 * @brief Return if a given section exists in the Config object
@@ -381,7 +382,7 @@ class Config {
 
 		/**
 		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
-		 *         it returns all the \<keys,value\> pairs that match (partial matches are considered) into a vector.
+		 *         it returns all the \<keys,value\> pairs that match (partial matches are considered, matching is case insensitive) into a vector.
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
@@ -396,7 +397,7 @@ class Config {
 
 		/**
 		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
-		 *         it returns all the keys that match (partial matches are considered) into a vector\<string\>.
+		 *         it returns all the keys that match (partial matches are considered, matching is case insensitive) into a vector\<string\>.
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
@@ -461,6 +462,9 @@ class Config {
 		 * @return vector of named arguments
 		 */
 		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm,
+			const std::string& section = "Interpolations1d") const;
+		// overload for indexed algorith
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm, const size_t& algo_index,
 			const std::string& section = "Interpolations1d") const;
 
 

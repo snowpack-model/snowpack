@@ -112,6 +112,10 @@
 #endif
 
 //now for the plugins that bring special includes
+#ifdef PLUGIN_BUFRIO
+#include <meteoio/plugins/BUFRIO.h>
+#endif
+
 #ifdef PLUGIN_DBO
 #include <meteoio/plugins/DBO.h>
 #endif
@@ -123,11 +127,6 @@
 #ifdef PLUGIN_GRIBIO
 #include <meteoio/plugins/GRIBIO.h>
 #endif
-
-#ifdef PLUGIN_BUFRIO
-#include <meteoio/plugins/BUFRIO.h>
-#endif
-
 
 #ifdef PLUGIN_IMISIO
 #include <meteoio/plugins/ImisIO.h>
@@ -210,6 +209,7 @@ namespace mio {
  * <tr><td>\subpage arc "ARC"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>ESRI/ARC ascii grid files</td><td></td></tr>
  * <tr><td>\subpage argosio "ARGOS"</td><td>meteo</td><td></td>		<td>ARGOS satellite raw files - <b>plugin not functional yet!</b></td><td></td></tr>
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td></td>		<td>ARPS ascii formatted grids</td><td></td></tr>
+ * <tr><td>\subpage bufrio "BUFRIO"</td><td>meteo</td><td></td>		<td>BUFR meteo files</td><td><A HREF="https://confluence.ecmwf.int/display/ECC/ecCodes+Home">ecCodes</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td></td>		<td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
  * <tr><td>\subpage csvio "CSV"</td><td>meteo</td><td></td>		<td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td></td>		<td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>

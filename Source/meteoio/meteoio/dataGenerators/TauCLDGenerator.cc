@@ -154,6 +154,11 @@ double TauCLDGenerator::interpolateCloudiness(const std::string& station_hash, c
 	return cloudiness;
 }
 
+/**
+ * @brief Add a cloudiness value to the cache.
+ * @param[in] julian_gmt Timestamp of the cloudiness value (in GMT)
+ * @param[in] cloudiness cloudiness value (between 0 and 1)
+ */
 void TauCLDGenerator::cloudCache::addCloudiness(const double& julian_gmt, const double& cloudiness)
 {
 	last_valid = std::make_pair(julian_gmt, cloudiness);

@@ -1,0 +1,58 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software ALPINE3D.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: ALPINE3D PARAMETERS -->
+	<parameter key="LATERAL_FLOW" type="alternative" default="FALSE" section="Alpine3D">
+		<option value="TRUE"/>
+		<option value="FALSE"/>
+		<help>Should the lateral water flows be simulated?</help>
+	</parameter>
+	<parameter key="GLACIER_KATABATIC_FLOW" type="alternative" default="FALSE" section="Alpine3D">
+		<option value="TRUE">
+			<reference name="KATABATIC_FLOWS"/>
+		</option>
+		<option value="FALSE"/>
+		<help>Should the katabatic flows above glaciers be simulated? (see &lt;a href="https://alpine3d.slf.ch/doc-release/html/glaciers.html"&gt;glaciers&lt;/a&gt;)</help>
+	</parameter>
+
+	<parametergroup name="KATABATIC_FLOWS">
+		<parameter type="helptext" wrap="true" section="Alpine3D">
+			<help>This module corrects the air temperature for the effect of the katabatic flows on the glaciated pixels. The katabatic flows paths are computed automatically based on the multiple flow direction algorithm by (Quinn, 1991). Then the air temperature correction is computed according to (Greuell and Bohm, 1998) with the improvements by (Ayala, Pellicciotti and Shea, 2015) (see &lt;a href="https://alpine3d.slf.ch/doc-release/html/classGlaciers.html#a8eccd0fe5c5f38b26dcef097a76d1eb1"&gt;Glaciers::correctTemperatures&lt;/a&gt;).</help>
+		</parameter>
+		<parameter key="KATABATIC_LAYER_HEIGHT" type="number" format="decimal" min="0" precision="1" default="17.0" unit="m" optional="false">
+			<help>Katabatic Boundary Layer (KBL) thickness, 17m in (Greuell and Bohm, 1998)</help>
+		</parameter>
+		<parameter key="KATABATIC_K_COEFFICIENT" type="number" format="decimal" min="0" precision="1" default="0.0" unit="°C" optional="false">
+			<help>takes into account the lateral energy fluxes on the glacier tongue in (Ayala et al., 2015), set at 7.0. Set to 0 to use a pure (Greuell and Bohm, 1998) model</help>
+		</parameter>
+		<parameter key="KATABATIC_SCALING" type="number" format="decimal" min="0" precision="1" default="1.0" optional="false">
+			<help>reduce the katabatic flow reach. A value of .25 seems to work quite well</help>
+		</parameter>
+
+	</parametergroup>
+
+</inishell_include>

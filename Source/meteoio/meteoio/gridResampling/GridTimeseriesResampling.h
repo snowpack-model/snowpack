@@ -45,13 +45,14 @@ namespace mio {
  */
 class GridTimeseriesResampling : public GridResamplingAlgorithm {
 	public:
-		GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &in_cfg);
 
 		void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid);
 		std::string toString() const;
 
 	private:
 		std::vector< std::pair<std::string, std::string> > vecArgs_;
+        const Config& cfg;
 		std::string base_algorithm_; ///< Name of timeseries resampling algorithm to use
 };
 

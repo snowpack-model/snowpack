@@ -73,7 +73,7 @@ namespace mio {
  *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
  *     - CREATE: fill missing values or create new parameters based on basic transformations or parametrizations, see EditingCreate
  *     - METADATA: edit station's metadata, see EditingMetadata
- * 	   - REGRESSIONFILL: fill missing values using a regression model, see EditingRegFill
+ *     - REGRESSIONFILL: fill missing values using a regression model, see EditingRegFill
  *     - MOVE: move parameters between stations, see EditingMove
  *     - SPLIT: split parameters from a station into a new one, see EditingSplit
  *
@@ -156,7 +156,6 @@ EditingBlock* EditingBlockFactory::getBlock(const std::string& i_stationID, cons
 	} else if (name == "METADATA"){
 		return new EditingMetadata(i_stationID, vecArgs, name, cfg);
 	} else if (name == "MOVE"){ 
-		std::cerr << "The new MOVE block is used!!" << std::endl;
 		return new EditingMove(i_stationID, vecArgs, name, cfg);
 	} else if (name == "REGRESSIONFILL") {
 		return new EditingRegFill(i_stationID, vecArgs, name, cfg);
@@ -264,7 +263,7 @@ void EditingRename::parse_args(const std::vector< std::pair<std::string, std::st
 			IOUtils::readLineToSet( IOUtils::strToUpper(vecArgs[ii].second), src_params);
 			has_src = true;
 		} else { //HACK keep this until all users of MOVE have migrated
-			throw InvalidArgumentException("Unsupported argument '"+vecArgs[ii].first+"' for "+where+". Keep in mind that the legacy MOVE filter has been renamed into RENAME and a new MOVE filter will later be implemented to move parameters between stations!", AT);
+			throw InvalidArgumentException("Unsupported argument '"+vecArgs[ii].first+"' for "+where+". Keep in mind that the legacy MOVE filter has been renamed into RENAME and a new MOVE filter has been implemented to move parameters between stations!", AT);
 		}
 	}
 
@@ -511,7 +510,7 @@ void EditingAutoMerge::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 }
 
 
-////////////////////////////////////////////////// MERGE
+////////////////////////////////////////////////// COMBINE
 EditingCombine::EditingCombine(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
             : EditingBlock(i_stationID, vecArgs, name, cfg), merged_params(), dest_param(), type(FIRST), replace(false)
 {
@@ -520,7 +519,6 @@ EditingCombine::EditingCombine(const std::string& i_stationID, const std::vector
 
 void EditingCombine::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
-	//TODO: add combine strategy: FIRST, MIN, AVG, MAX
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
 	bool has_dest=false, has_src=false;
 
@@ -1090,30 +1088,6 @@ void EditingRegFill::parse_args(const std::vector< std::pair<std::string, std::s
 	if (source_stations.empty()) throw InvalidArgumentException("Please provide a valid FILL value for "+where, AT);
 }
 
-// TODO: do we need station data merge here? Doesnt make sense in my opinion
-// void EditingRegFill::editTimeSeries(STATIONS_SET& vecStation)
-// {
-// 	//find our current station in vecStation
-// 	size_t toStationIdx=IOUtils::npos;
-// 	for (size_t ii=0; ii<vecStation.size(); ii++) {
-// 		if (IOUtils::strToUpper(vecStation[ii].stationID)==stationID) {
-// 			toStationIdx = ii;
-// 			break;
-// 		}
-// 	}
-	
-// 	if (toStationIdx==IOUtils::npos) return;
-	
-// 	for (size_t jj=0; jj<source_stations.size(); jj++) {
-// 		const std::string fromStationID( IOUtils::strToUpper( source_stations[jj] ) );
-		
-// 		for (size_t ii=0; ii<vecStation.size(); ii++) {
-// 			if (IOUtils::strToUpper(vecStation[ii].stationID)==fromStationID)
-// 				vecStation[toStationIdx].merge( vecStation[ii] );
-// 		}
-// 	}
-// }
-
 void EditingRegFill::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 {
 	//find our current station in vecStation
@@ -1155,7 +1129,8 @@ void EditingRegFill::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 	}
 }
 
-static FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype) {
+static FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype) 
+{
 	switch (regtype) {
 		case EditingRegFill::LINEAR:
 			return new LinearLS();
@@ -1166,8 +1141,9 @@ static FitLeastSquare* chooseModel(const EditingRegFill::RegressionType& regtype
 	}
 }
 
-static std::vector<double> doRegression(const std::vector<double>& x, const std::vector<double>& y, const EditingRegFill::RegressionType& regtype) {
-	std::unique_ptr<FitLeastSquare> model(chooseModel(regtype));
+static std::vector<double> doRegression(const std::vector<double>& x, const std::vector<double>& y, const EditingRegFill::RegressionType& regtype) 
+{
+	std::unique_ptr<FitLeastSquare> model( chooseModel(regtype) );
 	model->setData(x, y);
 	bool success = model->fit();
 	if (!success) 
@@ -1175,15 +1151,18 @@ static std::vector<double> doRegression(const std::vector<double>& x, const std:
 	return model->getParams();
 }
 
-static double linear(double x, const std::vector<double>& params) {
+static double linear(double x, const std::vector<double>& params) 
+{
 	return params[0]*x + params[1];
 }
 
-static double quadratic(double x, const std::vector<double>& params) {
+static double quadratic(double x, const std::vector<double>& params) 
+{
 	return params[0]*x*x + params[1]*x + params[2];
 }
 
-static double forward(double x, const std::vector<double>& params, EditingRegFill::RegressionType regtype) {
+static double forward(double x, const std::vector<double>& params, EditingRegFill::RegressionType regtype) 
+{
 	switch (regtype) {
 		case EditingRegFill::LINEAR:
 			return linear(x, params);
@@ -1194,7 +1173,8 @@ static double forward(double x, const std::vector<double>& params, EditingRegFil
 	}
 }
 
-static std::unordered_map<double, size_t> mapDatesToIndex(const METEO_SET& vecMeteo) {
+static std::unordered_map<double, size_t> mapDatesToIndex(const METEO_SET& vecMeteo) 
+{
 	std::unordered_map<double,size_t> dates;
 	for (size_t ii = 0; ii < vecMeteo.size(); ++ii) {
 		dates.insert({vecMeteo[ii].date.getJulian(true), ii});
@@ -1202,7 +1182,8 @@ static std::unordered_map<double, size_t> mapDatesToIndex(const METEO_SET& vecMe
 	return dates;
 }
 
-static std::vector<double> findDuplicateDates(const std::unordered_map<double,size_t>& dates_1, const std::unordered_map<double,size_t>& dates_2) {
+static std::vector<double> findDuplicateDates(const std::unordered_map<double,size_t>& dates_1, const std::unordered_map<double,size_t>& dates_2) 
+{
 	std::vector<double> duplicate_dates;
 	for (auto it = dates_2.begin(); it != dates_2.end(); ++it) {
 		if (dates_1.find(it->first) != dates_1.end()) {
@@ -1212,8 +1193,8 @@ static std::vector<double> findDuplicateDates(const std::unordered_map<double,si
 	return duplicate_dates;
 }
 
-void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMeteoSource) {
-	
+void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMeteoSource) 
+{
 	if (vecMeteo.empty() || vecMeteoSource.empty()) throw InvalidArgumentException("Empty METEO_SET", AT);
 
 	METEO_SET tmp_meteoOut;
@@ -1270,12 +1251,15 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 	vecMeteo = tmp_meteoOut;
 }
 
+////////////////////////////////////////////////// MOVE
 EditingMove::EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg)
-		:  EditingBlock(i_stationID, vecArgs, name, cfg), dest_stations(), params_to_move(), param_wildcard(false), station_wildcard(false), station_glob(false) {
+		:  EditingBlock(i_stationID, vecArgs, name, cfg), dest_stations(), params_to_move(), param_wildcard(false), station_wildcard(false), station_glob(false) 
+{
 	parse_args(vecArgs);
 }
 
-void EditingMove::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) {
+void EditingMove::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) 
+{
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
 
 	if (vecArgs.empty()) throw InvalidArgumentException("Please provide a destination and parameters for "+where, AT);
@@ -1307,7 +1291,8 @@ void EditingMove::parse_args(const std::vector< std::pair<std::string, std::stri
 	return;
 }
 
-void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecStations) {
+void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecStations) 
+{
 	//find our current station in vecStation
 	size_t fromStationIdx = IOUtils::npos;
 	for (size_t ii=0; ii<vecStations.size(); ii++) {
@@ -1336,13 +1321,8 @@ void EditingMove::editTimeSeries(std::vector<METEO_SET>& vecStations) {
 	}
 }
 
-static void moveParameters(
-	const std::set<std::string>& params_to_move,
-	MeteoData& md_pattern, 
-	const std::vector<MeteoData>& source, 
-	const std::unordered_map<double, size_t>& dates_src, 
-	const double& date ) {
-
+static void moveParameters(const std::set<std::string>& params_to_move, MeteoData& md_pattern, const std::vector<MeteoData>& source, const std::unordered_map<double, size_t>& dates_src, const double& date) 
+{
 	for (const std::string& param : params_to_move) {
 		if (md_pattern.param_exists(param)) {
 			md_pattern(param) = source[dates_src.at(date)](param);
@@ -1353,7 +1333,8 @@ static void moveParameters(
 	}
 }
 
-std::vector<MeteoData> EditingMove::createFullTimeSeries(const std::vector<MeteoData>& source, const std::vector<MeteoData>& dest) const {
+std::vector<MeteoData> EditingMove::createFullTimeSeries(const std::vector<MeteoData>& source, const std::vector<MeteoData>& dest) const 
+{
 	MeteoData md_pattern = dest.front();
 	md_pattern.reset();
 
@@ -1391,7 +1372,8 @@ std::vector<MeteoData> EditingMove::createFullTimeSeries(const std::vector<Meteo
 }
 
 
-bool EditingMove::isDestination(const std::string& toStationID) const {
+bool EditingMove::isDestination(const std::string& toStationID) const 
+{
 	if (toStationID == stationID) return false;
 	if (station_wildcard) return true;
 
@@ -1413,12 +1395,15 @@ bool EditingMove::isDestination(const std::string& toStationID) const {
 	return false;
 }
 
+////////////////////////////////////////////////// SPLIT
 EditingSplit::EditingSplit(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg) 
-		: EditingBlock(i_stationID, vecArgs, name, cfg), dest_station_id(), params_to_move() {
+		: EditingBlock(i_stationID, vecArgs, name, cfg), dest_station_id(), params_to_move() 
+{
 	parse_args(vecArgs);
 }
 
-static void checkSplitArgs(const std::string& dest_station_id, const std::set<std::string>& params_to_move, const std::string& where) {
+static void checkSplitArgs(const std::string& dest_station_id, const std::set<std::string>& params_to_move, const std::string& where) 
+{
 	if (dest_station_id.empty()) throw InvalidArgumentException("Please provide a valid DEST value for "+where, AT);
 	if (params_to_move.empty()) throw InvalidArgumentException("Please provide a valid PARAMS value for "+where, AT);
 
@@ -1431,7 +1416,8 @@ static void checkSplitArgs(const std::string& dest_station_id, const std::set<st
 	}
 }
 
-void EditingSplit::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) {
+void EditingSplit::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) 
+{
 	const std::string where( "InputEditing::"+block_name+" for station "+stationID );
 
 	if (vecArgs.empty()) throw InvalidArgumentException("Please provide a destination and parameters for "+where, AT);
@@ -1447,17 +1433,18 @@ void EditingSplit::parse_args(const std::vector< std::pair<std::string, std::str
 	checkSplitArgs(dest_station_id, params_to_move, where);
 }
 
-void EditingSplit::editTimeSeries(std::vector<METEO_SET>& vecStations) {
+void EditingSplit::editTimeSeries(std::vector<METEO_SET>& vecStations) 
+{
 	for (size_t ss=0; ss<vecStations.size(); ss++) {
 		if (vecStations[ss].front().getStationID() == stationID) {
-			std::vector<MeteoData> split_timeseries(splitTimeSeries(vecStations[ss]));
-			vecStations.push_back(split_timeseries);
+			vecStations.push_back( splitTimeSeries(vecStations[ss]) );
 			break;
 		}
 	}
 }
 
-std::vector<MeteoData> EditingSplit::splitTimeSeries(std::vector<MeteoData>& source) {
+std::vector<MeteoData> EditingSplit::splitTimeSeries(std::vector<MeteoData>& source) 
+{
 	std::vector<MeteoData> split_timeseries(source.size());
 
 	for (size_t ii = 0; ii < source.size(); ii++) {

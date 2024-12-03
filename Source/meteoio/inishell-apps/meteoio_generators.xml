@@ -1,0 +1,296 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for MeteoIO generators
+-->
+
+<inishell_include>
+
+	<!-- GENERATORS -->
+
+	<parametergroup name="GENERATORS">
+		<parameter label="Add/Remove Generator" type="selector">
+			<parameter key="%::GENERATOR#" type="alternative" replicate="true" template="true" pre-generate="false" bold="true">
+				<!-- generators -->
+				<reference name="ALL_GENERATORS"/>
+			</parameter>
+			<reference name="METEOPARAMETERS"/>
+			<help>&lt;font color="#ff0000"&gt;&lt;strong&gt;The order of declaration of the data creators defines the priority!&lt;/strong&gt;&lt;/font&gt; I. e. only if the first one can not provide data, would the second one get called...</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="ALL_GENERATORS">
+		<reference name="GENERATOR_NONE"/>
+		<reference name="GENERATOR_STD_PRESS"/>
+		<reference name="GENERATOR_HUMIDITY"/>
+		<reference name="GENERATOR_TS_OLWR"/>
+		<reference name="GENERATOR_ISWR_ALBEDO"/>
+		<reference name="GENERATOR_CST"/>
+		<reference name="GENERATOR_SIN"/>
+		<reference name="GENERATOR_CLEARSKY_LW"/>
+		<reference name="GENERATOR_ALLSKY_LW"/>
+		<reference name="GENERATOR_CLEARSKY_SW"/>
+		<reference name="GENERATOR_ALLSKY_SW"/>
+		<reference name="GENERATOR_TAU_CLD"/>
+		<reference name="GENERATOR_ESOLIP"/>
+		<reference name="GENERATOR_PRECSPLITTING"/>
+		<reference name="GENERATOR_RADCOMPONENTS"/>
+		<reference name="GENERATOR_WINDCOMPONENTS"/>
+		<reference name="GENERATOR_METEOINDEX"/>
+	</parametergroup>
+	
+	<parametergroup name="GENERATOR_NONE">
+		<option caption="None" value="NONE">
+			<help>This does nothing (this is useful in an IMPORT to overwrite previous generators)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_STD_PRESS">
+		<option value="STD_PRESS">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1StandardPressureGenerator.html&quot;&gt;Generate a standard atmosphere pressure&lt;/a&gt; as a function of the station's elevation</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_HUMIDITY">
+		<option value="HUMIDITY">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" default="RH">
+				<option value="AH"/>
+				<option value="RH"/>
+				<option value="QI"/>
+				<option value="TD"/>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1HumidityGenerator.html&quot;&gt;Generate any humidity parameter from other humidity measurements&lt;/a&gt;: absolute humidity (AH), specific humidity (QI), dew point temperature (TD), or relative humidity (RH)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_TS_OLWR">
+		<option value="TS_OLWR">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1TsGenerator.html&quot;&gt;Generate a surface temperature&lt;/a&gt; from Outgoing Long Wave Radiation</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_ISWR_ALBEDO">
+		<option value="ISWR_ALBEDO">
+			<parameter key="%::ARG#::FORCE" label="ISWR_ALBEDO" caption="Force" type="checkbox" default="FALSE">
+				<help>If no snow height is available, the generator will simply return unless the &lt;code&gt;FORCE&lt;/code&gt; argument is set to TRUE</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1IswrAlbedoGenerator.html&quot;&gt;Generate ISWR from RSWR or RSWR from ISWR&lt;/a&gt; with either a snow or a soil albedo, depending on the snow height</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_CST">
+		<option value="CST">
+			<parameter key="%::ARG#::VALUE" label="Value:" type="number" format="decimal" precision="6" default="0"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ConstGenerator.html&quot;&gt;Generate a constant value&lt;/a&gt;, as provided</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_SIN">
+		<option value="SIN">
+			<parameter key="%::ARG#::TYPE" label="Period: " type="alternative" optional="false">
+				<option value="Yearly"/>
+				<option value="Daily"/>
+			</parameter>
+			<parameter key="%::ARG#::MIN" label="Min:" type="number" format="decimal" precision="6" default="0"/>
+			<parameter key="%::ARG#::MAX" label="Max:" type="number" format="decimal" precision="6" default="0"/>
+			<parameter key="%::ARG#::PHASE" label="Phase:" type="number" format="decimal" precision="6" default="0"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1SinGenerator.html&quot;&gt;Generate a sinusoidal variation&lt;/a&gt;. The min and max values are provided as well as the phase expressed in the same units as the period and representing the time offset from the begining of the period to the first minimum value.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_CLEARSKY_LW">
+		<option value="CLEARSKY_LW">
+			<parameter key="%::ARG#::TYPE" label="Model:" type="alternative" optional="false">
+				<option value="Brutsaert"/>
+				<option value="Clark"/>
+				<option value="Dilley"/>
+				<option value="Idso"/>
+				<option value="Prata"/>
+				<option value="Tang"/>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ClearSkyLWGenerator.html&quot;&gt;ILWR using a clear sky&lt;/a&gt; emissivity (it also relies on TA, RH and the local elevation)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_ALLSKY_LW">
+		<option value="ALLSKY_LW">
+			<parameter key="%::ARG#::TYPE" label="Model:" type="alternative" optional="false">
+				<option value="Carmona"/>
+				<option value="Crawford"/>
+				<option value="Konzelmann"/>
+				<option value="Lhomme"/>
+				<option value="Omstedt"/>
+				<option value="Unsworth"/>
+				<help>Parametrization to use</help>
+			</parameter>
+			<parameter key="%::ARG#::CLD_TYPE" label="Model:" type="alternative" optional="true">
+				<option value="Crawford"/>
+				<option value="Kasten"/>
+				<option value="Lhomme"/>
+				<help>Cloudiness model to use (default: the model that belongs to the chosen ILWR parametrization). See the &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1TauCLDGenerator.html&quot;&gt;atmospheric transmissivity&lt;/a&gt; generator based on cloud cover fraction for more.</help>
+			</parameter>
+			<parameter key="%::ARG#::SHADE_FROM_DEM" label="Shade: " caption="from DEM" type="checkbox" default="FALSE">
+				<help>Should the DEM defined in the [Input] section will be used to compute the shading?</help>
+			</parameter>
+			<parameter key="%::ARG#::INFILE" label="Horizon input file" type="file" mode="input">
+				<help>Optional file containing the horizons to use to compute the shading</help>
+			</parameter>
+			<parameter key="%::ARG#::OUTFILE" label="Horizon output file" type="file" mode="output">
+				<help>Optional file to write the horizons used to compute the shading to</help>
+			</parameter>
+			<parameter key="%::ARG#::USE_RSWR" label="RSWR mode:" caption="Use RSWR" type="checkbox" default="FALSE">
+				<help>Should ISWR be computed from RSWR and an estimated albedo (not very precise)?</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1AllSkyLWGenerator.html&quot;&gt;ILWR using an all sky&lt;/a&gt; model. If no cloudiness is available, it is parametrized based on solar index (ratio of potential short wave radiation and measured short wave radiation)</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_CLEARSKY_SW">
+		<option value="CLEARSKY_SW">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate the &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ClearSkySWGenerator.html&quot;&gt;potential incoming short wave radiation&lt;/a&gt; (ie clear sky!). It relies on TA and RH, if there are not available, average values are used</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_ALLSKY_SW">
+		<option value="ALLSKY_SW">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate the &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1AllSkySWGenerator.html&quot;&gt;potential incoming short wave radiation with cloudiness corrections&lt;/a&gt; (ie all sky!): if ILWR is available, it computes the cloudiness from Unsworth (otherwise no cloudiness is computed).</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_TAU_CLD">
+		<option value="TAU_CLD">
+			<parameter key="%::ARG#::CLD_TYPE" label="Model:" type="alternative" optional="true">
+				<option value="Crawford"/>
+				<option value="Kasten"/>
+				<option value="Lhomme"/>
+				<help>Cloudiness model to use (default: Kasten)</help>
+			</parameter>
+			<parameter key="%::ARG#::SHADE_FROM_DEM" label="Shade: " caption="from DEM" type="checkbox" default="FALSE">
+				<help>Should the DEM defined in the [Input] section will be used to compute the shading?</help>
+			</parameter>
+			<parameter key="%::ARG#::INFILE" label="Horizon input file" type="file" mode="input">
+				<help>Optional file containing the horizons to use to compute the shading</help>
+			</parameter>
+			<parameter key="%::ARG#::OUTFILE" label="Horizon output file" type="file" mode="output">
+				<help>Optional file to write the horizons used to compute the shading to</help>
+			</parameter>
+			<parameter key="%::ARG#::USE_RSWR" label="RSWR mode:" caption="Use RSWR" type="checkbox" default="FALSE">
+				<help>Should ISWR be computed from RSWR and an estimated albedo (not very precise)?</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate the &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1TauCLDGenerator.html&quot;&gt;atmospheric transmissivity&lt;/a&gt; based on cloud cover fraction.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_ESOLIP">
+		<option value="ESOLIP">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ESOLIPGenerator.html&quot;&gt;precipitation from changes in snow height&lt;/a&gt; (see Mair et al., &lt;i&gt;"ESOLIP–estimate of solid and liquid precipitation at sub-daily time resolution by combining snow height and rain gauge measurements"&lt;/i&gt;, Hydrology and Earth System Sciences Discussions, 10(7), 8683-8714, 2013).</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_PRECSPLITTING">
+		<option value="PRECSPLITTING">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="true">
+				<option value="NONE"/>
+				<option value="THRESH">
+					<parameter key="%::ARG#::SNOW" label="Snow:" type="number" format="decimal" precision="2" default="274.35" unit="K"/>
+				</option>
+				<option value="RANGE">
+					<parameter key="%::ARG#::SNOW" label="Snow:" type="number" format="decimal" precision="2" default="273.35" unit="K"/>
+					<parameter key="%::ARG#::RAIN" label="Rain:" type="number" format="decimal" precision="2" default="275.35" unit="K"/>
+				</option>
+				<help>When no precip. splitting is provided in the data, define the model that will be used to parametrize it (default: NONE, so it will not parametrize the splitting if not already provided in the data)</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate either &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1PrecSplitting.html&quot;&gt;precip. sum and phase&lt;/a&gt; from solid and liquid precip. amounts or the other way around, performing precipitation splitting if necessary. This generator identifies what should be generated based on the parameter name, therefore it only applies to PSUM, PSUM_PH, PSUM_L and PSUM_S.</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_WINDCOMPONENTS">
+		<option value="WINDCOMPONENTS">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1WindComponents.html&quot;&gt;VW and DW&lt;/a&gt; from the U and V wind components</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="GENERATOR_RADCOMPONENTS">
+		<option value="RADCOMPONENTS">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Compute the &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1RadiationComponents.html&quot;&gt;global radiation (ISWR)&lt;/a&gt; from the direct and diffuse components.</help>
+		</option>
+	</parametergroup>
+	
+	<parametergroup name="GENERATOR_METEOINDEX">
+		<option value="METEOINDEX">
+			<parameter key="%::ARG#::TYPE" label="Model:" type="alternative">
+				<option value="WindChill"/>
+				<option value="HeatIndex"/>
+				<option value="Wet_Bulb"/>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Generate &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoIndex&quot;&gt;Common meteorological indices&lt;/a&gt; such as Wind chill, heat index, wet bulb temperature...</help>
+		</option>
+	</parametergroup>
+	
+</inishell_include>

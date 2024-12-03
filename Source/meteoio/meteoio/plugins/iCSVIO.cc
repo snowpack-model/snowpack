@@ -183,7 +183,7 @@ void iCSVIO::parseOutputSection() {
     if (out_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
 
         cfg.getValue("EXTENSION_OUT", "Output", file_extension_out, IOUtils::nothrow);
-        const std::regex valid_extension("^[.][a-zA-Z0-9]+$");
+        static const std::regex valid_extension("^[.][a-z0-9]+$", std::regex::icase | std::regex::optimize);
         if (!std::regex_match(file_extension_out, valid_extension))
             throw InvalidFormatException("Invalid extension format (valid: \".abc123\") : " + file_extension_out, AT);
 

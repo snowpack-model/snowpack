@@ -75,7 +75,7 @@ DataEditing& DataEditing::operator=(const DataEditing& source)
  */
 std::set<std::string> DataEditing::getEditableStations(const Config& cfg)
 {
-	static const std::regex statID_regex("([^:]+)::.*");
+	static const std::regex statID_regex("([^:]+)::.*", std::regex::optimize);
 	std::smatch index_matches;
 	const std::vector<std::string> vec_keys( cfg.getKeys(cmd_pattern, cmd_section, true) );
 

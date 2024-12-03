@@ -1,0 +1,1134 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for MeteoIO filters
+-->
+
+<inishell_include>
+
+	<!-- TIME FILTERS -->
+	<parametergroup name="TIMEFILTERS">
+		<parameter key="ENABLE_TIME_FILTERS" label="ENABLE_TIME_FILTERS" caption="Enable time filters?" type="checkbox" default="TRUE">
+			<help>Should the declared time filters be processed? (it is very strongly suggested to keep it set to TRUE for most applications)</help>
+		</parameter>
+		<parameter key="TIME::FILTER#" label="Add/remove filter for timestamps:" type="alternative" replicate="true">
+			<!-- time filters -->
+			<reference name="TIMEFILTER_SUPPR"/>
+			<reference name="TIMEFILTER_SHIFT"/>
+			<reference name="TIMEFILTER_SORT"/>
+			<reference name="TIMEFILTER_TIMELOOP"/>
+		</parameter>
+	</parametergroup>
+
+	<!-- FILTERS -->
+	<parametergroup name="FILTERS">
+		<parameter key="ENABLE_METEO_FILTERS" label="ENABLE_METEO_FILTERS" caption="Enable meteo parameters filters?" type="checkbox" default="TRUE">
+			<help>Should the declared meteorological filters be processed? (it is very strongly suggested to keep it set to TRUE for most applications)</help>
+		</parameter>
+		<parameter label="Add/Remove Filter" type="selector">
+			<parameter key="%::FILTER#" type="alternative" replicate="true" template="true" pre-generate="false" bold="true">
+				<!-- filters -->
+				<reference name="FILTER_NONE"/>
+				<reference name="FILTER_MIN"/>
+				<reference name="FILTER_MAX"/>
+				<reference name="FILTER_MIN_MAX"/>
+				<reference name="FILTER_MIN_MAX_CONDITIONAL"/>
+				<reference name="FILTER_RATE"/>
+				<reference name="FILTER_UNHEATED_RAINGAUGE"/>
+				<reference name="FILTER_DETECT_GRASS"/>
+				<reference name="FILTER_POTENTIALSW"/>
+				<reference name="FILTER_MATHS"/>
+				<reference name="FILTER_STD_DEV"/>
+				<reference name="FILTER_MAD"/>
+				<reference name="FILTER_TUKEY"/>
+				<reference name="FILTER_DESPIKING"/>
+				<reference name="FILTER_NO_CHANGE"/>
+				<reference name="FILTER_TIME_CONSISTENCY"/>
+				<reference name="FILTER_KALMAN"/>
+				<reference name="FILTER_PARTICLE"/>
+				<!-- general data transformations -->
+				<reference name="FILTER_SUPPR"/>
+				<reference name="PROC_ADD"/>
+				<reference name="PROC_MULT"/>
+				<reference name="PROC_SHIFT"/>
+				<reference name="PROC_QUANTILEMAPPING"/>
+				<!-- specific data transformations -->
+				<reference name="PROC_AGGREGATE"/>
+				<reference name="PROC_DEACCUMULATE"/>
+				<reference name="PROC_EXP_SMOOTHING"/>
+				<reference name="PROC_WMA_SMOOTHING"/>
+				<reference name="PROC_IIR"/>
+				<reference name="PROC_UNDERCATCH_WMO"/>
+				<reference name="PROC_UNDERCATCH_FORLAND"/>
+				<reference name="PROC_UNDERCATCH_HAMON"/>
+				<reference name="PROC_UNVENTILATED_T"/>
+				<reference name="PROC_PSUM_DISTRIBUTE"/>
+				<reference name="PROC_SHADE"/>
+				<reference name="PROC_REDUCE_PRESSURE"/>
+				<reference name="PROC_RHWATERTOICE"/>
+				<reference name="PROC_TRANSFORMWINDVECTOR"/>
+				<reference name="PROJECT_RADIATION"/>
+				<help>Select filter for parameter "${text}"</help>
+				<rephelp>Add filter for parameter "${text}"</rephelp>
+			</parameter>
+			<reference name="METEOPARAMETERS"/>
+			<help>Enter meteo parameter and add a filter for it</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- FILTER NONE -->
+	<parametergroup name="FILTER_NONE">
+		<option caption="None" value="NONE" color="#3282b8">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>This does nothing (this is useful in an IMPORT to overwrite previous filters)</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER MIN -->
+	<parametergroup name="FILTER_MIN">
+		<option caption="Min Range Filter" value="MIN" color="#3282b8">
+			<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+				<o><parameter key="@::SOFT" caption="Soft" type="checkbox"/></o>
+				<o><parameter key="@::MIN" label="Min:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::MIN_RESET" label="Adjust to:" type="number" format="decimal" precision="6"/></o>
+				<help>If "soft", all rejected data will be replaced by either the minimum permissible value or a user-defined &lt;code&gt;MIN_RESET&lt;/code&gt; value (if given in &lt;code&gt;Adjust to&lt;/code&gt;).</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterMin.html&quot;&gt;Min range filter&lt;/a&gt;. Reject all values smaller than the min.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER MAX -->
+	<parametergroup name="FILTER_MAX">
+		<option caption="Max Range Filter" value="MAX" color="#3282b8">
+			<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+				<o><parameter key="@::SOFT" caption="Soft" type="checkbox"/></o>
+				<o><parameter key="@::MAX" label="Max:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::MAX_RESET" label="Adjust to:" type="number" format="decimal" precision="6"/></o>
+				<help>If "soft", all rejected data will be replaced by either the maximum permissible or a user-defined &lt;code&gt;MAX_RESET&lt;/code&gt; value (if given in &lt;code&gt;Adjust to&lt;/code&gt;).</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterMax.html&quot;&gt;Max range filter&lt;/a&gt;. Reject all values greater than the max.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER MIN_MAX -->
+	<parametergroup name="FILTER_MIN_MAX">
+		<option caption="Minimum and Maximum Filter" value="MIN_MAX" color="#3282b8">
+			<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+				<o><parameter key="@::SOFT" caption="Soft" type="checkbox"/></o>
+				<o><parameter key="@::MIN" label="Min:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::MAX" label="Max:" type="number" format="decimal" precision="6"/></o>
+				<help>The keyword "soft" maybe added, in such a case all data greater than the max would be assigned
+					the maximum permissible value and all data smaller than the min would be assigned the minimum
+					permissible value or an optional extra set of two user provided values</help>
+			</parameter>
+			<parameter key="%::ARG#" label="" type="horizontal">
+				<o><parameter key="@::MIN_RESET" label="Min adjust to:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::MAX_RESET" label="Max adjust to:" type="number" format="decimal" precision="6"/></o>
+				<help>Leave these fields blank to default to &lt;code&gt;MIN&lt;/code&gt; and &lt;code&gt;MAX&lt;/code&gt;, respectively</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterMinMax.html&quot;&gt;Minimum and maximum filter&lt;/a&gt;. Reject all values greater than the max or smaller than the min.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER MIN_MAX_CONDITIONAL -->
+	<parametergroup name="FILTER_MIN_MAX_CONDITIONAL">
+		<option caption="Conditional Minimum and Maximum Filter" value="MIN_MAX_CONDITIONAL" color="#3282b8">
+			<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+				<o><parameter key="@::PARAMETER" label="Parameter:" type="text" size="small"/></o>
+				<option>
+					<parameter key="@::OPERATOR" label="Operator:" type="alternative" editable="false" optional="false">
+						<reference name="EQUALITY_OPERATORS"/>
+					</parameter>
+				</option>
+				<o><parameter key="@::COMPARE" label="Compare:" type="number" format="decimal" precision="6"/></o>
+				<help>The keyword "soft" maybe added, in such a case all data greater than the max would be assigned
+					the maximum permissible value and all data smaller than the min would be assigned the minimum
+					permissible value or an optional extra set of two user provided values</help>
+			</parameter>
+			<parameter key="%::ARG#" label="" type="horizontal">
+				<o><parameter key="@::MIN" label="Min:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::MAX" label="Max:" type="number" format="decimal" precision="6"/></o>
+			</parameter>
+			<parameter key="%::ARG#" label="" type="horizontal">
+				<o><parameter key="@::MIN_RESET" label="Min. reset:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::MAX_RESET" label="Max. reset:" type="number" format="decimal" precision="6"/></o>
+				<help>Leave these fields blank to default to &lt;code&gt;MIN&lt;/code&gt; and &lt;code&gt;MAX&lt;/code&gt;, respectively</help>
+			</parameter>
+			<parameter key="%::ARG#" label="" type="horizontal">
+				<o><parameter key="@::RESET" label="Reset value:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="@::SOFT" caption="Soft" type="checkbox"/></o>
+				<o><parameter key="@::IGNORE_MISSING" caption="Ignore missing" type="checkbox"/></o>
+				<help>SOFT: If true, values are not filtered to nodata but to the filter limits or the reset values. RESET: Values filtered if neither MIN nor MAX are supplied are not filtered to nodata, but to this. IGNORE_MISSING: Skip over access errors if PARAMETER is an extra parameter and not present</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterMinMaxConditional.html&quot;&gt;Conditional min/max filer&lt;/a&gt; that only takes action if a different parameter holds true to a condition.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER RATE -->
+	<parametergroup name="FILTER_RATE">
+		<option caption="Rate Filter" value="RATE" color="#3282b8">
+			<parameter key="%::ARG#" label="" type="horizontal" underline="true">
+				<o><parameter key="%::ARG#::MAX" label="Max:" type="number" format="decimal" precision="6"/></o>
+				<o><parameter key="%::ARG#::MIN" label="Min:" type="number" format="decimal" precision="6"/></o>
+			</parameter>
+			<parameter key="%::ARG#::METHOD" label="Method:" type="alternative" default="Left" optional="false">
+				<option value="Left"/>
+				<option value="Right"/>
+				<option value="Left_And_Right"/>
+				<option value="Left_Or_Right"/>
+				<help>Which points (from the point of view of the current point) are used to compute the rate of change. For example, &lt;i&gt;Left&lt;/i&gt; computes the rate from the last point before the current point (ie at its left); &lt;i&gt;Left_Or_Right&lt;/i&gt; filters the current point out if either the left or the right rate of change are above MAX or below MIN.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterRate.html&quot;&gt;Rate of change filter&lt;/a&gt;. Calculate the change rate (ie: slope) between two points, if it is above a user given value (or optionally below some value), reject the point.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER UNHEATED_RAINGAUGE -->
+	<parametergroup name="FILTER_UNHEATED_RAINGAUGE">
+		<option caption="Unheated Rain Gauge Filter" value="UNHEATED_RAINGAUGE" color="#3282b8">
+			<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+				<o><parameter key="@::SOFT" caption="Soft" type="checkbox"/></o>
+				<o><parameter key="@::THRESH_RH" label="RH threshold:" type="number" format="decimal" default="0.5" min="0" max="1" precision="2"/></o>
+				<o><parameter key="@::THRESH_DT" label="Delta_T threshold:" type="number" format="decimal" default="3.0" precision="1" unit="K"/></o>
+				<help>Non-zero measurements are accepted only if they take place when the relative humidity is high enough and TA and TSS are close enough, otherwise they get reset to 0. If none of these conditions could be tested (for lack of data), then the precipitation is reset to nodata (or left unchanged if "soft" has been selected).</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterUnheatedPSUM.html&quot;&gt;Filters out snow melting in an unheated rain gauge&lt;/a&gt;. This filter can ONLY be applied to precipitation.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER DETECT_GRASS -->
+	<parametergroup name="FILTER_DETECT_GRASS">
+		<option caption="Detect grass under the sensor" value="DETECT_GRASS" color="#3282b8">
+			<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+				<o><parameter key="@::TSS_OFFSET" label="TSS offset:" type="number" format="decimal" precision="2" unit="K"/></o>
+				<help>This removes the data points that don't match snow on the ground criterias (see Tilg, A.-M., Marty C. and G. Klein, &lt;i&gt;"An automatic algorithm for validating snow depth measurements of IMIS stations"&lt;/i&gt;, Swiss Geoscience Meeting, 2015). It uses HS, TSS, TSG and RSWR to infere if there is snow or grass on the ground. TSS_meas + TSS_offset is compared to given thresholds to determine if snow can exist on the ground, so you can give a negative offset to more easily keep snow on the ground)</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterDeGrass.html&quot;&gt;Grass signal removal in snow height&lt;/a&gt;, because the snow height sensor might not be able to distinguish between snow or vegetation/grass on the ground.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER POTENTIALSW -->
+	<parametergroup name="FILTER_POTENTIALSW">
+		<option caption="Potential Short Wave" value="POTENTIALSW" color="#3282b8">
+			<parameter key="%::ARG#::MIN_COEFF" label="MIN_COEFF" type="number" format="decimal" default="0.03" min="0" precision="2"/>
+			<parameter key="%::ARG#::MAX_COEFF" label="MAX_COEFF" type="number" format="decimal" default="1.1" min="0" precision="2"/>
+			<parameter key="%::ARG#::SOFT" caption="Soft" type="checkbox">
+				<help>If true, filtered values are set to the filter limits (coefficient * calculation) instead of nodata</help>
+			</parameter>
+			<parameter key="%::ARG#::MODE" label="Mode:" type="alternative">
+				<option value="GROUND">
+					<help>Set to GROUND to use ground level global radiation when evaluating the minimum plausible radiation</help>
+				</option>
+			</parameter>
+			<parameter key="%::ARG#::MEAN_PERIOD" label="MEAN_PERIOD" type="number" format="integer+" unit="s">
+				<help>Average the radiation over this given period (in seconds). If your data logger aggregates measurements this can lead to troubles at the steeper parts of the potential radiation curve. For 10 minutes, the difference can be a couple of dozens W/m^2 which would be averaged and compared to the theoretical value at the end of the aggregation period. To remedy this, you can set MEAN_PERIOD.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterPotentialSW.html&quot;&gt;Short wave potential radiation filter&lt;/a&gt;. This checks that for each point, the measured radiation is greater than the horizontal top of atmosphere potential radiation multiplied by the min_coeff coefficient and less than the global horizontal potential radiation multiplied by the max_coeff coefficient. See Moradi, I., &lt;i&gt;"Quality control of global solar radiation using sunshine duration hours"&lt;/i&gt;, 2009, Energy 34, no. 1, 1-6. </help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER MATHS -->
+	<parametergroup name="FILTER_MATHS">
+		<option caption="Arithmetic Filter" value="MATHS" color="#3282b8">
+			<parameter key="%::ARG#::FORMULA" label="FORMULA" type="text" lenient="true" size="large" optional="false">
+				<substitution find="meteo\(\w*\)" replace="1"/>
+				<substitution find="nodata|year|month|day|hour|minute|julian|altitude|azimuth|slope|latitude|longitude|easting|northing" replace="1"/>
+				<help>Arithmetic expression the meteo parameter the filter runs on will be evaluated to. Example: &lt;code&gt;meteo(TA) - 273.15&lt;/code&gt;</help>
+			</parameter>
+			<parameter key="%::ARG#::FORMULA_ELSE" label="FORMULA_ELSE" type="text" lenient="true" size="large">
+				<help>Expression the parameter the filter runs on is evaluated to if the conditions below are &lt;i&gt;not&lt;/i&gt; met.</help>
+			</parameter>
+			<parameter type="helptext" wrap="true">
+				<help>Below you can enter conditions that must be met in order for the filter to take effect. If a condition is entered (this is optional), then the expression from above will only be evaluated if it is met. Otherwise, the filter does nothing.</help>
+			</parameter>
+			<parameter key="%::ARG#::CONNECTIVE" label="CONNECTIVE" type="alternative" optional="false" default="AND">
+				<o value="AND"><h>All of the following expressions must evaluate to true.</h></o>
+				<o value="OR"><h>At least one of the following expressions must evaluate to true.</h></o>
+				<help>Logical connective for the conditions below. Either all (&lt;code&gt;AND&lt;/code&gt;), or a single one (&lt;code&gt;OR&lt;/code&gt;) of the following expressions must evaluate to true.</help>
+			</parameter>
+			<parameter label="Add Condition:" type="horizontal" replicate="true">
+				<o><parameter key="%::ARG#::EXPRESSION#" label="Expression:" type="text" optional="false"/></o>
+				<o><parameter key="%::ARG#::OPERATOR#" label="must be" type="alternative" optional="false"><reference name="EQUALITY_OPERATORS_EXTENDED"/></parameter></o>
+				<o><parameter key="%::ARG#::COMPARE#" label="compared to:" type="text" optional="false"/></o>
+				<help>Enter 3 parts of the condition: Expression that will be compared, comparison operator, compare "expression" against &lt;code&gt;COMPARE&lt;/code&gt;.</help>
+			</parameter>
+			<parameter key="%::ARG#::ASSIGN" label="ASSIGN" type="text" size="small">
+				<help>Change parameter to store final result in.</help>
+			</parameter>
+			<parameter key="%::ARG#::SKIP_NODATA" label="SKIP_NODATA" caption="Do not calculate with nodata values" type="checkbox" default="FALSE">
+				<help>Any input nodata stays untouched. Checks for nodata in COMPARE will not be called.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterMaths.html&quot;&gt;This filter evaluates an arithmetic expression&lt;/a&gt; and filters the meteo parameters to the result. You can use a number of substitutions from your data and station meta data.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER STD_DEV -->
+	<parametergroup name="FILTER_STD_DEV">
+		<option caption="Standard deviation filter" value="STD_DEV" color="#136b84">
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterStdDev.html&quot;&gt;Standard deviation filter&lt;/a&gt;. Values outside of mean ± 2 std_dev are rejected.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER MAD -->
+	<parametergroup name="FILTER_MAD">
+		<option caption="Median Absolute Deviation" value="MAD" color="#136b84">
+			<parameter key="%::ARG#::MIN_SIGMA" label="MIN_SIGMA" type="number" format="decimal" precision="2">
+				<help>Prevents sigma_mad to get too small by forcing a minimum value</help>
+			</parameter>
+			<parameter key="%::ARG#::STRICT" type="checkbox" caption="Strict">
+				<help>Activate "strict" if the inability to define a window should invalidate the data (default: false)).</help>
+			</parameter>
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterMAD.html&quot;&gt;Median Absolute Deviation&lt;/a&gt;. Values outside of median ± 3 σ_MAD are rejected.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER TUKEY -->
+	<parametergroup name="FILTER_TUKEY">
+		<option caption="Tukey 53H Filter" value="TUKEY" color="#136b84">
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterTukey.html&quot;&gt;Tukey 53H method&lt;/a&gt;: A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation. See "Despiking Acoustic Doppler Velocimeter Data", Derek G. Goring and Vladimir, L. Nikora, Journal of Hydraulic Engineering, 128, 1, 2002. The deviation factor coeffecient is currently hard-coded as k=1.5.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER DESPIKING -->
+	<parametergroup name="FILTER_DESPIKING">
+		<option caption="Phase space despiking" value="DESPIKING" color="#136b84">
+			<parameter key="%::ARG#::METHOD" type="alternative" default="Goring" optional="false">
+				<option value="GORING"/>
+				<option value="MORI"/>
+				<help>either use the Goring or the Mori version of the algorithm</help>
+			</parameter>
+			<parameter key="%::ARG#::SENSITIVITY" label="Sensitivity:" type="number" format="decimal" min="0" precision="2">
+				<help>Scaling factor applied to the universal threshold, a larger value rejects more spikes (default: 1)</help>
+			</parameter>
+			<parameter key="%::ARG#::INTERPOL_DEG" label="Degree of interpolation:" type="number" format="integer+" default="3" notoggle="true">
+				<help>The parameter interpol_deg sets the degree of the fit for the replacement. 1 is linear, 2 is quadratic, ..., 0 means "off" (removed spikes will be nodata and can be resampled later via [Interpolations1D]). This is useful in rare cases where the cubic fit happens to produce an unwanted peak by itself. Default value is 3 (cubic fit) as proposed in the paper by Goring.</help>
+			</parameter>
+			<parameter key="%::ARG#::INTERPOL_PTS" label="Interpolation points:" type="number" format="integer+" notoggle="true">
+				<help>The number of points used for the fitting (replacement) of the spikes can be set via interpol_pts. Default is 24 (as proposed in the paper by Goring).</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterDespikingPS.html&quot;&gt;Despiking Filter&lt;/a&gt;. The first and second derivatives are used to plot each point in phase space. The points are enclosed within an ellipsoid and the points lying outside are removed, the gaps being interpolated with a quadratic fit. See &lt;i&gt;"Despiking Acoustic Doppler Velocimeter Data"&lt;/i&gt;, Derek G. Goring and Vladimir L. Nikora, Journal of Hydraulic Engineering, 128, 1, 2002 as well as &lt;i&gt;"Noise of Acoustic Doppler Velocimeter Data in Bubbly Flows"&lt;/i&gt;, Mori, N., Suzuki, T. and Kakuno, S., J. Eng. Mech., 133(1):122-125, 2007</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER NO_CHANGE -->
+	<parametergroup name="FILTER_NO_CHANGE">
+		<option caption="Remove periods with low variance" value="NO_CHANGE" color="#136b84">
+			<parameter key="%::ARG#::MAX_VARIANCE" label="MAX_VARIANCE" type="number" format="decimal" precision="2">
+				<help>You can set the maximum variance that is allowed with &lt;code&gt;MAX_VARIANCE&lt;/code&gt;. If not set, this value is 0.</help>
+			</parameter>
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterNoChange.html&quot;&gt;Low variance filter&lt;/a&gt;. This filter removes time periods showing insufficient changes (based on the variance).</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER TIME_CONSISTENCY -->
+	<parametergroup name="FILTER_TIME_CONSISTENCY">
+		<option caption="Remove points with high variance" value="TIME_CONSISTENCY" color="#136b84">
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterTimeconsistency.html&quot;&gt;Time consistency&lt;/a&gt;. This  compares the change between two points with 4 times the standard deviation to keep or remove each points. It is based on Zahumensky, Igor, &lt;i&gt;"Guidelines on Quality Control Procedures for Data from Automatic Weather Stations, World Meteorological Organisation"&lt;/i&gt;, 2004.</help>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER KALMAN -->
+	<parametergroup name="FILTER_KALMAN">
+		<option caption="Kalman Filter" value="KALMAN" color="#136b84">
+			<parameter key="%::ARG#::STATE_DYNAMICS" label="State dynamics:" type="text" optional="false" size="large">
+				<help>State transition matrix. For a constant state for example you can enter the unit matrix as simply &lt;code&gt;1&lt;/code&gt; to put ones on the diagonal, or specify the full matrix via &lt;code&gt;[1, 0, 0][0, 1, 0][0, 0, 1]&lt;/code&gt;.</help>
+			</parameter>
+			<parameter type="horizontal">
+				<option>
+					<parameter key="%::ARG#::INITIAL_STATE" label="Initial state:" type="number" format="decimal" default="1st"/>
+				</option>
+				<option>
+					<parameter key="%::ARG#::INITIAL_TRUST" label="Initial trust:" type="number" format="decimal"/>
+				</option>
+				<help>State of the system at T=0; trust in the initial state.</help>
+			</parameter>
+			<parameter key="%::ARG#::ADD_OBSERVABLES" label="Add observables:" type="text">
+				<help>Space-separated list of observables (meteo parameters) the filter uses in addition to the one it runs on.</help>
+			</parameter>
+			<parameter key="%::ARG#::OBSERVATION_RELATION" label="Observation relation matrix:" type="text">
+				<help>Linear model relating the observations to the states</help>
+			</parameter>
+			<parameter key="%::ARG#::OBSERVATION_COVARIANCE" label="Observation covariance matrix:" type="text">
+				<help>Observation noise covariance matrix (trust in the measurements)</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterKalman.html&quot;&gt;Kalman filter&lt;/a&gt; (please have a look at the documentation!)</help>
+			<frame caption="Expert settings" background_color="#bbbbbb" collapsed="true">
+				<parameter key="%::ARG#::CONTROL_SIGNAL" label="External control signal" type="text" size="large">
+					<help>External control signal acting on the states. Enter a scalar (vector is filled with it), a vector (applied to each time step), or a space-separated list of meteo parameters that hold the signal value at each time step.</help>
+				</parameter>
+				<parameter key="%::ARG#::OUT_ESTIMATED_ERROR" label="Error parameter names:" type="text" size="large">
+					<help>Parameter name(s) to output error evolution to</help>
+				</parameter>
+				<parameter key="%::ARG#::PROCESS_COVARIANCE_PARAMS" label="Process covariance parameter names:" type="text" size="large">
+					<help>List of parameter names to read Q from</help>
+				</parameter>
+				<parameter key="%::ARG#::OBSERVATION_COVARIANCE_PARAMS" label="Observation covariance parameter names:" type="text" size="large">
+					<help>List of parameter names to read R from</help>
+				</parameter>
+				<parameter key="%::ARG#::FILTER_ALL_PARAMETERS" caption="Filter all parameters" type="checkbox">
+					<help>Filter only the parameter the filter runs on, or all states?</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" type="horizontal">
+					<o><parameter key="@::OUT_ERROR_AS_STDDEV" caption="Output error as standard deviation" type="checkbox"/></o>
+					<o><parameter key="@::VERBOSE" caption="Verbose output" type="checkbox"/></o>
+					<help>If &lt;code&gt;OUT_ERROR_AS_STDDEV&lt;/code&gt; is set, take the square root of error parameters. If &lt;code&gt;VERBOSE&lt;/code&gt;, output warnings to the console.</help>
+				</parameter>
+			</frame>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+		</option>
+	</parametergroup>
+
+	<!-- FILTER PARTICLE -->
+	<parametergroup name="FILTER_PARTICLE">
+		<option caption="Particle Filter" value="PARTICLE" color="#136b84">
+			<parameter key="%::ARG#" label="" type="horizontal">
+				<option>
+					<frame caption="Model functions" collapsed="false">
+						<parameter type="grid">
+							<option row="1" column="1" colspan="2">
+								<parameter key="@::MODEL_FUNCTION" label="Model function:" type="text" lenient="true" optional="false">
+									<substitution find="kk|tt|x_km1" replace="1"/> <!-- substitutions for correct expression styling -->
+									<substitution find="meteo\(\w*\)" replace="1"/>
+								</parameter>
+							</option>
+							<option row="2" column="1" colspan="2">
+								<parameter key="@::MODEL_FIT_PARAM" label="Fit curve against parameter" type="alternative" editable="true">
+									<reference name="METEOPARAMETERS"/>
+								</parameter>
+							</option>
+							<option row="3" column="1" colspan="2">
+								<parameter key="@::OBS_MODEL_FUNCTION" label="Observation model Func:" type="text" default="xx" lenient="true" optional="false">
+									<substitution find="xx|kk|tt|x_km1" replace="1"/>
+									<substitution find="meteo\(\w*\)" replace="1"/>
+								</parameter>
+							</option>
+						</parameter>
+					</frame>
+				</option>
+				<option>
+					<frame caption="Model function parameters" collapsed="true">
+						<parameter type="grid">
+							<option row="1" column="1" colspan="2">
+								<parameter key="@::INITIAL_STATE" label="Initial state:" type="number" />
+							</option>
+							<option row="2" column="1">
+								<parameter key="@::ESTIMATION_MEASURE" label="Estimation measure:" type="alternative" optional="false">
+									<option value="MEAN" default="true"/>
+									<option value="MAX_WEIGHT"/>
+								</parameter>
+							</option>
+							<option row="3" column="1">
+								<parameter key="@::NO_OF_PARTICLES" label="No of particles:" type="number" format="integer+" default="500" notoggle="true"/>
+							</option>
+						</parameter>
+					</frame>
+				</option>
+				<option>
+					<parameter type="helptext">
+						<help>The Particle filter needs a model function, which you must provide.&lt;br&gt;Alternatively however, you may set a meteo parameter from your data set&lt;br&gt;which will be interpolated onto a curve.</help>
+					</parameter>
+				</option>
+			</parameter>
+			<frame caption="Random number generators" collapsed="true">
+				<parameter type="alternative">
+					<option value="Model noise RNG settings">
+						<parameter key="%::ARG#::MODEL_RNG_ALGORITHM" label="RNG algorithm model:" type="alternative" default="XOR" optional="false">
+							<reference name="RNG_ALGORITHMS"/>
+							<help>Choose the random number generator algorithm for system/process noise. For details about these settings view the online help for &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1RandomNumberGenerator.html&quot;&gt;MeteoIO's random number generator&lt;/a&gt;.</help>
+						</parameter>
+						<parameter key="%::ARG#::MODEL_RNG_DISTRIBUTION" label="RNG distribution model:" type="alternative" default="GAUSS" optional="false">
+							<reference name="RNG_DISTRIBUTIONS"/>
+							<help>Distribution function for the model RNG. This is your process noise distribution.</help>
+						</parameter>
+						<parameter key="%::ARG#::MODEL_RNG_PARAMETERS" label="RNG parameters model:" type="text" size="small">
+							<help>Enter model RNG distribution parameters as a space-separated list. For e. g. a Gauss distribution you can set the mean and standard deviation. Then, your system model is assumed to be noisy within this standard deviation.</help>
+						</parameter>
+						<parameter key="%::ARG#::MODEL_RNG_SEED" label="RNG seed model:" type="text" size="small">
+							<help>Enter space-separated list of numbers to seed the RNG with. The number count must match the one the selected RNG expects. This is useful to reproduce experiments.</help>
+						</parameter>
+					</option>
+					<option value="Prior distribution RNG settings">
+						<parameter key="%::ARG#::PRIOR_RNG_ALGORITHM" label="RNG algorithm prior:" type="alternative" default="XOR" optional="false">
+							<reference name="RNG_ALGORITHMS"/>
+							<help>Prior distribution RNG algorithm.</help>
+						</parameter>
+						<parameter key="%::ARG#::PRIOR_RNG_DISTRIBUTION" label="RNG distribution prior:" type="alternative" default="GAUSS" optional="false">
+							<reference name="RNG_DISTRIBUTIONS"/>
+							<help>Distribution function for the prior RNG.</help>
+						</parameter>
+						<parameter key="%::ARG#::PRIOR_RNG_PARAMETERS" label="RNG parameters prior:" type="text" size="small">
+							<help>Prior RNG distribution parameters.</help>
+						</parameter>
+						<parameter key="%::ARG#::PRIOR_RNG_SEED" label="RNG seed prior:" type="text" size="small">
+							<help>Prior RNG seeds.</help>
+						</parameter>
+					</option>
+					<option value="Observation noise RNG settings">
+						<parameter key="%::ARG#::OBS_RNG_ALGORITHM" label="RNG algorithm obs.:" type="alternative" default="XOR" optional="false">
+							<reference name="RNG_ALGORITHMS"/>
+							<help>Observation noise RNG algorithm.</help>
+						</parameter>
+						<parameter key="%::ARG#::OBS_RNG_DISTRIBUTION" label="RNG distribution obs.:" type="alternative" default="gauss" optional="false">
+							<reference name="RNG_DISTRIBUTIONS"/>
+							<help>Your measurements are assumed to be faulty according to this error distribution. For natural phenomena, a normal distribution is always a good start. If you know how your sensor reacts to external changes you may want to refine this choice.</help>
+						</parameter>
+						<option row="3" column="3">
+							<parameter key="%::ARG#::OBS_RNG_PARAMETERS" label="RNG parameters obs.:" type="text" size="small">
+								<help>Observation RNG distribution parameters.</help>
+							</parameter>
+						</option>
+						<option row="3" column="4">
+							<parameter key="%::ARG#::OBS_RNG_SEED" label="RNG seed obs.:" type="text" size="small">
+								<help>Observation RNG seeds.</help>
+							</parameter>
+						</option>
+					</option>
+					<option value="Resampling RNG">
+						<parameter key="%::ARG#::RESAMPLE_RNG_SEED" label="RNG resampling seed:" type="text" size="small">
+							<help>The resampling RNG setting does not have a physical meaning connected to the apparatus but rather it is an internal generator used for particle path resampling.&lt;br&gt;It can be set for reproducability of simulations.</help>
+						</parameter>
+					</option>
+					<help>Set the various random number generators' properties.</help>
+				</parameter>
+			</frame>
+			<frame caption="Expert settings" background_color="#fbfbfb" collapsed="true">
+				<parameter key="@::PATH_RESAMPLING" caption="Perform path resampling" type="checkbox" default="TRUE">
+					<help>Perform path resampling? This has its drawbacks but is usually necessary.</help>
+				</parameter>
+				<parameter key="@::RESAMPLING_PERCENTILE" label="Resampling percentile:" type="number" format="decimal" default="0.5" precision="2">
+					<help>A simple heuristic on when path resampling is turned on (has nothing to do with meteo data resampling).</help>
+				</parameter>
+				<parameter key="@::VERBOSE" caption="Verbose output" type="checkbox">
+					<help>Output some filter status messages to the console.</help>
+				</parameter>
+				<parameter key="%::ARG#" type="grid">
+					<option row="2" column="1">
+						<parameter key="@::DUMP_PARTICLES_FILE" label="Dump particle paths:" type="file" mode="output"/>
+					</option>
+					<option row="2" column="2">
+						<parameter key="@::DUMP_INTERNAL_STATES_FILE" label="Dump internal states:" type="file" mode="output"/>
+					</option>
+					<option row="2" column="3">
+						<parameter key="@::INPUT_INTERNAL_STATES_FILE" label="Input internal states:" type="file" mode="output"/>
+					</option>
+				</parameter>
+			</frame>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterParticle.html&quot;&gt;Particle filter&lt;/a&gt;, please read the documentation!</help>
+		</option>
+	</parametergroup> <!-- end particle filter -->
+
+	<!-- DATA TRANSFORMATION SUPPR -->
+	<parametergroup name="FILTER_SUPPR">
+		<option caption="Suppress data" value="SUPPR" color="#62a388">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="All"><help>suppress all values for the selected parameter</help></option>
+				<option value="Frac">
+					<parameter key="%::ARG#::FRAC" label="Fraction:" type="number" format="decimal" min="0" max="1" precision="2" optional="false"><help>This suppresses a given fraction of the data for the given meteorological parameter</help></parameter>
+					<parameter key="%::ARG#::WIDTH" label="Gap width:" type="number" format="integer+" unit="s" optional="true"><help>If set, width (in seconds) of each of the data gaps to create (otherwise individual data points are deleted)</help></parameter>
+				</option>
+				<option value="File">
+					<parameter key="%::ARG#::FILE" label="supressions file:" type="file" mode="input" optional="false"><help>suppress values for the selected parameter at the timesteps and station IDs as given in the provided file</help></parameter>
+				</option>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1FilterSuppr.html&quot;&gt;This suppresses&lt;/a&gt; either a given fraction of the data or values for the selected parameter at the timesteps and station IDs as given in the provided file, or all values for this parameter.</help>
+		</option>
+	</parametergroup>
+
+	<!-- DATA TRANSFORMATION ADD -->
+	<parametergroup name="PROC_ADD">
+		<option caption="Add offset" value="ADD" color="#62a388">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="Cst">
+					<parameter key="%::ARG#::CST" label="CST" type="number" format="decimal" precision="6" optional="false"><help>Add a given offset to the data.</help></parameter>
+				</option>
+				<option value="File">
+					<parameter key="%::ARG#::PERIOD" label="Period:" type="alternative" optional="false">
+						<option caption="Hourly" value="HOURLY"/>
+						<option caption="Daily" value="DAILY"/>
+						<option caption="Monthly" value="MONTHLY"/>
+					</parameter>
+					<parameter key="%::ARG#::CORRECTIONS" label="Corrections file:" type="file" mode="input" optional="false"/>
+					<parameter key="%::ARG#::COLUMN" label="Column:" type="number" format="integer+" default="2" min="2" notoggle="true">
+						<help>This adds to the data an hourly/daily/monthly offset as read from a specified file (with absolute or relative path).</help>
+					</parameter>
+				</option>
+				<option value="Noise">
+					<parameter key="%::ARG#::DISTRIBUTION" label="Distribution:" type="alternative" optional="false">
+						<option value="uniform"/>
+						<option value="normal"/>
+					</parameter>
+					<parameter key="%::ARG#::RANGE" label="Range:" type="number" format="decimal" precision="6" default="5.0" optional="false">
+						<help>Add a noise signal to the input. The range is the scaling factor to apply: how many time the standard deviation for a normaly distributed noise or the amplitude (in %) around the original signal for an uniformly distributed noise.</help>
+					</parameter>
+				</option>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcAdd.html&quot;&gt;Add a given quantity&lt;/a&gt; to the data.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+		</option>
+	</parametergroup>
+
+	<!-- DATA TRANSFORMATION MULT -->
+	<parametergroup name="PROC_MULT">
+		<option caption="Multiply" value="MULT" color="#62a388">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="Cst">
+					<parameter key="%::ARG#::CST" label="CST" type="number" format="decimal" precision="6" default="0" optional="false"><help>This multiplies the data by a given factor.</help></parameter>
+				</option>
+				<option value="File">
+					<parameter key="%::ARG#::PERIOD" label="Period:" type="alternative" optional="false">
+						<option caption="Hourly" value="HOURLY"/>
+						<option caption="Daily" value="DAILY"/>
+						<option caption="Monthly" value="MONTHL>"/>
+						</parameter>
+						<parameter key="%::ARG#::CORRECTIONS" label="Corrections file:" type="file" mode="input" optional="false"/>
+						<parameter key="%::ARG#::COLUMN" label="Column:" type="number" format="integer+" default="2" min="2" notoggle="true">
+							<help>This multiplies the data by an hourly/daily/monthly factor as read from a specified file (with absolute or relative path).</help>
+						</parameter>
+				</option>
+				<option value="Noise">
+					<parameter key="%::ARG#::DISTRIBUTION" label="Distribution:" type="alternative" optional="false">
+						<option value="uniform"/>
+						<option value="normal"/>
+					</parameter>
+					<parameter key="%::ARG#::RANGE" label="Range:" type="number" format="decimal" precision="6" default="5.0" optional="false">
+						<help>Multiply the input by a noise signal. The range (interpreted as a fraction) is the scaling factor to apply: how many time the standard deviation for a normaly distributed noise or the amplitude (in %) around the original signal for an uniformly distributed noise.</help>
+					</parameter>
+				</option>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcAdd.html&quot;&gt;Multiply&lt;/a&gt; the data by a given quantity.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+		</option>
+	</parametergroup>
+	
+	<!-- DATA TRANSFORMATION SHIFT -->
+	<parametergroup name="PROC_SHIFT">
+		<option caption="Time shift" value="SHIFT" color="#62a388">
+			<parameter key="%::ARG#::EXTRACT_OFFSETS" type="alternative" default="FALSE">
+				<option value="TRUE">
+					<parameter key="%::ARG#::OFFSETS_FILE" type="file" mode="output" optional="false"/>
+					<parameter key="%::ARG#::REF_PARAM" type="text" optional="false" size="small"><help>Parameter to use as reference</help></parameter>
+					<parameter key="%::ARG#::SAMPLING_RATE" type="number" format="integer" optional="true">
+						<help>The sampling rate to use for the data (default: it will be transparently extracted from the data itself)</help>
+					</parameter>
+					<parameter key="%::ARG#::WIDTH" type="number" format="integer" optional="true">
+						<help>data window width (in seconds) over which to compute each correlation coefficient (default: 2 days);</help>
+					</parameter>
+					<parameter key="%::ARG#::OFFSET_RANGE" type="number" format="integer" optional="true">
+						<help>range of allowed variation (in seconds) for the offset when searching for the maximum correlation (default: 1 day, so looking for a maximum between 1/2 a day before and after the current point);</help>
+					</parameter>
+				</option>
+				<option value="FALSE">
+					<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" default="CST">
+						<option value="CST">
+							<parameter key="%::ARG#::CST" type="number"  format="decimal" optional="false"><help>Shift to apply in seconds</help></parameter>
+						</option>
+						<option value="STEPWISE">
+							<parameter key="%::ARG#::OFFSETS_FILE" type="file" mode="input" optional="false"/>
+							<parameter key="TIME_ZONE" type="number" format="decimal" sign="true" min="-12" max="14" wrap="true" notoggle="true" optional="false"><help>The time zone of the provided offsets</help></parameter>
+						</option>
+					</parameter>
+				</option>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcShift.html&quot;&gt;Shift&lt;/a&gt; the time base of a given parameter.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+		</option>
+	</parametergroup>
+
+	<!-- DATA TRANSFORMATION QUANTILE MAPPING -->
+	<parametergroup name="PROC_QUANTILEMAPPING">
+		<option caption="Quantile Mapping" value="QM" color="#62a388">
+			<parameter key="%::ARG#" label="Quantile Mapping" type="horizontal">
+				<option>
+					<parameter key="@::TYPE" label="Type:" type="alternative" optional="false">
+						<o value="ADD"/>
+						<o value="MULT"/>
+					</parameter>
+				</option>
+				<option>
+					<parameter key="@::PERIOD" label="Period:" type="alternative">
+						<o value="YEARLY"/>
+						<o value="MONTHLY"/>
+						<o value="WEEKLY"/>
+						<o value="DAILY"/>
+					</parameter>
+				</option>
+				<option>
+					<parameter key="@::CORRECTIONS" label="Corrections:" type="file" mode="input"/>
+				</option>
+				<option>
+					<parameter key="@::WRITE_QUANTILES" label="Write out quantiles:" type="alternative" default="FALSE">
+						<option value="TRUE"/>
+						<option value="FALSE"/>
+					</parameter>
+				</option>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcQuantileMapping.html&quot;&gt;Quantile Mapping&lt;/a&gt; Correction</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC AGGREGATE -->
+	<parametergroup name="PROC_AGGREGATE">
+		<option caption="Aggregate" value="AGGREGATE" color="#14691d">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="MIN"/>
+				<option value="MAX"/>
+				<option value="MEAN"/>
+				<option value="MEDIAN"/>
+				<option value="STEP_SUM"/>
+				<option value="WIND_AVG"/>
+				<help>Aggregation type</help>
+			</parameter>
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcAggregate.html&quot;&gt;Aggregate&lt;/a&gt; the data from a given time window.</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC DEACCUMULATE -->
+	<parametergroup name="PROC_DEACCUMULATE">
+		<option caption="DeAccumulate" value="DEACCUMULATE" color="#14691d">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcDeAccumulate.html&quot;&gt;Convert accumulated values back to instantaneous values&lt;/a&gt; (for example, accumulated solar radiation from ECMWF). This filter recomputes the instantaneous values by considering that once a value gets smaller than its preceding values, the end of the accumulation period has been reached, so the value is kept as is and the process starts over again (thus this assumes that they are no negative values).</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC EXP_SMOOTHING -->
+	<parametergroup name="PROC_EXP_SMOOTHING">
+		<option caption="Exponential Smoothing" value="EXP_SMOOTHING" color="#14691d">
+			<reference name="SOFT_CENTER_MIN"/>
+			<parameter key="%::ARG#::ALPHA" label="Alpha:" type="number" format="decimal" default="0.8" precision="2" min="0" max="1"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcExpSmoothing.html&quot;&gt;Exponential smoothing&lt;/a&gt; processing, exponential moving average s_0 = x_0 s_n = alpha*x_(t-1) + (1-alpha)*s_t-1</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC WMA_SMOOTHING -->
+	<parametergroup name="PROC_WMA_SMOOTHING">
+		<option caption="Weighted Moving Average Smoothing" value="WMA_SMOOTHING" color="#14691d">
+			<reference name="SOFT_CENTER_MIN"/>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcWMASmoothing.html&quot;&gt;Weighted moving average smoothing&lt;/a&gt; such as: WMA = (1*X1 + 2*X2 + ... + n*Xn) / sum_of_weights</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC IIR -->
+	<parametergroup name="PROC_IIR">
+		<option caption="IIR HP or LP filter" value="IIR" color="#14691d">
+			<parameter key="%::ARG#::FREQ_RESPONSE" label="Frequency response:" type="alternative" optional="false">
+				<option value="LP"/>
+				<option value="HP"/>
+				<help>Either choose Low Pass (LP) or High Pass (HP).</help>
+			</parameter>
+			<parameter key="%::ARG#::CUTOFF" label="Cutoff:" type="number" format="decimal" precision="0" min="0" default="${{3*3600}}" unit="s" optional="false">
+				<help>The cutoff period is defined as the period (in seconds) at which there is a -3dB gain.</help>
+			</parameter>
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" default="CRITICALLY_DAMPED">
+				<option value="CRITICALLY_DAMPED"/>
+				<option value="BUTTERWORTH"/>
+				<option value="BESSEL"/>
+				<help>Choose the type of filter (see documentation for more).</help>
+			</parameter>
+			<parameter key="%::ARG#::SINGLE_PASS" label="SINGLE_PASS" caption="Force single pass" type="checkbox" default="FALSE">
+				<help>Normally, the phase is removed by bidirectional filtering, ie. running the filter twice, first backward and then forward (this also squares the amplitude response).</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcIIR.html&quot;&gt;This Infinite Impulse Response (IIR)&lt;/a&gt;, two poles filter either acts as a Low Pass or High Pass filter. &lt;a href=&quot;http://www.dspguide.com/ch19/4.htm&quot;&gt;More information&lt;/a&gt;.</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC UNDERCATCH_WMO -->
+	<parametergroup name="PROC_UNDERCATCH_WMO">
+		<option caption="WMO Undercatch Filter" value="UNDERCATCH_WMO" color="#459a4a">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="Cst">
+					<parameter key="%::ARG#::SNOW" label="SNOW" type="number" format="decimal" precision="2" optional="false"/>
+					<parameter key="%::ARG#::MIXED" label="MIXED" type="number" format="decimal" precision="2" optional="false"/>
+					<parameter key="%::ARG#::T_SNOW" label="T_SNOW" type="number" format="decimal" precision="2" unit="°C">
+						<help>Snow temperature threshold, default -2 °C</help>
+					</parameter>
+					<parameter key="%::ARG#::T_RAIN" label="T_RAIN" type="number" format="decimal" precision="2" unit="°C">
+						<help>Rain temperature threshold, default +2 °C</help>
+					</parameter>
+					<help>this applies a constant factor to the precipitation (the solid and mixed precipitation factor must be provided). The snow and rain temperature thresholds can optionally be provided</help>
+				</option>
+				<o value="Nipher"/>
+				<o value="Tretyakov"/>
+				<o value="US8sh"/>
+				<o value="US8unsh"/>
+				<o value="RT3_Jp"/>
+				<o value="Cspg"/>
+				<o value="Geonorsh"/>
+				<o value="Hellmann"/>
+				<o value="Hellmannsh"/>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcUndercatch__WMO.html&quot;&gt;WMO undercatch correction&lt;/a&gt;. This implements the standard methods for precipitation correction as described in &lt;i&gt;"WMO Solid Precipitation Measurement Intercomparison"&lt;/i&gt;, B. Goodison, P. Louie and D. Yang, 872, 1998 as well as the overview given by &lt;i&gt;"Literature Study on the Correction of Precipitation Measurements"&lt;/i&gt;, Annette Wagner, 2009. The correction parameters for the shielded Hellmann gauge (German version) are from &lt;i&gt;"Wind-induced Precipitation Undercatch of the Hellmann Gauges"&lt;/i&gt;, Daqing Yang et al, Nordic Hydrology, 30, 1999, pp 57-80.</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC UNDERCATCH_FORLAND -->
+	<parametergroup name="PROC_UNDERCATCH_FORLAND">
+		<option caption="Forland Undercatch Filter" value="UNDERCATCH_FORLAND" color="#459a4a">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="Hellmann"/>
+				<option value="Swedish"/>
+				<option value="Norvegian"/>
+				<option value="Finnish"/>
+				<option value="Treyakov"/>
+				<option value="Belfort"/>
+				<option value="Geonor"/>
+				<option value="wfj"/>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcUndercatch__Forland.html&quot;&gt;Forland undercatch correction&lt;/a&gt;. This implements the standard methods for precipitation correction as described in &lt;i&gt;"Manual for operational correction of Nordic precipitation data"&lt;/i&gt;, E. Førland, P. Allerup, B. Dahlström, E. Elomaa, T. Jónsson, H. Madsen, P. Perälä Rissanen, H. Vedin, and F. Vejen, 1996, Tech. Rep. 24/96, Norske Meteorologiske Institutt. Some specific coefficients have been calculated by N. Wever for the Davos Weisflujoch experimental field ("wfj" gauge choice).</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC UNDERCATCH_HAMON -->
+	<parametergroup name="PROC_UNDERCATCH_HAMON">
+		<option caption="Hamon Undercatch Filter" value="UNDERCATCH_HAMON" color="#459a4a">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="Sh"/>
+				<option value="UnSh"/>
+				<option value="Hellmannsh"/>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcUndercatch__Hamon.html&quot;&gt;Hamon undercatch corection&lt;/a&gt;. This implements the standard methods for precipitation correction as described in &lt;i&gt;"Computing actual precipitation"&lt;/i&gt;, W. R. Hamon, in Distribution of precipitation in mountaineous areas, Geilo symposium 1, pp 159-174, World Meteorological Organization, Geneva, 1972.</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC UNVENTILATED_T -->
+	<parametergroup name="PROC_UNVENTILATED_T">
+		<option caption="Unventilated temperature sensor" value="UNVENTILATED_T" color="#459a4a">
+			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="false">
+				<option value="Suppr">
+					<parameter key="%::ARG#::THRESH_VW" label="THRESH_VW" type="number" format="decimal" precision="1" unit="m/s" optional="false">
+						<help>Wind velocity threshold in m/s.</help>
+					</parameter>
+					<help>Delete all data below a given wind velocity threshold.</help>
+				</option>
+				<option value="Huwald">
+					<parameter key="%::ARG#::SOIL_ALB" label="SOIL_ALB" type="number" format="decimal" precision="2" min="0" max="1" optional="false">
+						<help>Soil albedo to use when there is no snow on the ground.</help>
+					</parameter>
+					<help>This implements the correction described in (Reina Nakamura, 2005) with an albedo dependency as introduced in (Huwald, 2009)</help>
+				</option>
+				<option value="Nakamura">
+					<parameter key="%::ARG#::SOIL_ALB" label="SOIL_ALB" type="number" format="decimal" precision="2" min="0" max="1" optional="false">
+						<help>Soil albedo to use when there is no snow on the ground.</help>
+					</parameter>
+					<help>This implements the correction described in (Reina Nakamura, 2005)</help>
+				</option>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>Corrects for &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcUnventilatedT.html&quot;&gt;unventillated temperature sensors&lt;/a&gt;</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC PSUM_DISTRIBUTE -->
+	<parametergroup name="PROC_PSUM_DISTRIBUTE">
+		<option caption="Distribute precipitation" value="PSUM_DISTRIBUTE" color="#459a4a">
+			<parameter key="%::ARG#::MEAS_PERIOD" label="Measurement period:" type="number" format="integer+" default="${{24*3600}}" unit="s" optional="false">
+				<help>Measured accumulation period in seconds.</help>
+			</parameter>
+			<parameter key="%::ARG#::SOFT" caption="SOFT enabled" type="checkbox" default="FALSE">
+				<help>If set to TRUE, all missing data will be replaced by zeroes, otherwise nodata will propagate.</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcPSUMDistribute.html&quot;&gt;This distributes accumulated precipitation&lt;/a&gt; by assuming that the precipitation has been measured on intervals greater than the sampling interval of the data file (for example, 24 hours accumulations written once per day in an hourly file, the other timesteps receiving nodata). Please be aware that the accumulation has to be written on the last timestep of the accumulation period.</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC SHADE -->
+	<parametergroup name="PROC_SHADE">
+		<option caption="Shading" value="SHADE" color="#459a4a">
+			<parameter key="%::ARG#::INFILE" label="Horizon input file" type="file" mode="input">
+				<help>Optional file containing the horizons to use to compute the shading</help>
+			</parameter>
+			<parameter key="%::ARG#::OUTFILE" label="Horizon output file" type="file" mode="output">
+				<help>Optional file to write the horizons used to compute the shading to</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcShade.html&quot;&gt;Apply shading to radiation measurements&lt;/a&gt;. The shading from the surrounding is either computed from the DEM (provided with the DEM plugin) or from a provided horizon file. If an output file is provided, the horizons will be written back to this output file (if at least one has been computed from the DEM).</help>
+		</option>
+	</parametergroup>
+	
+	<!-- PROC REDUCE_PRESSURE -->
+	<parametergroup name="PROC_REDUCE_PRESSURE">
+		<option caption="Reduce pressure to sea level" value="REDUCE_PRESSURE" color="#459a4a">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcReducePressure.html&quot;&gt;reduce pressure&lt;/a&gt;. This converts local air pressure to sea level pressure.</help>
+		</option>
+	</parametergroup>
+
+	<!-- PROC RHWATERTOICE -->
+	<parametergroup name="PROC_RHWATERTOICE">
+		<option caption="Relative humidity over water correction" value="RHWATERTOICE" color="#459a4a">
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcRHWaterToIce.html&quot;&gt;Relative humidity over water or ice&lt;/a&gt;. This corrects relative humidity over water for the full temperature range to relative humidity over ice when the air temperature is below the triple point and over water otherwise. For example useful for weather stations that report relative humidity with respect to water for the full temperature range.</help>
+		</option>
+	</parametergroup>
+	
+	<!-- PROC TRANSFORMWINDVECTOR -->
+	<parametergroup name="PROC_TRANSFORMWINDVECTOR">
+		<option caption="Wind reprojection" value="TRANSFORMWINDVECTOR" color="#459a4a">
+			<parameter key="%::ARG#::COORDPARAM" label="epsg:" type="text" size="small" validate="[0-9]+">
+				<help>Target EPSG code for transformation (default: COORDPARAM from the [Input] section)</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ProcTransformWindVector.html&quot;&gt;Project wind direction, and/or wind speed components, from WGS84 to a PROJ4 supported coordinate system&lt;/a&gt;, defined by an EPSG code (requires PROJ4). It assumes the wind direction and/or the U and V wind speed components are defined in WGS84 (i.e, north/south is parallel to longitude, and east/west is parallel to latitude). After transformation to a PROJ4 supported coordinate system defined by an EPSG code, the wind direction is defined such that north/south is parallel to northing, and east/west is parallel to easting.</help>
+		</option>
+	</parametergroup>
+	
+	<!-- PROJECT_RADIATION -->
+	<parametergroup name="PROJECT_RADIATION">
+		<option caption="Project radiation" value="PROJECT_RADIATION" color="#459a4a">
+			<parameter key="%::ARG#" label="Source" type="horizontal">
+				<o><parameter key="@::SRC_ANGLE" label="angle:" type="number" format="integer+" min="0" max="90" unit="°"/></o>
+				<o><parameter key="@::SRC_AZI" label="azimuth:" type="number" format="integer+" min="0" max="360" unit="°"/></o>
+				<help>Leave these fields blank to default to 0 and 0, respectively (ie horizontal)</help>
+			</parameter>
+			<parameter key="%::ARG#" label="Destination" type="horizontal">
+				<o><parameter key="@::DEST_ANGLE" label="angle:" type="number" format="integer+" min="0" max="90" unit="°"/></o>
+				<o><parameter key="@::DEST_AZI" label="azimuth:" type="number" format="integer+" min="0" max="360" unit="°"/></o>
+				<help>Leave these fields blank to default to 0 and 0, respectively (ie horizontal)</help>
+			</parameter>
+			<reference name="ID_RESTRICT"/>
+			<reference name="HEIGHT_RESTRICT"/>
+			<reference name="TIME_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1RadProj.html&quot;&gt;Reproject&lt;/a&gt; short wave radiation measurements, for example to generate horizontal radiation values from measurements performed parallel to the slope or to generate slope-parallel values from horizontal measurements. Please provide either source properties, or destination properties or both.</help>
+		</option>
+	</parametergroup>
+
+	<!-- SHORTCUTS -->
+	<parametergroup name="SOFT_CENTER_MIN">
+		<parameter key="%::ARG#" label="" type="horizontal">
+			<option>
+				<parameter key="@::CENTERING" label="Centering: " type="alternative">
+					<o value="left"/>
+					<o value="center"/>
+					<o value="right"/>
+				</parameter>
+			</option>
+			<o><parameter key="@::MIN_PTS" type="number" label="No of points:" format="integer" min="1" default="1" notoggle="true"/></o>
+			<o><parameter key="@::MIN_SPAN" type="number" label="Duration:" format="integer+" default="${{30*60}}" unit="s"/></o>
+			<help>The window position maybe left, center or right. Minimal number of points in data window and minimal time interval spanning the window (seconds) are required.</help>
+		</parameter>
+		<parameter key="%::ARG#" label="" type="horizontal">
+			<option>
+				<parameter key="@::SOFT" type="checkbox" caption="Soft"/>
+			</option>
+			<help>Activate "soft" if the window position is allowed to be adjusted.</help>
+		</parameter>
+	</parametergroup>
+	
+	<parametergroup name="ID_RESTRICT">
+		<parameter key="%::ARG#" label="Stations restrictions" italic="true" type="horizontal">
+			<o><parameter key="@::EXCLUDE" label="do not run on:" type="text"/></o>
+			<o><parameter key="@::ONLY" label="only run on:" type="text"/></o>
+			<help>Restrict this filter to some space-delimited list of station IDs</help>
+		</parameter>
+	</parametergroup>
+	
+	<parametergroup name="TIME_ID_RESTRICT">
+		<parameter key="TIME::ARG#" label="Stations restrictions" italic="true" type="horizontal">
+			<o><parameter key="@::EXCLUDE" label="do not run on:" type="text"/></o>
+			<o><parameter key="@::ONLY" label="only run on:" type="text"/></o>
+			<help>Restrict this filter to some space-delimited list of station IDs</help>
+		</parameter>
+	</parametergroup>
+	
+	<parametergroup name="TIME_RESTRICT">
+		<parameter key="%::ARG#" label="Time restrictions" italic="true" type="horizontal">
+			<o><parameter key="@::WHEN" label="only run in:" type="text" size="large" validate="^(?:\d{4}\-[0-1]\d\-[0-3]\d(?:T[0-2]\d:[0-5]\d(:[0-5]\d)?)?(?:\s\-\s\d{4}\-[0-1]\d\-[0-3]\d(?:T[0-2]\d:[0-5]\d(:[0-5]\d)?)?)?(?:\s?,\s)?)+$"/></o>
+			<help>Restrict this filter to some comma-delimited list of time ranges (defined as ISO formatted timestamps separated by ' - ') such as &lt;i&gt;2020-07-01 - 2020-07-11T05:50&lt;/i&gt; or individual time points (also ISO formatted timestamps)</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="HEIGHT_RESTRICT">
+		<parameter key="%::ARG#" label="Height restrictions" italic="true" type="horizontal">
+			<o><parameter key="@::AT_HEIGHTS" label="only run on heights:" type="text"/></o>
+			<o><parameter key="@::EXCLUDE_HEIGHTS" label="do not run on heights:" type="text"/></o>
+			<help>Restrict this filter to some space-delimited list of heights, or IDs for paramters given as PAR@10 or similar. The default parametr TA can be listed with "NO" as height. Allowed is either no or two decimals (1|1.50)</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="RNG_ALGORITHMS">
+		<option value="XOR"/>
+		<option value="PCG"/>
+		<option value="MTW"/>
+	</parametergroup>
+
+	<parametergroup name="RNG_DISTRIBUTIONS">
+		<option value="GAUSS"/>
+	</parametergroup>
+
+	<!-- TIME FILTER SUPPR -->
+	<parametergroup name="TIMEFILTER_SUPPR">
+		<option caption="Suppress" value="SUPPR">
+			<parameter key="TIME::ARG#::TYPE" type="alternative" default="CLEANUP">
+				<option value="CLEANUP"/>
+				<option value="BYDATES">
+					<parameter key="TIME::ARG#::FILE" label="Supression file:" type="file" mode="input" optional="false"><help>provide a file that contains a list of station ID's and timesteps that should be suppressed</help></parameter>
+				</option>
+				<option value="FRAC">
+					<parameter key="TIME::ARG#::FRAC" label="Fraction:" type="number" format="decimal" precision="2" min="0" max="1"  optional="false"><help>fraction of the data to suppress for all meteorological parameters</help></parameter>
+					<parameter key="TIME::ARG#::WIDTH" label="Gap width:" type="number" format="integer+" unit="s" optional="true"><help>If set, width (in seconds) of each of the data gaps to create (otherwise individual data points are deleted)</help></parameter>
+				</option>
+				<help>define the strategy to delete timesteps</help>
+			</parameter>
+			<reference name="TIME_ID_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1TimeSuppr.html&quot;&gt;Filter to suppress&lt;/a&gt; a given fraction of the data for all meteorological parameters (only duplictaes / out of order timestamps, by dates or at random).</help>
+		</option>
+	</parametergroup>
+
+	<!-- TIME FILTER SHIFT -->
+	<parametergroup name="TIMEFILTER_SHIFT">
+		<option caption="Shift" value="SHIFT">
+			<parameter key="TIME::ARG#::TYPE" label="Type" type="alternative" default="OFFSET">
+				<option value="OFFSET">
+					<parameter key="TIME::ARG#::OFFSET" label="Offset" type="number" format="decimal" unit="s" optional="false"><help>Offset (in seconds) to add to each timestamp</help></parameter>
+				</option>
+				<option value="CORRECTIONS_FILE">
+					<parameter key="TIME::ARG#::CORRECTIONS" label="Corrections file:" type="file" mode="input" optional="false"><help>File containing the correction specifications: when, which offset has to be added to the timestamps</help></parameter>
+				</option>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1TimeShift.html&quot;&gt;Time shift filter&lt;/a&gt; that can be used for example to correct the data for Daylight Saving Time). Choose either a fixed offset or some time-varying corrections.</help>
+			</parameter>
+			<reference name="TIME_ID_RESTRICT"/>
+		</option>
+	</parametergroup>
+
+	<!-- TIME FILTER SORT -->
+	<parametergroup name="TIMEFILTER_SORT">
+		<option caption="Time sort" value="SORT">
+			<reference name="TIME_ID_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1TimeSort.html&quot;&gt;Time sorting filter&lt;/a&gt; to sort the data in chronological order.</help>
+		</option>
+	</parametergroup>
+
+	<!-- TIME FILTER TIMELOOP -->
+	<parametergroup name="TIMEFILTER_TIMELOOP">
+		<option caption="Time Loop" value="TIMELOOP">
+			<parameter key="TIME::ARG#::REF_START" label="REF_START" type="datetime" optional="false"><help>Start of the repeated period</help></parameter>
+			<parameter key="TIME::ARG#::REF_END" label="REF_END" type="datetime" optional="false"><help>End of the repeated period</help></parameter>
+			<parameter key="TIME::ARG#::MATCH_DATE" label="MATCH_DATE" type="datetime" optional="false"><help>Date in the output data that matches the start date of the repeated period</help></parameter>
+			<reference name="TIME_ID_RESTRICT"/>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1TimeLoop.html&quot;&gt;Looping over timestamps&lt;/a&gt; in order to repeat the data from a given time period (of course while adjusting the timestamp). This can be used for example for model spin-up.</help>
+		</option>
+	</parametergroup>
+
+</inishell_include>
