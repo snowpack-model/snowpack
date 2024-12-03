@@ -114,7 +114,7 @@ namespace mio {
  * is needed to make the libSnowpack usable by an end user as a standalone application, here called "snowpack-app"). Therefore the same components
  * can be used in other models (the same engine might be used in several cars while the same bodywork might contain different engines).
  *
- * \image html library_analogy.svg "Software library analogy: a software is made of several components (libraries)" width=400px
+ * \image html library_analogy.svg "Software library analogy: a software is made of several components: the MeteoIO library and the libSnowpack libray wrapped within Snowpack-app to build the full featured SNOWPACK model" width=600px
  * \image latex library_analogy.eps "Software library analogy: a software is made of several components (libraries)" width=0.4\textwidth
  *
  * @section MeteoIO_structure General MeteoIO structure
@@ -136,7 +136,7 @@ namespace mio {
  * of coordinates) and very often you will also need to provide a Digital Elevation Model.
  *
  * @section typical_setup Typical setup
- * \image html typical_setup.svg "typical setup of MeteoIO for operational applications" width=1200px
+ * \image html typical_setup.svg "typical setup of MeteoIO for operational applications" width=800px
  * \image latex typical_setup.eps "typical setup of MeteoIO for operational applications" width=0.9\textwidth
  * MeteoIO has been designed to accomodate both the needs of carefully crafted simulations for a specific purpose/study and for the needs of operational
  * simulations that run automatically and unattended. A typical setup for such operational applications consists of a data acquisition system

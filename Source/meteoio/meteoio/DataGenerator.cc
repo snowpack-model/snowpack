@@ -104,6 +104,9 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET
 			size_t param = station.getParameterIndex( it.first );
 			if (param==IOUtils::npos) param = station.addParameter( it.first );
 
+			double height; std::string base_parname;
+			MeteoData::getTypeAndNo( it.first, base_parname, height );
+
 			const std::string statID( station.meta.getStationID() );
 			//these are only required by data_qa_logs
 			const double old_val = station(param);
@@ -113,7 +116,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET
 			bool status = false;
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
-				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipTimeStep( vecMeteo.front().date ) ) {
+				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipTimeStep( vecMeteo.front().date ) && !vecGenerators[jj]->skipHeight( height )) {
 					const size_t station_idx = (has_fullDataset)? stations_idx[ii] : IOUtils::npos;
 
 					if (station_idx!=IOUtils::npos)
@@ -157,6 +160,9 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			size_t param = vecMeteo[0].getParameterIndex( it.first );
 			if (param==IOUtils::npos) param = vecMeteo[0].addParameter( it.first );
 
+			double height; std::string base_parname;
+			MeteoData::getTypeAndNo( it.first, base_parname, height );
+
 			const std::string statID( vecMeteo[0].meta.getStationID() );
 			//these are only required by data_qa_logs
 			const METEO_SET old_val( vecMeteo );
@@ -166,7 +172,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			bool status = false;
 			size_t jj=0;
 			while (jj<vecGenerators.size() && status != true) { //loop over the generators
-				if (!vecGenerators[jj]->skipStation( statID )) {
+				if (!vecGenerators[jj]->skipStation( statID ) && !vecGenerators[jj]->skipHeight( height )) {
 					
 					//loop over time restrictions periods
 					status = true; //so if any time restriction period returns false, status will be set to false

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * hsfft.h
  *
@@ -17,7 +18,7 @@
 extern "C" {
 #endif
 
-#define PIPOW2 6.28318530717958647692528676655900577
+#define PI2 6.28318530717958647692528676655900577
 
 #ifndef fft_type
 #define fft_type double

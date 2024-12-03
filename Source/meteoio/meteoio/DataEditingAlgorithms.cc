@@ -73,7 +73,7 @@ namespace mio {
  *     - COPY: make a copy of a given parameter under a new name, see EditingCopy
  *     - CREATE: fill missing values or create new parameters based on basic transformations or parametrizations, see EditingCreate
  *     - METADATA: edit station's metadata, see EditingMetadata
- * 	   - REGRESSIONFILL: fill missing values using a regression model, see EditingRegFill
+ *     - REGRESSIONFILL: fill missing values using a regression model, see EditingRegFill
  *     - MOVE: move parameters between stations, see EditingMove
  *     - SPLIT: split parameters from a station into a new one, see EditingSplit
  *

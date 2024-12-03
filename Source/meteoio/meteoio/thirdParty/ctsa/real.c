@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * real.c
  *
@@ -19,7 +20,7 @@ fft_real_object fft_real_init(int N, int sgn) {
 	obj->cobj = fft_init(N/2,sgn);
 	
 	for (k = 0; k < N/2;++k) {
-		theta = PIPOW2*k/N;
+		theta = PI2*k/N;
 		obj->twiddle2[k].re = cos(theta);
 		obj->twiddle2[k].im = sin(theta);
 		

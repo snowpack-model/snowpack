@@ -140,7 +140,7 @@ echo "${columns}" | awk '
 file_index=0
 for smet_file in "$@"; do
 	nodata=$(head -100 ${smet_file} | grep -E "^nodata\s+=" | cut -d'=' -f2 | tr -d ' ')
-	nb_sets=$(head -100 ${smet_file} | grep fields | wc -w)
+	nb_sets=$(head -100 ${smet_file} | grep -E "^fields\s+=" | wc -w)
 	for ii in $(seq 4 ${nb_sets}); do
 		f=$(( file_index+ii-4 ))
 		printf "@target G0.S${f}\n@type xy\n"

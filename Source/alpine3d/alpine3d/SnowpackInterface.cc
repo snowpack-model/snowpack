@@ -772,11 +772,13 @@ void SnowpackInterface::setVwDrift(const Grid2DObject& new_vw_drift, const mio::
 
 /**
  * @brief get values from Energy Balance
- * @param shortwave_in is the 2D double Array map of ISWR [W m-2]
- * @param longwave_in is the 2D double Array map of ILWR [W m-2]
- * @param diff_in is the 2D double Array map of Diffuse radiation from the sky [W m-2]
- * @param solarElevation_in double of Solar elevation to be used for Canopy (in dec)
- * @param timestamp is the time of the calculation step from which this new values are comming
+ * @param[in] shortwave_in is the 2D double Array map of ISWR [W m-2]
+ * @param[in] longwave_in is the 2D double Array map of ILWR [W m-2]
+ * @param[in] diff_in is the 2D double Array map of Diffuse radiation from the sky [W m-2]
+ * @param[in] terrain_shortwave_in 2D double Array map of ISWR reflected by the surrounding terrain [W m-2]
+ * @param[in] terrain_longwave_in2D double Array map of ILWR emitted by the surrounding terrain [W m-2]
+ * @param[in] solarElevation_in double of Solar elevation to be used for Canopy (in dec)
+ * @param[in] timestamp is the time of the calculation step from which this new values are comming
  */
 void SnowpackInterface::setRadiationComponents(const mio::Array2D<double>& shortwave_in,
      const mio::Array2D<double>& longwave_in, const mio::Array2D<double>& diff_in,

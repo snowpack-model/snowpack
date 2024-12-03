@@ -28,7 +28,7 @@ static void testRelativePath(bool& dir_status, bool& filestatus)
 	if (stat(mio::FileUtils::getPath(filename1, false).c_str(), &sb) == 0) {
 		dir_status = true;
 	}
-
+	
 	std::ifstream infile1(filename1);
 	std::ifstream infile2(filename2);
 	std::string item;
@@ -55,8 +55,8 @@ static void testRelativePath(bool& dir_status, bool& filestatus)
 
 static void testWinPath()
 {
-	static const std::string win_path = "C:\\Users\\Thomas\\Documents\\MeteoIO\\tests\\fstream\\test.txt";
-	static const std::string win_path2 = "C:/Users/Thomas/Documents/MeteoIO/tests/fstream/test.txt";
+	static const std::string win_path = "C:\\Users\\Thomas\\Docs\\MeteoIO\\tests\\fstream\\test.txt";
+	static const std::string win_path2 = "C:/Users/Thomas/Docs/MeteoIO/tests/fstream/test.txt";
 	
 	try {
 		ofilestream win(win_path);
@@ -85,7 +85,8 @@ static void testAbsPath()
 		// Handle the exception if needed
 	}
 
-	system(("rm -rf " + abs_path3).c_str());
+	static const char *cmd_rm_abs_path3 = ("rm -rf " + abs_path3).c_str();
+	if (system(cmd_rm_abs_path3) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path3 << "\"" << std::endl;
 }
 
 #ifdef LIMIT_WRITE_ACCESS
@@ -97,22 +98,20 @@ static void testLimitedWriteAccess()
 	ofilestream file3(filename3);
 	file3 << "hiii";
 	file3.close();
-	if (FileUtils::directoryExists("../../" + dirname3))
-	{
+	if (FileUtils::directoryExists("../../" + dirname3)) {
 		std::cerr << "Limiting write access did not work" << std::endl;
-	}
-	else if (FileUtils::directoryExists(dirname3))
-	{
+	} else if (FileUtils::directoryExists(dirname3)) {
 		std::cerr << "Limiting write access works perfectly" << std::endl;
-	}
-	else
-	{
+	} else {
 		std::cerr << "Directory was not created at all in write access limitation scope" << std::endl;
 	}
-	system(("rm -rf " + dirname3).c_str());
+	
+	static const char *cmd_rm_dirname3 = ("rm -rf " + dirname3).c_str();
+	if (system(cmd_rm_dirname3) != 0) std::cerr << "Error executing command \"" << cmd_rm_dirname3 << "\"" << std::endl;
 }
 
-static void testLimitedAccessWithoutCreatingDirectories() {
+static void testLimitedAccessWithoutCreatingDirectories() 
+{
 	const std::string abs_path11 = mio::FileUtils::cleanPath("./", true) + "rand/test.txt"; // should not work
 	try {
 		ofilestream fail(abs_path1);
@@ -126,7 +125,8 @@ static void testLimitedAccessWithoutCreatingDirectories() {
 		std::cerr << e.print() << "\n";
 		std::cerr << "Accessing absolute invalid path, without writing directories works as expected" << std::endl;
 	}
-	system("rm -rf " + abs_path11);
+	static const char *cmd_rm_abs_path11 = ("rm -rf " + abs_path11).c_str();
+	if (system(cmd_rm_abs_path11) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path11 << "\"" << std::endl;
 
 	const std::string abs_path2 = mio::FileUtils::cleanPath("./", true) + "rand2/test.txt";
 	mio::FileUtils::createDirectories(abs_path2);
@@ -135,7 +135,8 @@ static void testLimitedAccessWithoutCreatingDirectories() {
 		throw IOException("Default was not kept");
 	works << "hiii";
 	works.close();
-	system("rm -rf " + abs_path2);
+	static const char *cmd_rm_abs_path2 = ("rm -rf " + abs_path2).c_str();
+	if (system(cmd_rm_abs_path2) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path2 << "\"" << std::endl;
 	std:: cerr << "Accessing absolute valid path, without writing directories works as expected" << std::endl;
 }
 #endif
@@ -165,7 +166,8 @@ static void searchForRawCalls()
 {
 	std::cerr << "Checking for calls to std::ofstream outside of wrapper" << std::endl;
 	// Exclude occurrences of "ofstream" that are commented out
-	system("rgrep --exclude=\"*.cc.o\" \"^[^\\*\\/]*(ofstream)\" ../../meteoio | grep -vE \"^../../meteoio/FStream.\" | grep -vE \"ofstream::app\" | grep -vE \"ofstream::out\">tmp_ofstream_instances.txt");
+	static const char* cmd_grep = "rgrep --exclude=\"*.cc.o\" \"^[^\\*\\/]*(ofstream)\" ../../meteoio | grep -vE \"^../../meteoio/FStream.\" | grep -vE \"ofstream::app\" | grep -vE \"ofstream::out\" > tmp_ofstream_instances.txt";
+	if (system(cmd_grep) != 0) std::cerr << "Error executing command \"" << cmd_grep << "\"" << std::endl;
 	std::ifstream ofstream_instances("tmp_ofstream_instances.txt");
 	std::string item;
 	while (getline(ofstream_instances, item, ':')) {
@@ -188,9 +190,11 @@ int main() {
 		testRelativePath(dir_status, filestatus);
 		testWinPath();
 		testAbsPath();
-
-		system("rm -rf ./this");
-		system("rm -rf ./Documents");
+		
+		static const char* cmd_rm_this = "rm -rf ./this";
+		if (system(cmd_rm_this) != 0) std::cerr << "Error executing command \"" << cmd_rm_this << "\"" << std::endl;
+		static const char* cmd_rm_docs = "rm -rf ./Docs";
+		if (system(cmd_rm_docs) != 0) std::cerr << "Error executing command \"" << cmd_rm_docs << "\"" << std::endl;
 
 		std::cerr << "Everything works as expected" << std::endl;
 		std::cerr << "----------------------------" << std::endl;
@@ -211,7 +215,8 @@ int main() {
 
 	IOManager mng(cfg);
 	ofilestream tmp2("hi");
-	system("rm hi");
+	static const char* cmd_rm_hi = "rm hi";
+	if (system(cmd_rm_hi) != 0) std::cerr << "Error executing command \"" << cmd_rm_hi << "\"" << std::endl;
 	if (tmp2.getDefault() != false)
 		throw IOException("Default was not set");
 

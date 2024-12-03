@@ -146,7 +146,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * - DD.MM.YYYY HH24:MI:SS is for a Swiss formatted datetime.
  * 
  * @note When providing a timezone field, it \em must appear at the end of the string. it can either be numerical (such as "+1.") or an abbreviation
- * such as "CET" (see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations).
+ * such as "Z" or "CET" (see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations).
  * 
  * When this plugin identifies the fields by their column headers, it will look for TIMESTAMP or DATETIME for a combined date and time field, or DATE or TIME for (respectively) a
  * date and time field. Usually, other labels will not be recognized.

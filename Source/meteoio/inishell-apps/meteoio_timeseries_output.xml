@@ -90,13 +90,13 @@ Please include meteoio_parametergroups before use!
 			<help>Should the CryoStation format be used?</help>
 		</parameter>
 		<frame caption="CryoStation Metadata" collapsed="true">
-			<parameter key="WIGOSIDSERIES" type="number" format="integer" optional="true">
+			<parameter key="WIGOSIDSERIES" type="number" format="integer+" optional="true">
 				<help>WIGOS ID series number</help>
 			</parameter>
-			<parameter key="WIGOSISSUER" type="number" format="integer" optional="true">
+			<parameter key="WIGOSISSUER" type="number" format="integer+" optional="true">
 				<help>WIGOS ID issuer</help>
 			</parameter>
-			<parameter key="WIGOSISSUENO" type="number" format="integer" optional="true">
+			<parameter key="WIGOSISSUENO" type="number" format="integer+" optional="true">
 				<help>WIGOS ID issue number</help>
 			</parameter>
 			<parameter key="WIGOSLOCALID" type="text" optional="true">
@@ -391,8 +391,8 @@ Please include meteoio_parametergroups before use!
 			<parameter key="ACDD_TITLE" type="text" size="large"><help>a short title for the data set</help></parameter>
 			<parameter key="ACDD_SUMMARY" type="text" size="large"><help>a paragraph describing the dataset</help></parameter>
 			<parameter key="ACDD_SUMMARY_FILE" type="file"  mode="input"><help>a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present</help></parameter>
-			<parameter key="ACDD_KEYWORDS" type="text" size="large"><help>a comma-separated list of AGU Index Terms or terms fron another vocabulary</help></parameter>
-			<parameter key="ACDD_KEYWORDS_VOCABULARY" type="text" size="large"><help>the unique name or identifier of the vocabulary from which keywords are taken (default: AGU Index Terms)</help></parameter>
+			<parameter key="ACDD_KEYWORDS" type="text" size="large"><help>a comma-separated list of &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; terms or terms fron another vocabulary (provided with their full path)</help></parameter>
+			<parameter key="ACDD_KEYWORDS_VOCABULARY" type="text" size="large"><help>the unique name or identifier of the vocabulary from which keywords are taken (default: &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; (GCMDSK))</help></parameter>
 			<parameter key="ACDD_COMMENT" type="text" size="large"><help>miscellaneous informartion about the dataset</help></parameter>
 			<parameter key="ACDD_ACKNOWLEDGEMENT" type="text" size="large"><help>acknowledgement for the various types of support for the project that produced this data</help></parameter>
 		</frame>
@@ -440,7 +440,7 @@ Please include meteoio_parametergroups before use!
 			<parameter key="ACDD_INSTITUTION" type="text" size="medium"><help>Institution providing the data set (this is a legacy field, only one entry)</help></parameter>
 		</frame>
 		<frame caption="Miscellaneous" collapsed="true">
-			<parameter key="ACDD_LICENSE" type="text" size="large"><help>describes the license applicable to the dataset</help></parameter>
+			<parameter key="ACDD_LICENSE" type="text" size="large"><help>describes the license applicable to the dataset (in the form &lt;b&gt;{url} ({license abbreviation})&lt;/b&gt; as found in the &lt;a href="https://spdx.org/licenses/"&gt;SPDX License List&lt;/a&gt;)</help></parameter>
 			<parameter key="ACDD_PRODUCT_VERSION" type="text" size="medium"><help>version identifier of the data file or product as assigned by the data creator</help></parameter>
 			<parameter key="ACDD_PROCESSING_LEVEL" type="text" size="medium"><help>a textual description of the processing level</help></parameter>
 			<parameter key="ACDD_OPERATIONAL_STATUS" type="alternative">

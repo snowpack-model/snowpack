@@ -360,13 +360,13 @@
  * \image latex runoff.eps "Runoff: simple bucket approach with PREVAH or sub-catchments sums" width=0.9\textwidth
  * Several options are available for collecting the melt water or precipitation running out of each pixel. The historical approach relies on the
  * PREVAH hydrological modeling system (
- * D. Viviroli et al. <i>"An introduction to the hydrological modelling system PREVAH and its pre-and post-processing-tools"</i>, Environmental Modelling \& Software, \b 24.10, 2009, pp 1209-1222)
+ * D. Viviroli et al. <i>"An introduction to the hydrological modeling system PREVAH and its pre-and post-processing-tools"</i>, Environmental Modeling \& Software, \b 24.10, 2009, pp 1209-1222)
  * to perform on-the-fly hydrological simulation. Another approach consists of collecting the runoff sums for each sub-catchments defined by the user
  * (M. Bavay, T. Grünewald, M. Lehning, <i>"Response of snow cover and runoff to climate change in high Alpine catchments of Eastern Switzerland"</i>, Advances in Water Resources, \b 55, 2013, pp 4-16).
  * Finally, it is also possible to output the hourly distributed runoff (ie the runoff for each pixel, once per hour) and process this runoff in
  * an external model
  * ( F. Comola et al. <i>"Comparison of hydrologic response between a conceptual and a travel time distribution model for a snow-covered alpine catchment using Alpine3D"</i>, EGU General Assembly Conference Abstracts, Vol. \b 15, 2013;
- * J. Magnusson et al. <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Hydrological Processes, \b 25.13, 2011, pp 2071-2084).
+ * J. Magnusson et al. <i>"Quantitative evaluation of different hydrological modeling approaches in a partly glacierized Swiss watershed"</i>, Hydrological Processes, \b 25.13, 2011, pp 2071-2084).
  * This approach enables the external model to be calibrated without having to re-run Alpine3D.
  *
  */

@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "autoutils.h"
-#include <math.h>
 
 static int runstattests(double *x, int N, const char * test,const char *mtype,double alpha) {
     int diff,klag,lshort;
@@ -127,7 +127,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
 
     dodiff = runstattests(x,N,test,type,alpha_);
 
-    // TODO: if there are problems with the auto arima check here
+
     if (dodiff != dodiff) return d;
 
     y = (double*)malloc(sizeof(double)*NX);

@@ -11,6 +11,8 @@ rm -f output/5_*; rm -f output/grids/20*; rm -f output/snowfiles/*
 BEGIN="2014-10-01T01:00"
 END="2014-12-31T00:00"
 if [ -z "$PROG_ROOTDIR" ]; then PROG_ROOTDIR="../.."; fi;
+#Thanks to the RPATH in the compiled binary, tghe following exports should not be necessary. But it does not hurt
+#to make sure that tests are as robust as possible!
 export DYLD_FALLBACK_LIBRARY_PATH=${PROG_ROOTDIR}/lib:${DYLD_FALLBACK_LIBRARY_PATH}	#for osX
 export LD_LIBRARY_PATH=${PROG_ROOTDIR}/lib:${LD_LIBRARY_PATH}	#for Linux
 export SIMULATION_ROOT="${PROG_ROOTDIR}/doc/examples/Stillberg/input"	#where to find the input data for the simulation

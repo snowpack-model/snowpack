@@ -1255,7 +1255,7 @@ void ncFiles::writeMeteoMetadataHeader(const std::vector< std::vector<MeteoData>
 	if (schema.name=="CF-1.6") acdd.addAttribute("standard_name_vocabulary", "CF-1.6");
 	acdd.addAttribute("cdm_data_type", "Station");
 	acdd.addAttribute("featureType", "timeSeries");
-	acdd.addAttribute("keywords", "Time series analysis", ACDD::APPEND);
+	//acdd.addAttribute("keywords", "Time series analysis", ACDD::APPEND); //not part of GCMD keywords
 
 	if (station_idx==IOUtils::npos) { //multiple stations per file
 		if (vecMeteo.size()<30) {

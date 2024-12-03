@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "seastest.h"
 
 static void findMeans(double *x, int N, int stride, double *means) {
@@ -669,9 +670,7 @@ void OCSBtest(double *x, int N, int f, int mlags, const char *method,double *sta
 
     //printf("\n\n%d\n\n",fit->rank);
 
-    // TODO: possible source of error
-    // if (fit->rank != fit->p && fit->rank == fit->rank) {
-    if (fit->rank != fit->p) {
+    if (fit->rank != fit->p && fit->rank == fit->rank) {
         if (crit_reg == NULL) {
             printf("Could not find a solution. Try a different method. \n");
             exit(-1);

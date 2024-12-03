@@ -377,7 +377,7 @@ class MPIControl
 		template <class T> void send(const std::vector<T*>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
 		template <class T> void send(const std::vector<T>& /*vec_local*/, const size_t& /*destination*/, const int& tag=0) {(void)tag;}
 		#endif
-
+		
 		#ifdef ENABLE_MPI
 		/**
 		 * @brief	Receive vector of objects from process \#source

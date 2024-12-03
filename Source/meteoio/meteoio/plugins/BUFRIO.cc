@@ -108,7 +108,7 @@ using namespace PLUGIN;
      * - Ground State: GROUNDSTATE (https://vocabulary-manager.eumetsat.int/vocabularies/BUFR/WMO/40/TABLE_CODE_FLAG/020062)
      * - Snow Depth: HS (MeteoIO standard)
      * - Surface Qualifier for Temperature Data: SURFACEQUALIFIER (What type of Surface: https://vocabulary-manager.eumetsat.int/vocabularies/BUFR/WMO/40/TABLE_CODE_FLAG/008010) 
-     * - Skin Temperature: TSURFACE
+     * - Skin/Surface Temperature: TSS
      * Parameters with Height:
      * - Sensor Type: SENSORTYPE (https://confluence.ecmwf.int/display/ECC/WMO%3D40+code-flag+table#WMO=40codeflagtable-CF_002096)
      * - Air Temperature: TA (MeteoIO standard)
@@ -116,6 +116,8 @@ using namespace PLUGIN;
      * - Soil Temperature: TSOIL (MeteoIO standard)
      * - Water Temperature: TWATER
      * - Ice Temperature: TICE
+     *
+     * @note Be careful when using TSS and TSURFACE simultaneously, as this will lead to undefined behaviour!
      * 
      * @subsection bufrio_cryo_surface Surface Type
      * Available surface types are:
@@ -174,7 +176,7 @@ using namespace PLUGIN;
     const std::string dflt_extension_BUFR = ".bufr";
     const std::string BUFRIO::template_filename = "MeteoIO.bufr";
     const std::set<std::string> ADDITIONAL_CRYO_PARAMS({"SURFACEQUALIFIER", "SENSORTYPE", "TSURFACE", "ICE_THICKNESS", "GROUNDSTATE", "SENSORTYPE","TICE", "TWATER"});
-    const std::set<std::string> ALLOWED_CRYO_PARAMS({"ICE_THICKNESS", "GROUNDSTATE", "HS", "SURFACEQUALIFIER", "TSURFACE", "SENSORTYPE", "TA", "TSNOW", "TSOIL", "TWATER", "TICE"});
+    const std::set<std::string> ALLOWED_CRYO_PARAMS({"ICE_THICKNESS", "GROUNDSTATE", "HS", "SURFACEQUALIFIER", "SENSORTYPE", "TA", "TSNOW", "TSOIL", "TWATER", "TICE", "TSS"});
     const std::vector<MeteoParam> POSSIBLE_MULTIPLE_PARAMETERS = {
         MeteoParam::P, MeteoParam::TA, MeteoParam::RH, MeteoParam::TSOIL, MeteoParam::TSNOW}; // DEV note: the order of setting parameters in the BUFR file must follow the order here, otherwise heights get all mixed up
 
@@ -385,7 +387,7 @@ using namespace PLUGIN;
     }
 
     static void setCryoData(CodesHandlePtr &message, const MeteoData &meteo, const std::vector<std::pair<double, std::vector<std::string>>> &params_at_heights,
-                            std::map<std::string, int> &parameter_occurences, const bool &/* verbose */) {
+                            std::map<std::string, int> &parameter_occurences, const bool &/* verbose */, const double& nodata_value) {
         // we need to set all parameters for one height that we have, and then move to the next height
         for (const auto &height_and_params : params_at_heights) {
             const double height = height_and_params.first;
@@ -405,7 +407,7 @@ using namespace PLUGIN;
 
                     if (parsed_param_number == IOUtils::nodata) { // is a standard parameter, so no need to worry about height
                         if (ALLOWED_CRYO_PARAMS.find(parsed_param_name) == ALLOWED_CRYO_PARAMS.end()) {
-                            throw IOException("Parameter " + param + " is not allowed for Cryo Station", AT);                    
+                            continue;                    
                         }
                         std::string prefix = "#" + std::to_string(parameter_occurences[parsed_param_name]) + "#";
                         success = setParameter(message, prefix + BUFR_PARAMETER.at(parsed_param_name), meteo(param_id));
@@ -468,12 +470,12 @@ using namespace PLUGIN;
         setMeteoData(message, meteo, sorted_params, parameter_occurences, verbose);
     }
     static void populateSubset(CodesHandlePtr &message, const std::string &subset_prefix, const MeteoData &meteo, const std::vector<std::pair<double, std::vector<std::string>>> &params_at_heights,
-                               std::map<std::string, int> &parameter_occurences, const bool &verbose) {
+                               std::map<std::string, int> &parameter_occurences, const bool &verbose, const double& nodata_value) {
         if (params_at_heights.empty()) {
             throw IOException("No parameters to write to BUFR", AT);
         }
         setTime(message, meteo.date, subset_prefix);
-        setCryoData(message, meteo, params_at_heights, parameter_occurences, verbose);
+        setCryoData(message, meteo, params_at_heights, parameter_occurences, verbose, nodata_value);
     }
 
     static std::vector<std::string> sortAvailableParameters(const std::set<std::string> &available_params, const bool &verbose_out) {
@@ -516,6 +518,18 @@ using namespace PLUGIN;
         return params_at_heights;
     }
 
+    static void warnUnallowedParameter(const std::set<std::string>& available_params) {
+        for (const auto& param : available_params) {
+            std::string parsed_param_name;
+            double parsed_param_number;
+            if (MeteoData::getTypeAndNo(param, parsed_param_name, parsed_param_number, ADDITIONAL_CRYO_PARAMS)) {
+                if (ALLOWED_CRYO_PARAMS.find(parsed_param_name) == ALLOWED_CRYO_PARAMS.end()) {
+                    std::cout << "Warning: Parameter \"" << param << "\" is not allowed in Cryo Template and will be ignored." << std::endl;
+                }
+            }
+        }
+    }
+
     // WRITE METEO
 
     void BUFRIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecStations, const std::string & /* name */) {
@@ -531,6 +545,8 @@ using namespace PLUGIN;
             if (vecMeteo.front().listUnknownParameters(ADDITIONAL_CRYO_PARAMS) > 0) {
                 std::cout << "Warning: Unknown parameters in station " << station.getStationID() << " will not be written to BUFR" << std::endl;
             }
+
+            if (write_cryo) warnUnallowedParameter(available_params);
 
             // we need different sorting of parameters for cryo station, and meteoio template
             std::vector<std::string> sorted_params;
@@ -565,7 +581,7 @@ using namespace PLUGIN;
                 const std::string subset_prefix = "#" + std::to_string(i) + "#"; // we use occurence number as prefix
                 setStationData(message, station, position, subset_prefix);       // is the same for each subset, but needs to be set, otherwise missing
                 if (write_cryo) {
-                    populateSubset(message, subset_prefix, meteo, params_at_heights, parameter_occurences_in_file, verbose_out); // overload for cryo station
+                    populateSubset(message, subset_prefix, meteo, params_at_heights, parameter_occurences_in_file, verbose_out, plugin_nodata); // overload for cryo station
                 } else {
                     populateSubset(message, subset_prefix, meteo, sorted_params, parameter_occurences_in_file, verbose_out);
                 }

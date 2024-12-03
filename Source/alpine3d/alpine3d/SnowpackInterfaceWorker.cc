@@ -168,13 +168,14 @@ inline double getAvgAtDepth(const SnowStation& pixel, const double& depth, const
 /**
  * @brief Constructs and initialise Snowpack Interface Worker. Create one worker
  * and init values for slice which the worker need to simulate it slice.
- * @param io_cfg configuration to pass to Snowpack
- * @param dem_in gives the demographic Data. Also tetermines size and position of the slice
- * @param landuse_in gives the landuse Data. Also tetermines size and position of the landuse for slice
- * @param pts_in gives the spezial points. For this points more output is done then for the others. Calcualtion is the same.
- * @param snow_stations gives a vector of pointers to the SnowStation objects relevant for this thread
- * @param snow_stations_coord provide the (ii,jj) coordinates of each snow station. This is necessary because the slices might be irregular
- * @param offset_in gives the offsett on X for this slice (needed to read data and error messages)
+ * @param[in] io_cfg configuration to pass to Snowpack
+ * @param[in] dem_in gives the demographic Data. Also tetermines size and position of the slice
+ * @param[in] landuse_in gives the landuse Data. Also tetermines size and position of the landuse for slice
+ * @param[in] pts_in gives the spezial points. For this points more output is done then for the others. Calcualtion is the same.
+ * @param[in] snow_stations gives a vector of pointers to the SnowStation objects relevant for this thread
+ * @param[in] snow_stations_coord provide the (ii,jj) coordinates of each snow station. This is necessary because the slices might be irregular
+ * @param[in] offset_in gives the offsett on X for this slice (needed to read data and error messages)
+ * @param[in] grids_not_computed_in_worker vector of grids that are required but will be computed outside the workers
  */
 SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const mio::DEMObject& dem_in,
@@ -282,22 +283,20 @@ void SnowpackInterfaceWorker::uniqueOutputGrids(std::vector<std::string>& output
 }
 
 /** @brief Initialize and add to the grid map the requested grids
- * @param params string representation of the grids to add
+ * @param[in] params string representation of the grids to add
+ * @param[in] grids_not_computed_in_worker vector of grids that are required but will be computed outside the workers
  */
-void SnowpackInterfaceWorker::initGrids(std::vector<std::string>& params,
+void SnowpackInterfaceWorker::initGrids(std::vector<std::string> params,
                                         const std::vector<std::string>& grids_not_computed_in_worker)
 {
 	for (size_t ii = 0; ii<params.size(); ++ii) {
 		IOUtils::toUpper(params[ii]); //make sure all parameters are upper case
 		const size_t param_idx = SnGrids::getParameterIndex( params[ii] );
-		const auto position = std::find(grids_not_computed_in_worker.begin(),
-						 grids_not_computed_in_worker.end(),
-						 params[ii]);
-		if(position<grids_not_computed_in_worker.end()) {
-			continue;
-		}
+		const auto position = std::find(grids_not_computed_in_worker.begin(), grids_not_computed_in_worker.end(), params[ii]);
+		if(position<grids_not_computed_in_worker.end()) continue;
+		
 		if (param_idx==IOUtils::npos)
-			throw UnknownValueException("Unknow meteo grid '"+params[ii]+"' selected for gridded output", AT);
+			throw UnknownValueException("Unknown meteo grid '"+params[ii]+"' selected for gridded output", AT);
 
 		const std::map< SnGrids::Parameters, mio::Grid2DObject >::const_iterator it = grids.find( static_cast<SnGrids::Parameters>(param_idx) );
 		if (it==grids.end()) { //the parameter did not already exist, adding it

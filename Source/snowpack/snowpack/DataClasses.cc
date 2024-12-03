@@ -1694,7 +1694,7 @@ unsigned short int ElementData::snowType(const double& dendricity, const double&
 	int a=-1,b=-1,c=0;
 
 	// Dry snow
-	if (dendricity > 0.) { // Dry dendritic (new) snow: dendricity and sphericityhericity determine the class
+	if (dendricity > 0.) { // Dry dendritic (new) snow: dendricity and sphericity determine the class
 		const int sw2 = (int)(sphericity*10.);
 		if (dendricity > 0.80 ) { // ori 0.90, 27 Nov 2007 sb
 			a = 1; b = 1; c = 0;

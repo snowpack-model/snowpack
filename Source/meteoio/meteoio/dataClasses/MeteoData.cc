@@ -265,6 +265,11 @@ bool MeteoData::getTypeAndNo(const std::string& i_parname, std::string& paramete
 		parameter = i_parname;
 		number = IOUtils::nodata;
 		return true;
+	} else if (i_parname.find("@") == std::string::npos) {
+		// is not a known parameter without height, cannot be parsed
+		parameter = i_parname;
+		number = IOUtils::nodata;
+		return false;
 	}
 	bool is_known_parameter = false;
 

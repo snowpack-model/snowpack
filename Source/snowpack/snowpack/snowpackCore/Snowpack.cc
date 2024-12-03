@@ -1726,16 +1726,20 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	} else {
 		snowed_in = ((Xdata.getNumberOfNodes() > Xdata.SoilNode+1)
 		            || (detect_grass &&
-		                (((Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
+		                (((Mdata.tss_a24h != IOUtils::nodata && Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
 		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
+		                 || ((Mdata.tss_a12h != IOUtils::nodata && Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
 		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
-		                    && (Mdata.hs_rate > HS_threshold_largeincrease))
+		                 || ((Mdata.tss_a12h != IOUtils::nodata && Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
+		                    && (Mdata.hs_rate != IOUtils::nodata && Mdata.hs_rate > HS_threshold_largeincrease))
 		                 )
 		               )
-		            || (Mdata.hs_rate > HS_threshold_verylargeincrease)
+		            || (Mdata.hs_rate != IOUtils::nodata && Mdata.hs_rate > HS_threshold_verylargeincrease)
 		);
+		// Additional check if snowed_in is still false with DETECT_GRASS due to missing TSS data
+		if (!snowed_in && detect_grass && (Mdata.hs_rate == IOUtils::nodata || Mdata.tss_a24h == IOUtils::nodata || Mdata.tss_a12h == IOUtils::nodata)) {
+			prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "DETECT_GRASS is TRUE, but insufficient HS and/or TSS data is available for the algorithm. Snowfall may be missed.");
+		}
 	}
 	if (variant == "SEAICE" && nOldE == 0) {
 		// Ignore snow fall on open ocean

@@ -30,7 +30,7 @@ namespace mio {
  *
  * @section grid_resampling_section Grid resampling section
  * First, grid resampling must be enabled by setting the REGRIDDING_STRATEGY to GRID_1DINTERPOLATE in the [InputEditing] section.
- * Note that this currently forces the path through the temoral resampling (regridding) algorithms, and any spatial resampling
+ * Note that this currently forces the path through the temporal resampling (regridding) algorithms, and any spatial resampling
  * configured (from point timeseries) will not take action.
  * Then, grid resampling is configured in the [GridInterpolations1D] section for each meteo parameter separately.
  *

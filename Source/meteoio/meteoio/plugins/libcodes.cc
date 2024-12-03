@@ -49,10 +49,11 @@ namespace mio {
      *
      */
     namespace codes {
+        const int WMO_BUFR_TABLE_NO = 41;
 
         // ------------------- BUFR CONSTANTS -------------------
 
-        const std::string BUFR_HEIGHT_KEY = "height"; // TODO: change the key to the correct one when it is available
+        const std::string BUFR_HEIGHT_KEY = "height"; // height // verticalDistanceOfSensor is a descriptor that will be coming soon
         // mapping of BUFR parameters to MeteoIO parameters
         const std::map<std::string, std::string> BUFR_PARAMETER{
             {"P", "pressure"},
@@ -60,25 +61,24 @@ namespace mio {
             {"RH", "relativeHumidity"},
             {"TSG", "groundTemperature"},
             {"TSOIL", "soilTemperature"},
-            {"TSS", "skinTemperature"}, // workaround as there is no snow surface temperature kw
             {"TSNOW", "snowTemperature"},
-            {"HS", "totalSnowDepth"}, // TODO: CHANGE TO THE CORRECT VALUE WHEN AVAILABLE
+            {"HS", "totalSnowDepth"}, // totalSnowDepth // snowDepth will be available soon
             {"VW", "windSpeed"},
             {"DW", "windDirection"},
             {"VW_MAX", "maximumWindGustSpeed"},
-            {"RSWR", ""}, // TODO: there is no parameter for it, should we save albedo? --> also need to find descriptor
+            {"RSWR", ""}, // TODO: Reflected shortwave radiation when its available
             {"ISWR", "instantaneousShortWaveRadiation"},
             {"ILWR", "instantaneousLongWaveRadiation"},
-            {"TAU_CLD", "cloudCoverTotal	"},
-            {"PSUM", "totalPrecipitationOrTotalWaterEquivalent	"},
+            {"TAU_CLD", "cloudCoverTotal"},
+            {"PSUM", "totalPrecipitationOrTotalWaterEquivalent"},
             {"PSUM_PH", "precipitationType"}, // should the type be mapped to the phase?
             // Cryo specific
             {"SURFACEQUALIFIER","surfaceQualifierForTemperatureData"},
-            {"TSURFACE","skinTemperature"},
+            {"TSS","skinTemperature"},
             {"ICE_THICKNESS","iceThickness"},
             {"GROUNDSTATE","stateOfGround"},
             {"SENSORTYPE","temperatureSensorType"},
-            {"TICE","iceSurfaceTemperature"}, // TODO: Change to the correct value when available
+            {"TICE","iceSurfaceTemperature"}, // iceSurfaceTemperature // iceTemperature will be available soon
             {"TWATER","waterTemperature"}
         };
 
@@ -104,7 +104,7 @@ namespace mio {
             {"TA2m", 12004},
             {"TSG", 12120},
             {"TSOIL", 12130},
-            {"HS", 13013},// TODO: USE CORRECT VALUE WHEN AVAILABLE: 13119
+            {"HS", 13013},// 13013 // 13119 will be available soon but is not yet in the wmo table
             {"VW", 11012},
             {"DW", 11011},
             {"VW_MAX", 11041},
@@ -118,7 +118,7 @@ namespace mio {
             {"P", 7004},
             {"TA", 12101},
             {"RH", 13003},
-            {"HSensor", 7007}, // TODO: USE CORRECT VALUE WHEN AVAILABLE: 7034
+            {"HSensor", 7007}, // 7007 // 7034 will be available soon
             // Cryos specific
             {"WIGOS_ID", 301150},
             {"LongStationName", 1019},
@@ -128,11 +128,10 @@ namespace mio {
             {"GroundState", 20062},
             {"SnoDepthMethod", 2177},
             {"SurfQualifier", 8010},
-            {"TSkin", 12161}, // TSURFACE
             {"SensorType", 2096},
             {"ChangeDataWidth", 201131},
             {"ChangeScale", 202129},
-            {"TIce", 12132}, // TODO: USE CORRECT VALUE WHEN AVAILABLE: 12133
+            {"TIce", 12132}, // 12132// 12133 will be available soon
             {"TWater", 13082}};
 
         static long getDescriptor(const std::string &key) {
@@ -506,7 +505,7 @@ namespace mio {
         static void setHeader(codes_handle *ibufr, long num_subsets) {
             CODES_CHECK(codes_set_long(ibufr, "edition", 4), 0);
             CODES_CHECK(codes_set_long(ibufr, "masterTableNumber", 0), 0);
-            CODES_CHECK(codes_set_long(ibufr, "masterTablesVersionNumber", 40), 0);
+            CODES_CHECK(codes_set_long(ibufr, "masterTablesVersionNumber", WMO_BUFR_TABLE_NO), 0);
             CODES_CHECK(codes_set_long(ibufr, "dataCategory", 0), 0);
             CODES_CHECK(codes_set_long(ibufr, "internationalDataSubCategory", 2), 0);
             CODES_CHECK(codes_set_long(ibufr, "dataSubCategory", 2), 0);
@@ -519,10 +518,8 @@ namespace mio {
 
         // adds the number of repitions to the repeated descriptors (not using delayed descriptors, as we know the number of repitions already and it shouldnt be too much)
         static void addRepeatedDescriptors(std::vector<long> &descriptors, std::vector<long> &replication_factors_in_subset, const std::vector<long> &repeated_descriptors, long num) {
-            if (num > 0) {
-                replication_factors_in_subset.push_back(num);
-                addDescriptors(descriptors, repeated_descriptors);
-            }
+            addDescriptors(descriptors, repeated_descriptors);
+            replication_factors_in_subset.push_back(num);
         }
 
         // adds the standard descriptor, if it found in the available params and not repeated
@@ -536,7 +533,7 @@ namespace mio {
         static void setCryosDescriptors(std::vector<long> &descriptors, std::vector<long> &replication_factors_in_subset, long num_heights) {
             // even though it seems similar we need to have to functions setting the descriptors, to later allow for the cryos sequence
             std::vector<long> info_descriptors(getDescriptors({"WIGOS_ID", "LongStationName", "StationType", "Date", "Time", "LatLon", "Alt"}));
-            std::vector<long> single_occurence_descriptors(getDescriptors({"SurfType", "IceThickness", "GroundState", "HS", "SnoDepthMethod", "SurfQualifier", "TSkin"}));
+            std::vector<long> single_occurence_descriptors(getDescriptors({"SurfType", "IceThickness", "GroundState", "HS", "SnoDepthMethod", "SurfQualifier", "TSS"}));
             std::vector<long> repeated_descriptors = {109000,
                                                       31001,
                                                       getDescriptor("HSensor"),
@@ -553,6 +550,9 @@ namespace mio {
             addDescriptors(descriptors, single_occurence_descriptors);
 
             addRepeatedDescriptors(descriptors, replication_factors_in_subset, repeated_descriptors, num_heights);
+            // TODO: When the descriptor is available, we can use this:
+            // descriptors.push_back(307104);
+            // replication_factors_in_subset.push_back(num_heights);
         }
 
         static void setMeteoIODesrciptors(std::vector<long> &descriptors, std::vector<long> &replication_factors_in_subset, const std::map<MeteoParam, size_t> &multi_param_occurences,

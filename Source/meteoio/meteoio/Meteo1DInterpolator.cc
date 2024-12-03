@@ -152,7 +152,7 @@ void Meteo1DInterpolator::processAlgorithms(const std::string &parname, const st
     // process each algorithm, and possibly add it to the stack
     for (const auto &index_algo : vecAlgos) {
         std::string algo_name(IOUtils::strToUpper(index_algo.second));
-        int algo_index = index_algo.first;
+        const int algo_index = index_algo.first;
         checkDeprecatedKeySyntax(cfg, base_parname, algo_name, interpol_section);
 
         double max_gap_size_override( cfg.get(base_parname + "::" + arguments_ini_key + std::to_string(algo_index) + "::" + gap_size_key, interpol_section, max_gap_size) );

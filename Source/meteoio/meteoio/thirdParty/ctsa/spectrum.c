@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * spectrum.c
  *
@@ -81,7 +82,7 @@ void periodogram(spectrum_fft_object obj,double* vec,double* spec, double *freq,
 		N2 = N/2;
 		for (i = 1; i < N2+1 ;++i) {
 			spec[i] = (oup[i].re * oup[i].re + oup[i].im * oup[i].im) / N;
-			freq[i] = PIPOW2 * i / N;
+			freq[i] = PI2 * i / N;
 		}
 		if (side == 2) { 
 			for (i = 0; i < N2; i++) {
@@ -101,11 +102,11 @@ void periodogram(spectrum_fft_object obj,double* vec,double* spec, double *freq,
 		N2 = N/2;
 		for (i = 1; i < N2;++i) {
 			spec[i] = (oup[i].re * oup[i].re + oup[i].im * oup[i].im) / N;
-			freq[i] = PIPOW2 * i / N;
+			freq[i] = PI2 * i / N;
 		}
 		
 		spec[N2] = 0.0;
-		freq[N2] = PIPOW2 * N2 / N;
+		freq[N2] = PI2 * N2 / N;
 	
 		for (t = 0; t < N;t+=2) {
 			spec[N2] -= vec[t];
@@ -139,7 +140,7 @@ void psd(spectrum_fft_object obj,double* vec,double* spec, double *freq, int sid
 	
 	N = obj->lenfft;
 	NO = obj->len;
-	NP = NO * PIPOW2;
+	NP = NO * PI2;
 	
 	inp = (fft_data*) malloc (sizeof(fft_data) * N);
 	oup = (fft_data*) malloc (sizeof(fft_data) * N);
@@ -163,7 +164,7 @@ void psd(spectrum_fft_object obj,double* vec,double* spec, double *freq, int sid
 		N2 = N/2;
 		for (i = 1; i < N2+1 ;++i) {
 			spec[i] = (oup[i].re * oup[i].re + oup[i].im * oup[i].im) / NP;
-			freq[i] = PIPOW2 * i / N;
+			freq[i] = PI2 * i / N;
 		}
 		if (side == 2) { 
 			for (i = 0; i < N2; i++) {
@@ -183,12 +184,12 @@ void psd(spectrum_fft_object obj,double* vec,double* spec, double *freq, int sid
 		N2 = N/2;
 		for (i = 1; i < N2+1;++i) {
 			spec[i] = (oup[i].re * oup[i].re + oup[i].im * oup[i].im) / NP;
-			freq[i] = PIPOW2 * i / N;
+			freq[i] = PI2 * i / N;
 		}
 		
 		/*
 		spec[N2] = 0.0;
-		freq[N2] = PIPOW2 * N2 / N;
+		freq[N2] = PI2 * N2 / N;
 	
 		for (t = 0; t < N;t+=2) {
 			spec[N2] -= vec[t];
@@ -222,7 +223,7 @@ void psd_autocovar(auto_fft_object obj,double *vec,double* spec, double *freq,in
 	fft_data *oup;
 	
 	N = obj->ilen;
-	NP = PIPOW2 * N;
+	NP = PI2 * N;
 	acov = (double*) malloc (sizeof(double) * N);
 	inp = (fft_data*) malloc (sizeof(fft_data) * Nfft);
 	oup = (fft_data*) malloc (sizeof(fft_data) * Nfft);
@@ -247,18 +248,18 @@ void psd_autocovar(auto_fft_object obj,double *vec,double* spec, double *freq,in
 	
 	for (f = 1; f < N2;++f) {
 		spec[f] = (oup[f].re * oup[f].re + oup[f].im * oup[f].im) / NP;
-		freq[f] = PIPOW2 * f / Nfft;
+		freq[f] = PI2 * f / Nfft;
 	}
 	/*
 	for (f = 0; f < N2;f++) {
 		spec[f] = 0.0;
 		for (k = 1; k < N;k++) {
-			spec[f]+= acov[k] * cos(PIPOW2 * f * k / Nfft);
+			spec[f]+= acov[k] * cos(PI2 * f * k / Nfft);
 		}
 		spec[f] *= 2.0;
 		spec[f] += acov[0];
-		//spec[f] /= PIPOW2;
-		freq[f] = PIPOW2 * f / Nfft;
+		//spec[f] /= PI2;
+		freq[f] = PI2 * f / Nfft;
 	}
 	*/
 	

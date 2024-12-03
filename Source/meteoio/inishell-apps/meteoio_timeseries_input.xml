@@ -245,15 +245,53 @@ Please include meteoio_parametergroups before use!
 			<option value="FALSE"/>
 			<help>If set to true, fields that can not be parsed are assigned &lt;code&gt;nodata&lt;/code&gt;</help>
 		</parameter>
-
-		<parameter key="CSV_DELIMITER" type="text" default="," size="small">
-			<help>Field delimiter character (use &lt;code&gt;SPACE&lt;/code&gt; or &lt;code&gt;TAB&lt;/code&gt; for whitespaces)</help>
+		
+		<parameter type="spacer" height="15"/>
+		
+		<parameter key="STATION#" type="grid" replicate="true"> <!-- a grid without raster positions aligns vertically -->
+			<option>
+				<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" optional="false">
+					<option extension="Comma separated files (*.csv *.CSV *.dat *.DAT)"/>
+					<option extension="All files (*.*)"/>
+					<help>File name containing the data for station number #</help>
+				</parameter>
+			</option>
+			<option>
+				<reference name="CSV_NUMBERED_STATION"/>
+			</option>
+			<help>Enter file name and position for station number #</help>
 		</parameter>
-		<parameter key="CSV_NODATA" type="text">
-			<help>A space delimited list of strings that should be interpreted as &lt;code&gt;nodata&lt;/code&gt; (for example: NAN NULL -6999)</help>
+		
+		<parameter type="spacer" height="15"/>
+		<parameter type="helptext" wrap="true">
+			<help>The settings below apply to all stations, except when overwritten by station specific settings (as set within each STATION# input)</help>
 		</parameter>
-
-		<frame caption="Header handling" color="#c4c4c4" collapsed="false">
+		
+		<frame caption="Metadata" color="#c4c4c4" collapsed="true">
+			<parameter key="CSV_NAME" type="text">
+				<help>A descriptive station name to use (if provided, has priority over the special headers). Example: "Davos::SLF-station"</help>
+			</parameter>
+			<parameter key="CSV_ID" type="text">
+				<help>The (short) station ID to use (if provided, has priority over the special headers). The station ID is often used to built the output file name as well as to apply specific processing at specific stations, if necessary. Example: "SLF2"</help>
+			</parameter>
+			<parameter key="CSV_SLOPE" type="number" format="integer+" min="0" max="90">
+				<help>The slope angle at the station, in degrees (if providing a slope, also provide an azimuth)</help>
+			</parameter>
+			<parameter key="CSV_AZIMUTH" type="number" format="integer+" min="0" max="360">
+				<help>The slope azimuth at the station, in degrees from North </help>
+			</parameter>
+			<parameter key="POSITION" type="text" validate="coordinates">
+				<help>Coordinates are given as lat/lon/alt or easting/northing/alt such as &lt;b&gt;&lt;i&gt;latlon (46.75, 9.80, 2200)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;latlon (46d 48' 44.553", 9d 50' 50.694", 1550)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;xy(198754, 723458, 2200) [N,E,Alt]&lt;/i&gt;&lt;/b&gt;</help>
+			</parameter>
+			<parameter key="CSV_SPECIAL_HEADERS" type="text">
+				<help>Description of how to extract more metadata out of the headers, such as &lt;code&gt;name:1:3 id:2:5 lat:3:2 lon:3:4 alt:3:6&lt;/code&gt;</help>
+			</parameter>
+			<parameter key="CSV_FILENAME_SPEC" type="text">
+				<help>Pattern to parse the filename and extract metadata out of it, such as &lt;code&gt;{ID}_{NAME}-{SKIP}_-_{PARAM}&lt;/code&gt;</help>
+			</parameter>
+		</frame>
+		
+		<frame caption="Header handling" color="#c4c4c4" collapsed="true">
 			<parameter key="CSV_NR_HEADERS" type="number" format="integer+" default="1" notoggle="true">
 				<help>Number of header lines</help>
 			</parameter>
@@ -299,7 +337,13 @@ Please include meteoio_parametergroups before use!
 			</parameter>
 		</frame>
 
-		<frame caption="Fields parsing" color="#c4c4c4" collapsed="false">
+		<frame caption="Fields parsing" color="#c4c4c4" collapsed="true">
+			<parameter key="CSV_DELIMITER" type="text" default="," size="small">
+				<help>Field delimiter character (use &lt;code&gt;SPACE&lt;/code&gt; or &lt;code&gt;TAB&lt;/code&gt; for whitespaces)</help>
+			</parameter>
+			<parameter key="CSV_NODATA" type="text">
+				<help>A space delimited list of strings that should be interpreted as &lt;code&gt;nodata&lt;/code&gt; (for example: NAN NULL -6999)</help>
+			</parameter>
 			<parameter key="CSV_COLUMNS_HEADERS" type="number" format="integer+" notoggle="true">
 				<help>header line number to interpret as columns headers</help>
 			</parameter>
@@ -325,7 +369,7 @@ Please include meteoio_parametergroups before use!
 			</parameter>
 		</frame>
 
-		<frame caption="Date/Time handling" color="#c4c4c4" collapsed="false">
+		<frame caption="Date/Time handling" color="#c4c4c4" collapsed="true">
 			<parameter type="helptext" wrap="true">
 				<help>There are many, many ways to represent date and time:
 					&lt;ul&gt;
@@ -388,49 +432,6 @@ Please include meteoio_parametergroups before use!
 				<help>Date and time representation</help>
 			</parameter>
 		</frame>
-
-		<frame caption="Metadata" color="#c4c4c4" collapsed="true">
-			<parameter key="CSV_NAME" type="text">
-				<help>A descriptive station name to use (if provided, has priority over the special headers). Example: "Davos::SLF-station"</help>
-			</parameter>
-			<parameter key="CSV_ID" type="text">
-				<help>The (short) station ID to use (if provided, has priority over the special headers). The station ID is often used to built the output file name as well as to apply specific processing at specific stations, if necessary. Example: "SLF2"</help>
-			</parameter>
-			<parameter key="CSV_SLOPE" type="number" format="integer+" min="0" max="90">
-				<help>The slope angle at the station, in degrees (if providing a slope, also provide an azimuth)</help>
-			</parameter>
-			<parameter key="CSV_AZIMUTH" type="number" format="integer+" min="0" max="360">
-				<help>The slope azimuth at the station, in degrees from North </help>
-			</parameter>
-			<parameter key="POSITION" type="text" validate="coordinates">
-				<help>Coordinates are given as lat/lon/alt or easting/northing/alt such as &lt;b&gt;&lt;i&gt;latlon (46.75, 9.80, 2200)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;latlon (46d 48' 44.553", 9d 50' 50.694", 1550)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;xy(198754, 723458, 2200) [N,E,Alt]&lt;/i&gt;&lt;/b&gt;</help>
-			</parameter>
-			<parameter key="CSV_SPECIAL_HEADERS" type="text">
-				<help>Description of how to extract more metadata out of the headers, such as &lt;code&gt;name:1:3 id:2:5 lat:3:2 lon:3:4 alt:3:6&lt;/code&gt;</help>
-			</parameter>
-			<parameter key="CSV_FILENAME_SPEC" type="text">
-				<help>Pattern to parse the filename and extract metadata out of it, such as &lt;code&gt;{ID}_{NAME}-{SKIP}_-_{PARAM}&lt;/code&gt;</help>
-			</parameter>
-		</frame>
-
-		<parameter key="STATION#" type="grid" replicate="true"> <!-- a grid without raster positions aligns vertically -->
-			<option>
-				<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" optional="false">
-					<option extension="Comma separated files (*.csv *.CSV *.dat *.DAT)"/>
-					<option extension="All files (*.*)"/>
-					<help>File name containing the data for station number #</help>
-				</parameter>
-			</option>
-			<option>
-				<parameter key="POSITION#" type="text" validate="coordinates">
-					<help>Coordinates are given as lat/lon/alt or easting/northing/alt such as &lt;b&gt;&lt;i&gt;latlon (46.75, 9.80, 2200)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;latlon (46d 48' 44.553", 9d 50' 50.694", 1550)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;xy(198754, 723458, 2200) [N,E,Alt]&lt;/i&gt;&lt;/b&gt;</help>
-				</parameter>
-			</option>
-			<option>
-				<reference name="CSV_NUMBERED_STATION"/>
-			</option>
-			<help>Enter file name and position for station number #</help>
-		</parameter>
 	</parametergroup>
 
 	<parametergroup name="CSV_NUMBERED_STATION">
@@ -441,6 +442,29 @@ Please include meteoio_parametergroups before use!
 			<parameter key="CSV#_NODATA" type="text">
 				<help>A space delimited list of strings that should be interpreted as &lt;code&gt;nodata&lt;/code&gt; (for example: NAN NULL -6999)</help>
 			</parameter>
+			<frame caption="Metadata" color="#c4c4c4" collapsed="true">
+				<parameter key="CSV#_NAME" type="text">
+					<help>A descriptive station name to use (if provided, has priority over the special headers). Example: "Davos::SLF-station"</help>
+				</parameter>
+				<parameter key="CSV#_ID" type="text">
+					<help>The (short) station ID to use (if provided, has priority over the special headers). The station ID is often used to built the output file name as well as to apply specific processing at specific stations, if necessary. Example: "SLF2"</help>
+				</parameter>
+				<parameter key="CSV#_SLOPE" type="number" format="integer+" min="0" max="90">
+					<help>The slope angle at the station, in degrees (if providing a slope, also provide an azimuth)</help>
+				</parameter>
+				<parameter key="CSV#_AZIMUTH" type="number" format="integer+" min="0" max="360">
+					<help>The slope azimuth at the station, in degrees from North </help>
+				</parameter>
+				<parameter key="POSITION#" type="text" validate="coordinates">
+					<help>Coordinates are given as lat/lon/alt or easting/northing/alt such as &lt;b&gt;&lt;i&gt;latlon (46.75, 9.80, 2200)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;latlon (46d 48' 44.553", 9d 50' 50.694", 1550)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;xy(198754, 723458, 2200) [N,E,Alt]&lt;/i&gt;&lt;/b&gt;</help>
+				</parameter>
+				<parameter key="CSV#_SPECIAL_HEADERS" type="text">
+					<help>Description of how to extract more metadata out of the headers, such as &lt;code&gt;name:1:3 id:2:5 lat:3:2 lon:3:4 alt:3:6&lt;/code&gt;</help>
+				</parameter>
+				<parameter key="CSV#_FILENAME_SPEC" type="text">
+					<help>Pattern to parse the filename and extract metadata out of it, such as &lt;code&gt;{ID}_{NAME}-{SKIP}_-_{PARAM}&lt;/code&gt;</help>
+				</parameter>
+			</frame>
 			<frame caption="Header handling" color="#c4c4c4" collapsed="true">
 				<parameter key="CSV#_NR_HEADERS" type="number" format="integer+" min="0" notoggle="true">
 					<help>Number of header lines</help>
@@ -553,26 +577,6 @@ Please include meteoio_parametergroups before use!
 						<help>Pure numerical (combined) date and time representation</help>
 					</option>
 					<help>Date and time representation</help>
-				</parameter>
-			</frame>
-			<frame caption="Metadata" color="#c4c4c4" collapsed="true">
-				<parameter key="CSV#_NAME" type="text">
-					<help>A descriptive station name to use (if provided, has priority over the special headers). Example: "Davos::SLF-station"</help>
-				</parameter>
-				<parameter key="CSV#_ID" type="text">
-					<help>The (short) station ID to use (if provided, has priority over the special headers). The station ID is often used to built the output file name as well as to apply specific processing at specific stations, if necessary. Example: "SLF2"</help>
-				</parameter>
-				<parameter key="CSV#_SLOPE" type="number" format="integer+" min="0" max="90">
-					<help>The slope angle at the station, in degrees (if providing a slope, also provide an azimuth)</help>
-				</parameter>
-				<parameter key="CSV#_AZIMUTH" type="number" format="integer+" min="0" max="360">
-					<help>The slope azimuth at the station, in degrees from North </help>
-				</parameter>
-				<parameter key="CSV#_SPECIAL_HEADERS" type="text">
-					<help>Description of how to extract more metadata out of the headers, such as &lt;code&gt;name:1:3 id:2:5 lat:3:2 lon:3:4 alt:3:6&lt;/code&gt;</help>
-				</parameter>
-				<parameter key="CSV#_FILENAME_SPEC" type="text">
-					<help>Pattern to parse the filename and extract metadata out of it, such as &lt;code&gt;{ID}_{NAME}-{SKIP}_-_{PARAM}&lt;/code&gt;</help>
 				</parameter>
 			</frame>
 		</frame>

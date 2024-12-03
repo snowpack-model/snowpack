@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 #include "boxcox.h"
 
 int checkConstant(double *x, int N) {
@@ -59,12 +60,10 @@ double inv_boxcox_eval(double *x,int N, double lambda,double *bxcx) {
         for(i = 0; i < N;++i) {
             bxcx[i] = exp(x[i]);
         }
-        return 0;
     } else {
         for(i = 0; i < N;++i) {
             bxcx[i] = exp(log1p(lambda * x[i])/lambda);
         }
-        return 1;
     }
 }
 
