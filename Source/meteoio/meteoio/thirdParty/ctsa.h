@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
 * arma.h
 *
@@ -77,8 +78,9 @@ struct auto_arima_set{
 	double aic;
 	double bic;
 	double aicc;
-	double *params;
+	double params[0];
 };
+
 
 typedef struct sarimax_set* sarimax_object;
 
@@ -114,7 +116,7 @@ struct sarimax_set{
 	int retval;
 	int start;
 	int imean;
-	double *params;
+	double params[0];
 };
 
 typedef struct arima_set* arima_object;
@@ -141,7 +143,7 @@ struct arima_set{
 	double loglik;
 	double aic;
 	int retval;
-	double *params;
+	double params[0];
 };
 
 typedef struct sarima_set* sarima_object;
@@ -174,7 +176,7 @@ struct sarima_set{
 	double loglik;
 	double aic;
 	int retval;
-	double *params;
+	double params[0];
 };
 
 typedef struct ar_set* ar_object;
@@ -194,7 +196,7 @@ struct ar_set{
 	double var;
 	double aic;
 	int retval;
-	double *params;
+	double params[0];
 };
 
 void sarimax_exec(sarimax_object obj, double *inp,double *xreg) ;

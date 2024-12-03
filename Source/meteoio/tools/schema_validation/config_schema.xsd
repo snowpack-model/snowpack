@@ -1,0 +1,355 @@
+<?xml version="1.0"?>
+
+<!-- 
+###############################################################################
+#   Copyright 2022 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   #
+###############################################################################
+This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<!-- Important: This schema adheres to the XSD 1.1 standard. Validating it with an XSD 1.0-based validator will result in errors -->
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" vc:minVersion="1.1">
+
+    <xsd:element name="inishell_config">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="autoload_type" name="autoload" maxOccurs="1" minOccurs="0" />
+                <xsd:element type="workflow_type" name="workflow" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="parametergroup_type" name="parametergroup" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="frame_type" name="frame" maxOccurs="unbounded" minOccurs="0" />
+            </xsd:all>
+            <xsd:attribute type="xsd:string" name="application" />
+            <xsd:attribute type="xsd:string" name="simulation" />
+            <xsd:attribute type="xsd:string" name="icon" />
+            <xsd:attribute type="xsd:string" name="version"/>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="inishell_include">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="autoload_type" name="autoload" maxOccurs="1" minOccurs="0" />
+                <xsd:element type="workflow_type" name="workflow" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="parametergroup_type" name="parametergroup" maxOccurs="unbounded" minOccurs="0" />
+                <xsd:element type="frame_type" name="frame" maxOccurs="unbounded" minOccurs="0" />
+            </xsd:all>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:complexType name="include_type">
+        <xsd:attribute type="xsd:string" name="file" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="autoload_type">
+        <xsd:attribute type="xsd:string" name="inifile" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="workflow_type">
+        <xsd:all>
+            <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="parameter_type">
+        <xsd:all>
+            <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="help_type" name="help" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="help_type" name="h" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="rephelp_type" name="rephelp" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="option_type" name="option" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="option_type" name="o" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="xsd:string" name="text" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="substitution_type" name="substitution" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:all>
+        <xsd:attribute name="type" use="required">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="alternative" />
+                    <xsd:enumeration value="checkbox" />
+                    <xsd:enumeration value="checklist" />
+                    <xsd:enumeration value="choice" />
+                    <xsd:enumeration value="datetime" />
+                    <xsd:enumeration value="file" />
+                    <xsd:enumeration value="filename" />
+                    <xsd:enumeration value="path" />
+                    <xsd:enumeration value="number" />
+                    <xsd:enumeration value="text" />
+                    <xsd:enumeration value="selector" />
+                    <xsd:enumeration value="copytext" />
+                    <xsd:enumeration value="image" />
+                    <xsd:enumeration value="grid" />
+                    <xsd:enumeration value="horizontal" />
+                    <xsd:enumeration value="space" />
+                    <xsd:enumeration value="spacer" />
+                    <xsd:enumeration value="label" />
+                    <xsd:enumeration value="helptext" />
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+        <xsd:attribute type="xsd:string" name="section" />
+        <xsd:attribute type="xsd:string" name="key" />
+        <xsd:attribute type="xsd:boolean" name="optional" />
+        <xsd:attribute type="xsd:boolean" name="editable" />
+        <xsd:attribute type="xsd:string" name="label" />
+        <xsd:attribute type="xsd:string" name="format" />
+        <xsd:attribute type="xsd:string" name="default" />
+        <xsd:attribute type="xsd:string" name="size" />
+        <xsd:attribute type="xsd:string" name="placeholder" />
+        <xsd:attribute type="xsd:boolean" name="replicate" />
+        <xsd:attribute type="xsd:string" name="help" />
+        <xsd:attribute type="xsd:boolean" name="template" />
+        <!-- Label -->
+        <xsd:attribute type="xsd:boolean" name="longlabel" />
+        <!-- Textfield-->
+        <xsd:attribute type="xsd:string" name="validate" />
+        <xsd:attribute type="xsd:boolean" name="lenient" />
+        <!-- Copytext-->
+        <xsd:attribute type="xsd:string" name="syntax" />
+        <!-- Dropdown -->
+        <xsd:attribute type="xsd:boolean" name="pre-generate" />
+        <!-- Files -->
+        <xsd:attribute type="xsd:string" name="mode" />
+        <xsd:attribute type="xsd:boolean" name="preview" />
+        <xsd:attribute type="xsd:string" name="path" />
+        <!-- Images -->
+        <xsd:attribute type="xsd:string" name="url" />
+        <!-- Numbers -->
+        <xsd:attribute type="xsd:decimal" name="min" />
+        <xsd:attribute type="xsd:decimal" name="max" />
+        <xsd:attribute type="xsd:boolean" name="sign" />
+        <xsd:attribute type="xsd:string" name="unit" />
+        <xsd:attribute type="xsd:string" name="precision" />
+        <xsd:attribute type="xsd:boolean" name="notoggle" />
+        <!-- Styling -->
+        <xsd:attribute type="xsd:string" name="color" />
+        <xsd:attribute type="xsd:boolean" name="bold" />
+        <xsd:attribute type="xsd:boolean" name="italic" />
+        <xsd:attribute type="xsd:boolean" name="underline" />
+        <xsd:attribute type="xsd:string" name="font" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="font_size" />
+        <xsd:attribute type="xsd:string" name="align" />
+        <xsd:attribute type="xsd:boolean" name="wrap" />
+        <xsd:attribute type="xsd:boolean" name="nowrap" />
+        <xsd:attribute type="xsd:boolean" name="border" />
+        <xsd:attribute type="xsd:boolean" name="scroll" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="height" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="h" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="width" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="w" />
+        <!-- Caption and caption styling -->
+        <xsd:attribute type="xsd:string" name="caption" />
+        <xsd:attribute type="xsd:string" name="caption_font" />
+        <xsd:attribute type="xsd:string" name="caption_color" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="caption_size" />
+        <xsd:attribute type="xsd:boolean" name="caption_bold" />
+        <xsd:attribute type="xsd:boolean" name="caption_italic" />
+        <xsd:attribute type="xsd:boolean" name="caption_underline" />
+
+        <!-- Assertions -->
+        <xsd:assert test="not(help) or not(h)" /> <!-- Allow only one help element -->
+        <xsd:assert test="not(@editable) or @type = 'alternative' or @type = 'selector'" />
+        <xsd:assert test="not(@format) or @type = 'datetime' or @type = 'number'" />
+        <xsd:assert test="not(@size) or @type = 'text' or @type = 'copytext'" />
+        <xsd:assert test="not(@placeholder) or @type = 'text' or @type = 'selector'" />
+        <xsd:assert test="not(parameter) or @type = 'selector'" />
+        <xsd:assert test="not(rephelp) or string(@replicate) = 'true'" />
+        <!-- Checkbox -->
+        <xsd:assert test="not(@type = 'checkbox') or (count(option) + count(o) le 1)" />
+        <!-- Label -->
+        <xsd:assert test="not(@longlabel) or @type = 'label' or @label or @key" />
+        <!-- Textfield-->
+        <xsd:assert test="not(@validate) or @type = 'text'" />
+        <xsd:assert test="not(@lenient) or @type = 'text'" />
+        <!-- Copytext-->
+        <xsd:assert test="not(@syntax) or @type = 'copytext'" />
+        <xsd:assert test="not(text) or @type = 'copytext'" />
+        <!-- Dropdown -->
+        <xsd:assert test="not(@pre-generate) or @type = 'alternative'" />
+        <!-- Files -->
+        <xsd:assert test="not(@preview) or @type = 'file' or @type = 'filename'" />
+        <xsd:assert test="not(@mode) or @type = 'file' or @type = 'filename' or @type = 'path'" />
+        <!-- Images -->
+        <xsd:assert test="not(@url) or @type = 'image'" />
+        <xsd:assert test="not(@path) or @type = 'image' or @type = 'filename'" />
+        <!-- Numbers -->
+        <xsd:assert test="not(@min) or @type = 'number'" />
+        <xsd:assert test="not(@max) or @type = 'number'" />
+        <xsd:assert test="not(@sign) or @type = 'number'" />
+        <xsd:assert test="not(@unit) or @type = 'number'" />
+        <xsd:assert test="not(@precision) or @type = 'number'" />
+        <xsd:assert test="not(@notoggle) or @type = 'number'" />
+    </xsd:complexType>
+
+    <xsd:complexType name="option_type">
+        <xsd:all>
+            <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="frame_type" name="frame" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="help_type" name="help" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="help_type" name="h" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="option_type" name="option" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="option_type" name="o" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:all>
+        <xsd:attribute type="xsd:string" name="value" />
+        <xsd:attribute type="xsd:string" name="key" />
+        <xsd:attribute type="xsd:string" name="help" />
+        <xsd:attribute type="xsd:string" name="h" />
+        <xsd:attribute type="xsd:string" name="default" />
+        <xsd:attribute type="xsd:string" name="extension" />
+        <!-- Gird -->
+        <xsd:attribute type="xsd:string" name="row" />
+        <xsd:attribute type="xsd:string" name="r" />
+        <xsd:attribute type="xsd:string" name="column" />
+        <xsd:attribute type="xsd:string" name="c" />
+        <xsd:attribute type="xsd:string" name="rowspan" />
+        <xsd:attribute type="xsd:string" name="colspan" />
+        <!-- Styling -->
+        <xsd:attribute type="xsd:string" name="color" />
+        <xsd:attribute type="xsd:boolean" name="bold" />
+        <xsd:attribute type="xsd:boolean" name="italic" />
+        <xsd:attribute type="xsd:boolean" name="underline" />
+        <xsd:attribute type="xsd:string" name="font" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="font_size" />
+        <!-- Caption and caption styling -->
+        <xsd:attribute type="xsd:string" name="caption" />
+        <xsd:attribute type="xsd:string" name="caption_font" />
+        <xsd:attribute type="xsd:string" name="caption_color" />
+        <xsd:attribute type="xsd:nonNegativeInteger" name="caption_size" />
+        <xsd:attribute type="xsd:boolean" name="caption_bold" />
+        <xsd:attribute type="xsd:boolean" name="caption_italic" />
+        <xsd:attribute type="xsd:boolean" name="caption_underline" />
+
+        <!-- Assertions -->
+        <xsd:assert test="not(help) or not(h)" /> <!-- Allow only one help element -->
+    </xsd:complexType>
+
+    <xsd:simpleType name="help_type">
+        <xsd:restriction base="xsd:string" />
+    </xsd:simpleType>
+
+    <xsd:simpleType name="rephelp_type">
+        <xsd:restriction base="xsd:string" />
+    </xsd:simpleType>
+
+    <xsd:complexType name="reference_type">
+        <xsd:attribute type="xsd:string" name="name" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="substitution_type">
+        <xsd:attribute type="xsd:string" name="find" use="required" />
+        <xsd:attribute type="xsd:string" name="replace" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="section_type">
+        <xsd:all>
+            <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+            <!-- <xsd:element type="parametergroup_type" name="parametergroup" maxOccurs="unbounded" minOccurs="0" /> -->
+            <xsd:element type="frame_type" name="frame" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="help_type" name="help" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="help_type" name="h" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="rephelp_type" name="rephelp" maxOccurs="1" minOccurs="0" />
+            <xsd:element type="option_type" name="option" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="option_type" name="o" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="element_type" name="element" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:all>
+        <xsd:attribute type="xsd:string" name="name" />
+        <xsd:attribute type="xsd:string" name="color" />
+        <xsd:attribute type="xsd:string" name="background_color" />
+        <xsd:attribute type="xsd:string" name="replicate" />
+        <xsd:attribute type="xsd:string" name="caption" />
+
+        <!-- Assertions -->
+        <xsd:assert test="not(help) or not(h)" /> <!-- Allow only one help element -->
+        <xsd:assert test="not(rephelp) or string(@replicate) = 'true'" />
+    </xsd:complexType>
+
+    <xsd:complexType name="frame_type">
+        <xsd:all>
+            <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parametergroup_type" name="parametergroup" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="frame_type" name="frame" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:all>
+        <xsd:attribute type="xsd:string" name="key" />
+        <xsd:attribute type="xsd:string" name="caption" />
+        <xsd:attribute type="xsd:string" name="section" />
+        <xsd:attribute type="xsd:boolean" name="collapsed" />
+        <xsd:attribute type="xsd:string" name="color" />
+        <xsd:attribute type="xsd:string" name="background_color" />
+
+        <!-- Assertions -->
+        <xsd:assert test="not(help) or not(h)" /> <!-- Allow only one help element -->
+    </xsd:complexType>
+
+    <xsd:complexType name="parametergroup_type">
+        <xsd:all>
+            <xsd:element type="include_type" name="include" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="reference_type" name="reference" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="section_type" name="section" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parameter_type" name="parameter" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="parametergroup_type" name="parametergroup" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="frame_type" name="frame" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="option_type" name="option" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="option_type" name="o" maxOccurs="unbounded" minOccurs="0" />
+            <xsd:element type="substitution_type" name="substitution" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:all>
+        <xsd:attribute type="xsd:string" name="name" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="element_type">
+        <xsd:sequence>
+            <xsd:element type="xsd:string" name="command" maxOccurs="unbounded" minOccurs="0" />
+        </xsd:sequence>
+        <xsd:attribute name="type" use="required">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="datetime" />
+                    <xsd:enumeration value="checkbox" />
+                    <xsd:enumeration value="button" />
+                    <xsd:enumeration value="label" />
+                    <xsd:enumeration value="text" />
+                    <xsd:enumeration value="path" />
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+        <xsd:attribute type="xsd:string" name="key" />
+        <xsd:attribute type="xsd:string" name="id" />
+        <xsd:attribute type="xsd:string" name="caption" />
+        <xsd:attribute type="xsd:boolean" name="replicate" />
+        <xsd:attribute type="xsd:string" name="default" />
+        <xsd:attribute type="xsd:string" name="path" />
+
+        <!-- Assertions -->
+        <xsd:assert test="not(@type = 'checkbox') or (count(option) + count(o) le 1)" />
+    </xsd:complexType>
+
+</xsd:schema>

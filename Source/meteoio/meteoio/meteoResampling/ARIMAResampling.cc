@@ -24,8 +24,8 @@
 
 namespace mio {
 
-    ARIMAResampling::ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_window_size, const std::vector<std::pair<std::string, std::string>> &vecArgs)
-        : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), verbose(false), gap_data(), filled_data(), all_dates(), before_window(), after_window(), is_valid_gap_data(),
+    ARIMAResampling::ARIMAResampling(const std::string &i_algoname, const std::string &i_parname, const double &dflt_max_gap_size, const std::vector<std::pair<std::string, std::string>> &vecArgs)
+        : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs), verbose(false), gap_data(), filled_data(), all_dates(), before_window(), after_window(), is_valid_gap_data(),
           warned_about_gap(), newest_gap() {
         const std::string where("Interpolations1D::" + i_parname + "::" + i_algoname);
         if (vecArgs.empty()) // incorrect arguments, throw an exception
@@ -133,8 +133,6 @@ namespace mio {
 
         if (!(before_window != 0 || after_window != 0))
             throw InvalidArgumentException("Please provide a ARIMA window for " + where, AT);
-        if (before_window + after_window > window_size)
-            throw InvalidArgumentException("The ARIMA window is larger than the resampling window for " + where, AT);
     }
 
     std::string ARIMAResampling::toString() const {
@@ -431,9 +429,13 @@ namespace mio {
 
     std::vector<double> ARIMAResampling::getInterpolatedData(std::vector<double> &data, size_t size_before, size_t size_after, size_t startIdx_interpol, size_t length_gap_interpol, int sr_period) {
         std::vector<double> interpolated_data;
-        if (size_before < MIN_ARIMA_DATA_POINTS && size_after > MIN_ARIMA_DATA_POINTS) {
+        if (size_before < MIN_ARIMA_DATA_POINTS && size_after >= MIN_ARIMA_DATA_POINTS) {
+            if (verbose)
+                std::cout << "predicting backward" << std::endl;
             interpolated_data = predictData(data, "backward", startIdx_interpol, length_gap_interpol, sr_period);
-        } else if (size_after < MIN_ARIMA_DATA_POINTS && size_before > MIN_ARIMA_DATA_POINTS) {
+        } else if (size_after < MIN_ARIMA_DATA_POINTS && size_before >= MIN_ARIMA_DATA_POINTS) {
+            if (verbose)
+                std::cout << "predicting forward" << std::endl;
             interpolated_data = predictData(data, "forward", startIdx_interpol, length_gap_interpol, sr_period);
         } else if (size_before < MIN_ARIMA_DATA_POINTS && size_after < MIN_ARIMA_DATA_POINTS) {
             throw IOException("Could not accumulate enough data for parameter estimation; Increasing window sizes might help");
@@ -493,7 +495,7 @@ namespace mio {
         ARIMA_GAP new_gap;
         Date data_start_date;
         Date data_end_date;
-        computeARIMAGap(new_gap, index, paramindex, vecM, resampling_date, gap_start, gap_end, before_window, after_window, window_size, data_start_date, data_end_date);
+        computeARIMAGap(new_gap, index, paramindex, vecM, resampling_date, gap_start, gap_end, before_window, after_window, max_gap_size, data_start_date, data_end_date);
 
         if (position != ResamplingAlgorithms::begin && data_start_date < vecM[0].date) {
             data_start_date = vecM[0].date;
@@ -514,14 +516,7 @@ namespace mio {
             }
         }
 
-        assert(gap_length < MAX_ARIMA_EXTRAPOLATION && "Gap length is longer than max extraploation length, this should not happen");
-
-        // check if gap ended up being bigger than the window size
-        if (new_gap.endDate.getJulian(true) - new_gap.startDate.getJulian(true) > window_size) {
-            double difference = (new_gap.endDate - new_gap.startDate).getJulian(true) - window_size;
-            difference *= 86400;
-            throw IOException("The window size is smaller than the data gap to be interpolated, please increase window size, by at least: " + std::to_string(difference) + "s", AT);
-        }
+        assert(gap_length < 2*MAX_ARIMA_EXTRAPOLATION && "Gap length is longer than max extraploation length, this should not happen");
 
         if (new_gap.isGap()) {
             // data vector is of length (data_end_date - data_start_date) * sampling_rate

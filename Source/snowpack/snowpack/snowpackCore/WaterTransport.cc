@@ -427,6 +427,9 @@ void WaterTransport::compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& 
 							EMS[e].conc[WATER][ii] *= theta_w0/EMS[e].theta[WATER];
 						}
 					}
+					// Take care of possible floating point rounding errors in WATER and WATER_PREF
+					EMS[e].theta[WATER] = std::max(0., EMS[e].theta[WATER]);
+					EMS[e].theta[WATER_PREF] = std::max(0., EMS[e].theta[WATER_PREF]);
 					EMS[e].M += dM;
 					assert(EMS[e].M >= (-Constants::eps2)); //mass must be positive
 					Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += dM;

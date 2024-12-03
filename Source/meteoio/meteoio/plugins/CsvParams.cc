@@ -599,7 +599,7 @@ void CsvParameters::setSkipFields(const std::string& skipFieldSpecs, const bool&
 {
 	const std::string where = (negate)? "INPUT::CSV#_ONLY_FIELDS" : "INPUT::CSV#_SKIP_FIELDS";
 	//HACK temportarily look for old, space delimited syntax
-	static const std::regex old_syntax_regex("[^;|#]*[0-9]+(\\s+)[0-9]+.*"); //space delimited list of ints
+	static const std::regex old_syntax_regex("[^;|#]*[0-9]+(\\s+)[0-9]+.*", std::regex::optimize); //space delimited list of ints
 	if (std::regex_match(skipFieldSpecs, old_syntax_regex))
 		throw InvalidArgumentException("Using old, space delimited list for " + where + ". It should now be a comma delimited list (ranges are also supported)", AT);
 

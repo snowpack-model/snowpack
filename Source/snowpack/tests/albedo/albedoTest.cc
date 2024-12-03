@@ -25,6 +25,8 @@
 #include <sstream>
 #include <ctime>
 
+#include <regex>
+
 #ifdef _MSC_VER
 /*
  This software contains code under BSD license (namely, getopt for Visual C++).
@@ -759,24 +761,33 @@ inline void addSpecialKeys(SnowpackConfig &cfg) {
 	//warn the user if the precipitation miss proper re-accumulation
 	const bool HS_driven = cfg.get("ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack");
 	if (mode != "OPERATIONAL" && !HS_driven) {
-		const bool psum_key_exists = cfg.keyExists("PSUM::resample",
-		                                           "Interpolations1D");
-		const std::string psum_resampling =
-		    (psum_key_exists) ?
-		        IOUtils::strToUpper(cfg.get("PSUM::resample", "Interpolations1D")) :
-		        "LINEAR";
-		if (psum_resampling != "ACCUMULATE") {
-			std::cerr
-			    << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH, not doing it is most probably an error!\n";
+		const bool psum_key_exists = cfg.keyExistsRegex("PSUM::[Re][Ee][Ss][As][Mm][Pp][Ll][Ee]\\d+", "Interpolations1D");
+		std::vector<std::pair<std::string, std::string>> vecAlgos;
+		if (psum_key_exists) {
+			vecAlgos = cfg.getValues("PSUM::RESAMPLE", "Interpolations1D");
+		}
+
+		auto accumulateIndex = [](const std::vector<std::pair<std::string, std::string>>& vec) {
+			for (size_t ii=0; ii<vec.size(); ii++) {
+				if (IOUtils::strToUpper(vec[ii].second) == "ACCUMULATE") {
+					std::regex pattern ("^[A-Z]+::resample(\\d+)$", std::regex::icase);
+					std::smatch match;
+					if (std::regex_search(vec[ii].first, match, pattern)) { // first is the original key
+						return std::stoi(match[1]);
+					} else {
+						throw IOException("ACCUMULATE key " + vec[ii].first + " does not contain a valid index; I.e. it does not match the pattern PARAM::resample#",AT);
+					}
+				}
+			}
+			return static_cast<int>(IOUtils::nodata);
+		};
+		if (vecAlgos.empty() || accumulateIndex(vecAlgos) == IOUtils::nodata) {
+			std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH, not doing it is most probably an error!\n";
 		} else {
-			const double psum_accumulate = cfg.get("PSUM::accumulate::period",
-			                                       "Interpolations1D");
-			const double sn_step_length = cfg.get("CALCULATION_STEP_LENGTH",
-			                                      "Snowpack");
-			if (sn_step_length * 60. != psum_accumulate)
-				std::cerr
-				    << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH (currently, over "
-				    << psum_accumulate << "s)\n";
+			const double psum_accumulate = cfg.get("PSUM::arg"+std::to_string(accumulateIndex(vecAlgos))+"::period", "Interpolations1D");
+			const double sn_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
+			if (sn_step_length*60. != psum_accumulate)
+				std::cerr << "[W] The precipitation should be re-accumulated over CALCULATION_STEP_LENGTH (currently, over " <<  psum_accumulate << "s)\n";
 		}
 	}
 }

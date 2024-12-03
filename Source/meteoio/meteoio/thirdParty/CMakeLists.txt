@@ -41,6 +41,7 @@ SET(thirdParty_sources
 	thirdParty/ctsa/wtmath.c
 	thirdParty/ctsa/wavefilt.c
 	thirdParty/ctsa/wavelib.c
+	thirdParty/ctsa/ctsa_wrapper.c	#our own wrapper
 )
 
 # Add the Eigen library as part of the install target

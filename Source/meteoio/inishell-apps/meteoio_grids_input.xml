@@ -1,0 +1,308 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for gridded input / output plugin definitions
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: DEM -->
+	<parametergroup name="DEMPLUGINS">
+		<parameter type="helptext" wrap="true">
+			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+		</parameter>
+		<parameter key="DEM" label="Select DEM plugin:" type="alternative" pre-generate="false">
+			<option value="ARC">
+				<reference name="DEMFILE"/>
+			</option>
+			<option value="ARPS">
+				<reference name="DEMFILE"/>
+				<parameter key="ARPS_XCOORD" type="number" format="decimal" optional="false">
+					<help>X coordinate of the lower left corner of the grids</help>
+				</parameter>
+				<parameter key="ARPS_YCOORD" type="number" format="decimal" optional="false">
+					<help>Y coordinate of the lower left corner of the grids</help>
+				</parameter>
+			</option>
+			<option value="GRASS">
+				<reference name="DEMFILE"/>
+			</option>
+			<option value="GRIB" italic="true">
+				<reference name="DEMFILE"/>
+				<parameter key="GRIB_DEM_UPDATE" type="alternative">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>recompute slope/azimuth from the elevations when reading a DEM (default=false, that is we use the slope and azimuth included in the GRIB file)</help>
+				</parameter>
+				<parameter key="GRIB_TABLE" type="file" mode="input" optional="true">
+					<help>GRIB parameter table file, if using GRIB for Meteo and Grid2d reading as well, the same Grib Table will be used. (default: docs/resources/GRIB_param.tbl)</help>
+				</parameter>
+				<parameter key="VERBOSE" type="alternative">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>print some low level details about the file being read</help>
+				</parameter>
+			</option>
+			<option value="NETCDF">
+				<reference name="DEMFILE"/>
+				<parameter key="NETCDF_SCHEMA_GRID" type="alternative" default="CF-1.6">
+					<option value="CF-1.6"/>
+					<option value="CROCUS"/>
+					<option value="AMUNDSEN"/>
+					<option value="ERA-INTERIM"/>
+					<option value="ERA5"/>
+					<option value="WRF"/>
+					<help>Data schema to use (i. e. mostly variables and dimensions naming)</help>
+				</parameter>
+			</option>
+			<option value="PGM">
+				<reference name="DEMFILE"/>
+				<reference name="PGM_IN"/>
+			</option>
+			<help>plugin for Digital Elevation Model data </help>
+		</parameter>
+	</parametergroup>
+
+	<!-- Alternative panel: LANDUSE -->
+	<parametergroup name="LANDUSEPLUGINS">
+		<parameter key="LANDUSE" label="Select LANDUSE plugin:" type="alternative" pre-generate="false">
+			<option value="ARC">
+				<reference name="LANDUSEFILE"/>
+			</option>
+			<help>Plugin for land cover data </help>
+		</parameter>
+	</parametergroup>
+	
+	<!-- Alternative panel: GLACIERS_IN -->
+	<parametergroup name="GLACIERS_IN">
+		<parameter key="GLACIER_FROM_GRID" type="alternative">
+			<option value="TRUE">
+				<parameter key="GLACIER" label="Select GLACIER plugin:" type="alternative" default="ARC" optional="false">
+					<option value="ARC">
+						<parameter key="GLACIERFILE" type="file" mode="input" optional="false">
+							<help>Grid providing the glacier thickness (in meters, using either 0 or nodata for glacier-free pixels in the same geolocalization as the DEM)</help>
+						</parameter>
+					</option>
+					<help>Plugin for glacier thickness data </help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>Provide glacier thickness from a separate grid</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- Alternative panel: POI -->
+	<parametergroup name="POI">
+		<parameter key="POI" label="Select POI plugin:" type="alternative" pre-generate="false">
+			<option value="A3D">
+				<reference name="POIFILE"/>
+			</option>
+			<option value="SMET">
+				<reference name="POIFILE"/>
+			</option>
+			<help>Plugin that will provide the coordinates of points where special outputs should be produced (usually, more detailed outputs)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- Alternative panel: GRID2D_IN -->
+	<parametergroup name="GRID2D_IN">
+		<parameter type="helptext" wrap="true">
+			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+		</parameter>
+		<parameter key="GRID2D" label="Select GRID2D plugin:" type="alternative" pre-generate="false">
+			<option value="ARC">
+				<reference name="GRID2DPATH"/>
+				<reference name="ARC"/>
+			</option>
+			<option value="ARPS">
+				<reference name="GRID2DPATH"/>
+				<reference name="ARPS"/>
+			</option>
+			<option value="GRASS">
+				<reference name="GRID2DPATH"/>
+			</option>
+			<option value="GRIB" italic="true">
+				<reference name="GRID2DPATH"/>
+				<reference name="GRIB_GRIDS"/>
+			</option>
+			<option value="PGM">
+				<reference name="GRID2DPATH"/>
+				<reference name="PGM_IN"/>
+			</option>
+			<option value="NETCDF" bold="true" italic="true">
+				<reference name="NETCDF_GRIDS_IN"/>
+				<help>NetCDF grids</help>
+			</option>
+			<help>Choose plugin for 2D gridded data</help>
+		</parameter>
+	</parametergroup>
+	
+	<!-- Alternative panel: GRID3D_IN -->
+	<parametergroup name="GRID3D_IN">
+		<parameter type="helptext" wrap="true">
+			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+		</parameter>
+		<parameter key="GRID3D" label="Select GRID3D plugin:" type="alternative" pre-generate="false">
+			<option value="ARPS">
+				<reference name="GRID3DPATH"/>
+				<reference name="ARPS"/>
+			</option>
+			<help>Choose plugin for 3D gridded data</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- ARC -->
+	<parametergroup name="ARC">
+		<parameter key="GRID2DEXT" type="text">
+			<help>Grid file extension, or none for no file extension (default: .asc)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- ARPS -->
+	<parametergroup name="ARPS">
+		<parameter key="ARPS_XCOORD" type="number" format="decimal" optional="false">
+			<help>X coordinate of the lower left corner of the grids</help>
+		</parameter>
+		<parameter key="ARPS_YCOORD" type="number" format="decimal" optional="false">
+			<help>Y coordinate of the lower left corner of the grids</help>
+		</parameter>
+		<parameter key="ARPS_EXT" type="text">
+			<help>Grid file extension, or &lt;i&gt;none&lt;/i&gt; for no file extension (default: .asc)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- GRIB -->
+	<parametergroup name="GRIB_GRIDS">
+		<parameter key="GRID2DPATTERN" type="text">
+			<help>A pattern, by which 2D grid files should be distinguished in directory. (When using Grib for Meteo as well, either pattern or extension need to be different) </help>
+		</parameter>
+		<parameter key="GRID2DEXT" type="text">
+			<help>Grib file extension, or none for no file extension, used to search for 2D grid files (default: .grib) (When using Grib for Meteo as well, either extension or pattern needs to be different)</help>
+		</parameter>
+		<parameter key="GRIB_TABLE" type="file" mode="input" optional="true">
+			<help>GRIB parameter table file, if using GRIB for Meteo and DEM reading as well, the same Grib Table will be used. (default: docs/resources/GRIB_param.tbl)</help>
+		</parameter>
+		<parameter key="VERBOSE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>print some low level details about the file being read</help>
+		</parameter>
+		<parameter key="RECURSIVE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>search for files recursively in the directory</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- NETCDF -->
+	<parametergroup name="NETCDF_GRIDS_IN">
+		<parameter key="GRID2DPATH" type="path" optional="false">
+			<help>Path to the data files</help>
+		</parameter>
+		<parameter key="NC_EXT" type="text" default=".nc" size="small">
+			<help>NetCDF file extension (for example: .nc)</help>
+		</parameter>
+		<parameter key="NETCDF_SCHEMA_GRID" type="alternative" default="CF-1.6">
+			<option value="CF-1.6"/>
+			<option value="CROCUS"/>
+			<option value="AMUNDSEN"/>
+			<option value="ERA-INTERIM"/>
+			<option value="ERA5"/>
+			<option value="WRF"/>
+			<help>Data schema to use (i. e. mostly variables and dimensions naming)</help>
+		</parameter>
+		<parameter label="Remap variables:" type="selector">
+			<parameter key="NETCDF_VAR::%" type="text" template="true">
+				<help>parameter name as found in the current NetCDF file</help>
+			</parameter>
+			<reference name="METEOGRIDS"/>
+			<help>remap the names as found in the NetCDF file to MeteoIO's &lt;a href=https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoGrids.html#a2063b187182804ab133b154b65ae592c"&gt;MeteoGrids::parameters&lt;/a&gt;</help>
+		</parameter>
+		<parameter label="Remap dimensions:" type="selector">
+			<parameter key="NETCDF_DIM::%" type="text" template="true">
+				<help>dimension name as found in the current NetCDF file</help>
+			</parameter>
+			<reference name="METEOGRIDS"/>
+			<help>remap the names as found in the NetCDF file to MeteoIO's &lt;a href=https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoGrids.html#a2063b187182804ab133b154b65ae592c"&gt;MeteoGrids::parameters&lt;/a&gt;</help>
+		</parameter>
+		<parameter key="NC_KEEP_FILES_OPEN" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>keep files open for efficient access? Beware, there is a max number of simultaneously opened files (default: true)</help>
+		</parameter>
+		<parameter key="NC_DEBUG" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>print some low level details about the file being read</help>
+		</parameter>
+	</parametergroup>
+	
+	<!-- PGM_IN -->
+	<parametergroup name="PGM_IN">
+		<parameter key="PGM_XCOORD" type="number" format="decimal" optional="false">
+			<help>Lower left x coordinate</help>
+		</parameter>
+		<parameter key="PGM_YCOORD" type="number" format="decimal" optional="false">
+			<help>Lower left y coordinate</help>
+		</parameter>
+		<parameter key="PGM_CELLSIZE" type="number" format="decimal" optional="false">
+			<help>Cell size in meters</help>
+		</parameter>
+		<parameter key="PGM_MIN" type="number" format="decimal" optional="false">
+			<help>Minimum value in real world coordinates to match with the minimum value read out of the PGM file (such minimum being greater than 0 because 0 is NODATA)</help>
+		</parameter>
+		<parameter key="PGM_MAX" type="number" format="decimal" optional="false">
+			<help>Maximum value in real world coordinates to match with the maximum value read out of the PGM file</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- SHORTCUTS -->
+	<parametergroup name="DEMFILE">
+		<parameter key="DEMFILE" type="file" mode="input" optional="false">
+			<help>For reading the data as a DEMObject</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="LANDUSEFILE">
+		<parameter key="LANDUSEFILE" type="file" mode="input" optional="false">
+			<help>File containing a grid of landuse codes</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="GRID2DPATH">
+		<parameter key="GRID2DPATH" type="path" optional="false">
+			<help>String representing path where grid files should be read from</help>
+		</parameter>
+	</parametergroup>
+	
+	<parametergroup name="GRID3DPATH">
+		<parameter key="GRID3DPATH" type="path" optional="false">
+			<help>String representing path where 3D grid files should be read from</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="POIFILE">
+		<parameter key="POIFILE" type="file" mode="input" optional="false">
+			<help>a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)</help>
+		</parameter>
+	</parametergroup>
+
+</inishell_include>

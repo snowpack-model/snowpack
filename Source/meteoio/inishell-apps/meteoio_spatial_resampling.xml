@@ -1,0 +1,90 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for general section
+-->
+
+<inishell_include>
+
+	<!-- INPUT -->
+	<parametergroup name="RESAMPLING_SPATIAL">
+		<frame caption="Spatial resampling">
+			<section name="InputEditing"/>
+			<parameter type="helptext" wrap="true">
+				<help>It is possible to spatially interpolate meteorological fields or time series of 2D grids to extract meteorological time series for a set of points. This is handled as "spatial resampling" and the data will seem to originate from these virtual stations points where no station is present. This obviously comes at the cost of much higher run times. &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/spatial_resampling.html&quot;&gt;Several strategies are available&lt;/a&gt; to choose from. &lt;strong&gt;For gridded data extraction, do not forget to &lt;a href=&quot;app://input::GRID2D&quot;&gt;define a GRID2D plugin&lt;/a&gt; in the [Input] section! And if the 2D grids do not already contain a Digital Elevation Model matching the gridded data, please provide one with the &lt;a href=&quot;app://input::DEM&quot;&gt;DEM plugin&lt;/a&gt; in the [Input] section.&lt;/strong&gt;</help>
+			</parameter>
+			<parameter key="RESAMPLING_STRATEGY" type="alternative">
+				<option value="VSTATIONS"><help>The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive station IDs such as VIR# for each station). &lt;font color="#ff0000"&gt;&lt;strong&gt;Please do not forget to &lt;a href=&quot;app://interpolations2d::interpol-spatial&quot;&gt;configure spatial interpolations&lt;/a&gt; in the [Interpolations2D] section and provide a DEM!&lt;/strong&gt;&lt;/font&gt;. In order to avoid correcting data twice, please define stations restrictions to the filters that change the data.</help>
+					<reference name="STATIONGROUP_POSITION_SPECS"/>
+					<parameter key="VIRTUAL_PARAMETERS" type="text" optional="false">
+						<help>space delimited list of &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;MeteoData::Parameters&lt;/a&gt; that have to be interpolated to populate the virtual stations</help>
+					</parameter>
+					<parameter key="VSTATIONS_REFRESH_RATE" type="number" format="integer+" unit="s"><help>how often to rebuild the spatial interpolations</help></parameter>
+					<parameter key="VSTATIONS_REFRESH_OFFSET" type="number" format="integer+" unit="s"><help>time offset to the stations' refresh rate</help></parameter>
+				</option>
+				<option value="GRID_EXTRACT"><help>Extract data from gridded data at the provided coordinates.</help>
+					<reference name="STATIONGROUP_POSITION_SPECS"/>
+					<parameter key="VIRTUAL_PARAMETERS" type="text" optional="false">
+						<help>space delimited list of &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;MeteoData::Parameters&lt;/a&gt; that have to be interpolated to populate the virtual stations</help>
+					</parameter>
+				</option>
+				<option value="GRID_ALL"><help>Extract data from gridded data at all grid points</help>
+					<parameter key="VIRTUAL_PARAMETERS" type="text" optional="false">
+						<help>space delimited list of &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;MeteoData::Parameters&lt;/a&gt; that have to be interpolated to populate the virtual stations</help>
+					</parameter>
+				</option>
+				<option value="GRID_SMART"><help>Extract data from gridded data at the provided coordinates by extracting neighbouring points and spatially interpolating them to the provided point</help>
+					<reference name="STATIONGROUP_POSITION_SPECS"/>
+					<parameter key="VIRTUAL_PARAMETERS" type="text" optional="false">
+						<help>space delimited list of &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;MeteoData::Parameters&lt;/a&gt; that have to be interpolated to populate the virtual stations</help>
+					</parameter>
+					<parameter key="VSTATIONS_REFRESH_RATE" type="number" format="integer+" unit="s"><help>how often to rebuild the spatial interpolations (this has a direct impact on the performances)</help></parameter>
+					<parameter key="VSTATIONS_REFRESH_OFFSET" type="number" format="integer+" unit="s"><help>time offset to the stations' refresh rate (usually, none is required)</help></parameter>
+				</option>
+				<help>Select the spatial resampling strategy to use</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+	<parametergroup name="REGRIDDING">
+		<frame caption="Regridding">
+			<section name="InputEditing"/>
+			<parameter type="helptext" wrap="true">
+				<help>&lt;strong&gt;You can only use either resampling OR regridding.&lt;strong&gt; If needed, it is possible to use gridded data with a different spatial resolution and/or spatial extent to obtain a NEW grid (do not forget to &lt;a href=&quot;app://input::GRID2D&quot;&gt;define a GRID2D plugin&lt;/a&gt; in the [Input] section!). This is handled as "regridding" and &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/spatial_resampling.html#grids_resample&quot;&gt;Several strategies are available&lt;/a&gt; to choose from. This obviously comes at the cost of potentially much higher run times.</help>
+			</parameter>
+			<parameter key="REGRIDDING_STRATEGY" type="alternative">
+				<option value="GRID_RESAMPLE"><help>Extract data from gridded data at all grid points and provide the result as a new grid</help>
+					<parameter key="SOURCE_DEM" type="file" mode="input" optional="false">
+						<help>filename of the DEM to be read by the GRID2D plugin. This DEM provides the elevations, slopes, etc for the source grids</help>
+					</parameter>
+					<parameter key="VIRTUAL_PARAMETERS" type="text" optional="false">
+						<help>space delimited list of &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;MeteoData::Parameters&lt;/a&gt; that have to be interpolated to populate the virtual stations</help>
+					</parameter>
+				</option>
+				<option value="GRID_1DINTERPOLATE">
+					<help>Temporal interpolation between available grids. This feature is under development and &lt;font color="#dc322f"&gt;should not be used&lt;/font&gt; in critical operational setups yet.</help>
+				</option>
+				<help>Select the regridding strategy to use</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+</inishell_include>

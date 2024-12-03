@@ -138,20 +138,31 @@ class GeneratorAlgorithm {
 		* @return true the provided timestep should be skipped
 		*/
 		bool skipTimeStep(const Date& dt) const;
-		
+
+		/*
+		* @brief Should this height be skipped? based on user-provided height restrictions
+		* @param[in] height current height
+		* @return true if the provided height should be skipped
+		 */
+		bool skipHeight(const double& height) const;
+
 		std::vector<DateRange> getTimeRestrictions() const {return time_restrictions;}
 		std::string getAlgo() const {return algo;}
  	protected:
 		GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ); ///< protected constructor only to be called by children
 		virtual void parse_args(const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/) {}
 		static std::set<std::string> initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword);
+		void initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs);
 
 		const std::vector<DateRange> time_restrictions;
 		const std::set<std::string> excluded_stations, kept_stations;
+		std::set<double> included_heights, excluded_heights;
+		bool all_heights;
 		const std::string algo, section;
 		
 		//These are used by several generators in order work with radiation data by looking at HS and deciding which albedo should be used
 		static const double soil_albedo, snow_albedo, snow_thresh;
+		static const double default_height;
 };
 
 class GeneratorAlgorithmFactory {

@@ -63,15 +63,15 @@ class ResamplingAlgorithms {
 		} gap_info;
 		
 		static size_t searchBackward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size);
+                                              const double& i_max_gap_size);
 		static size_t searchForward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size, const size_t& indexP1);
+                                              const double& i_max_gap_size, const size_t& indexP1);
 
 		static gap_info findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-					 const double& i_window_size);
+					 const double& i_max_gap_size);
 
-		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
-		                    : algo(i_algoname), parname(i_parname), window_size(dflt_window_size), gaps() {}
+		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
+		                    : algo(i_algoname), parname(i_parname), max_gap_size(dflt_max_gap_size), gaps() {}
 
 		virtual ~ResamplingAlgorithms() {}
 
@@ -90,14 +90,14 @@ class ResamplingAlgorithms {
 		static double partialAccumulateAtRight(const std::vector<MeteoData>& vecM, const size_t& paramindex,
 		                                       const size_t& pos, const Date& curr_date);
 		void getNearestValidPts(const std::string& stationHash, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-		                               const double& i_window_size, size_t& indexP1, size_t& indexP2);
+		                               const double& i_max_gap_size, size_t& indexP1, size_t& indexP2);
 		static double linearInterpolation(const double& x1, const double& y1,
 		                                  const double& x2, const double& y2, const double& x3);
 		static Date getDailyStart(const Date& resampling_date);
 		static size_t getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, size_t pos, const Date& intervalStart, const Date& intervalEnd);
 
 		const std::string algo, parname;
-		double window_size;
+		double max_gap_size;
 		static const double soil_albedo, snow_albedo, snow_thresh; ///< These thresholds are used to handle solar radiation
 
 	private:
@@ -107,7 +107,7 @@ class ResamplingAlgorithms {
 
 class ResamplingAlgorithmsFactory {
 	public:
-		static ResamplingAlgorithms* getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		static ResamplingAlgorithms* getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg);
 };
 
 } //end namespace

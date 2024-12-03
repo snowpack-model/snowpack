@@ -1,0 +1,512 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: SNOWPACK_ADVANCED -->
+	<parameter type="label" label="&lt;font color='#ff0000'&gt;&lt;h3&gt;Warning&lt;/h3&gt;&lt;/font&gt;">
+		<section name="SnowpackAdvanced" color="sl_base01"/>
+	</parameter>
+	<parameter type="helptext" wrap="true" section="SnowpackAdvanced">
+		<help>&lt;font color="#ff0000"&gt;&lt;strong&gt;The keys in this section deeply affect the operation of the SNOWPACK model. This could lead to unexpected behavior or surprising results. If you are not an experienced Snowpack user, please do NOT change any keys below!&lt;/strong&gt;&lt;/font&gt;</help>
+	</parameter>
+	<parameter type="spacer" height="10" section="SnowpackAdvanced"/>
+
+	<frame caption="Operation mode" section="SnowpackAdvanced" collapsed="false">
+		<parameter key="VARIANT" type="alternative" section="SnowpackAdvanced">
+			<option value="DEFAULT"/>
+			<option value="JAPAN"/>
+			<option value="ANTARCTICA"/>
+			<option value="POLAR"/>
+			<option value="SEAICE"/>
+			<!-- <option value="CALIBRATION"/> -->
+			<help>Variant selection. A choice of specific SNOWPACK variants that will set some switches and values to non-default ones. Users can override these by setting them below. When using POLAR variant, please cite: Steger CR, Reijmer CH, van den Broeke MR, Wever N, Forster RR, Koenig LS, Kuipers Munneke P, Lehning M, Lhermitte S, Ligtenberg SRM, Miège C and Noël BPY, &lt;i&gt;"Firn Meltwater Retention on the Greenland Ice Sheet: A Model Comparison"&lt;/i&gt;, Front. Earth Sci. 5:3, 2017, doi: 10.3389/feart.2017.00003</help>
+		</parameter>
+		<parameter key="RESEARCH" type="alternative" section="SnowpackAdvanced">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Except for some very specific operational needs, please choose TRUE (default: TRUE)</help>
+		</parameter>
+		<parameter key="NUMBER_FIXED_RATES" type="number" format="integer" default="0" section="SnowpackAdvanced" notoggle="true"/>
+	</frame>
+
+	<frame caption="Station Handling" section="SnowpackAdvanced" collapsed="false">
+		<parameter key="ADJUST_HEIGHT_OF_METEO_VALUES" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>If set to true, an adjustment of the height of the meteo values to the presence of a snow cover is applied (e.g., for measurements from a fixed mast that gets snowed in). If false, measured meteo values are assumed to maintain a constant height above the snow surface (e.g., when using measurements from Col de Porte or weather models as input). (default: TRUE)</help>
+		</parameter>
+		<parameter key="ADJUST_HEIGHT_OF_WIND_VALUE" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>If set to true, an adjustment of the height of the wind value to the presence of a snow cover is applied (e.g., for measurements from a fixed mast that gets snowed in). If false, measured wind value are assumed to maintain a constant height above the snow surface (e.g., when using weather models as input). (default: TRUE)</help>
+		</parameter>
+		<parameter key="FORCE_SW_MODE" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Sometimes at the end of the snow melt, there is still some snow left in the simulation but none left in reality. This can be problematic when forcing the model with reflected short wave radiation, because a low measured RSWR (iswr reflected on a dark ground) will be used to generate a low ISWR, resulting in even less snow melt. Setting FORCE_SW_MODE to TRUE allows Snowpack to use the potential ISWR when the remaining snow height is less than 10cm, the relative humidity is low enough and the measured RSWR is very low compared to the potential incoming short wave radiation. (default: FALSE)</help>
+		</parameter>
+		<parameter key="SNOW_EROSION" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Specifies if snow erosion is enabled for the main station. Works only if measured heigths of snow are available at the main station. Unless NUMBER_SLOPES is set to 1, this erosion will not contribute to the drifting snow index (compare with SNOW_REDISTRIBUTION). (default: FALSE)</help>
+		</parameter>
+		<parameter key="WIND_SCALING_FACTOR" type="number" format="decimal" precision="1" min="0" max="2" longlabel="true">
+			<help>Scaling factor to apply to wind values causing drifting snow because some stations consistently measure a wind that is too low (this should be computed from statistical analysis). Please note that in operational mode, this value is overwritten by the value provided in the snow cover data (sno files). (default: 1.0)</help>
+		</parameter>
+		<parameter key="NUMBER_SLOPES" type="alternative" default="1" optional="false" longlabel="true">
+			<option value="1"/>
+			<option value="3">
+				<reference name="SP_VIRTUAL_SLOPES_OPTION"/>
+			</option>
+			<option value="4"/>
+			<option value="5">
+				<reference name="SP_VIRTUAL_SLOPES_OPTION"/>
+			</option>
+			<option value="7">
+				<reference name="SP_VIRTUAL_SLOPES_OPTION"/>
+			</option>
+			<option value="9">
+				<reference name="SP_VIRTUAL_SLOPES_OPTION"/>
+			</option>
+			<help>Based on meteorological input from a (flat field) automatic station or numerical weather model, up to 8 expositions can be calculated in addition to the flat field if the corresponding *.sno files are provided. For example, if you provide a flat field *.snow file (mandatory), which is named KLO2.sno and you want 4 slopes to be calculated the corresponding slope files should be named KLO21.sno, . . ., KLO24.sno. SNOW_REDISTRIBUTION is only available if each virtual slope has a matching luv/lee slope.</help>
+		</parameter>
+		<parameter key="PERP_TO_SLOPE" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Set this option if the main station is on a slope and the input parameters are taken perpendicular to the slope. Works only for "NUMBER_SLOPES = 1" (default: FALSE)</help>
+		</parameter>
+		<parameter key="ALLOW_ADAPTIVE_TIMESTEPPING" type="alternative" longlabel="true">
+			<option value="TRUE" />
+			<option value="FALSE" />
+			<help>Set whether adaptive time stepping is allowed for solving the heat advection equation/phase changes when unstable atmospheric stratification is encountered (only for non-neutral atmospheric stability schemes). It then temporarily reduces the time step, in order to reduce oscillations in surface temperature. This increases computation times. Note that independent of this flag, the time step can be temporarily reduced when the heat equation does not converge (default: TRUE).</help>
+		</parameter>
+	</frame>
+
+	<!--Parameter group for virtual slopes -->
+	<parametergroup name="SP_VIRTUAL_SLOPES_OPTION">
+		<parameter key="SNOW_REDISTRIBUTION" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Specifies if redistribution of snow is allowed from windward (luv) to lee slopes. The snow erosion on virtual slopes will contribute to the drifting snow index (default: FALSE).</help>
+		</parameter>
+		<parameter key="PREVAILING_WIND_DIR" type="number" format="integer+" min="0" max="360" wrap="true" notoggle="true" unit="°">
+			<help>Shifts the origin of the wind rose for snow redistribution and slope simulations: e.g. choose 45° to have NE/SE/SW/NW (default: 0)</help>
+		</parameter>
+		<parameter key="MEAS_INCOMING_LONGWAVE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Use the provided incoming long wave on virtual slopes too? (default: FALSE)</help>
+		</parameter>
+	</parametergroup>
+
+	<frame caption="Precipitation Handling" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="THRESH_RAIN" type="number" format="decimal" precision="2" unit="°C">
+			<help>Fallback temperature threshold for rain/snow transition if no other spliting method is provided (as data generator). (Default: 1.2°C)</help>
+		</parameter>
+		<parameter key="FORCE_RH_WATER" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Tell the model that relative humidity values are with respect to water regardless of the temperature (default: TRUE)</help>
+		</parameter>
+		<parameter key="THRESH_RH" type="number" format="decimal" precision="2">
+			<help>If ENFORCE_MEASURED_SNOW_HEIGHTS, relative humidity threshold for precipitation to occur (default: 0.5)</help>
+		</parameter>
+		<parameter key="THRESH_DTEMP_AIR_SNOW" type="number" format="decimal" precision="1" unit="°C">
+			<help>If ENFORCE_MEASURED_SNOW_HEIGHTS, (TA-TSS)' threshold for precipitation to occur (default: 3.0°C)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Hoar Handling" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="HOAR_THRESH_TA" type="number" format="decimal" precision="2" unit="°C">
+			<help>Air temperature threshold above which no surface hoar is allowed to form (default: 1.2°C)</help>
+		</parameter>
+		<parameter key="HOAR_THRESH_RH" type="number" format="decimal" precision="2">
+			<help>Relative humidity threshold above which no surface hoar is allowed to form (because at very high humidity, typically no hoar crystals can form). (Default: 0.97)</help>
+		</parameter>
+		<parameter key="HOAR_THRESH_VW" type="number" format="decimal" precision="1" unit="m/s">
+			<help>Wind speed threshold above which no surface hoar is allowed to form (because it will drift away). (Default: 3.5 m/s)</help>
+		</parameter>
+		<parameter key="HOAR_DENSITY_BURIED" type="number" format="integer+" unit="kg/m³">
+			<help>Define the initial density for surface hoar at the time it gets buried by new snow (default: 125 kg/m³)</help>
+		</parameter>
+		<parameter key="HOAR_MIN_SIZE_BURIED" type="number" format="decimal" precision="1" unit="mm">
+			<help>Define a threshold below which any traces of surface hoar will not be given a separate hoar layer when buried (default: 2.0 mm)</help>
+		</parameter>
+		<parameter key="HOAR_DENSITY_SURF" type="number" format="integer+" unit="kg/m³">
+			<help>Assumed density of surface hoar while exposed at the surface and not buried (default: 100 kg/m³)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Temperatures Handling" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="FIXED_POSITIONS" type="text" default="">
+			<help>positions of temperatur sensors in snow or soil: positive values refer to heigths measured from the ground surface (snow only), negative values refer to depths measured from either the ground surface or the snow surface in case no soil layers are present. A sensor must at least be covered by MIN_DEPTH_SUBSURF (m) snow for its temperature to be output.</help>
+		</parameter>
+		<!-- <parameter key="MAX_NUMBER_MEAS_TEMPERATURES" type="number" format="integer+" default="5"/> -->
+		<parameter key="MIN_DEPTH_SUBSURF" type="number" format="decimal" precision="2" unit="m">
+			<help>Minimum snow depth (m) above a temperature sensor to accept the measurement (default: 0.07 m)</help>
+		</parameter>
+		<parameter key="T_CRAZY_MIN" type="number" format="integer+" unit="K">
+			<help>If you go to Antarctica or the tropics you may expect different reasonable temperatures. Moreover, if the temperature solution has a temperature below T_CRAZY_MIN, the temperature equation will be solved with a smaller time step (default: 210 K)</help>
+		</parameter>
+		<parameter key="T_CRAZY_MAX" type="number" format="integer+" unit="K">
+			<help>If you go to Antarctica or the tropics you may expect different reasonable temperatures (default:340 K)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Submodels" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="METAMORPHISM_MODEL" type="alternative" longlabel="true">
+			<option value="DEFAULT"/>
+			<option value="NIED"/>
+			<help>metamorphism_model</help>
+		</parameter>
+		<parameter key="NEW_SNOW_GRAIN_SIZE" type="number" format="decimal" precision="1" unit="mm" longlabel="true">
+			<help>Grain size of new snow crystals (default: 0.3 mm)</help>
+		</parameter>
+		<parameter key="STRENGTH_MODEL" type="alternative" longlabel="true">
+			<option value="DEFAULT"/>
+			<option value="NIED"/>
+			<help>Strength model</help>
+		</parameter>
+		<parameter key="VISCOSITY_MODEL" type="alternative" longlabel="true">
+			<option value="DEFAULT"/>
+			<help>Viscosity model</help>
+		</parameter>
+		<parameter key="SALTATION_MODEL" type="alternative" longlabel="true">
+			<option value="SORENSEN"/>
+			<option value="DOORSCHOT"/>
+			<help>The simple Sorenson parameterization is computationally more efficient than the full Doorschot model (default: SORENSEN)</help>
+		</parameter>
+		<!-- <parameter key="SURFACECODE" type="alternative">
+			<option value="NEUMANN_BC"/>
+			<option value="DIRICHLET_BC"/>
+			<help>Select the boundary conditions to use</help>
+		</parameter> -->
+		<parameter key="ENABLE_VAPOUR_TRANSPORT" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Enable mass transport by vapour flow (default: FALSE). See &lt;a href=&quot;https://doi.org/10.3389/feart.2020.00249&quot;&gt;Jafari et al. (2020)&lt;/a&gt; for details.</help>
+		</parameter>
+		<parameter key="WATERTRANSPORTMODEL_SNOW" type="alternative" longlabel="true">
+			<option value="BUCKET"/>
+			<option value="NIED"/>
+			<option value="RICHARDSEQUATION">
+				<parameter key="AVG_METHOD_HYDRAULIC_CONDUCTIVITY" type="alternative">
+					<option value="ARITHMETICMEAN"/>
+					<option value="LOGMEAN"/>
+					<option value="GEOMETRICMEAN"/>
+					<option value="HARMONICMEAN"/>
+					<option value="MINIMUMVALUE"/>
+					<option value="UPSTREAM"/>
+					<help>Averaging method for hydraulic conductivity at the layer nodes. Recommended setting either ARITHMETICMEAN (default), LOGMEAN or GEOMETRICMEAN.</help>
+				</parameter>
+				<parameter key="PREF_FLOW" type="alternative">
+					<option value="FALSE"/>
+					<option value="TRUE">
+						<parameter key="AVG_METHOD_HYDRAULIC_CONDUCTIVITY_PREF_FLOW" type="alternative">
+							<option value="ARITHMETICMEAN"/>
+							<option value="LOGMEAN"/>
+							<option value="GEOMETRICMEAN"/>
+							<option value="HARMONICMEAN"/>
+							<option value="MINIMUMVALUE"/>
+							<option value="UPSTREAM"/>
+							<help>Averaging method for hydraulic conductivity at the layer nodes. Recommended setting either GEOMETRICMEAN or LOGMEAN.</help>
+						</parameter>
+						<parameter key="PREF_FLOW_PARAM_TH" type="number" format="decimal" precision="2" default="0.1">
+							<help>Tuning parameter: saturation threshold in preferential flow (default: 0.1)</help>
+						</parameter>
+						<parameter key="PREF_FLOW_PARAM_N" type="number" format="decimal">
+							<help>Tuning parameter: number of preferential flow paths for heat exchange (default: 0.0)</help>
+						</parameter>
+						<parameter key="PREF_FLOW_PARAM_HETEROGENEITY_FACTOR" type="number" format="decimal">
+							<help>Tuning parameter: heterogeneity factor for grain size (default: 1.0)</help>
+						</parameter>
+						<parameter key="PREF_FLOW_RAIN_INPUT_DOMAIN" type="alternative">
+							<option value="MATRIX"/>
+							<option value="PREF_FLOW"/>
+							<help>Direct incoming rain water to either matrix or preferential flow domain (default: MATRIX)</help>
+						</parameter>
+						<parameter key="ICE_RESERVOIR" type="alternative">
+							<option value="FALSE"/>
+							<option value="TRUE"/>
+							<help>Allow excess water in the preferential flow domain to contribute to ice lenses / layers? See &lt;a href="https://doi.org/10.5194/tc-14-3449-2020"&gt;Quéno et al.&lt;/a&gt; for details. (default: FALSE)</help>
+						</parameter>
+					</option>
+					<help>Dual domain approach to simulate preferential flow. When set to TRUE, it requires to specify the volumetric water content in preferential flow (Vol_Frac_WP) in the *.sno file, directly following the column Vol_Frac_W. (default: FALSE)</help>
+				</parameter>
+			</option>
+			<help>Water transport model to use in snow: simple bucket model (default), Nied model or Richards equation solver</help>
+		</parameter>
+		<parameter key="WATERTRANSPORTMODEL_SOIL" type="alternative" longlabel="true">
+			<option value="BUCKET"/>
+			<option value="RICHARDSEQUATION">
+				<parameter key="LB_COND_WATERFLUX" type="alternative" optional="false">
+					<option value="FREEDRAINAGE"/>
+					<option value="WATERTABLE"/>
+					<option value="DIRICHLET"/>
+					<option value="GRAVITATIONALDRAINAGE"/>
+					<option value="SEEPAGE"/>
+					<help>Lower boundary condition for Richards equation solver (default: FREEDRAINAGE):
+						&lt;dl&gt;
+						&lt;dt&gt;FREEDRAINAGE&lt;/dt&gt;  &lt;dd&gt;(default, recommended for shallow soil) prescribes a free drainage boundary;&lt;/dd&gt;
+						&lt;dt&gt;WATERTABLE&lt;/dt&gt;  &lt;dd&gt;(recommended for deep soil) prescribes a saturated lower boundary;&lt;/dd&gt;
+						&lt;dt&gt;DIRICHLET&lt;/dt&gt;  &lt;dd&gt;keeps the saturation in the lowest layer constant;&lt;/dd&gt;
+						&lt;dt&gt;GRAVITATIONALDRAINAGE&lt;/dt&gt;  &lt;dd&gt;prescribes the gravity compenent of the liquid water flow;&lt;/dd&gt;
+						&lt;dt&gt;SEEPAGE&lt;/dt&gt;  &lt;dd&gt;provides a seepage boundary condition which typically describes the setup of laboratory experiments;&lt;/dd&gt;
+						&lt;/dl&gt;
+					</help>
+				</parameter>
+				<parameter key="REQ_INITIALIZE_SOIL" type="alternative" optional="true">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>If TRUE, allow the water and ice content in the soil layers to be modified upon model initialization, in order to (1) minimize liquid water flow at the first time step by initializing pressure head (and thus soil water content) in an approximate steady state, and (2) achieve thermal equilibrium between the ice and liquid water part for a given temperature (default: FALSE).</help>
+				</parameter>
+				<parameter key="HYDRAULIC_CONDUCTIVITY_FROZEN_SOIL" type="alternative">
+					<option value="IGNORE"/>
+					<option value="OMEGA7"/>
+					<option value="LIQUIDPORESPACE"/>
+					<help>Select calculation method for hydraulic conductivity in frozen soil:
+						&lt;dl&gt;
+						&lt;dt&gt;IGNORE&lt;/dt&gt;  &lt;dd&gt;(default) ignore the effect of ice on hydraulic conductivity;&lt;/dd&gt;
+						&lt;dt&gt;OMEGA7&lt;/dt&gt;  &lt;dd&gt;applies the omega method (see Eq. 6 in &lt;a href=&quot;https://doi.org/10.2136/vzj2004.0693&quot;&gt;Hansson et al., 2004&lt;/a&gt;), with omega=7. To use other values of omega, set OMEGAx in the ini file with x the requested value (e.g., OMEGA2.5 sets omega to 2.5);&lt;/dd&gt;
+						&lt;dt&gt;LIQUIDPORESPACE&lt;/dt&gt;  &lt;dd&gt;calculates the hydraulic conductivity using the saturation determined using the liquid water part only;&lt;/dd&gt;
+						&lt;/dl&gt;
+						Note that OMEGA7 has often a stronger effect than LIQUIDPORESPACE and frequently inhibits downward percolation so much that the solver becomes numerically unstable.
+					</help>
+				</parameter>
+			</option>
+			<help>Water transport model to use in soil: simple bucket model (default) or Richards equation solver. Note that Richards equation solver uses the grain size of the layer to determine the soil type, as listed at: https://snowpack.slf.ch/Soil-with-Richards-equation.</help>
+		</parameter>
+		<parameter key="COUPLEDPHASECHANGES" type="alternative" optional="true" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>More detailed (and stable) solving of the phase changes together with the liquid water transport at the cost of higher computation time? (default: FALSE)</help>
+		</parameter>
+		<parameter key="SOIL_EVAP_MODEL" type="alternative" longlabel="true">
+			<option value="EVAP_RESISTANCE"><help>Resistance Approach</help></option>
+			<option value="RELATIVE_HUMIDITY"><help>Relative Humidity Approach</help></option>
+			<option value="NONE"><help>Assume saturation pressure and no extra resistance</help></option>
+			<help>Representation of the soil evaporation (default: EVAP_RESISTANCE)</help>
+		</parameter>
+		<parameter key="SOIL_THERMAL_CONDUCTIVITY" type="alternative" longlabel="true">
+			<option value="COSENZA2003"><help>Use the soil thermal conductivity model by &lt;a href="https://doi.org/10.1046/j.1365-2389.2003.00539.x"&gt;Cosenza et al. (2003)&lt;/a&gt; (recommended)</help></option>
+			<option value="FITTED"><help>Use fit values for soil thermal conductivity (&lt;font color='#ff0000'&gt;warning: using the current implementation of FITTED is not recommended!&lt;/font&gt;)</help></option>
+			<option value="RAW"><help>Use the relative weights of the thermal conductivity of soil, water and ice</help></option>
+			<help>Representation of the soil thermal conductivity (default: COSENZA2003)</help>
+		</parameter>
+		
+		<frame caption="Degree-day model" collapsed="true">
+			<parameter type="helptext" wrap="true" section="SnowpackAdvanced">
+				<help>For models intercomparisons, it is possible to replace the energy balance model by a degree-day model during the melt phases. This degree-day model provides the energy fluxes at the surface as: &lt;center&gt;temp_index_degree_day*(T&lt;sub&gt;air&lt;/sub&gt; - T&lt;sub&gt;surface&lt;/sub&gt;) + temp_index_swr_factor*SW&lt;sub&gt;net&lt;/sub&gt;&lt;/center&gt;</help>
+			</parameter>
+			<parameter key="TEMP_INDEX_DEGREE_DAY" type="number" format="decimal" min="0.00" precision="2" optional="true">
+				<help>If a positive value is given, the degree-day model is enabled and this is the temperature factor.</help>
+			</parameter>
+			<parameter key="TEMP_INDEX_SWR_FACTOR" type="number" format="decimal" min="0.00" precision="2" optional="true">
+				<help>If using a degree-day model, it is possible to enhance it with an Incoming Short Wave Radiation dependency. This provides the ISWR factor to use.</help>
+			</parameter>
+		</frame>
+	</frame>
+
+	<frame caption="Parameterization Handling" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="HN_DENSITY" type="alternative" longlabel="true">
+			<option value="EVENT"/>
+			<option value="PARAMETERIZED">
+				<parameter key="HN_DENSITY_PARAMETERIZATION" type="alternative">
+					<option value="LEHNING_NEW"/>
+					<option value="ZWART"/>
+					<option value="BELLAIRE"/>
+					<option value="LEHNING_OLD"/>
+					<option value="PAHAUT"/>
+					<option value="NIED"/>
+					<option value="VANKAMPENHOUT"/>
+					<help>Choice of parameterizations for new snow density (statistical models, default: LEHNING_NEW)</help>
+				</parameter>
+			</option>
+			<option value="MEASURED">
+				<parameter key="HN_DENSITY_FIXEDVALUE" type="number" format="integer+" min="1" unit="kg/m³">
+					<help>Set to 1 kg m-3 to use surface snow density in case of missing measurement values (default: 100 kg/m³)</help>
+				</parameter>
+			</option>
+			<option value="FIXED">
+				<parameter key="HN_DENSITY_FIXEDVALUE" type="number" format="integer+" min="30" unit="kg/m³">
+					<help>Usual range used in SNOWPACK : 30 to 250 kg m-3. 30 kg m-3 will be enforced as minimum (default: 100 kg/m³)</help>
+				</parameter>
+			</option>
+			<help>New snow density scheme. By default, Snowpack uses "PARAMETERIZED". If selecting "MEASURED", the new snow density must be provided under the parameter name "RHO_HN".</help>
+		</parameter>
+		<parameter key="SNOW_ALBEDO" type="alternative" longlabel="true">
+			<option value="PARAMETERIZED">
+				<parameter key="ALBEDO_PARAMETERIZATION" type="alternative">
+					<option value="LEHNING_0"/>
+					<option value="LEHNING_1"/>
+					<option value="LEHNING_2"/>
+					<option value="SCHMUCKI_GSZ">
+						<parameter key="ALBEDO_AVERAGE_SCHMUCKI" type="alternative">
+							<option value="ALL_DATA"/>
+							<option value="CUSTOM"/>
+							<help>Average value of regression models. ALL_DATA (default) is the average of all albedo values obtained from four SwissMetNet stations: Weissfluhjoch (WFJ, 2540 m asl), Davos (DAV, 1594 m asl), Napf (NAP, 1404 m asl), and Payerne (PAY, 490 m asl). CUSTOM is the mean of the albedo averages for each single station WFJ, DAV, and PAY; it better fits stations lying below 1500 m asl in Switzerland</help>
+						</parameter>
+					</option>
+					<option value="SCHMUCKI_OGS">
+						<parameter key="ALBEDO_AVERAGE_SCHMUCKI" type="alternative">
+							<option value="ALL_DATA"/>
+							<option value="CUSTOM"/>
+							<help>Average value of regression models. ALL_DATA (default) is the average of all albedo values obtained from four SwissMetNet stations: Weissfluhjoch (WFJ, 2540 m asl), Davos (DAV, 1594 m asl), Napf (NAP, 1404 m asl), and Payerne (PAY, 490 m asl). CUSTOM is the mean of the albedo averages for each single station WFJ, DAV, and PAY; it better fits stations lying below 1600 m asl in Switzerland</help>
+						</parameter>
+					</option>
+					<option value="NIED">
+						<parameter key="ALBEDO_NIED_AV" type="number" format="decimal" precision="2">
+							<help>Parameter av in the NIED albedo scheme (default: 0.75)</help>
+						</parameter>
+					</option>
+					<help>Choice of parameterizations for snow albedo (statistical models, default: LEHNING_2)</help>
+				</parameter>
+			</option>
+			<option value="FIXED">
+				<parameter key="ALBEDO_FIXEDVALUE" type="number" format="decimal" precision="2">
+					<help>Enter a value between 0.30 (default albedo for glaciers) and 0.95 (enforced range). Default: 0.95</help>
+				</parameter>
+			</option>
+			<help>What scheme should be used for snow albedo? By default, Snowpack uses "PARAMETERIZED".</help>
+		</parameter>
+		<parameter key="ALBEDO_AGING" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Should the age of the snow be taken into account in the snow albedo parametrizations (default)? Turning it off should only be necessary for arctic/antarctic regions (although not all such parametrizations use it).</help>
+		</parameter>
+		<parameter key="SW_ABSORPTION_SCHEME" type="alternative" longlabel="true">
+			<option value="MULTI_BAND"/>
+			<option value="SINGLE_BAND"/>
+			<help>Select either a multi band (default) or a single band scheme for shortwave radiation absorption by the snow cover</help>
+		</parameter>
+		<parameter key="HARDNESS_PARAMETERIZATION" type="alternative" longlabel="true">
+			<option value="MONTI"/>
+			<option value="BELLAIRE"/>
+			<option value="ASARC"/>
+			<help>Select the appropriate hand hardness parameterization (default: MONTI)</help>
+		</parameter>
+		<parameter key="MULTI_LAYER_SK38" type="alternative" longlabel="true" optional="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Use a multi layer SK38 index as in (Monti, Fabiano, et al., &lt;i&gt;"Snow instability evaluation: calculating the skier-induced stress in a multi-layered snowpack"&lt;/i&gt;, Natural Hazards and Earth System Sciences, 16.3, 2016). (default: FALSE)</help>
+		</parameter>
+		<parameter key="SSI_IS_RTA" type="alternative" longlabel="true" optional="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Output the Relative Threshold Approach (Monti, Fabiano, and Jürg Schweizer, &lt;i&gt;"A relative difference approach to detect potential weak layers within a snow profile"&lt;/i&gt;, Proceedings ISSW, 2013) for stability evaluation instead of the SSI (default: FALSE)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Extras" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="COUPLEDPHASECHANGES" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Default: FALSE. If true, solves the phase changes iteratively with the heat equation to better deal with freezing point depressions from salinity (SEAICE simulations). Forced to true for SEAICE and RICHARDSEQUATION.</help>
+		</parameter>
+		<parameter key="DETECT_GRASS" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Identify grass growing under the snow height sensor. This usually works well but might sometimes lead to problems (therefore it defaults to FALSE)</help>
+		</parameter>
+		<parameter key="PLASTIC" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Switch to tell the model that a impermeable layer should be simulated on top of some snow or ice: this requires that the *.sno file contains this layer, which is characterized via the soil parameters; the option has successfully been used to simulate snow and ice protection using geo-textiles and saw dust (default: FALSE).</help>
+		</parameter>
+		<parameter key="JAM" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>If switched on, you can also simulate ponding on impermeable ice surfaces below the snow cover (default: FALSE)</help>
+		</parameter>
+		<parameter key="WATER_LAYER" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>This flag behaves differently depending on the chosen water transport scheme. For the BUCKET scheme: Assuming an impermeable surface such as on a road or on geo-textiles (e.g. for snow farming), a liquid water layer is allowed to form on this surface. For RICHARDSEQUATION: in case high infiltration fluxes cannot be fully absorbed by the matrix, form a ponding layer on the top of the domain. Default: FALSE</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Elements Handling" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="HEIGHT_NEW_ELEM" type="number" format="decimal" precision="2" unit="m">
+			<help>Standard size (m) of a new element added to the stack of elements (layers) during snowfall events (default: 0.02 m)</help>
+		</parameter>
+		<parameter key="MINIMUM_L_ELEMENT" type="number" format="decimal" precision="4" unit="m">
+			<help>Threshold value for enforcing the layer to be merged with the layer above or below (default: 0.0025 m)</help>
+		</parameter>
+		<parameter key="COMBINE_ELEMENTS" type="alternative">
+			<option value="TRUE">
+				<!--<parameter key="COMB_THRESH_L" type="number" format"decimal" default="0.015">
+				<help>Threshold value: both elements must be smaller than COMB_THRESH_L for an action to be taken.</help>
+				</parameter>-->
+				<!--<parameter key="REDUCE_N_ELEMENTS" type="alternative" default="FALSE">
+				<option value="FALSE"/>
+				<option value="TRUE"/>
+				<help>Increase the combining of elements deeper in the snowpack and split elements when they approach the surface again. This reduces the number of elements and thereby the computational load in case of deep snowpacks, like glaciers or firn packs.</help>
+				</parameter>-->
+			</option>
+			<option value="FALSE"/>
+			<help>Combine neighboring elements based on a set of similarity conditions which are hard-coded (default: TRUE)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Canopy" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="TWO_LAYER_CANOPY" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>The canopy is divided into a trunk layer and a leaf-layer. An energy balance is computed for each layer, producing leaf-layer and trunk layer temperatures that affect LW radiations to the ground. Default: TRUE</help>
+		</parameter>
+		<parameter key="CANOPY_HEAT_MASS" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Add a biomass heat flux term in the canopy energy balance (default: TRUE)</help>
+		</parameter>
+		<parameter key="CANOPY_TRANSMISSION" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Computes the canopy shade soil cover fraction, as function of canopy height, crown diameter, vertical canopy soil cover, and solar elevation angle (default: TRUE)</help>
+		</parameter>
+		<parameter key="FORESTFLOOR_ALB" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Litter falling on the forest floor can reduce albedo (default: TRUE)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Permafrost" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="ADVECTIVE_HEAT" type="alternative">
+			<option value="FALSE"/>
+			<option value="TRUE">
+				<parameter key="HEAT_BEGIN" type="number" format="decimal" precision="3" unit="m" optional="false">
+					<help>depth in meters where to start injecting the thermal flux (from the surface)</help>
+				</parameter>
+				<parameter key="HEAT_END" type="number" format="decimal" precision="3" unit="m" optional="false">
+					<help>depth in meters where to stop injecting the thermal flux (from the surface)</help>
+				</parameter>
+			</option>
+			<help>Inject a thermal flux (in W/m³) at a given depth (this must be provided under the parameter name ADV_HEAT in the meteo file, currently only SMET provides this possibility). Default: FALSE</help>
+		</parameter>
+	</frame>
+
+</inishell_include>

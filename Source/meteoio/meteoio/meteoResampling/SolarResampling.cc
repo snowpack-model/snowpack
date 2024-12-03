@@ -27,18 +27,18 @@
 
 namespace mio {
 
-Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), cache_losses(), extrapolate(false)
+Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs), cache_losses(), extrapolate(false)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 
 	for (const auto& arg : vecArgs) {
-		if (arg.first=="WINDOW_SIZE") {
-			IOUtils::parseArg(arg, where, window_size);
-			window_size /= 86400.; //user uses seconds, internally julian day is used
-			if (window_size<=0.) {
+		if (arg.first=="MAX_GAP_SIZE") {
+			IOUtils::parseArg(arg, where, max_gap_size);
+			max_gap_size /= 86400.; //user uses seconds, internally julian day is used
+			if (max_gap_size<=0.) {
 				std::ostringstream ss;
-				ss << "Invalid accumulation period (" << window_size << ") for \"" << where << "\"";
+				ss << "Invalid accumulation period (" << max_gap_size << ") for \"" << where << "\"";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
 		} else if (arg.first=="EXTRAPOLATE") {
@@ -88,7 +88,7 @@ bool Solar::computeLossFactor(const std::string& stationHash, const size_t& inde
                            const std::vector<MeteoData>& vecM, const Date& resampling_date, Points &pts)
 {
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, max_gap_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	if (!extrapolate && (!foundP1 || !foundP2)) return false;

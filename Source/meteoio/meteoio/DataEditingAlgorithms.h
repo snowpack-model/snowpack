@@ -230,9 +230,15 @@ class EditingKeep : public EditingBlock {
  *     - REPLACE: if set to TRUE, even valid DEST data points will be replaced, otherwise only data gaps 
  *                in DEST will be filled with new data (default: false).
  * 
- * Please note that for MIN/AVG/MAX, the current value of DEST is included if it is a valid value! If you 
+ * \note Please note that for MIN/AVG/MAX, the current value of DEST is included if it is a valid value! If you 
  * want to replace valid values of DEST with for example the average of several other parameters excluding itself, 
  * first declare a KEEP or EXCLUDE algorithm for the period of interest in order to delete DEST.
+ * 
+ * \warning If the parameters to combine don't have the same sampling rate, the results will be some interlaced 
+ * output alternating between the different sources. For example combining an hourly precipitation with a 10 minutes
+ * precipitation reanalysis would lead to five reanalysis values followed by an hourly measurement (and repeated over
+ * the whole dataset duration). If this is not what you want (most probably), then first declare an EXCLUDE or KEEP
+ * editing operation over the period of interest.
  *
  * @code
  * [Input]
@@ -246,11 +252,6 @@ class EditingKeep : public EditingBlock {
  * STB::arg2::src  = TA_THY TA_ROT TA@100
  * STB::arg2::dest = TA
  * @endcode
- * 
- * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
- * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
- * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
- * the start of the first station to the start of the second station)
  */
 class EditingCombine : public EditingBlock {
 	public:

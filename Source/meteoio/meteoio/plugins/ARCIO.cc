@@ -331,7 +331,18 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 {
-	write2DGrid_internal(grid_in, options+grid2d_ext_out);
+	// options is a string of the format varname@Date
+	std::vector<std::string> vec_options;
+	if (IOUtils::readLineToVec(options, vec_options, '@')  != 2)
+		throw InvalidArgumentException("The format for the options to ARCIO::write2DGrid is varname@Date, received instead '"+options+"'", AT);
+
+	mio::Date date;
+	if(!mio::IOUtils::convertString(date, vec_options[1], cfg.get("TIME_ZONE","input"))) {
+		throw InvalidArgumentException("Unable to convert date '"+vec_options[1]+"'", AT);
+	}
+	
+	const std::string filename( date.toString(Date::NUM)+vec_options[0]+grid2d_ext_out );
+	write2DGrid_internal(grid_in, filename);
 }
 
 void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& name) const

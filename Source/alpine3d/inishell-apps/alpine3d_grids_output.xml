@@ -1,0 +1,105 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for gridded input / output plugin definitions
+-->
+
+<inishell_include>
+
+	<include_external file="meteoio_grids_output.xml" app="meteoio"/>
+
+	<!-- Alternative panel: A3D_GRID2D_OUT -->
+	<frame caption="2D Grids" collapsed="false">
+		<section name="Output"/>
+		<parameter key="GRIDS_WRITE" type="alternative" default="FALSE">
+			<option value="TRUE">
+				<reference name="GRID2D_OUT"/>
+				<parameter key="GRIDS_START" type="number" format="decimal" precision="6" default="0" min="0" max="365" unit="days" optional="false">
+					<help>When to start writing gridded data out (offset, in days)</help>
+				</parameter>
+				<parameter key="GRIDS_DAYS_BETWEEN" type="number" format="decimal" precision="6" default="1." min="0" max="365" unit="days" optional="false">
+					<help>How often to write gridded data out (in days: 3 hours=.125, 1 hour=4.1666e-2, 0.5 hour=2.08333e-2, 0.25 hour=1.04167e-2))</help>
+				</parameter>
+				<parameter key="GRIDS_PARAMETERS" type="text" optional="true">
+					<help>list of parameters (taken from &lt;a href=&quot;https://alpine3d.slf.ch/doc-release/html/classSnGrids.html#aa7cc1a3714dd8ca8dc3919695f17649b&quot;&gt;SnGrids::Parameters&lt;/a&gt;) to output as grids, see &lt;a href=&quot;https://alpine3d.slf.ch/doc-release/html/snowpack.html#gridded_outputs&quot;&gt;Gridded outputs&lt;/a&gt;</help>
+				</parameter>
+				<parameter key="MASK_GLACIERS" type="alternative" default="FALSE">
+					<option value="TRUE">
+						<parameter key="MASK_DYNAMIC" type="alternative" default="FALSE">
+							<option value="TRUE"/>
+							<option value="FALSE"/>
+							<help>Should the glacier mask be recomputed at each timestep (to account for melting glaciers for example)?</help>
+						</parameter>
+					</option>
+					<option value="FALSE"/>
+					<help>Should values over glaciers be replaced by nodata in the outputs?</help>
+				</parameter>
+				<parameter key="SOIL_TEMPERATURE_DEPTHS" type="text" optional="true">
+					<help>list of depths (in m) where to extract grids of soil temperatures</help>
+				</parameter>
+				<parameter key="SNOW_TEMPERATURE_DEPTH" type="number" format="decimal" precision="3" min="0" unit="m" optional="true">
+					<help>depth (in m) where to extract grids of snow temperatures (if the snow is not deep enough for the chosen depth, the pixel gets assigned nodata)</help>
+				</parameter>
+				<parameter key="SNOW_AVG_TEMPERATURE_DEPTH" type="number" format="decimal" precision="3" min="0" unit="m" optional="true">
+					<help>extract grids of average snow temperatures for the top &lt;i&gt;x&lt;/i&gt; m (if the snow is not deep enough for the chosen depth, the pixel will be assigned the average temperature of the whole snow pack)</help>
+				</parameter>
+				<parameter key="SNOW_AVG_DENSITY_DEPTH" type="number" format="decimal" precision="3" min="0" unit="m" optional="true">
+					<help>extract grids of average snow density for the top &lt;i&gt;x&lt;/i&gt; m (if the snow is not deep enough for the chosen depth, the pixel will be assigned the average density of the whole snow pack)</help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>Output distributed grids of certain parameters?</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Runoff Outputs" collapsed="false">
+		<section name="Output"/>
+		<parameter key="WRITE_RUNOFF_GRIDS" type="alternative" default="FALSE">
+			<option value="TRUE">
+				<reference name="RUNOFF_GRIDS_PLUGINS"/>
+			</option>
+			<option value="FALSE"/>
+			<help>write out the generated runoff at each cell and timesteps</help>
+		</parameter>
+		<parameter key="CATCHMENTS_PATH" type="path" section="Output" optional="true">
+			<help>Path to the catchments sums output files (if you have provided a catchment grid in the [Input] section)</help>
+		</parameter>
+		<parameter key="RUNOFF_FILES_EXTRA_DATA" type="text" optional="true">
+			<help>list of parameters (taken from &lt;a href=&quot;https://alpine3d.slf.ch/doc-release/html/classSnGrids.html#aa7cc1a3714dd8ca8dc3919695f17649b&quot;&gt;SnGrids::Parameters&lt;/a&gt;) to output as sub-cacthments sums, see &lt;a href=&quot;https://alpine3d.slf.ch/doc-release/html/runoff.html&quot;&gt;Runoff&lt;/a&gt;</help>
+		</parameter>
+	</frame>
+
+	<parametergroup name="RUNOFF_GRIDS_PLUGINS">
+		<parameter key="RUNOFF_GRID2D" type="alternative" default="ARC" optional="false">
+			<option value="ARC">
+				<parameter key="RUNOFF_GRID2DPATH" type="path" optional="false">
+					<help>Path to the runoff output grids files</help>
+				</parameter>
+			</option>
+			<option value="NETCDF">
+				<parameter key="RUNOFF_GRID2DFILE" type="file" mode="output" optional="false">
+					<help>file to write runoff output grids to</help>
+				</parameter>
+			</option>
+		</parameter>
+	</parametergroup>
+
+</inishell_include>

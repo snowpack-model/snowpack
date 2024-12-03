@@ -1,0 +1,312 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for raw data editing
+-->
+
+<inishell_include>
+
+	<parameter type="label" label="&lt;h3&gt;Input Data Editing&lt;/h3&gt;">
+		<section name="InputEditing"/>
+	</parameter>
+	<parameter type="helptext" wrap="true" section="InputEditing">
+		<help>It is possible to perform several low level editing on the input data before any other processing takes place.&lt;br&gt;</help>
+	</parameter>
+	
+	<!-- Alternative panel: Raw data editing -->
+	<frame caption="Timeseries editing">
+		<section name="InputEditing"/>
+		<parameter type="helptext" wrap="true">
+			<help>Timeseries can be transformed just after input, before any other processing takes place by means of a number of different algorithms. Please have a look at &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/raw_data_editing.html&quot;&gt;MeteoIO's online documentation&lt;/a&gt; for details about them. All commands support both &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a901c39b71450ef8f0e80ba0db81aafac&quot;&gt;standard meteorological parameters&lt;/a&gt; as well as non-standard parameters.</help>
+		</parameter>
+		
+		<parameter key="ENABLE_TIMESERIES_EDITING" label="ENABLE_TIMESERIES_EDITING" caption="Enable timeseries editing?" type="checkbox" default="TRUE">
+			<help>Should the declared timeseries editing be processed? (it is very strongly suggested to keep it set to TRUE for most applications)</help>
+		</parameter>
+		
+		
+		<!-- Editing Commands -->
+		<parameter label="Add/Remove Editing Command" type="selector" placeholder="&lt;station ID&gt;">
+			<parameter key="%::EDIT#" type="alternative" replicate="true" template="true" pre-generate="false" bold="true">
+				<reference name="EDITING_SWAP"/>
+				<reference name="EDITING_RENAME"/>
+				<reference name="EDITING_EXCLUDE"/>
+				<reference name="EDITING_KEEP"/>
+				<reference name="EDITING_COMBINE"/>
+				<reference name="EDITING_AUTOMERGE"/>
+				<reference name="EDITING_MERGE"/>
+				<reference name="EDITING_COPY"/>
+				<reference name="EDITING_CREATE"/>
+				<reference name="EDITING_METADATA"/>
+				<reference name="EDITING_REGFILL"/>
+				<reference name="EDITING_MOVE"/>
+				<reference name="EDITING_SPLIT"/>
+			</parameter>
+			<help>Enter the station ID to process or &lt;b&gt;*&lt;/b&gt; for any station ID (please keep in mind that the &lt;b&gt;*&lt;/b&gt; commands are applied &lt;b&gt;before&lt;/b&gt; any other station ID!)</help>
+		</parameter>
+			
+		<!-- SWAP command -->
+		<parametergroup name="EDITING_SWAP">
+			<option value="SWAP">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::SRC" label="Source:" type="text" size="small" optional="false"/></o>
+					<o><parameter key="@::DEST" label="Destination:" type="text" size="small" optional="false"/></o>
+					<help>Swap pairs of parameters, if a parameter does not exists, it will be transparently added with a nodata value.</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingSwap.html&quot;&gt;SWAP editing&lt;/a&gt;: swap two parameters</help>
+			</option>
+		</parametergroup>
+		
+		<!-- RENAME command -->
+		<parametergroup name="EDITING_RENAME">
+			<option value="RENAME">
+				<parameter key="%::ARG#" label="" type="grid">
+					<o><parameter key="@::SRC" label="Source:" type="text" size="large" optional="false"/></o>
+					<o><parameter key="@::DEST" label="Destination:" type="text" size="small" optional="false"/></o>
+					<help>Rename a meteorological parameter (for example to rename non-standard parameter names into standard ones.). This key can take multiple source names that will be processed in the order of declaration (and existing values will not be overwritten). Original names that are not found in the current dataset will silently be ignored, so it is safe to provide a list that contain many possible names.</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingRename.html&quot;&gt;RENAME editing&lt;/a&gt;: rename parameters</help>
+			</option>
+		</parametergroup>
+		
+		<!-- EXCLUDE command -->
+		<parametergroup name="EDITING_EXCLUDE">
+			<option value="EXCLUDE">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAMS" label="Parameters:" type="text" size="large" optional="false"/></o>
+					<help>Exclude specific parameters as provided by a space delimited list of meteorological parameters (use the wildcard parameter '*' to exclude all parameters).</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingExclude.html&quot;&gt;EXCLUDE editing&lt;/a&gt;: exclude some parameters</help>
+			</option>
+		</parametergroup>
+		
+		<!-- KEEP command -->
+		<parametergroup name="EDITING_KEEP">
+			<option value="KEEP">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAMS" label="Parameters:" type="text" size="large" optional="false"/></o>
+					<help>only keep specific parameters as provided by a space delimited list of meteorological parameters.</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingKeep.html&quot;&gt;KEEP editing&lt;/a&gt;: only keep some parameters</help>
+			</option>
+		</parametergroup>
+		
+		<!-- AUTOMERGE command -->
+		<parametergroup name="EDITING_AUTOMERGE">
+			<option value="AUTOMERGE">
+				<parameter type="helptext" wrap="true">
+					<help>Merge the stations that have the exact same ID. If merge conflicts are encountered (such as identical fields having different values at the same timestamp),  warnings will be printed out and the chosen conflict resolution will be used.</help>
+				</parameter>
+				<parameter key="%::ARG#::MERGE_STRATEGY" label="Merging strategy" type="alternative" optional="true">
+					<option value="STRICT_MERGE"><help>Station1 receives data from station2 only for common timestamps</help></option>
+					<option value="EXPAND_MERGE"><help>If station2 can provide some data before/after station1, this extra data is added to station1</help></option>
+					<option value="FULL_MERGE"><help>All timestamps from station2 are brought into station1 even if the timestamps don't match</help></option>
+					<option value="WINDOW_MERGE"><help>Similar to FULL_MERGE but only within the time range of station1</help></option>
+					<help>When stations are merged together, how should it be performed? (default: &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a34234aa7ed0229afd97b52b8de55ebef.html&quot;&gt;MeteoData::FULL_MERGE&lt;/a&gt;)</help>
+				</parameter>
+				<parameter key="%::ARG#::MERGE_CONFLICTS" label="Conflicts resolution" type="alternative" optional="true">
+					<option value="CONFLICTS_PRIORITY_FIRST"><help>The first station has priority</help></option>
+					<option value="CONFLICTS_PRIORITY_LAST"><help>The last station has priority</help></option>
+					<option value="CONFLICTS_AVERAGE"><help>The merged value is the average of station1 and station2</help></option>
+					<help>When stations are merged together, how solve conflicts (default: &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#ad106ac2c8273943a8297219bf89d094e.html&quot;&gt;MeteoData::CONFLICTS_AVERAGE&lt;/a&gt;)</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingAutoMerge.html&quot;&gt;AUTOMERGE editing&lt;/a&gt;: merge stations having the same IDs</help>
+			</option>
+		</parametergroup>
+		
+		<!-- MERGE command -->
+		<parametergroup name="EDITING_MERGE">
+			<option value="MERGE">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::MERGE" label="Merge from:" type="text" size="large" optional="false"/></o>
+					<help>Station IDs to merge together (in the declared order).</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAMS" label="Parameters:" type="text" size="large" optional="true"/></o>
+					<help>In order to restrict the merge to some specific parameters, then provide them here as a space delimited list.</help>
+				</parameter>
+				<parameter key="%::ARG#::MERGE_STRATEGY" label="Merging strategy" type="alternative" optional="true">
+					<option value="STRICT_MERGE"><help>Station1 receives data from station2 only for common timestamps</help></option>
+					<option value="EXPAND_MERGE"><help>If station2 can provide some data before/after station1, this extra data is added to station1</help></option>
+					<option value="FULL_MERGE"><help>All timestamps from station2 are brought into station1 even if the timestamps don't match</help></option>
+					<option value="WINDOW_MERGE"><help>Similar to FULL_MERGE but only within the time range of station1</help></option>
+					<help>When stations are merged together, how should it be performed? (default: &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#a34234aa7ed0229afd97b52b8de55ebef.html&quot;&gt;MeteoData::EXPAND_MERGE&lt;/a&gt;)</help>
+				</parameter>
+				<parameter key="%::ARG#::MERGE_CONFLICTS" label="Conflict resolution" type="alternative" optional="true">
+					<option value="CONFLICTS_PRIORITY_FIRST"><help>The first station has priority</help></option>
+					<option value="CONFLICTS_PRIORITY_LAST"><help>The last station has priority</help></option>
+					<option value="CONFLICTS_AVERAGE"><help>The merged value is the average of station1 and station2</help></option>
+					<help>When stations are merged together, how solve conflicts (default: &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1MeteoData.html#ad106ac2c8273943a8297219bf89d094e.html&quot;&gt;MeteoData::CONFLICTS_PRIORITY&lt;/a&gt;)</help>
+				</parameter>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingMerge.html&quot;&gt;MERGE editing&lt;/a&gt;: merge stations together</help>
+			</option>
+		</parametergroup>
+		
+		<!-- COPY command -->
+		<parametergroup name="EDITING_COPY">
+			<option value="COPY">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::SRC" label="Source:" type="text" size="small" optional="false"/></o>
+					<o><parameter key="@::DEST" label="Destination:" type="text" size="small" optional="false"/></o>
+					<help>Make a copy of a parameter under a given name.</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingCopy.html&quot;&gt;COPY editing&lt;/a&gt;: copy a parameter</help>
+			</option>
+		</parametergroup>
+
+		<!-- CREATE command -->
+		<parametergroup name="EDITING_CREATE">
+			<option value="CREATE">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAM" label="Parameter:" type="text" optional="false"/></o>
+				</parameter>
+				<parameter key="%::ARG#::ALGORITHM" label="Algorithm:" type="alternative" optional="false">
+					<reference name="ALL_GENERATORS"/>
+				</parameter>
+				<!--<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/> Already included in ALL_GENERATORS-->
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingCreate.html&quot;&gt;CREATE editing&lt;/a&gt;: create data with a choice of Data generator parametrizations (see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/generators.html&quot;&gt;MeteoIO's online help&lt;/a&gt; for more information). It is also possible to call these generators later, in the dedicated [Generators] section.</help>
+			</option>
+		</parametergroup>
+		
+		<!-- METADATA command -->
+		<parametergroup name="EDITING_METADATA">
+			<option value="METADATA">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::NAME" label="Name:" type="text" optional="true"/></o>
+					<o><parameter key="@::ID" label="Id:" type="text" optional="true"/></o>
+					<help>Please keep in mind that editing the station ID in effect creates a new station!</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::LATITUDE" label="Latitude:" type="number" format="decimal" min="-90.000000" max="90.000000" precision="6" optional="true"/></o>
+					<o><parameter key="@::LONGITUDE" label="Longitude:" type="number" format="decimal" min="-180.000000" max="360.000000" precision="6" optional="true"/></o>
+					<o><parameter key="@::ALTITUDE" label="Altitude:" type="number" format="decimal" optional="true"/></o>
+					<help>Edit the geographic coordinates.</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::SLOPE" label="Slope:" type="number" format="decimal" min="-90.0" max="90.0" optional="true"/></o>
+					<o><parameter key="@::AZIMUTH" label="Azimuth:" type="number" format="decimal" min="0.00" max="360.000" optional="true"/></o>
+					<help>Edit the slope information.</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingMetadata.html&quot;&gt;METADATA editing&lt;/a&gt;: edit the metadata</help>
+			</option>
+		</parametergroup>
+
+		<!-- REGRESSION FILL command -->
+		<parametergroup name="EDITING_REGFILL">
+			<option value="REGRESSIONFILL">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::FILL" label="Fill from:" type="text" size="large" optional="false"/></o>
+					<help>Station IDs to fill the missing data from.</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAMS" label="Parameters:" type="text" size="large" optional="true"/></o>
+					<help>In order to restrict the merge to some specific parameters, then provide them here as a space delimited list.</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::TYPE" label="Regression Type" type="alternative" optional="true">
+						<option value="LINEAR"><help>Linear regression</help></option>
+					</parameter></o>
+				</parameter>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingRegFill.html&quot;&gt;REGRESSIONFILL editing&lt;/a&gt;: Fill a station by regression from another station.</help>
+			</option>
+		</parametergroup>
+
+		<!-- MOVE command -->
+		<parametergroup name="EDITING_MOVE">
+			<option value="MOVE">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::DEST" label="Destination:" type="text" size="small" optional="false"/></o>
+					<help>Destination stationID where params will be moved to. Can be multiple: "*"" is allowed as a wildcard (moving to all stations) or DAV* moving to all stations beginning with DAV etc.</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAMS" label="Parameters:" type="text" size="large" optional="false"/></o>
+					<help>Parameters to move, space separated list. Wildcard "*" is allowed, moving all parameters of a station.</help>
+				</parameter>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingMove.html&quot;&gt;MOVE editing&lt;/a&gt;: Move parameters from one station to another.</help>
+			</option>
+		</parametergroup>
+
+		<!-- SPLIT command -->
+		<parametergroup name="EDITING_SPLIT">
+			<option value="SPLIT">
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::DEST" label="Destination:" type="text" size="small" optional="false"/></o>
+					<help>Destination stationID of the new station</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" underline="true" type="horizontal">
+					<o><parameter key="@::PARAMS" label="Parameters:" type="text" size="large" optional="false"/></o>
+					<help>Parameters to move, space separated list. Wildcard "*" is not allowed.</help>
+				</parameter>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingSplit.html&quot;&gt;SPLIT editing&lt;/a&gt;: Split parameters from one station to a new one.</help>
+			</option>
+		</parametergroup>
+		
+		<!-- COMBINE command -->
+		<parametergroup name="EDITING_COMBINE">
+			<option value="COMBINE">
+				<parameter key="%::ARG#" label="" type="horizontal">
+					<o><parameter key="@::SRC" label="Source(s):" type="text" size="medium" optional="false"/></o>
+					<help>Source parameters providing the data (space delimited list)</help>
+				</parameter>
+				<parameter key="%::ARG#" label="" type="horizontal">
+					<o><parameter key="@::DEST" label="Destination:" type="text" size="medium" optional="false"/></o>
+					<help>Destination parameter (it will be created if it does not already exist)</help>
+				</parameter>
+				<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="true">
+					<option value="FIRST" />
+					<option value="MIN" />
+					<option value="AVG" />
+					<option value="MAX" />
+					<help>How are data point combined? (default: FIRST)</help>
+				</parameter>
+				<parameter key="%::ARG#::REPLACE" label="Replace:" type="alternative" optional="true">
+					<option value="TRUE" />
+					<option value="FALSE" />
+					<help>Replace valid data points or only do gap-filling? (default: false)</help>
+				</parameter>
+				<reference name="ID_RESTRICT"/>
+				<reference name="TIME_RESTRICT"/>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingCombine.html&quot;&gt;COMBINE editing&lt;/a&gt;: Combine several parameters into a single parameter for gap filling or to create a new, composite parameter.</help>
+			</option>
+		</parametergroup>
+
+	</frame>
+
+</inishell_include>

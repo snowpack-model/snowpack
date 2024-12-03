@@ -19,7 +19,6 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
-#include <regex>
 #include <ctype.h>
 #if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 	#ifndef NOMINMAX

@@ -109,6 +109,7 @@ namespace mio {
  * @endcode
  */
 
+const std::string PNGIO::default_extension = ".png";
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
@@ -436,9 +437,19 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 	free(png_ptr);
 }
 
-void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
+void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 {
-	const std::string full_name( grid2dpath+"/"+filename );
+	// options is a string of the format varname@Date
+	std::vector<std::string> vec_options;
+	if (IOUtils::readLineToVec(options, vec_options, '@')  != 2)
+		throw InvalidArgumentException("The format for the options to PNGIO::write2DGrid is varname@Date, received instead '"+options+"'", AT);
+
+	mio::Date date;
+	if(!mio::IOUtils::convertString(date, vec_options[1], cfg.get("TIME_ZONE","input"))) {
+		throw InvalidArgumentException("Unable to convert date '"+vec_options[1]+"'", AT);
+	}
+	
+	const std::string full_name( grid2dpath+"/"+date.toString(Date::NUM)+vec_options[0]+default_extension );
 	fp=nullptr;
 	png_structp png_ptr=nullptr;
 	png_infop info_ptr=nullptr;

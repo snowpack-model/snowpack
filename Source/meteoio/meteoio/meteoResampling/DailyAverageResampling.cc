@@ -26,8 +26,8 @@
 
 namespace mio {
 
-DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-                 : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), range(IOUtils::nodata), phase(0.)
+DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+                 : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs), range(IOUtils::nodata), phase(0.)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 
@@ -45,7 +45,7 @@ std::string DailyAverage::toString() const
 {
 	std::ostringstream ss;
 	ss << std::right << std::setw(10) << parname << "::"  << std::left << std::setw(15) << algo;
-	ss << "[ window_size=" << window_size;
+	ss << "[ max_gap_size=" << max_gap_size;
 	if (range!=IOUtils::nodata)
 		ss << " range=" << range;
 	if (phase!=0.)

@@ -1,0 +1,187 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for common neccessities
+-->
+
+<inishell_include>
+
+	<!-- SUBSTITUTIONS -->
+	<parametergroup name="METEOPARAMETERS"> <!-- Meteo Parameters for filters, resampling, spatial interpolations, ... -->
+		<option value="TA" help="Air temperature"/>
+		<option value="RH" help="Relative humidity"/>
+		<option value="HS" help="Height of snow"/>
+		<option value="VW" help="Wind velocity"/>
+		<option value="DW" help="Wind direction"/>
+		<option value="VW_MAX" help="Maximum wind velocity"/>
+		<option value="ISWR" help="Incoming short wave radiation"/>
+		<option value="RSWR" help="Reflected short wave radiation"/>
+		<option value="ILWR" help="Incoming long wave radiation (downwelling)"/>
+		<option value="TSG" help="Temperature of the ground surface"/>
+		<option value="TSS" help="Temperature of the snow surface"/>
+		<option value="P" help="Air pressure"/>
+		<option value="PSUM" help="Water equivalent of precipitations, either solid or liquid"/>
+		<option value="PSUM_PH" help="Precipitation phase: between 0 (fully solid) and 1 (fully liquid)"/>
+		<option value="TAU_CLD" help="Cloud transmissivity or ISWR/ISWR_clear_sky"/>
+	</parametergroup>
+
+	<parametergroup name="METEOGRIDS"> <!-- MeteoGrids names -->
+		<option value="TA" help="Air temperature"/>
+		<option value="RH" help="Relative humidity"/>
+		<option value="QI" help="Specific humidity"/>
+		<option value="TD" help="Dew Point temperature"/>
+		<option value="VW" help="Wind velocity"/>
+		<option value="DW" help="Wind direction"/>
+		<option value="VW_MAX" help="Maximum wind velocity"/>
+		<option value="ISWR" help="Incoming short wave radiation"/>
+		<option value="RSWR" help="Reflected short wave radiation"/>
+		<option value="ISWR_DIFF" help="Incoming short wave diffuse"/>
+		<option value="ISWR_DIR" help="Incoming short wave direct"/>
+		<option value="ILWR" help="Incoming long wave radiation"/>
+		<option value="OLWR" help="Outgoing long wave radiation"/>
+		<option value="TAU_CLD" help="Cloud transmissivity or ISWRISWR_clear_sky"/>
+		<option value="HS" help="Height of snow"/>
+		<option value="PSUM" help="Water equivalent of precipitations either solid or liquid"/>
+		<option value="PSUM_PH" help=" Precipitation phase between 0 (fully solid) and 1 (fully liquid)"/>
+		<option value="PSUM_L" help="Water equivalent of liquid precipitation"/>
+		<option value="PSUM_S" help="Water equivalent of solid precipitation"/>
+		<option value="TSG" help="Temperature ground surface"/>
+		<option value="TSS" help="Temperature snow surface"/>
+		<option value="TSOIL" help="Temperature within the soil at a given depth"/>
+		<option value="P" help="Air pressure"/>
+		<option value="P_SEA" help="Sea level air pressure"/>
+		<option value="U" help="East component of wind"/>
+		<option value="V" help="North component of wind"/>
+		<option value="W" help="Vertical component of wind"/>
+		<option value="SWE" help="Snow Water Equivalent"/>
+		<option value="RSNO" help="Snow mean density"/>
+		<option value="ROT" help="Total generated runoff"/>
+		<option value="ALB" help="Albedo"/>
+		<option value="DEM" help="Digital Elevation Model"/>
+		<option value="SHADE" help="Hillshade"/>
+		<option value="SLOPE" help="DEM slope angle"/>
+		<option value="AZI" help="DEM slope azimuth"/>
+	</parametergroup>
+
+	<parametergroup name="COORDSYSTEMS"> <!-- Coordinate systems -->
+		<option value="CH1903" default="true">
+			<help>Coordinates in the &lt;a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system"&gt;Swiss Grid&lt;/a&gt;</help>
+		</option>
+		<option value="CH1903+">
+			<help>Coordinates in the &lt;a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system"&gt;Swiss Grid&lt;/a&gt;</help>
+		</option>
+		<option value="UTM">
+			<parameter key="COORDPARAM" type="text" validate="^\d\d[A-Z]$" optional="false">
+				<help>Specify the zone with the zone letter (for example, 32T)</help>
+			</parameter>
+			<help>&lt;a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system"&gt;UTM coordinates&lt;/a&gt;</help>
+		</option>
+		<option value="UPS">
+			<parameter key="COORDPARAM" type="text" validate="^N|S$" optional="false">
+				<help>Specify the hemisphere (either N or S)</help>
+			</parameter>
+			<help>&lt;a href="https://en.wikipedia.org/wiki/Universal_Polar_Stereographic_coordinate_system"&gt;Universal Polar Stereographic coordinates&lt;/a&gt;</help>
+		</option>
+		<option value="PROJ4">
+			<parameter key="COORDPARAM" type="text" optional="false"/>
+			<help>External library &lt;a href="https://proj.org/"&gt;PROJ&lt;/a&gt;</help>
+		</option>
+		<option value="LOCAL">
+			<help>Uses the horizontal and vertical distance from a reference point</help>
+		</option>
+	</parametergroup>
+
+	<!--Parameter groups for station lists -->
+	<parametergroup name="FILESGROUP">
+		<parameter key="METEOFILE#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true" optional="false">
+			<help>filename to read the data from for each key</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="FILESGROUP_OPTIONAL">
+		<parameter key="METEOFILE#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true">
+			<help>filename to read the data from for each key</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="STATIONGROUP_FILES">
+		<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true" optional="false">
+			<help>File name for station number #</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="STATIONGROUP_FILES_OPTIONAL">
+		<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true">
+			<help>File name for station number #</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="STATIONGROUP_NAMES">
+		<parameter key="STATION#" type="text" replicate="true" optional="false">
+			<help>Station ID for the given station number #</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="STATIONGROUP_NAMES_OPTIONAL">
+		<parameter key="STATION#" type="text" replicate="true">
+			<help>Station ID for the given station number #</help>
+		</parameter>
+	</parametergroup>
+	<parametergroup name="STATIONGROUP_POSITION_SPECS">
+		<parameter key="VSTATION#" type="text" replicate="true" optional="false" validate="coordinates">
+			<help>Coordinates are given as lat/lon/alt or easting/northing/alt such as &lt;b&gt;&lt;i&gt;latlon (46.75, 9.80, 2200)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;latlon (46d 48' 44.553", 9d 50' 50.694", 1550)&lt;/i&gt;&lt;/b&gt; or &lt;b&gt;&lt;i&gt;xy (198754, 723458, 2200)&lt;/i&gt;&lt;/b&gt;</help>
+		</parameter>
+		<parameter key="VID#" type="text" replicate="true" optional="true">
+			<help>Station ID to use for the matching VSTATION</help>
+		</parameter>
+		<parameter key="VNAME#" type="text" replicate="true" optional="true">
+			<help>Station name to use for the matching VSTATION</help>
+		</parameter>
+	</parametergroup>
+
+	<parametergroup name="EQUALITY_OPERATORS">
+		<o value="LT"/>
+		<o value="LE"/>
+		<o value="GT"/>
+		<o value="GE"/>
+		<o value="EQ"/>
+		<o value="NE"/>
+	</parametergroup>
+	
+	<parametergroup name="EQUALITY_OPERATORS_EXTENDED">
+		<o value="LT"/>
+		<o value="LE"/>
+		<o value="GT"/>
+		<o value="GE"/>
+		<o value="EQ"/>
+		<o value="NE"/>
+		<o value="STRCMP"/>
+		<o value="STRBEG"/>
+		<o value="STREND"/>
+		<o value="STRINC"/>
+	</parametergroup>
+
+	<!-- Short descriptions of the software packages -->
+	<parametergroup name="INFO_METEOIO">
+		<frame caption="MeteoIO" color="sl_blue">
+			<section name="General"/>
+			<parameter type="helptext" wrap="true">
+				<help>&lt;i&gt;MeteoIO&lt;/i&gt; is a preprocessor for (meteorological) data. Through a collection of plugins that can be configured in here it handles everything from meteo data input to quality control and the output. Get more information at &lt;a href=&quot;https://meteoio.slf.ch&quot;&gt;MeteoIO's project page&lt;/a&gt; and &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/index.html&quot;&gt;online help&lt;/a&gt;.</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+</inishell_include>

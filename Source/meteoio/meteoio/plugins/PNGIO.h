@@ -43,7 +43,7 @@ class PNGIO : public IOInterface {
 
 		PNGIO& operator=(const PNGIO&); ///<Assignement operator, required because of pointer member
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
@@ -77,6 +77,7 @@ class PNGIO : public IOInterface {
 
 		std::vector<std::string> metadata_key, metadata_text;
 
+		static const std::string default_extension;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const unsigned char channel_depth;
 		static const unsigned char channel_max_color;

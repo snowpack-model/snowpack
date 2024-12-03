@@ -32,7 +32,7 @@ namespace mio {
  * @brief This class is used to read grib files
  *
  * @ingroup plugins
- * @author Patrick Leibersperge
+ * @author Patrick Leibersperger
  * @date   2024-04-17
  * 
  */

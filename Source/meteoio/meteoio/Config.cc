@@ -162,6 +162,18 @@ bool Config::keyExists(std::string key, std::string section) const
 	return (it!=properties.end());
 }
 
+// will do a regex search with the given key
+bool Config::keyExistsRegex(std::string key_regex, std::string section) const
+{
+	IOUtils::toUpper(section);
+	std::regex full_pattern( section + "::" + key_regex, std::regex::icase | std::regex::optimize);
+	std::map<string,string>::const_iterator it = properties.begin();
+	for (; it!=properties.end(); ++it) {
+		if (std::regex_match(it->first, full_pattern)) return true;
+	}
+	return false;
+}
+
 bool Config::sectionExists(std::string section) const
 {
 	IOUtils::toUpper( section );
@@ -216,9 +228,9 @@ void Config::moveSection(std::string org, std::string dest, const bool& overwrit
 std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(const std::string& regex_str, std::string section) const
 {
 	//regex for selecting the keys
-	static const std::regex user_regex(regex_str);
+	static const std::regex user_regex(regex_str, std::regex::icase | std::regex::optimize);
 	//regex to try sorting the keys by numerical order of their index, so STATION2 comes before STATION10
-	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})$"); //limit the number of digits so it fits within an "int" for the call to atoi()
+	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})$", std::regex::optimize); //limit the number of digits so it fits within an "int" for the call to atoi()
 	std::smatch index_matches;
 	
 	IOUtils::toUpper(section);
@@ -267,7 +279,7 @@ std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(const 
 
 std::vector< std::pair<std::string, std::string> > Config::getValues(std::string keymatch, std::string section, const bool& anywhere) const
 {
-	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})"); //limit the number of digits so it fits within an "int" for the call to atoi()
+	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})", std::regex::optimize); //limit the number of digits so it fits within an "int" for the call to atoi()
 	std::smatch index_matches;
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keymatch);
@@ -559,6 +571,13 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 	return vecArgs;
 }
 
+std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm, const size_t& algo_index, const std::string& section) const
+{
+	if (algo_index==IOUtils::npos) return getArgumentsForAlgorithm(parname, algorithm, section);
+	
+	return getArgumentsForAlgorithm(parname, algorithm+std::to_string(algo_index), section);
+}
+
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
 //the local values must have priority -> we initialize from the given i_properties, overwrite from the local values 
 //and swap the two before returning i_properties
@@ -655,11 +674,11 @@ void ConfigParser::parseFile(const std::string& filename)
 
 bool ConfigParser::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
 {
-	static const std::regex section_regex("^\\[((?:\\w|\\-)+)\\].*$"); //valid chars for section: letters, numbers, _ and -
+	static const std::regex section_regex("^\\[((?:\\w|\\-)+)\\].*$", std::regex::optimize); //valid chars for section: letters, numbers, _ and -
 	std::smatch section_matches;
 	
 	if (std::regex_match(line, section_matches, section_regex)) {
-		static const std::regex sectionValidation_regex("^\\[((?:\\w|\\-)+)\\]\\s*((;|#).*)*$"); //valid chars for section: letters, numbers, _ and -. Any number of whitespaces after the section header, potentially comments too
+		static const std::regex sectionValidation_regex("^\\[((?:\\w|\\-)+)\\]\\s*((;|#).*)*$", std::regex::optimize); //valid chars for section: letters, numbers, _ and -. Any number of whitespaces after the section header, potentially comments too
 		std::smatch sectionValidation_matches;
 		if (!std::regex_match(line, sectionValidation_matches, sectionValidation_regex))
 			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);

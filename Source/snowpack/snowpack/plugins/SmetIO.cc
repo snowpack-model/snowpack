@@ -802,7 +802,7 @@ void SmetIO::setBasicHeader(const SnowStation& Xdata, const std::string& fields,
 {
 	// Set the basic, mandatory header key/value pairs for a SMET file
 	smet_writer.set_header_value("station_id", Xdata.meta.getStationID());
-	smet_writer.set_header_value("station_name", Xdata.meta.getStationName());
+	if (!Xdata.meta.getStationName().empty()) smet_writer.set_header_value("station_name", Xdata.meta.getStationName());
 	smet_writer.set_header_value("nodata", IOUtils::nodata);
 	smet_writer.set_header_value("fields", fields);
 

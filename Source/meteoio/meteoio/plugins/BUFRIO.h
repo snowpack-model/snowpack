@@ -27,11 +27,10 @@ namespace mio {
 
 /**
  * @class BUFRIO
- * @brief This (empty) class is to be used as a bufrio for developing new plugins
  *
  * @ingroup plugins
- * @author Mathias Bavay
- * @date   2010-06-14
+ * @author Patrick Leibersperger
+ * @date   2024-08-06
  */
 class BUFRIO : public IOInterface {
 	public:
@@ -52,12 +51,20 @@ class BUFRIO : public IOInterface {
         
         std::string outpath;
         bool separate_stations;
+        bool verbose_out;
 
+        // Cryo Station specific
+        bool write_cryo;
+        long wigos_id_series, wigos_issuer, wigos_issue_no, station_type, surface_type, snow_depth_method;
+        std::string wigos_local_id;
+        
 		static const std::string template_filename;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 
         void parseInputSection();
         void parseOutputSection();
+        void setStationData(CodesHandlePtr &message, const StationData &station, const Coords &position, const std::string &subset_prefix);
+        void setWIGOSId(CodesHandlePtr &message, const std::string &subset_prefix);
 
 
 };
