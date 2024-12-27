@@ -1115,24 +1115,6 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_color << "0x8282A3 0x8282A3 0x8282A3 0x8282A3 0xA38282 0x82A382" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
-		if (useRichardsEq && Xdata.meta.getSlopeAngle() > 0.) {
-			plot_description << "lateral_flow_snow" << " ";
-			plot_units << "kg/m2" << " ";
-			units_offset << "0" << " ";
-			units_multiplier << "1" << " ";
-			plot_color << "#A3A3CC" << " ";
-			plot_min << "" << " ";
-			plot_max << "" << " ";
-			if (useSoilLayers) {
-				plot_description << "lateral_flow_soil" << " ";
-				plot_units << "kg/m2" << " ";
-				units_offset << "0" << " ";
-				units_multiplier << "1" << " ";
-				plot_color << "#CCA3A3" << " ";
-				plot_min << "" << " ";
-				plot_max << "" << " ";
-			}
-		}
 	}
 	if (out_inflate) {
 		//"dHS_corr dMass_corr"
