@@ -57,7 +57,7 @@ namespace mio {
 * @section template_keywords Keywords
 * This plugin uses the following keywords:
 * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
-* - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH
+* - METEOFILE#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH
 * directory
 * will be scanned for files ending in ".icsv" and sorted in ascending order;
 * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false); [Input] section;
@@ -161,8 +161,18 @@ void iCSVIO::parseInputSection() {
         cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
         const std::string inpath = cfg.get("METEOPATH", "Input");
 
+        //handle the deprecated STATION# syntax
+        std::string meteofiles_key( "METEOFILE" );
+        //const std::vector< std::pair<std::string, std::string> > vecDeprecated( cfg.getValues("STATION", "INPUT") );
+       const std::vector< std::string > vecDeprecated( cfg.getKeys("STATION", "INPUT") );
+		if (!vecDeprecated.empty()) {
+			meteofiles_key = "STATION";
+			std::cerr << "[W] The STATION# syntax has been deprecated for the iCSV input plugin, please rename these keys as METEOFILE#!\n";
+			//throw InvalidArgumentException("The STATION# syntax has been deprecated for the SMET plugin, please rename these keys as METEOFILE#!", AT);
+		}
+        
         std::vector<std::string> vecFilenames;
-        cfg.getValues("STATION", "INPUT", vecFilenames);
+        cfg.getValues(meteofiles_key, "INPUT", vecFilenames);
 
         if (vecFilenames.empty())
             scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_iCSV);

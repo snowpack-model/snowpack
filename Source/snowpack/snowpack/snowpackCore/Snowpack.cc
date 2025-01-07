@@ -289,8 +289,13 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	 * - 0.002  m : favored operational value with Dirichlet bc */
 	//Density of BURIED surface hoar (kg m-3), default: 125./ Antarctica: 200.
 	cfg.getValue("HOAR_DENSITY_BURIED", "SnowpackAdvanced", hoar_density_buried);
+	if ( ! (hoar_density_buried > Constants::eps) )
+		throw IOException("HOAR_DENSITY_BURIED must be >0! Please fix your ini file.", AT);
+
 	//Density of surface hoar (-> hoar index of surface node) (kg m-3)
 	cfg.getValue("HOAR_DENSITY_SURF", "SnowpackAdvanced", hoar_density_surf);
+	if ( ! (hoar_density_surf > Constants::eps) )
+		throw IOException("HOAR_DENSITY_SURF must be >0! Please fix your ini file.", AT);
 
 	//Minimum surface hoar size to be buried (mm). Increased by 50% for Dirichlet bc.
 	cfg.getValue("HOAR_MIN_SIZE_BURIED", "SnowpackAdvanced", hoar_min_size_buried);

@@ -107,7 +107,7 @@ namespace mio {
  *    - CSV\#_SPECIAL_HEADERS: description of how to extract more metadata out of the headers; optional
  *    - CSV\#_FILENAME_SPEC: pattern to parse the filename and extract metadata out of it; optional
  *    - The following two keys provide mandatory data for each station, therefore there is no "global" version and they must be defined:
- *       - STATION\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
+ *       - METEOFILE\#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory will be scanned for files with the extension specified in CSV_FILE_EXTENSION;
  *       - POSITION\#: coordinates of the station (default: reading key "POSITION", see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax). This key can only be omitted if lat/lon/altitude are provided in the file name or in the headers (see CSV\#_FILENAME_SPEC and CSV\#_SPECIAL_HEADERS);
  *
  * If no ID has been provided, an automatic station ID will be generated as "ID{n}" where *n* is the current station's index. Regarding the units handling, 
@@ -223,7 +223,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_DATETIME_SPEC = YYYYMMDDHH24
  * CSV_NODATA = -
  *
- * STATION1 = IDA_station1.csv
+ * METEOFILE1 = IDA_station1.csv
  * POSITION1 = latlon (46.80284, 9.77726, 2418)
  * CSV1_NAME = TEST
  * CSV1_ID = myID
@@ -255,7 +255,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_DATETIME_SPEC = DD.MM.YYYY HH24:MI:SS
  * CSV_SPECIAL_HEADERS = name:1:2 id:1:4
  *
- * STATION1 = DisMa_DisEx.csv
+ * METEOFILE1 = DisMa_DisEx.csv
  * POSITION1 = latlon 46.810325 9.806657 2060
  * CSV1_ID = DIS4
  * @endcode
@@ -309,15 +309,15 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_FILENAME_SPEC = {ID}_{NAME}_-_{SKIP}-{PARAM}
  * CSV_COLUMNS_HEADERS = 1
  *
- * STATION1 = H0118_Generoso_-_Calmasino_precipitation.csv
+ * METEOFILE1 = H0118_Generoso_-_Calmasino_precipitation.csv
  *
- * STATION2 = H0118_Generoso_-_Calmasino_temperature.csv    #the parameter name is ambiguous, it will not be recognized
+ * METEOFILE2 = H0118_Generoso_-_Calmasino_temperature.csv    #the parameter name is ambiguous, it will not be recognized
  * CSV2_FIELDS = DATE TIME TA                               #so we define the parameter manually
  * CSV2_UNITS_OFFSET = 0 0 273.15
  *
- * STATION3 = H0118_Generoso_-_Calmasino_reflected_solar_radiation.csv
- * STATION4 = H0118_Generoso_-_Calmasino_relative_humidity.csv
- * STATION5 = H0118_Generoso_-_Calmasino_wind_velocity.csv
+ * METEOFILE3 = H0118_Generoso_-_Calmasino_reflected_solar_radiation.csv
+ * METEOFILE4 = H0118_Generoso_-_Calmasino_relative_humidity.csv
+ * METEOFILE5 = H0118_Generoso_-_Calmasino_wind_velocity.csv
  *
  * [InputEditing]
  * AUTOMERGE = true
@@ -339,21 +339,21 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_NAME = Generoso
  *
  * CSV1_FIELDS = DATE TIME PSUM HS
- * STATION1 = H0118_lg23456.csv
+ * METEOFILE1 = H0118_lg23456.csv
  *
  * CSV2_FIELDS = DATE TIME TA
- * STATION2 = H0118_lg7850.csv
+ * METEOFILE2 = H0118_lg7850.csv
  * CSV2_UNITS_OFFSET = 0 0 273.15
  *
  * CSV3_FIELDS = DATE TIME RSWR ISWR
- * STATION3 = H0118_lg64520.csv
+ * METEOFILE3 = H0118_lg64520.csv
  *
  * CSV4_FIELDS = DATE TIME RH
- * STATION4 = H0118_lg45302.csv
+ * METEOFILE4 = H0118_lg45302.csv
  * CSV4_UNITS_MULTIPLIER = 1 1 0.01
  *
  * CSV5_FIELDS = DATE TIME VW
- * STATION5 = H0118_wind_velocity.csv
+ * METEOFILE5 = H0118_wind_velocity.csv
  *
  * [InputEditing]
  * ID1::MERGE = ID2 ID3 ID4 ID5
@@ -373,12 +373,12 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * CSV_UNITS_OFFSET = 0 0 0 273.15 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 273.15
  * CSV_UNITS_MULTIPLIER = 1 1 1 1 0.01 1 1 1 0.01 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
  * 
- * STATION1 = Extracted_data.csv
+ * METEOFILE1 = Extracted_data.csv
  * POSITION1 = latlon (46.8, 9.81, 1511.826)
  * CSV1_ID = 109
  * CSV1_NAME = Station109
  * 
- * STATION2 = Extracted_data.csv
+ * METEOFILE2 = Extracted_data.csv
  * POSITION2 = xy (45.8018, 9.82, 111.826)
  * CSV2_ID = 105
  * CSV2_NAME = Station105
@@ -391,7 +391,7 @@ CTION, WD; RELATIVE_HUMIDITY, RELATIVEHUMIDITY; WIND_VELOCITY, WS; PRESSURE, STA
  * Here is some rough procedure to help correcting such issues:
  *     1. Split the data at the time of changes. If the data is provided for example in yearly files and such changes appear
  *        between files, created one station ID per file (such as {base_id}_{year}). If such changes appear within one file,
- *        split the file by reading it multiple times (with multiple STATION# statements) with different lines exclusions
+ *        split the file by reading it multiple times (with multiple METEOFILE# statements) with different lines exclusions
  *        commands and attribute a different station ID for each.
  *     2. Name each column with its column index, using the CSV\#_NUMBER_FIELDS key. You can combine it with CSV\#_FIELDS_POSTFIX
  *        in order to also have an indication of the origin of the data (such as the year or the line ranges).
@@ -423,9 +423,18 @@ void CsvIO::parseInputOutputSection()
 	cfg.getValue("CSV_SILENT_ERRORS", "Input", silent_errors, IOUtils::nothrow);
 	cfg.getValue("CSV_ERRORS_TO_NODATA", "Input", errors_to_nodata, IOUtils::nothrow);
 
+	//handle the deprecated STATION# syntax
+	std::string meteofiles_key( "METEOFILE" );
+	const std::vector< std::string > vecDeprecated( cfg.getKeys("STATION", "INPUT") );
+	if (!vecDeprecated.empty()) {
+		meteofiles_key = "STATION";
+		std::cerr << "[W] The STATION# syntax has been deprecated for the CSV input plugin, please rename these keys as METEOFILE#!\n";
+		//throw InvalidArgumentException("The STATION# syntax has been deprecated for the CSV plugin, please rename these keys as METEOFILE#!", AT);
+	}
+	
 	const double in_TZ = cfg.get("TIME_ZONE", "Input");
 	const std::string meteopath = cfg.get("METEOPATH", "Input");
-	std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues("STATION", "INPUT") );
+	std::vector< std::pair<std::string, std::string> > vecFilenames( cfg.getValues(meteofiles_key, "INPUT") );
 
 	if (vecFilenames.empty()) { //scan all of the data path for a given file extension if no stations are specified
 		std::string csvext(".csv");
@@ -438,7 +447,7 @@ void CsvIO::parseInputOutputSection()
 		for (const std::string& filename : tmpFilenames)	{
 			hit++;
 			std::stringstream ss;
-			ss << "STATION" << hit; //assign alphabetically ordered ID to station
+			ss << meteofiles_key << hit; //assign alphabetically ordered ID to station
 			
 			const std::pair<std::string, std::string> stat_id_and_name(ss.str(), filename);
 			vecFilenames.push_back(stat_id_and_name);
@@ -446,7 +455,7 @@ void CsvIO::parseInputOutputSection()
 	} 
 	
 	for (size_t ii=0; ii<vecFilenames.size(); ii++) {
-		const std::string idx( vecFilenames[ii].first.substr(string("STATION").length()) );
+		const std::string idx( vecFilenames[ii].first.substr(meteofiles_key.length()) );
 		static const std::string dflt("CSV_"); //the prefix for a key for ALL stations
 		const std::string pre( "CSV"+idx+"_" ); //the prefix for the current station only
 		

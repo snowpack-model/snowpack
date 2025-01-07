@@ -462,11 +462,10 @@ double SnowpackInterface::getTiming() const
 
 
 /**
- * @brief Internal in Snowpack Interface Master used method to write standard
- * results in output files.
- * Attantion: to have old format files output, set in ini file following key:
- * **A3D_VIEW	= true**
- *
+ * @brief Internal method to allow the master (in case of parallel execution) or the normal thread (non-parallel execution)
+ * to write gridded outputs
+ * @details
+ * In order to generate ARC ASCI files compatible with the legacy Alpine3D grids viewer, set A3D_VIEW to TRUE in the [Output] section!
  * @param date is the date for which the output is done
  */
 void SnowpackInterface::writeOutput(const mio::Date& date)
@@ -475,6 +474,7 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 	const bool isMaster = mpicontrol.master();
 
 	if (do_grid_output(date)) {
+		const std::string grid_type = sn_cfg.get("GRID2D", "output");
 		//no OpenMP pragma here, otherwise multiple threads might call an MPI reduce_sum()
 		for (size_t ii=0; ii<output_grids.size(); ii++) {
 			const size_t SnGrids_idx = SnGrids::getParameterIndex( output_grids[ii] );
@@ -485,36 +485,17 @@ void SnowpackInterface::writeOutput(const mio::Date& date)
 				if (meteoGrids_idx!=IOUtils::npos) { //for this, the grid plugins must be thread-safe!
 					io.write2DGrid(grid, static_cast<MeteoGrids::Parameters>(meteoGrids_idx), date);
 				} else {
-					std::string grid_type;
-					sn_cfg.getValue("GRID2D", "output",grid_type);
-					if (grid_type == "ARC") {
-						std::string file_name;
-						if (a3d_view) {
-							std::string dateStr( date.toString(Date::NUM) );
-							dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
-							file_name =  dateStr + "_" + output_grids[ii] + ".asc" ;
-						} else {
-							std::string date_str(date.toString(mio::Date::ISO));
-							std::replace( date_str.begin(), date_str.end(), ':', '.');
-							file_name =  date_str + "_" + output_grids[ii] + ".asc" ;
-						}
-						io.write2DGrid(grid, file_name);
-					} else if (grid_type=="NETCDF") {
-						std::string file;
-						sn_cfg.getValue("GRID2DFILE", "output", file);
-						io.write2DGrid(grid, output_grids[ii]+"@"+date.toString(mio::Date::ISO));
-					} else {
+					const std::string param_and_date = output_grids[ii] + "@" + date.toString(mio::Date::ISO);
+					if ((grid_type!="ARC") && (grid_type!="NETCDF")) {
 						throw InvalidFormatException("[E] Only ARC and NetCDF allow writing out non-standard grids such as "+output_grids[ii], AT);
 					}
-
+					io.write2DGrid(grid, param_and_date);
 					// Reset WINDEROSIONDEPOSITION, which is cumulative since the previous output grid
 					if (output_grids[ii] == "WINDEROSIONDEPOSITION") winderosiondeposition.set(winderosiondeposition, 0.);
 				}
 			}
 		}
 	}
-
-
 }
 
 /**

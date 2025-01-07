@@ -256,7 +256,7 @@ void next_token(state *s) {
                 const char *start;
                 start = s->next;
                 while (isalpha(s->next[0]) || isdigit(s->next[0]) || (s->next[0] == '_')) s->next++;
-                
+
                 const te_variable *var = find_lookup(s, start, s->next - start);
                 if (!var) var = find_builtin(start, s->next - start);
 
@@ -575,12 +575,12 @@ static te_expr *list(state *s) {
 
     while (s->type == TOK_SEP) {
         next_token(s);
-        te_expr *e_expr = expr(s);
-        CHECK_NULL(e_expr, te_free(ret));
+        te_expr *e = expr(s);
+        CHECK_NULL(e, te_free(ret));
 
         te_expr *prev = ret;
-        ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, e_expr);
-        CHECK_NULL(ret, te_free(e_expr), te_free(prev));
+        ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, e);
+        CHECK_NULL(ret, te_free(e), te_free(prev));
 
         ret->function = comma;
     }
@@ -692,13 +692,14 @@ te_expr *te_compile(const char *expression, const te_variable *variables, int va
 
 double te_interp(const char *expression, int *error) {
     te_expr *n = te_compile(expression, 0, 0, error);
-    if (n == NULL) {
-        return NAN;
-    }
 
-    double ret = te_eval(n);
-    te_free(n);
-    
+    double ret;
+    if (n) {
+        ret = te_eval(n);
+        te_free(n);
+    } else {
+        ret = NAN;
+    }
     return ret;
 }
 

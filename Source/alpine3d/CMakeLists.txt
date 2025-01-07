@@ -1,5 +1,5 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
-SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+#SPDX-License-Identifier: LGPL-3.0-or-later
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.27.2)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(alpine3d)
@@ -28,25 +28,25 @@ ENDIF(WIN32)
 
 ###########################################################
 #set compiler flags according to the detected compiler and user options
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED True)
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
 SET_COMPILER_OPTIONS()
 
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
-	SET(LIB_DEST "lib")
-
 	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
 	MARK_AS_ADVANCED(FORCE USE_RPATH)
 	if(USE_RPATH)
 		#set a full rpath for both build & install tree
 		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-		# add the directory of the binary to the rpath
 		IF(APPLE)
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+			SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
 		ELSE(APPLE)
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
 		ENDIF(APPLE)
 
 		# add the automatically determined parts of the RPATH
@@ -63,6 +63,8 @@ IF(UNIX)
 	IF(APPLE)
 		SET(DLL_EXT "dylib")
 		SET(STAT_EXT "a")
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion") #for now, keep clang quiet
+		SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation")
 		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
 		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
 	ELSE(APPLE)
@@ -92,7 +94,7 @@ FIND_PACKAGE(Libsnowpack REQUIRED)
 SET(ALPINE3D_STANDALONE ON CACHE BOOL "Compilation Alpine3D standalone ON or OFF")
 SET(MPI OFF CACHE BOOL "Compile with MPI support ON or OFF")
 SET(OPENMP OFF CACHE BOOL "Compile with OPENMP support ON or OFF")
-SET(PROFILING OFF CACHE BOOL "Link the profiler library")
+SET(PROFILER OFF CACHE BOOL "Link the profiler library")
 
 IF(MPI)
 	SET(MPI_FLAGS "-DENABLE_MPI")
@@ -107,8 +109,6 @@ SET(CMAKE_CXX_FLAGS "${MPI_FLAGS} ${OPENMP_FLAGS} ${_VERSION} ${ARCH} ${EXTRA}" 
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_STANDARD 11)
-SET(CMAKE_CXX_STANDARD_REQUIRED True)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
 #Add subdirectory, so they can inherit all variables defined above
