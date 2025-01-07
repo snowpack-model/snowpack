@@ -233,7 +233,7 @@ Please include meteoio_parametergroups before use!
 			<help>If set to true, &lt;code&gt;METEOPATH&lt;/code&gt; will be search recursively for data files</help>
 		</parameter>
 		<parameter key="CSV_FILE_EXTENSION" type="text" default=".csv" size="small">
-			<help>When scanning a directory for all csv files, which extension to consider (only used when no &lt;code&gt;STATION&lt;/code&gt; key is defined)</help>
+			<help>When scanning a directory for all csv files, which extension to consider (only used when no &lt;code&gt;METEOFILE&lt;/code&gt; key is defined)</help>
 		</parameter>
 		<parameter key="CSV_SILENT_ERRORS" type="alternative">
 			<option value="TRUE"/>
@@ -248,23 +248,23 @@ Please include meteoio_parametergroups before use!
 		
 		<parameter type="spacer" height="15"/>
 		
-		<parameter key="STATION#" type="grid" replicate="true"> <!-- a grid without raster positions aligns vertically -->
+		<parameter key="METEOFILE#" type="grid" replicate="true"> <!-- a grid without raster positions aligns vertically -->
 			<option>
-				<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" optional="false">
+				<parameter key="METEOFILE#" type="filename" path="%INPUT::METEOPATH" mode="input" optional="false">
 					<option extension="Comma separated files (*.csv *.CSV *.dat *.DAT)"/>
 					<option extension="All files (*.*)"/>
-					<help>File name containing the data for station number #</help>
+					<help>File name containing the data for meteofile number #</help>
 				</parameter>
 			</option>
 			<option>
-				<reference name="CSV_NUMBERED_STATION"/>
+				<reference name="CSV_NUMBERED_METEOFILE"/>
 			</option>
-			<help>Enter file name and position for station number #</help>
+			<help>Enter file name and position for meteofile number #</help>
 		</parameter>
 		
 		<parameter type="spacer" height="15"/>
 		<parameter type="helptext" wrap="true">
-			<help>The settings below apply to all stations, except when overwritten by station specific settings (as set within each STATION# input)</help>
+			<help>The settings below apply to all meteofiles, except when overwritten by meteofile specific settings (as set within each METEOFILE# input)</help>
 		</parameter>
 		
 		<frame caption="Metadata" color="#c4c4c4" collapsed="true">
@@ -434,7 +434,7 @@ Please include meteoio_parametergroups before use!
 		</frame>
 	</parametergroup>
 
-	<parametergroup name="CSV_NUMBERED_STATION">
+	<parametergroup name="CSV_NUMBERED_METEOFILE">
 		<frame caption="Provide station specific settings" collapsed="true">
 			<parameter key="CSV#_DELIMITER" type="text" size="small">
 				<help>Field delimiter character</help>
@@ -716,10 +716,10 @@ Please include meteoio_parametergroups before use!
 			<help>If set to true, files are recursively searched within &lt;a href=&quot;app://input::meteopath&quot;&gt;METEOPATH&lt;/a&gt; (default: false)</help>
 		</parameter>
 		<!--<reference name="STATIONGROUP_FILES_OPTIONAL"/>-->
-		<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true">
+		<parameter key="METEOFILE#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true">
 			<option extension="iCSV files (*.icsv *.ICSV)"/>
 			<option extension="All files (*.*)"/>
-			<help>File name for station number #</help>
+			<help>File name for meteo file number #</help>
 		</parameter>
 		<parameter key="SNOWPACK_SLOPES" type="alternative">
 			<option value="true"/>
@@ -947,11 +947,11 @@ Please include meteoio_parametergroups before use!
 			<option value="false"/>
 			<help>If set to true, files are recursively searched within &lt;a href=&quot;app://input::meteopath&quot;&gt;METEOPATH&lt;/a&gt; (default: false)</help>
 		</parameter>
-		<!--<reference name="STATIONGROUP_FILES_OPTIONAL"/>-->
-		<parameter key="STATION#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true">
+		<!--<reference name="METEOFILEGROUP_FILES_OPTIONAL"/>-->
+		<parameter key="METEOFILE#" type="filename" path="%INPUT::METEOPATH" mode="input" replicate="true">
 			<option extension="SMET files (*.smet *.SMET)"/>
 			<option extension="All files (*.*)"/>
-			<help>File name for station number #</help>
+			<help>File name for meteofile number #</help>
 		</parameter>
 		<parameter key="SNOWPACK_SLOPES" type="alternative">
 			<option value="true"/>

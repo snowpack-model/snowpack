@@ -1082,6 +1082,13 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 				else
 					return IOUtils::nodata;
 			}
+			case 2: { //timezone as +0, this is NOT part of the ISO 8601 standard but we tolerate +0
+				int tz_h;
+				if ( sscanf(c_str, "%d", &tz_h) == 1) {
+					if (tz_h==0) return 0.;
+				}
+				return IOUtils::nodata;
+			}
 			default: {
 				return IOUtils::nodata;
 			}

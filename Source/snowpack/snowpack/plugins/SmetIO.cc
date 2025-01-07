@@ -150,7 +150,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
         : fixedPositions(), outpath(), o_snowpath(), experiment(), inpath(), i_snowpath(),
           metamorphism_model(), variant(), sw_mode(), info(run_info), tsWriters(), acdd(false),
           in_dflt_TZ(0.), calculation_step_length(0.), ts_days_between(0.), min_depth_subsurf(0.),
-          avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), haz_write(true), useReferenceLayer(false),
+          avgsum_time_series(false), useCanopyModel(false), useSoilLayers(false), research_mode(false), perp_to_slope(false), precip_rates(true), haz_write(true), useReferenceLayer(false),
           out_heat(false), out_lw(false), out_sw(false), out_meteo(false), out_haz(false), out_mass(false), out_dhs(false), out_t(false),
           out_load(false), out_stab(false), out_canopy(false), out_soileb(false), out_inflate(false), useRichardsEq(false), enable_pref_flow(false), enable_ice_reservoir(false), read_dsm(false)
 {
@@ -160,6 +160,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	cfg.getValue("SW_MODE", "Snowpack", sw_mode);
 	cfg.getValue("MIN_DEPTH_SUBSURF", "SnowpackAdvanced", min_depth_subsurf);
 	cfg.getValue("PERP_TO_SLOPE", "SnowpackAdvanced", perp_to_slope);
+	cfg.getValue("PRECIP_RATES", "Output", precip_rates);
 	cfg.getValue("AVGSUM_TIME_SERIES", "Output", avgsum_time_series, IOUtils::nothrow);
 	cfg.getValue("RESEARCH", "SnowpackAdvanced", research_mode);
 	cfg.getValue("METAMORPHISM_MODEL", "SnowpackAdvanced", metamorphism_model, IOUtils::nothrow);
@@ -1106,7 +1107,13 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	if (out_meteo) {
 		//"TA TSS_mod TSS_meas T_bottom RH VW VW_drift DW MS_Snow HS_mod HS_meas"
 		plot_description << "air_temperature  surface_temperature(mod)  surface_temperature(meas)  bottom_temperature  relative_humidity  wind_velocity  wind_velocity_drift  wind_direction  solid_precipitation_rate  snow_height(mod)  snow_height(meas)" << " ";
-		plot_units << "K K K K - m/s m/s ° kg/m2/h m m" << " ";
+		plot_units << "K K K K - m/s m/s ° ";
+		if (precip_rates) {
+			plot_units << " kg/m2/h";
+		} else {
+			plot_units << " kg/m2";
+		}
+		plot_units << " m m" << " ";
 		units_offset << "273.15 273.15 273.15 273.15 0 0 0 0 0 0 0" << " ";
 		units_multiplier << "1 1 1 1 0.01 1 1 1 1 0.01 0.01" << " ";
 		plot_color << "0x8324A4 0xFAA6D0 0xFA72B7 0xDE22E2 0x50CBDB 0x297E24 0x297E24 0x64DD78 0x2431A4 0x818181 0x000000" << " ";
@@ -1136,7 +1143,13 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	if (out_mass) {
 		//"SWE MS_Water MS_Water_Soil MS_Ice_Soil MS_Wind MS_Rain MS_SN_Runoff MS_Surface_mass_flux MS_Soil_Runoff MS_Sublimation MS_Evap"
 		plot_description << "snow_water_equivalent  total_amount_of_water  total_amount_of_water_soil  total_amount_of_ice_soil  erosion_mass_loss  rain_rate  virtual_lysimeter_surface_snow_only surface_mass_flux  virtual_lysimeter_under_the_soil  sublimation_mass  evaporated_mass  mass_melt  mass_refreeze" << " ";
-		plot_units << "kg/m2 kg/m2 kg/m2 kg/m2 kg/m2/h kg/m2/h kg/m2 kg/m2 kg/m2 kg/m2 kg/m2 kg/m2 kg/m2" << " ";
+		plot_units << "kg/m2 kg/m2 kg/m2 kg/m2 kg/m2/h";
+		if (precip_rates) {
+			plot_units << " kg/m2/h";
+		} else {
+			plot_units << " kg/m2";
+		}
+		plot_units << " kg/m2 kg/m2 kg/m2 kg/m2 kg/m2 kg/m2 kg/m2" << " ";
 		units_offset << "0 0 0 0 0 0 0 0 0 0 0 0 0" << " ";
 		units_multiplier << "1 1 1 1 1 1 1 1 1 1 1 1 1" << " ";
 		plot_color << "0x3300FF 0x3300FF 0x3300FF 0x3300FF 0x0000FF 0x99CCCC 0x009E9E 0x0066CC 0x003366 0xCCFFFF 0xCCCCFF 0xFF0000 0x0000FF" << " ";
@@ -1170,24 +1183,6 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_color << "0x8282A3 0x8282A3 0x8282A3 0x8282A3 0xA38282 0x82A382" << " ";
 		plot_min << "" << " ";
 		plot_max << "" << " ";
-		if (useRichardsEq && Xdata.meta.getSlopeAngle() > 0.) {
-			plot_description << "lateral_flow_snow" << " ";
-			plot_units << "kg/m2" << " ";
-			units_offset << "0" << " ";
-			units_multiplier << "1" << " ";
-			plot_color << "#A3A3CC" << " ";
-			plot_min << "" << " ";
-			plot_max << "" << " ";
-			if (useSoilLayers) {
-				plot_description << "lateral_flow_soil" << " ";
-				plot_units << "kg/m2" << " ";
-				units_offset << "0" << " ";
-				units_multiplier << "1" << " ";
-				plot_color << "#CCA3A3" << " ";
-				plot_min << "" << " ";
-				plot_max << "" << " ";
-			}
-		}
 	}
 	if (out_inflate) {
 		//"dHS_corr dMass_corr"

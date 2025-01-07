@@ -23,6 +23,7 @@
 
 #include <eccodes.h>
 #include <vector>
+#include <memory>
 
 #include <iostream>
 

@@ -54,7 +54,7 @@ using namespace PLUGIN;
  * @section smetio_keywords Keywords
  * This plugin uses the following keywords:
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
- * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
+ * - METEOFILE#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet" and sorted in ascending order;
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false); [Input] section;
  * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
@@ -90,9 +90,9 @@ using namespace PLUGIN;
  * [Input]
  * METEO     = SMET
  * METEOPATH = ./input
- * STATION1  = uppper_station.smet
- * STATION2  = lower_station.smet
- * STATION3  = outlet_station.smet
+ * METEOFILE1  = uppper_station.smet
+ * METEOFILE2  = lower_station.smet
+ * METEOFILE3  = outlet_station.smet
  * [Output]
  * METEOPATH  = ./output
  * METEOPARAM = ASCII GZIP
@@ -172,10 +172,19 @@ void SMETIO::parseInputOutputSection()
 	//Parse input section: extract number of files to read and store filenames in vecFiles
 	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		//handle the deprecated STATION# syntax
+		std::string meteofiles_key( "METEOFILE" );
+		const std::vector< std::string > vecDeprecated( cfg.getKeys("STATION", "INPUT") );
+		if (!vecDeprecated.empty()) {
+			meteofiles_key = "STATION";
+			std::cerr << "[W] The STATION# syntax has been deprecated for the SMET input plugin, please rename these keys as METEOFILE#!\n";
+			//throw InvalidArgumentException("The STATION# syntax has been deprecated for the SMET plugin, please rename these keys as METEOFILE#!", AT);
+		}
+		
 		cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
 		const std::string inpath = cfg.get("METEOPATH", "Input");
 		std::vector<std::string> vecFilenames;
-		cfg.getValues("STATION", "INPUT", vecFilenames);
+		cfg.getValues(meteofiles_key, "INPUT", vecFilenames);
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 			scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension);
 		} 

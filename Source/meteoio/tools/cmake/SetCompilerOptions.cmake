@@ -41,7 +41,7 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(ARCH_OPTIM "/arch:AVX2")
 		SET(ARCH_SAFE "")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
-			SET(ARCH_SAFE  "/arch:SSE2")
+			SET(ARCH_SAFE "/arch:SSE2")
 		ENDIF()
 		SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 		SET(_VERSION "/D_VERSION=${_versionString}")
@@ -78,7 +78,6 @@ MACRO (SET_COMPILER_OPTIONS)
 	
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
-		#we consider that all other compilers support "-" options and silently ignore what they don't know
 		IF(WIN32)
 			LIST(APPEND CFLAGS " -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 		ENDIF(WIN32)
@@ -88,10 +87,10 @@ MACRO (SET_COMPILER_OPTIONS)
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")
 		SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
-			IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 11.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 11.0)
-				SET(ARCH_SAFE "-march=x86-64-v2 -mtune=core-avx2")
-			ELSE()
+			IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11.0)
 				SET(ARCH_SAFE "-march=nehalem -mtune=skylake")
+			ELSE()
+				SET(ARCH_SAFE "-march=x86-64-v2 -mtune=core-avx2")
 			ENDIF()
 		ENDIF()
 		SET(DEBUG "-g3 -O0 -D__DEBUG")
@@ -175,6 +174,7 @@ MACRO (SET_COMPILER_OPTIONS)
 			ENDIF(LEAKS_CHECK)
 
 		#Considering that on all supported platforms, CLang has some versions that might no accept the march=native flag
+		#An alternative solution would be to consider that only Apple's Clang 12 does not support march=native
 		IF(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64")
 			include(CheckCXXCompilerFlag)
 			CHECK_CXX_COMPILER_FLAG(-march=native COMPILER_SUPPORTS_NATIVE)

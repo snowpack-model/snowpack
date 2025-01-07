@@ -25,6 +25,7 @@
 NOTES:
 - needs documentatino
 */
+#include "meteoio/IOUtils.h"
 #include <meteoio/FStream.h>
 #include <meteoio/FileUtils.h>
 #include <meteoio/plugins/libcodes.h>
@@ -57,7 +58,7 @@ namespace mio {
         // mapping of BUFR parameters to MeteoIO parameters
         const std::map<std::string, std::string> BUFR_PARAMETER{
             {"P", "pressure"},
-            {"TA", "airTemperatureAt2M"}, // Can also be found as airTemperature under heightOfSensor(somthing like this) = 2
+            {"TA", "airTemperature"}, // Can also be found as airTemperature under heightOfSensor(somthing like this) = 2
             {"RH", "relativeHumidity"},
             {"TSG", "groundTemperature"},
             {"TSOIL", "soilTemperature"},
@@ -79,11 +80,12 @@ namespace mio {
             {"GROUNDSTATE","stateOfGround"},
             {"SENSORTYPE","temperatureSensorType"},
             {"TICE","iceSurfaceTemperature"}, // iceSurfaceTemperature // iceTemperature will be available soon
-            {"TWATER","waterTemperature"}
+            {"TWATER","waterTemperature"},
+            {"T","airTemperature"} // To allow for general temperatures
         };
 
         // an alternative mapping of BUFR parameters to MeteoIO parameters
-        const std::map<std::string, std::string> BUFR_PARAMETER_ALT{{"TA", "airTemperature"}};
+        const std::map<std::string, std::string> BUFR_PARAMETER_ALT{{"TA", "airTemperatureAt2m"}};
 
         // flags for the possible reference systems are 0-4
         const std::vector<int> FLAG_TO_EPSG = {4326, 4258, 4269, 4314};
@@ -655,16 +657,22 @@ namespace mio {
         }
 
         bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const double &parameterValue) {
+            if (parameterValue == IOUtils::nodata) return true;
             int err = codes_set_double(ibufr.get(), parameterName.c_str(), parameterValue);
             return err == 0;
         }
         bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const long &parameterValue) {
+            if (parameterValue == static_cast<long>(IOUtils::nodata)) return true;
             int err = codes_set_long(ibufr.get(), parameterName.c_str(), parameterValue);
             return err == 0;
         }
 
         bool setParameter(CodesHandlePtr &ibufr, const std::string &parameterName, const std::vector<long> &parameterValues) {
-            int err = codes_set_long_array(ibufr.get(), parameterName.c_str(), parameterValues.data(), parameterValues.size());
+            std::vector<long> values = parameterValues;
+            double missingValue;
+            CODES_CHECK(codes_get_double(ibufr.get(), "missingValue", &missingValue), 0);
+            std::replace(values.begin(), values.end(), static_cast<long>(IOUtils::nodata), static_cast<long>(missingValue));
+            int err = codes_set_long_array(ibufr.get(), parameterName.c_str(), values.data(), values.size());
             return err == 0;
         }
 
