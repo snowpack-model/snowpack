@@ -4,7 +4,7 @@
 # Use extract_profile.sh <pro-file> <date> [absolute]
 #  <pro file>: specify *.pro file
 #  <date>    : specify date to extract profile for. The script takes the first profile on or after this date to produce the output.
-#  <abolute> : [optional] if absolute is set, absolute z-values are provided (height increasing upward), if absolute is omitted, the snow surface is set at 0, with depth increasing downward
+#  <absolute>: [optional] if absolute is set, absolute z-values are provided (height increasing upward), if absolute is omitted, the snow surface is set at 0, with depth increasing downward
 #
 #  Output: writes profile with depth (i.e., z=0 is surface) to stdout
 #

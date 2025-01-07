@@ -647,10 +647,16 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 
 	// Check if ILWR can be derived from NET_LW and TSS
 	if (Mdata.lw_net != mio::IOUtils::nodata && Mdata.tss != mio::IOUtils::nodata) {
+#ifndef SNOWPACK_CORE
 		const double emmisivity = (vecXdata[slope.mainStation].getNumberOfElements() > vecXdata[slope.mainStation].SoilNode) ? Constants::emissivity_snow : vecXdata[slope.mainStation].SoilEmissivity;
 		const double ilwr = Mdata.lw_net + emmisivity * Constants::stefan_boltzmann * Optim::pow4(Mdata.tss);
 		Mdata.lw_net = IOUtils::nodata;
 		Mdata.ea = SnLaws::AirEmissivity(ilwr, Mdata.ta, variant);
+#else
+		// "variant" unknown in SNOWPACK_CORE at this point. Fix when use case comes up.
+		prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "FIXME!");
+		throw mio::IOException("Not implemented yet in SNOWPACK_CORE!", AT);
+#endif
 	}
 
 	bool adjust_height_of_wind_value;
@@ -897,10 +903,6 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 		if (useCanopyModel) {
 			throw mio::IOException("Please don't set CANOPY to 1 in OPERATIONAL mode", AT);
 		}
-		if (!detect_grass){
-			cfg.addKey("DETECT_GRASS", "SnowpackAdvanced", "true");
-			detect_grass = true;
-		}
 	}
 
 	if (detect_grass) {
@@ -939,7 +941,7 @@ inline void addSpecialKeys(SnowpackConfig &cfg)
 	if (mode != "OPERATIONAL" && !HS_driven) {
 		int psum_resampling_index = IOUtils::inodata;
 		const std::vector<std::pair<std::string, std::string>> vecAlgos( cfg.getValues("PSUM::RESAMPLE", "Interpolations1D") );
-		for (const auto key : vecAlgos) {
+		for (const auto &key : vecAlgos) {
 			if (IOUtils::strToUpper(key.second) == "ACCUMULATE") {
 				std::regex pattern ("PSUM::RESAMPLE(\\d+)$", std::regex::icase);
 				std::smatch match;

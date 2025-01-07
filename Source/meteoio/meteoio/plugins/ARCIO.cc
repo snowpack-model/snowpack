@@ -341,7 +341,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 		throw InvalidArgumentException("Unable to convert date '"+vec_options[1]+"'", AT);
 	}
 	
-	const std::string filename( date.toString(Date::NUM)+vec_options[0]+grid2d_ext_out );
+	const std::string filename( date.toString(Date::NUM)+"_"+vec_options[0]+grid2d_ext_out );
 	write2DGrid_internal(grid_in, filename);
 }
 

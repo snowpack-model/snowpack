@@ -112,6 +112,31 @@ elif (( ${smet} )); then
 	colsubl=$(echo ${header} | sed 's/ /\n/g' | grep -nx "MS_Sublimation" | awk -F: '{print $1-2}')
 	colevap=$(echo ${header} | sed 's/ /\n/g' | grep -nx "MS_Evap" | awk -F: '{print $1-2}')
 	colwinddrift=$(echo ${header} | sed 's/ /\n/g' | grep -nx "MS_Wind" | awk -F: '{print $1-2}')
+
+	# Check units
+	units_MS_Rain=$(grep -m 1 ^plot_unit ${smet_file} | awk -v col=${colrainrate} '{print $(col+2)}')
+	units_MS_Snow=$(grep -m 1 ^plot_unit ${smet_file} | awk -v col=${colsnowrate} '{print $(col+2)}')
+	if [ -z "${units_MS_Rain}" ] || [ -z "${units_MS_Rain}" ]; then
+		echo "massbalancecheck.sh: WARNING: units for MS_Rain and MS_Snow not found, assuming kg/m2/h."
+		echo ${units_MS_Rain}  ${units_MS_Snow}
+	else
+		if [[ "${units_MS_Rain}" == "kg/m2/h" ]]; then
+			rainrate=1
+		elif [[ "${units_MS_Rain}" == "kg/m2" ]]; then
+			rainrate=0
+		else
+			echo "massbalancecheck.sh: ERROR: Unknown units for MS_Rain: ${units_MS_Rain}." > /dev/stderr
+			exit
+		fi
+		if [[ "${units_MS_Snow}" == "kg/m2/h" ]]; then
+			snowrate=1
+		elif [[ "${units_MS_Snow}" == "kg/m2" ]]; then
+			snowrate=0
+		else
+			echo "massbalancecheck.sh: ERROR: Unknown units for MS_Snow: ${units_MS_Snow}." > /dev/stderr
+			exit
+		fi
+	fi
 fi
 
 
@@ -189,7 +214,7 @@ sed '1,/\[DATA\]/d' ${file} | \
 #  -- Select all the massbalance terms, make them correct sign and correct units. Also makes sure some terms are only considered when they are a part of the SNOW mass balance (like evaporation, which may also originate from soil).
 #     Note we store the previous SWE, to know whether evaporation and/or sublimation was actually from soil or from snow. For the first time step it doesn't matter what we do here, as we will cut out this first line later.
 #         (We cannot cut out this first line here, as the previous time step SWE is also needed for the mass balance calculations).
-awk -F"${field_sep}" '{n++; if(n==1){prevSWE=1}; print $'${coldatetime}', $'${colhsmeasured}', $'${colhsmodel}', $'${colSWE}', $'${colLWC}', ($'${colSWE}'>0.0 || $'${colsnowrate}'>0.0)?($'${colrainrate}'*(24/'${nsamplesperday}')):0, $'${colsnowrate}'*(24/'${nsamplesperday}'), -1.*$'${colrunoff_surf}', (prevSWE>0.0 || $'${colSWE}'>0.0 || $'${colsnowrate}'>0.0)?($'${colsubl}'):0, (prevSWE>0.0 || $'${colSWE}'>0.0 || $'${colsnowrate}'>0.0)?($'${colevap}'):0, ($'${colwinddrift}'>0)?-1.0*($'${colwinddrift}')*(24/'${nsamplesperday}'):0; prevSWE=$'${colSWE}'}' | \
+awk -F"${field_sep}" -v rr=${rainrate} -v sr=${snowrate} '{n++; if(n==1){prevSWE=1}; print $'${coldatetime}', $'${colhsmeasured}', $'${colhsmodel}', $'${colSWE}', $'${colLWC}', ($'${colSWE}'>0.0 || $'${colsnowrate}'>0.0)?($'${colrainrate}'*((rr)?(24/'${nsamplesperday}'):(1.))):0, $'${colsnowrate}'*((sr)?(24/'${nsamplesperday}'):(1.)), -1.*$'${colrunoff_surf}', (prevSWE>0.0 || $'${colSWE}'>0.0 || $'${colsnowrate}'>0.0)?($'${colsubl}'):0, (prevSWE>0.0 || $'${colSWE}'>0.0 || $'${colsnowrate}'>0.0)?($'${colevap}'):0, ($'${colwinddrift}'>0)?-1.0*($'${colwinddrift}')*(24/'${nsamplesperday}'):0; prevSWE=$'${colSWE}'}' | \
 #  -- Reformat time
 awk -v met=${met} '{if(met) {printf "%04d%02d%02d %02d%02d", substr($1,7,4), substr($1,4,2), substr($1,1,2), substr($2,1,2), substr($2,4,2); for(i=3; i<=NF; i++) {printf " %s", $i}} else {printf "%04d%02d%02d %02d%02d", substr($1,1,4), substr($1,6,2), substr($1,9,2), substr($1,12,2), substr($1,15,2); for(i=2; i<=NF; i++) {printf " %s", $i}}; printf "\n"}' | \
 # Now select period

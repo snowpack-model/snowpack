@@ -74,7 +74,7 @@ namespace mio {
  * - COORDSYS: coordinate system (see Coords);
  * - COORDPARAM: extra coordinates parameters (see Coords);
  * - METEOPATH: the directory where the data files are located;
- * - STATION1: the filename that contains the data;
+ * - METEOFILE1: the filename that contains the data;
  * - POSITION1: the station coordinates, see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax;
  * - NAME1: the station name;
  * - ID1: the station ID.
@@ -103,7 +103,7 @@ void PmodIO::parseInputOutputSection()
 	const std::string in_meteo = IOUtils::strToUpper( cfg.get("METEO", "Input", "") );
 	if (in_meteo == "PMOD") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
-		cfg.getValue("STATION1", "Input", filename);
+		cfg.getValue("METEOFILE1", "Input", filename);
 
 		std::string coordin, coordinparam; //projection parameters
 		IOUtils::getProjectionParameters(cfg, coordin, coordinparam);
