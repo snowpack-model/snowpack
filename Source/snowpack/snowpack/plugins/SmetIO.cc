@@ -35,8 +35,8 @@ using namespace mio;
  * <a href="https://meteoio.slf.ch">MeteoIO</a> pre-processing library documentation (under
  * <i>"Available plugins and usage"</i>, then <i>"smet"</i>).
  *
-* @note There is also a python library, <a href="https://gitlabext.wsl.ch/patrick.leibersperger/pysmet">pySMET</a> available, to read SMET files.
- * 
+* @note There is also a python library, <a href="https://code.wsl.ch/patrick.leibersperger/snowpat">snowpat</a> available, to read SMET files.
+ *
  * @section fluxes_ts Fluxes timeseries
  * These files are very regular SMET files with a large number of fields.
  *
@@ -107,7 +107,6 @@ using namespace mio;
  * CanopyHeight     = 0.00				;height (in m) of the canopy
  * CanopyLeafAreaIndex     = 0.00
  * CanopyDirectThroughfall = 1.00
- * WindScalingFactor       = 1.00			;some stations consistently measure a wind that is too low
  * ErosionLevel     = 0
  * TimeCountDeltaHS = 0.000000
  * fields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo
@@ -552,7 +551,6 @@ mio::Date SmetIO::read_snosmet_header(const smet::SMETReader& sno_reader, const 
 	SSdata.Canopy_Height = get_doubleval(sno_reader, "CanopyHeight");
 	SSdata.Canopy_LAI = get_doubleval(sno_reader, "CanopyLeafAreaIndex");
 	SSdata.Canopy_Direct_Throughfall = get_doubleval(sno_reader, "CanopyDirectThroughfall");
-	SSdata.WindScalingFactor = get_doubleval(sno_reader, "WindScalingFactor");
 
 	SSdata.ErosionLevel = get_intval(sno_reader, "ErosionLevel");
 	SSdata.TimeCountDeltaHS = get_doubleval(sno_reader, "TimeCountDeltaHS");
@@ -858,8 +856,6 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	smet_writer.set_header_value("SoilEmissivity", ss.str());
 
 	// Additional parameters
-	ss.str(""); ss << fixed << setprecision(2) << Xdata.WindScalingFactor;
-	smet_writer.set_header_value("WindScalingFactor", ss.str());
 	smet_writer.set_header_value("ErosionLevel", static_cast<double>(Xdata.ErosionLevel));
 	ss.str(""); ss << fixed << setprecision(6) << Xdata.TimeCountDeltaHS;
 	smet_writer.set_header_value("TimeCountDeltaHS", ss.str());
@@ -1281,7 +1277,7 @@ void SmetIO::writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& 
 		data.push_back( (perp_to_slope? Hdata.psum24/cos_sl : Hdata.psum24) ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
 		const double penetrationDepth = StabilityAlgorithms::compPenetrationDepth(Xdata);
 		data.push_back( penetrationDepth ); vec_precision.push_back(dflt_precision); vec_width.push_back(dflt_width);
-		
+
 	}
 
 	if (out_soileb) {

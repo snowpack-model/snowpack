@@ -34,7 +34,7 @@ using namespace PLUGIN;
  * <a href="https://code.wsl.ch/snow-models/meteoio/-/package_files/433/download">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG,
  * RH, VW, DW, ISWR, RSWR, ILWR, OLWR, PINT, PSUM, HS). For PINT, it is assumed that the intensity (in mm/h) is valid for the whole period between the actual
  * time step and the previous one so a PSUM signal can be reconstructed by multiplying PINT by the previous timestep duration (see ProcAggregate).
- * 
+ *
  * You can have a look at the following <A HREF="http://www.envidat.ch/dataset/10-16904-1">Weissfluhjoch dataset</A> as a (quite large) example SMET dataset.
  *
  * This plugin can also provide Points Of Interest, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter,
@@ -42,13 +42,13 @@ using namespace PLUGIN;
  *
  * Non-standard parameters can also be given, such as extra snow temperatures. These parameters will then take the name that has been given in "fields", converted to uppercase.
  * It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
- * 
- * @note There is also a python library, <a href="https://gitlabext.wsl.ch/patrick.leibersperger/pysmet">pySMET</a> available, to read SMET files.
+ *
+ * @note There is also a python library, <a href="https://code.wsl.ch/patrick.leibersperger/snowpat">snowpat</a> available, to read SMET files.
  *
  * @section smetio_units Units
  * All units are <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.330-2019.pdf">coherent derived SI units</a> (section 2.3.4 in the SI-Brochure),
- * the only exception being the precipitations that are in mm/h or mm/{time step}. It is however possible to use  multipliers and offsets 
- * (but they must be specified in the file header). If no time zone is present, GMT is assumed (but it is nevertheless highly recommended to provide the time zone, 
+ * the only exception being the precipitations that are in mm/h or mm/{time step}. It is however possible to use  multipliers and offsets
+ * (but they must be specified in the file header). If no time zone is present, GMT is assumed (but it is nevertheless highly recommended to provide the time zone,
  * even when set to zero).
  *
  * @section smetio_keywords Keywords
@@ -57,11 +57,11 @@ using namespace PLUGIN;
  * - METEOFILE#: input filename (in METEOPATH). As many meteofiles as needed may be specified. If nothing is specified, the METEOPATH directory 
  * will be scanned for files ending in ".smet" and sorted in ascending order;
  * - METEOPATH_RECURSIVE: if set to true, the scanning of METEOPATH is performed recursively (default: false); [Input] section;
- * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files, 
+ * - SNOWPACK_SLOPES: if set to true and no slope information is found in the input files,
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
- * - SMET_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value 
+ * - SMET_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
  * (in the [Output] section, default is no such versioning):
  *      - NOW: append the current date formatted as numerical ISO;
  *      - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
@@ -77,14 +77,14 @@ using namespace PLUGIN;
  * - SMET_WRITEMODE: when an output file already exists, should the plugin append data, overwrite it or append? [Output] section
  * 		- APPEND: append data to the existing file;
  * 		- OVERWRITE: overwrite the existing file;
- * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
+ * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A>
  * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
  * - POIFILE: a path+file name to the a file containing grid coordinates of Points Of Interest (for special outputs, [Input] section)
  *
  * In order to be able to use this plugin for some software that require less structured text files (ie more like classical CSV files, for example for databases imports), the following options exist, but please keep in mind that these make the produced SMET file <b>non-conformant</b>:
  * - SMET_SEPARATOR: set a different output field separator (the header key "column_delimiter" will be set to the character that has been used as a delimiter so this plugin can re-read such files); [Output] section
  * - SMET_COMMENTED_HEADERS: prefix all header lines with a '#' sign to comment them out (currently this plugin won't be able to re-read such files); [Output] section
- * 
+ *
  * Example:
  * @code
  * [Input]
@@ -140,7 +140,7 @@ SMETIO::SMETIO(const Config& cfgreader)
 std::map<std::string, SMETIO::plot_attr> SMETIO::initPlotParams()
 {
 	std::map< std::string, plot_attr > results;
-	
+
 	results[ MeteoGrids::getParameterName(MeteoGrids::P) ] 		= plot_attr(MeteoGrids::P, "0xAEAEAE", 87000., 115650.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::TA) ] 	= plot_attr(MeteoGrids::TA, "0x8324A4", 253.15, 283.15);
 	results[ MeteoGrids::getParameterName(MeteoGrids::RH) ] 	= plot_attr(MeteoGrids::RH, "0x50CBDB", 0., 1.);
@@ -157,7 +157,7 @@ std::map<std::string, SMETIO::plot_attr> SMETIO::initPlotParams()
 	results[ MeteoGrids::getParameterName(MeteoGrids::CLD) ] 	= plot_attr(MeteoGrids::CLD, "0xD9A48F", 0., 9.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::PSUM) ] 	= plot_attr(MeteoGrids::PSUM, "0x2431A4", 0., 20.);
 	results[ MeteoGrids::getParameterName(MeteoGrids::PSUM_PH) ]	= plot_attr(MeteoGrids::PSUM_PH, "0x7E8EDF", 0., 1.);
-	
+
 	return results;
 }
 
@@ -187,10 +187,10 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValues(meteofiles_key, "INPUT", vecFilenames);
 		if (vecFilenames.empty()) { //no stations provided, then scan METEOPATH
 			scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension);
-		} 
+		}
 
 		vecFiles =  getFilesWithPaths(vecFilenames, inpath, dflt_extension);
-		
+
 		for (const std::string& file_and_path : vecFiles) {
 			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
 		}
@@ -201,7 +201,7 @@ void SMETIO::parseInputOutputSection()
 	const std::string out_meteo = IOUtils::strToUpper( cfg.get("METEO", "Output", "") );
 	if (out_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		outputIsAscii = true;
-		
+
 		bool write_acdd = false;
 		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
 		if (write_acdd) {
@@ -230,7 +230,7 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 		cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
 		cfg.getValue("SMET_COMMENTED_HEADERS", "Output", outputCommentedHeaders, IOUtils::nothrow); //allow prefixing headers by a '#' character for easy import into Dbs, etc
-		
+
 		std::vector<std::string> vecArgs;
 		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
 		if (vecArgs.empty())
@@ -343,14 +343,14 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 double SMETIO::getSnowpackSlope(const std::string& id)
 {
 	static const char ALPHA[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	
+
 	const std::size_t end_name_pos = id.find_first_not_of(ALPHA);
 	if (end_name_pos==std::string::npos) return IOUtils::nodata; //this is not a Snowpack virtual station naming
 	if (id[end_name_pos]<'0' || id[end_name_pos]>'9') return IOUtils::nodata;
-	
+
 	if (id.size() - end_name_pos == 1) return 0.; //this is the flat field station
 	const char slope_code = id[end_name_pos+1]; //we are now sure that there is another char at this position
-	
+
 	if (slope_code=='1') return 1.;
 	else if (slope_code=='2') return 2.;
 	else if (slope_code=='3') return 3.;
@@ -395,9 +395,9 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		meta.setSlope(slope_angle, 0.);
 	} else if (snowpack_slopes) {
 		const double exposition = getSnowpackSlope( meta.stationID );
-		if (exposition==0.) 
+		if (exposition==0.)
 			meta.setSlope(0., 0.);
-		else if (exposition!=IOUtils::nodata) 
+		else if (exposition!=IOUtils::nodata)
 			meta.setSlope(snVirtualSlopeAngle, (exposition - 1.)*90.);
 	}
 
@@ -446,7 +446,7 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
-	
+
 	if (timestamp_present) vecMeteo.reserve( timestamps.size() );
 	MeteoData tmp_md(md);
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
@@ -481,10 +481,10 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 				else
 					tmp_md(indexes[jj]) = current_data;
 			}
-			
+
 			current_index++;
 		}
-		
+
 		//process location in the data section
 		if (data_epsg || data_wgs84) {
 			if (data_epsg) {
@@ -498,7 +498,7 @@ void SMETIO::populateMeteo(const smet::SMETReader& myreader,
 				lon = IOUtils::nodata;
 			}
 			alt = IOUtils::nodata;
-			
+
 			tmp_md.meta.position.check("Inconsistent inline geographic coordinates in file \"" + filename + "\": ");
 		}
 
@@ -511,7 +511,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	vecMeteo.clear();
 	vecMeteo.resize( vecFiles.size() );
-	
+
 
 	//Loop through all requested stations, open the respective files and parse them
 	for (size_t ii=0; ii<vecFiles.size(); ii++){
@@ -540,12 +540,12 @@ std::string SMETIO::buildVersionString(const std::vector< std::vector<MeteoData>
 {
 	if (outputVersioning==NO_VERSIONING) return "";
 	if (outputVersioning==NOW) return "_"+Date(smet_timezone).toString(Date::NUM);
-	
+
 	//get the absolute start and end dates
 	Date start_dt, end_dt;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].empty()) continue;
-		
+
 		if (!start_dt.isUndef()) {
 			if (start_dt>vecMeteo[ii].front().date) start_dt = vecMeteo[ii].front().date;
 			if (end_dt<vecMeteo[ii].back().date) end_dt = vecMeteo[ii].back().date;
@@ -555,20 +555,20 @@ std::string SMETIO::buildVersionString(const std::vector< std::vector<MeteoData>
 		}
 	}
 	if (start_dt.isUndef()) return ""; //no valid data could be found
-	
+
 	start_dt.setTimeZone(smet_timezone);
 	end_dt.setTimeZone(smet_timezone);
-	
+
 	if (outputVersioning==DATA_START) return "_"+start_dt.toString(Date::NUM);
 	if (outputVersioning==DATA_END) return "_"+end_dt.toString(Date::NUM);
 	if (outputVersioning==DATA_YEARS) {
 		const int startYear = start_dt.getYear();
 		const int endYear = end_dt.getYear();
-		
+
 		if (startYear==endYear) return "_"+IOUtils::toString(startYear);
 		return "_"+IOUtils::toString(startYear)+"_"+IOUtils::toString(endYear);
 	}
-	
+
 	//this should not be reached as we test for all members of the enum above
 	return "";
 }
@@ -585,7 +585,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		if (sd.stationID.empty()) sd.stationID = "Station"+IOUtils::toString( ii+1 );
 
 		//2. check which meteo parameter fields are actually in use
-		//if the user set an output time zone, all will be converted to it. 
+		//if the user set an output time zone, all will be converted to it.
 		//Otherwise, we know that the current station is not empty, we take TZ from the first timestamnp
 		const double smet_timezone = (out_dflt_TZ != IOUtils::nodata)? out_dflt_TZ : vecMeteo[ii][0].date.getTimeZone();
 		const std::set<std::string> paramInUse( MeteoData::listAvailableParameters(vecMeteo[ii]) );
@@ -610,8 +610,8 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					myprecision.push_back(tmpprecision);
 					mywidth.push_back(tmpwidth);
 				}
-				
-				if (output_separator!=' ') 
+
+				if (output_separator!=' ')
 					throw InvalidArgumentException("It is not possible to set the field separator when appending data to a smet file", AT);
 				mywriter = new smet::SMETWriter(filename, fields, IOUtils::nodata); //set to append mode
 				mywriter->set_width(mywidth);
@@ -619,7 +619,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			} else {
 				if (fileExists && !allowOverwrite)
 					throw AccessException("File '"+filename+"' already exists, please either allow append or overwrite", AT);
-				
+
 				mywriter = new smet::SMETWriter(filename, type);
 				if (output_separator!=' ') mywriter->set_separator( output_separator );
 				mywriter->set_commented_headers( outputCommentedHeaders );
@@ -655,7 +655,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				if (!isConsistent) { //Meta data changes
 					if (vecMeteo[ii][jj].meta.position != vecLocation.back())
 						vecLocation.push_back( vecMeteo[ii][jj].meta.position );
-					
+
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLat());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLon());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getAltitude());
@@ -727,7 +727,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		mywriter.set_header_value("altitude", sd.position.getAltitude());
 		const short int epsg = sd.position.getEPSG();
 		if (epsg!=IOUtils::snodata) mywriter.set_header_value("epsg", static_cast<double>(epsg));
-		
+
 		const double slope = sd.getSlopeAngle(), azi = sd.getAzimuth();
 		if ((slope==0.) || (slope!=IOUtils::nodata && azi!=IOUtils::nodata)) {
 			mywriter.set_header_value("slope_angle", slope);
@@ -783,7 +783,7 @@ bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 		const size_t pos_non_num = param.find_first_not_of("0123456789", numbering_start+1);
 		if (pos_non_num==std::string::npos) param.erase( numbering_start );
 	}
-	
+
 	std::map<std::string, plot_attr>::const_iterator it = plot_ppt.find( param );
 	if (it!=plot_ppt.end()) { //the parameter is a known one with some preset parameters
 		plot_units << it->second.units << " ";
@@ -797,7 +797,7 @@ bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 		plot_description << "- ";
 		plot_min << IOUtils::nodata << " ";
 		plot_max << IOUtils::nodata << " ";
-		
+
 		if (!randomColors) {
 			plot_color  << "- ";
 			return false;
@@ -868,7 +868,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 	}
 
 	const size_t actual_nr_of_parameters = vecMeteo[0].getNrOfParameters();
-	
+
 	for (size_t ii=1; ii<vecMeteo.size(); ii++){
 		const size_t current_size = vecMeteo[ii].getNrOfParameters();
 
@@ -880,7 +880,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 			return MeteoData::nrOfParameters;
 		}
 	}
-	
+
 	return actual_nr_of_parameters;
 }
 
