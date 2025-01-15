@@ -375,9 +375,11 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 		if (deltaM[e] < 0.) {
 			// Mass loss: apply mass change first to water, then to ice, based on energy considerations
 			// We can only do this partitioning here in this "simple" way, without checking if the mass is available, because we already limited dM above, based on available ICE + WATER.
-			const double dTh_water = std::max((EMS[e].VG.theta_r * (1. + Constants::eps) - EMS[e].theta[WATER]),
-											  deltaM[e] / (Constants::density_water * EMS[e].L));
+			const double dTh_water = std::max(  // Take the least negative value from the two options below:
+							  std::min(0., (EMS[e].VG.theta_r * (1. + Constants::eps) - EMS[e].theta[WATER])),   // No water can evaporate below the residual water content, and mass loss must come from ice in those cases
+							  deltaM[e] / (Constants::density_water * EMS[e].L));                                // Mass loss to be applied
 			const double dTh_ice = std::max(-EMS[e].theta[ICE], ( deltaM[e] - (dTh_water * Constants::density_water * EMS[e].L) ) / (Constants::density_ice * EMS[e].L));
+
 			EMS[e].theta[WATER] += dTh_water;
 			EMS[e].theta[ICE] += dTh_ice;
 
@@ -396,12 +398,24 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 			}
 		} else {  // Mass gain: add water in case temperature at or above melting point, ice otherwise
 			// FIXME: the code below is prone to errors, as more volumetric content can be added than available, resulting in a sum of volumetric content exceeding 1.
+			// At this point in the code, the liquid water flux should have been dealt with in the watertransport schemes
+			// Additional solid deposition flux should maybe form surface hoar
 			if (EMS[e].Te >= EMS[e].meltfreeze_tk) {
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
+				if ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) > (1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL]))) {
+					// If there is not enough pore space to accomodate the liquid water part in frozen state
+					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for deposition flux");
+					EMS[e].theta[WATER] = 0.999 * ((1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL])) * (Constants::density_ice / Constants::density_water) - EMS[e].theta[WATER_PREF]);
+				}
 				EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
 				Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += deltaM[e];
 			} else {
 				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
+				if ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) > (1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL]))) {
+					// If there is not enough pore space to accomodate the liquid water part in frozen state
+					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for deposition flux");
+					EMS[e].theta[ICE] = -0.999 * ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) + EMS[e].theta[SOIL] - 1.);
+				}
 				EMS[e].Qmm += (deltaM[e]*Constants::lh_sublimation)/sn_dt/EMS[e].L;	// [w/m^3]
 				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[e];
 			}

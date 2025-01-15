@@ -376,15 +376,15 @@ void ImisDBIO::print_Hdata_query(const ProcessDat& Hdata, const ProcessInd& Hdat
 	if (Hdata_ind.hn72_24)   cerr << Hdata.hn72_24 << ",";
 	else cerr << "NULL,";
 	cerr << "\t";
-	if (Hdata_ind.psum3)        cerr << Hdata.psum3 << ",";
+	if (Hdata_ind.hnw3)        cerr << Hdata.hnw3 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum6)        cerr << Hdata.psum6 << ",";
+	if (Hdata_ind.hnw6)        cerr << Hdata.hnw6 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum12)       cerr << Hdata.psum12 << ",";
+	if (Hdata_ind.hnw12)       cerr << Hdata.hnw12 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum24)       cerr << Hdata.psum24 << ",";
+	if (Hdata_ind.hnw24)       cerr << Hdata.hnw24 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum72)       cerr << Hdata.psum72 << ",";
+	if (Hdata_ind.hnw72)       cerr << Hdata.hnw72 << ",";
 	else cerr << "NULL,";
 
 	cerr << "\t";
@@ -494,15 +494,15 @@ void ImisDBIO::insertHdata(const std::string& stationName, const std::string& st
 		if (Hdata_ind[i].hn72_24)   stmt->setNumber(param++, Hdata[i].hn72_24);
 		else stmt->setNull(param++, occi::OCCINUMBER);
 
-		if (Hdata_ind[i].psum3)        stmt->setNumber(param++, Hdata[i].psum3);
+		if (Hdata_ind[i].hnw3)        stmt->setNumber(param++, Hdata[i].hnw3);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum6)        stmt->setNumber(param++, Hdata[i].psum6);
+		if (Hdata_ind[i].hnw6)        stmt->setNumber(param++, Hdata[i].hnw6);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum12)       stmt->setNumber(param++, Hdata[i].psum12);
+		if (Hdata_ind[i].hnw12)       stmt->setNumber(param++, Hdata[i].hnw12);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum24)       stmt->setNumber(param++, Hdata[i].psum24);
+		if (Hdata_ind[i].hnw24)       stmt->setNumber(param++, Hdata[i].hnw24);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum72)       stmt->setNumber(param++, Hdata[i].psum72);
+		if (Hdata_ind[i].hnw72)       stmt->setNumber(param++, Hdata[i].hnw72);
 		else stmt->setNull(param++, occi::OCCINUMBER);
 
 		if (Hdata_ind[i].hoar_size)  stmt->setNumber(param++, Hdata[i].hoar_size);
