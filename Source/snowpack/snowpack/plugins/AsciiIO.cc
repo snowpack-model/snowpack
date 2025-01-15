@@ -115,7 +115,6 @@ const bool AsciiIO::t_gnd = false;
  * CanopyHeight=0.
  * CanopyLeafAreaIndex=0.
  * CanopyDirectThroughfall=0
- * WindScalingFactor=1.00
  * ErosionLevel=0
  * TimeCountDeltaHS=0.00
  * YYYY MM DD HH MI Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo
@@ -610,10 +609,6 @@ void AsciiIO::readSnowCover(const std::string& i_snowfile, const std::string& st
 		throw InvalidFormatException("Can not read CanopyDirectThroughfall in file "+snofilename, AT);
 	}
 
-	if (fscanf(fin, "\nWindScalingFactor=%lf",&SSdata.WindScalingFactor) != 1) {
-		fclose(fin);
-		throw InvalidFormatException("Can not read WindScalingFactor in file "+snofilename, AT);
-	}
 	if (fscanf(fin, "\nErosionLevel=%d",&SSdata.ErosionLevel) != 1) {
 		fclose(fin);
 		throw InvalidFormatException("Can not read ErosionLevel in file "+snofilename, AT);
@@ -844,11 +839,9 @@ void AsciiIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 	}
 	// Additional parameters
 #ifndef SNOWPACK_CORE
-	fout << "WindScalingFactor= " << Xdata.WindScalingFactor << "\n";
 	fout << "ErosionLevel= " << Xdata.ErosionLevel << "\n";
 	fout << "TimeCountDeltaHS= " << Xdata.TimeCountDeltaHS << "\n";
 #else
-	fout << "WindScalingFactor= " << static_cast<double>(1.) << "\n";
 	fout << "ErosionLevel= " << Xdata.ErosionLevel << "\n";
 	fout << "TimeCountDeltaHS= " << static_cast<double>(0.) << "\n";
 #endif

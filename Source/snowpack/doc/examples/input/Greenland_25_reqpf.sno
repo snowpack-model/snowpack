@@ -18,7 +18,6 @@ BareSoil_z0      = 0.020
 CanopyHeight     = 0.00
 CanopyLeafAreaIndex = 0.00
 CanopyDirectThroughfall = 1.00
-WindScalingFactor = 1.00
 ErosionLevel     = 192
 TimeCountDeltaHS = 0.000000
 fields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_WP Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo

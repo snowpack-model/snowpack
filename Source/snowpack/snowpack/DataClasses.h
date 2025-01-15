@@ -243,7 +243,7 @@ class SN_SNOWSOIL_DATA {
                      nLayers(0), Ldata(), HS_last(0.), Albedo(mio::IOUtils::nodata),
 								     SoilAlb(mio::IOUtils::nodata), BareSoil_z0(mio::IOUtils::nodata),
                      Canopy_Height(mio::IOUtils::nodata), Canopy_LAI(mio::IOUtils::nodata),
-										 Canopy_Direct_Throughfall(mio::IOUtils::nodata),  WindScalingFactor(1.),
+										 Canopy_Direct_Throughfall(mio::IOUtils::nodata),
 										 ErosionLevel(static_cast<int>(mio::IOUtils::nodata)), TimeCountDeltaHS(mio::IOUtils::nodata),
 										 Canopy_BasalArea(mio::IOUtils::nodata), Canopy_diameter(mio::IOUtils::nodata),
 										 Canopy_lai_frac_top_default(mio::IOUtils::nodata),Canopy_int_cap_snow(mio::IOUtils::nodata),
@@ -269,7 +269,6 @@ class SN_SNOWSOIL_DATA {
 		double Canopy_Height;             ///< Canopy Height in m
 		double Canopy_LAI;                ///< Canopy Leaf Area Index in m2 m-2
 		double Canopy_Direct_Throughfall; ///< Direct throughfall [fraction of precipitation]
-		double WindScalingFactor;         ///< Local scaling factor for wind at drift station
 		int    ErosionLevel;              ///< Erosion Level in operational mode (flat field virtual erosion)
 		double TimeCountDeltaHS;          ///< Time counter tracking erroneous settlement in operational mode
 		/// OPTIONAL PARAMETERS, a warning will be thrown in CANOPY::Initialize if no value is provided
@@ -733,7 +732,6 @@ class SnowStation {
 		double ReSolver_dt;         ///< Last used RE time step in the previous SNOWPACK time step
 #ifndef SNOWPACK_CORE
 		bool windward;              ///< True for windward (luv) slope
-		double WindScalingFactor;   ///< Local scaling factor for wind at drift station
 		double TimeCountDeltaHS;    ///< Time counter tracking erroneous settlement in operational mode
 #endif
 		static const double comb_thresh_l_ratio, comb_thresh_ice, comb_thresh_water;

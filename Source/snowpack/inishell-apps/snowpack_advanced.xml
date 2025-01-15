@@ -74,7 +74,7 @@ https://snowpack.slf.ch
 			<help>Specifies if snow erosion is enabled for the main station. Works only if measured heigths of snow are available at the main station. Unless NUMBER_SLOPES is set to 1, this erosion will not contribute to the drifting snow index (compare with SNOW_REDISTRIBUTION). (default: FALSE)</help>
 		</parameter>
 		<parameter key="WIND_SCALING_FACTOR" type="number" format="decimal" precision="1" min="0" max="2" longlabel="true">
-			<help>Scaling factor to apply to wind values causing drifting snow because some stations consistently measure a wind that is too low (this should be computed from statistical analysis). Please note that in operational mode, this value is overwritten by the value provided in the snow cover data (sno files). (default: 1.0)</help>
+			<help>Scaling factor to apply to wind values causing drifting snow because some stations consistently measure a wind that is too low (this should be computed from statistical analysis). (default: 1.0)</help>
 		</parameter>
 		<parameter key="NUMBER_SLOPES" type="alternative" default="1" optional="false" longlabel="true">
 			<option value="1"/>

@@ -105,7 +105,7 @@ void TechSnow::productionPpt(const CurrentMeteo& Mdata, const double& cumu_preci
 	static const double V_water = 100.;	// (l/min) average water supply by the snow guns
 
 	Tw = IOUtils::K_TO_C(Mdata.ta) * atan(0.151977 * sqrt(Mdata.rh*100. + 8.313659)) + atan(IOUtils::K_TO_C(Mdata.ta) + Mdata.rh*100.) - atan(Mdata.rh*100. - 1.676331) + 0.00391838 * pow(Mdata.rh*100, 1.5) * atan(0.023101 * Mdata.rh*100) - 4.686035; // (°C) Wet-bulb temperature
-	rho_hn = 1.7261 * Optim::pow2(Tw) + 37.484 * Tw + 505.05; // (kg/m3) density of technical snow (kg/m3) dependent from the wet-bulb temperature
+	rho_hn = 1.7261 * Optim::pow2(std::max(-11., Tw)) + 37.484 * std::max(-11., Tw) + 605.05; // (kg/m3) density of technical snow (kg/m3) dependent from the wet-bulb temperature. Validity range of parameterization: -12 <= Tw <= 0. Minimum set at -11, where the approximate minimum of the function lies.
 
 	double LWC_max = 29.76 - 11.71 * log(std::abs(Tw)) + 1.07*T_water - 1.6 * v_wind;	// (%vol) liquid water content at 55 l/min
 	if (LWC_max < 0.) LWC_max = 0.;
