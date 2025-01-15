@@ -20,11 +20,10 @@
 baresoil_z0=0.002
 soilalbedo=0.09
 tz=0
-windscalingfactor=1.000
 metamo=0		# Currently unused in SNOWPACK
 write_h=0		# Write pressure head?
 
-awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v wsf=${windscalingfactor} -v metamo=${metamo} -v write_h=${write_h} -F, 'BEGIN { \
+awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v metamo=${metamo} -v write_h=${write_h} -F, 'BEGIN { \
 	data=0; written=0; d1=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(d,1,4), substr(d,6,2), substr(d,9,2), substr(d,12,2), substr(d,15,2), substr(d,18,2))); \
 } \
 { \
@@ -62,7 +61,7 @@ awk -v d=${2} -v tz=${tz} -v bsz0=${baresoil_z0} -v sab=${soilalbedo} -v wsf=${w
 					if(/^0519/) {b_soil=1; for(i=3; i<=NF; i++) {soil[i-3]=$i/100.}}; \
 					if(/^0529/) {b_cdot=1; for(i=3; i<=NF; i++) {cdot[i-3]=$i}}; \
 					if(/^0500/ || res==0) { \
-						printf("SMET 1.1 ASCII\n[HEADER]\nstation_id       = %s\nstation_name     = %s\nlatitude         = %s\nlongitude        = %s\naltitude         = %s\nnodata           = -999\nProfileDate      = %s\nHS_Last          = 0\nSlopeAngle       = %s\nSlopeAzi         = %s\nnSoilLayerData   = %d\nnSnowLayerData   = %s\nSoilAlbedo       = %s\nBareSoil_z0      = %s\nCanopyHeight     = 0.00\nCanopyLeafAreaIndex = 0.000000\nCanopyDirectThroughfall = 1.00\nWindScalingFactor = %s\nErosionLevel     = 0\nTimeCountDeltaHS = 0.000000\nfields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo%s\n[DATA]\n", station_id, station_id, lat, lon, alt, d2, slope, azi, nsoil, nsnow, sab, bsz0, wsf, ((write_h)?(" h"):(""))); \
+						printf("SMET 1.1 ASCII\n[HEADER]\nstation_id       = %s\nstation_name     = %s\nlatitude         = %s\nlongitude        = %s\naltitude         = %s\nnodata           = -999\nProfileDate      = %s\nHS_Last          = 0\nSlopeAngle       = %s\nSlopeAzi         = %s\nnSoilLayerData   = %d\nnSnowLayerData   = %s\nSoilAlbedo       = %s\nBareSoil_z0      = %s\nCanopyHeight     = 0.00\nCanopyLeafAreaIndex = 0.000000\nCanopyDirectThroughfall = 1.00\nErosionLevel     = 0\nTimeCountDeltaHS = 0.000000\nfields           = timestamp Layer_Thick  T  Vol_Frac_I  Vol_Frac_W  Vol_Frac_V  Vol_Frac_S Rho_S Conduc_S HeatCapac_S  rg  rb  dd  sp  mk mass_hoar ne CDot metamo%s\n[DATA]\n", station_id, station_id, lat, lon, alt, d2, slope, azi, nsoil, nsnow, sab, bsz0, ((write_h)?(" h"):(""))); \
 						for(i=0; i<n; i++) { \
 							nd=t1-age[i]*(24.*60.*60.)+timeshift; \
 							cmd=sprintf("date \"+%%Y-%%m-%%dT%%H:%%M:%%S\" -d @%d", nd); cmd | getline ts; close(cmd); \

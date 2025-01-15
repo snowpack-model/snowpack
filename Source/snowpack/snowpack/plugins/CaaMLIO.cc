@@ -51,7 +51,7 @@ using namespace mio;
  * Data which is important for a snowpack-simulation but usually not given in a caaml-file (like dendricity for example), can be included in a caaml-file
  * as snowpack-custom-data with the prefix "snp". A caaml-file written out by this plugin will contain this data. However, if this data is not available,
  * the corresponding values will be estimated or set to default values:
- * - snowpack-custom-data for the whole snowpack (like Albedo, WindScalingFactor,...) will be set to default values.
+ * - snowpack-custom-data for the whole snowpack (like Albedo, ...) will be set to default values.
  * - layer-custom-data (like dendricity, sphericity, maker,...) will be estimated from primary grain form, grain size and temperature.
  * - the formation time of a layer will be estimated depending on snow type and layer location.
  *
@@ -680,7 +680,6 @@ void CaaMLIO::setCustomSnowSoil(SN_SNOWSOIL_DATA& Xdata)
 	Xdata.Canopy_LAI = xmlReadValueFromPath(xpath,"CanopyLAI",0.);
 	Xdata.Canopy_BasalArea = xmlReadValueFromPath(xpath,"CanopyBasalArea",0.);
 	Xdata.Canopy_Direct_Throughfall = xmlReadValueFromPath(xpath,"CanopyDirectThroughfall",1.);
-	Xdata.WindScalingFactor = xmlReadValueFromPath(xpath,"WindScalingFactor",1.);
 	Xdata.ErosionLevel = xmlReadValueFromPath(xpath,"ErosionLevel",0);
 	Xdata.TimeCountDeltaHS = xmlReadValueFromPath(xpath,"TimeCountDeltaHS",0.);
 }
@@ -1168,13 +1167,6 @@ void CaaMLIO::writeCustomSnowSoil(pugi::xml_node& node, const SnowStation& Xdata
 		sprintf(valueStr,"%.4f",IOUtils::nodata);
 		xmlWriteElement(node,(namespaceSNP+":CanopyDirectThroughfall").c_str(),valueStr,"","");
 	}
-#ifndef SNOWPACK_CORE
-	sprintf(valueStr,"%.4f",Xdata.WindScalingFactor);
-	xmlWriteElement(node,(namespaceSNP+":WindScalingFactor").c_str(),valueStr,"","");
-#else
-	sprintf(valueStr,"%.0f",IOUtils::nodata);
-	xmlWriteElement(node,(namespaceSNP+":WindScalingFactor").c_str(),valueStr,"","");
-#endif
 	sprintf(valueStr,"%d",static_cast<unsigned int>(Xdata.ErosionLevel));
 	xmlWriteElement(node,(namespaceSNP+":ErosionLevel").c_str(),valueStr,"","");
 #ifndef SNOWPACK_CORE

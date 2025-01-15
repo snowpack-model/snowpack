@@ -756,7 +756,7 @@ inline void getOutputControl(MainControl& mn_ctrl, const mio::Date& step, const 
 inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackConfig& cfg, const size_t& i_stn,
                    Slope& slope, mio::Date &current_date, vector<SN_SNOWSOIL_DATA> &vecSSdata,
                    vector<SnowStation> &vecXdata, ZwischenData &sn_Zdata, CurrentMeteo& Mdata,
-                   double &wind_scaling_factor, double &time_count_deltaHS)
+                   double &time_count_deltaHS)
 {
 	std::string snowfile;
 	stringstream ss;
@@ -827,9 +827,8 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 			}
 		}
 
-		// Operational mode ONLY: Pass ... wind_factor, snow depth discrepancy time counter
+		// Operational mode ONLY: Pass ... snow depth discrepancy time counter
 		if ((sector == slope.mainStation) && (mode == "OPERATIONAL")) {
-			wind_scaling_factor = vecSSdata[slope.mainStation].WindScalingFactor;
 			time_count_deltaHS = vecSSdata[slope.mainStation].TimeCountDeltaHS;
 		}
 	}
@@ -1144,7 +1143,7 @@ inline void real_main (int argc, char *argv[])
 	if (!vecStationIDs.empty()) { //operational use case: stationIDs provided on the command line
 		for (size_t i_stn=0; i_stn<vecStationIDs.size(); i_stn++) {
 			stringstream ss;
-			ss << "STATION" << i_stn+1;
+			ss << "METEOFILE" << i_stn+1;
 			cfg.addKey(ss.str(), "Input", vecStationIDs[i_stn]);
 		}
 	}
@@ -1203,7 +1202,7 @@ inline void real_main (int argc, char *argv[])
 		meteoRead_timer.start();
 		if (mode == "OPERATIONAL")
 			cfg.addKey("PERP_TO_SLOPE", "SnowpackAdvanced", "false");
-		const bool read_slope_status = readSlopeMeta(io, snowpackio, cfg, i_stn, slope, current_date, vecSSdata, vecXdata, sn_Zdata, Mdata, wind_scaling_factor, time_count_deltaHS);
+		const bool read_slope_status = readSlopeMeta(io, snowpackio, cfg, i_stn, slope, current_date, vecSSdata, vecXdata, sn_Zdata, Mdata, time_count_deltaHS);
 		meteoRead_timer.stop();
 		if (!read_slope_status) continue; //something went wrong, move to the next station
 
