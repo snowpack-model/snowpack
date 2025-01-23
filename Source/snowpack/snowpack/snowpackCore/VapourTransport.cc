@@ -428,6 +428,9 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 		if (std::fabs(EMS[e].theta[AIR]) < 1.e-15) {
 			EMS[e].theta[AIR] = 0;
 		}
+		if (std::fabs(EMS[e].theta[WATER]) < 1.e-15) {
+			EMS[e].theta[WATER] = 0;
+		}
 		EMS[e].updDensity();
 		assert(EMS[e].Rho > 0 || EMS[e].Rho == IOUtils::nodata); // density must be positive
 		if (!(EMS[e].Rho > Constants::eps
@@ -769,7 +772,7 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 					v_ij = 1.0;
 					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
 				} else {
-					b[k] = Constants::eps2;    // Setting to 0. seems to lead to non-invertibility in some cases
+					b[k] = Constants::eps;    // Setting to 0. seems to lead to non-invertibility in some cases
 					v_ij = -1.0;
 					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
 
