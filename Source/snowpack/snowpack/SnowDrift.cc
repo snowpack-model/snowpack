@@ -38,8 +38,6 @@ const double SnowDrift::schmidt_drift_fudge = 1.0;
 ///Enables erosion notification
 const bool SnowDrift::msg_erosion = false;
 
-///For REDEPOSIT mode: search depth for average threshold tau from the surface downward (in cm)
-const double SnowDrift::redeposit_avg_depth = 0.0;
 
 
 /************************************************************
@@ -111,6 +109,13 @@ static double get_erosion_limit(const SnowpackConfig& cfg)
 	return tmp_erosion_limit;
 }
 
+static double get_redeposit_avg_depth(const SnowpackConfig& cfg)
+{
+	double tmp_redeposit_avg_depth = Constants::undefined;
+	cfg.getValue("SNOW_EROSION_REDEPOSIT_AVG_DEPTH", "SnowpackAdvanced", tmp_redeposit_avg_depth, IOUtils::nothrow);
+	return tmp_redeposit_avg_depth;
+}
+
 double SnowDrift::get_tau_thresh(const ElementData& Edata)
 {
 	// Compute basic quantities that are needed: friction velocity, z0, threshold vw
@@ -135,7 +140,7 @@ double SnowDrift::get_ustar_thresh(const ElementData& Edata)
 
 SnowDrift::SnowDrift(const SnowpackConfig& cfg) : saltation(cfg),
                      enforce_measured_snow_heights( get_bool(cfg, "ENFORCE_MEASURED_SNOW_HEIGHTS", "Snowpack") ), snow_redistribution( get_redistribution(cfg) ), snow_erosion( get_erosion(cfg) ), alpine3d( get_bool(cfg, "ALPINE3D", "SnowpackAdvanced") ),
-                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), erosion_limit( get_erosion_limit(cfg) ), forcing("ATMOS")
+                     sn_dt( get_sn_dt(cfg) ), fetch_length( get_fetch_length(cfg) ), erosion_limit( get_erosion_limit(cfg) ), redeposit_avg_depth( get_redeposit_avg_depth(cfg) ), forcing("ATMOS")
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 }
@@ -163,7 +168,7 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
 			dH += EMS[e].L;
 			tausum += SnowDrift::get_tau_thresh(EMS[e]) * EMS[e].L;
 			rgsum += EMS[e].rg * EMS[e].L;
-			if (dH > SnowDrift::redeposit_avg_depth) break;
+			if (redeposit_avg_depth == Constants::undefined || dH > redeposit_avg_depth) break;
 		}
 		tau_thresh = (dH > 0.) ? (tausum / dH) : (0.);
 		rg = (dH > 0.) ? (rgsum / dH) : (0.);
