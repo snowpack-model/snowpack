@@ -62,6 +62,10 @@ namespace Cst {
 	static const double earth_R0 = 6356766.0; // (m)
 
 	static const double solcon = 1366.1; // (W/m^2)
+	static const double albedo_short_grass = .23;
+	static const double albedo_bare_soil = 0.17;
+	static const double albedo_fresh_snow = .85;
+	static const double snow_nosnow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 	//Math constants
 	static const double phi = (1.+sqrt(5)) / 2.; //golden ratio

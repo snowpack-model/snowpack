@@ -802,9 +802,9 @@ bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 			plot_color  << "- ";
 			return false;
 		} else {
-			char tmp[9];
+			char tmp[11];
 			static const int max_col = 256*256*256;
-			sprintf(tmp,"0x%x", rand() % max_col);
+			snprintf(tmp, 11, "0x%x", rand() % max_col);
 			plot_color << tmp << " ";
 			return true;
 		}

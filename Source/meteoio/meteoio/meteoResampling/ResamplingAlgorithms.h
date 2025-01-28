@@ -98,7 +98,6 @@ class ResamplingAlgorithms {
 
 		const std::string algo, parname;
 		double max_gap_size;
-		static const double soil_albedo, snow_albedo, snow_thresh; ///< These thresholds are used to handle solar radiation
 
 	private:
 		std::map<std::string, gap_info> gaps;

@@ -404,8 +404,9 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 				EMS[e].theta[WATER] += deltaM[e] / (Constants::density_water * EMS[e].L);
 				if ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) > (1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL]))) {
 					// If there is not enough pore space to accomodate the liquid water part in frozen state
-					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for deposition flux");
+					const double theta_w_in = EMS[e].theta[WATER];
 					EMS[e].theta[WATER] = 0.999 * ((1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL])) * (Constants::density_ice / Constants::density_water) - EMS[e].theta[WATER_PREF]);
+					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for condensation flux, estimated mass balance error: %f kg/m2", EMS[e].L * (EMS[e].theta[WATER] - theta_w_in));
 				}
 				EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
 				Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += deltaM[e];
@@ -413,8 +414,9 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
 				if ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) > (1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL]))) {
 					// If there is not enough pore space to accomodate the liquid water part in frozen state
-					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for deposition flux");
+					const double theta_i_in = EMS[e].theta[ICE];
 					EMS[e].theta[ICE] = -0.999 * ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) + EMS[e].theta[SOIL] - 1.);
+					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for deposition flux, estimated mass balance error: %f kg/m2", EMS[e].L * (EMS[e].theta[ICE] - theta_i_in));
 				}
 				EMS[e].Qmm += (deltaM[e]*Constants::lh_sublimation)/sn_dt/EMS[e].L;	// [w/m^3]
 				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[e];
@@ -654,7 +656,10 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 /**
  * @brief This function is the solver for discretized transient-diffusive vapor tranport equation.
  * NOTES:
- * -#   Note, for the case of only snow (no soil), bottomDirichletBCtype is set to Drichlet ans Neumann does not make sense \n
+ * -#   For the case of only snow (no soil) or sea ice, bottomDirichletBCtypeSaturation is set to true (Drichlet with \n
+ *      saturated conditions), as Neumann does not make sense. \n
+ * -#   For the case of soil, bottomDirichletBCtypeSaturation is set to false (Drichlet with unsaturated conditions), as \n
+ *      Neumann was not running stable.\n
  * -#   The system of equations forms a tridiagonal sparse matrix for which the sparse solvers from the Eigen C++ library are used. \n
  *      Here, we used quite well stabel solver as BiCGSTAB. Feel free to use other solvers by looking at Eigen documentaion.
  * -#   When selecting the Explicit method, sub time steps are computed to ensure a stable solution. \n
@@ -675,7 +680,7 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 										 const std::vector<double>& D_el,
 										 std::vector<double>& oldVaporDenNode)
 {
-	const bool bottomDirichletBCtype = (Xdata.SoilNode == 0 && variant != "SEAICE") ? (true) : (false);
+	const bool bottomDirichletBCtypeSaturation = (Xdata.SoilNode == 0 && variant != "SEAICE") ? (true) : (false);
 
 	const size_t nN = Xdata.getNumberOfNodes();
 	size_t nE = nN-1;
@@ -728,7 +733,7 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 		error_max = 0.;
 
 		// The lower B.C.
-		if(bottomDirichletBCtype){
+		if(bottomDirichletBCtypeSaturation){
 			double elementSaturationVaporDensity=Atmosphere::waterVaporDensity(NDS[0].T, Atmosphere::vaporSaturationPressure(NDS[0].T));
 			NDS[0].rhov=elementSaturationVaporDensity;
 		}
@@ -767,17 +772,14 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 				v_ij = 1.0;
 				tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));		// Set up the matrix diagonal
 			} if (k == 0) {
-				if (bottomDirichletBCtype) {
-					b[k] = saturationDensity;  // NDS[k].rhov;
+				if (bottomDirichletBCtypeSaturation) {
+					b[k] = saturationDensity; // Assume saturation
 					v_ij = 1.0;
 					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
 				} else {
-					b[k] = Constants::eps;    // Setting to 0. seems to lead to non-invertibility in some cases
-					v_ij = -1.0;
-					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
-
+					b[k] = NDS[k].rhov;
 					v_ij = 1.0;
-					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k) + 1, v_ij));// Set up the matrix upper diagonals, k+1
+					tripletList.push_back(Trip(static_cast<int>(k), static_cast<int>(k), v_ij));	// Set up the matrix diagonal
 				}
 			}
 		}
@@ -830,7 +832,7 @@ bool VapourTransport::compDensityProfile(const CurrentMeteo& Mdata, SnowStation&
 			double error = std::abs(NDS[k].rhov-oldVaporDenNode[k]);
 			if(NDS[k].rhov<0) {
 				std::ostringstream err_msg;
-				err_msg << "[E] [" <<  Mdata.date.toString(Date::ISO) << "] Error, rhov is below zero (" << NDS[k].rhov << "). Can not proceed.";
+				err_msg << "[E] [" <<  Mdata.date.toString(Date::ISO) << "] Error at layer " << k << ": rhov is below zero (" << NDS[k].rhov << "). Cannot proceed.";
 				throw mio::IOException(err_msg.str(), AT);
 			}
 			error_max = std::max(error_max, error);

@@ -40,7 +40,7 @@ class ZRXPIO : public IOInterface {
 		ZRXPIO(const Config& cfgreader);
 		ZRXPIO(const ZRXPIO&);
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-		                            const std::string& name = "");
+		                            const std::string& name = "") override;
 
 	private:
 		const Config cfg;

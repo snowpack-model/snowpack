@@ -84,7 +84,7 @@ void ProcShade::process(const unsigned int& param, const std::vector<MeteoData>&
 			double albedo = .5;
 			if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
 				if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+					albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 
 				if (ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata))
 					ISWR = RSWR / albedo;

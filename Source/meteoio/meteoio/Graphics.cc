@@ -425,7 +425,8 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 	}
 	if (delta==0) { //otherwise constant data throughout the grid makes a division by zero...
 #ifndef NOSAFECHECKS
-		if ((nr_unique_cols/2 + reserved_idx) > std::numeric_limits<unsigned char>::max()) {
+		//test that (nr_unique_cols/2 + reserved_idx) does not overflow without overflowing in the test itself!
+		if (static_cast<unsigned char>(nr_unique_cols/2) > (std::numeric_limits<unsigned char>::max() - reserved_idx)) {
 			std::ostringstream ss;
 			ss << "[E] Number of unique colors in gradient and/or reserved index too large to fit in index: ";
 			ss << (nr_unique_cols/2 + reserved_idx) << " when it should be at most " << std::numeric_limits<unsigned char>::max();

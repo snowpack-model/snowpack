@@ -78,12 +78,12 @@ namespace mio {
 class ProcTransformWindVector : public ProcessingBlock { //use this one for simple filter that only look at one data point at a time, for example min_max
 	public:
 		ProcTransformWindVector(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
-		~ProcTransformWindVector();
+		~ProcTransformWindVector() override;
 		ProcTransformWindVector(const ProcTransformWindVector& c);
 		ProcTransformWindVector& operator = (const ProcTransformWindVector& c);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec) override;
 
 	private:
 #if defined PROJ4 || defined PROJ

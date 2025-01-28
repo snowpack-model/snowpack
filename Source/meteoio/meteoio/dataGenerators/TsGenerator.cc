@@ -35,7 +35,7 @@ bool TsGenerator::generate(const size_t& param, MeteoData& md, const std::vector
 			return false;
 
 		const double hs = md(MeteoData::HS);
-		const double ea = (hs==IOUtils::nodata)? .5*(e_snow+e_soil) : (hs>snow_thresh)? e_snow : e_soil;
+		const double ea = (hs==IOUtils::nodata)? .5*(e_snow+e_soil) : (hs>Cst::snow_nosnow_thresh)? e_snow : e_soil;
 
 		//value = pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
 		value = Optim::invSqrt( Optim::invSqrt(olwr / ( ea * Cst::stefan_boltzmann )) );

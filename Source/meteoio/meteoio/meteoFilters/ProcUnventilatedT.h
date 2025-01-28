@@ -67,7 +67,7 @@ class ProcUnventilatedT : public ProcessingBlock {
 		ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec) override;
 
 	private:
 		void filterTA(const unsigned int& param, std::vector<MeteoData>& ovec) const;
@@ -75,7 +75,7 @@ class ProcUnventilatedT : public ProcessingBlock {
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		double usr_albedo, usr_vw_thresh;
-		static const double dflt_albedo, vw_thresh;
+		static const double vw_thresh;
 		bool nakamura; //use Nakamura or Huwald model
 
 };

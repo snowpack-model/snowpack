@@ -45,8 +45,8 @@ class CosmoXMLIO : public IOInterface {
 
 		CosmoXMLIO& operator=(const CosmoXMLIO&); ///<Assignement operator, required because of pointer member
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 	private:
 		typedef enum METEOREADSTATUS { read_ok, read_continue, read_stop } MeteoReadStatus;

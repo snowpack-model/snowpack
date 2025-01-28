@@ -24,10 +24,6 @@
 
 namespace mio {
 
-const double MeteoIndex::soil_albedo = .23; //grass
-const double MeteoIndex::snow_albedo = .85; //snow
-const double MeteoIndex::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-
 void MeteoIndex::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( section+"::"+algo );
@@ -105,7 +101,7 @@ bool MeteoIndex::WBGT_index(const size_t& param, MeteoData& md)
 	const double HS = md(MeteoData::HS);
 	double albedo = 0.5;
 	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 	
 	sun.setLatLon(lat, lon, alt);
 	sun.setDate(julian_gmt, 0.);

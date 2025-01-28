@@ -40,14 +40,14 @@ class PGMIO : public IOInterface {
 		PGMIO(const PGMIO&);
 		PGMIO(const Config& cfgreader);
 
-		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list);
-		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
-		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list) override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
-		virtual void readDEM(DEMObject& dem_out);
+		virtual void readDEM(DEMObject& dem_out) override;
 		
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename) override;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
 	private:
 		void getGridPaths();

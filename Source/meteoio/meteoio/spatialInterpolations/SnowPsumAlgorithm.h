@@ -54,8 +54,8 @@ class SnowPSUMInterpolation : public InterpolationAlgorithm {
 	public:
 		SnowPSUMInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
 		                                          GridsManager& i_gdm, Meteo2DInterpolator& i_mi);
-		virtual double getQualityRating(const Date& i_date);
-		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+		virtual double getQualityRating(const Date& i_date) override;
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid) override;
 	private:
 		Meteo2DInterpolator& mi;
 		GridsManager& gdm;

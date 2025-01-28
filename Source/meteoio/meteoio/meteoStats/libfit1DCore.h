@@ -74,9 +74,9 @@ class FitModel {
 class FitLeastSquare : public FitModel {
  	public:
 		FitLeastSquare(const std::string& i_regname, const size_t& i_nParam, const size_t& i_min_nb_pts) : FitModel(i_regname, i_nParam, i_min_nb_pts) {}
-		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
-		bool fit();
-		virtual double f(const double& x) const = 0;
+		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) override;
+		bool fit() override;
+		virtual double f(const double& x) const override = 0;
 
 	protected:
 		virtual void setDefaultGuess(); //set defaults guess values. Called by setData

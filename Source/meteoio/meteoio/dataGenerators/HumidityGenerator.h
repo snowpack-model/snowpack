@@ -41,11 +41,11 @@ class HumidityGenerator : public GeneratorAlgorithm {
 	public:
 		HumidityGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
 			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), type(GEN_RH) { parse_args(vecArgs); }
-		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo);
-		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) override;
 
 		static bool generateAH(double& value, MeteoData& md);
 		static bool generateRH(double& value, MeteoData& md);

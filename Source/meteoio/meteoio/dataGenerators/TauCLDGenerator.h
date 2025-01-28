@@ -93,10 +93,10 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		} clf_parametrization;
 
 		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
-		~TauCLDGenerator();
+		~TauCLDGenerator() override;
 		
-		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo);
-		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
 
 	protected:
 		struct CLOUDCACHE; //forward declaration

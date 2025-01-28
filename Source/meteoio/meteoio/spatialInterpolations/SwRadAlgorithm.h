@@ -52,15 +52,14 @@ class SWRadInterpolation : public InterpolationAlgorithm {
 	public:
 		SWRadInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
 		                                   Meteo2DInterpolator& i_mi);
-		virtual double getQualityRating(const Date& i_date);
-		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+		virtual double getQualityRating(const Date& i_date) override;
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid) override;
 	private:
 		Meteo2DInterpolator& mi;
 		SunObject Sun;
 		std::vector<size_t> vecIdx;
 		double scale, alpha; ///<a scale parameter to smooth out the 1/dist and an exponent
 		bool shading, project_on_slope; ///<sould we also compute the shading? should we project the computed fields on the slopes?
-		static const double soil_albedo, snow_albedo, snow_thresh;
 };
 
 } //end namespace mio

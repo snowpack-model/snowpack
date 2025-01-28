@@ -37,10 +37,10 @@ class BUFRIO : public IOInterface {
 		BUFRIO(const std::string& configfile);
 		BUFRIO(const Config& cfgreader);
 
-		virtual void readStationData(const Date &date, std::vector<StationData> &vecStation);
-        virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo);
+		virtual void readStationData(const Date &date, std::vector<StationData> &vecStation) override;
+        virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo) override;
 
-        virtual void writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "");
+        virtual void writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "") override;
 
 	private:
 		const Config cfg;

@@ -66,7 +66,7 @@ double Solar::getPotentialH(const MeteoData& md)
 	const double HS = md(MeteoData::HS);
 	double albedo = 0.5;
 	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 	//if we don't have TA and RH, set them so the reduced precipitable water will get an average value
 	double TA = md(MeteoData::TA);
 	double RH = md(MeteoData::RH);

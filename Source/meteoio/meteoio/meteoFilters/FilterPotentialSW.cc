@@ -45,7 +45,7 @@ void FilterPotentialSW::process(const unsigned int& param, const std::vector<Met
 		if (param==MeteoData::RSWR) {
 			const double HS = ovec[ii](MeteoData::HS);
 			if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+				albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 			else
 				albedo = 0.5;
 		}

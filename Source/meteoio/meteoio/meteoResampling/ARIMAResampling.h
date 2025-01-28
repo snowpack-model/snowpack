@@ -324,8 +324,8 @@ namespace mio {
 
         // Performs ARIMA interpolation the first time it is called, as this is also the first time the data is available
         void resample(const std::string &stationHash, const size_t &index, const ResamplingPosition &position, const size_t &paramindex,
-                      const std::vector<MeteoData> &vecM, MeteoData &md);
-        std::string toString() const;
+                      const std::vector<MeteoData> &vecM, MeteoData &md) override;
+        std::string toString() const override;
 
     private:
         bool verbose;

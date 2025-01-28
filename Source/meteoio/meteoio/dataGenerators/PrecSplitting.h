@@ -87,11 +87,11 @@ class PrecSplitting : public GeneratorAlgorithm {
 			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(NONE), where( section+"::"+algo ), fixed_thresh(IOUtils::nodata),
 			range_start(IOUtils::nodata), range_norm(IOUtils::nodata) { parse_args(vecArgs); }
 
-		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo);
-		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
 
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) override;
 		bool generatePSUM_S(double& value, MeteoData& md) const;
 		bool generatePSUM_L(double& value, MeteoData& md) const;
 		bool generatePSUM_PH(double& value, MeteoData& md) const;

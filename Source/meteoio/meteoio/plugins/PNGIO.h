@@ -43,8 +43,8 @@ class PNGIO : public IOInterface {
 
 		PNGIO& operator=(const PNGIO&); ///<Assignement operator, required because of pointer member
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options) override;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
 	private:
 		void setOptions();
