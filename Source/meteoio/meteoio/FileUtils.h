@@ -25,6 +25,7 @@
 #include <list>
 
 #include <meteoio/dataClasses/Date.h>
+#include <meteoio/FStream.h>
 
 namespace mio {
 namespace FileUtils {
@@ -53,6 +54,15 @@ namespace FileUtils {
 
 	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="", const bool& isRecursive=false);
 
+	bool directoryExists(const std::string &path);
+	bool isWindowsPath(const std::string &path);
+	/**
+	 * @brief creates the directory tree for the given path, including missing intermediate directories
+	 * (gives only rw permissions), only takes paths delimited with '/'
+	 * @param path directory tree to create, cannot include filenames
+	 */
+	void createDirectories(const std::string &path);
+
 	bool validFileAndPath(const std::string& filename);
 
 	bool fileExists(const std::string& filename);
@@ -62,8 +72,9 @@ namespace FileUtils {
 	* links, convert relative paths to absolute paths, etc
 	* @param in_path the path string to cleanup
 	* @param resolve resolve links, convert relative paths, etc? (default=false)
+	* @param silent do not print error messages if set to true (only useful to send another error message later)
 	*/
-	std::string cleanPath(std::string in_path, const bool& resolve=false);
+	std::string cleanPath(std::string in_path, const bool& resolve=false, const bool& silent=false);
 
 	/**
 	* @brief returns the extension part of a given filename.
@@ -90,6 +101,12 @@ namespace FileUtils {
 	* @return path
 	*/
 	std::string getCWD();
+
+	/**
+	 * @brief returns the current date and time as a string.
+	 * @return date and time
+	 */
+	std::string getDateTime();
 
 	/**
 	* @brief returns the path preceeding a given filename.
@@ -138,10 +155,11 @@ namespace FileUtils {
 			* @brief Add a new position to the index
 			* @param[in] i_date date of the new position
 			* @param[in] i_pos streampos position
+			* @param[in] linenr line number in the input file
 			*/
-			void setIndex(const Date& i_date, const std::streampos& i_pos);
-			void setIndex(const std::string& i_date, const std::streampos& i_pos);
-			void setIndex(const double& i_date, const std::streampos& i_pos);
+			void setIndex(const Date& i_date, const std::streampos& i_pos, const size_t& linenr=static_cast<size_t>(-1));
+			void setIndex(const std::string& i_date, const std::streampos& i_pos, const size_t& linenr=static_cast<size_t>(-1));
+			void setIndex(const double& i_date, const std::streampos& i_pos, const size_t& linenr=static_cast<size_t>(-1));
 
 			/**
 			* @brief Get the file position suitable for a given date
@@ -153,11 +171,22 @@ namespace FileUtils {
 			std::streampos getIndex(const std::string& i_date) const;
 			std::streampos getIndex(const double& i_date) const;
 
+			/**
+			* @brief Get the file position suitable for a given date
+			* @param[in] i_date date for which a position is requested
+			* @param[out] o_linenr the original line number if the position has been found (otherwise, it remains unchanged)
+			* @return closest streampos position before the requested date,
+			* -1 if nothing could be found (empty index)
+			*/
+			std::streampos getIndex(const Date& i_date, size_t& o_linenr) const;
+			std::streampos getIndex(const std::string& i_date, size_t& o_linenr) const;
+			std::streampos getIndex(const double& i_date, size_t& o_linenr) const;
+
 			const std::string toString() const;
 
 		private:
 			struct file_index {
-				file_index(const Date& i_date, const std::streampos& i_pos) : date(i_date), pos(i_pos) {}
+				file_index(const Date& i_date, const std::streampos& i_pos, const size_t& i_linenr=static_cast<size_t>(-1)) : date(i_date), linenr(i_linenr), pos(i_pos) {}
 				bool operator<(const file_index& a) const {
 					return date < a.date;
 				}
@@ -165,6 +194,7 @@ namespace FileUtils {
 					return date > a.date;
 				}
 				Date date;
+				size_t linenr;
 				std::streampos pos;
 			};
 			size_t binarySearch(const Date& soughtdate) const;

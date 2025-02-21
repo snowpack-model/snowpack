@@ -59,6 +59,9 @@ namespace mio {
  * options followed by a list of station IDs (see example below) as well as restrict the operation of a data generator / creator
  * to specific time ranges using the **when** option followed by a comma delimited list of date intervals (represented by 
  * two ISO formatted dates seperated by ' - ').
+ * 
+ * NEW: It is also possible to restrict the operation of a data generator / creator to specific heights (with the {paramname}\@{height_in_m} syntax) using the **at_heights** and **exclude_heights** options 
+ * followed by a list of heights (Can be arbitrary numbers) or 'NO' for no height.
  *
  * @note it is generally not advised to use data generators in combination with spatial interpolations as this would
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
@@ -76,9 +79,9 @@ namespace mio {
  * [InputEditing]
  * #calling the parametrizations very early on, just after reading the raw data
  * *::edit1            = CREATE
- * *::arg1::algorithgm = CST
+ * *::arg1::algorithm  = CST
  * *::arg1::param      = TAU_CLD	;create a new TAU_CLD parameter set at constant 0.5
- * *::arg1::param      = 0.5
+ * *::arg1::value      = 0.5
  *
  * [Generators]
  * #calling the parametrizations after everything else happened 
@@ -91,8 +94,11 @@ namespace mio {
  *
  * ILWR::generator1    = AllSky_LW
  * ILWR::arg1::exclude = DAV3 DAV5
+ * ILWR::arg1::at_heights = NO 100
  * ILWR::generator2    = ClearSky_LW
  * ILWR::arg2::only    = *WFJ *DAV
+ * ILWR::arg2::exclude_heights = 100
+ * 
  * @endcode
  *
  * @section generators_keywords Available generators
@@ -136,9 +142,7 @@ namespace mio {
  *
  */
 
-const double GeneratorAlgorithm::soil_albedo = .23; //grass
-const double GeneratorAlgorithm::snow_albedo = .85; //snow
-const double GeneratorAlgorithm::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+const double GeneratorAlgorithm::default_height = IOUtils::nodata; // might need to change that if negative heights are allowed
 
 GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::string& i_section, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
@@ -186,7 +190,68 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, c
 }
 
 GeneratorAlgorithm::GeneratorAlgorithm(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
-                                   : time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", i_section+"::"+i_algo+" for station ", TZ) ), excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), algo(i_algo), section(i_section) {}
+                                   : time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", i_section+"::"+i_algo+" for station ", TZ) ), excluded_stations( initStationSet(vecArgs, "EXCLUDE") ), kept_stations( initStationSet(vecArgs, "ONLY") ), included_heights(), excluded_heights(), all_heights(true), algo(i_algo), section(i_section) {}
+
+void GeneratorAlgorithm::initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs) {
+	std::set<std::string> results_include;
+	std::set<std::string> results_exclude;
+
+	for (size_t ii=0; ii<vecArgs.size(); ii++) {
+		if (vecArgs[ii].first == "AT_HEIGHTS") {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results_include.insert(word);
+			}
+		}
+		else if (vecArgs[ii].first == "EXCLUDE_HEIGHTS") {
+			std::istringstream iss(vecArgs[ii].second);
+			std::string word;
+			while (iss >> word){
+				results_exclude.insert(word);
+			}
+		}
+	}
+
+	if (!results_exclude.empty() || !results_include.empty()) {
+		all_heights = false;
+	}
+
+	for (const auto& h_str : results_include) {
+		double height;
+		if (h_str == "NO") {
+			height = default_height;
+		} else {
+			height = std::stod(h_str);
+		}
+
+		if (!included_heights.insert(height).second) { 
+			throw IOException("Could not parse height of " + h_str + " for generator " + algo);
+		}
+	}
+
+	for (const auto& h_str : results_exclude) {
+		double height;
+		if (h_str == "NO") {
+			height = default_height;
+		} else {
+			height = std::stod(h_str);
+		}
+
+		if (!excluded_heights.insert(height).second) { 
+			throw IOException("Could not parse height of " + h_str + " for generator " + algo);
+		}
+	}
+}
+
+bool GeneratorAlgorithm::skipHeight(const double& height) const
+{
+	if (all_heights) return false;
+	if (excluded_heights.count(height)!=0) return true; //the height is in the excluded list -> skip
+	if (included_heights.empty()) return false; //there are no kept heights -> do not skip
+
+	return (included_heights.count(height)==0);
+}
 
 std::set<std::string> GeneratorAlgorithm::initStationSet(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& keyword)
 {

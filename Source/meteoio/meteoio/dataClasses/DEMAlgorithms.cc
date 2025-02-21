@@ -29,6 +29,7 @@
 #include <meteoio/MathOptim.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/meteoLaws/Meteoconst.h> //for math constants
 
 /**
@@ -174,8 +175,10 @@ std::vector< std::pair<double,double> > DEMAlgorithms::getHorizonScan(const DEMO
 	const size_t iy1 = static_cast<size_t>( point.getGridJ() );
 	for (double bearing=0.0; bearing <360.; bearing += increment) {
 		const double tan_alpha = getHorizon(dem, ix1, iy1, bearing);
-		if (tan_alpha!=IOUtils::nodata)
-			horizon.push_back( make_pair(bearing, atan(tan_alpha)*Cst::to_deg) );
+		if (tan_alpha!=IOUtils::nodata) {
+			const double angle = std::ceil(atan(tan_alpha)*Cst::to_deg * 10.) * .1; //rounded up to the nearest .1 deg
+			horizon.push_back( make_pair(bearing, angle) );
+		}
 	}
 	
 	return horizon;
@@ -283,7 +286,7 @@ std::map< std::string, std::vector< std::pair<double,double> > > DEMAlgorithms::
 void DEMAlgorithms::writeHorizons(const std::map< std::string, std::vector< std::pair<double,double> > >& horizon, const std::string& filename)
 {
 	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
-	std::ofstream fout(filename.c_str(), ios::out);
+	ofilestream fout(filename.c_str(), ios::out);
 	if (fout.fail()) {
 		std::ostringstream ss;
 		ss << "error opening file \"" << filename << "\" for writing, possible reason: " << std::strerror(errno);

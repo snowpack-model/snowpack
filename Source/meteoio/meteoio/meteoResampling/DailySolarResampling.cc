@@ -30,8 +30,8 @@ namespace mio {
 
 const size_t Daily_solar::samples_per_day = 24*3; //every 20 minutes
 
-Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), radiation(), station_index(), dateStart(), dateEnd(), loss_factor()
+Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs), radiation(), station_index(), dateStart(), dateEnd(), loss_factor()
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
 	if (!vecArgs.empty()) {
@@ -52,7 +52,7 @@ double Daily_solar::compRadiation(const double& lat, const double& lon, const do
 	const double P = Atmosphere::stdAirPressure(alt);
 	double albedo = 0.5;
 	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 	const double TA=274.98, RH=0.666; //the reduced precipitable water will get an average value
 
 	SunObject sun(lat, lon, alt);
@@ -146,7 +146,7 @@ void Daily_solar::resample(const std::string& stationHash, const size_t& index, 
 	} else {
 		double albedo = 0.5;
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 		md(paramindex) = loss_factor[stat_idx] * rad * albedo;
 	}
 

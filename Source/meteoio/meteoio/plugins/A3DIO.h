@@ -20,6 +20,7 @@
 #define A3DIO_H
 
 #include <meteoio/IOInterface.h>
+#include <meteoio/FStream.h>
 
 #include <string>
 #include <vector>
@@ -36,15 +37,15 @@ class A3DIO : public IOInterface {
 		A3DIO(const std::string& configfile);
 		A3DIO(const Config&);
 		
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-			                   std::vector< std::vector<MeteoData> >& vecMeteo);
+			                   std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-		                            const std::string& name="");
+		                            const std::string& name="") override;
 
-		virtual void readPOI(std::vector<Coords>& pts);
+		virtual void readPOI(std::vector<Coords>& pts) override;
 
 	private:
 		void read1DStation(StationData& sd);
@@ -63,10 +64,10 @@ class A3DIO : public IOInterface {
 		                       std::map<std::string, size_t>& hashStations);
 
 		bool create1DFile(const std::vector< std::vector<MeteoData> >& data);
-		bool writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& stations, const std::string& parameter_name);
+		bool writeHeader(ofilestream &file, const std::vector< std::vector<MeteoData> >& stations, const std::string& parameter_name);
 		void open2DFile(const std::vector< std::vector<MeteoData> >& stations,
 		                const std::string& fileprefix, const std::string& label, const double& year,
-		                std::ofstream& file);
+		                ofilestream& file);
 		bool write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const unsigned int& parindex,
 		                     const std::string& filename, const std::string& label);
 		void write2DMeteo(const std::vector< std::vector<MeteoData> >& data);

@@ -56,7 +56,7 @@ void SinGenerator::parse_args(const std::vector< std::pair<std::string, std::str
 	offset = min+amplitude;
 }
 
-bool SinGenerator::generate(const size_t& param, MeteoData& md)
+bool SinGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -84,7 +84,7 @@ bool SinGenerator::create(const size_t& param, const size_t& ii_min, const size_
 	if (vecMeteo.empty()) return true;
 
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		generate(param, vecMeteo[ii]);
+		generate(param, vecMeteo[ii], vecMeteo);
 	}
 
 	return true; //all missing values could be filled

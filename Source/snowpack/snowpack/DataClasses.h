@@ -145,6 +145,8 @@ class CurrentMeteo {
 		double rho_hn;             ///< Measured new snow density (kg m-3)
 		double rime_hn;            ///< riming index of new snow
 		double lwc_hn;             ///< liquid water content of new snow
+		
+		bool poor_ea;              ///< when ilwr has not been measured nor parametrized in good conditions, it could be redone later on
 
 	private:
 		size_t getNumberMeasTemperatures(const mio::MeteoData& md);
@@ -221,7 +223,7 @@ class LayerData {
 		double hr;                  ///< Surface hoar Mass in kg m-2
 		double CDot;                ///< Stress rate (Pa s-1), that is the LAST overload change rate
 		double metamo;              ///< keep track of metamorphism
-		double salinity;            ///< salinity (kg/kg)
+		double salinity;            ///< bulk salinity (g/kg)
 		double h;                   ///< capillary pressure head (m)
 		double dsm;                 ///< dry snow metamorphism factor
 };
@@ -237,7 +239,7 @@ class SN_SNOWSOIL_DATA {
                      nLayers(0), Ldata(), HS_last(0.), Albedo(mio::IOUtils::nodata),
 								     SoilAlb(mio::IOUtils::nodata), BareSoil_z0(mio::IOUtils::nodata),
                      Canopy_Height(mio::IOUtils::nodata), Canopy_LAI(mio::IOUtils::nodata),
-										 Canopy_Direct_Throughfall(mio::IOUtils::nodata),  WindScalingFactor(1.),
+										 Canopy_Direct_Throughfall(mio::IOUtils::nodata),
 										 ErosionLevel(static_cast<int>(mio::IOUtils::nodata)), TimeCountDeltaHS(mio::IOUtils::nodata),
 										 Canopy_BasalArea(mio::IOUtils::nodata), Canopy_diameter(mio::IOUtils::nodata),
 										 Canopy_lai_frac_top_default(mio::IOUtils::nodata),Canopy_int_cap_snow(mio::IOUtils::nodata),
@@ -263,7 +265,6 @@ class SN_SNOWSOIL_DATA {
 		double Canopy_Height;             ///< Canopy Height in m
 		double Canopy_LAI;                ///< Canopy Leaf Area Index in m2 m-2
 		double Canopy_Direct_Throughfall; ///< Direct throughfall [fraction of precipitation]
-		double WindScalingFactor;         ///< Local scaling factor for wind at drift station
 		int    ErosionLevel;              ///< Erosion Level in operational mode (flat field virtual erosion)
 		double TimeCountDeltaHS;          ///< Time counter tracking erroneous settlement in operational mode
 		/// OPTIONAL PARAMETERS, a warning will be thrown in CANOPY::Initialize if no value is provided
@@ -308,7 +309,7 @@ class ElementData {
 		void snowResidualWaterContent();
 		static double snowResidualWaterContent(const double& theta_i);
 		double soilFieldCapacity() const;
-		double RelativeHumidity() const;
+		double soilRelativeHumidity() const;
 
 		double snowElasticity() const;
 		double neckStressEnhancement() const;
@@ -353,7 +354,7 @@ class ElementData {
 		size_t mk;                 ///< grain marker (history dependent)
 		unsigned short int type;   ///< grain class
 		double metamo;             ///< keep track of metamorphism
-		double salinity;           ///< salinity (PSU, which is g/kg)
+		double salinity;           ///< bulk salinity (PSU, which is g/kg)
 		double dth_w;              ///< Subsurface Melting & Freezing Data: change of water content
 		double res_wat_cont;       ///< Residual water content
 		double Qmf;                ///< Subsurface Melting & Freezing Data: change of energy due to phase changes (melt-freeze)
@@ -385,13 +386,20 @@ class ElementData {
 
 		unsigned short int ID;    ///< Element ID used to track elements
 		static const unsigned short int noID;
+
+		double rhov;                ///< vapor density...(kg/m^3)
+		double Qmm;                ///< Heat source/sink due to phase changes in the case of vapor transport (W/m^3)
+		double vapTrans_fluxDiff;  ///< vapor dissusion flux in the case of vapor transport (W/m^2/s)
+		double vapTrans_snowDenChangeRate;  ///< snow density change rate in the case of vapor transport (kg/m^3/s)
+		double vapTrans_cumulativeDenChange;  ///< cumulative density change  in the case of vapor transport (kg/m^3)
+		double vapTrans_underSaturationDegree;  ///< the degree of undersaturation, (rhov-rohv_sat)/rhov_sat (-)
 };
 
 /// @brief NODAL DATA used as a pointer in the SnowStation structure
 class NodeData {
 	public:
 		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.), S_n(0.), S_s(0.), ssi(6.), hoar(0.),
-		             dsm(0.), S_dsm(0.), Sigdsm(0.), rime(0.) {} //HACK: set ssi to max_stability!
+		             dsm(0.), S_dsm(0.), Sigdsm(0.), rime(0.), water_flux(0.), rhov(0.) {} //HACK: set ssi to max_stability!
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const NodeData& data);
@@ -412,6 +420,10 @@ class NodeData {
 		double S_dsm;
 		double Sigdsm;
 		double rime;
+
+		double water_flux; ///< Water flowing through the node (kg/m2). Positive values denote downward fluxes.
+
+		double rhov;    ///< nodal vapor density in kg/m^3
 };
 
 /**
@@ -620,6 +632,9 @@ class SnowStation {
 		void compSoilInternalEnergyChange(const double& sn_dt);
 		double getLiquidWaterIndex() const;
 		double getModelledTemperature(const double& z) const;
+		double getTotalLateralFlowSnow() const;
+		double getTotalLateralFlowSoil() const;
+		void resetSlopeParFlux();
 
 		size_t getNumberOfElements() const;
 		size_t getNumberOfNodes() const;
@@ -628,6 +643,8 @@ class SnowStation {
 		double findMarkedReferenceLayer() const;
 
 		size_t find_tag(const size_t& tag) const;
+
+		void reset_water_fluxes();
 
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const SnowStation& data);
@@ -651,6 +668,8 @@ class SnowStation {
 		double mass_sum;            ///< Total mass summing mass of snow elements
 		double swe;                 ///< Total mass summing snow water equivalent of elements
 		double lwc_sum;             ///< Total liquid water in snowpack
+		double lwc_sum_soil;        ///< Total liquid water in soil
+		double swc_sum_soil;        ///< Total solid water in soil
 		double hn;                  ///< Depth of new snow to be used on slopes
 		double rho_hn;              ///< Density of new snow to be used on slopes
 		double rime_hn;              ///< rime of new snow to be used on slopes
@@ -659,18 +678,19 @@ class SnowStation {
 		size_t ErosionLevel;        ///< Element where snow erosion stopped previously for the drift index
 		double ErosionMass;         ///< Eroded mass either real or virtually (storage if less than one element)
 		double ErosionLength;       ///< Snow height change dueo to eroded mass (only real erosion)
+		double ErosionAge;          ///< Layer age of eroded snow layers
 		char S_class1;               ///< Stability class based on hand hardness, grain class ...
 		char S_class2;               ///< Stability class based on hand hardness, grain class ...
-		double S_d;                 ///< Minimum Direct Action Stability Index  ...
-		double z_S_d;               ///< Depth of Minimum Direct Action Stability
-		double S_n;                 ///< Minimum Natural Stability Index
-		double z_S_n;               ///< Depth of Minimum Natural Stability
-		double S_s;                 ///< Minimum Skier Stability Index (SSI)
-		double z_S_s;               ///< Depth of Minimum SSI
-		double S_4;                 ///< stab_index4
-		double z_S_4;               ///< Depth of stab_index4
-		double S_5;                 ///< stab_index5
-		double z_S_5;               ///< Depth of stab_index5
+		double S_d;                 ///< Minimum deformation rate stability index
+		double z_S_d;               ///< Depth of Minimum S_d
+		double S_n;                 ///< Minimum natural stability index
+		double z_S_n;               ///< Depth of Minimum S_n
+		double S_s;                 ///< Minimum skier stability index sk38 (Sk38)
+		double z_S_s;               ///< Depth of Minimum S_s
+		double S_4;                 ///< placeholder - currently Minimum structural stability index (SSI)
+		double z_S_4;               ///< Depth of Minimum S_4
+		double S_5;                 ///< placeholder
+		double z_S_5;               ///< Depth of Minimum S_5
 		std::vector<NodeData> Ndata;    ///< pointer to nodal data array (e.g. T, z, u, etc..)
 		std::vector<ElementData> Edata; ///< pointer to element data array (e.g. Te, L, Rho, etc..)
 		void *Kt;                   ///< Pointer to pseudo-conductivity and stiffnes matrix
@@ -684,9 +704,7 @@ class SnowStation {
 		double refreezeMassTot;     ///< Vertically summed refreeze per model time step (kg m-2)
 		double ReSolver_dt;         ///< Last used RE time step in the previous SNOWPACK time step
 		bool windward;              ///< True for windward (luv) slope
-		double WindScalingFactor;   ///< Local scaling factor for wind at drift station
 		double TimeCountDeltaHS;    ///< Time counter tracking erroneous settlement in operational mode
-
 		static const double comb_thresh_l_ratio, comb_thresh_ice, comb_thresh_water;
 		static const double comb_thresh_dd, comb_thresh_sp, comb_thresh_rg;
 		static const double thresh_moist_snow, thresh_moist_soil;
@@ -735,14 +753,18 @@ class SurfaceFluxes {
 			MS_TOTALMASS,      ///< This of course is the total mass of the snowpack at the present time
 			MS_SWE,            ///< This too, of course, but summing rho*L
 			MS_WATER,          ///< The total amount of water in the snowpack at the present time
+			MS_WATER_SOIL,     ///< The total amount of water in the soil at the present time
+			MS_ICE_SOIL,       ///< The total amount of ice in the soil at the present time
 			MS_HNW,            ///< Solid precipitation rate
 			MS_RAIN,           ///< Rain rate
 			MS_WIND,           ///< Mass loss rate due to wind erosion
 			MS_EVAPORATION,    ///< The mass loss or gain of the top element due to water evaporating
 			MS_SUBLIMATION,    ///< The mass loss or gain of the top element due to snow (ice) sublimating
-			MS_SNOWPACK_RUNOFF,///< The total mass loss of snowpack due to water transport (virtual lysimeter)
+			MS_SNOWPACK_RUNOFF,///< The mass loss of snowpack from snow melt due to water transport (virtual lysimeter)
+			MS_SURFACE_MASS_FLUX, ///< The total mass loss of snowpack due to water transport (virtual lysimeter)
 			MS_SOIL_RUNOFF,    ///< Equivalent to MS_SNOWPACK_RUNOFF but at bottom soil node
-			MS_FLOODING,       ///< Flooding of sea ice (Bucket scheme only)
+			MS_FLOODING,       ///< The mass gain due to adding ocean water to snow- seaice by flodding process
+			MS_ICEBASE_MELTING_FREEZING,       ///< The mass gain/loss of the ice base due to melting-freezing
 			MS_SNOW_DHS,       ///< Snow height change due to snowfall (m)
 			MS_SETTLING_DHS,   ///< Snow height change due to settling, and element removal (m)
 			MS_SUBL_DHS,       ///< Snow height change due to sublimation (m)
@@ -851,12 +873,14 @@ class RunInfo {
 		RunInfo& operator=(const RunInfo&) {return *this;} //everything is static, so we can not change anything
 
 		const std::string version;   ///< SNOWPACK version
+		const double version_num;    ///< SNOWPACK version formatted as a number
 		const mio::Date computation_date; ///< Date of computation
 		const std::string compilation_date; ///< Date of compilation
 		const std::string user; ///< logname of the user running the simulation
 		const std::string hostname; ///< hostname of the computer running the simulation
 
 	private:
+		static double getNumericVersion(std::string version_str);
 		static mio::Date getRunDate();
 		static std::string getCompilationDate();
 };

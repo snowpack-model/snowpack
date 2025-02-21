@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-04-26 10:55:27 -->
+
+<!-- Magnification: 1.05 -->
+
+<svg
+   width="793pt"
+   height="448pt"
+   viewBox="608 -390 12582 7102"
+   version="1.1"
+   id="svg12248"
+   sodipodi:docname="vector_vector.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title12315">Core meteorological data class in MeteoIO</title>
+  <defs
+     id="defs12252">
+    <defs
+       id="defs12202">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="M 608,-390 H 13190 V 6712 H 608 Z m 2790,1199 -68,180 -67,-180 49,244 h 36 z"
+           id="path12199" />
+      </clipPath>
+    </defs>
+  </defs>
+  <sodipodi:namedview
+     id="namedview12250"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="1.078125"
+     inkscape:cx="484.63768"
+     inkscape:cy="298.2029"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg12248" />
+  <polyline
+     points=" 4320,3915 8010,5670"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polyline12147"
+     style="fill:none" />
+  <polyline
+     points=" 4320,3375 8010,2835"
+     stroke="#000000"
+     stroke-width="8px"
+     id="polyline12149"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="1118"
+     width="1859"
+     height="4464"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12151"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="4466"
+     width="1859"
+     height="559"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12153"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="3908"
+     width="1859"
+     height="558"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12155"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="2792"
+     width="1859"
+     height="559"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12157"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="2234"
+     width="1859"
+     height="558"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12159"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="1675"
+     width="1859"
+     height="559"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12161"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="1118"
+     width="1859"
+     height="557"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12163"
+     style="fill:none" />
+  <rect
+     x="2468"
+     y="3351"
+     width="1859"
+     height="557"
+     fill="#fff2f2"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12165" />
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="5397"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12167"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T09:00</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="4838"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12169"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T08:30</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="4281"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12171"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T08:00</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="3722"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12173"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T07:30</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="3164"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12175"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T07:00</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="2606"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12177"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T06:30</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="2048"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12179"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T06:00</text>
+  <text
+     xml:space="preserve"
+     x="3360"
+     y="1489"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="156px"
+     text-anchor="middle"
+     id="text12181"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:190.39595736px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T05:30</text>
+  <polyline
+     points=" 2475,3915 5805,5670"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-dasharray="40, 40"
+     id="polyline12183"
+     style="fill:none" />
+  <polyline
+     points=" 4320,3915 5805,4635"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-dasharray="40, 40"
+     id="polyline12185"
+     style="fill:none" />
+  <polyline
+     points=" 4320,3375 5805,3150"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-dasharray="40, 40"
+     id="polyline12187"
+     style="fill:none" />
+  <polyline
+     points=" 2475,3375 5805,2835"
+     stroke="#000000"
+     stroke-width="8px"
+     stroke-dasharray="40, 40"
+     id="polyline12189"
+     style="fill:none" />
+  <rect
+     x="4320"
+     y="1125"
+     width="1845"
+     height="540"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12191"
+     style="fill:none" />
+  <rect
+     x="6165"
+     y="1125"
+     width="1845"
+     height="540"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12193"
+     style="fill:none" />
+  <rect
+     x="8010"
+     y="1125"
+     width="1845"
+     height="540"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12195"
+     style="fill:none" />
+  <rect
+     x="630"
+     y="1125"
+     width="9225"
+     height="540"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12197"
+     style="fill:none" />
+  <polyline
+     points=" 3330,180 3330,1035"
+     clip-path="url(#cp0)"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline12204"
+     style="fill:none" />
+  <polyline
+     points=" 3398,809 3330,989 3263,809"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-miterlimit="8"
+     id="polyline12206"
+     style="fill:none" />
+  <text
+     xml:space="preserve"
+     x="6930"
+     y="5985"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12208"
+     style="-inkscape-font-specification:'Times, Bold';font-family:Times;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">MeteoData object</text>
+  <text
+     xml:space="preserve"
+     x="3375"
+     y="5940"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12210"
+     style="-inkscape-font-specification:'Times, Bold';font-family:Times;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">time series</text>
+  <text
+     xml:space="preserve"
+     x="3375"
+     y="6570"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12212"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">at one location</text>
+  <text
+     xml:space="preserve"
+     x="3375"
+     y="6255"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12214"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">vector of MeteoData</text>
+  <text
+     xml:space="preserve"
+     x="6930"
+     y="6300"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12216"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">set of measurements</text>
+  <text
+     xml:space="preserve"
+     x="6930"
+     y="6630"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12218"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">at one location, at one time</text>
+  <text
+     xml:space="preserve"
+     x="9945"
+     y="1575"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="start"
+     id="text12220"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.861px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:start;fill:#000000">vector of timeseries</text>
+  <text
+     xml:space="preserve"
+     x="9945"
+     y="1305"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="192px"
+     text-anchor="start"
+     id="text12222"
+     style="-inkscape-font-specification:'Times, Bold';font-family:Times;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:253.861px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:start;fill:#000000">time series for all locations</text>
+  <text
+     xml:space="preserve"
+     x="3330"
+     y="-180"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12224"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">each time series is associated</text>
+  <text
+     xml:space="preserve"
+     x="3330"
+     y="90"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12226"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">with a unique location</text>
+  <rect
+     x="5804"
+     y="2835"
+     width="2215"
+     height="2835"
+     fill="#fff2f2"
+     stroke="#000000"
+     stroke-width="15px"
+     id="rect12228" />
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="3234"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12230"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2010-07-11T07:30</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="3559"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12232"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">TA=285.3</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="3884"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12234"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">RH=0.8</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="4209"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12236"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">HNW=0</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="4533"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12238"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">VW=3.4</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="4858"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12240"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">DW=325</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="5183"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12242"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">ISWR=123</text>
+  <text
+     xml:space="preserve"
+     x="6911"
+     y="5508"
+     fill="#000000"
+     font-family="Times"
+     font-style="italic"
+     font-weight="normal"
+     font-size="192px"
+     text-anchor="middle"
+     id="text12244"
+     style="-inkscape-font-specification:'Times, Italic';font-family:Times;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:253.86127645px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">ILWR=-999</text>
+  <metadata
+     id="metadata12311">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Core meteorological data class in MeteoIO</dc:title>
+        <dc:date>2024-04-26</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:source>https://code.wsl.ch/snow-models/meteoio</dc:source>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

@@ -25,10 +25,8 @@
 
 class SnowpackInterfaceWorker;
 class SnowDriftA3D;
-class Runoff; // forward declaration, cyclic header include
 
 #include <alpine3d/DataAssimilation.h>
-#include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/Glaciers.h>
@@ -145,7 +143,6 @@ class Runoff; // forward declaration, cyclic header include
 		void setSnowDrift(SnowDriftA3D& drift);
 		void setEnergyBalance(EnergyBalance& myeb);
 		void setDataAssimilation(DataAssimilation& init_da);
-		void setRunoff(Runoff& init_runoff);
 
 		// Methods to communicate with other modules
 		void setSnowDrift();
@@ -171,15 +168,15 @@ class Runoff; // forward declaration, cyclic header include
 		                            const mio::Date& timestamp);
 
 		mio::Grid2DObject getGrid(const SnGrids::Parameters& param) const;
+		void calcNextStep();
 
 	private:
 		static const std::vector<std::string> grids_not_computed_in_worker;
 		std::string getGridsRequirements() const;
 		mio::Config readAndTweakConfig(const mio::Config& io_cfg,const bool have_pts);
 		bool do_grid_output(const mio::Date &date) const;
-		void calcNextStep();
-		void setInitGlacierHeight();
-		SN_SNOWSOIL_DATA getIcePixel(const double glacier_height, const std::stringstream& GRID_sno, const bool seaIce);
+		void setInitGlacierThickness();
+		SN_SNOWSOIL_DATA getIcePixel(const double glacier_thickness, const std::stringstream& GRID_sno, const bool seaIce);
 		void readInitalSnowCover(std::vector<SnowStation*>& snow_stations,
                              std::vector<std::pair<size_t,size_t> >& snow_stations_coord);
 		void readSnowCover(const std::string& GRID_sno, const std::string& LUS_sno, const bool& is_special_point,
@@ -201,7 +198,8 @@ class Runoff; // forward declaration, cyclic header include
 
 		std::vector< std::pair<size_t,size_t> > pts; //special points
 
-		const mio::DEMObject dem;
+		const mio::DEMObject dem;	// full DEM
+		mio::DEMObject omp_dem;		// DEM shared by OMP workers (after MPI slicing)
 
 		// Config dependent information
 		bool is_restart, useCanopy, enable_simple_snow_drift, enable_lateral_flow, a3d_view;
@@ -210,6 +208,7 @@ class Runoff; // forward declaration, cyclic header include
 		bool glacier_katabatic_flow, snow_production, snow_grooming;
 		// Output
 		std::vector<std::string> Tsoil_idx; //TSOIL names in order to build the "field" header of the smet output
+		std::vector<std::string> soil_runoff_idx; // Runoff depths names in order to build the "field" header of the smet output
 		double grids_start, grids_days_between; //gridded outputs
 		double ts_start, ts_days_between; //time series outputs
 		double prof_start, prof_days_between; //profiles outputs
@@ -227,10 +226,10 @@ class Runoff; // forward declaration, cyclic header include
 
 		size_t dimx, dimy;
 		size_t mpi_offset, mpi_nx;
-		mio::Grid2DObject landuse;
+		mio::Grid2DObject landuse, omp_landuse;	// full land use map, and land use map shared by OMP workers (after MPI slicing)
 		// meteo forcing variables
 		mio::Grid2DObject mns, shortwave, longwave, diffuse, terrain_shortwave, terrain_longwave;
-		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_height;
+		mio::Grid2DObject psum, psum_ph, psum_tech, grooming, vw, vw_drift, dw, rh, ta, tsg, init_glaciers_thickness;
 		mio::Grid2DObject winderosiondeposition;
 		double solarElevation;
 
@@ -250,7 +249,6 @@ class Runoff; // forward declaration, cyclic header include
 		SnowDriftA3D *drift;
 		EnergyBalance *eb;
 		DataAssimilation *da;
-		Runoff *runoff;
 
 		Glaciers *glaciers;
 		TechSnowA3D *techSnow;

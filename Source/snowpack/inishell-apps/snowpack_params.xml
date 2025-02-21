@@ -1,0 +1,119 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: SNOWPACK PARAMETERS -->
+	<frame caption="Model Parameters">
+		<section name="Snowpack"/>
+		<parameter key="CALCULATION_STEP_LENGTH" type="number" format="decimal" precision="3" default="15.000" min="0.015" max="180" unit="min" optional="false" longlabel="true">
+			<help>Internal time step (in minutes) used for model simulation. Please note that this MUST be the same as PSUM::accumulate (the latter being in seconds) if re-acumulating precipitation, otherwise it would lead to wrong results.</help>
+		</parameter>
+		<parameter key="ROUGHNESS_LENGTH" type="number" format="decimal" precision="3" default="0.002" unit="m" optional="false" longlabel="true">
+			<help>Aerodynamic roughness length as a parameter for the Monin-Obukhov bulk formulation; A typical value for complex terrain is 0.01 m and for snow covered flat sites 0.001 m.</help>
+		</parameter>
+		<parameter key="HEIGHT_OF_METEO_VALUES" type="number" format="decimal" precision="1" default="5.0" min="0" unit="m" optional="false" longlabel="true">
+			<help>The instrument height (or model layer height) for meteorological input data except for wind, which may be at a different height; note that height is above ground for a standard SNOWPACK application but above surface (snow or ground) for Alpine3D applications.</help>
+		</parameter>
+		<parameter key="HEIGHT_OF_WIND_VALUE" type="number" format="decimal" precision="1" default="5.0" min="0" unit="m" optional="false" longlabel="true">
+			<help>The instrument height (or model layer height) for wind input data; note that height is above ground for a standard SNOWPACK application but above surface (snow or ground) for Alpine3D applications</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Models Selection" section="Snowpack">
+		<parameter key="ENFORCE_MEASURED_SNOW_HEIGHTS" type="alternative" optional="false" longlabel="true">
+			<option value="TRUE">
+				<parameter key="INFLATE_ALLOW" type="alternative" optional="true">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>Allow scaling the whole snow pack when there is a period without precipitation and the measured and simulated snow height diverge too much? (warning: this does not conserve mass! The only goal is to have better evaluations of new snow amounts in case the measured and simulated snow heights diverge too much; default is true in &lt;i&gt;operational&lt;/i&gt; mode and false in &lt;i&gt;research&lt;/i&gt; mode)</help>
+				</parameter>
+				<parameter key="INFLATE_INFO" type="alternative" optional="true">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>When allowing inflate/deflate, should Snowpack print some information message every time it performs such an adjustment?</help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>The measured snow depth is used as a proxy to precipitation inputs to force the mass balance (IMIS standard)</help>
+		</parameter>
+		<parameter key="SW_MODE" type="alternative" optional="false" longlabel="true">
+			<o value="INCOMING"><h>The incoming shortwave radiation is measured and the albedo is estimated by the model</h></o>
+			<o value="REFLECTED"><h>The reflected shortwave radiation is measured and the albedo is estimated by the model (IMIS standard)</h></o>
+			<o value="BOTH"><h>Both incoming and reflected shortwave radiation are measured and the albedo is estimated from both measurements subject to plausibility checks.</h></o>
+			<help>Define the shortwave radiation input</help>
+		</parameter>
+		<parameter key="ATMOSPHERIC_STABILITY" type="alternative" optional="false" longlabel="true">
+			<o value="RICHARDSON"><h>Simplified Richardson number stability correction;</h></o>
+			<o value="NEUTRAL"><h>Assume neutral stratification. Should be used with &lt;code&gt;BC_CHANGE=1&lt;/code&gt;, i. e., Dirichlet bc but also recommended with Neumann b.c., i. e., &lt;code&gt;BC_CHANGE=0&lt;/code&gt;</h></o>
+			<o value="MO_LOG_LINEAR"><h>Simple log-linear model</h></o>
+			<o value="MO_HOLTSLAG"><h>Holtslag and DeBruin (1988). Should be better than &lt;code&gt;MICHLMAYR_MO&lt;/code&gt; during melt periods.</h></o>
+			<o value="MO_STEARNS"><h>Stearns C. and Weidner G. &lt;i&gt;"Sensible and latent heat flux estimates in antarctica"&lt;/i&gt;, Antarctic meteorology and climatology: studies based on automatic weather stations, Antarctic Research Series, 61, pp 190-138, 1993</h></o>
+			<o value="MO_MICHLMAYR"><h>Stearns and Weidner (1993) modified by Michlmayr (2008). can be used with &lt;code&gt;BC_CHANGE=0&lt;/code&gt;.</h></o>
+			<o value="MO_SCHLOEGL_UNI"><h>Schlögl univariate, see Schlögl et al. &lt;i&gt;"How do stability corrections perfom over snow in the stable boundary layer?"&lt;/i&gt;, Boundary-Layer Meteorology, 2017, 165, pp 161-180</h></o>
+			<o value="MO_SCHLOEGL_MULTI"><h>Schlögl multivariate without offset</h></o>
+			<o value="MO_SCHLOEGL_MULTI_OFFSET"><h>Schlögl multivariate with offset</h></o>
+			<help>&lt;b&gt;Atmospheric stability corrections&lt;/b&gt;. Except Richardson and Neutral, all are standard MO iterations with the specified stability correction. In unstable conditions, they use Paulson and Stearns &amp; Weidner, 1993 for scalars.</help>
+		</parameter>
+		<parameter key="CANOPY" type="alternative" default="FALSE" optional="false" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Switch to tell the model that canopy is present (note that Canopy parameters should then be provided in the *.sno file)</help>
+		</parameter>
+	</frame>
+
+	<frame caption="Boundary Conditions" section="Snowpack">
+		<parameter key="MEAS_TSS" type="alternative" default="FALSE" optional="false">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>A measured surface temperature is available and can be reliably used for various consistency tests (it needs to be set to true if enabling CHANGE_BC).</help>
+		</parameter>
+		<parameter key="CHANGE_BC" type="alternative" default="FALSE" optional="false">
+			<option value="TRUE">
+				<parameter key="THRESH_CHANGE_BC" type="number" format="decimal" precision="2" default="-1.0" unit="°C" optional="false">
+					<help>Threshold value (small number below freezing), above which SNOWPACK switches from Dirichlet to Neumann BCs if CHANGE_BC is selected</help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>Use measured surface temperature as Dirichlet temperature BC for sub-freezing snowpacks and switch to Neumann only for melting snowpacks. If set to false, assumes Neumann boundary conditions.</help>
+		</parameter>
+		<parameter key="SNP_SOIL" type="alternative" default="FALSE" optional="false">
+			<option value="TRUE">
+				<parameter key="SOIL_FLUX" type="alternative" default="FALSE" optional="false">
+					<option value="TRUE">
+						<parameter key="GEO_HEAT" type="number" format="decimal" precision="3" default="0.06" optional="false" unit="W/m²">
+							<help>Constant geothermal heat flux at great) depth W m-2): Lower flux boundary condition for temperature equation if BC is Neumann</help>
+						</parameter>
+					</option>
+					<option value="FALSE"/>
+					<help>Assume that the lower temperature boundary condition is given by GEO_HEAT (Neumann) and not by a measured temperature</help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>Soil layers as defined by the *.sno files are included in the simulation</help>
+		</parameter>
+	</frame>
+
+</inishell_include>

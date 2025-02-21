@@ -48,21 +48,40 @@ namespace mio {
  *    - INFILE: a file containing the horizon for some or all stations (see the ProcShade filter for the format);
  *    - OUTFILE: a file to write the computed horizons to. If some horizons have been read from INFILE, they will also be written out in OUTFILE;
  *    - USE_RSWR. If set to TRUE, when no ISWR is available but RSWR and HS are available, a ground albedo is estimated
- * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunatelly, this is not very precise... (thus default is false)
+ * (either soil or snow albedo) and ISWR is then computed from RSWR. Unfortunately, this is not very precise... (thus default is false)
  *    - USE_RAD_THRESHOLD: when relying on measured ISWR to parametrize the cloudiness, there is a risk that the measuring station would
  * stand in a place where it is shaded by the surrounding terrain at some point during the day. This would lead to an overestimation 
  * of the cloudiness that is undesirable. In this case, it is possible to set USE_RAD_THRESHOLD to TRUE in order to interpolate the cloudiness
- * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation but improves things
- * in this specific scenario.
+ * over all periods of low radiation measured ISWR. This is less performant that only considering the solar elevation (with shading 
+ * computed from DEM) but improves things in this specific scenario, when no shading is available.
  * 
- * Please not that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
- * INFILE will be computed from DEM. If none is available, a fixed 5 degrees threshold is used.
+ * \note
+ * Please note that it is possible to combine SHADE_FROM_DEM and INFILE: in this case, stations that don't have any horizon in the provided
+ * INFILE will be computed from DEM. It is also possible to define wildcard station ID in the horizon file. If SHADE_FROM_DEM has been set
+ * to false and no INFILE has been provided, a fixed 5 degrees threshold is used.
  *
  * @code
  * [Generators]
  * TAU_CLD::generator1     = TAU_CLD
  * TAU_CLD::arg1::use_rswr = false
  * @endcode
+ *
+ * The horizon file contains on each line a station ID followed by an azimuth (in degrees, starting from North) and an elevation above the
+ * horizontal (also in degrees). It is possible to define a wildcard station ID '*' to be used as fallback. The elevation for any given azimuth
+ * will be linearly interpolated between the provided horizons before and after. If only one azimuth is given for a station ID, its horizon
+ * elevation is assumed to be constant. See below an example horizon file, defining two station IDs (SLF2 and FLU2):
+ * @code
+ * SLF2 0 5
+ * SLF2 45 25
+ * SLF2 180 30
+ * SLF2 245 10
+ * FLU2 0 7
+ * @endcode
+ * 
+ * \note 
+ * In order to pre-compute the horizons for multiple stations, write an ini file reading all stations of interest, declare a dataGenerator 
+ * that relies on TauCLDGenerator and run meteoio_timeseries on it for at least one time step. This will be enough to create the horizon file
+ * for all stations...
  */
 class TauCLDGenerator : public GeneratorAlgorithm {
 	public:
@@ -74,23 +93,45 @@ class TauCLDGenerator : public GeneratorAlgorithm {
 		} clf_parametrization;
 
 		TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
-		~TauCLDGenerator();
+		~TauCLDGenerator() override;
 		
-		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
+
 	protected:
-		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
+		struct CLOUDCACHE; //forward declaration
+		typedef struct CLOUDCACHE cloudCache;
+
+		double interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const;
+		double getCloudiness(const MeteoData& md);
+		double computeCloudiness(const MeteoData& md, bool &is_night);
 		double getClearness(const double& cloudiness) const;
 		static std::vector< std::pair<double,double> > computeMask(const DEMObject& i_dem, const StationData& sd);
+		double getHorizon(const MeteoData& md, const double& sun_azi);
 		
-		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
+		std::map< std::string, cloudCache > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 		std::map< std::string , std::vector< std::pair<double,double> > > masks;
 		std::string horizons_outfile;
 		const Config &cfg;
 		DEMObject dem;
+		SunObject sun;
 		clf_parametrization cloudiness_model;
 		bool use_rswr, use_rad_threshold;
-		bool write_mask_out, has_dem;
+		bool write_mask_out, use_horizons, from_dem;
+};
+
+
+/**
+ * @struct TauCLDGenerator::CLOUDCACHE
+ * @brief This is a small helper structure to store pairs of <timestamp, cloudiness> values for caching
+ */
+struct TauCLDGenerator::CLOUDCACHE {
+	CLOUDCACHE() : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) {}
+	CLOUDCACHE(const double& julian_gmt, const double& cloudiness) : last_valid(std::make_pair(IOUtils::nodata, IOUtils::nodata)) { addCloudiness(julian_gmt, cloudiness); }
+
+	void addCloudiness(const double& julian_gmt, const double& cloudiness);
+
+	std::pair<double, double> last_valid;
 };
 
 } //end namespace mio

@@ -9,6 +9,7 @@ install_manifest.txt
 **/cmake_install.cmake
 **/cmake_uninstall.cmake
 **/Makefile
+build/
 
 #generated files
 /doc/html/*
@@ -37,6 +38,8 @@ lib/*
 *.swp
 tags
 **/*~
+.vscode/
+.cache/
 
 #profiling:
 callgrind.out.*
@@ -50,3 +53,26 @@ CPackSourceConfig.cmake
 *.tar.gz
 *.exe
 *.dmg
+
+#Ctest generated files
+*CTestTestfile.cmake
+*DartConfiguration.tcl
+tests/2D_interpolations/2009-01-19T12.00.00_P.asc
+tests/arrays/arrays
+.gitignore
+tests/2D_interpolations/2D_interpolations
+Testing/Temporary/CTestCostData.txt
+tests/coords/coordinates
+tests/dataEditing/data_editing
+tests/dem_reading/AZI.asc
+tests/dem_reading/dem_reading
+tests/dem_reading/DEM.asc
+tests/dem_reading/SLOPE.asc
+tests/fstream/fstream
+tests/fstream/tmp_ofstream_instances.txt
+tests/meteo_reading_interpol/meteo_reading_int
+tests/meteo_reading_no_interpol/meteo_reading_no_int
+.gitignore
+tests/sun/sun
+.gitignore
+tests/stats/stats

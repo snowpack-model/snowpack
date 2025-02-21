@@ -221,13 +221,13 @@ std::map<std::string, double> FilterMaths::parseBracketExpression(std::string& l
 	static const std::string prefix("meteo(");
 	static const size_t len = prefix.length();
 
-	size_t pos1 = 0, pos2;
+	size_t pos1 = 0;
 
 	while (true) {
 		pos1 = line.find(prefix, pos1);
 		if (pos1 == std::string::npos)
 			break; //done
-		pos2 = line.find(")", pos1 + len);
+		const size_t pos2 = line.find(")", pos1 + len);
 		if (pos2 == std::string::npos || pos2-pos1-len == 0) //no closing bracket
 			throw InvalidArgumentException("Missing closing bracket in meteo(...) substitution for " + where, AT);
 

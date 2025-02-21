@@ -112,13 +112,14 @@ class AsciiIO : public SnowpackIOInterface {
 		double time_zone; // time zone of input
 		double calculation_step_length, hazard_steps_between, ts_days_between;
 		double min_depth_subsurf, hoar_density_surf, hoar_min_size_surf;
-		bool enable_pref_flow;
-		bool enable_ice_reservoir;
+		bool useRichardsEq, enable_pref_flow, enable_ice_reservoir;
+		bool enable_vapour_transport;
 		bool avgsum_time_series, useCanopyModel, useSoilLayers, research_mode, perp_to_slope;
 		bool useReferenceLayer;		//Whether or not the output should be referenced to the marked reference layer (i.e., the layer with int(mk/1000)==9).
 		bool out_heat, out_lw, out_sw, out_meteo, out_haz, out_mass, out_t, out_load, out_stab, out_canopy, out_soileb;
 		bool r_in_n;
 		std::string prof_ID_or_MK;
+		std::string prof_AGE_or_DATE;
 
 		static const bool t_srf, t_gnd;
 };

@@ -49,16 +49,22 @@ namespace mio {
  * ILWR::generator1 = clearsky_LW
  * ILWR::arg1::type = Dilley
  * @endcode
+ * 
+ * The graph below shows the comparison between measured and modeled ILWR depending on the chosen parametrization. The measured data (ISWR, TA, RH and the reference ILWR)
+ * comes from the Weissfluhjoch *WFJ AWS (2691m, Davos, Switzerland) for the 2010-08-01 -- 2019-08-01 period with half-hourly resolution. The data has been binned every 5 W/m²,
+ * the black dots represent the average of the bin, the greay area contains every data point (ie it shows the minimum and maximum data) while the brown area is defined as average±σ.
+ * \image html clear_sky_ilwr_cmp.svg "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period"
+ * \image latex clear_sky_ilwr_cmp.eps "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period" width=0.9\textwidth
  *
  */
 class ClearSkyLWGenerator : public GeneratorAlgorithm {
 	public:
 		ClearSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
 			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), model(BRUTSAERT) { parse_args(vecArgs); }
-		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) override;
 		typedef enum PARAMETRIZATION {
 			BRUTSAERT,
 			DILLEY,

@@ -49,6 +49,7 @@ inline std::vector<std::string> initDimensionNames()
 	tmp.push_back("LATITUDE"); tmp.push_back("LONGITUDE");
 	tmp.push_back("NORTHING"); tmp.push_back("EASTING"); 
 	tmp.push_back("STATION"); tmp.push_back("STATSTRLEN");
+	tmp.push_back("DATESTRLEN");
 	tmp.push_back("ZREF"); tmp.push_back("UREF");
 	
 	return tmp;
@@ -56,7 +57,7 @@ inline std::vector<std::string> initDimensionNames()
 const std::vector<std::string> dimnames( initDimensionNames() );
 
 void open_file(const std::string& filename, const int& omode, int& ncid)
-{
+{	
 	const int status = nc_open(filename.c_str(), omode, &ncid);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not open netcdf file '" + filename + "': " + nc_strerror(status), AT);
@@ -64,6 +65,7 @@ void open_file(const std::string& filename, const int& omode, int& ncid)
 
 void create_file(const std::string& filename, const int& cmode, int& ncid)
 {
+	mio::ofilestream::createDirectoriesOfFile(filename.c_str());
 	const int status = nc_create(filename.c_str(), cmode, &ncid);
 	if (status != NC_NOERR)
 		throw mio::IOException("Could not create netcdf file '" + filename + "': " + nc_strerror(status), AT);
@@ -128,11 +130,11 @@ void add_attribute(const int& ncid, const int& varid, const std::string& attr_na
 */
 void writeACDDAttributes(const int& ncid, const mio::ACDD& acdd)
 {
-	const size_t nr = acdd.getNrAttributes();
-	std::string name, value;
-	for (size_t ii=0; ii<nr; ii++) {
-		acdd.getAttribute(ii, name, value);
+	for (auto it = acdd.cbegin(); it!=acdd.cend(); ++it) {
+		const std::string name( it->second.getName() );
+		const std::string value( it->second.getValue() );
 		if (name.empty() || value.empty()) continue;
+		
 		ncpp::add_attribute(ncid, NC_GLOBAL, name, value);
 	}
 }
@@ -378,8 +380,12 @@ void readVariableMetadata(const int& ncid, ncpp::nc_variable& var, const bool& r
 	status = nc_inq_vartype(ncid, var.varid, &var.attributes.type);
 	if (status != NC_NOERR) throw mio::IOException(nc_strerror(status), AT);
 	
-	if (readTimeTransform)
+	if (readTimeTransform) {
+		//trying to be more robust as some might misplace the time units
+		if (var.attributes.units.empty()) 
+			ncpp::getAttribute(ncid, var, "description", var.attributes.units);
 		ncpp::getTimeTransform(var.attributes.units, TZ, var.offset, var.scale);
+	}
 }
 
 /**
@@ -775,6 +781,7 @@ std::map< std::string, std::vector<ncpp::nc_dimension> > NC_SCHEMA::initSchemasD
 	tmp.push_back( ncpp::nc_dimension(ncpp::LONGITUDE, "west_east") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATION, "station") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::STATSTRLEN, "station_str_len") );
+	tmp.push_back( ncpp::nc_dimension(ncpp::DATESTRLEN, "DateStrLen") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::EASTING, "easting") );
 	tmp.push_back( ncpp::nc_dimension(ncpp::NORTHING, "northing") );
 	tmp.push_back( ncpp::nc_dimension(mio::MeteoGrids::DEM, "HGT") );
@@ -938,7 +945,6 @@ std::map< std::string, std::vector<ncpp::var_attr> > NC_SCHEMA::initSchemasVars(
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::TSS, "TSK", "Surface skin temperature", "SURFACE SKIN TEMPERATURE", "K", mio::IOUtils::nodata, NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::U, "U10", "10-meter wind speed", "U at 10 M", "m/s", 10., NC_DOUBLE) );
 	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::V, "V10", "10-meter wind speed", "V at 10 M", "m/s", 10., NC_DOUBLE) );
-	tmp.push_back( ncpp::var_attr(mio::MeteoGrids::W, "W10", "10-meter wind speed", "W at 10 M", "m/s", 10., NC_DOUBLE) );
 	results["WRF"] = tmp;
 	
 	//METEOCH schema

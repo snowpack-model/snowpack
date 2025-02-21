@@ -27,21 +27,22 @@
 
 namespace mio {
 
-Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), cache_losses(), extrapolate(false)
+Solar::Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_max_gap_size, vecArgs), cache_losses(), extrapolate(false)
 {
 	const std::string where( "Interpolations1D::"+i_parname+"::"+i_algoname );
-	for (size_t ii=0; ii<vecArgs.size(); ii++) {
-		if (vecArgs[ii].first=="WINDOW_SIZE") {
-			IOUtils::parseArg(vecArgs[ii], where, window_size);
-			window_size /= 86400.; //user uses seconds, internally julian day is used
-			if (window_size<=0.) {
+
+	for (const auto& arg : vecArgs) {
+		if (arg.first=="MAX_GAP_SIZE") {
+			IOUtils::parseArg(arg, where, max_gap_size);
+			max_gap_size /= 86400.; //user uses seconds, internally julian day is used
+			if (max_gap_size<=0.) {
 				std::ostringstream ss;
-				ss << "Invalid accumulation period (" << window_size << ") for \"" << where << "\"";
+				ss << "Invalid accumulation period (" << max_gap_size << ") for \"" << where << "\"";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
-		} else if (vecArgs[ii].first=="EXTRAPOLATE") {
-			IOUtils::parseArg(vecArgs[ii], where, extrapolate);
+		} else if (arg.first=="EXTRAPOLATE") {
+			IOUtils::parseArg(arg, where, extrapolate);
 		}
 	}
 }
@@ -65,7 +66,7 @@ double Solar::getPotentialH(const MeteoData& md)
 	const double HS = md(MeteoData::HS);
 	double albedo = 0.5;
 	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 	//if we don't have TA and RH, set them so the reduced precipitable water will get an average value
 	double TA = md(MeteoData::TA);
 	double RH = md(MeteoData::RH);
@@ -87,7 +88,7 @@ bool Solar::computeLossFactor(const std::string& stationHash, const size_t& inde
                            const std::vector<MeteoData>& vecM, const Date& resampling_date, Points &pts)
 {
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
+	getNearestValidPts(stationHash, index, paramindex, vecM, resampling_date, max_gap_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	if (!extrapolate && (!foundP1 || !foundP2)) return false;
@@ -122,12 +123,20 @@ double Solar::interpolateLossFactor(const double& resampling_jul, const Points &
 	return 1.;
 }
 
-void Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+void Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
+	if (position == ResamplingAlgorithms::exact_match) {
+		const double value = vecM[index](paramindex);
+		if (value != IOUtils::nodata) {
+			md(paramindex) = value; // propagate value
+			return;
+		}
+	}
+	
 	const double pot_pt = getPotentialH( md );
 	if (pot_pt==IOUtils::nodata) return;
 

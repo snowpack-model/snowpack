@@ -102,7 +102,7 @@ class ncFiles {
 		bool strict_schema, lax_schema, debug, isLatLon;
 		std::string nc_filename;
 		int ncid;
-		bool keep_input_files_open, keep_output_files_open;
+		bool keep_input_files_open, keep_output_files_open, allow_missing_coords;
 };
 
 /**
@@ -117,20 +117,20 @@ class NetCDFIO : public IOInterface {
 		NetCDFIO(const NetCDFIO&);
 		NetCDFIO(const Config& cfgreader);
 
-		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list);
-		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
-		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
-		virtual void readDEM(DEMObject& dem_out);
+		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list) override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts) override;
+		virtual void readDEM(DEMObject& dem_out) override;
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename) override;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="") override;
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 	private:
 		void parseInputOutputSection();
@@ -143,7 +143,7 @@ class NetCDFIO : public IOInterface {
 		std::vector< ncFiles > cache_inmeteo_files; //cache of meteo files in input METEOPATH
 		std::set<std::string> in_stations; ///< only the stations IDs listed here will be returned by a call to readMeteoData/readStationData
 		std::vector<MeteoGrids::Parameters> available_params;
-		std::string in_schema, out_schema, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
+		std::string in_schema_grid, out_schema_grid, in_schema_meteo, out_schema_meteo, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
 		std::string out_meteo_path, out_meteo_file;
 		bool debug, out_single_file;
 		bool split_by_year, split_by_var;

@@ -1,0 +1,87 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- EXTRA INPUT PARAMETERS -->
+	<parametergroup name="SN_EXTRA_INPUT_ALL">
+		<reference name="SN_EXTRA_INPUT_PLUGINS"/>
+		<parameter key="SNOWFILE#" type="filename" path="%INPUT::SNOWPATH" mode="input" replicate="true" optional="true">
+			<help>File name for the initial profile for station number #</help>
+		</parameter>
+		<parameter key="SLOPE_FROM_SNO" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Get the slope and azimuth from the SNO file instead of from the meteorological forcings (default: true)?</help>
+		</parameter>
+	</parametergroup>
+
+
+	<parametergroup name="SN_EXTRA_INPUT_PLUGINS">
+		<parameter key="NUMBER_OF_SOLUTES" type="number" format="integer+" notoggle="true">
+			<help>&lt;i&gt;SNOWPACK&lt;/i&gt; can transport an arbitrary number of trace components in its snow and water phases [special use, default: 0]</help>
+		</parameter>
+		<parameter key="SNOW" type="alternative" default="SMET" optional="false">
+			<option value="SMET">
+				<parameter key="SNOWPATH" type="path">
+					<help>Path to the land surface and snow input parameters; defaults to METEOPATH if not given.</help>
+				</parameter>
+				<help>Plugin for reading SNO data (default, *.sno)</help>
+			</option>
+			<option value="CAAML">
+				<parameter key="XML_ENCODING" type="alternative">
+					<option value="UTF-8"/>
+					<option value="UTF-16"/>
+					<option value="UTF-16-LE"/>
+					<option value="UTF-16-BE"/>
+					<option value="UTF-32"/>
+					<option value="UTF-32-LE"/>
+					<option value="UTF-32-BE"/>
+					<option value="LATIN1"/>
+					<option value="ISO-8859-1"/>
+					<option value="WCHAR"/>
+					<help>force the input file encoding, overriding the file's own encoding declaration</help>
+				</parameter>
+				<parameter key="CAAML_MAX_ELEMENT_THICKNESS" type="number" format="decimal" precision="3" unit="mm" default="0">
+					<help>If set, the thickness of the elements will be set to this value, otherwise each element will correspond to one stratigraphic layer. Recommendation: set this value to 0.02 (= 2 cm)</help>
+				</parameter>
+				<parameter key="CAAML_WRITEOUT_AS_READIN" caption="CAAML_WRITEOUT_AS_READIN" type="checkbox" default="FALSE">
+					<help>If set to true, a CAAML file will be written just after reading in, to check if the reading of the CAL was correct</help>
+				</parameter>
+				<parameter key="SNOWPATH" type="path">
+					<help>Path to the land surface and snow input parameters; defaults to METEOPATH if not given.</help>
+				</parameter>
+				<help>Plugin for reading SNO data as CAAML file</help>
+			</option>
+			<option value="SNOOLD">
+				<parameter key="SNOWPATH" type="path">
+					<help>Path to the land surface and snow input parameters; defaults to METEOPATH if not given.</help>
+				</parameter>
+				<help>Plugin for reading SNO data (deprecated, *.snoold)</help>
+			</option>
+		</parameter>
+	</parametergroup>
+
+</inishell_include>

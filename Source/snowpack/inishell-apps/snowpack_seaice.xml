@@ -1,0 +1,64 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+	<!-- Alternative panel: SnowpackSeaice -->
+	<parameter key="CHECK_INITIAL_CONDITIONS" type="alternative" default="FALSE" section="SnowpackSeaice" optional="true">
+		<option value="TRUE"/>
+		<option value="FALSE"/>
+		<help>If FALSE, initial conditions from *.sno file are taken as-is. If TRUE, initial conditions are modified to enforce thermal equilibrium and minimize water fluxes at the first time step. First water and ice content is calculated, while maintaining initial, prescribed bulk salinity and temperature. After that, pressure head is initialized consistent with the displaced ocean water.</help>
+	</parameter>
+	<parameter key="SALINITYPROFILE" type="alternative" section="SnowpackSeaice" optional="true">
+		<option value="NONE"/>
+		<option value="CONSTANT"/>
+		<option value="COXANDWEEKS"/>
+		<option value="LINEARSAL"/>
+		<option value="LINEARSAL2"/>
+		<option value="SINUSSAL"/>
+		<help>Choice of enforced salinity profile:
+			&lt;dl&gt;
+			&lt;dt&gt;NONE&lt;/dt&gt;  &lt;dd&gt;no salinity profile enforced;&lt;/dd&gt;
+			&lt;dt&gt;CONSTANT&lt;/dt&gt;  &lt;dd&gt;constant salinity profile (bulk salinity of 35 g/kg);&lt;/dd&gt;
+			&lt;dt&gt;COXANDWEEKS&lt;/dt&gt;  &lt;dd&gt;&lt;a href=&quot;https://doi.org/10.3189/S0022143000023418&quot;&gt;Cox and Weeks et al. (1974)&lt;/a&gt; profile;&lt;/dd&gt;
+			&lt;dt&gt;LINEARSAL&lt;/dt&gt;  &lt;dd&gt;linear salinity profile with bulk salinity in the upper- and lowermost layer of 1 and 5 g/kg, respectively;&lt;/dd&gt;
+			&lt;dt&gt;LINEARSAL2&lt;/dt&gt;  &lt;dd&gt;linear salinity profile with bulk salinity in the upper- and lowermost ice layer of 1 and 5 g/kg, respectively, while snow layers get assigned a bulk salinity of 1 g/kg;&lt;/dd&gt;
+			&lt;dt&gt;SINUSSAL&lt;/dt&gt;  &lt;dd&gt;(recommended) C-shaped salinity profile, with top and bottom sea ice layer bulk salinity of 12 g/kg, and an amplitude of 8 g/kg, while snow layers get assigned a bulk salinity of 1 g/kg;&lt;/dd&gt;
+			&lt;/dl&gt;
+		</help>
+	</parameter>
+	<parameter key="SALINITYTRANSPORT_SOLVER" type="alternative" section="SnowpackSeaice" optional="true">
+		<option value="EXPLICIT"/>
+		<option value="IMPLICIT"/>
+		<option value="IMPLICIT2"/>
+		<help>Choice of solver for the salinity transport equation:
+			&lt;dl&gt;
+			&lt;dt&gt;EXPLICIT&lt;/dt&gt;  &lt;dd&gt;explicit scheme;&lt;/dd&gt;
+			&lt;dt&gt;IMPLICIT&lt;/dt&gt;  &lt;dd&gt;implicit scheme;&lt;/dd&gt;
+			&lt;dt&gt;IMPLICIT2&lt;/dt&gt;  &lt;dd&gt;(recommended) implicit scheme using donor-cell (upwind) scheme;&lt;/dd&gt;
+			&lt;/dl&gt;
+			Note that this requires the use of Richards equation (see SnowpackAdvanced), and only brings sensible results when setting SALINITYPROFILE to NONE.
+		</help>
+	</parameter>
+</inishell_include>

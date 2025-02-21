@@ -24,10 +24,6 @@
 
 namespace mio {
 
-const double MeteoIndex::soil_albedo = .23; //grass
-const double MeteoIndex::snow_albedo = .85; //snow
-const double MeteoIndex::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-
 void MeteoIndex::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( section+"::"+algo );
@@ -105,7 +101,7 @@ bool MeteoIndex::WBGT_index(const size_t& param, MeteoData& md)
 	const double HS = md(MeteoData::HS);
 	double albedo = 0.5;
 	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 	
 	sun.setLatLon(lat, lon, alt);
 	sun.setDate(julian_gmt, 0.);
@@ -120,7 +116,7 @@ bool MeteoIndex::WBGT_index(const size_t& param, MeteoData& md)
 	return true;
 }
 
-bool MeteoIndex::generate(const size_t& param, MeteoData& md)
+bool MeteoIndex::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -139,7 +135,7 @@ bool MeteoIndex::create(const size_t& param, const size_t& ii_min, const size_t&
 
 	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		const bool status = generate(param, vecMeteo[ii]);
+		const bool status = generate(param, vecMeteo[ii], vecMeteo);
 		if (status==false) all_filled=false;
 	}
 

@@ -27,10 +27,10 @@
 namespace mio {
 
 TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg)
-                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), masks(), horizons_outfile(), cfg(i_cfg), dem(), cloudiness_model(DEFAULT), use_rswr(false), use_rad_threshold(false), write_mask_out(), has_dem(false)
+                              : GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), last_cloudiness(), masks(), horizons_outfile(), cfg(i_cfg), dem(), sun(), cloudiness_model(DEFAULT), use_rswr(false), use_rad_threshold(false), write_mask_out(), use_horizons(false), from_dem(false)
 {
 	const std::string where( section+"::"+algo );
-	bool from_dem=false, has_infile=false;
+	bool has_infile=false;
 	
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="CLD_TYPE") {
@@ -66,21 +66,14 @@ TauCLDGenerator::TauCLDGenerator(const std::vector< std::pair<std::string, std::
 		}
 	}
 	
-	const bool use_default_horizon = !from_dem && !has_infile;
-	if (write_mask_out && use_default_horizon)
+	use_horizons = (from_dem || has_infile);
+	if (write_mask_out && !use_horizons)
 		throw InvalidArgumentException("In "+where+", please provide an INFILE and/or a DEM to compute the shading and write it out!", AT);
-	
-	if (from_dem) {
-		IOHandler io(cfg);
-		dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevations
-		io.readDEM(dem);
-		has_dem = true;
-	}
 }
 
 TauCLDGenerator::~TauCLDGenerator()
 {
-	if (has_dem && !masks.empty() && !horizons_outfile.empty())
+	if (from_dem && !masks.empty() && !horizons_outfile.empty())
 		DEMAlgorithms::writeHorizons(masks, horizons_outfile);
 }
 
@@ -119,6 +112,106 @@ std::vector< std::pair<double,double> > TauCLDGenerator::computeMask(const DEMOb
 	return o_mask;
 }
 
+//check if the station already has an associated mask, first by stationID then as wildcard, otherwise compute it from dem
+double TauCLDGenerator::getHorizon(const MeteoData& md, const double& sun_azi)
+{
+	const std::string stationID( md.getStationID() );
+	std::map< std::string , std::vector< std::pair<double,double> > >::const_iterator mask = masks.find( stationID );
+	if (mask!=masks.end()) return DEMAlgorithms::getHorizon(mask->second, sun_azi);
+	
+	//now look for a wildcard fallback
+	mask = masks.find( "*" );
+	if (mask!=masks.end()) return DEMAlgorithms::getHorizon(mask->second, sun_azi);
+	
+	if (!from_dem)
+		throw InvalidArgumentException("No horizon could be found for station "+stationID+", please either provide it in the horizon file or provide a DEM to compute the horizon", AT);
+
+	//get the horizon from the DEM, save the computed mask
+	if (dem.empty()) {
+		IOHandler io(cfg);
+		dem.setUpdatePpt( DEMObject::NO_UPDATE ); //we only need the elevations
+		io.readDEM(dem);
+	}
+
+	masks[ stationID ] = computeMask(dem, md.meta);
+	mask = masks.find( stationID );
+	return DEMAlgorithms::getHorizon(mask->second, sun_azi);
+}
+
+double TauCLDGenerator::interpolateCloudiness(const std::string& station_hash, const double& julian_gmt) const
+{
+	const auto& cloudiness_point = last_cloudiness.find(station_hash); //we get a cloudCache object
+	if (cloudiness_point==last_cloudiness.end()) {
+		return IOUtils::nodata;
+	}
+
+	//TODO for now, exact same behavior as before. The goal is to implement better interpolations!
+	const double last_cloudiness_julian = cloudiness_point->second.last_valid.first;
+	const double last_cloudiness_value = cloudiness_point->second.last_valid.second;
+	double cloudiness = IOUtils::nodata;
+	if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
+
+	return cloudiness;
+}
+
+/**
+ * @brief Add a cloudiness value to the cache.
+ * @param[in] julian_gmt Timestamp of the cloudiness value (in GMT)
+ * @param[in] cloudiness cloudiness value (between 0 and 1)
+ */
+void TauCLDGenerator::cloudCache::addCloudiness(const double& julian_gmt, const double& cloudiness)
+{
+	last_valid = std::make_pair(julian_gmt, cloudiness);
+}
+
+/**
+ * @brief Return the atmospheric cloudiness
+ * @details
+ * Based on the available data, it might be a direct copy of a cloudiness value available in the Meteodata, a parametrization
+ * based on clearness index (ie the ratio of the incoming short wave radiation over the ground potential radiation, projected on the horizontal) or
+ * a temporal interpolations (over the night or while the AWS is in the shade of the terrain). 
+ * @param[in] md MeteoData
+ * @return cloudiness (between 0 and 1)
+ */
+double TauCLDGenerator::getCloudiness(const MeteoData& md)
+{
+	const double TAU_CLD=md(MeteoData::TAU_CLD);
+	const double CLD = (md.param_exists("CLD"))? md("CLD") : IOUtils::nodata;
+	double cloudiness = (TAU_CLD!=IOUtils::nodata)? Atmosphere::Kasten_cloudiness( TAU_CLD ) : IOUtils::nodata;
+
+	if (CLD!=IOUtils::nodata) {
+		//Synop sky obstructed from view -> fully cloudy
+		if (CLD>9. || CLD<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
+		cloudiness = std::max(std::min(CLD/8., 1.), 0.1);
+	}
+
+	const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
+	const double julian_gmt = md.date.getJulian(true);
+
+	//try to get a cloudiness value
+	if (cloudiness==IOUtils::nodata) {
+		const double lat = md.meta.position.getLat();
+		const double lon = md.meta.position.getLon();
+		const double alt = md.meta.position.getAltitude();
+		if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return IOUtils::nodata;
+
+		bool is_night;
+		sun.setLatLon(lat, lon, alt); //there is some caching in Sun if lat/lon/alt are unchanged
+		sun.setDate(julian_gmt, 0.);
+		cloudiness = computeCloudiness(md, is_night);
+		if (cloudiness==IOUtils::nodata && !is_night) return IOUtils::nodata;
+
+		if (is_night) { //interpolate the cloudiness over the night but don't cache it!
+			return interpolateCloudiness(station_hash, julian_gmt); //either interpolated cloudiness or nodata
+		}
+	}
+
+	//save the last valid cloudiness
+	last_cloudiness[station_hash] = cloudCache( julian_gmt, cloudiness );
+
+	return cloudiness;
+}
+
 
 /**
  * @brief Compute the atmospheric cloudiness from the available measurements
@@ -127,37 +220,21 @@ std::vector< std::pair<double,double> > TauCLDGenerator::computeMask(const DEMOb
  * is computed and used to evaluate the cloudiness, based on the chosen parametrization.
  * @param[in] md MeteoData
  * be a soil ro a snow albedo
- * @param sun For better efficiency, the SunObject for this location (so it can be cached)
  * @param[out] is_night set to TRUE if it is night time
- * @return cloudiness (between 0 and 1)
+ * @return cloudiness (between 0 and 1) or IOUtils::nodata
  */
-double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night)
+double TauCLDGenerator::computeCloudiness(const MeteoData& md, bool &is_night)
 {
 	//we know that TA and RH are available, otherwise we would not get called
-	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
+	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+	if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;		//NOTE: keep it for safety?
+	const double HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
 	double ISWR=md(MeteoData::ISWR);
 	
 	double sun_azi, sun_elev;
 	sun.position.getHorizontalCoordinates(sun_azi, sun_elev);
-	
-	//check if the station already has an associated mask, first by stationID then as wildcard
-	double mask_elev = 5.;
-	const std::string stationID( md.getStationID() );
-	std::map< std::string , std::vector< std::pair<double,double> > >::const_iterator mask = masks.find( stationID );
-	if (mask!=masks.end()) {
-		mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
-	} else {
-		//now look for a wildcard fallback
-		mask = masks.find( "*" );
-		if (mask!=masks.end()) {
-			mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
-		} else if (has_dem) {
-			masks[ stationID ] = computeMask(dem, md.meta);
-			mask = masks.find( stationID );
-			mask_elev = DEMAlgorithms::getHorizon(mask->second, sun_azi);
-		}
-	}
-	
+	const double mask_elev = (use_horizons)? getHorizon(md, sun_azi) : 5.;
+
 	//at sunrise or sunset, we might get very wrong results -> return nodata in order to use interpolation instead
 	//obviously, when it is really night neither can we compute anything here...
 	//we use 5 degrees to represent very low elevation rays of light that would not work well in the horizontal sensors
@@ -169,7 +246,7 @@ double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 		albedo = std::min( 0.99, std::max(0.01, RSWR / ISWR) );
 	} else { //so some measurements are missing
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 
 		if (ISWR==IOUtils::nodata) { //ISWR is missing, trying to compute it
 			if (!use_rswr) return IOUtils::nodata;
@@ -209,52 +286,11 @@ double TauCLDGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 		return IOUtils::nodata; //this should never happen
 }
 
-bool TauCLDGenerator::generate(const size_t& param, MeteoData& md)
+bool TauCLDGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
-		double cld = (md.param_exists("CLD"))? md("CLD") : IOUtils::nodata;
-		if (cld!=IOUtils::nodata) {
-			if (cld==9) cld=8.; //Synop sky obstructed from view -> fully cloudy
-			if (cld>8. || cld<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
-			value = getClearness( cld );
-			return true;
-		}
-
-		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
-		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
-
-		const std::string station_hash = md.meta.stationID + ":" + md.meta.stationName;
-		const double julian_gmt = md.date.getJulian(true);
-		bool cloudiness_from_cache = false;
-
-		const double lat = md.meta.position.getLat();
-		const double lon = md.meta.position.getLon();
-		const double alt = md.meta.position.getAltitude();
-		if (lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
-		SunObject sun;
-		sun.setLatLon(lat, lon, alt);
-		sun.setDate(julian_gmt, 0.);
-
-		bool is_night;
-		double cloudiness = TauCLDGenerator::getCloudiness(md, sun, is_night);
-		if (cloudiness==IOUtils::nodata && !is_night) return false;
-
-		if (is_night) { //interpolate the cloudiness over the night
-			const std::map< std::string, std::pair<double, double> >::const_iterator it = last_cloudiness.find(station_hash);
-			if (it==last_cloudiness.end()) return false;
-
-			cloudiness_from_cache = true;
-			const double last_cloudiness_julian = it->second.first;
-			const double last_cloudiness_value = it->second.second;
-			if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
-			else return false;
-		}
-
-		//save the last valid cloudiness
-		if (!cloudiness_from_cache)
-			last_cloudiness[station_hash] = std::pair<double,double>( julian_gmt, cloudiness );
-
+		const double cloudiness = getCloudiness(md);
 		value = 1.- cloudiness;
 	}
 
@@ -267,7 +303,7 @@ bool TauCLDGenerator::create(const size_t& param, const size_t& ii_min, const si
 
 	bool status = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		if (!generate(param, vecMeteo[ii]))
+		if (!generate(param, vecMeteo[ii], vecMeteo))
 			status = false;
 	}
 

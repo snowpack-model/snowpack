@@ -1,0 +1,456 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2020 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+INIshell include file for timeseries output plugin definitions
+Please include meteoio_parametergroups before use!
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: METEOIO_TS_OUT -->
+	<parametergroup name="METEOIO_TS_OUT">
+		<!-- it's nice to give defaults to non-optional keys (no 'unsaved changes' warning: -->
+		<parameter type="helptext" wrap="true">
+			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system. Please also note that several plugins rely on the station ID to build the output file name (so if you change the station ID in the input or inputEditing, this would change the output file name).</help>
+		</parameter>
+		<parameter key="METEO" label="Select METEO data plugin:" type="alternative" optional="false" default="SMET" pre-generate="false">
+			<section name="Output"/>
+			<option value="A3D">
+				<parameter key="METEOPATH" type="path" optional="false">
+					<help>Path to the meteorological files; this path must exist, it won't be created</help>
+				</parameter>
+				<help>Original Alpine3D meteo files [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/a3d.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="BUFR">
+				<reference name="BUFR_OUT"/>
+				<help>BUFR files [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/geotop.html&quot;&gt;more…&lt;/a&gt;]. Filenames will be generated on the fly</help>
+			</option>
+			<option value="GEOTOP">
+				<reference name="GEOTOP_OUT"/>
+				<help>GeoTop meteo files [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/geotop.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="iCSV">
+				<reference name="iCSV_OUT"/>
+				<help>iCSV data files [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/icsvio.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="NETCDF" bold="true" italic="true">
+				<reference name="NETCDF_OUT"/>
+				<help>NetCDF grids and timeseries [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/netcdf.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="PSQL" italic="true">
+				<reference name="PSQL_OUT"/>
+				<help>PostgreS output (not suitable for most users) [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/psqlio.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="SMET" bold="true">
+				<reference name="SMET_OUT"/>
+				<help>SMET data files [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/smetio.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="SNOWPACK">
+				<parameter key="METEOPATH" type="path" optional="false">
+					<help>Path to the SNOWPACK files; this path MUST exist, it won't be created</help>
+				</parameter>
+				<help>Original SNOWPACK meteo files [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/snowpack.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+			<option value="ZRXP">
+				<reference name="ZRXP"/>
+				<help>Text format that can be read by the WISKI database environment [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/zrxpio.html&quot;&gt;more…&lt;/a&gt;]</help>
+			</option>
+
+			<help>See &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/data_sources.html&quot;&gt;MeteoIO's help&lt;/a&gt; for more information</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- BUFR-->
+	<parametergroup name="BUFR_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path where BUFR files should be saved</help>
+		</parameter>
+		<parameter key="SEPARATESTATIONS" type="checkbox" optional="true">
+			<help>Should each station be saved in a separate file?</help>
+		</parameter>
+		<parameter key="CRYOSTATION" type="checkbox" optional="true">
+			<help>Should the CryoStation format be used?</help>
+		</parameter>
+		<frame caption="CryoStation Metadata" collapsed="true">
+			<parameter key="WIGOSIDSERIES" type="number" format="integer+" optional="true">
+				<help>WIGOS ID series number</help>
+			</parameter>
+			<parameter key="WIGOSISSUER" type="number" format="integer+" optional="true">
+				<help>WIGOS ID issuer</help>
+			</parameter>
+			<parameter key="WIGOSISSUENO" type="number" format="integer+" optional="true">
+				<help>WIGOS ID issue number</help>
+			</parameter>
+			<parameter key="WIGOSLOCALID" type="text" optional="true">
+				<help>WIGOS local ID</help>
+			</parameter>
+			<parameter key="STATIONTYPE" type="alternative" optional="true">
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+				<option value="3"/>
+				<help>Station type: 0|Automatic; 1|Manned; 2|Hybrid; 3|Missing (default: 3)</help>
+			</parameter>
+			<parameter key="SURFACETYPE" type="alternative" optional="true">
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+				<option value="3"/>
+				<option value="4"/>
+				<option value="5"/>
+				<option value="6"/>
+				<option value="11"/>
+				<option value="12"/>
+				<option value="13"/>
+				<option value="14"/>
+				<option value="15"/>
+				<option value="16"/>
+				<option value="17"/>
+				<option value="18"/>
+				<option value="255"/>
+				<help>Surface type: 0|Open Ocean or Semi-Enclosed Sea; 1|Enclosed Sea or Lake; 2|Continental Ice; 3|Land; 4|Low Inland(below sea level); 5|Mix of Land and Water;
+						6|Mix of Land and Low Inland; 11|River; 12|Lake; 13|Sea; 14|Glacier; 15|Urban Land; 16|Rural Land; 17|Suburban Land; 18|Sea Ice; 255|Missing Value (default: 255)</help>
+			</parameter>
+			<parameter key="SNOWDEPTHMETHOD" type="alternative" optional="true">
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+				<option value="3"/>
+				<option value="14"/>
+				<option value="15"/>
+				<help>Method of snow depth measurement: 0|Manual; 1|Ultrasonic; 2|Video Camera; 3|Laser; 14|Others; 15|Missing Value (default: 15)</help>
+			</parameter>
+		</frame>
+		<parameter key="VERBOSE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Should additional information be printed?</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- GEOTOP -->
+	<parametergroup name="GEOTOP_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files</help>
+		</parameter>
+		<parameter key="METEOPREFIX" type="text">
+			<help>prefix to append when generating a file name for reading</help>
+		</parameter>
+		<parameter key="METEOSEQ" type="text" optional="false">
+			<help>specifiy in which order the columns should be printed out</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- NETCDF -->
+	<parametergroup name="NETCDF_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Path to the data files</help>
+		</parameter>
+		<parameter key="NC_SINGLE_FILE" type="alternative" default="FALSE">
+			<option value="TRUE">
+				<parameter key="METEOFILE" type="file" mode="output" optional="false">
+					<help>Absolute filename of the metadata file</help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>force all stations to be contained in a single file?</help>
+		</parameter>
+		<parameter key="NETCDF_SCHEMA_METEO" type="alternative" default="CF-1.6">
+			<option value="CF-1.6"/>
+			<option value="CROCUS"/>
+			<option value="AMUNDSEN"/>
+			<option value="ERA-INTERIM"/>
+			<option value="ERA5"/>
+			<option value="WRF"/>
+			<help>Data schema to use (i. e. mostly variables and dimensions naming)</help>
+		</parameter>
+		<parameter key="NC_STRICT_SCHEMA" type="alternative" default="FALSE">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>only write out parameters that are specifically described in the chosen schema?</help>
+		</parameter>
+		<parameter key="NC_LAX_SCHEMA" type="alternative" default="FALSE">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>write out all provided parameters even if no metadata can be associated with them?</help>
+		</parameter>
+		<parameter type="horizontal" label="">
+			<o><parameter key="ZREF" type="number" /></o>
+			<o><parameter key="UREF" type="number" /></o>
+			<help>For some applications, some extra information (meteorological measurements reference height ZREF, wind measurements reference height UREF) must be provided for meteorological time series (for example, for Crocus)</help>
+		</parameter>
+		<parameter type="horizontal" label="">
+			<o><parameter key="DEFAULT_SLOPE" type="number" /></o>
+			<o><parameter key="DEFAULT_AZI" type="number" /></o>
+			<help>For some applications, some extra information (default slope and azimuth) must be provided for meteorological time series (for example, for Crocus)</help>
+		</parameter>
+		<parameter key="ACDD_WRITE" label="Write ACDD metadata" type="alternative" default="TRUE">
+			<option value="TRUE"><reference name="ACDD"/></option>
+			<option value="FALSE"/>
+			<help>fill ACDD metadata fields (see &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1ACDD.html&quot;&gt;MeteoIO's help&lt;/a&gt; for more information)</help>
+		</parameter>
+		<parameter key="NC_KEEP_FILES_OPEN" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>keep files open for efficient access? Beware, simulateous writing to a file in the case of parallelized processing could lead to data corruption (default: false)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- PSQL -->
+	<parametergroup name="PSQL_OUT">
+		<parameter key="PSQL_URL" type="text" optional="false">
+			<help>Database URL</help>
+		</parameter>
+		<parameter key="PSQL_PORT" type="text" validate="[0-9]+" size="small">
+			<help>Database port to use for connection</help>
+		</parameter>
+		<parameter key="PSQL_DB" type="text" optional="false">
+			<help>Database name</help>
+		</parameter>
+		<parameter key="PSQL_USER" type="text" optional="false"/>
+		<parameter key="PSQL_PASS" type="text" optional="false"/>
+		<parameter key="SQL_META" type="text" optional="false">
+			<help>Query to retrieve the metadata. For example, &lt;code&gt;SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN&lt;/code&gt;
+			</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- SMET output -->
+	<parametergroup name="SMET_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Directory to save your SMET data output files in</help>
+		</parameter>
+		<parameter key="METEOPARAM" type="alternative">
+			<option value="ASCII"/>
+			<option value="BINARY"/>
+			<help>Either write an ascii file (default) or a binary one</help>
+		</parameter>
+		<parameter key="SMET_VERSIONING" type="alternative">
+			<option value="NONE"/>
+			<option value="NOW"/>
+			<option value="DATA_START"/>
+			<option value="DATA_END"/>
+			<option value="YEARS"/>
+			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
+		</parameter>
+		<parameter key="SMET_PLOT_HEADERS" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>should the plotting headers (to help make more meaningful plots) be included in the outputs? (default: true)</help>
+		</parameter>
+		<parameter key="SMET_RANDOM_COLORS" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>for variables where no predefined colors are available, either specify grey or random colors (default: false)</help>
+		</parameter>
+		<parameter key="SMET_DEFAULT_PREC" type="number" format="integer+" notoggle="true">
+			<help>default number of decimals for parameters that don't already define it (default: 3)</help>
+		</parameter>
+		<parameter key="SMET_DEFAULT_WIDTH" type="number" format="integer+" notoggle="true">
+			<help>default number of characters for parameters that don't already define it (default: 8)</help>
+		</parameter>
+		<parameter key="SMET_APPEND" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>when an output file already exists, should the plugin try to append data? (default: false)</help>
+		</parameter>
+		<parameter key="SMET_OVERWRITE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>when an output file already exists, should the plugin overwrite it? (default: true)</help>
+		</parameter>
+		<parameter key="ACDD_WRITE" label="Write ACDD metadata" type="alternative">
+			<option value="TRUE"><reference name="ACDD"/></option>
+			<option value="FALSE"/>
+			<help>Should ACDD metadata be written in the header? (default: false)</help>
+		</parameter>
+		<frame caption="CSV compatibility" collapsed="true">
+			<parameter type="helptext" wrap="true">
+				<help>The options below make it easy to import smet files into various softwares that expect very basic CSV syntax but at the cost of making the smet files &lt;font color="#ff0000"&gt;&lt;strong&gt;non-conformant&lt;/strong&gt;&lt;/font&gt;</help>
+			</parameter>
+			<parameter key="SMET_SEPARATOR" type="text" validate="(\[:space:\])|." size="small">
+				<help>Set a different column delimiter, the posix expression &lt;i&gt;[:space:]&lt;/i&gt; represents any combination of white spaces (default: white spaces)</help>
+			</parameter>
+			<parameter key="SMET_COMMENTED_HEADERS" type="alternative">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Prefix all header lines with a '#' character? (default: false)</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+	<!-- iCSV output -->
+	<parametergroup name="iCSV_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Directory to save your iCSV data output files in</help>
+		</parameter>
+		<parameter key="EXTENSION_OUT" type="text" optional="true">
+			<help>File extension for the output files (default: .icsv)</help>
+		</parameter>
+		<parameter key="iCSV_SEPARATOR" type="alternative" optional="true">
+			<option value=","/>
+			<option value=";"/>
+			<option value=":"/>
+			<option value="|"/>
+			<option value="/"/>
+			<option value="\"/>
+			<help> The delimiter used in the output file (default: ,)</help>
+		</parameter>
+		<parameter key="iCSV_APPEND" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>when an output file already exists, should the plugin try to append data? (default: false)</help>
+		</parameter>
+		<parameter key="iCSV_OVERWRITE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>when an output file already exists, should the plugin overwrite it? (default: true)</help>
+		</parameter>
+		<parameter key="ACDD_WRITE" label="Write ACDD metadata" type="alternative">
+			<option value="TRUE"><reference name="ACDD"/></option>
+			<option value="FALSE"/>
+			<help>Should ACDD metadata be written in the header? (default: false)</help>
+		</parameter>
+	</parametergroup>
+
+	<!-- ZRXP -->
+	<parametergroup name="ZRXP">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Directory to save your SMET data output files in</help>
+		</parameter>
+		<parameter key="ZRXP_FILE_EXTENSION" label="File extension:" type="text" default="zrxp" size="small"/>
+		<parameter type="horizontal" key="ZRXP_" label="">
+			<o><parameter key="@SEPARATOR" label="Header separator:" type="text" default="|" validate="." size="small"/></o>
+			<o><parameter key="ZRXP_RINVAL" label="RINVAL:" type="number" default="-999"/></o>
+			<help>The file extension for ZRXP files, the delimiter used to separate the header fields, and the value given to WISKI to interpret as missing data (default: MeteoIO's nodata, usually -999)</help>
+		</parameter>
+		<parameter key="ZRXP_WRITE_UNITS" label="Write out units:" type="alternative" default="KEYWORD">
+			<o value="KEYWORD"><help>Units respected by the WISKI import</help></o>
+			<o value="COMMENT"><h>Units transported as comment, not used in WISKI import</h></o>
+			<o value="OFF"><h>Do not write out units</h></o>
+			<help>Controls whether MeteoIO's stored units for the parameters are written out</help>
+		</parameter>
+		<parameter key="ZRXP_CONVERT_LATIN" type="checkbox" caption="Use local character encoding" default="FALSE">
+			<help>Encode non-ASCII characters on the operating system running the program</help>
+		</parameter>
+		<parameter key="ZRXP_WRITE_CNR" type="checkbox" caption="Write internal paramater indices" default="TRUE">
+			<help>Outputs MeteoIO's internal parameter index</help>
+		</parameter>
+		<parameter key="ZRXP_NODATA_PARAMS" type="checkbox" caption="Output parameters processed to nodata" default="TRUE">
+			<help>Parameters that are nodata throughout will be output if at least one nodata is the result of processing</help>
+		</parameter>
+		<parameter key="ZRXP_REMARK" label="Enter remark:" type="text" default="" size="large">
+			<help>A remark that is passed through to each output line</help>
+		</parameter>
+		<parameter type="helptext" wrap="true">
+			<help>The following are &lt;font color=&quot;#000000&quot;&gt;&lt;u&gt;status values&lt;/u&gt;&lt;/font&gt; that are set depending on how the meteo value was processed:&lt;ul&gt;
+				&lt;li&gt;Status to give for data that was checked and left unaltered&lt;/li&gt;
+				&lt;li&gt;Status for temporally interpolated data&lt;/li&gt;
+				&lt;li&gt;Status for filtered (changed) data&lt;/li&gt;
+				&lt;li&gt;Status for data originating from a MeteoIO generator&lt;/li&gt;
+				&lt;li&gt;Status for nodata values (default: disabled, has priority over all others)&lt;/li&gt;
+				&lt;li&gt;Status for when nodata is already present in the input file and left untouched&lt;/li&gt;
+				&lt;/ul&gt;</help>
+		</parameter>
+		<parameter type="horizontal" key="ZRXP_STATUS_" label="">
+			<o><parameter key="@UNALTERED" label="Unaltered:" type="number" format="integer" default="41" notoggle="true"/></o>
+			<o><parameter key="@RESAMPLED" label="Resampled:" type="number" format="integer" default="42" notoggle="true"/></o>
+			<o><parameter key="@FILTERED" label="Filtered:" type="number" format="integer" default="43" notoggle="true"/></o>
+		</parameter>
+		<parameter type="horizontal" key="ZRXP_STATUS_" label="">
+			<o><parameter key="@GENERATED" label="Generated:" type="number" format="integer" default="44" notoggle="true"/></o>
+			<o><parameter key="@NODATA" label="Nodata:" type="number" format="integer" notoggle="true"/></o>
+			<o><parameter key="@UNALTERED_NODATA" label="Unaltered n/a:" type="number" format="integer" default="255" notoggle="true"/></o>
+		</parameter>
+	</parametergroup>
+	
+	<!-- ACDD input keys for plugins supporting acdd metadata -->
+	<parametergroup name="ACDD">
+		<parameter type="helptext" wrap="true">
+			<help>The Attribute Convention for Data Discovery (ACDD) describes attributes recommended for describing a  dataset to discovery systems such as Digital Libraries. This helps systems and users locate and use data efficiently. Please have a look at the &lt;a href="https://adc.met.no/node/4"&gt;list of attribues&lt;/a&gt; with their definitions.</help>
+		</parameter>
+		<frame caption="Overview of the dataset" collapsed="true">
+			<parameter key="ACDD_TITLE" type="text" size="large" bold="true"><help>a short title for the data set</help></parameter>
+			<parameter key="ACDD_SUMMARY" type="text" size="large" bold="true"><help>a paragraph describing the dataset</help></parameter>
+			<parameter key="ACDD_SUMMARY_FILE" type="file"  mode="input"><help>a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present</help></parameter>
+			<parameter key="ACDD_KEYWORDS" type="text" size="large" bold="true"><help>a comma-separated list of &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; terms or terms fron another vocabulary (provided with their full path)</help></parameter>
+			<parameter key="ACDD_KEYWORDS_VOCABULARY" type="text" size="large" bold="true"><help>the unique name or identifier of the vocabulary from which keywords are taken (default: &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; (GCMDSK))</help></parameter>
+			<parameter key="ACDD_COMMENT" type="text" size="large"><help>miscellaneous informartion about the dataset</help></parameter>
+			<parameter key="ACDD_ACKNOWLEDGEMENT" type="text" size="large"><help>acknowledgement for the various types of support for the project that produced this data</help></parameter>
+		</frame>
+		<frame caption="Linking the dataset to other resources and metadata" collapsed="true">
+			<parameter key="WIGOS_ID" type="text" size="medium"><help>although this is not an ACDD key, it can be very useful in linking datasets together through their &lt;a href="https://oscar.wmo.int/surface"&gt;WIGOS ID&lt;/a&gt;</help></parameter>
+			<parameter key="ACDD_ID" type="text" size="medium" bold="true"><help>an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces</help></parameter>
+			<parameter key="ACDD_NAMING_AUTHORITY" type="text" size="medium" bold="true"><help>the organization that provides the initial id for the dataset</help></parameter>
+			<parameter key="ACDD_REFERENCES" type="text" size="medium"><help>Published or web-based references that describe the data or methods used to produce it</help></parameter>
+			<parameter key="ACDD_METADATA_LINK" type="text" size="medium" validate="^(http|https|ftp)://.+"><help>A URL/DOI that gives more complete metadata</help></parameter>
+		</frame>
+		<frame caption="Origin of the data" collapsed="true">
+			<parameter key="ACDD_SOURCE" type="text" size="medium"><help>the source and method of production of the original data</help></parameter>
+			<parameter key="ACDD_PROJECT" type="text" size="medium" bold="true"><help>the scientific project that created the data</help></parameter>
+			<parameter key="ACDD_PROGRAM" type="text" size="medium"><help>the overarching program(s) of which the dataset is a part;</help></parameter>
+			<parameter key="ACDD_ACTIVITY_TYPE" type="alternative">
+				<o value="aircraft"/>
+				<o value="space borne instrument"/>
+				<o value="numerical simulation"/>
+				<o value="climate indicator"/>
+				<o value="in situ land-based station"/>
+				<o value="in situ ship-based station"/>
+				<o value="in situ ocean fixed station"/>
+				<o value="in situ ocean moving station"/>
+				<o value="in situ ice-based station"/>
+				<o value="interview/questionnaire"/>
+				<o value="maps/charts/photographs"/>
+				<help>Controlled vocabulary used to describe activity types, see &lt;a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type"&gt;the specification&lt;/a&gt; for more</help>
+			</parameter>
+		</frame>
+		<frame caption="Contact information regarding the data set" collapsed="true">
+			<parameter type="helptext" wrap="true">
+			<help>These attributes should help contacting those involved in every step from the creation of the dataset to its publication. In order to properly acknowledge all contributions, these fields can all be comma seperated lists (white spaces around the commas are allowed) but all matching fields must contain the same number of elements. For example if there are 3 names provided in ACDD_CREATOR, then there must also be 3 emails provided in ACDD_CREATOR_EMAIL (in the same order as the 3 names).</help>
+			</parameter>
+			<parameter key="ACDD_CREATOR" type="text" size="medium" bold="true"><help>Name of the creator(s) of the data set</help></parameter>
+			<parameter key="ACDD_CREATOR_EMAIL" type="text" size="medium" bold="true" validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}( *, *[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}){0,}$"><help>Email(s) of the creator(s)</help></parameter>
+			<parameter key="ACDD_CREATOR_INSTITUTION" type="text" size="medium" bold="true"><help>Institution(s) of the creator(s)</help></parameter>
+			<parameter key="ACDD_CREATOR_URL" type="text" size="medium" bold="true" validate="^((http|https|ftp)://[^,]*)( *, *(http|https|ftp)://[^,]*){0,}"><help>URL of the creator(s)</help></parameter>
+			<parameter key="ACDD_CREATOR_TYPE" type="text" bold="true" validate="(person|group|institution|position)( *, *(person|group|institution|position)){0,}"><help>Type of creator(s), choosen from &lt;b&gt;(person|group|institution|position)&lt;/b&gt;</help></parameter>
+			<parameter key="ACDD_PUBLISHER" type="text" size="medium"><help>Name of the person(s) / entity(ies) responsible for publishing the data file or product to users, with its current metadata and format</help></parameter>
+			<parameter key="ACDD_PUBLISHER_EMAIL" type="text" size="medium" validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}( *, *[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}){0,}$"><help>Email of the publisher(s)</help></parameter>
+			<parameter key="ACDD_PUBLISHER_URL" type="text" size="medium" validate="^((http|https|ftp)://[^,]*)( *, *(http|https|ftp)://[^,]*){0,}"><help>the URL of the publisher</help></parameter>
+			<parameter key="ACDD_PUBLISHER_TYPE" type="text" validate="(person|group|institution|position)( *, *(person|group|institution|position)){0,}"><help>Type of publisher(s), choosen from &lt;b&gt;(person|group|institution|position)&lt;/b&gt;</help></parameter>
+			<parameter key="ACDD_CONTRIBUTOR" type="text" size="medium"><help>Name of the person(s) / entity(ies) who has/have contributed to the data set (such as by providing data, maintaining the instruments, ...)</help></parameter>
+			<parameter key="ACDD_CONTRIBUTOR_ROLE" type="text" size="medium"><help>Role of the contributor(s)</help></parameter>
+			<parameter key="ACDD_INSTITUTION" type="text" size="medium"><help>Institution providing the data set (this is a legacy field, only one entry)</help></parameter>
+		</frame>
+		<frame caption="Miscellaneous" collapsed="true">
+			<parameter key="ACDD_LICENSE" type="text" size="large" bold="true"><help>describes the license applicable to the dataset (in the form &lt;b&gt;{url} ({license abbreviation})&lt;/b&gt; as found in the &lt;a href="https://spdx.org/licenses/"&gt;SPDX License List&lt;/a&gt;)</help></parameter>
+			<parameter key="ACDD_PRODUCT_VERSION" type="text" size="medium"><help>version identifier of the data file or product as assigned by the data creator</help></parameter>
+			<parameter key="ACDD_PROCESSING_LEVEL" type="text" size="medium"><help>a textual description of the processing level</help></parameter>
+			<parameter key="ACDD_OPERATIONAL_STATUS" type="alternative">
+				<o value="operational"/>
+				<o value="pre-operational"/>
+				<o value="experimental"/>
+				<o value="scientific"/>
+				<help>Controlled vocabulary used to describe the operational status, see &lt;a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status"&gt;the specification&lt;/a&gt; for more</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+</inishell_include>

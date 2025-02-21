@@ -39,7 +39,7 @@ namespace mio {
  * Finally, plugins must properly handle time zones. The Date class provides everything that is necessary, but the plugin developer must still properly set the time zone to each Date object (using the "TZ" key in the io.ini configuration file at least as a default value and afterwards overwriting with a plugin specified time zone specification if available). The time zone should be set \em before setting the date (so that the date that is given is understood as a date within the specified time zone).
  *
  * The meteorological data must be returned in a vector of vectors of MeteoData (and similarly, of StationData in order to provide the metadata). This consists of building a vector of MeteoData objects, each containing a set of measurements for a given timestamp, at a given location. This vector that contains the time series at one specific location is then added to a vector (pushed) that will then contain all locations.
- * \image html vector_vector.png "vector of vector structure"
+ * \image html vector_vector.svg "vector of vector structure" width=900px
  * \image latex vector_vector.eps "vector of vector structure" width=0.9\textwidth
  *
  * Various classes from MeteoIO can prove convenient for use by plugins: for example the Coords class should be used for geographic coordinates conversions, while the Config class should be used for getting configuration information from the user's configuration file. Please do NOT implement your own version of this kind of feature in your plugin but exclusively rely on the matching classes of MeteoIO, extending them if necessary.
@@ -200,19 +200,20 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 	if (args.empty()) return lines_specs;
 	
 	std::vector<std::string> vecString;
-	const size_t nrElems = IOUtils::readLineToVec(args, vecString, ',');
+	IOUtils::readLineToVec(args, vecString, ',');
 	
-	for (size_t ii=0; ii<nrElems; ii++) {
-		size_t l1, l2;
-		const size_t delim_pos = vecString[ii].find("-");
+	for (const std::string& restr_spec : vecString) {
+		size_t l1;
+		const size_t delim_pos = restr_spec.find("-");
 		if (delim_pos==std::string::npos) {
-			const std::string arg1( vecString[ii] );
+			const std::string arg1( restr_spec );
 			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
 				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
 			lines_specs.push_back( LinesRange(l1, l1) );
 		} else {
-			const std::string arg1( vecString[ii].substr(0, delim_pos) );
-			const std::string arg2( vecString[ii].substr(delim_pos+1) );
+			size_t l2;
+			const std::string arg1( restr_spec.substr(0, delim_pos) );
+			const std::string arg2( restr_spec.substr(delim_pos+1) );
 			if (!IOUtils::convertString(l1, IOUtils::trim(arg1) ))
 				throw InvalidFormatException("Could not process line number restriction "+arg1+" for "+where, AT);
 			if (!IOUtils::convertString(l2, IOUtils::trim(arg2) ))
@@ -232,13 +233,14 @@ std::vector< LinesRange > IOInterface::initLinesRestrictions(const std::string& 
 		//if negate, then compute the negation of the lines ranges
 		//trick: remember that a [] ONLY range is converted to a ][ EXCLUDE range!
 		std::vector<LinesRange> negative_lines_specs;
-		size_t ii_exclude_start = 1;
+		size_t ii_exclude_start = 0;
 		
-		for (size_t ii=0; ii<lines_specs.size(); ii++) {
-			const size_t only_start = lines_specs[ii].start;
+		for (const auto& spec : lines_specs) {
+			const size_t only_start = spec.start;
 			if (only_start>1)
 				negative_lines_specs.push_back( LinesRange(ii_exclude_start, only_start-1) );
-			ii_exclude_start = lines_specs[ii].end+1;
+
+			ii_exclude_start = spec.end+1;
 		}
 		negative_lines_specs.push_back( LinesRange(ii_exclude_start, static_cast<size_t>(-1)) );
 		

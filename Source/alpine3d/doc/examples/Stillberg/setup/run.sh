@@ -37,6 +37,10 @@ export LD_LIBRARY_PATH=${PROG_ROOTDIR}:${LD_LIBRARY_PATH}	#for Linux
 EXE="${PROG_ROOTDIR}/alpine3d"
 if [ ! -f ${EXE} ]; then
 	EXE=`which alpine3d`
+	if [ -z "$EXE" ]; then
+		echo "ERROR: alpine3d binary not found!" >> /dev/stderr
+		exit 127
+	fi
 fi
 N_EB=1
 N_SN=1
@@ -69,7 +73,6 @@ fi
 
 A3D_CMD="${TOOL} ${EXE} \
 --iofile=./io.ini \
---enable-eb  \
 --np-ebalance=${N_EB} \
 --np-snowpack=${N_SN} \
 --startdate=${BEGIN} --enddate=${END}"

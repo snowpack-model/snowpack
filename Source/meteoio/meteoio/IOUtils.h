@@ -118,7 +118,7 @@ namespace IOUtils {
 	* @param epsilon is a radius around val1
 	* @return true if val2 is within the radius around val1, false otherwise.
 	*/
-	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (fabs(val1-val2) < epsilon);}
+	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (std::abs(val1-val2) < epsilon);}
 
 	/**
 	* @brief Search for an element at a given date in a vector of MeteoData.
@@ -191,6 +191,8 @@ namespace IOUtils {
 	void stripComments(std::string& str);
 	
 	void stripComments(std::string& str, const char& comment_mk);
+
+	void cleanEscapedCharacters(std::string& str, const std::vector<char>& escaped_chars);
 	
 	/**
 	 * @brief Replace a substring within a given string by another one.
@@ -286,6 +288,9 @@ namespace IOUtils {
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim);
 	
+	std::vector<std::string> split(const std::string& str, char delim);
+	std::vector<std::string> split(const std::string& str, std::string delim);
+
 	template <class T> std::string toString(const T& t) {
 		std::ostringstream os;
 		os << t;

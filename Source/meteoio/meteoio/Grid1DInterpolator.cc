@@ -51,7 +51,7 @@ Grid1DInterpolator::Grid1DInterpolator(const Config& in_cfg) : algorithm_map(), 
 		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getArgumentsForAlgorithm(
 			parname, algo_name, section_name) );
 		algorithm_map[parname] = GridResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname,
-			grid_window_size, vecArgs);
+			grid_window_size, vecArgs, cfg);
 
 		//set generic parameters available for all algorithms:
 		const std::string where( "GridInterpolations1D::" + parname + "::" + algo_name );

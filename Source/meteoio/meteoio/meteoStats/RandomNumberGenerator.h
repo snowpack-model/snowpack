@@ -1261,12 +1261,12 @@ class RandomNumberGenerator : private RngCore {
 		RandomNumberGenerator(const RNG_TYPE& type = RNG_XOR, const RNG_DISTR& distribution = RNG_UNIFORM,
     		    const std::vector<double>& distribution_params = std::vector<double>());
 		RandomNumberGenerator(const RandomNumberGenerator& rng);
-		virtual ~RandomNumberGenerator();
+		virtual ~RandomNumberGenerator() override;
 
 		RandomNumberGenerator& operator=(const RandomNumberGenerator& rng);
 
-		uint64_t int64();
-		uint32_t int32();
+		uint64_t int64() override;
+		uint32_t int32() override;
 		double doub(); //we keep this separate for speed
 		double doub(const RNG_BOUND& bounds, const bool& true_double = false);
 		double draw(); //alias for uniform double
@@ -1279,8 +1279,8 @@ class RandomNumberGenerator : private RngCore {
 		bool trueRange32(const uint32_t& aa, const uint32_t& bb, uint32_t& result,
 		    const unsigned int& nmax = 1e6); //[a, b]
 		
-		void getState(std::vector<uint64_t>& ovec_seed) const;
-		void setState(const std::vector<uint64_t>& ivec_seed);
+		void getState(std::vector<uint64_t>& ovec_seed) const override;
+		void setState(const std::vector<uint64_t>& ivec_seed) override;
 
 		RNG_DISTR getDistribution(std::vector<double>& vec_params) const;
 		void setDistribution(const RNG_DISTR& distribution, const std::vector<double>& vec_params =
@@ -1333,10 +1333,10 @@ class RandomNumberGenerator : private RngCore {
 class RngXor : public RngCore { //combined generator with xor, shift and multiply
 	public: //new generators must provide these
 		RngXor();
-		uint64_t int64();
-		uint32_t int32();
-		void getState(std::vector<uint64_t>& ovec_seed) const;
-		void setState(const std::vector<uint64_t>& ivec_seed);
+		uint64_t int64() override;
+		uint32_t int32() override;
+		void getState(std::vector<uint64_t>& ovec_seed) const override;
+		void setState(const std::vector<uint64_t>& ivec_seed) override;
 
 	private:
 		uint64_t state;
@@ -1348,10 +1348,10 @@ class RngXor : public RngCore { //combined generator with xor, shift and multipl
 class RngPcg : public RngCore { //Permuted linear congruential generator
 	public:
 		RngPcg();
-		uint64_t int64();
-		uint32_t int32( );
-		void getState(std::vector<uint64_t>& ovec_seed) const;
-		void setState(const std::vector<uint64_t>& ivec_seed);
+		uint64_t int64() override;
+		uint32_t int32() override;
+		void getState(std::vector<uint64_t>& ovec_seed) const override;
+		void setState(const std::vector<uint64_t>& ivec_seed) override;
 
 	private:
 		uint64_t state;
@@ -1363,10 +1363,10 @@ class RngPcg : public RngCore { //Permuted linear congruential generator
 class RngMtw : public RngCore { //Mersenne Twister
 	public:
 		RngMtw();
-		uint64_t int64();
-		uint32_t int32( );
-		void getState(std::vector<uint64_t>& ovec_seed) const;
-		void setState(const std::vector<uint64_t>& ivec_seed);
+		uint64_t int64() override;
+		uint32_t int32() override;
+		void getState(std::vector<uint64_t>& ovec_seed) const override;
+		void setState(const std::vector<uint64_t>& ivec_seed) override;
 
 	private:
 		const unsigned int MT_NN; //number of states

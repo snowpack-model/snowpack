@@ -1,0 +1,29 @@
+SMET 1.1 ASCII
+[HEADER]
+station_id   = SDK
+station_name = Sodankyla
+latitude     = 67.367
+longitude    = 26.629
+altitude     = 179
+nodata = -999
+tz = 2
+ProfileDate = 2007-10-15T01:00
+HS_Last = 0.0
+SlopeAngle = 0
+SlopeAzi = 0
+nSoilLayerData = 5
+nSnowLayerData = 0
+SoilAlbedo = 0.25
+BareSoil_z0 = 0.2
+CanopyHeight = 0
+CanopyLeafAreaIndex = 2
+CanopyDirectThroughfall = 0
+ErosionLevel = 0
+TimeCountDeltaHS = 0
+fields = timestamp Layer_Thick T Vol_Frac_I Vol_Frac_W Vol_Frac_V Vol_Frac_S Rho_S Conduc_S HeatCapac_S rg rb dd sp mk mass_hoar ne CDot metamo
+[DATA]
+2007-10-15T01:00 1.60 274.87 0.00 0.25 0.125 0.625 2600.0 0.9 1000.00 3.5 0.0 0.0 0.0 0 0.0 4 0.0 0.0
+2007-10-15T01:00 0.80 274.91 0.00 0.25 0.125 0.625 2600.0 0.9 1000.00 3.5 0.0 0.0 0.0 0 0.0 2 0.0 0.0
+2007-10-15T01:00 0.20 274.81 0.00 0.25 0.125 0.625 2600.0 0.9 1000.00 3.5 0.0 0.0 0.0 0 0.0 2 0.0 0.0
+2007-10-15T01:00 0.20 274.67 0.00 0.25 0.125 0.625 2600.0 0.9 1000.00 3.5 0.0 0.0 0.0 0 0.0 4 0.0 0.0
+2007-10-15T01:00 0.20 274.15 0.00 0.25 0.125 0.625 2600.0 0.9 1000.00 3.5 0.0 0.0 0.0 0 0.0 20 0.0 0.0

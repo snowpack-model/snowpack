@@ -42,11 +42,12 @@ namespace mio {
  */
 class DataGenerator {
 	public:
-		DataGenerator(const Config& cfg);
+		DataGenerator(const Config& cfg, const std::set<std::string>& params_to_generate = std::set<std::string>());
 		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), data_qa_logs(c.data_qa_logs)  {}
 		virtual ~DataGenerator();
 
-		void fillMissing(METEO_SET& vecMeteo) const;
+		void fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET>& fullDataset, const std::vector<size_t>& stations_idx) const;
+		void fillMissing(METEO_SET& vecMeteo) const; //simplified call similar to above
 		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
 
 		DataGenerator& operator=(const DataGenerator& source);

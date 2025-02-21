@@ -37,6 +37,7 @@ class ElementData;
 class SnowStation;
 class CurrentMeteo;
 class BoundCond;
+class SurfaceFluxes;
 
 class SeaIce {
 	public:
@@ -51,7 +52,8 @@ class SeaIce {
 		static double compSeaIceThermalConductivity(const ElementData& Edata);
 		static double compSeaIceLatentHeatFusion(const ElementData& Edata);
 		static double compSeaIceLatentHeatFusion(const double& T, const double& Sal);
-		static double calculateMeltingTemperature(const double& Sal);
+		double calculateBrineSalinity(const double& T);
+		double calculateMeltingTemperature(const double& Sal);
 
 		const static double SeaWaterFreezingTemp;
 		const static double SeaIceDensity;
@@ -73,31 +75,33 @@ class SeaIce {
 		double OceanHeatFlux;       ///< Ocean heat flux (W/m^2)
 
 		double BottomSalFlux, TopSalFlux;	//Bottom and top salt flux
-		double TotalFloodingBucket;		//Total flooding with Bucket scheme (kg / m^2)
 
 		bool check_initial_conditions;
 		enum salinityprofiles{NONE, CONSTANT, COXANDWEEKS, LINEARSAL, LINEARSAL2, SINUSSAL};
 		salinityprofiles salinityprofile;
+		enum thermalmodels{IGNORE, ASSUR1958, VANCOPPENOLLE2019, VANCOPPENOLLE2019_M};
+		thermalmodels thermalmodel;
+
 
 		friend std::iostream& operator<<(std::iostream& os, const SeaIce& data);
 		friend std::iostream& operator>>(std::iostream& is, SeaIce& data);
 
 		void calculateMeltingTemperature(ElementData& Edata);
+		std::pair<double, double>getMu(const double& Sal);
 		void compSalinityProfile(SnowStation& Xdata);
 		void updateFreeboard(SnowStation& Xdata);
 		double findIceSurface(SnowStation& Xdata);
-		void compFlooding(SnowStation& Xdata);
-		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt);
-		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM);
+		void compFlooding(SnowStation& Xdata, SurfaceFluxes& Sdata);
+		void bottomIceFormation(SnowStation& Xdata, const CurrentMeteo& Mdata, const double& sn_dt, SurfaceFluxes& Sdata);
+		void ApplyBottomIceMassBalance(SnowStation& Xdata, const CurrentMeteo& Mdata, double dM, SurfaceFluxes& Sdata);
 
 		double getAvgBulkSalinity(const SnowStation& Xdata);
 		double getAvgBrineSalinity(const SnowStation& Xdata);
 		double getTotSalinity(const SnowStation& Xdata);
 
 		void InitSeaIce(SnowStation& Xdata);
-		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt);
-	private:
 
+		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt, SurfaceFluxes& Sdata);
 
 }; //end class Snowpack
 

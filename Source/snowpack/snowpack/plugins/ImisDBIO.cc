@@ -128,7 +128,7 @@ bool ImisDBIO::snowCoverExists(const std::string& /*i_snowfile*/, const std::str
 }
 
 void ImisDBIO::readSnowCover(const std::string& /*i_snowfile*/, const std::string& /*stationID*/,
-                             SN_SNOWSOIL_DATA& /*SSdata*/, ZwischenData& /*Zdata*/)
+                             SN_SNOWSOIL_DATA& /*SSdata*/, ZwischenData& /*Zdata*/, const bool& read_salinity)
 {
 	throw IOException("Nothing implemented here!", AT);
 }
@@ -176,7 +176,7 @@ void ImisDBIO::insertProfile(const std::vector<SnowProfileLayer> &Pdata)
 	const occi::Date calcDate( OracleDate(info.computation_date) );
 	const std::string stat_abk( Pdata[0].stationname );
 	const unsigned char stao_nr = Pdata[0].loc_for_snow;
-	const double version = atof( info.version.c_str() );
+	const double version = info.version_num;
 
 	//check that the station can really be an IMIS station
 	if(stat_abk.size()>4 || stat_abk.find_first_of("0123456789")!=string::npos)
@@ -212,7 +212,7 @@ void ImisDBIO::insertProfile(const std::vector<SnowProfileLayer> &Pdata)
 			stmt->executeUpdate(); // execute the statement stmt
 		} catch (const exception& e) {
 			cerr << "[E] SDB profile for station " << stat_abk << stao_nr << " at " << Pdata[0].profileDate.toString(mio::Date::ISO);
-			cerr << "\tsnowpack_version: " << fixed << setw(12) << setprecision(3) << info.version << "\tcalculation_date: " << Pdata[ii].depositionDate.toString(mio::Date::ISO);
+			cerr << "\tsnowpack_version: " << info.version << "\tcalculation_date: " << Pdata[ii].depositionDate.toString(mio::Date::ISO);
 			print_Profile_query(Pdata[ii]);
 			throw; //rethrow the exception
 		}
@@ -222,7 +222,7 @@ void ImisDBIO::insertProfile(const std::vector<SnowProfileLayer> &Pdata)
 				(stmt->getConnection())->commit();
 			} catch (const exception& e) {
 				cerr << "[E] SDB profile for station " << stat_abk << stao_nr << " at " << Pdata[0].profileDate.toString(mio::Date::ISO);
-				cerr << "\tsnowpack_version: " << fixed << setw(12) << setprecision(3) << info.version << "\tcalculation_date: " << Pdata[ii].depositionDate.toString(mio::Date::ISO);
+				cerr << "\tsnowpack_version: " << info.version << "\tcalculation_date: " << Pdata[ii].depositionDate.toString(mio::Date::ISO);
 				throw; //rethrow the exception
 			}
 		}
@@ -376,15 +376,15 @@ void ImisDBIO::print_Hdata_query(const ProcessDat& Hdata, const ProcessInd& Hdat
 	if (Hdata_ind.hn72_24)   cerr << Hdata.hn72_24 << ",";
 	else cerr << "NULL,";
 	cerr << "\t";
-	if (Hdata_ind.psum3)        cerr << Hdata.psum3 << ",";
+	if (Hdata_ind.hnw3)        cerr << Hdata.hnw3 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum6)        cerr << Hdata.psum6 << ",";
+	if (Hdata_ind.hnw6)        cerr << Hdata.hnw6 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum12)       cerr << Hdata.psum12 << ",";
+	if (Hdata_ind.hnw12)       cerr << Hdata.hnw12 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum24)       cerr << Hdata.psum24 << ",";
+	if (Hdata_ind.hnw24)       cerr << Hdata.hnw24 << ",";
 	else cerr << "NULL,";
-	if (Hdata_ind.psum72)       cerr << Hdata.psum72 << ",";
+	if (Hdata_ind.hnw72)       cerr << Hdata.hnw72 << ",";
 	else cerr << "NULL,";
 
 	cerr << "\t";
@@ -455,7 +455,7 @@ void ImisDBIO::insertHdata(const std::string& stationName, const std::string& st
                            const size_t& num)
 {
 	unsigned int rows_inserted = 0;
-	const double version = atof( info.version.c_str() );
+	const double version = info.version_num;
 	int statNum = 0;
 	IOUtils::convertString(statNum, stationNumber);
 	const occi::Date computationdate( OracleDate( info.computation_date ) );
@@ -494,15 +494,15 @@ void ImisDBIO::insertHdata(const std::string& stationName, const std::string& st
 		if (Hdata_ind[i].hn72_24)   stmt->setNumber(param++, Hdata[i].hn72_24);
 		else stmt->setNull(param++, occi::OCCINUMBER);
 
-		if (Hdata_ind[i].psum3)        stmt->setNumber(param++, Hdata[i].psum3);
+		if (Hdata_ind[i].hnw3)        stmt->setNumber(param++, Hdata[i].hnw3);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum6)        stmt->setNumber(param++, Hdata[i].psum6);
+		if (Hdata_ind[i].hnw6)        stmt->setNumber(param++, Hdata[i].hnw6);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum12)       stmt->setNumber(param++, Hdata[i].psum12);
+		if (Hdata_ind[i].hnw12)       stmt->setNumber(param++, Hdata[i].hnw12);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum24)       stmt->setNumber(param++, Hdata[i].psum24);
+		if (Hdata_ind[i].hnw24)       stmt->setNumber(param++, Hdata[i].hnw24);
 		else stmt->setNull(param++, occi::OCCINUMBER);
-		if (Hdata_ind[i].psum72)       stmt->setNumber(param++, Hdata[i].psum72);
+		if (Hdata_ind[i].hnw72)       stmt->setNumber(param++, Hdata[i].hnw72);
 		else stmt->setNull(param++, occi::OCCINUMBER);
 
 		if (Hdata_ind[i].hoar_size)  stmt->setNumber(param++, Hdata[i].hoar_size);
@@ -569,7 +569,7 @@ void ImisDBIO::insertHdata(const std::string& stationName, const std::string& st
 			rows_inserted += stmt->executeUpdate(); // execute the statement stmt
 		} catch (const exception& e) {
 			cerr << "[E] SDB for station " << stationName << statNum << " at " << Hdata[i].date.toString(mio::Date::ISO);
-			cerr << "\tsnowpack_version: " << fixed << setw(12) << setprecision(3) << info.version << "\tcalculation_date: " << info.computation_date.toString(mio::Date::ISO);
+			cerr << "\tsnowpack_version: " << info.version << "\tcalculation_date: " << info.computation_date.toString(mio::Date::ISO);
 			print_Hdata_query(Hdata[i], Hdata_ind[i]);
 			throw; //rethrow the exception
 		}
@@ -579,7 +579,7 @@ void ImisDBIO::insertHdata(const std::string& stationName, const std::string& st
 				(stmt->getConnection())->commit();
 			} catch (const exception& e) {
 				cerr << "[E] Commit to SDB failed for station " << stationName << statNum << " after " << Hdata[i].date.toString(mio::Date::ISO);
-				cerr << "\tsnowpack_version: " << fixed << setw(12) << setprecision(3) << info.version << "\tcalculation_date: " << info.computation_date.toString(mio::Date::ISO);
+				cerr << "\tsnowpack_version: " << info.version << "\tcalculation_date: " << info.computation_date.toString(mio::Date::ISO);
 				throw; //rethrow the exception
 			}
 		}

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2009-2024 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -53,7 +53,7 @@ TEMPLATE::TEMPLATE(const std::string& configfile) : cfg(configfile)
 	 * 
 	 * //it is also possible to get all the keys starting with a given pattern at once and then loop through them:
 	 * std::vector<std::string> vecFilenames;
-	* cfg.getValues("STATION", "INPUT", vecFilenames);
+	* cfg.getValues("METEOFILE", "INPUT", vecFilenames);
 	 */
 }
 

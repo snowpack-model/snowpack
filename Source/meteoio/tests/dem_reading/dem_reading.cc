@@ -11,17 +11,17 @@ using namespace std;
 const double epsilon = 1.0e-7;
 
 // --- File names ---
-unsigned int n_files= 3;
-string files[] ={"DEM.asc", "AZI.asc","SLOPE.asc"};
-string prefix_ref("ref_");
+static unsigned int n_files= 3;
+static string files[] ={"DEM.asc", "AZI.asc","SLOPE.asc"};
+static string prefix_ref("ref_");
 
 // --- Results ---
 // Header:				min		max			mean		s. min	s. max		[s. == slope]
-double r_DEM[]		={	193.,	4204.81,	1302.38,	0.,		43.486};
-double r_SUB_DEM[]	={	403.4,	4027.3,		1291.28,	0.,		40.0628};
+static double r_DEM[]		={	193.,	4204.81,	1302.38,	0.,		43.486};
+static double r_SUB_DEM[]	={	403.4,	4027.3,		1291.28,	0.,		40.0628};
 
 // controll basic values on dem
-bool simpleDEMcontroll(DEMObject& dem, double results[]) {
+static bool simpleDEMcontroll(DEMObject& dem, double results[]) {
 	bool status = true;
 
 	if(!IOUtils::checkEpsilonEquality(dem.grid2D.getMin(), results[0], epsilon)){
@@ -54,7 +54,7 @@ bool simpleDEMcontroll(DEMObject& dem, double results[]) {
 }
 
 // Make output files
-bool makeDEMfiles() {
+static bool makeDEMfiles() {
 	bool status=true;
 	cout << " ----- Read DEM, make subfiles and some basic controll \n";
 
@@ -121,7 +121,7 @@ bool makeDEMfiles() {
 	return status;
 }
 
-bool compareFiles() {
+static bool compareFiles() {
 	bool status=true;
 	for(unsigned int i = 0; i < n_files; i++) {
 		// ------ Compare reference file with generated results ---------

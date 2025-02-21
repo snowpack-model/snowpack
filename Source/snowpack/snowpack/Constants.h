@@ -40,9 +40,6 @@
 	#define SN_VERSION STR2( _VERSION )
 #endif
 
-/// @brief Initial value for stability parameter
-#define INIT_STABILITY 999.
-
 namespace Constants {
 	const double undefined = -999.; ///<This is the snowpack undefined value
 	const int iundefined = -999; ///<This is the snowpack undefined value

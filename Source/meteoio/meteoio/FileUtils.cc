@@ -19,8 +19,10 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include <sys/stat.h>
 
 #if defined _WIN32 || defined __MINGW32__
 	#ifndef NOMINMAX
@@ -38,6 +40,25 @@
 
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/FStream.h>
+#include <regex>
+
+//helper functions in file-scope only
+static void make_directory(const std::string &path)
+{
+	errno = 0;
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
+    const int status = mkdir(path.c_str());
+#else
+    const int status =  mkdir(path.c_str(), 0777);
+#endif
+	if (status==-1) {
+		std::ostringstream oss;
+		oss << "Creating directory \'" << path << "\' failed. Reason: " << std::strerror(errno) << "\n";
+		throw mio::IOException(oss.str(), AT);
+	}
+}
+
 
 namespace mio {
 namespace FileUtils {
@@ -53,7 +74,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	if (fin.fail()) throw AccessException(src, AT);
 
 	if (!validFileAndPath(dest)) throw InvalidNameException(dest, AT);
-	std::ofstream fout(dest.c_str(), std::ios::binary);
+	ofilestream fout(dest.c_str(), std::ios::binary);
 	if (fout.fail()) {
 		fin.close();
 		throw AccessException(dest, AT);
@@ -65,7 +86,7 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(std::string in_path, const bool& resolve)
+std::string cleanPath(std::string in_path, const bool& resolve, const bool& silent)
 {
 	if (!resolve) { //do not resolve links, relative paths, etc
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
@@ -91,7 +112,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 			free(real_path);
 			return tmp;
 		} else {
-			std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
+			if (!silent) std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif
@@ -141,6 +162,15 @@ std::string getFilename(const std::string& path)
 		return path;
 }
 
+std::string getDateTime()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm = *std::localtime(&t);
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%m%d_%H%M");
+	return oss.str();
+}
+
 bool validFileAndPath(const std::string& filename)
 {
 #if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
@@ -176,6 +206,43 @@ std::list<std::string> readDirectory(const std::string& path, const std::string&
 	std::list<std::string> dirlist;
 	readDirectoryPrivate(path, "", dirlist, pattern, isRecursive);
 	return dirlist;
+}
+
+bool directoryExists(const std::string &path) {
+	struct stat sb;
+	if (stat(path.c_str(), &sb) == 0) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool isWindowsPath(const std::string& path) 
+{
+	static const std::regex e("^[a-z]:\\/", std::regex::icase | std::regex::optimize);
+	return std::regex_search(path, e);
+}
+
+void createDirectories(const std::string &path)
+{
+	if (path.empty())
+		throw mio::IOException("Can not create empty directory", AT);
+	std::stringstream ps(path);
+
+	std::string tmp_path = "";
+	std::string item;
+	// recursively go through the path and create nonexisting directories
+	while (std::getline(ps, item, '/'))	{
+		tmp_path += item.empty() ? "/" : item;
+		// check if path already exists
+		if (directoryExists(tmp_path + "/")) { // Will falsely return false on windows otherwise
+			if (tmp_path != "/") tmp_path += "/";
+			continue;
+		} else {
+			make_directory( tmp_path );
+			tmp_path += "/";
+		}
+	}
 }
 
 #if defined _WIN32 || defined __MINGW32__
@@ -401,9 +468,9 @@ std::map<std::string,std::string> readKeyValueHeader(std::istream& fin, const si
 
 
 //below, the file indexer implementation
-void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
+void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos, const size_t& linenr)
 {
-	const file_index elem(i_date, i_pos);
+	const file_index elem(i_date, i_pos, linenr);
 
 	//check if we can simply append the new index
 	if (vecIndex.empty() || elem>vecIndex.back()) {
@@ -419,17 +486,17 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 	}
 }
 
-void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos)
+void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos, const size_t& linenr)
 {
 	Date tmpdate;
 	IOUtils::convertString(tmpdate, i_date, 0.);
-	setIndex(tmpdate, i_pos);
+	setIndex(tmpdate, i_pos, linenr);
 }
 
-void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos)
+void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos, const size_t& linenr)
 {
 	const Date tmpdate(i_date, 0.);
-	setIndex(tmpdate, i_pos);
+	setIndex(tmpdate, i_pos, linenr);
 }
 
 std::streampos FileIndexer::getIndex(const Date& i_date) const
@@ -452,6 +519,32 @@ std::streampos FileIndexer::getIndex(const double& i_date) const
 	return getIndex(tmpdate);
 }
 
+std::streampos FileIndexer::getIndex(const Date& i_date, size_t& o_linenr) const
+{
+	const size_t foundIdx = binarySearch(i_date);
+	if (foundIdx==static_cast<size_t>(-1))
+		return static_cast<std::streampos>(-1);
+
+	if (vecIndex[foundIdx].linenr == static_cast<size_t>(-1))
+		throw UnknownValueException("It is not possible to retrieve the line count from an indexed file if this has not been set when first reading the file. Please report it to the developers!", AT);
+
+	o_linenr = vecIndex[foundIdx].linenr;
+	return vecIndex[foundIdx].pos;
+}
+
+std::streampos FileIndexer::getIndex(const std::string& i_date, size_t& o_linenr) const
+{
+	Date tmpdate;
+	IOUtils::convertString(tmpdate, i_date, 0.);
+	return getIndex(tmpdate, o_linenr);
+}
+
+std::streampos FileIndexer::getIndex(const double& i_date, size_t& o_linenr) const
+{
+	const Date tmpdate(i_date, 0.);
+	return getIndex(tmpdate, o_linenr);
+}
+
 size_t FileIndexer::binarySearch(const Date& soughtdate) const
 {//perform binary search, return the first element that is GREATER than the provided value
 	if (vecIndex.empty()) return static_cast<size_t>(-1);
@@ -469,8 +562,15 @@ const std::string FileIndexer::toString() const
 {
 	std::ostringstream os;
 	os << "<FileIndexer>\n";
-	for (size_t ii=0; ii<vecIndex.size(); ii++)
-		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << vecIndex[ii].pos << std::dec << "\n";
+	for (size_t ii=0; ii<vecIndex.size(); ii++) {
+		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO);
+		if (vecIndex[ii].linenr==static_cast<size_t>(-1))
+			os << " - no linenr";
+		else
+			os << " - " << vecIndex[ii].linenr;
+		os << " -> #" << std::hex << vecIndex[ii].pos <<
+		std::dec << "\n";
+	}
 	os << "</FileIndexer>\n";
 	return os.str();
 }

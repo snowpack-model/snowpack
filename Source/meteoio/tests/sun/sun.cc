@@ -10,7 +10,7 @@ using namespace std;
 // ----- Constants ----
 static const int minutes_per_day = 60 * 24;
 
-mio::SunObject Sun(46.77181, 9.86820, 2192.); //Stillberg station
+static mio::SunObject Sun(46.77181, 9.86820, 2192.); //Stillberg station
 static const double slope_azi=38., slope_elev=35.;   //Stillberg station
 static const double TZ=1.;
 static const double TA = 273.15+11., RH = 0.5, mean_albedo = 0.5;
@@ -28,7 +28,7 @@ static const mio::Date d6(2001, 05, 22, 01, 0, 0, TZ); // double peaks
 static const double iswr_ref []= {-1000., -100., -10., -1., -0.1, -0.01, 0, 0.01, 0.1, 1., 10., 100., 1000};
 
 // write out ref file
-bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_ref) 
+static bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_ref)
 {
 	for (mio::Date date(start_date); date <= (start_date+1.); date+=(10./minutes_per_day)) { //every 10 minutes
 		os << date.toString(Date::ISO) << "\t";
@@ -84,7 +84,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_r
 
 
 // print out header to know which line is which
-void printHeader(ostream& os){
+static void printHeader(ostream& os){
 	os << "# date" << "\t" ;
 	os << "r. beam total" << "\t"<< "r. beam direct" << "\t"<< "r. beam diffues" << "\t"<< "r. beam splitting" << "\t";
 	os << "r. horizontal total" << "\t"<< "r. horizontal direct" << "\t"<< "r. horizontal diffuse" << "\t"<< "r. horizontal splitting" << "\t";
@@ -114,9 +114,9 @@ int main()
 	std::ofstream ofs(f_output.c_str(), ofstream::out | ofstream::trunc);
 
 	printHeader(ofs);
-	for (list<mio::Date>::iterator it_date = date.begin(); it_date != date.end(); it_date++) {
+	for (list<mio::Date>::iterator it_date = date.begin(); it_date != date.end(); ++it_date) {
 		std::cout << " -- read information for date : " << (*it_date).toString(Date::ISO) << "\n -- Processing reference iswr [";
-		for (list<double>::iterator it_iswr = iswr.begin(); it_iswr != iswr.end(); it_iswr++) {
+		for (list<double>::iterator it_iswr = iswr.begin(); it_iswr != iswr.end(); ++it_iswr) {
 			cout << " " << *it_iswr;
 			if(!writeSun24h(ofs, *it_date, *it_iswr)){
 				exit(1);

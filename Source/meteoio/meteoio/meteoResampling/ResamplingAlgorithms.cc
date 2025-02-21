@@ -25,6 +25,7 @@
 #include <meteoio/meteoResampling/NearestNeighbour.h>
 #include <meteoio/meteoResampling/NoResampling.h>
 #include <meteoio/meteoResampling/SolarResampling.h>
+#include <meteoio/meteoResampling/ARIMAResampling.h>
 
 namespace mio {
 /**
@@ -34,32 +35,47 @@ namespace mio {
  *
  * @section resampling_section Resampling section
  * The resampling is specified for each parameter in the [Interpolations1D] section. This section contains
- * a list of the various meteo parameters with their associated choice of resampling algorithm and
+ * a list of the various meteo parameters (either from the \ref MeteoData::Parameters "list of standard parameter names" or 
+ * any other name of your choice) with their associated choice of resampling algorithm stacks and
  * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
- * assumed. An example of such section is given below:
+ * assumed. The Resampling is done by using a stack of resampling algorithms, with optional specifications of 
+ * the maximum data gap that the respective algorithm should be used for.
+ * (The default for the maximum gap size is -999 = internal nodata value, meaning that the algorithm should be used for all gaps).
+ * 
+ * NEW: The arguments for the resampling algorithms are not given by PARAM::ALGO_NAME::%ARGUMENT anymore but by PARAM::ARG#::%ARGUMENT for 
+ * the resampling algorithm number #. This allows to repeat the same algorithm with different parameters for the same meteo parameter.
+ * 
+ * NEW: Parameter heights will be accounted for (given with @...) parameters at different heights will be treated with the same algorithm.
+ * 
+ * An example of such section is given below:
  * @code
  * [Interpolations1D]
- * WINDOW_SIZE     = 86400
- * TA::resample    = linear
+ * MAX_GAP_SIZE     = 86400
+ * TA::RESAMPLE1    = linear
  *
- * RH::resample            = linear
- * RH::linear::window_size = 172800
+ * RH::RESAMPLE1            = linear
+ * RH::ARG1::MAX_GAP_SIZE = 86400 # 1 day in seconds
  *
- * VW::resample             = nearest
- * VW::nearest::extrapolate = true
+ * VW::resample1             = nearest
+ * VW::ARG1::extrapolate = true
+ * VW::ARG1::max_gap_size = 3600
+ * VW::resample2			 = nearest
+ * VW::ARG2::extrapolate = false
+ * VW::ARG2::max_gap_size = 86400
+ * 
  *
- * PSUM::resample           = accumulate
- * PSUM::accumulate::period = 3600
+ * PSUM::resample1           = accumulate
+ * PSUM::arg1::period = 3600
  * @endcode
  *
- * Most of the resampling algorithms allow you to define per-meteo parameter and per-algorithm the WINDOW_SIZE. Otherwise, the section's WINDOW_SIZE is
- * used as default window size. This represents the biggest gap that can be interpolated (in seconds). Therefore if two valid points are less than
- * WINDOW_SIZE seconds apart, points in between will be interpolated. If they are further apart, all points in between will remain IOUtils::nodata.
- * If using the "extrapolate" optional argument, points at WINDOW_SIZE distance of only one valid point will be extrapolated, otherwise they will remain
+ * Most of the resampling algorithms allow you to define per-meteo parameter and per-algorithm the MAX_GAP_SIZE. Otherwise, the section's MAX_GAP_SIZE is
+ * used as default maximum gap size. This represents the biggest gap that can be interpolated (in seconds). Therefore if two valid points are less than
+ * MAX_GAP_SIZE seconds apart, points in between will be interpolated. If they are further apart, all points in between will remain IOUtils::nodata.
+ * If using the "extrapolate" optional argument, points at MAX_GAP_SIZE distance of only one valid point will be extrapolated, otherwise they will remain
  * IOUtils::nodata. Please keep in mind that allowing extrapolated values can lead to grossly out of range data: using the slope
  * between two hourly measurements to extrapolate a point 10 days ahead is obviously risky!
  *
- * By default, WINDOW_SIZE is set to 2 days. This key has a <b>potentially large impact on run time/performance</b>.
+ * By default, MAX_GAP_SIZE is set to 2 days. This key has a <b>potentially large impact on run time/performance</b>.
  *
  * @section algorithms_available Available Resampling Algorithms
  * Several algorithms for the resampling are implemented:
@@ -70,37 +86,36 @@ namespace mio {
  * - solar: resample solar radiation by interpolating an atmospheric loss factor, see Solar
  * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
  * - daily_avg: generate a sinusoidal variation around the measurement taken as daily average and of a given amplitude, see DailyAverage
+ * - ARIMA: resample using the ARIMA model, see ARIMAResampling
  *
  * @note By default a linear resampling will be performed. It is possible to turn off all resampling by setting the *Enable_Resampling* key
  * to *false* in the [Interpolations1D] section.
  */
 
-ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &cfg)
 {
 	const std::string algoname( IOUtils::strToUpper(i_algoname) );
 
 	if (algoname == "NONE" || algoname == "NO") {
-		return new NoResampling(algoname, parname, dflt_window_size, vecArgs);
+		return new NoResampling(algoname, parname, dflt_max_gap_size, vecArgs);
 	} else if (algoname == "LINEAR") {
-		return new LinearResampling(algoname, parname, dflt_window_size, vecArgs);
+		return new LinearResampling(algoname, parname, dflt_max_gap_size, vecArgs);
 	} else if (algoname == "NEAREST") {
-		return new NearestNeighbour(algoname, parname, dflt_window_size, vecArgs);
+		return new NearestNeighbour(algoname, parname, dflt_max_gap_size, vecArgs);
 	} else if (algoname == "ACCUMULATE") {
-		return new Accumulate(algoname, parname, dflt_window_size, vecArgs);
+		return new Accumulate(algoname, parname, dflt_max_gap_size, vecArgs, cfg);
 	} else if (algoname == "SOLAR") {
-		return new Solar(algoname, parname, dflt_window_size, vecArgs);
+		return new Solar(algoname, parname, dflt_max_gap_size, vecArgs);
 	} else if (algoname == "DAILY_SOLAR") {
-		return new Daily_solar(algoname, parname, dflt_window_size, vecArgs);
+		return new Daily_solar(algoname, parname, dflt_max_gap_size, vecArgs);
 	} else if (algoname == "DAILY_AVG") {
-		return new DailyAverage(algoname, parname, dflt_window_size, vecArgs);
+		return new DailyAverage(algoname, parname, dflt_max_gap_size, vecArgs);
+	} else if (algoname == "ARIMA") {
+		return new ARIMAResampling(algoname, parname, dflt_max_gap_size, vecArgs);
 	} else {
 		throw IOException("The resampling algorithm '"+algoname+"' is not implemented" , AT);
 	}
 }
-
-const double ResamplingAlgorithms::soil_albedo = .23; ///< grass albedo
-const double ResamplingAlgorithms::snow_albedo = .85; ///< snow albedo
-const double ResamplingAlgorithms::snow_thresh = .1; ///< if snow height greater than this threshold -> snow albedo
 
 //compute the partial accumulation at the std::left of curr_date within a sampling interval
 double ResamplingAlgorithms::partialAccumulateAtLeft(const std::vector<MeteoData>& vecM, const size_t& paramindex,
@@ -143,9 +158,9 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
 
 //return true if a valid point could be found
 size_t ResamplingAlgorithms::searchBackward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size)
+                                              const double& i_max_gap_size)
 {
-	const Date windowStart( resampling_date - i_window_size );
+	const Date windowStart( resampling_date - i_max_gap_size );
 	const bool knownGap = (!last_gap.start.isUndef() && !last_gap.end.isUndef());
 	const bool currentInGap = (knownGap)? (resampling_date>=last_gap.start && resampling_date<=last_gap.end) : false;
 	const bool windowStartInGap = (knownGap)? (windowStart>=last_gap.start && windowStart<=last_gap.end) : false;
@@ -191,9 +206,9 @@ size_t ResamplingAlgorithms::searchBackward(gap_info &last_gap, const size_t& po
 
 //return true if a valid point could be found
 size_t ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size, const size_t& indexP1)
+                                              const double& i_max_gap_size, const size_t& indexP1)
 {
-	const Date windowEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+i_window_size : resampling_date+i_window_size;
+	const Date windowEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+i_max_gap_size : resampling_date+i_max_gap_size;
 	const bool knownGap = (!last_gap.start.isUndef() && !last_gap.end.isUndef());
 	const bool currentInGap = (knownGap)? (resampling_date>=last_gap.start && resampling_date<=last_gap.end) : false;
 	const bool windowEndInGap = (knownGap)? (windowEnd>=last_gap.start && windowEnd<=last_gap.end) : false;
@@ -236,6 +251,21 @@ size_t ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos
 	}
 }
 
+ResamplingAlgorithms::gap_info ResamplingAlgorithms::findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
+					 const double& i_max_gap_size) {
+	ResamplingAlgorithms::gap_info last_gap;
+	size_t indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size);
+	size_t indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size, indexP1);
+
+	if (indexP1 == IOUtils::npos) {
+		last_gap.setStart(0, vecM);
+	}
+	if (indexP2 == IOUtils::npos) {
+		last_gap.setEnd(vecM.size()-1, vecM);
+	}
+	return last_gap;
+}
+
 /**
  * @brief This function returns the last and next valid points around a given position
  * @param stationHash hash used to uniquely identify timeseries (so we can cache some data per timeseries)
@@ -243,16 +273,16 @@ size_t ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos
  * @param paramindex meteo parameter to use
  * @param vecM vector of MeteoData
  * @param resampling_date date to resample
- * @param i_window_size size of the search window
+ * @param i_max_gap_size size of the search window
  * @param indexP1 index of point before the current position (IOUtils::npos if none could be found)
  * @param indexP2 index of point after the current position (IOUtils::npos if none could be found)
  */
 void ResamplingAlgorithms::getNearestValidPts(const std::string& stationHash, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& i_window_size, size_t& indexP1, size_t& indexP2)
+                                              const double& i_max_gap_size, size_t& indexP1, size_t& indexP2)
 {
 	gap_info &last_gap = gaps[ stationHash ];
-	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size);
-	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_window_size, indexP1);
+	indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size);
+	indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size, indexP1);
 }
 
 /**
@@ -344,7 +374,7 @@ size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, c
 		if (hour1==0 && min1==0)
 			indexP1=IOUtils::npos;
 		else { //otherwise, this means multiple daily sums have been found for the same day
-			const std::string msg = "More than one daily sum of solar radiation found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
+			const std::string msg = "More than one daily value found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
 			throw IOException(msg, AT);
 		}
 	}

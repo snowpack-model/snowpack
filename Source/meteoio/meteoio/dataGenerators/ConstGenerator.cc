@@ -36,7 +36,7 @@ void ConstGenerator::parse_args(const std::vector< std::pair<std::string, std::s
 	if (!has_cst) throw InvalidArgumentException("Please provide a VALUE for "+where, AT);
 }
 
-bool ConstGenerator::generate(const size_t& param, MeteoData& md)
+bool ConstGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata)
@@ -50,7 +50,7 @@ bool ConstGenerator::create(const size_t& param, const size_t& ii_min, const siz
 	if (vecMeteo.empty()) return true;
 
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		generate(param, vecMeteo[ii]);
+		generate(param, vecMeteo[ii], vecMeteo);
 	}
 
 	return true; //all missing values could be filled

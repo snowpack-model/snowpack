@@ -54,10 +54,9 @@ class SnowpackInterface;
  * in the [EBalance] section of the configuration file and is handled by a choice of various algorithms,
  * as chosen in the configuration file with the key Terrain_Radiation_Method that
  * can take any of the following choices:
- *     - SIMPLE : a very basic (but fast) guess, see TerrainRadiationSimple
- *     - FULL : a parallelized implementation of a radiosity algorithm, see TerrainRadiation
- *     - HELBIG : the original radiosity implementation, not parallelized, see TerrainRadiationHelbig
- *     - PETSC : a parallel implementation relying on PETSC for added performances, see TerrainRadiationPETSc
+ *     - SIMPLE: a very basic (but fast) guess, see TerrainRadiationSimple
+ *     - HELBIG: the original radiosity implementation, not parallelized, see TerrainRadiationHelbig
+ *     - COMPLEX: a complex modeling with anisotropic reflection of light on snow (forward scattering) and multiple reflections in the terrain, see TerrainRadiationComplex
  *
  * @code
  * [EBalance]
@@ -78,8 +77,10 @@ class EnergyBalance
 		void setSnowPack(SnowpackInterface &mysnowpack );
 		void setAlbedo( const mio::Grid2DObject &in_albedo );
 
-		void setMeteo(const mio::Grid2DObject& in_ilwr,
-		              const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Date timestamp);
+		void compute(const mio::Grid2DObject& in_ilwr,
+		             const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p,
+		             const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
+		             const mio::Date timestamp);
 
 		void writeSP(const unsigned int max_steps); //write Solar Panels information
 
@@ -101,6 +102,7 @@ class EnergyBalance
 		const mio::Config& cfg;
 		size_t dimx, dimy;
 		unsigned int nbworkers;
+		bool dataFromGrids;
 };
 
 #endif

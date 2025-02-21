@@ -78,6 +78,7 @@ class Metamorphism {
 		static std::map<std::string, MetaSpRateFn> mapSpRate;
 
 		const std::string metamorphism_model;
+		const std::string variant;
 		const double sn_dt, new_snow_grain_size;
 };
 

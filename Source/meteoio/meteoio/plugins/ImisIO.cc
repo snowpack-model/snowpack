@@ -39,6 +39,13 @@ namespace mio {
  * @section imis_format Format
  * This plugin reads data directly from the IMIS network database (Oracle database).
  * It retrieves standard IMIS data as well as ENETZ and ANETZ data.
+ * 
+ * In order to compile this plugin, you need to install Oracle's OCCI which is bundled with some versions
+ * of the <a href="https://www.oracle.com/database/technologies/instant-client.html">instant client</a>. By
+ * default when compiling, MeteoIO will search for the dynamic library in the PATH environment variable (on Windows) or
+ * in subdirectories of the path pointed to by the ORACLE_HOME environment variable (Linux, MacOS). Please be aware that
+ * the development version of occi must be installed (so it contains the headers) as well as libaio (from your package
+ * manager on Linux).
  *
  * @section imis_units Units
  * The units are assumed to be the following:
@@ -584,7 +591,7 @@ void ImisIO::findAnetzStations(std::map<std::string, size_t>& mapAnetzNames,
 	}
 
 	size_t pp = 0;
-	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ii++){
+	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ++ii){
 		mapAnetzNames[*ii] = pp;
 		pp++;
 
@@ -625,7 +632,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
-	const bool reduce_pressure = (tmpmd.meta.stationID!="STB2")? true : false; //unfortunatelly, there is no metadata to know this...
+	const bool reduce_pressure = (tmpmd.meta.stationID!="STB2")? true : false; //unfortunately, there is no metadata to know this...
 	vecMeteo[stationindex].resize( vecResult.size() );
 	for (size_t ii=0; ii<vecResult.size(); ii++) {
 		parseDataSet(vecResult[ii], tmpmd, fullStation);

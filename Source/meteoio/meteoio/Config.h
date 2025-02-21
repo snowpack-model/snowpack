@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
@@ -143,12 +142,13 @@ class Config {
 		std::string getConfigRootDir() const {return configRootDir;}
 
 		/**
-		 * @brief Return if a given key exists in a given section
+		 * @brief Return if a given key exists in a given section (matching is case insensitive)
 		 * @param[in] key string representing the key to be searched
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @return true if the key exists
 		 */
 		bool keyExists(std::string key, std::string section) const;
+		bool keyExistsRegex(std::string key_pattern, std::string section) const;
 
 		/**
 		 * @brief Return if a given section exists in the Config object
@@ -335,6 +335,9 @@ class Config {
 		
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
+		 * @details Please not that if the keys are postfixed by integral numbers (ie build as <i>{common string}{integral number}</i>, such as *STATION12*)
+		 * then the keys will be sorted in ascending order based on this integral number. As soon as a key does not fit this pattern, the sort will be
+		 * purely alphabetical (therefore *STATION11_a* would appear **before** *STATION2_a*).
 		 * @param[in] keymatch std::string representing a pattern for the key in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
@@ -346,8 +349,8 @@ class Config {
 			IOUtils::toUpper(section);
 			const std::vector< std::string > vecKeys( getKeys(keymatch, section) );
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key( section + "::" + vecKeys[ii] );
+			for (const std::string& key : vecKeys) {
+				const std::string full_key( section + "::" + key );
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -365,8 +368,8 @@ class Config {
 			IOUtils::toUpper(section);
 			vecKeys = getKeys(keymatch, section);
 
-			for (size_t ii=0; ii<vecKeys.size(); ++ii) {
-				const std::string full_key = section + "::" + vecKeys[ii];
+			for (const std::string& key : vecKeys) {
+				const std::string full_key = section + "::" + key;
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
@@ -377,21 +380,34 @@ class Config {
 			}
 		}
 
+		/**
+		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
+		 *         it returns all the \<keys,value\> pairs that match (partial matches are considered, matching is case insensitive) into a vector.
+		 * @param[in] keymatch A string representing the beginning of a key to search for
+		 * @param[in] section A string defining which section to search through (default: GENERAL)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
+		 * @return a vector of all \<keys,value\> pairs that partially match *keymatch*
+		 * @code
+		 *  const std::vector< std::pair<std::string, std::string> > myVec( cfg.getValues("TA::", "Filters") );
+		 * @endcode
+		 */
 		std::vector< std::pair<std::string, std::string> > getValues(std::string keymatch, std::string section, const bool& anywhere=false) const;
+		
+		std::vector< std::pair<std::string, std::string> > getValuesRegex(const std::string& regex_str, std::string section) const;
 
 		/**
 		 * @brief Function that searches for a given string within the keys of a given section (default: GENERAL)
-		 *         it returns all the keys that match (partial matches are considered) into a vector\<string\>.
+		 *         it returns all the keys that match (partial matches are considered, matching is case insensitive) into a vector\<string\>.
 		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the beginning only)
 		 * @return a vector that holds all keys that partially match keymatch
 		 * @code
-		 *  const std::vector<std::string> myVec( cfg.findKeys("TA::", "Filters") );
+		 *  const std::vector<std::string> myVec( cfg.getKeys("TA::", "Filters") );
 		 * @endcode
 		 */
 		std::vector<std::string> getKeys(std::string keymatch, std::string section, const bool& anywhere=false) const;
-		
+		std::vector<std::string> getKeysRegex(const std::string& regex_str, std::string section) const;
 		/**
 		 * @brief Returns all the sections that are present in the config object
 		 * @return a set that holds all the sections names
@@ -447,6 +463,9 @@ class Config {
 		 */
 		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm,
 			const std::string& section = "Interpolations1d") const;
+		// overload for indexed algorith
+		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm, const size_t& algo_index,
+			const std::string& section = "Interpolations1d") const;
 
 
 
@@ -482,6 +501,7 @@ class ConfigParser {
 	private:
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
+		static bool onlyOneEqual(const std::string& str);
 		static void processEnvVars(std::string& value);
 		static void processExpr(std::string& value);
 		bool processVars(std::string& value, const std::string& section);

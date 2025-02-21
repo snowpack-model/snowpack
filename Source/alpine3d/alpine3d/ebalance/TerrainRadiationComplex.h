@@ -27,26 +27,28 @@
 #include <array>
 
 /**
- * @page TerrainRadiationComplex
-
+ * @class TerrainRadiationComplex
+ * @brief
  * This module calculates the radiative transfer of SW radiation in snow-covered terrain. It can take into account anisotropic reflection
- * of light on snow (forward scattering) and multiple reflections in the terrain. The price for this complexity is high:
+ * of light on snow (forward scattering) and multiple reflections in the terrain. 
+ * @details
+ * The price for this complexity is high:
  * The initialization time is extremely long (for a DEM with 30'000 pixels it can be 12 hours. However, if a ViewList-file is generated
  * during the initialization, it can be bypassed in later simulations. ) In the main computation loop, the effort is considerable too
  * and may dominate the simulation time in many cases. Therefore, this module is recommended for explicit radiation investigations based
  * on relatively small, high-resolution DEM's. It can also be coupled to the SolarPanel-module for precise simulation of radiation on
  * photovoltaic panels.
- * The algorithm is described in the master thesis of Felix von Rütte, entitled "Radiative Transfer Model for Snowy Mountains". In the
- * comments is often referred to by the abbreviation "MT". If you don't find a version online, ask Michael Lehning, he was the supervisor.
+ * 
+ * The algorithm is described in F. von Rütte et al., <i>"How Forward-Scattering Snow and Terrain Change the Alpine Radiation Balance 
+ * With Application to Solar Panels"</i>, Journal of Geophysical Research: Atmospheres 126.15 (2021), <a href="https://doi.org/10.1029/2020JD034333">10.1029/2020JD034333</a> or in the master thesis of Felix von Rütte (under the supervision of M. Lehning), 
+ * entitled "Radiative Transfer Model for Snowy Mountains" (in the comments, it is often referred to by the abbreviation "MT").
  *
- * @keys in io-file
- * COMPLEX_ANISOTROPY [true or false] 		: Whether a snow BRDF should be included. False means isotropic scattering.
- * COMPLEX_MULTIPLE [true or false]			: Whether multiple scattering in the terrain should be taken into account.
- * COMPLEX_WRITE_VIEWLIST [true or false]	: Whether the initialization stuff should be written to file. (Make sure you have folder "output")
- * COMPLEX_READ_VIEWLIST [true or false]	: Whether an existing initialization file should be read in; bypassing the initialization.
- * COMPLEX_VIEWLISTFILE [<path>/<filename>]	: Path to the ViewList file if existing. (e.g ../input/surface-grids/ViewList_Totalp_30x30.rad)
- *
- *
+ * This algorithm is configured with the following ini keys:
+ *  - COMPLEX_ANISOTROPY: Whether a snow BRDF should be included. False means isotropic scattering (true or false);
+ *  - COMPLEX_MULTIPLE : Whether multiple scattering in the terrain should be taken into account (true or false);
+ *  - COMPLEX_WRITE_VIEWLIST : Whether the initialization data should be written to file (it requires an already existing "output" folder); (true or false);
+ *  - COMPLEX_READ_VIEWLIST : Whether an existing initialization file should be read in; bypassing the initialization (true or false);
+ *  - COMPLEX_VIEWLISTFILE : Path and filename to the ViewList file if existing, for example "../input/surface-grids/ViewList_Totalp_30x30.rad", ()
  *
  * @code
  * [EBalance]

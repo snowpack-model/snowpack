@@ -40,7 +40,7 @@ namespace mio {
  * a soil albedo is used.
  *
  * It takes the following arguments:
- *  - WINDOW_SIZE: This represents how big a data gap can be and still be interpolated. This allows to overwrite the global WINDOW_SIZE (in ResamplingAlgorithms) for
+ *  - MAX_GAP_SIZE: This represents how big a data gap can be and still be interpolated. This allows to overwrite the global MAX_GAP_SIZE (in ResamplingAlgorithms) for
  * this parameter and resampling algorithm (optional);
  *  - EXTRAPOLATE: If set to TRUE, points *outside* of available measurements will be interpolated (otherwise, there need to be values before and after a missing point for it to
  * be interpolated. Optional).
@@ -50,11 +50,11 @@ namespace mio {
  */
 class Solar : public ResamplingAlgorithms {
 	public:
-		Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		Solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md);
-		std::string toString() const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md) override;
+		std::string toString() const override;
 	private:
 		typedef struct POINTS {
 			POINTS(): jul1(0.), loss1(IOUtils::nodata), jul2(0), loss2(IOUtils::nodata) {}

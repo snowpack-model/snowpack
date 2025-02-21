@@ -60,8 +60,8 @@ namespace mio {
  *
  * First, an interpolation method has to be selected for each variable which needs interpolation. Then the class computes
  * the interpolation for each 2D grid point, combining the inputs provided by the available data sources.
- * Any parameter of MeteoData can be interpolated, using the names given by \ref meteoparam. One has to keep
- * in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
+ * Any parameter of MeteoData can be interpolated, using the names given by the \ref MeteoData::Parameters "list of standard parameter names". 
+ * One has to keep in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
  * memory of (eventual) previous time steps is kept. This means that all parameters and variables that are
  * automatically calculated get recalculated anew for each time step.
  * 
@@ -146,9 +146,10 @@ namespace mio {
  *
  * A list of supported options controlling the lapse rates is given in Trend::Trend().
  *
- * @section interpol2D_dev_use Developer usage
- * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its
- * IOManager::getMeteoData method with an elevation model and a grid.
+ * @section interpol2D_dev_use Usage
+ * From the users's point of view, all that has to be done is instantiate an IOManager object and call its
+ * IOManager::getMeteoData method with an elevation model and a grid. The spatial interpolation will then be done according to the settings in the INI file. 
+ * The following lines show an example of the workflow:
  * @code
  * 	Config cfg("io.ini");
  * 	IOManager io(cfg);

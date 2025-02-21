@@ -23,6 +23,7 @@
 
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/plugins/ZRXPIO.h>
 
 namespace mio {
@@ -114,7 +115,7 @@ namespace mio {
  * @note The internal parameter index that is passed as `CNR` may change within MeteoIO for special parameters,
  * hence you can turn it off aswell and make sure WISKI does not use it.
  *
- * @section Example
+ * @section eg Examples
  * Putting ZRXP as the METEO output plugin will produce .(z)rxp-files:
  * @code
  * [Output]
@@ -254,7 +255,7 @@ void ZRXPIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			if (!FileUtils::validFileAndPath(filepath))
 				throw InvalidNameException(filepath, AT);
 
-			std::ofstream outfile;
+			ofilestream outfile;
 			outfile.open(filepath.c_str());
 
 			if (outfile.fail()) {

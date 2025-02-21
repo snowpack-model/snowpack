@@ -61,9 +61,10 @@ namespace mio {
  *    -# \subpage configuration "Configuration file"
  *    -# \subpage build_io "How to build your io.ini configuration file"
  *    -# External Links
- *         -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
- *               -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
- *               -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
+ *         -# <A HREF="https://meteoio.slf.ch">MeteoIO's home page</A>
+ *               -# <A HREF="https://meteoio.slf.ch/Getting-started">Installation, compilation</A>
+ *               -# <A HREF="https://meteoio.slf.ch/GettingHelp">Getting help</A>
+ *    -# \subpage credits "Credits & funding"
  * -# Processing steps documentation
  *    -# \subpage data_sources "Data sources, input/output"
  *    -# \subpage data_editing "Input Data Editing"
@@ -80,12 +81,12 @@ namespace mio {
  *    -# <A HREF="modules.html">Modules list</a>
  *    -# \subpage examples "Usage examples"
  * -# Advanced: Expanding MeteoIO
- *    -# How to \subpage dev_coords "write a coordinate system support"
- *    -# How to \subpage dev_plugins "write a Plugin"
- *    -# How to \subpage dev_processing "write a processing element"
- *    -# How to \subpage dev_1Dinterpol "write a resampling algorithm"
+ *    -# How to \subpage dev_coords "Write a coordinate system support"
+ *    -# How to \subpage dev_plugins "Write a Plugin"
+ *    -# How to \subpage dev_processing "Write a processing element"
+ *    -# How to \subpage dev_1Dinterpol "Write a resampling algorithm"
  *    -# How to \subpage dev_DataGenerator "Write a data generator"
- *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
+ *    -# How to \subpage dev_2Dinterpol "Write a spatial interpolation algorithm"
  * 
  * <center><hr></center>
  * <p><center><i><small>
@@ -113,12 +114,12 @@ namespace mio {
  * is needed to make the libSnowpack usable by an end user as a standalone application, here called "snowpack-app"). Therefore the same components
  * can be used in other models (the same engine might be used in several cars while the same bodywork might contain different engines).
  *
- * \image html library_analogy.png "Software library analogy: a software is made of several components (libraries)"
+ * \image html library_analogy.svg "Software library analogy: a software is made of several components: the MeteoIO library and the libSnowpack libray wrapped within Snowpack-app to build the full featured SNOWPACK model" width=600px
  * \image latex library_analogy.eps "Software library analogy: a software is made of several components (libraries)" width=0.4\textwidth
  *
  * @section MeteoIO_structure General MeteoIO structure
  * @anchor general_structure
- * \image html meteoio_workflow.png "MeteoIO workflow"
+ * \image html meteoio_workflow.svg "MeteoIO workflow" width=500px
  * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
@@ -135,7 +136,7 @@ namespace mio {
  * of coordinates) and very often you will also need to provide a Digital Elevation Model.
  *
  * @section typical_setup Typical setup
- * \image html typical_setup.png "typical setup of MeteoIO for operational applications"
+ * \image html typical_setup.svg "typical setup of MeteoIO for operational applications" width=800px
  * \image latex typical_setup.eps "typical setup of MeteoIO for operational applications" width=0.9\textwidth
  * MeteoIO has been designed to accomodate both the needs of carefully crafted simulations for a specific purpose/study and for the needs of operational
  * simulations that run automatically and unattended. A typical setup for such operational applications consists of a data acquisition system
@@ -233,8 +234,8 @@ namespace mio {
 /**
  * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
- * <b>it is highly recommended to use <a href="https://models.slf.ch/p/inishell">inishell</a></b> to build your io.ini configuration file, since this significantly
- * reduces the number of errors and provides help text for each keys.
+ * <b>it is highly recommended to use <a href="https://inishell.slf.ch">inishell</a></b> to build your io.ini 
+ * configuration file, since this significantly reduces the number of errors and provides help text for each keys.
  *
  * Anyway, this section will show you how to manually set up a configuration file. Please read
  * \ref general documentation page before starting!
@@ -263,9 +264,9 @@ namespace mio {
  *
  * - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
  *                         to be able to take in data at any sampling rate and to extract values at any user given time step
- *                         according to the resampling specifications of the user. The search window size can be given with
- *                         key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
- *                         re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point).
+ *                         according to the resampling specifications of the user. The maximum gap size can be given with
+ *                         key MAX_GAP_SIZE that expresses (in seconds) how far a valid point can be searched for when
+ *                         re-interpolating a missing value (up to MAX_GAP_SIZE/2 before and after the requested point).
  *                         See \ref resampling .
  *
  * - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
@@ -279,10 +280,33 @@ namespace mio {
  *
  */
 
+/**
+ * @page credits Credits & funding
+ * MeteoIO has received contributions from various individuals since its start in 2008. Thomas Egger and Mathias Bavay implemented the very first version and kept on working on MeteoIO many years later. Moustapha Mbengue
+ * implemented the first database plugin (for IMIS stations), David Zanella worked on the first build and Continuous Integration toolchain that would later be fully overhauled by Benjamin Bürgisser years later. Thiemo Theile,
+ * Michael Reisecker and Patrick Leibersperger contributed some quite advanced algotithms and plugins while Nander Wever and Adrien Michel contributed over various parts of the code.
+ *
+ *
+ * On the funding side, MeteoIO has mostly been self-funded by the SLF as well as "on the side" as a way to achieve the goals of other projects. It has therefore been indirectly and sometimes directly, funded or motivated by the following projects:
+ *  - our work in support of the <a href="https://www.slf.ch/en/about-the-slf/organisation/research-units/snow-avalanches-and-prevention/avalanche-warning/">SLF avalanche warning</a> applications (as part of our mandate with
+ * the <a href="https://snowpack.slf.ch">Snowpack</a> snow cover model) has provided a strong motivation for the <a href="https://arc.lib.montana.edu/snow-science/objects/ISSW2018_O08.2.pdf">development of MeteoIO</a>;
+ *  - a <a href="https://www.innosuisse.ch">KTI</a> (now Innosuisse) project in 2008-2009;
+ *  - the <a href="https://lsds.hesge.ch/smscg/">Swiss Multi-Science Computing Grid</a> (SMSCG) project funded by <a href="https://help.switch.ch/aai/">AAI-Switch</a> in 2008-2013 and in 2013-2013 for its SMSCG-2 follow-up project;
+ *  - the European Union <a href="https://interreg.eu/about-interreg/">Interreg</a> project <a href="https://www.gr.ch/DE/institutionen/verwaltung/diem/awn/dokumentenliste_afw/3_1_10_4_IRKIS_Endbericht.pdf">Interregionales Kriseninformationssystem</a> (IRKIS) in 2007-2013;
+ *  - the European Union project <a href="https://cordis.europa.eu/project/id/224416">Hydrosys</a> (grant number 224416) in 2008-2011;
+ *  - the <a href="https://lsds.hesge.ch/smscg/">Swiss Multi-Science Computing Grid 2</a> (SMSCG2) follow-up project funded by <a href="https://help.switch.ch/aai/">AAI-Switch</a> in 2013;
+ *  - the European Union <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en">Horizon2020</a> project <a href="https://cordis.europa.eu/project/id/730203/fr">ProSnow</a> (grant number 730203) in 2017-2020;
+ *  - the <a href="https://wmo.int/">World Meteorological Organisation</a> (WMO) <a href="https://account.datascience.codata.org/index.php/up-j-dsj/article/view/dsj-2020-006/935">Data Access Made Easy</a> (DAME) project in 2020 (agreement number 01061/2019-1.0 OBS);
+ *  - the <a href="https://www.caritas.ch/en/tajikistan/">Caritas</a> and <a href="https://www.eda.admin.ch/deza/en/home/countries/central-asia.html/content/dezaprojects/SDC/en/2021/7F09825/phase1">Swiss Agency for Development and Cooperation</a> project <a href="https://www.caritas.ch/en/tajikistan-adapts-to-a-changing-climate/">Weather, water and climate services</a> (WWCS) in 2021-2025;
+ *  - the European Union <a href="https://research-and-innovation.ec.europa.eu/funding/funding-opportunities/funding-programmes-and-open-calls/horizon-2020_en">Horizon2020</a> project <a href="https://cordis.europa.eu/project/id/101003472">Arctic Passion</a> (grant number 101003472) in 2021-2025;
+ *
+ */
+
+
  /**
  * @page workflow Workflow
  * Here is a workflow example showing how meteorological data is requested by the user's application and delivered. This is a simplified view, in order to show the general structure. Requesting grids (2D grids, DEM, etc) is very similar but does not perfom filtering or resampling.
- * \image html workflow_meteoreading.png "simplified meteo reading workflow"
+ * \image html workflow_meteoreading.svg "simplified meteo reading workflow" width=1200px
  * \image latex workflow_meteoreading.eps "simplified meteo reading workflow" width=0.9\textwidth
  */
 
@@ -291,7 +315,7 @@ namespace mio {
  * This library contains various classes that have been designed to deal with various sets of problems. This page shows the different sets of problems and what kind of functionnality the library offers to tackle them.
  *
  * @section class_structure Class structure
- * \image html structure.png "simplified class structure"
+ * \image html structure.svg "simplified class structure" width=1200px
  * \image latex structure.eps "simplified class structure" width=0.9\textwidth
  *
  * @section iohandler_sec Data reading

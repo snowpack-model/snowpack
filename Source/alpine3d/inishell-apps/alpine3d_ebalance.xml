@@ -1,0 +1,133 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- Alternative panel: EBalance -->
+	<parameter type="helptext" wrap="true" section="EBalance">
+		<help>First, the measured radiation (as provided by each station that measured both ISWR, TA and RH) is interpolated over the domain (see the &lt;a href="https://alpine3d.slf.ch/doc-release/html/radiation_balance.html"&gt;online documentation&lt;/a&gt;). Then the effects of the terrain on the radiation field are accounted for. These are twofold: first the topography can cast shade on some parts of the domain (this is always computed) and second some radiation can be reflected by the terrain on some other cells (this is what is configured here).</help>
+	</parameter>
+	<parameter type="spacer" height="10" section="EBalance"/>
+
+	<parameter key="Terrain_Radiation" type="alternative" default="TRUE" section="EBalance">
+		<option value="TRUE">
+			<parameter key="Terrain_Radiation_Method" type="alternative" default="SIMPLE" section="EBalance">
+				<reference name="TERRAIN_SIMPLE"/>
+				<reference name="TERRAIN_HELBIG"/>
+				<reference name="TERRAIN_COMPLEX"/>
+				<help>Select how the radiation reflected by the terrain will be computed</help>
+			</parameter>
+		</option>
+		<option value="FALSE"/>
+		<help>Should the radiation reflected by the terrain be computed?</help>
+	</parameter>
+
+	<parametergroup name="TERRAIN_SIMPLE">
+		<option value="SIMPLE">
+			<help>a very basic (but fast) guess, see &lt;a href="https://alpine3d.slf.ch/doc-release/html/classTerrainRadiationSimple.html"&gt;TerrainRadiationSimple&lt;/a&gt;</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="TERRAIN_HELBIG">
+		<option value="HELBIG">
+			<parameter key="itEps_SW" type="number" format="decimal" precision="2" default="0.4" min="0">
+				<help>stopping tolerance/iteration error for shortwave radiation (default: 0.4). Make it larger to stop the iteration earlier, i.e. less terrain reflections are included –> with 10 % (0.1) a good accuracy is obtained.</help>
+			</parameter>
+			<parameter key="itEps1_SW" type="number" format="decimal" precision="2" default="0.1" min="0">
+				<help>stopping tolerance/iteration error for shortwave radiation (default: 0.1). Make it lower to stop the iteration earlier, i.e. less terrain reflections are included</help>
+			</parameter>
+			<parameter key="itEps_LW" type="number" format="decimal" precision="2" default="0.1" min="0">
+				<help>stopping tolerance/iteration error for longwave radiation (default: 0.4). Note that two stopping critera are used</help>
+			</parameter>
+			<parameter key="sw_radius" type="number" format="integer+" default="3000" unit="m">
+				<help>the distance radius (in m) around each grid cell until which terrain reflection is taken into account (default: 3000)</help>
+			</parameter>
+			<parameter key="lw_radius" type="number" format="integer+" default="3000" unit="m">
+				<help>the distance radius (in m) around each grid cell until which longwave emission is taken into account (default: 3000)</help>
+			</parameter>
+			<parameter key="sub_crit" type="number" format="decimal" precision="2" default="0.4" min="0">
+				<help>substructuring threshold (in %) of the patches in the view factor computation (default: 0.4). Note that mccluney(1994) proposes 0.1, i.e. for accurate view factors / radiation exchange computations a threshold of least 0.1 should be used.</help>
+			</parameter>
+			<parameter key="vf_in_ram" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Progressive Refinement iteration is used; but you can enable storing the view factors in memory (in case of sufficient memory capacity –> faster terrain radiation computation)</help>
+			</parameter>
+			<parameter key="WRITE_SKY_VIEW_FACTOR" type="alternative" optional="true">
+				<option value="TRUE">
+					<parameter key="VF_FILE" type="file" mode="output" optional="false">
+						<help>file to write the view factors to</help>
+					</parameter>
+					<parameter key="TVFAREA" type="file" mode="output" optional="false">
+						<help>file to write the terrain view factors to</help>
+					</parameter>
+				</option>
+				<option value="FALSE"/>
+				<help>Write the computed view factors to a file for (much) faster retrieval for new simulations (default: false)</help>
+			</parameter>
+			<parameter key="VF_FILE" type="file" mode="input" optional="true">
+				<help>file to read the pre-computed view factors from</help>
+			</parameter>
+			<parameter key="TVFAREA" type="file" mode="input" optional="true">
+				<help>file to read the pre-computed terrain view factors from</help>
+			</parameter>
+			<help>the original radiosity implementation, not parallelized, see &lt;a href="https://alpine3d.slf.ch/doc-release/html/classTerrainRadiationHelbig.html"&gt;TerrainRadiationHelbig&lt;/a&gt;</help>
+		</option>
+	</parametergroup>
+
+	<parametergroup name="TERRAIN_COMPLEX">
+		<option value="COMPLEX">
+			<parameter key="COMPLEX_ANISOTROPY" type="alternative" optional="true">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Whether a snow BRDF should be included. False means isotropic scattering (default: false)</help>
+			</parameter>
+			<parameter key="COMPLEX_ANISOTROPY" type="alternative" optional="true">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Whether multiple scattering in the terrain should be taken into account (default: false)</help>
+			</parameter>
+			<parameter key="COMPLEX_WRITE_VIEWLIST" type="alternative" optional="true">
+				<option value="TRUE">
+					<parameter key="COMPLEX_VIEWLISTFILE" type="file" mode="input" optional="false">
+						<help>file to write the view factors to</help>
+					</parameter>
+				</option>
+				<option value="FALSE"/>
+				<help>Whether the initialization stuff should be written to file (in the "ouput" sub-directory) (default: true)</help>
+			</parameter>
+			<parameter key="COMPLEX_READ_VIEWLIST" type="alternative" optional="true">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Whether an existing initialization file should be read in; bypassing the initialization (default: false)</help>
+			</parameter>
+			<parameter key="PVPFILE" type="file" mode="input" optional="true">
+				<help>file to define solar panels</help>
+			</parameter>
+			<help>radiative transfer of SW radiation in snow-covered terrain according to (von Rütte, F., Kahl, A., Rohrer, J., Lehning, M. &lt;i&gt;"How forward-scattering snow and terrain change the Alpine radiation balance with application to solar panels"&lt;/i&gt;, Journal of Geophysical Research: Atmospheres, 126, e2020JD034333, (2021), &lt;a href="https://doi.org/10.1029/2020JD034333"&gt;doi.org/10.1029/2020JD034333&lt;/a&gt;</help>
+		</option>
+	</parametergroup>
+
+</inishell_include>

@@ -1,7 +1,6 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 INCLUDE("${PROJECT_SOURCE_DIR}/alpine3d/ebalance/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/alpine3d/runoff/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/alpine3d/snowdrift/CMakeLists.txt")
 
 FIND_PACKAGE(MeteoIO)
@@ -17,7 +16,6 @@ ENDIF(MPI)
 
 SET(a3d_sources
 	${ebalance_sources}
-	${runoff_sources}
 	${snowdrift_sources}
 	SnowpackInterfaceWorker.cc
 	SnowpackInterface.cc
@@ -108,9 +106,9 @@ IF(ALPINE3D_STANDALONE)
 	ADD_EXECUTABLE(${BINARY} ${a3d_main})
 	TARGET_LINK_LIBRARIES(${BINARY} ${LIBALPINE3D_LIBRARY} ${A3D_LINKS})
 
-IF(PROFILING)
+IF(PROFILER)
 	TARGET_LINK_LIBRARIES(${BINARY} debug profiler)
-ENDIF(PROFILING)
+ENDIF(PROFILER)
 
 	SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"

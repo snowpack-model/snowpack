@@ -23,7 +23,7 @@
 
 namespace mio {
 
-bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
+bool ESOLIPGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/, const std::vector<MeteoData>& /*vecMeteo*/)
 {//HACK: modify prototype so we can get the full vector + the index of the replacement
 	return false; //all missing values could be filled
 }

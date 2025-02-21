@@ -54,31 +54,39 @@ namespace mio {
  * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980) by default 
  * except for Crawford and Lhomme that provide their own parametrizations (it can be forced through the TauCLDGenerator options).
  * The last evaluation of cloud transmissivity is used all along during the times when no ISWR is available (as it is night, or the station stands in 
- * the shade or the ISWR measurement is missing) and the last valid value is not too old (ie. no more than 1 day old).
+ * the shade or the ISWR measurement is missing) and the last valid value is not too old (ie. no more than 1 day old).  The example below gives an
+ * example use, providing a file with the horizons for the stations (see TauCLDGenerator) but not relying on a DEM. Of course, it is possible to
+ * use the generator without any DEM or horizon file!
  * 
- * Finally, it is recommended to also use a clear sky generator (declared after this one)
- * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
  * [Generators]
  * ILWR::generator1 = allsky_LW
  * ILWR::arg1::type = Omstedt
+ * ILWR::arg1::infile = input/horizons.txt
+ * ILWR::arg1::shade_from_dem = FALSE
+ * ILWR::arg1::use_rswr = FALSE
  * @endcode
  *
+ * Finally, it is recommended to also use a clear sky generator (declared after this one) for the case of no available short wave measurement
+ * (by declaring the ClearSky generator \em after AllSky).
  *
  * The graph below shows the comparison between measured and modeled ILWR depending on the chosen parametrization. The measured data (ISWR, TA, RH and the reference ILWR)
  * comes from the Weissfluhjoch *WFJ AWS (2691m, Davos, Switzerland) for the 2010-08-01 -- 2019-08-01 period with half-hourly resolution. The data has been binned every 5 W/m²,
  * the black dots represent the average of the bin, the greay area contains every data point (ie it shows the minimum and maximum data) while the brown area is defined as average±σ.
- * \image html all_sky_ilwr_cmp.png "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period"
+ * \image html all_sky_ilwr_cmp.svg "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period"
  * \image latex all_sky_ilwr_cmp.eps "Comparison between measured and parametrized ILWR at the Weissfluhjoch *WFJ station (2691m, Davos, Switzerland) for the 2010-08-01 – 2019-08-01 period" width=0.9\textwidth
  *
  */
 class AllSkyLWGenerator : public TauCLDGenerator {
 	public:
-		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg);
-		bool generate(const size_t& param, MeteoData& md);
-		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo);
+		//TauCLDGenerator will do its own arguments parsing, then AllSkyLWGenerator
+		//so make sure that we don't use here the same name as an argument to TauCLDGenerator!
+		AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg) : TauCLDGenerator(vecArgs, i_algo, i_section, TZ, i_cfg), model(OMSTEDT) {parse_args(vecArgs); }
+		
+		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
+		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
 	private:
-		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs) override;
 
 		typedef enum PARAMETRIZATION {
 			LHOMME,
@@ -89,7 +97,6 @@ class AllSkyLWGenerator : public TauCLDGenerator {
 			UNSWORTH
 		} parametrization;
 
-		SunObject sun;
 		parametrization model;
 };
 

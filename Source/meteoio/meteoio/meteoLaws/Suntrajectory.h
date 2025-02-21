@@ -49,6 +49,7 @@ class SunTrajectory {
 		///(see http://en.wikipedia.org/wiki/Horizontal_coordinate_system)
 		///please remember that zenith_angle = 90 - elevation
 		virtual double getSolarElevation() const=0;
+		virtual double getSolarAzimuth() const=0;
 		virtual void getHorizontalCoordinates(double& azimuth, double& elevation) const=0;
 		virtual void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const=0;
 		virtual void getDaylight(double& sunrise, double& sunset, double& daylight)=0;
@@ -94,9 +95,9 @@ class SunTrajectory {
  * @class SunMeeus
  * @brief Calculate the Sun's position based on the Meeus algorithm.
  * See J. Meeus, <i>"Astronomical Algorithms"</i>, 1998, 2nd ed, Willmann-Bell, Inc., Richmond, VA, USA, ISBN 0-943396-61-1.
- * A useful reference is also NOAA's spreadsheet at http://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html or
- * http://energyworksus.com/solar_installation_position.html for comparing positional data. The technical report
- * I. Reda, A. Andreas, <i>"Solar Position Algorithm for Solar Radiation Applications"</i>, 2008, NREL/TP-560-34302
+ * A useful reference is also NOAA's spreadsheet at https://gml.noaa.gov/grad/solcalc/calcdetails.html
+ * for comparing positional data. The technical report I. Reda, A. Andreas,
+ * <i>"Solar Position Algorithm for Solar Radiation Applications"</i>, 2008, NREL/TP-560-34302
  * also contains an alternative algorithm and very detailed validation data sets.
  *
  * @ingroup meteoLaws
@@ -106,26 +107,28 @@ class SunTrajectory {
 class SunMeeus : public SunTrajectory {
 	public:
 		SunMeeus();
-		~SunMeeus() {}
+		~SunMeeus() override {}
 		SunMeeus(const double& i_latitude, const double& i_longitude);
 		SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.);
 
-		void setDate(const double& i_julian, const double& i_TZ=0.);
-		void setLatLon(const double& i_latitude, const double& i_longitude);
-		void setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.);
-		void reset();
+		void setDate(const double& i_julian, const double& i_TZ=0.) override;
+		void setLatLon(const double& i_latitude, const double& i_longitude) override;
+		void setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.) override;
+		void reset() override;
 
-		double getSolarElevation() const;
-		void getHorizontalCoordinates(double& azimuth, double& elevation) const;
-		void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const;
-		void getDaylight(double& sunrise, double& sunset, double& MeeusDaylight);
+		double getSolarElevation() const override;
+		double getSolarAzimuth() const override;
+		void getHorizontalCoordinates(double& azimuth, double& elevation) const override;
+		void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const override;
+		void getDaylight(double& sunrise, double& sunset, double& MeeusDaylight) override;
 		void getEquatorialSunVector(double& sunx, double& suny, double& sunz);
-		void getEquatorialCoordinates(double& right_ascension, double& declination);
+		void getEquatorialCoordinates(double& right_ascension, double& declination) override;
 		
 		static double SideralToLocal(const double& JD);
 	private:
 		void private_init();
-		void update();
+		double getEquationOfTime(const double& julian_century);
+		void update() override;
 
 	private:
 		double SolarElevationAtm;

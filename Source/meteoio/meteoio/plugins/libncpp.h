@@ -30,7 +30,7 @@
 
 namespace ncpp {
 	/// This enum expands the parameters given in mio::MeteoGrids::Parameters and adds parameters used as dimensions in NetCDF files
-	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, ZREF, UREF, lastdimension=UREF};
+	enum Dimensions {firstdimension=mio::MeteoGrids::lastparam+10, NONE=firstdimension, TIME, LATITUDE, LONGITUDE, NORTHING, EASTING, STATION, STATSTRLEN, DATESTRLEN, ZREF, UREF, lastdimension=UREF};
 	
 	//These methods are needed by the structures defined below
 	std::string getParameterName(const size_t& param);

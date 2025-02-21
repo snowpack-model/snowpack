@@ -69,6 +69,7 @@ class MeteoGrids {
 				TSG, ///< Temperature ground surface
 				TSS, ///< Temperature snow surface
 				TSOIL, ///< Temperature within the soil, at a given depth
+				TSNOW, ///< Temperature within the snow, at a given depth
 				P, ///< Air pressure
 				P_SEA, ///< Sea level air pressure
 				U, ///< East component of wind
@@ -119,7 +120,7 @@ class MeteoData {
 		* When the two stations both have data at a given time step, only the parameters that are *not* present
 		* in station1 will be taken from station2 (ie. station1 has priority).
 		*
-		* \image html merging_strategies.png "Merging strategies for two stations with different sampling rates"
+		* \image html merging_strategies.svg "Merging strategies for two stations with different sampling rates" width=600px
 		* \image latex merging_strategies.eps "Merging strategies for two stations with different sampling rates" width=0.9\textwidth
 		* @note Keep in mind that if a station is moving (ie. if its location might change in time) merge strategies other than STRICT_MERGE
 		* will introduce potentially invalid metadata (since the new position can not be reconstructed).
@@ -150,6 +151,8 @@ class MeteoData {
 		                 QI, ///< Specific humidity
 		                 TSG, ///< Temperature of the ground surface
 		                 TSS, ///< Temperature of the snow surface
+		                 TSOIL, ///< Temperature within the soil
+		                 TSNOW, ///< Temperature within the snow
 		                 HS, ///< Height of snow
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
@@ -168,6 +171,9 @@ class MeteoData {
 		                 PSUM_LC, ///< Water equivalent of liquid convective precipitation
 		                 PSUM_S, ///< Water equivalent of solid precipitation
 		                 lastparam=PSUM_S};
+		
+		static Parameters toParameter(const std::string& paramStr);
+		static std::string parToString(const Parameters& param);
 
 		static const std::string& getParameterName(const size_t& parindex);
 
@@ -184,6 +190,12 @@ class MeteoData {
 		*/
 		MeteoData(const Date& in_date);
 
+		/**
+		* @brief A constructor that sets the meta data and keeps julian ==0.0
+		* @param meta_in A StationData object containing the meta data
+		*/
+		MeteoData(const StationData& meta_in);
+		
 		/**
 		* @brief A constructor that sets the measurment time and meta data
 		* @param date_in A Date object representing the time of the measurement
@@ -244,6 +256,20 @@ class MeteoData {
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const {return nrOfAllParameters;}
+		size_t getOccurencesOfParameter(const Parameters& par, const std::set<std::string>& additional_parameters = std::set<std::string>()) const;
+		std::vector<double> getHeightsForParameter(const std::string& in_parname, bool include_default = true, const std::set<std::string>& additional_parameters = std::set<std::string>()) const;
+		size_t listUnknownParameters(const std::set<std::string>& additional_params = std::set<std::string>()) const;
+		static std::string convertHeightToString(const double& height);
+
+
+		static bool getTypeAndNo(const std::string& parname, std::string& par, double& number, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static bool sameParameterType(const std::string& par1, const std::string& par2, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::vector<std::string> retrieveAllHeightsForParam(const std::set<std::string>& available_parameters, const std::string& parname, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::vector<std::string> retrieveAllParametersAtHeight(const std::set<std::string>& available_parameters, const double& height, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::set<double> retrieveAllHeights(const std::set<std::string>& available_parameters, const std::set<std::string>& additional_parameters = std::set<std::string>());
+		static std::set<std::string> retriveUniqueParameters(const std::set<std::string>& available_parameters, const std::set<std::string>& additional_parameters=std::set<std::string>());
+		static std::vector<std::string> sortListByParams(const std::vector<std::string>& param_list, const std::set<std::string>& available_parameters = std::set<std::string>());
+
 
 		static MeteoGrids::Parameters findGridParam(const Parameters& mpar);
 		static Parameters findMeteoParam(const MeteoGrids::Parameters& gpar);
@@ -360,6 +386,15 @@ class MeteoData {
 		 * @return parameters that have at least one valid value
 		 */
 		static std::set<std::string> listAvailableParameters(const std::vector<MeteoData>& vecMeteo);
+		
+
+		/**
+		 * @brief Ensure all elements in a METEO_SET have the same parameters.
+		 * @details This should be called before writing out the METEO_SET with a plugin such as smet
+		 * in order to guarantee that all parameters are always present.
+		 * @param vecMeteo METEO_SET to process
+		 */
+		static void unifyMeteoData(METEO_SET &vecMeteo);
 
 		/**
 		 * @brief Print the content of the current object

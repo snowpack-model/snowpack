@@ -304,7 +304,6 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 	double Alb = Constants::min_albedo;
 	const double Ta = Mdata.ta;
 	double age = (ageAlbedo)? Mdata.date.getJulian() - Edata.depositionDate.getJulian() : 0.;
-
 	if (i_snow_albedo == "FIXED") {
 		Alb = i_albedo_fixedValue;
 	} else if ((ageAlbedo && (age > 365.)) || Xdata.isGlacier(false)) {
@@ -536,7 +535,6 @@ double SnLaws::parameterizedSnowAlbedo(const std::string& i_snow_albedo, const s
 		prn_msg(__FILE__, __LINE__, "err", Date(), "Albedo parameterization %s not implemented yet!", i_albedo_parameterization.c_str());
 		throw IOException("The required snow albedo model is not implemented yet!", AT);
 	}
-
 	return(Alb);
 }
 
@@ -554,7 +552,7 @@ void SnLaws::compShortWaveAbsorption(const std::string& i_sw_absorption_scheme, 
 	if (nE==0) return;
 
 	const size_t bottom_element = (Xdata.SoilNode > 0)? Xdata.SoilNode - 1 : Xdata.SoilNode;
-	for (size_t e = bottom_element; e < nE; e++)
+	for (size_t e = 0; e < nE; e++)
 		EMS[e].sw_abs = 0.;
 
 	// Compute absorbed radiation
@@ -682,7 +680,7 @@ double SnLaws::compWindGradientSnow(const ElementData& Edata, double& v_pump)
  * @version 12.0: thermal conductivity model is now defined by a key SOIL_THERMAL_CONDUCTIVITY in SNOWPACK_ADVANCED
  * @param[in] Edata
  * @param[in] dvdz Wind velocity gradient (s-1)
- * @param[in] soil_thermal_conductivity Thermal conductivity model to use (either "FITTED" or any other string)
+ * @param[in] soil_thermal_conductivity Thermal conductivity model to use (either "FITTED", "COSENZA2003", or "RAW")
  * @return Soil thermal conductivity (W K-1 m-1)
  */
 double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const double& dvdz,
@@ -691,22 +689,32 @@ double SnLaws::compSoilThermalConductivity(const ElementData& Edata, const doubl
 	double C_eff_soil;
 
 	//0 means no soil, 10000 means rock
-	if ((Edata.rg > 0.) && (Edata.rg < 10000.) && soil_thermal_conductivity == "FITTED") {
-		static const double c_clay = 1.3, c_sand = 0.27;
-		static const double beta1 = 6., beta2 = 4.978, c_mineral = 2.9;
-		const double weight = (c_clay - Edata.soil[SOIL_K]) / (c_clay - c_sand);
-		const double C_eff_soil_max = Edata.theta[SOIL] * c_mineral + (Edata.theta[WATER]+Edata.theta[WATER_PREF])
-		                              * SnLaws::conductivity_water(Edata.Te) + Edata.theta[ICE]
-		                              * SnLaws::conductivity_ice(Edata.Te);
+	if ((Edata.rg > 0.) && (Edata.rg < 10000.) && soil_thermal_conductivity != "RAW") {
+		if (soil_thermal_conductivity == "FITTED") {
+			static const double c_clay = 1.3, c_sand = 0.27;
+			static const double beta1 = 6., beta2 = 4.978, c_mineral = 2.9;
+			const double weight = (c_clay - Edata.soil[SOIL_K]) / (c_clay - c_sand);
+			const double C_eff_soil_max = Edata.theta[SOIL] * c_mineral + (Edata.theta[WATER]+Edata.theta[WATER_PREF])
+			                              * SnLaws::conductivity_water(Edata.Te) + Edata.theta[ICE]
+			                              * SnLaws::conductivity_ice(Edata.Te);
 
-		C_eff_soil = (beta1 + weight * beta2) * Edata.theta[ICE];
-		if ((Edata.theta[WATER]+Edata.theta[WATER_PREF]) > SnowStation::thresh_moist_soil) {
-			static const double alpha1 = 0.389, alpha2 = 0.3567, alpha3 = 61.61;
-			C_eff_soil += std::max( 0.27, (alpha1 + alpha2 * weight) * log(alpha3 * (Edata.theta[WATER]+Edata.theta[WATER_PREF])) );
+			C_eff_soil = (beta1 + weight * beta2) * Edata.theta[ICE];
+			if ((Edata.theta[WATER]+Edata.theta[WATER_PREF]) > SnowStation::thresh_moist_soil) {
+				static const double alpha1 = 0.389, alpha2 = 0.3567, alpha3 = 61.61;
+				C_eff_soil += std::max( 0.27, (alpha1 + alpha2 * weight) * log(alpha3 * (Edata.theta[WATER]+Edata.theta[WATER_PREF])) );
+			} else {
+				C_eff_soil += 0.27;
+			}
+			C_eff_soil = std::min(C_eff_soil_max, C_eff_soil);
+		} else if (soil_thermal_conductivity == "COSENZA2003") {
+			// Eq. 12 in Cosenza et al. (2003): Relationship between thermal conductivity and water content of soils using numerical modelling. https://doi.org/10.1046/j.1365-2389.2003.00539.x
+			const double n = 1. - Edata.theta[SOIL];	// n = porosity in Cosenza et al. (2003)
+			C_eff_soil = (0.8908 - 1.0959 * n) * Edata.soil[SOIL_K] + (1.2236 - 0.3485 * n) * (Edata.theta[WATER]+Edata.theta[WATER_PREF]);
+			// Now add ice contribution
+			C_eff_soil += Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te);
 		} else {
-			C_eff_soil += 0.27;
+			throw UnknownValueException("Unknown soil thermal conductivity model (SOIL_THERMAL_CONDUCTIVITY) selected!", AT);
 		}
-		C_eff_soil = std::min(C_eff_soil_max, C_eff_soil);
 	} else {
 		C_eff_soil = Edata.soil[SOIL_K] + (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * SnLaws::conductivity_water(Edata.Te)
                        + Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te);
@@ -749,6 +757,7 @@ double SnLaws::soilVaporDiffusivity(const ElementData& Edata)
  * temperature gradients in the air phase.
  * @author Margaux Couttet
  * @param Edata element data
+ * @param clay_fraction fraction of clay in the soil
  * @return Enhancement factor (-)
  */
 double SnLaws::compEnhanceWaterVaporTransportSoil(const ElementData& Edata, const double& clay_fraction)
@@ -772,13 +781,14 @@ double SnLaws::compEnhanceWaterVaporTransportSoil(const ElementData& Edata, cons
 * @param Edata_top element data
 * @param Te_bot lower element temperature (K)
 * @param Te_top upper element temperature (K)
+* @param clay_fraction fraction of clay in the soil
 * @return thermal vapor hydraulic conductivity (m2 K-1 s-1)
 */
 double SnLaws::compSoilThermalVaporConductivity(const ElementData& Edata_bot, const ElementData& Edata_top, const double& Te_bot, const double& Te_top, const double& clay_fraction)
 {
 	//Determine the nodal values by averaging between top and bottom elements
 	const double nodal_diffusivity = .5 * (SnLaws::soilVaporDiffusivity(Edata_top) + SnLaws::soilVaporDiffusivity(Edata_bot)); //(m2 s-1)
-	const double nodal_HR = .5 * (Edata_top.RelativeHumidity() + Edata_bot.RelativeHumidity()); //(-)
+	const double nodal_HR = .5 * (Edata_top.soilRelativeHumidity() + Edata_bot.soilRelativeHumidity()); //(-)
 	const double nodal_enhancement = .5 * (SnLaws::compEnhanceWaterVaporTransportSoil(Edata_top,clay_fraction)
 	+ SnLaws::compEnhanceWaterVaporTransportSoil(Edata_bot,clay_fraction)); // (-)
 
@@ -809,7 +819,7 @@ double SnLaws::compSoilIsothermalVaporConductivity(const ElementData& Edata_bot,
 	const double nodal_diffusivity = .5*(SnLaws::soilVaporDiffusivity(Edata_top) + SnLaws::soilVaporDiffusivity(Edata_bot)); //(m2 s-1)
 	const double nodal_vaporDensity = .5*(Atmosphere::waterVaporDensity(Te_top, Atmosphere::vaporSaturationPressure(Te_top))
 	                                   + Atmosphere::waterVaporDensity(Te_bot, Atmosphere::vaporSaturationPressure(Te_bot))); //(kg m-3)
-	const double nodal_HR = .5*(Edata_top.RelativeHumidity() + Edata_bot.RelativeHumidity()); //(-)
+	const double nodal_HR = .5*(Edata_top.soilRelativeHumidity() + Edata_bot.soilRelativeHumidity()); //(-)
 
 	return (nodal_diffusivity/Constants::density_water * nodal_vaporDensity * Constants::g/(Constants::gas_constant * T_node)) * nodal_HR;
 }
@@ -873,7 +883,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 
 	const double rg = MM_TO_M(Edata.rg); //Grain radius (m)
 	const double rb = MM_TO_M(Edata.rb); //Bond radius (m)
-	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk); //Element temperature (K)
+	const double Te = std::min(Edata.Te, Constants::meltfreeze_tk); //Element temperature (K)
 
 	// Check for elements with no ice and assume they contain only water
 	if (Edata.theta[ICE] < Snowpack::min_ice_content)
@@ -902,7 +912,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 
 	// Compute cross-sectional areas of conduction paths (m2)
 	const double Ap = Metamorphism::csPoreArea(Edata); // (mm2)
-	const double Aiw = std::max(0., Edata.theta[WATER] * (1. / C1 - rg) / C1 * (Ap + Constants::pi * rg*rg));
+	const double Aiw = std::max(0., Edata.theta[WATER] * (1. / C1)/(1. / C1 - rg) * (Ap + Constants::pi * rg*rg));
 	const double Aip = std::max(0., Constants::pi * (rg*rg - rb*rb) - Aiw);
 
 	/*
@@ -929,7 +939,7 @@ double SnLaws::compSnowThermalConductivity(const ElementData& Edata, const doubl
 	const double C5 = (Constants::conductivity_ice * Constants::conductivity_water * Aiw)
 	                  / (rg * Constants::conductivity_water  + (1./C1 - rg) * Constants::conductivity_ice);
 
-	double C_eff  = SnLaws::montana_c_fudge * C1 * (C2 + C3 + C4 + C5) * (2.0 - Edata.dd) * (1.0 + pow(Edata.theta[ICE], 1.7)) * (0.5 + Optim::pow2(Te/Edata.meltfreeze_tk) );
+	double C_eff  = SnLaws::montana_c_fudge * C1 * (C2 + C3 + C4 + C5) * (2.0 - Edata.dd) * (1.0 + pow(Edata.theta[ICE], 1.7)) * (0.5 + Optim::pow2(Te/Constants::meltfreeze_tk) );
 
 	if (!((C_eff < 5.*Constants::conductivity_ice) && (C_eff > 0.2*Constants::conductivity_air)) && show_warnings) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Conductivity out of range (0.2*Constants::conductivity_air=%.3lf, 5.*Constants::conductivity_ice=%.3lf):", 0.2 * Constants::conductivity_air, 5. * Constants::conductivity_ice);
@@ -1013,7 +1023,7 @@ double SnLaws::compLatentHeat_Rh(const std::string soil_evaporation,
 			 * in snowpackCore/Snowpack.h
 			*/
 			if (soil_evaporation=="EVAP_RELATIVE_HUMIDITY") {
-				eS = Vp2 * Xdata.Edata[Xdata.SoilNode-1].RelativeHumidity();
+				eS = Vp2 * Xdata.Edata[Xdata.SoilNode-1].soilRelativeHumidity();
 			} else {
 				eS = Vp2;
 			}
@@ -1103,8 +1113,8 @@ double SnLaws::compLWRadCoefficient(const double& t_snow, const double& t_atm, c
 
 /**
  * @brief Event driven new-snow density
- * @param i_event:
- * - event_wind: rho = 250.3 kg m-3 @ 4 m s-1; rho = 338 kg m-3 @ 7 m s-1 Antarctica
+ * @param variant Snowpack variant (such as DEFAULT, POLAR...)
+ * @param i_event - event_wind: rho = 250.3 kg m-3 @ 4 m s-1; rho = 338 kg m-3 @ 7 m s-1 Antarctica
  * @param Mdata  Meteorological input
  */
 double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::EventType& i_event,
@@ -1121,7 +1131,7 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
 			const double vw_avg_ref = Meteo::windspeedProfile(Mdata, z_ref_vw, Mdata.vw_avg);
 			if ((vw_avg_ref >= event_wind_lowlim) && (vw_avg_ref <= event_wind_highlim)) {
 				static const double rho_0=361., rho_1=33.;
-				return (vw_avg_ref == 0.) ? (rho_1) : (std::max(rho_1, rho_0*log10(vw_avg_ref)) + rho_1);
+				return (vw_avg_ref == 0.) ? (rho_1) : (std::max(rho_1, rho_0*log10(vw_avg_ref) + rho_1));
 			} else
 				return Constants::undefined;
 		}
@@ -1140,7 +1150,7 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
  * @param RH  Relative air humidity (1)
  * @param VW  Mean wind velocity (m s-1)
  * @param HH  Altitude a.s.l. (m)
- * @param model Parameterization to be used
+ * @param i_hn_model Parameterization to be used
  * @return New snow density (kg m-3)
  */
 double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
@@ -1195,6 +1205,22 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 	} else if (i_hn_model == "NIED") {
 		rho_hn = 62. + 3.6 * VW - 0.2 * TA;
 
+	} else if (i_hn_model == "VANKAMPENHOUT") {
+		// van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988
+		// Eq. 4 in van Kampenhout et al. (2017):
+		const double rho_w = 266.861 * (pow((0.5 * (1. + tanh( VW / 5. ))), 8.8));
+		double rho_t = 0.;
+		// Eq. 3 in van Kampenhout et al. (2017):
+		if (TA > 2.) {
+			rho_t = 50. + 1.7 * pow(17., 1.5);
+		} else if (TA > -15. && TA <= 2.) {
+			rho_t = 50. + 1.7 * pow((TA + 15.), 1.5);
+		} else {
+			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
+		}
+		// Eq. 2 in van Kampenhout et al. (2017):
+		rho_hn = rho_t + rho_w;
+
 	} else {
 		prn_msg(__FILE__, __LINE__, "err", Date(),
 		        "New snow density parameterization '%s' not available",
@@ -1224,7 +1250,7 @@ double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const d
  * @name New snow density
  * @brief Computes the density of new snow. The options for HN_DENSITY are:
  * - PARAMETERIZED (default is LEHNING_NEW):
- * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007
+ * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
  * 	- LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
  * 	- LEHNING_OLD: First model by M. Lehning
  *       @note {models by M. Lehning can be augmented with a parameterization for winds > 2.9 m s-1
@@ -1235,7 +1261,7 @@ double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const d
  * 	- event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
  * - MEASURED: Use measured new snow density read from meteo input
  * 	-Note: Set HN_DENSITY_FIXEDVALUE to 1. to use surface snow density as a "measured" value in case of missing values
- * - FIXED: Use a fixed new snow density by assigning HN_DENSITY-FIXEDVALUE a value (default: 100 kg m-3, at least min_hn_density)
+ * - FIXED: Use a fixed new snow density by assigning HN_DENSITY_FIXEDVALUE a value (default: 100 kg m-3, at least min_hn_density)
  * @param i_hn_density type of density computation
  * @param i_hn_density_parameterization to use
  * @param i_hn_density_fixedValue to use
@@ -1262,7 +1288,7 @@ double SnLaws::compNewSnowDensity(const std::string& i_hn_density, const std::st
 		if (Mdata.rho_hn != Constants::undefined) {
 			rho = Mdata.rho_hn; // New snow density as read from input file
 		} else if (Mdata.psum > 0. && (Mdata.psum_ph==IOUtils::nodata || Mdata.psum_ph<1.)) {
-			if (i_hn_density_fixedValue > 0. && i_hn_density_fixedValue > min_hn_density) // use density of surface snowpack
+			if (i_hn_density_fixedValue > 0. && i_hn_density_fixedValue > min_hn_density && Xdata.getNumberOfElements()-Xdata.SoilNode > 0) // use density of surface snowpack
 				rho = Xdata.Edata[Xdata.getNumberOfElements()-1].Rho;
 			else
 				rho = newSnowDensityPara(i_hn_density_parameterization,
@@ -1271,9 +1297,11 @@ double SnLaws::compNewSnowDensity(const std::string& i_hn_density, const std::st
 		} else {
 			rho = Constants::undefined;
 		}
-	} else { // "FIXED"
+	} else if (i_hn_density == "FIXED") {
 		rho = (i_hn_density_fixedValue != Constants::undefined) ? i_hn_density_fixedValue : Xdata.Edata[Xdata.getNumberOfElements()-1].Rho;
 		rho = std::max(min_hn_density, rho);
+	} else {
+		throw UnknownValueException("Unknown new snow density option (HN_DENSITY) selected!", AT);
 	}
 
 	return rho;
@@ -1316,7 +1344,8 @@ double SnLaws::NewSnowViscosityLehning(const ElementData& Edata)
  */
 double SnLaws::snowViscosityTemperatureTerm(const double& Te)
 {
-	const double Q = 67000.; // Activation energy for defects in ice (J mol-1)
+	// Max Stevens concluded in presentation at AGU 2021 that models with activation energy 60 kJ/mol worked best for South Pole (see https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/947354)
+	const double Q = (current_variant == "POLAR" || current_variant == "ANTARCTICA") ? (60000.) :(67000.); // Activation energy for defects in ice (J mol-1)
 
 	switch (SnLaws::t_term) {
 	case t_term_arrhenius_critical:
@@ -1692,17 +1721,16 @@ double SnLaws::ArrheniusLaw(const double ActEnergy, const double T, const double
  */
 double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
 {
-	const double ILWR = (md(MeteoData::ILWR)>1.)? md(MeteoData::ILWR) : IOUtils::nodata;
+	const double ILWR = md(MeteoData::ILWR);
 
 	if (ILWR!=IOUtils::nodata)
-		return AirEmissivity(ILWR, md(MeteoData::TA), variant);
+		return AirEmissivity(ILWR, md(MeteoData::TA), variant, false); // Do not enforce max limit on ea, to maintain original ILWR
 	else {
-		const double cloudiness = (md(MeteoData::ILWR)>0. && md(MeteoData::ILWR)<=1.)? md(MeteoData::ILWR) : IOUtils::nodata;
 		const double ilwr_p = Atmosphere::ILWR_parametrized(md.meta.position.getLat(), md.meta.position.getLon(), md.meta.position.getAltitude(),
 	                                        md.date.getJulian(), md.date.getTimeZone(),
-	                                        md(MeteoData::RH), md(MeteoData::TA), md(MeteoData::ISWR), cloudiness);
+	                                        md(MeteoData::RH), md(MeteoData::TA), md(MeteoData::ISWR), md(MeteoData::TAU_CLD));
 
-		return AirEmissivity(ilwr_p, md(MeteoData::TA), variant);
+		return AirEmissivity(ilwr_p, md(MeteoData::TA), variant, true); // Since ILWR has been parameterized, enforce limits on ea
 	}
 }
 
@@ -1719,13 +1747,13 @@ double SnLaws::AirEmissivity(mio::MeteoData& md, const std::string& variant)
  * 	- Antarctica: 0.31 (from 2006/2007 data of Dome C)
  * @return air emissivity in range [MIN_AIR_EMISSIVITY,1.] (1)
  */
-double SnLaws::AirEmissivity(const double& ilwr, const double& ta, const std::string& variant)
+double SnLaws::AirEmissivity(const double& ilwr, const double& ta, const std::string& variant, const bool& max_limit)
 {
 	const double min_emissivity = (variant != "ANTARCTICA" && variant != "POLAR") ? 0.55 : 0.31;
 
 	if(ilwr==IOUtils::nodata || ta==IOUtils::nodata) return min_emissivity;
 
-	const double ea = Atmosphere::blkBody_Emissivity(ilwr, ta); //return 1 if >1
+	const double ea = Atmosphere::blkBody_Emissivity(ilwr, ta, max_limit);
 	if (ea<min_emissivity) return min_emissivity;
 	return ea;
 }
@@ -1809,7 +1837,7 @@ double SnLaws::SnowViscosityMSU(const ElementData& Edata)
 			Vis = (L/(2.*rg + L)) * epdot * exp( (Q/R)*(1./Tref - 1./T) );
 			Vis = 1. / (Vis * Optim::pow2(S) * Optim::pow3(Vis1));
 		} else { // NOT YIELDING, linear
-			// This viscocity is not a function of stress and is therefore a linear viscosity.  Its value
+			// This viscosity is not a function of stress and is therefore a linear viscosity.  Its value
 			// depends on rb, rg, N3, theta_i and T. The expression  ((N3*theta_i)/(4.))*(rb/rg)^2
 			// determines the neck stress relative to the snow stress. The expression   ((rg + L)/(3.*L))
 			// relates the neck strains to the global volumetric strains. The term MONTANA_V_FUDGE is a

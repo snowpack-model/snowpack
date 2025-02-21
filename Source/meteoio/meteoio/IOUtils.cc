@@ -127,10 +127,22 @@ std::string bearing(double bearing)
 
 void stripComments(std::string& str)
 {
-	const size_t found = str.find_first_of("#;");
-	if (found != std::string::npos){
-		str.erase(found); //rest of line disregarded
-	}
+	size_t pos = 0;
+	do {
+		//find_first_of searches for any of the given chars while find search for an exact match...
+		const size_t pound_found_idx = str.find('#', pos);
+		const size_t semi_found_idx = str.find(';', pos);
+		pos = std::min(pound_found_idx, semi_found_idx);
+		
+		if (pos != std::string::npos) {
+			if (pos>0 && str[pos-1]=='\\') {
+				str.erase(pos-1, 1); //remove the escape character
+				continue;
+			}
+			str.erase(pos); //rest of line disregarded
+			return;
+		}
+	} while (pos != std::string::npos);
 }
 
 void stripComments(std::string& str, const char& comment_mk)
@@ -138,6 +150,25 @@ void stripComments(std::string& str, const char& comment_mk)
 	const size_t found = str.find_first_of(comment_mk);
 	if (found != std::string::npos){
 		str.erase(found); //rest of line disregarded
+	}
+}
+
+void cleanEscapedCharacters(std::string& str, const std::vector<char>& escaped_chars)
+{
+	for (auto escape_char : escaped_chars) {
+		size_t pos = 0;
+		do {
+			//find_first_of searches for any of the given chars while find search for an exact match...
+			pos = str.find(escape_char, pos);
+			
+			if (pos != std::string::npos) {
+				if (pos>0 && str[pos-1]=='\\') {
+					str.erase(pos-1, 1); //remove the escape character
+					continue;
+				}
+				pos++;
+			}
+		} while (pos != std::string::npos);
 	}
 }
 
@@ -443,6 +474,31 @@ size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, co
 	return vecRet.size();
 }
 
+std::vector<std::string> split(const std::string &s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter)) {
+        trim(token);
+		tokens.push_back(token);
+    }
+    return tokens;
+}
+
+std::vector<std::string> split(const std::string& s, std::string delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = s.find(delimiter);
+
+    while (end != std::string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delimiter.length();
+        end = s.find(delimiter, start);
+    }
+
+    tokens.push_back(s.substr(start, end));
+    return tokens;
+}
 // generic template function convertString must be defined in the header
 
 static const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -451,7 +507,7 @@ static const char NUM[] = "0123456789";
 template<> bool convertString<std::string>(std::string& t, std::string str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
-	t =str;
+	t = str;
 	trim(t); //delete trailing and leading whitespaces and tabs
 	return true;
 }

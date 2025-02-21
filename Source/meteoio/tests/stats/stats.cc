@@ -7,9 +7,7 @@
 using namespace std;
 using namespace mio;
 
-const double rand_range = 1000.;
-
-void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
+static void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 	X.clear(); X.resize(10);
 	Y.clear(); Y.resize(10);
 
@@ -25,30 +23,31 @@ void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 	X[9] = 408.396; Y[9] = 105.45;
 }
 
-void cr_rand_vectors(vector<double> &X, vector<double> &Y) {
-	const size_t N = 20;
-	srand( static_cast<unsigned int>(time(NULL)) );
-	X.clear(); X.resize(N);
-	Y.clear(); Y.resize(N);
+// static void cr_rand_vectors(vector<double> &X, vector<double> &Y) {
+//	static const double rand_range = 1000.;
+// 	const size_t N = 20;
+// 	srand( static_cast<unsigned int>(time(nullptr)) );
+// 	X.clear(); X.resize(N);
+// 	Y.clear(); Y.resize(N);
+//
+// 	for(size_t ii=0; ii<N; ++ii) {
+// 		X[ii] = rand()/(double)RAND_MAX*rand_range - rand_range/2.;
+// 		Y[ii] = rand()/(double)RAND_MAX*rand_range - rand_range/2.;
+// 	}
+// }
+//
+// static void print_vector(const vector<double>& X) {
+// 	for(size_t ii=0; ii<X.size(); ++ii)
+// 		std::cout << "X[" << ii << "] = " << X[ii] << "\n";
+// }
 
-	for(size_t ii=0; ii<N; ++ii) {
-		X[ii] = rand()/(double)RAND_MAX*rand_range - rand_range/2.;
-		Y[ii] = rand()/(double)RAND_MAX*rand_range - rand_range/2.;
-	}
-}
-
-void print_vector(const vector<double>& X) {
-	for(size_t ii=0; ii<X.size(); ++ii)
-		std::cout << "X[" << ii << "] = " << X[ii] << "\n";
-}
-
-void print_vectors(const vector<double>& X, const vector<double>& Y) {
+static void print_vectors(const vector<double>& X, const vector<double>& Y) {
 	for(size_t ii=0; ii<X.size(); ++ii)
 		std::cout << "X[" << ii << "] = " << X[ii] << "; Y[" << ii << "] = " << Y[ii] << ";\n";
 }
 
 ////////////////////////////////// start real tests
-bool check_sort(const vector<double>& x, const vector<double>& y) {
+static bool check_sort(const vector<double>& x, const vector<double>& y) {
 	vector<double> X(x), Y(y);
 	Interpol1D::sort(X, Y);
 	bool status = true;
@@ -68,7 +67,7 @@ bool check_sort(const vector<double>& x, const vector<double>& y) {
 	return status;
 }
 
-bool check_bin(const vector<double>& x, const vector<double>& y) {
+static bool check_bin(const vector<double>& x, const vector<double>& y) {
 	vector<double> X(x), Y(y);
 	Interpol1D::equalBin(3, X, Y);
 	const bool status1 = IOUtils::checkEpsilonEquality(X[0],-348.502,1e-3) &&
@@ -104,7 +103,7 @@ bool check_bin(const vector<double>& x, const vector<double>& y) {
 	return status;
 }
 
-bool check_quantiles(const vector<double>& X) {
+static bool check_quantiles(const vector<double>& X) {
 	static const double arr[] = {.1, .2, .4, .5, .75, .95};
 	static const double results[] = {-191.9748, -107.819, -57.6047, 57.4737, 250.781, 402.4144};
 	const vector<double> quartiles(arr, arr + sizeof(arr) / sizeof(arr[0]));
@@ -125,7 +124,7 @@ bool check_quantiles(const vector<double>& X) {
 	return status;
 }
 
-bool check_basics(const vector<double>& X, const vector<double>& Y) {
+static bool check_basics(const vector<double>& X, const vector<double>& Y) {
 	//min, max
 	const double min = Interpol1D::min_element(Y);
 	const double min_ref = -377.073;
@@ -183,7 +182,7 @@ bool check_basics(const vector<double>& X, const vector<double>& Y) {
 	const double m1_ref = 310.465757275, m2_ref = 353.558802994;
 	const double m1 = Interpol1D::weightedMean(d1, d2, w1);
 	const double m2 = Interpol1D::weightedMean(d1, d2, w2);
-	double wmean_status = true;
+	bool wmean_status = true;
 	if(IOUtils::checkEpsilonEquality(m1, m1_ref, 1e-6) && IOUtils::checkEpsilonEquality(m2, m2_ref, 1e-6))
 		std::cout << "Weighted mean: success\n";
 	else {
@@ -205,7 +204,7 @@ bool check_basics(const vector<double>& X, const vector<double>& Y) {
 	return (min_status || max_status || mad_status || variance_status || median_status || stddev_status || wmean_status || vector_mean_status);
 }
 
-bool check_covariance(const vector<double>& x, const vector<double>& y) {
+static bool check_covariance(const vector<double>& x, const vector<double>& y) {
 	const double cov = Interpol1D::covariance(x, y);
 	const double cov_ref = -35272.1266148;
 
@@ -218,7 +217,7 @@ bool check_covariance(const vector<double>& x, const vector<double>& y) {
 	return status;
 }
 
-bool check_derivative(const vector<double>& x, const vector<double>& y) {
+static bool check_derivative(const vector<double>& x, const vector<double>& y) {
 	static const double results[] = {IOUtils::nodata, -0.6146761, -0.454329, -11.377355, -3.8521071, -1.104764, 2.0748285, 3.241513, 0.516724, IOUtils::nodata};
 	vector<double> X(x), Y(y);
 	Interpol1D::sort(X, Y);
@@ -239,7 +238,7 @@ bool check_derivative(const vector<double>& x, const vector<double>& y) {
 	return status;
 }
 
-bool check_regressions(const vector<double>& x, const vector<double>& y) {
+static bool check_regressions(const vector<double>& x, const vector<double>& y) {
 	bool status = true;
 
 	Fit1D fit(Fit1D::SIMPLE_LINEAR, x, y);

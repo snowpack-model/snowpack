@@ -30,6 +30,9 @@ class RadiationField {
 		void setStations(const std::vector<mio::MeteoData>& vecMeteo, const mio::Grid2DObject& albedo);
 
 		void setMeteo(const mio::Grid2DObject& in_ta, const mio::Grid2DObject& in_rh, const mio::Grid2DObject& in_p, const mio::Grid2DObject& in_albedo);
+		void setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::Grid2DObject& in_iswr_diff,
+		              const mio::Grid2DObject& in_albedo, const mio::Date timestamp);
+
 
 		void getPositionSun(double& o_solarAzimuth, double& o_solarElevation) const;
 		void getRadiation(mio::Array2D<double>& o_direct, mio::Array2D<double>& o_diffuse, mio::Array2D<double>& o_direct_unshaded_horizontal) const;

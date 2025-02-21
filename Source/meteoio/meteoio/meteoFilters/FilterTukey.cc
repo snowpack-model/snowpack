@@ -52,7 +52,7 @@ void FilterTukey::process(const unsigned int& param, const std::vector<MeteoData
 
 			const double u3 = getU3(ivec, ii, param);
 			if (std_dev!=IOUtils::nodata && u3!=IOUtils::nodata) {
-				if ( abs(value-u3) > k*std_dev ) {
+				if ( std::abs(value-u3) > k*std_dev ) {
 					value = IOUtils::nodata;
 				}
 			} else if (!is_soft) value = IOUtils::nodata;

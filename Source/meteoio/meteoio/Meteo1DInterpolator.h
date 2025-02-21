@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace mio {
 /**
@@ -72,6 +73,7 @@ namespace mio {
  *
 */
 
+
 /**
  * @class Meteo1DInterpolator
  * @brief A class that can resample MeteoData objects
@@ -79,7 +81,24 @@ namespace mio {
  * @ingroup stats
  * @author Thomas Egger
  * @date   2010-06-24
- */
+*/
+
+class ResamplingStack {
+    public:
+		ResamplingStack();
+
+        void addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double& max_gap_size);
+        std::vector<std::shared_ptr<ResamplingAlgorithms>> buildStack(const ResamplingAlgorithms::gap_info& gap) const;
+
+		void resetResampling();
+		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM, MeteoData &md, const double& max_gap_size) const;
+		std::string getStackStr() const;
+		bool empty() const;
+
+    private:
+        std::vector<double> max_gap_sizes;
+        std::vector<std::shared_ptr<ResamplingAlgorithms>> stack;
+};
 
 class Meteo1DInterpolator {
 	public:
@@ -101,8 +120,6 @@ class Meteo1DInterpolator {
 		Meteo1DInterpolator(const Config& in_cfg, const char& rank=1, const IOUtils::OperationMode &mode=IOUtils::STD);
 		Meteo1DInterpolator(const Meteo1DInterpolator& org) = default;
 
-		~Meteo1DInterpolator();
-
 		/**
 		 * @brief A function that executes all the resampling algorithms that have been setup in the constructor
 		 * @param[in] date The requested date for a MeteoData object (to be resampled if not present)
@@ -112,7 +129,7 @@ class Meteo1DInterpolator {
 		 * @return true if successfull, false if no resampling was possible (no element created)
 		 */
 		bool resampleData(const Date& date, const std::string& stationHash, const std::vector<MeteoData>& vecM, MeteoData& md);
-		
+
 		/**
 		 * @brief Call each ResamplingAlgorithms to reset its cached data (as might be needed after a rebuffer)
 		 */
@@ -127,11 +144,25 @@ class Meteo1DInterpolator {
 		std::vector< std::pair<std::string, std::string> > getArgumentsForAlgorithm(const std::string& parname, const std::string& algorithm) const;
 		std::string getAlgorithmsForParameter(const std::string& parname) const;
 
-		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
+		void processAlgorithms(const std::string& parname, const std::vector<std::pair<int, std::string>>& vecAlgos, std::string base_parname="", const IOUtils::OperationMode& mode=IOUtils::STD, const char& rank=1);
+		void createResamplingStacks(const IOUtils::OperationMode& mode, const char& rank);
+		// resampling stack helpers
+	    void addAlgorithmToStack(const std::string& parname,const std::string& algo_name ,const std::vector<std::pair<std::string, std::string>>& vecArgs, const double& i_max_gap_size);
+    	void createDefaultAlgorithm(const std::string &parname);
+
+		std::map< std::string, ResamplingStack > mapAlgorithms; //per parameter interpolation algorithms
 		const Config& cfg;
-		double window_size; ///< In seconds
+		double max_gap_size; ///< In seconds
 		bool enable_resampling, data_qa_logs; ///< easy way to turn resampling off
+		std::string gap_size_key; // To support window size for now; TODO: remove at some point
+
+	public:
+		static const std::string interpol_section;
+		static const std::string interpol_pattern;
+		static const std::string arg_pattern;
 };
+
+
 } //end namespace
 
 #endif

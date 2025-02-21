@@ -1,13 +1,19 @@
 #SPDX-License-Identifier: LGPL-3.0-or-later
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
-SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.27.2)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(meteoio)
 # Version of library
-SET(VERSION_MAJOR 3 CACHE INTERNAL "")
-SET(VERSION_MINOR 0 CACHE INTERNAL "")
-SET(VERSION_PATCH 0 CACHE INTERNAL "")
+IF(DEFINED ENV{VERSION_MAJOR} AND DEFINED ENV{VERSION_MINOR} AND DEFINED ENV{VERSION_PATCH})
+	SET(VERSION_MAJOR $ENV{VERSION_MAJOR} CACHE INTERNAL "Major version")
+	SET(VERSION_MINOR $ENV{VERSION_MINOR} CACHE INTERNAL "Minor version")
+	SET(VERSION_PATCH $ENV{VERSION_PATCH} CACHE INTERNAL "Patch version")
+ELSE()
+	SET(VERSION_MAJOR 2 CACHE INTERNAL "Major version")
+	SET(VERSION_MINOR 11 CACHE INTERNAL "Minor version")
+	SET(VERSION_PATCH 0 CACHE INTERNAL "Patch version")
+ENDIF()
+
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
@@ -37,26 +43,29 @@ IF(UNIX)
 		SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
 	ENDIF()
 	
-	#set a full rpath for both build & install tree
-	SET(CMAKE_SKIP_BUILD_RPATH FALSE)
-	SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-	# add the directory of the binary to the rpath
-	#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN'")
-	IF(APPLE)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
-		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12")
-	ELSE(APPLE)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
-	ENDIF(APPLE)
-	
-	# add the automatically determined parts of the RPATH
-	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	#SET(CMAKE_INSTALL_RPATH $ORIGIN)
-	# the RPATH to be used when installing, but only if it's not a system directory
-	LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
- 	IF("${isSystemDir}" STREQUAL "-1")
- 		SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
- 	ENDIF("${isSystemDir}" STREQUAL "-1")
+	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
+	MARK_AS_ADVANCED(FORCE USE_RPATH)
+	if(USE_RPATH)
+		#set a full rpath for both build & install tree
+		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+		IF(APPLE)
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+			SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+		ELSE(APPLE)
+			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+		ENDIF(APPLE)
+
+		# add the automatically determined parts of the RPATH
+		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+		# the RPATH to be used when installing, but only if it's not a system directory
+		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+		IF("${isSystemDir}" STREQUAL "-1")
+			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+		ENDIF("${isSystemDir}" STREQUAL "-1")
+	ELSE(USE_RPATH)
+		SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+	ENDIF(USE_RPATH)
 
 	IF(APPLE)
 		SET(DLL_EXT "dylib*")
@@ -90,6 +99,7 @@ SET(PLUGIN_ALPUG ON CACHE BOOL "Compilation ALPUG ON or OFF")
 SET(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
 SET(PLUGIN_ARGOSIO OFF CACHE BOOL "Compilation ARGOSIO ON or OFF")
 SET(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
+SET(PLUGIN_BUFRIO OFF CACHE BOOL "Compilation BUFRIO ON or OFF")
 SET(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
 SET(PLUGIN_CSVIO ON CACHE BOOL "Compilation CsvIO ON or OFF")
 SET(PLUGIN_DBO OFF CACHE BOOL "Compilation DBO ON or OFF")
@@ -97,8 +107,10 @@ SET(PLUGIN_GEOTOPIO ON CACHE BOOL "Compilation GEOTOPIO ON or OFF")
 SET(PLUGIN_GOESIO ON CACHE BOOL "Compilation GOESIO ON or OFF")
 SET(PLUGIN_GRASSIO ON CACHE BOOL "Compilation GRASSIO ON or OFF")
 SET(PLUGIN_GRIBIO OFF CACHE BOOL "Compilation GRIBIO ON or OFF")
+SET(PLUGIN_iCSVIO ON CACHE BOOL "Compilation iCSVIO ON or OFF")
 SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
 SET(PLUGIN_METEOBLUE OFF CACHE BOOL "Compilation METEOBLUE ON or OFF")
+SET(PLUGIN_MYSQLIO OFF CACHE BOOL "Compilation MYSQLIO ON or OFF")
 SET(PLUGIN_NETCDFIO OFF CACHE BOOL "Compilation NETCDFIO ON or OFF")
 SET(PLUGIN_OSHDIO OFF CACHE BOOL "Compilation OshdIO ON or OFF")
 SET(PLUGIN_PGMIO ON CACHE BOOL "Compilation PGMIO ON or OFF")
@@ -108,18 +120,45 @@ SET(PLUGIN_PSQLIO OFF CACHE BOOL "Compilation PSQLIO ON or OFF")
 SET(PLUGIN_SASEIO OFF CACHE BOOL "Compilation SASEIO ON or OFF")
 SET(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
 SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
-SET(PLUGIN_WWCSIO OFF CACHE BOOL "Compilation WWCSIO ON or OFF")
+SET(PLUGIN_SYNTHIO ON CACHE BOOL "Compilation SYNTHIO ON or OFF")
 SET(PLUGIN_ZRXPIO OFF CACHE BOOL "Compilation ZRXPIO ON or OFF")
 SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
+###########################################################
+## Additional Options
+###########################################################
+SET(LIMIT_OUT_ACCESS OFF CACHE BOOL "Limit write access of the library to CWD")
+MARK_AS_ADVANCED(FORCE LIMIT_OUT_ACCESS)
+# SET(LIMIT_BASE_DIR ".")
+IF(LIMIT_OUT_ACCESS)
+	IF(MSVC)	#TODO: replace by add_compile_definitions(LIMIT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/LIMIT_WRITE_ACCESS)
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DLIMIT_WRITE_ACCESS)
+	ENDIF(MSVC)
+	SET(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
+	IF(MSVC)	#TODO: replace by add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"") when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\")
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DLIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\")
+	ENDIF(MSVC)
+ENDIF()
+
+IF(CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
+	IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 5.0)
+		IF(PLUGIN_IMISIO) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
+			SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
+		ENDIF(PLUGIN_IMISIO)
+	ENDIF()
+ENDIF()
+
+#show exception messages in a graphical message box
+SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 
 ###########################################################
 #finally, SET compile flags
 SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
-if (PROJ)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H") #allow PROJ v6
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H")
-ENDIF(PROJ)
+
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
@@ -221,7 +260,7 @@ ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/c
 INCLUDE(FindDoxygen)
 FIND_PACKAGE(Doxygen)
 if (DOXYGEN_FOUND)
-	ADD_CUSTOM_TARGET(doc "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
+	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env MIO_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
 ENDIF (DOXYGEN_FOUND)
 #Install the documentation if the user desires it
 SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
@@ -259,7 +298,7 @@ IF(CPACK_BUNDLE_ALL)
 			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
 			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
 			IF("${stdlibs}" STREQUAL "")
- 		        MESSAGE("STDLIBS not found! Please make sure they are in ${CMAKE_SOURCE_DIR}/bin")
+				MESSAGE("STDLIBS not found! Please make sure the dlls from your compiler for libwinpthread*, libstdc++* and libgcc_s_seh* are in ${CMAKE_SOURCE_DIR}/bin")
 			ENDIF("${stdlibs}" STREQUAL "")
 			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
 		ENDIF(CPACK_BUNDLE_STDLIBS)
@@ -340,7 +379,8 @@ IF(UNIX)
 		SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/icon.icns")
 		SET_SOURCE_FILES_PROPERTIES(${CPACK_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 	ELSE(APPLE)	#Linux packages: rmp, deb and tgz
-		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
+		SET(CPACK_GENERATOR "DEB;RPM;TGZ" CACHE STRING "Which packages to build")
+		MARK_AS_ADVANCED(FORCE CPACK_GENERATOR)
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
 		SET(CPACK_DEBIAN_PACKAGE_SECTION "devel")
@@ -356,6 +396,7 @@ IF(UNIX)
 		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++") #simply libproj for OpenSuse
 		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "${CPACK_ARCH}")
 		SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+		SET(CPACK_RPM_SPEC_INSTALL_POST "/bin/true") #disable running strip on the binaries (fails on some distributions and makes debugging much harder)
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)	#Windows packages
@@ -363,10 +404,11 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
+		SET(CPACK_NSIS_MODIFY_PATH ON)
 		
 		#Main links (they can get overwritten later)
 		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
-		SET(MENU_LINKS_METEOIO "https://models.slf.ch/p/meteoio/" "MeteoIO Home page")
+		SET(MENU_LINKS_METEOIO "https://meteoio.slf.ch" "MeteoIO Home page")
 		IF(INSTALL_DOC)
 			LIST(APPEND MENU_LINKS_METEOIO
 			"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
@@ -389,7 +431,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://models.slf.ch/p/meteoio")
+		SET(CPACK_NSIS_HELP_LINK "https://meteoio.slf.ch")
 		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 		SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
 	ENDIF(WIN32)

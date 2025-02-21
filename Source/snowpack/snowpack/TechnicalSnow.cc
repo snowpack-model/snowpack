@@ -31,7 +31,35 @@
 using namespace std;
 using namespace mio;
 
-TechSnow::TechSnow(const SnowpackConfig& cfg) 
+/**
+ * @page technical_snow Technical snow
+ * The technical snow module contains everything that is required to simulate the technical snow management as
+ * performed in ski resorts. This includes both <a href="https://en.wikipedia.org/wiki/Snow_grooming">snow grooming</a> and
+ * <a href="https://en.wikipedia.org/wiki/Snowmaking">technical snow production</a>.
+ * In order to keep the configuration quite simple and to reduce the need for detailed operational data, the grooming operations are simplified: it
+ * is assumed that snow grooming is performed between a specific calendar week, everyday at a specific time and ends at another given calendar week. In contrast,
+ * there is more flexibility regarding snow production: it is triggered when the forcing data contains positive values in the <i>psum_tech</i> field.
+ *
+ * @section snow_grooming Snow grooming
+ * The densification and mixing of the upper layers of the snow are simulated by the snow grooming module (see TechSnow::preparation). it is configured with the following keys:
+ *   - GROOMING_WEEK_START: calendar week when to start grooming operations;
+ *   - GROOMING_WEEK_END: calendar week when to end grooming operations;
+ *   - GROOMING_HOUR: at what time of the day is snow grooming performed;
+ *   - GROOMING_DEPTH_START: minimum snow height necessary for groooming (if there is less than GROOMING_DEPTH_START, grooming will be skipped);
+ *   - GROOMING_DEPTH_IMPACT: maximum grooming depth on the snow. Snow layers deeper than GROOMING_DEPTH_IMPACT are left unchanged.
+ *
+ * @section snow_production Snow production
+ * When a meteorological forcing named <i>psum_tech</i> has a positive value, snow production will be triggered. The mass of produced snow is given by <i>psum_tech</i>
+ * while other properties (such as snow temperature and liquid water content as well as the partition between solid and liquid precipitation) are computed based
+ * on the local <a href="https://en.wikipedia.org/wiki/Wet-bulb_temperature"wet bulb temperature</a>. Average values of water losses due to wind and
+ * evaporation are assumed together with an average wind speed suitable for snow production (this means that the true, local wind speed is not used, instead
+ * it is assumed that the snow production has been triggered because the wind speed was not too high).
+ *
+ * More details are given in TechSnow::productionPpt.
+ *
+ */
+
+TechSnow::TechSnow(const SnowpackConfig& cfg)
         : grooming_week_start(cfg.get("GROOMING_WEEK_START", "TechSnow")), grooming_week_end(cfg.get("GROOMING_WEEK_END", "TechSnow")),
           grooming_hour(cfg.get("GROOMING_HOUR", "TechSnow")), min_depth( cfg.get("GROOMING_DEPTH_START", "TechSnow")),
           max_depth( cfg.get("GROOMING_DEPTH_IMPACT", "TechSnow"))
@@ -77,9 +105,9 @@ void TechSnow::productionPpt(const CurrentMeteo& Mdata, const double& cumu_preci
 	static const double V_water = 100.;	// (l/min) average water supply by the snow guns
 
 	Tw = IOUtils::K_TO_C(Mdata.ta) * atan(0.151977 * sqrt(Mdata.rh*100. + 8.313659)) + atan(IOUtils::K_TO_C(Mdata.ta) + Mdata.rh*100.) - atan(Mdata.rh*100. - 1.676331) + 0.00391838 * pow(Mdata.rh*100, 1.5) * atan(0.023101 * Mdata.rh*100) - 4.686035; // (°C) Wet-bulb temperature
-	rho_hn = 1.7261 * Optim::pow2(Tw) + 37.484 * Tw + 505.05; // (kg/m3) density of technical snow (kg/m3) dependent from the wet-bulb temperature
+	rho_hn = 1.7261 * Optim::pow2(std::max(-11., Tw)) + 37.484 * std::max(-11., Tw) + 605.05; // (kg/m3) density of technical snow (kg/m3) dependent from the wet-bulb temperature. Validity range of parameterization: -12 <= Tw <= 0. Minimum set at -11, where the approximate minimum of the function lies.
 
-	double LWC_max = 29.76 - 11.71 * log(abs(Tw)) + 1.07*T_water - 1.6 * v_wind;	// (%vol) liquid water content at 55 l/min
+	double LWC_max = 29.76 - 11.71 * log(std::abs(Tw)) + 1.07*T_water - 1.6 * v_wind;	// (%vol) liquid water content at 55 l/min
 	if (LWC_max < 0.) LWC_max = 0.;
 
 	const double LWC = (0.004 * V_water + 0.52) * 100 * (rho_hn/917.) / 36.3 * LWC_max * 0.4;	// (%vol) liquid water content (average value multiply by 0.4)

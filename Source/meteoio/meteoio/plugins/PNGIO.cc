@@ -20,6 +20,7 @@
 #include <meteoio/meteoStats/libresampling2D.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <fstream>
@@ -108,6 +109,7 @@ namespace mio {
  * @endcode
  */
 
+const std::string PNGIO::default_extension = ".png";
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
@@ -307,10 +309,10 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	else png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
 
 	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB|PNG_FILTER_UP); //any other filter is costly and brings close to nothing...
-	if (indexed_png) png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 
 	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	if (indexed_png) {
+		png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 		png_set_IHDR(png_ptr, info_ptr, static_cast<png_uint_32>(width), static_cast<png_uint_32>(height),
 			channel_depth, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
 			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -435,9 +437,19 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 	free(png_ptr);
 }
 
-void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
+void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 {
-	const std::string full_name( grid2dpath+"/"+filename );
+	// options is a string of the format varname@Date
+	std::vector<std::string> vec_options;
+	if (IOUtils::readLineToVec(options, vec_options, '@')  != 2)
+		throw InvalidArgumentException("The format for the options to PNGIO::write2DGrid is varname@Date, received instead '"+options+"'", AT);
+
+	mio::Date date;
+	if(!mio::IOUtils::convertString(date, vec_options[1], cfg.get("TIME_ZONE","input"))) {
+		throw InvalidArgumentException("Unable to convert date '"+vec_options[1]+"'", AT);
+	}
+	
+	const std::string full_name( grid2dpath+"/"+date.toString(Date::NUM)+vec_options[0]+default_extension );
 	fp=nullptr;
 	png_structp png_ptr=nullptr;
 	png_infop info_ptr=nullptr;
@@ -560,8 +572,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 87000.; max = 115650.; //centered around 1 atm
 			gradient.set(Gradient::bluewhitered, min, max, autoscale);
 		} else {
-			const double delta1 = fabs(Cst::std_press-min);
-			const double delta2 = fabs(max - Cst::std_press);
+			const double delta1 = std::abs(Cst::std_press-min);
+			const double delta2 = std::abs(max - Cst::std_press);
 			const double delta = (delta1>delta2)?delta1:delta2;
 			gradient.set(Gradient::bluewhitered, Cst::std_press-delta, Cst::std_press+delta, autoscale);
 		}
@@ -624,7 +636,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 {
 	const std::string world_file( FileUtils::removeExtension(filename)+".pnw" );
 	if (!FileUtils::validFileAndPath(world_file)) throw InvalidNameException(world_file, AT);
-	std::ofstream fout(world_file.c_str(), ios::out);
+	ofilestream fout(world_file.c_str(), ios::out);
 	if (fout.fail()) throw AccessException(world_file, AT);
 
 	const double cellsize = grid_in.cellsize;

@@ -283,10 +283,6 @@ void Interpol1D::equalCountBin(const unsigned int k, std::vector<double> &X, std
 	Y = Y_bin;
 }
 
-inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
-	return l.first < r.first;
-}
-
 /**
  * @brief This function sorts the X and Y vectors by increasing X.
  * The nodata values (both in X and Y) are removed, meaning that the vector length might not
@@ -312,7 +308,11 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
 		new_vec.push_back( tmp );
 	}
 
-	std::sort( new_vec.begin(), new_vec.end(), pair_comparator );
+	std::sort( new_vec.begin(), new_vec.end(), 
+		[](const std::pair<double, double>& l, const std::pair<double, double>& r) {
+			return l.first < r.first;
+		}
+	);
 
 	const size_t newSize = new_vec.size();
 	X.resize( newSize );
@@ -334,7 +334,7 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool
  */
 double Interpol1D::weightedMean(const double& d1, const double& d2, const double& weight)
 {
-	const double tmp = abs(d1 - d2);
+	const double tmp = std::abs(d1 - d2);
 	if (d1 < d2) {
 		return (d1 + tmp*weight);
 	} else {
@@ -665,11 +665,11 @@ double Interpol1D::getBoxMuller()
 * @return distance of the point to the line
 */
 double Interpol1D::pt_line_distance(const double& x, const double& y, const double& a, const double& c) {
-	if (a==0.) return abs(y-c); //horizontal line
+	if (a==0.) return std::abs(y-c); //horizontal line
 
 	//for ax+by+c=0; for us, b=-1
 	static const double b = -1.;
-	const double d = abs(a*x +b*y + c) * Optim::invSqrt( a*a + b*b );
+	const double d = std::abs(a*x +b*y + c) * Optim::invSqrt( a*a + b*b );
 	return d;
 }
 
@@ -725,7 +725,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 	//computing the regression line
 	static const double epsilon = 1e-6;
-	if (sx <= abs(x_avg)*epsilon) { //sx and sy are always positive
+	if (sx <= std::abs(x_avg)*epsilon) { //sx and sy are always positive
 		//all points have same X -> we return a constant value that is the average
 		a = 0.;
 		b = y_avg;
@@ -740,7 +740,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		r = 1.;
 	} else {
 		//any other line
-		r = abs( sxy / sqrt(sx*sy) );
+		r = std::abs( sxy / sqrt(sx*sy) );
 	}
 }
 

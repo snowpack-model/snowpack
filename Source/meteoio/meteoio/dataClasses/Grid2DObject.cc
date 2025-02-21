@@ -450,6 +450,18 @@ size_t Grid2DObject::getNy() const {
 	return grid2D.getNy();
 }
 
+double Grid2DObject::getMin() const {
+	return grid2D.getMin();
+}
+
+double Grid2DObject::getMax() const {
+	return grid2D.getMax();
+}
+
+double Grid2DObject::getMean() const {
+	return grid2D.getMean();
+}
+
 
 void Grid2DObject::clear() {
 	grid2D.clear();
@@ -480,7 +492,7 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 	                     grid2D.getNy()==target.grid2D.getNy() &&
 	                     llcorner==target.llcorner &&
 	                     (cellsize==target.cellsize 
-	                     || (fabs(ur_lat-target.ur_lat) < eps && fabs(ur_lon-target.ur_lon) < eps));
+	                     || (std::abs(ur_lat-target.ur_lat) < eps && std::abs(ur_lon-target.ur_lon) < eps));
 
 	return isSameLoc;
 }
@@ -522,8 +534,8 @@ std::vector< double > Grid2DObject::extractPoints(const std::vector< std::pair<s
 
 double Grid2DObject::calculate_XYcellsize(const std::vector<double>& vecX, const std::vector<double>& vecY)
 {
-	const double distanceX = fabs(vecX.front() - vecX.back());
-	const double distanceY = fabs(vecY.front() - vecY.back());
+	const double distanceX = std::abs(vecX.front() - vecX.back());
+	const double distanceY = std::abs(vecY.front() - vecY.back());
 
 	//round to 1cm precision for numerical stability (and size()-1 because of the intervals thing)
 	const double cellsize_x = static_cast<double>(mio::Optim::round( distanceX / static_cast<double>(vecX.size()-1)*100. )) / 100.;

@@ -394,8 +394,8 @@ void PhaseChange::finalize(const SurfaceFluxes& Sdata, SnowStation& Xdata, const
 		// In the final step compute temperature and temperature gradient, check both density and mass balance
 		for (e = 0; e < nE; e++) {
 			//Restructure temperature arrays
-                        EMS[e].gradT = (NDS[e+1].T - NDS[e].T) / EMS[e].L;
-		        EMS[e].Te = (NDS[e].T + NDS[e+1].T) / 2.0;
+			EMS[e].gradT = (NDS[e+1].T - NDS[e].T) / EMS[e].L;
+			EMS[e].Te = (NDS[e].T + NDS[e+1].T) / 2.0;
 			//if (((EMS[e].Te - EMS[e].meltfreeze_tk) > 0.2) && EMS[e].theta[ICE]>0.) //handle the case of soil layers above ice/snow layers
 			//	prn_msg(__FILE__, __LINE__, "wrn", date_in,
 			//	        "%s temperature Te=%f K is above melting point (%f K) in element %d (nE=%d; T0=%f K, T1=%f K, theta_ice=%f)",
@@ -472,7 +472,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 			e--;
 			// Verify element state against maximum possible density: only water
 			if (!(EMS[e].Rho > Constants::eps && EMS[e].Rho <= (1.-EMS[e].theta[SOIL])*Constants::density_water + (EMS[e].theta[SOIL] * EMS[e].soil[SOIL_RHO]))) {
-				prn_msg(__FILE__, __LINE__, "err", date_in, "Phase Change Begin: volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le", e, EMS[e].Rho,
+				prn_msg(__FILE__, __LINE__, "err", date_in, "Phase Change Begin: volume contents: e:%d nE:%d rho:%lf ice:%lf wat:%lf wat_pref:%lf air:%le",
 									    e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
 				throw IOException("Run-time error in compPhaseChange()", AT);
 			}
@@ -524,7 +524,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 				// In case we use Richards equation for soil, phase transisitions are calculated there. The solver for Richards equation adjusts the element temperatures
 				// and stores the heat associated with the phase transitions in Qmf. Here, we use Qmf to calculate i_Te, and adjust the nodes here.
 				i_Te = EMS[e].Te;
-				EMS[e].Te += ( (EMS[e].Qmf * sn_dt) / (EMS[e].c[TEMPERATURE] * EMS[e].Rho));
+				EMS[e].Te += ( (EMS[e].Qmf * sn_dt) / (EMS[e].c[TEMPERATURE] * EMS[e].Rho) );
 			}
 			if ( e >= Xdata.SoilNode || iwatertransportmodel_soil != RICHARDSEQUATION ) {
 				// Check if phase change did occur
@@ -636,17 +636,14 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 				}
 				// TODO If WATER_LAYER && ql_rest > 0, consider evaporating water left in the last element above soil!
 			} else {
-				if ( EMS[e].Te != i_Te && iwatertransportmodel_soil == RICHARDSEQUATION && e < Xdata.SoilNode ) {
+				if ( iwatertransportmodel_soil == RICHARDSEQUATION && e < Xdata.SoilNode ) {
 					// In case we use Richards equation for soil and have recent phase changes (Te != i_Te), then, adjust nodes accordingly.
 					if(e==nE-1) {
 						NDS[e+1].T+=EMS[e].Te-i_Te;
 						retTopNodeT=NDS[e+1].T;
-					} else if (e==Xdata.SoilNode-1) {
-						NDS[e+1].T=(EMS[e].Te + EMS[e+1].Te)/2.0;
-					} else {
-						NDS[e+1].T+=0.5*(EMS[e].Te-i_Te);
 					}
-					NDS[e].T+=0.5*(EMS[e].Te-i_Te);
+					// Adjust lower node of element. A bit of an ad-hoc solution to only have the lower node absorb the energy change, but it's difficult to find a good, consistent solution here.
+					NDS[e].T+=(EMS[e].Te-i_Te);
 				} else {
 					// In case we use Richards equation for soil, phase changes will be calculated in ReSolver1d::SolveRichardsEquation
 					// Nevertheless, we need to make sure to define the return value:
@@ -695,7 +692,7 @@ double PhaseChange::compPhaseChange(SnowStation& Xdata, const mio::Date& date_in
 						EMS[e_CIR].theta[ICE] += EMS[e_CIR].theta_i_reservoir_cumul - reservoir_residual_ice; // Transfer ice from the cumulated ice reservoir to the matrix at lowest layer
 						EMS[e_CIR].theta[AIR] = 1. - (EMS[e_CIR].theta[ICE]+EMS[e_CIR].theta[WATER]+EMS[e_CIR].theta[WATER_PREF]+EMS[e_CIR].theta[SOIL]);
 						EMS[e_CIR].theta_i_reservoir = reservoir_residual_ice; // Leave only potential residual ice in the reservoir
-						cout << "TRANSFER OF RESERVOIR ICE";
+						//cout << "TRANSFER OF RESERVOIR ICE\n";	//keep it commented out for debug
 					}
 				}
 			} else { // Case CIR_to_fill==false

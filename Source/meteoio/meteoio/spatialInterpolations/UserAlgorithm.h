@@ -69,8 +69,8 @@ class USERInterpolation : public InterpolationAlgorithm {
 	public:
 		USERInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
 		                                GridsManager& i_gdm);
-		virtual double getQualityRating(const Date& i_date);
-		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+		virtual double getQualityRating(const Date& i_date) override;
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid) override;
 	private:
 		double bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_nx, const size_t &org_ny, const double &x, const double &y);
 		Grid2DObject resample(const DEMObject& dem, const Grid2DObject& grid_in);

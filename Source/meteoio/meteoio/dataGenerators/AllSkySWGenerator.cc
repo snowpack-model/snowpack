@@ -23,7 +23,7 @@
 
 namespace mio {
 
-bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
+bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
@@ -38,7 +38,7 @@ bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 		double albedo = .5;
 		if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
 			if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+				albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 		} else if (ISWR>0. && RSWR>0.) { //this could happen if the user calls this generator for a copy parameter, etc
 			albedo = std::max(0.01, std::min(0.99, RSWR / ISWR));
 		}
@@ -77,7 +77,7 @@ bool AllSkySWGenerator::create(const size_t& param, const size_t& ii_min, const 
 
 	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		const bool status = generate(param, vecMeteo[ii]);
+		const bool status = generate(param, vecMeteo[ii], vecMeteo);
 		if (status==false) all_filled=false;
 	}
 

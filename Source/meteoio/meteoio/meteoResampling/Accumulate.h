@@ -38,11 +38,11 @@ namespace mio {
  */
 class Accumulate : public ResamplingAlgorithms {
 	public:
-		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 
 		void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md);
-		std::string toString() const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md) override;
+		std::string toString() const override;
 	private:
 		static size_t findStartOfPeriod(const std::vector<MeteoData>& vecM, const size_t& index, const Date& dateStart);
 		double easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const;

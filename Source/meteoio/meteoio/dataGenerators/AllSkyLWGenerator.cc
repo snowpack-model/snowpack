@@ -26,17 +26,9 @@
 
 namespace mio {
 
-AllSkyLWGenerator::AllSkyLWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ, const Config &i_cfg)
-                   : TauCLDGenerator(vecArgs, i_algo, i_section, TZ, i_cfg), sun(), model(OMSTEDT)
-{ 
-	//TauCLDGenerator will do its own arguments parsing, then AllSkyLWGenerator
-	parse_args(vecArgs); 
-}
-
 void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs)
 {
 	const std::string where( section+"::"+algo );
-	std::string user_cloudiness;
 	bool has_type=false;
 
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
@@ -65,52 +57,14 @@ void AllSkyLWGenerator::parse_args(const std::vector< std::pair<std::string, std
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
 }
 
-bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
+bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
 	if (value==IOUtils::nodata) {
-		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), TAU_CLD=md(MeteoData::TAU_CLD);
-		const double CLD = (md.param_exists("CLD"))? md("CLD") : IOUtils::nodata;
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
-		double cloudiness = (TAU_CLD!=IOUtils::nodata)? Atmosphere::Kasten_cloudiness( TAU_CLD ) : IOUtils::nodata;
-		
-		if (CLD!=IOUtils::nodata) {
-			//Synop sky obstructed from view -> fully cloudy
-			if (CLD>9. || CLD<0.) throw InvalidArgumentException("Cloud cover CLD should be between 0 and 8!", AT);
-			cloudiness = std::max(std::min(CLD/8., 1.), 0.1);
-		}
-
-		const std::string station_hash( md.meta.stationID + ":" + md.meta.stationName );
-		const double julian_gmt = md.date.getJulian(true);
-		bool cloudiness_from_cache = false;
-
-		//try to get a cloudiness value
-		if (cloudiness==IOUtils::nodata) {
-			const double lat = md.meta.position.getLat();
-			const double lon = md.meta.position.getLon();
-			const double alt = md.meta.position.getAltitude();
-			sun.setLatLon(lat, lon, alt);
-			sun.setDate(julian_gmt, 0.);
-
-			bool is_night;
-			cloudiness = TauCLDGenerator::getCloudiness(md, sun, is_night);
-			if (cloudiness==IOUtils::nodata && !is_night) return false;
-
-			if (is_night) { //interpolate the cloudiness over the night
-				const std::map< std::string, std::pair<double, double> >::const_iterator it = last_cloudiness.find(station_hash);
-				if (it==last_cloudiness.end()) return false;
-
-				cloudiness_from_cache = true;
-				const double last_cloudiness_julian = it->second.first;
-				const double last_cloudiness_value = it->second.second;
-				if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
-				else return false;
-			}
-		}
-
-		//save the last valid cloudiness
-		if (!cloudiness_from_cache)
-			last_cloudiness[station_hash] = std::pair<double,double>( julian_gmt, cloudiness );
+		const double cloudiness = TauCLDGenerator::getCloudiness(md);
+		if (cloudiness==IOUtils::nodata) return false;
 
 		//run the ILWR parametrization
 		if (model==LHOMME)
@@ -139,7 +93,7 @@ bool AllSkyLWGenerator::create(const size_t& param, const size_t& ii_min, const 
 
 	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
-		const bool status = generate(param, vecMeteo[ii]);
+		const bool status = generate(param, vecMeteo[ii], vecMeteo);
 		if (status==false) all_filled=false;
 	}
 

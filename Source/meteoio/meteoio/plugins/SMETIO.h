@@ -45,14 +45,14 @@ class SMETIO : public IOInterface {
 		SMETIO(const SMETIO&);
 		SMETIO(const Config& cfgreader);
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-		                            const std::string& name="");
+		                            const std::string& name="") override;
 
-		virtual void readPOI(std::vector<Coords>& pts);
+		virtual void readPOI(std::vector<Coords>& pts) override;
 
 	private:
 		/** This structure contains the metadata associated with a SMET variable in order to plot it */
@@ -88,17 +88,12 @@ class SMETIO : public IOInterface {
 		void parseInputOutputSection();
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
-		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& smet_timezone,
-		                            std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
 		bool getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const;
-		void getFormatting(const size_t& param, int& prec, int& width) const;
+		void getFormatting(const std::string& parname, int& prec, int& width) const;
 		std::string buildVersionString(const std::vector< std::vector<MeteoData> >& vecMeteo, const double& smet_timezone) const;
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-		                        const double& smet_timezone, const size_t& nr_of_parameters,
-		                        const std::vector<bool>& vecParamInUse,
-		                        const std::vector<std::string>& vecColumnName,
-		                        smet::SMETWriter& mywriter);
+		                        const double& smet_timezone, const std::set<std::string>& paramInUse, smet::SMETWriter& mywriter);
 
 		static const char* dflt_extension;
 		static const double snVirtualSlopeAngle;
@@ -116,6 +111,7 @@ class SMETIO : public IOInterface {
 		VersioningType outputVersioning; //this is usefull when generating multiple versions of the same dataset, for example with forecast data
 		bool outputCommentedHeaders;   //prefix all headers with a '#' for easy import into dbs but breaks SMET conformance
 		bool outputIsAscii, outputPlotHeaders, randomColors, allowAppend, allowOverwrite, snowpack_slopes;//read from the Config [Output] section
+		// the default values of allowOverwrite and allowAppend should be kept as they are, to allow backward compatibility
 };
 
 } //namespace

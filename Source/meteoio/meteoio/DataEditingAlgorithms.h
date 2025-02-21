@@ -104,7 +104,7 @@ class EditingSwap : public EditingBlock {
 	public:
 		EditingSwap(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -113,31 +113,34 @@ class EditingSwap : public EditingBlock {
 
 
 /** 
- * @class EditingMove
+ * @class EditingRename
  * @ingroup processing
- * @brief MOVE input editing command
+ * @brief RENAME input editing command
  * @details
- * It is possible to rename a meteorological parameter thanks to the MOVE key. This key can take 
+ * It is possible to rename a meteorological parameter thanks to the RENAME key. This key can take
  * multiple source names that will be processed in the order of declaration and renamed into a single 
  * destination name. Original names that are not found in the current dataset will silently be ignored, 
  * so it is safe to provide a list that contain many possible names:
  * 
  * @code
  * [InputEditing]
- * SLF2::edit1      = MOVE
- * SLF2::arg1::dest = TA
+ * SLF2::edit1      = RENAME
  * SLF2::arg1::src  = air_temp air_temperature temperature_air
+ * SLF2::arg1::dest = TA
  * @endcode
  * 
  * This can be used to rename non-standard parameter names into standard ones. In this example, if TA already had some values, it will keep
  * those and only points not having a value will be filled by either air_temp or air_temperature or temperature_air (the first one in
  * the list to have a value has the priority).
+ *
+ * @note This editing command was previously MOVE. It has been renamed into RENAME so in the future a new MOVE command will be implemented to move
+ * parameters between stations.
  */
-class EditingMove : public EditingBlock {
+class EditingRename : public EditingBlock {
 	public:
-		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		EditingRename(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -160,15 +163,15 @@ class EditingMove : public EditingBlock {
  * FLU2::arg3::params  = TA RH TSS TSG
  * 
  * SLF2::edit1         = EXCLUDE
- * SLF2::arg3::params  = *
- * SLF2::arg3::when    = 2020-09-01 - 2020-09-03 , 2020-11-01T04:00
+ * SLF2::arg1::params  = *
+ * SLF2::arg1::when    = 2020-09-01 - 2020-09-03 , 2020-11-01T04:00
  * @endcode
  */
 class EditingExclude : public EditingBlock {
 	public:
 		EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -199,12 +202,79 @@ class EditingKeep : public EditingBlock {
 	public:
 		EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		static void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params); //for use in DataEditingAlgorithms
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::set< std::string > keep_params;
+};
+
+/** 
+ * @class EditingCombine
+ * @ingroup processing
+ * @brief COMBINE input editing command
+ * @details
+ * This algorithm allows combining several parameters into a single parameter for gap filling or to create 
+ * a new, composite parameter. This is useful, for example in order to fill gaps in a 2m air temperature 
+ * with air temperatures from other sensors or from other heights. Several methods to combine the parameters 
+ * are available with the TYPE argument and an arbitrary number of source parameters can be provided. 
+ * Please note that after processing, the source parameters will be deleted! It takes the following arguments:
+ *     - SRC: the source parameters providing the data (space delimited list);
+ *     - DEST: the destination parameter (it will be created if it does not already exist);
+ *     - TYPE: how to generate the data provided by the source parameters (default: FIRST):
+ *            - FIRST: take the first valid data (in the order that is given by the SRC argument);
+ *            - MIN: take the minimum of all valid data;
+ *            - AVG: take the average of all valid data;
+ *            - MAX: take the maximum of all valid data;
+ *     - REPLACE: if set to TRUE, even valid DEST data points will be replaced, otherwise only data gaps 
+ *                in DEST will be filled with new data (default: false).
+ * 
+ * \note Please note that for MIN/AVG/MAX, the current value of DEST is included if it is a valid value! If you 
+ * want to replace valid values of DEST with for example the average of several other parameters excluding itself, 
+ * first declare a KEEP or EXCLUDE algorithm for the period of interest in order to delete DEST.
+ * 
+ * \warning If the parameters to combine don't have the same sampling rate, the results will be some interlaced 
+ * output alternating between the different sources. For example combining an hourly precipitation with a 10 minutes
+ * precipitation reanalysis would lead to five reanalysis values followed by an hourly measurement (and repeated over
+ * the whole dataset duration). If this is not what you want (most probably), then first declare an EXCLUDE or KEEP
+ * editing operation over the period of interest.
+ *
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit2      = COMBINE
+ * STB::arg2::src  = TA_THY TA_ROT TA@100
+ * STB::arg2::dest = TA
+ * @endcode
+ */
+class EditingCombine : public EditingBlock {
+	public:
+		enum CombineType {
+			FIRST,	///< take the first valid data
+			MIN,	///< take the MIN of all valid data
+			AVG,	///< take the average of all valid data
+			MAX		///< take the MAX of all valid data
+		};
+	public:
+		EditingCombine(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void processFIRST(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		void processMIN(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		void processAVG(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		void processMAX(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
+		std::vector< std::string > merged_params; //as vector since order is important
+		std::string dest_param;
+		CombineType type;
+		bool replace;
 };
 
 /** 
@@ -260,10 +330,10 @@ class EditingMerge : public EditingBlock {
 	public:
 		EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		virtual void editTimeSeries(STATIONS_SET& vecStation) override;
 		
-		std::set<std::string> requiredIDs() const;
+		std::set<std::string> requiredIDs() const override;
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::vector< std::string > merged_stations;
@@ -293,8 +363,8 @@ class EditingAutoMerge : public EditingBlock {
 	public:
 		EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		virtual void editTimeSeries(STATIONS_SET& vecStation) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -326,7 +396,7 @@ class EditingCopy : public EditingBlock {
 	public:
 		EditingCopy(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -367,7 +437,7 @@ class EditingCreate : public EditingBlock {
 	public:
 		EditingCreate(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		static const std::vector< std::pair<std::string, std::string> > cleanGeneratorArgs(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -420,11 +490,10 @@ class EditingMetadata : public EditingBlock {
 	public:
 		EditingMetadata(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		virtual void editTimeSeries(STATIONS_SET& vecStation) override;
 		
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
-		
-		std::set<std::string> providedIDs() const;
+		std::set<std::string> providedIDs() const override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -433,6 +502,156 @@ class EditingMetadata : public EditingBlock {
 		std::string new_name, new_id;
 		double lat, lon, alt, slope, azi;
 		bool edit_in_place;
+};
+
+/** 
+ * @class EditingRegFill
+ * @ingroup processing
+ * @brief RegFill input editing command
+ * @details
+ * 
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit1        = EXCLUDE
+ * STB::arg1::params = ILWR PSUM
+ * 
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
+ *
+ * STB::edit2       = REGFILL
+ * STB::arg2::merge = WFJ2 WFJ1
+ * 
+ * DAV1::edit1        = REGFILL
+ * DAV1::arg1::merge  = WFJ2
+ * DAV1::arg1::params = HS RSWR PSUM
+ * @endcode
+ * 
+ * @note One limitation when handling "extra" parameters (ie parameters that are not in the default \ref meteoparam) is that these extra
+ * parameters must be known from the beginning. So if station2 appears later in time with extra parameters, make sure that the buffer size
+ * is large enough to reach all the way to this new station (by setting General::BUFFER_SIZE at least to the number of days from
+ * the start of the first station to the start of the second station)
+ */
+class EditingRegFill : public EditingBlock {
+	public: 
+		enum RegressionType {
+			LINEAR,
+			QUADRATIC,
+			CUBIC
+		};
+
+	public:
+		EditingRegFill(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		void fillTimeseries(METEO_SET& vecMeteo1, const METEO_SET& vecMeteo2);
+		std::vector< std::string > source_stations;
+		std::set< std::string > params_to_merge;
+		RegressionType regtype;
+};
+
+/** 
+ * @class EditingMove
+ * @ingroup processing
+ * @brief MOVE input editing command
+ * @details
+ * 
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit1         = EXCLUDE
+ * STB::arg1::params  = ILWR PSUM
+ * 
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
+ *
+ * SLF2::edit2        = MOVE
+ * SLF2::arg2::params = TA RH
+ * SLF2::arg2::dest   = *DAV
+ * @endcode
+ */
+class EditingMove : public EditingBlock {
+	public: 
+
+	public:
+		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		std::set<std::string> dest_stations;
+		std::set< std::string > params_to_move;
+
+		std::vector<MeteoData> createFullTimeSeries(const std::vector<MeteoData>& source, const std::vector<MeteoData>& dest) const;
+		bool isDestination(const std::string& stationID) const;
+
+		bool param_wildcard;
+		bool station_wildcard;
+		bool station_glob;
+};
+
+/** 
+ * @class EditingSplit
+ * @ingroup processing
+ * @brief Split input editing command
+ * @details
+ * 
+ * @code
+ * [Input]
+ * METEO = SMET
+ * METEOPATH = ./input
+ * STATION1  = STB
+ * STATION2  = WFJ2
+ * STATION3  = WFJ1
+ * STATION4  = DAV1
+ * [...]
+ *
+ * [InputEditing]
+ * STB::edit1         = EXCLUDE
+ * STB::arg1::params  = ILWR PSUM
+ * 
+ * WFJ2::edit1        = KEEP
+ * WFJ2::arg1::params = PSUM ILWR RSWR
+ *
+ * DAV1::edit1        = SPLIT
+ * DAV1::arg1::params = TSS HS
+ * DAV1::arg1::dest   = DAV_CRYO
+ * @endcode
+ */
+class EditingSplit : public EditingBlock {
+	public: 
+
+	public:
+		EditingSplit(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
+		
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		
+	private:
+		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
+		std::string dest_station_id;
+		std::set< std::string > params_to_move;
+
+		std::vector<MeteoData> splitTimeSeries(std::vector<MeteoData>& source);
 };
 
 class EditingBlockFactory {

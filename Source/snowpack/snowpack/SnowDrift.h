@@ -56,7 +56,7 @@ class SnowDrift {
 		const double fetch_length;
 		const double erosion_limit;
 		static const bool msg_erosion;
-		static const double redeposit_avg_depth;
+		const double redeposit_avg_depth;  ///< For REDEPOSIT mode: search depth for average threshold tau from the surface downward (in m)
 		std::string forcing;
 }; //End class SnowDrift
 

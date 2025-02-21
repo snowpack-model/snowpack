@@ -1,0 +1,3645 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.8b -->
+
+<!-- CreationDate: 2024-05-24 11:52:46 -->
+
+<!-- Magnification: 0.735 -->
+
+<svg
+   width="753.82373pt"
+   height="555.61163pt"
+   viewBox="-1147 2382 17086.999 12590.877"
+   version="1.1"
+   id="svg764"
+   sodipodi:docname="data_strategies.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title2332">Data strategies for an Alpine3D simulation</title>
+  <defs
+     id="defs768">
+    <defs
+       id="defs299">
+      <clipPath
+         id="cp0">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 15284,4008 240,90 -240,90 334,-64 v -51 z"
+           id="path296" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs384">
+      <clipPath
+         id="cp1">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 3674,3993 240,90 -240,90 334,-64 v -51 z"
+           id="path381" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs393">
+      <clipPath
+         id="cp2">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 8039,3993 240,90 -240,90 334,-64 v -51 z"
+           id="path390" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs456">
+      <clipPath
+         id="cp3">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 3674,7293 240,90 -240,90 334,-64 v -51 z"
+           id="path453" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs465">
+      <clipPath
+         id="cp4">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 8039,7293 240,90 -240,90 334,-64 v -51 z"
+           id="path462" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs528">
+      <clipPath
+         id="cp5">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 3674,10848 240,90 -240,90 334,-64 v -51 z"
+           id="path525" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs537">
+      <clipPath
+         id="cp6">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 8039,10848 240,90 -240,90 334,-64 v -51 z"
+           id="path534" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs546">
+      <clipPath
+         id="cp7">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 11009,5099 187,-175 -26,255 91,-327 -45,-23 z"
+           id="path543" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs555">
+      <clipPath
+         id="cp8">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 10964,4008 240,90 -240,90 334,-64 v -51 z"
+           id="path552" />
+      </clipPath>
+    </defs>
+    <defs
+       id="defs564">
+      <clipPath
+         id="cp9">
+        <path
+           clip-rule="evenodd"
+           d="M -1147,2382 H 16216 V 15027 H -1147 Z m 11152,2976 41,253 -197,-164 222,258 44,-26 z"
+           id="path561" />
+      </clipPath>
+    </defs>
+  </defs>
+  <sodipodi:namedview
+     id="namedview766"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.4798387"
+     inkscape:cx="482.82289"
+     inkscape:cy="370.6485"
+     inkscape:window-width="3440"
+     inkscape:window-height="1357"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg764" />
+  <circle
+     cx="-956"
+     cy="3389.3784"
+     r="191"
+     fill="#000000"
+     id="circle2" />
+  <circle
+     cx="-956"
+     cy="6389.3784"
+     r="191"
+     fill="#000000"
+     id="circle4" />
+  <circle
+     cx="-934"
+     cy="9734.3789"
+     r="191"
+     fill="#000000"
+     id="circle6" />
+  <circle
+     cx="-934"
+     cy="13289.379"
+     r="191"
+     fill="#000000"
+     id="circle8" />
+  <rect
+     x="10215"
+     y="4795.3784"
+     width="2835"
+     height="3870"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect10" />
+  <rect
+     x="2970"
+     y="5545.3784"
+     width="2835"
+     height="1845"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect12" />
+  <rect
+     x="2925"
+     y="8080.3784"
+     width="2835"
+     height="2790"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect14" />
+  <rect
+     x="2925"
+     y="11635.379"
+     width="2835"
+     height="2790"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect16" />
+  <rect
+     x="10507"
+     y="6062.3784"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect18" />
+  <rect
+     x="10507"
+     y="7029.3784"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect20" />
+  <rect
+     x="10507"
+     y="5095.3784"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect22" />
+  <rect
+     x="3262"
+     y="5845.3784"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect24" />
+  <rect
+     x="3217"
+     y="9347.3789"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect26" />
+  <rect
+     x="3217"
+     y="8380.3789"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect28" />
+  <rect
+     x="3217"
+     y="12902.379"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect30" />
+  <rect
+     x="3217"
+     y="11935.379"
+     width="2250"
+     height="810"
+     rx="105"
+     fill="#f5f5f5"
+     stroke="#000000"
+     stroke-width="30px"
+     id="rect32" />
+  <text
+     xml:space="preserve"
+     x="-1047.9377"
+     y="3514.1382"
+     fill="#ffffff"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="start"
+     id="text34"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:362.674px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1</text>
+  <text
+     xml:space="preserve"
+     x="-1045.7617"
+     y="6514.1382"
+     fill="#ffffff"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="start"
+     id="text36"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:362.674px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">2</text>
+  <text
+     xml:space="preserve"
+     x="-1021.767"
+     y="9856.5996"
+     fill="#ffffff"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="start"
+     id="text38"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:362.674px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">3</text>
+  <text
+     xml:space="preserve"
+     x="-1023.5804"
+     y="13414.139"
+     fill="#ffffff"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="start"
+     id="text40"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:362.674px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">4</text>
+  <polyline
+     points=" 14534,6954 15337,6954 15338,6266 15277,6130 15223,6088 15069,6056 15024,6045  15024,5794 14983,5742 14911,5712 14835,5699 14524,5699"
+     fill="#f3eed3"
+     id="polyline42"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="15253,6095 15104,5896 15026,5783 15026,6041 "
+     fill="#f3eed3"
+     id="polygon44"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 44,3939 847,3939 848,3251 787,3115 733,3073 579,3041 534,3030 534,2779 493,2727  421,2697 345,2684 34,2684"
+     fill="#f3eed3"
+     id="polyline46"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="763,3080 614,2881 536,2768 536,3026 "
+     fill="#f3eed3"
+     id="polygon48"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 44,6939 847,6939 848,6251 787,6115 733,6073 579,6041 534,6030 534,5779 493,5727  421,5697 345,5684 34,5684"
+     fill="#f3eed3"
+     id="polyline50"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="763,6080 614,5881 536,5768 536,6026 "
+     fill="#f3eed3"
+     id="polygon52"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7334,6939 8137,6939 8138,6251 8077,6115 8023,6073 7869,6041 7824,6030 7824,5779  7783,5727 7711,5697 7635,5684 7324,5684"
+     fill="#f3eed3"
+     id="polyline54"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8053,6080 7904,5881 7826,5768 7826,6026 "
+     fill="#f3eed3"
+     id="polygon56"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 44,10239 847,10239 848,9551 787,9415 733,9373 579,9341 534,9330 534,9079 493,9027  421,8997 345,8984 34,8984"
+     fill="#f3eed3"
+     id="polyline58"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="763,9380 614,9181 536,9068 536,9326 "
+     fill="#f3eed3"
+     id="polygon60"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7334,10239 8137,10239 8138,9551 8077,9415 8023,9373 7869,9341 7824,9330 7824,9079  7783,9027 7711,8997 7635,8984 7324,8984"
+     fill="#f3eed3"
+     id="polyline62"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8053,9380 7904,9181 7826,9068 7826,9326 "
+     fill="#f3eed3"
+     id="polygon64"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 44,13794 847,13794 848,13106 787,12970 733,12928 579,12896 534,12885 534,12634  493,12582 421,12552 345,12539 34,12539"
+     fill="#f3eed3"
+     id="polyline66"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="763,12935 614,12736 536,12623 536,12881 "
+     fill="#f3eed3"
+     id="polygon68"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7334,13794 8137,13794 8138,13106 8077,12970 8023,12928 7869,12896 7824,12885  7824,12634 7783,12582 7711,12552 7635,12539 7324,12539"
+     fill="#f3eed3"
+     id="polyline70"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8053,12935 7904,12736 7826,12623 7826,12881 "
+     fill="#f3eed3"
+     id="polygon72"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 15010,5770 15305,6172"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline74"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 14665,5700 14530,5700 14530,6960 15340,6960 15340,6330"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline76"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 14530,5700 14531,5700 14536,5700 14547,5700 14565,5700 14586,5700 14608,5700  14630,5700 14649,5700 14666,5700 14682,5700 14696,5700 14710,5700 14724,5700  14738,5700 14753,5700 14768,5700 14783,5701 14799,5701 14814,5702 14829,5702  14844,5703 14857,5705 14870,5706 14883,5708 14897,5710 14911,5713 14925,5716  14940,5721 14953,5726 14966,5731 14977,5738 14987,5745 14996,5752 15003,5760  15008,5769 15013,5778 15017,5789 15020,5802 15022,5815 15023,5828 15024,5842  15025,5855 15025,5868 15025,5880 15025,5892 15025,5905 15025,5918 15025,5932  15025,5945 15025,5958 15025,5971 15025,5982 15025,5991 15025,6000 15025,6008  15025,6015 15026,6022 15027,6029 15028,6034 15030,6039 15033,6044 15037,6047  15042,6050 15048,6053 15054,6054 15062,6056 15072,6057 15083,6059 15095,6060  15107,6061 15119,6063 15131,6064 15142,6066 15153,6068 15163,6070 15173,6073  15183,6076 15194,6080 15204,6085 15214,6090 15224,6095 15233,6101 15242,6106  15250,6113 15258,6119 15267,6126 15276,6135 15284,6144 15293,6155 15301,6167  15308,6180 15315,6194 15320,6209 15325,6225 15328,6239 15331,6255 15333,6272  15335,6289 15337,6307 15338,6325 15339,6342 15339,6357 15340,6371 15340,6382  15340,6391 15340,6398 15340,6402 15340,6400 15340,6392 15340,6377 15340,6358  15340,6341 15340,6332 15340,6330"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline78"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6710.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text80"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6620.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text82"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6530.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text84"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6440.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text86"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6350.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text88"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6260.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text90"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="14632"
+     y="6170.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text92"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 520,2755 815,3157"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline94"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 175,2685 40,2685 40,3945 850,3945 850,3315"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline96"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 40,2685 41,2685 46,2685 57,2685 75,2685 96,2685 118,2685 140,2685 159,2685 176,2685  192,2685 206,2685 220,2685 234,2685 248,2685 263,2685 278,2685 293,2686 309,2686  324,2687 339,2687 354,2688 367,2690 380,2691 393,2693 407,2695 421,2698 435,2701  450,2706 463,2711 476,2716 487,2723 497,2730 506,2737 513,2745 518,2754 523,2763  527,2774 530,2787 532,2800 533,2813 534,2827 535,2840 535,2853 535,2865 535,2877  535,2890 535,2903 535,2917 535,2930 535,2943 535,2956 535,2967 535,2976 535,2985  535,2993 535,3000 536,3007 537,3014 538,3019 540,3024 543,3029 547,3032 552,3035  558,3038 564,3039 572,3041 582,3042 593,3044 605,3045 617,3046 629,3048 641,3049  652,3051 663,3053 673,3055 683,3058 693,3061 704,3065 714,3070 724,3075 734,3080  743,3086 752,3091 760,3098 768,3104 777,3111 786,3120 794,3129 803,3140 811,3152  818,3165 825,3179 830,3194 835,3210 838,3224 841,3240 843,3257 845,3274 847,3292  848,3310 849,3327 849,3342 850,3356 850,3367 850,3376 850,3383 850,3387 850,3385  850,3377 850,3362 850,3343 850,3326 850,3317 850,3315"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline98"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3695.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text100"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3605.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text102"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3515.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text104"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3425.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text106"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3335.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text108"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3245.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text110"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="3155.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text112"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 520,5755 815,6157"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline114"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 175,5685 40,5685 40,6945 850,6945 850,6315"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline116"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 40,5685 41,5685 46,5685 57,5685 75,5685 96,5685 118,5685 140,5685 159,5685 176,5685  192,5685 206,5685 220,5685 234,5685 248,5685 263,5685 278,5685 293,5686 309,5686  324,5687 339,5687 354,5688 367,5690 380,5691 393,5693 407,5695 421,5698 435,5701  450,5706 463,5711 476,5716 487,5723 497,5730 506,5737 513,5745 518,5754 523,5763  527,5774 530,5787 532,5800 533,5813 534,5827 535,5840 535,5853 535,5865 535,5877  535,5890 535,5903 535,5917 535,5930 535,5943 535,5956 535,5967 535,5976 535,5985  535,5993 535,6000 536,6007 537,6014 538,6019 540,6024 543,6029 547,6032 552,6035  558,6038 564,6039 572,6041 582,6042 593,6044 605,6045 617,6046 629,6048 641,6049  652,6051 663,6053 673,6055 683,6058 693,6061 704,6065 714,6070 724,6075 734,6080  743,6086 752,6091 760,6098 768,6104 777,6111 786,6120 794,6129 803,6140 811,6152  818,6165 825,6179 830,6194 835,6210 838,6224 841,6240 843,6257 845,6274 847,6292  848,6310 849,6327 849,6342 850,6356 850,6367 850,6376 850,6383 850,6387 850,6385  850,6377 850,6362 850,6343 850,6326 850,6317 850,6315"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline118"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6695.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text120"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6605.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text122"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6515.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text124"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6425.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text126"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6335.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text128"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6245.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text130"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="6155.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text132"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 7810,5755 8105,6157"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline134"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7465,5685 7330,5685 7330,6945 8140,6945 8140,6315"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline136"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7330,5685 7331,5685 7336,5685 7347,5685 7365,5685 7386,5685 7408,5685 7430,5685  7449,5685 7466,5685 7482,5685 7496,5685 7510,5685 7524,5685 7538,5685 7553,5685  7568,5685 7583,5686 7599,5686 7614,5687 7629,5687 7644,5688 7657,5690 7670,5691  7683,5693 7697,5695 7711,5698 7725,5701 7740,5706 7753,5711 7766,5716 7777,5723  7787,5730 7796,5737 7803,5745 7808,5754 7813,5763 7817,5774 7820,5787 7822,5800  7823,5813 7824,5827 7825,5840 7825,5853 7825,5865 7825,5877 7825,5890 7825,5903  7825,5917 7825,5930 7825,5943 7825,5956 7825,5967 7825,5976 7825,5985 7825,5993  7825,6000 7826,6007 7827,6014 7828,6019 7830,6024 7833,6029 7837,6032 7842,6035  7848,6038 7854,6039 7862,6041 7872,6042 7883,6044 7895,6045 7907,6046 7919,6048  7931,6049 7942,6051 7953,6053 7963,6055 7973,6058 7983,6061 7994,6065 8004,6070  8014,6075 8024,6080 8033,6086 8042,6091 8050,6098 8058,6104 8067,6111 8076,6120  8084,6129 8093,6140 8101,6152 8108,6165 8115,6179 8120,6194 8125,6210 8128,6224  8131,6240 8133,6257 8135,6274 8137,6292 8138,6310 8139,6327 8139,6342 8140,6356  8140,6367 8140,6376 8140,6383 8140,6387 8140,6385 8140,6377 8140,6362 8140,6343  8140,6326 8140,6317 8140,6315"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline138"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6695.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text140"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6605.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text142"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6515.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text144"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6425.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text146"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6335.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text148"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6245.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text150"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="6155.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text152"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 520,9055 815,9457"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline154"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 175,8985 40,8985 40,10245 850,10245 850,9615"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline156"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 40,8985 41,8985 46,8985 57,8985 75,8985 96,8985 118,8985 140,8985 159,8985 176,8985  192,8985 206,8985 220,8985 234,8985 248,8985 263,8985 278,8985 293,8986 309,8986  324,8987 339,8987 354,8988 367,8990 380,8991 393,8993 407,8995 421,8998 435,9001  450,9006 463,9011 476,9016 487,9023 497,9030 506,9037 513,9045 518,9054 523,9063  527,9074 530,9087 532,9100 533,9113 534,9127 535,9140 535,9153 535,9165 535,9177  535,9190 535,9203 535,9217 535,9230 535,9243 535,9256 535,9267 535,9276 535,9285  535,9293 535,9300 536,9307 537,9314 538,9319 540,9324 543,9329 547,9332 552,9335  558,9338 564,9339 572,9341 582,9342 593,9344 605,9345 617,9346 629,9348 641,9349  652,9351 663,9353 673,9355 683,9358 693,9361 704,9365 714,9370 724,9375 734,9380  743,9386 752,9391 760,9398 768,9404 777,9411 786,9420 794,9429 803,9440 811,9452  818,9465 825,9479 830,9494 835,9510 838,9524 841,9540 843,9557 845,9574 847,9592  848,9610 849,9627 849,9642 850,9656 850,9667 850,9676 850,9683 850,9687 850,9685  850,9677 850,9662 850,9643 850,9626 850,9617 850,9615"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline158"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9995.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text160"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9905.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text162"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9815.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text164"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9725.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text166"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9635.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text168"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9545.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text170"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="9455.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text172"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 7810,9055 8105,9457"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline174"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7465,8985 7330,8985 7330,10245 8140,10245 8140,9615"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline176"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7330,8985 7331,8985 7336,8985 7347,8985 7365,8985 7386,8985 7408,8985 7430,8985  7449,8985 7466,8985 7482,8985 7496,8985 7510,8985 7524,8985 7538,8985 7553,8985  7568,8985 7583,8986 7599,8986 7614,8987 7629,8987 7644,8988 7657,8990 7670,8991  7683,8993 7697,8995 7711,8998 7725,9001 7740,9006 7753,9011 7766,9016 7777,9023  7787,9030 7796,9037 7803,9045 7808,9054 7813,9063 7817,9074 7820,9087 7822,9100  7823,9113 7824,9127 7825,9140 7825,9153 7825,9165 7825,9177 7825,9190 7825,9203  7825,9217 7825,9230 7825,9243 7825,9256 7825,9267 7825,9276 7825,9285 7825,9293  7825,9300 7826,9307 7827,9314 7828,9319 7830,9324 7833,9329 7837,9332 7842,9335  7848,9338 7854,9339 7862,9341 7872,9342 7883,9344 7895,9345 7907,9346 7919,9348  7931,9349 7942,9351 7953,9353 7963,9355 7973,9358 7983,9361 7994,9365 8004,9370  8014,9375 8024,9380 8033,9386 8042,9391 8050,9398 8058,9404 8067,9411 8076,9420  8084,9429 8093,9440 8101,9452 8108,9465 8115,9479 8120,9494 8125,9510 8128,9524  8131,9540 8133,9557 8135,9574 8137,9592 8138,9610 8139,9627 8139,9642 8140,9656  8140,9667 8140,9676 8140,9683 8140,9687 8140,9685 8140,9677 8140,9662 8140,9643  8140,9626 8140,9617 8140,9615"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline178"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9995.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text180"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9905.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text182"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9815.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text184"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9725.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text186"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9635.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text188"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9545.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text190"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="9455.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text192"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 520,12610 815,13012"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline194"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 175,12540 40,12540 40,13800 850,13800 850,13170"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline196"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 40,12540 41,12540 46,12540 57,12540 75,12540 96,12540 118,12540 140,12540 159,12540  176,12540 192,12540 206,12540 220,12540 234,12540 248,12540 263,12540 278,12540  293,12541 309,12541 324,12542 339,12542 354,12543 367,12545 380,12546 393,12548  407,12550 421,12553 435,12556 450,12561 463,12566 476,12571 487,12578 497,12585  506,12592 513,12600 518,12609 523,12618 527,12629 530,12642 532,12655 533,12668  534,12682 535,12695 535,12708 535,12720 535,12732 535,12745 535,12758 535,12772  535,12785 535,12798 535,12811 535,12822 535,12831 535,12840 535,12848 535,12855  536,12862 537,12869 538,12874 540,12879 543,12884 547,12887 552,12890 558,12893  564,12894 572,12896 582,12897 593,12899 605,12900 617,12901 629,12903 641,12904  652,12906 663,12908 673,12910 683,12913 693,12916 704,12920 714,12925 724,12930  734,12935 743,12941 752,12946 760,12953 768,12959 777,12966 786,12975 794,12984  803,12995 811,13007 818,13020 825,13034 830,13049 835,13065 838,13079 841,13095  843,13112 845,13129 847,13147 848,13165 849,13182 849,13197 850,13211 850,13222  850,13231 850,13238 850,13242 850,13240 850,13232 850,13217 850,13198 850,13181  850,13172 850,13170"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline198"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13550.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text200"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13460.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text202"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13370.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text204"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13280.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text206"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13190.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text208"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13100.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text210"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="142"
+     y="13010.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text212"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 7810,12610 8105,13012"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline214"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7465,12540 7330,12540 7330,13800 8140,13800 8140,13170"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline216"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7330,12540 7331,12540 7336,12540 7347,12540 7365,12540 7386,12540 7408,12540  7430,12540 7449,12540 7466,12540 7482,12540 7496,12540 7510,12540 7524,12540  7538,12540 7553,12540 7568,12540 7583,12541 7599,12541 7614,12542 7629,12542  7644,12543 7657,12545 7670,12546 7683,12548 7697,12550 7711,12553 7725,12556  7740,12561 7753,12566 7766,12571 7777,12578 7787,12585 7796,12592 7803,12600  7808,12609 7813,12618 7817,12629 7820,12642 7822,12655 7823,12668 7824,12682  7825,12695 7825,12708 7825,12720 7825,12732 7825,12745 7825,12758 7825,12772  7825,12785 7825,12798 7825,12811 7825,12822 7825,12831 7825,12840 7825,12848  7825,12855 7826,12862 7827,12869 7828,12874 7830,12879 7833,12884 7837,12887  7842,12890 7848,12893 7854,12894 7862,12896 7872,12897 7883,12899 7895,12900  7907,12901 7919,12903 7931,12904 7942,12906 7953,12908 7963,12910 7973,12913  7983,12916 7994,12920 8004,12925 8014,12930 8024,12935 8033,12941 8042,12946  8050,12953 8058,12959 8067,12966 8076,12975 8084,12984 8093,12995 8101,13007  8108,13020 8115,13034 8120,13049 8125,13065 8128,13079 8131,13095 8133,13112  8135,13129 8137,13147 8138,13165 8139,13182 8139,13197 8140,13211 8140,13222  8140,13231 8140,13238 8140,13242 8140,13240 8140,13232 8140,13217 8140,13198  8140,13181 8140,13172 8140,13170"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline218"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13550.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text220"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13460.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text222"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13370.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text224"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13280.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text226"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13190.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text228"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13100.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text230"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7432"
+     y="13010.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text232"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 14939,6684 15742,6684 15743,5996 15682,5860 15628,5818 15474,5786 15429,5775  15429,5524 15388,5472 15316,5442 15240,5429 14929,5429"
+     fill="#f3eed3"
+     id="polyline234"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="15658,5825 15509,5626 15431,5513 15431,5771 "
+     fill="#f3eed3"
+     id="polygon236"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 449,3669 1252,3669 1253,2981 1192,2845 1138,2803 984,2771 939,2760 939,2509  898,2457 826,2427 750,2414 439,2414"
+     fill="#f3eed3"
+     id="polyline238"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1168,2810 1019,2611 941,2498 941,2756 "
+     fill="#f3eed3"
+     id="polygon240"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 449,6669 1252,6669 1253,5981 1192,5845 1138,5803 984,5771 939,5760 939,5509  898,5457 826,5427 750,5414 439,5414"
+     fill="#f3eed3"
+     id="polyline242"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1168,5810 1019,5611 941,5498 941,5756 "
+     fill="#f3eed3"
+     id="polygon244"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7739,6669 8542,6669 8543,5981 8482,5845 8428,5803 8274,5771 8229,5760 8229,5509  8188,5457 8116,5427 8040,5414 7729,5414"
+     fill="#f3eed3"
+     id="polyline246"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8458,5810 8309,5611 8231,5498 8231,5756 "
+     fill="#f3eed3"
+     id="polygon248"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 449,9969 1252,9969 1253,9281 1192,9145 1138,9103 984,9071 939,9060 939,8809  898,8757 826,8727 750,8714 439,8714"
+     fill="#f3eed3"
+     id="polyline250"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1168,9110 1019,8911 941,8798 941,9056 "
+     fill="#f3eed3"
+     id="polygon252"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7739,9969 8542,9969 8543,9281 8482,9145 8428,9103 8274,9071 8229,9060 8229,8809  8188,8757 8116,8727 8040,8714 7729,8714"
+     fill="#f3eed3"
+     id="polyline254"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8458,9110 8309,8911 8231,8798 8231,9056 "
+     fill="#f3eed3"
+     id="polygon256"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 449,13524 1252,13524 1253,12836 1192,12700 1138,12658 984,12626 939,12615 939,12364  898,12312 826,12282 750,12269 439,12269"
+     fill="#f3eed3"
+     id="polyline258"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1168,12665 1019,12466 941,12353 941,12611 "
+     fill="#f3eed3"
+     id="polygon260"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7739,13524 8542,13524 8543,12836 8482,12700 8428,12658 8274,12626 8229,12615  8229,12364 8188,12312 8116,12282 8040,12269 7729,12269"
+     fill="#f3eed3"
+     id="polyline262"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8458,12665 8309,12466 8231,12353 8231,12611 "
+     fill="#f3eed3"
+     id="polygon264"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="11632"
+     y="6564.3784"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text266"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libSnowpack</text>
+  <text
+     xml:space="preserve"
+     x="11632"
+     y="7531.3784"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text268"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libAlpine3D</text>
+  <text
+     xml:space="preserve"
+     x="11632"
+     y="5597.3784"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text270"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libMeteoIO</text>
+  <text
+     xml:space="preserve"
+     x="11632"
+     y="8530.3789"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text272"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Alpine3D</text>
+  <polyline
+     points=" 15415,5500 15710,5902"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline274"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 15070,5430 14935,5430 14935,6690 15745,6690 15745,6060"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline276"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 14935,5430 14936,5430 14941,5430 14952,5430 14970,5430 14991,5430 15013,5430  15035,5430 15054,5430 15071,5430 15087,5430 15101,5430 15115,5430 15129,5430  15143,5430 15158,5430 15173,5430 15188,5431 15204,5431 15219,5432 15234,5432  15249,5433 15262,5435 15275,5436 15288,5438 15302,5440 15316,5443 15330,5446  15345,5451 15358,5456 15371,5461 15382,5468 15392,5475 15401,5482 15408,5490  15413,5499 15418,5508 15422,5519 15425,5532 15427,5545 15428,5558 15429,5572  15430,5585 15430,5598 15430,5610 15430,5622 15430,5635 15430,5648 15430,5662  15430,5675 15430,5688 15430,5701 15430,5712 15430,5721 15430,5730 15430,5738  15430,5745 15431,5752 15432,5759 15433,5764 15435,5769 15438,5774 15442,5777  15447,5780 15453,5783 15459,5784 15467,5786 15477,5787 15488,5789 15500,5790  15512,5791 15524,5793 15536,5794 15547,5796 15558,5798 15568,5800 15578,5803  15588,5806 15599,5810 15609,5815 15619,5820 15629,5825 15638,5831 15647,5836  15655,5843 15663,5849 15672,5856 15681,5865 15689,5874 15698,5885 15706,5897  15713,5910 15720,5924 15725,5939 15730,5955 15733,5969 15736,5985 15738,6002  15740,6019 15742,6037 15743,6055 15744,6072 15744,6087 15745,6101 15745,6112  15745,6121 15745,6128 15745,6132 15745,6130 15745,6122 15745,6107 15745,6088  15745,6071 15745,6062 15745,6060"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline278"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="6440.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text280"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="6350.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text282"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="6260.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text284"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="6170.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text286"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="6080.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text288"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="5990.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text290"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15037"
+     y="5900.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text292"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15345"
+     y="7810.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text294"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">results</text>
+  <polyline
+     points=" 13140,6480 14445,6480"
+     clip-path="url(#cp0)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline301"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 14137,6390 14377,6480 14137,6570"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline303"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 925,2485 1220,2887"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline305"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 580,2415 445,2415 445,3675 1255,3675 1255,3045"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline307"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 445,2415 446,2415 451,2415 462,2415 480,2415 501,2415 523,2415 545,2415 564,2415  581,2415 597,2415 611,2415 625,2415 639,2415 653,2415 668,2415 683,2415 698,2416  714,2416 729,2417 744,2417 759,2418 772,2420 785,2421 798,2423 812,2425 826,2428  840,2431 855,2436 868,2441 881,2446 892,2453 902,2460 911,2467 918,2475 923,2484  928,2493 932,2504 935,2517 937,2530 938,2543 939,2557 940,2570 940,2583 940,2595  940,2607 940,2620 940,2633 940,2647 940,2660 940,2673 940,2686 940,2697 940,2706  940,2715 940,2723 940,2730 941,2737 942,2744 943,2749 945,2754 948,2759 952,2762  957,2765 963,2768 969,2769 977,2771 987,2772 998,2774 1010,2775 1022,2776 1034,2778  1046,2779 1057,2781 1068,2783 1078,2785 1088,2788 1098,2791 1109,2795 1119,2800  1129,2805 1139,2810 1148,2816 1157,2821 1165,2828 1173,2834 1182,2841 1191,2850  1199,2859 1208,2870 1216,2882 1223,2895 1230,2909 1235,2924 1240,2940 1243,2954  1246,2970 1248,2987 1250,3004 1252,3022 1253,3040 1254,3057 1254,3072 1255,3086  1255,3097 1255,3106 1255,3113 1255,3117 1255,3115 1255,3107 1255,3092 1255,3073  1255,3056 1255,3047 1255,3045"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline309"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="547"
+     y="3425.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text311"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="3335.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text313"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="3245.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text315"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="3155.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text317"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="3065.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text319"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="2975.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text321"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="2885.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text323"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="4795.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text325"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">meteorological</text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="5065.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text327"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">forcings</text>
+  <polyline
+     points=" 925,5485 1220,5887"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline329"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 580,5415 445,5415 445,6675 1255,6675 1255,6045"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline331"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 445,5415 446,5415 451,5415 462,5415 480,5415 501,5415 523,5415 545,5415 564,5415  581,5415 597,5415 611,5415 625,5415 639,5415 653,5415 668,5415 683,5415 698,5416  714,5416 729,5417 744,5417 759,5418 772,5420 785,5421 798,5423 812,5425 826,5428  840,5431 855,5436 868,5441 881,5446 892,5453 902,5460 911,5467 918,5475 923,5484  928,5493 932,5504 935,5517 937,5530 938,5543 939,5557 940,5570 940,5583 940,5595  940,5607 940,5620 940,5633 940,5647 940,5660 940,5673 940,5686 940,5697 940,5706  940,5715 940,5723 940,5730 941,5737 942,5744 943,5749 945,5754 948,5759 952,5762  957,5765 963,5768 969,5769 977,5771 987,5772 998,5774 1010,5775 1022,5776 1034,5778  1046,5779 1057,5781 1068,5783 1078,5785 1088,5788 1098,5791 1109,5795 1119,5800  1129,5805 1139,5810 1148,5816 1157,5821 1165,5828 1173,5834 1182,5841 1191,5850  1199,5859 1208,5870 1216,5882 1223,5895 1230,5909 1235,5924 1240,5940 1243,5954  1246,5970 1248,5987 1250,6004 1252,6022 1253,6040 1254,6057 1254,6072 1255,6086  1255,6097 1255,6106 1255,6113 1255,6117 1255,6115 1255,6107 1255,6092 1255,6073  1255,6056 1255,6047 1255,6045"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline333"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="547"
+     y="6425.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text335"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="6335.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text337"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="6245.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text339"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="6155.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text341"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="6065.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text343"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="5975.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text345"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="5885.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text347"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="7795.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text349"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">meteorological</text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="8065.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text351"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">forcings</text>
+  <polyline
+     points=" 8215,5485 8510,5887"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline353"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7870,5415 7735,5415 7735,6675 8545,6675 8545,6045"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline355"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7735,5415 7736,5415 7741,5415 7752,5415 7770,5415 7791,5415 7813,5415 7835,5415  7854,5415 7871,5415 7887,5415 7901,5415 7915,5415 7929,5415 7943,5415 7958,5415  7973,5415 7988,5416 8004,5416 8019,5417 8034,5417 8049,5418 8062,5420 8075,5421  8088,5423 8102,5425 8116,5428 8130,5431 8145,5436 8158,5441 8171,5446 8182,5453  8192,5460 8201,5467 8208,5475 8213,5484 8218,5493 8222,5504 8225,5517 8227,5530  8228,5543 8229,5557 8230,5570 8230,5583 8230,5595 8230,5607 8230,5620 8230,5633  8230,5647 8230,5660 8230,5673 8230,5686 8230,5697 8230,5706 8230,5715 8230,5723  8230,5730 8231,5737 8232,5744 8233,5749 8235,5754 8238,5759 8242,5762 8247,5765  8253,5768 8259,5769 8267,5771 8277,5772 8288,5774 8300,5775 8312,5776 8324,5778  8336,5779 8347,5781 8358,5783 8368,5785 8378,5788 8388,5791 8399,5795 8409,5800  8419,5805 8429,5810 8438,5816 8447,5821 8455,5828 8463,5834 8472,5841 8481,5850  8489,5859 8498,5870 8506,5882 8513,5895 8520,5909 8525,5924 8530,5940 8533,5954  8536,5970 8538,5987 8540,6004 8542,6022 8543,6040 8544,6057 8544,6072 8545,6086  8545,6097 8545,6106 8545,6113 8545,6117 8545,6115 8545,6107 8545,6092 8545,6073  8545,6056 8545,6047 8545,6045"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline357"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="6425.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text359"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="6335.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text361"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="6245.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text363"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="6155.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text365"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="6065.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text367"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="5975.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text369"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="5885.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text371"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8145"
+     y="7795.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text373"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">pre-processed</text>
+  <text
+     xml:space="preserve"
+     x="8145"
+     y="8065.3784"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text375"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">forcings</text>
+  <text
+     xml:space="preserve"
+     x="4387"
+     y="6347.3784"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text377"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libMeteoIO</text>
+  <text
+     xml:space="preserve"
+     x="4387"
+     y="7210.3784"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text379"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">data_converter</text>
+  <polyline
+     points=" 1530,6465 2835,6465"
+     clip-path="url(#cp1)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline386"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 2527,6375 2767,6465 2527,6555"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline388"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 5895,6465 7200,6465"
+     clip-path="url(#cp2)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline395"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 6892,6375 7132,6465 6892,6555"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline397"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 925,8785 1220,9187"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline399"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 580,8715 445,8715 445,9975 1255,9975 1255,9345"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline401"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 445,8715 446,8715 451,8715 462,8715 480,8715 501,8715 523,8715 545,8715 564,8715  581,8715 597,8715 611,8715 625,8715 639,8715 653,8715 668,8715 683,8715 698,8716  714,8716 729,8717 744,8717 759,8718 772,8720 785,8721 798,8723 812,8725 826,8728  840,8731 855,8736 868,8741 881,8746 892,8753 902,8760 911,8767 918,8775 923,8784  928,8793 932,8804 935,8817 937,8830 938,8843 939,8857 940,8870 940,8883 940,8895  940,8907 940,8920 940,8933 940,8947 940,8960 940,8973 940,8986 940,8997 940,9006  940,9015 940,9023 940,9030 941,9037 942,9044 943,9049 945,9054 948,9059 952,9062  957,9065 963,9068 969,9069 977,9071 987,9072 998,9074 1010,9075 1022,9076 1034,9078  1046,9079 1057,9081 1068,9083 1078,9085 1088,9088 1098,9091 1109,9095 1119,9100  1129,9105 1139,9110 1148,9116 1157,9121 1165,9128 1173,9134 1182,9141 1191,9150  1199,9159 1208,9170 1216,9182 1223,9195 1230,9209 1235,9224 1240,9240 1243,9254  1246,9270 1248,9287 1250,9304 1252,9322 1253,9340 1254,9357 1254,9372 1255,9386  1255,9397 1255,9406 1255,9413 1255,9417 1255,9415 1255,9407 1255,9392 1255,9373  1255,9356 1255,9347 1255,9345"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline403"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9725.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text405"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9635.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text407"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9545.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text409"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9455.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text411"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9365.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text413"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9275.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text415"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="9185.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text417"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="11095.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text419"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">meteorological</text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="11365.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text421"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">forcings</text>
+  <polyline
+     points=" 8215,8785 8510,9187"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline423"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7870,8715 7735,8715 7735,9975 8545,9975 8545,9345"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline425"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7735,8715 7736,8715 7741,8715 7752,8715 7770,8715 7791,8715 7813,8715 7835,8715  7854,8715 7871,8715 7887,8715 7901,8715 7915,8715 7929,8715 7943,8715 7958,8715  7973,8715 7988,8716 8004,8716 8019,8717 8034,8717 8049,8718 8062,8720 8075,8721  8088,8723 8102,8725 8116,8728 8130,8731 8145,8736 8158,8741 8171,8746 8182,8753  8192,8760 8201,8767 8208,8775 8213,8784 8218,8793 8222,8804 8225,8817 8227,8830  8228,8843 8229,8857 8230,8870 8230,8883 8230,8895 8230,8907 8230,8920 8230,8933  8230,8947 8230,8960 8230,8973 8230,8986 8230,8997 8230,9006 8230,9015 8230,9023  8230,9030 8231,9037 8232,9044 8233,9049 8235,9054 8238,9059 8242,9062 8247,9065  8253,9068 8259,9069 8267,9071 8277,9072 8288,9074 8300,9075 8312,9076 8324,9078  8336,9079 8347,9081 8358,9083 8368,9085 8378,9088 8388,9091 8399,9095 8409,9100  8419,9105 8429,9110 8438,9116 8447,9121 8455,9128 8463,9134 8472,9141 8481,9150  8489,9159 8498,9170 8506,9182 8513,9195 8520,9209 8525,9224 8530,9240 8533,9254  8536,9270 8538,9287 8540,9304 8542,9322 8543,9340 8544,9357 8544,9372 8545,9386  8545,9397 8545,9406 8545,9413 8545,9417 8545,9415 8545,9407 8545,9392 8545,9373  8545,9356 8545,9347 8545,9345"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline427"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9725.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text429"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9635.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text431"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9545.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text433"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9455.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text435"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9365.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text437"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9275.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text439"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="9185.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text441"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8145"
+     y="11095.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text443"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">pre-processed</text>
+  <text
+     xml:space="preserve"
+     x="8145"
+     y="11365.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text445"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">forcings</text>
+  <text
+     xml:space="preserve"
+     x="4342"
+     y="9849.3789"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text447"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libSnowpack</text>
+  <text
+     xml:space="preserve"
+     x="4342"
+     y="8882.3789"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text449"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libMeteoIO</text>
+  <text
+     xml:space="preserve"
+     x="4342"
+     y="10690.379"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text451"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Snowpack</text>
+  <polyline
+     points=" 1530,9765 2835,9765"
+     clip-path="url(#cp3)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline458"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 2527,9675 2767,9765 2527,9855"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline460"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 5895,9765 7200,9765"
+     clip-path="url(#cp4)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline467"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 6892,9675 7132,9765 6892,9855"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline469"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 925,12340 1220,12742"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline471"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 580,12270 445,12270 445,13530 1255,13530 1255,12900"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline473"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 445,12270 446,12270 451,12270 462,12270 480,12270 501,12270 523,12270 545,12270  564,12270 581,12270 597,12270 611,12270 625,12270 639,12270 653,12270 668,12270  683,12270 698,12271 714,12271 729,12272 744,12272 759,12273 772,12275 785,12276  798,12278 812,12280 826,12283 840,12286 855,12291 868,12296 881,12301 892,12308  902,12315 911,12322 918,12330 923,12339 928,12348 932,12359 935,12372 937,12385  938,12398 939,12412 940,12425 940,12438 940,12450 940,12462 940,12475 940,12488  940,12502 940,12515 940,12528 940,12541 940,12552 940,12561 940,12570 940,12578  940,12585 941,12592 942,12599 943,12604 945,12609 948,12614 952,12617 957,12620  963,12623 969,12624 977,12626 987,12627 998,12629 1010,12630 1022,12631 1034,12633  1046,12634 1057,12636 1068,12638 1078,12640 1088,12643 1098,12646 1109,12650  1119,12655 1129,12660 1139,12665 1148,12671 1157,12676 1165,12683 1173,12689  1182,12696 1191,12705 1199,12714 1208,12725 1216,12737 1223,12750 1230,12764  1235,12779 1240,12795 1243,12809 1246,12825 1248,12842 1250,12859 1252,12877  1253,12895 1254,12912 1254,12927 1255,12941 1255,12952 1255,12961 1255,12968  1255,12972 1255,12970 1255,12962 1255,12947 1255,12928 1255,12911 1255,12902  1255,12900"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline475"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="547"
+     y="13280.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text477"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="13190.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text479"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="13100.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text481"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="13010.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text483"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="12920.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text485"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="12830.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text487"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="547"
+     y="12740.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text489"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="14650.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text491"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">meteorological</text>
+  <text
+     xml:space="preserve"
+     x="855"
+     y="14920.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text493"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;fill:#000000">forcings</text>
+  <polyline
+     points=" 8215,12340 8510,12742"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline495"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7870,12270 7735,12270 7735,13530 8545,13530 8545,12900"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline497"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7735,12270 7736,12270 7741,12270 7752,12270 7770,12270 7791,12270 7813,12270  7835,12270 7854,12270 7871,12270 7887,12270 7901,12270 7915,12270 7929,12270  7943,12270 7958,12270 7973,12270 7988,12271 8004,12271 8019,12272 8034,12272  8049,12273 8062,12275 8075,12276 8088,12278 8102,12280 8116,12283 8130,12286  8145,12291 8158,12296 8171,12301 8182,12308 8192,12315 8201,12322 8208,12330  8213,12339 8218,12348 8222,12359 8225,12372 8227,12385 8228,12398 8229,12412  8230,12425 8230,12438 8230,12450 8230,12462 8230,12475 8230,12488 8230,12502  8230,12515 8230,12528 8230,12541 8230,12552 8230,12561 8230,12570 8230,12578  8230,12585 8231,12592 8232,12599 8233,12604 8235,12609 8238,12614 8242,12617  8247,12620 8253,12623 8259,12624 8267,12626 8277,12627 8288,12629 8300,12630  8312,12631 8324,12633 8336,12634 8347,12636 8358,12638 8368,12640 8378,12643  8388,12646 8399,12650 8409,12655 8419,12660 8429,12665 8438,12671 8447,12676  8455,12683 8463,12689 8472,12696 8481,12705 8489,12714 8498,12725 8506,12737  8513,12750 8520,12764 8525,12779 8530,12795 8533,12809 8536,12825 8538,12842  8540,12859 8542,12877 8543,12895 8544,12912 8544,12927 8545,12941 8545,12952  8545,12961 8545,12968 8545,12972 8545,12970 8545,12962 8545,12947 8545,12928  8545,12911 8545,12902 8545,12900"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline499"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="13280.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text501"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="13190.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text503"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="13100.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text505"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="13010.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text507"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="12920.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text509"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="12830.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text511"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="7837"
+     y="12740.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text513"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8145"
+     y="14650.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text515"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">virtual</text>
+  <text
+     xml:space="preserve"
+     x="8145"
+     y="14920.379"
+     fill="#000000"
+     font-family="'Helvetica Narrow'"
+     font-style="italic"
+     font-weight="bold"
+     font-size="168px"
+     text-anchor="middle"
+     id="text517"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:249.338px;font-family:'Helvetica Narrow';-inkscape-font-specification:'Helvetica Narrow, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">stations</text>
+  <text
+     xml:space="preserve"
+     x="4342"
+     y="13404.379"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text519"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libSnowpack</text>
+  <text
+     xml:space="preserve"
+     x="4342"
+     y="12437.379"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text521"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">libMeteoIO</text>
+  <text
+     xml:space="preserve"
+     x="4342"
+     y="14245.379"
+     fill="#000000"
+     font-family="Times"
+     font-style="normal"
+     font-weight="bold"
+     font-size="216px"
+     text-anchor="middle"
+     id="text523"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:317.339px;font-family:Times;-inkscape-font-specification:'Times, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Snowpack</text>
+  <polyline
+     points=" 1530,13320 2835,13320"
+     clip-path="url(#cp5)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline530"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 2527,13230 2767,13320 2527,13410"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline532"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 5895,13320 7200,13320"
+     clip-path="url(#cp6)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline539"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 6892,13230 7132,13320 6892,13410"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline541"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 8820,9765 10080,7245"
+     clip-path="url(#cp7)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline548"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 9862,7481 10049,7306 10023,7561"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline550"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 8820,6480 10125,6480"
+     clip-path="url(#cp8)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline557"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 9817,6390 10057,6480 9817,6570"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline559"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 1530,3465 8820,3465 10080,5670"
+     clip-path="url(#cp9)"
+     stroke="#000000"
+     stroke-width="45px"
+     id="polyline566"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 10005,5358 10046,5611 9849,5447"
+     stroke="#000000"
+     stroke-width="45px"
+     stroke-miterlimit="8"
+     id="polyline568"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 15119,7449 15922,7449 15923,6761 15862,6625 15808,6583 15654,6551 15609,6540  15609,6289 15568,6237 15496,6207 15420,6194 15109,6194"
+     fill="#f3eed3"
+     id="polyline570"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="15838,6590 15689,6391 15611,6278 15611,6536 "
+     fill="#f3eed3"
+     id="polygon572"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 629,4434 1432,4434 1433,3746 1372,3610 1318,3568 1164,3536 1119,3525 1119,3274  1078,3222 1006,3192 930,3179 619,3179"
+     fill="#f3eed3"
+     id="polyline574"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1348,3575 1199,3376 1121,3263 1121,3521 "
+     fill="#f3eed3"
+     id="polygon576"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 629,7434 1432,7434 1433,6746 1372,6610 1318,6568 1164,6536 1119,6525 1119,6274  1078,6222 1006,6192 930,6179 619,6179"
+     fill="#f3eed3"
+     id="polyline578"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1348,6575 1199,6376 1121,6263 1121,6521 "
+     fill="#f3eed3"
+     id="polygon580"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7919,7434 8722,7434 8723,6746 8662,6610 8608,6568 8454,6536 8409,6525 8409,6274  8368,6222 8296,6192 8220,6179 7909,6179"
+     fill="#f3eed3"
+     id="polyline582"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8638,6575 8489,6376 8411,6263 8411,6521 "
+     fill="#f3eed3"
+     id="polygon584"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 629,10734 1432,10734 1433,10046 1372,9910 1318,9868 1164,9836 1119,9825 1119,9574  1078,9522 1006,9492 930,9479 619,9479"
+     fill="#f3eed3"
+     id="polyline586"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1348,9875 1199,9676 1121,9563 1121,9821 "
+     fill="#f3eed3"
+     id="polygon588"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7919,10734 8722,10734 8723,10046 8662,9910 8608,9868 8454,9836 8409,9825 8409,9574  8368,9522 8296,9492 8220,9479 7909,9479"
+     fill="#f3eed3"
+     id="polyline590"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8638,9875 8489,9676 8411,9563 8411,9821 "
+     fill="#f3eed3"
+     id="polygon592"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 629,14289 1432,14289 1433,13601 1372,13465 1318,13423 1164,13391 1119,13380  1119,13129 1078,13077 1006,13047 930,13034 619,13034"
+     fill="#f3eed3"
+     id="polyline594"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="1348,13430 1199,13231 1121,13118 1121,13376 "
+     fill="#f3eed3"
+     id="polygon596"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7919,14289 8722,14289 8723,13601 8662,13465 8608,13423 8454,13391 8409,13380  8409,13129 8368,13077 8296,13047 8220,13034 7909,13034"
+     fill="#f3eed3"
+     id="polyline598"
+     transform="translate(0,-19.621536)" />
+  <polygon
+     points="8638,13430 8489,13231 8411,13118 8411,13376 "
+     fill="#f3eed3"
+     id="polygon600"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 15595,6265 15890,6667"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline602"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 15250,6195 15115,6195 15115,7455 15925,7455 15925,6825"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline604"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 15115,6195 15116,6195 15121,6195 15132,6195 15150,6195 15171,6195 15193,6195  15215,6195 15234,6195 15251,6195 15267,6195 15281,6195 15295,6195 15309,6195  15323,6195 15338,6195 15353,6195 15368,6196 15384,6196 15399,6197 15414,6197  15429,6198 15442,6200 15455,6201 15468,6203 15482,6205 15496,6208 15510,6211  15525,6216 15538,6221 15551,6226 15562,6233 15572,6240 15581,6247 15588,6255  15593,6264 15598,6273 15602,6284 15605,6297 15607,6310 15608,6323 15609,6337  15610,6350 15610,6363 15610,6375 15610,6387 15610,6400 15610,6413 15610,6427  15610,6440 15610,6453 15610,6466 15610,6477 15610,6486 15610,6495 15610,6503  15610,6510 15611,6517 15612,6524 15613,6529 15615,6534 15618,6539 15622,6542  15627,6545 15633,6548 15639,6549 15647,6551 15657,6552 15668,6554 15680,6555  15692,6556 15704,6558 15716,6559 15727,6561 15738,6563 15748,6565 15758,6568  15768,6571 15779,6575 15789,6580 15799,6585 15809,6590 15818,6596 15827,6601  15835,6608 15843,6614 15852,6621 15861,6630 15869,6639 15878,6650 15886,6662  15893,6675 15900,6689 15905,6704 15910,6720 15913,6734 15916,6750 15918,6767  15920,6784 15922,6802 15923,6820 15924,6837 15924,6852 15925,6866 15925,6877  15925,6886 15925,6893 15925,6897 15925,6895 15925,6887 15925,6872 15925,6853  15925,6836 15925,6827 15925,6825"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline606"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="7205.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text608"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="7115.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text610"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="7025.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text612"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="6935.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text614"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="6845.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text616"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="6755.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text618"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="15217"
+     y="6665.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text620"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 1105,3250 1400,3652"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline622"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 760,3180 625,3180 625,4440 1435,4440 1435,3810"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline624"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 625,3180 626,3180 631,3180 642,3180 660,3180 681,3180 703,3180 725,3180 744,3180  761,3180 777,3180 791,3180 805,3180 819,3180 833,3180 848,3180 863,3180 878,3181  894,3181 909,3182 924,3182 939,3183 952,3185 965,3186 978,3188 992,3190 1006,3193  1020,3196 1035,3201 1048,3206 1061,3211 1072,3218 1082,3225 1091,3232 1098,3240  1103,3249 1108,3258 1112,3269 1115,3282 1117,3295 1118,3308 1119,3322 1120,3335  1120,3348 1120,3360 1120,3372 1120,3385 1120,3398 1120,3412 1120,3425 1120,3438  1120,3451 1120,3462 1120,3471 1120,3480 1120,3488 1120,3495 1121,3502 1122,3509  1123,3514 1125,3519 1128,3524 1132,3527 1137,3530 1143,3533 1149,3534 1157,3536  1167,3537 1178,3539 1190,3540 1202,3541 1214,3543 1226,3544 1237,3546 1248,3548  1258,3550 1268,3553 1278,3556 1289,3560 1299,3565 1309,3570 1319,3575 1328,3581  1337,3586 1345,3593 1353,3599 1362,3606 1371,3615 1379,3624 1388,3635 1396,3647  1403,3660 1410,3674 1415,3689 1420,3705 1423,3719 1426,3735 1428,3752 1430,3769  1432,3787 1433,3805 1434,3822 1434,3837 1435,3851 1435,3862 1435,3871 1435,3878  1435,3882 1435,3880 1435,3872 1435,3857 1435,3838 1435,3821 1435,3812 1435,3810 "
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline626"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="727"
+     y="4190.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text628"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="4100.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text630"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="4010.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text632"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="3920.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text634"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="3830.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text636"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="3740.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text638"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="3650.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text640"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 1105,6250 1400,6652"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline642"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 760,6180 625,6180 625,7440 1435,7440 1435,6810"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline644"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 625,6180 626,6180 631,6180 642,6180 660,6180 681,6180 703,6180 725,6180 744,6180  761,6180 777,6180 791,6180 805,6180 819,6180 833,6180 848,6180 863,6180 878,6181  894,6181 909,6182 924,6182 939,6183 952,6185 965,6186 978,6188 992,6190 1006,6193  1020,6196 1035,6201 1048,6206 1061,6211 1072,6218 1082,6225 1091,6232 1098,6240  1103,6249 1108,6258 1112,6269 1115,6282 1117,6295 1118,6308 1119,6322 1120,6335  1120,6348 1120,6360 1120,6372 1120,6385 1120,6398 1120,6412 1120,6425 1120,6438  1120,6451 1120,6462 1120,6471 1120,6480 1120,6488 1120,6495 1121,6502 1122,6509  1123,6514 1125,6519 1128,6524 1132,6527 1137,6530 1143,6533 1149,6534 1157,6536  1167,6537 1178,6539 1190,6540 1202,6541 1214,6543 1226,6544 1237,6546 1248,6548  1258,6550 1268,6553 1278,6556 1289,6560 1299,6565 1309,6570 1319,6575 1328,6581  1337,6586 1345,6593 1353,6599 1362,6606 1371,6615 1379,6624 1388,6635 1396,6647  1403,6660 1410,6674 1415,6689 1420,6705 1423,6719 1426,6735 1428,6752 1430,6769  1432,6787 1433,6805 1434,6822 1434,6837 1435,6851 1435,6862 1435,6871 1435,6878  1435,6882 1435,6880 1435,6872 1435,6857 1435,6838 1435,6821 1435,6812 1435,6810 "
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline646"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="727"
+     y="7190.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text648"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="7100.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text650"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="7010.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text652"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="6920.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text654"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="6830.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text656"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="6740.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text658"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="6650.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text660"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 8395,6250 8690,6652"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline662"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 8050,6180 7915,6180 7915,7440 8725,7440 8725,6810"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline664"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7915,6180 7916,6180 7921,6180 7932,6180 7950,6180 7971,6180 7993,6180 8015,6180  8034,6180 8051,6180 8067,6180 8081,6180 8095,6180 8109,6180 8123,6180 8138,6180  8153,6180 8168,6181 8184,6181 8199,6182 8214,6182 8229,6183 8242,6185 8255,6186  8268,6188 8282,6190 8296,6193 8310,6196 8325,6201 8338,6206 8351,6211 8362,6218  8372,6225 8381,6232 8388,6240 8393,6249 8398,6258 8402,6269 8405,6282 8407,6295  8408,6308 8409,6322 8410,6335 8410,6348 8410,6360 8410,6372 8410,6385 8410,6398  8410,6412 8410,6425 8410,6438 8410,6451 8410,6462 8410,6471 8410,6480 8410,6488  8410,6495 8411,6502 8412,6509 8413,6514 8415,6519 8418,6524 8422,6527 8427,6530  8433,6533 8439,6534 8447,6536 8457,6537 8468,6539 8480,6540 8492,6541 8504,6543  8516,6544 8527,6546 8538,6548 8548,6550 8558,6553 8568,6556 8579,6560 8589,6565  8599,6570 8609,6575 8618,6581 8627,6586 8635,6593 8643,6599 8652,6606 8661,6615  8669,6624 8678,6635 8686,6647 8693,6660 8700,6674 8705,6689 8710,6705 8713,6719  8716,6735 8718,6752 8720,6769 8722,6787 8723,6805 8724,6822 8724,6837 8725,6851  8725,6862 8725,6871 8725,6878 8725,6882 8725,6880 8725,6872 8725,6857 8725,6838  8725,6821 8725,6812 8725,6810"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline666"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="7190.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text668"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="7100.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text670"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="7010.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text672"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="6920.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text674"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="6830.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text676"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="6740.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text678"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="6650.3784"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text680"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 1105,9550 1400,9952"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline682"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 760,9480 625,9480 625,10740 1435,10740 1435,10110"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline684"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 625,9480 626,9480 631,9480 642,9480 660,9480 681,9480 703,9480 725,9480 744,9480  761,9480 777,9480 791,9480 805,9480 819,9480 833,9480 848,9480 863,9480 878,9481  894,9481 909,9482 924,9482 939,9483 952,9485 965,9486 978,9488 992,9490 1006,9493  1020,9496 1035,9501 1048,9506 1061,9511 1072,9518 1082,9525 1091,9532 1098,9540  1103,9549 1108,9558 1112,9569 1115,9582 1117,9595 1118,9608 1119,9622 1120,9635  1120,9648 1120,9660 1120,9672 1120,9685 1120,9698 1120,9712 1120,9725 1120,9738  1120,9751 1120,9762 1120,9771 1120,9780 1120,9788 1120,9795 1121,9802 1122,9809  1123,9814 1125,9819 1128,9824 1132,9827 1137,9830 1143,9833 1149,9834 1157,9836  1167,9837 1178,9839 1190,9840 1202,9841 1214,9843 1226,9844 1237,9846 1248,9848  1258,9850 1268,9853 1278,9856 1289,9860 1299,9865 1309,9870 1319,9875 1328,9881  1337,9886 1345,9893 1353,9899 1362,9906 1371,9915 1379,9924 1388,9935 1396,9947  1403,9960 1410,9974 1415,9989 1420,10005 1423,10019 1426,10035 1428,10052 1430,10069  1432,10087 1433,10105 1434,10122 1434,10137 1435,10151 1435,10162 1435,10171  1435,10178 1435,10182 1435,10180 1435,10172 1435,10157 1435,10138 1435,10121  1435,10112 1435,10110"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline686"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="727"
+     y="10490.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text688"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="10400.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text690"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="10310.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text692"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="10220.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text694"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="10130.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text696"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="10040.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text698"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="9950.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text700"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 8395,9550 8690,9952"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline702"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 8050,9480 7915,9480 7915,10740 8725,10740 8725,10110"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline704"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7915,9480 7916,9480 7921,9480 7932,9480 7950,9480 7971,9480 7993,9480 8015,9480  8034,9480 8051,9480 8067,9480 8081,9480 8095,9480 8109,9480 8123,9480 8138,9480  8153,9480 8168,9481 8184,9481 8199,9482 8214,9482 8229,9483 8242,9485 8255,9486  8268,9488 8282,9490 8296,9493 8310,9496 8325,9501 8338,9506 8351,9511 8362,9518  8372,9525 8381,9532 8388,9540 8393,9549 8398,9558 8402,9569 8405,9582 8407,9595  8408,9608 8409,9622 8410,9635 8410,9648 8410,9660 8410,9672 8410,9685 8410,9698  8410,9712 8410,9725 8410,9738 8410,9751 8410,9762 8410,9771 8410,9780 8410,9788  8410,9795 8411,9802 8412,9809 8413,9814 8415,9819 8418,9824 8422,9827 8427,9830  8433,9833 8439,9834 8447,9836 8457,9837 8468,9839 8480,9840 8492,9841 8504,9843  8516,9844 8527,9846 8538,9848 8548,9850 8558,9853 8568,9856 8579,9860 8589,9865  8599,9870 8609,9875 8618,9881 8627,9886 8635,9893 8643,9899 8652,9906 8661,9915  8669,9924 8678,9935 8686,9947 8693,9960 8700,9974 8705,9989 8710,10005 8713,10019  8716,10035 8718,10052 8720,10069 8722,10087 8723,10105 8724,10122 8724,10137  8725,10151 8725,10162 8725,10171 8725,10178 8725,10182 8725,10180 8725,10172  8725,10157 8725,10138 8725,10121 8725,10112 8725,10110"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline706"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="10490.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text708"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="10400.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text710"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="10310.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text712"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="10220.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text714"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="10130.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text716"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="10040.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text718"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="9950.3789"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text720"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 1105,13105 1400,13507"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline722"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 760,13035 625,13035 625,14295 1435,14295 1435,13665"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline724"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 625,13035 626,13035 631,13035 642,13035 660,13035 681,13035 703,13035 725,13035  744,13035 761,13035 777,13035 791,13035 805,13035 819,13035 833,13035 848,13035  863,13035 878,13036 894,13036 909,13037 924,13037 939,13038 952,13040 965,13041  978,13043 992,13045 1006,13048 1020,13051 1035,13056 1048,13061 1061,13066 1072,13073  1082,13080 1091,13087 1098,13095 1103,13104 1108,13113 1112,13124 1115,13137  1117,13150 1118,13163 1119,13177 1120,13190 1120,13203 1120,13215 1120,13227  1120,13240 1120,13253 1120,13267 1120,13280 1120,13293 1120,13306 1120,13317  1120,13326 1120,13335 1120,13343 1120,13350 1121,13357 1122,13364 1123,13369  1125,13374 1128,13379 1132,13382 1137,13385 1143,13388 1149,13389 1157,13391  1167,13392 1178,13394 1190,13395 1202,13396 1214,13398 1226,13399 1237,13401  1248,13403 1258,13405 1268,13408 1278,13411 1289,13415 1299,13420 1309,13425  1319,13430 1328,13436 1337,13441 1345,13448 1353,13454 1362,13461 1371,13470  1379,13479 1388,13490 1396,13502 1403,13515 1410,13529 1415,13544 1420,13560  1423,13574 1426,13590 1428,13607 1430,13624 1432,13642 1433,13660 1434,13677  1434,13692 1435,13706 1435,13717 1435,13726 1435,13733 1435,13737 1435,13735  1435,13727 1435,13712 1435,13693 1435,13676 1435,13667 1435,13665"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline726"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="727"
+     y="14045.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text728"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="13955.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text730"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="13865.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text732"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="13775.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text734"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="13685.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text736"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="13595.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text738"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="727"
+     y="13505.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text740"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <polyline
+     points=" 8395,13105 8690,13507"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline742"
+     style="fill:none"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 8050,13035 7915,13035 7915,14295 8725,14295 8725,13665"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     id="polyline744"
+     transform="translate(0,-19.621536)" />
+  <polyline
+     points=" 7915,13035 7916,13035 7921,13035 7932,13035 7950,13035 7971,13035 7993,13035  8015,13035 8034,13035 8051,13035 8067,13035 8081,13035 8095,13035 8109,13035  8123,13035 8138,13035 8153,13035 8168,13036 8184,13036 8199,13037 8214,13037  8229,13038 8242,13040 8255,13041 8268,13043 8282,13045 8296,13048 8310,13051  8325,13056 8338,13061 8351,13066 8362,13073 8372,13080 8381,13087 8388,13095  8393,13104 8398,13113 8402,13124 8405,13137 8407,13150 8408,13163 8409,13177  8410,13190 8410,13203 8410,13215 8410,13227 8410,13240 8410,13253 8410,13267  8410,13280 8410,13293 8410,13306 8410,13317 8410,13326 8410,13335 8410,13343  8410,13350 8411,13357 8412,13364 8413,13369 8415,13374 8418,13379 8422,13382  8427,13385 8433,13388 8439,13389 8447,13391 8457,13392 8468,13394 8480,13395  8492,13396 8504,13398 8516,13399 8527,13401 8538,13403 8548,13405 8558,13408  8568,13411 8579,13415 8589,13420 8599,13425 8609,13430 8618,13436 8627,13441  8635,13448 8643,13454 8652,13461 8661,13470 8669,13479 8678,13490 8686,13502  8693,13515 8700,13529 8705,13544 8710,13560 8713,13574 8716,13590 8718,13607  8720,13624 8722,13642 8723,13660 8724,13677 8724,13692 8725,13706 8725,13717  8725,13726 8725,13733 8725,13737 8725,13735 8725,13727 8725,13712 8725,13693  8725,13676 8725,13667 8725,13665"
+     fill="#f3eed3"
+     stroke="#000000"
+     stroke-width="30px"
+     stroke-linejoin="bevel"
+     id="polyline746"
+     transform="translate(0,-19.621536)" />
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="14045.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text748"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="13955.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text750"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="13865.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text752"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="13775.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text754"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="13685.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text756"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 1 0 0 1 1 0 0</text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="13595.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text758"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">0 1 0 1 0 0 0 1 </text>
+  <text
+     xml:space="preserve"
+     x="8017"
+     y="13505.379"
+     fill="#808080"
+     font-family="Courier"
+     font-style="italic"
+     font-weight="bold"
+     font-size="48px"
+     text-anchor="start"
+     id="text760"
+     style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:68.0013px;font-family:Courier;-inkscape-font-specification:'Courier, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">1 0 0 1 1 1 0 1 </text>
+  <metadata
+     id="metadata2330">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Data strategies for an Alpine3D simulation</dc:title>
+        <dc:date>2024-05-24</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Mathias Bavay</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:source>https://code.wsl.ch/snow-models/alpine3d</dc:source>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>SLF</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

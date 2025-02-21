@@ -3,7 +3,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-x86_64.tar.gz</name>
 		<summary>Linux binary tarball</summary>
-		<description>Binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 18.04. Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>Binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 18.04. Please consider using <a href="https://code.wsl.ch/snow-models/inishell/-/releases">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-x86_64.tar.gz</replaces>
 		<labels>
 			<label>Type:Archive</label>
@@ -13,7 +13,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-x86_64.deb</name>
 		<summary>Linux DEB binary package</summary>
-		<description>DEB binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 18.04. Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>DEB binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 18.04. Please consider using <a href="https://code.wsl.ch/snow-models/inishell/-/releases">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-x86_64.deb</replaces>
 		<labels>
 			<label>Type:Package</label>
@@ -23,7 +23,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-x86_64.rpm</name>
 		<summary>Linux RPM binary package</summary>
-		<description>RPM binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 18.04. Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>RPM binary package for MeteoIO compiled for i686, 64 bits. Compiled on Ubuntu 18.04. Please consider using <a href="https://code.wsl.ch/snow-models/inishell/-/releases">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-x86_64.rpm</replaces>
 		<labels>
 			<label>Type:Package</label>
@@ -33,7 +33,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-x86_64.dmg</name>
 		<summary>OsX Installer</summary>
-		<description>Binary package for MeteoIO compiled on Mac OsX. Compiled with XCode on Intel. Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>Binary package for MeteoIO compiled on Mac OsX. Compiled with XCode on Intel. Please consider using <a href="https://code.wsl.ch/snow-models/inishell/-/releases">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-x86_64.dmg</replaces>
 		<labels>
 			<label>Type:Installer</label>
@@ -43,7 +43,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-x86_64.exe</name>
 		<summary>Windows Installer</summary>
-		<description>Binary package for MeteoIO compiled for 64 bits (gcc8.1). Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>Binary package for MeteoIO compiled for 64 bits (gcc8.1). Please consider using <a href="https://code.wsl.ch/snow-models/inishell/-/releases">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-x86_64.exe</replaces>
 		<labels>
 			<label>Type:Installer</label>
@@ -64,7 +64,7 @@
 	<file>
 		<name>MeteoIO-2.9.0-src.tar.gz</name>
 		<summary>Source package</summary>
-		<description>Please have a look at <a href="https://models.slf.ch/p/meteoio/page/Getting-started/">Getting-started</a> for instructions (the build is based on cmake). Please consider using <a href="https://models.slf.ch/p/inishell-ng/downloads/">Inishell</a> to configure your data pre-processing!</description>
+		<description>Please have a look at <a href="https://meteoio.slf.ch/Getting-started">Getting-started</a> for instructions (the build is based on cmake). Please consider using <a href="https://code.wsl.ch/snow-models/inishell/-/releases">Inishell</a> to configure your data pre-processing!</description>
 		<replaces>MeteoIO-2.8.0-src.tar.gz</replaces>
 		<labels>
 			<label>Type:Source</label>

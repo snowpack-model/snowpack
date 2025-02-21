@@ -1,0 +1,417 @@
+default:
+  image: gcc # official gcc image, based on debian, see https://hub.docker.com/_/gcc/
+  tags: ['docker']
+  before_script:
+  - apt-get update && apt-get -y install cmake
+
+
+stages:
+  - SSH
+  - edit release
+  - build
+  - test
+  - docker
+  - test coverage
+  - release build
+  - release
+  - pages
+
+build:
+  stage: build
+  script:
+    # build meteoio including binaries (test if build works for all artifacts)
+    - mkdir build && cd build
+    - cmake -S .. -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=ON -D BUILD_TESTING:BOOL=ON
+      -D BUILD_TESTING_WITH_COVERAGE:BOOL=ON -D USE_LTO_OPTIMIZATIONS:BOOL=OFF -D METEOIO_TIMESERIES:BOOL=ON
+    - make -j 2
+    # cleanup to avoid limits in GitLab
+    - find . -name "*.o" -type f -delete
+  artifacts:
+    expire_in: 1h
+    paths:
+      - build
+      - lib
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+.test_base:
+  stage: test
+  script:
+    - cp -r tests build
+    - cd build
+    - ctest --verbose -R "^${TEST_NAME}$"
+
+meteo_reading_interpol:
+  extends: .test_base
+  variables:
+    TEST_NAME: meteo_reading_interpol.smoke
+
+meteo_reading_no_interpol:
+  extends: .test_base
+  variables:
+    TEST_NAME: meteo_reading_no_interpol.smoke
+
+dataEditing:
+  extends: .test_base
+  variables:
+    TEST_NAME: data_editing.smoke
+
+sun:
+  extends: .test_base
+  variables:
+    TEST_NAME: sun.smoke
+  before_script:
+  - apt-get update && apt-get -y install cmake numdiff
+
+
+dem_reading:
+  extends: .test_base
+  variables:
+    TEST_NAME: dem_reading.smoke
+
+2D_interpolations:
+  extends: .test_base
+  variables:
+    TEST_NAME: 2D_interpolations.smoke
+
+arrays:
+  extends: .test_base
+  variables:
+    TEST_NAME: arrays.smoke
+
+coords:
+  extends: .test_base
+  variables:
+    TEST_NAME: coordinates.smoke
+
+stats:
+  extends: .test_base
+  variables:
+    TEST_NAME: stats.smoke
+
+fstream:
+  extends: .test_base
+  variables:
+    TEST_NAME: fstream.smoke
+
+running times and coverage:
+  stage: test coverage
+  script:
+    - apt-get -y install numdiff
+    - cp -r tests build # copy the required test files into the tests folder
+    - cd build
+    - ctest && ctest -D NightlyCoverage
+
+
+
+Debian release build:
+  stage: release build
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies: []
+  before_script:
+    - apt-get update && apt-get -y install cmake doxygen graphviz # both doxygen and graphviz are required for cmake "FindDoxygen"
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
+    - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
+    - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
+    - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
+    - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF
+      -D USE_LTO_OPTIMIZATIONS:BOOL=ON -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON -D CPACK_GENERATOR:STRING="DEB;TGZ"
+    - make -j 2
+    - make doc
+    - cpack
+    # Documentation only package
+    - mv doc MeteoIO-${METEOIO_VERSION}-doc
+    - tar -czvf MeteoIO-${METEOIO_VERSION}-doc.tar.gz MeteoIO-${METEOIO_VERSION}-doc
+    - echo "MeteoIO-$METEOIO_VERSION compiled for Debian"
+    # Useful for debugging, just in case
+    - ls MeteoIO-*
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-*-x86_64.tar.gz
+      - MeteoIO-*-x86_64.deb
+      - MeteoIO-*-doc.tar.gz
+
+Fedora release build:
+  stage: release build
+  image: fedora
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies: []
+  before_script:
+    - yum -y install make gcc g++ cmake doxygen graphviz rpm-build
+  script:
+    - echo "%__os_install_post %{nil}" > ~/.rpmmacros # Turn off binary stripping for rpm
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - export VERSION_MAJOR=`echo $METEOIO_VERSION | cut -d. -f1`
+    - export VERSION_MINOR=`echo $METEOIO_VERSION | cut -d. -f2`
+    - export VERSION_PATCH=`echo $METEOIO_VERSION | cut -d. -f3`
+    - echo VERSION_MAJOR=$VERSION_MAJOR - VERSION_MINOR=$VERSION_MINOR - VERSION_PATCH=$VERSION_PATCH
+    - cmake -S . -B . -D DEST:STRING=safe -D VERSION_FROM_GIT:BOOL=OFF -D BUILD_TESTING:BOOL=OFF -D USE_LTO_OPTIMIZATIONS:BOOL=ON 
+      -D INSTALL_DOC:BOOL=ON -D CPACK_BUNDLE_ALL:BOOL=ON -D CPACK_GENERATOR:STRING="RPM" -D USE_RPATH:BOOL=OFF
+    - make -j 2
+    - make doc
+    - cpack
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-*-x86_64.rpm
+  
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies:
+    - Debian release build
+    - Fedora release build
+  before_script: # overrides global before_script
+    - apk add --no-cache curl
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.tar.gz
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.tar.gz"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.rpm
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.rpm"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.deb
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.deb"'
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-doc.tar.gz
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-doc.tar.gz"'
+  release:
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Created using GitLab CI/CD'
+    tag_name: '$CI_COMMIT_TAG'
+    ref: '$CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'Linux Debian binary tarball (x86_64)'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.tar.gz'
+          link_type: 'other'
+        - name: 'Linux Fedora RPM binary package (x86_64)'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.rpm'
+          link_type: 'package'
+        - name: 'Linux Debian DEB binary package (x86_64)'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-x86_64.deb'
+          link_type: 'package'
+        - name: 'Documentation only package'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${CI_COMMIT_TAG#*-}/MeteoIO-${CI_COMMIT_TAG#*-}-doc.tar.gz'
+          link_type: 'other'
+
+
+
+# need to do the exporting of METEOFILE every single time to have the variables available
+.ssh_access:
+  image: debian
+  tags: ['docker']
+  stage: SSH
+  before_script: # set
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client curl jq -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - touch ~/.ssh/config
+    - touch ~/.ssh/known_hosts
+    - chmod -R 400 ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config' # remove later for security reasons
+
+SSH copy WIN:
+  extends: .ssh_access
+  stage: SSH
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi # if manual, use the tag name, else use the commit hash
+    - echo "Meteofile=${METEOFILE} ..."
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOFILE-x86_64.exe ./$METEOFILE-x86_64.exe
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-*-x86_64.exe
+  allow_failure: true
+
+SSH copy MAC:
+  extends: .ssh_access
+  stage: SSH
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOFILE=${METEO:1:-1} # "MeteoIO-0.0.0" (No)
+    - if [ "$CI_PIPELINE_SOURCE" == "web" ]; then tmp="tmp"; else METEOFILE=${CI_COMMIT_TAG}; fi # if manual, use the tag name, else use the commit hash
+    - echo "Meteofile=${METEOFILE} ..."
+    - scp $SSH_USER@$SSH_HOST:/home/$SSH_USER/$METEOFILE-x86_64.dmg ./$METEOFILE-x86_64.dmg
+  artifacts:
+    expire_in: 1h
+    paths:
+      - MeteoIO-*-x86_64.dmg
+  allow_failure: true
+
+# add WIn package to release when a new release is created automatically
+auto-add WIN to release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: ["release", "SSH copy WIN"]
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  before_script: # overrides global before_script
+    - apk add --no-cache curl
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN package to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*.exe"
+    # upload to api
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.exe
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.exe"'
+    # add to release
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="Windows installer" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.exe"
+              --data direct_asset_path="/bin/win-installer" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/MeteoIO-${METEOIO_VERSION}/assets/links"'
+  allow_failure: true
+
+
+# add MAC package to release when a new release is created automatically
+auto-add MAC to release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: ["release", "SSH copy MAC"]
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  before_script: # overrides global before_script
+    - apk add --no-cache curl
+  script:
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*.dmg"
+    # upload to api
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.dmg
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.dmg"'
+    # add to release
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="MacOS disk image (DMG)" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.dmg"
+              --data direct_asset_path="/bin/mac-image" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/MeteoIO-${METEOIO_VERSION}/assets/links"'
+  allow_failure: true
+
+
+# add WIN packages to release manually after a release was created
+manuel-add WIN to release:
+  stage: edit release # needs to be in another stage to be able to see artifacts
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - SSH copy WIN
+  before_script:
+    - apk add curl jq
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No) == latest commit tag
+    - echo "Meteofile=${METEOFILE} ..."
+    - export METEOIO_VERSION=${METEOFILE#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*.exe"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.exe
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.exe"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="Windows installer"
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.exe"
+              --data direct_asset_path="/bin/win-installer"
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/MeteoIO-${METEOIO_VERSION}/assets/links"'
+  allow_failure: true
+
+# add MAC packages to release manually after a release was created
+manuel-add MAC to release:
+  stage: edit release # needs to be in another stage to be able to see artifacts
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - SSH copy MAC
+  before_script:
+    - apk add curl jq
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - 'curl --location --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/permalink/latest" | jq ".tag_name" >> tmp.txt'
+    - export METEO=`cat tmp.txt` # "MeteoIO-0.0.0" (v-No)
+    - export METEOFILE=${METEO:1:-1} # MeteoIO-0.0.0 (No)
+    - echo "Meteofile=${METEOFILE} ..."
+    - export METEOIO_VERSION=${METEOFILE#*-}
+    - echo "Uploading MeteoIO-${METEOIO_VERSION} WIN/MAC packages to
+      ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-*.dmg"
+    - 'curl -i --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file MeteoIO-${METEOIO_VERSION}-x86_64.dmg
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.dmg"'
+    - 'curl -i --request POST --header "JOB-TOKEN: $CI_JOB_TOKEN"
+              --data name="MacOS disk image (DMG)" 
+              --data url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/meteoio/${METEOIO_VERSION}/MeteoIO-${METEOIO_VERSION}-x86_64.dmg"
+              --data direct_asset_path="/bin/mac-image" 
+              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/MeteoIO-${METEOIO_VERSION}/assets/links"'
+  allow_failure: true
+
+
+release latest image:
+  stage: docker
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
+  before_script:
+  script:
+    - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
+    - echo $REALEASE_DATE
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
+      --build-arg METEOIO_VERSION=unstable
+      --build-arg REALEASE_DATE=$REALEASE_DATE
+  allow_failure: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+release docker image:
+  stage: docker
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
+  before_script:
+  script:
+    - export REALEASE_DATE=${CI_COMMIT_TIMESTAMP%T*}
+    - export METEOIO_VERSION=${CI_COMMIT_TAG#*-}
+    - echo $METEOIO_VERSION $REALEASE_DATE
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:${METEOIO_VERSION}"
+      --build-arg METEOIO_VERSION=$METEOIO_VERSION
+      --build-arg REALEASE_DATE=$REALEASE_DATE
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+
+update pages:
+  stage: pages
+  before_script: [] # overrides global before_script
+  rules:
+    - if: $CI_COMMIT_TAG # Run this job when a tag is created manually
+  dependencies:
+    - release
+  script:
+    - curl --request POST
+     --form token=${CI_JOB_TOKEN}
+     --form ref=main
+     "https://gitlabext.wsl.ch/api/v4/projects/174/trigger/pipeline"

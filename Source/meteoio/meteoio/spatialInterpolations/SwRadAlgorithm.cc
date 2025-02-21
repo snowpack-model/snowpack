@@ -23,10 +23,6 @@
 
 namespace mio {
 
-const double SWRadInterpolation::soil_albedo = .23; //grass
-const double SWRadInterpolation::snow_albedo = .85; //snow
-const double SWRadInterpolation::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-
 SWRadInterpolation::SWRadInterpolation(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_param, TimeSeriesManager& i_tsm,
                                                                        Meteo2DInterpolator& i_mi)
                                    : InterpolationAlgorithm(vecArgs, i_algo, i_param, i_tsm), mi(i_mi), Sun(), vecIdx(), scale(1e3), alpha(1.), shading(true), project_on_slope(false)
@@ -94,7 +90,7 @@ void SWRadInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 		const double HS = vecMeteo[idx](MeteoData::HS);
 		double albedo = 0.5;
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 		Sun.calculateRadiation(vecMeteo[idx](mio::MeteoData::TA), vecMeteo[idx](mio::MeteoData::RH), vecMeteo[idx](mio::MeteoData::P), albedo);
 
 		bool day, night;

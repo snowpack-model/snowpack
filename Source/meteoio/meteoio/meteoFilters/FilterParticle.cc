@@ -20,7 +20,8 @@
 #include <meteoio/meteoFilters/FilterParticle.h>
 #include <meteoio/meteoStats/libfit1D.h>
 
-#include <fstream> //for the dump files
+#include <meteoio/FStream.h> //for the dump files
+#include <fstream>
 #include <limits>
 #include <sstream> //for readLineToVec
 #include <cerrno>
@@ -353,13 +354,13 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
 {
 	static const std::string prefix("meteo(");
 	static const size_t len = prefix.length();
-	size_t pos1 = 0, pos2;
+	size_t pos1 = 0;
 
 	while (true) {
 		pos1 = line.find(prefix, pos1);
 		if (pos1 == std::string::npos)
 			break; //done
-		pos2 = line.find(")", pos1+len);
+		const size_t pos2 = line.find(")", pos1+len);
 		if (pos2 == std::string::npos || pos2-pos1-len == 0) //no closing bracket
 			throw InvalidArgumentException("Missing closing bracket in meteo(...) part of particle filter's system model.", AT);
 
@@ -380,7 +381,7 @@ void FilterParticle::parseBracketExpression(std::string& line, std::vector<std::
  */
 void FilterParticle::dumpInternalStates(Matrix& particles, Matrix& weights) const
 { //using this, we are able to resume our filter without having to recalculate the past if new data arrives
-	std::ofstream oss(dump_states_file.c_str(), std::ofstream::out);
+	ofilestream oss(dump_states_file.c_str(), std::ofstream::out);
 	if (oss.fail()) {
 		std::ostringstream ss;
 		ss << "Particle filter could not dump internal states to \"" << dump_states_file;
@@ -438,7 +439,7 @@ bool FilterParticle::readInternalStates(Matrix& particles, Matrix& weights) cons
  */
 void FilterParticle::dumpParticlePaths(Matrix& particles) const
 { //to plot paths and kernel density outside of MeteoIO
-	std::ofstream oss(dump_particles_file.c_str(), std::ofstream::out);
+	ofilestream oss(dump_particles_file.c_str(), std::ofstream::out);
 	if (oss.fail()) {
 		std::ostringstream ss;
 		ss << "Particle filter could not dump particle paths states to \"" << dump_states_file;

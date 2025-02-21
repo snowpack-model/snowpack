@@ -10,7 +10,7 @@ northing         = 190800.000000
 epsg             = 21781
 nodata           = -999
 tz               = 1
-fields           = timestamp TA RH TSG TSS HS VW DW VW_MAX OSWR
+fields           = timestamp TA RH TSG TSS HS VW DW VW_MAX RSWR
 [DATA]
 2014-10-01T00:00:00   278.45   0.997   280.75   279.35    0.030    0.8   276    1.8      0
 2014-10-01T00:30:00   278.45   0.997   280.75   279.25    0.030    0.8   277    2.3      0

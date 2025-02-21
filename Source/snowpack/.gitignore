@@ -9,6 +9,7 @@ install_manifest.txt
 **/cmake_install.cmake
 **/cmake_uninstall.cmake
 **/Makefile
+*build/
 
 #generated files
 /doc/html/*
@@ -20,6 +21,8 @@ lib/*
 Testing
 CTest*
 Dart*
+.vscode/
+.DS_store
 
 #example files and binaries:
 /doc/examples/output/*
@@ -28,6 +31,7 @@ Dart*
 *.swp
 tags
 **/*~
+.cache/
 
 #profiling:
 callgrind.out.*
@@ -41,3 +45,11 @@ CPackSourceConfig.cmake
 *.tar.gz
 *.exe
 *.dmg
+
+#Mac OS
+*.DS_Store
+
+#Tests
+tests/albedo/albedoTest
+tests/implicitsolver/implicitsolverTest
+tests/linearsolver/linearsolverTest

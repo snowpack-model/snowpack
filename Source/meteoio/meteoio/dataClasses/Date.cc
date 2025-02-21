@@ -61,6 +61,7 @@ const bool Date::__init = Date::initStaticData();
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
 
 //see https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations
+//Otherwise, 'Z' is supported as this is officially part of the standard
 bool Date::initStaticData()
 {
 	TZAbbrev["ACDT"] = 10.5;     TZAbbrev["ACST"] = 9.5;      TZAbbrev["ACT"] = -5;        TZAbbrev["ACWST"] = 8.75;    TZAbbrev["ADT"] = -3;
@@ -704,7 +705,7 @@ unsigned short Date::getISOWeekNr(int &ISO_year, const bool& gmt) const
 {
 	ISO_year = getYear(gmt);
 	const double jdn = getJulianDayNumber(gmt);
-	Date newYear(*this - jdn + 1);
+	const Date newYear(*this - jdn + 1);
 	const unsigned short newYear_dow = newYear.getDayOfWeek(gmt);
 	const int firstThursday = (7 - newYear_dow + 4) % 7 + 1; //first Thursday of the year belongs to week 1
 	const int firstWeekMonday = firstThursday - 3; //this could be <0, for example if Jan 01 is a Thursday
@@ -919,7 +920,7 @@ bool Date::operator==(const Date& indate) const {
 		return( undef==true && indate.isUndef() );
 	}
 
-	return (fabs(gmt_julian - indate.gmt_julian) <= epsilon);
+	return (std::abs(gmt_julian - indate.gmt_julian) <= epsilon);
 }
 
 bool Date::operator!=(const Date& indate) const {
@@ -1081,6 +1082,13 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 				else
 					return IOUtils::nodata;
 			}
+			case 2: { //timezone as +0, this is NOT part of the ISO 8601 standard but we tolerate +0
+				int tz_h;
+				if ( sscanf(c_str, "%d", &tz_h) == 1) {
+					if (tz_h==0) return 0.;
+				}
+				return IOUtils::nodata;
+			}
 			default: {
 				return IOUtils::nodata;
 			}
@@ -1162,8 +1170,7 @@ const string Date::toString(const FORMATS& type, const bool& gmt) const
 					tz_min = -static_cast<int>( (timezone + (double)tz_h)*60. + .5 ); //round to closest
 					tmpstr << "-";
 				}
-				tmpstr << setw(2) << setfill('0') << tz_h << ":"
-				<< setw(2) << setfill('0') << tz_min;
+				tmpstr << setw(2) << setfill('0') << tz_h << ":" << setw(2) << setfill('0') << tz_min;
 			}
 			break;
 		case(ISO_DATE):

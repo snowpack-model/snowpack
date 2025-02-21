@@ -21,21 +21,26 @@ const double res_Met_1 []	= {263.8564879,		265.0744597,		266.1950635,		266.48997
 const double res_Met_2 []	= {1.,				0.9669166667,		1.,					0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
 const double res_Met_3 []	= {273.6963,		274.3503833,		273.9969,			274.6983,			274.0971,			274.9251417,		274.0971}; // TSG
 const double res_Met_4 []	= {262.9366667,		266.1666667,		264.41,				268.9033333,		265.43,				266.89,				262.1966667}; // TSS
-const double res_Met_5 []	= {0.5875000001,	0.95,				1.894166667,		1.415833333,		0.35,				0.72,				1.47}; // HS
-const double res_Met_6 []	= {2.2,				1.2,				2.2,				0.2,				2.1,				0.6,				1.}; // VW
-const double res_Met_7 []	= {335.5833333,		144.4166666,		103.25,				213.0833333,		266.8333333,		239.5,				112.25}; // DW
-const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
-const double res_Met_9 []	= {53.83333397,		59.16666651,		51.25000000,		35.75000000,		60.91666651,		66.58333349,		62.58333349}; //RSWR
-const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
-const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
-const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TAU_CLD
-const double res_Met_13 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.000,				0.}; // HNW
+
+const double res_Met_5 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TSOIL
+const double res_Met_6 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TSNOW
+
+
+const double res_Met_7 []	= {0.5875000001,	0.95,				1.894166667,		1.415833333,		0.35,				0.72,				1.47}; // HS
+const double res_Met_8 []	= {2.2,				1.2,				2.2,				0.2,				2.1,				0.6,				1.}; // VW
+const double res_Met_9 []	= {335.5833333,		144.4166666,		103.25,				213.0833333,		266.8333333,		239.5,				112.25}; // DW
+const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
+const double res_Met_11 []	= {53.83333397,		59.16666651,		51.25000000,		35.75000000,		60.91666651,		66.58333349,		62.58333349}; //RSWR
+const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
+const double res_Met_13 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
+const double res_Met_14 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TAU_CLD
+const double res_Met_15 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.000,				0.}; // HNW
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
-bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
+static bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 
-	const double epsilon = 1.0e-7; // accuracy of the double tests
+	const double epsilon = 1.0e-6; // accuracy of the double tests
 	bool status = true;
 
 	// Coords content
@@ -161,6 +166,14 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on " << MeteoData::getParameterName(13) << " : " << std::setprecision(10) << datMeteo(13) << " != " << res_Met_13[i_results] << endl;
 		status = false;
 	}
+	if(!IOUtils::checkEpsilonEquality(datMeteo(14), res_Met_14[i_results], epsilon)){
+		cerr << "error on " << MeteoData::getParameterName(14) << " : " << std::setprecision(10) << datMeteo(14) << " != " << res_Met_14[i_results] << endl;
+		status = false;
+	}
+	if(!IOUtils::checkEpsilonEquality(datMeteo(15), res_Met_15[i_results], epsilon)){
+		cerr << "error on " << MeteoData::getParameterName(15) << " : " << std::setprecision(10) << datMeteo(15) << " != " << res_Met_15[i_results] << endl;
+		status = false;
+	}
 
 	MeteoData refMeteo(datDate);
 	refMeteo.standardizeNodata(IOUtils::nodata);
@@ -179,6 +192,8 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 	refMeteo(11)= res_Met_11[i_results];
 	refMeteo(12)= res_Met_12[i_results];
 	refMeteo(13)= res_Met_13[i_results];
+	refMeteo(14)= res_Met_14[i_results];
+	refMeteo(15)= res_Met_15[i_results];
 	if(datMeteo != refMeteo){
 		cerr << "error on == operator for MeteoData :" << datMeteo.getNrOfParameters() << " - " << refMeteo.getNrOfParameters() << endl;
 		cerr << datMeteo.toString() << endl;

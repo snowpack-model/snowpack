@@ -53,8 +53,8 @@ namespace mio {
  * @endcode
  *
  * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj</a> library for handling the coordinate conversion, the EPSG codes of
- * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
+ * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
  * @code
  * COORDSYS	= PROJ
  * COORDPARAM	= 21781
@@ -167,8 +167,8 @@ void Coords::moveByBearing(const double& i_bearing, const double& i_distance) {
 * @brief Simple merge strategy.
 * If some fields of the first argument are empty, they will be filled by the matching field from the
 * second argument.
-* @param coord1 first Coords to merge, highest priority
-* @param coord2 second Coords to merge, lowest priority
+* @param[in] coord1 first Coords to merge, highest priority
+* @param[in] coord2 second Coords to merge, lowest priority
 * @return new Coords object
 */
 Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
@@ -181,7 +181,7 @@ Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
 * @brief Simple merge strategy.
 * If some fields of the current object are empty, they will be filled by the matching field from the
 * provided argument.
-* @param coord2 extra Coords to merge, lowest priority
+* @param[in] coord2 extra Coords to merge, lowest priority
 */
 void Coords::merge(const Coords& coord2) {
 	if (altitude==IOUtils::nodata) altitude=coord2.altitude;
@@ -218,6 +218,7 @@ void Coords::merge(const Coords& coord2) {
 /**
 * @brief Print the content of the Coords object (useful for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
+* @param[in] type how to format the output (see FORMATS)
 */
 const std::string Coords::toString(const FORMATS& type) const 
 {
@@ -341,7 +342,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 }
 
 /**
-* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* @brief Local projection constructor: this constructor is only suitable for building a local projection.
 * Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
 * @param[in] in_lat_ref latitude of the reference point
@@ -497,7 +498,7 @@ void Coords::setLatLon(const std::string& in_coordinates, const double in_altitu
 */
 void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) 
 {
-	if ((in_latitude!=IOUtils::nodata && fabs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && fabs(in_longitude)>360.)) {
+	if ((in_latitude!=IOUtils::nodata && std::abs(in_latitude)>90.) || (in_longitude!=IOUtils::nodata && std::abs(in_longitude)>360.)) {
 		std::ostringstream ss;
 		ss << "(" << in_latitude << "," << in_longitude << ")";
 		throw InvalidArgumentException("Invalid latitude/longitude: "+ss.str(), AT);
@@ -537,6 +538,41 @@ void Coords::setXY(const double in_easting, const double in_northing, const doub
 	grid_i = grid_j = grid_k = IOUtils::inodata;
 	validIndex = false;
 }
+
+const std::set<int> Coords::latlon_epsgs = {4326};
+
+/**
+* @brief Set coordinates based on the previously defined EPSG code
+* If the EPSG code is 4326 (which represents WGS84 latitude-longitude), it sets latitude and longitude.
+* @param[in] in_x_or_lat latitude or easting to set based on the EPSG code
+* @param[in] in_y_or_lon longitude or northing to set based on the EPSG code
+* @param[in] in_altitude altitude to set
+*/
+void Coords::setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude) {
+	if (latlon_epsgs.find(getEPSG()) != latlon_epsgs.end()) {
+		setLatLon(in_x_or_lat, in_y_or_lon, in_altitude,true);
+	} else {
+		setXY(in_x_or_lat, in_y_or_lon, in_altitude, true);
+	}
+}
+
+/**
+* @brief Set coordinates based on a given EPSG code
+* If the EPSG code is 4326 (which represents WGS84 latitude-longitude), it sets latitude and longitude.
+* @param[in] in_x_or_lat latitude or easting to set based on the EPSG code
+* @param[in] in_y_or_lon longitude or northing to set based on the EPSG code
+* @param[in] in_altitude altitude to set
+* @param[in] epsg epsg code of the coordinates
+*/
+void Coords::setPoint(const double in_x_or_lat, const double in_y_or_lon, const double in_altitude, const int epsg) {
+	if (latlon_epsgs.find(epsg) != latlon_epsgs.end()) {
+		setLatLon(in_x_or_lat, in_y_or_lon, in_altitude,true);
+	} else {
+		setEPSG(epsg);
+		setXY(in_x_or_lat, in_y_or_lon, in_altitude, true);
+	}
+}
+
 
 /**
 * @brief Set grid indices
@@ -866,14 +902,12 @@ void Coords::distance(const Coords& destination, double& o_distance, double& o_b
 */
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
-	double alpha;
-	double dist;
-
 	if ((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
 		east_out = IOUtils::nodata;
 		north_out = IOUtils::nodata;
 		//throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
 	} else {
+		double alpha, dist;
 		switch(distance_algo) {
 			case GEO_COSINE:
 				dist = CoordsAlgorithms::cosineDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);

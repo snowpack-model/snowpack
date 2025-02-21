@@ -1,0 +1,251 @@
+<!--
+/*****************************************************************************/
+/*  Copyright 2019 WSL Institute for Snow and Avalanche Research  SLF-DAVOS  */
+/*****************************************************************************/
+/* This file is part of INIshell.
+INIshell is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+INIshell is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with INIshell.  If not, see <http://www.gnu.org/licenses/>.
+*/
+-->
+
+<!--
+This is an INIshell configuration file for the software SNOWPACK.
+https://snowpack.slf.ch
+-->
+
+<inishell_include>
+
+	<!-- EXTRA OUTPUT PARAMETERS -->
+	<frame caption="SNOWPACK Output" section="Output">
+		<parameter key="METEOPATH" type="path" mode="output" default="./output" optional="false">
+			<help>Path to the outputs; this path MUST exist, it won't be created</help>
+		</parameter>
+		<parameter key="WRITE_PROCESSED_METEO" type="alternative" default="FALSE">
+			<option value="TRUE">
+				<reference name="METEOIO_TS_OUT"/> <!-- all METEO output plugins -->
+			</option>
+			<option value="FALSE"/>
+			<help>If set to true, before the simulation is computed, the pre-processed meteorological inputs will be written out in METEOPATH (default: false).</help>
+		</parameter>
+		<parameter key="EXPERIMENT" type="text" default="NO_EXP">
+			<help>Option to give an additional simulation specific output name to the run in addition to "STATION_NAME")</help>
+		</parameter>
+		<parameter key="USEREFERENCELAYER" caption="USEREFERENCELAYER" type="checkbox">
+			<help>Option to reference the output to a marked referenced layer in the snowpack (i.e., a layer with int(mk/1000)==9), default: false.</help>
+		</parameter>
+	</frame>
+	<frame caption="Status Files" section="Output">
+		<parameter key="SNOW_WRITE" type="alternative" default="FALSE">
+			<option value="TRUE">
+				<parameter key="SNOW" type="alternative" default="SMET">
+					<option value="SMET">
+						<help>Plugin for writing SNO data (default, *.sno)</help>
+					</option>
+					<option value="CAAML">
+						<help>Plugin for writing out SNO data</help>
+					</option>
+					<option value="SNOOLD">
+						<help>Plugin for writing out SNO data (deprecated, *.snoold)</help>
+					</option>
+				</parameter>
+				<parameter key="SNOWPATH" type="path" mode="output">
+					<help>Output path for the land surface and snow status files; defaults to &lt;code&gt;METEOPATH&lt;/code&gt; if not given.</help>
+				</parameter>
+				<parameter key="SNOW_DAYS_BETWEEN" type="number" format="decimal" precision="6" default="365" min="0" unit="days">
+					<help>Dump snow files every SNOW_DAYS_BETWEEN days</help>
+				</parameter>
+				<parameter key="FIRST_BACKUP" type="number" format="decimal" precision="6" default="365" min="0" unit="days">
+					<help>First dump of sno files happens at end of run or after FIRST_BACKUP days, whichever happens first</help>
+				</parameter>
+				<!--<parameter key="HAZARD_STEPS_BETWEEN" type="number" format="decimal" default="365" min="0" optional="false">
+					<help>Dump hazard data every HAZARD_STEPS_BETWEEN days</help>
+				</parameter>-->
+			</option>
+			<option value="FALSE"/>
+			<help>Write snow status data (to use for a restart, for example)?</help>
+		</parameter>
+	</frame>
+	<frame caption="Snow Profiles" section="Output">
+		<parameter key="PROF_WRITE" type="alternative" optional="false">
+			<option value="TRUE">
+				<parameter key="PROF_FORMAT" type="choice" optional="false">
+					<option value="PRO">
+						<help>SN_GUI format, multi-profile asccii file (*.pro)</help>
+					</option>
+					<option value="PRF">
+						<help>tabular format; multi-profile ascii file (*.prf)</help>
+					</option>
+					<option value="IMIS">
+						<help>aggregated data; to be directly loaded in SLF database</help>
+					</option>
+				</parameter>
+				<parameter key="AGGREGATE_PRO" type="alternative">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>If set to true, the profile in PRO-format will be aggregated, that is, containing less layers (.apro).</help>
+				</parameter>
+				<parameter key="AGGREGATE_PRF" type="alternative" >
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>If set to true, the profile in PRF-format will be aggregated, that is, containing less layers (*.aprf).</help>
+				</parameter>
+				<parameter key="PROF_START" type="number" format="decimal" precision="6" default="0" min="0" max="365" unit="days" optional="false">
+					<help>When to start writing profile data out (offset, in days)</help>
+				</parameter>
+				<parameter key="PROF_DAYS_BETWEEN" type="number" format="decimal" precision="6" default="4.1666e-2" min="0" max="365" unit="days" optional="false">
+					<help>How often to write profile data out (in days: 3 hours=.125, 1 hour=4.1666e-2, 0.5 hour=2.08333e-2, 0.25 hour=1.04167e-2))</help>
+				</parameter>
+				<parameter key="PROF_ID_OR_MK" type="alternative" default="ID" optional="true">
+					<help>Write layer ID or layer marker as 0504 (only in PRO format)</help>
+					<option value="ID">
+						<help>Write layer ID as 0504</help>
+					</option>
+					<option value="MK">
+						<help>Write layer marker as 0504</help>
+					</option>
+				</parameter>
+				<parameter key="PROF_AGE_OR_DATE" type="alternative" default="AGE" optional="true">
+					<help>Write layer age in days or layer deposition date in ISO format as 0505 (only in PRO format)</help>
+					<option value="AGE">
+						<help>Write layer age in days as 0505</help>
+					</option>
+					<option value="DATE">
+						<help>Write layer deposition date in ISO format as 0505</help>
+					</option>
+				</parameter>
+				<parameter key="HARDNESS_IN_NEWTON" type="alternative" default="FALSE">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>Output the hand hardness index in newtons (default=false)</help>
+				</parameter>
+				<parameter key="CLASSIFY_PROFILE" type="alternative">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>Classify the profile (default=false)? This is according to Schweizer, J. and M. Luetschg, &lt;i&gt;Characteristics of human-triggered avalanches&lt;/i&gt;, 2001, Cold Reg. Sci. Technol. &lt;b&gt;33&lt;/b&gt;(2-3)</help>
+				</parameter>
+			</option>
+			<option value="FALSE"/>
+			<help>Write profile data?</help>
+		</parameter>
+	</frame>
+	<frame caption="Time Series" section="Output">
+		<parameter key="TS_WRITE" type="alternative" optional="false">
+			<option value="TRUE">
+				<parameter key="TS_FORMAT" type="alternative" optional="false">
+					<option value="SMET">
+						<include file="meteoio_timeseries_output.xml"/>
+						<parameter key="ACDD_WRITE" label="Write ACDD metadata" type="alternative">
+							<option value="TRUE"><reference name="ACDD"/></option>
+							<option value="FALSE"/>
+							<help>Should ACDD metadata be written in the header? (default: false)</help>
+						</parameter>
+						<help>SnopViz format; flexible multi-column ascii file (*.smet)</help>
+					</option>
+					<option value="MET">
+						<help>SN_GUI format; 100-column ascii file (*.met)</help>
+					</option>
+				</parameter>
+				<parameter key="TS_START" type="number" format="decimal" precision="6" default="0" min="0" max="365" unit="days" optional="false">
+					<help>When to start writing meteo data out (offset, in days)</help>
+				</parameter>
+				<parameter key="TS_DAYS_BETWEEN" type="number" format="decimal" precision="6" default="4.1666e-2" min="0" max="365" unit="days" optional="false">
+					<help>How often to write meteo data out (in days: 3 hours=.125, 1 hour=4.1666e-2, 0.5 hour=2.08333e-2, 0.25 hour=1.04167e-2)</help>
+				</parameter>
+				<parameter key="AVGSUM_TIME_SERIES" type="alternative" default="TRUE">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>If AVGSUM_TIME_SERIES is set, mean fluxes and cumulated masses since last dump are written, else current energy fluxes, cumulated masses over last COMPUTATION_STEP_LENGTH (recommended setting in operational mode). &lt;i&gt;This is forced to false when using virtual slopes!&lt;i&gt;
+					</help>
+				</parameter>
+				<parameter key="CUMSUM_MASS" type="alternative" default="FALSE">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>If CUMSUM_MASS is set, current value of cumulated masses since begin of run are dumped. See PRECIP_RATES for precipitation. &lt;i&gt;This is forced to false when using virtual slopes!&lt;i&gt;
+					</help>
+				</parameter>
+				<parameter key="PRECIP_RATES" type="alternative" default="TRUE">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>Write precipitation as rates (kg m-2 h-1, default) or as sums over the output time step. Please note that the units label in the output file and in SN_GUI &lt;b&gt;will remain kg m-2 h-1&lt;/b&gt; and will therefore not match sums.</help>
+				</parameter>
+				<reference name="SP_TS_OUTPUTS" />
+			</option>
+			<option value="FALSE"/>
+			<help>Write time series of single parameters?</help>
+		</parameter>
+	</frame>
+
+	<parametergroup name="SP_TS_OUTPUTS">
+		<frame caption="Time Series Outputs Selection" collapsed="false">
+			<section name="output"/>
+			<parameter key="OUT_CANOPY" type="alternative" default="FALSE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write canopy data out? To be set to TRUE only if CANOPY=TRUE</help>
+			</parameter>
+			<parameter key="OUT_HAZ" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write hazard data out? This must be FALSE for Alpine3D</help>
+			</parameter>
+			<parameter key="OUT_SOILEB" type="alternative" default="FALSE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write soil energy balance data out? This can &lt;b&gt;NOT&lt;/b&gt; be enabled together with OUT_HAZ</help>
+			</parameter>
+			<parameter key="OUT_HEAT" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write turbulent fluxes out?</help>
+			</parameter>
+			<parameter key="OUT_T" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write snow/soil temperatures out?</help>
+			</parameter>
+			<!-- <parameter key="OUT_LOAD" type="alternative" default="FALSE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write solutes load data out?</help>
+			</parameter> -->
+			<parameter key="OUT_LW" type="alternative" default="TRUE">
+				<section name="output" />
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write long wave radiation out?</help>
+			</parameter>
+			<parameter key="OUT_SW" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write short wave radiation out?</help>
+			</parameter>
+			<parameter key="OUT_MASS" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write mass balance terms out?</help>
+			</parameter>
+			<parameter key="OUT_METEO" type="alternative" default="TRUE">
+				<section name="output" />
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write meteo parameters out?</help>
+			</parameter>
+			<parameter key="OUT_STAB" type="alternative" default="TRUE">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write stability parameters out?</help>
+			</parameter>
+		</frame>
+	</parametergroup>
+
+</inishell_include>

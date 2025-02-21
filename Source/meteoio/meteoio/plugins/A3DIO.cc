@@ -689,7 +689,7 @@ bool A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 		if (size>0) {
 			const std::string filename( tmp_path+"/meteo1D_"+data[ii][0].meta.getStationID()+".txt" );
 			if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException(filename,AT);
-			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
+			ofilestream file(filename.c_str(), std::ios::out | std::ios::trunc);
 			if (!file) {
 				throw AccessException("[E] Can not open file "+filename, AT);
 			}
@@ -741,7 +741,7 @@ bool A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 	return true;
 }
 
-bool A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& data, const std::string& parameter_name)
+bool A3DIO::writeHeader(ofilestream &file, const std::vector< std::vector<MeteoData> >& data, const std::string& parameter_name)
 {
 	std::ostringstream str_altitudes;
 	std::ostringstream str_eastings;
@@ -773,7 +773,7 @@ bool A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<Mete
 
 void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
                        const std::string& fileprefix, const std::string& label, const double& year,
-                       std::ofstream& file)
+                       ofilestream& file)
 {//creates a meteo2D file according to the specifications
 //the header is also written
 	std::ostringstream out;
@@ -797,7 +797,7 @@ bool A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 	const size_t nb_timesteps = data[0].size();
 	if (nb_timesteps==0) return false;
 
-	std::ofstream file;
+	ofilestream file;
 	int startyear, year, month, day, hour;
 	Date tmp_date(data[0][0].date.getJulian(true), out_tz);
 	tmp_date.getDate(startyear, month, day, hour);

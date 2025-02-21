@@ -100,16 +100,20 @@ void SalinityTransport::SetDomainSize(size_t nE) {
 /**
  * @brief Solve diffusion-advection equation using the Crank-Nicolson implicit, or fully implicit method\n
  * @author Nander Wever
- * @par This function solves the following equation ($n$ and $i$ denoting time and spatial level, respectively), in Latex code:
-\begin{multline}
+ * @details This function solves the following equation (<i>n</i> and <i>i</i> denoting time and spatial level, respectively):
+\f[
+\begin{multlined}
 \frac{ \left ( \theta^{n+1}_i S_{\mathrm{b}, i}^{n+1} - \theta^{n}_i S_{\mathrm{b}, i}^{n} \right ) } { \Delta t } \\
 - f \left [ \left ( \frac{ 2 D_{i+1}^{n} \theta^{n+1}_{i+1} S_{\mathrm{b}, i+1}^{n+1} }{ \Delta z_{\mathrm{up}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } - \frac{ 2 D_{i}^{n} \theta^{n+1}_{i} S_{\mathrm{b}, i}^{n+1} }{\left ( \Delta z_{\mathrm{up}} \Delta z_{\mathrm{down}} \right ) } + \frac{ D_{i-1}^{n} \theta^{n+1}_{i-1} S_{\mathrm{b}, i-1}^{n+1} }{ \Delta z_{\mathrm{down}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] \\
 - \left ( 1-f \right ) \left [ \left ( \frac{ 2 D_{i+1}^{n} \theta^{n}_{i+1} S_{\mathrm{b}, i+1}^{n} }{ \Delta z_{\mathrm{up}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } - \frac{ 2 D_{i}^{n} \theta^{n}_{i} S_{\mathrm{b}, i}^{n} }{\left ( \Delta z_{\mathrm{up}} \Delta z_{\mathrm{down}} \right ) } + \frac{ D_{i-1}^{n} \theta^{n}_{i-1} S_{\mathrm{b}, i-1}^{n} }{ \Delta z_{\mathrm{down}} \left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] \\
 - f \left [ \left ( \frac{q^{n}_{i+1} S_{\mathrm{b},i+1}^{n+1} - q^{n}_{i-1} S_{\mathrm{b},i-1}^{n+1}}{\left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] - \left ( 1-f \right ) \left [ \left ( \frac{q^{n}_{i+1} S_{\mathrm{b},i+1}^{n} - q^{n}_{i-1} S_{\mathrm{b},i-1}^{n}}{\left ( \Delta z_{\mathrm{up}} + \Delta z_{\mathrm{down}} \right ) } \right ) \right ] - s_{\mathrm{sb}} = 0
-\end{multline}
-Here, $f=1$ results in the fully implicit scheme, whereas $f=0.5$ corresponds to the Crank-Nicolson scheme. The implicit scheme is first order accurate, whereas the Crank-Nicolson scheme is second order accurate. Furthermore, both are unconditionally stable and suffer only minimal numerical diffusion for the advection part. As with many other common schemes, the advection part is not perfectly conserving sharp transitions. Futhermore, the reason to not use the fully implicit or the Crank Nicolson scheme is the occurrence of spurious oscillations in the solution, which negatively impact the accuracy of the simulations more than the negative effect on computational efficiency imposed by the CFL criterion required for the explicit method (see SalinityTransport::SolveSalinityTransportEquationExcplicit).
+\end{multlined}
+\f]
+Here, \f$f=1\f$ results in the fully implicit scheme, whereas \f$f=0.5\f$ corresponds to the Crank-Nicolson scheme. The implicit scheme is first order accurate, whereas the Crank-Nicolson scheme is second order accurate. Furthermore, both are unconditionally stable and suffer only minimal numerical diffusion for the advection part. As with many other common schemes, the advection part is not perfectly conserving sharp transitions. Futhermore, the reason to not use the fully implicit or the Crank Nicolson scheme is the occurrence of spurious oscillations in the solution, which negatively impact the accuracy of the simulations more than the negative effect on computational efficiency imposed by the CFL criterion required for the explicit method (see SalinityTransport::SolveSalinityTransportEquationExcplicit).
  * @param dt Time step (s)
  * @param DeltaSal Result vector (change in salinity over time step)
+ * @param f Set to 0.5 for Crank-Nicolson, or to 1.0 for fully implicit
+ * @param DonorCell If true, use mass-conserving donor-cell scheme (upwind). If false, use default implicit discretization
  * @return false on error, true otherwise
  */
 bool SalinityTransport::SolveSalinityTransportEquationImplicit(const double dt, std::vector <double> &DeltaSal, const double f, const bool DonorCell) {

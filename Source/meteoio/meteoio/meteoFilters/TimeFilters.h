@@ -88,7 +88,7 @@ class TimeSuppr : public ProcessingBlock {
 	public:
 		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
 
 	private:
 		//possible modes of operation
@@ -118,9 +118,12 @@ class TimeSuppr : public ProcessingBlock {
  * the timestamps back to Winter time only (or "Standard Time", as it should always be!) or to correct 
  * a clock that has drifted in a data logger. 
  * 
- * In order to do so, a correction file has to be provided that contains on each line an ISO formatted 
+ * This takes either a fixed offset or a correction file that contains on each line an ISO formatted 
  * timestamp as well as an offset (in seconds) to apply to the timestamps starting at the provided time
- * (always assumed to be in the input timezone + a potential previous offset).
+ * (always assumed to be in the input timezone + a potential previous offset). So the supported arguments 
+ * are:
+ *    + CORRECTIONS: the correction file (optional);
+ *    + OFFSET: the fixe offset (in seconds) to add to the time (optional).
  *
  * @code
  * TIME::filter1     = SHIFT
@@ -137,15 +140,21 @@ class TimeSuppr : public ProcessingBlock {
  * @note The current implementation does not handle data conflicts if a shifted timestep conflicts with another timestep. In
  * such a case, an error message "[E] timestamp error for station..." will be returned and you will have to manually decide 
  * in your input data which timestep to keep.
+ * 
+ * @note The correction file supports comments (everything behind ';' or '#' is a comment) and empty lines.
  */
 class TimeShift : public ProcessingBlock {
 	public:
 		TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
 
 	private:
+		void process_corrections(std::vector<MeteoData>& ovec) const;
+		void process_offset(std::vector<MeteoData>& ovec) const;
 		std::vector<offset_spec> dst_changes;
+		double offset;
+		bool has_offset;
 };
 
 /**
@@ -165,7 +174,7 @@ class TimeSort : public ProcessingBlock {
 	public:
 		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
 };
 
 /**
@@ -198,8 +207,8 @@ class TimeLoop : public ProcessingBlock {
 	public:
 		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
-		void process(Date &dateStart, Date &dateEnd);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
+		void process(Date &dateStart, Date &dateEnd) override;
 
 	private:
 		Date req_start, req_end;

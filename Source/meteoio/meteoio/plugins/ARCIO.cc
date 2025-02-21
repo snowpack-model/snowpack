@@ -19,6 +19,7 @@
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
+#include <meteoio/FStream.h>
 #include <meteoio/IOExceptions.h>
 
 #include <cerrno>
@@ -330,7 +331,18 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& options)
 {
-	write2DGrid_internal(grid_in, options+grid2d_ext_out);
+	// options is a string of the format varname@Date
+	std::vector<std::string> vec_options;
+	if (IOUtils::readLineToVec(options, vec_options, '@')  != 2)
+		throw InvalidArgumentException("The format for the options to ARCIO::write2DGrid is varname@Date, received instead '"+options+"'", AT);
+
+	mio::Date date;
+	if(!mio::IOUtils::convertString(date, vec_options[1], cfg.get("TIME_ZONE","input"))) {
+		throw InvalidArgumentException("Unable to convert date '"+vec_options[1]+"'", AT);
+	}
+	
+	const std::string filename( date.toString(Date::NUM)+"_"+vec_options[0]+grid2d_ext_out );
+	write2DGrid_internal(grid_in, filename);
 }
 
 void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& name) const
@@ -338,7 +350,7 @@ void ARCIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string&
 	const std::string full_name( grid2dpath_out+"/"+name );
 	if (!FileUtils::validFileAndPath(full_name)) throw InvalidNameException(full_name,AT);
 	errno = 0;
-	std::ofstream fout(full_name.c_str(), ios::out);
+	ofilestream fout(full_name.c_str(), ios::out);
 	if (fout.fail()) {
 		std::ostringstream ss;
 		ss << "Error opening file \"" << full_name << "\", possible reason: " << std::strerror(errno);

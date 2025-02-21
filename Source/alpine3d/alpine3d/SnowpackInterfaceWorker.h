@@ -19,7 +19,6 @@
 #include <alpine3d/DataAssimilation.h>
 #include <alpine3d/snowdrift/SnowDrift.h>
 #include <alpine3d/ebalance/EnergyBalance.h>
-#include <alpine3d/runoff/Runoff.h>
 #include <alpine3d/MeteoObj.h> //for the SnGrids
 #include <snowpack/libsnowpack.h> //for TechSnow
 
@@ -72,10 +71,13 @@ class SnowpackInterfaceWorker
 		void setLateralFlow(const std::vector<SnowStation*>& snow_station);
 
 	private:
-		void initGrids(std::vector<std::string>& params, const std::vector<std::string>& grids_not_computed_in_worker);
+		void initGrids(std::vector<std::string> params, const std::vector<std::string>& grids_not_computed_in_worker);
 		void gatherSpecialPoints(const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
 		void fillGrids(const size_t& ii, const size_t& jj, const CurrentMeteo& meteoPixel, const SnowStation& snowPixel, const SurfaceFluxes& surfaceFlux);
 		double& getGridPoint(const SnGrids::Parameters& param, const size_t& ii, const size_t& jj);
+
+	public:
+		std::vector<std::pair<size_t,size_t> > SnowStationsCoord;
 
 	private:
 		SnowpackConfig sn_cfg; // created on element
@@ -84,13 +86,12 @@ class SnowpackInterfaceWorker
 		Stability stability;
 		TechSnow sn_techsnow;
 
-		const mio::DEMObject dem;
+		const mio::DEMObject& dem;
 		const size_t dimx, dimy, offset;
 		std::vector<SnowStation*> SnowStations; // Save different Pixel values
-		std::vector<std::pair<size_t,size_t> > SnowStationsCoord;
 		std::vector<bool> isSpecialPoint;
 
-		const mio::Grid2DObject landuse;
+		const mio::Grid2DObject& landuse;
 		mio::Grid2DObject store;
 		mio::Grid2DObject erodedmass;
 		std::map< SnGrids::Parameters, mio::Grid2DObject > grids;
@@ -99,8 +100,7 @@ class SnowpackInterfaceWorker
 		std::vector<SnowStation> snow_pixel;
 		std::vector<CurrentMeteo> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
-		std::vector<double> soil_temp_depths;
-		std::vector<double> snow_density_depths;
+		std::vector<double> soil_temp_depths, soil_runoff_depths, snow_density_depths;
 
 		double calculation_step_length;
 		double height_of_wind_value;

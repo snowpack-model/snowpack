@@ -48,7 +48,7 @@ void FilterTimeconsistency::process(const unsigned int& param, const std::vector
 			const double std_dev = Interpol1D::std_dev( data );
 			if (std_dev==IOUtils::nodata) continue;
 			if (ii==0 || ii==(nr_points-1)) continue;
-			const double local_diff = fabs(value - ivec[ii-1](param)) + fabs(value - ivec[ii+1](param));
+			const double local_diff = std::abs(value - ivec[ii-1](param)) + std::abs(value - ivec[ii+1](param));
 			if (local_diff > std_factor*std_dev) value = IOUtils::nodata;
 			
 		} else if (!is_soft) value = IOUtils::nodata;

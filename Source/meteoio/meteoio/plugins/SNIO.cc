@@ -482,23 +482,21 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md(MeteoData::RSWR) = tmpdata[ii++];
 	else
 		md(MeteoData::RSWR) = IOUtils::nodata;
-
-	double& ea = tmpdata[ii++];
-	if ((ea <= 1) && (ea != plugin_nodata)){
-		if ((md(MeteoData::TA) != plugin_nodata) && (md(MeteoData::RH) != plugin_nodata)) {
-			if (ea==0.)
-				ea = Atmosphere::Brutsaert_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)));
-			else
-				ea = Atmosphere::Omstedt_ilwr(md(MeteoData::RH)/100., IOUtils::C_TO_K(md(MeteoData::TA)), ea); //calculate ILWR from cloudiness
+	
+	//read either EA or ILWR
+	const double tmp = tmpdata[ii++];
+	if (tmp>0) {
+		if (tmp<=1) {
+			md.addParameter("EA");
+			md("EA") = tmp;
 		} else {
-			ea = plugin_nodata;
+			md(MeteoData::ILWR) = tmp;
 		}
 	}
-
-	md(MeteoData::ILWR) = ea;
+	
 	md(MeteoData::TSS)  = tmpdata[ii++];
 	md(MeteoData::TSG)  = tmpdata[ii++];
-	md(MeteoData::PSUM)  = tmpdata[ii++];
+	md(MeteoData::PSUM) = tmpdata[ii++];
 	md(MeteoData::HS)   = tmpdata[ii++]; // nr_meteoData
 
 	// Read optional values
@@ -570,7 +568,7 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 			if (station_id.empty()) station_id = "UNKNOWN";
 			const std::string output_name( outpath + "/" + station_id + ".inp" );
 			if (!FileUtils::validFileAndPath(output_name)) throw InvalidNameException(output_name,AT);
-			std::ofstream fout;
+			ofilestream fout;
 			if ( !FileUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
 				fout << "MTO <" << station_id << "> " << vecMeteo[ii].size() << "\n";
@@ -583,7 +581,7 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	}
 }
 
-void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name, std::ofstream& fout)
+void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name, ofilestream& fout)
 { //write out the data for 1 station
 	unsigned int failure_count = 0;
 	unsigned int Dirichlet_failure_count = 0;

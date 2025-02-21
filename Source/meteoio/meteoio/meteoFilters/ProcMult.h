@@ -91,11 +91,11 @@ class ProcMult : public ProcAdd {
 		ProcMult(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec) override;
 
 	protected:
-		virtual void uniform_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const;
-		virtual void normal_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const;
+		virtual void uniform_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const override;
+		virtual void normal_noise(const unsigned int& param, std::vector<MeteoData>& ovec) const override;
 };
 
 } //end namespace

@@ -4,17 +4,33 @@
 # to automatically, on-the-fly convert smet to agr directly in xmgrace, add the following line to your gracerc:
 # DEFINE IFILTER "smet2agr.sh %s" PATTERN "*.smet"
 
-INPUT=$1
+if [ $# -eq 0 ]; then
+	printf "$0: convert a smet file to an agr file to be read by XmGrace\nIt takes the following arguments:\n" >> /dev/stderr
+	printf "\t[PROFILE]: either NORMAL or WIDE, defines the aspect ratio of the plot (optional, default: NORMAL);\n" >> /dev/stderr
+	printf "\t[SMET FILES]: one or more smet files to plot (mandatory);\n" >> /dev/stderr
+	exit 1
+else
+	INPUT1=$1
+	if [ $# -gt 1 ]; then
+		PROFILE=$1
+		INPUT1=$2
+		shift 1
+	fi
+fi
 
 #create general header section
 printf "# Grace project file\n#\n"
 printf "@version 50121\n"
-printf "@page size 792, 612\n"
+if [ "x${PROFILE}" != "xWIDE" ]; then
+	printf "@page size 792, 612\n"
+else
+	printf "@page size 2160, 888\n"
+fi 
 datum=$(date --rfc-3339=seconds)
 printf "@timestamp def \"${datum}\"\n"
 
 #print the color table and generate the table of indices
-plot_colors=`head -100 ${INPUT} | grep "plot_color" | tr -s '\t' ' ' | cut -d'=' -f2 | tr ' ' '\n'`
+plot_colors=`head -100 ${INPUT1} | grep "plot_color" | tr -s '\t' ' ' | cut -d'=' -f2 | tr ' ' '\n'`
 if [ "x$plot_colors" != "x" ]; then
 	sorted_plot_colors=`echo "${plot_colors}" | sort -u | grep -v "0x000000" | grep -v "-" | grep -v "0xFFFFFF" | tr '\n' ' ' | awk '{printf("white black grey %s", $0)}' `
 	color_table=`echo "${plot_colors}" | awk '
@@ -66,11 +82,11 @@ if [ "x$plot_colors" != "x" ]; then
 fi
 
 #create g0 graph
-stat_id=`head -100 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-stat_name=`head -100 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lat=`head -100 ${INPUT} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-lon=`head -100 ${INPUT} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
-alt=`head -100 ${INPUT} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_id=`head -100 ${INPUT1} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+stat_name=`head -100 ${INPUT1} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lat=`head -100 ${INPUT1} | grep "latitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+lon=`head -100 ${INPUT1} | grep "longitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
+alt=`head -100 ${INPUT1} | grep "altitude" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 printf "@g0 on\n"
 printf "@g0 hidden false\n"
 printf "@g0 type XY\n"
@@ -82,11 +98,19 @@ printf "@g0 fixedpoint xy 0.000000, 0.000000\n"
 printf "@g0 fixedpoint format yymmddhms general\n"
 printf "@g0 fixedpoint prec 6, 6\n"
 printf "@with g0\n"
-printf "@    world 2454800, -1000, 2454820, 400\n"
+if [ "x${PROFILE}" != "xWIDE" ]; then
+	printf "@    world 2454800, -1000, 2454820, 400\n"
+else
+	printf "@    world 2446584.92183, -9.7972972973, 2446615.92445, 19.3412162162\n"
+fi 
 printf "@    stack world 0, 0, 0, 0\n"
 printf "@    znorm 1\n"
-printf "@    view 0.150000, 0.150000, 1.150000, 0.850000\n"
-printf "@    title \"${INPUT}\"\n"
+if [ "x${PROFILE}" != "xWIDE" ]; then
+	printf "@    view 0.150000, 0.150000, 1.150000, 0.850000\n"
+else
+	printf "@    view 0.100000, 0.100000, 2.332432, 0.900000\n"
+fi 
+printf "@    title \"${INPUT1}\"\n"
 printf "@    subtitle \"${stat_id} - ${stat_name} (${lat}, ${lon}, ${alt})\"\n"
 printf "@    legend 0.2, 0.8\n"
 printf "@    legend char size 0.500000\n"
@@ -95,34 +119,44 @@ printf "@    xaxis  ticklabel on\n"
 printf "@    xaxis  ticklabel format yymmdd\n"
 
 #create data sets metadata
-columns=$(head -100 ${INPUT} | grep "fields")
+columns=$(head -100 $@ | grep "fields" | cut -d '=' -f2 | tr -s ' ' '\n' | grep -vi "timestamp" | tr '\n' ' ')
 echo "${columns}" | awk '
 	BEGIN {
 		n=split("'"${color_table}"'", color_table, " ")
 	}
-	/fields/ {
-		for(i=4; i<=NF; i++) {
-			f=i-4
+	{
+		for(ii=1; ii<=NF; ii++) {
+			f=ii-1
 			printf("@    s%d hidden false\n", f)
 			printf("@    s%d type xy\n", f)
-			printf("@    s%d comment \"%s\"\n", f, $(i))
-			printf("@    s%d legend  \"%s\"\n", f, $(i))
+			printf("@    s%d comment \"%s\"\n", f, $(ii))
+			printf("@    s%d legend  \"%s\"\n", f, $(ii))
 			if (n>0) printf("@    s%d line color %d\n", f, color_table[f+2])
 		}
 	}
 '
 
 #create data sets data
-nb_sets=$(echo "${columns}" | wc -w)
-for i in $(seq 4 ${nb_sets}); do
-	f=$(( i-4 ))
-	printf "@target G0.S${f}\n@type xy\n"
-	awk '
-	BEGIN {
-		field='${i}'-2
-	}
-	/^[[:space:]]*[0-9\-]+/ {
-		printf("%s %s\n",$1, $(field))
-		}' ${INPUT}
-	printf "&\n"
+file_index=0
+for smet_file in "$@"; do
+	nodata=$(head -100 ${smet_file} | grep -E "^nodata\s+=" | cut -d'=' -f2 | tr -d ' ')
+	nb_sets=$(head -100 ${smet_file} | grep -E "^fields\s+=" | wc -w)
+	for ii in $(seq 4 ${nb_sets}); do
+		f=$(( file_index+ii-4 ))
+		printf "@target G0.S${f}\n@type xy\n"
+		awk '
+		BEGIN {
+			field='${ii}'-2
+			nodata='${nodata}'
+		}
+		/^[[:space:]]*[0-9\-]+/ {
+			val=$(field)
+			if (val==nodata) next
+			printf("%s %s\n",$1, val)
+		}
+		' ${smet_file}
+		printf "&\n"
+	done
+	file_index=$(( file_index+nb_sets-4+1 ))
 done
+

@@ -20,16 +20,16 @@
 
 #define WS0 0.5
 #define TKE 0
-#define SALTATION 1		// switch for saltation simulation
-#define SUBLIMATION 0 		// switch for drifting snow sublimation
-#define FIELD3D_OUTPUT 0	// output with all three-dimensional fields (only possible for sublimation)
-#define SUBLIMATION_OUTPUT 0	// debug output of drifting snow sublimation
-#define T_FB 1 //switch for feedback between sublimation and air temperature
-#define Q_FB 1 //switch for feedback between sublimation and humidity
-#define C_FB 1 //switch for feedback between sublimation and snow concentration
-#define READK 0  //define as 1 if you have K from ARPS wind fields INCLUDING turbulence
-#define WRITE_DRIFT_FLUXES 0 //set to 1 in order to write snow drift fluxes
-#define dt_diff 0.5   /* Small calculation step length for snow diffusion */
+#define SALTATION 1          ///< switch for saltation simulation
+#define SUBLIMATION 0        ///< switch for drifting snow sublimation
+#define FIELD3D_OUTPUT 0     ///< output with all three-dimensional fields (only possible for sublimation)
+#define SUBLIMATION_OUTPUT 0 ///< debug output of drifting snow sublimation
+#define T_FB 1               ///< switch for feedback between sublimation and air temperature
+#define Q_FB 1               ///< switch for feedback between sublimation and humidity
+#define C_FB 1               ///< switch for feedback between sublimation and snow concentration
+#define READK 0              ///< define as 1 if you have K from ARPS wind fields INCLUDING turbulence
+#define WRITE_DRIFT_FLUXES 0 ///< set to 1 in order to write snow drift fluxes
+#define dt_diff 0.5          ///< Small calculation step length for snow diffusion
 
 #include <stdio.h>
 #include <math.h>
@@ -62,18 +62,29 @@ struct WIND_FIELD {unsigned int start_step;std::string wind;};
  * @page snowdrift Snowdrift
  * This module computes the preferential deposition and redistribution of snow by the wind (see \ref principles_snowdrift). It is
  * enabled using the "--enable-drift" command line option.
- * The 3D wind fields are read using a GRID3D <A HREF="https://models.slf.ch/p/meteoio">MeteoIO</A> plugin such as ARPS:
+ * 
+ * \warning Please note that this module is considered highly experimental! It is computationally inefficient and not parallelized. 
+ * 
+ *  Most of the module's configuration is done through constants defined in the first few lines of snowdrift/SnowDrift.h. Otherwise, 
+ * it is necessary to define a spatial interpolation algorithm for the air temperature TA (in MeteoIO) and it is recommended to rely 
+ * on either CST or AVG or AVG_LAPSE for best results.
+ * 
+ * It is also necessary to provide pre-computed 3D wind fields for each timestep. They must be based on the same DEM as the whole Alpine3D simulation and be in 
+ * the ARPS ascii format (see <A HREF="https://meteoio.slf.ch/doc-release/html/arps.html">MeteoIO's documentation</A> for the format and configuration options).
+ * These wind fields are attributed to each timestep with the WINDFIELDS configuration key in the [Input] section of the ini file. It contains a 
+ * space delimited list of wind fields files (within GRID3DPATH) and associated number of time steps:
  * @code
- * GRID3D		= ARPS
- * GRID3DPATH	= ../input/wind_fields/
+ * [Input]
+ * GRID3D      = ARPS
+ * GRID3DPATH  = ../input/wind_fields/
+ * 
+ * WINDFIELDS  = sw3.asc 1 nw3.asc 3 ww0.asc 2 nw9.asc 5 nw6.asc 10 ww0.asc 5 sw3.asc 6 nw3.asc 1
  * @endcode
  *
- * The WINDFIELDS key must be defined in the [Input] section and contains a space delimited list of wind fields files (here within GRID3DPATH) and
- * associated number of time steps:
- * @code
- * WINDFIELDS = sw3.asc 1 nw3.asc 3 ww0.asc 2 nw9.asc 5 nw6.asc 10 ww0.asc 5 sw3.asc 6 nw3.asc 1
- * @endcode
- *
+ * In the given example, the wind field file "sw3.asc" will be used for the first timesteps of the simulation, then the wind field file "nw3.asc" will
+ * be used for the next 3 timesteps, etc As shown in this example, it makes sense to pay attention to the naming of the wind fields files for 
+ * clarity (the extension could be omitted as  it is automatically appended to the provided file name. By default, it is ".asc" but this can also 
+ * be configured in the ARPS plugin).
  */
 class SnowDriftA3D {
 	public:
@@ -85,20 +96,20 @@ class SnowDriftA3D {
 		                                const mio::Grid2DObject& N3_in, const mio::Grid2DObject& rb_in);
 
 		void setSnowPack(SnowpackInterface &mysnowpack);
-		void setEnergyBalance(EnergyBalance &myeb);
 
 		virtual void Compute(const mio::Date& calcDate);
 		bool isNewWindField(const unsigned int current_step) /*const*/;
-		void setMeteo (const unsigned int& steps, const mio::Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph, const mio::Grid2DObject& new_p, const mio::Grid2DObject& new_vw,
-		                     const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_tsg, const mio::Grid2DObject& new_ilwr, const mio::Date& calcDate,
-		                     const std::vector<mio::MeteoData>& vecMeteo);
+		void setMeteo (const unsigned int& steps, const mio::Grid2DObject& new_psum, const mio::Grid2DObject& new_psum_ph,
+                   const mio::Grid2DObject& new_p, mio::Grid2DObject& vw, mio::Grid2DObject& dw,
+                   const mio::Grid2DObject& new_rh, const mio::Grid2DObject& new_ta, const mio::Grid2DObject& new_tsg,
+                   const std::vector<mio::MeteoData>& vecMeteo);
 
 		void GetTResults(double  outtime_v[15], double outtime_tau[15], double outtime_salt[15], double outtime_diff[15]);
 
 		double getTiming() const;
 
 		void Destroy();
-		
+
 		std::string getGridsRequirements() const;
 
 	protected:
@@ -200,7 +211,7 @@ class SnowDriftA3D {
 
 	protected:
 		Saltation saltation_obj;
-		
+
 		//Time dependent data output after each computation step (SnowDrift::Compute)
 		double  time_v[15], time_tau[15], time_salt[15], time_diff[15];
 		int DOITERATION;
@@ -209,7 +220,6 @@ class SnowDriftA3D {
 
 		mio::IOManager io;
 		SnowpackInterface *snowpack;
-		EnergyBalance *eb;
 		mio::Timer timer;
 
 		mio::Grid2DObject cH;
@@ -313,7 +323,7 @@ class SnowDriftA3D {
 
 		//Meteo 1D data
 		double ta_1D;
-		
+
 		mio::Date skip_date; //time step to skip because there would be no drift
 
 		//3D
@@ -323,7 +333,6 @@ class SnowDriftA3D {
 		mio::Grid3DObject nodes_Tair,nodes_Tair_ini, nodes_q, nodes_q_ini, nodes_RH, nodes_Subl, nodes_Subl_ini, nodes_WindVel, nodes_tmp_c;
 		bool STATIONARY;
 
-	protected:
 		void buildWindFieldsTable(const std::string& wind_field_string);
 		std::vector<struct WIND_FIELD> wind_fields;
 		int wind_field_index;
@@ -342,8 +351,3 @@ class SnowDriftA3D {
 #pragma GCC diagnostic pop
 
 #endif
-
-
-
-
-

@@ -3,7 +3,7 @@ Setting up basic outomated Coverage cDash client
 
 This manual shows how to set up a simple basic cDash client which runs every 
 night the tests. This is based on sources and structure of MeteoIO 
-(https://models.slf.ch/p/meteoio/) and a Linux host.
+(https://meteoio.slf.ch) and a Linux host.
 
 Special about this client is, that he will compile as Build type Debug and that 
 information about Code Coverage of the testing will be sent to the cDash Server !
@@ -36,7 +36,7 @@ IMPORTANT: Coverage testing only works with GCC as compiler right now with cDash
 1. Make direcotry and checkout svn files:
 	- mkdir -p ${HOME}/cdash_clients/meteoio
 	- cd ${HOME}/cdash_clients/
-	- svn co https://models.slf.ch/svn/slfsmm/meteoio/YOUR_BRANCH_OR_TRUNK meteoio
+	- git clone https://code.wsl.ch/snow-models/meteoio.git
 	
 2. Get cDash connection configuration
 	- Login in the cDash site -> myCDash

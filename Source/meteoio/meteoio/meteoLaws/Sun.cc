@@ -154,9 +154,9 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
                             const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
                             double& R_direct, double& R_diffuse) const
 {
-	if (ta<0. || rh<0.) 
-		throw InvalidArgumentException("When calling SunObject::getClearSky(), TA and RH must be >0, currently TA="+IOUtils::toString(ta)+", RH="+IOUtils::toString(rh), AT);
-	
+	if (ta<0. || rh<0. || pressure<0.)
+		throw InvalidArgumentException("When calling SunObject::getClearSky(), TA, RH and P must be >0, currently TA="+IOUtils::toString(ta)+", RH="+IOUtils::toString(rh)+", P="+IOUtils::toString(pressure), AT);
+
 	//these pow cost us a lot here, but replacing them by fastPow() has a large impact on accuracy (because of the exp())
 	static const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
 	static const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
@@ -311,33 +311,31 @@ double SunObject::getSplitting(const double& toa_h, const double& iswr_measured)
 	if (iswr_measured==IOUtils::nodata)
 		throw NoDataException("measured ISWR can not be nodata", AT);
 	
-	double splitting_coef;
+	double splitting_coef = 1.;
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
+	
+	// when the Sun is low above the horizon, Mt is getting abnormally too large pretending
+	// this is a clear sky day when almost all the radiation should be diffuse
+	// no matter how the sky is
+	if (elevation < elevation_threshold) return 1.;
 
-	if ( elevation < elevation_threshold ) {
-		// when the Sun is low above the horizon, Mt is getting abnormally too large pretending
-		// this is a clear sky day when almost all the radiation should be diffuse
-		// no matter how the sky is
-		splitting_coef = 1.0;
+	// clear sky index (ratio global measured to top of atmosphere radiation)
+	const double Mt = iswr_measured / toa_h; // should be <=1.2, aka clearness index Kt
+	static const double clear_sky = 0.147;
+
+	// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
+	// splitting according to a combination of Reindl et al.(1990)'s models (Mt-model and Mt&Psolar->elev-model):
+	if ( Mt >= 0.78 ) { // Mt in [0.78;1] -> clear day
+			splitting_coef = clear_sky;
 	} else {
-		// clear sky index (ratio global measured to top of atmosphere radiation)
-		const double Mt = iswr_measured / toa_h; // should be <=1.2, aka clearness index Kt
-		static const double clear_sky = 0.147;
-
-		// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
-		// splitting according to a combination of Reindl et al.(1990)'s models (Mt-model and Mt&Psolar->elev-model):
-		if ( Mt >= 0.78 ) { // Mt in [0.78;1] -> clear day
-			 splitting_coef = clear_sky;
-		} else {
-			if ( Mt <= 0.3 ) { // Mt in [0;0.3] -> overcast
-				splitting_coef = 1.02 - 0.248*Mt;
-				if (splitting_coef>1.) splitting_coef=1.;
-			} else {           // Mt in ]0.3;0.78[ -> cloudy
-				splitting_coef = 1.4 - 1.749*Mt + 0.177*sin(elevation*Cst::to_rad);
-				if (splitting_coef>0.97) splitting_coef = 0.97;
-				if (splitting_coef<clear_sky) splitting_coef = clear_sky;
-			}
+		if ( Mt <= 0.3 ) { // Mt in [0;0.3] -> overcast
+			splitting_coef = 1.02 - 0.248*Mt;
+			if (splitting_coef>1.) splitting_coef=1.;
+		} else {           // Mt in ]0.3;0.78[ -> cloudy
+			splitting_coef = 1.4 - 1.749*Mt + 0.177*sin(elevation*Cst::to_rad);
+			if (splitting_coef>0.97) splitting_coef = 0.97;
+			if (splitting_coef<clear_sky) splitting_coef = clear_sky;
 		}
 	}
 
@@ -368,22 +366,20 @@ double SunObject::getSplittingBoland(const double& toa_h, const double& iswr_mea
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
 
-	if ( elevation < elevation_threshold ) {
-		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
-		// this is a clear sky day when almost all the radiation should be diffuse
-		// no matter how the sky is
-		splitting_coef = 1.0;
-	} else {
-		// clear sky index (ratio global measured to top of atmosphere radiation)
-		const double kt = iswr_measured / toa_h; // should be <=1.2, aka clearness index Kt
-		static const double beta_0 = -8.769;
-		static const double beta_1 = 7.325;
-		static const double beta_2 = 0.377;
-		static const double c = -0.039;
-		
-		splitting_coef = c + (1-c) / (1 + exp( beta_0 + beta_1*kt + beta_2*t) ); //complex fit
-		//splitting_coef = 1. / (1 + exp(7.997*(kt-0.586))); //simple fit
-	}
+	//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
+	// this is a clear sky day when almost all the radiation should be diffuse
+	// no matter how the sky is
+	if (elevation < elevation_threshold) return 1.;
+	
+	// clear sky index (ratio global measured to top of atmosphere radiation)
+	const double kt = iswr_measured / toa_h; // should be <=1.2, aka clearness index Kt
+	static const double beta_0 = -8.769;
+	static const double beta_1 = 7.325;
+	static const double beta_2 = 0.377;
+	static const double c = -0.039;
+	
+	splitting_coef = c + (1-c) / (1 + exp( beta_0 + beta_1*kt + beta_2*t) ); //complex fit
+	//splitting_coef = 1. / (1 + exp(7.997*(kt-0.586))); //simple fit
 
 	return std::min(1., std::max(clear_sky, splitting_coef));
 }

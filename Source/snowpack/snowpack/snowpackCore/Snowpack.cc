@@ -97,7 +97,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             allow_adaptive_timestepping(false), research_mode(false), useCanopyModel(false), enforce_measured_snow_heights(false), detect_grass(false),
             soil_flux(false), useSoilLayers(false), coupled_phase_changes(false), combine_elements(false), reduce_n_elements(0), force_add_snowfall(false), max_simulated_hs(-1.),
             change_bc(false), meas_tss(false), vw_dendricity(false),
-            enhanced_wind_slab(false), snow_erosion("NONE"), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true),
+            enhanced_wind_slab(false), snow_erosion("NONE"), redeposit_keep_age(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true),
             adjust_height_of_wind_value(false), advective_heat(false), heat_begin(0.), heat_end(0.),
             temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(), soil_thermal_conductivity()
 {
@@ -239,6 +239,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
 
+
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
 	* - If VW_DENDRICITY is set, new snow dendricity is f(vw)
@@ -276,6 +277,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
 	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
+	cfg.getValue("REDEPOSIT_KEEP_AGE", "SnowpackAdvanced", redeposit_keep_age);
 
 	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
 	new_snow_bond_size = 0.25 * new_snow_grain_size;
@@ -287,8 +289,13 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	 * - 0.002  m : favored operational value with Dirichlet bc */
 	//Density of BURIED surface hoar (kg m-3), default: 125./ Antarctica: 200.
 	cfg.getValue("HOAR_DENSITY_BURIED", "SnowpackAdvanced", hoar_density_buried);
+	if ( ! (hoar_density_buried > Constants::eps) )
+		throw IOException("HOAR_DENSITY_BURIED must be >0! Please fix your ini file.", AT);
+
 	//Density of surface hoar (-> hoar index of surface node) (kg m-3)
 	cfg.getValue("HOAR_DENSITY_SURF", "SnowpackAdvanced", hoar_density_surf);
+	if ( ! (hoar_density_surf > Constants::eps) )
+		throw IOException("HOAR_DENSITY_SURF must be >0! Please fix your ini file.", AT);
 
 	//Minimum surface hoar size to be buried (mm). Increased by 50% for Dirichlet bc.
 	cfg.getValue("HOAR_MIN_SIZE_BURIED", "SnowpackAdvanced", hoar_min_size_buried);
@@ -296,6 +303,8 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	//Watertransport models
 	cfg.getValue("WATERTRANSPORTMODEL_SNOW", "SnowpackAdvanced", watertransportmodel_snow);
 	cfg.getValue("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", watertransportmodel_soil);
+	if (variant!="SEAICE" && coupled_phase_changes && useSoilLayers && watertransportmodel_soil=="RICHARDSEQUATION")
+		throw IOException("COUPLEDPHASECHANGES cannot be set to true when WATERTRANSPORTMODEL_SOIL == RICHARDSEQUATION! Please correct your ini file.", AT);
 
 	//Indicate if the meteo values can be considered at constant height above the snow surface (e.g., Col de Porte measurement method)
 	cfg.getValue("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", adjust_height_of_meteo_values);
@@ -313,6 +322,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("SOIL_EVAP_MODEL", "SnowpackAdvanced", soil_evaporation);
 	/* Get the soil thermal conductivity model to be used
 	*  - FITTED: Use fit values for soil thermal conductivity, see snLaws::compSoilThermalConductivity()
+	*  - COSENZA2003: Use the soil thermal conductivity model by Cosenza et al. (2003)
 	*  - RAW: Use simply Edata.soil[SOIL_K] + Edata.theta[WATER] * SnLaws::conductivity_water(Edata.Te)
 	                    + Edata.theta[ICE] * SnLaws::conductivity_ice(Edata.Te) */
 	cfg.getValue("SOIL_THERMAL_CONDUCTIVITY", "SnowpackAdvanced", soil_thermal_conductivity);
@@ -462,6 +472,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 			            e, nE, EMS[e].Rho, EMS[e].theta[ICE], EMS[e].theta[WATER], EMS[e].theta[WATER_PREF], EMS[e].theta[AIR]);
 			throw IOException("Runtime Error in compSnowCreep()", AT);
 		}
+		EMS[e].gradT = (NDS[e+1].T - NDS[e].T) / EMS[e].L;
 	}
 	// Update computed snow depth
 	Xdata.cH = NDS[nN-1].z + NDS[nN-1].u;
@@ -497,10 +508,11 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Find the conductivity of the element TODO: check thresholds
 	double Keff;    // the effective thermal conductivity
 	if (Edata.theta[SOIL] > 0.0) {
-		Keff = SnLaws::compSoilThermalConductivity(Edata, dvdz,soil_thermal_conductivity);
+		Keff = SnLaws::compSoilThermalConductivity(Edata, dvdz, soil_thermal_conductivity);
 	} else if (Edata.theta[ICE] > 0.55 || Edata.theta[ICE] < min_ice_content) {
+		// Note: no soil when inside this if-block.
 		Keff = Edata.theta[AIR] * Constants::conductivity_air + Edata.theta[ICE] * Constants::conductivity_ice +
-		           (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * Constants::conductivity_water + Edata.theta[SOIL] * Edata.soil[SOIL_K];
+		           (Edata.theta[WATER]+Edata.theta[WATER_PREF]) * Constants::conductivity_water;
 	} else {
 		Keff = SnLaws::compSnowThermalConductivity(Edata, dvdz, !alpine3d); //do not show the warning for Alpine3D
 	}
@@ -535,6 +547,13 @@ bool Snowpack::sn_ElementKtMatrix(ElementData &Edata, double dt, const double dv
 	// Add the source/sink term resulting from phase changes
 	Fe[1] += Edata.Qph_up * 0.5 * Edata.L;
 	Fe[0] += Edata.Qph_down * 0.5 * Edata.L;
+
+	// Add the source/sink term resulting from phase changes (due to water vapor transport)
+	Fe[1] += Edata.Qmm * 1.0 * Edata.L;
+	Fe[0] += Edata.Qmm * 1.0 * Edata.L;
+
+	//Se[1][1] += Edata.Qmm*Edata.L/Edata.Te;
+	//Fe[1] += Edata.Qmm*Edata.L;
 
 	return true;
 }
@@ -725,9 +744,14 @@ void Snowpack::neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& B
 		}
 
 		// Net longwave radiation: NON-linear dependence on snow surface temperature
-		const double delta = SnLaws::compLWRadCoefficient( T_iter, T_air, Mdata.ea);
-		Se[1][1] += delta;
-		Fe[1] += delta * pow( Mdata.ea, 0.25 ) * T_air;
+		if (Mdata.lw_net == IOUtils::nodata) {
+			const double delta = SnLaws::compLWRadCoefficient( T_iter, T_air, Mdata.ea);
+			Se[1][1] += delta;
+			Fe[1] += delta * pow( Mdata.ea, 0.25 ) * T_air;
+		} else {
+			// When NET_LW is provided, we force explicitly
+			Fe[1] += Bdata.lw_net;
+		}
 
 		// Because of the implicit time integration, must subtract this term from the flux ....
 		Fe[1] -= Se[1][1] * T_snow;
@@ -899,9 +923,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 		exit(EXIT_FAILURE);
 	}
 
-	if (surfaceCode == DIRICHLET_BC || forcing=="MASSBAL") {
-		I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
-	}
+	if (forcing=="MASSBAL") I0 = 0.; // no shortwave radiation absorption within snowpack with MASSBAL forcing
 
 	// ABSORPTION OF SOLAR RADIATION WITHIN THE SNOWPACK
 	// Simple treatment of radiation absorption in snow: Beer-Lambert extinction (single or multiband).
@@ -1003,7 +1025,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	}
 	// Now treat sea ice variant, in which ocean heat flux is used already at this point to build or destroy sea ice based on the net energy balance, so just set the temperature of the lowest node to melting.
 	if (variant == "SEAICE") {
-		NDS[0].T = SeaIce::calculateMeltingTemperature(SeaIce::OceanSalinity);
+		NDS[0].T = Xdata.Seaice->calculateMeltingTemperature(SeaIce::OceanSalinity);
 	}
 
 	// Copy Temperature at time0 into First Iteration
@@ -1094,7 +1116,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 				if (Xdata.Seaice != NULL) {
 					// For sea ice, balance the meltfreeze_tk with assuming thermal equilibrium with the brine:
-					// (1): Xdata.Edata[e].meltfreeze_tk = Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+					// (1): Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
 					// (2): BrineSal_new = (Xdata.Edata[e].salinity /  (Xdata.Edata[e].theta[WATER] + deltaTheta));
 					// (3): deltaTheta = A * (0.5 * (U[e+1] + U[e]) - Xdata.Edata[e].meltfreeze_tk) * (Constants::density_water / Constants::density_ice);
 					// Balancing equations (1), (2) and (3) derived using wxmaxima:
@@ -1111,7 +1133,14 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					const double f = Constants::density_ice / Constants::density_water;
 					const double tmp_T = 0.5 * (U[e+1] + U[e]);
 					const double tmp_Theta = Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * f;
-					Xdata.Edata[e].meltfreeze_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * Constants::meltfreeze_tk) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * Constants::meltfreeze_tk * tmp_Theta + 4. * A * f * SeaIce::mu * Xdata.Edata[e].salinity + A * f * A * f * Constants::meltfreeze_tk * Constants::meltfreeze_tk) - A * f * tmp_T - tmp_Theta - A * f * Constants::meltfreeze_tk) / (2. * A * f);
+					const double BrineSal_new = (tmp_Theta == 0.) ? (0.) : (Xdata.Edata[e].salinity / tmp_Theta);
+
+					std::pair<double, double> mu = Xdata.Seaice->getMu(BrineSal_new);
+					if(mu.second < -Constants::eps2) {
+						Xdata.Edata[e].meltfreeze_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * mu.first) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * mu.first * tmp_Theta - 4. * A * f * mu.second * Xdata.Edata[e].salinity + A * f * A * f * mu.first * mu.first) - A * f * tmp_T - tmp_Theta - A * f * mu.first) / (2. * A * f);
+					} else {
+						Xdata.Edata[e].meltfreeze_tk = IOUtils::C_TO_K(0.);
+					}
 				}
 
 				dth_i_up[e] += A * (Xdata.Edata[e].meltfreeze_tk - U[e+1]);	// change in volumetric ice content in upper half of element
@@ -1144,7 +1173,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
 					const double ThetaWater_new = (Xdata.Edata[e].theta[WATER] - 0.5 * (dth_i_up[e] + dth_i_down[e]) * (Constants::density_ice / Constants::density_water));
 					const double BrineSal_new = (ThetaWater_new == 0.) ? (0.) : (Xdata.Edata[e].salinity / ThetaWater_new);
-					Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+					Xdata.Edata[e].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(BrineSal_new);
 				}
 			}
 			EL_INCID( static_cast<int>(e), Ie );
@@ -1351,7 +1380,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	if (coupled_phase_changes) {
 		// Ensure that when top element consists of ice, its upper node does not exceed melting temperature
 		// This is to have consistent surface energy balance calculation and for having good looking output
-		if (nE > 0 && Xdata.Edata[nE-1].theta[ICE] > Constants::eps) NDS[nE].T=std::min(Xdata.Edata[nE-1].meltfreeze_tk, NDS[nE].T);
+		// Note: for sea ice, the effect of salinity is such that this doesn't work...
+		if (nE > 0 && Xdata.Edata[nE-1].theta[ICE] > Constants::eps && Xdata.Edata[nE-1].salinity > Constants::eps2) NDS[nE].T=std::min(Xdata.Edata[nE-1].meltfreeze_tk, NDS[nE].T);
 	}
 
 	return TempEqConverged;
@@ -1490,19 +1520,16 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	elem.snowType(); // Snow classification
 
 	//Initialise the Stability Index for ml_st_CheckStability routine
-	elem.S_dr = INIT_STABILITY;
+	elem.S_dr = IOUtils::nodata;
 	elem.hard = IOUtils::nodata;
 
 	elem.h = Constants::undefined;	//Pressure head not initialized yet
 
 	//Initial snow salinity
-	if (variant == "SEAICE" ) {
-		elem.salinity = SeaIce::InitSnowSalinity;
-		const double BrineSal_new = (elem.theta[WATER] == 0.) ? (0.) : (elem.salinity / elem.theta[WATER]);
-		elem.meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
-	} else {
-		elem.meltfreeze_tk = Constants::meltfreeze_tk;
-	}
+	if (variant == "SEAICE" ) elem.salinity = SeaIce::InitSnowSalinity;
+
+	double p_vapor = Atmosphere::vaporSaturationPressure(elem.Te);
+	elem.rhov = Atmosphere::waterVaporDensity(elem.Te, p_vapor);
 }
 
 /**
@@ -1551,58 +1578,58 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	const double Ln = (hn / (double)nAddE);               // New snow element length
 	double z0 = NDS[nOldN-1].z + NDS[nOldN-1].u + Ln; // Position of lowest new node
 	for (size_t n = nOldN; n < nNewN; n++) { //loop over the nodes
-			NDS[n].T = Tw;                  // t_surf Temperature of the new node
-			NDS[n].z = z0;                      // New nodal position
-			NDS[n].u = 0.0;                     // Initial displacement is 0
-			NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
-			NDS[n].udot = 0.0;                  // Settlement rate is also 0
-			NDS[n].f = 0.0;                     // Unbalanced forces are 0
-			NDS[n].S_n = INIT_STABILITY;
-			NDS[n].S_s = INIT_STABILITY;
-			z0 += Ln;
+		NDS[n].T = Tw;                      // t_surf Temperature of the new node
+		NDS[n].z = z0;                      // New nodal position
+		NDS[n].u = 0.0;                     // Initial displacement is 0
+		NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
+		NDS[n].udot = 0.0;                  // Settlement rate is also 0
+		NDS[n].f = 0.0;                     // Unbalanced forces are 0
+		NDS[n].S_n = IOUtils::nodata;
+		NDS[n].S_s = IOUtils::nodata;
+		z0 += Ln;
 	}
 
 	// Fill the element data
 	for (size_t e = nOldE; e < nNewE; e++) { //loop over the elements
-				const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
-				fillNewSnowElement(Mdata, length, rho_hn, false, Xdata.number_of_solutes, EMS[e]);
+		const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
+		fillNewSnowElement(Mdata, length, rho_hn, false, Xdata.number_of_solutes, EMS[e]);
 
-				// Now give specific properties for technical snow, consider liquid water
-				// Assume that the user does not specify unreasonably high liquid water contents.
-				// This depends also on the density of the solid fraction - print a warning if it looks bad
-				EMS[e].theta[WATER] += theta_w;
+		// Now give specific properties for technical snow, consider liquid water
+		// Assume that the user does not specify unreasonably high liquid water contents.
+		// This depends also on the density of the solid fraction - print a warning if it looks bad
+		EMS[e].theta[WATER] += theta_w;
 
-				if ( (EMS[e].theta[WATER] + EMS[e].theta[ICE]) > 0.7)
-					prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
-				          "Too much liquid water specified or density too high! Dry density =%.3f kg m-3  Water Content = %.3f %", rho_hn, theta_w);
+		if ( (EMS[e].theta[WATER] + EMS[e].theta[ICE]) > 0.7)
+			prn_msg(__FILE__, __LINE__, "wrn", Mdata.date,
+		          "Too much liquid water specified or density too high! Dry density =%.3f kg m-3  Water Content = %.3f %", rho_hn, theta_w);
 
-				EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
+		EMS[e].theta[AIR] = 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL];
 
-				if (EMS[e].theta[AIR] < 0.) {
-					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Error in technical snow input - no void fraction left");
-					throw IOException("Runtime error in runSnowpackModel", AT);
-					}
+		if (EMS[e].theta[AIR] < 0.) {
+			prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Error in technical snow input - no void fraction left");
+			throw IOException("Runtime error in runSnowpackModel", AT);
+		}
 
-				// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
-				// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.
-				// Note that we use the same branching condition as in the function Snowpack::neumannBoundaryConditions(...)
-				const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
-				if(nOldE > 0 && EMS[nOldE-1].theta[WATER] > theta_r + Constants::eps && EMS[nOldE-1].theta[ICE] > Constants::eps) {
-					EMS[e].theta[WATER]+=(2.*Constants::eps);
-					EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
-					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
-				}
+		// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
+		// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.
+		// Note that we use the same branching condition as in the function Snowpack::neumannBoundaryConditions(...)
+		const double theta_r = ((watertransportmodel_snow=="RICHARDSEQUATION" && Xdata.getNumberOfElements()>Xdata.SoilNode) || (watertransportmodel_soil=="RICHARDSEQUATION" && Xdata.getNumberOfElements()==Xdata.SoilNode)) ? (PhaseChange::RE_theta_threshold) : (PhaseChange::theta_r);
+		if(nOldE > 0 && EMS[nOldE-1].theta[WATER] > theta_r + Constants::eps && EMS[nOldE-1].theta[ICE] > Constants::eps) {
+			EMS[e].theta[WATER]+=(2.*Constants::eps);
+			EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
+			EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
+		}
+		EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
+		Xdata.ColdContent += EMS[e].coldContent(); //update cold content
 
-				Xdata.ColdContent += EMS[e].coldContent(); //update cold content
+		// Now adjust default new element values to technical snow (mk = 6)
+		EMS[e].mk = 6;
+		EMS[e].dd = 0.;
+		EMS[e].sp = 1.;
+		EMS[e].rg = 0.2; // Have to adapt after some tests
+		EMS[e].rb = EMS[e].rg/3.;
 
-				// Now adjust default new element values to technical snow (mk = 6)
-				EMS[e].mk = 6;
-				EMS[e].dd = 0.;
-				EMS[e].sp = 1.;
-				EMS[e].rg = 0.2; // Have to adapt after some tests
-				EMS[e].rb = EMS[e].rg/3.;
-
-			}   // End elements
+	}   // End elements
 
 	// Finally, update the computed snowpack height
 	Xdata.cH = NDS[nNewN-1].z + NDS[nNewN-1].u;
@@ -1704,16 +1731,20 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	} else {
 		snowed_in = ((Xdata.getNumberOfNodes() > Xdata.SoilNode+1)
 		            || (detect_grass &&
-		                (((Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
+		                (((Mdata.tss_a24h != IOUtils::nodata && Mdata.tss_a24h < IOUtils::C_TO_K(TSS_threshold24))
 		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
+		                 || ((Mdata.tss_a12h != IOUtils::nodata && Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_smallHSincrease))
 		                    && (Mdata.hs_rate > HS_threshold_smallincrease))
-		                 || ((Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
-		                    && (Mdata.hs_rate > HS_threshold_largeincrease))
+		                 || ((Mdata.tss_a12h != IOUtils::nodata && Mdata.tss_a12h < IOUtils::C_TO_K(TSS_threshold12_largeHSincrease))
+		                    && (Mdata.hs_rate != IOUtils::nodata && Mdata.hs_rate > HS_threshold_largeincrease))
 		                 )
 		               )
-		            || (Mdata.hs_rate > HS_threshold_verylargeincrease)
+		            || (Mdata.hs_rate != IOUtils::nodata && Mdata.hs_rate > HS_threshold_verylargeincrease)
 		);
+		// Additional check if snowed_in is still false with DETECT_GRASS due to missing TSS data
+		if (!snowed_in && detect_grass && (Mdata.hs_rate == IOUtils::nodata || Mdata.tss_a24h == IOUtils::nodata || Mdata.tss_a12h == IOUtils::nodata)) {
+			prn_msg(__FILE__, __LINE__, "wrn", Mdata.date, "DETECT_GRASS is TRUE, but insufficient HS and/or TSS data is available for the algorithm. Snowfall may be missed.");
+		}
 	}
 	if (variant == "SEAICE" && nOldE == 0) {
 		// Ignore snow fall on open ocean
@@ -1862,14 +1893,16 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[nOldN-1].hoar = 0.0;
 				// Now fill nodal data for upper hoar node
 				NDS[nOldN].T = t_surf;              // The temperature of the new node
+				double p_vapor = Atmosphere::vaporSaturationPressure(NDS[nOldN].T);
+				NDS[nOldN].rhov = Atmosphere::waterVaporDensity(NDS[nOldN].T, p_vapor);
 				// The new nodal position;
 				NDS[nOldN].z = NDS[nOldN-1].z + NDS[nOldN-1].u + hoar/hoar_density_buried;
 				NDS[nOldN].u = 0.0;                 // Initial displacement is 0
 				NDS[nOldN].hoar = hoar / hoar_density_buried;         // Surface hoar initial size
 				NDS[nOldN].udot = 0.0;               // Settlement rate is also 0
 				NDS[nOldN].f = 0.0;                 // Unbalanced forces is 0
-				NDS[nOldN].S_n = INIT_STABILITY;
-				NDS[nOldN].S_s = INIT_STABILITY;
+				NDS[nOldN].S_n = IOUtils::nodata;
+				NDS[nOldN].S_s = IOUtils::nodata;
 			} else { // Make sure top node surface hoar mass is removed
 				NDS[nOldN-1].hoar = 0.0;
 			}
@@ -1886,8 +1919,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				NDS[n].hoar = 0.0;                  // The new snow surface hoar is set to zero
 				NDS[n].udot = 0.0;                  // Settlement rate is also 0
 				NDS[n].f = 0.0;                     // Unbalanced forces are 0
-				NDS[n].S_n = INIT_STABILITY;
-				NDS[n].S_s = INIT_STABILITY;
+				NDS[n].S_n = IOUtils::nodata;
+				NDS[n].S_s = IOUtils::nodata;
 				z0 += Ln;
 			}
 
@@ -1906,6 +1939,12 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 					EMS[e].theta[ICE]-=(2.*Constants::eps)*(Constants::density_water/Constants::density_ice);
 					EMS[e].theta[AIR]+=((Constants::density_water/Constants::density_ice)-1.)*(2.*Constants::eps);
 				}
+				if (variant == "SEAICE" ) {
+					Xdata.Seaice->calculateMeltingTemperature(EMS[e]);
+				} else {
+					EMS[e].meltfreeze_tk = Constants::meltfreeze_tk;
+				}
+
 				Xdata.ColdContent += EMS[e].coldContent(); //update cold content
 			}   // End elements
 
@@ -1951,6 +1990,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
 	const double tmp_Xdata_hn = Xdata.hn;
 	const double tmp_Xdata_rho_hn = Xdata.rho_hn;
+	const mio::Date tmp_MdataDate = Mdata.date;
 	// Deposition mode settings:
 	double tmp_psum = redeposit_mass;
 	force_add_snowfall = true;
@@ -1958,9 +1998,14 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
 	enforce_measured_snow_heights = false;
 	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
-	if (Mdata.vw_avg == mio::IOUtils::nodata) Mdata.vw_avg = Mdata.vw;
-	if (Mdata.rh_avg == mio::IOUtils::nodata) Mdata.rh_avg = Mdata.rh;
+	// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
+	Mdata.vw_avg = Mdata.vw;
+	Mdata.rh_avg = Mdata.rh;
 	Xdata.hn = 0.;
+	if (Xdata.ErosionAge != Constants::undefined && redeposit_keep_age) {
+		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());
+		Mdata.date = EnforcedDepositionDate;
+	}
 	// Add eroded snow:
 	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
 	// Set back original settings:
@@ -1968,6 +2013,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	hn_density = tmp_hn_density;
 	variant = tmp_variant;
 	enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
+	Mdata.date = tmp_MdataDate;
 	// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
 	Xdata.hn_redeposit = Xdata.hn;
 	Xdata.rho_hn_redeposit = Xdata.rho_hn;
@@ -2029,7 +2075,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
  * @param Bdata
  * @param Sdata
  */
-void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& cumu_precip,
+void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
                                 BoundCond& Bdata, SurfaceFluxes& Sdata)
 {
 	// HACK -> couldn't the following objects be created once in init ?? (with only a reset method ??)
@@ -2111,7 +2157,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			Bdata.reset();
 			updateBoundHeatFluxes(Bdata, Xdata, Mdata);
 			// Run sea ice module
-			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt);
+			Xdata.Seaice->runSeaIceModule(Xdata, Mdata, Bdata, sn_dt, Sdata);
 			// Remesh when necessary
 			Xdata.splitElements(2. * comb_thresh_l, comb_thresh_l);
 		}
@@ -2137,14 +2183,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 			if (forcing=="MASSBAL" && Mdata.surf_melt != mio::IOUtils::nodata)	Mdata.surf_melt *= sn_dt;	// scale the mass balance components like the precipiation
 		}
 
-		Meteo M(cfg);
+		Meteo meteo(cfg);
 		do {
 			// After the first sub-time step, update Meteo object to reflect on the new stability state
 			if (ii >= 1){
 				// ADJUST_HEIGHT_OF_WIND_VALUE is checked at each call to allow different
 				// cfg values for different pixels in Alpine3D
 				cfg.getValue("ADJUST_HEIGHT_OF_WIND_VALUE", "SnowpackAdvanced", adjust_height_of_wind_value);
-				M.compMeteo(Mdata, Xdata, false, adjust_height_of_wind_value);
+				meteo.compMeteo(Mdata, Xdata, false, adjust_height_of_wind_value);
 			}
 			// Reinitialize and compute the initial meteo heat fluxes
 			Bdata.reset();
@@ -2213,7 +2259,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 						if (Xdata.Seaice != NULL) {
 							// Adjust melting/freezing point assuming thermal quilibrium in the brine pockets
 							const double BrineSal_new = (Xdata.Edata[e].theta[WATER] == 0.) ? (0.) : (Xdata.Edata[e].salinity / Xdata.Edata[e].theta[WATER]);
-							Xdata.Edata[e].meltfreeze_tk = -SeaIce::mu * BrineSal_new + Constants::meltfreeze_tk;
+							Xdata.Edata[e].meltfreeze_tk = Xdata.Seaice->calculateMeltingTemperature(BrineSal_new);
 						}
 					}
 				}
@@ -2260,6 +2306,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo Mdata, SnowStation& Xdata, double& 
 		// and creep solution routines will not pick up the new mesh boolean.
 		double ql = Bdata.ql;	// Variable to keep track of how latent heat is used
 		watertransport.compTransportMass(Mdata, Xdata, Sdata, ql);
+
 		vapourtransport.compTransportMass(Mdata, ql, Xdata, Sdata);
 
 		// See if any SUBSURFACE phase changes are occuring due to updated water content (infiltrating rain/melt water in cold snow layers)

@@ -12,15 +12,18 @@ install_manifest.txt
 
 #generated files
 /doc/html/*
-lib/*.so*
+lib/*
 /bin/*
 *.aux
 *.log
+build/
 
 #editor files:
 *.swp
 tags
 **/*~
+.vscode/
+.cache/
 
 #profiling:
 callgrind.out.*
@@ -34,3 +37,9 @@ CPackSourceConfig.cmake
 *.tar.gz
 *.exe
 *.dmg
+*.DS_Store*
+
+#examples generated files
+doc/examples/Stillberg/output/grids/*
+doc/examples/Stillberg/output/9*
+doc/examples/Stillberg/output/io.ini

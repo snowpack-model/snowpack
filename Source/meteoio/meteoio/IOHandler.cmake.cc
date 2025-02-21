@@ -31,16 +31,19 @@
 #cmakedefine PLUGIN_ARGOSIO
 #cmakedefine PLUGIN_ARPSIO
 #cmakedefine PLUGIN_A3DIO
-#cmakedefine PLUGIN_DBO
+#cmakedefine PLUGIN_BUFRIO
 #cmakedefine PLUGIN_COSMOXMLIO
 #cmakedefine PLUGIN_CSVIO
+#cmakedefine PLUGIN_DBO
 #cmakedefine PLUGIN_GEOTOPIO
 #cmakedefine PLUGIN_GOESIO
 #cmakedefine PLUGIN_GRASSIO
 #cmakedefine PLUGIN_GRIBIO
 #cmakedefine PLUGIN_IMISIO
 #cmakedefine PLUGIN_METEOBLUE
+#cmakedefine PLUGIN_MYSQLIO
 #cmakedefine PLUGIN_NETCDFIO
+#cmakedefine PLUGIN_iCSVIO
 #cmakedefine PLUGIN_OSHDIO
 #cmakedefine PLUGIN_PGMIO
 #cmakedefine PLUGIN_PNGIO
@@ -49,22 +52,70 @@
 #cmakedefine PLUGIN_SASEIO
 #cmakedefine PLUGIN_SMETIO
 #cmakedefine PLUGIN_SNIO
+#cmakedefine PLUGIN_SYNTHIO
 #cmakedefine PLUGIN_ZRXPIO
 
+#ifdef PLUGIN_ALPUG
 #include <meteoio/plugins/ALPUG.h>
+#endif
+
+#ifdef PLUGIN_ARCIO
 #include <meteoio/plugins/ARCIO.h>
+#endif
+
+#ifdef PLUGIN_ARGOSIO
 #include <meteoio/plugins/Argos.h>
+#endif
+
+#ifdef PLUGIN_ARPSIO
 #include <meteoio/plugins/ARPSIO.h>
+#endif
+
+#ifdef PLUGIN_A3DIO
 #include <meteoio/plugins/A3DIO.h>
+#endif
+
+#ifdef PLUGIN_CSVIO
 #include <meteoio/plugins/CsvIO.h>
+#endif
+
+#ifdef PLUGIN_GEOTOPIO
 #include <meteoio/plugins/GeotopIO.h>
+#endif
+
+#ifdef PLUGIN_GOESIO
 #include <meteoio/plugins/Goes.h>
+#endif
+
+#ifdef PLUGIN_GRASSIO
 #include <meteoio/plugins/GrassIO.h>
+#endif
+
+#ifdef PLUGIN_iCSVIO
+#include <meteoio/plugins/iCSVIO.h>
+#endif
+
+#ifdef PLUGIN_PGMIO
 #include <meteoio/plugins/PGMIO.h>
+#endif
+
+#ifdef PLUGIN_SMETIO
 #include <meteoio/plugins/SMETIO.h>
+#endif
+
+#ifdef PLUGIN_SNIO
 #include <meteoio/plugins/SNIO.h>
+#endif
+
+#ifdef PLUGIN_SYNTHIO
+#include <meteoio/plugins/SyntheticIO.h>
+#endif
 
 //now for the plugins that bring special includes
+#ifdef PLUGIN_BUFRIO
+#include <meteoio/plugins/BUFRIO.h>
+#endif
+
 #ifdef PLUGIN_DBO
 #include <meteoio/plugins/DBO.h>
 #endif
@@ -83,6 +134,10 @@
 
 #ifdef PLUGIN_METEOBLUE
 #include <meteoio/plugins/MeteoBlue.h>
+#endif
+
+#ifdef PLUGIN_MYSQLIO
+#include <meteoio/plugins/MySQLIO.h>
 #endif
 
 #ifdef PLUGIN_NETCDFIO
@@ -121,6 +176,9 @@ namespace mio {
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they
  * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
+ * 
+ * 
+ * Writing a file happens via a wrapper for std::ofstream \subpage ofstream_wrapper "ofilestream" that adds some functionality, like limiting the write access.
  *
  * Please have a look at the support for \subpage coords "coordinate systems".
  *
@@ -151,24 +209,28 @@ namespace mio {
  * <tr><td>\subpage arc "ARC"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>ESRI/ARC ascii grid files</td><td></td></tr>
  * <tr><td>\subpage argosio "ARGOS"</td><td>meteo</td><td></td>		<td>ARGOS satellite raw files - <b>plugin not functional yet!</b></td><td></td></tr>
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d, grid3d</td><td></td>		<td>ARPS ascii formatted grids</td><td></td></tr>
+ * <tr><td>\subpage bufrio "BUFRIO"</td><td>meteo</td><td></td>		<td>BUFR meteo files</td><td><A HREF="https://confluence.ecmwf.int/display/ECC/ecCodes+Home">ecCodes</A></td></tr>
  * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td></td>		<td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://xmlsoft.org/">libxml2</A></td></tr>
  * <tr><td>\subpage csvio "CSV"</td><td>meteo</td><td></td>		<td>flexible reading of CSV files</td><td></td></tr>
  * <tr><td>\subpage dbo "DBO"</td><td>meteo</td><td></td>		<td>connects to SLF's DBO web service interface</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
  * <tr><td>\subpage geotop "GEOTOP"</td><td>meteo</td><td>meteo</td>		<td>GeoTop meteo files</td><td></td></tr>
  * <tr><td>\subpage goesio "GOES"</td><td>meteo</td><td></td>		<td>Meteo files transmitted by the GOES satellites</td><td></td></tr>
  * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>grid2d</td>		<td>Grass grid files</td><td></td></tr>
- * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
+ * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td></td>		<td>GRIB meteo grid files</td><td><A HREF="https://confluence.ecmwf.int/display/ECC/ecCodes+Home">ecCodes</A></td></tr>
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td></td>		<td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage meteoblue "METEOBLUE"</td><td>meteo</td><td></td>		<td>connects to MeteoBlue's web API</td><td><A HREF="http://curl.haxx.se/libcurl/">libcurl</A></td></tr>
+ * <tr><td>\subpage mysql "MYSQL"</td><td>meteo</td><td></td>		<td>connects to a MySQL database, various schemas are supported</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage netcdf "NETCDF"</td><td>meteo, dem, grid2d</td><td>meteo, grid2d</td>		<td>NetCDF grids and timeseries</td><td><A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF-C library</A></td></tr>
+ * <tr><td>\subpage icsvio "iCSV"</td><td>meteo, poi</td><td>meteo</td>		<td>iCSV data files</td><td></td></tr>
  * <tr><td>\subpage oshd "OSHD"</td><td>meteo</td><td></td>		<td>OSHD generated binary Matlab files</td><td><A HREF="https://sourceforge.net/projects/matio">libmatio</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>grid2d</td>		<td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pmodio "PMOD"</td><td>meteo</td><td></td>		<td>Raw data files from Pmod/Wrc (experimental!)</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td></td><td>grid2d</td>		<td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
  * <tr><td>\subpage psqlio "PSQL"</td><td>meteo</td><td>meteo</td>		<td>connects to PostgreSQL database</td><td><A HREF="http://www.postgresql.org/">PostgreSQL</A>'s libpq</td></tr>
- * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td></td>		<td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
+ * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td></td>		<td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/c-api/8.0/en/">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>meteo</td>		<td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>meteo</td>		<td>original SNOWPACK meteo files</td><td></td></tr>
+ * <tr><td>\subpage synthio "SYNTH"</td><td>meteo</td><td></td>		<td>synthetic data generation</td><td></td></tr>
  * <tr><td>\subpage zrxpio "ZRXP"</td><td></td><td>meteo</td>		<td>WISKI database input files</td><td></td></tr>
  * </table></center>
  *
@@ -193,6 +255,7 @@ namespace mio {
 IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) const
 {
 	IOUtils::toUpper( plugin_name );
+	if (plugin_name == "NONE") throw IOException("NONE plugin specified, but a functioning plugin was requested. Make sure you are not trying to read timeseries data with this plugin.");
 #ifdef PLUGIN_ALPUG
 	if (plugin_name == "ALPUG") return new ALPUG(i_cfg);
 #endif
@@ -202,14 +265,26 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_ARGOSIO
 	if (plugin_name == "ARGOS") return new ArgosIO(i_cfg);
 #endif
+	#ifdef PLUGIN_ARPSIO
+	if (plugin_name == "ARPS") return new ARPSIO(i_cfg);
+#endif
 #ifdef PLUGIN_A3DIO
 	if (plugin_name == "A3D") return new A3DIO(i_cfg);
 #endif
-#ifdef PLUGIN_ARPSIO
-	if (plugin_name == "ARPS") return new ARPSIO(i_cfg);
+#ifdef PLUGIN_COSMOXMLIO
+	if (plugin_name == "COSMOXML") return new CosmoXMLIO(i_cfg);
 #endif
 #ifdef PLUGIN_CSVIO
 	if (plugin_name == "CSV") return new CsvIO(i_cfg);
+#endif
+#ifdef PLUGIN_BUFRIO
+	if (plugin_name == "BUFR") return new BUFRIO(i_cfg);
+#endif
+#ifdef PLUGIN_DBO
+	if (plugin_name == "DBO") return new DBO(i_cfg);
+#endif
+#ifdef PLUGIN_GEOTOPIO
+	if (plugin_name == "GEOTOP") return new GeotopIO(i_cfg);
 #endif
 #ifdef PLUGIN_GOESIO
 	if (plugin_name == "GOES") return new GoesIO(i_cfg);
@@ -217,26 +292,29 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_GRASSIO
 	if (plugin_name == "GRASS") return new GrassIO(i_cfg);
 #endif
-#ifdef PLUGIN_GEOTOPIO
-	if (plugin_name == "GEOTOP") return new GeotopIO(i_cfg);
-#endif
-#ifdef PLUGIN_SMETIO
-	if (plugin_name == "SMET") return new SMETIO(i_cfg);
-#endif
-#ifdef PLUGIN_SNIO
-	if (plugin_name == "SNOWPACK") return new SNIO(i_cfg);
-#endif
-#ifdef PLUGIN_PGMIO
-	if (plugin_name == "PGM") return new PGMIO(i_cfg);
+#ifdef PLUGIN_GRIBIO
+	if (plugin_name == "GRIB") return new GRIBIO(i_cfg);
 #endif
 #ifdef PLUGIN_IMISIO
 	if (plugin_name == "IMIS") return new ImisIO(i_cfg);
 #endif
+#ifdef PLUGIN_METEOBLUE
+	if (plugin_name == "METEOBLUE") return new MeteoBlue(i_cfg);
+#endif
+#ifdef PLUGIN_MYSQLIO
+	if (plugin_name == "MYSQL") return new MYSQLIO(i_cfg);
+#endif
+#ifdef PLUGIN_NETCDFIO
+	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
+#endif
+#ifdef PLUGIN_iCSVIO
+	if (plugin_name == "ICSV") return new iCSVIO(i_cfg);
+#endif
 #ifdef PLUGIN_OSHDIO
 	if (plugin_name == "OSHD") return new OshdIO(i_cfg);
 #endif
-#ifdef PLUGIN_GRIBIO
-	if (plugin_name == "GRIB") return new GRIBIO(i_cfg);
+#ifdef PLUGIN_PGMIO
+	if (plugin_name == "PGM") return new PGMIO(i_cfg);
 #endif
 #ifdef PLUGIN_PMODIO
 	if (plugin_name == "PMOD") return new PmodIO(cfg);
@@ -244,23 +322,20 @@ IOInterface* IOHandler::getPlugin(std::string plugin_name, const Config& i_cfg) 
 #ifdef PLUGIN_PNGIO
 	if (plugin_name == "PNG") return new PNGIO(i_cfg);
 #endif
-#ifdef PLUGIN_COSMOXMLIO
-	if (plugin_name == "COSMOXML") return new CosmoXMLIO(i_cfg);
-#endif
-#ifdef PLUGIN_DBO
-	if (plugin_name == "DBO") return new DBO(i_cfg);
-#endif
-#ifdef PLUGIN_METEOBLUE
-	if (plugin_name == "METEOBLUE") return new MeteoBlue(i_cfg);
-#endif
-#ifdef PLUGIN_NETCDFIO
-	if (plugin_name == "NETCDF") return new NetCDFIO(i_cfg);
-#endif
 #ifdef PLUGIN_PSQLIO
 	if (plugin_name == "PSQL") return new PSQLIO(i_cfg);
 #endif
 #ifdef PLUGIN_SASEIO
 	if (plugin_name == "SASE") return new SASEIO(i_cfg);
+#endif
+#ifdef PLUGIN_SMETIO
+	if (plugin_name == "SMET") return new SMETIO(i_cfg);
+#endif
+#ifdef PLUGIN_SNIO
+	if (plugin_name == "SNOWPACK") return new SNIO(i_cfg);
+#endif
+#ifdef PLUGIN_SYNTHIO
+	if (plugin_name == "SYNTH") return new SynthIO(i_cfg);
 #endif
 #ifdef PLUGIN_ZRXPIO
 	if (plugin_name == "ZRXP") return new ZRXPIO(i_cfg);
@@ -415,7 +490,7 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 		} else  {
 			STATIONS_SET vectmp;
 			plugin->readStationData(date, vectmp);
-			for (size_t jj=0; jj<vectmp.size(); jj++) vecStation.push_back( vectmp[jj] );
+			for (const auto& station : vectmp) vecStation.push_back( station );
 		}
 	}
 	
@@ -440,7 +515,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		} else  {
 			std::vector<METEO_SET> vectmp;
 			plugin->readMeteoData(fakeStart, fakeEnd, vectmp);
-			for (size_t jj=0; jj<vectmp.size(); jj++) vecMeteo.push_back( vectmp[jj] );
+			for (const auto& station_meteo : vectmp) vecMeteo.push_back( station_meteo );
 		}
 	}
 
