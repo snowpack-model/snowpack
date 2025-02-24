@@ -45,7 +45,7 @@ class DBO : public IOInterface {
 		DBO(const std::string& configfile);
 		DBO(const Config&);
 		DBO(const DBO&);
-		~DBO();
+		~DBO() override;
 
 		DBO& operator=(const mio::DBO&);
 		

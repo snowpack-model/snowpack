@@ -59,11 +59,11 @@ namespace mio {
                     ZScore,
                     Nothing,
                 };
-                Normalization(); 
-                Normalization(std::vector<double>& data, Mode new_mode); 
-                Normalization(std::vector<double>& data);
+                Normalization();
+                Normalization(const std::vector<double>& data);
+                Normalization(const std::vector<double>& data, const Mode& new_mode);
                 
-                void setMode(Mode new_mode) {mode = new_mode;}
+                void setMode(const Mode& new_mode) {mode = new_mode;}
                 Mode getMode() {return mode;}
                 std::vector<double> normalize(const std::vector<double>& data); 
                 std::vector<double> denormalize(const std::vector<double>& data);
@@ -77,13 +77,13 @@ namespace mio {
             };
 
         // slice a vector from start to start+N
-        std::vector<double> slice(const std::vector<double> &vec, size_t start, size_t N);
+        std::vector<double> slice(const std::vector<double> &vec, const size_t& start, const size_t& N);
 
         // slice a vector from start to end
-        std::vector<double> slice(const std::vector<double> &vec, size_t start);
+        std::vector<double> slice(const std::vector<double> &vec, const size_t& start);
 
         // np.arange for c++
-        std::vector<double> arange(size_t start, size_t N);
+        std::vector<double> arange(const size_t& start, const size_t& N);
 
         template <typename T> T findMinMax(const std::vector<T> &vec, bool findMin) {
             assert(!vec.empty()); // Ensure the vector is not empty

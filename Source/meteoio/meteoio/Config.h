@@ -22,10 +22,8 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
 #include <map>
 #include <vector>
-#include <typeinfo> //for typeid()
 
 namespace mio {
 
@@ -43,7 +41,7 @@ namespace mio {
  * - \anchor config_special_syntax special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
  *       - environment variables are called by using the following syntax: ${env:my_env_var};
  *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key} (make sure to prefix the key with its section if it refers to another section!)
- *       - evaluating an arithmetic expression: ${{arithm. expression}}
+ *       - evaluating an arithmetic expression: ${{arithm. expression}}. It is possible to perform arithmetics on other variables: for example ${{ 10*${SAMPLING_RATE_MIN}+3*${MY_VAR} }} will be properly evaluated. Please note that in such a case, it is necessary to add white spaces around the arithmetic expression within its "{{" and "}}" markers so it is properly parsed.
  * 
  * @note The arithemic expressions are evaluated thanks to the <A HREF="https://codeplea.com/tinyexpr">tinyexpr</A> math library (under the 
  * <A HREF="https://opensource.org/licenses/Zlib">zlib license</A>) and can use standard operators (including "^"), 
@@ -497,14 +495,14 @@ class ConfigParser {
 	public:
 		ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections);
 		
-		static std::string extract_section(std::string key);
+		static std::string extract_section(const std::string& key, const bool& provide_default=false);
 	private:
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
 		static bool onlyOneEqual(const std::string& str);
 		static void processEnvVars(std::string& value);
-		static void processExpr(std::string& value);
-		bool processVars(std::string& value, const std::string& section);
+		static bool processExpr(std::string& value);
+		bool processVars(std::string& value, const std::string& section) const;
 		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
 		std::string clean_import_path(const std::string& in_path) const;
 		bool processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before);
@@ -514,6 +512,7 @@ class ConfigParser {
 		std::set<std::string> imported; ///< list of files already imported (to avoid circular references)
  		std::set<std::string> sections; ///< list of all the sections that have been found
  		std::set<std::string> deferred_vars; ///< list of all the variables that have been found and will have to be resolved
+ 		std::set<std::string> deferred_exprs; ///< list of all the arithmetic expressions that have been found and will have to be resolved
  		std::string sourcename; ///< description of the data source for the key/value pair
 };
 

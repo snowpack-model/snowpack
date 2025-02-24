@@ -17,6 +17,7 @@ ENDIF()
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
@@ -126,20 +127,20 @@ SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
 ###########################################################
 ## Additional Options
 ###########################################################
-SET(LIMIT_OUT_ACCESS OFF CACHE BOOL "Limit write access of the library to CWD")
-MARK_AS_ADVANCED(FORCE LIMIT_OUT_ACCESS)
-# SET(LIMIT_BASE_DIR ".")
-IF(LIMIT_OUT_ACCESS)
-	IF(MSVC)	#TODO: replace by add_compile_definitions(LIMIT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
-		ADD_DEFINITIONS(/LIMIT_WRITE_ACCESS)
+SET(RESTRICT_WRITE_ACCESS OFF CACHE BOOL "Limit write access of the library to a given directory (default: CWD)")
+MARK_AS_ADVANCED(FORCE RESTRICT_WRITE_ACCESS)
+# SET(RESTRICTED_BASE_DIR ".")
+IF(RESTRICT_WRITE_ACCESS)
+	IF(MSVC)	#TODO: replace by add_compile_definitions(RESTRICT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/RESTRICT_WRITE_ACCESS)
 	ELSE(MSVC)
-		ADD_DEFINITIONS(-DLIMIT_WRITE_ACCESS)
+		ADD_DEFINITIONS(-DRESTRICT_WRITE_ACCESS)
 	ENDIF(MSVC)
-	SET(LIMIT_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
-	IF(MSVC)	#TODO: replace by add_compile_definitions("LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\"") when moving to cmake >=3.12 released 11.2018
-		ADD_DEFINITIONS(/LIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\")
+	SET(RESTRICTED_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
+	IF(MSVC)	#TODO: replace by add_compile_definitions("RESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\"") when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/RESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\")
 	ELSE(MSVC)
-		ADD_DEFINITIONS(-DLIMIT_BASE_DIR=\"${LIMIT_BASE_DIR}\")
+		ADD_DEFINITIONS(-DRESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\")
 	ENDIF(MSVC)
 ENDIF()
 

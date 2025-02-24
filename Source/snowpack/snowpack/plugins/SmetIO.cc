@@ -957,7 +957,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 	if (out_lw)
 		os << "OLWR ILWR LWR_net" << " "; //Longwave radiation fluxes (W m-2)
 	if (out_sw)
-		os << "OSWR ISWR Qw pAlbedo mAlbedo ISWR_h ISWR_dir ISWR_diff" << " "; //Shortwave radiation fluxes (W m-2) and computed albedo
+		os << "RSWR ISWR Qw pAlbedo mAlbedo ISWR_h ISWR_dir ISWR_diff" << " "; //Shortwave radiation fluxes (W m-2) and computed albedo
 	if (out_meteo)
 		os << "TA TSS_mod TSS_meas T_bottom RH VW VW_drift DW MS_Snow HS_mod HS_meas" << " "; //Air temperature, snow surface temperature (modeled and measured), temperature at bottom of snow/soil pack (degC)
 	if (out_haz)
@@ -1036,7 +1036,7 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 		plot_max << "" << " ";
 	}
 	if (out_sw) {
-		//"OSWR ISWR Qw pAlbedo mAlbedo ISWR_h ISWR_dir ISWR_diff"
+		//"RSWR ISWR Qw pAlbedo mAlbedo ISWR_h ISWR_dir ISWR_diff"
 		plot_description << "reflected_short_wave_radiation  incoming_short_wave_radiation  net_short_wave_radiation  parametrized_albedo  measured_albedo  incoming_short_wave_on_horizontal  direct_incoming_short_wave  diffuse_incoming_short_wave" << " ";
 		plot_units << "W/m2 W/m2 W/m2 - - W/m2 W/m2 W/m2" << " ";
 		units_offset << "0 0 0 0 0 0 0 0" << " ";

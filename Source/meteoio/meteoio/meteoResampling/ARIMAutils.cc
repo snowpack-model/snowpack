@@ -46,9 +46,9 @@ const std::map<OptimizationMethod, std::string> OptimizationMethodMap = {
 
 Normalization::Normalization(): mean(0), std(0), min(0), max(0) {}
 
-Normalization::Normalization(std::vector<double>& data): mean(calcVecMean(data)), std(stdDev(data)), min(*std::min_element(data.begin(), data.end())), max(*std::max_element(data.begin(), data.end())) {};
+Normalization::Normalization(const std::vector<double>& data): mean(calcVecMean(data)), std(stdDev(data)), min(*std::min_element(data.begin(), data.end())), max(*std::max_element(data.begin(), data.end())) {};
 
-Normalization::Normalization(std::vector<double>& data, Mode new_mode): mean(calcVecMean(data)), std(stdDev(data)), min(*std::min_element(data.begin(),data.end())), max(*std::max_element(data.begin(), data.end())), mode(new_mode) {}
+Normalization::Normalization(const std::vector<double>& data, const Mode& new_mode): mean(calcVecMean(data)), std(stdDev(data)), min(*std::min_element(data.begin(),data.end())), max(*std::max_element(data.begin(), data.end())), mode(new_mode) {}
 
 std::vector<double> Normalization::normalize(const std::vector<double>& data) {
 	std::vector<double> normalizedData = data; // Create a copy of data
@@ -103,26 +103,26 @@ std::vector<double> Normalization::denormalize(const std::vector<double>& data) 
 
 
 // slice a vector from start to start+N
-std::vector<double> slice(const std::vector<double>& vec, size_t start, size_t N) { 
+std::vector<double> slice(const std::vector<double>& vec, const size_t& start, const size_t& N) {
 	assert(start + N < vec.size()); // Ensure the range is valid
-	std::vector<double> vec_sliced;
-	vec_sliced.assign(vec.begin() + start, vec.begin() + start + N);
+	std::vector<double> vec_sliced(vec.begin() + start, vec.begin() + start + N);
+	//vec_sliced.assign(vec.begin() + start, vec.begin() + start + N);
 	return vec_sliced;
 }
 
 // slice a vector from start to end
-std::vector<double> slice(const std::vector<double>& vec, size_t start) { 
+std::vector<double> slice(const std::vector<double>& vec, const size_t& start) {
 	assert(start < vec.size()); // Ensure the range is valid
-	std::vector<double> vec_sliced;
-	vec_sliced.assign(vec.begin() + start, vec.end());
+	std::vector<double> vec_sliced(vec.begin() + start, vec.end());
+	//vec_sliced.assign(vec.begin() + start, vec.end());
 	return vec_sliced;
 }
 
 // np.arange for c++
-std::vector<double> arange(size_t start, size_t N) {
+std::vector<double> arange(const size_t& start, const size_t& N) {
     std::vector<double> vec(N);
-    for (size_t i = 0; i < N; i++) {
-        vec[i] = static_cast<double>(start + i);
+    for (size_t ii = 0; ii < N; ii++) {
+        vec[ii] = static_cast<double>(start + ii);
     }
     return vec;
 }
@@ -156,7 +156,7 @@ double stdDev(const std::vector<double>& vec) {
 
 // converts a vector of MeteoData to a vector of doubles
 std::vector<double> toVector(const std::vector<MeteoData>& vecM, const std::string &paramname) {
-    size_t paramindex = vecM[0].getParameterIndex(paramname);
+    const size_t paramindex = vecM[0].getParameterIndex(paramname);
     std::vector<double> vec(vecM.size());
     std::transform(vecM.begin(), vecM.end(), vec.begin(), [paramindex](const MeteoData& data) {
         return data(paramindex);
