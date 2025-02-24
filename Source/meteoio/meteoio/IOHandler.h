@@ -39,36 +39,35 @@ class IOHandler : public IOInterface {
 		IOHandler(const IOHandler&);
 		IOHandler(const Config&);
 
-		virtual ~IOHandler() noexcept;
+		virtual ~IOHandler() noexcept override;
 
 		IOHandler& operator=(const IOHandler&); ///<Assignement operator
 
 		//methods defined in the IOInterface class
-		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list);
-		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
-		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
-		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="");
-		virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> > &list) override;
+		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="") override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts) override;
+		virtual void read3DGrid(Grid3DObject& grid_out, const std::string& i_filename="") override;
+		virtual void read3DGrid(Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
-		virtual void readDEM(DEMObject& dem_out);
-		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readGlacier(Grid2DObject& glacier_out);
+		virtual void readDEM(DEMObject& dem_out) override;
+		virtual void readLanduse(Grid2DObject& landuse_out) override;
+		virtual void readGlacier(Grid2DObject& glacier_out) override;
 
-		virtual void readStationData(const Date& date,
-		                             STATIONS_SET& vecStation);
+		virtual void readStationData(const Date& date, STATIONS_SET& vecStation) override;
 
 		virtual void writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
-		                            const std::string& name="");
+		                            const std::string& name="") override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector<METEO_SET>& vecMeteo);
+		                           std::vector<METEO_SET>& vecMeteo) override;
 
-		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
-		virtual void readPOI(std::vector<Coords>& pts);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
-		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options);
-		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out) override;
+		virtual void readPOI(std::vector<Coords>& pts) override;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name) override;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) override;
+		virtual void write3DGrid(const Grid3DObject& grid_out, const std::string& options) override;
+		virtual void write3DGrid(const Grid3DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
 		const std::string toString() const;
 

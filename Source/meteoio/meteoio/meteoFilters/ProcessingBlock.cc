@@ -300,10 +300,6 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 	}
 }
 
-const double ProcessingBlock::soil_albedo = .23; //grass
-const double ProcessingBlock::snow_albedo = .85; //snow
-const double ProcessingBlock::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-
 ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
                             : excluded_stations( MeteoProcessor::initStationSet(vecArgs, "EXCLUDE") ), kept_stations( MeteoProcessor::initStationSet(vecArgs, "ONLY") ), 
                               time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), included_heights(), excluded_heights(), all_heights(true), properties(), block_name(name) {
@@ -694,9 +690,7 @@ std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const
 
 	Date d1, d2;
 	try {
-		size_t lcount=0;
 		do {
-			lcount++;
 			std::string line;
 			getline(fin, line, eoln); //read complete line
 			IOUtils::stripComments(line);

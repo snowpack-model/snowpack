@@ -286,7 +286,7 @@ class Gradient {
 class gr_heat : public Gradient_model {
 	public:
 		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {(void)i_min; (void)i_max; (void)i_autoscale;}
-		void getColor(const double &i_val, double &r, double &g, double &b) const;
+		void getColor(const double &i_val, double &r, double &g, double &b) const override;
 };
 
 class gr_blue_pink : public Gradient_model {
@@ -297,7 +297,7 @@ class gr_blue_pink : public Gradient_model {
 class gr_freeze : public Gradient_model {
 	public:
 		gr_freeze(const double& i_min, const double& i_max, const bool& i_autoscale);
-		void getColor(const double &val, double &r, double &g, double &b) const;
+		void getColor(const double &val, double &r, double &g, double &b) const override;
 	private:
 		//This gradient is interpolated in RGB color space
 		std::vector<double> v_r, v_g, v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order

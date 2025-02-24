@@ -89,12 +89,10 @@ static void compare_data(const std::vector<MeteoData> &ref, const std::vector<Me
 	}
 	
 	std::set< std::string > diff_params;
-	size_t diff_nr_params = 0;
 	for (size_t ii=0; ii<ref.size(); ii++) {
 		if (test[ii]==ref[ii]) continue;
 		
 		if (test[ii].getNrOfParameters() != ref[ii].getNrOfParameters()) {
-			diff_nr_params++;
 			continue;
 		}
 		
@@ -164,7 +162,6 @@ int main()
 		const bool status = compare_data(vecMeteoRef, vecMeteoTest);
 		if (status) {
 			std::cout << "All OK\n";
-			exit(0);
 		} else {
 			std::cout << "REF and TEST datasets differ!!\n";
 			exit(1);

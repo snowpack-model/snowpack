@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2009-2025 WSL Institute for Snow and Avalanche Research   SLF-DAVOS  */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -41,10 +41,12 @@ namespace mio {
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
  * (that becomes part of MeteoIO) or through the use of an external library, Proj [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
- * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf] (epsg codes, respectively 21781 and 2056)
+ * - <a href="https://en.wikipedia.org/wiki/Swiss_coordinate_system">CH1903 or CH1903+</a> for coordinates in the Swiss Grid [ref: https://backend.swisstopo.admin.ch/fileservice/sdweb-docs-prod-swisstopoch-files/files/2023/11/14/7f7bf15b-22e2-48b6-b1ab-6905f81dca8a.pdf] (epsg codes, respectively 21781 and 2056)
  * - <a href="https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system">UTM</a> for UTM coordinates, the zone must be specified in the parameters, for example 31T [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf] (epsg codes as 32600+zoneNumber in the northern hemisphere or as 32700+zoneNumber in the southern hemisphere)
  * - <a href="https://en.wikipedia.org/wiki/Universal_polar_stereographic_coordinate_system">UPS</a> for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2] (epsg codes as 32661 for the north pole and 32761 for the south pole)
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
+ * - PROJ for relying on the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj</a> library for handling the coordinate conversion. The <a href="https://spatialreference.org/ref/epsg/?page=1">EPSG code</a> is provided as COORDPARAM (for example 21781 is the EPSG code for the CH1903 coordinate system). The maximum standard value for such a code is 32766.
+ * - PROJ_STR for relying on the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj</a> library for handling the coordinate conversion and providing a full definition string as COORDPARAM argument. For example, "+proj=longlat +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +no_defs +type=crs" for the CH1903 coordinate system.
  *
  * Such an example of use is the following:
  * @code
@@ -52,9 +54,7 @@ namespace mio {
  * COORDPARAM	= 31T
  * @endcode
  *
- * On the other hand, when using the <a href="https://en.wikipedia.org/wiki/PROJ.4">Proj</a> library for handling the coordinate conversion, the EPSG codes of
- * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
- * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
+ * Relying on an EPSG code with the PROJ library:
  * @code
  * COORDSYS	= PROJ
  * COORDPARAM	= 21781
@@ -836,6 +836,7 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 		else if (coordsystem=="CH1903+") CoordsAlgorithms::CH1903_to_WGS84(i_easting-2.e6, i_northing-1.e6, o_latitude, o_longitude);
 		else if (coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if (coordsystem=="PROJ") CoordsAlgorithms::PROJ_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
+		else if (coordsystem=="PROJ_STR") CoordsAlgorithms::PROJ_STR_to_WGS84(i_easting, i_northing, coordparam, o_latitude, o_longitude);
 		else if (coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\". Please notice that PROJ4 has been renamed into PROJ!", AT);
 	} else {
@@ -864,6 +865,7 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 		}
 		else if (coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
 		else if (coordsystem=="PROJ") CoordsAlgorithms::WGS84_to_PROJ(i_latitude, i_longitude, coordparam, o_easting, o_northing);
+		else if (coordsystem=="PROJ_STR") CoordsAlgorithms::WGS84_to_PROJ_STR(i_latitude, i_longitude, coordparam, o_easting, o_northing);
 		else if (coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
 		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\". Please notice that PROJ4 has been renamed into PROJ!", AT);
 	} else {

@@ -1742,7 +1742,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 		if (EMS[e].theta[AIR] < 0.) {
 			prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Error in technical snow input - no void fraction left");
 			throw IOException("Runtime error in runSnowpackModel", AT);
-			}
+		}
 
 		// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
 		// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.

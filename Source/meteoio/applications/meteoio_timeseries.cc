@@ -394,7 +394,11 @@ static void generatePointTimeseries(const Config& cfg, const Date& dateBegin, co
 			io.writeMeteoData(vecMeteo);
 			for (const MeteoData& md : Meteo) {
 				const std::string stationID( md.meta.stationID );
-				vecMeteo[ mapIDs[stationID] ].clear();
+				auto it = mapIDs.find(stationID);
+				if (it != mapIDs.end()) {
+					vecMeteo[it->second].clear();
+					vecMeteo[it->second].shrink_to_fit();
+				}
 			}
 		}
 	}

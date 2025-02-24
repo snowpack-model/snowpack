@@ -30,8 +30,20 @@ using namespace std;
 
 namespace mio {
 
-static const char* defaultSection = "GENERAL";
+static const std::string defaultSection = "GENERAL";
 static const char NUM[] = "0123456789";
+
+//these are not defined as part of any class in order to avoid dragging a <regex> include into the Config.h header
+//arithmetic expression syntax, delimited by ${{ and }} and contains anything in between including sub-variables
+static const std::regex expr_regex(R"(\$\{\{(.+?)\}\})", std::regex::optimize);
+//environment variable syntax, delimited by ${env: and } and not sub-variables / expressions
+static const std::regex envvar_regex(R"(\$\{env:([^\$\{\}]+?)\})", std::regex::optimize);
+//variable refering to another key, delimited by ${ and } and can contain sub-variables / expressions
+static const std::regex var_regex(R"(\$\{((?!\{).*?)\}(?!\}))", std::regex::optimize);
+static const std::regex sub_expr_regex(R"(.*\$\{((?!\{).*?)\}(?!\}).*)", std::regex::optimize); //same as above but allowing match anywhere in the string
+//regex to try sorting the keys by numerical order of their index, so STATION2 comes before STATION10
+static const std::regex index_regex("([^0-9]+)([0-9]{1,9})$", std::regex::optimize); //limit the number of digits so it fits within an "int" for the call to atoi()
+static const std::regex section_regex(R"(^\[((?:\w|\-)+)\].*$)", std::regex::optimize); //valid chars for section: letters, numbers, _ and -
 
 //Constructors
 Config::Config() : properties(), sections(), sourcename(), configRootDir() {}
@@ -229,8 +241,6 @@ std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(const 
 {
 	//regex for selecting the keys
 	static const std::regex user_regex(regex_str, std::regex::icase | std::regex::optimize);
-	//regex to try sorting the keys by numerical order of their index, so STATION2 comes before STATION10
-	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})$", std::regex::optimize); //limit the number of digits so it fits within an "int" for the call to atoi()
 	std::smatch index_matches;
 	
 	IOUtils::toUpper(section);
@@ -279,7 +289,6 @@ std::vector< std::pair<std::string, std::string> > Config::getValuesRegex(const 
 
 std::vector< std::pair<std::string, std::string> > Config::getValues(std::string keymatch, std::string section, const bool& anywhere) const
 {
-	static const std::regex index_regex("([^0-9]+)([0-9]{1,9})", std::regex::optimize); //limit the number of digits so it fits within an "int" for the call to atoi()
 	std::smatch index_matches;
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keymatch);
@@ -401,7 +410,7 @@ void Config::write(const std::string& filename) const
 		unsigned int sectioncount = 0;
 		for (const auto& prop : properties) {
 			const std::string key_full( prop.first );
-			const std::string section( ConfigParser::extract_section(key_full) );
+			const std::string section( ConfigParser::extract_section(key_full, true) );
 
 			if (current_section != section) {
 				current_section = section;
@@ -581,15 +590,17 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 ///////////////////////////////////////////////////// ConfigParser helper class //////////////////////////////////////////
 //the local values must have priority -> we initialize from the given i_properties, overwrite from the local values 
 //and swap the two before returning i_properties
-ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(i_properties), imported(), sections(), deferred_vars(), sourcename(filename)
+ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(i_properties), imported(), sections(), deferred_vars(), deferred_exprs(), sourcename(filename)
 {
 	parseFile(filename);
-	
-	//process potential deferred vars
-	size_t deferred_count = deferred_vars.size();
+
+	//process potential deferred vars and exprs, at least one must be successfuly replaced / evaluated at each iteration, 
+	//otherwise we consider that there is a circular dependency
+	size_t deferred_count = deferred_vars.size() + deferred_exprs.size();
 	while (deferred_count>0) {
+		//try to perform variable expansion
 		for (std::set<std::string>::iterator it = deferred_vars.begin(); it!=deferred_vars.end(); ) {
-			const std::string section( extract_section( *it ) );
+			const std::string section( extract_section( *it, true ) );
 			std::string value( properties[ *it ] );
 			const bool status = processVars(value, section);
 			
@@ -599,7 +610,20 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 			else
 				++it;
 		}
-		const size_t new_deferred_count = deferred_vars.size();
+
+		//try to arithmetic expression evaluation
+		for (std::set<std::string>::iterator it = deferred_exprs.begin(); it!=deferred_exprs.end(); ) {
+			std::string value( properties[ *it ] );
+			const bool status = processExpr(value);
+
+			properties[ *it ] = value; //save the key/value pair
+			if (status) //the variable could be fully expanded
+				deferred_exprs.erase( it++ );
+			else
+				++it;
+		}
+
+		const size_t new_deferred_count = deferred_vars.size() + deferred_exprs.size();
 		if (new_deferred_count==deferred_count) {
 			std::string msg("In file "+filename+", the following keys could not be resolved (circular dependency? invalid variable name? syntax error?):");
 			for (const std::string& var : deferred_vars) 
@@ -611,7 +635,6 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 	
 	//swap the caller and local properties before returning, so the caller gets the new version
 	std::swap(properties, i_properties);
-
 	i_sections.insert(sections.begin(), sections.end());
 }
 
@@ -674,11 +697,10 @@ void ConfigParser::parseFile(const std::string& filename)
 
 bool ConfigParser::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
 {
-	static const std::regex section_regex("^\\[((?:\\w|\\-)+)\\].*$", std::regex::optimize); //valid chars for section: letters, numbers, _ and -
 	std::smatch section_matches;
 	
 	if (std::regex_match(line, section_matches, section_regex)) {
-		static const std::regex sectionValidation_regex("^\\[((?:\\w|\\-)+)\\]\\s*((;|#).*)*$", std::regex::optimize); //valid chars for section: letters, numbers, _ and -. Any number of whitespaces after the section header, potentially comments too
+		static const std::regex sectionValidation_regex(R"(^\[((?:\w|\-)+)\]\s*((;|#).*)*$)", std::regex::optimize); //valid chars for section: letters, numbers, _ and -. Any number of whitespaces after the section header, potentially comments too
 		std::smatch sectionValidation_matches;
 		if (!std::regex_match(line, sectionValidation_matches, sectionValidation_regex))
 			throw IOException("Section header corrupt at line " + IOUtils::toString(linenr), AT);
@@ -698,54 +720,65 @@ bool ConfigParser::processSectionHeader(const std::string& line, std::string &se
 */
 void ConfigParser::processEnvVars(std::string& value)
 {
-	size_t pos_start;
+	std::smatch matches;
 	
-	//process env. variables
-	static const std::string env_var_marker( "${env:" );
-	static const size_t len_env_var_marker = env_var_marker.length();
-	while ((pos_start = value.find(env_var_marker)) != std::string::npos) {
-		const size_t pos_end = value.find("}", pos_start);
-		if (pos_end==std::string::npos || pos_end<(pos_start+len_env_var_marker+1)) //at least 1 char between "${env:" and "}"
-			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
-		const size_t next_start = value.find("${", pos_start+len_env_var_marker);
-		if (next_start!=std::string::npos && next_start<pos_end)
-			throw InvalidFormatException("Wrong syntax for environment variable: '"+value+"'", AT);
+	std::string::const_iterator searchStart( value.cbegin() );
+    while( regex_search( searchStart, value.cend(), matches, envvar_regex ) ) { //there might be several replacements to perform in a single value string
+		const std::string envVar( matches[1].str() );
+		if (envVar.empty())
+			throw InvalidFormatException("Wrong syntax for environment variable: '"+envVar+"'", AT);
 		
-		const size_t len = pos_end - (pos_start+len_env_var_marker); //we have tested above that this is >=1
-		const std::string envVar( value.substr(pos_start+len_env_var_marker, len ) );
 		char *tmp = getenv( envVar.c_str() );
 		if (tmp==nullptr) 
 			throw InvalidNameException("Environment variable '"+envVar+"' declared in ini file could not be resolved", AT);
 		
-		value.replace(pos_start, pos_end+1, std::string(tmp)); //we also replace the closing "}"
+		const size_t match_pos = std::distance(static_cast<std::string::const_iterator>(value.begin()), searchStart) + matches.position();
+		value.replace(match_pos, matches.length(), std::string(tmp));
+		//we don't increment searchStart as after replacement, we have to search again from the same point
 	}
+	
 }
 
-void ConfigParser::processExpr(std::string& value)
+/**
+* @brief Process keys that are arithmetic expressions
+* @details Variables are used as key = ${{expr}} and can refere to keys that will be defined later.
+* @return false if the key has to be processed later (as in the case of part of the expression refering to a key
+* that has not yet been read)
+*/
+bool ConfigParser::processExpr(std::string& value)
 {
-	size_t pos_start;
-	
 	//process env. variables
-	static const std::string expr_marker( "${{" );
-	static const size_t len_expr_marker = expr_marker.length();
-	while ((pos_start = value.find(expr_marker)) != std::string::npos) {
-		const size_t pos_end = value.find("}}", pos_start);
-		if (pos_end==std::string::npos || pos_end<(pos_start+len_expr_marker+1)) //at least 1 char between "${{" and "}}"
-			throw InvalidFormatException("Wrong syntax for arithmetic expression: '"+value+"'", AT);
-		const size_t next_start = value.find(expr_marker, pos_start+len_expr_marker);
-		if (next_start!=std::string::npos && next_start<pos_end)
-			throw InvalidFormatException("Wrong syntax for arithmetic expression: '"+value+"'", AT);
-		
-		const size_t len = pos_end - (pos_start+len_expr_marker); //we have tested above that this is >=1
-		const std::string expression( value.substr(pos_start+len_expr_marker, len ) );
+	static const std::regex var_ref_regex(R"(.*\$\{((?!\{).*?)\}(?!\}).*)", std::regex::optimize); //to be able to catch sub-expressions referring to variables
+	std::smatch matches;
+	
+	//the replacements won't be done in place but by building a separate string for efficiency
+	bool var_fully_parsed = true;
+	
+	std::string::const_iterator searchStart( value.cbegin() );
+    while( regex_search( searchStart, value.cend(), matches, expr_regex ) ) { //there might be several replacements to perform in a single value string
+		const std::string expression( matches[1].str() );
+		if (expression.empty())
+			throw InvalidFormatException("Wrong syntax for arithmetic expression: '"+expression+"'", AT);
+
+		if (std::regex_match(expression, var_ref_regex, std::regex_constants::match_any)) {
+				//the expression contains a ${VAR}, so it still requires further replacement before evaluation
+				var_fully_parsed = false;
+				searchStart = matches.suffix().first;
+				continue;
+		}
 		int status_code;
 		const double val = te_interp(expression.c_str(), &status_code);
-		
 		if (status_code!=0)
 			throw InvalidNameException("Arithmetic expression '"+expression+"' declared in ini file could not be evaluated", AT);
 		
-		value.replace(pos_start, pos_end+2, IOUtils::toString(val));  //we also replace the closing "))"
+		
+		const size_t match_pos = std::distance(static_cast<std::string::const_iterator>(value.begin()), searchStart) + matches.position();
+		value.replace(match_pos, matches.length(), IOUtils::toString(val));
+		//we don't increment searchStart as after replacement, we have to search again from the same point
 	}
+	
+	if (!var_fully_parsed) return false;
+	return true;
 }
 
 /**
@@ -754,42 +787,40 @@ void ConfigParser::processExpr(std::string& value)
 * @return false if the key has to be processed later (as in the case of standard variables refering to a key
 * that has not yet been read)
 */
-bool ConfigParser::processVars(std::string& value, const std::string& section)
+bool ConfigParser::processVars(std::string& value, const std::string& section) const
 {
-	//process standard variables
-	static const std::string var_marker( "${" );
-	static const size_t len_var_marker = var_marker.length();
+	//process env. variables
+	std::smatch matches;
 	bool var_fully_parsed = true;
-	size_t pos_start, pos_end = 0;
-	
-	while ((pos_start = value.find(var_marker, pos_end)) != std::string::npos) {
-		pos_end = value.find("}", pos_start);
-		if (pos_end==std::string::npos || pos_end<(pos_start+len_var_marker+1)) //at least one char between "${" and "}"
-			throw InvalidFormatException("Wrong syntax for variable: '"+value+"'", AT);
-		const size_t next_start = value.find("${", pos_start+len_var_marker);
-		if (next_start!=std::string::npos && next_start<pos_end)
-			throw InvalidFormatException("Wrong syntax for variable: '"+value+"'", AT);
-		
-		const size_t len = pos_end - (pos_start+len_var_marker); //we have tested above that this is >=1
-		std::string var( value.substr(pos_start+len_var_marker, len ) );
+
+	std::string::const_iterator searchStart( value.cbegin() );
+    while( std::regex_search( searchStart, value.cend(), matches, var_regex ) ) { //there might be several replacements to perform in a single value string
+		std::string var( matches[1].str() );
+		if (var.empty()) throw InvalidFormatException("Wrong syntax for variable: '"+var+"'", AT);
 		IOUtils::toUpper( var );
-		
-		const std::string var_section( extract_section( var ) ); //extract the section name out of the variable name
+	
+		const std::string var_section( extract_section( var ) ); //extract the section name out of the variable name. If none is found, it will be empty
 		//since sections' headers are declared before the variables, every extracted section should be available in our sections
 		//list, so we can validate that it is indeed a proper section. if not, prepend with the section given as argument
 		const bool extracted_section_exists = sections.find(var_section) != sections.end();
 		if (!extracted_section_exists && !section.empty()) var = section+"::"+var;
 		if (properties.count( var )!=0) {
-			const std::string replacement( properties[var] );
-			value.replace(pos_start, pos_end+1, replacement); //we also replace the closing "}"
-			pos_end = pos_start; //so if it was replaced by another var, it will be scanned again
+			const std::string replacement( properties.find(var)->second );
+			if (std::regex_match(replacement, sub_expr_regex, std::regex_constants::match_any)) {
+				//the replacement contains a ${VAR}, so it still requires further replacement
+				var_fully_parsed = false;
+			}
+			
+			const size_t match_pos = std::distance(static_cast<std::string::const_iterator>(value.begin()), searchStart) + matches.position();
+			value.replace(match_pos, matches.length(), replacement);
+			//we don't increment searchStart as after replacement, we have to search again from the same point
 		} else {
 			var_fully_parsed = false;
+			searchStart = matches.suffix().first; //so we can look for the next match
 		}
 	}
 	
 	if (!var_fully_parsed) return false;
-	
 	return true;
 }
 
@@ -872,11 +903,11 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 		//if this is an import, process it and return
 		if (processImports(key, value, import_after, accept_import_before)) return;
 
+		if (value.find("}}}")!=std::string::npos) throw InvalidFormatException("Invalid configuration key '"+section+"::"+key+"': please use a space to separate the variables from the arithmetic expression delimiters, like in ${{ 10*${SAMPLING_RATE_MIN} }} ", AT);
+		
 		processEnvVars( value );
-		processExpr( value );
-		if (!processVars(value, section)) {
-			deferred_vars.insert( section+"::"+key );
-		}
+		if (!processExpr( value )) deferred_exprs.insert( section+"::"+key );
+		if (!processVars(value, section)) deferred_vars.insert( section+"::"+key );
 		if (key.find(' ')!=std::string::npos) throw InvalidFormatException("Invalid configuration key '"+section+"::"+key+"': keys can not contain spaces", AT);
 		properties[section+"::"+key] = value; //save the key/value pair
 		accept_import_before = false; //this is not an import, so no further import_before allowed
@@ -886,16 +917,19 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 }
 
 //extract the section name from a section+"::"+key value
-std::string ConfigParser::extract_section(std::string key)
+std::string ConfigParser::extract_section(const std::string& key, const bool& provide_default)
 {
 	const std::string::size_type pos = key.find("::");
 
 	if (pos != string::npos){
 		const std::string sectionname( key.substr(0, pos) );
-		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
+		//key.erase(key.begin(), key.begin() + pos + 2); //delete section name
 		return sectionname;
 	}
-	return std::string( defaultSection );
+	if (!provide_default)
+		return std::string();
+	else
+		return defaultSection;
 }
 
 } //end namespace

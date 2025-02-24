@@ -426,7 +426,7 @@ class FilterKalman : public ProcessingBlock {
 	public:
 		FilterKalman(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		        std::vector<MeteoData>& ovec);
+		        std::vector<MeteoData>& ovec) override;
 	private:
 		Matrix buildInitialStates(const std::vector<std::string>& xx_str, const std::vector<size_t>& meas_idx,
 		        const std::vector<MeteoData>& ivec, const size_t& nr_observations) const;

@@ -45,14 +45,14 @@ class SMETIO : public IOInterface {
 		SMETIO(const SMETIO&);
 		SMETIO(const Config& cfgreader);
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-		                            const std::string& name="");
+		                            const std::string& name="") override;
 
-		virtual void readPOI(std::vector<Coords>& pts);
+		virtual void readPOI(std::vector<Coords>& pts) override;
 
 	private:
 		/** This structure contains the metadata associated with a SMET variable in order to plot it */

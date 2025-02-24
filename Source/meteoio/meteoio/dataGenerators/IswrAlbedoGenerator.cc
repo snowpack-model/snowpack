@@ -49,7 +49,7 @@ bool IswrAlbedoGenerator::generate(const size_t& param, MeteoData& md, const std
 
 		double albedo = .5;
 		if (HS!=IOUtils::nodata)
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 		else if (!force) return false;
 
 		if (param==MeteoData::ISWR && RSWR!=IOUtils::nodata) {

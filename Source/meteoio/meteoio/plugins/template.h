@@ -41,10 +41,10 @@ class TEMPLATE : public IOInterface {
 		~TEMPLATE() noexcept;
 
 		using IOInterface::read2DGrid; //to call before overriding the method when NOT all the polymorphic calls are implemented (see http://bojolais.livejournal.com/222428.html)
-		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") override;
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 	private:
 		void cleanup() noexcept;

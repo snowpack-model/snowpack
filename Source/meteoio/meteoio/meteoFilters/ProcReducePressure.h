@@ -43,7 +43,7 @@ class ProcReducePressure : public ProcessingBlock {
 		ProcReducePressure(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec) override;
 
 	private:
 };

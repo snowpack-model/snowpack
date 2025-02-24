@@ -104,7 +104,7 @@ class EditingSwap : public EditingBlock {
 	public:
 		EditingSwap(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -140,7 +140,7 @@ class EditingRename : public EditingBlock {
 	public:
 		EditingRename(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -171,7 +171,7 @@ class EditingExclude : public EditingBlock {
 	public:
 		EditingExclude(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -202,7 +202,7 @@ class EditingKeep : public EditingBlock {
 	public:
 		EditingKeep(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		static void processStation(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx, const std::set< std::string >& params); //for use in DataEditingAlgorithms
 		
 	private:
@@ -264,7 +264,7 @@ class EditingCombine : public EditingBlock {
 	public:
 		EditingCombine(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		void processFIRST(METEO_SET& vecMeteo, const size_t& startIdx, const size_t& endIdx) const;
@@ -330,10 +330,10 @@ class EditingMerge : public EditingBlock {
 	public:
 		EditingMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		virtual void editTimeSeries(STATIONS_SET& vecStation) override;
 		
-		std::set<std::string> requiredIDs() const;
+		std::set<std::string> requiredIDs() const override;
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
 		std::vector< std::string > merged_stations;
@@ -363,8 +363,8 @@ class EditingAutoMerge : public EditingBlock {
 	public:
 		EditingAutoMerge(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		virtual void editTimeSeries(STATIONS_SET& vecStation) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -396,7 +396,7 @@ class EditingCopy : public EditingBlock {
 	public:
 		EditingCopy(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -437,7 +437,7 @@ class EditingCreate : public EditingBlock {
 	public:
 		EditingCreate(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		static const std::vector< std::pair<std::string, std::string> > cleanGeneratorArgs(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -490,11 +490,10 @@ class EditingMetadata : public EditingBlock {
 	public:
 		EditingMetadata(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
+		virtual void editTimeSeries(STATIONS_SET& vecStation) override;
 		
-		virtual void editTimeSeries(STATIONS_SET& vecStation);
-		
-		std::set<std::string> providedIDs() const;
+		std::set<std::string> providedIDs() const override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -552,7 +551,7 @@ class EditingRegFill : public EditingBlock {
 	public:
 		EditingRegFill(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -596,7 +595,7 @@ class EditingMove : public EditingBlock {
 	public:
 		EditingMove(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);
@@ -645,7 +644,7 @@ class EditingSplit : public EditingBlock {
 	public:
 		EditingSplit(const std::string& i_stationID, const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config &cfg);
 		
-		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo);
+		virtual void editTimeSeries(std::vector<METEO_SET>& vecMeteo) override;
 		
 	private:
 		void parse_args(const std::vector< std::pair<std::string, std::string> >& vecArgs);

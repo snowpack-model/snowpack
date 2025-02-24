@@ -17,16 +17,12 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteoFilters/ProcRadProj.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Sun.h>
 
 using namespace std;
 
 namespace mio {
-
-//HACK put it in Sun.h so it is shared and consistent accross generators, filters, etc
-const double soil_albedo = .23; //grass
-const double snow_albedo = .85; //snow
-const double snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 	
 RadProj::RadProj(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
           : ProcessingBlock(vecArgs, name, cfg), src_azi(0.), dest_azi(0.), src_angle(0.), dest_angle(0.) 
@@ -63,7 +59,7 @@ void RadProj::process(const unsigned int& param, const std::vector<MeteoData>& i
 		
 		//get the necessary forcings and compute the toa and clear sky radiation
 		const double HS=meteo(MeteoData::HS), TA=meteo(MeteoData::TA), RH=meteo(MeteoData::RH), P=meteo(MeteoData::P);
-		const double albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		const double albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 		sun.calculateRadiation(TA, RH, P, albedo);
 		double R_toa, R_direct, R_diffuse;
 		sun.getBeamRadiation(R_toa, R_direct, R_diffuse);

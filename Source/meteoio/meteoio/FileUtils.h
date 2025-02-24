@@ -76,6 +76,14 @@ namespace FileUtils {
 	*/
 	std::string cleanPath(std::string in_path, const bool& resolve=false, const bool& silent=false);
 
+
+	/**
+	* @brief Check if a given path (here in_path) is a subpath of another one (here root_path)
+	* @param in_path the path to test for
+	* @param root_path for root path to test against
+	*/
+	bool isSubDirOf(std::string in_path, std::string root_path);
+
 	/**
 	* @brief returns the extension part of a given filename.
 	* @details

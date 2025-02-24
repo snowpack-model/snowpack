@@ -39,18 +39,18 @@ class GrassIO : public IOInterface {
 		GrassIO(const GrassIO&);
 		GrassIO(const Config&);
 
-		virtual bool list2DGrids(const Date& /*start*/, const Date& /*end*/, std::map<Date, std::set<size_t> >& /*list*/) {return false;}
+		virtual bool list2DGrids(const Date& /*start*/, const Date& /*end*/, std::map<Date, std::set<size_t> >& /*list*/) override {return false;}
 		using IOInterface::read2DGrid; //to call before overriding the method
-		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="") override;
 
-		virtual void readDEM(DEMObject& dem_out);
-		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readGlacier(Grid2DObject& glacier_out);
+		virtual void readDEM(DEMObject& dem_out) override;
+		virtual void readLanduse(Grid2DObject& landuse_out) override;
+		virtual void readGlacier(Grid2DObject& glacier_out) override;
 
-		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out) override;
 
 		using IOInterface::write2DGrid; //to call before overriding the method
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options) override;
 
 	private:
 		void getGridPaths();

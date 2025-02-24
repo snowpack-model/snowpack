@@ -160,8 +160,6 @@ class GeneratorAlgorithm {
 		bool all_heights;
 		const std::string algo, section;
 		
-		//These are used by several generators in order work with radiation data by looking at HS and deciding which albedo should be used
-		static const double soil_albedo, snow_albedo, snow_thresh;
 		static const double default_height;
 };
 

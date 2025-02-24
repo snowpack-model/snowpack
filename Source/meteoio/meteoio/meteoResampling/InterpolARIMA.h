@@ -104,9 +104,9 @@ using namespace ARIMAutils;
 class InterpolARIMA {
 	public:
 		InterpolARIMA();
-		InterpolARIMA(std::vector<double> data_in, size_t gap_loc, size_t N_gap, int s = 0);
-		InterpolARIMA(std::vector<double> data_in, size_t gap_loc, size_t N_gap, std::vector<double> xreg_vec, int s = 0);
-		InterpolARIMA(std::vector<double> data_in, size_t gap_loc, size_t n_predictions, std::string direction = "forward", int s = 0);
+		InterpolARIMA(const std::vector<double>& data_in, const size_t& gap_loc, const size_t& N_gap, const int& s = 0);
+		InterpolARIMA(const std::vector<double>& data_in, const size_t& gap_loc, const size_t& N_gap, const std::vector<double>& xreg_vec, const int& s = 0);
+		InterpolARIMA(const std::vector<double>& data_in, const size_t& gap_loc, const size_t& n_predictions, const std::string& direction = "forward", const int& s = 0);
 
 		// Setters
 		void setAutoArimaMetaData(int max_p_param = 8, int max_d_param = 3, int max_q = 8, int start_p = 2, int start_q = 2, int max_P = 2,
@@ -119,7 +119,6 @@ class InterpolARIMA {
 		void setManualARIMA(int p, int d, int q, int P, int D, int Q, bool fill_backward);
 
 		// Interpolation methods
-		std::vector<double> simulate(int n_steps, int seed = 0);
 		void fillGap();
 		void fillGapManual();
 
@@ -215,7 +214,7 @@ class InterpolARIMA {
 
 	// info
 	std::string toString();
-	std::string autoArimaInfo(auto_arima_object obj);
+	std::string autoArimaInfo(const auto_arima_object& obj);
 
 
 private:
@@ -247,7 +246,7 @@ private:
 	bool seasonal = true, stationary = false;
 
 	bool consistencyCheck();
-	auto_arima_object initAutoArima(size_t N_data);
+	auto_arima_object initAutoArima(const size_t& N_data);
 
 	// last to be initialized
 public:

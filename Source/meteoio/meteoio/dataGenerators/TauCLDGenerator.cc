@@ -246,7 +246,7 @@ double TauCLDGenerator::computeCloudiness(const MeteoData& md, bool &is_night)
 		albedo = std::min( 0.99, std::max(0.01, RSWR / ISWR) );
 	} else { //so some measurements are missing
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			albedo = (HS>=Cst::snow_nosnow_thresh)? Cst::albedo_fresh_snow : Cst::albedo_short_grass;
 
 		if (ISWR==IOUtils::nodata) { //ISWR is missing, trying to compute it
 			if (!use_rswr) return IOUtils::nodata;

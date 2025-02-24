@@ -78,7 +78,7 @@ class FilterMinMaxConditional : public ProcessingBlock {
 		    const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		    std::vector<MeteoData>& ovec);
+		    std::vector<MeteoData>& ovec) override;
 
 	private:
 		bool assert_condition(const double& condition_value);

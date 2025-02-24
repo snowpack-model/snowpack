@@ -119,6 +119,16 @@ std::string cleanPath(std::string in_path, const bool& resolve, const bool& sile
 	}
 }
 
+bool isSubDirOf(std::string in_path, std::string root_path)
+{
+	const std::string root_path_clean( cleanPath(root_path, true, true) );
+	const std::string in_path_clean( cleanPath(in_path, true, true) );
+
+	const size_t pos = in_path_clean.find( root_path_clean );
+	if (pos==0) return true; //root_path_clean is a substring of in_path_clean, starting at position 0
+	return false;
+}
+
 std::string getExtension(const std::string& filename)
 {
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path

@@ -23,11 +23,10 @@ using namespace std;
 
 namespace mio {
 
-const double ProcUnventilatedT::dflt_albedo = .23;
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
 ProcUnventilatedT::ProcUnventilatedT(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
-                  : ProcessingBlock(vecArgs, name, cfg), usr_albedo(dflt_albedo),
+                  : ProcessingBlock(vecArgs, name, cfg), usr_albedo(Cst::albedo_fresh_snow),
                     usr_vw_thresh(IOUtils::nodata), nakamura(false)
 {
 	parse_args(vecArgs);
@@ -68,8 +67,8 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 			const double hs = ovec[ii](MeteoData::HS);
 
 			if (hs!=IOUtils::nodata && iswr==IOUtils::nodata && rswr!=IOUtils::nodata) {
-				if (hs>snow_thresh) iswr = rswr / snow_albedo;
-				else iswr = rswr / soil_albedo;
+				if (hs>Cst::snow_nosnow_thresh) iswr = rswr / Cst::albedo_fresh_snow;
+				else iswr = rswr / Cst::albedo_short_grass;
 			}
 
 			if (iswr==IOUtils::nodata || vw==IOUtils::nodata)
@@ -97,8 +96,8 @@ void ProcUnventilatedT::correctTA(const unsigned int& param, std::vector<MeteoDa
 			const double hs = ovec[ii](MeteoData::HS);
 
 			if (hs!=IOUtils::nodata && rswr==IOUtils::nodata && iswr!=IOUtils::nodata) {
-				if (hs>snow_thresh) rswr = iswr * snow_albedo;
-				else rswr = iswr * soil_albedo;
+				if (hs>Cst::snow_nosnow_thresh) rswr = iswr * Cst::albedo_fresh_snow;
+				else rswr = iswr * Cst::albedo_short_grass;
 			}
 
 			if (rswr==IOUtils::nodata || vw==IOUtils::nodata)
