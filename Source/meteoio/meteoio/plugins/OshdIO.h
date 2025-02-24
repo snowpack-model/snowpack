@@ -39,15 +39,15 @@ class OshdIO : public IOInterface {
 		OshdIO(const OshdIO&);
 		OshdIO(const Config& cfgreader);
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
-		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list);
-		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& filename="");
-		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		virtual void readDEM(DEMObject& dem_out);
+		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list) override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& filename="") override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
+		virtual void readDEM(DEMObject& dem_out) override;
 
 	private:
 		struct file_index {

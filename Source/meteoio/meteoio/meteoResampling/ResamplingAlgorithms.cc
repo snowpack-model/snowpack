@@ -117,10 +117,6 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 	}
 }
 
-const double ResamplingAlgorithms::soil_albedo = .23; ///< grass albedo
-const double ResamplingAlgorithms::snow_albedo = .85; ///< snow albedo
-const double ResamplingAlgorithms::snow_thresh = .1; ///< if snow height greater than this threshold -> snow albedo
-
 //compute the partial accumulation at the std::left of curr_date within a sampling interval
 double ResamplingAlgorithms::partialAccumulateAtLeft(const std::vector<MeteoData>& vecM, const size_t& paramindex,
                                                      const size_t& pos, const Date& curr_date)

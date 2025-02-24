@@ -83,13 +83,14 @@ static void testAbsPath()
 	}
 	catch (const std::exception&) {
 		// Handle the exception if needed
+		std::cerr << "Error appending to ofilestream by absolute path" << std::endl;
 	}
 
-	static const char *cmd_rm_abs_path3 = ("rm -rf " + abs_path3).c_str();
-	if (system(cmd_rm_abs_path3) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path3 << "\"" << std::endl;
+	static const std::string cmd_rm_abs_path3 ( "rm -rf " + abs_path3 );
+	if (system(cmd_rm_abs_path3.c_str()) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path3 << "\"" << std::endl;
 }
 
-#ifdef LIMIT_WRITE_ACCESS
+#ifdef RESTRICT_WRITE_ACCESS
 static void testLimitedWriteAccess()
 {
 	std::cerr << "Testing to write a not allowed directory with limited writing access" << std::endl;
@@ -106,13 +107,13 @@ static void testLimitedWriteAccess()
 		std::cerr << "Directory was not created at all in write access limitation scope" << std::endl;
 	}
 	
-	static const char *cmd_rm_dirname3 = ("rm -rf " + dirname3).c_str();
-	if (system(cmd_rm_dirname3) != 0) std::cerr << "Error executing command \"" << cmd_rm_dirname3 << "\"" << std::endl;
+	static const std::string cmd_rm_dirname3 ( "rm -rf " + dirname3 );
+	if (system(cmd_rm_dirname3.c_str()) != 0) std::cerr << "Error executing command \"" << cmd_rm_dirname3 << "\"" << std::endl;
 }
 
 static void testLimitedAccessWithoutCreatingDirectories() 
 {
-	const std::string abs_path11 = mio::FileUtils::cleanPath("./", true) + "rand/test.txt"; // should not work
+	const std::string abs_path1 = mio::FileUtils::cleanPath("./", true) + "rand/test.txt"; // should not work
 	try {
 		ofilestream fail(abs_path1);
 		std::cerr << "Default |" << fail.getDefault() << std::endl;
@@ -122,11 +123,11 @@ static void testLimitedAccessWithoutCreatingDirectories()
 		fail.close();
 		exit(1);
 	} catch (const std::exception &e) {
-		std::cerr << e.print() << "\n";
+		std::cerr << e.what() << "\n";
 		std::cerr << "Accessing absolute invalid path, without writing directories works as expected" << std::endl;
 	}
-	static const char *cmd_rm_abs_path11 = ("rm -rf " + abs_path11).c_str();
-	if (system(cmd_rm_abs_path11) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path11 << "\"" << std::endl;
+	static const std::string cmd_rm_abs_path1( "rm -rf " + abs_path1 );
+	if (system(cmd_rm_abs_path1.c_str()) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path1 << "\"" << std::endl;
 
 	const std::string abs_path2 = mio::FileUtils::cleanPath("./", true) + "rand2/test.txt";
 	mio::FileUtils::createDirectories(abs_path2);
@@ -135,8 +136,8 @@ static void testLimitedAccessWithoutCreatingDirectories()
 		throw IOException("Default was not kept");
 	works << "hiii";
 	works.close();
-	static const char *cmd_rm_abs_path2 = ("rm -rf " + abs_path2).c_str();
-	if (system(cmd_rm_abs_path2) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path2 << "\"" << std::endl;
+	static const std::string cmd_rm_abs_path2( "rm -rf " + abs_path2 );
+	if (system(cmd_rm_abs_path2.c_str()) != 0) std::cerr << "Error executing command \"" << cmd_rm_abs_path2 << "\"" << std::endl;
 	std:: cerr << "Accessing absolute valid path, without writing directories works as expected" << std::endl;
 }
 #endif
@@ -199,7 +200,7 @@ int main() {
 		std::cerr << "Everything works as expected" << std::endl;
 		std::cerr << "----------------------------" << std::endl;
 
-#ifdef LIMIT_WRITE_ACCESS
+#ifdef RESTRICT_WRITE_ACCESS
 		testLimitedWriteAccess();
 		std::cerr << "----------------------------" << std::endl;
 #endif
@@ -220,7 +221,7 @@ int main() {
 	if (tmp2.getDefault() != false)
 		throw IOException("Default was not set");
 
-#ifdef LIMIT_WRITE_ACCESS
+#ifdef RESTRICT_WRITE_ACCESS
 	testLimitedAccessWithoutCreatingDirectories();
 #endif
 

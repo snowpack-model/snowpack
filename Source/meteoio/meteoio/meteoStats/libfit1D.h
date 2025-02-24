@@ -29,19 +29,19 @@ namespace mio {
 class Zero : public FitModel {
 	public:
 		Zero() : FitModel("Zero", 0, 0) {fit_ready=true;}
-		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) {}
-		bool fit() { return true;}
-		double f(const double& /*x*/) const {return 0.;}
+		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) override {}
+		bool fit() override { return true;}
+		double f(const double& /*x*/)  const override {return 0.;}
 };
 
 class SimpleLinear : public FitModel {
 	public:
 		SimpleLinear() : FitModel("SimpleLinear", 2, 2), fixed_lapse_rate(IOUtils::nodata) {fit_ready=false;}
 		SimpleLinear(const std::string& i_regname) : FitModel(i_regname, 2, 2), fixed_lapse_rate(IOUtils::nodata) {fit_ready=false;}
-		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
-		bool fit();
-		double f(const double& x) const;
-		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts--;}
+		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) override;
+		bool fit() override;
+		double f(const double& x) const override;
+		void setLapseRate(const double& in_lapse_rate) override {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts--;}
 	protected:
 		double fixed_lapse_rate;
 };
@@ -49,49 +49,49 @@ class SimpleLinear : public FitModel {
 class NoisyLinear : public SimpleLinear {
 	public:
 		NoisyLinear() : SimpleLinear("NoisyLinear") {fit_ready=false;}
-		bool fit();
+		bool fit() override;
 };
 
 class SphericVario : public FitLeastSquare {
 	public:
 		SphericVario() : FitLeastSquare("SphericVario", 3, 4) {fit_ready = false;}
-		void setDefaultGuess();
-		double f(const double& x) const;
+		void setDefaultGuess() override;
+		double f(const double& x) const override;
 };
 
 class LinVario : public FitLeastSquare {
 	public:
 		LinVario() : FitLeastSquare("LinVario", 2, 3) {fit_ready = false;}
-		void setDefaultGuess();
-		double f(const double& x) const;
+		void setDefaultGuess() override;
+		double f(const double& x) const override;
 };
 
 class ExpVario : public FitLeastSquare {
 	public:
 		ExpVario() : FitLeastSquare("ExpVario", 3, 4) {fit_ready = false;}
-		void setDefaultGuess();
-		double f(const double& x) const;
+		void setDefaultGuess() override;
+		double f(const double& x) const override;
 };
 
 class RatQuadVario : public FitLeastSquare {
 	public:
 		RatQuadVario() : FitLeastSquare("RatQuadVario", 3, 4) {fit_ready = false;}
-		void setDefaultGuess();
-		double f(const double& x) const;
+		void setDefaultGuess() override;
+		double f(const double& x) const override;
 };
 
 class LinearLS : public FitLeastSquare {
 	public:
 		LinearLS() : FitLeastSquare("LinearLS", 2, 3) {fit_ready = false;}
-		void setDefaultGuess();
-		double f(const double& x) const;
+		void setDefaultGuess() override;
+		double f(const double& x) const override;
 };
 
 class Quadratic : public FitLeastSquare {
 	public:
 		Quadratic() : FitLeastSquare("Quadratic", 3, 4) {fit_ready = false;}
-		void setDefaultGuess();
-		double f(const double& x) const;
+		void setDefaultGuess() override;
+		double f(const double& x) const override;
 };
 
   /**
@@ -122,10 +122,10 @@ class PolynomialRegression : public FitModel {
 		PolynomialRegression(const std::string& i_regname, const size_t& degreeOfRegression) :
                             FitModel(i_regname, degreeOfRegression+1, degreeOfRegression+1),
                             degree(degreeOfRegression){fit_ready=false;}
-		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
-		bool fit();
-		double f(const double& x) const;
-		void setDegree(const size_t& in_degree) {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
+		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) override;
+		bool fit() override;
+		double f(const double& x) const override;
+		void setDegree(const size_t& in_degree) override {degree = in_degree; fit_ready = false; min_nb_pts=in_degree+1; nParam=in_degree+1; }
 	protected:
 		size_t degree;
 };

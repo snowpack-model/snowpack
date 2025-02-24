@@ -118,8 +118,6 @@ class ProcessingBlock {
 		ProcessingProperties properties;
 		const std::string block_name;
 
-		static const double soil_albedo, snow_albedo, snow_thresh; ///< parametrize the albedo from HS
-
 	private:
 		void initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs);
 };

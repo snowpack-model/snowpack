@@ -63,10 +63,10 @@ class GoesIO : public IOInterface {
 		GoesIO(const GoesIO&);
 		GoesIO(const Config& cfgreader);
 		
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 	private:
 		void parseInputOutputSection(const Config& cfgreader);

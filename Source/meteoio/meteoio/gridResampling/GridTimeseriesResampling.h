@@ -47,8 +47,8 @@ class GridTimeseriesResampling : public GridResamplingAlgorithm {
 	public:
 		GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &in_cfg);
 
-		void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid);
-		std::string toString() const;
+		void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid) override;
+		std::string toString() const override;
 
 	private:
 		std::vector< std::pair<std::string, std::string> > vecArgs_;

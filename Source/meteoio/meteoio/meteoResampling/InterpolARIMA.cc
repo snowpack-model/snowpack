@@ -32,7 +32,7 @@ namespace mio {
 
 // Default constructor
 InterpolARIMA::InterpolARIMA()
-    : norm(data), data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(), data_backward(), new_xreg_vec_f(), new_xreg_vec_b(),
+    : norm(std::vector<double>(5, 0.0)), data(5, 0.0), gap_loc(0), N_gap(5), time(), pred_forward(), pred_backward(), xreg_vec_f(), xreg_vec_b(), data_forward(), data_backward(), new_xreg_vec_f(), new_xreg_vec_b(),
         xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(), amse_backward(), N_data_forward(5), N_data_backward(5),
         auto_arima_forward(initAutoArima(N_data_forward)), auto_arima_backward(initAutoArima(N_data_backward)), sarima_forward() 
 {
@@ -49,7 +49,7 @@ InterpolARIMA::InterpolARIMA()
     * @param gap_length The length of the gap in the data.
     * @param period (Optional) The period of the ARIMA model. Defaults to 0. Only needed when the period is known.
     */
-InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, int period)
+InterpolARIMA::InterpolARIMA(const std::vector<double>& data_in, const size_t& gap_location, const size_t& gap_length, const int& period)
     : norm(data_in), data(norm.normalize(data_in)), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap), xreg_vec_f(0), xreg_vec_b(0),
         data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)), new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr),
         new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap), N_data_forward(data_forward.size()), N_data_backward(data_backward.size()), s(period),
@@ -74,7 +74,7 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, s
     *
     * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class.
     */
-InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, size_t gap_length, std::vector<double> xreg_vec_in, int period)
+InterpolARIMA::InterpolARIMA(const std::vector<double>& data_in, const size_t& gap_location, const size_t& gap_length, const std::vector<double>& xreg_vec_in, const int& period)
     : norm(data_in), data(data_in), gap_loc(gap_location), N_gap(gap_length), time(arange(0, N_gap)), pred_forward(N_gap), pred_backward(N_gap), xreg_vec_f(slice(xreg_vec_in, 0, gap_loc)),
         xreg_vec_b(reverseVectorReturn(slice(xreg_vec_in, gap_loc + N_gap))), data_forward(slice(data, 0, gap_loc)), data_backward(slice(data, gap_loc + N_gap)),
         new_xreg_vec_f(xreg_vec_f.size() == 0 ? 0 : N_gap), new_xreg_vec_b(xreg_vec_b.size() == 0 ? 0 : N_gap), xreg_f(xreg_vec_f.size() == 0 ? nullptr : &xreg_vec_f[0]),
@@ -107,7 +107,7 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t gap_location, s
     *
     * @note This constructor is part of the [`InterpolARIMA`](meteoio/meteoResampling/InterpolARIMA.cc) class in [InterpolARIMA.cc](meteoio/meteoResampling/InterpolARIMA.cc).
     */
-InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, size_t n_predictions, std::string direction, int period)
+InterpolARIMA::InterpolARIMA(const std::vector<double>& data_in, const size_t& data_end, const size_t& n_predictions, const std::string& direction, const int& period)
     : norm(data_in), data(norm.normalize(data_in)), gap_loc(data_end), N_gap(n_predictions), time(arange(0, data.size())), pred_forward(n_predictions), pred_backward(n_predictions), xreg_vec_f(0),
         xreg_vec_b(0), data_forward(decideDirection(data, direction, true, gap_loc, n_predictions)), data_backward(decideDirection(data, direction, false, gap_loc, n_predictions)),
         new_xreg_vec_f(0), new_xreg_vec_b(0), xreg_f(nullptr), xreg_b(nullptr), new_xreg_f(nullptr), new_xreg_b(nullptr), amse_forward(N_gap), amse_backward(N_gap),
@@ -120,7 +120,7 @@ InterpolARIMA::InterpolARIMA(std::vector<double> data_in, size_t data_end, size_
 }
 
 // ------------------- Helper methods ------------------- //
-auto_arima_object InterpolARIMA::initAutoArima(size_t N_data) {
+auto_arima_object InterpolARIMA::initAutoArima(const size_t& N_data) {
     std::vector<int> pqdmax = {max_p, max_d, max_q};
     std::vector<int> PQDmax = {max_P, max_D, max_Q};
     return auto_arima_init(pqdmax.data(), PQDmax.data(), s, r, static_cast<int>(N_data));
@@ -172,7 +172,7 @@ std::string InterpolARIMA::toString() {
     return ss.str();
 }
 
-std::string InterpolARIMA::autoArimaInfo(auto_arima_object obj) {
+std::string InterpolARIMA::autoArimaInfo(const auto_arima_object& obj) {
     int i, pq, t, ncxreg, mean;
     pq = obj->p + obj->q + obj->P + obj->Q + obj->M;
     mean = obj->M - obj->r;
@@ -389,14 +389,6 @@ std::vector<double> InterpolARIMA::getInterpolatedData() {
 }
 
 // ------------------- Interpolation methods ------------------- //
-// Simulate n_steps into the future
-std::vector<double> InterpolARIMA::simulate(int n_steps, int seed) {
-    std::vector<double> sim(n_steps);
-    seed++;
-    // use the equations to simulate with random errors
-    std::cerr << "not implemented, and not needed for now\n";
-    return sim;
-}
 
 std::vector<double> InterpolARIMA::ARIMApredict(size_t n_steps) {
     if (n_steps == 0) {

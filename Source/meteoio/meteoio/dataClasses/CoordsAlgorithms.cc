@@ -341,12 +341,15 @@ short int CoordsAlgorithms::str_to_EPSG(const std::string& coordsystem, const st
 	}
 	if (coordsystem=="PROJ") {
 		const int tmp = atoi(coordparam.c_str());
-		if (tmp<0 || tmp>32767) {
+		if (tmp<0 || tmp>32766) {
 			std::ostringstream ss;
-			ss << "Invalid EPSG code argument: " << tmp << ". It should be between 0 and 32767! (please check EPSG registry)";
+			ss << "Invalid EPSG code argument: " << tmp << ". It should be between 0 and 32766! (please check EPSG registry)";
 			throw InvalidArgumentException(ss.str(), AT);
 		}
 		return static_cast<short>(tmp);
+	}
+	if (coordsystem=="PROJ_STR") {
+		return custom_epsg;
 	}
 
 	//all others have no associated EPSG code
@@ -377,8 +380,14 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 {
 	coordsystem.clear();
 	coordparam.clear();
+
+	if (epsg==custom_epsg) {
+		coordsystem.assign("PROJ_STR"); // and we can not give any coordparam string, so we can not use this information to reproject
+		return;
+	}
+
 	//TODO: get rid of the zone letter. This is not part of the standard and redundant (and messy)
-	if (epsg<0 || epsg>32767) {
+	if (epsg<0 || epsg>32766) {
 		std::ostringstream ss;
 		ss << "Invalid epsg code " << epsg << " (it should be between 0 and 32767)!";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -424,7 +433,7 @@ void CoordsAlgorithms::EPSG_to_str(const int& epsg, std::string& coordsystem, st
 		coordparam = (epsg==5041)? "N" : "S";
 		return;
 	}
-	
+
 	//anything else has to be processed by proj
 	coordsystem.assign("PROJ");
 	std::ostringstream osstream;
@@ -879,8 +888,8 @@ void CoordsAlgorithms::WGS84_to_PROJ(const double& lat_in, const double& long_in
 
 /**
 * @brief Coordinate conversion: from proj parameters to WGS84 Lat/Long
-* @param east_in easting coordinate (Swiss system)
-* @param north_in northing coordinate (Swiss system)
+* @param east_in easting coordinate
+* @param north_in northing coordinate
 * @param[in] coordparam Extra parameters necessary for the conversion (such as UTM zone, etc)
 * @param lat_out Decimal Latitude
 * @param long_out Decimal Longitude
@@ -930,6 +939,90 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 
 	const int pj_errno = proj_errno(pj_trans);
 	if (pj_errno != 0) throw ConversionFailedException("PROJ: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	long_out = x;
+	lat_out = y;
+	proj_destroy(pj_trans);
+	proj_context_destroy(pj_context);
+#else
+	(void)east_in;
+	(void)north_in;
+	(void)coordparam;
+	(void)lat_out;
+	(void)long_out;
+	throw IOException("Not compiled with PROJ support", AT);
+#endif
+}
+
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to proj custom parameters
+* @param[in] lat_in Decimal Latitude
+* @param[in] long_in Decimal Longitude
+* @param[in] coordparam Extra parameters necessary for the conversion (proj arguments)
+* @param[out] east_out easting coordinate (target system)
+* @param[out] north_out northing coordinate (target system)
+*
+* \note Using libproj is currently not thread safe (see https://trac.osgeo.org/proj/wiki/ThreadSafety)
+*/
+void CoordsAlgorithms::WGS84_to_PROJ_STR(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
+{
+#if defined(PROJ)
+	static const std::string src_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
+
+	PJ_CONTEXT* pj_context = proj_context_create();
+	PJ* pj_trans = proj_create_crs_to_crs(pj_context, src_param.c_str(), coordparam.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("PROJ_STR: Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+
+	double x=long_in, y=lat_in;
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("PROJ_STR: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+
+	east_out = x;
+	north_out = y;
+	proj_destroy(pj_trans);
+	proj_context_destroy(pj_context);
+#else
+	(void)lat_in;
+	(void)long_in;
+	(void)coordparam;
+	(void)east_out;
+	(void)north_out;
+	throw IOException("Not compiled with PROJ support", AT);
+#endif
+}
+
+/**
+* @brief Coordinate conversion: from proj custom parameters to WGS84 Lat/Long
+* @param east_in easting coordinate
+* @param north_in northing coordinate
+* @param[in] coordparam Extra parameters necessary for the conversion (proj arguments)
+* @param lat_out Decimal Latitude
+* @param long_out Decimal Longitude
+*/
+void CoordsAlgorithms::PROJ_STR_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
+{
+#if defined(PROJ4)
+	static const std::string dest_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
+
+	PJ_CONTEXT* pj_context = proj_context_create();
+	PJ* pj_trans = proj_create_crs_to_crs(pj_context, coordparam.c_str(), dest_param.c_str(), NULL);
+
+	if (pj_trans == NULL) {
+		const int pj_errno = proj_context_errno(pj_context);
+		throw ConversionFailedException("PROJ_STR: Failed to create transform: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
+	}
+
+	double x=east_in, y=north_in;
+	proj_trans_generic(pj_trans, PJ_FWD, &x, sizeof(double), 1, &y, sizeof(double), 1, 0, sizeof(double), 0, 0, sizeof(double), 0);
+
+	const int pj_errno = proj_errno(pj_trans);
+	if (pj_errno != 0) throw ConversionFailedException("PROJ_STR: Failed to transform coords: " + std::string(proj_context_errno_string(pj_context, pj_errno)));
 
 	long_out = x;
 	lat_out = y;

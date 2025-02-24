@@ -45,9 +45,9 @@ class MeteoBlue : public IOInterface {
 		MeteoBlue(const MeteoBlue&);
 		MeteoBlue(const Config&);
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 		typedef struct METEOPARAM {
 			METEOPARAM() : param(), units_multiplier(1.), units_offset(0.) {}

@@ -88,7 +88,7 @@ class TimeSuppr : public ProcessingBlock {
 	public:
 		TimeSuppr(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
 
 	private:
 		//possible modes of operation
@@ -147,7 +147,7 @@ class TimeShift : public ProcessingBlock {
 	public:
 		TimeShift(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
 
 	private:
 		void process_corrections(std::vector<MeteoData>& ovec) const;
@@ -174,7 +174,7 @@ class TimeSort : public ProcessingBlock {
 	public:
 		TimeSort(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
 };
 
 /**
@@ -207,8 +207,8 @@ class TimeLoop : public ProcessingBlock {
 	public:
 		TimeLoop(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
-		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec);
-		void process(Date &dateStart, Date &dateEnd);
+		void process(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec) override;
+		void process(Date &dateStart, Date &dateEnd) override;
 
 	private:
 		Date req_start, req_end;

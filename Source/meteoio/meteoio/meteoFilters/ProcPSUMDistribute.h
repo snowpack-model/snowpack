@@ -51,7 +51,7 @@ class ProcPSUMDistribute : public ProcessingBlock {
 		ProcPSUMDistribute(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec) override;
 
 		static void SmartDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 		static void CstDistributePSUM(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);

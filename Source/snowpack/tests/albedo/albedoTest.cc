@@ -571,7 +571,7 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio,
                           Slope& slope, mio::Date &current_date,
                           vector<SN_SNOWSOIL_DATA> &vecSSdata,
                           vector<SnowStation> &vecXdata, ZwischenData &sn_Zdata,
-                          CurrentMeteo& Mdata, double &wind_scaling_factor,
+                          CurrentMeteo& Mdata, double &/*wind_scaling_factor*/,
                           double &time_count_deltaHS) {
 	string snowfile;
 	stringstream ss;

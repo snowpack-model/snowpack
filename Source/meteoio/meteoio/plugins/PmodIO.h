@@ -40,9 +40,9 @@ class PmodIO : public IOInterface {
 		PmodIO(const PmodIO&);
 		PmodIO(const Config& cfgreader);
 		
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecvecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecvecMeteo) override;
 
 	private:
 		void parseInputOutputSection();

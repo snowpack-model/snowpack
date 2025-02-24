@@ -48,7 +48,7 @@ namespace mio {
  * @section coords_registering Registering the coordinate system
  * Once these two methods have been implemented, they need to be registered for the user to be able to use them. This is done by following
  * these steps:
- *      -# retrieve the appropriate EPSG code at http://www.epsg-registry.org/ for the coordinate system. It is a good idea to use the associated abbreviation
+ *      -# retrieve the appropriate EPSG code at https://epsg.org/ for the coordinate system. It is a good idea to use the associated abbreviation
  *         as keyword/abbreviation in the source code as well as for the end user.
  *      -# map the coordinate system abbreviation to its EPSG code in Coords::setEPSG()
  *      -# map the coordinate system abbreviation to its EPSG code in Coords::getEPSG()
@@ -170,10 +170,10 @@ class Coords {
 
 	private:
 		double ref_latitude, ref_longitude;
-		double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)
-		double latitude, longitude; ///<latitude and longitude of the point
-		double easting, northing; ///<east and north coordinate of the point in a cartesian grid
-		int grid_i, grid_j, grid_k; ///<grid index i, j, k (please notice that this index is NOT automatically regenerated NOR checked)
+		double altitude; ///< altitude of the point (the altitude is currently NOT dependant on the projection)
+		double latitude, longitude; ///< latitude and longitude of the point
+		double easting, northing; ///< east and north coordinate of the point in a cartesian grid
+		int grid_i, grid_j, grid_k; ///< grid index i, j, k (please notice that this index is NOT automatically regenerated NOR checked)
 		bool validIndex; ///< are grid index invalid?
 
 		std::string coordsystem, coordparam;
@@ -181,7 +181,6 @@ class Coords {
 	
 	public:
 		static const std::set<int> latlon_epsgs;
-
 
 };
 } //end namespace

@@ -117,20 +117,20 @@ class NetCDFIO : public IOInterface {
 		NetCDFIO(const NetCDFIO&);
 		NetCDFIO(const Config& cfgreader);
 
-		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list);
-		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
-		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts);
-		virtual void readDEM(DEMObject& dem_out);
+		virtual bool list2DGrids(const Date& start, const Date& end, std::map<Date, std::set<size_t> >& list) override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") override;
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) override;
+		virtual void readPointsIn2DGrid(std::vector<double>& data, const MeteoGrids::Parameters& parameter, const Date& date, const std::vector< std::pair<size_t, size_t> >& Pts) override;
+		virtual void readDEM(DEMObject& dem_out) override;
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename) override;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) override;
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="") override;
 
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo) override;
 
 	private:
 		void parseInputOutputSection();

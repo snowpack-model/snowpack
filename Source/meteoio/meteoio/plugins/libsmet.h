@@ -46,7 +46,7 @@ enum LocationType {WGS84, EPSG};
 class SMETException : public std::exception {
 	public:
 		SMETException(const std::string& message="SMETException occured", const std::string& position="");
-		const char* what() const noexcept;
+		const char* what() const noexcept override;
 
 	protected:
 		std::string msg;

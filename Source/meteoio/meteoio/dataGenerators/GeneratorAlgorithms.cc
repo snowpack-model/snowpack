@@ -142,9 +142,6 @@ namespace mio {
  *
  */
 
-const double GeneratorAlgorithm::soil_albedo = .23; //grass
-const double GeneratorAlgorithm::snow_albedo = .85; //snow
-const double GeneratorAlgorithm::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 const double GeneratorAlgorithm::default_height = IOUtils::nodata; // might need to change that if negative heights are allowed
 
 GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const Config& cfg, const std::string& i_algoname, const std::string& i_section, const std::vector< std::pair<std::string, std::string> >& vecArgs)

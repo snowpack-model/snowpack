@@ -107,28 +107,28 @@ class SunTrajectory {
 class SunMeeus : public SunTrajectory {
 	public:
 		SunMeeus();
-		~SunMeeus() {}
+		~SunMeeus() override {}
 		SunMeeus(const double& i_latitude, const double& i_longitude);
 		SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.);
 
-		void setDate(const double& i_julian, const double& i_TZ=0.);
-		void setLatLon(const double& i_latitude, const double& i_longitude);
-		void setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.);
-		void reset();
+		void setDate(const double& i_julian, const double& i_TZ=0.) override;
+		void setLatLon(const double& i_latitude, const double& i_longitude) override;
+		void setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.) override;
+		void reset() override;
 
-		double getSolarElevation() const;
-		double getSolarAzimuth() const;
-		void getHorizontalCoordinates(double& azimuth, double& elevation) const;
-		void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const;
-		void getDaylight(double& sunrise, double& sunset, double& MeeusDaylight);
+		double getSolarElevation() const override;
+		double getSolarAzimuth() const override;
+		void getHorizontalCoordinates(double& azimuth, double& elevation) const override;
+		void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const override;
+		void getDaylight(double& sunrise, double& sunset, double& MeeusDaylight) override;
 		void getEquatorialSunVector(double& sunx, double& suny, double& sunz);
-		void getEquatorialCoordinates(double& right_ascension, double& declination);
+		void getEquatorialCoordinates(double& right_ascension, double& declination) override;
 		
 		static double SideralToLocal(const double& JD);
 	private:
 		void private_init();
 		double getEquationOfTime(const double& julian_century);
-		void update();
+		void update() override;
 
 	private:
 		double SolarElevationAtm;

@@ -459,7 +459,7 @@ Date ArgosStation::parseDate(const std::string& str, const size_t &linenr) const
 		throw InvalidFormatException("Could not parse date '"+str+"' at line "+IOUtils::toString(linenr), AT);
 	}
 	
-	return Date();
+	//return Date();
 }
 
 MeteoData ArgosStation::parseDataLine(const Date& dt, const std::vector<unsigned int>& raw_data, const size_t& linenr) const

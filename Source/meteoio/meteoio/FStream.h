@@ -47,7 +47,7 @@ class ofilestream : public std::ofstream
         static void createDirectoriesOfFile(const char* filename);
 
         static bool getDefault();
-        static std::string getLimitBaseDir();
+        static std::string getRestrictedBaseDir();
 
     private:
         static std::string initializeFilesystem(const char* filename, const Config& cfgreader);
