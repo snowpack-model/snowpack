@@ -1376,7 +1376,7 @@ inline void real_main (int argc, char *argv[])
 						cumsum.rain += surfFluxes.mass[SurfaceFluxes::MS_RAIN];
 						cumsum.snow += surfFluxes.mass[SurfaceFluxes::MS_HNW];
 					}
-				} else {
+				} else { // virtual stations / slopes
 					const size_t i_hz = (mn_ctrl.HzStep > 0) ? mn_ctrl.HzStep-1 : 0;
 					if (slope.luvDriftIndex) {
 						// Update drifting snow index (VI24),

@@ -36,7 +36,7 @@ using namespace std;
 const double SnowDrift::schmidt_drift_fudge = 1.0;
 
 ///Enables erosion notification
-const bool SnowDrift::msg_erosion = false;
+const bool SnowDrift::msg_erosion = true; //false; BK 20250303
 
 
 
@@ -253,9 +253,12 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 				if (enforce_measured_snow_heights && !windward) {
 					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
 					ustar = Mdata.ustar;
-				} else {
+				} else if (windward) { // BK only erode windward?
+				// } else {
 					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
 					ustar = ustar_max;
+				}else {
+					Sdata.drift = 0.;
 				}
 			} catch(const exception&) {
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Cannot compute mass flux of drifting snow!");
@@ -302,7 +305,7 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 					Xdata.rho_hn = EMS[e].Rho; // Density of drifting snow on virtual luv slope
 				const double dL = -massErode / (EMS[e].Rho);
 				NDS[e+1].z += dL;
-				EMS[e].L0 = EMS[e].L = EMS[e].L + dL;
+				EMS[e].L0 = EMS[e].L = EMS[e].L + dL; //  BK: wut?
 				Xdata.cH += dL;
 				NDS[e+1].z += NDS[e+1].u;
 				NDS[e+1].u = 0.0;
