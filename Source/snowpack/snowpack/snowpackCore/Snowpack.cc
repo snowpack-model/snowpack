@@ -238,7 +238,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
-
+	cfg.getValue("ENHANCED_WIND_SLAB", "SnowpackAdvanced", enhanced_wind_slab);
 
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
@@ -271,8 +271,8 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		new_snow_sp_wind = 0.75;
 		vw_dendricity = true;
 		rh_lowlim = 1.0;
-		bond_factor_rh = 1.0;
-		enhanced_wind_slab = false; //true; //
+		bond_factor_rh = 1.0; 
+		// enhanced_wind_slab = true; //true; // set in namelist now
 	}
 
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
@@ -408,10 +408,10 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 			const double z_ref_vw = 3.;	// See p. 336 in Groot Zwaaftink et al. (doi: https://doi.org/10.5194/tc-7-333-2013)
 			const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
 			const double dv = vw_ref - Metamorphism::wind_slab_vw;
-			if (snow_erosion == "REDEPOSIT") {
-				wind_slab = 1.;
-			} else {
-				if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
+			// if (snow_erosion == "REDEPOSIT") {  //Why should this not be used with REDEPOSIT? 
+			// 	wind_slab = 1.;
+			// } else {
+			{	if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
 				      && (vw_ref > Metamorphism::wind_slab_vw)
 					&& ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
 					if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
@@ -2116,7 +2116,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 			Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = t_surf;
 		}
 
-		// If there is DEPOSITING of snow:
+		// If there is DEPOSITING of snow: // This is externally forced snow drift, e.g. from Alpine3D. In snowpack standalone, without snowdrift in .smet file, Mdata.snowdrift (redeposit_mass) is 0.
 		if (Mdata.snowdrift > 0. && snow_erosion == "REDEPOSIT") {
 			RedepositSnow(Mdata, Xdata, Sdata, Mdata.snowdrift);
 			Mdata.snowdrift = 0.;
