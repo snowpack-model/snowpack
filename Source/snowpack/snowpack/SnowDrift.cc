@@ -236,8 +236,11 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
 	// At main station, measured snow depth controls whether erosion is possible or not
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
-	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
-
+	const bool erosion = ( 
+		( snow_erosion == "FREE" || snow_erosion == "REDEPOSIT"	) 
+		|| (
+			snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH)
+		)  );
 	double ustar = 0.;
 	if (windward || erosion || (forced_massErode < -Constants::eps2) || (forcing == "MASSBAL")) {
 		double massErode=0.; // Mass loss due to erosion
@@ -253,9 +256,11 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 				if (enforce_measured_snow_heights && !windward) {
 					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
 					ustar = Mdata.ustar;
-				} else {
+				} else if (windward || (Xdata.meta.getSlopeAngle() < Constants::min_slope_angle)) { // only erode windward or flat (if erosion=1) (maybe rewrite this pile of if-statements entirely?)
 					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
 					ustar = ustar_max;
+				} else{	
+					Sdata.drift = 0.;
 				}
 			} catch(const exception&) {
 					prn_msg(__FILE__, __LINE__, "err", Mdata.date, "Cannot compute mass flux of drifting snow!");

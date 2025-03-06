@@ -2146,8 +2146,11 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 				tmp = cumu_precip;
 				cumu_precip = 0.;
 			}
-			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
-			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d) RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
+			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp); //compute drift & erosion
+			//redeposit on flat field only in case of REDEPOSIT mode. (Virtual slopes are handles by snow_redistribution in Main.cc)
+			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d && Xdata.meta.getSlopeAngle() < Constants::min_slope_angle) {
+				RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
+			} 
 		} else { // MASSBAL forcing
 			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
 		}
