@@ -36,7 +36,7 @@ using namespace std;
 const double SnowDrift::schmidt_drift_fudge = 1.0;
 
 ///Enables erosion notification
-const bool SnowDrift::msg_erosion = true; //false; BK 20250303
+const bool SnowDrift::msg_erosion = false;
 
 
 
@@ -236,7 +236,11 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
 	// At main station, measured snow depth controls whether erosion is possible or not
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
-	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
+	const bool erosion = ( 
+		( snow_erosion == "FREE" || snow_erosion == "REDEPOSIT"	) 
+		|| (
+			snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH)
+		)  );
 
 	double ustar = 0.;
 	if (windward || erosion || (forced_massErode < -Constants::eps2) || (forcing == "MASSBAL")) {
@@ -247,14 +251,13 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 			}
 		} else if (forced_massErode < -Constants::eps2) {
 			massErode = std::max(0., -forced_massErode); //negative mass is erosion
-		} else {
+		} else {  // if (windward || erosion)
 			const double ustar_max = (Mdata.vw>0.1) ? Mdata.ustar * Mdata.vw_drift / Mdata.vw : 0.; // Scale Mdata.ustar
 			try {
 				if (enforce_measured_snow_heights && !windward) {
 					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
 					ustar = Mdata.ustar;
-				} else if (windward) { // BK only erode windward?
-				// } else {
+				} else if (windward || (Xdata.meta.getSlopeAngle() < Constants::min_slope_angle)) { // BK: only erode windward or flat (if erosion=1) (maybe rewrite if-statement entirely?)
 					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
 					ustar = ustar_max;
 				}else {

@@ -2089,7 +2089,7 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 	// ADJUST_HEIGHT_OF_METEO_VALUE is checked at each call to allow different
 	// cfg values for different pixels in Alpine3D
 	cfg.getValue("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", adjust_height_of_meteo_values);
-
+	const int nSlopes = cfg.get("NUMBER_SLOPES", "SnowpackAdvanced"); // Redeposit on same slope only if there are no virtual slopes
 
 	try {
 		//since precipitation phase is a little less intuitive than other, measured parameters, make sure it is provided
@@ -2146,8 +2146,14 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 				tmp = cumu_precip;
 				cumu_precip = 0.;
 			}
-			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
-			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d) RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
+			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp); //compute drif & erosion
+			// if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d){ //original code
+			// if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d && nSlopes==1){ //Redeposit on flat field only if there are no virtual slopes
+			//redeposit on flat field only in case of REDEPOSIT modes. (Virtual slopes are handles by snow_redistribution in Main.cc)
+			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d && Xdata.meta.getSlopeAngle() < Constants::min_slope_angle) {
+				RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
+			} 
+				
 		} else { // MASSBAL forcing
 			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
 		}
