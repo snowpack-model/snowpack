@@ -26,10 +26,19 @@ along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weffc++"
-#include <snowpack/plugins/pugixml/pugixml.hpp>
-#pragma GCC diagnostic pop
+//PugiXML, we temporarily disable warnings
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Weffc++"
+	#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+	#include <snowpack/plugins/pugixml/pugixml.hpp>
+	#pragma GCC diagnostic pop
+#elif defined __clang__
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wdeprecated-dynamic-exception-spec"
+	#include <snowpack/plugins/pugixml/pugixml.hpp>
+	#pragma clang diagnostic pop
+#endif
 
 
 /**
@@ -46,21 +55,21 @@ class CaaMLIO : public SnowpackIOInterface {
 		CaaMLIO(const SnowpackConfig& i_cfg, const RunInfo& run_info);
 		CaaMLIO(const CaaMLIO&);
 
-		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
+		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const override;
 
 		virtual void readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
+		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity) override;
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-		                            const ZwischenData& Zdata, const size_t& forbackup=0);
+		                            const ZwischenData& Zdata, const size_t& forbackup=0) override;
 
 		virtual void writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata,
-		                             const ProcessDat& Hdata, const double wind_trans24);
+		                             const ProcessDat& Hdata, const double wind_trans24) override;
 
-		virtual void writeProfile(const mio::Date& date, const SnowStation& Xdata);
+		virtual void writeProfile(const mio::Date& date, const SnowStation& Xdata) override;
 
 		virtual bool writeHazardData(const std::string& stationID, const std::vector<ProcessDat>& Hdata,
-		                             const std::vector<ProcessInd>& Hdata_ind, const size_t& num);
+		                             const std::vector<ProcessInd>& Hdata_ind, const size_t& num) override;
 
 	private:
 		void cleanup() throw();
@@ -130,7 +139,8 @@ class CaaMLIO : public SnowpackIOInterface {
 		static const char *xml_ns_snp, *xml_ns_abrev_snp;
 		static const std::string TimeData_xpath, StationMetaData_xpath, SnowData_xpath;
 
-		char layerDepthTopStr[10], layerThicknessStr[10], layerValStr[10], valueStr[10];
+		static const int num_max_len = 10;
+		char layerDepthTopStr[num_max_len], layerThicknessStr[num_max_len], layerValStr[num_max_len], valueStr[num_max_len];
 		double hoarDensitySurf;
 		std::vector<std::string> grainForms;
 };

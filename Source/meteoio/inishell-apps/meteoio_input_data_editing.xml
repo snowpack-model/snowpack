@@ -242,6 +242,11 @@ INIshell include file for raw data editing
 					</parameter></o>
 				</parameter>
 				<reference name="TIME_RESTRICT"/>
+				<parameter key="%::ARG#::PRINT_REGRESSION_INFO" label="Print Regression Info" type="alternative" optional="true">
+					<option value="TRUE" />
+					<option value="FALSE" />
+					<help>Print information about the goodness of the fit. (Default: TRUE)</help>
+				</parameter>
 				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1EditingRegFill.html&quot;&gt;REGRESSIONFILL editing&lt;/a&gt;: Fill a station by regression from another station.</help>
 			</option>
 		</parametergroup>

@@ -70,7 +70,7 @@ double RunInfo::getNumericVersion(std::string version_str)
 	//remove any '-' used for formatting the date
 	version_str.erase(std::remove_if(version_str.begin(), version_str.end(), [] (char c) { return c=='-'; }), version_str.end());
 	//keep only the first '.' and remove the other ones, if any
-	const size_t pos = version_str.find('.');
+	const std::string::difference_type pos = static_cast<std::string::difference_type>( version_str.find('.') );	//very ugly, but size_t is not the same as difference_type...
 	version_str.erase(std::remove_if(version_str.begin()+pos+1, version_str.end(), [] (char c) { return c=='.'; }), version_str.end());
 	return atof( version_str.c_str() );
 }

@@ -330,28 +330,28 @@ double StabilityAlgorithms::getHandHardnessASARC(const ElementData& Edata, const
 			case 1: { // Precipitation Particles PP
 				A = 0.45;
 				B = 0.0068;
-				C =  0.;
+				C = 0.;
 				break;
 			}
 			case 2: { // Decomposing and Fragmented precipitation particles DF
-				A =  0.;
+				A = 0.;
 				B = 0.0140;
-				C =  0.;
+				C = 0.;
 				break;
 			}
 			case 3: { // Rounded Grains RG
-				A =  1.94;
+				A = 1.94;
 				B = 0.0073;
 				C = -0.192;
 				break;
 			}
 			case 4: {
 				if ( F2 != 9 ) { // Faceted Crystals FC
-					A =  0.;
+					A = 0.;
 					B = 0.0138;
 					C = -0.284;
 				} else { // Rounding faceted particles FCxr, because F1=9 does not occur in SNOWPACK
-					A =  1.29;
+					A = 1.29;
 					B = 0.0094;
 					C = -0.350;
 				};
@@ -363,7 +363,7 @@ double StabilityAlgorithms::getHandHardnessASARC(const ElementData& Edata, const
 					B = 0.0150;
 					C = -0.140;
 				} else { // use FC values for small depth hoar grains
-					A =  0.00;
+					A = 0.00;
 					B = 0.0138;
 					C = -0.284;
 				};
@@ -379,22 +379,22 @@ double StabilityAlgorithms::getHandHardnessASARC(const ElementData& Edata, const
 				if ( Edata.theta[WATER] < 0.001 ) { // MF, dry
 					A = 2.14;
 					B = 0.0048;
-					C =  0.;
+					C = 0.;
 				} else { // MF, wet (LWC > 0.)
 					A = 3.00;
 					B = 0.0000;
-					C =  0.;
+					C = 0.;
 				};
 				break;
 			}
 			case 8: { // Ice layer IFil
-				A =  6.;
+				A = 6.;
 				B = 0.;
-				C =  0.;
+				C = 0.;
 				break;
 			}
 			case 9: { // Rounding faceted particles FCxr
-				A =  1.29;
+				A = 1.29;
 				B = 0.0094;
 				C = -0.350;
 				break;
@@ -436,11 +436,11 @@ double StabilityAlgorithms::getHandHardnessASARC(const ElementData& Edata, const
  */
 double StabilityAlgorithms::compCriticalStress(const double& epsNeckDot, const double& Ts)
 {
-	static const double sigBrittle=1.e7;   // Brittle fracture stress of ice (Pa)
-	static const double C1=-6.6249;     // Constant
-	static const double C2=6.0780e-2;   // Constant
-	static const double C3=-1.3380e-4;  // Constant
-	static const double P1=70.000;      // Constant (Pa)
+	static const double sigBrittle=1.e7;	// Brittle fracture stress of ice (Pa)
+	static const double C1=-6.6249;		// Constant
+	static const double C2=6.0780e-2;	// Constant
+	static const double C3=-1.3380e-4;	// Constant
+	static const double P1=70.000;		// Constant (Pa)
 
 	// Find the rate dependent friction angle phi
 	const double phi = P1*pow(fabs(epsNeckDot), 0.23)*mio::Cst::to_rad; // Function of strain rate dependent failure surface
@@ -462,7 +462,7 @@ double StabilityAlgorithms::compCriticalStress(const double& epsNeckDot, const d
 /**
  * @brief Returns the layer stability index
  * The intra-layer stability criteria is given by the ratio S_f = S_c/S_n where
- * S_n is the neck stress and S_c is the critical stress.  The critical stress is determined
+ * S_n is the neck stress and S_c is the critical stress. The critical stress is determined
  * in the function st_CriticalStress. This function might get a little more involved as
  * time goes on.
  * @param *Edata
@@ -475,15 +475,15 @@ double StabilityAlgorithms::setDeformationRateIndex(ElementData& Edata)
 		return(0.1);
 	}
 
-	static const double eps1Dot = 1.76e-7; // Unit strain rate (at stress = 1 MPa) (s-1)
-	static const double sig1 = 0.5e6;      // Unit stress from Sinha's formulation (Pa)
-	const double sig = -Edata.C;   // Overburden stress, that is, absolute value of Cauchy stress (Pa)
+	static const double eps1Dot = 1.76e-7;	// Unit strain rate (at stress = 1 MPa) (s-1)
+	static const double sig1 = 0.5e6;	// Unit stress from Sinha's formulation (Pa)
+	const double sig = -Edata.C;		// Overburden stress, that is, absolute value of Cauchy stress (Pa)
 	const double Te = std::min(Edata.Te, Edata.meltfreeze_tk); // Element temperature (K)
 
 	// First find the absolute neck stress
 	const double sigNeck = Edata.neckStressEnhancement() * (sig); // Neck stress (Pa)
 	// Now find the strain rate in the neck
-	const double epsNeckDot =  eps1Dot * SnLaws::snowViscosityTemperatureTerm(Te) * mio::Optim::pow3(sigNeck/sig1); // Total strain rate in the neck (s-1) NOTE is it used here only?
+	const double epsNeckDot = eps1Dot * SnLaws::snowViscosityTemperatureTerm(Te) * mio::Optim::pow3(sigNeck/sig1); // Total strain rate in the neck (s-1) NOTE is it used here only?
 	// Return the stability index
 	return (std::max(0.1, std::min(compCriticalStress(epsNeckDot, Te) / sigNeck, 6.)));
 }
@@ -495,9 +495,9 @@ double StabilityAlgorithms::setDeformationRateIndex(ElementData& Edata)
  */
 double StabilityAlgorithms::compPenetrationDepth(const SnowStation& Xdata)
 {
-	double rho_Pk = 0., dz_Pk = 0.;           // Penetration depth Pk, from mean slab density
-	double top_crust = 0., thick_crust = 0.;  // Crust properties
-	bool crust = false;                       // Checks for crust
+	double rho_Pk = 0., dz_Pk = 0.;		 // Penetration depth Pk, from mean slab density
+	double top_crust = 0., thick_crust = 0.; // Crust properties
+	bool crust = false;			 // Checks for crust
 	size_t e_crust = Constants::stundefined;
 
 	const double cos_sl = Xdata.cos_sl; // Cosine of slope angle
@@ -580,7 +580,7 @@ double StabilityAlgorithms::getLayerSkierStability(const double& Pk, const doubl
 		static const double ski_length = 1.7;
 		static const double load = skier_weight*Constants::g/ski_length;
 		double delta_sig = 2. * load * cos(Alpha_max) * Optim::pow2( sin(Alpha_max) ) * sin(Alpha_max + STpar.psi_ref);
-		delta_sig /= Constants::pi *  layer_depth * STpar.cos_psi_ref; // in Pa
+		delta_sig /= Constants::pi * layer_depth * STpar.cos_psi_ref; // in Pa
 		delta_sig /= 1000.; // convert to kPa
 		// Limit skier stability index to range {0.05, Stability::max_stability}
 		return(std::max(0.05, std::min(((STpar.Sig_c2 + STpar.phi*STpar.sig_n)/(STpar.sig_s + delta_sig)), Stability::max_stability)));
@@ -591,23 +591,23 @@ double StabilityAlgorithms::getLayerSkierStability(const double& Pk, const doubl
 
 bool StabilityAlgorithms::normalizeVector(std::vector<double>& vecData)
 {
-    if (vecData.empty()) return true;
-    
-    const double mean = mio::Interpol1D::arithmeticMean( vecData );
-    const double std_dev = mio::Interpol1D::std_dev( vecData );
-    
-    const double denominator = (std_dev == 0. || std_dev==IOUtils::nodata) ? 1 : std_dev;
-    
-   //for (size_t ii=0; ii<vecData.size(); ii++) {
+	if (vecData.empty()) return true;
+
+	const double mean = mio::Interpol1D::arithmeticMean( vecData );
+	const double std_dev = mio::Interpol1D::std_dev( vecData );
+
+	const double denominator = (std_dev == 0. || std_dev==IOUtils::nodata) ? 1 : std_dev;
+
+	//for (size_t ii=0; ii<vecData.size(); ii++) {
 	for (auto& value : vecData) {
-        //vecData[ii] = (vecData[ii] - mean) / denominator;
+		//vecData[ii] = (vecData[ii] - mean) / denominator;
 		value = (value - mean) / denominator;
-    }
-    return true;
+	}
+	return true;
 }
 
 /**
- * @brief Returns the Relative Threshold Sum approach  (RTA) weak layer. 
+ * @brief Returns the Relative Threshold Sum approach (RTA) weak layer.
  * This is according to Monti, Fabiano, and Jürg Schweizer, <i>"A relative difference 
  * approach to detect potential weak layers within a snow profile"</i>, 2013, Proceedings ISSW.
  * @param Xdata all the element and node data for all the layers
@@ -631,70 +631,72 @@ bool StabilityAlgorithms::getRelativeThresholdSum(SnowStation& Xdata)
 		NDS[ e ].ssi = 0.; //initialize with 0 so layers that can not get computed don't get in the way
 		
 		vecRG.push_back( EMS[e].rg );
-        vecHard.push_back( EMS[e].hard );
-        if (e > 0) {
-            vecRG_diff.push_back(std::max(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].rg - EMS[e].rg) : 0,
-                                          EMS[e-1].hard>EMS[e].hard ? fabs(EMS[e-1].rg - EMS[e].rg) : 0
-                                          ));
-            vecHard_diff.push_back(std::max(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].hard - EMS[e].hard) : 0,
-                                          EMS[e-1].hard>=EMS[e].hard ? fabs(EMS[e-1].hard - EMS[e].hard) : 0
-                                          ));
-        } else {
-            vecRG_diff.push_back(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].rg - EMS[e].rg) : 0);
-            vecHard_diff.push_back(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].hard - EMS[e].hard) : 0);
-        }
-		
+		vecHard.push_back( EMS[e].hard );
+		if (e > 0) {
+			vecRG_diff.push_back(std::max(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].rg - EMS[e].rg) : 0,
+			                     EMS[e-1].hard>EMS[e].hard ? fabs(EMS[e-1].rg - EMS[e].rg) : 0
+			                   ));
+			vecHard_diff.push_back(std::max(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].hard - EMS[e].hard) : 0,
+			                       EMS[e-1].hard>=EMS[e].hard ? fabs(EMS[e-1].hard - EMS[e].hard) : 0
+			                     ));
+		} else {
+			vecRG_diff.push_back(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].rg - EMS[e].rg) : 0);
+			vecHard_diff.push_back(EMS[e+1].hard>EMS[e].hard ? fabs(EMS[e+1].hard - EMS[e].hard) : 0);
+		}
+
 		//grain types receive a score depending on their primary and secondary forms
 		const unsigned short int primary = static_cast<unsigned short int>( EMS[e].type / 100 %100 );
 		const unsigned short int secondary = static_cast<unsigned short int>( EMS[e].type / 10 %10 );
 		const bool primary_is_persistent = (primary==4 || primary==5 || primary==6 || primary==9);
 		const bool secondary_is_persistent = (secondary==4 || secondary==5 || secondary==6 || secondary==9);
-		if (primary_is_persistent && secondary_is_persistent)
+		if (primary_is_persistent && secondary_is_persistent) {
 			vecTypes.push_back( 1. );
-		else if (!primary_is_persistent && !secondary_is_persistent)
+		} else if (!primary_is_persistent && !secondary_is_persistent) {
 			vecTypes.push_back( 0. );
-		else
+		} else {
 			vecTypes.push_back( .5 );
-		
+		}
+
 		//compute the weibull function for the depth from the top
 		const double layer_depth = hs_top - (NDS[e].z+NDS[e].u - NDS[Xdata.SoilNode].z)/cos_sl;
 		static const double w1 = 2.5;
 		static const double w2 = 50.;
 		const double weibull_depth = (w1/w2) * pow((layer_depth*100), w1-1.) * exp( -1*pow((layer_depth*100)/w2, w1) );
-		
+
 		//compute crust factor
-        const bool crust_cond = (EMS[e].L>=0.01 && EMS[e].hard>=3 );
-        const double crust_value = (crust_cond)? exp( -((hs_top*100) - ((NDS[e+1].z+NDS[e+1].u - NDS[Xdata.SoilNode].z)*100)/cos_sl)/20. ) : 0.;
+		const bool crust_cond = (EMS[e].L>=0.01 && EMS[e].hard>=3 );
+		const double crust_value = (crust_cond)? exp( -((hs_top*100) - ((NDS[e+1].z+NDS[e+1].u - NDS[Xdata.SoilNode].z)*100)/cos_sl)/20. ) : 0.;
 		crust_coeff += crust_value;
 		const double crust_contrib = weibull_depth - crust_coeff;
-        if (crust_contrib>0)
+		if (crust_contrib>0) {
 			weibull.push_back( crust_contrib ); //store the weibull corrected for the crust coefficient
-		else 
+		} else {
 			weibull.push_back( 0. ); //the crust is so thick that there is no additional load below
+		}
 	}
-	
+
 	//calculate the normalization parameters
-    normalizeVector(vecRG);
+	normalizeVector(vecRG);
 	const double RG_min = mio::Interpol1D::min_element( vecRG );
 	const double RG_max = mio::Interpol1D::max_element( vecRG );
 	
-    normalizeVector(vecRG_diff);
+	normalizeVector(vecRG_diff);
 	const double RG_diff_min = mio::Interpol1D::min_element( vecRG_diff );
 	const double RG_diff_max = mio::Interpol1D::max_element( vecRG_diff );
 	
-    normalizeVector(vecHard);
+	normalizeVector(vecHard);
 	const double hard_min = mio::Interpol1D::min_element( vecHard );
 	const double hard_max = mio::Interpol1D::max_element( vecHard );
 	
-    normalizeVector(vecHard_diff);
+	normalizeVector(vecHard_diff);
 	const double hard_diff_min = mio::Interpol1D::min_element( vecHard_diff );
 	const double hard_diff_max = mio::Interpol1D::max_element( vecHard_diff );
 	
-    normalizeVector(vecTypes);
+	normalizeVector(vecTypes);
 	const double type_min = mio::Interpol1D::min_element( vecTypes );
 	const double type_max = mio::Interpol1D::max_element( vecTypes );
-    
-    
+
+
 	const double dp_min = mio::Interpol1D::min_element( weibull );
 	const double dp_max = mio::Interpol1D::max_element( weibull );
 	
@@ -919,12 +921,12 @@ void StabilityAlgorithms::classifyStability_Bellaire(const double& Swl_ssi, Snow
  */
 bool StabilityAlgorithms::classifyType_SchweizerLuetschg(SnowStation& Xdata)
 {
-	static const size_t n_window=5;                              // Window half-width in number of elements
+	static const size_t n_window=5;				// Window half-width in number of elements
 	static const double L_base_0=0.2;
-	static const double min_hard=19.472, slope_hard=150.;        // Constants to compute reduced hardness,
-	                                                      // (N) and (N m-1), respectively
+	static const double min_hard=19.472, slope_hard=150.;	// Constants to compute reduced hardness,
+								// (N) and (N m-1), respectively
 	const double cos_sl = Xdata.cos_sl;
-	const double cH = (Xdata.cH - Xdata.Ground)/cos_sl; // Vertical snow depth
+	const double cH = (Xdata.cH - Xdata.Ground)/cos_sl;	// Vertical snow depth
 
 	// Check for snow profile shallower than 1.5*L_base_0 m (not classifiable)
 	if ( cH <= 1.5*L_base_0 ) {
@@ -939,11 +941,11 @@ bool StabilityAlgorithms::classifyType_SchweizerLuetschg(SnowStation& Xdata)
 	vector<NodeData>& NDS = Xdata.Ndata;
 
 	//temporary vectors
-	vector<double> z_el(nE_s, 0.0);                            // Vertical element heigth (m)
-	vector<double> L_el(nE_s, 0.0);                            // Vertical element thickness (m)
-	vector<double> hard(nE_s, 0.0);                            // Hardness in N
-	vector<double> red_hard(nE_s, 0.0);                        // Reduced hardness in N
-	vector<double> deltaN(nE_s, 0.0);                          // Difference in hardness between layers in N
+	vector<double> z_el(nE_s, 0.0);				// Vertical element heigth (m)
+	vector<double> L_el(nE_s, 0.0);				// Vertical element thickness (m)
+	vector<double> hard(nE_s, 0.0);				// Hardness in N
+	vector<double> red_hard(nE_s, 0.0);			// Reduced hardness in N
+	vector<double> deltaN(nE_s, 0.0);			// Difference in hardness between layers in N
 
 	// Absolute and reduced hardness profiles (N)
 	for(size_t idx = nE_s; idx --> 0; ) { //because it is decremented before executing anything
@@ -1113,7 +1115,7 @@ bool StabilityAlgorithms::classifyType_SchweizerLuetschg(SnowStation& Xdata)
  * @return return false on error, true otherwise
  */
 bool StabilityAlgorithms::setShearStrengthDEFAULT(const double& cH, const double& cos_sl, const mio::Date& date,
-                                        ElementData& Edata, NodeData& Ndata, StabilityData& STpar)
+						  ElementData& Edata, NodeData& Ndata, StabilityData& STpar)
 {
 	bool prn_wrn = false; //turn to true to print warnings
 
@@ -1204,9 +1206,8 @@ bool StabilityAlgorithms::setShearStrengthDEFAULT(const double& cH, const double
 	STpar.phi = phi;
 
 	// Warning message may be enabled for large differences in snow shear stength models
-	if (prn_wrn
-		    && (((fabs(Sig_c2-Sig_cC)/Sig_cC) > 10.) || ((Sig_c3 > 0.)
-		        && ((fabs(Sig_c3-Sig_cC)/Sig_cC > 10.)))) ) {
+	if (prn_wrn && (((fabs(Sig_c2-Sig_cC)/Sig_cC) > 10.) || ((Sig_c3 > 0.)
+	            && ((fabs(Sig_c3-Sig_cC)/Sig_cC > 10.)))) ) {
 		prn_msg( __FILE__, __LINE__, "wrn", date,"Large difference in Snow Shear Stength (type=%d)", F1);
 		prn_msg(__FILE__, __LINE__, "msg-", Date(), "Conway: %lf Sig_c2: %lf Sig_c3: %lf\n", Sig_cC, Sig_c2, Sig_c3);
 		return false;
@@ -1226,12 +1227,12 @@ bool StabilityAlgorithms::setShearStrengthDEFAULT(const double& cH, const double
  * @return return false on error, true otherwise
  */
 bool StabilityAlgorithms::setShearStrength_NIED(const double& cH, const double& cos_sl, const mio::Date& date,
-                                              ElementData& Edata, NodeData& Ndata, StabilityData& STpar)
+						ElementData& Edata, NodeData& Ndata, StabilityData& STpar)
 {
 	bool prn_wrn = false;
 	const double rho_ri = Edata.Rho/Constants::density_ice; // Snow density relative to ice
 	// Determine majority grain shape
-	int    F1, F2, F3;             // Grain shape
+	int F1, F2, F3;		// Grain shape
 	typeToCode(&F1, &F2, &F3, Edata.type);
 
 	// Determine critical shear stress of element (kPa)
@@ -1313,8 +1314,7 @@ bool StabilityAlgorithms::setShearStrength_NIED(const double& cH, const double& 
 	STpar.phi = phi;
 
 	// Warning message may be enabled to warn for large differences in snow shear stength models
-	if (prn_wrn
-	        && (((fabs(Sig_c2-Sig_cC)/Sig_cC) > 10.) || ((Sig_c3 > 0.)
+	if (prn_wrn && (((fabs(Sig_c2-Sig_cC)/Sig_cC) > 10.) || ((Sig_c3 > 0.)
 	            && ((fabs(Sig_c3-Sig_cC)/Sig_cC > 10.)))) ) {
 		prn_msg( __FILE__, __LINE__, "wrn", date,"Large difference in Snow Shear Stength (type=%d)", F1);
 		prn_msg(__FILE__, __LINE__, "msg-", Date(), "Conway: %lf Sig_c2: %lf Sig_c3: %lf\n", Sig_cC, Sig_c2, Sig_c3);

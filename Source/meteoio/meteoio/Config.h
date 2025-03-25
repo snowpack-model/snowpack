@@ -39,9 +39,10 @@ namespace mio {
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
  * - \anchor config_special_syntax special values: there is a special syntax to refer to environment variables, to other keys or to evaluate arithmetic expressions:
- *       - environment variables are called by using the following syntax: ${env:my_env_var};
- *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): ${other_key} or ${section::other_key} (make sure to prefix the key with its section if it refers to another section!)
- *       - evaluating an arithmetic expression: ${{arithm. expression}}. It is possible to perform arithmetics on other variables: for example ${{ 10*${SAMPLING_RATE_MIN}+3*${MY_VAR} }} will be properly evaluated. Please note that in such a case, it is necessary to add white spaces around the arithmetic expression within its "{{" and "}}" markers so it is properly parsed.
+ *       - environment variables are called by using the following syntax: <b>${env:my_env_var}</b>.
+ *       - refering to another key (it only needs to be defined at some point in the ini file, even in an included file is enough): <b>${other_key}</b> or <b>${section::other_key}</b> (make sure to prefix the key with its section if it refers to another section!)
+ *       - evaluating an arithmetic expression: <b>${{arithm. expression}}</b>
+ *       - please note that any depth of recusion is supported within all three types of variables: for example ${{10*${SAMPLING_RATE_MIN}+3*${MY_VAR}}} will be properly evaluated as well as ${env:${MYVAR}${{2*${RATE}}}}. Of course, the syntax has to be correct (closing markers matching the opening markers)! Some "standard" environment variables might not be visible in the MeteoIO context, therefore it is recommended to explicitly export the variables of interest.
  * 
  * @note The arithemic expressions are evaluated thanks to the <A HREF="https://codeplea.com/tinyexpr">tinyexpr</A> math library (under the 
  * <A HREF="https://opensource.org/licenses/Zlib">zlib license</A>) and can use standard operators (including "^"), 
@@ -496,13 +497,44 @@ class ConfigParser {
 		ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections);
 		
 		static std::string extract_section(const std::string& key, const bool& provide_default=false);
+		
 	private:
+		enum VarType {
+			ROOT,	///< root expression, this won't be expanded but replacements will ultimately be made there
+			ENV,	///< environment variable
+			EXPR,	///< arithmetic expression
+			REF		///< reference to another key
+		};
+		
+		///structure to contain the information relative to a variable to be replaced in a value string
+		typedef struct VARIABLE {
+			VARIABLE() : value(), children_idx(), children_not_ready(0), parent_idx(IOUtils::npos), pos_start(std::string::npos), pos_end(std::string::npos), type(REF), isExpanded(false) {}
+			VARIABLE(const size_t& i_pos_start, const VarType& i_type) : value(), children_idx(), children_not_ready(0), parent_idx(IOUtils::npos), pos_start(i_pos_start), pos_end(std::string::npos), type(i_type), isExpanded(false) {}
+			VARIABLE(const std::string& i_value, const size_t& i_pos_start, const size_t& i_pos_end, const VarType& i_type) : value(i_value), children_idx(), children_not_ready(0), parent_idx(IOUtils::npos), pos_start(i_pos_start), pos_end(i_pos_end), type(i_type), isExpanded(false) {}
+			
+			void finalize(const std::string& i_value, const size_t& i_pos_end) {value=i_value; pos_end=i_pos_end;}
+			void setParent(const size_t& idx) {parent_idx=idx;}
+			void setChild(const size_t& idx) {children_idx.insert(idx); children_not_ready++;}
+			
+			std::string toString() const {std::ostringstream os; os << "<Variable>" << (type==EXPR?"expr":(type==ENV?"env":"ref")) << " @[" << pos_start << ","; if(pos_end!=IOUtils::npos) os << pos_end; else os << "-"; os << "]" << " is '" << value << "'"; if(parent_idx!=IOUtils::npos) os << " parent: " << parent_idx; if(!children_idx.empty()){ os << " children: "; for(const auto& val : children_idx) os << val << " ";}; os << " children_not_ready=" << children_not_ready << " "; os << "</variable>"; return os.str();}
+			
+			std::string value;				///< This contains the raw value (without delimiters) and will be replaced by the expanded value later
+			std::set<size_t> children_idx;	///< A variable might itself contain other variables that require expansion (recursion)
+			size_t children_not_ready;		///< Number of children that have not been expanded yet
+			size_t parent_idx;				///< Index of the parent of this variable
+			size_t pos_start, pos_end;		///< Start and end position of the variable in the root string (including delimiters)
+			VarType type;					///< Type of the variable
+			bool isExpanded;				///< When a variable is expanded, its value is replaced by the expansion and this is set to true
+		} variable;
+		
+		static std::vector<ConfigParser::variable> parseVariable(const std::string &value);
+		bool expandVar(const variable& var, const std::string& section, std::string &replacement) const;
+		bool expandVarsForKey(std::vector<variable>& vecVars, const std::string& section, bool& hasSomeSuccesses);
+		
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
+		
 		static bool onlyOneEqual(const std::string& str);
-		static void processEnvVars(std::string& value);
-		static bool processExpr(std::string& value);
-		bool processVars(std::string& value, const std::string& section) const;
 		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
 		std::string clean_import_path(const std::string& in_path) const;
 		bool processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before);
@@ -511,8 +543,7 @@ class ConfigParser {
 		std::map<std::string, std::string> properties; ///< Save key value pairs
 		std::set<std::string> imported; ///< list of files already imported (to avoid circular references)
  		std::set<std::string> sections; ///< list of all the sections that have been found
- 		std::set<std::string> deferred_vars; ///< list of all the variables that have been found and will have to be resolved
- 		std::set<std::string> deferred_exprs; ///< list of all the arithmetic expressions that have been found and will have to be resolved
+ 		std::map<std::string, std::vector<variable> > vars; ///< all values that contain variables that need to be expanded in a map of <key, variables tree>
  		std::string sourcename; ///< description of the data source for the key/value pair
 };
 

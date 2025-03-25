@@ -36,7 +36,9 @@ void MeteoIndex::parse_args(const std::vector< std::pair<std::string, std::strin
 			if (user_algo=="WINDCHILL") model = WINDCHILL;
 			else if (user_algo=="HEATINDEX") model = HEATINDEX;
 			else if (user_algo=="WET_BULB") model = WET_BULB;
-			//else if (user_algo=="WBGT_INDEX") model = WBGT_INDEX; //curently not accurate enough
+			else if (user_algo=="HUMIDEX") model = HUMIDEX;
+			else if (user_algo=="WBGT_INDEX") model = WBGT_INDEX; //curently not accurate enough
+			else if (user_algo=="WBGT_SIMPLE") model = WBGT_SIMPLE;
 			else
 				throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for "+where, AT);
 
@@ -84,6 +86,18 @@ bool MeteoIndex::wetBulbTemperature(const size_t& param, MeteoData& md)
 		return false;
 }
 
+bool MeteoIndex::Humidex(const size_t& param, MeteoData& md)
+{
+	const double TA = md(MeteoData::TA);
+	const double RH = md(MeteoData::RH);
+	
+	if (TA!=IOUtils::nodata && RH!=IOUtils::nodata) {
+		md(param) = Atmosphere::humidex(TA, RH);
+		return true;
+	} else
+		return false;
+}
+
 bool MeteoIndex::WBGT_index(const size_t& param, MeteoData& md)
 {
 	const double TA = md(MeteoData::TA);
@@ -116,6 +130,18 @@ bool MeteoIndex::WBGT_index(const size_t& param, MeteoData& md)
 	return true;
 }
 
+bool MeteoIndex::WBGT_simple(const size_t& param, MeteoData& md)
+{
+	const double TA = md(MeteoData::TA);
+	const double RH = md(MeteoData::RH);
+	
+	if (TA!=IOUtils::nodata && RH!=IOUtils::nodata) {
+		md(param) = Atmosphere::WBGT_index_Au(TA, RH);
+		return true;
+	} else
+		return false;
+}
+
 bool MeteoIndex::generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& /*vecMeteo*/)
 {
 	double &value = md(param);
@@ -123,7 +149,9 @@ bool MeteoIndex::generate(const size_t& param, MeteoData& md, const std::vector<
 		if (model==WINDCHILL) return windChill(param, md);
 		if (model==HEATINDEX) return heatIndex(param, md);
 		if (model==WET_BULB) return wetBulbTemperature(param, md);
+		if (model==HUMIDEX) return Humidex(param, md);
 		if (model==WBGT_INDEX) return WBGT_index(param, md);
+		if (model==WBGT_SIMPLE) return WBGT_simple(param, md);
 	}
 
 	return true; //all missing values could be filled

@@ -242,7 +242,7 @@ double TauCLDGenerator::computeCloudiness(const MeteoData& md, bool &is_night)
 	if (is_night) return IOUtils::nodata;
 	
 	double albedo = .5;
-	if (RSWR!=IOUtils::nodata && ISWR!=IOUtils::nodata && RSWR>Atmosphere::day_iswr_thresh && ISWR>Atmosphere::day_iswr_thresh) {
+	if (RSWR!=IOUtils::nodata && ISWR!=IOUtils::nodata && RSWR>(albedo*Atmosphere::day_iswr_thresh) && ISWR>Atmosphere::day_iswr_thresh) {
 		albedo = std::min( 0.99, std::max(0.01, RSWR / ISWR) );
 	} else { //so some measurements are missing
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
