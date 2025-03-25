@@ -1013,7 +1013,7 @@ void Metamorphism::metamorphismNIED(const CurrentMeteo& Mdata, SnowStation& Xdat
 	}
 }
 
-void Metamorphism::runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) const throw()
+void Metamorphism::runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) const noexcept
 {
 	CALL_MEMBER_FN(*this, mapMetamorphismModel[metamorphism_model])(Mdata, Xdata);
 }

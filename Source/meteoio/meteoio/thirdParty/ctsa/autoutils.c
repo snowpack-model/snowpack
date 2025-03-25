@@ -128,7 +128,7 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
     dodiff = runstattests(x,N,test,type,alpha_);
 
 
-    if (dodiff != dodiff) return d;
+    //if (dodiff != dodiff) return d;	//mb FIX
 
     y = (double*)malloc(sizeof(double)*NX);
     z = (double*)malloc(sizeof(double)*NX);
@@ -152,10 +152,10 @@ int ndiffs(double *x, int N,double *alpha, const char *test,const char *type, in
 
         //printf("dodiff %d \n",dodiff);
 
-        if (dodiff != dodiff) {
+        /*if (dodiff != dodiff) {	//mb FIX
             d--;
             break;
-        }
+        }*/
 
         memcpy(y,z,sizeof(double)*NX);
     }

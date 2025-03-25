@@ -131,19 +131,24 @@ namespace mio {
  * - a set of \ref grid_resampling "gridded resampling algorithms" (for example to regrid model data to different dates/times)
  * - it is also possible to \ref spatial_resampling "spatially resample" the data (for example to extract points out of gridded data or generate data from neighbouring stations)
  *
- * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user. Moreover, a few
- * assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort
- * of coordinates) and very often you will also need to provide a Digital Elevation Model.
+ * Each of these steps can be \ref configuration "configured" and fine tuned according to the needs of the model and the wishes of the user. 
+ * Moreover, a fewassumptions are made about the data that you are using: each data point has to be associated with a geographic 
+ * location (defined by some sort of coordinates) and very often you will also need to provide a Digital Elevation Model.
  *
  * @section typical_setup Typical setup
  * \image html typical_setup.svg "typical setup of MeteoIO for operational applications" width=800px
  * \image latex typical_setup.eps "typical setup of MeteoIO for operational applications" width=0.9\textwidth
  * MeteoIO has been designed to accomodate both the needs of carefully crafted simulations for a specific purpose/study and for the needs of operational
- * simulations that run automatically and unattended. A typical setup for such operational applications consists of a data acquisition system
- * (made of various sensors, usually mounted on a common mast, thus seen as belonging to a station and some system to bring the data back to some sort
- * of data repository), a data storage system that usually has some way of also distributing the data (often a database but sometimes only data files on a disk)
- * and is mostly seen as the data source by the application, some applications using the data and producing results that are published to
- * their end users (either to an automated system that one can connect to or to some visualization tool that one can use to explore the results).
+ * simulations that run automatically and unattended. Various features are supported in the configuration file to make it as easy as possible 
+ * to integrate within a whole workflow (possibility to import multiple additional configuration files within an INI file, several variable expansion
+ * strategies including environment variables in the INI file, evaluation of arithmetic expressions, see 
+ * \ref config_special_syntax "special syntax" for more).
+ * 
+ * A typical setup for such operational applications consists of a data acquisition system (made of various sensors, usually mounted on a 
+ * common mast, thus seen as belonging to a station and some system to bring the data back to some sort of data repository), a data storage 
+ * system that usually has some way of also distributing the data (often a database but sometimes only data files on a disk) and is mostly 
+ * seen as the data source by the application, some applications using the data and producing results that are published to their end users 
+ * (either to an automated system that one can connect to or to some visualization tool that one can use to explore the results).
  *
  * In this setup, MeteoIO is the "glue" between the numerical model at the core of the application and the data sources on one hand and the
  * publication system on the other hand.
@@ -153,12 +158,13 @@ namespace mio {
  /**
  * @page configuration Configuration file
  * @anchor config_doc
- * Since MeteoIO is a library, you, as an end user, will not be directly exposed to it: the library is called by the program that you are using,
- * not directly by yourself. You will basically have to set some parameters in a configuration file that defines how MeteoIO has to behave.
+ * Since MeteoIO is a library, you, as an end user, will not be directly exposed to it: the library is called by the program that you are using
+ * (such as a numerical model or a wrapper like <i>meteoio_timeseries</i>), not directly by yourself. You will basically have to set 
+ * some parameters in a configuration file that defines how MeteoIO has to behave.
  * This configuration file is often named "io.ini" and follows the <A HREF="http://en.wikipedia.org/wiki/INI_file">INI file format</A> standard.
  *
- * It is highly recommended that you first understand the \ref general_structure "general structure" of MeteoIO before moving forward. We will then show the
- * configuration file syntax and then the configuration file structure.
+ * It is highly recommended that you first understand the \ref general_structure "general structure" of MeteoIO before moving forward. We will 
+ * then show the configuration file syntax and then the configuration file structure.
  *
  * @section Config_syntax Configuration file syntax
  * The configuration inputs/outputs file is divided in sections. Each section name is enclosed in brackets.
@@ -178,12 +184,13 @@ namespace mio {
  * TA::algorithms = IDW_LAPSE CST_LAPSE
  * @endcode
  * 
- * A value can also be an environment variable, another key or an arithmetic expression (see the \ref Config "Config class documentation" for more details):
+ * A value can also be an environment variable, another key or an arithmetic expression (see the \ref config_special_syntax "special syntax" for more details):
  * @code
  * USERNAME = ${env:LOGNAME}
  * FIRST_NAME = John
  * FULL_NAME = ${FIRST_NAME}_${USERNAME}
  * AGE = ${{3*20-18+pi/18}}
+ * USER_DATA = ${FIRST_NAME} ${env:LOGNAME}, ${{${AGE}/365.25}} years old
  * @endcode
  *
  * @section Config_structure Configuration file structure

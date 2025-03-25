@@ -47,7 +47,9 @@ class Atmosphere {
 
 		static double windChill(const double& TA, const double& VW);
 		static double heatIndex(const double& TA, const double& RH);
+		static double humidex(const double& TA, const double& RH);
 		static double WBGT_index(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z, const double& altitude);
+		static double WBGT_index_Au(const double& TA, const double& RH);
 
 		//clear sky emissivity
 		static double Brutsaert_emissivity(const double& RH, const double& TA);
