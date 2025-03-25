@@ -33,21 +33,21 @@ class ImisDBIO : public SnowpackIOInterface{
 		ImisDBIO(const ImisDBIO& in);
 		~ImisDBIO();
 
-		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const;
+		virtual bool snowCoverExists(const std::string& i_snowfile, const std::string& stationID) const override;
 
 		virtual void readSnowCover(const std::string& i_snowfile, const std::string& stationID,
-		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity);
+		                           SN_SNOWSOIL_DATA& SSdata, ZwischenData& Zdata, const bool& read_salinity) override;
 
 		virtual void writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
-		                            const ZwischenData& Zdata, const bool& forbackup=false);
+		                            const ZwischenData& Zdata, const bool& forbackup=false) override;
 
 		virtual void writeTimeSeries(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata,
-		                             const ProcessDat& Hdata, const double wind_trans24);
+		                             const ProcessDat& Hdata, const double wind_trans24) override;
 
-		virtual void writeProfile(const mio::Date& date, const SnowStation& Xdata);
+		virtual void writeProfile(const mio::Date& date, const SnowStation& Xdata) override;
 
 		virtual bool writeHazardData(const std::string& stationID, const std::vector<ProcessDat>& Hdata,
-		                             const std::vector<ProcessInd>& Hdata_ind, const size_t& num);
+		                             const std::vector<ProcessInd>& Hdata_ind, const size_t& num) override;
 
 		ImisDBIO& operator=(const ImisDBIO& in);
 

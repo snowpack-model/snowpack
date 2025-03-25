@@ -1,5 +1,5 @@
 #SPDX-License-Identifier: LGPL-3.0-or-later
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.27.2)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.31.6)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(alpine3d)
@@ -146,11 +146,8 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove *~ alpine3d/*~ alpine3d/ebalance/*~ alpine3d/runoff/*~ alpine3d/snowdrift/*~
 	COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake
 	COMMAND cmake -E remove alpine3d/*.cmake alpine3d/ebalance/*.cmake alpine3d/runoff/*.cmake alpine3d/snowdrift/*.cmake
-	COMMAND cmake -E remove_directory CMakeFiles
-	COMMAND cmake -E remove_directory alpine3d/CMakeFiles
-	COMMAND cmake -E remove_directory alpine3d/ebalance/CMakeFiles
-	COMMAND cmake -E remove_directory alpine3d/runoff/CMakeFiles
-	COMMAND cmake -E remove_directory alpine3d/snowdrift/CMakeFiles
+	COMMAND cmake -E remove_directory CMakeFiles alpine3d/CMakeFiles alpine3d/*/CMakeFiles
+	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
 	COMMAND cmake -E remove bin/*
 	COMMAND cmake -E remove lib/*
 )
@@ -171,7 +168,11 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 #Build the documentation if doxygen is found
-INCLUDE(FindDoxygen)
+IF(CMAKE_VERSION VERSION_GREATER 3.9)
+	FIND_PACKAGE(Doxygen OPTIONAL_COMPONENTS dot)
+ELSE(CMAKE_VERSION VERSION_GREATER 3.9)
+	FIND_PACKAGE(Doxygen)
+ENDIF(CMAKE_VERSION VERSION_GREATER 3.9)
 FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env A3D_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/alpine3d/config.dox)

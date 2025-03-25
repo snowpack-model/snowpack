@@ -53,7 +53,7 @@ static void eraseArg(std::vector<std::pair<std::string, std::string>> &vecArgs, 
 static bool checkDeprecatedWindowSize(const Config &cfg)
 {
 	if (cfg.keyExistsRegex(".*WINDOW_SIZE.*", Meteo1DInterpolator::interpol_section)) {
-		std::cout << "[W]] Using deprecated key: WINDOW_SIZE in section " + Meteo1DInterpolator::interpol_section + ".\n Please use MAX_GAP_SIZE instead.\n";
+		std::cout << "[W] Using deprecated key: WINDOW_SIZE in section " + Meteo1DInterpolator::interpol_section + ".\n Please use MAX_GAP_SIZE instead.\n";
 		return true;
 	}
 	return false;

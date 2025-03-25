@@ -1,5 +1,5 @@
 #SPDX-License-Identifier: LGPL-3.0-or-later
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.27.2)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.31.6)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(snowpack)
@@ -162,9 +162,8 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove_directory CMakeFiles
 	COMMAND cmake -E remove_directory snowpack/CMakeFiles
 	COMMAND cmake -E remove_directory applications/snowpack/CMakeFiles
-	COMMAND cmake -E remove_directory tests/CMakeFiles
+	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
 	COMMAND cmake -E remove tests/res1exp/*.cmake tests/res1exp/output/*
-	COMMAND cmake -E remove_directory tests/res1exp/CMakeFiles
 	COMMAND cmake -E remove_directory tests/res1exp/Testing
 	COMMAND cmake -E remove *~ CMakeCache.txt cmake_install.cmake CPack*.cmake cmake_*.cmake Makefile
 	)
@@ -180,7 +179,11 @@ ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/c
 
 #Build the documentation if doxygen is found
 INCLUDE(FindDoxygen)
-FIND_PACKAGE(Doxygen)
+IF(CMAKE_VERSION VERSION_GREATER 3.9)
+	FIND_PACKAGE(Doxygen OPTIONAL_COMPONENTS dot)
+ELSE(CMAKE_VERSION VERSION_GREATER 3.9)
+	FIND_PACKAGE(Doxygen)
+ENDIF(CMAKE_VERSION VERSION_GREATER 3.9)
 IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env SN_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/snowpack/config.dox)
 ENDIF(DOXYGEN_FOUND)

@@ -84,33 +84,28 @@ ELSE(WIN32)
 	ENDIF(APPLE)
 ENDIF(WIN32)
 
-#build LIBSNOWPACK_ROOT so we can provide a hint for searching for the header file
-IF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
+IF(LIBSNOWPACK_LIBRARY)
+	#build LIBSNOWPACK_ROOT so we can provide a hint for searching for the header file
 	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${LIBSNOWPACK_LIBRARY} DIRECTORY) #get PATH
 	GET_FILENAME_COMPONENT(MSVC_TARGET ${LIBSNOWPACK_ROOT} NAME) #special directory name for some MSVC
 	IF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
 		GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${LIBSNOWPACK_ROOT} DIRECTORY) #go up one level
 	ENDIF(("${MSVC_TARGET}" STREQUAL "Debug") OR ("${MSVC_TARGET}" STREQUAL "Release"))
 	GET_FILENAME_COMPONENT(LIBSNOWPACK_ROOT ${LIBSNOWPACK_ROOT} DIRECTORY) #go up one level
-ELSE(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
-    GET_FILENAME_COMPONENT(snowpack_libs_root ${LIBSNOWPACK_LIBRARY} PATH)
-	SET(LIBSNOWPACK_ROOT "${snowpack_libs_root}/../")
-	STRING(REPLACE  " " "\\ " LIBSNOWPACK_ROOT ${LIBSNOWPACK_ROOT})
-ENDIF(${CMAKE_VERSION} VERSION_GREATER "2.8.11")
 
-
-# locate main header file
-FIND_PATH(LIBSNOWPACK_INCLUDE_DIR
-  NAMES snowpack/libsnowpack.h
-  HINTS
-	"${LIBSNOWPACK_ROOT}/include"
-	"${LIBSNOWPACK_ROOT}"
-	"~/usr/include"
-	"/usr/local/include"
-	"/usr/include"
-	"/opt/include"
-  DOC "Location of the libsnowpack headers, like /usr/include"
-)
+	# locate main header file
+	FIND_PATH(LIBSNOWPACK_INCLUDE_DIR
+	NAMES snowpack/libsnowpack.h
+	HINTS
+		"${LIBSNOWPACK_ROOT}/include"
+		"${LIBSNOWPACK_ROOT}"
+		"~/usr/include"
+		"/usr/local/include"
+		"/usr/include"
+		"/opt/include"
+	DOC "Location of the libsnowpack headers, like /usr/include"
+	)
+ENDIF(LIBSNOWPACK_LIBRARY)
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.

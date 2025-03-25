@@ -266,6 +266,25 @@ double Atmosphere::heatIndex(const double& TA, const double& RH)
 }
 
 /**
+* @brief Humidex index, by Canadian meteorologists.
+* This is an index aiming at expressing the human-perceived air temperature due to humidity.
+* This is NOT a scientific measurement, only an index to express a subjective feeling.
+* See Masterson J, Richardson FA (1979) <i>"Humidex, A Method of Quantifying Human Discomfort Due to 
+* Excessive Heat and Humidity"</i>. Environment Canada, Downsview, Ontario
+* @param TA air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @return Humidex index (K)
+*/
+double Atmosphere::humidex(const double& TA, const double& RH)
+{
+	const double Td = RhtoDewPoint(RH, TA, false);	//in K
+	const double e = 6.11 * exp( 5417.753 * 1./273.16 * 1./Td );	//Water vapour pressure (hPa)
+	const double humidex = TA + 0.5555 * (e-10); //here in K
+	
+	return humidex;
+}
+
+/**
 * @brief Wet Bulb Globe Temperature index.
 * This is an index aiming at expressing the human-perceived air temperature due to humidity, wind and radiation.
 * This is the foundation of ISO 7243 and is widely used for physical activity safety evaluation (for example for physical training).
@@ -285,6 +304,30 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 	const double DB = TA;
 
 	return 0.7*NWB + 0.2*GT + 0.1*DB;
+}
+
+/**
+* @brief Wet Bulb Globe Temperature index, Australian Bureau of Meteorology approximation.
+* This is an index aiming at expressing the human-perceived air temperature due to humidity, wind and radiation.
+* This is the approximation used by the Australian Bureau of Meteorology that assumes a moderately high radiation level in light wind conditions. In cloudy and windy conditions
+* as well as during night time or early morning conditions, this aproximation will overestimate the stress.
+* See Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., and Tinz, B. (2012). <i>"Comparison of UTCI to selected thermal indices"</i>. Int. J. Biometeorology 56, 515–535. <a href="https://doi.org/10.1007/s00484-011-0453-2">10.1007/s00484-011-0453-2</a> for more
+* @param TA air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @param VW wind velocity (m/s)
+* @param iswr_dir direct solar SW radiation (W/m^2)
+* @param iswr_diff diffuse solar SW radiation (W/m^2)
+* @param cos_Z cosinus of the solar zenith angle
+* @param altitude altitude of the point where to perform the calculation
+* @return Heat index (K)
+*/
+double Atmosphere::WBGT_index_Au(const double& TA, const double& RH)
+{
+	const double ta = IOUtils::K_TO_C( TA );
+	const double e = RH * 6.105 * exp( 17.27 * ta / ( 237.7 + ta ) );	//Water vapour pressure (hPa)
+	const double WBGT_approx = 0.567 * ta + 0.393 * e + 3.94;
+
+	return WBGT_approx;
 }
 
 /**
