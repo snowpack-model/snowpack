@@ -966,7 +966,33 @@ void CoordsAlgorithms::PROJ_to_WGS84(const double& east_in, const double& north_
 */
 void CoordsAlgorithms::WGS84_to_PROJ_STR(const double& lat_in, const double& long_in, const std::string& coordparam, double& east_out, double& north_out)
 {
-#if defined(PROJ)
+#if defined(PROJ4)
+	static const std::string src_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
+	
+	projPJ pj_latlong, pj_dest;
+	double x=long_in*Cst::to_rad, y=lat_in*Cst::to_rad;
+
+	if ( !(pj_dest = pj_init_plus(coordparam.c_str())) ) {
+		pj_free(pj_dest);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+coordparam, AT);
+	}
+	if ( !(pj_latlong = pj_init_plus(src_param.c_str())) ) {
+		pj_free(pj_latlong);
+		pj_free(pj_dest);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+src_param, AT);
+	}
+
+	const int p = pj_transform(pj_latlong, pj_dest, 1, 1, &x, &y, NULL );
+	if (p!=0) {
+		pj_free(pj_latlong);
+		pj_free(pj_dest);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
+	}
+	east_out = x;
+	north_out = y;
+	pj_free(pj_latlong);
+	pj_free(pj_dest);
+#elif defined(PROJ)
 	static const std::string src_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
 
 	PJ_CONTEXT* pj_context = proj_context_create();
@@ -1008,6 +1034,31 @@ void CoordsAlgorithms::WGS84_to_PROJ_STR(const double& lat_in, const double& lon
 void CoordsAlgorithms::PROJ_STR_to_WGS84(const double& east_in, const double& north_in, const std::string& coordparam, double& lat_out, double& long_out)
 {
 #if defined(PROJ4)
+	static const std::string dest_param("+proj=latlong +datum=WGS84 +ellps=WGS84");
+	projPJ pj_latlong, pj_src;
+	double x=east_in, y=north_in;
+
+	if ( !(pj_src = pj_init_plus(coordparam.c_str())) ) {
+		pj_free(pj_src);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+coordparam, AT);
+	}
+	if ( !(pj_latlong = pj_init_plus(dest_param.c_str())) ) {
+		pj_free(pj_latlong);
+		pj_free(pj_src);
+		throw InvalidArgumentException("Failed to initalize Proj with given arguments: "+dest_param, AT);
+	}
+
+	const int p = pj_transform(pj_src, pj_latlong, 1, 1, &x, &y, NULL );
+	if (p!=0) {
+		pj_free(pj_latlong);
+		pj_free(pj_src);
+		throw ConversionFailedException("PROJ conversion failed: "+IOUtils::toString(p), AT);
+	}
+	long_out = x*RAD_TO_DEG;
+	lat_out = y*RAD_TO_DEG;
+	pj_free(pj_latlong);
+	pj_free(pj_src);
+#elif defined(PROJ)
 	static const std::string dest_param("+proj=longlat +datum=WGS84 +no_defs");	// Preferred over EPSG:4326, since EPSG:4326 expects x=<lat>, y=<lon>!
 
 	PJ_CONTEXT* pj_context = proj_context_create();

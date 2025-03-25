@@ -285,6 +285,9 @@ INIshell include file for MeteoIO generators
 				<option value="WindChill"/>
 				<option value="HeatIndex"/>
 				<option value="Wet_Bulb"/>
+				<option value="Humidex"/>
+				<option value="WBGT_simple"/>
+				<option value="WBGT_index"/>
 			</parameter>
 			<reference name="ID_RESTRICT"/>
 			<reference name="HEIGHT_RESTRICT"/>

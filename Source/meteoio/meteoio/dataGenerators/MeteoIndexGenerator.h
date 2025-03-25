@@ -34,7 +34,10 @@ namespace mio {
  * with the TYPE argument:
  *    - WINDCHILL: human-percived feeling of air temperature on exposed skin due to wind;
  *    - HEATINDEX: human-perceived air temperature due to humidity;
- *    - WET_BULB: lowest temperature that could be reached by water evaporation.
+ *    - WET_BULB: lowest temperature that could be reached by water evaporation;
+ *    - HUMIDEX: Canadian index combining the effect of heat and humidity;
+ *    - WBGT_INDEX: a parametrization to reproduce the Wet Bulb Globe Temperature index (this parametrization is not that great);
+ *    - WBGT_SIMPLE: the simplified Wet Bulb Globe Temperature index parametzrization in use by the Australian Bureau of Meteorology.
  * 
  * @code
  * *::edit1 = CREATE
@@ -54,13 +57,17 @@ class MeteoIndex : public GeneratorAlgorithm {
 		static bool windChill(const size_t& param, MeteoData& md);
 		static bool heatIndex(const size_t& param, MeteoData& md);
 		static bool wetBulbTemperature(const size_t& param, MeteoData& md);
+		static bool Humidex(const size_t& param, MeteoData& md);
 		bool WBGT_index(const size_t& param, MeteoData& md);
+		bool WBGT_simple(const size_t& param, MeteoData& md);
 		
 		typedef enum PARAMETRIZATION {
 			WINDCHILL,
 			HEATINDEX,
 			WET_BULB,
-			WBGT_INDEX
+			HUMIDEX,
+			WBGT_INDEX,
+			WBGT_SIMPLE
 		} parametrization;
 		
 		SunObject sun;

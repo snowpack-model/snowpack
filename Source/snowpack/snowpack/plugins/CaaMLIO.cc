@@ -624,7 +624,7 @@ Date CaaMLIO::xmlGetDate()
 {
 	Date date;
 	pugi::xml_node dateNode =  inDoc.first_element_by_path(TimeData_xpath.c_str());
-	const std::string dateStr( (char*)dateNode.child_value() );
+	const std::string dateStr( (const char*)dateNode.child_value() );
 	if (dateStr==""){
 		throw NoDataException("No data found for '"+TimeData_xpath+"'. Please check the version of the caaml-file. Only caaml-version 6 is supported. ", AT);
 	}
@@ -722,18 +722,18 @@ LayerData CaaMLIO::xmlGetLayer(pugi::xml_node nodeLayer, std::string& grainFormC
 			}
 		}
 		if (fieldName == "caaml:wetness"){ //this value will be replaced if a lwc-profile is in the caaml-file!!!
-			Layer.phiWater = lwc_codeToVal((char*) node.child_value());
+			Layer.phiWater = lwc_codeToVal((const char*) node.child_value());
 		}
 		if (fieldName == "caaml:hardness"){
 			//const double hardness = hardness_codeToVal((char*) node.child_value());
 			//std::cout << "hardness (we have no member (of Layer) we could set this value to!!!): " << hardness << " " << std::endl;
 		}
 		if (fieldName == "caaml:grainFormPrimary"){
-			grainFormCode = std::string( (char*)node.child_value() );
+			grainFormCode = std::string( (const char*)node.child_value() );
 			grainShape_codeToVal(grainFormCode, Layer.sp, Layer.dd, Layer.mk); // these values will be replaced if there are values in the custom-snowpack-data
 		}
 		if (fieldName == "caaml:validFormationTime"){
-			const std::string date_str( (char*) node.child("caaml:TimeInstant").child("caaml:timePosition").child_value() );
+			const std::string date_str( (const char*) node.child("caaml:TimeInstant").child("caaml:timePosition").child_value() );
 			Date date;
 			IOUtils::convertString(date, date_str, in_tz);
 			Layer.depositionDate = date;
@@ -767,13 +767,13 @@ void CaaMLIO::xmlReadLayerData(SN_SNOWSOIL_DATA& SSdata)
 	const bool directionTopDown = getLayersDir(); //Read profile direction
 
 	std::string path = SnowData_xpath+"/caaml:snowPackCond/caaml:hS/caaml:Components/caaml:height";
-	const pugi::xml_node nodeHS =  inDoc.first_element_by_path( (char*) path.c_str() );
+	const pugi::xml_node nodeHS =  inDoc.first_element_by_path( (const char*) path.c_str() );
 	SSdata.HS_last=IOUtils::nodata;
 	xmlReadValueFromNode(nodeHS,"caaml:height",SSdata.HS_last,"m");
 
 	size_t nLayers=0;
 	path = SnowData_xpath+"/caaml:stratProfile/caaml:Layer";
-	const pugi::xml_node nodeFirstLayer =  inDoc.first_element_by_path( (char*) path.c_str() );
+	const pugi::xml_node nodeFirstLayer =  inDoc.first_element_by_path( (const char*) path.c_str() );
 	if(nodeFirstLayer.empty()){
 		throw NoDataException("Layer data not found in caaml-file. Expected path: '"+path+"'", AT);
 	}
@@ -830,7 +830,7 @@ bool CaaMLIO::xmlGetProfile(const std::string path, const std::string name, std:
 	}
 
 	std::string profilePath = SnowData_xpath+path;
-	const pugi::xml_node nodeFirstProfile =  inDoc.first_element_by_path( (char*) profilePath.c_str() );
+	const pugi::xml_node nodeFirstProfile =  inDoc.first_element_by_path( (const char*) profilePath.c_str() );
 	zVec.resize(0);
 	valVec.resize(0);
 	for (pugi::xml_node nodeProfile = nodeFirstProfile; nodeProfile; nodeProfile = nodeProfile.next_sibling()){
@@ -840,14 +840,14 @@ bool CaaMLIO::xmlGetProfile(const std::string path, const std::string name, std:
 					double val=0;
 				sscanf((const char*) node.child_value(), "%lf", &val);
 				if (name=="caaml:snowTemp"){
-					val = unitConversion(val,(char*)node.attribute("uom").as_string(),(char*)"K");
+					val = unitConversion(val,(const char*)node.attribute("uom").as_string(),(const char*)"K");
 				}
 				valVec.push_back(val);
 			}
 			if (fieldName == "caaml:depth" || fieldName == "caaml:depthTop") {
 				double z=0;
 				sscanf((const char*) node.child_value(), "%lf", &z);
-				z = unitConversion(z,(char*)node.attribute("uom").as_string(),(char*)"m");
+				z = unitConversion(z,(const char*)node.attribute("uom").as_string(),(const char*)"m");
 				zVec.push_back(z);
 			}
 		}
@@ -1111,16 +1111,16 @@ void CaaMLIO::writeSnowFile(const std::string& snofilename, const Date& date, co
 	writeCustomSnowSoil(snowSoilNode,Xdata);
 
 	// Write profile depth
-	sprintf(valueStr,"%.4f",100.*Xdata.cH/Xdata.cos_sl); // cmb
+	snprintf(valueStr, num_max_len,"%.4f",100.*Xdata.cH/Xdata.cos_sl); // cmb
 	xmlWriteElement(stratNode,(namespaceCAAML+":profileDepth").c_str(),valueStr,"uom","cm");
 
 	//Write height of snow and Snow Water Equivalent (SWE)
 	pugi::xml_node tempNode = stratNode.append_child( (namespaceCAAML+":snowPackCond").c_str() )
 	                                   .append_child( (namespaceCAAML+":hS").c_str() )
 	                                   .append_child( (namespaceCAAML+":Components").c_str() );
-	sprintf(valueStr,"%.4f",100.*(Xdata.cH - Xdata.Ground)/Xdata.cos_sl); // cmb
+	snprintf(valueStr, num_max_len,"%.4f",100.*(Xdata.cH - Xdata.Ground)/Xdata.cos_sl); // cmb
 	xmlWriteElement(tempNode,(namespaceCAAML+":height").c_str(),valueStr,"uom","cm");
-	sprintf(valueStr,"%.2f",Xdata.swe);
+	snprintf(valueStr, num_max_len,"%.2f",Xdata.swe);
 	xmlWriteElement(tempNode,(namespaceCAAML+":waterEquivalent").c_str(),valueStr,"uom","kgm-2");
 
 	//Write layers and quantity profiles
@@ -1142,23 +1142,23 @@ void CaaMLIO::writeSnowFile(const std::string& snofilename, const Date& date, co
  */
 void CaaMLIO::writeCustomSnowSoil(pugi::xml_node& node, const SnowStation& Xdata)
 {
-	sprintf(valueStr,"%.4f",Xdata.Albedo);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.Albedo);
 	xmlWriteElement(node,(namespaceSNP+":Albedo").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.SoilAlb);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.SoilAlb);
 	xmlWriteElement(node,(namespaceSNP+":SoilAlb").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.BareSoil_z0);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.BareSoil_z0);
 	xmlWriteElement(node,(namespaceSNP+":BareSoil_z0").c_str(),valueStr,"uom","m");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.height);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.Cdata.height);
 	xmlWriteElement(node,(namespaceSNP+":CanopyHeight").c_str(),valueStr,"uom","m");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.lai);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.Cdata.lai);
 	xmlWriteElement(node,(namespaceSNP+":CanopyLAI").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.BasalArea);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.Cdata.BasalArea);
 	xmlWriteElement(node,(namespaceSNP+":CanopyBasalArea").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.Cdata.throughfall);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.Cdata.throughfall);
 	xmlWriteElement(node,(namespaceSNP+":CanopyDirectThroughfall").c_str(),valueStr,"","");
-	sprintf(valueStr,"%d",static_cast<unsigned int>(Xdata.ErosionLevel));
+	snprintf(valueStr,num_max_len,"%d",static_cast<unsigned int>(Xdata.ErosionLevel));
 	xmlWriteElement(node,(namespaceSNP+":ErosionLevel").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Xdata.TimeCountDeltaHS);
+	snprintf(valueStr,num_max_len,"%.4f",Xdata.TimeCountDeltaHS);
 	xmlWriteElement(node,(namespaceSNP+":TimeCountDeltaHS").c_str(),valueStr,"","");
 }
 
@@ -1180,9 +1180,9 @@ void CaaMLIO::writeLayers(pugi::xml_node& node, const SnowStation& Xdata)
 			writeCustomLayerData(customNode,Xdata.Edata[ii],Xdata.Ndata[ii]);
 
 			// Write snow and soil layer data 
-			sprintf(layerDepthTopStr,"%.4f",100.*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
+			snprintf(layerDepthTopStr,num_max_len,"%.4f",100.*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100.*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
+			snprintf(layerThicknessStr,num_max_len,"%.4f",100.*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 
 			if (snowLayer) {
@@ -1201,7 +1201,7 @@ void CaaMLIO::writeLayers(pugi::xml_node& node, const SnowStation& Xdata)
 				pugi::xml_node grainSizeNode = layerNode.append_child( (namespaceCAAML+":grainSize").c_str() );
 				grainSizeNode.append_attribute("uom") = "mm";
 				pugi::xml_node compNode = grainSizeNode.append_child( (namespaceCAAML+":Components").c_str() );
-				sprintf(layerValStr,"%.3f",2.*Xdata.Edata[ii].rg);
+				snprintf(layerValStr,num_max_len,"%.3f",2.*Xdata.Edata[ii].rg);
 				xmlWriteElement(compNode,(namespaceCAAML+":avg").c_str(),layerValStr,"","");
 			}
 			pugi::xml_node timeNode = layerNode.append_child( (namespaceCAAML+":validFormationTime").c_str() )
@@ -1220,30 +1220,30 @@ void CaaMLIO::writeLayers(pugi::xml_node& node, const SnowStation& Xdata)
  */
 void CaaMLIO::writeCustomLayerData(pugi::xml_node& node, const ElementData& Edata, const NodeData& Ndata)
 {
-	sprintf(valueStr,"%.4f",Edata.theta[SOIL]);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.theta[SOIL]);
 	xmlWriteElement(node,(namespaceSNP+":phiSoil").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Edata.soil[2]);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.soil[2]);
 	xmlWriteElement(node,(namespaceSNP+":SoilRho").c_str(),valueStr,"uom","kgm-3");
-	sprintf(valueStr,"%.4f",Edata.soil[0]);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.soil[0]);
 	xmlWriteElement(node,(namespaceSNP+":SoilK").c_str(),valueStr,"uom","Wm-1s-1");
-	sprintf(valueStr,"%.4f",Edata.soil[1]);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.soil[1]);
 	xmlWriteElement(node,(namespaceSNP+":SoilC").c_str(),valueStr,"uom","Jkg-1");
-	sprintf(valueStr,"%.4f",Edata.rb);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.rb);
 	xmlWriteElement(node,(namespaceSNP+":bondSize").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.2f",Edata.dd);
+	snprintf(valueStr,num_max_len,"%.2f",Edata.dd);
 	xmlWriteElement(node,(namespaceSNP+":dendricity").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.2f",Edata.sp);
+	snprintf(valueStr,num_max_len,"%.2f",Edata.sp);
 	xmlWriteElement(node,(namespaceSNP+":sphericity").c_str(),valueStr,"","");
-	sprintf(valueStr,"%4u",static_cast<int>(Edata.mk));
+	snprintf(valueStr,num_max_len,"%4u",static_cast<int>(Edata.mk));
 	xmlWriteElement(node,(namespaceSNP+":marker").c_str(),valueStr,"","");
-	sprintf(valueStr,"%.4f",Ndata.hoar);
+	snprintf(valueStr,num_max_len,"%.4f",Ndata.hoar);
 	xmlWriteElement(node,(namespaceSNP+":SurfaceHoarMass").c_str(),valueStr,"uom","kgm-2");
 	xmlWriteElement(node,(namespaceSNP+":ne").c_str(),"1","","");
-	sprintf(valueStr,"%.4f",Edata.CDot);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.CDot);
 	xmlWriteElement(node,(namespaceSNP+":StressRate").c_str(),valueStr,"uom","Nm-2s-1");
-	sprintf(valueStr,"%.4f",Edata.metamo);
+	snprintf(valueStr,num_max_len,"%.4f",Edata.metamo);
 	xmlWriteElement(node,(namespaceSNP+":Metamorphism").c_str(),valueStr,"","");
-	sprintf(valueStr,"%5u",Edata.ID);
+	snprintf(valueStr,num_max_len,"%5u",Edata.ID);
 	xmlWriteElement(node,(namespaceSNP+":ID").c_str(),valueStr,"","");
 }
 
@@ -1258,9 +1258,9 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Ndata.empty()) {
 		for (size_t ii = Xdata.Ndata.size(); ii-->0;) {
 			pugi::xml_node obsNode = tempNode.append_child( (namespaceCAAML+":Obs").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii].z)/Xdata.cos_sl); // cmb
+			snprintf(layerDepthTopStr,num_max_len,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(obsNode,(namespaceCAAML+":depth").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(valueStr,"%.3f",unitConversion(Xdata.Ndata[ii].T,(char*)"degK",(char*)"degC"));
+			snprintf(valueStr,num_max_len,"%.3f",unitConversion(Xdata.Ndata[ii].T,(const char*)"degK",(const char*)"degC"));
 			xmlWriteElement(obsNode,(namespaceCAAML+":snowTemp").c_str(),valueStr,"uom","degC");
 		}
 	}//end temperature profile
@@ -1272,11 +1272,11 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = densityNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
+			snprintf(layerDepthTopStr,num_max_len,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
+			snprintf(layerThicknessStr,num_max_len,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
-			sprintf(valueStr,"%.2f",Xdata.Edata[ii].Rho);
+			snprintf(valueStr,num_max_len,"%.2f",Xdata.Edata[ii].Rho);
 			xmlWriteElement(layerNode,(namespaceCAAML+":density").c_str(),valueStr,"uom","kgm-3");
 		}
 	}//end density profile
@@ -1289,11 +1289,11 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = lwcNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
+			snprintf(layerDepthTopStr,num_max_len,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
+			snprintf(layerThicknessStr,num_max_len,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
-			sprintf(valueStr,"%.2f",Xdata.Edata[ii].theta[2]*100);
+			snprintf(valueStr,num_max_len,"%.2f",Xdata.Edata[ii].theta[2]*100);
 			xmlWriteElement(layerNode,(namespaceCAAML+":lwc").c_str(),valueStr,"uom","% by Vol");
 		}
 	}//end lwc profile
@@ -1306,14 +1306,14 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = ssaNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
+			snprintf(layerDepthTopStr,num_max_len,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
+			snprintf(layerThicknessStr,num_max_len,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
 			double ogs = Xdata.Edata[ii].ogs;
 			double rho = Xdata.Edata[ii].Rho;
 			double ssa = 6.0/(rho*ogs/1000.0); //conversion from optical grain size to ssa
-			sprintf(valueStr,"%.2f",ssa);
+			snprintf(valueStr,num_max_len,"%.2f",ssa);
 			xmlWriteElement(layerNode,(namespaceCAAML+":specSurfArea").c_str(),valueStr,"uom","m2kg-1");
 		}
 	}//end specSurfAreaProfile
@@ -1326,11 +1326,11 @@ void CaaMLIO::writeProfiles(pugi::xml_node& node, const SnowStation& Xdata)
 	if (!Xdata.Edata.empty()) {
 		for (size_t ii = Xdata.Edata.size(); ii-->0;) {
 			pugi::xml_node layerNode = strengthNode.append_child( (namespaceCAAML+":Layer").c_str() );
-			sprintf(layerDepthTopStr,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
+			snprintf(layerDepthTopStr,num_max_len,"%.4f",100*(Xdata.cH - Xdata.Ndata[ii+1].z)/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":depthTop").c_str(),layerDepthTopStr,"uom","cm");
-			sprintf(layerThicknessStr,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
+			snprintf(layerThicknessStr,num_max_len,"%.4f",100*Xdata.Edata[ii].L/Xdata.cos_sl); // cmb
 			xmlWriteElement(layerNode,(namespaceCAAML+":thickness").c_str(),layerThicknessStr,"uom","cm");
-			sprintf(valueStr,"%.2f",(Xdata.Edata[ii].s_strength)*1000); //conversion from kPa to Nm-2: *1000
+			snprintf(valueStr,num_max_len,"%.2f",(Xdata.Edata[ii].s_strength)*1000); //conversion from kPa to Nm-2: *1000
 			xmlWriteElement(layerNode,(namespaceCAAML+":strengthValue").c_str(),valueStr,"uom","Nm-2");
 		}
 	}//end strengthProfile
@@ -1350,7 +1350,7 @@ void CaaMLIO::writeStationData(pugi::xml_node& root, const SnowStation& Xdata)
 	                              .append_child( (namespaceCAAML+":ElevationPosition").c_str() );
 	elevNode.append_attribute("uom") = "m";
 	char elevStr[5];
-	sprintf(elevStr,"%.0f",Xdata.meta.position.getAltitude());
+	snprintf(elevStr,5,"%.0f",Xdata.meta.position.getAltitude());
 	xmlWriteElement(elevNode,(namespaceCAAML+":position").c_str(),elevStr,"","");
 
 	pugi::xml_node aspectNode = node.append_child( (namespaceCAAML+":validAspect").c_str() )
@@ -1362,7 +1362,7 @@ void CaaMLIO::writeStationData(pugi::xml_node& root, const SnowStation& Xdata)
 		                               .append_child( (namespaceCAAML+":SlopeAnglePosition").c_str() );
 		slopeNode.append_attribute("uom") = "deg";
 		char slopeStr[4];
-		sprintf(slopeStr,"%.0f",Xdata.meta.getSlopeAngle());
+		snprintf(slopeStr,4,"%.0f",Xdata.meta.getSlopeAngle());
 		xmlWriteElement(slopeNode,(namespaceCAAML+":position").c_str(),slopeStr,"","");
 	}
 	pugi::xml_node pointNode = node.append_child( (namespaceCAAML+":pointLocation").c_str() )
@@ -1371,7 +1371,7 @@ void CaaMLIO::writeStationData(pugi::xml_node& root, const SnowStation& Xdata)
 	pointNode.append_attribute("srsName") = "urn:ogc:def:crs:OGC:1.3:CRS84";
 	pointNode.append_attribute("srsDimension") = "2";
 	char posStr[30];
-	sprintf(posStr,"%f %f",Xdata.meta.position.getLon(),Xdata.meta.position.getLat());
+	snprintf(posStr,30,"%f %f",Xdata.meta.position.getLon(),Xdata.meta.position.getLat());
 	xmlWriteElement(pointNode,"gml:pos",posStr,"","");
 }
 
@@ -1682,18 +1682,14 @@ bool CaaMLIO::xmlReadValueFromNode (const pugi::xml_node node, const std::string
 							        const std::string unitOut,const std::string unitMeasured, const double factor)
 {
 	const std::string fieldName( node.name() );
-	if (fieldName == propertyName){
+	if (fieldName == propertyName) {
 		double temp;
 		sscanf((const char*) node.child_value(),"%lf",&temp);
 		if (unitOut != ""){
-			char* unitOfMeasurement = (char*)unitMeasured.c_str();
-			if(unitMeasured==""){
-				unitOfMeasurement = (char*) node.attribute("uom").as_string();
-			}
-			temp = unitConversion(temp,unitOfMeasurement,(char*) unitOut.c_str());
+			const std::string unitOfMeasurement = (!unitMeasured.empty())? unitMeasured : node.attribute("uom").as_string();
+			temp = unitConversion(temp,unitOfMeasurement.c_str(),(const char*) unitOut.c_str());
 		}
 		variableToSet = temp*factor;
-		//std::cout << propertyName << ": " << variableToSet << unitOut << std::endl;
 		return true;
 	}
 	return false;
