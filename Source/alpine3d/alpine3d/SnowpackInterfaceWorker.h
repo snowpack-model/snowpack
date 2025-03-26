@@ -31,8 +31,7 @@ class SnowpackInterfaceWorker
 		                        const std::vector< std::pair<size_t,size_t> >& pts_in,
 		                        const std::vector<SnowStation*>& snow_stations,
 		                        const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
-		                        const size_t offset_in,
-                            const std::vector<std::string>& grids_not_computed_in_worker);
+                                const std::vector<std::string>& grids_not_computed_in_worker);
 
 		~SnowpackInterfaceWorker();
 
@@ -87,7 +86,7 @@ class SnowpackInterfaceWorker
 		TechSnow sn_techsnow;
 
 		const mio::DEMObject& dem;
-		const size_t dimx, dimy, offset;
+		const size_t dimx, dimy;
 		std::vector<SnowStation*> SnowStations; // Save different Pixel values
 		std::vector<bool> isSpecialPoint;
 

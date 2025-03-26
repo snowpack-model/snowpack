@@ -184,8 +184,6 @@ void TerrainRadiationComplex::resizeArrays()
 	ViewList = ViewList_tmp;
 }
 
-TerrainRadiationComplex::~TerrainRadiationComplex() {}
-
 //########################################################################################################################
 //                                             INITIALISATION FUNCTIONS
 //########################################################################################################################

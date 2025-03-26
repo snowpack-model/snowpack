@@ -43,7 +43,7 @@ void SnowDriftA3D::Suspension()
   double diff_max[2];
   diff_max[1] = 0.0;
   double t_diff=0.0;
-  static int tmpindex=0;
+  //static int tmpindex=0;
 
   if (DRIFT_MARC)
     {
@@ -100,7 +100,7 @@ void SnowDriftA3D::Suspension()
 			Diffusion(dt_diff, diff_max[1], t_diff);
 			printf("\n Local c: %f Diff Time: %f s diff_max:%f\n", nodes_c.grid3D(2,2,2),t_diff,diff_max[1]);
 
-			tmpindex++;
+			//tmpindex++;
 			//DEBUG("SEQ FLUX (ix=31): x=%f, y=%f, z=%f",
 			//	checksum(flux_x,31, nx-1),checksum(flux_y,31, nx-1),checksum(flux_z,31, nx-1));
 			//DEBUG("SEQ FLUX (ix=33): x=%f, y=%f, z=%f",

@@ -6,7 +6,7 @@
 class SnowBRDF{
 
 	public:
-		SnowBRDF(){};
+		SnowBRDF(){}
 		SnowBRDF(const mio::Config& cfg);
 		~SnowBRDF();
 

@@ -521,7 +521,6 @@ void SolarPanel::initBasicSetHorizontal(){
 	double psi_0=0,psi_1=0,epsilon=0;
 	double delta=0;
 	double phi=0;
-	int i=0;
 
 	BasicSet_horizontal.clear();
 
@@ -540,7 +539,6 @@ void SolarPanel::initBasicSetHorizontal(){
 		for (size_t m = 0; m < M_phi_panel; ++m)
 		{
 			phi=2*3.1415926*(m+0.5)/M_phi_panel;															// [MT eq. 2.3]
-			i+=1;
 			BasicSet_horizontal.push_back({cos(epsilon)*sin(phi), cos(epsilon)*cos(phi), sin(epsilon)}); 	// [MT eq. 2.1]
 		}
 	}
