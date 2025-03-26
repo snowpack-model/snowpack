@@ -1921,6 +1921,7 @@ std::ostream& operator<<(std::ostream& os, const NodeData& data)
 	os.write(reinterpret_cast<const char*>(&data.S_n), sizeof(data.S_n));
 	os.write(reinterpret_cast<const char*>(&data.S_s), sizeof(data.S_s));
 	os.write(reinterpret_cast<const char*>(&data.ssi), sizeof(data.ssi));
+	os.write(reinterpret_cast<const char*>(&data.rta), sizeof(data.rta));
 #endif
 	os.write(reinterpret_cast<const char*>(&data.hoar), sizeof(data.hoar));
 
@@ -1945,6 +1946,7 @@ std::istream& operator>>(std::istream& is, NodeData& data)
 	is.read(reinterpret_cast<char*>(&data.S_n), sizeof(data.S_n));
 	is.read(reinterpret_cast<char*>(&data.S_s), sizeof(data.S_s));
 	is.read(reinterpret_cast<char*>(&data.ssi), sizeof(data.ssi));
+	is.read(reinterpret_cast<char*>(&data.rta), sizeof(data.rta));
 #endif
 	is.read(reinterpret_cast<char*>(&data.hoar), sizeof(data.hoar));
 
@@ -1966,7 +1968,7 @@ const std::string NodeData::toString() const
 	os << "\tz=" << z << " T=" << T << " hoar=" << hoar << "\n";
 	os << "\tCreep: u=" << u << " udot=" << udot << " f=" << f << "\n";
 #ifndef SNOWPACK_CORE
-	os << "\tStability: S_n=" << S_n << " S_s=" << S_s << " ssi=" << ssi << "\n";
+	os << "\tStability: S_n=" << S_n << " S_s=" << S_s << " ssi=" << ssi << " rta=" << rta << "\n";
 #endif
 	os << "\tWater flux: S_n=" << water_flux << "\n";
 	os << "</NodeData>\n";
@@ -2411,6 +2413,7 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 				Ndata[eNew].u = Ndata[e].udot = 0.;
 #ifndef SNOWPACK_CORE
 				Ndata[eNew].ssi = Ndata[e+1].ssi;
+				Ndata[eNew].rta = Ndata[e+1].rta;
 				Ndata[eNew].S_s = Ndata[e+1].S_s;
 				Ndata[eNew].S_n = Ndata[e+1].S_n;
 #endif
@@ -2436,6 +2439,7 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 			Ndata[eNew+1].u = Ndata[e+1].udot = 0.;
 #ifndef SNOWPACK_CORE
 			Ndata[eNew+1].ssi = Ndata[e+1].ssi;
+			Ndata[eNew+1].rta = Ndata[e+1].rta;
 			Ndata[eNew+1].S_s = Ndata[e+1].S_s;
 			Ndata[eNew+1].S_n = Ndata[e+1].S_n;
 #endif

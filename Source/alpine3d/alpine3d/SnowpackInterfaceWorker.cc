@@ -15,6 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "MeteoObj.h"
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/AlpineMain.h>
 
@@ -174,7 +175,6 @@ inline double getAvgAtDepth(const SnowStation& pixel, const double& depth, const
  * @param[in] pts_in gives the spezial points. For this points more output is done then for the others. Calcualtion is the same.
  * @param[in] snow_stations gives a vector of pointers to the SnowStation objects relevant for this thread
  * @param[in] snow_stations_coord provide the (ii,jj) coordinates of each snow station. This is necessary because the slices might be irregular
- * @param[in] offset_in gives the offsett on X for this slice (needed to read data and error messages)
  * @param[in] grids_not_computed_in_worker vector of grids that are required but will be computed outside the workers
  */
 SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
@@ -183,10 +183,9 @@ SnowpackInterfaceWorker::SnowpackInterfaceWorker(const mio::Config& io_cfg,
                                                  const std::vector< std::pair<size_t,size_t> >& pts_in,
                                                  const std::vector<SnowStation*>& snow_stations,
                                                  const std::vector<std::pair<size_t,size_t> >& snow_stations_coord,
-                                                 const size_t offset_in,
                                                  const std::vector<std::string>& grids_not_computed_in_worker)
  : SnowStationsCoord(snow_stations_coord), sn_cfg(io_cfg), sn(sn_cfg), meteo(sn_cfg), stability(sn_cfg, false), sn_techsnow(sn_cfg), dem(dem_in),
-   dimx(dem.getNx()), dimy(dem.getNy()),  offset(offset_in), SnowStations(snow_stations),
+   dimx(dem.getNx()), dimy(dem.getNy()), SnowStations(snow_stations),
    isSpecialPoint(snow_stations.size(), false), landuse(landuse_in), store(dem_in, 0.), erodedmass(dem_in, 0.), grids(), snow_pixel(), meteo_pixel(),
    surface_flux(), soil_temp_depths(), soil_runoff_depths(), snow_density_depths(), calculation_step_length(0.), height_of_wind_value(0.),
    snow_temp_depth(IOUtils::nodata), snow_avg_temp_depth(IOUtils::nodata), snow_avg_rho_depth(IOUtils::nodata),
@@ -262,7 +261,7 @@ SnowpackInterfaceWorker::~SnowpackInterfaceWorker()
 {
 	//sorry for this cryptic syntax, this is to guarantee execution order with the "," operator
 	while (!SnowStations.empty())
-		((SnowStations.back()!=NULL)? delete SnowStations.back() : (void)0) , SnowStations.pop_back();
+		static_cast<void>((SnowStations.back()!=NULL)? delete SnowStations.back() : (void)0) , SnowStations.pop_back();
 }
 
 /******************************************************************************
@@ -493,7 +492,7 @@ void SnowpackInterfaceWorker::fillGrids(const size_t& ii, const size_t& jj, cons
 				}
 				else
 				{
-					throw InvalidArgumentException("Invalid parameter requested " + it->first, AT);
+					throw InvalidArgumentException("Invalid parameter requested " + SnGrids::getParameterName( it->first ), AT);
 				}
 		}
 		it->second(ii,jj) = value;

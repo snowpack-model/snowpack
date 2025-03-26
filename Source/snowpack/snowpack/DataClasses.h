@@ -412,7 +412,7 @@ class NodeData {
 	public:
 		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.)
 #ifndef SNOWPACK_CORE
-                             , S_n(0.), S_s(0.), ssi(6.)
+                             , S_n(0.), S_s(0.), ssi(6.), rta(0.)
 #endif
                              , hoar(0.)
 #ifndef SNOWPACK_CORE
@@ -433,6 +433,7 @@ class NodeData {
 		double S_n;  ///< Stability Index for natural avalanches
 		double S_s;  ///< Stability Index for skier triggered avalanches
 		double ssi;  ///< Structural Stability Index
+		double rta;  ///< Relative Threshold Sum apprach
 #endif
 		double hoar; ///< Mass of surface hoar collected while node was exposed to surface
 

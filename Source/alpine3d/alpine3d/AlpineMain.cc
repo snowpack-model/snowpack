@@ -90,14 +90,14 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 
 		/* These options don't set a flag.
 			We distinguish them by their indices. */
-		{"np-snowpack",		required_argument, 0, 'p'},
-		{"np-ebalance",		required_argument, 0, 'b'},
-		{"iofile",		required_argument, 0, 'i'},
-		{"startdate",		required_argument, 0, 'a'},
-		{"enddate",		required_argument, 0, 'z'},
-		{"steps",		required_argument, 0, 'n'},
-		{"help",		no_argument, 0, 'h'},
-		{0, 0, 0, 0}
+		{"np-snowpack",		required_argument, nullptr, 'p'},
+		{"np-ebalance",		required_argument, nullptr, 'b'},
+		{"iofile",		required_argument, nullptr, 'i'},
+		{"startdate",		required_argument, nullptr, 'a'},
+		{"enddate",		required_argument, nullptr, 'z'},
+		{"steps",		required_argument, nullptr, 'n'},
+		{"help",		no_argument, nullptr, 'h'},
+		{nullptr, 0, nullptr, 0}
 	};
 
 	while ((opt=getopt_long( argc, argv, ":d:p:r:s:e:i:f:a:z:n:h", long_options, &longindex)) != -1) {

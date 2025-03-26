@@ -71,12 +71,11 @@ bool Stability::initStaticData()
 
 Stability::Stability(const SnowpackConfig& cfg, const bool& i_classify_profile)
            : strength_model(), hardness_parameterization(), hoar_density_buried(IOUtils::nodata), plastic(false),
-             classify_profile(i_classify_profile), multi_layer_sk38(false), RTA_ssi(false)
+             classify_profile(i_classify_profile), multi_layer_sk38(false)
 {
 	cfg.getValue("STRENGTH_MODEL", "SnowpackAdvanced", strength_model);
 	cfg.getValue("HARDNESS_PARAMETERIZATION", "SnowpackAdvanced", hardness_parameterization);
 	cfg.getValue("MULTI_LAYER_SK38", "SnowpackAdvanced", multi_layer_sk38); //HACK: temporary key until we decide for a permanent solution
-	cfg.getValue("SSI_IS_RTA", "SnowpackAdvanced", RTA_ssi); //HACK: temporary key until we decide for a permanent solution
 
 	const map<string, StabMemFn>::const_iterator it1 = mapHandHardness.find(hardness_parameterization);
 	if (it1 == mapHandHardness.end()) throw InvalidArgumentException("Unknown hardness parameterization: "+hardness_parameterization, AT);
@@ -213,7 +212,7 @@ void Stability::checkStability(const CurrentMeteo& Mdata, SnowStation& Xdata)
 	double Swl_ssi, Swl_Sk38;
 	size_t Swl_lemon;
 	Stability::findWeakLayer(Pk, n_lemon, Xdata, Swl_ssi, Swl_Sk38, Swl_lemon);
-	if (RTA_ssi) StabilityAlgorithms::getRelativeThresholdSum(Xdata); //HACK: overwrite the Ndata.ssi with the RTA
+	StabilityAlgorithms::getRelativeThresholdSum(Xdata);
 
 	switch (Stability::prof_classi) {
 		case 0:
@@ -331,7 +330,7 @@ void Stability::findWeakLayer(const double& Pk, std::vector<unsigned short>& n_l
 #else	// For SNOWPACK_CORE, create empty functions for functions called by Alpine3D
 Stability::Stability(const SnowpackConfig& /*cfg*/, const bool& i_classify_profile)
            : strength_model(), hardness_parameterization(), hoar_density_buried(IOUtils::nodata), plastic(false),
-             classify_profile(i_classify_profile), multi_layer_sk38(false), RTA_ssi(false)
+             classify_profile(i_classify_profile), multi_layer_sk38(false)
 {
 }
 

@@ -128,7 +128,7 @@ template<class T, class U> void VFSymetricMatrix<T, U>::setElement(unsigned int 
 		throw mio::IndexOutOfBoundsException(std::string(), AT);
 	#endif
 	T tval = static_cast<T>(val);
-	if (tval != 0.) {
+	if (tval != static_cast<T>(0)) {
 		int idx = x*ny+y;
 		if (x > y) {
 			idx = y*ny+x;

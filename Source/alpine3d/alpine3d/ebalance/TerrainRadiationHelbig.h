@@ -31,12 +31,10 @@
 //Optimisation #6 by GS : Function to sort CellList's array by radiation
 inline int CellsRadComparator_Helbig(const void *cell1, const void *cell2)
 {
-	const double c1 = ((CellsList *)cell1)->radiation;
-	const double c2 = ((CellsList *)cell2)->radiation;
-	if (c1 > c2)
-		return -1;
-	if (c1 < c2)
-		return 1;
+	const double c1 = ((const CellsList *)cell1)->radiation;
+	const double c2 = ((const CellsList *)cell2)->radiation;
+	if (c1 > c2) return -1;
+	if (c1 < c2) return 1;
 	return 0;
 }
 
@@ -83,8 +81,10 @@ public:
 	virtual void getRadiation(mio::Array2D<double> &direct, mio::Array2D<double> &diffuse,
 							  mio::Array2D<double> &terrain, const mio::Array2D<double> &direct_unshaded_horizontal,
 							  const mio::Array2D<double> &total_ilwr, mio::Array2D<double> &sky_ilwr,
-							  mio::Array2D<double> &terrain_ilwr, double solarAzimuth, double solarElevation);
-	virtual void setMeteo(const mio::Array2D<double> &albedo, const mio::Array2D<double> &ta);
+							  mio::Array2D<double> &terrain_ilwr, double solarAzimuth, double solarElevation) override;
+	virtual void setMeteo(const mio::Array2D<double> &albedo, const mio::Array2D<double> &ta) override;
+	
+	void getSkyViewFactor(mio::Array2D<double> &o_sky_vf) override;
 
 private:
 	mio::DEMObject dem;
@@ -130,7 +130,6 @@ private:
 	void fillSWResultsGrids(const bool &day);
 
 	void InitializeLW(const int i, const int j, int &i_max_unshoot_lw, int &j_max_unshoot_lw, double &diffmax_lw);
-	void getSkyViewFactor(mio::Array2D<double> &o_sky_vf);
 
 	static inline void CalculateIndex(const int indice, const int distance_max, int dim, int *min, int *max);
 	static inline void LWTerrainRadiationCore(const double bx2, const int j_shoot, const double z_shoot, const int j, const double z, const double cellsize, const double t_snow_shoot, const double t_snow_shoot_value, const double t_a, const double vf, double *lwi, int *s);
