@@ -1870,6 +1870,7 @@ std::ostream& operator<<(std::ostream& os, const NodeData& data)
 	os.write(reinterpret_cast<const char*>(&data.S_n), sizeof(data.S_n));
 	os.write(reinterpret_cast<const char*>(&data.S_s), sizeof(data.S_s));
 	os.write(reinterpret_cast<const char*>(&data.ssi), sizeof(data.ssi));
+	os.write(reinterpret_cast<const char*>(&data.rta), sizeof(data.rta));
 	os.write(reinterpret_cast<const char*>(&data.hoar), sizeof(data.hoar));
 
 	os.write(reinterpret_cast<const char*>(&data.dsm), sizeof(data.dsm));
@@ -1890,6 +1891,7 @@ std::istream& operator>>(std::istream& is, NodeData& data)
 	is.read(reinterpret_cast<char*>(&data.S_n), sizeof(data.S_n));
 	is.read(reinterpret_cast<char*>(&data.S_s), sizeof(data.S_s));
 	is.read(reinterpret_cast<char*>(&data.ssi), sizeof(data.ssi));
+	is.read(reinterpret_cast<char*>(&data.rta), sizeof(data.rta));
 	is.read(reinterpret_cast<char*>(&data.hoar), sizeof(data.hoar));
 
 	is.read(reinterpret_cast<char*>(&data.dsm), sizeof(data.dsm));
@@ -1907,7 +1909,7 @@ const std::string NodeData::toString() const
 	os << "<NodeData>\n";
 	os << "\tz=" << z << " T=" << T << " hoar=" << hoar << "\n";
 	os << "\tCreep: u=" << u << " udot=" << udot << " f=" << f << "\n";
-	os << "\tStability: S_n=" << S_n << " S_s=" << S_s << " ssi=" << ssi << "\n";
+	os << "\tStability: S_n=" << S_n << " S_s=" << S_s << " ssi=" << ssi << " rta=" << rta << "\n";
 	os << "\tWater flux: S_n=" << water_flux << "\n";
 	os << "</NodeData>\n";
 	return os.str();
@@ -2317,6 +2319,7 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 				Ndata[eNew].z = Ndata[e+1].z + Ndata[e+1].u + dL;
 				Ndata[eNew].u = Ndata[e].udot = 0.;
 				Ndata[eNew].ssi = Ndata[e+1].ssi;
+				Ndata[eNew].rta = Ndata[e+1].rta;
 				Ndata[eNew].S_s = Ndata[e+1].S_s;
 				Ndata[eNew].S_n = Ndata[e+1].S_n;
 				//FIXME: when activating the lines below, there is a huge mass balance error. Thus, the nodal "z" repositioning must be off.
@@ -2340,6 +2343,7 @@ void SnowStation::reduceNumberOfElements(const size_t& rnE)
 			Ndata[eNew+1].z = Ndata[e+1].z + Ndata[e+1].u + dL;
 			Ndata[eNew+1].u = Ndata[e+1].udot = 0.;
 			Ndata[eNew+1].ssi = Ndata[e+1].ssi;
+			Ndata[eNew+1].rta = Ndata[e+1].rta;
 			Ndata[eNew+1].S_s = Ndata[e+1].S_s;
 			Ndata[eNew+1].S_n = Ndata[e+1].S_n;
 			//FIXME: when activating the lines below, there is a huge mass balance error. Thus, the nodal "z" repositioning must be off.

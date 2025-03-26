@@ -26,7 +26,8 @@ class ViewFactors : public ViewFactorsAlgorithm {
 
 	public:
 		ViewFactors(const mio::Config& cfg, const mio::DEMObject &dem_in);
-		double getSkyViewFactor(const int &i, const int &j);
+		
+		double getSkyViewFactor(const int &i, const int &j) override;
 		double GetViewfactor(const int i, const int j, const int a, const int b);
 		double getSymetricTerrainViewFactor(const int &i, const int &j);
 		void setBoundarys(const unsigned int in_start_x, const unsigned int in_end_x, const unsigned int in_start_y, const unsigned int in_end_y);

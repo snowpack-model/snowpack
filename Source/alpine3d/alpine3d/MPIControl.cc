@@ -31,14 +31,14 @@ using namespace std;
 using namespace mio;
 
 // Local oprators << and >> on pairs, nedded to serialize pairs in MPI communication
-std::istream& operator>>(std::istream& is, std::pair<size_t,size_t>& data)
+static std::istream& operator>>(std::istream& is, std::pair<size_t,size_t>& data)
 {
 	is.read(reinterpret_cast<char*>(&data.first), sizeof(data.first));
 	is.read(reinterpret_cast<char*>(&data.second), sizeof(data.second));
 	return is;
 }
 
-std::ostream& operator<<(std::ostream& os, const std::pair<size_t,size_t>& data)
+static std::ostream& operator<<(std::ostream& os, const std::pair<size_t,size_t>& data)
 {
 	os.write(reinterpret_cast<const char*>(&data.first), sizeof(data.first));
 	os.write(reinterpret_cast<const char*>(&data.second), sizeof(data.second));
@@ -250,7 +250,7 @@ void MPIControl::barrier() const
 }
 
 #else
-std::string getHostName() {
+static std::string getHostName() {
 	static const size_t len = 4096;
 
 	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__

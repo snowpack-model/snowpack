@@ -54,7 +54,7 @@ inline bool pair_comparator(const std::pair<double, double>& l, const std::pair<
 }
 
 //convert the POI to grid index representation and warn of duplicates
-std::vector< std::pair<size_t,size_t> > prepare_pts(const std::vector<Coords>& vec_pts)
+static std::vector< std::pair<size_t,size_t> > prepare_pts(const std::vector<Coords>& vec_pts)
 {
 	std::vector< std::pair<size_t,size_t> > pts;
 	std::vector<size_t> vec_idx;
@@ -269,7 +269,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 		workers[ii] = new SnowpackInterfaceWorker(sn_cfg, omp_dem, omp_landuse, sub_pts,
                                               thread_stations, thread_stations_coord,
-                                              offset, grids_not_computed_in_worker);
+                                              grids_not_computed_in_worker);
 
 		worker_startx[ii] = offset;
 		worker_deltax[ii] = omp_nx;
@@ -447,7 +447,7 @@ mio::Config SnowpackInterface::readAndTweakConfig(const mio::Config& io_cfg, con
 SnowpackInterface::~SnowpackInterface()
 {
 	if (glacier_katabatic_flow) delete glaciers;
-	while (!workers.empty()) delete workers.back(), workers.pop_back();
+	while (!workers.empty()) (void)delete workers.back(), workers.pop_back(); // guarantee execution order with the "," operator
 }
 
 
@@ -1321,7 +1321,7 @@ SN_SNOWSOIL_DATA SnowpackInterface::getIcePixel(const double glacier_thickness, 
 			} else {
 				MPIControl::instance().send(snow_stations_tmp, ii);
 				MPIControl::instance().send(snow_stations_coord_tmp, ii);
-				while (!snow_stations_tmp.empty()) delete snow_stations_tmp.back(), snow_stations_tmp.pop_back();
+				while (!snow_stations_tmp.empty()) (void)delete snow_stations_tmp.back(), snow_stations_tmp.pop_back(); // guarantee execution order with the "," operator
 			}
 		}
 		std::cout << "[i] Read initial snow cover for process " << MPIControl::instance().rank() << "\n";

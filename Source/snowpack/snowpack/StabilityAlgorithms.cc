@@ -625,9 +625,9 @@ bool StabilityAlgorithms::getRelativeThresholdSum(SnowStation& Xdata)
 	
 	double crust_coeff = 0.;
 	size_t e = nE-1;
-	NDS[ nE ].ssi = 0.; //the top node is assumed perfectly stable
+	NDS[ nE ].rta = 0.; //the top node is assumed perfectly stable
 	while (e-- > Xdata.SoilNode) {
-		NDS[ e ].ssi = 0.; //initialize with 0 so layers that can not get computed don't get in the way
+		NDS[ e ].rta = 0.; //initialize with 0 so layers that can not get computed don't get in the way
 		
 		vecRG.push_back( EMS[e].rg );
 		vecHard.push_back( EMS[e].hard );
@@ -713,9 +713,9 @@ bool StabilityAlgorithms::getRelativeThresholdSum(SnowStation& Xdata)
 		if (index.back()>max_index) max_index = index.back();
 	}
 	
-	if (max_index==0.) max_index=1.; //in this case, all index()==0 so we will set all ssi to zero
+	if (max_index==0.) max_index=1.; //in this case, all index()==0 so we will set all rta to zero
 	for (size_t ii=0; ii<vecRG.size(); ii++) {
-		NDS[ nE - ii -1 ].ssi = index[ii] / max_index;
+		NDS[ nE - ii -1 ].rta = index[ii] / max_index;
 	}
 	
 	return true;

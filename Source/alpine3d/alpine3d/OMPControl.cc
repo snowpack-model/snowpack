@@ -34,18 +34,12 @@ namespace OMPControl
     size_t dimy = dem.getNy();
 
     size_t n_skip_cell=0;
-    size_t n_skip_cell_2=0;
 
     for (size_t ix = 0; ix < dimx; ix++) {
       for (size_t iy = 0; iy < dimy; iy++) {
         if (SnowpackInterfaceWorker::skipThisCell(landuse(ix,iy), dem(ix,iy)))
         {n_skip_cell++;}
       }
-    }
-    for(size_t i=0;i<snow_station.size();++i)
-    {
-      if(snow_station.at(i)==NULL)
-      {n_skip_cell_2++;}
     }
 
     size_t n_snow_station_compute = (snow_station.size()-n_skip_cell);
