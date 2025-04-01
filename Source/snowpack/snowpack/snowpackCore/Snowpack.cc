@@ -2006,8 +2006,15 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());
 		Mdata.date = EnforcedDepositionDate;
 	}
+	// if this redeposit scheme is used for snow_distribution (in Main.cc), luv eroded snow can be deposited on the bare lee ground before runSnowpackMOdel is called, and t_surf is not yet set.
+	// In this case, we need to set t_surf so the temperature profile can be properly computed after deposition.
+	if (t_surf == Constants::undefined || t_surf == 0.0) {
+		t_surf = std::min(Constants::meltfreeze_tk , Xdata.Ndata[Xdata.getNumberOfNodes()-1].T);
+	}
+
 	// Add eroded snow:
 	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+
 	// Set back original settings:
 	force_add_snowfall = tmp_force_add_snowfall;
 	hn_density = tmp_hn_density;

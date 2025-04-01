@@ -62,6 +62,8 @@ class Snowpack {
 
 		void setSnDt(const double& snDt) { sn_dt = snDt;}
 
+		void RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass);
+		void updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const CurrentMeteo& Mdata);
 		/**
 		 * @brief Specifies what kind of boundary condition is to be implemented at the top surface.
 		 * Either use surface fluxes (NEUMANN_BC) or use a prescribed surface temperature (DIRICHLET_BC)
@@ -74,12 +76,14 @@ class Snowpack {
 		double getParameterizedAlbedo(const SnowStation& Xdata,
 		                              const CurrentMeteo& Mdata) const;
 		double getModelAlbedo(const SnowStation& Xdata, CurrentMeteo& Mdata) const;
-
+		bool compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xdata,
+			BoundCond& Bdata,
+			const bool& ThrowAtNoConvergence);
  protected:
 
-		bool compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xdata,
-                              BoundCond& Bdata,
-                              const bool& ThrowAtNoConvergence);
+		// bool compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xdata,
+        //                       BoundCond& Bdata,
+        //                       const bool& ThrowAtNoConvergence);
 
 		BoundaryCondition surfaceCode;
 
@@ -94,7 +98,7 @@ class Snowpack {
 		                        double Se[ N_OF_INCIDENCES ][ N_OF_INCIDENCES ], double Fe[ N_OF_INCIDENCES ],
 		                        const double VaporEnhance);
 
- 		void updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const CurrentMeteo& Mdata);
+ 		// void updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const CurrentMeteo& Mdata);
 
 		void neumannBoundaryConditions(const CurrentMeteo& Mdata, BoundCond& Bdata, const SnowStation& Xdata,
 		                               const double& T_snow, const double& T_iter,
@@ -117,8 +121,6 @@ class Snowpack {
 
 		void compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                  SurfaceFluxes& Sdata);
-
-		void RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass);
 
 		const SnowpackConfig& cfg;
 
