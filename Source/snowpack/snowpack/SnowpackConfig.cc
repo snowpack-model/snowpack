@@ -53,6 +53,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["SOOT_PPMV"] = "0.0";
 	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
+	advancedConfig["ENHANCED_WIND_SLAB"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
 	advancedConfig["FORCE_ADD_SNOWFALL"] = "false";

@@ -109,6 +109,8 @@ static bool restart = false;
 static mio::Date dateBegin, dateEnd;
 static vector<string> vecStationIDs;
 
+bool msg_deposit = false;  ///Enables deposit notification for debugging
+
 /// @brief Main control parameters
 struct MainControl
 {
@@ -560,7 +562,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
                             SunObject &sun,
                             double& precip, const double& lw_in, const double hs_a3hl6,
                             double& tot_mass_in,
-                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo)
+                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo) //, BoundCond& Bdata
 {
 	SnowStation &currentSector = vecXdata[slope.sector]; //alias: the current station
 	const bool isMainStation = (slope.sector == slope.mainStation);
@@ -662,15 +664,27 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		 * while erosion is treated in SnowDrift.c (windward).
 		*/
 		if (slope.snow_redistribution && (slope.sector == slope.lee)) {
-			// If it is not snowing, use surface snow density on windward slope
-			if (!(hn_slope > 0.)) {
-				rho_hn_slope = vecXdata[slope.luv].rho_hn;
+
+			// Add eroded mass from windward slope using the Redeposit scheme:
+			if (vecXdata[slope.luv].ErosionMass > 0.) {
+				if ( msg_deposit) { //messages for debug
+						prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Depositing total mass %.3lf kg/m2 ( slope=%d)", vecXdata[slope.luv].ErosionMass, slope.sector);
+					}
+				int El_bfr = vecXdata[slope.sector].getNumberOfElements();
+				
+				Snowpack snowpack(cfg); // HACK: create a separate snowpack object to access the Redeposit and compSnowfall functions
+				snowpack.RedepositSnow(Mdata, vecXdata[slope.sector], surfFluxes, vecXdata[slope.luv].ErosionMass);
+				
+				// has snow actually been deposited??
+				if ( msg_deposit) {
+					if ( vecXdata[slope.sector].getNumberOfElements() != El_bfr ) {
+							prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "deposited %d elements,  %.4lf m, rho=%.3lf kg/m3" ,
+								 (vecXdata[slope.sector].getNumberOfElements()-El_bfr), vecXdata[slope.sector].hn_redeposit, vecXdata[slope.sector].rho_hn_redeposit );
+						}
+					}	
+				// snow has been deposited, and ErosionMass is now zero
+				vecXdata[slope.luv].ErosionMass = 0.;
 			}
-			// Add eroded mass from windward slope
-			if (rho_hn_slope != 0.) {
-				hn_slope += vecXdata[slope.luv].ErosionMass / rho_hn_slope;
-			}
-			vecXdata[slope.luv].ErosionMass = 0.;
 		}
 		// Update depth of snowfall on slopes.
 		// This may include contributions from drifting snow eroded on the windward (luv) slope.
