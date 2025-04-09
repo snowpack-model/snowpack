@@ -105,7 +105,7 @@ class Cumsum {
 //Global variables in this file:
 static string cfgfile = "io.ini";
 static string mode = "RESEARCH";
-bool restart = false;
+static bool restart = false;
 static mio::Date dateBegin, dateEnd;
 static vector<string> vecStationIDs;
 
@@ -248,15 +248,15 @@ inline void parseCmdLine(int argc, char **argv, string& begin_date_str, string& 
 
 	struct option long_options[] =
 	{
-		{"begindate", required_argument, 0, 'b'},
-		{"enddate", required_argument, 0, 'e'},
-		{"mode", required_argument, 0, 'm'},
-		{"restart", no_argument, 0, 'r'},
-		{"config", required_argument, 0, 'c'},
-		{"stations", required_argument, 0, 's'},
-		{"version", no_argument, 0, 'v'},
-		{"help", no_argument, 0, 'h'},
-		{0, 0, 0, 0}
+		{"begindate", required_argument, nullptr, 'b'},
+		{"enddate", required_argument, nullptr, 'e'},
+		{"mode", required_argument, nullptr, 'm'},
+		{"restart", no_argument, nullptr, 'r'},
+		{"config", required_argument, nullptr, 'c'},
+		{"stations", required_argument, nullptr, 's'},
+		{"version", no_argument, nullptr, 'v'},
+		{"help", no_argument, nullptr, 'h'},
+		{nullptr, 0, nullptr, 0}
 	};
 
 	if (argc==1) { //no arguments provided

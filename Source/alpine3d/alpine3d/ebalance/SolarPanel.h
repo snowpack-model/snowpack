@@ -11,7 +11,7 @@
 class SolarPanel{
 
 	public:
-		SolarPanel(){};
+		SolarPanel(){}
 
 		SolarPanel(const mio::Config& cfg, const mio::DEMObject &dem_in, const std::vector<std::vector<double> > &pv_pts);
 

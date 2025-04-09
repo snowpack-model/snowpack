@@ -105,38 +105,33 @@ MACRO (SET_COMPILER_OPTIONS)
 				SET(CMAKE_EXE_LINKER_FLAGS "--enable-auto-import")
 			ENDIF(WIN32)
 		ENDIF(NOT ANDROID)
-		IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.2 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.2)	#from cmake 3.7: GREATER_EQUAL
-			SET(ARCH_OPTIM "-march=native -mtune=native")
-		ENDIF()
-		IF(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.8 OR CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.8)
-			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wvector-operation-performance") #for gcc>=4.7.0
-			IF(NOT WIN32)
-				#for gcc>4.5, but first implementations were slow, so it is safe to enforce 4.8
-				FIND_PROGRAM(CMAKE_GCC_AR NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ar${_CMAKE_TOOLCHAIN_SUFFIX} HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
-				FIND_PROGRAM(CMAKE_GCC_NM NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-nm HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
-				FIND_PROGRAM(CMAKE_GCC_RANLIB NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ranlib HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+		SET(ARCH_OPTIM "-march=native -mtune=native")
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wvector-operation-performance")
+		IF(NOT WIN32)
+			FIND_PROGRAM(CMAKE_GCC_AR NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ar${_CMAKE_TOOLCHAIN_SUFFIX} HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+			FIND_PROGRAM(CMAKE_GCC_NM NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-nm HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
+			FIND_PROGRAM(CMAKE_GCC_RANLIB NAMES ${_CMAKE_TOOLCHAIN_PREFIX}gcc-ranlib HINTS ${_CMAKE_TOOLCHAIN_LOCATION})
 
-				IF(CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB)
-					#for cmake>3.9: set CMAKE_INTERPROCEDURAL_OPTIMIZATION to TRUE
-					SET(USE_LTO_OPTIMIZATIONS ON CACHE BOOL "Use Link Time Optmizations when compiling (memory heavy while compiling)")
-					MARK_AS_ADVANCED(FORCE USE_LTO_OPTIMIZATIONS)
-					IF(USE_LTO_OPTIMIZATIONS)
-						SET(OPTIM "${OPTIM} -flto=auto -fno-fat-lto-objects")
-					ENDIF()
-					SET( CMAKE_AR "${CMAKE_GCC_AR}" )
-					SET( CMAKE_NM "${CMAKE_GCC_NM}" )
-					SET( CMAKE_RANLIB "${CMAKE_GCC_RANLIB}" )
-				ELSE()
-					MESSAGE( WARNING "GCC indicates LTO support, but binutils wrappers could not be found. Disabling LTO." )
+			IF(CMAKE_GCC_AR AND CMAKE_GCC_NM AND CMAKE_GCC_RANLIB)
+				#for cmake>3.9: set CMAKE_INTERPROCEDURAL_OPTIMIZATION to TRUE
+				SET(USE_LTO_OPTIMIZATIONS ON CACHE BOOL "Use Link Time Optmizations when compiling (memory heavy while compiling)")
+				MARK_AS_ADVANCED(FORCE USE_LTO_OPTIMIZATIONS)
+				IF(USE_LTO_OPTIMIZATIONS)
+					SET(OPTIM "${OPTIM} -flto=auto -fno-fat-lto-objects")
 				ENDIF()
-			ENDIF(NOT WIN32)
-			#if set to ON, all binaries depending on the library have to be compiled the same way.
-			#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"
-			SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
-			IF (LEAKS_CHECK)
-				SET(EXTRA "${EXTRA} -fsanitize=address -fno-omit-frame-pointer")
-			ENDIF(LEAKS_CHECK)
-		ENDIF()
+				SET( CMAKE_AR "${CMAKE_GCC_AR}" )
+				SET( CMAKE_NM "${CMAKE_GCC_NM}" )
+				SET( CMAKE_RANLIB "${CMAKE_GCC_RANLIB}" )
+			ELSE()
+				MESSAGE( WARNING "GCC indicates LTO support, but binutils wrappers could not be found. Disabling LTO." )
+			ENDIF()
+		ENDIF(NOT WIN32)
+		#if set to ON, all binaries depending on the library have to be compiled the same way.
+		#Then, do an "export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4" and run with "ASAN_OPTIONS=symbolize=1"
+		SET(LEAKS_CHECK OFF CACHE BOOL "Set to ON to dynamically check for memory corruption (and do the same for applications linked with MeteoIO)")
+		IF (LEAKS_CHECK)
+			SET(EXTRA "${EXTRA} -fsanitize=address -fno-omit-frame-pointer")
+		ENDIF(LEAKS_CHECK)
 
 	###########################################################
 	ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -144,7 +139,7 @@ MACRO (SET_COMPILER_OPTIONS)
 			LIST(APPEND CFLAGS " -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 		ENDIF(WIN32)
 		
-		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-format-nonliteral -Wno-date-time -Wno-unused-template -Wno-disabled-macro-expansion -Wno-c++98-compat -Wno-c++98-compat-pedantic")
+		SET(WARNINGS_OFF "-Wno-long-long -Wno-float-equal -Wno-documentation -Wno-documentation-unknown-command -Wno-old-style-cast -Wno-padded -Wno-missing-noreturn -Wno-weak-vtables -Wno-switch-enum -Wno-covered-switch-default -Wno-global-constructors -Wno-exit-time-destructors -Wno-unknown-pragmas -Wno-source-uses-openmp -Wno-format-nonliteral -Wno-date-time -Wno-unused-template -Wno-disabled-macro-expansion -Wno-c++98-compat -Wno-c++98-compat-pedantic")
 		SET(WARNINGS "-Wall -Wswitch -Weverything ${WARNINGS_OFF}") #obviously, we should try to fix the warnings! Keeping in mind that some of these W are half buggy...
 		SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization -Wctor-dtor-privacy") #-Rpass=.* for static analysis
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}")

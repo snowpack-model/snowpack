@@ -197,6 +197,7 @@ const bool AsciiIO::t_gnd = false;
  * 0604,nElems,structural stability index SSI
  * 0605,nElems,inverse texture index ITI (Mg m-4)
  * 0606,nElems,critical cut length (m)
+ * 0607,nElems,relative threshold sum approach RTA
  * 0621,nElems,dsm (for NIED only)
  * 0622,nElems,Sigdsm (for NIED only)
  * 0623,nElems,S_dsm (for NIED only)
@@ -1292,6 +1293,10 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 		for (size_t e = Xdata.SoilNode; e < nE; e++) {
 			fout << "," << std::fixed << std::setprecision(2) << EMS[e].crit_cut_length;
 		}
+		// 0607: relative threshold sum approach (RTA)
+		fout << "\n0607," << nE-Xdata.SoilNode;
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].rta;
 		if (metamorphism_model == "NIED") {
 			// 0621: Dry snow metamorphism factor
 			fout << "\n0621," << nE-Xdata.SoilNode;
@@ -1310,7 +1315,7 @@ void AsciiIO::writeProfileProAddDefault(const SnowStation& Xdata, std::ofstream 
 			}
 		}
 	} else {
-		for (size_t jj = 1; jj < 7; jj++) {
+		for (size_t jj = 1; jj < 8; jj++) {
 			fout << "\n060" << jj << ",1,0";
 		}
 		if (metamorphism_model == "NIED") {
@@ -1367,6 +1372,10 @@ void AsciiIO::writeProfileProAddCalibration(const SnowStation& Xdata, std::ofstr
 		for (size_t e = Xdata.SoilNode; e < nE; e++) {
 			fout << "," << std::fixed << std::setprecision(2) << EMS[e].crit_cut_length;
 		}
+		// 0607: relative threshold sum approach RTA
+		fout << "\n0607," << nE-Xdata.SoilNode;
+		for (size_t e = Xdata.SoilNode; e < nE; e++)
+			fout << "," << std::fixed << std::setprecision(2) << NDS[e+1].rta;
 
 		// 700-profile specials for settling comparison
 		// 0701: SNOWPACK: settling rate due to metamorphism (sig0) (% h-1)
@@ -1418,7 +1427,7 @@ void AsciiIO::writeProfileProAddCalibration(const SnowStation& Xdata, std::ofstr
 			fout << "," << std::fixed << std::setprecision(2) << 1.e-9*eta_sntherm;
 		}
 	} else {
-		for (size_t jj = 1; jj < 7; jj++) {
+		for (size_t jj = 1; jj < 8; jj++) {
 			fout << "\n060" << jj << ",1,0";
 		}
 		for (size_t jj = 1; jj < 7; jj++) {
@@ -2496,6 +2505,7 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\n0604,nElems,ssi";
 	fout << "\n0605,nElems,inverse texture index ITI (Mg m-4)";
 	fout << "\n0606,nElems,critical cut length (m)";
+	fout << "\n0607,nElems,rta";
 	if (metamorphism_model == "NIED") {
 		fout << "\n0621,nElems,dry snow metamorphism factor (dsm)";
 		fout << "\n0622,nElems,Sigdsm";

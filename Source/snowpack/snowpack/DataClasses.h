@@ -398,7 +398,7 @@ class ElementData {
 /// @brief NODAL DATA used as a pointer in the SnowStation structure
 class NodeData {
 	public:
-		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.), S_n(0.), S_s(0.), ssi(6.), hoar(0.),
+		NodeData() : z(0.), u(0.), f(0.), udot(0.), T(0.), S_n(0.), S_s(0.), ssi(6.), rta(0.), hoar(0.),
 		             dsm(0.), S_dsm(0.), Sigdsm(0.), rime(0.), water_flux(0.), rhov(0.) {} //HACK: set ssi to max_stability!
 
 		const std::string toString() const;
@@ -413,6 +413,7 @@ class NodeData {
 		double S_n;  ///< Stability Index for natural avalanches
 		double S_s;  ///< Stability Index for skier triggered avalanches
 		double ssi;  ///< Structural Stability Index
+		double rta;  ///< Relative Threshold Sum apprach
 		double hoar; ///< Mass of surface hoar collected while node was exposed to surface
 
 		//NIED (H. Hirashima)

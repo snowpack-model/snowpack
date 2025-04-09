@@ -114,11 +114,6 @@ double ViewFactorsSectors::getHorizonForRay(const unsigned int& ix1, const unsig
 
 	if (ix1==0 || (int)ix1==dimx-1 || iy1==0 || (int)iy1==dimy-1) return 0.; //a border cell is not shadded
 
-	int horzionHeightsCounter = 0;
-
-	//if (ix1==35 && iy1 ==90)
-	//       horzionMinHorizonAngle(horzionHeightsAngle,0) = min_horizon_angle;
-
 	while (!horizon_found) {
 		nb_cells+=schrittweite;
 		const int ix2 = ix1 + (int)mio::Optim::round( ((double)(nb_cells))*sin(alpha) ); //alpha is a bearing
@@ -158,7 +153,6 @@ double ViewFactorsSectors::getHorizonForRay(const unsigned int& ix1, const unsig
 
 		}
 
-		horzionHeightsCounter++;
 		if (distance>max_shade_distance) horizon_found=true; //maximum lookup distance reached
 	}
 

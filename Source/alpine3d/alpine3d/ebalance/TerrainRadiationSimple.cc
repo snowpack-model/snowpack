@@ -34,8 +34,6 @@ TerrainRadiationSimple::TerrainRadiationSimple(const mio::Config& /*i_cfg*/, con
 
 }
 
-TerrainRadiationSimple::~TerrainRadiationSimple() {}
-
 void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& /*direct*/,
                                           mio::Array2D<double>& diffuse, mio::Array2D<double>& terrain,
                                           const mio::Array2D<double>& direct_unshaded_horizontal,

@@ -315,7 +315,7 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 
 //generate PSUM_PH from PSUM and TA
 bool MeteoObj::fillPrecSplitting() {
-	std::string model = "RANGE";
+	static const std::string model = "RANGE";
 	double fixed_thresh = 273.15+2;
 	double range_start = 273.15+0;
 	double range_end = 273.15+2;
@@ -325,11 +325,11 @@ bool MeteoObj::fillPrecSplitting() {
 			const double TA = ta(ix,iy);
 			if (TA == IOUtils::nodata) return false;
 			double value;
-			if (model == "THRESH") {
-				value = (TA >= fixed_thresh)? 1. : 0.;
-			} else if (model == "RANGE") {
+			if (model == "RANGE") {
 				const double tmp_rainfraction =  (TA - range_start)/(range_end-range_start);
 				value = (tmp_rainfraction>1)? 1. : (tmp_rainfraction<0.)? 0. : tmp_rainfraction;
+			} else { //model == "THRESH"
+				value = (TA >= fixed_thresh)? 1. : 0.;
 			}
 			psum_ph(ix,iy) = value;
 		}
@@ -380,12 +380,12 @@ void MeteoObj::checkLapseRate(const std::vector<mio::MeteoData>& i_vecMeteo, con
 	std::cout << "[check:Data_Lapse_Rate] " << date_str << " " << param_str << " " << std::fixed << std::setw(7) << std::setprecision(5) << A << " ";
 
 	if (param==MeteoData::PSUM && A<-1e-3) { //when precip gradient is "too wrong", print values
-		const std::streamsize prec = std::cout.precision();
+		const auto default_precision{std::cout.precision()};
 		std::cout << "- ";
 		for (size_t ii=0; ii<vecData.size(); ii++){
 			std::cout << std::fixed << std::setw(4) << std::setprecision(2) << vecData[ii] << "@" << std::fixed << std::setw(6) << std::setprecision(1) << vecAltitudes[ii] << " ";
 		}
-		std::cout << std::setprecision(prec);
+		std::cout << std::setprecision(default_precision);
 		std::cout .unsetf(ios_base::floatfield);
 	}
 	std::cout << "\n";
