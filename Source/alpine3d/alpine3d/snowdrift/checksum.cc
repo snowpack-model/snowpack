@@ -184,10 +184,10 @@ double checksum(const std::vector<ElementData>& x, const size_t n)
 double checksum(const CanopyData &x)
 {
 	const size_t n = sizeof(CanopyData)/sizeof(double);
-	double *xp=(double *)(&x);
+	double *xp = (double *)(&x); //BUG x should be const, then we increment it through the pointer...
 	double t=0;
 	for (size_t i=0;i<n;i++, xp++) {
-		t+=*xp;
+		t += *xp;
 	}
 	return t;
 }

@@ -40,7 +40,7 @@ void SnowBRDF::initialize(const mio::Config& cfg)
 	
 	for (unsigned i = 1; i < n_thi+1; ++i) {
 		char theta[4];
-		sprintf(theta, "%d", 3*i);
+		snprintf(theta, 4, "%d", 3*i);
 		std::string filename = path + mid + theta;
 		std::ifstream file(filename);
 

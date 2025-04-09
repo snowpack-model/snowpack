@@ -68,8 +68,8 @@ void Snowpack::EL_INCID(const int &e, int Ie[]) {
 
 /// @brief Define the node to element temperature macro
 void Snowpack::EL_TEMP( const int Ie[], double Te0[], double Tei[], const std::vector<NodeData> &T0, const double Ti[] ) {
-	Te0[ 0 ] = T0[ Ie[ 0 ] ].T;
-	Te0[ 1 ] = T0[ Ie[ 1 ] ].T;
+	Te0[ 0 ] = T0[ static_cast<size_t>(Ie[ 0 ]) ].T;
+	Te0[ 1 ] = T0[ static_cast<size_t>(Ie[ 1 ]) ].T;
 	Tei[ 0 ] = Ti[ Ie[ 0 ] ];
 	Tei[ 1 ] = Ti[ Ie[ 1 ] ];
 }
@@ -956,7 +956,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	}
 
 	if (Kt != NULL)
-		ds_Solve(ReleaseMatrixData, (SD_MATRIX_DATA*)Kt, 0);
+		ds_Solve(ReleaseMatrixData, (SD_MATRIX_DATA*)Kt, nullptr);
 	ds_Initialize(static_cast<int>(nN), (SD_MATRIX_DATA**)&Kt);
 	/*
 	 * Define the structure of the matrix, i.e. its connectivity. For each element
@@ -980,7 +980,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	 * memory in order to store the numerical matrix. Then reallocate all the
 	 * solution vectors.
 	*/
-	ds_Solve(SymbolicFactorize, (SD_MATRIX_DATA*)Kt, 0);
+	ds_Solve(SymbolicFactorize, (SD_MATRIX_DATA*)Kt, nullptr);
 
 	// Make sure that these vectors are always available for use ....
 	errno=0;
@@ -1092,7 +1092,7 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 	do {
 		iteration++;
 		// Reset the matrix data and zero out all the increment vectors
-		ds_Solve(ResetMatrixData, (SD_MATRIX_DATA*)Kt, 0);
+		ds_Solve(ResetMatrixData, (SD_MATRIX_DATA*)Kt, nullptr);
 		for (size_t n = 0; n < nN; n++) {
 			ddU[n] = dU[n];
 			dU[n] = 0.;

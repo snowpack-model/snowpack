@@ -413,11 +413,6 @@ https://snowpack.slf.ch
 			<option value="FALSE"/>
 			<help>Use a multi layer SK38 index as in (Monti, Fabiano, et al., &lt;i&gt;"Snow instability evaluation: calculating the skier-induced stress in a multi-layered snowpack"&lt;/i&gt;, Natural Hazards and Earth System Sciences, 16.3, 2016). (default: FALSE)</help>
 		</parameter>
-		<parameter key="SSI_IS_RTA" type="alternative" longlabel="true" optional="true">
-			<option value="TRUE"/>
-			<option value="FALSE"/>
-			<help>Output the Relative Threshold Approach (Monti, Fabiano, and Jürg Schweizer, &lt;i&gt;"A relative difference approach to detect potential weak layers within a snow profile"&lt;/i&gt;, Proceedings ISSW, 2013) for stability evaluation instead of the SSI (default: FALSE)</help>
-		</parameter>
 	</frame>
 
 	<frame caption="Extras" section="SnowpackAdvanced" collapsed="true">

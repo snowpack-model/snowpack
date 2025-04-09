@@ -41,7 +41,7 @@ class Metamorphism {
 	public:
 		Metamorphism(const SnowpackConfig& i_cfg);
 
-		void runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) const throw();
+		void runMetamorphismModel(const CurrentMeteo& Mdata, SnowStation& Xdata) const noexcept;
 
 		static double csPoreArea(const ElementData& Edata);
 

@@ -107,7 +107,6 @@ class SunTrajectory {
 class SunMeeus : public SunTrajectory {
 	public:
 		SunMeeus();
-		~SunMeeus() override {}
 		SunMeeus(const double& i_latitude, const double& i_longitude);
 		SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& i_TZ=0.);
 

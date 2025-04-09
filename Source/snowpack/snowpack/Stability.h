@@ -72,7 +72,7 @@ class Stability {
 		std::string strength_model, hardness_parameterization;
 		double hoar_density_buried;
 		bool plastic;
-		bool classify_profile, multi_layer_sk38, RTA_ssi;
+		bool classify_profile, multi_layer_sk38;
 };
 
 #endif //End of Stability.h

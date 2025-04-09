@@ -307,12 +307,12 @@ void typeToCode(int *F1, int *F2, int *F3, int type)
  * @brief Performs simple unit conversion (supports temperature, prefixes and exponents)
  * @author Adrien Gaudard
  * @version 11.03
- * @param val Value (expressed in unitIn)
- * @param unitIn (units of input)
- * @param unitOut (units of output)
+ * @param[in] val Value (expressed in unitIn)
+ * @param[in] unitIn (units of input)
+ * @param[in] unitOut (units of output)
  * return Value (expressed in unitOut)
  */
-double unitConversion(const double val, char* unitIn, char* unitOut)
+double unitConversion(const double val, const char* unitIn, const char* unitOut)
 {
 	if (!strcmp(unitIn,"degK") || !strcmp(unitIn,"°K") || !strcmp(unitIn,"Kelvin"))
 		unitIn = strdup("K");
@@ -447,14 +447,12 @@ bool massBalanceCheck(const SnowStation& Xdata, const SurfaceFluxes& Sdata, doub
  */
 double forcedErosion(const double hs, SnowStation& Xdata)
 {
-	int    nErode=0;        // Counters
 	double massErode=0.;    // Eroded mass (kg m-2)
 
 	while ( (Xdata.getNumberOfElements() > Xdata.SoilNode) && (hs + 0.01) < (Xdata.cH - Xdata.Ground) ) {
 		massErode += Xdata.Edata[Xdata.getNumberOfElements()-1].M;
 		Xdata.cH -= Xdata.Edata[Xdata.getNumberOfElements()-1].L;
 		Xdata.resize(Xdata.getNumberOfElements() - 1);
-		nErode++;
 	}
 	Xdata.ErosionLevel = std::min(Xdata.getNumberOfElements()-1, Xdata.ErosionLevel);
 

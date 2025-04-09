@@ -390,8 +390,6 @@ void SnowDriftA3D::ConstructElements()
 void SnowDriftA3D::SnowMassChange(bool setbound, const mio::Date& calcDate)
 {
 	//LH_DEBUG BEGIN
-	static int timestepp=0;
-	timestepp++;
 
 	//loop over all interior nodes, boundary nodes are set to zero
 	//subsequently

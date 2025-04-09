@@ -25,7 +25,7 @@
 class ViewFactorsSectors : public ViewFactorsAlgorithm {
 	public:
 		ViewFactorsSectors(const mio::Config& cfg, const mio::DEMObject &dem_in);
-		double getSkyViewFactor(const int &i, const int &j);
+		double getSkyViewFactor(const int &i, const int &j) override;
 		void getSkyViewFactor(mio::Array2D<double> &o_sky_vf) const;
 		double GetViewfactor(const int i, const int j, const int a, const int b);
 		int getViewCells(const int i, const int j, const int h, const int v);
