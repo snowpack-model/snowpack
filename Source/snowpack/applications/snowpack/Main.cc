@@ -683,7 +683,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 						}
 					}	
 				// snow has been deposited, and ErosionMass is now zero
-				vecXdata[slope.luv].ErosionMass = 0.;
+				vecXdata[slope.luv].ErosionMass = 0.;  // But the cumsum is calculated in ln. 1409
 			}
 		}
 		// Update depth of snowfall on slopes.
@@ -1390,7 +1390,7 @@ inline void real_main (int argc, char *argv[])
 						cumsum.rain += surfFluxes.mass[SurfaceFluxes::MS_RAIN];
 						cumsum.snow += surfFluxes.mass[SurfaceFluxes::MS_HNW];
 					}
-				} else {
+				} else { // not slope.main Station
 					const size_t i_hz = (mn_ctrl.HzStep > 0) ? mn_ctrl.HzStep-1 : 0;
 					if (slope.luvDriftIndex) {
 						// Update drifting snow index (VI24),
@@ -1406,7 +1406,7 @@ inline void real_main (int argc, char *argv[])
 					}
 
 					// Update erosion mass from windward virtual slope
-					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;
+					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;   // this has been set to 0 around ln 666, after it has been deposited to the lee slope. 
 					cumsum.erosion_length[slope.sector] += vecXdata[slope.sector].ErosionLength;
 				}
 
