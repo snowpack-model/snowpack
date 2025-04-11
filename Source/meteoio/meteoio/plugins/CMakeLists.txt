@@ -69,7 +69,6 @@ IF(PLUGIN_GRASSIO)
 	SET(plugins_sources ${plugins_sources} plugins/GrassIO.cc)
 ENDIF(PLUGIN_GRASSIO)
 
-
 IF(PLUGIN_GEOTOPIO)
 	SET(plugins_sources ${plugins_sources} plugins/GeotopIO.cc)
 ENDIF(PLUGIN_GEOTOPIO)

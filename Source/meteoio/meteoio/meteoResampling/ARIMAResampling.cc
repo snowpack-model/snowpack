@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include <sstream>
+#include <iomanip>
 
 namespace mio {
 

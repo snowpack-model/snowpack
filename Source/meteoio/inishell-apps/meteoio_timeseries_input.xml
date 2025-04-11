@@ -335,6 +335,9 @@ Please include meteoio_parametergroups before use!
 			<parameter key="CSV_ONLY_LINES" type="text" size="large" validate="^(?:\d+(?:\s*\-\s*\d+)?(?:\s*,\s*)?)+$">
 				<help>Restrict the parsing to a comma delimited list of line ranges (line numbers separated by ' - ') such as &lt;i&gt;456 - 468&lt;/i&gt; or individual lines. Please note that it is not possible to mix CSV_EXCLUDE_LINES and CSV_ONLY_LINES, only one type of specification may be provided.</help>
 			</parameter>
+			<parameter key="CSV_COVERAGE_HINT" type="text" size="large" validate="^([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)(?:\s+\-\s+([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)?)?$">
+				<help>A simplified date range (at most daily resolution) fully encompassing the data contained in the file such as &lt;i&gt;2023-10 - 2024&lt;/i&gt; fully encompassing the temporal coverage of the file. This allows MeteoIO to skip files that don't contain data relevant for the date range requested when running.</help>
+			</parameter>
 		</frame>
 
 		<frame caption="Fields parsing" color="#c4c4c4" collapsed="true">
@@ -500,6 +503,9 @@ Please include meteoio_parametergroups before use!
 				</parameter>
 				<parameter key="CSV#_ONLY_LINES" type="text" size="large" validate="^(?:\d+(?:\s*\-\s*\d+)?(?:\s*,\s*)?)+$">
 					<help>Restrict the parsing to a comma delimited list of line ranges (line numbers separated by ' - ') such as &lt;i&gt;456 - 468&lt;/i&gt; or individual lines. Please note that it is not possible to mix CSV_EXCLUDE_LINES and CSV_ONLY_LINES, only one type of specification may be provided.</help>
+				</parameter>
+				<parameter key="CSV#_COVERAGE_HINT" type="text" size="large" validate="^([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)(?:\s+\-\s+([0-9]{4}(?:\-[0-1][0-9](?:\-[0-3][0-9])?)?)?)?$">
+					<help>A simplified date range (at most daily resolution) fully encompassing the data contained in the file such as &lt;i&gt;2023-10 - 2024&lt;/i&gt; fully encompassing the temporal coverage of the file. This allows MeteoIO to skip files that don't contain data relevant for the date range requested when running.</help>
 				</parameter>
 			</frame>
 			<frame caption="Fields parsing" color="#c4c4c4" collapsed="true">

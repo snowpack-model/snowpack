@@ -78,6 +78,7 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 
+
 	<!-- BUFR-->
 	<parametergroup name="BUFR_OUT">
 		<parameter key="METEOPATH" type="path" optional="false">
@@ -146,6 +147,7 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 
+
 	<!-- GEOTOP -->
 	<parametergroup name="GEOTOP_OUT">
 		<parameter key="METEOPATH" type="path" optional="false">
@@ -159,6 +161,55 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 
+
+	<!-- iCSV output -->
+	<parametergroup name="iCSV_OUT">
+		<parameter key="METEOPATH" type="path" optional="false">
+			<help>Directory to save your iCSV data output files in</help>
+		</parameter>
+		<parameter key="EXTENSION_OUT" type="text" optional="true">
+			<help>File extension for the output files (default: .icsv)</help>
+		</parameter>
+		<parameter key="iCSV_SEPARATOR" type="alternative" optional="true">
+			<option value=","/>
+			<option value=";"/>
+			<option value=":"/>
+			<option value="|"/>
+			<option value="/"/>
+			<option value="\"/>
+			<help> The delimiter used in the output file (default: ,)</help>
+		</parameter>
+		<parameter key="iCSV_APPEND" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>when an output file already exists, should the plugin try to append data? (default: false)</help>
+		</parameter>
+		<parameter key="iCSV_OVERWRITE" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>when an output file already exists, should the plugin overwrite it? (default: true)</help>
+		</parameter>
+		<parameter key="ACDD_WRITE" label="Write ACDD metadata" type="alternative">
+			<option value="TRUE"><reference name="ACDD"/></option>
+			<option value="FALSE"/>
+			<help>Should ACDD metadata be written in the header? (default: false)</help>
+		</parameter>
+		<parameter key="iCSV_VERSIONING" type="alternative" optional="true">
+			<option value="NONE"/>
+			<option value="STRING">
+				<parameter key="iCSV_VERSIONING_STRING" type="text" optional="false">
+					<help>Fixed string to use to identify the output file version</help>
+				</parameter>
+			</option>
+			<option value="NOW"/>
+			<option value="DATA_START"/>
+			<option value="DATA_END"/>
+			<option value="YEARS"/>
+			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
+		</parameter>
+	</parametergroup>
+
+
 	<!-- NETCDF -->
 	<parametergroup name="NETCDF_OUT">
 		<parameter key="METEOPATH" type="path" optional="false">
@@ -167,11 +218,24 @@ Please include meteoio_parametergroups before use!
 		<parameter key="NC_SINGLE_FILE" type="alternative" default="FALSE">
 			<option value="TRUE">
 				<parameter key="METEOFILE" type="file" mode="output" optional="false">
-					<help>Absolute filename of the metadata file</help>
+					<help>Filename of the output file within METEOPATH</help>
 				</parameter>
 			</option>
 			<option value="FALSE"/>
 			<help>force all stations to be contained in a single file?</help>
+		</parameter>
+		<parameter key="NETCDF_VERSIONING" type="alternative" optional="true">
+			<option value="NONE"/>
+			<option value="STRING">
+				<parameter key="NETCDF_VERSIONING_STRING" type="text" optional="false">
+					<help>Fixed string to use to identify the output file version</help>
+				</parameter>
+			</option>
+			<option value="NOW"/>
+			<option value="DATA_START"/>
+			<option value="DATA_END"/>
+			<option value="YEARS"/>
+			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
 		</parameter>
 		<parameter key="NETCDF_SCHEMA_METEO" type="alternative" default="CF-1.6">
 			<option value="CF-1.6"/>
@@ -214,6 +278,7 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 
+
 	<!-- PSQL -->
 	<parametergroup name="PSQL_OUT">
 		<parameter key="PSQL_URL" type="text" optional="false">
@@ -233,6 +298,7 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 
+
 	<!-- SMET output -->
 	<parametergroup name="SMET_OUT">
 		<parameter key="METEOPATH" type="path" optional="false">
@@ -243,8 +309,13 @@ Please include meteoio_parametergroups before use!
 			<option value="BINARY"/>
 			<help>Either write an ascii file (default) or a binary one</help>
 		</parameter>
-		<parameter key="SMET_VERSIONING" type="alternative">
+		<parameter key="SMET_VERSIONING" type="alternative" optional="true">
 			<option value="NONE"/>
+			<option value="STRING">
+				<parameter key="SMET_VERSIONING_STRING" type="text" optional="false">
+					<help>Fixed string to use to identify the output file version</help>
+				</parameter>
+			</option>
 			<option value="NOW"/>
 			<option value="DATA_START"/>
 			<option value="DATA_END"/>
@@ -297,39 +368,6 @@ Please include meteoio_parametergroups before use!
 		</frame>
 	</parametergroup>
 
-	<!-- iCSV output -->
-	<parametergroup name="iCSV_OUT">
-		<parameter key="METEOPATH" type="path" optional="false">
-			<help>Directory to save your iCSV data output files in</help>
-		</parameter>
-		<parameter key="EXTENSION_OUT" type="text" optional="true">
-			<help>File extension for the output files (default: .icsv)</help>
-		</parameter>
-		<parameter key="iCSV_SEPARATOR" type="alternative" optional="true">
-			<option value=","/>
-			<option value=";"/>
-			<option value=":"/>
-			<option value="|"/>
-			<option value="/"/>
-			<option value="\"/>
-			<help> The delimiter used in the output file (default: ,)</help>
-		</parameter>
-		<parameter key="iCSV_APPEND" type="alternative">
-			<option value="TRUE"/>
-			<option value="FALSE"/>
-			<help>when an output file already exists, should the plugin try to append data? (default: false)</help>
-		</parameter>
-		<parameter key="iCSV_OVERWRITE" type="alternative">
-			<option value="TRUE"/>
-			<option value="FALSE"/>
-			<help>when an output file already exists, should the plugin overwrite it? (default: true)</help>
-		</parameter>
-		<parameter key="ACDD_WRITE" label="Write ACDD metadata" type="alternative">
-			<option value="TRUE"><reference name="ACDD"/></option>
-			<option value="FALSE"/>
-			<help>Should ACDD metadata be written in the header? (default: false)</help>
-		</parameter>
-	</parametergroup>
 
 	<!-- ZRXP -->
 	<parametergroup name="ZRXP">
@@ -382,6 +420,7 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 	
+
 	<!-- ACDD input keys for plugins supporting acdd metadata -->
 	<parametergroup name="ACDD">
 		<parameter type="helptext" wrap="true">

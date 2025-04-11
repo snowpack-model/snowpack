@@ -16,6 +16,7 @@ ENDIF()
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
@@ -154,17 +155,20 @@ INSTALL(FILES ${pugifiles} DESTINATION include/snowpack/plugins/pugixml COMPONEN
 INSTALL(FILES ${hcorefiles} DESTINATION include/snowpack/snowpackCore COMPONENT headers)
 
 ADD_CUSTOM_TARGET(distclean make clean
-	COMMAND cmake -E remove snowpack/*~ snowpack/cmake_install.cmake
-	COMMAND cmake -E remove applications/snowpack/*~ applications/snowpack/cmake_install.cmake applications/snowpack/Makefile  applications/snowpack/cmake_*.cmake
-	COMMAND cmake -E remove tests/*~ tests/res1exp/*~ tests/res5exp/*~ tests/cmake_install.cmake tests/CTestTestfile.cmake
-	COMMAND cmake -E remove_directory CMakeFiles
-	COMMAND cmake -E remove_directory snowpack/CMakeFiles
-	COMMAND cmake -E remove_directory applications/snowpack/CMakeFiles
+	COMMAND cmake -E remove CMakeCache.txt CTestTestfile.cmake DartConfiguration.tcl CPack*.cmake cmake_*.cmake install_manifest.txt Makefile CMakeDoxy*
+	COMMAND cmake -E remove "lib/libsnow*.${DLL_EXT}" "lib/libsnow*.${STAT_EXT}" "lib/libsnow*.lib"
+	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
+	COMMAND cmake -E remove *~ snowpack/*~ snowpack/*/*~ applications/snowpack/*~
+	COMMAND cmake -E remove applications/snowpack/cmake_install.cmake applications/snowpack/Makefile  applications/snowpack/cmake_*.cmake
+	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
+	COMMAND cmake -E remove_directory CMakeFiles snowpack/CMakeFiles snowpack/*/CMakeFiles applications/snowpack/CMakeFiles
+	COMMAND cmake -E remove compile_commands.json
+	COMMAND cmake -E remove_directory Testing
 	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
-	COMMAND cmake -E remove tests/res1exp/*.cmake tests/res1exp/output/*
-	COMMAND cmake -E remove_directory tests/res1exp/Testing
-	COMMAND cmake -E remove *~ CMakeCache.txt cmake_install.cmake CPack*.cmake cmake_*.cmake Makefile
-	)
+	COMMAND cmake -E remove tests/Makefile tests/*/Makefile tests/CTestTestfile.cmake tests/*/CTestTestfile.cmake tests/cmake_install.cmake tests/*/cmake_install.cmake
+	COMMAND cmake -E remove tests/*~ tests/*/*~
+	COMMAND cmake -E remove tests/res1exp/output/* tests/res5exp/output/*
+)
 
 ###########################################################
 #for the uninstall target

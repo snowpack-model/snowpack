@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <cstring>
 #include <regex>
+#include <iomanip>
 
 using namespace std;
 
@@ -33,8 +34,7 @@ namespace mio {
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
 
 CsvDateTime::CsvDateTime(const double& tz_in) 
-           : max_dt_col(0), auto_wrap(false), datetime_idx(), date_idx(), time_idx(), datetime_format(), date_format(), time_format(),
-           decimal_date_type(JULIAN), csv_tz(tz_in), 
+           : max_dt_col(0), csv_tz(tz_in), auto_wrap(false), datetime_idx(), date_idx(), time_idx(), datetime_format(), date_format(), time_format(), decimal_date_type(JULIAN),
            idx_decimal_date(IOUtils::npos), idx_date_time_str(IOUtils::npos), idx_date_str(IOUtils::npos), idx_time_str(IOUtils::npos), idx_year(IOUtils::npos), idx_jdn(IOUtils::npos), idx_month(IOUtils::npos), idx_day(IOUtils::npos), idx_ntime(IOUtils::npos), idx_hours(IOUtils::npos), idx_minutes(IOUtils::npos), idx_seconds(IOUtils::npos), year_cst(IOUtils::inodata), hour_cst(IOUtils::inodata),
            has_tz(false), dt_as_decimal(false), dt_2digits_year(false)
 {}
@@ -559,7 +559,7 @@ std::string CsvDateTime::toString() const
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), exclusion_last_linenr(0), last_allowed_field(IOUtils::npos)
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), start_hint(), end_hint(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), exclusion_last_linenr(0), last_allowed_field(IOUtils::npos)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
@@ -864,6 +864,81 @@ void CsvParameters::setPurgeChars(const std::string& chars_to_purge)
 			throw InvalidArgumentException("Invalid purge chars specification '"+std::string(c_str)+"' for the CSV plugin, please use either single chars or decimal notation", AT);
 		}
 	}
+}
+
+/** @brief parse a simplified ISO date and build a Date object
+ * @param[in] Date_str ths string to parse for an ISO date
+ * @param[in] early_interpretation interpret missing date components toward the earliest possible date (if set to true), otherwise toward the latest possible date
+ * @return Date object
+ */
+Date CsvParameters::parseDateHint(const std::string& Date_str, const double tz, const bool& early_interpretation)
+{
+	static const std::regex ISO_date_regex("^([0-9]{4})(?:-([0-9]{2}))?(?:-([0-9]{2}))?$", std::regex::optimize); //either only year, or year and month or year, month, day
+	std::smatch match;
+
+	if (!std::regex_match(Date_str, match, ISO_date_regex))
+		throw InvalidArgumentException("Invalid temporal coverage hint '"+Date_str+"' for the CSV plugin, please use proper ISO notation", AT);
+
+	int year=IOUtils::inodata, month=IOUtils::inodata, day=IOUtils::inodata;
+	if (!IOUtils::convertString(year, match.str(1)))
+		throw InvalidArgumentException("Could not parse temporal coverage hint '"+Date_str+"' for the CSV plugin", AT);
+
+	//since we can not easily count the number of groups that have effectively been captured, we need to check their content
+	if (!match.str(2).empty()) {
+		if (!IOUtils::convertString(month, match.str(2)))
+			throw InvalidArgumentException("Could not parse temporal coverage hint '"+Date_str+"' for the CSV plugin", AT);
+		if (!match.str(3).empty()) {
+			if (!IOUtils::convertString(day, match.str(3)))
+				throw InvalidArgumentException("Could not parse temporal coverage hint '"+Date_str+"' for the CSV plugin", AT);
+		}
+	}
+
+	if (early_interpretation) {
+		if (month==IOUtils::inodata) month = 1;
+		if (day==IOUtils::inodata) day = 1;
+		return Date(year, month, day, 0, 0, 0., tz);
+	} else {
+		if (month==IOUtils::inodata) month = 12;
+		if (day==IOUtils::inodata) day = Date::getNumberOfDaysInMonth(year, month);
+		return Date(year, month, day, 23, 59, 59.999, tz);
+	}
+}
+
+/** @brief Set the date range from a provided date range string
+ * @details Such a string can either contain only one date (at least the year must be provided, everything else is optional)
+ * or two dates separated by a dash. Examples of valid ranges:
+ *  * 2024 - 2025 (this means from 2024-01-01 until 2025-12-31 at midnight)
+ *  * 2024-10 (this means the whole month of October 2024)
+ *  * 2024-10 - 2025 (this means from 2024-10-01 until 2025-12-31)
+ * 
+ * @param[in] range_spec the range string
+ */
+void CsvParameters::setCoverageHint(const std::string& range_spec)
+{
+	const double tz_in = date_cols.csv_tz;
+	static const std::regex ISO_range_regex("^([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)(?:\\s+\\-\\s+([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)?)?$", std::regex::optimize); //2 capturing group: we either have a single date or a range
+	std::smatch match;
+
+	//do we have two dates or only one?
+	if (!std::regex_match(range_spec, match, ISO_range_regex))
+	 	throw InvalidArgumentException("Invalid temporal coverage hint format '"+range_spec+"' for the CSV plugin, please use proper ISO notation with daily resolution", AT);
+
+	//since we can not easily count the number of groups that have effectively been captured, we need to check their content
+	if (!match.str(1).empty()) start_hint = parseDateHint(match.str(1), tz_in, true);
+	if (!match.str(2).empty()) 
+		end_hint = parseDateHint(match.str(2), tz_in, false);
+	else
+		end_hint = parseDateHint(match.str(1), tz_in, false);
+
+	if (start_hint.isUndef() || end_hint.isUndef()) return;
+	if (start_hint>=end_hint) return;
+}
+
+bool CsvParameters::hasDates(const Date& start, const Date& end) const 
+{
+	if (start_hint.isUndef()) return true; 
+	const bool overlap = (start_hint<=end && end_hint>=start);
+	return overlap;
 }
 
 bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)

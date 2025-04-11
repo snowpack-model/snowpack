@@ -21,7 +21,6 @@
 #include <meteoio/IOUtils.h>
 
 #include <cmath>
-#include <limits>
 #include <iomanip>
 #include <sstream>
 #include <algorithm> //for set_difference
@@ -603,10 +602,10 @@ std::vector<double> MeteoData::getHeightsForParameter(const std::string& in_parn
 // counts the number of occurences of a reappearing parameter (default is excluded)
 size_t MeteoData::getOccurencesOfParameter(const Parameters& par, const std::set<std::string>& additional_parameters) const
 {
-	const std::string in_parname = getParameterName(par);
+	const std::string in_parname( getParameterName(par) );
 	std::string parameter;
 	double number;
-	int occurences = 0;
+	size_t occurences = 0;
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		getTypeAndNo(getNameForParameter(ii), parameter, number, additional_parameters);
 		if (parameter == in_parname) {
