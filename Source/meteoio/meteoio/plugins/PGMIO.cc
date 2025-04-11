@@ -22,6 +22,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cerrno>
 #include <cstring>

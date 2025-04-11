@@ -19,6 +19,7 @@
 #include <meteoio/meteoFilters/ProcessingStack.h>
 
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 

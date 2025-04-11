@@ -23,7 +23,6 @@
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 
 #include <algorithm>
-#include <fstream>
 #include <regex>
 
 using namespace std;

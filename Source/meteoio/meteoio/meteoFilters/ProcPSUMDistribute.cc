@@ -18,6 +18,7 @@
 */
 #include <meteoio/meteoFilters/ProcPSUMDistribute.h>
 #include <cmath>
+#include <iomanip>
 
 using namespace std;
 

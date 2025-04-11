@@ -70,6 +70,14 @@ namespace mio {
 * - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
 * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
 * - iCSV_SEPARATOR: choice of field delimiter, options are: [,;:|/\]; [Output] section
+* - iCSV_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
+* (in the [Output] section, default is no such versioning):
+*      - NOW: append the current date formatted as numerical ISO;
+*      - STRING: append a fixed string as provided by the iCSV_VERSIONING_STRING key;
+*      - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
+*      - DATA_END: append the absolute end date of the dataset formatted as numerical ISO;
+*      - YEARS: append the absolute start and end years of dataset (if they are the same, only one year is used);
+*      - NONE: do not append anything, no versioning is performed (default).
 * 
 * @note There is a python module available to read iCSV files, see <a href="http://patrick.leibersperger.gitlab-pages.wsl.ch/snowpat/">snowpat</a>
 * 
@@ -77,8 +85,8 @@ namespace mio {
 using namespace PLUGIN;
 // clang-format off
 static const std::string dflt_extension_iCSV = ".icsv";
-const double iCSVIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
-static const std::streamsize MAXMEMORY = static_cast<std::streamsize>(20) * 1024 * 1024 * 1024; // if i use more than 20GB of memory for data read it sequentially
+static const double snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes are 38 degrees
+static const std::streamsize MAXMEMORY = static_cast<std::streamsize>(20) * 1024 * 1024 * 1024; // if it uses more than 20GB of memory for data, read it sequentially
 // clang-format on
 
 // ------------------ IO Helpers ------------------
@@ -89,165 +97,185 @@ static const std::streamsize MAXMEMORY = static_cast<std::streamsize>(20) * 1024
 * @param filenames The vector of filenames to check.
 * @return True if the total size is within the memory limit, false otherwise.
 */
-static bool areFilesWithinLimit(const std::vector<std::string> &filenames) {
-    std::streamsize totalSize = 0;
-    for (const auto &filename : filenames) {
-        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+static bool areFilesWithinLimit(const std::vector<std::string> &filenames)
+{
+	std::streamsize totalSize = 0;
+	for (const auto &filename : filenames) {
+		std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
-        const std::streamsize size = file.tellg();
-        file.close();
+		const std::streamsize size = file.tellg();
+		file.close();
 
-        totalSize += size;
-        if (totalSize > MAXMEMORY) {
-            return false;
-        }
-    }
-    return true;
+		totalSize += size;
+		if (totalSize > MAXMEMORY) {
+			return false;
+		}
+	}
+	return true;
 }
 
-static std::string joinVector(const std::vector<std::string> &vec, const char &delimiter) {
-    std::string result;
-    for (size_t i = 0; i < vec.size(); i++) {
-        result += vec[i];
-        if (i != vec.size() - 1) {
-            result += delimiter;
-        }
-    }
-    return result;
+static std::string joinVector(const std::vector<std::string> &vec, const char &delimiter)
+{
+	std::string result;
+	for (size_t i = 0; i < vec.size(); i++) {
+		result += vec[i];
+		if (i != vec.size() - 1) {
+			result += delimiter;
+		}
+	}
+	return result;
 }
 
-static std::vector<Coords> getUniqueLocations(iCSVFile &file) {
-    std::vector<Coords> locations;
-    if (file.location_in_header) {
-        locations.push_back(file.station_location.toCoords(file.METADATA.epsg));
-    } else {
-        for (size_t ii = 0; ii < file.getAllLocationsInData().size(); ii++) {
-            const Coords latest = file.getLocationAt(ii).toCoords(file.METADATA.epsg);
-            if (latest != locations.back()) {
-                locations.push_back(latest);
-            }
-        }
-    }
-    return locations;
+static std::vector<Coords> getUniqueLocations(iCSVFile &file)
+{
+	std::vector<Coords> locations;
+	if (file.location_in_header) {
+		locations.push_back( file.station_location.toCoords(file.METADATA.epsg) );
+	} else {
+		for (size_t ii = 0; ii < file.getAllLocationsInData().size(); ii++) {
+			const Coords latest( file.getLocationAt(ii).toCoords(file.METADATA.epsg) );
+			if (latest != locations.back()) {
+				locations.push_back(latest);
+			}
+		}
+	}
+	return locations;
 }
 
 using namespace iCSV;
 
 // ----------------- iCSVIO -----------------
 iCSVIO::iCSVIO(const std::string &configfile)
-    : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), snowpack_slopes(false), read_sequential(false),
-        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_iCSV) {
-    parseInputSection();
-    parseOutputSection();
+       : stations_files(), cfg(configfile), acdd_metadata(false), coordin(), coordinparam(), coordout(), coordoutparam(), file_extension_out(dflt_extension_iCSV), outpath(),
+         versioning_str(), TZ_out(0), outputVersioning(NO_VERSIONING), out_delimiter(','), snowpack_slopes(false), read_sequential(false), allow_overwrite(false), allow_append(false)
+{
+	parseInputSection();
+	parseOutputSection();
 }
 
 iCSVIO::iCSVIO(const Config &cfgreader)
-    : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), snowpack_slopes(false), read_sequential(false),
-        stations_files(), acdd_metadata(false), TZ_out(0), outpath(""), allow_overwrite(false), allow_append(false), out_delimiter(','), file_extension_out(dflt_extension_iCSV) {
-    parseInputSection();
-    parseOutputSection();
+	   : stations_files(), cfg(cfgreader), acdd_metadata(false), coordin(), coordinparam(), coordout(), coordoutparam(), file_extension_out(dflt_extension_iCSV), outpath(),
+         versioning_str(), TZ_out(0), outputVersioning(NO_VERSIONING), out_delimiter(','), snowpack_slopes(false), read_sequential(false), allow_overwrite(false), allow_append(false)
+{
+	parseInputSection();
+	parseOutputSection();
 }
 
 // ----------------- iCSVIO parse -----------------
-void iCSVIO::parseInputSection() {
-    // default timezones
+void iCSVIO::parseInputSection()
+{
+	// Parse the [Input] and [Output] sections within Config object cfg
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
-    // Parse the [Input] and [Output] sections within Config object cfg
-    IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	// Parse input section: extract number of files to read and store filenames in vecFiles
+	const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
+	if (in_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
+		const std::string inpath = cfg.get("METEOPATH", "Input");
 
-    // Parse input section: extract number of files to read and store filenames in vecFiles
-    const std::string in_meteo = IOUtils::strToUpper(cfg.get("METEO", "Input", ""));
-    if (in_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
-        cfg.getValue("SNOWPACK_SLOPES", "Input", snowpack_slopes, IOUtils::nothrow);
-        const std::string inpath = cfg.get("METEOPATH", "Input");
-
-        //handle the deprecated STATION# syntax
-        std::string meteofiles_key( "METEOFILE" );
-        //const std::vector< std::pair<std::string, std::string> > vecDeprecated( cfg.getValues("STATION", "INPUT") );
-       const std::vector< std::string > vecDeprecated( cfg.getKeys("STATION", "INPUT") );
+		//handle the deprecated STATION# syntax
+		std::string meteofiles_key( "METEOFILE" );
+		const std::vector< std::string > vecDeprecated( cfg.getKeys("STATION", "INPUT") );
 		if (!vecDeprecated.empty()) {
 			meteofiles_key = "STATION";
 			std::cerr << "[W] The STATION# syntax has been deprecated for the iCSV input plugin, please rename these keys as METEOFILE#!\n";
 			//throw InvalidArgumentException("The STATION# syntax has been deprecated for the SMET plugin, please rename these keys as METEOFILE#!", AT);
 		}
-        
-        std::vector<std::string> vecFilenames;
-        cfg.getValues(meteofiles_key, "INPUT", vecFilenames);
 
-        if (vecFilenames.empty())
-            scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_iCSV);
+		std::vector<std::string> vecFilenames;
+		cfg.getValues(meteofiles_key, "INPUT", vecFilenames);
 
-        const std::vector<std::string> all_files_and_paths = getFilesWithPaths(vecFilenames, inpath, dflt_extension_iCSV);
-        read_sequential = !areFilesWithinLimit(all_files_and_paths);
-        for (auto &filename : all_files_and_paths)
-            stations_files.push_back(iCSVFile(filename, read_sequential));
-    } 
+		if (vecFilenames.empty())
+			scanMeteoPath(cfg, inpath, vecFilenames, dflt_extension_iCSV);
+
+		const std::vector<std::string> all_files_and_paths( getFilesWithPaths(vecFilenames, inpath, dflt_extension_iCSV) );
+		read_sequential = !areFilesWithinLimit(all_files_and_paths);
+		for (auto &filename : all_files_and_paths)
+			stations_files.push_back(iCSVFile(filename, read_sequential));
+	}
 }
 
-void iCSVIO::parseOutputSection() {
-    // Parse output section: extract info on whether to write ASCII or BINARY, gzipped or not, acdd...
-    cfg.getValue("TIME_ZONE", "Output", TZ_out, IOUtils::nothrow);
+void iCSVIO::parseOutputSection()
+{
+	// Parse output section: extract info on whether to write ASCII or BINARY, gzipped or not, acdd...
+	cfg.getValue("TIME_ZONE", "Output", TZ_out, IOUtils::nothrow);
 
-    outpath.clear();
-    const std::string out_meteo = IOUtils::strToUpper(cfg.get("METEO", "Output", ""));
-    if (out_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
+	outpath.clear();
+	const std::string out_meteo = IOUtils::strToUpper(cfg.get("METEO", "Output", ""));
+	if (out_meteo == "ICSV") { // keep it synchronized with IOHandler.cc for plugin mapping!!
 
-        cfg.getValue("EXTENSION_OUT", "Output", file_extension_out, IOUtils::nothrow);
-        static const std::regex valid_extension("^[.][a-z0-9]+$", std::regex::icase | std::regex::optimize);
-        if (!std::regex_match(file_extension_out, valid_extension))
-            throw InvalidFormatException("Invalid extension format (valid: \".abc123\") : " + file_extension_out, AT);
+		static const std::regex valid_extension("^[.][a-z0-9]+$", std::regex::icase | std::regex::optimize);
+		cfg.getValue("EXTENSION_OUT", "Output", file_extension_out, IOUtils::nothrow);
+		if (!std::regex_match(file_extension_out, valid_extension))
+			throw InvalidFormatException("Invalid extension format (valid: \".abc123\") : " + file_extension_out, AT);
 
-        bool write_acdd = false;
-        cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
-        if (write_acdd) {
-            acdd_metadata.setEnabled(true);
-            acdd_metadata.setUserConfig(cfg, "Output", false); // do not allow multi-line keys
-        }
+		bool write_acdd = false;
+		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
+		if (write_acdd) {
+			acdd_metadata.setEnabled(true);
+			acdd_metadata.setUserConfig(cfg, "Output", false); // do not allow multi-line keys
+		}
 
-        cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
-        cfg.getValue("iCSV_APPEND", "Output", allow_append, IOUtils::nothrow);
-        cfg.getValue("iCSV_OVERWRITE", "Output", allow_overwrite, IOUtils::nothrow);
-        cfg.getValue("iCSV_SEPARATOR", "Output", out_delimiter,
-                        IOUtils::nothrow); // allow specifying a different field separator as required by some import programs
-        std::vector<std::string> vecArgs;
+		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
+		cfg.getValue("iCSV_APPEND", "Output", allow_append, IOUtils::nothrow);
+		cfg.getValue("iCSV_OVERWRITE", "Output", allow_overwrite, IOUtils::nothrow);
+		cfg.getValue("iCSV_SEPARATOR", "Output", out_delimiter, IOUtils::nothrow); // allow specifying a different field separator as required by some import programs
 
-        if (allow_overwrite && allow_append)
-            throw InvalidFormatException("Cannot allow both iCSV_APPEND and iCSV_OVERWRITE", AT);
-    } 
+		if (allow_overwrite && allow_append)
+			throw InvalidFormatException("Cannot allow both iCSV_APPEND and iCSV_OVERWRITE", AT);
+
+		//support for versioning in the file names
+		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("iCSV_VERSIONING", "Output", "") );
+		if (versioning_type_str.empty()) {
+			outputVersioning = NO_VERSIONING;
+		} else {
+			if (versioning_type_str=="NONE") outputVersioning = NO_VERSIONING;
+			else if (versioning_type_str=="STRING") outputVersioning = STRING;
+			else if (versioning_type_str=="NOW") outputVersioning = NOW;
+			else if (versioning_type_str=="DATA_START") outputVersioning = DATA_START;
+			else if (versioning_type_str=="DATA_END") outputVersioning = DATA_END;
+			else if (versioning_type_str=="YEARS") outputVersioning = DATA_YEARS;
+			else
+				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for iCSV_VERSIONING", AT);
+		}
+		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("iCSV_VERSIONING_STRING", "Output", "") );
+	}
 }
 
 // ------------------------------------- iCSVIO read -----------------------------------------
 
-void iCSVIO::readStationData(const Date & /*date*/, std::vector<StationData> &vecStation) {
-    vecStation.clear();
-    vecStation.resize(stations_files.size());
+void iCSVIO::readStationData(const Date & /*date*/, std::vector<StationData> &vecStation)
+{
+	vecStation.clear();
+	vecStation.resize(stations_files.size());
 
-    // Now loop through all requested stations, open the respective files and parse them
-    for (size_t ii = 0; ii < stations_files.size(); ii++) {
-        StationData sd;
-        iCSVFile &current_file = stations_files[ii];
+	// Now loop through all requested stations, open the respective files and parse them
+	for (size_t ii = 0; ii < stations_files.size(); ii++) {
+		StationData sd;
+		iCSVFile &current_file = stations_files[ii];
 
-        read_meta_data(current_file, sd);
-        vecStation[ii] = sd;
-    }
+		read_meta_data(current_file, sd);
+		vecStation[ii] = sd;
+	}
 }
 
-void iCSVIO::readMeteoData(const Date &start_date, const Date &end_date, std::vector<std::vector<MeteoData>> &vecvecMeteo) {
-    vecvecMeteo.clear();
-    vecvecMeteo.resize(stations_files.size());
+void iCSVIO::readMeteoData(const Date &start_date, const Date &end_date, std::vector<std::vector<MeteoData>> &vecvecMeteo)
+{
+	vecvecMeteo.clear();
+	vecvecMeteo.resize(stations_files.size());
 
-    for (size_t ii = 0; ii < stations_files.size(); ii++) {
-        iCSVFile current_file = stations_files[ii];
-        if (read_sequential) {
-            readDataSequential(current_file);
-        }
+	for (size_t ii = 0; ii < stations_files.size(); ii++) {
+		iCSVFile current_file = stations_files[ii];
+		if (read_sequential) {
+			readDataSequential(current_file);
+		}
 
-        std::vector<Date> date_vec = current_file.getDatesInFile(start_date, end_date);
-        std::vector<geoLocation> location_vec = current_file.getLocationsInData(start_date, end_date);
+		std::vector<Date> date_vec = current_file.getDatesInFile(start_date, end_date);
+		std::vector<geoLocation> location_vec = current_file.getLocationsInData(start_date, end_date);
 
-        std::vector<MeteoData> vecMeteo = createMeteoDataVector(current_file, date_vec, location_vec);
-        vecvecMeteo.push_back(vecMeteo);
-    }
+		std::vector<MeteoData> vecMeteo = createMeteoDataVector(current_file, date_vec, location_vec);
+		vecvecMeteo.push_back(vecMeteo);
+	}
 }
 
 // --------------------------- iCSVIO read helper functions ---------------------------------------
@@ -263,45 +291,49 @@ void iCSVIO::readMeteoData(const Date &start_date, const Date &end_date, std::ve
 * @param current_file The iCSV file from which to read the meta data.
 * @param meta The StationData object to populate with the meta data.
 */
-void iCSVIO::read_meta_data(const iCSVFile &current_file, StationData &meta) {
-    const double nodata_value = current_file.getNoData();
+void iCSVIO::read_meta_data(const iCSVFile &current_file, StationData &meta) const
+{
+	const double nodata_value = current_file.getNoData();
 
-    setMetaDataPosition(current_file, meta, nodata_value);
+	setMetaDataPosition(current_file, meta, nodata_value);
 
-    meta.stationID = current_file.METADATA.station_id;
-    meta.stationName = current_file.METADATA.getOptionalMetaData("station_name");
+	meta.stationID = current_file.METADATA.station_id;
+	meta.stationName = current_file.METADATA.getOptionalMetaData("station_name");
 
-    setMetaDataSlope(current_file, meta, nodata_value);
+	setMetaDataSlope(current_file, meta, nodata_value);
 
-    meta.extra = current_file.METADATA.toMetaMap();
+	meta.extra = current_file.METADATA.toMetaMap();
 }
 
-void iCSVIO::setMetaDataPosition(const iCSVFile &current_file, StationData &meta, const double &nodata_value) {
-    meta.position.setProj(coordin, coordinparam);
-    if (current_file.location_in_header) {
-        const double east = IOUtils::standardizeNodata(current_file.station_location.x, nodata_value);
-        const double north = IOUtils::standardizeNodata(current_file.station_location.y, nodata_value);
-        const double alt = IOUtils::standardizeNodata(current_file.station_location.z, nodata_value);
-        meta.position.setPoint(east, north, alt, current_file.METADATA.epsg);
-    }
-    if (!meta.position.isNodata())
-        meta.position.check("Inconsistent geographic coordinates in file \"" + current_file.filename + "\": ");
+void iCSVIO::setMetaDataPosition(const iCSVFile &current_file, StationData &meta, const double &nodata_value) const
+{
+	meta.position.setProj(coordin, coordinparam);
+	if (current_file.location_in_header) {
+		const double east = IOUtils::standardizeNodata(current_file.station_location.x, nodata_value);
+		const double north = IOUtils::standardizeNodata(current_file.station_location.y, nodata_value);
+		const double alt = IOUtils::standardizeNodata(current_file.station_location.z, nodata_value);
+		meta.position.setPoint(east, north, alt, current_file.METADATA.epsg);
+	}
+	if (!meta.position.isNodata())
+		meta.position.check("Inconsistent geographic coordinates in file \"" + current_file.filename + "\": ");
 }
 
-void iCSVIO::setMetaDataSlope(const iCSVFile &current_file, StationData &meta, const double &nodata_value) {
-    const double slope_angle = IOUtils::standardizeNodata(current_file.station_location.slope_angle, nodata_value);
-    const double slope_azi = IOUtils::standardizeNodata(current_file.station_location.slope_azi, nodata_value);
-    if (slope_angle != IOUtils::nodata && slope_azi != IOUtils::nodata) {
-        meta.setSlope(slope_angle, slope_azi);
-    } else if (slope_angle == 0.) {
-        meta.setSlope(slope_angle, 0.);
-    } else if (snowpack_slopes) {
-        const double exposition = getSnowpackSlope(meta.stationID);
-        if (exposition == 0.)
-            meta.setSlope(0., 0.);
-        else if (exposition != IOUtils::nodata)
-            meta.setSlope(snVirtualSlopeAngle, (exposition - 1.) * 90.);
-    }
+void iCSVIO::setMetaDataSlope(const iCSVFile &current_file, StationData &meta, const double &nodata_value) const
+{
+	const double slope_angle = IOUtils::standardizeNodata(current_file.station_location.slope_angle, nodata_value);
+	const double slope_azi = IOUtils::standardizeNodata(current_file.station_location.slope_azi, nodata_value);
+
+	if (slope_angle != IOUtils::nodata && slope_azi != IOUtils::nodata) {
+		meta.setSlope(slope_angle, slope_azi);
+	} else if (slope_angle == 0.) {
+		meta.setSlope(slope_angle, 0.);
+	} else if (snowpack_slopes) {
+		const double exposition = getSnowpackSlope(meta.stationID);
+		if (exposition == 0.)
+			meta.setSlope(0., 0.);
+		else if (exposition != IOUtils::nodata)
+			meta.setSlope(snVirtualSlopeAngle, (exposition - 1.) * 90.);
+	}
 }
 
 /**
@@ -310,25 +342,26 @@ void iCSVIO::setMetaDataSlope(const iCSVFile &current_file, StationData &meta, c
 * @param current_file The iCSVFile object representing the file to read from.
 * @throws IOException if the file cannot be opened.
 */
-void iCSVIO::readDataSequential(iCSVFile &current_file) {
-    std::ifstream file(current_file.filename);
-    if (!file.is_open()) {
-        throw IOException("Unable to open file " + current_file.filename, AT);
-    }
+void iCSVIO::readDataSequential(iCSVFile &current_file) const
+{
+	std::ifstream file(current_file.filename);
+	if (!file.is_open()) {
+		throw IOException("Unable to open file " + current_file.filename, AT);
+	}
 
-    std::string line;
-    size_t line_count = 0;
-    while (std::getline(file, line)) {
-        if (line_count < current_file.skip_lines_to_data) {
-            line_count++;
-            continue;
-        }
-        IOUtils::trim(line);
-        if (line.empty()) {
-            continue;
-        }
-        current_file.processData(line);
-    }
+	std::string line;
+	size_t line_count = 0;
+	while (std::getline(file, line)) {
+		if (line_count < current_file.skip_lines_to_data) {
+			line_count++;
+			continue;
+		}
+		IOUtils::trim(line);
+		if (line.empty()) {
+			continue;
+		}
+		current_file.processData(line);
+	}
 }
 
 /**
@@ -343,90 +376,86 @@ void iCSVIO::readDataSequential(iCSVFile &current_file) {
 * @return std::vector<MeteoData> The vector of MeteoData objects created.
 */
 std::vector<MeteoData> iCSVIO::createMeteoDataVector(iCSVFile &current_file, std::vector<Date> &date_vec,
-                                                        std::vector<geoLocation> &location_vec) {
+                                                     std::vector<geoLocation> &location_vec) const
+{
+	std::vector<size_t> indexes;
+	MeteoData md;
+	identify_fields(current_file.FIELDS.fields, indexes, md, current_file.METADATA.geometry);
+
+	const double nodata = current_file.getNoData();
     std::vector<MeteoData> vecMeteo;
-    vecMeteo.reserve(date_vec.size());
+	vecMeteo.reserve( date_vec.size() );
 
-    std::vector<size_t> indexes;
-    MeteoData md;
-    identify_fields(current_file.FIELDS.fields, indexes, md, current_file.METADATA.geometry);
+	MeteoData tmp_md(md);
+	for (size_t d_idx = 0; d_idx < date_vec.size(); d_idx++) {
+		tmp_md.reset();
+		const Date date = date_vec[d_idx];
 
-    double nodata = current_file.getNoData();
+		tmp_md.setDate(date);
+		read_meta_data(current_file, tmp_md.meta);
+		if (location_vec.size() == date_vec.size()) {
+			setMeteoDataLocation(tmp_md, location_vec[d_idx], current_file, nodata);
+		}
 
-    MeteoData tmp_md(md);
-    for (size_t d_idx = 0; d_idx < date_vec.size(); d_idx++) {
-        tmp_md.reset();
-        Date &date = date_vec[d_idx];
-
-        tmp_md.setDate(date);
-
-        read_meta_data(current_file, tmp_md.meta);
-        if (location_vec.size() == date_vec.size()) {
-            setMeteoDataLocation(tmp_md, location_vec[d_idx], current_file, nodata);
-        }
-
-        setMeteoDataFields(tmp_md, current_file, date, indexes, nodata);
-        vecMeteo.push_back(tmp_md);
-    }
-    return vecMeteo;
+		setMeteoDataFields(tmp_md, current_file, date, indexes, nodata);
+		vecMeteo.push_back(tmp_md);
+	}
+	return vecMeteo;
 }
 
-void iCSVIO::setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, iCSVFile &current_file, double nodata) {
-    tmp_md.meta.position.setPoint(IOUtils::standardizeNodata(loc.x, nodata), IOUtils::standardizeNodata(loc.y, nodata),
-                                    IOUtils::standardizeNodata(loc.z, nodata), current_file.METADATA.epsg); // TODO: what happens if alt=nodata?
-    tmp_md.meta.position.check("Inconsistent geographic coordinates in file \"" + current_file.filename + "\": ");
+void iCSVIO::setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, iCSVFile &current_file, double nodata)
+{
+	// TODO: what happens if alt=nodata?
+	tmp_md.meta.position.setPoint(IOUtils::standardizeNodata(loc.x, nodata), IOUtils::standardizeNodata(loc.y, nodata), IOUtils::standardizeNodata(loc.z, nodata), current_file.METADATA.epsg);
+	tmp_md.meta.position.check("Inconsistent geographic coordinates in file \"" + current_file.filename + "\": ");
 }
 
-void iCSVIO::setMeteoDataFields(MeteoData &tmp_md, iCSVFile &current_file, Date &date, std::vector<size_t> &indexes, double nodata) {
-    double offset = 0;
-    double multiplier = 1;
-    for (size_t field_idx = 0; field_idx < current_file.FIELDS.fields.size(); field_idx++) {
-        if (!current_file.FIELDS.units_offsets.empty())
-            offset = current_file.FIELDS.units_offsets[field_idx];
-        if (!current_file.FIELDS.units_multipliers.empty())
-            multiplier = current_file.FIELDS.units_multipliers[field_idx];
-        const std::string &fieldname = current_file.FIELDS.fields[field_idx];
-        const double value = current_file.readData(date, fieldname);
+void iCSVIO::setMeteoDataFields(MeteoData &tmp_md, iCSVFile &current_file, const Date &date, std::vector<size_t> &indexes, double nodata)
+{
+	double offset = 0;
+	double multiplier = 1;
 
-        if (fieldname == "timestamp" || fieldname == "julian")
-            continue;
-        // TODO: handle geometry = multiple columns
-        if (fieldname == current_file.METADATA.geometry)
-            continue;
+	for (size_t field_idx = 0; field_idx < current_file.FIELDS.fields.size(); field_idx++) {
+		if (!current_file.FIELDS.units_offsets.empty()) offset = current_file.FIELDS.units_offsets[field_idx];
+		if (!current_file.FIELDS.units_multipliers.empty()) multiplier = current_file.FIELDS.units_multipliers[field_idx];
+		const std::string fieldname( current_file.FIELDS.fields[field_idx] );
+		const double value = current_file.readData(date, fieldname);
 
-        if (value == nodata) {
-            tmp_md(indexes[field_idx]) = IOUtils::nodata;
-        } else {
-            tmp_md(indexes[field_idx]) = (value + offset) * multiplier;
-        }
-    }
+		if (fieldname == "timestamp" || fieldname == "julian")
+			continue;
+		// TODO: handle geometry = multiple columns
+		if (fieldname == current_file.METADATA.geometry)
+			continue;
+
+		if (value == nodata) {
+			tmp_md(indexes[field_idx]) = IOUtils::nodata;
+		} else {
+			tmp_md(indexes[field_idx]) = (value + offset) * multiplier;
+		}
+	}
 }
 
 // assume an operational snowpack virtual slopes naming: the station ID is made of letters followed by a station
 // number (1 digit) and an optional virtual slope (1 digit, between 1 and 4)
-double iCSVIO::getSnowpackSlope(const std::string &id) {
-    static const char ALPHA[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+double iCSVIO::getSnowpackSlope(const std::string &id)
+{
+	static const char ALPHA[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    const std::size_t end_name_pos = id.find_first_not_of(ALPHA);
-    if (end_name_pos == std::string::npos)
-        return IOUtils::nodata; // this is not a Snowpack virtual station naming
-    if (id[end_name_pos] < '0' || id[end_name_pos] > '9')
-        return IOUtils::nodata;
+	const std::size_t end_name_pos = id.find_first_not_of(ALPHA);
+	if (end_name_pos == std::string::npos)
+		return IOUtils::nodata; // this is not a Snowpack virtual station naming
+	if (id[end_name_pos] < '0' || id[end_name_pos] > '9')
+		return IOUtils::nodata;
 
-    if (id.size() - end_name_pos == 1)
-        return 0.;                                // this is the flat field station
-    const char slope_code = id[end_name_pos + 1]; // we are now sure that there is another char at this position
+	if (id.size() - end_name_pos == 1) return 0.; // this is the flat field station
+	const char slope_code = id[end_name_pos + 1]; // we are now sure that there is another char at this position
 
-    if (slope_code == '1')
-        return 1.;
-    else if (slope_code == '2')
-        return 2.;
-    else if (slope_code == '3')
-        return 3.;
-    else if (slope_code == '4')
-        return 4.;
-    else
-        return IOUtils::nodata; // this is not a digit or not in the [1-4] range
+	if (slope_code == '1') return 1.;
+	else if (slope_code == '2') return 2.;
+	else if (slope_code == '3') return 3.;
+	else if (slope_code == '4') return 4.;
+	else
+		return IOUtils::nodata; // this is not a digit or not in the [1-4] range
 }
 
 /**
@@ -441,66 +470,69 @@ double iCSVIO::getSnowpackSlope(const std::string &id) {
 * @param[out] julian_present set to true if a column contains a julian date
 * @param[out] md a MeteoData object where extra parameters would be added
 */
-void iCSVIO::identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md,
-                                const std::string &geometry_field) {
-    for (size_t ii = 0; ii < fields.size(); ii++) {
-        const std::string &key = fields[ii];
-        if (key == "julian" || key == "timestamp") {
-            indexes.push_back(IOUtils::npos);
-            continue;
-        }
+void iCSVIO::identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md, const std::string &geometry_field)
+{
+	for (size_t ii = 0; ii < fields.size(); ii++) {
+		const std::string key( fields[ii] );
+		if (key == "julian" || key == "timestamp") {
+			indexes.push_back(IOUtils::npos);
+			continue;
+		}
 
-        // TODO: handle geometry = multiple columns
-        if (key == geometry_field) {
-            indexes.push_back(IOUtils::npos);
-            continue;
-        }
+		// TODO: handle geometry = multiple columns
+		if (key == geometry_field) {
+			indexes.push_back(IOUtils::npos);
+			continue;
+		}
 
-        if (md.param_exists(key)) {
-            indexes.push_back(md.getParameterIndex(key));
-            continue;
-        }
+		if (md.param_exists(key)) {
+			indexes.push_back(md.getParameterIndex(key));
+			continue;
+		}
 
-        // specific key mapping
-        if (key == "OSWR") {
-            std::cerr << "The OSWR field name has been deprecated, it should be renamed into RSWR. Please update your files!!\n";
-            indexes.push_back(md.getParameterIndex("RSWR"));
-        } else if (key == "OLWR") {
-            md.addParameter("OLWR");
-            indexes.push_back(md.getParameterIndex("OLWR"));
-        } else if (key == "PINT") { // in mm/h
-            md.addParameter("PINT");
-            indexes.push_back(md.getParameterIndex("PINT"));
-        } else {
-            // this is an extra parameter, we convert to uppercase
-            const std::string extra_param(IOUtils::strToUpper(key));
-            md.addParameter(extra_param);
-            indexes.push_back(md.getParameterIndex(extra_param));
-        }
-    }
+		// specific key mapping
+		if (key == "OSWR") {
+			std::cerr << "The OSWR field name has been deprecated, it should be renamed into RSWR. Please update your files!!\n";
+			indexes.push_back(md.getParameterIndex("RSWR"));
+		} else if (key == "OLWR") {
+			md.addParameter("OLWR");
+			indexes.push_back(md.getParameterIndex("OLWR"));
+		} else if (key == "PINT") { // in mm/h
+			md.addParameter("PINT");
+			indexes.push_back(md.getParameterIndex("PINT"));
+		} else {
+			// this is an extra parameter, we convert to uppercase
+			//const std::string extra_param( IOUtils::strToUpper(key) );
+			std::string extra_param( key );
+			IOUtils::toUpper(extra_param);
+
+			md.addParameter(extra_param);
+			indexes.push_back( md.getParameterIndex(extra_param) );
+		}
+	}
 }
 
 // ---------------------------- iCSVIO write -----------------------------------
 
-void iCSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMeteo, const std::string &) {
-    for (size_t ii = 0; ii < vecvecMeteo.size(); ii++) {
-        if (vecvecMeteo[ii].empty())
-            continue;
+void iCSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMeteo, const std::string &)
+{
+	for (size_t ii = 0; ii < vecvecMeteo.size(); ii++) {
+		if (vecvecMeteo[ii].empty()) continue;
 
-        std::vector<MeteoData> vecMeteo = vecvecMeteo[ii];
-        iCSVFile outfile;
-        bool file_exists = createFilename(outfile, vecMeteo[0].meta, ii);
+		std::vector<MeteoData> vecMeteo( vecvecMeteo[ii] );
+		iCSVFile outfile;
+		bool file_exists = createFilename(outfile, vecvecMeteo[ii], ii);
 
-        prepareOutfile(outfile, vecMeteo, file_exists);
-        outfile.aggregateData(vecMeteo);
+		prepareOutfile(outfile, vecMeteo, file_exists);
+		outfile.aggregateData(vecMeteo);
 
-        if (acdd_metadata.isEnabled()) {
-            acdd_metadata.setTimeCoverage(vecMeteo);
-            acdd_metadata.setGeometry(getUniqueLocations(outfile), true);
-        }
+		if (acdd_metadata.isEnabled()) {
+			acdd_metadata.setTimeCoverage(vecMeteo);
+			acdd_metadata.setGeometry(getUniqueLocations(outfile), true);
+		}
 
-        writeToFile(outfile);
-    }
+		writeToFile(outfile);
+	}
 }
 
 // ----------------- iCSVIO write helper functions -----------------
@@ -516,13 +548,15 @@ void iCSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMet
 * @return True if the generated filename exists, false otherwise.
 * @throws InvalidNameException if the generated filename or path is invalid.
 */
-bool iCSVIO::createFilename(iCSVFile &outfile, const StationData &station, size_t ii) {
-    outfile.METADATA.station_id = station.getStationID().empty() ? "Station" + IOUtils::toString(ii + 1) : station.getStationID();
-    outfile.filename = outpath + "/" + outfile.METADATA.station_id + file_extension_out;
-    if (!FileUtils::validFileAndPath(outfile.filename)) {
-        throw InvalidNameException(outfile.filename, AT);
-    }
-    return FileUtils::fileExists(outfile.filename);
+bool iCSVIO::createFilename(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, size_t ii) const
+{
+	outfile.METADATA.station_id = vecMeteo.front().meta.getStationID().empty() ? "Station" + IOUtils::toString(ii + 1) : vecMeteo.front().meta.getStationID();
+	const std::string version_str( buildVersionString( outputVersioning, vecMeteo, TZ_out, versioning_str ) );
+	outfile.filename = outpath + "/" + outfile.METADATA.station_id + version_str + file_extension_out;
+	if (!FileUtils::validFileAndPath(outfile.filename)) {
+		throw InvalidNameException(outfile.filename, AT);
+	}
+	return FileUtils::fileExists(outfile.filename);
 }
 
 /**
@@ -536,43 +570,45 @@ bool iCSVIO::createFilename(iCSVFile &outfile, const StationData &station, size_
 * @param vecMeteo The vector of MeteoData containing the data to be written.
 * @param file_exists A flag indicating whether the file already exists.
 */
-void iCSVIO::prepareOutfile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) {
-    if (file_exists && allow_append) {
-        outfile.readFile(outfile.filename, false);
-        outfile.parseGeometry();
-    } else {
-        handleNewFile(outfile, vecMeteo, file_exists);
-    }
+void iCSVIO::prepareOutfile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) const
+{
+	if (file_exists && allow_append) {
+		outfile.readFile(outfile.filename, false);
+		outfile.parseGeometry();
+	} else {
+		handleNewFile(outfile, vecMeteo, file_exists);
+	}
 
-    outfile.firstline = iCSV_firstline;
-    outfile.checkFormatValidity();
-    outfile.checkMeteoIOCompatibility();
+	outfile.firstline = iCSV_firstline;
+	outfile.checkFormatValidity();
+	outfile.checkMeteoIOCompatibility();
 
-    if (file_exists && allow_append) {
-        handleFileAppend(outfile, vecMeteo);
-    }
+	if (file_exists && allow_append) {
+		handleFileAppend(outfile, vecMeteo);
+	}
 }
 
-void iCSVIO::handleNewFile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) {
-    if (file_exists && !allow_overwrite) {
-        throw IOException("File " + outfile.filename + " already exists and iCSV_OVERWRITE is not allowed", AT);
-    }
-    createMetaDataSection(outfile, vecMeteo);
-    createFieldsSection(outfile, vecMeteo);
+void iCSVIO::handleNewFile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) const
+{
+	if (file_exists && !allow_overwrite) {
+		throw IOException("File " + outfile.filename + " already exists and iCSV_OVERWRITE is not allowed", AT);
+	}
+	createMetaDataSection(outfile, vecMeteo);
+	createFieldsSection(outfile, vecMeteo);
 }
 
-void iCSVIO::handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
-    if (outfile.location_in_header && outfile.station_location != toiCSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg)) {
-        throw IOException("Inconsistent geographic coordinates between header and data in file \"" + outfile.filename + "\": " +
-                                outfile.station_location.toString() + " != " + toiCSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg).toString(),
-                            AT);
-    }
-    std::vector<std::string> columns_to_append = outfile.columnsToAppend(vecMeteo);
-    if (!columns_to_append.empty()) {
-        std::cerr << "Will append the following columns to file " << outfile.filename << ": "
-                    << joinVector(columns_to_append, outfile.METADATA.field_delimiter) << "\n";
-        outfile.FIELDS.fields.insert(outfile.FIELDS.fields.end(), columns_to_append.begin(), columns_to_append.end());
-    }
+void iCSVIO::handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo)
+{
+	if (outfile.location_in_header && outfile.station_location != toiCSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg)) {
+		const std::string diff_locations( outfile.station_location.toString() + " != " + toiCSVLocation(vecMeteo[0].meta.position, outfile.METADATA.epsg).toString() );
+		const std::string message( "Inconsistent geographic coordinates between header and data in file \"" + outfile.filename + "\": " + diff_locations );
+		throw IOException(message, AT);
+	}
+	const std::vector<std::string> columns_to_append( outfile.columnsToAppend(vecMeteo) );
+	if (!columns_to_append.empty()) {
+		std::cerr << "Will append the following columns to file " << outfile.filename << ": " << joinVector(columns_to_append, outfile.METADATA.field_delimiter) << "\n";
+		outfile.FIELDS.fields.insert(outfile.FIELDS.fields.end(), columns_to_append.begin(), columns_to_append.end());
+	}
 }
 
 /**
@@ -585,131 +621,135 @@ void iCSVIO::handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &v
 * @param outfile The iCSVFile object representing the output file.
 * @param vecMeteo A vector of MeteoData objects containing the meteorological data.
 */
-void iCSVIO::createMetaDataSection(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
-    outfile.FIELDS.fields.push_back("timestamp"); // force time stamp to be the first field
+void iCSVIO::createMetaDataSection(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) const
+{
+	outfile.FIELDS.fields.push_back("timestamp"); // force time stamp to be the first field
 
-    outfile.METADATA.timezone = TZ_out;
-    outfile.METADATA.nodata = IOUtils::nodata;
-    outfile.METADATA.field_delimiter = out_delimiter;
+	outfile.METADATA.timezone = TZ_out;
+	outfile.METADATA.nodata = IOUtils::nodata;
+	outfile.METADATA.field_delimiter = out_delimiter;
 
-    Coords loc = vecMeteo[0].meta.position;
-    loc.setProj(coordout, coordoutparam);
-    int epsg = loc.getEPSG();
-    outfile.METADATA.setEPSG(epsg);
+	Coords loc = vecMeteo[0].meta.position;
+	loc.setProj(coordout, coordoutparam);
+	const int epsg = loc.getEPSG();
+	outfile.METADATA.setEPSG(epsg);
 
-    outfile.location_in_header = checkLocationConsistency(vecMeteo);
-    if (outfile.location_in_header) {
-        double x = loc.getEasting();  // is this the correct way to get xy according to epsg?
-        double y = loc.getNorthing(); // is this the correct way to get xy according to epsg?
-        double z = loc.getAltitude(); // is this the correct way to get xy according to epsg?
-        outfile.station_location = geoLocation(x, y, z);
-        outfile.METADATA.geometry = getGeometry(outfile.station_location);
-    } else {
-        outfile.METADATA.geometry = "geometry";
-        outfile.FIELDS.fields.push_back("geometry");
-    }
-    outfile.METADATA.optional_metadata = vecMeteo[0].meta.extra;
-    outfile.findLocation();
+	outfile.location_in_header = checkLocationConsistency(vecMeteo);
+	if (outfile.location_in_header) {
+		const double x = loc.getEasting();  // is this the correct way to get xy according to epsg?
+		const double y = loc.getNorthing(); // is this the correct way to get xy according to epsg?
+		const double z = loc.getAltitude(); // is this the correct way to get xy according to epsg?
+		outfile.station_location = geoLocation(x, y, z);
+		outfile.METADATA.geometry = getGeometry(outfile.station_location);
+	} else {
+		outfile.METADATA.geometry = "geometry";
+		outfile.FIELDS.fields.push_back("geometry");
+	}
+	outfile.METADATA.optional_metadata = vecMeteo[0].meta.extra;
+	outfile.findLocation();
 }
 
 // TODO: somehow get other information like longname etc.
-void iCSVIO::createFieldsSection(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo) {
-    std::set<std::string> available_params = MeteoData::listAvailableParameters(vecMeteo);
-    for (const auto &param : available_params) {
-        outfile.FIELDS.fields.push_back(param);
-    }
+void iCSVIO::createFieldsSection(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo)
+{
+	const std::set<std::string> available_params( MeteoData::listAvailableParameters(vecMeteo) );
+	for (const auto &param : available_params) {
+		outfile.FIELDS.fields.push_back(param);
+	}
 }
 
-bool iCSVIO::checkLocationConsistency(const std::vector<MeteoData> &vecMeteo) {
-    for (size_t ii = 1; ii < vecMeteo.size(); ii++) {
-        const Coords &p1 = vecMeteo[ii - 1].meta.position;
-        const Coords &p2 = vecMeteo[ii].meta.position;
-        if (p1 != p2) {
-            // we don't mind if p1==nodata or p2==nodata
-            if (p1.isNodata() == false && p2.isNodata() == false)
-                return false;
-        }
-    }
+bool iCSVIO::checkLocationConsistency(const std::vector<MeteoData> &vecMeteo)
+{
+	for (size_t ii = 1; ii < vecMeteo.size(); ii++) {
+		const Coords p1( vecMeteo[ii - 1].meta.position );
+		const Coords p2( vecMeteo[ii].meta.position );
+		if (p1 != p2) {
+			// we don't mind if p1==nodata or p2==nodata
+			if (p1.isNodata() == false && p2.isNodata() == false)
+				return false;
+		}
+	}
 
-    return true;
+	return true;
 }
 
-std::string iCSVIO::getGeometry(const geoLocation &loc) {
-    bool dim_2 = loc.z == IOUtils::nodata;
-    std::string geometry = dim_2 ? "POINT(" : "POINTZ(";
-    geometry += std::to_string(loc.x) + " " + std::to_string(loc.y);
-    if (!dim_2) {
-        geometry += " " + std::to_string(loc.z);
-    }
-    geometry += ")";
-    return geometry;
+std::string iCSVIO::getGeometry(const geoLocation &loc)
+{
+	const bool dim_2 = (loc.z == IOUtils::nodata);
+	std::string geometry = dim_2 ? "POINT(" : "POINTZ(";
+	geometry += std::to_string(loc.x) + " " + std::to_string(loc.y);
+	if (!dim_2) {
+		geometry += " " + std::to_string(loc.z);
+	}
+	geometry += ")";
+	return geometry;
 }
 
-void iCSVIO::writeToFile(const iCSVFile &outfile) {
-    ofilestream file(outfile.filename);
-    if (!file.is_open()) {
-        throw IOException("Unable to open file " + outfile.filename, AT);
-    }
-    file << outfile.firstline << "\n";
-    file << "# [METADATA]\n";
+void iCSVIO::writeToFile(const iCSVFile &outfile) const
+{
+	ofilestream file(outfile.filename);
+	if (!file.is_open()) throw IOException("Unable to open file " + outfile.filename, AT);
+	file << outfile.firstline << "\n";
+	file << "# [METADATA]\n";
 
-    std::map<std::string, std::string> metadata = outfile.METADATA.toOutputMap();
-    for (const auto &meta : metadata) {
-        file << "# " << meta.first << " = " << meta.second << "\n";
-    }
+	const std::map<std::string, std::string> metadata( outfile.METADATA.toOutputMap() );
+	for (const auto &meta : metadata) {
+		file << "# " << meta.first << " = " << meta.second << "\n";
+	}
 
-    // print acdd metadata
-    if (acdd_metadata.isEnabled()) {
-        // print ACDD headers
-        for (auto it = acdd_metadata.cbegin(); it != acdd_metadata.cend(); ++it) {
-            const std::string header_field(it->second.getName());
-            const std::string value(it->second.getValue());
-            if (header_field.empty() || value.empty())
-                continue;
+	// print acdd metadata
+	if (acdd_metadata.isEnabled()) {
+		// print ACDD headers
+		for (auto it = acdd_metadata.cbegin(); it != acdd_metadata.cend(); ++it) {
+			const std::string header_field( it->second.getName() );
+			const std::string value( it->second.getValue() );
+			if (header_field.empty() || value.empty())
+				continue;
 
-            file << "# " << header_field << " = " << value << "\n";
-        }
-    }
+			file << "# " << header_field << " = " << value << "\n";
+		}
+	}
 
-    file << "# [FIELDS]\n";
-    std::map<std::string, std::vector<std::string>> fields = outfile.FIELDS.toMap();
-    for (const auto &field : fields) {
-        file << "# " << field.first << " = " << joinVector(field.second, outfile.METADATA.field_delimiter) << "\n";
-    }
-    file << "# [DATA]\n";
-    // timestamp and geometry will not be in row data
-    size_t num_data_fields = outfile.FIELDS.fields.size() - 1;
-    if (!outfile.location_in_header) {
-        num_data_fields--;
-    }
-    const auto& out_data = outfile.getRowData();
-    const auto& out_dates = outfile.getAllDatesInFile();
-    const auto& out_locations = outfile.getAllLocationsInData();
-    const double nodata = outfile.getNoData();
-    for (size_t ii = 0; ii < outfile.getRowData().size(); ii++) {
-        size_t data_idx = 0;
-        for (size_t jj = 0; jj < outfile.FIELDS.fields.size(); jj++) {
-            if (outfile.FIELDS.fields[jj] == "timestamp") {
-                file << out_dates[ii].toString(Date::ISO) << outfile.METADATA.field_delimiter;
-            } else if (outfile.FIELDS.fields[jj] == outfile.METADATA.geometry) {
-                file << getGeometry(out_locations[ii]) << outfile.METADATA.field_delimiter;
-            } else {
-                if (data_idx < num_data_fields) {
-                    file << IOUtils::standardizeNodata(out_data[ii][data_idx], nodata);
-                } else {
-                    file << IOUtils::nodata;
-                }
-                data_idx++;
-                if (jj != outfile.FIELDS.fields.size() - 1) {
-                    file << outfile.METADATA.field_delimiter;
-                }
-            }
-        }
-        if (ii != out_data.size() - 1) {
-            file << "\n";
-        }
-    }
-    file.close();
+	file << "# [FIELDS]\n";
+	const std::map<std::string, std::vector<std::string>> fields( outfile.FIELDS.toMap() );
+	for (const auto &field : fields) {
+		file << "# " << field.first << " = " << joinVector(field.second, outfile.METADATA.field_delimiter) << "\n";
+	}
+
+	file << "# [DATA]\n";
+	// timestamp and geometry will not be in row data
+	size_t num_data_fields = outfile.FIELDS.fields.size() - 1;
+	if (!outfile.location_in_header) {
+		num_data_fields--;
+	}
+	const auto& out_data = outfile.getRowData();
+	const auto& out_dates = outfile.getAllDatesInFile();
+	const auto& out_locations = outfile.getAllLocationsInData();
+	const double nodata = outfile.getNoData();
+	for (size_t ii = 0; ii < outfile.getRowData().size(); ii++) {
+		size_t data_idx = 0;
+		for (size_t jj = 0; jj < outfile.FIELDS.fields.size(); jj++) {
+			if (outfile.FIELDS.fields[jj] == "timestamp") {
+				file << out_dates[ii].toString(Date::ISO) << outfile.METADATA.field_delimiter;
+			} else if (outfile.FIELDS.fields[jj] == outfile.METADATA.geometry) {
+				file << getGeometry(out_locations[ii]) << outfile.METADATA.field_delimiter;
+			} else {
+				if (data_idx < num_data_fields) {
+					file << IOUtils::standardizeNodata(out_data[ii][data_idx], nodata);
+				} else {
+					file << IOUtils::nodata;
+				}
+				data_idx++;
+				if (jj != outfile.FIELDS.fields.size() - 1) {
+					file << outfile.METADATA.field_delimiter;
+				}
+			}
+		}
+		if (ii != out_data.size() - 1) {
+			file << "\n";
+		}
+	}
+	file.close();
 }
 
 } // namespace

@@ -19,8 +19,6 @@
 
 #include <meteoio/GridProcessor.h>
 
-#include <algorithm>
-
 namespace mio {
 
 /**
@@ -116,5 +114,14 @@ std::map<Date, Grid2DObject>::const_iterator GridProcessor::seek_after(const Dat
 	}
 	return grids.end();
 }
+
+const std::string GridProcessor::toString() const {
+	std::ostringstream os;
+	os << "<GridProcessor>\n";
+	os << gi1d.toString();
+	os << "</GridProcessor>\n";
+	return os.str();
+}
+
 
 } //namespace

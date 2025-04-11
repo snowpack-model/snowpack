@@ -176,7 +176,6 @@ const std::string MeteoProcessor::toString() const {
 	os << "Processing stacks:\n";
 	map<string, ProcessingStack*>::const_iterator it;
 	for (it=processing_stack.begin(); it != processing_stack.end(); ++it){
-		//os << setw(10) << it->first.toString() << "::"; //the processing stack already contains it
 		os << (*it->second).toString();
 	}
 	os << "</MeteoProcessor>\n";

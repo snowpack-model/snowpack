@@ -22,6 +22,7 @@
 #include <meteoio/Config.h>
 
 #include <sstream>
+#include <iomanip>
 
 namespace mio {
 

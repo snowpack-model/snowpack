@@ -64,6 +64,7 @@ using namespace PLUGIN;
  * - SMET_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
  * (in the [Output] section, default is no such versioning):
  *      - NOW: append the current date formatted as numerical ISO;
+ *      - STRING: append a fixed string as provided by the SMET_VERSIONING_STRING key;
  *      - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
  *      - DATA_END: append the absolute end date of the dataset formatted as numerical ISO;
  *      - YEARS: append the absolute start and end years of dataset (if they are the same, only one year is used);
@@ -120,7 +121,7 @@ const double SMETIO::snVirtualSlopeAngle = 38.; //in Snowpack, virtual slopes ar
 SMETIO::SMETIO(const std::string& configfile)
         : cfg(configfile), acdd(false), plot_ppt( initPlotParams() ),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
+          vec_smet_reader(), vecFiles(), outpath(), versioning_str(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputVersioning(NO_VERSIONING), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
@@ -130,7 +131,7 @@ SMETIO::SMETIO(const std::string& configfile)
 SMETIO::SMETIO(const Config& cfgreader)
         : cfg(cfgreader), acdd(false), plot_ppt( initPlotParams() ),
           coordin(), coordinparam(), coordout(), coordoutparam(),
-          vec_smet_reader(), vecFiles(), outpath(), out_dflt_TZ(0.),
+          vec_smet_reader(), vecFiles(), outpath(), versioning_str(), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), default_prec(3), default_width(8), output_separator(' '), outputVersioning(NO_VERSIONING), outputCommentedHeaders(false),
           outputIsAscii(true), outputPlotHeaders(true), randomColors(false), allowAppend(false), allowOverwrite(true), snowpack_slopes(false)
 {
@@ -210,18 +211,6 @@ void SMETIO::parseInputOutputSection()
 		}
 
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
-		const std::string versioning_str = IOUtils::strToUpper( cfg.get("SMET_VERSIONING", "Output", "") );
-		if (versioning_str.empty()) {
-			outputVersioning = NO_VERSIONING;
-		} else {
-			if (versioning_str=="NONE") outputVersioning = NO_VERSIONING;
-			else if (versioning_str=="NOW") outputVersioning = NOW;
-			else if (versioning_str=="DATA_START") outputVersioning = DATA_START;
-			else if (versioning_str=="DATA_END") outputVersioning = DATA_END;
-			else if (versioning_str=="YEARS") outputVersioning = DATA_YEARS;
-			else
-				throw InvalidArgumentException("Unknown value '"+versioning_str+"' for SMET_VERSIONING", AT);
-		}
 		cfg.getValue("SMET_DEFAULT_PREC", "Output", default_prec, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_DEFAULT_WIDTH", "Output", default_width, IOUtils::nothrow); //for fields that don't have any other settings
 		cfg.getValue("SMET_PLOT_HEADERS", "Output", outputPlotHeaders, IOUtils::nothrow); //should the plot_xxx header lines be included?
@@ -230,6 +219,22 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue("SMET_OVERWRITE", "Output", allowOverwrite, IOUtils::nothrow);
 		cfg.getValue("SMET_SEPARATOR", "Output", output_separator, IOUtils::nothrow); //allow specifying a different field separator as required by some import programs
 		cfg.getValue("SMET_COMMENTED_HEADERS", "Output", outputCommentedHeaders, IOUtils::nothrow); //allow prefixing headers by a '#' character for easy import into Dbs, etc
+
+		//support for versioning in the file names
+		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("SMET_VERSIONING", "Output", "") );
+		if (versioning_type_str.empty()) {
+			outputVersioning = NO_VERSIONING;
+		} else {
+			if (versioning_type_str=="NONE") outputVersioning = NO_VERSIONING;
+			else if (versioning_type_str=="STRING") outputVersioning = STRING;
+			else if (versioning_type_str=="NOW") outputVersioning = NOW;
+			else if (versioning_type_str=="DATA_START") outputVersioning = DATA_START;
+			else if (versioning_type_str=="DATA_END") outputVersioning = DATA_END;
+			else if (versioning_type_str=="YEARS") outputVersioning = DATA_YEARS;
+			else
+				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for SMET_VERSIONING", AT);
+		}
+		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("SMET_VERSIONING_STRING", "Output", "") );
 
 		std::vector<std::string> vecArgs;
 		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
@@ -536,43 +541,6 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-std::string SMETIO::buildVersionString(const std::vector< std::vector<MeteoData> >& vecMeteo, const double& smet_timezone) const
-{
-	if (outputVersioning==NO_VERSIONING) return "";
-	if (outputVersioning==NOW) return "_"+Date(smet_timezone).toString(Date::NUM);
-
-	//get the absolute start and end dates
-	Date start_dt, end_dt;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (vecMeteo[ii].empty()) continue;
-
-		if (!start_dt.isUndef()) {
-			if (start_dt>vecMeteo[ii].front().date) start_dt = vecMeteo[ii].front().date;
-			if (end_dt<vecMeteo[ii].back().date) end_dt = vecMeteo[ii].back().date;
-		} else {
-			start_dt = vecMeteo[ii].front().date;
-			end_dt = vecMeteo[ii].back().date;
-		}
-	}
-	if (start_dt.isUndef()) return ""; //no valid data could be found
-
-	start_dt.setTimeZone(smet_timezone);
-	end_dt.setTimeZone(smet_timezone);
-
-	if (outputVersioning==DATA_START) return "_"+start_dt.toString(Date::NUM);
-	if (outputVersioning==DATA_END) return "_"+end_dt.toString(Date::NUM);
-	if (outputVersioning==DATA_YEARS) {
-		const int startYear = start_dt.getYear();
-		const int endYear = end_dt.getYear();
-
-		if (startYear==endYear) return "_"+IOUtils::toString(startYear);
-		return "_"+IOUtils::toString(startYear)+"_"+IOUtils::toString(endYear);
-	}
-
-	//this should not be reached as we test for all members of the enum above
-	return "";
-}
-
 void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
 	//Loop through all stations
@@ -589,7 +557,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		//Otherwise, we know that the current station is not empty, we take TZ from the first timestamnp
 		const double smet_timezone = (out_dflt_TZ != IOUtils::nodata)? out_dflt_TZ : vecMeteo[ii][0].date.getTimeZone();
 		const std::set<std::string> paramInUse( MeteoData::listAvailableParameters(vecMeteo[ii]) );
-		const std::string version_str = buildVersionString( vecMeteo, smet_timezone );
+		const std::string version_str( buildVersionString( outputVersioning, vecMeteo[ii], smet_timezone, versioning_str ) );
 		const std::string filename( outpath + "/" + sd.stationID + version_str + dflt_extension );
 		if (!FileUtils::validFileAndPath(filename)) //Check whether filename is valid
 			throw InvalidNameException(filename, AT);

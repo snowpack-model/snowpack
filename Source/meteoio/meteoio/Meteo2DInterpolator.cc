@@ -19,6 +19,7 @@
 
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/Timer.h>
+#include <iomanip>
 
 using namespace std;
 

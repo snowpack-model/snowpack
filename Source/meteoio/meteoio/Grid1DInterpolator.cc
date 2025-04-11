@@ -40,7 +40,7 @@ Grid1DInterpolator::Grid1DInterpolator(const Config& in_cfg) : algorithm_map(), 
 	if (grid_window_size <= 1.)
 		throw IOException("WINDOW_SIZE for grids not valid, it should be a duration in seconds at least greater than 1", AT);
 	grid_window_size /= 86400.; //user inputs seconds, internally we use Julian
-	cfg.getValue("ENABLE_GRID_RESAMPLING", section_name, enable_grid_resampling, IOUtils::nothrow);
+	cfg.getValue("ENABLE_GRID_RESAMPLING", section_name, enable_resampling, IOUtils::nothrow);
 
 	//create the grid resampling algorithms for each MeteoData::Parameters entry:
 	for (size_t ii = 0; ii < MeteoData::nrOfParameters; ++ii) { //loop over all MeteoData member variables
@@ -110,6 +110,25 @@ std::string Grid1DInterpolator::getGridAlgorithmForParameter(const std::string& 
 	std::string algorithm( "linear" ); //default algorithm
 	cfg.getValue(parname + "::resample", section_name, algorithm, IOUtils::nothrow);
 	return algorithm;
+}
+
+const std::string Grid1DInterpolator::toString() const
+{
+	ostringstream os;
+	os << "<Grid1DInterpolator>\n";
+	os << "Config& cfg = " << hex << &cfg << dec << "\n";
+	if (enable_resampling) {
+		os << "Resampling algorithms:\n";
+		map<string, GridResamplingAlgorithm*>::const_iterator it;
+		for (it = algorithm_map.begin(); it != algorithm_map.end(); ++it) {
+			os << it->second->toString() << "\n";
+		}
+	} else {
+		os << "Resampling disabled\n";
+	}
+	os << "</Grid1DInterpolator>\n";
+
+	return os.str();
 }
 
 } //namespace

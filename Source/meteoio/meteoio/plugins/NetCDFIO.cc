@@ -28,7 +28,6 @@
 
 #include <cmath>
 #include <cstdio>
-#include <sstream>
 #include <algorithm>
 #include <netcdf.h>
 
@@ -78,8 +77,8 @@ namespace mio {
  * - General keys:
  *     - NC_EXT: only the files containing this pattern in their filename will be used; [Input] section (default: .nc)
  *     - NETCDF_SCHEMA_[METEO/GRID/DEM]: the schema to use for reading [MeteoData, Grid2d, or Dem] needs to be specified for each input type (either CF-1.6, CROCUS, AMUNDSEN,  ERA-INTERIM, ERA5 or WRF); [Input] and [Output] section (default: CF-1.6)
- *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section;
- *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section;
+ *     - NETCDF_VAR::{MeteoGrids::Parameters} = {netcdf_param_name} : this allows to remap the names as found in the NetCDF file to the MeteoIO grid parameters; [Input] section; Pay attention, this is case sensitive!
+ *     - NETCDF_DIM::{MeteoGrids::Parameters} = {netcdf_dimension_name} : this allows to remap the names as found in the NetCDF file to the ncFiles Dimensions; [Input] section; Pay attention, this is case sensitive!
  *     - NC_DEBUG: print some low level details about the file being read (default: false); [Input] section;
  *     - NC_ALLOW_MISSING_COORDS: for files containing timeseries without any STATION dimension, accept files that do not contain the geolocalization of the measurements (please then use a data creator to provide the geolocalization, otherwise you can expect a mess at some point. Default: false); [Input] section;
  *     - NC_KEEP_FILES_OPEN: keep files open for efficient access (default for input: true, default for output: false). Reading from or writing to many NetCDF files may cause the
@@ -102,6 +101,14 @@ namespace mio {
  *               - METEOPATH_RECURSIVE: should the scan for files be recursive (default: false)?; [Input]
  *     - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false); [Output]
  *     - METEOFILE: when NC_SINGLE_FILE is set, the output file name to use [Output];
+ *     - NETCDF_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
+ * (in the [Output] section, default is no such versioning):
+ *          - NOW: append the current date formatted as numerical ISO;
+ *          - STRING: append a fixed string as provided by the NETCDF_VERSIONING_STRING key;
+ *          - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
+ *          - DATA_END: append the absolute end date of the dataset formatted as numerical ISO;
+ *          - YEARS: append the absolute start and end years of dataset (if they are the same, only one year is used);
+ *          - NONE: do not append anything, no versioning is performed (default).
  *     - NC_STRICT_SCHEMA: only write out parameters that are specifically described in the chosen schema (default: false, all parameters in
  * MeteoGrids::Parameters are also written out); [Output]
  *     - NC_LAX_SCHEMA: write out all provided parameters even if no metadata can be associated with them (default: false); [Output]
@@ -341,14 +348,14 @@ namespace mio {
 
 NetCDFIO::NetCDFIO(const std::string& configfile)
          : cfg(configfile), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema_grid("CF-1.6"), out_schema_grid("CF-1.6"), in_schema_meteo("CF-1.6"), out_schema_meteo("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
-         out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
+         out_meteo_path(), out_meteo_file(), out_meteo_ext(".nc"), versioning_str(), outputVersioning(NO_VERSIONING), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
 {
 	parseInputOutputSection();
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader)
          : cfg(cfgreader), cache_grid_files(), cache_grids_out(), cache_inmeteo_files(), in_stations(), available_params(), in_schema_grid("CF-1.6"), out_schema_grid("CF-1.6"), in_schema_meteo("CF-1.6"), out_schema_meteo("CF-1.6"), in_grid2d_path(), in_nc_ext(".nc"), out_grid2d_path(), grid2d_out_file(),
-         out_meteo_path(), out_meteo_file(), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
+         out_meteo_path(), out_meteo_file(), out_meteo_ext(".nc"), versioning_str(), outputVersioning(NO_VERSIONING), debug(false), out_single_file(false), split_by_year(false), split_by_var(false)
 {
 	parseInputOutputSection();
 }
@@ -403,6 +410,7 @@ void NetCDFIO::parseInputOutputSection()
 			bool is_recursive = false;
 			cfg.getValue("METEOPATH_RECURSIVE", "Input", is_recursive, IOUtils::nothrow);
 			std::list<std::string> dirlist( FileUtils::readDirectory(inpath, in_nc_ext, is_recursive) );
+			if (dirlist.empty()) std::cerr << "[W] Scanning '" << inpath << "' for NetCDF files (" << in_nc_ext << ") did not return any results\n";
 			dirlist.sort();
 			
 			for (std::list<std::string>::const_iterator it = dirlist.begin(); it != dirlist.end(); ++it) {
@@ -424,7 +432,31 @@ void NetCDFIO::parseInputOutputSection()
 		cfg.getValue("NETCDF_SCHEMA_METEO", "Output", out_schema_meteo, IOUtils::nothrow); IOUtils::toUpper(out_schema_meteo);
 		cfg.getValue("METEOPATH", "Output", out_meteo_path);
 		cfg.getValue("NC_SINGLE_FILE", "Output", out_single_file, IOUtils::nothrow);
-		if (out_single_file) cfg.getValue("METEOFILE", "Output", out_meteo_file);
+		if (out_single_file) {
+			cfg.getValue("METEOFILE", "Output", out_meteo_file);
+			//split between file name and extension, so we can append optional versioning string to the file name and keep the extension
+			const size_t dotPosition = out_meteo_file.find_last_of('.');
+			if (dotPosition!=std::string::npos) {
+				out_meteo_ext = out_meteo_file.substr(dotPosition);	//including '.'
+				out_meteo_file.resize( dotPosition );
+			}
+		}
+
+		//support for versioning in the file names
+		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("NETCDF_VERSIONING", "Output", "") );
+		if (versioning_type_str.empty()) {
+			outputVersioning = NO_VERSIONING;
+		} else {
+			if (versioning_type_str=="NONE") outputVersioning = NO_VERSIONING;
+			else if (versioning_type_str=="STRING") outputVersioning = STRING;
+			else if (versioning_type_str=="NOW") outputVersioning = NOW;
+			else if (versioning_type_str=="DATA_START") outputVersioning = DATA_START;
+			else if (versioning_type_str=="DATA_END") outputVersioning = DATA_END;
+			else if (versioning_type_str=="YEARS") outputVersioning = DATA_YEARS;
+			else
+				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for NETCDF_VERSIONING", AT);
+		}
+		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("NETCDF_VERSIONING_STRING", "Output", "") );
 	}
 }
 
@@ -432,7 +464,10 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 {
 	nc_files.clear();
 	std::list<std::string> dirlist( FileUtils::readDirectory(in_path, nc_ext) );
-	if (dirlist.empty()) return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
+	if (dirlist.empty()) {
+		std::cerr << "[W] Scanning '" << in_path << "' for NetCDF files (" << nc_ext << ") did not return any results, using GRID2DFILE instead\n";
+		return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
+	}
 	dirlist.sort();
 
 	//Check date range in every filename and cache it
@@ -635,7 +670,8 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
 	if (out_single_file) {
-		const std::string file_and_path( out_meteo_path + "/" + out_meteo_file );
+		const std::string version_str( buildVersionString( outputVersioning, vecMeteo[0], 0., versioning_str ) );
+		const std::string file_and_path( out_meteo_path + "/" + out_meteo_file + version_str + out_meteo_ext );
 		if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
 		if (FileUtils::fileExists(file_and_path)) throw IOException("Appending data to timeseries is currently non-functional for NetCDF, please delete file "+file_and_path, AT);
 
@@ -645,7 +681,8 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	} else {
 		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 			if (vecMeteo[ii].empty()) continue;
-			const std::string file_and_path( out_meteo_path + "/" + vecMeteo[ii].front().meta.stationID + ".nc" );
+			const std::string version_str( buildVersionString( outputVersioning, vecMeteo, 0., versioning_str ) );
+			const std::string file_and_path( out_meteo_path + "/" + vecMeteo[ii].front().meta.stationID + version_str + ".nc" );
 			if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidNameException("Invalid output file name '"+file_and_path+"'", AT);
 			if (FileUtils::fileExists(file_and_path)) throw IOException("Appending data to timeseries is currently non-functional for NetCDF, please delete file "+file_and_path, AT);
 
@@ -1977,7 +2014,7 @@ size_t ncFiles::addTimestamp(const Date& date)
 		if (time_pos==vecTime.size())
 			vecTime.push_back( std::make_pair(date,vecTime.size()) );
 		else
-			vecTime.insert(vecTime.begin()+time_pos, std::make_pair(date,time_pos) );
+			vecTime.insert(vecTime.begin()+static_cast<std::ptrdiff_t>(time_pos), std::make_pair(date,time_pos) );
 	}
 
 	return time_pos;
@@ -1994,7 +2031,7 @@ void ncFiles::initDimensionsFromFile()
 	status = nc_inq_unlimdim(ncid, &unlim_id);
 	if (status != NC_NOERR) throw IOException("Could not retrieve unlimited dimension: " + std::string(nc_strerror(status)), AT);
 
-	int *dimids = (int*)malloc(ndims * sizeof(int));
+	int *dimids = (int*)malloc(static_cast<size_t>(ndims) * sizeof(int));
 	status = nc_inq_dimids(ncid, &ndims, dimids, 0);
 	if (status != NC_NOERR) throw IOException("Could not retrieve dimensions IDs: " + std::string(nc_strerror(status)), AT);
 

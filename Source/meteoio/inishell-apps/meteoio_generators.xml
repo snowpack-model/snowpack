@@ -245,6 +245,9 @@ INIshell include file for MeteoIO generators
 		<option value="PRECSPLITTING">
 			<parameter key="%::ARG#::TYPE" label="Type:" type="alternative" optional="true">
 				<option value="NONE"/>
+				<option value="WET_BULB">
+					<parameter key="%::ARG#::SNOW" label="Snow:" type="number" format="decimal" precision="2" default="273.65" unit="K"/>
+				</option>
 				<option value="THRESH">
 					<parameter key="%::ARG#::SNOW" label="Snow:" type="number" format="decimal" precision="2" default="274.35" unit="K"/>
 				</option>

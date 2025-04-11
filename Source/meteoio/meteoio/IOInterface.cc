@@ -175,6 +175,76 @@ double IOInterface::computeGridXYCellsize(const std::vector<double>& vecX, const
 	return Grid2DObject::calculate_XYcellsize(vecX, vecY);
 }
 
+
+std::string IOInterface::buildVersionString(const VersioningType& versioning, const std::vector< std::vector<MeteoData> >& vecMeteo, const double& tz, const std::string& versioning_str)
+{
+	if (versioning==NO_VERSIONING) return "";
+	if (versioning==STRING) return "_"+versioning_str;
+	if (versioning==NOW) return "_"+Date(tz).toString(Date::NUM);
+
+	//get the absolute start and end dates
+	Date start_dt, end_dt;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (vecMeteo[ii].empty()) continue;
+
+		if (!start_dt.isUndef()) {
+			if (start_dt>vecMeteo[ii].front().date) start_dt = vecMeteo[ii].front().date;
+			if (end_dt<vecMeteo[ii].back().date) end_dt = vecMeteo[ii].back().date;
+		} else {
+			start_dt = vecMeteo[ii].front().date;
+			end_dt = vecMeteo[ii].back().date;
+		}
+	}
+	if (start_dt.isUndef()) return std::string(); //no valid data could be found
+
+	start_dt.setTimeZone(tz);
+	end_dt.setTimeZone(tz);
+
+	if (versioning==DATA_START) return "_"+start_dt.toString(Date::NUM);
+	if (versioning==DATA_END) return "_"+end_dt.toString(Date::NUM);
+	if (versioning==DATA_YEARS) {
+		const int startYear = start_dt.getYear();
+		const int endYear = end_dt.getYear();
+
+		if (startYear==endYear) return "_"+IOUtils::toString(startYear);
+		return "_"+IOUtils::toString(startYear)+"_"+IOUtils::toString(endYear);
+	}
+
+	//this should not be reached as we test for all members of the enum above
+	return std::string();
+}
+
+
+std::string IOInterface::buildVersionString(const VersioningType& versioning, const std::vector<MeteoData>& vecMeteo, const double& tz, const std::string& versioning_str)
+{
+	if (versioning==NO_VERSIONING) return "";
+	if (versioning==STRING) return "_"+versioning_str;
+	if (versioning==NOW) return "_"+Date(tz).toString(Date::NUM);
+
+	//get the absolute start and end dates
+	if (vecMeteo.empty()) return std::string();
+	Date start_dt( vecMeteo.front().date );
+	Date end_dt( vecMeteo.back().date );
+	if (start_dt.isUndef() || end_dt.isUndef()) return std::string(); //no valid data could be found
+
+	start_dt.setTimeZone(tz);
+	end_dt.setTimeZone(tz);
+
+	if (versioning==DATA_START) return "_"+start_dt.toString(Date::NUM);
+	if (versioning==DATA_END) return "_"+end_dt.toString(Date::NUM);
+	if (versioning==DATA_YEARS) {
+		const int startYear = start_dt.getYear();
+		const int endYear = end_dt.getYear();
+
+		if (startYear==endYear) return "_"+IOUtils::toString(startYear);
+		return "_"+IOUtils::toString(startYear)+"_"+IOUtils::toString(endYear);
+	}
+
+	//this should not be reached as we test for all members of the enum above
+	return std::string();
+}
+
+
 void IOInterface::mergeLinesRanges(std::vector< LinesRange >& lines_specs)
 {
 	std::sort(lines_specs.begin(), lines_specs.end()); //in case of identical start dates, the oldest end date comes first

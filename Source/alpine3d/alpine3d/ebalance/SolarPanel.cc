@@ -5,6 +5,7 @@
 
 //file operations
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <stdlib.h>
 
@@ -49,8 +50,10 @@ SolarPanel::SolarPanel(const mio::Config& cfg, const mio::DEMObject &dem_in, con
 	}
 
 	// Check for required Key
-	if (cfg.keyExists("PV_shadowing", "Ebalance")) cfg.getValue("PV_shadowing", "Ebalance", if_shadowing);
-		else std::cout<<"[i] In SolarPanel: No flag <<PV_shadowing>> set in [Ebalance]. Use default PV_shadowing = "<<if_shadowing<<" .\n";
+	if (cfg.keyExists("PV_shadowing", "Ebalance"))
+		cfg.getValue("PV_shadowing", "Ebalance", if_shadowing);
+	else
+		std::cout<<"[i] In SolarPanel: No flag <<PV_shadowing>> set in [Ebalance]. Use default PV_shadowing = " << if_shadowing << " .\n";
 
 	// Initialize the embedding of the panels in the terrain
 	initBasicSetHorizontal();

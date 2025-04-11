@@ -22,6 +22,7 @@
 #include <meteoio/MathOptim.h>
 
 #include <sstream>
+#include <iomanip>
 #include <cmath>
 
 namespace mio {

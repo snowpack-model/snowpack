@@ -22,6 +22,9 @@
 #include <snowpack/snowpackCore/SalinityTransport.h>
 #include <snowpack/Utils.h>
 #include <snowpack/snowpackCore/Snowpack.h>
+
+#include <iomanip>
+
 #ifdef CLAPACK
 	// Matching C data types with FORTRAN data types (taken from f2c.h):
 	typedef long int integer;

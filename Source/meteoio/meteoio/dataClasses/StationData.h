@@ -22,7 +22,6 @@
 #include <meteoio/dataClasses/Coords.h>
 
 #include <string>
-#include <iomanip>
 #include <vector>
 
 #include <map>

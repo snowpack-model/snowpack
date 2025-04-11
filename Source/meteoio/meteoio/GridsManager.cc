@@ -17,6 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/GridsManager.h>
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
@@ -504,7 +505,7 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 	 //reproject grid if it is lat/lon
 	if (enforce_cartesian && grid2D.isLatlon())
 		grid2D.reproject(); //HACK this is currently very, very primitive
-
+	
 	return grid2D;
 }
 
