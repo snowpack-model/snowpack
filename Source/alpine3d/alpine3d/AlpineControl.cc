@@ -19,6 +19,8 @@
 #include <alpine3d/AlpineMain.h>
 #include <meteoio/MeteoIO.h>
 
+#include <iomanip>
+
 using namespace mio;
 using namespace std;
 

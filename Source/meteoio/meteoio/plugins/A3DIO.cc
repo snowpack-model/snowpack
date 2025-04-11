@@ -22,6 +22,7 @@
 #include <meteoio/FileUtils.h>
 
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 

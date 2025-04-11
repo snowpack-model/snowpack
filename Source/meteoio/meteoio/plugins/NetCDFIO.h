@@ -144,7 +144,9 @@ class NetCDFIO : public IOInterface {
 		std::set<std::string> in_stations; ///< only the stations IDs listed here will be returned by a call to readMeteoData/readStationData
 		std::vector<MeteoGrids::Parameters> available_params;
 		std::string in_schema_grid, out_schema_grid, in_schema_meteo, out_schema_meteo, in_grid2d_path, in_nc_ext, out_grid2d_path, grid2d_out_file;
-		std::string out_meteo_path, out_meteo_file;
+		std::string out_meteo_path, out_meteo_file, out_meteo_ext;
+		std::string versioning_str;		//string to use for versionning (if using FIXED versionning, see VERSIONING_TYPE)
+		VersioningType outputVersioning; //this is usefull when generating multiple versions of the same dataset, for example with forecast data
 		bool debug, out_single_file;
 		bool split_by_year, split_by_var;
 };

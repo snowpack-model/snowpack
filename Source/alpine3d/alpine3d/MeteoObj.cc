@@ -16,6 +16,7 @@
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <alpine3d/MeteoObj.h>
+#include <iomanip>
 
 using namespace mio;
 using namespace std;

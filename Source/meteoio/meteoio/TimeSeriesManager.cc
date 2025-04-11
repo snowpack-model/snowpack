@@ -20,6 +20,7 @@
 #include <meteoio/TimeSeriesManager.h>
 
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 

@@ -21,8 +21,8 @@
 #include <alpine3d/MPIControl.h>
 #include <alpine3d/OMPControl.h>
 
+#include <iomanip>
 #include <errno.h>
-#include <algorithm>
 
 using namespace std;
 using namespace mio;

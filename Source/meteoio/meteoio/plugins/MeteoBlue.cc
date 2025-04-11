@@ -22,7 +22,6 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
-#include <algorithm>
 #include <sstream>
 #include <iostream>
 #include <cstring>

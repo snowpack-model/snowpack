@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include <meteoio/MeteoIO.h>
+#include <iomanip>
 
 using namespace std;
 using namespace mio;

@@ -1589,7 +1589,7 @@ int ComputeTmpConMatrix(SD_CON_MATRIX_DATA *pMat0, SD_TMP_CON_MATRIX_DATA *pMat)
 
 		// Insert the diagonal block as first block
 		SD_GET_COL_BLOCK(pColBlock, pMat);
-		pColBlock->Next = 0;
+		pColBlock->Next = nullptr;
 		pColBlock->Col0 =  pColBlock->Col1 = PermRow;
 		pRowBlock->Data.ColBlock = pColBlock;
 

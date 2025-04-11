@@ -15,9 +15,11 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "MeteoObj.h"
+#include <alpine3d/MeteoObj.h>
 #include <alpine3d/SnowpackInterfaceWorker.h>
 #include <alpine3d/AlpineMain.h>
+
+#include <iomanip>
 
 using namespace std;
 using namespace mio;

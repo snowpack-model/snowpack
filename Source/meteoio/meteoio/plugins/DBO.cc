@@ -22,7 +22,6 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
-#include <sstream>
 #include <regex>
 
 using namespace std;

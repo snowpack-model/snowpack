@@ -20,6 +20,7 @@
 #include <meteoio/dataClasses/Buffer.h>
 
 #include <limits.h>
+#include <iomanip>
 #include <algorithm>
 
 using namespace std;

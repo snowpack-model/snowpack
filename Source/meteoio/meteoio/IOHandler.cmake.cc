@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 
 //in alphabetical order
 #cmakedefine PLUGIN_ALPUG
