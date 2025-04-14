@@ -262,7 +262,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		vw_dendricity = false;
 		rh_lowlim = 0.7;
 		bond_factor_rh = 3.0;
-		enhanced_wind_slab = true;
+		// enhanced_wind_slab = true;  // set in namelist now
 		ageAlbedo = false;
 	} else {
 		new_snow_dd = 1.0;
@@ -1429,9 +1429,11 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 			elem.dd = new_snow_dd;
 			elem.sp = new_snow_sp;
 			// Adapt dd and sp for blowing snow
-			if ((Mdata.vw > 5.) && ((variant == "ANTARCTICA" || variant == "POLAR")
-			|| (!SnLaws::jordy_new_snow && ((hn_density_parameterization == "BELLAIRE")
-			|| (hn_density_parameterization == "LEHNING_NEW"))))) {
+			if ((Mdata.vw > 5.) && (
+				(variant == "ANTARCTICA" || variant == "POLAR")
+				|| (!SnLaws::jordy_new_snow && ((hn_density_parameterization == "BELLAIRE")
+					|| (hn_density_parameterization == "LEHNING_NEW"))
+				))) {
 				elem.dd = new_snow_dd_wind;
 				elem.sp = new_snow_sp_wind;
 			} else if (vw_dendricity && ((hn_density_parameterization == "BELLAIRE")
@@ -1439,7 +1441,8 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 				const double vw = std::max(0.05, Mdata.vw);
 				elem.dd = (1. - pow(vw/10., 1.57));
 				elem.dd = std::max(0.2, elem.dd);
-			}
+			} // and else ??
+
 			if (Snowpack::hydrometeor) { // empirical
 				static const double alpha=1.4, beta=-0.08, gamma=-0.15;
 				static const double delta=-0.02;
