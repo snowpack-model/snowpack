@@ -212,6 +212,7 @@ void RadiationField::setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::G
 	Sun.position.getHorizontalCoordinates(solarAzimuth, solarElevation);
 	const double tan_sun_elev = tan(solarElevation*mio::Cst::to_rad);
 
+	//set the geolocalization from in_iswr_dir, the cells' values will be set in the for loop below
 	direct.set(in_iswr_dir, 0.); //reset to a band size (the "night" case might have set to the full dem)
 	diffuse.set(in_iswr_dir, 0.); //reset to a band size (the "night" case might have set to the full dem)
 	direct_unshaded_horizontal.set(in_iswr_dir, 0.); //reset to a band size (the "night" case might have set to the full dem)

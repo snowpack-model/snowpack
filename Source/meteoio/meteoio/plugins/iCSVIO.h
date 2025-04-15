@@ -29,85 +29,74 @@
 
 namespace mio {
 
-    using namespace iCSV;
-    /**
-     * @class iCSVIO
-     * @brief A class to read and write iCSV files
-     *
-     * @section TODO (when available)
-     * - if meteoparam metadata is available use it to pass along long_name ... and also write it out
-     *
-     *
-     * @ingroup plugins
-     * @author Patrick Leibersperger
-     * @date   2024-02-015
-     */
-    class iCSVIO : public IOInterface {
-    public:
-        iCSVIO(const std::string &configfile);
-        iCSVIO(const iCSVIO &);
-        iCSVIO(const Config &cfgreader);
+using namespace iCSV;
+/**
+* @class iCSVIO
+* @brief A class to read and write iCSV files
+*
+* @section TODO (when available)
+* - if meteoparam metadata is available use it to pass along long_name ... and also write it out
+*
+*
+* @ingroup plugins
+* @author Patrick Leibersperger
+* @date   2024-02-015
+*/
+class iCSVIO : public IOInterface {
+	public:
+		iCSVIO(const std::string &configfile);
+		iCSVIO(const iCSVIO &);
+		iCSVIO(const Config &cfgreader);
 
-        virtual void readStationData(const Date &date, std::vector<StationData> &vecStation) override;
-        virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo) override;
+		virtual void readStationData(const Date &date, std::vector<StationData> &vecStation) override;
+		virtual void readMeteoData(const Date &dateStart, const Date &dateEnd, std::vector<std::vector<MeteoData>> &vecMeteo) override;
 
-        virtual void writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "") override;
+		virtual void writeMeteoData(const std::vector<std::vector<MeteoData>> &vecMeteo, const std::string &name = "") override;
 
-    private:
-        // input section
-        const Config cfg;
-        std::string coordin, coordinparam, coordout, coordoutparam; // projection parameters
-        bool snowpack_slopes;
-        bool read_sequential;
+	private:
+		// constructor helpers
+		void parseInputSection();
+		void parseOutputSection();
 
-        // file information
-        std::vector<iCSVFile> stations_files;
+		// read helpers
+		static void identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md, const std::string &geometry_field);
+		static double getSnowpackSlope(const std::string &id);
+		void read_meta_data(const iCSVFile &current_file, StationData &meta) const;
+		void setMetaDataPosition(const iCSVFile &current_file, StationData &meta, const double &nodata_value) const;
+		void setMetaDataSlope(const iCSVFile &current_file, StationData &meta, const double &nodata_value) const;
 
-        // output section
-        ACDD acdd_metadata;
-        double TZ_out;
-        std::string outpath;
-        bool allow_overwrite;
-        bool allow_append;
-        char out_delimiter;
-        std::string file_extension_out;
+		void readDataSequential(iCSVFile &current_file) const;
+		std::vector<MeteoData> createMeteoDataVector(iCSVFile &current_file, std::vector<Date> &date_vec, std::vector<geoLocation> &location_vec) const;
+		static void setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, iCSVFile &current_file, double nodata);
+		static void setMeteoDataFields(MeteoData &tmp_md, iCSVFile &current_file, const Date &date, std::vector<size_t> &indexes, double nodata);
+
+		// write helpers
+		void prepareOutfile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) const;
+		void handleNewFile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists) const;
+		static void handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo);
+
+		static std::string getGeometry(const geoLocation &loc);
+		static bool checkLocationConsistency(const std::vector<MeteoData> &vecMeteo);
+		bool createFilename(iCSVFile &outfile, const std::vector<MeteoData> &vecvecMeteo, size_t station_num) const;
+		void createMetaDataSection(iCSVFile &current_file, const std::vector<MeteoData> &vecMeteo) const;
+		static void createFieldsSection(iCSVFile &current_file, const std::vector<MeteoData> &vecMeteo);
+		void writeToFile(const iCSVFile &outfile) const;
 
 
-        // constants
-        const std::string iCSV_version = "1.0";
-        const std::string iCSV_firstline = "# iCSV " + iCSV_version + " UTF-8";
-        static const double snVirtualSlopeAngle;
+		// constants
+		const std::string iCSV_version = "1.0";
+		const std::string iCSV_firstline = "# iCSV " + iCSV_version + " UTF-8";
 
-        // constructor helpers
-        void parseInputSection();
-        void parseOutputSection();
-
-        // read helpers
-        void identify_fields(const std::vector<std::string> &fields, std::vector<size_t> &indexes, MeteoData &md,
-                                     const std::string &geometry_field);
-        double getSnowpackSlope(const std::string &id);
-        void read_meta_data(const iCSVFile &current_file, StationData &meta);
-        void setMetaDataPosition(const iCSVFile &current_file, StationData &meta, const double &nodata_value);
-        void setMetaDataSlope(const iCSVFile &current_file, StationData &meta, const double &nodata_value);
-
-        void readDataSequential(iCSVFile &current_file);
-        std::vector<MeteoData> createMeteoDataVector(iCSVFile &current_file, std::vector<Date> &date_vec,
-                                                             std::vector<geoLocation> &location_vec);
-        void setMeteoDataLocation(MeteoData &tmp_md, geoLocation &loc, iCSVFile &current_file, double nodata);
-        void setMeteoDataFields(MeteoData &tmp_md, iCSVFile &current_file, Date &date, std::vector<size_t> &indexes, double nodata);
-
-        // write helpers
-        void prepareOutfile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists);
-        void handleNewFile(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo, bool file_exists);
-        void handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &vecMeteo);
-
-        std::string getGeometry(const geoLocation &loc);
-        bool checkLocationConsistency(const std::vector<MeteoData> &vecMeteo);
-        bool createFilename(iCSVFile &outfile, const StationData &station, size_t station_num);
-        void createMetaDataSection(iCSVFile &current_file, const std::vector<MeteoData> &vecMeteo);
-        void createFieldsSection(iCSVFile &current_file, const std::vector<MeteoData> &vecMeteo);
-        void writeToFile(const iCSVFile &outfile);
-    };
+		std::vector<iCSVFile> stations_files;
+		const Config cfg;
+		ACDD acdd_metadata;
+		std::string coordin, coordinparam, coordout, coordoutparam; // projection parameters
+		std::string file_extension_out, outpath, versioning_str;
+		double TZ_out;
+		VersioningType outputVersioning; //this is usefull when generating multiple versions of the same dataset, for example with forecast data
+		char out_delimiter;
+		bool snowpack_slopes, read_sequential, allow_overwrite, allow_append;
+};
 
 } // namespace
 #endif

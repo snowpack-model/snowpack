@@ -1,25 +1,6 @@
 #SPDX-License-Identifier: LGPL-3.0-or-later
 #building version number in variable _versionString
 
-MACRO (GETDATE TODAY)
-	IF(CMAKE_VERSION VERSION_GREATER 2.8.11)
-		STRING(TIMESTAMP TODAY "%Y%m%d")
-	ELSE(CMAKE_VERSION VERSION_GREATER 2.8.11)
-		IF (WIN32)
-			EXECUTE_PROCESS(COMMAND "cmd" " /C date /T" OUTPUT_VARIABLE ${TODAY})
-			STRING(REGEX REPLACE "(..)/(..)/(....) .*\n" "\\3\\2\\1" ${TODAY} ${${TODAY}}) #US format
-			STRING(REGEX REPLACE "(..)-(..)-(....) .*\n" "\\3\\2\\1" ${TODAY} ${${TODAY}}) #UK format
-			STRING(REGEX REPLACE "(..)\\.(..)\\.(....) .*\n" "\\3\\2\\1" ${TODAY} ${${TODAY}}) #CH format
-		ELSEIF(UNIX)
-			EXECUTE_PROCESS(COMMAND "date" "+%Y-%m-%d" OUTPUT_VARIABLE ${TODAY})
-			string(REGEX REPLACE "(....)-(..)-(..).*" "\\1\\2\\3" ${TODAY} ${${TODAY}})
-		ELSE (WIN32)
-			MESSAGE(SEND_ERROR "date not implemented")
-			SET(${TODAY} 000000)
-		ENDIF (WIN32)
-	ENDIF(CMAKE_VERSION VERSION_GREATER 2.8.11)
-ENDMACRO (GETDATE)
-
 MACRO (GET_TORTOISE_GIT_WCREV PROJECT_GIT_STR)
 	IF("${PROJECT_GIT_STR}" MATCHES "HEAD is ([a-zA-Z0-9]+)")
 		STRING(SUBSTRING "${CMAKE_MATCH_1}" 0 7 GIT_VERSION)
@@ -29,10 +10,10 @@ ENDMACRO (GET_TORTOISE_GIT_WCREV)
 MACRO(BuildVersionSVN)
 	FIND_PACKAGE(Subversion QUIET)
 	IF(Subversion_FOUND)
-		SET(VERSION_FROM_SVN OFF CACHE BOOL "Retrieve software version from Subversion")
+		SET(VERSION_FROM_SVN ON CACHE BOOL "Retrieve software version from Subversion")
 		IF(VERSION_FROM_SVN)
 			Subversion_WC_INFO(${PROJECT_SOURCE_DIR} project) #HACK: if not an svn tree, it does not work
-			GETDATE(TODAY)
+			STRING(TIMESTAMP TODAY "%Y%m%d")
 			SET(_versionString "${TODAY}.${project_WC_REVISION}")
 		ELSE(VERSION_FROM_SVN)
 			SET(_versionString "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
@@ -46,7 +27,7 @@ MACRO(BuildVersionGIT)
 	FIND_PACKAGE(Git QUIET)
 	IF(GIT_FOUND)
 		MARK_AS_ADVANCED(GIT_EXECUTABLE)
-		SET(VERSION_FROM_GIT OFF CACHE BOOL "Retrieve software version from Git")
+		SET(VERSION_FROM_GIT ON CACHE BOOL "Retrieve software version from Git")
 		IF(VERSION_FROM_GIT)
 			execute_process(
 				COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
@@ -55,14 +36,14 @@ MACRO(BuildVersionGIT)
 				ERROR_QUIET
 				OUTPUT_STRIP_TRAILING_WHITESPACE
 			)
-			GETDATE(TODAY)
+			STRING(TIMESTAMP TODAY "%Y%m%d")
 			SET(_versionString "${TODAY}.${project_WC_REVISION}")
 		ENDIF(VERSION_FROM_GIT)
 	ELSE(GIT_FOUND)
 		find_program(TORTOISE_WCREV gitWCRev HINTS $ENV{PATH} QUIET)
 		if(TORTOISE_WCREV)
 			MARK_AS_ADVANCED(TORTOISE_WCREV)
-			SET(VERSION_FROM_GIT OFF CACHE BOOL "Retrieve software version from Git")
+			SET(VERSION_FROM_GIT ON CACHE BOOL "Retrieve software version from Git")
 			IF(VERSION_FROM_GIT)
 				execute_process(
 					COMMAND ${TORTOISE_WCREV} "${PROJECT_SOURCE_DIR}" 
@@ -72,7 +53,7 @@ MACRO(BuildVersionGIT)
 				)
 				string(REPLACE "\\" "/" project_WC_REVISION "${project_WC_REVISION}")
 				GET_TORTOISE_GIT_WCREV(${project_WC_REVISION})
-				GETDATE(TODAY)
+				STRING(TIMESTAMP TODAY "%Y%m%d")
 				SET(_versionString "${TODAY}.${GIT_VERSION}")
 			ENDIF(VERSION_FROM_GIT)
 		ENDIF(TORTOISE_WCREV)

@@ -12,12 +12,12 @@
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
-
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <meteoio/dataGenerators/PrecSplitting.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
 #include <algorithm>
 
 namespace mio {
@@ -32,6 +32,7 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 			const std::string user_algo( IOUtils::strToUpper(vecArgs[ii].second) );
 
 			if (user_algo=="THRESH") model = THRESH;
+			else if (user_algo=="WET_BULB") model = WET_BULB;
 			else if (user_algo=="RANGE") model = RANGE;
 			else if (user_algo=="NONE") model = NONE;
 			else
@@ -48,6 +49,10 @@ void PrecSplitting::parse_args(const std::vector< std::pair<std::string, std::st
 	}
 
 	if (model == THRESH) {
+		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for "+where, AT);
+		fixed_thresh = snow_T_thresh;
+	}
+	if (model == WET_BULB) {
 		if (!has_snow) throw InvalidArgumentException("Please provide a snow/rain threshold for "+where, AT);
 		fixed_thresh = snow_T_thresh;
 	}
@@ -257,11 +262,17 @@ bool PrecSplitting::generatePSUM_PH(double& value, MeteoData& md) const
 bool PrecSplitting::runModel(double &value, MeteoData& md) const
 {
 	if (model==NONE) return false;
-	const double TA=md(MeteoData::TA);
+	const double TA = md(MeteoData::TA);
 	if (TA==IOUtils::nodata) return false;
 	
 	if (model==THRESH) {
 		value = (TA>=fixed_thresh)? 1. : 0.;
+	} else if (model==WET_BULB) {
+		const double RH = md(MeteoData::RH);
+		const double altitude = md.meta.getAltitude();
+		if (RH==IOUtils::nodata || altitude==IOUtils::nodata) return false;
+		const double Tw = Atmosphere::wetBulbTemperature(TA, RH, altitude);
+		value = (Tw>=fixed_thresh)? 1. : 0.;
 	} else if (model==RANGE) {
 		const double tmp_rainfraction = range_norm * (TA - range_start);
 		value = (tmp_rainfraction>1)? 1. : (tmp_rainfraction<0.)? 0. : tmp_rainfraction;

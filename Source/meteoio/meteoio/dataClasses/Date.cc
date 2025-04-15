@@ -692,6 +692,22 @@ unsigned short Date::getDayOfWeek(const bool& gmt) const {
 	}
 }
 
+
+/**
+* @brief Return the number of days of the given month for the given year
+* The returned day is between 28 (ferbuary, leap year) and 31
+* @return last day of month[28, 31]
+*/
+int Date::getNumberOfDaysInMonth(const int &ISO_year, const int &month)
+{
+	const bool leapYear = isLeapYear( ISO_year );
+	if (month<1 || month>12) throw InvalidArgumentException("Months must be between 1 and 12!", AT);
+
+	if (leapYear) return daysLeapYear[ month-1 ];
+	return daysNonLeapYear[ month-1 ];
+
+}
+
 /**
 * @brief Return the ISO 8601 week number
 * The week number range from 1 to 53 for a leap year. The first week is the week that contains

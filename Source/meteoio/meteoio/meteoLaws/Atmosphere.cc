@@ -314,11 +314,6 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 * See Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., and Tinz, B. (2012). <i>"Comparison of UTCI to selected thermal indices"</i>. Int. J. Biometeorology 56, 515–535. <a href="https://doi.org/10.1007/s00484-011-0453-2">10.1007/s00484-011-0453-2</a> for more
 * @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)
-* @param VW wind velocity (m/s)
-* @param iswr_dir direct solar SW radiation (W/m^2)
-* @param iswr_diff diffuse solar SW radiation (W/m^2)
-* @param cos_Z cosinus of the solar zenith angle
-* @param altitude altitude of the point where to perform the calculation
 * @return Heat index (K)
 */
 double Atmosphere::WBGT_index_Au(const double& TA, const double& RH)
@@ -332,8 +327,8 @@ double Atmosphere::WBGT_index_Au(const double& TA, const double& RH)
 
 /**
 * @brief Standard water vapor saturation pressure.
-* See Murray, F. W., <i>"On the computation of saturation vapor pressure"</i>, 1966, J. Appl. Meteor., <b>6</b>, 203–204,
-* doi: 10.1175/1520-0450(1967)006<0203:OTCOSV>2.0.CO;2.
+* See Murray, F. W., <i>"On the computation of saturation vapor pressure"</i>, 1967, Journal of Applied Meteorology and Climatology, 
+* <b>6(1)</b>, 203–204, doi:10.1175/1520-0450(1967)006<0203:OTCOSV>2.0.CO;2.
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure (Pa)
 */

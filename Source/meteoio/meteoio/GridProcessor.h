@@ -26,7 +26,6 @@
 
 #include <map>
 #include <string>
-#include <vector>
 
 namespace mio {
 
@@ -44,6 +43,8 @@ class GridProcessor {
 		static std::map<Date, Grid2DObject>::const_iterator seek_before(const Date& date, const std::map<Date, Grid2DObject>& grids);
 		static std::map<Date, Grid2DObject>::const_iterator seek_after(const Date& date, const std::map<Date, Grid2DObject>& grids);
 		double getWindowSize() const { return gi1d.getWindowSize(); }
+		
+		const std::string toString() const;
 
 	private:
 		static std::set<std::string> getParameters(const Config& cfg);

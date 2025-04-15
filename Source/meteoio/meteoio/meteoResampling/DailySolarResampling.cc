@@ -25,6 +25,7 @@
 #include <meteoio/meteoStats/libinterpol1D.h>
 
 #include <sstream>
+#include <iomanip>
 
 namespace mio {
 

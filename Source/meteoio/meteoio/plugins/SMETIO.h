@@ -69,14 +69,6 @@ class SMETIO : public IOInterface {
 			double max; ///< axis maximum
 		} plot_attr;
 		
-		typedef enum VERSIONING_TYPE {
-		            NO_VERSIONING, ///< no type selected
-		            NOW, ///< creation time
-		            DATA_START, ///< date of the start of the data
-		            DATA_END, ///< date of the end of the data
-		            DATA_YEARS ///< start and end year of the data (if they are the same, it is not repeated)
-		} VersioningType;
-		
 		static std::map<std::string, plot_attr> initPlotParams();
 		static double getSnowpackSlope(const std::string& id);
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
@@ -90,7 +82,6 @@ class SMETIO : public IOInterface {
 		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
 		bool getPlotProperties(std::string param, std::ostringstream &plot_units, std::ostringstream &plot_description, std::ostringstream &plot_color, std::ostringstream &plot_min, std::ostringstream &plot_max) const;
 		void getFormatting(const std::string& parname, int& prec, int& width) const;
-		std::string buildVersionString(const std::vector< std::vector<MeteoData> >& vecMeteo, const double& smet_timezone) const;
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
 		                        const double& smet_timezone, const std::set<std::string>& paramInUse, smet::SMETWriter& mywriter);
@@ -104,6 +95,7 @@ class SMETIO : public IOInterface {
 		std::vector<smet::SMETReader> vec_smet_reader;
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
 		std::string outpath;                //read from the Config [Output] section
+		std::string versioning_str;		//string to use for versionning (if using FIXED versionning, see VERSIONING_TYPE)
 		double out_dflt_TZ;     //default time zone
 		double plugin_nodata;
 		int default_prec, default_width; //output default precision and width

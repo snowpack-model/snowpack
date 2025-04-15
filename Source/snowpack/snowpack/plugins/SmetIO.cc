@@ -25,6 +25,8 @@
 
 #define OUTPUT_PRECISION_SNO_FILE 6
 
+#include <iomanip>
+
 using namespace std;
 using namespace mio;
 
@@ -832,7 +834,7 @@ void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::
 	smet_writer.set_header_value("BareSoil_z0", ss.str());
 
 	// Canopy Characteristics
-	ss.str(""); ss << fixed << setprecision(2) << Xdata.Cdata.height;
+	ss.str(""); ss << fixed << setprecision(3) << Xdata.Cdata.height;
 	smet_writer.set_header_value("CanopyHeight", ss.str());
 	ss.str(""); ss << fixed << setprecision(6) << Xdata.Cdata.lai;
 	smet_writer.set_header_value("CanopyLeafAreaIndex", ss.str());

@@ -36,13 +36,6 @@ static const std::string defaultSection = "GENERAL";
 static const char NUM[] = "0123456789";
 
 //these are not defined as part of any class in order to avoid dragging a <regex> include into the Config.h header
-//arithmetic expression syntax, delimited by ${{ and }} and contains anything in between including sub-variables
-static const std::regex expr_regex(R"(\$\{\{(.+?)\}\})", std::regex::optimize);
-//environment variable syntax, delimited by ${env: and } and not sub-variables / expressions
-static const std::regex envvar_regex(R"(\$\{env:([^\$\{\}]+?)\})", std::regex::optimize);
-//variable refering to another key, delimited by ${ and } and can contain sub-variables / expressions
-static const std::regex var_regex(R"(\$\{((?!\{).*?)\}(?!\}))", std::regex::optimize);
-static const std::regex sub_expr_regex(R"(.*\$\{((?!\{).*?)\}(?!\}).*)", std::regex::optimize); //same as above but allowing match anywhere in the string
 //regex to try sorting the keys by numerical order of their index, so STATION2 comes before STATION10
 static const std::regex index_regex("([^0-9]+)([0-9]{1,9})$", std::regex::optimize); //limit the number of digits so it fits within an "int" for the call to atoi()
 static const std::regex section_regex(R"(^\[((?:\w|\-)+)\].*$)", std::regex::optimize); //valid chars for section: letters, numbers, _ and -

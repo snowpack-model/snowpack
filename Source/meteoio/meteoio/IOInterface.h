@@ -332,7 +332,29 @@ class IOInterface {
 		 */
 		static std::vector< LinesRange > initLinesRestrictions(const std::string& args, const std::string& where, const bool& negate);
 		
-	protected: 
+	protected:
+		//this enum defines the different options to add some version information into a file name
+		typedef enum VERSIONING_TYPE {
+		            NO_VERSIONING, ///< no type selected
+					STRING, ///< fixed string, user provided
+		            NOW, ///< creation time
+		            DATA_START, ///< date of the start of the data
+		            DATA_END, ///< date of the end of the data
+		            DATA_YEARS ///< start and end year of the data (if they are the same, it is not repeated)
+		} VersioningType;
+
+		/**
+		 * @brief Build a version identification to add to the output file name
+		 * @param[in] versioning versioning type
+		 * @param[in] vecMeteo the whole metadata that will be written to an output file (to extract start/end dates)
+		 * @param[in] tz timezone to use for the dates
+		 * @param[in] versioning_str fixed string to use as version (to be provided by the user)
+		 * @return string version to integrate into the output file name
+		 */
+		static std::string buildVersionString(const VersioningType& versioning, const std::vector< std::vector<MeteoData> >& vecMeteo, const double& tz, const std::string& versioning_str);
+
+		static std::string buildVersionString(const VersioningType& versioning, const std::vector<MeteoData>& vecMeteo, const double& tz, const std::string& versioning_str);
+
 		/**
 		 * @brief Merge potentially overlaping line ranges
 		 * @param[in] lines_specs sorted, unique and non-overlapping set of line ranges

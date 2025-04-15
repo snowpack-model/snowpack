@@ -26,6 +26,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <fstream>
+#include <iomanip>
 #include <cerrno>
 #include <cstring>
 #include <algorithm>
@@ -34,7 +35,7 @@
 using namespace std;
 
 namespace mio {
-	
+
 ACDD::ACDD(const bool& set_enable) 
      : attributes(), linked_attributes(), enabled(set_enable) 
 {
@@ -231,7 +232,7 @@ void ACDD::setEnabled(const bool& i_enable)
 
 size_t ACDD::countCommas(const std::string& str)
 {
-	const size_t count = std::count_if( str.begin(), str.end(), []( const char& c ){return c ==',';});
+	const size_t count = static_cast<size_t>( std::count_if( str.begin(), str.end(), []( const char& c ){return c ==',';}) );
 	return count;
 }
 
@@ -587,5 +588,4 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const 
 	}
 }
 
-} //namespace
-
+} // namespace mio

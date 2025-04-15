@@ -22,6 +22,7 @@
 #include <cassert>
 #include <meteoio/MeteoIO.h>
 #include <vector>
+#include <iomanip>
 
 static const double DATE_TOLERANCE = 1e-6;
 static const int MIN_ARIMA_DATA_POINTS = 8;

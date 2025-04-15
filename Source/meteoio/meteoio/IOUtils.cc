@@ -276,7 +276,7 @@ size_t FNV_hash(const std::string& text)
 	size_t hash = FNV_offset_basis;
 
 	for (size_t ii=0; ii<text.size(); ii++){
-		hash = hash ^ (text[ii]); //XOR the lower 8 bits
+		hash = hash ^ static_cast<size_t>(text[ii]); //XOR the lower 8 bits
 		hash *= FNV_prime;
 	}
 	return hash;
@@ -360,6 +360,13 @@ std::string getLogName()
 
 std::string getHostName() {
 	static const size_t len = 4096;
+	
+	//allow the user to set the HOSTNAME environment variable
+	//in order to force the hostname seen by MeteoIO
+	char *tmp;
+	if ((tmp=getenv("HOSTNAME"))!=nullptr) {
+		return std::string(tmp);
+	}
 
 	#if (defined _WIN32 || defined __MINGW32__) && ! defined __CYGWIN__
 		TCHAR infoBuf[len];
