@@ -695,7 +695,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 				int El_bfr = vecXdata[slope.sector].getNumberOfElements();
 				
 				Snowpack snowpack(cfg); // HACK: create a separate snowpack object to access the Redeposit and compSnowfall functions
-				snowpack.RedepositSnow(Mdata, vecXdata[slope.sector], surfFluxes, vecXdata[slope.luv].ErosionMass); //, "PARAMETERIZED");
+				snowpack.RedepositSnow(Mdata, vecXdata[slope.sector], surfFluxes, vecXdata[slope.luv].ErosionMass, "PARAMETERIZED"); 
 				
 				// has snow actually been deposited??
 				if ( msg_deposit) {
