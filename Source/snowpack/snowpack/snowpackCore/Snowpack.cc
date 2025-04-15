@@ -80,7 +80,7 @@ void Snowpack::EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]) {
 	F[Ie[1]] += Fe[1];
 }
 
-bool msg_density = true;  ///print density and windspeed during snowfall (and redepositioning) for debugging
+bool msg_density = false;  ///print density and windspeed during snowfall (and redepositioning) for debugging
 
 /************************************************************
  * non-static section                                       *
@@ -1689,8 +1689,8 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 
 	if (msg_density && Mdata.vw>5. && Xdata.meta.getAzimuth()==90 && Xdata.meta.getSlopeAngle() > 0.) { // pick one slope to limit output
 		prn_msg(__FILE__, __LINE__, "err", Mdata.date,
-		        "Snow w. rho_hn=%.3f kg m-3 (azi=%.0f, slope=%.0f), vw=%.1f m/s, density=%s",
-		        rho_hn, Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle(), Mdata.vw, hn_density.c_str());
+		        "Snow w. rho_hn=%.3f kg m-3 (azi=%.0f, slope=%.0f), vw=%.1f m/s, density=%s - %s",
+		        rho_hn, Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle(), Mdata.vw, hn_density.c_str(), hn_density_parameterization.c_str());
 			}
 			
 	if ((Sdata.cRho_hn < 0.) && (rho_hn != Constants::undefined))
@@ -1995,13 +1995,17 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
  * @param Mdata Meteorological data (pass by value, since we modify it)
  * @param Xdata Snow cover data
  * @param redeposit_mass cumulated amount of snow deposition (kg m-2)
- * @param density_redist density of the redeposited snow (default: "EVENT"), can be set to "PARAMETERIZED" to use the hn_density_parameterization set in ini file (default LEHING_NEW)
+ * @param density_redist allow for different density setting for the redeposited snow:
+ * 	 - "EVENT" (default): use the EVENT scheme from Groot-Zwaaftink (this is the default if nothing is set - see Snowpack.h),
+ * 	 - "PARAMETERIZED": to use the same hn_density_parameterization as regular snowfall (set in ini file or default LEHNING_NEW), 
+ *   -  a member of the hn_density_parameterization: to use a specific scheme other than the one used for 'normal' snowfall. 
  */
 void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass, const std::string density_redist)
 {
 	// Backup settings we are going to override:
 	const bool tmp_force_add_snowfall = force_add_snowfall;
 	const std::string tmp_hn_density = hn_density;
+	const std::string tmp_hn_density_param = hn_density_parameterization;
 	const std::string tmp_variant = variant;
 	const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
 	const double tmp_Xdata_hn = Xdata.hn;
@@ -2010,14 +2014,22 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	// Deposition mode settings:
 	double tmp_psum = redeposit_mass;
 	force_add_snowfall = true;
-	// hn_density = "EVENT"; // allow for same density as hn_density_parameterization
-	hn_density = density_redist; // "EVENT is default, but PARAMETERIZED can be set, in which case hn_density_parameterization is used
+	// set the density of the redeposited snow:
+	if (density_redist == "EVENT" ) {
+		hn_density = "EVENT";
+		// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
+		Mdata.vw_avg = Mdata.vw;
+		Mdata.rh_avg = Mdata.rh;
+	}else if (density_redist == "PARAMETERIZED"){ //use same density as hn_density_parameterization
+		hn_density = "PARAMETERIZED";	
+	} else { // use a specific scheme from the hn_density_parameterizations in Laws_sn.cc
+		hn_density = "PARAMETERIZED";
+		hn_density_parameterization = density_redist;
+	}
+	
 	if (variant=="ANTARCTICA") variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
 	enforce_measured_snow_heights = false;
 	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
-	// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
-	Mdata.vw_avg = Mdata.vw;
-	Mdata.rh_avg = Mdata.rh;
 	Xdata.hn = 0.;
 	if (Xdata.ErosionAge != Constants::undefined && redeposit_keep_age) {
 		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());
@@ -2035,6 +2047,7 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	// Set back original settings:
 	force_add_snowfall = tmp_force_add_snowfall;
 	hn_density = tmp_hn_density;
+	hn_density_parameterization = tmp_hn_density_param;
 	variant = tmp_variant;
 	enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
 	Mdata.date = tmp_MdataDate;

@@ -165,7 +165,7 @@ double SnLaws::event_wind_lowlim = 0.0;
 double SnLaws::event_wind_highlim = 0.0;
 //@}
 double SnLaws::min_hn_density = 30.;
-double SnLaws::max_hn_density = 250.0;
+double SnLaws::max_hn_density = 500.0; // was 250.0;
 
 const bool SnLaws::__init = SnLaws::setStaticData("DEFAULT", "BUCKET");
 

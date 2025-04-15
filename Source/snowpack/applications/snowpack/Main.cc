@@ -671,9 +671,10 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 						prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Depositing total mass %.3lf kg/m2 ( slope=%d)", vecXdata[slope.luv].ErosionMass, slope.sector);
 					}
 				int El_bfr = vecXdata[slope.sector].getNumberOfElements();
+				const string density_redeposit = cfg.get("DENSITY_REDEPOSIT", "SnowpackAdvanced");
 				
 				Snowpack snowpack(cfg); // HACK: create a separate snowpack object to access the Redeposit and compSnowfall functions
-				snowpack.RedepositSnow(Mdata, vecXdata[slope.sector], surfFluxes, vecXdata[slope.luv].ErosionMass); //, "PARAMETERIZED");
+				snowpack.RedepositSnow(Mdata, vecXdata[slope.sector], surfFluxes, vecXdata[slope.luv].ErosionMass, density_redeposit);
 				
 				// has snow actually been deposited??
 				if ( msg_deposit) {

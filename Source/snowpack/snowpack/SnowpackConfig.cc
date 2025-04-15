@@ -62,6 +62,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["HN_DENSITY"] = "PARAMETERIZED";
 	advancedConfig["HN_DENSITY_FIXEDVALUE"] = "100.";
 	advancedConfig["HN_DENSITY_PARAMETERIZATION"] = "LEHNING_NEW";
+	advancedConfig["DENSITY_REDEPOSIT"] = "EVENT"; // The density to use in snowpack::redepositSnow. EVENT, PARAMETERIZED, or a value from hn_density_parameterization. 
 	advancedConfig["HOAR_DENSITY_BURIED"] = "125.";
 	advancedConfig["HOAR_DENSITY_SURF"] = "100.";
 	advancedConfig["HOAR_MIN_SIZE_BURIED"] = "2.";
