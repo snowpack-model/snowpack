@@ -129,6 +129,29 @@ struct MainControl
  * non-static section                                       *
  ************************************************************/
 
+ static std::string get_erosion(const SnowpackConfig& cfg)
+ {
+	 std::string erosion = "NONE";
+	 cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", erosion);
+	 std::transform(erosion.begin(), erosion.end(), erosion.begin(), ::toupper);	// Force upper case
+	 if (erosion != "NONE" && erosion != "VIRTUAL" && erosion != "HS_DRIVEN" && erosion != "FREE" && erosion != "REDEPOSIT") {
+		 if (erosion == "TRUE") {
+			 // SNOW_EROSION==TRUE is deprecated and now interpreted as HS_DRIVEN.
+			 // TODO/HACK: remove this hack in the future.
+			 erosion="HS_DRIVEN";
+		 } else if (erosion == "FALSE") {
+			 // SNOW_EROSION==FALSE is deprecated and now interpreted as NONE.
+			 // TODO/HACK: remove this hack in the future.
+			 erosion="NONE";
+		 } else {
+			 std::stringstream msg;
+			 msg << "Value provided for SNOW_EROSION (" << erosion << ") is not valid. Choose either NONE, VIRTUAL, HS_DRIVEN, FREE or REDEPOSIT.";
+			 throw UnknownValueException(msg.str(), AT);
+		 }
+	 }
+	 return erosion;
+ }
+
 Slope::Slope(const mio::Config& cfg)
        : prevailing_wind_dir(0.), nSlopes(0), mainStation(0), sector(0),
          first(1), luv(0), lee(0),
@@ -138,8 +161,7 @@ Slope::Slope(const mio::Config& cfg)
          sector_width(0)
 {
 	cfg.getValue("NUMBER_SLOPES", "SnowpackAdvanced", nSlopes);
-	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
-	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
+	snow_erosion = get_erosion(cfg); 
 	stringstream ss;
 	ss << "" << nSlopes;
 	cfg.getValue("SNOW_REDISTRIBUTION", "SnowpackAdvanced", snow_redistribution);

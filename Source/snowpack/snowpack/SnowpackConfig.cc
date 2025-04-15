@@ -88,7 +88,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["REDEPOSIT_KEEP_AGE"] = "false";
 	advancedConfig["RESEARCH"] = "true";
 	advancedConfig["SNOW_ALBEDO"] = "PARAMETERIZED";
-	advancedConfig["SNOW_EROSION"] = "false";
+	advancedConfig["SNOW_EROSION"] = "NONE";
 	advancedConfig["SNOW_REDISTRIBUTION"] = "false";
 	advancedConfig["SALTATION_MODEL"] = "SORENSEN";
 	advancedConfig["STRENGTH_MODEL"] = "DEFAULT";
