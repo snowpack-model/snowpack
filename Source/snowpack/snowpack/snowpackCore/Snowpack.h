@@ -62,7 +62,7 @@ class Snowpack {
 
 		void setSnDt(const double& snDt) { sn_dt = snDt;}
 
-		void RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass);
+		void RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass, const std::string density_redist="EVENT");
 		
 		/**
 		 * @brief Specifies what kind of boundary condition is to be implemented at the top surface.

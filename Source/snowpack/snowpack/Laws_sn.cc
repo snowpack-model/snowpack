@@ -232,6 +232,13 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 			visc_water_fudge = 33.;
 		}
 		setfix = false;
+
+		// To be able to use hn_density=EVENT outside POLAR or ANtARCTICA, we set these parameters as well. 
+		// Really this whole 'event' concept should probably be incorparted into the hn_density_parameterization options,
+		// it is extremely confusing in its current state!
+		event = event_wind;
+		event_wind_lowlim = 0.0;
+		event_wind_highlim = 100.0;
 	}
 
 	// snow extinction coefficients; values in use since r140

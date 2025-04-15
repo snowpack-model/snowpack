@@ -80,6 +80,8 @@ void Snowpack::EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]) {
 	F[Ie[1]] += Fe[1];
 }
 
+bool msg_density = true;  ///print density and windspeed during snowfall (and redepositioning) for debugging
+
 /************************************************************
  * non-static section                                       *
  ************************************************************/
@@ -262,7 +264,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		vw_dendricity = false;
 		rh_lowlim = 0.7;
 		bond_factor_rh = 3.0;
-		enhanced_wind_slab = true;
+		// enhanced_wind_slab = true;  // set in namelist now
 		ageAlbedo = false;
 	} else {
 		new_snow_dd = 1.0;
@@ -1415,8 +1417,10 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 		elem.theta[AIR] = 1. - elem.theta[ICE];  // void content
 	} else { // no Graupel
 		elem.mk = Snowpack::new_snow_marker;
-		if (SnLaws::jordy_new_snow && (Mdata.vw > 2.9)
-			&& ((hn_density_parameterization == "LEHNING_NEW") || (hn_density_parameterization == "LEHNING_OLD"))) {
+		if (SnLaws::jordy_new_snow 
+			&& (Mdata.vw > 2.9)
+			&& ((hn_density_parameterization == "LEHNING_NEW") || (hn_density_parameterization == "LEHNING_OLD"))
+		) {
 			elem.dd = std::max(0.5, std::min(1.0, Optim::pow2(1.87 - 0.04*Mdata.vw)) );
 			elem.sp = new_snow_sp;
 			static const double alpha = 0.9, beta = 0.015, gamma = -0.0062;
@@ -1429,9 +1433,13 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 			elem.dd = new_snow_dd;
 			elem.sp = new_snow_sp;
 			// Adapt dd and sp for blowing snow
-			if ((Mdata.vw > 5.) && ((variant == "ANTARCTICA" || variant == "POLAR")
-			|| (!SnLaws::jordy_new_snow && ((hn_density_parameterization == "BELLAIRE")
-			|| (hn_density_parameterization == "LEHNING_NEW"))))) {
+			if ((Mdata.vw > 5.) && (
+					(variant == "ANTARCTICA" || variant == "POLAR")
+					|| (!SnLaws::jordy_new_snow 
+						&& ((hn_density_parameterization == "BELLAIRE") || (hn_density_parameterization == "LEHNING_NEW"))
+						)
+					)
+			) {
 				elem.dd = new_snow_dd_wind;
 				elem.sp = new_snow_sp_wind;
 			} else if (vw_dendricity && ((hn_density_parameterization == "BELLAIRE")
@@ -1439,7 +1447,8 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 				const double vw = std::max(0.05, Mdata.vw);
 				elem.dd = (1. - pow(vw/10., 1.57));
 				elem.dd = std::max(0.2, elem.dd);
-			}
+			} // and else ??
+
 			if (Snowpack::hydrometeor) { // empirical
 				static const double alpha=1.4, beta=-0.08, gamma=-0.15;
 				static const double delta=-0.02;
@@ -1678,6 +1687,12 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	double rho_hn = SnLaws::compNewSnowDensity(hn_density, hn_density_parameterization, hn_density_fixedValue,
                                                Mdata, Xdata, t_surf, variant);
 
+	if (msg_density && Mdata.vw>5. && Xdata.meta.getAzimuth()==90 && Xdata.meta.getSlopeAngle() > 0.) { // pick one slope to limit output
+		prn_msg(__FILE__, __LINE__, "err", Mdata.date,
+		        "Snow w. rho_hn=%.3f kg m-3 (azi=%.0f, slope=%.0f), vw=%.1f m/s, density=%s",
+		        rho_hn, Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle(), Mdata.vw, hn_density.c_str());
+			}
+			
 	if ((Sdata.cRho_hn < 0.) && (rho_hn != Constants::undefined))
 		Sdata.cRho_hn = -rho_hn;
 
@@ -1980,8 +1995,9 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
  * @param Mdata Meteorological data (pass by value, since we modify it)
  * @param Xdata Snow cover data
  * @param redeposit_mass cumulated amount of snow deposition (kg m-2)
+ * @param density_redist density of the redeposited snow (default: "EVENT"), can be set to "PARAMETERIZED" to use the hn_density_parameterization set in ini file (default LEHING_NEW)
  */
-void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass)
+void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass, const std::string density_redist)
 {
 	// Backup settings we are going to override:
 	const bool tmp_force_add_snowfall = force_add_snowfall;
@@ -1994,8 +2010,9 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	// Deposition mode settings:
 	double tmp_psum = redeposit_mass;
 	force_add_snowfall = true;
-	hn_density = "EVENT";
-	variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
+	// hn_density = "EVENT"; // allow for same density as hn_density_parameterization
+	hn_density = density_redist; // "EVENT is default, but PARAMETERIZED can be set, in which case hn_density_parameterization is used
+	if (variant=="ANTARCTICA") variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
 	enforce_measured_snow_heights = false;
 	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
 	// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
