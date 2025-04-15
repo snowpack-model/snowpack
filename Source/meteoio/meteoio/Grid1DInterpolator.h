@@ -26,7 +26,6 @@
 #include <meteoio/gridResampling/GridResamplingAlgorithms.h>
 
 #include <string>
-#include <vector>
 #include <map>
 
 namespace mio {
@@ -45,6 +44,7 @@ class Grid1DInterpolator {
 		Grid1DInterpolator& operator=(const Grid1DInterpolator&);
 		bool resampleData(const Date& date, const MeteoGrids::Parameters& parameter, const std::map<Date, Grid2DObject>& available_grids, Grid2DObject& resampled_grid);
 		double getWindowSize() const { return grid_window_size; }
+		const std::string toString() const;
 
 	private:
 		std::string getGridAlgorithmForParameter(const std::string& parname) const;
@@ -53,7 +53,7 @@ class Grid1DInterpolator {
 		std::map<std::string, GridResamplingAlgorithm*> algorithm_map; //per parameter interpolation algorithms
 		const Config& cfg;
 		double grid_window_size = 86400.; ///< in seconds, default is 2 Julian days
-		bool enable_grid_resampling = true; ///< easy way to turn grid resampling on/off
+		bool enable_resampling = true; ///< easy way to turn grid resampling on/off
 };
 
 } //end namespace

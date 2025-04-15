@@ -30,21 +30,6 @@
 using namespace std;
 using namespace mio;
 
-// Local oprators << and >> on pairs, nedded to serialize pairs in MPI communication
-static std::istream& operator>>(std::istream& is, std::pair<size_t,size_t>& data)
-{
-	is.read(reinterpret_cast<char*>(&data.first), sizeof(data.first));
-	is.read(reinterpret_cast<char*>(&data.second), sizeof(data.second));
-	return is;
-}
-
-static std::ostream& operator<<(std::ostream& os, const std::pair<size_t,size_t>& data)
-{
-	os.write(reinterpret_cast<const char*>(&data.first), sizeof(data.first));
-	os.write(reinterpret_cast<const char*>(&data.second), sizeof(data.second));
-	return os;
-}
-
 bool MPIControl::openmp() const
 {
 	#ifdef _OPENMP
@@ -98,6 +83,21 @@ bool MPIControl::master() const
 }
 
 #ifdef ENABLE_MPI
+// Local oprators << and >> on pairs, nedded to serialize pairs in MPI communication
+static std::istream& operator>>(std::istream& is, std::pair<size_t,size_t>& data)
+{
+	is.read(reinterpret_cast<char*>(&data.first), sizeof(data.first));
+	is.read(reinterpret_cast<char*>(&data.second), sizeof(data.second));
+	return is;
+}
+
+static std::ostream& operator<<(std::ostream& os, const std::pair<size_t,size_t>& data)
+{
+	os.write(reinterpret_cast<const char*>(&data.first), sizeof(data.first));
+	os.write(reinterpret_cast<const char*>(&data.second), sizeof(data.second));
+	return os;
+}
+
 MPIControl::MPIControl()
 {
 	MPI_Init(NULL, NULL);

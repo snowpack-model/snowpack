@@ -38,6 +38,7 @@ SET_COMPILER_OPTIONS()
 #The following pre-processor variables are automatically defined:
 # __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
+	#HAVE_STRUCT_STAT_ST_FLAGS is used in FileUtils.cc
 	INCLUDE (CheckStructHasMember)
 	CHECK_STRUCT_HAS_MEMBER("struct stat" st_flags sys/stat.h HAVE_STRUCT_STAT_ST_FLAGS)
 	IF(HAVE_STRUCT_STAT_ST_FLAGS) 
@@ -213,18 +214,20 @@ INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteoFilters COMPONENT
 INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteoStats COMPONENT headers)
 
 ADD_CUSTOM_TARGET(distclean make clean
-	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
+	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPack*.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_*.cmake install_manifest.txt Makefile CMakeDoxy*
 	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}" "lib/libmeteo*.${STAT_EXT}" "lib/libmeteo*.lib"
 	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
+	COMMAND cmake -E remove *~ meteoio/*~ meteoio/*/*~ applications/*~
 	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
 	COMMAND cmake -E remove_directory doc/examples/CMakeFiles applications/CMakeFiles
 	COMMAND cmake -E remove_directory CMakeFiles meteoio/CMakeFiles meteoio/*/CMakeFiles
+	COMMAND cmake -E remove compile_commands.json
 	COMMAND cmake -E remove_directory Testing
 	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
 	COMMAND cmake -E remove_directory tests/Testing tests/*/Testing
 	COMMAND cmake -E remove tests/sun/generated_results.txt
 	COMMAND cmake -E remove tests/dem_reading/AZI.asc tests/dem_reading/DEM.asc tests/dem_reading/SLOPE.asc
-	COMMAND cmake -E remove tests/2D_interpolations/2009-01-19T12.00_HNW.asc tests/2D_interpolations/2009-01-19T12.00_RH.asc tests/2D_interpolations/2009-01-19T12.00_RSWR.asc tests/2D_interpolations/2009-01-19T12.00_TA.asc
+	COMMAND cmake -E remove tests/2D_interpolations/2009*_HNW.asc tests/2D_interpolations/2009*_RH.asc tests/2D_interpolations/2009*_RSWR.asc tests/2D_interpolations/2009*_TA.asc
 )
 
 ###########################################################

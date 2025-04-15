@@ -20,6 +20,7 @@
 #include <meteoio/IOUtils.h>
 #include <cmath>
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 

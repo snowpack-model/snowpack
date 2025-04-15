@@ -78,6 +78,7 @@ namespace mio {
  *    - CSV\#_PURGE_CHARS: space delimited list of ascii characters to purge from the input, either directly given or as decimal representation or as hexadecimal representation (prefixed with <i>0x</i>). Example: 0x40 13 \" ;
  *    - CSV\#_EXCLUDE_LINES: a comma delimited list of line ranges (numbers separated by a dash) or line numbers to exclude from parsing (ie the lines within these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES and that additional spaces (for more clarity in the input, as in the provided example) can be used although they are not mandatory.
  *    - CSV\#_ONLY_LINES: a comma delimited list of line ranges (numbers separated by a dash enclosed in spaces) or line numbers to restrict the parsing to (ie the lines outside of these ranges will be read and discarded immediately). Example:  <i>18 - 36, 52, 55, 167 - 189</i>. Please note that it is not possible to mix CSV\#_EXCLUDE_LINES and CSV\#_ONLY_LINES.
+ *    - CSV\#_COVERAGE_HINT: a simplified date range (at most daily resolution) fully encompassing the data contained in the file. This is a useful optimization when a dataset is made of many CSV files covering a very large temporal range and MeteoIO is used to generate subsets of the dataset on-demand. In this case, MeteoIO can skip some files if their temporal coverage does not overlap with the requested temporal period. Examples: <i>2021</i> (this means, all of 2021) or <i>2020-10 - 2023</i> (this means from 2020-10-01T00:00 until the last second of 2023).
  * - <b>Fields parsing</b>
  *    - CSV\#_COLUMNS_HEADERS: header line to interpret as columns headers (default: 1, see also \ref csvio_special_fields "special field names");
  *    - CSV\#_FIELDS: one line providing the columns headers (if they don't exist in the file or to overwrite them). If a field is declared as "ID" then only the lines that have the proper ID for the current station will be kept; if a field is declared as "SKIP" it will be skipped; otherwise date/time parsing fields are supported according to <i>Date/Time parsing</i> below (see also the \ref csvio_special_fields "special field names" for more); optional
@@ -594,6 +595,11 @@ void CsvIO::parseInputOutputSection()
 		else cfg.getValue(dflt+"FALLBACK_TIME", "Input", fixed_hour, IOUtils::nothrow);
 		if (fixed_hour!=IOUtils::inodata) tmp_csv.setFixedHour( fixed_hour );
 
+		std::string dateRangeHint;
+		if (cfg.keyExists(pre+"COVERAGE_HINT", "INPUT")) cfg.getValue(pre+"COVERAGE_HINT", "INPUT", dateRangeHint);
+		else cfg.getValue(dflt+"COVERAGE_HINT", "INPUT", dateRangeHint, IOUtils::nothrow);
+		if (!dateRangeHint.empty()) tmp_csv.setCoverageHint( dateRangeHint );
+
 		std::vector<std::string> vecMetaSpec;
 		if (cfg.keyExists(pre+"SPECIAL_HEADERS", "Input")) cfg.getValue(pre+"SPECIAL_HEADERS", "Input", vecMetaSpec);
 		else cfg.getValue(dflt+"SPECIAL_HEADERS", "Input", vecMetaSpec, IOUtils::nothrow);
@@ -826,10 +832,30 @@ void CsvIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	vecMeteo.clear();
-	vecMeteo.resize( csvparam.size() );
-	for (size_t ii=0; ii<csvparam.size(); ii++) {
-		vecMeteo[ii] = readCSVFile(csvparam[ii], dateStart, dateEnd);
+	vecMeteo.reserve( csvparam.size() ); //max possible size
+
+	for (size_t ii=0; ii<csvparam.size(); ii++) { //loop over CSV files
+		const std::vector<MeteoData> tmpVec( readCSVFile(csvparam[ii], dateStart, dateEnd) );
+		if (tmpVec.empty()) continue;
+		const std::string tmpID( tmpVec.front().getStationID() );
+
+		//does this stationID already exist?
+		size_t append_index = IOUtils::npos;
+		for (size_t jj=0; jj<std::min(ii, vecMeteo.size()); jj++) {
+			if (vecMeteo[jj].back().getStationID()==tmpID) {
+				append_index = jj;
+				break;
+			}
+		}
+
+		if (append_index==IOUtils::npos) { //this is a new stationID, add to vecMeteo
+			vecMeteo.push_back( tmpVec );
+		} else { //this stationID already exists, appending
+			vecMeteo[append_index].insert( vecMeteo[append_index].end(), tmpVec.begin(), tmpVec.end() );
+		}
 	}
+
+	vecMeteo.shrink_to_fit();	//free non-used storage
 }
 
 } //namespace

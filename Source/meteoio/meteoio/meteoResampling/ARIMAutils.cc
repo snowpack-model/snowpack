@@ -17,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ARIMAutils.h"
+#include <meteoio/meteoResampling/ARIMAutils.h>
 #include <cmath>
 #include <unordered_map>
 #include <numeric>

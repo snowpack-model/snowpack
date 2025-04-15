@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include <cstdlib>
+#include <iomanip>
 #include <time.h>
 #include <algorithm>
 #include <meteoio/MeteoIO.h>

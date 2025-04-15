@@ -164,6 +164,7 @@ class Date {
 		unsigned short getDayOfWeek(const bool& gmt=false) const;
 		unsigned short getISOWeekNr(const bool& gmt=false) const;
 		unsigned short getISOWeekNr(int &ISO_year, const bool& gmt=false) const;
+		static int getNumberOfDaysInMonth(const int &ISO_year, const int &month);
 		int getJulianDayNumber(const bool& gmt=false) const;
 		bool isLeapYear() const;
 

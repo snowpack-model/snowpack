@@ -738,8 +738,7 @@ inline void getOutputControl(MainControl& mn_ctrl, const mio::Date& step, const 
 
 inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackConfig& cfg, const size_t& i_stn,
                    Slope& slope, mio::Date &current_date, vector<SN_SNOWSOIL_DATA> &vecSSdata,
-                   vector<SnowStation> &vecXdata, ZwischenData &sn_Zdata, CurrentMeteo& Mdata,
-                   double &time_count_deltaHS)
+                   vector<SnowStation> &vecXdata, ZwischenData &sn_Zdata, CurrentMeteo& Mdata)
 {
 	std::string snowfile;
 	stringstream ss;
@@ -808,11 +807,6 @@ inline bool readSlopeMeta(mio::IOManager& io, SnowpackIO& snowpackio, SnowpackCo
 				cout << e.what();
 				throw;
 			}
-		}
-
-		// Operational mode ONLY: Pass ... snow depth discrepancy time counter
-		if ((sector == slope.mainStation) && (mode == "OPERATIONAL")) {
-			time_count_deltaHS = vecSSdata[slope.mainStation].TimeCountDeltaHS;
 		}
 	}
 	prn_msg(__FILE__, __LINE__, "msg-", mio::Date(), "Finished initializing station %s", vecStationIDs[i_stn].c_str());
@@ -1009,7 +1003,7 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
 *   of fresh snow mass because Michi spent many painful days calibrating the settling ...
 *   and therefore it can't be wrong, dixunt Michi and Charles.
 */
-inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, double &time_count_deltaHS, const CurrentMeteo &Mdata, const double &sn_dt, const size_t &i_hz, const bool &prn_check)
+inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, const CurrentMeteo &Mdata, const double &sn_dt, const size_t &i_hz, const bool &prn_check)
 {
 	if (Xdata.mH == IOUtils::nodata) {
 		cerr << "[E] No measured snow height: cannot execute ALLOW_INFLATE!" << endl;
@@ -1019,25 +1013,25 @@ inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, dou
 	const double mH = Xdata.mH - Xdata.Ground;
 	// Look for missed erosion or not strong enough settling ...
 	// ... and nastily deep "dips" caused by buggy data ...
-	if (time_count_deltaHS > -Constants::eps2) {
+	if (Xdata.TimeCountDeltaHS > -Constants::eps2) {
 		if ((mH + 0.01) < cH) {
-			time_count_deltaHS += S_TO_D(sn_dt);
+			Xdata.TimeCountDeltaHS += S_TO_D(sn_dt);
 		} else {
-			time_count_deltaHS = 0.;
+			Xdata.TimeCountDeltaHS = 0.;
 		}
 	}
 	// ... or too strong settling
-	if (time_count_deltaHS < Constants::eps2) {
+	if (Xdata.TimeCountDeltaHS < Constants::eps2) {
 		if ((mH - 0.01) > cH) {
-			time_count_deltaHS -= S_TO_D(sn_dt);
+			Xdata.TimeCountDeltaHS -= S_TO_D(sn_dt);
 		} else {
-			time_count_deltaHS = 0.;
+			Xdata.TimeCountDeltaHS = 0.;
 		}
 	}
 	// If the error persisted for at least one day => apply correction
-	if (fabs(time_count_deltaHS) > (1. - 0.05 * S_TO_D(sn_dt))) {
+	if (fabs(Xdata.TimeCountDeltaHS) > (1. - 0.05 * S_TO_D(sn_dt))) {
 		deflateInflate(Mdata, Xdata, qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr, prn_check);
-		time_count_deltaHS = 0.;
+		Xdata.TimeCountDeltaHS = 0.;
 	}
 }
 
@@ -1154,9 +1148,6 @@ inline void real_main (int argc, char *argv[])
 		// Used to scale wind for blowing and drifting snowpack (from statistical analysis)
 		double wind_scaling_factor = cfg.get("WIND_SCALING_FACTOR", "SnowpackAdvanced");
 
-		// Control of time window: used for adapting diverging snow depth in operational mode
-		double time_count_deltaHS = 0.;
-
 		// Snowpack data (input/output)
 		ZwischenData sn_Zdata;   // "Memory"-data, required for every operational station
 		vector<SN_SNOWSOIL_DATA> vecSSdata(slope.nSlopes, SN_SNOWSOIL_DATA(/*number_of_solutes*/));
@@ -1177,7 +1168,7 @@ inline void real_main (int argc, char *argv[])
 		meteoRead_timer.start();
 		if (mode == "OPERATIONAL")
 			cfg.addKey("PERP_TO_SLOPE", "SnowpackAdvanced", "false");
-		const bool read_slope_status = readSlopeMeta(io, snowpackio, cfg, i_stn, slope, current_date, vecSSdata, vecXdata, sn_Zdata, Mdata, time_count_deltaHS);
+		const bool read_slope_status = readSlopeMeta(io, snowpackio, cfg, i_stn, slope, current_date, vecSSdata, vecXdata, sn_Zdata, Mdata);
 		meteoRead_timer.stop();
 		if (!read_slope_status) continue; //something went wrong, move to the next station
 
@@ -1353,7 +1344,7 @@ inline void real_main (int argc, char *argv[])
 
 					//check if inflate-deflate is required and perform it if necessary
 					if (enforce_snow_height && allow_inflate)
-						deflateInflate(vecXdata[slope.mainStation], qr_Hdata, time_count_deltaHS, Mdata, sn_dt, i_hz, prn_check);
+						deflateInflate(vecXdata[slope.mainStation], qr_Hdata, Mdata, sn_dt, i_hz, prn_check);
 
 					if (mn_ctrl.HzDump) { // Save hazard data ...
 						qr_Hdata.at(i_hz).stat_abbrev = vecStationIDs[i_stn];
@@ -1512,10 +1503,6 @@ inline void real_main (int argc, char *argv[])
 		//   dump the PROFILEs (Xdata) for every station referred to as sector where sector 0 corresponds to the main station
 		if (computed_one_timestep && snow_write) {
 			for (size_t sector=slope.mainStation; sector<slope.nSlopes; sector++) {
-				if ((mode == "OPERATIONAL") && (sector == slope.mainStation)) {
-					// Operational mode ONLY: dump snow depth discrepancy time counter
-					vecXdata[slope.mainStation].TimeCountDeltaHS = time_count_deltaHS;
-				}
 				snowpackio.writeSnowCover(current_date, vecXdata[sector], sn_Zdata);
 				if (sector == slope.mainStation) {
 					prn_msg(__FILE__, __LINE__, "msg", mio::Date(),

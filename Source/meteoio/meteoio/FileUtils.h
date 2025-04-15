@@ -18,7 +18,6 @@
 #ifndef FILEUTILS_H
 #define FILEUTILS_H
 
-#include <sstream>
 #include <string>
 #include <map>
 #include <vector>

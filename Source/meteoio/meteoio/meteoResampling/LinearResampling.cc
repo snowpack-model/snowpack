@@ -21,6 +21,7 @@
 #include <meteoio/IOUtils.h>
 
 #include <sstream>
+#include <iomanip>
 
 namespace mio {
 

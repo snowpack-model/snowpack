@@ -16,6 +16,7 @@ ENDIF()
 
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
@@ -135,19 +136,24 @@ FILE(GLOB hfiles_gen "alpine3d/*.h")
 FILE(GLOB hfiles_eb "alpine3d/ebalance/*.h")
 FILE(GLOB hfiles_rot "alpine3d/runoff/*.h")
 FILE(GLOB hfiles_drift "alpine3d/snowdrift/*.h")
+
 INSTALL(FILES ${hfiles_gen} DESTINATION include/alpine3d COMPONENT headers)
 INSTALL(FILES ${hfiles_eb} DESTINATION include/alpine3d/ebalance COMPONENT headers)
 INSTALL(FILES ${hfiles_rot} DESTINATION include/alpine3d/runoff COMPONENT headers)
 INSTALL(FILES ${hfiles_drift} DESTINATION include/alpine3d/snowdrift COMPONENT headers)
 
 ADD_CUSTOM_TARGET(distclean make clean
-	COMMAND cmake -E remove *~ alpine3d/*~ alpine3d/ebalance/*~ alpine3d/runoff/*~ alpine3d/snowdrift/*~
-	COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake
-	COMMAND cmake -E remove alpine3d/*.cmake alpine3d/ebalance/*.cmake alpine3d/runoff/*.cmake alpine3d/snowdrift/*.cmake
+	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile CMakeDoxyfile.in CMakeDoxygenDefaults.cmake
+	COMMAND cmake -E remove "lib/libalpine*.${DLL_EXT}" "lib/libalpine*.${STAT_EXT}" "lib/libalpine*.lib"
+	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
+	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
 	COMMAND cmake -E remove_directory CMakeFiles alpine3d/CMakeFiles alpine3d/*/CMakeFiles
+	COMMAND cmake -E remove compile_commands.json
 	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
-	COMMAND cmake -E remove bin/*
-	COMMAND cmake -E remove lib/*
+	COMMAND cmake -E remove tests/Makefile tests/*/Makefile
+	COMMAND cmake -E remove tests/simple/output/5_*.* tests/simple/output/io.ini tests/simple/output/grids/20*.* tests/simple/output/snowfiles/20*.*
+	COMMAND cmake -E remove tests/simple/stdouterr.log
+	COMMAND cmake -E remove *~ alpine3d/*~ alpine3d/*/*~
 )
 
 ADD_CUSTOM_TARGET(deploy
@@ -166,12 +172,12 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 #Build the documentation if doxygen is found
+INCLUDE(FindDoxygen)
 IF(CMAKE_VERSION VERSION_GREATER 3.9)
 	FIND_PACKAGE(Doxygen OPTIONAL_COMPONENTS dot)
 ELSE(CMAKE_VERSION VERSION_GREATER 3.9)
 	FIND_PACKAGE(Doxygen)
 ENDIF(CMAKE_VERSION VERSION_GREATER 3.9)
-FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env A3D_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/alpine3d/config.dox)
 ENDIF(DOXYGEN_FOUND)

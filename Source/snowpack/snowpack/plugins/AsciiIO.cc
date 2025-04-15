@@ -27,6 +27,8 @@
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/Aggregate.h>
 
+#include <iomanip>
+
 #define MAX_STRING_LENGTH 256
 
 using namespace std;
