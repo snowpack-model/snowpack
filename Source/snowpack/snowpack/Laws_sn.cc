@@ -1228,6 +1228,26 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		// Eq. 2 in van Kampenhout et al. (2017):
 		rho_hn = rho_t + rho_w;
 
+	} else if (i_hn_model == "KRAMPE") {
+		// Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100
+		// A combination of the parameterizationd from Liston 2007 and Kampenhout et al. 2017		
+		// Based on Greenland field data & Crocus model. 
+		double rho_t = 0.;
+		
+		// wind dependent part (eqn 4 in Krampe et al. 2021)
+		const double rho_w = 25 + 250 * (1- exp(-0.2*(VW-5,0)));   
+		// Temperature dependent part :
+		if (TA >= -15 ){ //eqn 2 in Krampe et al. 2021
+			rho_t = 50. + 1.7 * pow((IOUtils::C_TO_K(TA) - 258.16), 1.5 );
+		} else { // below -15 (eqn 6 in Krampe et al. 2021 )
+			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
+		}
+		if (VW >= 5){ //eqn 3 in Krampe et al. 2021
+			rho_hn = rho_t + rho_w;
+		}else{
+			rho_hn = rho_t;
+		}
+
 	} else {
 		prn_msg(__FILE__, __LINE__, "err", Date(),
 		        "New snow density parameterization '%s' not available",
