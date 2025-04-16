@@ -1151,6 +1151,29 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
 }
 
 /**
+ * @brief Estimate wet-bulb temperature (°C) from air temperature TA (°C) and relative humidity RH (%)
+// Based on Stull, 2011: https://doi.org/10.1175/JAMC-D-11-0143.1
+ * @param TA Air temperature (°C)
+ * @param RH_percent Relative humidity (%)
+ * @param VW Wind velocity (m s-1)
+ * @return Wet-bulb temperature (°C)
+ */
+// 
+double wetBulbTempStull(double TA, double RH_percent) {
+    // RH_percent = std::clamp(RH_percent, 1.0, 100.0); // Clamp RH between 1% and 100%
+
+	RH_percent = std::max(0.1, std::min(RH_percent, 100.0)); // Clamp RH between 0% and 100%
+
+    double term1 = TA * std::atan(0.151977 * std::sqrt(RH_percent + 8.313659));
+    double term2 = std::atan(TA + RH_percent);
+    double term3 = std::atan(RH_percent - 1.676331);
+    double term4 = 0.00391838 * std::pow(RH_percent, 1.5) * std::atan(0.023101 * RH_percent);
+
+    double Tw = term1 + term2 - term3 + term4 - 4.686035;
+    return Tw;
+}
+
+/**
  * @brief Parameterized new-snow density
  * @param TA  Air temperature (K)
  * @param TSS Snow surface temperature (K)
@@ -1237,8 +1260,9 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		// wind dependent part (eqn 4 in Krampe et al. 2021)
 		const double rho_w = 25 + 250 * (1- exp(-0.2*(VW-5,0)));   
 		// Temperature dependent part :
+		const double Twb = wetBulbTempStull(TA, RH);
 		if (TA >= -15 ){ //eqn 2 in Krampe et al. 2021
-			rho_t = 50. + 1.7 * pow((IOUtils::C_TO_K(TA) - 258.16), 1.5 );
+			rho_t = 50. + 1.7 * pow((IOUtils::C_TO_K(Twb) - 258.16), 1.5 );
 		} else { // below -15 (eqn 6 in Krampe et al. 2021 )
 			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
 		}

@@ -1447,7 +1447,12 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 				const double vw = std::max(0.05, Mdata.vw);
 				elem.dd = (1. - pow(vw/10., 1.57));
 				elem.dd = std::max(0.2, elem.dd);
-			} // and else ??
+			} else if ((hn_density_parameterization == "VANKAMPENHOUT") || (hn_density_parameterization == "KRAMPE")){
+				const double vw = std::max(0.05, Mdata.vw);
+				elem.dd = (1. - pow(vw/10., 1.57));
+				elem.dd = std::max(0.2, elem.dd);
+				if (Mdata.vw > 5.) elem.sp = new_snow_sp_wind;
+			}
 
 			if (Snowpack::hydrometeor) { // empirical
 				static const double alpha=1.4, beta=-0.08, gamma=-0.15;
