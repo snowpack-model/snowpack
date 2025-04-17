@@ -110,7 +110,7 @@ const double SnLaws::alpha_por_tor = 0.07;
 //@}
 
 /// @brief To use J. Hendrikx's parameterization for wind speeds > 2.9 m s-1
-const bool SnLaws::jordy_new_snow = false;
+// const bool SnLaws::jordy_new_snow = false; now separate hn_density_parameterization "JORDY"
 
 /// @brief Defines the smallest allowable viscosity (Pa s) that a viscosity law will return \n
 /// Value is DAMM SMALL -- smaller values than this are pretty unrealistic.
@@ -1198,8 +1198,6 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		static const double alpha=70., beta=30., gamma=10., delta=0.4;
 		static const double eta=30., phi=6.0, mu=-3.0, nu=-0.5;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW;
-		if (jordy_new_snow && (VW > 2.9))
-			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
 
 	} else if (i_hn_model == "LEHNING_NEW") {
 		max_hn_density = 250.0; // parameterization based on limited data set, not properly validated for high wind speeds or low temperatures, thus we limit the density.
@@ -1210,10 +1208,21 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		if (TA < -10.)
 			rho_hn = std::min(rho_hn, alpha*(1. + 0.05*(TA + 10.)));
 		// Increase snow density under snow transport conditions
-		if ((!jordy_new_snow) && (VW > 5.)) {
+		if (VW > 5.) {
 			rho_hn = 90. + (rho_hn - 30.)*0.9;
-		} else if (jordy_new_snow && (VW > 2.9)) {
-			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
+		}
+	
+	}else if (i_hn_model == "JORDY") { // this is identical to LEHNING_NEW below 2.9 m/s
+		max_hn_density = 250.0; // parameterization explodes at high winds, thus we limit the density.
+		static const double alpha=90., beta=6.5, gamma=7.5, delta=0.26;
+		static const double eta=13., phi=-4.5, mu=-0.65, nu=-0.17, om=0.06;
+		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW + om*TA*TSS*RH;
+		// Ad hoc temperature correction
+		if (TA < -10.)
+			rho_hn = std::min(rho_hn, alpha*(1. + 0.05*(TA + 10.)));
+		if (VW > 2.9) {
+			static const double alpha=91., beta=-35., gamma=-1.1, delta=49., eta=32.,  phi=4.6;
+			return (alpha + beta*TA + gamma*RH +  delta*VW + eta*TSS + phi*TA*VW);
 		}
 
 	} else if (i_hn_model == "BELLAIRE") {
@@ -1285,20 +1294,6 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 	return(std::min(max_hn_density, std::max(min_hn_density, rho_hn)));
 }
 
-/**
- * @brief Jordy Hendrikx' new snow density parameterization for strong winds (> 2.9 m s-1)
- * @note To be used with Lehning's models only!
- * @param ta  Air temperature (degC)
- * @param tss Snow surface temperature (degC)
- * @param rh  Relative air humidity (%)
- * @param vw  Mean wind velocity (m s-1)
- * @return New snow density
- */
-double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const double rh, const double vw)
-{
-	static const double alpha=91., beta=-35., gamma=-1.1, delta=49., eta=32.,  phi=4.6;
-	return (alpha + beta*ta + gamma*rh +  delta*vw + eta*tss + phi*ta*vw);
-}
 
 /**
  * @name New snow density
