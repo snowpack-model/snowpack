@@ -1187,13 +1187,14 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
                                   double TA, double TSS, double RH, double VW, double HH)
 {
 	double rho_hn;
-
+	// densities are capped at 500 kg/m3, unless otherwise specified (see max_hn_density = 500.0;
 	TA  = IOUtils::K_TO_C(TA);
 	TSS = IOUtils::K_TO_C(TSS);
 	RH  *= 100.;
 	HH  = floor(HH);
 
 	if (i_hn_model == "LEHNING_OLD") {
+		max_hn_density = 250.0; // parameterization based on limited data set
 		static const double alpha=70., beta=30., gamma=10., delta=0.4;
 		static const double eta=30., phi=6.0, mu=-3.0, nu=-0.5;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW;
@@ -1201,6 +1202,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
 
 	} else if (i_hn_model == "LEHNING_NEW") {
+		max_hn_density = 250.0; // parameterization based on limited data set, not properly validated for high wind speeds or low temperatures, thus we limit the density.
 		static const double alpha=90., beta=6.5, gamma=7.5, delta=0.26;
 		static const double eta=13., phi=-4.5, mu=-0.65, nu=-0.17, om=0.06;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW + om*TA*TSS*RH;
@@ -1221,7 +1223,8 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		const double arg = alpha + beta*TA + zeta*HH + eta*log(VW) + mu*TA*log(VW);
 		rho_hn = exp(arg);
 
-	} else if (i_hn_model == "ZWART") {
+	} else if (i_hn_model == "ZWART") { // see "Significance of new-snow properties for snowcover development" - MSc thesis Costijn Zwart, 2007
+		max_hn_density = 250.0; // parameterization based on limited data set, not validated for wind speeds >9m/s  or low temperatures (<-20), thus we limit the density.
 		VW = std::max(2., VW);
 		RH = 0.8; // ori: std::min(1., RH/100.); see asin(sqrt()) below
 		static const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
@@ -1229,7 +1232,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		if(TA>=-14.) arg += beta02; // += beta2*TA;
 		rho_hn = pow(10., arg);
 
-	} else if (i_hn_model == "PAHAUT") {
+	} else if (i_hn_model == "PAHAUT") { // i.e. Crocus, see Vionnet et al. (2012) https://doi.org/10.5194/gmd-5-773-2012, not suitable for temperatures below -20°C
 		rho_hn = 109. + 6.*(IOUtils::C_TO_K(TA) - Constants::meltfreeze_tk) + 26.*sqrt(VW);
 
 	} else if (i_hn_model == "NIED") {

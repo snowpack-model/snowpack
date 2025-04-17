@@ -1432,6 +1432,7 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 		} else {
 			elem.dd = new_snow_dd;
 			elem.sp = new_snow_sp;
+			
 			// Adapt dd and sp for blowing snow
 			if ((Mdata.vw > 5.) && (
 					(variant == "ANTARCTICA" || variant == "POLAR")
@@ -1447,11 +1448,16 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 				const double vw = std::max(0.05, Mdata.vw);
 				elem.dd = (1. - pow(vw/10., 1.57));
 				elem.dd = std::max(0.2, elem.dd);
-			} else if ((hn_density_parameterization == "VANKAMPENHOUT") || (hn_density_parameterization == "KRAMPE")){
-				const double vw = std::max(0.05, Mdata.vw);
-				elem.dd = (1. - pow(vw/10., 1.57));
-				elem.dd = std::max(0.2, elem.dd);
-				if (Mdata.vw > 5.) elem.sp = new_snow_sp_wind;
+			} else if (vw_dendricity){
+				// Bert's heuristic parameterization:
+				elem.dd = 1.05 - 0.85 / (1.0 + std::exp(-0.5 * (Mdata.vw - 5.5)));
+				elem.dd = std::min(elem.dd, 1.0);
+				elem.sp = 0.375 / (1.0 + exp(-0.9*(Mdata.vw-5)) ) + 0.5 ;
+				elem.sp = std::max(elem.sp, 0.5  );
+				
+				// // Crocus wind-dependent sp an dd parameterization (Vionnet et al. 2012):
+				// elem.dd = std::min( std::max(1.29 - 0.17*Mdata.vw, 0.20), 1  )
+				// elem.sp = std::min( std::max(0.08*Mdata.VW + 0.38, 0.5), 0.9) .
 			}
 
 			if (Snowpack::hydrometeor) { // empirical
