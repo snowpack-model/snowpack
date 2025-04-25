@@ -157,7 +157,7 @@ void Hazard::initializeHazard(std::vector<double>& old_drift, double slope_angle
 double Hazard::compDriftIndex(std::vector<double>& vecDrift, const double& newDrift, const double& rho,
                               const unsigned int& nHours, const double& slope_angle, const ActVec& action)
 {
-	actOnVector(vecDrift, newDrift, action);
+	actOnVector(vecDrift, newDrift, action); // add new drift value to vector vecDrift
 
 	unsigned int nValues=0;
 	double sumVec = 0.;
@@ -165,7 +165,7 @@ double Hazard::compDriftIndex(std::vector<double>& vecDrift, const double& newDr
 		if (vecDrift[ii] == Constants::undefined) {
 			continue;
 		} else {
-			sumVec += vecDrift[ii];
+			sumVec += vecDrift[ii]; // sum all values in the last nHours
 			nValues++;
 		}
 	}
@@ -173,8 +173,8 @@ double Hazard::compDriftIndex(std::vector<double>& vecDrift, const double& newDr
 		return Constants::undefined;
 	} else {
 		const double flux = H_TO_S(std::max(0.,(sumVec - Hazard::minimum_drift)) / (2. * nHours)); // kg m-1 h-1
-		double ero_depo = M_TO_CM(flux * nHours / (Hazard::typical_slope_length * rho));
-		ero_depo = std::min(ero_depo, nHours * Hazard::maximum_drift * cos(slope_angle*mio::Cst::to_rad));
+		double ero_depo = M_TO_CM(flux * nHours / (Hazard::typical_slope_length * rho));   // flux is divided by rho*length [kg m-2] to yield deposition [m] [cm]
+		ero_depo = std::min(ero_depo, nHours * Hazard::maximum_drift * cos(slope_angle*mio::Cst::to_rad)); // put a maximum on the drift index. Useless for a diagnostic variable?
 		ero_depo /= cos(slope_angle*mio::Cst::to_rad);
 		return ero_depo;
 	}
@@ -187,7 +187,7 @@ void Hazard::getDriftIndex(ProcessDat& Hdata, ProcessInd& Hdata_ind,
 	Hdata_ind.wind_trans24 = true;
 
 	Hdata.wind_trans = compDriftIndex(vecDrift, newDriftValue, Hazard::wind_slab_density, 6, slope_angle, pushOverwrite);
-	Hdata.wind_trans24 = compDriftIndex(vecDrift, Constants::undefined, Hazard::wind_slab_density, 24, slope_angle, noAction);
+	Hdata.wind_trans24 = compDriftIndex(vecDrift, Constants::undefined, Hazard::wind_slab_density, 24, slope_angle, noAction); //vecDrift has been updated to include newDriftValue in the line above, so it is not needed again
 
 	if (Hdata.wind_trans < 0.) Hdata_ind.wind_trans = false;
 	if (Hdata.wind_trans24 < 0.) Hdata_ind.wind_trans24 = false;
