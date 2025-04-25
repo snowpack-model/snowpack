@@ -31,15 +31,15 @@ namespace mio {
  * @brief Constructor for a grid resampling algorithm.
  * @details On initialization, a resampling object stores its user settings.
  * @param[in] i_algoname The current algorithm's semantic name.
- * @param[in] i_parname The current meteo parameter's identifier.
- * @param[in] dflt_window_size The default grid resampling window size.
+ * @param[in] i_parname The current meteo parameter's identifier (taken from MeteoGrids).
+ * @param[in] dflt_max_gap_size The default max gap size to allow resampling.
  * @param[in] vecArgs Vector of arguments (user settings) for this algorithm. Note that settings must
  * @param[in] in_cfg Config object in order to be able to read configuration keys.
  * be given for this algorithm's name (e. g. TA::TIMESERIES::EXTRAPOLATE = T for TA::TIMESERIES::ALGORITHM = LINEAR).
  */
 GridTimeseriesResampling::GridTimeseriesResampling(const std::string& i_algoname, const std::string& i_parname,
-	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &in_cfg)
-	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_window_size, vecArgs), vecArgs_(vecArgs), cfg(in_cfg),
+	const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config &in_cfg)
+	: GridResamplingAlgorithm(i_algoname, i_parname, dflt_max_gap_size, vecArgs), vecArgs_(vecArgs), cfg(in_cfg),
 	base_algorithm_("LINEAR")
 {
 	for (size_t ii = 0; ii < vecArgs.size(); ++ii) {

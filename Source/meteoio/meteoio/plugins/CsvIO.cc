@@ -835,6 +835,8 @@ void CsvIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	vecMeteo.reserve( csvparam.size() ); //max possible size
 
 	for (size_t ii=0; ii<csvparam.size(); ii++) { //loop over CSV files
+		if (!csvparam[ii].hasDates(dateStart, dateEnd)) continue;
+		
 		const std::vector<MeteoData> tmpVec( readCSVFile(csvparam[ii], dateStart, dateEnd) );
 		if (tmpVec.empty()) continue;
 		const std::string tmpID( tmpVec.front().getStationID() );

@@ -106,7 +106,7 @@ class CsvParameters {
 		void setDateTimeSpecs(const std::string &datetime_spec, const std::string &date_spec, const std::string &time_spec, const std::string &decimaldate_type);
 		void setFixedYear(const int& i_year, const bool& i_auto_wrap) {date_cols.setFixedYear(i_year, i_auto_wrap);}
 		void setFixedHour(const int& i_hour) {date_cols.setFixedHour(i_hour);}
-		void setCoverageHint(const std::string& range_spec);
+		void setCoverageHint(const std::string& range_spec) {coverageHint.setRange(range_spec, date_cols.csv_tz);}
 		
 		std::string toString() const;
 		std::string getFilename() const {return file_and_path;}
@@ -117,8 +117,7 @@ class CsvParameters {
 		bool hasPurgeChars() const {return !purgeCharsSet.empty();}
 		void purgeChars(std::string &line) {IOUtils::removeChars(line, purgeCharsSet);}
 		bool isNodata(const std::string& value) const;
-		//bool hasDates(const Date& start, const Date& end) const {if (start_hint.isUndef()) return true; return (start_hint<=end && end_hint>=start);}
-		bool hasDates(const Date& start, const Date& end) const;
+		bool hasDates(const Date& start, const Date& end) const {return coverageHint.hasOverlap(start, end);}
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names
 		std::vector<double> units_offset, units_multiplier;		///< offsets and multipliers to convert the data to SI
@@ -139,7 +138,6 @@ class CsvParameters {
 		void parseFields(const std::vector<std::string>& headerFields, std::vector<std::string>& fieldNames);
 		static std::multimap< size_t, std::pair<size_t, std::string> > parseHeadersSpecs(const std::vector<std::string>& vecMetaSpec);
 		void parseSpecialHeaders(const std::string& line, const size_t& linenr, const std::multimap< size_t, std::pair<size_t, std::string> >& meta_spec, double &lat, double &lon, double &easting, double &northing);
-		static Date parseDateHint(const std::string& Date_str, const double tz, const bool& early_interpretation);
 		
 		CsvDateTime date_cols;		///< index of each column containing the a date/time component
 		Coords location;
@@ -149,7 +147,7 @@ class CsvParameters {
 		std::vector< LinesRange > linesExclusions;	///< lines to exclude from reading
 		std::string file_and_path, single_field; 		///< the scanf() format string for use in parseDate, the parameter in case of a single value contained in the Csv file
 		std::string name, id;
-		Date start_hint, end_hint;
+		DateRange coverageHint;
 		double slope, azi;
 		size_t exclusion_idx;		///< pointer to the latest exclusion period that has been found, if using lines exclusion
 		size_t exclusion_last_linenr; ///< pointer to the last line number that has been checked for exclusions

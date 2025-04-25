@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <iostream>
 #include <ctime>
+#include <regex>
 
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/IOUtils.h>
@@ -1408,5 +1409,83 @@ double Date::GMTToLocal(const double& i_gmt_julian) const
 {
 	return (i_gmt_julian + timezone/24.);
 }
+
+
+///////////////////////////////////////////////////// Start of the DateRange class //////////////////////////////////////////
+
+/** @brief parse a simplified ISO date and build a Date object
+ * @param[in] Date_str ths string to parse for an ISO date
+ * @param[in] early_interpretation interpret missing date components toward the earliest possible date (if set to true), otherwise toward the latest possible date
+ * @return Date object
+ */
+Date DateRange::parseDateHint(const std::string& Date_str, const double tz, const bool& early_interpretation)
+{
+	static const std::regex ISO_date_regex("^([0-9]{4})(?:-([0-9]{2}))?(?:-([0-9]{2}))?$", std::regex::optimize); //either only year, or year and month or year, month, day
+	std::smatch match;
+
+	if (!std::regex_match(Date_str, match, ISO_date_regex))
+		throw InvalidArgumentException("Invalid date specification '"+Date_str+"' in date range string, please use proper ISO notation", AT);
+
+	int year=IOUtils::inodata, month=IOUtils::inodata, day=IOUtils::inodata;
+	if (!IOUtils::convertString(year, match.str(1)))
+		throw InvalidArgumentException("Could not parse year '"+Date_str+"' in date range string", AT);
+
+	//since we can not easily count the number of groups that have effectively been captured, we need to check their content
+	if (!match.str(2).empty()) {
+		if (!IOUtils::convertString(month, match.str(2)))
+			throw InvalidArgumentException("Could not parse month  '"+Date_str+"' in date string", AT);
+		if (!match.str(3).empty()) {
+			if (!IOUtils::convertString(day, match.str(3)))
+				throw InvalidArgumentException("Could not parse day  '"+Date_str+"' in date string", AT);
+		}
+	}
+
+	if (early_interpretation) {
+		if (month==IOUtils::inodata) month = 1;
+		if (day==IOUtils::inodata) day = 1;
+		return Date(year, month, day, 0, 0, 0., tz);
+	} else {
+		if (month==IOUtils::inodata) month = 12;
+		if (day==IOUtils::inodata) day = Date::getNumberOfDaysInMonth(year, month);
+		return Date(year, month, day, 23, 59, 59.999, tz);
+	}
+}
+
+/** @brief Set the date range from a provided date range string (at most daily resolution)
+ * @details Such a string can either contain only one date (at least the year must be provided, everything else is optional)
+ * or two dates separated by a dash. Examples of valid ranges:
+ *  * 2024 - 2025 (this means from 2024-01-01 until 2025-12-31 at midnight)
+ *  * 2024-10 (this means the whole month of October 2024)
+ *  * 2024-10 - 2025 (this means from 2024-10-01 until 2025-12-31)
+ * 
+ * @param[in] range_spec the range string
+ * @param[in] tz timezone of the dates provided in range_spec
+ */
+void DateRange::setRange(const std::string& range_spec, const double& tz)
+{
+	static const std::regex ISO_range_regex("^([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)(?:\\s+\\-\\s+([0-9]{4}(?:\\-[0-1][0-9](?:\\-[0-3][0-9])?)?)?)?$", std::regex::optimize); //2 capturing group: we either have a single date or a range
+	std::smatch match;
+
+	//do we have two dates or only one?
+	if (!std::regex_match(range_spec, match, ISO_range_regex))
+	 	throw InvalidArgumentException("Invalid date range specification '"+range_spec+"', please use proper ISO notation with daily resolution", AT);
+
+	//since we can not easily count the number of groups that have effectively been captured, we need to check their content
+	if (!match.str(1).empty()) start = parseDateHint(match.str(1), tz, true);
+	if (!match.str(2).empty()) 
+		end = parseDateHint(match.str(2), tz, false);
+	else
+		end = parseDateHint(match.str(1), tz, false);
+
+	if (!start.isUndef() && !end.isUndef() && start<=end) isValid=true;
+}
+
+bool DateRange::hasOverlap(const Date& i_start, const Date& i_end) const 
+{
+	if (start.isUndef()) return true; 
+	const bool overlap = (start<=i_end && end>=i_start);
+	return overlap;
+}
+
 
 } //namespace

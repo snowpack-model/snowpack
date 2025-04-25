@@ -19,6 +19,7 @@
 #ifndef DBO_H
 #define DBO_H
 
+#include <meteoio/dataClasses/Date.h>
 #include <meteoio/IOInterface.h>
 
 #include <string>
@@ -98,6 +99,7 @@ class DBO : public IOInterface {
 		std::vector< std::vector<DBO::tsMeta> > vecTsMeta; ///< for every station, a map that contains for each timeseries the relevant timeseries properties
 		std::string coordin, coordinparam; ///< projection parameters
 		std::string endpoint; ///< Variables for endpoint configuration
+		DateRange coverageRestrict;
 		JsonWrapper *json;
 
 		bool dbo_debug;

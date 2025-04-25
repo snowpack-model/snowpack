@@ -16,6 +16,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "meteoio/IOUtils.h"
 #include <meteoio/plugins/NetCDFIO.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
@@ -465,7 +466,7 @@ void NetCDFIO::scanPath(const std::string& in_path, const std::string& nc_ext, s
 	nc_files.clear();
 	std::list<std::string> dirlist( FileUtils::readDirectory(in_path, nc_ext) );
 	if (dirlist.empty()) {
-		std::cerr << "[W] Scanning '" << in_path << "' for NetCDF files (" << nc_ext << ") did not return any results, using GRID2DFILE instead\n";
+		std::cerr << "[W] Scanning '" << in_path << "' for NetCDF files (" << nc_ext << ") did not return any results, using GRID2DFILE instead (extensions are case sensitive!)\n";
 		return; //nothing to do if the directory is empty, we will transparently swap to using GRID2DFILE
 	}
 	dirlist.sort();

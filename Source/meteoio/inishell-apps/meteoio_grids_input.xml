@@ -27,7 +27,7 @@ INIshell include file for gridded input / output plugin definitions
 	<!-- Alternative panel: DEM -->
 	<parametergroup name="DEMPLUGINS">
 		<parameter type="helptext" wrap="true">
-			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+			<help>The plugins in the drop-down menu below that are italicized require third-party libraries that might not be installed on your system.</help>
 		</parameter>
 		<parameter key="DEM" label="Select DEM plugin:" type="alternative" pre-generate="false">
 			<option value="ARC">
@@ -125,7 +125,7 @@ INIshell include file for gridded input / output plugin definitions
 	<!-- Alternative panel: GRID2D_IN -->
 	<parametergroup name="GRID2D_IN">
 		<parameter type="helptext" wrap="true">
-			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+			<help>The plugins in the drop-down menu below that are italicized require third-party libraries that might not be installed on your system.</help>
 		</parameter>
 		<parameter key="GRID2D" label="Select GRID2D plugin:" type="alternative" pre-generate="false">
 			<option value="ARC">
@@ -158,7 +158,7 @@ INIshell include file for gridded input / output plugin definitions
 	<!-- Alternative panel: GRID3D_IN -->
 	<parametergroup name="GRID3D_IN">
 		<parameter type="helptext" wrap="true">
-			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system.</help>
+			<help>The plugins in the drop-down menu below that are italicized require third-party libraries that might not be installed on your system.</help>
 		</parameter>
 		<parameter key="GRID3D" label="Select GRID3D plugin:" type="alternative" pre-generate="false">
 			<option value="ARPS">
@@ -218,7 +218,7 @@ INIshell include file for gridded input / output plugin definitions
 			<help>Path to the data files</help>
 		</parameter>
 		<parameter key="NC_EXT" type="text" default=".nc" size="small">
-			<help>NetCDF file extension (for example: .nc)</help>
+			<help>NetCDF file extension (for example: .nc, be careful, it is case sensitive!)</help>
 		</parameter>
 		<parameter key="NETCDF_SCHEMA_GRID" type="alternative" default="CF-1.6">
 			<option value="CF-1.6"/>
