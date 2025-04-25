@@ -773,7 +773,11 @@ MeteoData::Merge_Conflicts MeteoData::getMergeConflicts(std::string merge_confli
 size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy, const Merge_Conflicts& conflicts_strategy)
 {
 	if (vec2.empty()) return 0; //nothing to merge
-	if (strategy==STRICT_MERGE && vec1.empty()) return 0; //optimization for STRICT_MERGE
+	if ((strategy==STRICT_MERGE || strategy==WINDOW_MERGE) && vec1.empty()) return 0; //optimization for STRICT_MERGE
+	if (vec1.empty()) {
+		vec1 = vec2;
+		return 0;
+	}
 
 	//adding the necessary extra parameters to vec1 elements, no matter which merge strategy
 	if (!vec1.empty()) {

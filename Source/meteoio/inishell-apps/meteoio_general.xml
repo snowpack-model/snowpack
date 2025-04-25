@@ -29,12 +29,12 @@ INIshell include file for general section
 		<parameter key="IMPORT_BEFORE" type="file" mode="input">
 			<option extension="INI files (*.ini *.INI)"/>
 			<option extension="All files (*.*)"/>
-			<help>It is possible to import another ini file before everything else and overwrite its settings with the current one. In order to do it, provide the file path and name.</help>
+			<help>It is possible to import another ini file before everything else and overwrite its settings with the current one. In order to do it, provide the file path and name. If ':' and a section name are appended to the filename, only the provided section will be imported (for example "io.ini:Output"</help>
 		</parameter>
 		<parameter key="IMPORT_AFTER" type="file" mode="input">
 			<option extension="INI files (*.ini *.INI)"/>
 			<option extension="All files (*.*)"/>
-			<help>Import another ini file after everything else and overwrite the current settings with it. In order to do it, provide the file path and name.</help>
+			<help>Import another ini file after everything else and overwrite the current settings with it. In order to do it, provide the file path and name. If ':' and a section name are appended to the filename, only the provided section will be imported (for example "io.ini:Output"</help>
 		</parameter>
 	</frame>
 	<frame caption="Data buffering">

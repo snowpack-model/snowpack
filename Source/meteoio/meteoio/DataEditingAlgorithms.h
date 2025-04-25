@@ -22,7 +22,6 @@
 #include <meteoio/IOInterface.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 
-#include <map>
 #include <set>
 #include <string>
 

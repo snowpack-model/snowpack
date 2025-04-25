@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2021 MobyGIS Srl, Trento, Italy                                      */
+/*  Copyright 2025 SLF, Davos, Switzerland                                         */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -17,28 +17,28 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef GRIDLINEARRESAMPLING_H
-#define GRIDLINEARRESAMPLING_H
+#ifndef GRIDNEARESTNEIGHBOURRESAMPLING_H
+#define GRIDNEARESTNEIGHBOURRESAMPLING_H
 
 #include <meteoio/gridResampling/GridResamplingAlgorithms.h>
 
 namespace mio {
 
 /**
- * @class GridLinearResampling
- * @brief Point-wise linear interpolation between grids.
- * @details This algorithm performs linear interpolation between available grids.
+ * @class GridNearestResampling
+ * @brief Nearest neighbour interpolation between grids.
+ * @details This algorithm picks the nearest neighbour between available grids.
  * The syntax is the same as for timeseries interpolations; for example:
  * @code
  * [GridInterpolations1D]
- * TA::RESAMPLE = LINEAR
+ * TA::RESAMPLE = NEAREST
  * @endcode
- * @author Michael Reisecker
- * @date 2021-09
+ * @author Mathias Bavay
+ * @date 2025-04
  */
-class GridLinearResampling : public GridResamplingAlgorithm {
+class GridNearestResampling : public GridResamplingAlgorithm {
 	public:
-		GridLinearResampling(const std::string& algoname, const std::string& i_parname, const double& dflt_max_gap_size,
+		GridNearestResampling(const std::string& algoname, const std::string& i_parname, const double& dflt_max_gap_size,
 			const std::vector< std::pair<std::string, std::string> >& vecArgs);
 
 		void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid) override;
