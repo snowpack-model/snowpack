@@ -29,7 +29,7 @@ Please include meteoio_parametergroups before use!
 	<parametergroup name="METEOIO_TS_IN">
 		<!-- it's nice to give defaults to non-optional keys (no 'unsaved changes' warning: -->
 		<parameter type="helptext" wrap="true">
-			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system. Used to read in data from stations.</help>
+			<help>The plugins in the drop-down menu below that are italicized require third-party libraries that might not be installed on your system. Used to read in data from stations.</help>
 		</parameter>
 		<parameter key="METEO" label="Select METEO data plugin:" type="alternative" optional="false" default="SMET" pre-generate="false">
 			<option value="A3D">
@@ -119,7 +119,7 @@ Please include meteoio_parametergroups before use!
 				<help>Generation of synthetic forcings [&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/synthio.html&quot;&gt;more…&lt;/a&gt;]</help>
 			</option>
 			<option value="NONE">
-				<help>Only use in the special case of only reading gridded data and no meteo data. Can not be used with meteoio_timeseries, i.e. the inpuilt meteoio application.</help>
+				<help>Only use in the special case of only reading gridded data and no meteo data. Can not be used with meteoio_timeseries, i.e. the inbuilt meteoio application.</help>
 			</option>
 			<help>See &lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/data_sources.html&quot;&gt;MeteoIO's help&lt;/a&gt; for more information</help>
 		</parameter> <!-- end METEOIO_TS_IN -->
@@ -601,7 +601,7 @@ Please include meteoio_parametergroups before use!
 			<help>extension of BUFR data files to use when no Station filenames have been provided (default: .bufr)</help>
 		</parameter>
 		<parameter key="ADDITIONAL_PARAMS" type="text" optional="true" size="large">
-			<help>Additional Params, that are not specified in WMO table 40 on BUFR. (BUFR keys seperated by whitespaces) </help>
+			<help>Additional Params, that are not specified in WMO table 40 on BUFR. (BUFR keys separated by whitespace) </help>
 		</parameter>
 		<parameter key="FALLBACKTZ" type="number" optional="true">
 			<help>Timezone to use when the timezone is not specified in the BUFR file (default: 0)</help>
@@ -620,11 +620,14 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 		<reference name="STATIONGROUP_NAMES"/>
 		<frame caption="Advanced options" collapsed="true">
+			<parameter key="DBO_COVERAGE_RESTRICT" type="text" size="large" validate="^\d{4}(?:\-[0-1]\d)?(?:\-[0-3]\d)?(?:\s\-\s\d{4}(?:\-[0-1]\d)?(?:\-[0-3]\d)?)?$">
+				<help>Restrict this plugin to the provided time ranges (defined as ISO formatted dates separated by ' - ') such as &lt;i&gt;2020 - 2021-06&lt;/i&gt;</help>
+			</parameter>
 			<parameter key="DBO_URL" type="text" size="large" optional="true">
 				<help>RESTful service URL (default: https://pgdata.int.slf.ch)</help>
 			</parameter>
 			<parameter key="DBO_PROXY" type="text" size="large" optional="true">
-				<help>The URL of a &lt;A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/"&gt;SOCKS5 proy&lt;/A&gt; for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*)</help>
+				<help>The URL of a &lt;A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/"&gt;SOCKS5 proxy&lt;/A&gt; for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*)</help>
 			</parameter>
 			<parameter key="DBO_TIMEOUT" type="number" format="integer+" unit="s" optional="true">
 				<help>timeout for the connection to the server (default: 60s)</help>
@@ -800,7 +803,7 @@ Please include meteoio_parametergroups before use!
 					<help>The (short) station ID to use. It is recommended to define an ID as this will be used to apply data generators, filters, etc (default: ID_#)</help>
 				</parameter>
 			</option>
-			<help>Enter the generated station's coordinates and optionaly ids and names</help>
+			<help>Enter the generated station's coordinates and optionally ids and names</help>
 		</parameter>
 	</parametergroup>
 	
@@ -831,7 +834,7 @@ Please include meteoio_parametergroups before use!
 			<help>Path to the data files</help>
 		</parameter>
 		<parameter key="NC_EXT" type="text" default=".nc" size="small">
-			<help>NetCDF file extension (for example: .nc)</help>
+			<help>NetCDF file extension (for example: .nc, be careful, it is case sensitive!)</help>
 		</parameter>
 		<reference name="FILESGROUP_OPTIONAL"/>
 		<parameter key="METEOPATH_RECURSIVE" type="alternative">
@@ -1052,7 +1055,7 @@ Please include meteoio_parametergroups before use!
 				<help>Enter meteo parameter and define how to generate it</help>
 			</parameter>
 			</option>
-			<help>Enter the generated station's coordinates and optionaly ids and names</help>
+			<help>Enter the generated station's coordinates and optionally ids and names</help>
 		</parameter>
 	</parametergroup>
 

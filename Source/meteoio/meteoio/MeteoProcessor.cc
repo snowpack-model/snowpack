@@ -16,6 +16,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <cstddef>
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/meteoFilters/TimeFilters.h>
 #include <algorithm>
@@ -156,12 +157,12 @@ std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< s
 	for (size_t ii=0; ii<(dates_specs.size()-1); ii++) {
 		if (dates_specs[ii]==dates_specs[ii+1]) {
 			//remove exactly identical ranges
-			dates_specs.erase(dates_specs.begin()+ii+1); //we should have a limited number of elements so this is no problem
+			dates_specs.erase(dates_specs.begin()+static_cast<ptrdiff_t>(ii+1)); //we should have a limited number of elements so this is no problem
 			ii--; //we must redo the current element
 		} else if (dates_specs[ii].start==dates_specs[ii+1].start || dates_specs[ii].end >= dates_specs[ii+1].start) {
 			//remove overlapping ranges. Since the vector is sorted on (start, end), the overlap criteria is very simplified!
 			dates_specs[ii].end = std::max(dates_specs[ii].end, dates_specs[ii+1].end);
-			dates_specs.erase(dates_specs.begin()+ii+1);
+			dates_specs.erase(dates_specs.begin()+static_cast<ptrdiff_t>(ii+1));
 			ii--; //we must redo the current element
 		}
 	}

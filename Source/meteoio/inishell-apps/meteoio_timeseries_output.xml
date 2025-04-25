@@ -29,7 +29,7 @@ Please include meteoio_parametergroups before use!
 	<parametergroup name="METEOIO_TS_OUT">
 		<!-- it's nice to give defaults to non-optional keys (no 'unsaved changes' warning: -->
 		<parameter type="helptext" wrap="true">
-			<help>The plugins in the dropdown menu below that are italicized require third-party libraries that might not be installed on your system. Please also note that several plugins rely on the station ID to build the output file name (so if you change the station ID in the input or inputEditing, this would change the output file name).</help>
+			<help>The plugins in the drop-down menu below that are italicized require third-party libraries that might not be installed on your system. Please also note that several plugins rely on the station ID to build the output file name (so if you change the station ID in the input or inputEditing, this would change the output file name).</help>
 		</parameter>
 		<parameter key="METEO" label="Select METEO data plugin:" type="alternative" optional="false" default="SMET" pre-generate="false">
 			<section name="Output"/>
@@ -157,7 +157,7 @@ Please include meteoio_parametergroups before use!
 			<help>prefix to append when generating a file name for reading</help>
 		</parameter>
 		<parameter key="METEOSEQ" type="text" optional="false">
-			<help>specifiy in which order the columns should be printed out</help>
+			<help>specify in which order the columns should be printed out</help>
 		</parameter>
 	</parametergroup>
 
@@ -274,7 +274,7 @@ Please include meteoio_parametergroups before use!
 		<parameter key="NC_KEEP_FILES_OPEN" type="alternative">
 			<option value="TRUE"/>
 			<option value="FALSE"/>
-			<help>keep files open for efficient access? Beware, simulateous writing to a file in the case of parallelized processing could lead to data corruption (default: false)</help>
+			<help>keep files open for efficient access? Beware, simultaneous writing to a file in the case of parallelized processing could lead to data corruption (default: false)</help>
 		</parameter>
 	</parametergroup>
 
@@ -355,7 +355,7 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 		<frame caption="CSV compatibility" collapsed="true">
 			<parameter type="helptext" wrap="true">
-				<help>The options below make it easy to import smet files into various softwares that expect very basic CSV syntax but at the cost of making the smet files &lt;font color="#ff0000"&gt;&lt;strong&gt;non-conformant&lt;/strong&gt;&lt;/font&gt;</help>
+				<help>The options below make it easy to import smet files into various software that expect very basic CSV syntax but at the cost of making the smet files &lt;font color="#ff0000"&gt;&lt;strong&gt;non-conformant&lt;/strong&gt;&lt;/font&gt;</help>
 			</parameter>
 			<parameter key="SMET_SEPARATOR" type="text" validate="(\[:space:\])|." size="small">
 				<help>Set a different column delimiter, the posix expression &lt;i&gt;[:space:]&lt;/i&gt; represents any combination of white spaces (default: white spaces)</help>
@@ -424,16 +424,16 @@ Please include meteoio_parametergroups before use!
 	<!-- ACDD input keys for plugins supporting acdd metadata -->
 	<parametergroup name="ACDD">
 		<parameter type="helptext" wrap="true">
-			<help>The Attribute Convention for Data Discovery (ACDD) describes attributes recommended for describing a  dataset to discovery systems such as Digital Libraries. This helps systems and users locate and use data efficiently. Please have a look at the &lt;a href="https://adc.met.no/node/4"&gt;list of attribues&lt;/a&gt; with their definitions.</help>
+			<help>The Attribute Convention for Data Discovery (ACDD) describes attributes recommended for describing a  dataset to discovery systems such as Digital Libraries. This helps systems and users locate and use data efficiently. Please have a look at the &lt;a href="https://adc.met.no/node/4"&gt;list of attributes&lt;/a&gt; with their definitions.</help>
 		</parameter>
 		<frame caption="Overview of the dataset" collapsed="true">
 			<parameter key="ACDD_TITLE" type="text" size="large" bold="true"><help>a short title for the data set</help></parameter>
 			<parameter key="ACDD_SUMMARY" type="text" size="large" bold="true"><help>a paragraph describing the dataset</help></parameter>
 			<parameter key="ACDD_SUMMARY_FILE" type="file"  mode="input"><help>a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present</help></parameter>
-			<parameter key="ACDD_KEYWORDS" type="text" size="large" bold="true"><help>a comma-separated list of &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; terms or terms fron another vocabulary (provided with their full path)</help></parameter>
+			<parameter key="ACDD_KEYWORDS" type="text" size="large" bold="true"><help>a comma-separated list of &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; terms or terms from another vocabulary (provided with their full path)</help></parameter>
 			<parameter key="ACDD_KEYWORDS_VOCABULARY" type="text" size="large" bold="true"><help>the unique name or identifier of the vocabulary from which keywords are taken (default: &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; (GCMDSK))</help></parameter>
-			<parameter key="ACDD_COMMENT" type="text" size="large"><help>miscellaneous informartion about the dataset</help></parameter>
-			<parameter key="ACDD_ACKNOWLEDGEMENT" type="text" size="large"><help>acknowledgement for the various types of support for the project that produced this data</help></parameter>
+			<parameter key="ACDD_COMMENT" type="text" size="large"><help>miscellaneous information about the dataset</help></parameter>
+			<parameter key="ACDD_ACKNOWLEDGEMENT" type="text" size="large"><help>acknowledgment for the various types of support for the project that produced this data</help></parameter>
 		</frame>
 		<frame caption="Linking the dataset to other resources and metadata" collapsed="true">
 			<parameter key="WIGOS_ID" type="text" size="medium"><help>although this is not an ACDD key, it can be very useful in linking datasets together through their &lt;a href="https://oscar.wmo.int/surface"&gt;WIGOS ID&lt;/a&gt;</help></parameter>
@@ -469,11 +469,11 @@ Please include meteoio_parametergroups before use!
 			<parameter key="ACDD_CREATOR_EMAIL" type="text" size="medium" bold="true" validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}( *, *[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}){0,}$"><help>Email(s) of the creator(s)</help></parameter>
 			<parameter key="ACDD_CREATOR_INSTITUTION" type="text" size="medium" bold="true"><help>Institution(s) of the creator(s)</help></parameter>
 			<parameter key="ACDD_CREATOR_URL" type="text" size="medium" bold="true" validate="^((http|https|ftp)://[^,]*)( *, *(http|https|ftp)://[^,]*){0,}"><help>URL of the creator(s)</help></parameter>
-			<parameter key="ACDD_CREATOR_TYPE" type="text" bold="true" validate="(person|group|institution|position)( *, *(person|group|institution|position)){0,}"><help>Type of creator(s), choosen from &lt;b&gt;(person|group|institution|position)&lt;/b&gt;</help></parameter>
+			<parameter key="ACDD_CREATOR_TYPE" type="text" bold="true" validate="(person|group|institution|position)( *, *(person|group|institution|position)){0,}"><help>Type of creator(s), chosen from &lt;b&gt;(person|group|institution|position)&lt;/b&gt;</help></parameter>
 			<parameter key="ACDD_PUBLISHER" type="text" size="medium"><help>Name of the person(s) / entity(ies) responsible for publishing the data file or product to users, with its current metadata and format</help></parameter>
 			<parameter key="ACDD_PUBLISHER_EMAIL" type="text" size="medium" validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}( *, *[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}){0,}$"><help>Email of the publisher(s)</help></parameter>
 			<parameter key="ACDD_PUBLISHER_URL" type="text" size="medium" validate="^((http|https|ftp)://[^,]*)( *, *(http|https|ftp)://[^,]*){0,}"><help>the URL of the publisher</help></parameter>
-			<parameter key="ACDD_PUBLISHER_TYPE" type="text" validate="(person|group|institution|position)( *, *(person|group|institution|position)){0,}"><help>Type of publisher(s), choosen from &lt;b&gt;(person|group|institution|position)&lt;/b&gt;</help></parameter>
+			<parameter key="ACDD_PUBLISHER_TYPE" type="text" validate="(person|group|institution|position)( *, *(person|group|institution|position)){0,}"><help>Type of publisher(s), chosen from &lt;b&gt;(person|group|institution|position)&lt;/b&gt;</help></parameter>
 			<parameter key="ACDD_CONTRIBUTOR" type="text" size="medium"><help>Name of the person(s) / entity(ies) who has/have contributed to the data set (such as by providing data, maintaining the instruments, ...)</help></parameter>
 			<parameter key="ACDD_CONTRIBUTOR_ROLE" type="text" size="medium"><help>Role of the contributor(s)</help></parameter>
 			<parameter key="ACDD_INSTITUTION" type="text" size="medium"><help>Institution providing the data set (this is a legacy field, only one entry)</help></parameter>

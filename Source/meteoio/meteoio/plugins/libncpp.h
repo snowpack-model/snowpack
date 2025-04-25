@@ -70,7 +70,7 @@ namespace ncpp {
 							: attributes(attr), dimids(), dimid_time(i_dimid_time), dimid_X(i_dimid_X), dimid_Y(i_dimid_Y), scale(i_scale), offset(i_offset), nodata(i_nodata), varid(i_varid) {}
 		
 		bool isUndef() const {return (attributes.isUndef());}
-		std::string toString() const {std::ostringstream os; os << "[" << varid << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();}
+		std::string toString() const {std::ostringstream os; os << "["; if(varid!=-1) os<<varid; else os<<"∅"; os << " - " << "\"" << attributes.name << "\" - packing( *" << scale << ", +" << offset << "), nodata=" << nodata << " - depends on ("; for(size_t ii=0; ii<dimids.size(); ii++) os << " " << dimids[ii]; os << ") ]"; return os.str();}
 		
 		var_attr attributes; ///< metadata about the variable
 		std::vector<int> dimids;  ///< dimensions this variable depends on
@@ -89,7 +89,7 @@ namespace ncpp {
 					: name(i_name), length(0), dimid(-1), param(i_param), isUnlimited(false) {}
 		NC_DIMENSION(const size_t& i_param, const std::string& i_name, const size_t& len, const int& i_dimid, const bool& unlimited)
 					: name(i_name), length(len), dimid(i_dimid), param(i_param), isUnlimited(unlimited) {}
-		std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ " << dimid << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();}
+		std::string toString() const {std::ostringstream os; os << getParameterName(param) << " -> [ "; if(dimid!=-1) os<<dimid; else os<<"∅"; os << " - " << name << ", length " << length; if (isUnlimited) os << ", unlimited"; os << "]"; return os.str();}
 
 		std::string name; ///< dimension name
 		size_t length; ///< dimension length (irrelevant when the dimension is "unlimited")

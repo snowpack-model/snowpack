@@ -123,7 +123,6 @@ size_t SnGrids::getParameterIndex(const std::string& parname)
 	return IOUtils::npos; //parameter not a part of SnGrids
 }
 
-
 /************************************************************
  * MeteoObj                                           *
  ************************************************************/
@@ -134,8 +133,8 @@ MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                      p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata), iswr_dir(in_dem, IOUtils::nodata),
                      iswr_diff(in_dem, IOUtils::nodata), sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(),
                      sum_vw(), sum_ilwr(), vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0),
-                     skipWind(false), dataFromGrids(false), soil_flux(true), enable_simple_snow_drift(false), enable_snowdrift2d(false) {
-
+                     skipWind(false), dataFromGrids(false), soil_flux(true), enable_simple_snow_drift(false), enable_snowdrift2d(false)
+{
 	config.getValue("DATA_FROM_GRIDS", "input", dataFromGrids,IOUtils::nothrow);
 
 	//check if simple snow drift is enabled
@@ -274,25 +273,25 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 void MeteoObj::fillMeteoGrids(const Date& calcDate)
 {
 	if(dataFromGrids){
-		io.read2DGrid(psum, MeteoGrids::PSUM,date);
+		io.read2DGrid(psum, MeteoGrids::PSUM, date);
 
-		io.read2DGrid(rh, MeteoGrids::RH,date);
-		io.read2DGrid(ta, MeteoGrids::TA,date);
+		io.read2DGrid(rh, MeteoGrids::RH, date);
+		io.read2DGrid(ta, MeteoGrids::TA, date);
 
-		//Fill teh prec splitting grid
+		//Fill the prec splitting grid
 		fillPrecSplitting();
 
 		if (!soil_flux) io.getMeteoData(calcDate, dem, MeteoData::TSG, tsg);
 		if (!skipWind) {
-			io.read2DGrid(vw, MeteoGrids::VW,date);
+			io.read2DGrid(vw, MeteoGrids::VW, date);
 			dw=0;
-			//io.read2DGrid(dw, MeteoData::DW,date);
+			//io.read2DGrid(dw, MeteoData::DW, date);
 			if (enable_simple_snow_drift || enable_snowdrift2d) io.getMeteoData(calcDate, dem, "VW_DRIFT", vw_drift);
 		}
-		io.read2DGrid(p, MeteoGrids::P,date);
-		io.read2DGrid(ilwr, MeteoGrids::ILWR,date);
-		io.read2DGrid(iswr_dir, MeteoGrids::ISWR_DIR,date);
-		io.read2DGrid(iswr_diff, MeteoGrids::ISWR_DIFF,date);
+		io.read2DGrid(p, MeteoGrids::P, date);
+		io.read2DGrid(ilwr, MeteoGrids::ILWR, date);
+		io.read2DGrid(iswr_dir, MeteoGrids::ISWR_DIR, date);
+		io.read2DGrid(iswr_diff, MeteoGrids::ISWR_DIFF, date);
 	} else {
 		//fill the meteo parameter grids (of the AlpineControl object) using the data from the stations
 		try {
@@ -320,24 +319,23 @@ void MeteoObj::fillMeteoGrids(const Date& calcDate)
 //generate PSUM_PH from PSUM and TA
 bool MeteoObj::fillPrecSplitting() {
 	static const std::string model = "RANGE";
-	double fixed_thresh = 273.15+2;
-	double range_start = 273.15+0;
-	double range_end = 273.15+2;
+	static const double fixed_thresh = 273.15+2;
+	static const double range_start = 273.15+0;
+	static const double range_end = 273.15+2;
 
-	for (size_t ix = 0; ix < psum_ph.getNx(); ix++) {
-		for (size_t iy = 0; iy < psum_ph.getNy(); iy++) {
-			const double TA = ta(ix,iy);
-			if (TA == IOUtils::nodata) return false;
-			double value;
-			if (model == "RANGE") {
-				const double tmp_rainfraction =  (TA - range_start)/(range_end-range_start);
-				value = (tmp_rainfraction>1)? 1. : (tmp_rainfraction<0.)? 0. : tmp_rainfraction;
-			} else { //model == "THRESH"
-				value = (TA >= fixed_thresh)? 1. : 0.;
-			}
-			psum_ph(ix,iy) = value;
+	for (size_t ii=0; ii<psum_ph.size(); ii++) {
+		const double TA = ta(ii);
+		if (TA == IOUtils::nodata) return false;
+		double value;
+		if (model == "RANGE") {
+			const double tmp_rainfraction =  (TA - range_start)/(range_end-range_start);
+			value = (tmp_rainfraction>1)? 1. : (tmp_rainfraction<0.)? 0. : tmp_rainfraction;
+		} else { //model == "THRESH"
+			value = (TA >= fixed_thresh)? 1. : 0.;
 		}
+		psum_ph(ii) = value;
 	}
+	
 	return true;
 }
 

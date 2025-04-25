@@ -43,15 +43,13 @@ Grid1DInterpolator::Grid1DInterpolator(const Config& in_cfg) : algorithm_map(), 
 	cfg.getValue("ENABLE_GRID_RESAMPLING", section_name, enable_resampling, IOUtils::nothrow);
 
 	//create the grid resampling algorithms for each MeteoData::Parameters entry:
-	for (size_t ii = 0; ii < MeteoData::nrOfParameters; ++ii) { //loop over all MeteoData member variables
-		const std::string parname( MeteoData::getParameterName(ii) ); //current semantic parameter name
+	for (size_t ii = 0; ii < MeteoGrids::nrOfParameters; ++ii) { //loop over all MeteoGrids member variables
+		const std::string parname( MeteoGrids::getParameterName(ii) ); //current semantic parameter name
 		const std::string algo_name( IOUtils::strToUpper(getGridAlgorithmForParameter(parname)) );
 
 		//parse the algorithm's INI file settings and create an object for each algorithm:
-		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getArgumentsForAlgorithm(
-			parname, algo_name, section_name) );
-		algorithm_map[parname] = GridResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname,
-			grid_window_size, vecArgs, cfg);
+		const std::vector< std::pair<std::string, std::string> > vecArgs( cfg.getArgumentsForAlgorithm(parname, algo_name, section_name) );
+		algorithm_map[parname] = GridResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, grid_window_size, vecArgs, cfg);
 
 		//set generic parameters available for all algorithms:
 		const std::string where( "GridInterpolations1D::" + parname + "::" + algo_name );
@@ -59,10 +57,10 @@ Grid1DInterpolator::Grid1DInterpolator(const Config& in_cfg) : algorithm_map(), 
 			if (vecArgs[jj].first == "WINDOW_SIZE") {
 				double algo_window_size;
 				IOUtils::parseArg(vecArgs[jj], where, algo_window_size);
-				algorithm_map[parname]->setWindowSize(algo_window_size);
+				algorithm_map[parname]->setMaxGapSize(algo_window_size);
 			}
-		} //endfor jj
-	} //endfor ii
+		} //loop over all algorithms for this variable
+	} //loop over all MeteoGrids member variables
 }
 
 /**
@@ -91,9 +89,7 @@ Grid1DInterpolator::~Grid1DInterpolator()
 bool Grid1DInterpolator::resampleData(const Date& date, const MeteoGrids::Parameters& parameter,
 	const std::map<Date, Grid2DObject>& available_grids, Grid2DObject& resampled_grid)
 {
-	//translate MeteoGrids parameter to MeteoData parameter:
-	const MeteoData::Parameters mpar( MeteoData::findMeteoParam(parameter) );
-	const std::string mparname( MeteoData::getParameterName(mpar) );
+	const std::string mparname( MeteoGrids::getParameterName(parameter) );
 	if (algorithm_map.find(mparname) == algorithm_map.end())
 		return false; //no algorithm configured for this parameter
 	algorithm_map[mparname]->resample(date, available_grids, resampled_grid);

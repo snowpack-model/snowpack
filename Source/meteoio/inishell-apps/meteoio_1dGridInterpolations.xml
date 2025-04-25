@@ -33,7 +33,7 @@ INIshell include file for MeteoIO temporal grid interpolations
 			<section name="GridInterpolations1D"/>
 			<help>Output all temporally resampled (regridded) grids to the file system?</help>
 		</parameter>
-		<parameter key="WINDOW_SIZE" type="number" format="integer+" min="1" default="43200" unit="s">
+		<parameter key="MAX_GAP_SIZE" type="number" format="integer+" min="1" default="43200" unit="s">
 			<section name="GridInterpolations1D"/>
 			<help>Default width of the biggest data gap that can be filled by temporal interpolation (in seconds: 1/2 day=43200, 1 day=86400, 1 week=604800)</help>
 		</parameter>
@@ -41,6 +41,7 @@ INIshell include file for MeteoIO temporal grid interpolations
 		<parameter label="Add/Remove grid interpolation" type="selector">
 			<section name="GridInterpolations1D"/>
 			<parameter key="%::RESAMPLE" label="Resample % with:" type="alternative" template="true">
+				<reference name="GRIDRESAMPLING_NEAREST"/>
 				<reference name="GRIDRESAMPLING_LINEAR"/>
 				<reference name="GRIDRESAMPLING_TIMESERIES"/>
 			</parameter>
@@ -49,10 +50,19 @@ INIshell include file for MeteoIO temporal grid interpolations
 	</parametergroup>
 
 	<!-- 1D GRID RESAMPLING -->
+	<parametergroup name="GRIDRESAMPLING_NEAREST">
+		<option caption="Nearest Neighbour" value="NEAREST">
+			<parameter key="%::NEAREST::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer" min="1" unit="s">
+				<help>Override default max gap size</help>
+			</parameter>
+			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1GridNearestResampling.html&quot;&gt;Nearest Neighbour interpolation&lt;/a&gt;</help>
+		</option>
+	</parametergroup>
+	
 	<parametergroup name="GRIDRESAMPLING_LINEAR">
 		<option caption="Linear interpolation" value="LINEAR">
-			<parameter key="%::LINEAR::WINDOW_SIZE" label="WINDOW_SIZE" type="number" format="integer" min="1" unit="s">
-				<help>Override default window size</help>
+			<parameter key="%::LINEAR::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer" min="1" unit="s">
+				<help>Override default max gap size</help>
 			</parameter>
 			<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-release/html/classmio_1_1GridLinearResampling.html&quot;&gt;Linear interpolation&lt;/a&gt;</help>
 		</option>
@@ -60,8 +70,8 @@ INIshell include file for MeteoIO temporal grid interpolations
 
 	<parametergroup name="GRIDRESAMPLING_TIMESERIES">
 		<option caption="Timeseries resampling" value="TIMESERIES">
-			<parameter key="%::TIMESERIES::WINDOW_SIZE" label="WINDOW_SIZE" type="number" format="integer" min="1" unit="s">
-				<help>Override default window size</help>
+			<parameter key="%::TIMESERIES::MAX_GAP_SIZE" label="MAX_GAP_SIZE" type="number" format="integer" min="1" unit="s">
+				<help>Override default max gap size</help>
 			</parameter>
 			<parameter key="%::TIMESERIES::ALGORITHM" caption="Interpolation algorithm" type="text">
 				<help>Name of the algorithm to use.</help>
