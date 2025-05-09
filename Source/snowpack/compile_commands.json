@@ -1,0 +1,147 @@
+[
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/DataClasses.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/DataClasses.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/DataClasses.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/vanGenuchten.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/vanGenuchten.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/vanGenuchten.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/SnowpackConfig.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/SnowpackConfig.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/SnowpackConfig.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/Meteo.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Meteo.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Meteo.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/Saltation.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Saltation.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Saltation.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/Laws_sn.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Laws_sn.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Laws_sn.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/Utils.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Utils.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Utils.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/StabilityAlgorithms.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/StabilityAlgorithms.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/StabilityAlgorithms.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/Stability.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Stability.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Stability.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/Hazard.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Hazard.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/Hazard.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/SnowDrift.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/SnowDrift.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/SnowDrift.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/TechnicalSnow.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/TechnicalSnow.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/TechnicalSnow.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/plugins/SnowpackIO.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/SnowpackIO.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/SnowpackIO.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/plugins/AsciiIO.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/AsciiIO.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/AsciiIO.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/plugins/SmetIO.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/SmetIO.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/SmetIO.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/plugins/CaaMLIO.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/CaaMLIO.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/CaaMLIO.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -w -o CMakeFiles/snowpack.dir/plugins/pugixml/pugixml.cpp.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/pugixml/pugixml.cpp",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/plugins/pugixml/pugixml.cpp"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/Snowpack.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Snowpack.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Snowpack.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/Aggregate.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Aggregate.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Aggregate.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/WaterTransport.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/WaterTransport.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/WaterTransport.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/VapourTransport.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/VapourTransport.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/VapourTransport.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/ReSolver1d.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/ReSolver1d.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/ReSolver1d.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/Canopy.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Canopy.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Canopy.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/Metamorphism.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Metamorphism.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Metamorphism.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/PhaseChange.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/PhaseChange.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/PhaseChange.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/SeaIce.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/SeaIce.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/SeaIce.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/Solver.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Solver.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/Solver.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack",
+  "command": "/usr/bin/c++ -Dsnowpack_EXPORTS -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -fPIC -std=gnu++11 -o CMakeFiles/snowpack.dir/snowpackCore/SalinityTransport.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/SalinityTransport.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/snowpack/snowpackCore/SalinityTransport.cc"
+},
+{
+  "directory": "/home/alkr/src/polar_snowpack/Source/snowpack/applications/snowpack",
+  "command": "/usr/bin/c++  -I/home/alkr/src/polar_snowpack/Source/snowpack -I/home/alkr/src/polar_snowpack/Source/snowpack/applications/snowpack/../.. -I/home/alkr/src/meteoio -D_VERSION=3.7.0 -march=x86-64-v2 -mtune=core-avx2   -DCLAPACK -g -O3 -DNDEBUG -DNOSAFECHECKS -flto=auto -fno-fat-lto-objects -std=gnu++11 -o CMakeFiles/snowpack.app.dir/Main.cc.o -c /home/alkr/src/polar_snowpack/Source/snowpack/applications/snowpack/Main.cc",
+  "file": "/home/alkr/src/polar_snowpack/Source/snowpack/applications/snowpack/Main.cc"
+}
+]
