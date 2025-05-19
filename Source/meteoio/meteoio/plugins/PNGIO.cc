@@ -23,7 +23,7 @@
 #include <meteoio/FStream.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 
-#include <fstream>
+#include <iomanip>
 #include <cstring>
 #include <algorithm>
 #include <cerrno>
@@ -205,12 +205,14 @@ void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& heig
 {
 	char rest[32] = "";
 	unsigned int w,h;
-	if (sscanf(size_spec.c_str(), "%u %u%31s", &w, &h, rest) < 2)
-	if (sscanf(size_spec.c_str(), "%u*%u%31s", &w, &h, rest) < 2)
-	if (sscanf(size_spec.c_str(), "%ux%u%31s", &w, &h, rest) < 2) {
-		std::ostringstream ss;
-		ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
-		throw InvalidFormatException(ss.str(), AT);
+	if (sscanf(size_spec.c_str(), "%u %u%31s", &w, &h, rest) < 2) {
+		if (sscanf(size_spec.c_str(), "%u*%u%31s", &w, &h, rest) < 2) {
+			if (sscanf(size_spec.c_str(), "%ux%u%31s", &w, &h, rest) < 2) {
+				std::ostringstream ss;
+				ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
+				throw InvalidFormatException(ss.str(), AT);
+			}
+		}
 	}
 
 	width = static_cast<size_t>( w );

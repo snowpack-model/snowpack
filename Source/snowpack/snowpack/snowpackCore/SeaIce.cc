@@ -841,7 +841,7 @@ void SeaIce::InitSeaIce(SnowStation& Xdata)
 			// Given brine salinity and provided bulk salinity, we can derive theta[WATER]
 			const double theta_water_new = Xdata.Edata[e].salinity / BrineSal;
 			// We can now estimate theta[ICE]
-			const double theta_ice_new = 1. - (theta_water_new * (Constants::density_water / Constants::density_ice));
+			const double theta_ice_new = Xdata.Edata[e].theta[ICE] - ((theta_water_new - Xdata.Edata[e].theta[WATER]) * (Constants::density_water / Constants::density_ice));
 			Xdata.Edata[e].theta[ICE] = theta_ice_new;
 			Xdata.Edata[e].theta[WATER] = theta_water_new;
 			Xdata.Edata[e].theta[AIR] = 1. - Xdata.Edata[e].theta[WATER] - Xdata.Edata[e].theta[ICE];

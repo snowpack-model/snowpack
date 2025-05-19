@@ -72,9 +72,16 @@ void MessageBoxX11( const char* title, const char* text ) {
 	char *temp = (char *)malloc( text_len );
 	strncpy( temp, text, text_len );
 
-	char *pch = strtok( temp, "\n" );
+	char const* pch = strtok( temp, "\n" );
 	while ( pch!=nullptr ) {
-		strvec = (char **)realloc( strvec, (strvec_size+1)*sizeof(char**) );
+		char **tmp_ptr = (char **)realloc( strvec, (strvec_size+1)*sizeof(char**) );
+		if (tmp_ptr) {
+			strvec = tmp_ptr;
+		} else {
+			//most probably running out of memory...
+			free( strvec );
+			exit( EXIT_FAILURE );
+		}
 		strvec[ strvec_size ] = (char *)malloc( strlen(pch)+1 );
 		strncpy( strvec[ strvec_size ], pch, strlen(pch)+1 );
 		++strvec_size;
