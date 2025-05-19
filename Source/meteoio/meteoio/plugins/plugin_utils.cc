@@ -17,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "plugin_utils.h"
+#include <meteoio/plugins/plugin_utils.h>
 #include <meteoio/FileUtils.h>
 
 namespace mio

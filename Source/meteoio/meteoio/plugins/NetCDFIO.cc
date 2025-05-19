@@ -16,7 +16,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "meteoio/IOUtils.h"
+#include <meteoio/IOUtils.h>
 #include <meteoio/plugins/NetCDFIO.h>
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoLaws/Atmosphere.h>

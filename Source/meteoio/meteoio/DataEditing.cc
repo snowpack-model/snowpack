@@ -52,7 +52,7 @@ DataEditing::DataEditing(const Config& cfgreader)
 DataEditing::~DataEditing() 
 {
 	for (const auto& station_stack : editingStack) { //editingStack is std::map< std::string, std::vector< EditingBlock* > >
-		for (auto& block : station_stack.second) delete block;
+		for (auto const& block : station_stack.second) delete block;
 	}
 }
 

@@ -29,7 +29,7 @@
 		#define NOMINMAX
 	#endif
 	#include <windows.h>
-	#include "Shlwapi.h"
+	#include <Shlwapi.h>
 #else
 	#include <dirent.h>
 	#include <sys/stat.h>
@@ -119,7 +119,7 @@ std::string cleanPath(std::string in_path, const bool& resolve, const bool& sile
 	}
 }
 
-bool isSubDirOf(std::string in_path, std::string root_path)
+bool isSubDirOf(const std::string& in_path, const std::string& root_path)
 {
 	const std::string root_path_clean( cleanPath(root_path, true, true) );
 	const std::string in_path_clean( cleanPath(in_path, true, true) );

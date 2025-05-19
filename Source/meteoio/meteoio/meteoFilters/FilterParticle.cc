@@ -109,12 +109,11 @@ void FilterParticle::process(const unsigned int& param, const std::vector<MeteoD
 	static const size_t nr_hardcoded_sub = 4; //in order not to forget to keep substitutions in sync
 
 	Fit1D model_fit;
-	std::vector<double> model_data_points;
 
 	if (has_model) {
 		expr_model = compileExpression(model_expression, te_vars, sub_expr.size()); //empty string would fail
 	} else { //prepare a fit ready to evaluate
-		model_data_points.resize(ivec.size());
+		std::vector<double> model_data_points( ivec.size() );
 		for (size_t ii = 0; ii < ivec.size(); ++ii) //read the modeled data points
 			model_data_points[ii] = ivec[ii](fit_param);
 

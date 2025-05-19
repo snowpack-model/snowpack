@@ -1106,7 +1106,7 @@ INIshell include file for MeteoIO filters
 				<option value="CORRECTIONS_FILE">
 					<parameter key="TIME::ARG#::CORRECTIONS" label="Corrections file:" type="file" mode="input" optional="false"><help>File containing the correction specifications: when, which offset has to be added to the timestamps</help></parameter>
 				</option>
-				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1TimeShift.html&quot;&gt;Time shift filter&lt;/a&gt; that can be used for example to correct the data for Daylight Saving Time). Choose either a fixed offset or some time-varying corrections.</help>
+				<help>&lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1TimeShift.html&quot;&gt;Time shift filter&lt;/a&gt; that can be used for example to correct the data for Daylight Saving Time). Choose either a fixed offset or some time-varying corrections. If you only need to time-shift a single parameter, use the &lt;a href=&quot;https://meteoio.slf.ch/doc-dev/html/classmio_1_1ProcShift.html&quot;&gt;Proc shift filter&lt;/a&gt; instead!</help>
 			</parameter>
 			<reference name="TIME_ID_RESTRICT"/>
 		</option>

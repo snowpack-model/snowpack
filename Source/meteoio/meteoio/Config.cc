@@ -16,8 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "IOUtils.h"
-#include "meteoio/IOExceptions.h"
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <cstddef>
 #include <meteoio/Config.h>
 #include <meteoio/FileUtils.h>
@@ -589,7 +589,7 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 //and swap the two before returning i_properties
 ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(i_properties), imported(), sections(), vars(), sourcename(filename)
 {
-	parseFile( fileProperties(filename, sourcename) );
+	parseFile( fileProperties(filename, std::string()) );
 	
 	//expand all variables that might be used in key/values. 
 	//Instead of relying on a dependency tree between keys, we just keep on running on all keys that require expansion until 
@@ -611,7 +611,7 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 			}
 		}
 		
-		if (!hasSomeSuccesses) { //not a single variable could be expanded
+		if (!hasSomeSuccesses) { //not even one variable could be expanded
 			std::string msg("In file "+filename+", the following keys could not be resolved (circular dependency? undefined variable name?):");
 			for (const auto& var : vars) msg.append( " "+var.first );
 			throw InvalidArgumentException(msg, AT);
@@ -623,7 +623,7 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 	i_sections.insert(sections.begin(), sections.end());
 }
 
-ConfigParser::FILE_PPT::FILE_PPT(const std::string& filename, const std::string& sourcename)
+ConfigParser::FILE_PPT::FILE_PPT(const std::string& filename, const std::string& ini_sourcename)
              : original_name(filename), restrict_section(), clean_name()
 {
 	//extract a section name appended to the filename, if any
@@ -636,7 +636,7 @@ ConfigParser::FILE_PPT::FILE_PPT(const std::string& filename, const std::string&
 
 	//resolve symlinks, resolve relative path w/r to the path of the current ini file
 	//if this is a relative path, prefix the import path with the current path
-	const std::string prefix = ( FileUtils::isAbsolutePath(original_name) )? "" : FileUtils::getPath(sourcename, true)+"/";
+	const std::string prefix = ( FileUtils::isAbsolutePath(original_name) || ini_sourcename.empty() )? "" : FileUtils::getPath(ini_sourcename, true)+"/";
 	const std::string path( FileUtils::getPath(prefix+original_name, true) );  //clean & resolve path
 	const std::string clean_filename( FileUtils::getFilename(original_name) );
 	clean_name = path + "/" + clean_filename;
@@ -663,11 +663,11 @@ bool ConfigParser::onlyOneEqual(const std::string& str)
 */
 void ConfigParser::parseFile(const fileProperties& iniFile)
 {
-	if (!FileUtils::validFileAndPath(iniFile.original_name)) throw InvalidNameException("Invalid configuration file name '"+iniFile.original_name+"'",AT);
-	if (!FileUtils::fileExists(iniFile.original_name)) throw NotFoundException("Configuration file '"+iniFile.original_name+"' not found", AT);
+	if (!FileUtils::validFileAndPath(iniFile.clean_name)) throw InvalidNameException("Invalid configuration file name '"+iniFile.original_name+"'",AT);
+	if (!FileUtils::fileExists(iniFile.clean_name)) throw NotFoundException("Configuration file '"+iniFile.original_name+"' not found", AT);
 
 	//Open file
-	std::ifstream fin(iniFile.original_name.c_str(), ifstream::in);
+	std::ifstream fin(iniFile.clean_name.c_str(), ifstream::in);
 	if (fin.fail()) throw AccessException(iniFile.original_name, AT);
 	imported.insert( iniFile ); //keep track of this file being processed to prevent circular IMPORT directives
 	
