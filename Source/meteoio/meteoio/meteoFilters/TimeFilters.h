@@ -125,6 +125,8 @@ class TimeSuppr : public ProcessingBlock {
  *    + CORRECTIONS: the correction file (optional);
  *    + OFFSET: the fixe offset (in seconds) to add to the time (optional).
  *
+ * @note if you only need to time-shift a single parameter, use the ProcShift filter instead.
+ * 
  * @code
  * TIME::filter1     = SHIFT
  * TIME::arg1::CORRECTIONS = ./input/meteo/dst.dat

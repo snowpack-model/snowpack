@@ -342,7 +342,7 @@ std::vector<std::string> MeteoData::sortListByParams(const std::vector<std::stri
 			params_with_heights[parameter].push_back(std::make_pair(number, par));
 		}
 	}
-	for (auto& entry : params_with_heights) {
+	for (auto const& entry : params_with_heights) {
 		std::vector<std::pair<double,std::string>> par = entry.second;
 		std::sort(par.begin(), par.end(), comparePairOfHeightParam);
 		for (const auto& p : par) {
@@ -773,8 +773,9 @@ MeteoData::Merge_Conflicts MeteoData::getMergeConflicts(std::string merge_confli
 size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const Merge_Type& strategy, const Merge_Conflicts& conflicts_strategy)
 {
 	if (vec2.empty()) return 0; //nothing to merge
-	if ((strategy==STRICT_MERGE || strategy==WINDOW_MERGE) && vec1.empty()) return 0; //optimization for STRICT_MERGE
 	if (vec1.empty()) {
+		if (strategy==STRICT_MERGE || strategy==WINDOW_MERGE) return 0; //optimization for STRICT_MERGE
+		
 		vec1 = vec2;
 		return 0;
 	}
@@ -803,7 +804,7 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 	if (strategy!=STRICT_MERGE && strategy!=WINDOW_MERGE && vec1.front().date>vec2.front().date) {
 		const Date start_date( vec1.front().date );
 		vec1_start = vec2.size(); //if no overlap is found, take all vec2
-		for(size_t ii=0; ii<vec2.size(); ii++) { //find the range of elements to add
+		for (size_t ii=0; ii<vec2.size(); ii++) { //find the range of elements to add
 			if (vec2[ii].date>=start_date) {
 				vec1_start = ii;
 				break;
@@ -828,7 +829,7 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 
 		size_t idx2 = vec1_start; //all previous elements were handled before
 		size_t last_v1 = vec1_start; //last element from vec1 that will have to be invalidated
-		for(size_t ii=vec1_start; ii<vec1.size(); ii++) {
+		for (size_t ii=vec1_start; ii<vec1.size(); ii++) {
 			const Date curr_date( vec1[ii].date );
 			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) {
 				tmp.push_back( md_pattern );

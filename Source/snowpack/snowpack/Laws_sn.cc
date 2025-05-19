@@ -1169,6 +1169,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW;
 		if (jordy_new_snow && (VW > 2.9))
 			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "LEHNING_NEW") {
 		static const double alpha=90., beta=6.5, gamma=7.5, delta=0.26;
@@ -1183,6 +1184,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		} else if (jordy_new_snow && (VW > 2.9)) {
 			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
 		}
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "BELLAIRE") {
 		static const double alpha=3.946, beta=0.07703, zeta=0.0001701, eta=0.02222, mu=-0.05371;
@@ -1190,6 +1192,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		VW = std::max(1., VW);
 		const double arg = alpha + beta*TA + zeta*HH + eta*log(VW) + mu*TA*log(VW);
 		rho_hn = exp(arg);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "ZWART") {
 		VW = std::max(2., VW);
@@ -1198,12 +1201,15 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		double arg = beta01 + beta1*TA + beta2*asin(sqrt(RH)) + beta3*log10(VW);
 		if(TA>=-14.) arg += beta02; // += beta2*TA;
 		rho_hn = pow(10., arg);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "PAHAUT") {
 		rho_hn = 109. + 6.*(IOUtils::C_TO_K(TA) - Constants::meltfreeze_tk) + 26.*sqrt(VW);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "NIED") {
 		rho_hn = 62. + 3.6 * VW - 0.2 * TA;
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "VANKAMPENHOUT") {
 		// van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988
@@ -1220,6 +1226,8 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		}
 		// Eq. 2 in van Kampenhout et al. (2017):
 		rho_hn = rho_t + rho_w;
+		// Limiting the van Kampenhout scheme at 450 kg/m3:
+		rho_hn = std::min(450., std::max(min_hn_density, rho_hn));
 
 	} else {
 		prn_msg(__FILE__, __LINE__, "err", Date(),
@@ -1228,7 +1236,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		exit(EXIT_FAILURE);
 	}
 
-	return(std::min(max_hn_density, std::max(min_hn_density, rho_hn)));
+	return rho_hn;
 }
 
 /**

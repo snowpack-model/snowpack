@@ -21,7 +21,6 @@
 
 #include <meteoio/meteoFilters/ProcessingBlock.h>
 #include <meteoio/Config.h>
-#include <memory>
 #include <vector>
 #include <string>
 

@@ -149,13 +149,13 @@ https://snowpack.slf.ch
 		<parameter key="HOAR_THRESH_VW" type="number" format="decimal" precision="1" unit="m/s">
 			<help>Wind speed threshold above which no surface hoar is allowed to form (because it will drift away). (Default: 3.5 m/s)</help>
 		</parameter>
-		<parameter key="HOAR_DENSITY_BURIED" type="number" format="integer+" unit="kg/m³">
+		<parameter key="HOAR_DENSITY_BURIED" type="number" format="integer+" unit="kg/m³" default="125">
 			<help>Define the initial density for surface hoar at the time it gets buried by new snow (default: 125 kg/m³)</help>
 		</parameter>
-		<parameter key="HOAR_MIN_SIZE_BURIED" type="number" format="decimal" precision="1" unit="mm">
+		<parameter key="HOAR_MIN_SIZE_BURIED" type="number" format="decimal" precision="1" unit="mm" default="2.0">
 			<help>Define a threshold below which any traces of surface hoar will not be given a separate hoar layer when buried (default: 2.0 mm)</help>
 		</parameter>
-		<parameter key="HOAR_DENSITY_SURF" type="number" format="integer+" unit="kg/m³">
+		<parameter key="HOAR_DENSITY_SURF" type="number" format="integer+" unit="kg/m³" default="100">
 			<help>Assumed density of surface hoar while exposed at the surface and not buried (default: 100 kg/m³)</help>
 		</parameter>
 	</frame>

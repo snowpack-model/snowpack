@@ -32,7 +32,7 @@
 	Therefore, this product includes software developed by the University of
 	California, Berkeley and its contributors when compiling with Visual C++.
 	*/
-	#include "getopt.h"
+	#include <getopt.h>
 #else
 	//#include <unistd.h> //for getopt
 	#include <getopt.h> //for getopt_long

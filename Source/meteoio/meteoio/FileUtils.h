@@ -81,7 +81,7 @@ namespace FileUtils {
 	* @param in_path the path to test for
 	* @param root_path for root path to test against
 	*/
-	bool isSubDirOf(std::string in_path, std::string root_path);
+	bool isSubDirOf(const std::string& in_path, const std::string& root_path);
 
 	/**
 	* @brief returns the extension part of a given filename.

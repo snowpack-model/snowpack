@@ -44,7 +44,7 @@ MeteoProcessor::~MeteoProcessor()
 {
 	//clean up heap memory, processing_stack is std::map<std::string, ProcessingStack*>
 	//call delete on the Stack of each parameter
-	for (auto& paramStack : processing_stack) delete paramStack.second;
+	for (auto const& paramStack : processing_stack) delete paramStack.second;
 }
 
 std::set<std::string> MeteoProcessor::getParameters(const Config& cfg)

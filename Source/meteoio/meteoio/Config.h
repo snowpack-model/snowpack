@@ -531,8 +531,10 @@ class ConfigParser {
 		///structure to contain file properties
 		typedef struct FILE_PPT {
 			FILE_PPT() : original_name(), restrict_section(), clean_name() {}
-			FILE_PPT(const std::string& filename, const std::string& sourcename);
+			FILE_PPT(const std::string& filename, const std::string& ini_sourcename);
 
+			std::string toString() const {std::ostringstream os; os << "<INI file>" << original_name << ", cleaned as " << clean_name; if (!restrict_section.empty()) os << ", restricted to [" << restrict_section << "]"; os << "</INI file>"; return os.str();}
+			
 			bool operator<(const FILE_PPT& a) const { //needed for "sort"
 				if (original_name<a.original_name) return true;
 				if (clean_name<a.clean_name) return true;

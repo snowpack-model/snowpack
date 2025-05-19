@@ -17,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 // #include <meteoio/plugins/bufrio.h>
-#include "meteoio/plugins/libcodes.h"
+#include <meteoio/plugins/libcodes.h>
 #include <cassert>
 #include <meteoio/plugins/BUFRIO.h>
 #include <meteoio/plugins/plugin_utils.h>
