@@ -253,8 +253,8 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 				if (enforce_measured_snow_heights && !windward) {
 					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
 					ustar = Mdata.ustar;
-				} else {
-					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
+				} else { // vslope(s) and main st. w/o measured snow depth 
+					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, vslope && vw_drift && nE-1 !N.B.
 					ustar = ustar_max;
 				}
 			} catch(const exception&) {

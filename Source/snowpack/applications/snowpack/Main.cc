@@ -188,6 +188,7 @@ unsigned int Slope::getSectorDir(const double& dir_or_expo) const
 
 /**
  * @brief Set slope variables
+ * This is to ensure we loop through the slopes in the right order; main station is always first, luv is always 2nd
  * @param slope_sequence computation sequence for slopes
  * @param vecXdata
  * @param wind_dir direction of wind

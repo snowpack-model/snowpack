@@ -1232,11 +1232,11 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		const double arg = alpha + beta*TA + zeta*HH + eta*log(VW) + mu*TA*log(VW);
 		rho_hn = exp(arg);
 
-	} else if (i_hn_model == "ZWART") { // see "Significance of new-snow properties for snowcover development" - MSc thesis Costijn Zwart, 2007
+	} else if (i_hn_model == "ZWART") { // see "Significance of new-snow properties for snowcover development" - MSc thesis Costijn Zwart, 2007, https://zenodo.org/records/8138302 
 		max_hn_density = 250.0; // parameterization based on limited data set, not validated for wind speeds >9m/s  or low temperatures (<-20), thus we limit the density.
 		VW = std::max(2., VW);
 		RH = 0.8; // ori: std::min(1., RH/100.); see asin(sqrt()) below
-		static const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
+		static const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.31;  // Table 5.4 in Zwart, 2007
 		double arg = beta01 + beta1*TA + beta2*asin(sqrt(RH)) + beta3*log10(VW);
 		if(TA>=-14.) arg += beta02; // += beta2*TA;
 		rho_hn = pow(10., arg);
@@ -1302,10 +1302,11 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
  * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
  * 	- LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
  * 	- LEHNING_OLD: First model by M. Lehning
- *       @note {models by M. Lehning can be augmented with a parameterization for winds > 2.9 m s-1
- *              worked out by J. Hendrikx => set jordy_new_snow in Laws_sn.cc}
+ *  - JORDY: JORDY model by J. Hendrikx (2017) for wind speeds > 2.9 m/s (uses LEHNING_NEW below 2.9 m/s)
  * 	- BELLAIRE: Sascha Bellaire's model (elaborated 2007; used summer/fall 2007)
  * 	- PAHAUT: Edmond Pahaut's model, introduced Sep 1995 in CROCUS by G. Giraud
+ *  - VANKAMPENHOUT: van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988 , developed for firn in antartica
+ *  - KRAMPE: Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100, developed for Greenland, based on liston 2007 and Kampenhout et al. 2017
  * - EVENT: Driven by event type, that is,
  * 	- event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
  * - MEASURED: Use measured new snow density read from meteo input
