@@ -2061,6 +2061,10 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 
 	// Add eroded snow:
 	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);  //tmp_psum = redeposit_mass. But note that vslopes (normally) receive snowfall from Xdata.hn.
+	
+	// Save the redeposited snow and its density in Xdata:
+	Xdata.hn_redeposit = Xdata.hn;
+	Xdata.rho_hn_redeposit = Xdata.rho_hn;
 
 	// Set back original settings:
 	force_add_snowfall = tmp_force_add_snowfall;
@@ -2069,15 +2073,9 @@ void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFlux
 	variant = tmp_variant;
 	enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
 	Mdata.date = tmp_MdataDate;
-
-	// Save the redeposited snow and its density in Xdata:
-	Xdata.hn_redeposit = Xdata.hn;
-	Xdata.rho_hn_redeposit = Xdata.rho_hn;
-	if ((tmp_Xdata_hn + Xdata.hn) > 0.) {
-		Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
-	}
-	Xdata.hn += tmp_Xdata_hn;
-}
+	Xdata.hn = tmp_Xdata_hn; // reset to original value
+	Xdata.rho_hn = tmp_Xdata_rho_hn; // reset to original value
+}	
 
 /**
  * @brief The near future (s. below) has arrived on Wednesday Feb. 6, when it was finally snowing
