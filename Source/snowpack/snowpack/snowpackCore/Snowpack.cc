@@ -2194,10 +2194,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 		}
 		Xdata.hn += tmp_Xdata_hn; // for virtual slopes, this leads to a double counting of hn?? 
 		
-		if (Xdata.hn > 0.) {
-			prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "A. Sector %d, azi: %.0f, Xdata.hn: %.3f", Xdata.sector, Xdata.meta.getAzimuth(), M_TO_CM(tmp_Xdata_hn));
-			prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "B. Sector %d, azi: %.0f, Xdata.hn: %.3f", Xdata.sector, Xdata.meta.getAzimuth(), M_TO_CM(Xdata.hn));
-		}
 		// Check to see if snow is DRIFTING, compute a simple snowdrift index and erode layers if
 		// neccessary. Note that also the very important friction velocity is computed in this
 		// routine and later used to compute the Meteo Heat Fluxes
@@ -2212,10 +2208,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 			// Calculate erosion:
 			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);  // Calculate Xdata.ErosionMass (and Xdata.ErosionLevel)
 
-			// ToDo: prin erosion mass before and after call to compSnowDrift
-			// prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Erosion mass: %.3f, cumu_precip: %.3f", Xdata.ErosionMass, cumu_precip);//
-			if (Xdata.hn > 0.) 	prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "C. Sector %d, azi: %.0f, Xdata.hn: %.3f", Xdata.sector, Xdata.meta.getAzimuth(), M_TO_CM(Xdata.hn));
-
 			// Redeposit eroded snow on same slope in case of snow_erosion=REDEPOSIT: 
 			if (snow_erosion == "REDEPOSIT" && Xdata.ErosionMass > 0. && !alpine3d) {
 				if (snow_redistribution && !Xdata.windward && !Xdata.leeward) {
@@ -2224,7 +2216,6 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 				}else if (!snow_redistribution)	{ // if snow_redistribution is not set, we redeposit snow on all slopes.
 					RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
 				}
-				prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "D. Sector %d, azi: %.0f, Xdata.hn: %.3f", Xdata.sector, Xdata.meta.getAzimuth(), M_TO_CM(Xdata.hn));
 			}
 		} else { // MASSBAL forcing
 			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
