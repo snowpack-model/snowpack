@@ -201,6 +201,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 	case 0:
 		for (size_t kk=0; kk<nSlopes; kk++) {
 			vecXdata[kk].windward = false;
+			vecXdata[kk].leeward = false;
 			vecXdata[kk].rho_hn   = 0.;
 			vecXdata[kk].hn       = 0.;
 		}
@@ -221,6 +222,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 		luvDriftIndex = snow_redistribution;
 		break;
 	default:
+		vecXdata[lee].leeward = true;
 		sector++;
 		if (sector == nSlopes) sector = 1;
 	}
@@ -688,7 +690,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		*/
 		if (slope.snow_redistribution && (slope.sector == slope.lee)) {
 
-			// Add eroded mass from windward slope using the Redeposit scheme:
+			// Add eroded mass from windward slope to lee slope using the Redeposit scheme:
 			if (vecXdata[slope.luv].ErosionMass > 0.) {
 				if ( msg_deposit) { //messages for debug
 						prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Depositing total mass %.3lf kg/m2 ( slope=%d)", vecXdata[slope.luv].ErosionMass, slope.sector);
@@ -707,11 +709,12 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 						}
 					}	
 				// snow has been deposited, and ErosionMass is now zero
-				vecXdata[slope.luv].ErosionMass = 0.;  // But the cumsum is calculated in ln. 1409
+				vecXdata[slope.luv].ErosionMass = 0.;  // But the cumsum is calculated in ln. 1427? (but luv has already passed??)
 			}
-		}
+		}  // This adds to Xdata.hn_redeposit (not Xdata.hn) and of course ElementData
+
 		// Update depth of snowfall on slopes.
-		// This may include contributions from drifting snow eroded on the windward (luv) slope.
+		// This may include contributions from drifting snow eroded on the windward (luv) slope. (not with new redeposit scheme, it is added to Xdata.hn_redeposit)
 		if ((hn_slope > 0.) && (vecXdata[slope.mainStation].cH > 0.01)) {
 			currentSector.hn = hn_slope;
 			currentSector.rho_hn = rho_hn_slope;
@@ -722,7 +725,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		if (!meas_incoming_longwave && lw_in!=IOUtils::nodata) {
 			Mdata.ea = SnLaws::AirEmissivity(lw_in, Mdata.ta, variant, true); // In this case, lw_in is an estimate, and we enforce max limit on ea.
 		}
-	}
+	} // end of else for virtual slope
 }
 
 /**
@@ -1239,7 +1242,7 @@ inline void real_main (int argc, char *argv[])
 
 		// START TIME INTEGRATION LOOP
 		do {
-			current_date += calculation_step_length/1440;
+			current_date += calculation_step_length/1440; // calculation_step_length is in minutes, so we divide by 1440 to get days
 			mn_ctrl.nStep++;
 			mn_ctrl.nAvg++;
 
@@ -1420,8 +1423,8 @@ inline void real_main (int argc, char *argv[])
 						if(slope.luvDriftIndex) cumsum.drift = 0.;
 					}
 
-					// Update erosion mass from windward virtual slope
-					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;   // this has been set to 0 around ln 666, after it has been deposited to the lee slope. 
+					// Update erosion mass from windward (all?) virtual slope(s)
+					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;   // this has been set to 0 around ln 712 for luvsector, after it has been deposited to the lee slope. 
 					cumsum.erosion_length[slope.sector] += vecXdata[slope.sector].ErosionLength;
 				}
 
