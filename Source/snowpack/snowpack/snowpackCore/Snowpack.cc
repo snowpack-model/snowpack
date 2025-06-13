@@ -281,7 +281,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
 	cfg.getValue("REDEPOSIT_KEEP_AGE", "SnowpackAdvanced", redeposit_keep_age);
 
-	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
+	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size); //0.3 is defualt value
 	new_snow_bond_size = 0.25 * new_snow_grain_size;
 
 	/* Thresholds for surface hoar formation and burial
@@ -1398,6 +1398,9 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 /**
  * @brief Set the microstructure parameters for the current element according to the type of precipitation meteor.
+ * First, a distinction is made between Graupel and New Snow. Next, the dendricity and sphericity are set to default values, 
+ * which are then adjusted based on criteria such as the wind speed and different hn_density_paramterizations.
+ * Lastly, the grain size and bond size are set based on the wind speed and the type of hydrometeor.
  * @param Mdata Meteorological data
  * @param is_surface_hoar is this layer a layer of surface hoar?
  * @param EMS Element to set
@@ -1422,62 +1425,64 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 		elem.theta_i_reservoir = 0.0;
 		elem.theta_i_reservoir_cumul = 0.0;
 		elem.theta[AIR] = 1. - elem.theta[ICE];  // void content
+	
 	} else { // no Graupel
 		elem.mk = Snowpack::new_snow_marker;
-		if ((Mdata.vw > 2.9)
-			&& ((hn_density_parameterization == "LEHNING_NEW") || (hn_density_parameterization == "LEHNING_OLD")|| (hn_density_parameterization == "JORDY"))
-		) {
+		
+		/**** Set Dendricity (dd) and Sphericity (sp) for new snow: ****/
+		elem.dd = new_snow_dd;
+		elem.sp = new_snow_sp;
+	
+		// Adapt dd and sp for blowing snow
+		if (   (Mdata.vw > 5.) 
+			&& ((variant == "ANTARCTICA" || variant == "POLAR")	||  
+				(hn_density_parameterization == "BELLAIRE") || 
+				(hn_density_parameterization == "LEHNING_NEW"))
+			) { // In these cases, use a step function for dendricity and sphericity
+			elem.dd = new_snow_dd_wind;
+			elem.sp = new_snow_sp_wind;
+		} else if (	vw_dendricity && 
+					((hn_density_parameterization == "BELLAIRE") || (hn_density_parameterization == "ZWART"))) {
+			const double vw = std::max(0.05, Mdata.vw);
+			elem.dd = (1. - pow(vw/10., 1.57));
+			elem.dd = std::max(0.2, elem.dd);
+		} else if (vw_dendricity){
+			// Bert's heuristic parameterization:
+			elem.dd = 1.05 - 0.85 / (1.0 + std::exp(-0.5 * (Mdata.vw - 5.5)));
+			elem.dd = std::min(elem.dd, 1.0);
+			elem.sp = 0.375 / (1.0 + exp(-0.9*(Mdata.vw-5)) ) + 0.5 ;
+			elem.sp = std::max(elem.sp, 0.5  );
+			
+			// // Crocus wind-dependent sp an dd parameterization (Vionnet et al. 2012): 
+			// elem.dd = std::min( std::max(1.29 - 0.17*Mdata.vw, 0.20), 1  )
+			// elem.sp = std::min( std::max(0.08*Mdata.VW + 0.38, 0.5), 0.9) .
+		} else if ((Mdata.vw > 2.9) && (hn_density_parameterization == "JORDY")) {
 			elem.dd = std::max(0.5, std::min(1.0, Optim::pow2(1.87 - 0.04*Mdata.vw)) );
 			elem.sp = new_snow_sp;
+		} 
+
+		/**** now set grain size and bond size ****/
+		if ((Mdata.vw > 2.9) && (hn_density_parameterization == "JORDY")) {
 			static const double alpha = 0.9, beta = 0.015, gamma = -0.0062;
 			static const double delta = -0.117, eta=0.0011, phi=-0.0034;
 			elem.rg = std::min(0.5*new_snow_grain_size, std::max(0.15*new_snow_grain_size,
 				alpha + beta*TA + gamma*RH + delta*Mdata.vw
 				+ eta*RH*Mdata.vw + phi*TA*Mdata.vw));
 			elem.rb = 0.4*elem.rg;
+		}
+		else if (Snowpack::hydrometeor) { // empirical  (hardcoded to false...)
+			static const double alpha=1.4, beta=-0.08, gamma=-0.15;
+			static const double delta=-0.02;
+			elem.rg = 0.5*(alpha + beta*TA + gamma*Mdata.vw + delta*TA*Mdata.vw);
+			elem.rb = 0.25*elem.rg;
 		} else {
-			elem.dd = new_snow_dd;
-			elem.sp = new_snow_sp;
-			
-			// Adapt dd and sp for blowing snow
-			if (   (Mdata.vw > 5.) 
-				&& ((variant == "ANTARCTICA" || variant == "POLAR")	||  
-					(hn_density_parameterization == "BELLAIRE") || 
-					(hn_density_parameterization == "LEHNING_NEW")	
-					)
-			) { // shouldnt this just be the default option?
-				elem.dd = new_snow_dd_wind;
-				elem.sp = new_snow_sp_wind;
-			} else if (vw_dendricity && ((hn_density_parameterization == "BELLAIRE")
-				|| (hn_density_parameterization == "ZWART"))) {
-				const double vw = std::max(0.05, Mdata.vw);
-				elem.dd = (1. - pow(vw/10., 1.57));
-				elem.dd = std::max(0.2, elem.dd);
-			} else if (vw_dendricity){
-				// Bert's heuristic parameterization:
-				elem.dd = 1.05 - 0.85 / (1.0 + std::exp(-0.5 * (Mdata.vw - 5.5)));
-				elem.dd = std::min(elem.dd, 1.0);
-				elem.sp = 0.375 / (1.0 + exp(-0.9*(Mdata.vw-5)) ) + 0.5 ;
-				elem.sp = std::max(elem.sp, 0.5  );
-				
-				// // Crocus wind-dependent sp an dd parameterization (Vionnet et al. 2012):
-				// elem.dd = std::min( std::max(1.29 - 0.17*Mdata.vw, 0.20), 1  )
-				// elem.sp = std::min( std::max(0.08*Mdata.VW + 0.38, 0.5), 0.9) .
-			}
-
-			if (Snowpack::hydrometeor) { // empirical
-				static const double alpha=1.4, beta=-0.08, gamma=-0.15;
-				static const double delta=-0.02;
-				elem.rg = 0.5*(alpha + beta*TA + gamma*Mdata.vw + delta*TA*Mdata.vw);
-				elem.rb = 0.25*elem.rg;
-			} else {
-				elem.rg = new_snow_grain_size/2.;
-				elem.rb = new_snow_bond_size/2.;
-				if (((Mdata.vw_avg >= SnLaws::event_wind_lowlim) && (Mdata.rh_avg >= rh_lowlim))) {
-					elem.rb = std::min(bond_factor_rh*elem.rb, Metamorphism::max_grain_bond_ratio*elem.rg);
-				}
+			elem.rg = new_snow_grain_size/2.; //(	advancedConfig["NEW_SNOW_GRAIN_SIZE"] = "0.3";)
+			elem.rb = new_snow_bond_size/2.;
+			if (((Mdata.vw_avg >= SnLaws::event_wind_lowlim) && (Mdata.rh_avg >= rh_lowlim))) {  //rh_lowlim = 1.0 
+				elem.rb = std::min(bond_factor_rh*elem.rb, Metamorphism::max_grain_bond_ratio*elem.rg);
 			}
 		}
+
 	} // end no Graupel
 
 	if(is_surface_hoar) { //surface hoar
