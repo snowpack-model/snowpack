@@ -120,7 +120,7 @@ double SnowDrift::get_tau_thresh(const ElementData& Edata)
 {
 	// Compute basic quantities that are needed: friction velocity, z0, threshold vw
 	// For now assume logarithmic wind profile; TODO change this later
-	const double weight = 0.02 * Constants::density_ice * (Edata.sp + 1.) * Constants::g * MM_TO_M(Edata.rg);
+	const double weight = 0.02 * Constants::density_ice * (Edata.sp + 1.) * Constants::g * MM_TO_M(Edata.rg); // Does this accurately limit erosionof dense snow???
 	// weight = Edata.Rho*(Edata.sp + 1.)*Constants::g*MM_TO_M(Edata.rg);
 	const double sig = 300.;
 	const double binding = 0.0015 * sig * Edata.N3 * Optim::pow2(Edata.rb/Edata.rg);

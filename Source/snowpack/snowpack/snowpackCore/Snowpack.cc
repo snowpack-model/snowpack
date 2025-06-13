@@ -410,10 +410,10 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 			const double z_ref_vw = 3.;	// See p. 336 in Groot Zwaaftink et al. (doi: https://doi.org/10.5194/tc-7-333-2013)
 			const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
 			const double dv = vw_ref - Metamorphism::wind_slab_vw;
-			// if (snow_erosion == "REDEPOSIT") {  //Why should this not be used with REDEPOSIT? 
-			// 	wind_slab = 1.;
-			// } else {
-			{	if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
+			if (snow_erosion == "REDEPOSIT") {  // REDEPOSIT mode simulates the same process (i.e. wind compaction). Probably best not to use both at the same time.  
+				wind_slab = 1.;
+			} else {
+				if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
 				      && (vw_ref > Metamorphism::wind_slab_vw)
 					&& ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
 					if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
