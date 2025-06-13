@@ -49,13 +49,14 @@ namespace mio {
  * standard functions (such as "sin", "sqrt", "ln", "log", "exp", "floor"...) as well as the "pi" and "e" constants.
  * 
  * @section config_import Imports
- * It is possible to import another ini file, by specifying as many of the keys listed below as necessary.
+ * It is possible to import another ini file or even a specific section of it, by specifying as many of the keys listed below as necessary.
  *   Please note that there is a check to prevent circular dependencies.
  *      - IMPORT_BEFORE = {file and path to import}. This must take place before any non-import
  *        key or section header. This imports the specified file before processing the current file, allowing
  *        to overwrite the imported parameters in the current configuration file.
  *      - IMPORT_AFTER = {file and path to import}. This can occur anywhere and imports the specified file
  *        after processing the current file, allowing to overwrite the local parameters by the imported parameters.
+ *      - In order to only import a specific section, append ':' and the section name, for example "io.ini:Output".
  *
  * @section config_examples Exemples
  * @code
@@ -526,22 +527,42 @@ class ConfigParser {
 			VarType type;					///< Type of the variable
 			bool isExpanded;				///< When a variable is expanded, its value is replaced by the expansion and this is set to true
 		} variable;
+
+		///structure to contain file properties
+		typedef struct FILE_PPT {
+			FILE_PPT() : original_name(), restrict_section(), clean_name() {}
+			FILE_PPT(const std::string& filename, const std::string& ini_sourcename);
+
+			std::string toString() const {std::ostringstream os; os << "<INI file>" << original_name << ", cleaned as " << clean_name; if (!restrict_section.empty()) os << ", restricted to [" << restrict_section << "]"; os << "</INI file>"; return os.str();}
+			
+			bool operator<(const FILE_PPT& a) const { //needed for "sort"
+				if (original_name<a.original_name) return true;
+				if (clean_name<a.clean_name) return true;
+				return restrict_section < a.restrict_section;
+			}
+			bool operator==(const FILE_PPT& a) const { //needed to check for uniqueness
+				return (original_name==a.original_name) && (restrict_section==a.restrict_section) && (clean_name==a.clean_name);
+			}
+
+			std::string original_name;		///< Original name as provided by the user but without the (optional) section restriction
+			std::string restrict_section;	///< If provided, only this section will be imported
+			std::string clean_name;			///< Original name after resolving symlinks and relative paths (referenced to "sourcename")
+		} fileProperties;
 		
 		static std::vector<ConfigParser::variable> parseVariable(const std::string &value);
 		bool expandVar(const variable& var, const std::string& section, std::string &replacement) const;
 		bool expandVarsForKey(std::vector<variable>& vecVars, const std::string& section, bool& hasSomeSuccesses);
 		
-		void parseFile(const std::string& filename);
-		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
+		void parseFile(const fileProperties& iniFile);
+		void parseLine(const unsigned int& linenr, const std::string& restrict_section, std::vector< fileProperties > &import_after, bool &accept_import_before, std::string line, std::string &section);
 		
 		static bool onlyOneEqual(const std::string& str);
 		bool processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr);
-		std::string clean_import_path(const std::string& in_path) const;
-		bool processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before);
+		bool processImports(const std::string& key, const std::string& value, std::vector< fileProperties > &import_after, const bool &accept_import_before);
 		void handleNonKeyValue(const std::string& line_backup, const std::string& section, const unsigned int& linenr, bool &accept_import_before);
 
 		std::map<std::string, std::string> properties; ///< Save key value pairs
-		std::set<std::string> imported; ///< list of files already imported (to avoid circular references)
+		std::set< fileProperties > imported; ///< list of files already imported (to avoid circular references)
  		std::set<std::string> sections; ///< list of all the sections that have been found
  		std::map<std::string, std::vector<variable> > vars; ///< all values that contain variables that need to be expanded in a map of <key, variables tree>
  		std::string sourcename; ///< description of the data source for the key/value pair

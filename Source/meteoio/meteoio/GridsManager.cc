@@ -85,7 +85,7 @@ void GridsManager::read2DGrid(Grid2DObject& grid2D, const std::string& option)
 * @details If the grid has been buffered, it will be returned from the buffer. If it is not available but can be generated, it will
 * be generated transparently. If everything fails, it will thrown an exception.
 * @param[out] grid2D a grid filled with the requested parameter
-* @param parameter the parameter to get
+* @param[in] parameter the parameter to get
 * @param[in] date the timestamp that we would like to have
 * @param[in] enable_grid_resampling Completely enable or disable temporal grid resampling.
 */
@@ -482,8 +482,8 @@ Grid2DObject GridsManager::getGrid(const MeteoGrids::Parameters& parameter, cons
 					}
 				} else {
 					if (enable_grid_resampling) { //user requests to temporally interpolate inbetween grids
-						Date sdate( date - gridprocessor.getWindowSize() );
-						Date edate( date + gridprocessor.getWindowSize() );
+						const Date sdate( date - gridprocessor.getWindowSize() );
+						const Date edate( date + gridprocessor.getWindowSize() );
 						const bool status_all = setGrids2d_list(sdate, edate); //rebuffer the grid list if necessary
 						if (!status_all)
 							throw InvalidArgumentException("The data input plugin does not support the necessary call to query all available grids.", AT);

@@ -38,16 +38,16 @@ namespace mio {
 class GridResamplingAlgorithm {
 
 	public:
-		GridResamplingAlgorithm(const std::string& algorithm, const std::string& i_parname, const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/);
+		GridResamplingAlgorithm(const std::string& algorithm, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/);
 		virtual ~GridResamplingAlgorithm() = default;
 		
-		void setWindowSize(const double& window_size);
+		void setMaxGapSize(const double& i_max_gap_size);
 		virtual void resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid) = 0;
 		virtual std::string toString() const = 0;
 
 	protected:
 		const std::string algo, parname;
-		double grid_window_size;
+		double max_gap_size;
 };
 
 /**
@@ -57,7 +57,7 @@ class GridResamplingAlgorithm {
 class GridResamplingAlgorithmsFactory {
 	public:
 		static GridResamplingAlgorithm* getAlgorithm(const std::string& i_algorithm, const std::string& parname,
-			const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
+			const double& max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg);
 };
 
 } //end namespace

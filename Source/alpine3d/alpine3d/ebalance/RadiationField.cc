@@ -16,7 +16,6 @@
     along with Alpine3D.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <cmath>
-#include <limits>
 
 #include <alpine3d/ebalance/RadiationField.h>
 #include <alpine3d/MPIControl.h>
@@ -233,7 +232,7 @@ void RadiationField::setGrids(const mio::Grid2DObject& in_iswr_dir, const mio::G
 			} else {
 				diffuse(i_band,jj) = in_iswr_diff(i_band,jj);
 				direct(i_band,jj) = in_iswr_dir(i_band,jj);
-				//cell_direct = mio::SunTrajectory::projectHorizontalToSlope( solarAzimuth, solarElevation, dem.azi(i_dem,jj), dem.slope(i_dem,jj), cell_direct );
+				//TODO handle the case of radiation grids that are NOT projected on the slope?
 			}
 			direct_unshaded_horizontal(i_band,jj)=0;
 		}

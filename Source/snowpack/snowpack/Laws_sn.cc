@@ -1224,6 +1224,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 			static const double alpha=91., beta=-35., gamma=-1.1, delta=49., eta=32.,  phi=4.6;
 			return (alpha + beta*TA + gamma*RH +  delta*VW + eta*TSS + phi*TA*VW);
 		}
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "BELLAIRE") {
 		static const double alpha=3.946, beta=0.07703, zeta=0.0001701, eta=0.02222, mu=-0.05371;
@@ -1231,6 +1232,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		VW = std::max(1., VW);
 		const double arg = alpha + beta*TA + zeta*HH + eta*log(VW) + mu*TA*log(VW);
 		rho_hn = exp(arg);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "ZWART") { // see "Significance of new-snow properties for snowcover development" - MSc thesis Costijn Zwart, 2007, https://zenodo.org/records/8138302 
 		max_hn_density = 250.0; // parameterization based on limited data set, not validated for wind speeds >9m/s  or low temperatures (<-20), thus we limit the density.
@@ -1240,16 +1242,20 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		double arg = beta01 + beta1*TA + beta2*asin(sqrt(RH)) + beta3*log10(VW);
 		if(TA>=-14.) arg += beta02; // += beta2*TA;
 		rho_hn = pow(10., arg);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "PAHAUT") { // i.e. Crocus, see Vionnet et al. (2012) https://doi.org/10.5194/gmd-5-773-2012, not suitable for temperatures below -20°C
 		rho_hn = 109. + 6.*(IOUtils::C_TO_K(TA) - Constants::meltfreeze_tk) + 26.*sqrt(VW);
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "NIED") {
 		rho_hn = 62. + 3.6 * VW - 0.2 * TA;
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "VANKAMPENHOUT") {
 		// van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988
 		// Eq. 4 in van Kampenhout et al. (2017):
+		max_hn_density = 450.0;
 		const double rho_w = 266.861 * (pow((0.5 * (1. + tanh( VW / 5. ))), 8.8));
 		double rho_t = 0.;
 		// Eq. 3 in van Kampenhout et al. (2017):
@@ -1262,6 +1268,29 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		}
 		// Eq. 2 in van Kampenhout et al. (2017):
 		rho_hn = rho_t + rho_w;
+		// Limiting the van Kampenhout scheme at 450 kg/m3:
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
+
+	} else if (i_hn_model == "KRAMPE") {
+		// Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100
+		// A combination of the parameterizationd from Liston 2007 and Kampenhout et al. 2017		
+		// Based on Greenland field data & Crocus model. 
+		double rho_t = 0.;
+		
+		// wind dependent part (eqn 4 in Krampe et al. 2021)
+		const double rho_w = 25 + 250 * (1- exp(-0.2*(VW-5,0)));   
+		// Temperature dependent part :
+		const double Twb = wetBulbTempStull(TA, RH);
+		if (TA >= -15 ){ //eqn 2 in Krampe et al. 2021
+			rho_t = 50. + 1.7 * pow((IOUtils::C_TO_K(Twb) - 258.16), 1.5 );
+		} else { // below -15 (eqn 6 in Krampe et al. 2021 )
+			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
+		}
+		if (VW >= 5){ //eqn 3 in Krampe et al. 2021
+			rho_hn = rho_t + rho_w;
+		}else{
+			rho_hn = rho_t;
+		}
 
 	} else if (i_hn_model == "KRAMPE") {
 		// Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100
@@ -1291,7 +1320,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		exit(EXIT_FAILURE);
 	}
 
-	return(std::min(max_hn_density, std::max(min_hn_density, rho_hn)));
+	return rho_hn;
 }
 
 

@@ -19,7 +19,7 @@
 #ifndef BUFRIO_H
 #define BUFRIO_H
 
-#include "BUFRFile.h"
+#include <meteoio/plugins/BUFRFile.h>
 
 #include <string>
 

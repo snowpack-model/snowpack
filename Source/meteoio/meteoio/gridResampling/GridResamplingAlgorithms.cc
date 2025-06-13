@@ -18,6 +18,7 @@
 */
 
 #include <meteoio/gridResampling/GridResamplingAlgorithms.h>
+#include <meteoio/gridResampling/GridNearestResampling.h>
 #include <meteoio/gridResampling/GridLinearResampling.h>
 #include <meteoio/gridResampling/GridTimeseriesResampling.h>
 
@@ -45,6 +46,7 @@ namespace mio {
  *
  * @section grid_algorithms_available Available Grid resampling algorithms
  * The following grid resampling algorithms are implemented:
+ * - NEAREST: nearest neighbour resampling, see GridNearestResampling
  * - LINEAR: linear data resampling, see GridLinearResampling
  * - TIMESERIES: extract time series at all grid points and use Interpolations1D algorithm, see GridTimeseriesResampling
  *
@@ -57,45 +59,44 @@ namespace mio {
  * @brief Facade constructor for a generic grid resampling algorithm.
  * @param[in] algorithm The current algorithm's semantic name.
  * @param[in] i_parname The current meteo parameter's identifier.
- * @param[in] dflt_window_size The default grid resampling window size.
+ * @param[in] dflt_max_gap_size The default max gap size that is allowed to be resampled.
  * @param[in] vecArgs vector of arguments (user settings) for this algorithm.
  */
 GridResamplingAlgorithm::GridResamplingAlgorithm(const std::string& algorithm, const std::string& i_parname,
-	const double& dflt_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
-	: algo(algorithm), parname(i_parname), grid_window_size(dflt_window_size)
-{
-	//do nothing
-	(void)vecArgs;
-}
+	const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
+	: algo(algorithm), parname(i_parname), max_gap_size(dflt_max_gap_size)
+{ (void)vecArgs; }
 
 /**
- * @brief Set this algorithm's window size to something other than the default value.
- * @param[in] window_size Desired window size in seconds.
+ * @brief Set this algorithm's max gap size to something other than the default value.
+ * @param[in] i_max_gap_size Desired max gap size in seconds.
  */
-void GridResamplingAlgorithm::setWindowSize(const double& window_size)
+void GridResamplingAlgorithm::setMaxGapSize(const double& i_max_gap_size)
 {
-	if (window_size <= 0.)
-		throw InvalidArgumentException("Invalid WINDOW_SIZE for grid resampling algorithm", AT);
-	grid_window_size = window_size / 86400.; //end user enters seconds, Julian internally
+	if (i_max_gap_size <= 0.)
+		throw InvalidArgumentException("Invalid MAX_GAP_SIZE for grid resampling algorithm", AT);
+	max_gap_size = i_max_gap_size / 86400.; //end user enters seconds, Julian internally
 }
 
 /**
  * @brief Object factory for temporal grid resampling algorithms.
  * @param[in] i_algorithm Semantic name of algorithm (as given in the INI file) to build.
  * @param[in] parname Meteo parameter to build the algorithm for.
- * @param[in] grid_window_size Standard window size for temporal grid resampling.
+ * @param[in] max_gap_size Standard max gap size for temporal grid resampling.
  * @param[in] vecArgs The algorithm's parameters as parsed from the user setings.
  * @param[in] cfg Config object in order to be able to read configuration keys.
  * @return A resampling algorithm object for the desired parameter.
  */
 GridResamplingAlgorithm* GridResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algorithm, const std::string& parname,
-	const double& grid_window_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
+	const double& max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs, const Config& cfg)
 {
 	const std::string algorithm( IOUtils::strToUpper(i_algorithm) );
-	if (algorithm == "LINEAR")
-		return new GridLinearResampling(algorithm, parname, grid_window_size, vecArgs);
+	if (algorithm == "NEAREST")
+		return new GridNearestResampling(algorithm, parname, max_gap_size, vecArgs);
+	else if (algorithm == "LINEAR")
+		return new GridLinearResampling(algorithm, parname, max_gap_size, vecArgs);
 	else if (algorithm == "TIMESERIES")
-		return new GridTimeseriesResampling(algorithm, parname, grid_window_size, vecArgs, cfg);
+		return new GridTimeseriesResampling(algorithm, parname, max_gap_size, vecArgs, cfg);
 	else
 		throw IOException("The temporal grid resampling algorithm '" + algorithm + "' is not implemented", AT);
 }

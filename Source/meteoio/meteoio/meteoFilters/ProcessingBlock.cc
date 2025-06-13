@@ -302,11 +302,13 @@ ProcessingBlock* BlockFactory::getTimeBlock(const std::string& blockname, const 
 
 ProcessingBlock::ProcessingBlock(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& name, const Config& cfg)
                             : excluded_stations( MeteoProcessor::initStationSet(vecArgs, "EXCLUDE") ), kept_stations( MeteoProcessor::initStationSet(vecArgs, "ONLY") ), 
-                              time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), included_heights(), excluded_heights(), all_heights(true), properties(), block_name(name) {
+                              time_restrictions( MeteoProcessor::initTimeRestrictions(vecArgs, "WHEN", "Filters::"+name, cfg.get("TIME_ZONE", "Input")) ), included_heights(), excluded_heights(), all_heights(true), properties(), block_name(name) 
+{
 	initHeightRestrictions(vecArgs);
 }
 
-void ProcessingBlock::initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs) {
+void ProcessingBlock::initHeightRestrictions(const std::vector<std::pair<std::string, std::string>> vecArgs) 
+{
 	std::set<std::string> results_include;
 	std::set<std::string> results_exclude;
 
@@ -376,7 +378,8 @@ bool ProcessingBlock::skipStation(const std::string& station_id) const
  * @param[in] height height to test
  * @return true if the startion should be skipped, false otherwise
  */
-bool ProcessingBlock::skipHeight(const double& height) const {
+bool ProcessingBlock::skipHeight(const double& height) const 
+{
 
 	if (all_heights) return false;
 
@@ -740,8 +743,7 @@ std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const
 }
 
 
-void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
-                                     std::vector<double>& ovec)
+void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec, std::vector<double>& ovec)
 {
 	ovec.resize( ivec.size() );
 	for (size_t ii=0; ii<ivec.size(); ii++) {
@@ -749,8 +751,7 @@ void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::v
 	}
 }
 
-void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
-                                     std::vector<double>& ovec)
+void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec, std::vector<double>& ovec)
 {
 	ovec.resize( ivec.size() );
 	for (size_t ii=0; ii<ivec.size(); ii++) {
@@ -758,7 +759,8 @@ void ProcessingBlock::extract_dbl_vector(const unsigned int& param, const std::v
 	}
 }
 
-const std::string ProcessingBlock::toString() const {
+const std::string ProcessingBlock::toString() const 
+{
 	std::ostringstream os;
 	os << "[" << block_name << " ";
 	os << properties.toString();

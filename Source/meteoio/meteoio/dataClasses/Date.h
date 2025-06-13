@@ -240,8 +240,14 @@ class Date {
  */
 class DateRange {
 	public:
-		DateRange() : start(), end() {}
-		DateRange(const Date& d1, const Date& d2) : start(d1), end(d2) {}
+		DateRange() : start(), end(), isValid(false) {}
+		DateRange(const Date& d1, const Date& d2) : start(d1), end(d2), isValid(false) {if (!start.isUndef() && !end.isUndef() && start<=end) isValid=true;}
+		//at most daily resolution
+		DateRange(const std::string& range_spec, const double& tz) : start(), end(), isValid(false) {setRange(range_spec, tz);}
+		
+		void setRange(const std::string& range_spec, const double& tz);
+		
+		bool isUndef() const {return (!isValid);}
 		
 		/**
 		 * @brief Is the provided date within the current range?
@@ -249,39 +255,57 @@ class DateRange {
 		 * @return true if the date is within the current range, false otherwise
 		 */
 		bool in(const Date& a) const {
+			if (!isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
 			return (a >= start && a <= end);
 		}
 		
 		/**
-		 * @brief Is the provided date before the *end* of the range?
+		 * @brief Is the provided date range within the current range?
+		 * @param[in] i_start start of the range to check
+		 * @param[in] i_end end of the range to check
+		 * @return true if both ranges have some overlap, false otherwise
+		 */
+		bool hasOverlap(const Date& i_start, const Date& i_end) const;
+		
+		/**
+		 * @brief Is the range before the provided date?
 		 * @param[in] a Date to check
-		 * @return true if the date is less than the end of the current range, false otherwise
+		 * @return true if the date is more than the end of the current range, false otherwise
 		 */
 		bool operator<(const Date& a) const {
+			if (!isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
 			return end < a;
 		}
 		
 		/**
-		 * @brief Is the provided date after the *start* of the range?
+		 * @brief Is the range after the provided date?
 		 * @param[in] a Date to check
-		 * @return true if the date is greater than the end of the current range, false otherwise
+		 * @return true if the date is less than the start of the current range, false otherwise
 		 */
 		bool operator>(const Date& a) const {
+			if (!isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
 			return start > a;
 		}
 		
 		bool operator<(const DateRange& a) const { //needed for "sort"
+			if (!isValid || !a.isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
 			if (start==a.start) return end < a.end;
 			return start < a.start;
 		}
 		
 		bool operator==(const DateRange& a) const { //needed to check for uniqueness
+			if (!isValid || !a.isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
 			return (start==a.start) && (end==a.end);
 		}
 		
 		const std::string toString() const {std::ostringstream os; os << "[" << start.toString(Date::ISO) << " - " << end.toString(Date::ISO) << "]"; return os.str();}
 		
 		Date start, end;
+		
+	private:
+		static Date parseDateHint(const std::string& Date_str, const double tz, const bool& early_interpretation);
+		
+		bool isValid;
 };
 
 typedef Date Duration; //so that later, we can implement a true Interval/Duration class

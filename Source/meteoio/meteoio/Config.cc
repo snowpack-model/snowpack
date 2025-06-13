@@ -16,7 +16,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "meteoio/IOExceptions.h"
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 #include <cstddef>
 #include <meteoio/Config.h>
 #include <meteoio/FileUtils.h>
@@ -588,7 +589,7 @@ std::vector< std::pair<std::string, std::string> > Config::getArgumentsForAlgori
 //and swap the two before returning i_properties
 ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, std::string> &i_properties, std::set<std::string> &i_sections) : properties(i_properties), imported(), sections(), vars(), sourcename(filename)
 {
-	parseFile(filename);
+	parseFile( fileProperties(filename, std::string()) );
 	
 	//expand all variables that might be used in key/values. 
 	//Instead of relying on a dependency tree between keys, we just keep on running on all keys that require expansion until 
@@ -610,7 +611,7 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 			}
 		}
 		
-		if (!hasSomeSuccesses) { //not a single variable could be expanded
+		if (!hasSomeSuccesses) { //not even one variable could be expanded
 			std::string msg("In file "+filename+", the following keys could not be resolved (circular dependency? undefined variable name?):");
 			for (const auto& var : vars) msg.append( " "+var.first );
 			throw InvalidArgumentException(msg, AT);
@@ -621,6 +622,26 @@ ConfigParser::ConfigParser(const std::string& filename, std::map<std::string, st
 	std::swap(properties, i_properties);
 	i_sections.insert(sections.begin(), sections.end());
 }
+
+ConfigParser::FILE_PPT::FILE_PPT(const std::string& filename, const std::string& ini_sourcename)
+             : original_name(filename), restrict_section(), clean_name()
+{
+	//extract a section name appended to the filename, if any
+	const size_t section_delim = filename.find_last_of(':');
+	if (section_delim!=std::string::npos) {
+		original_name = filename.substr(0, section_delim);
+		restrict_section = filename.substr(section_delim+1);
+		IOUtils::toUpper( restrict_section );
+	}
+
+	//resolve symlinks, resolve relative path w/r to the path of the current ini file
+	//if this is a relative path, prefix the import path with the current path
+	const std::string prefix = ( FileUtils::isAbsolutePath(original_name) || ini_sourcename.empty() )? "" : FileUtils::getPath(ini_sourcename, true)+"/";
+	const std::string path( FileUtils::getPath(prefix+original_name, true) );  //clean & resolve path
+	const std::string clean_filename( FileUtils::getFilename(original_name) );
+	clean_name = path + "/" + clean_filename;
+}
+
 
 bool ConfigParser::onlyOneEqual(const std::string& str)
 {
@@ -640,27 +661,27 @@ bool ConfigParser::onlyOneEqual(const std::string& str)
 * @brief Parse the whole file, line per line
 * @param[in] filename file to parse
 */
-void ConfigParser::parseFile(const std::string& filename)
+void ConfigParser::parseFile(const fileProperties& iniFile)
 {
-	if (!FileUtils::validFileAndPath(filename)) throw InvalidNameException("Invalid configuration file name '"+filename+"'",AT);
-	if (!FileUtils::fileExists(filename)) throw NotFoundException("Configuration file '"+filename+"' not found", AT);
+	if (!FileUtils::validFileAndPath(iniFile.clean_name)) throw InvalidNameException("Invalid configuration file name '"+iniFile.original_name+"'",AT);
+	if (!FileUtils::fileExists(iniFile.clean_name)) throw NotFoundException("Configuration file '"+iniFile.original_name+"' not found", AT);
 
 	//Open file
-	std::ifstream fin(filename.c_str(), ifstream::in);
-	if (fin.fail()) throw AccessException(filename, AT);
-	imported.insert( FileUtils::cleanPath(filename, true) ); //keep track of this file being processed to prevent circular IMPORT directives
+	std::ifstream fin(iniFile.clean_name.c_str(), ifstream::in);
+	if (fin.fail()) throw AccessException(iniFile.original_name, AT);
+	imported.insert( iniFile ); //keep track of this file being processed to prevent circular IMPORT directives
 	
 	std::string section( defaultSection );
 	const char eoln = FileUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 1;
-	std::vector<std::string> import_after; //files to import after the current one
+	std::vector< fileProperties > import_after; //files to import after the current one
 	bool accept_import_before = true;
 
 	try {
 		do {
 			std::string line;
 			getline(fin, line, eoln); //read complete line
-			parseLine(linenr++, import_after, accept_import_before, line, section);
+			parseLine(linenr++, iniFile.restrict_section, import_after, accept_import_before, line, section);
 		} while (!fin.eof());
 		fin.close();
 	} catch(const std::exception&){
@@ -676,7 +697,7 @@ void ConfigParser::parseFile(const std::string& filename)
 		import_after.pop_back();
 	}
 	
-	imported.erase( filename );
+	imported.erase( iniFile );
 }
 
 bool ConfigParser::processSectionHeader(const std::string& line, std::string &section, const unsigned int& linenr)
@@ -699,33 +720,22 @@ bool ConfigParser::processSectionHeader(const std::string& line, std::string &se
 	return false;
 }
 
-//resolve symlinks, resolve relative path w/r to the path of the current ini file
-std::string ConfigParser::clean_import_path(const std::string& in_path) const
-{
-	//if this is a relative path, prefix the import path with the current path
-	const std::string prefix = ( FileUtils::isAbsolutePath(in_path) )? "" : FileUtils::getPath(sourcename, true)+"/";
-	const std::string path( FileUtils::getPath(prefix+in_path, true) );  //clean & resolve path
-	const std::string filename( FileUtils::getFilename(in_path) );
-
-	return path + "/" + filename;
-}
-
-bool ConfigParser::processImports(const std::string& key, const std::string& value, std::vector<std::string> &import_after, const bool &accept_import_before)
+bool ConfigParser::processImports(const std::string& key, const std::string& value, std::vector< fileProperties > &import_after, const bool &accept_import_before)
 {
 	if (key=="IMPORT_BEFORE") {
-		const std::string file_and_path( clean_import_path(value) );
+		const fileProperties imported_file( value, sourcename );
 		if (!accept_import_before)
 			throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
-		if (imported.count( file_and_path ) != 0)
+		if (imported.count( imported_file ) != 0)
 			throw IOException("IMPORT Circular dependency with \"" + value + "\"", AT);
-		parseFile( file_and_path );
+		parseFile( imported_file );
 		return true;
 	}
 	if (key=="IMPORT_AFTER") {
-		const std::string file_and_path( clean_import_path(value) );
-		if (imported.count( file_and_path ) != 0)
+		const fileProperties imported_file( value, sourcename );
+		if (imported.count( imported_file ) != 0)
 			throw IOException("IMPORT Circular dependency with \"" + value + "\"", AT);
-		import_after.push_back(file_and_path);
+		import_after.push_back(imported_file);
 		return true;
 	}
 
@@ -753,7 +763,16 @@ void ConfigParser::handleNonKeyValue(const std::string& line_backup, const std::
 	throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
 }
 
-void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
+/**
+* @brief Parse the given INI line
+* @param[in] linenr line number in the current file for better error messages
+* @param[in] restrict_section if not an empty string, only the keys from this section will be processed (useful to only import a given section from another ini file)
+* @param[out] import_after vector to keep track of all the files that should be imported after the parsing of the current file
+* @param accept_import_before if set to false, any IMPORT directive will trigger an error (since imports must be done before any other key is declared)
+* @param[in] line The line to parse
+* @param section The current section (either returned when a new section header has been encountered or used to attribute the current key to the right section)
+*/
+void ConfigParser::parseLine(const unsigned int& linenr, const std::string& restrict_section, std::vector< fileProperties > &import_after, bool &accept_import_before, std::string line, std::string &section)
 {
 	const std::string line_backup( line ); //this might be needed in some rare cases
 	//First thing cut away any possible comments (may start with "#" or ";")
@@ -763,6 +782,9 @@ void ConfigParser::parseLine(const unsigned int& linenr, std::vector<std::string
 
 	//if this is a section header, read it and return
 	if (processSectionHeader(line, section, linenr)) return;
+
+	//if we should only process a given section and this is not it, return
+	if (!restrict_section.empty() && section!=restrict_section) return;
 
 	//first, we check that we don't have two '=' chars in one line (this indicates a missing newline)
 	if (!onlyOneEqual(line)) {

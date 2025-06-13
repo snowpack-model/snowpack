@@ -29,7 +29,7 @@
 		#define NOMINMAX
 	#endif
 	#include <windows.h>
-	#include "Shlwapi.h"
+	#include <Shlwapi.h>
 #else
 	#include <dirent.h>
 	#include <sys/stat.h>
@@ -119,7 +119,7 @@ std::string cleanPath(std::string in_path, const bool& resolve, const bool& sile
 	}
 }
 
-bool isSubDirOf(std::string in_path, std::string root_path)
+bool isSubDirOf(const std::string& in_path, const std::string& root_path)
 {
 	const std::string root_path_clean( cleanPath(root_path, true, true) );
 	const std::string in_path_clean( cleanPath(in_path, true, true) );
@@ -564,7 +564,7 @@ size_t FileIndexer::binarySearch(const Date& soughtdate) const
 	const file_index elem(soughtdate, 0);
 	//returns the first element that is GREATER than the provided value
 	const std::vector< struct file_index >::const_iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), elem);
-	if (it>vecIndex.begin()) return it-vecIndex.begin()-1;
+	if (it>vecIndex.begin()) return static_cast<size_t>(it-vecIndex.begin()-1);
 	else return static_cast<size_t>(-1);
 }
 

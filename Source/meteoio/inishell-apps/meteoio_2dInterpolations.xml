@@ -260,6 +260,7 @@ INIshell include file for MeteoIO spatial interpolations
 				<parameter key="%::LISTON_WIND::MULTILINEAR" caption="Multilinear" type="checkbox"><help>Perform mutlilinear (x,y,z) regression instead of linear (z)</help></parameter>
 				<parameter key="%::LISTON_WIND::TREND_MIN_ALT" label="Trend_min_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations below this elevation from the trend regression</help></parameter>
 				<parameter key="%::LISTON_WIND::TREND_MAX_ALT" label="Trend_max_alt" type="number" format="decimal" precision="1" unit="m"><help>Exclude stations above this elevation from the trend regression</help></parameter>
+				<parameter key="%::LISTON_WIND::ETA" type="number" label="Scale" min="1" unit="m"><help>topographic length scale (m) for calculating the curvature (e.g., the distance from a typical ridge to the nearest valley), default: grid cell size</help></parameter>
 				<parameter key="%::LISTON_WIND::SCALE" type="number" label="Scale" min="1" unit="m"><help>Offset added to the distance to get a smoother distribution, default: 1000m</help></parameter>
 				<parameter key="%::LISTON_WIND::ALPHA" type="number" label="Alpha" min="0"><help>exponent to the distance (distribution as 1/r^n), default: 1</help></parameter>
 			</frame>

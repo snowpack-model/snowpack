@@ -54,6 +54,7 @@ https://alpine3d.slf.ch
 	</parametergroup>
 	<!-- <include file="workflow_alpine3d.xml"/>	HACK -->
 
+	<include_external file="meteoio_grids_input.xml" app="meteoio"/>
 	<include_external file="meteoio_timeseries_input.xml" app="meteoio"/>
 	<include_external file="meteoio_timeseries_output.xml" app="meteoio"/>
 	<frame caption="Coordinate system and time zone">
@@ -67,21 +68,31 @@ https://alpine3d.slf.ch
 			<help>The time zone your data is reported with</help>
 		</parameter>
 	</frame>
+	<include_external file="meteoio_input_data_editing.xml" app="meteoio"/>
+	
+	<!-- Handle the 2 ways of providing forcings: as stations or as grids -->
 	<frame caption="Meteorological data format">
 		<section name="Input"/>
-		<reference name="METEOIO_TS_IN"/> <!-- all METEO input plugins -->
+		<parameter key="DATA_FROM_GRIDS" type="alternative" optional="false" default="FALSE">
+			<option value="TRUE">
+				<section name="Input"/>
+				<reference name="GRID2D_IN"/>
+			</option>
+			<option value="FALSE">
+				<section name="Input"/>
+				<reference name="METEOIO_TS_IN"/> <!-- all METEO input plugins -->
+			</option>
+			<help>Meteorological fields are either provided as stations (point measurements) or as grids</help>
+		</parameter>
 	</frame>
-	<include_external file="meteoio_input_data_editing.xml" app="meteoio"/>
 
 	<!-- SPATIAL RESAMPLING: only include grid resampling -->
 	<include_external file="meteoio_spatial_resampling.xml" app="meteoio"/>
 	<reference name="REGRIDDING"/>
 
 	<!-- Grids input -->
-	<include_external file="meteoio_grids_input.xml" app="meteoio"/>
-	<frame caption="2D Grids" collapsed="false">
+	<frame caption="2D Grids">
 		<section name="Input"/>
-		<reference name="GRID2D_IN"/>
 		<reference name="DEMPLUGINS"/>
 		<parameter key="SLOPE_ALGORITHM" type="alternative" optional="true">
 			<option value="HICK"/>

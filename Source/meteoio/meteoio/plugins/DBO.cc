@@ -16,6 +16,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <cstddef>
 #include <meteoio/plugins/DBO.h>
 #include <meteoio/plugins/JsonWrapper.h>
 #include <meteoio/dataClasses/Coords.h>
@@ -23,8 +24,6 @@
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <regex>
-
-using namespace std;
 
 namespace mio {
 /**
@@ -43,6 +42,7 @@ namespace mio {
  * - DBO_PROXY: The URL of a <A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/">SOCKS5 proxy</A> for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*, see <A HREF="https://stackoverflow.com/questions/51579063/curl-https-via-an-ssh-proxy">this</A> for more)
  * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2, by default the network is assumed to be IMIS)
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
+ * - DBO_COVERAGE_RESTRICT: only request data from within the provided DateRange (see DateRange::setRange) (this is useful when merging data from several sources, for example to only get the new data from DBO and otherwise use the old data from files)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
  *
  * @code
@@ -122,9 +122,8 @@ const std::string DBO::metadata_api = "/data/stations/";
 const std::string DBO::data_api = "/data/timeseries/";
 
 DBO::DBO(const std::string& configfile)
-      : vecStationName(), vecMeta(), vecTsMeta(),
-        coordin(), coordinparam(),
-        endpoint(endpoint_default), json( new JsonWrapper() ), 
+      : vecStationName(), vecMeta(), vecTsMeta(), coordin(), coordinparam(),
+        endpoint(endpoint_default), coverageRestrict(), json( new JsonWrapper() ), 
         dbo_debug(false)
 {
 	const Config cfg( configfile );
@@ -134,9 +133,8 @@ DBO::DBO(const std::string& configfile)
 }
 
 DBO::DBO(const Config& cfgreader)
-      : vecStationName(), vecMeta(), vecTsMeta(),
-        coordin(), coordinparam(),
-        endpoint(endpoint_default), json( new JsonWrapper() ),
+      : vecStationName(), vecMeta(), vecTsMeta(), coordin(), coordinparam(),
+        endpoint(endpoint_default), coverageRestrict(), json( new JsonWrapper() ),
         dbo_debug(false)
 {
 	initDBOConnection(cfgreader);
@@ -145,10 +143,8 @@ DBO::DBO(const Config& cfgreader)
 }
 
 DBO::DBO(const DBO& c)
-    : vecStationName(c.vecStationName), vecMeta(c.vecMeta), vecTsMeta(c.vecTsMeta),
-      coordin(c.coordin), coordinparam(c.coordinparam),
-      endpoint(c.endpoint), json( new JsonWrapper() ),
-      dbo_debug(c.dbo_debug) {}
+    : vecStationName(c.vecStationName), vecMeta(c.vecMeta), vecTsMeta(c.vecTsMeta), coordin(c.coordin), coordinparam(c.coordinparam),
+    endpoint(c.endpoint), coverageRestrict(c.coverageRestrict), json( new JsonWrapper() ), dbo_debug(c.dbo_debug) {}
 
 DBO::~DBO()
 {
@@ -164,6 +160,7 @@ DBO& DBO::operator=(const mio::DBO& c)
 		coordin = c.coordin;
 		coordinparam = c.coordinparam;
 		endpoint = c.endpoint;
+		coverageRestrict = c.coverageRestrict;
 		json = new JsonWrapper();
 		dbo_debug = c.dbo_debug;
 	}
@@ -175,13 +172,17 @@ void DBO::initDBOConnection(const Config& cfg)
 {
 	cfg.getValue("DBO_URL", "Input", endpoint, IOUtils::nothrow);
 	if (*endpoint.rbegin() != '/') endpoint += "/";
-	cerr << "[i] Using DBO URL: " << endpoint << endl;
+	std::cerr << "[i] Using DBO URL: " << endpoint << std::endl;
 	
 	int http_timeout = http_timeout_dflt;
 	cfg.getValue("DBO_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
 	cfg.getValue("DBO_DEBUG", "INPUT", dbo_debug, IOUtils::nothrow);
 	const std::string proxy = cfg.get("DBO_PROXY", "INPUT", "");
 	json->setConnectionParams(proxy, http_timeout, dbo_debug);
+	
+	std::string dateRangeHint;
+	cfg.getValue("DBO_COVERAGE_RESTRICT", "INPUT", dateRangeHint);
+	if (!dateRangeHint.empty()) coverageRestrict.setRange( dateRangeHint, dbo_tz );
 }
 
 void DBO::readStationData(const Date& /*date*/, std::vector<StationData>& vecStation)
@@ -196,10 +197,14 @@ void DBO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	vecMeteo.clear();
 	if (vecMeta.empty()) fillStationMeta();
-
+	if (!coverageRestrict.isUndef() && (coverageRestrict.start>dateEnd || coverageRestrict.end<dateStart)) return;
+	
+	const Date trueStart = (coverageRestrict.isUndef())? dateStart : std::max(dateStart, coverageRestrict.start);
+	const Date trueEnd = (coverageRestrict.isUndef())? dateEnd : std::min(dateEnd, coverageRestrict.end);
+	
 	vecMeteo.resize(vecMeta.size());
 	for(size_t ii=0; ii<vecMeta.size(); ii++)
-		readData(dateStart, dateEnd, vecMeteo[ii], ii);
+		readData(trueStart, trueEnd, vecMeteo[ii], ii);
 }
 
 /**
@@ -486,7 +491,7 @@ void DBO::mergeTimeSeries(const MeteoData& md_pattern, const size_t& param, cons
 
 		const size_t new_count = last_vM - vecM_start + 1;
 		if (new_count<tmp.size())
-			vecMeteo.insert( vecMeteo.begin() + vecM_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
+			vecMeteo.insert( vecMeteo.begin() + static_cast<ptrdiff_t>(vecM_start), tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
 
 		for(size_t ii=0; ii<tmp.size(); ii++)
 			vecMeteo[vecM_start+ii] = tmp[ii];

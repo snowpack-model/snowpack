@@ -55,7 +55,7 @@ DataGenerator::DataGenerator(const Config& cfg, const std::set<std::string>& par
 DataGenerator::~DataGenerator()
 { //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
 	for (auto& it : mapAlgorithms) {
-		std::vector<GeneratorAlgorithm*> &vec( it.second );
+		std::vector<GeneratorAlgorithm*> const& vec( it.second );
 		for (size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
 	}

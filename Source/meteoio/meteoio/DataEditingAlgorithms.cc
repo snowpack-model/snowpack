@@ -593,7 +593,7 @@ void EditingCombine::processMIN(METEO_SET& vecMeteo, const size_t& startIdx, con
 		}
 
 		if (replace_value && min!=Cst::dbl_max) { //include the current value of md(dest_index)
-			if (destIsNodata || (!destIsNodata && md(dest_index)>min)) md(dest_index) = min;
+			if (destIsNodata || md(dest_index)>min) md(dest_index) = min;
 		}
 	}
 }
@@ -650,7 +650,7 @@ void EditingCombine::processMAX(METEO_SET& vecMeteo, const size_t& startIdx, con
 		}
 
 		if (replace_value && max!=Cst::dbl_min) { //include the current value of md(dest_index)
-			if (destIsNodata || (!destIsNodata && md(dest_index)<max)) md(dest_index) = max;
+			if (destIsNodata || md(dest_index)<max) md(dest_index) = max;
 		}
 	}
 }

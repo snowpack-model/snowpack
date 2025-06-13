@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /***********************************************************************************/
-/*  Copyright 2021 MobyGIS Srl, Trento, Italy                                      */
+/*  Copyright 2025 SLF, Davos, Switzerland                                         */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <meteoio/gridResampling/GridLinearResampling.h>
+#include <meteoio/gridResampling/GridNearestResampling.h>
 #include <meteoio/GridProcessor.h>
 #include <meteoio/IOUtils.h>
 
@@ -31,10 +31,10 @@ namespace mio {
  * @details On initialization, a resampling object stores its user settings.
  * @param[in] algoname The current algorithm's semantic name.
  * @param[in] i_parname The current meteo parameter's identifier.
- * @param[in] dflt_max_gap_size The default max gap size allowing resampling.
+ * @param[in] dflt_max_gap_size The default grid resampling window size.
  * @param[in] vecArgs Vector of arguments (user settings) for this algorithm.
  */
-GridLinearResampling::GridLinearResampling(const std::string& algoname, const std::string& i_parname,
+GridNearestResampling::GridNearestResampling(const std::string& algoname, const std::string& i_parname,
 	const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& vecArgs)
 	: GridResamplingAlgorithm(algoname, i_parname, dflt_max_gap_size, vecArgs) {}
 
@@ -42,7 +42,7 @@ GridLinearResampling::GridLinearResampling(const std::string& algoname, const st
  * @brief Print this algorithm's properties to a stream.
  * @return Semantic description of the algorithm's setup.
  */
-std::string GridLinearResampling::toString() const
+std::string GridNearestResampling::toString() const
 {
 	std::ostringstream ss;
 	ss << std::right << std::setw(10) << parname << "::"  << std::left << std::setw(15) <<
@@ -59,7 +59,7 @@ std::string GridLinearResampling::toString() const
  * their corresponding dates.
  * @param[out] resampled_grid The temporally resampled grid.
  */
-void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid)
+void GridNearestResampling::resample(const Date& date, const std::map<Date, Grid2DObject>& all_grids, Grid2DObject& resampled_grid)
 {
 	auto it_before( GridProcessor::seek_before(date, all_grids) );
 	auto it_after( GridProcessor::seek_after(date, all_grids) );
@@ -69,24 +69,35 @@ void GridLinearResampling::resample(const Date& date, const std::map<Date, Grid2
 	const Grid2DObject& grid_after = it_after->second;
 	resampled_grid.clear();
 
-	//solve:
-	//(y - y1)/(x - x1) = (y2 - y1)/(x2 - x1)
-	//==> y = y1 + (y2 - y1)/(x2 - x1) * (x - x1)
 	const double x1 = it_before->first.getJulian();
 	const double x2 = it_after->first.getJulian();
 	const double xx = date.getJulian();
-	if (x1 == x2) throw IOException("Equal start and end date for grid linear interpolation", AT);
+	if (x1 == x2) throw IOException("Equal start and end date for nearest neighbour interpolation", AT);
 	if (x2-x1 > max_gap_size) return;
 
 	resampled_grid.set(grid_before, IOUtils::nodata);
-	const double lin_factor = 1. / (x2 - x1); //optim: prevent doing all these inversions in the for loop
 	for (size_t jj = 0; jj < grid_before.size(); ++jj) {
+		const double diff1 = xx - x1;
+		const double diff2 = x2 - xx;
 		const double y1 = grid_before(jj);
 		const double y2 = grid_after(jj);
-		if ((y1 == IOUtils::nodata) || (y2 == IOUtils::nodata))
-			continue; //already at nodata
-		const double aa = (y2 - y1) * lin_factor; //small optimization for faster grid resampling
-		resampled_grid(jj) = y1 + aa * (xx - x1);
+		
+		if (y1 == IOUtils::nodata) {
+			resampled_grid(jj) = y2; //if y2 is also nodata, then we keep nodata
+			continue;
+		}
+		if (y2 == IOUtils::nodata) {
+			resampled_grid(jj) = y1;
+			continue;
+		}
+		
+		if (IOUtils::checkEpsilonEquality(diff1, diff2, 0.1/1440.)) { //within 6 seconds
+			resampled_grid(jj) = 0.5*(y1+y2);
+		} else if (diff1<diff2) {
+			resampled_grid(jj) = y1;
+		} else {
+			resampled_grid(jj) = y2;
+		}
 	} //endfor jj
 }
 
