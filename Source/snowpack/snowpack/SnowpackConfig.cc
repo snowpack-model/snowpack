@@ -53,6 +53,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["SOOT_PPMV"] = "0.0";
 	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
+	advancedConfig["ENHANCED_WIND_SLAB"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
 	advancedConfig["FORCE_ADD_SNOWFALL"] = "false";
@@ -61,6 +62,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["HN_DENSITY"] = "PARAMETERIZED";
 	advancedConfig["HN_DENSITY_FIXEDVALUE"] = "100.";
 	advancedConfig["HN_DENSITY_PARAMETERIZATION"] = "LEHNING_NEW";
+	advancedConfig["DENSITY_REDEPOSIT"] = "EVENT"; // The density to use in snowpack::redepositSnow. EVENT, PARAMETERIZED, or a value from hn_density_parameterization. 
 	advancedConfig["HOAR_DENSITY_BURIED"] = "125.";
 	advancedConfig["HOAR_DENSITY_SURF"] = "100.";
 	advancedConfig["HOAR_MIN_SIZE_BURIED"] = "2.";
@@ -87,7 +89,7 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["REDEPOSIT_KEEP_AGE"] = "false";
 	advancedConfig["RESEARCH"] = "true";
 	advancedConfig["SNOW_ALBEDO"] = "PARAMETERIZED";
-	advancedConfig["SNOW_EROSION"] = "false";
+	advancedConfig["SNOW_EROSION"] = "NONE";
 	advancedConfig["SNOW_REDISTRIBUTION"] = "false";
 	advancedConfig["SALTATION_MODEL"] = "SORENSEN";
 	advancedConfig["STRENGTH_MODEL"] = "DEFAULT";
