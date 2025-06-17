@@ -23,6 +23,7 @@ CTest*
 Dart*
 .vscode/
 .DS_store
+*.code-workspace
 
 #example files and binaries:
 /doc/examples/output/*
