@@ -110,7 +110,7 @@ const double SnLaws::alpha_por_tor = 0.07;
 //@}
 
 /// @brief To use J. Hendrikx's parameterization for wind speeds > 2.9 m s-1
-const bool SnLaws::jordy_new_snow = false;
+// const bool SnLaws::jordy_new_snow = false; now separate hn_density_parameterization "JORDY"
 
 /// @brief Defines the smallest allowable viscosity (Pa s) that a viscosity law will return \n
 /// Value is DAMM SMALL -- smaller values than this are pretty unrealistic.
@@ -165,7 +165,7 @@ double SnLaws::event_wind_lowlim = 0.0;
 double SnLaws::event_wind_highlim = 0.0;
 //@}
 double SnLaws::min_hn_density = 30.;
-double SnLaws::max_hn_density = 250.0;
+double SnLaws::max_hn_density = 500.0; // was 250.0;
 
 const bool SnLaws::__init = SnLaws::setStaticData("DEFAULT", "BUCKET");
 
@@ -232,6 +232,13 @@ bool SnLaws::setStaticData(const std::string& variant, const std::string& watert
 			visc_water_fudge = 33.;
 		}
 		setfix = false;
+
+		// To be able to use hn_density=EVENT outside POLAR or ANtARCTICA, we set these parameters as well. 
+		// Really this whole 'event' concept should probably be incorparted into the hn_density_parameterization options,
+		// it is extremely confusing in its current state!
+		event = event_wind;
+		event_wind_lowlim = 0.0;
+		event_wind_highlim = 100.0;
 	}
 
 	// snow extinction coefficients; values in use since r140
@@ -1144,6 +1151,29 @@ double SnLaws::newSnowDensityEvent(const std::string& variant, const SnLaws::Eve
 }
 
 /**
+ * @brief Estimate wet-bulb temperature (°C) from air temperature TA (°C) and relative humidity RH (%)
+// Based on Stull, 2011: https://doi.org/10.1175/JAMC-D-11-0143.1
+ * @param TA Air temperature (°C)
+ * @param RH_percent Relative humidity (%)
+ * @param VW Wind velocity (m s-1)
+ * @return Wet-bulb temperature (°C)
+ */
+// 
+double wetBulbTempStull(double TA, double RH_percent) {
+    // RH_percent = std::clamp(RH_percent, 1.0, 100.0); // Clamp RH between 1% and 100%
+
+	RH_percent = std::max(0.1, std::min(RH_percent, 100.0)); // Clamp RH between 0% and 100%
+
+    double term1 = TA * std::atan(0.151977 * std::sqrt(RH_percent + 8.313659));
+    double term2 = std::atan(TA + RH_percent);
+    double term3 = std::atan(RH_percent - 1.676331);
+    double term4 = 0.00391838 * std::pow(RH_percent, 1.5) * std::atan(0.023101 * RH_percent);
+
+    double Tw = term1 + term2 - term3 + term4 - 4.686035;
+    return Tw;
+}
+
+/**
  * @brief Parameterized new-snow density
  * @param TA  Air temperature (K)
  * @param TSS Snow surface temperature (K)
@@ -1157,21 +1187,20 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
                                   double TA, double TSS, double RH, double VW, double HH)
 {
 	double rho_hn;
-
+	// densities are capped at 500 kg/m3, unless otherwise specified (see max_hn_density = 500.0;
 	TA  = IOUtils::K_TO_C(TA);
 	TSS = IOUtils::K_TO_C(TSS);
 	RH  *= 100.;
 	HH  = floor(HH);
 
 	if (i_hn_model == "LEHNING_OLD") {
+		max_hn_density = 250.0; // parameterization based on limited data set
 		static const double alpha=70., beta=30., gamma=10., delta=0.4;
 		static const double eta=30., phi=6.0, mu=-3.0, nu=-0.5;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW;
-		if (jordy_new_snow && (VW > 2.9))
-			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
-		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
 	} else if (i_hn_model == "LEHNING_NEW") {
+		max_hn_density = 250.0; // parameterization based on limited data set, not properly validated for high wind speeds or low temperatures, thus we limit the density.
 		static const double alpha=90., beta=6.5, gamma=7.5, delta=0.26;
 		static const double eta=13., phi=-4.5, mu=-0.65, nu=-0.17, om=0.06;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW + om*TA*TSS*RH;
@@ -1179,10 +1208,21 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		if (TA < -10.)
 			rho_hn = std::min(rho_hn, alpha*(1. + 0.05*(TA + 10.)));
 		// Increase snow density under snow transport conditions
-		if ((!jordy_new_snow) && (VW > 5.)) {
+		if (VW > 5.) {
 			rho_hn = 90. + (rho_hn - 30.)*0.9;
-		} else if (jordy_new_snow && (VW > 2.9)) {
-			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
+		}
+	
+	}else if (i_hn_model == "JORDY") { // this is identical to LEHNING_NEW below 2.9 m/s
+		max_hn_density = 250.0; // parameterization explodes at high winds, thus we limit the density.
+		static const double alpha=90., beta=6.5, gamma=7.5, delta=0.26;
+		static const double eta=13., phi=-4.5, mu=-0.65, nu=-0.17, om=0.06;
+		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW + om*TA*TSS*RH;
+		// Ad hoc temperature correction
+		if (TA < -10.)
+			rho_hn = std::min(rho_hn, alpha*(1. + 0.05*(TA + 10.)));
+		if (VW > 2.9) {
+			static const double alpha=91., beta=-35., gamma=-1.1, delta=49., eta=32.,  phi=4.6;
+			return (alpha + beta*TA + gamma*RH +  delta*VW + eta*TSS + phi*TA*VW);
 		}
 		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
@@ -1194,16 +1234,17 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		rho_hn = exp(arg);
 		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
-	} else if (i_hn_model == "ZWART") {
+	} else if (i_hn_model == "ZWART") { // see "Significance of new-snow properties for snowcover development" - MSc thesis Costijn Zwart, 2007, https://zenodo.org/records/8138302 
+		max_hn_density = 250.0; // parameterization based on limited data set, not validated for wind speeds >9m/s  or low temperatures (<-20), thus we limit the density.
 		VW = std::max(2., VW);
 		RH = 0.8; // ori: std::min(1., RH/100.); see asin(sqrt()) below
-		static const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
+		static const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.31;  // Table 5.4 in Zwart, 2007
 		double arg = beta01 + beta1*TA + beta2*asin(sqrt(RH)) + beta3*log10(VW);
 		if(TA>=-14.) arg += beta02; // += beta2*TA;
 		rho_hn = pow(10., arg);
 		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
-	} else if (i_hn_model == "PAHAUT") {
+	} else if (i_hn_model == "PAHAUT") { // i.e. Crocus, see Vionnet et al. (2012) https://doi.org/10.5194/gmd-5-773-2012, not suitable for temperatures below -20°C
 		rho_hn = 109. + 6.*(IOUtils::C_TO_K(TA) - Constants::meltfreeze_tk) + 26.*sqrt(VW);
 		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
@@ -1214,6 +1255,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 	} else if (i_hn_model == "VANKAMPENHOUT") {
 		// van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988
 		// Eq. 4 in van Kampenhout et al. (2017):
+		max_hn_density = 450.0;
 		const double rho_w = 266.861 * (pow((0.5 * (1. + tanh( VW / 5. ))), 8.8));
 		double rho_t = 0.;
 		// Eq. 3 in van Kampenhout et al. (2017):
@@ -1227,7 +1269,49 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		// Eq. 2 in van Kampenhout et al. (2017):
 		rho_hn = rho_t + rho_w;
 		// Limiting the van Kampenhout scheme at 450 kg/m3:
-		rho_hn = std::min(450., std::max(min_hn_density, rho_hn));
+		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
+
+	} else if (i_hn_model == "KRAMPE") {
+		// Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100
+		// A combination of the parameterizationd from Liston 2007 and Kampenhout et al. 2017		
+		// Based on Greenland field data & Crocus model. 
+		double rho_t = 0.;
+		
+		// wind dependent part (eqn 4 in Krampe et al. 2021)
+		const double rho_w = 25 + 250 * (1- exp(-0.2*(VW-5,0)));   
+		// Temperature dependent part :
+		const double Twb = wetBulbTempStull(TA, RH);
+		if (TA >= -15 ){ //eqn 2 in Krampe et al. 2021
+			rho_t = 50. + 1.7 * pow((IOUtils::C_TO_K(Twb) - 258.16), 1.5 );
+		} else { // below -15 (eqn 6 in Krampe et al. 2021 )
+			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
+		}
+		if (VW >= 5){ //eqn 3 in Krampe et al. 2021
+			rho_hn = rho_t + rho_w;
+		}else{
+			rho_hn = rho_t;
+		}
+
+	} else if (i_hn_model == "KRAMPE") {
+		// Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100
+		// A combination of the parameterizationd from Liston 2007 and Kampenhout et al. 2017		
+		// Based on Greenland field data & Crocus model. 
+		double rho_t = 0.;
+		
+		// wind dependent part (eqn 4 in Krampe et al. 2021)
+		const double rho_w = 25 + 250 * (1- exp(-0.2*(VW-5,0)));   
+		// Temperature dependent part :
+		const double Twb = wetBulbTempStull(TA, RH);
+		if (TA >= -15 ){ //eqn 2 in Krampe et al. 2021
+			rho_t = 50. + 1.7 * pow((IOUtils::C_TO_K(Twb) - 258.16), 1.5 );
+		} else { // below -15 (eqn 6 in Krampe et al. 2021 )
+			rho_t = -3.8328 * TA - 0.0333 * TA * TA;
+		}
+		if (VW >= 5){ //eqn 3 in Krampe et al. 2021
+			rho_hn = rho_t + rho_w;
+		}else{
+			rho_hn = rho_t;
+		}
 
 	} else {
 		prn_msg(__FILE__, __LINE__, "err", Date(),
@@ -1239,20 +1323,6 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 	return rho_hn;
 }
 
-/**
- * @brief Jordy Hendrikx' new snow density parameterization for strong winds (> 2.9 m s-1)
- * @note To be used with Lehning's models only!
- * @param ta  Air temperature (degC)
- * @param tss Snow surface temperature (degC)
- * @param rh  Relative air humidity (%)
- * @param vw  Mean wind velocity (m s-1)
- * @return New snow density
- */
-double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const double rh, const double vw)
-{
-	static const double alpha=91., beta=-35., gamma=-1.1, delta=49., eta=32.,  phi=4.6;
-	return (alpha + beta*ta + gamma*rh +  delta*vw + eta*tss + phi*ta*vw);
-}
 
 /**
  * @name New snow density
@@ -1261,10 +1331,11 @@ double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const d
  * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
  * 	- LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
  * 	- LEHNING_OLD: First model by M. Lehning
- *       @note {models by M. Lehning can be augmented with a parameterization for winds > 2.9 m s-1
- *              worked out by J. Hendrikx => set jordy_new_snow in Laws_sn.cc}
+ *  - JORDY: JORDY model by J. Hendrikx (2017) for wind speeds > 2.9 m/s (uses LEHNING_NEW below 2.9 m/s)
  * 	- BELLAIRE: Sascha Bellaire's model (elaborated 2007; used summer/fall 2007)
  * 	- PAHAUT: Edmond Pahaut's model, introduced Sep 1995 in CROCUS by G. Giraud
+ *  - VANKAMPENHOUT: van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988 , developed for firn in antartica
+ *  - KRAMPE: Krampe et al. (2021): https://doi.org/10.5194/tc-2021-100, developed for Greenland, based on liston 2007 and Kampenhout et al. 2017
  * - EVENT: Driven by event type, that is,
  * 	- event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
  * - MEASURED: Use measured new snow density read from meteo input

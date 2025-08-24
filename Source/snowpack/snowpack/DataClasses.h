@@ -705,6 +705,7 @@ class SnowStation {
 		double refreezeMassTot;     ///< Vertically summed refreeze per model time step (kg m-2)
 		double ReSolver_dt;         ///< Last used RE time step in the previous SNOWPACK time step
 		bool windward;              ///< True for windward (luv) slope
+		bool leeward;              ///< True for leeward (nuv) slope
 		double TimeCountDeltaHS;    ///< Time counter tracking erroneous settlement in operational mode
 		static const double comb_thresh_l_ratio, comb_thresh_ice, comb_thresh_water;
 		static const double comb_thresh_dd, comb_thresh_sp, comb_thresh_rg;

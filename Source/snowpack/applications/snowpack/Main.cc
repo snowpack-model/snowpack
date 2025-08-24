@@ -109,6 +109,8 @@ static bool restart = false;
 static mio::Date dateBegin, dateEnd;
 static vector<string> vecStationIDs;
 
+bool msg_deposit = false;  ///Enables deposit notification for debugging
+
 /// @brief Main control parameters
 struct MainControl
 {
@@ -127,6 +129,29 @@ struct MainControl
  * non-static section                                       *
  ************************************************************/
 
+ static std::string get_erosion(const SnowpackConfig& cfg)
+ {
+	 std::string erosion = "NONE";
+	 cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", erosion);
+	 std::transform(erosion.begin(), erosion.end(), erosion.begin(), ::toupper);	// Force upper case
+	 if (erosion != "NONE" && erosion != "VIRTUAL" && erosion != "HS_DRIVEN" && erosion != "FREE" && erosion != "REDEPOSIT") {
+		 if (erosion == "TRUE") {
+			 // SNOW_EROSION==TRUE is deprecated and now interpreted as HS_DRIVEN.
+			 // TODO/HACK: remove this hack in the future.
+			 erosion="HS_DRIVEN";
+		 } else if (erosion == "FALSE") {
+			 // SNOW_EROSION==FALSE is deprecated and now interpreted as NONE.
+			 // TODO/HACK: remove this hack in the future.
+			 erosion="NONE";
+		 } else {
+			 std::stringstream msg;
+			 msg << "Value provided for SNOW_EROSION (" << erosion << ") is not valid. Choose either NONE, VIRTUAL, HS_DRIVEN, FREE or REDEPOSIT.";
+			 throw UnknownValueException(msg.str(), AT);
+		 }
+	 }
+	 return erosion;
+ }
+
 Slope::Slope(const mio::Config& cfg)
        : prevailing_wind_dir(0.), nSlopes(0), mainStation(0), sector(0),
          first(1), luv(0), lee(0),
@@ -136,8 +161,7 @@ Slope::Slope(const mio::Config& cfg)
          sector_width(0)
 {
 	cfg.getValue("NUMBER_SLOPES", "SnowpackAdvanced", nSlopes);
-	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
-	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
+	snow_erosion = get_erosion(cfg); 
 	stringstream ss;
 	ss << "" << nSlopes;
 	cfg.getValue("SNOW_REDISTRIBUTION", "SnowpackAdvanced", snow_redistribution);
@@ -164,6 +188,7 @@ unsigned int Slope::getSectorDir(const double& dir_or_expo) const
 
 /**
  * @brief Set slope variables
+ * This is to ensure we loop through the slopes in the right order; main station is always first, luv is always 2nd
  * @param slope_sequence computation sequence for slopes
  * @param vecXdata
  * @param wind_dir direction of wind
@@ -176,6 +201,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 	case 0:
 		for (size_t kk=0; kk<nSlopes; kk++) {
 			vecXdata[kk].windward = false;
+			vecXdata[kk].leeward = false;
 			vecXdata[kk].rho_hn   = 0.;
 			vecXdata[kk].hn       = 0.;
 		}
@@ -196,6 +222,7 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 		luvDriftIndex = snow_redistribution;
 		break;
 	default:
+		vecXdata[lee].leeward = true;
 		sector++;
 		if (sector == nSlopes) sector = 1;
 	}
@@ -560,7 +587,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
                             SunObject &sun,
                             double& precip, const double& lw_in, const double hs_a3hl6,
                             double& tot_mass_in,
-                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo)
+                            const std::string& variant, const bool& iswr_is_net, Meteo &meteo) //, BoundCond& Bdata
 {
 	SnowStation &currentSector = vecXdata[slope.sector]; //alias: the current station
 	const bool isMainStation = (slope.sector == slope.mainStation);
@@ -662,18 +689,32 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		 * while erosion is treated in SnowDrift.c (windward).
 		*/
 		if (slope.snow_redistribution && (slope.sector == slope.lee)) {
-			// If it is not snowing, use surface snow density on windward slope
-			if (!(hn_slope > 0.)) {
-				rho_hn_slope = vecXdata[slope.luv].rho_hn;
+
+			// Add eroded mass from windward slope to lee slope using the Redeposit scheme:
+			if (vecXdata[slope.luv].ErosionMass > 0.) {
+				if ( msg_deposit) { //messages for debug
+						prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Depositing total mass %.3lf kg/m2 ( slope=%d)", vecXdata[slope.luv].ErosionMass, slope.sector);
+					}
+				int El_bfr = vecXdata[slope.sector].getNumberOfElements();
+				const string density_redeposit = cfg.get("DENSITY_REDEPOSIT", "SnowpackAdvanced");
+				
+				Snowpack snowpack(cfg); // HACK: create a separate snowpack object to access the Redeposit and compSnowfall functions
+				snowpack.RedepositSnow(Mdata, vecXdata[slope.sector], surfFluxes, vecXdata[slope.luv].ErosionMass, density_redeposit);
+				
+				// has snow actually been deposited??
+				if ( msg_deposit) {
+					if ( vecXdata[slope.sector].getNumberOfElements() != El_bfr ) {
+							prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "deposited %d elements,  %.4lf m, rho=%.3lf kg/m3" ,
+								 (vecXdata[slope.sector].getNumberOfElements()-El_bfr), vecXdata[slope.sector].hn_redeposit, vecXdata[slope.sector].rho_hn_redeposit );
+						}
+					}	
+				// snow has been deposited, and ErosionMass is now zero
+				vecXdata[slope.luv].ErosionMass = 0.;  // But the cumsum is calculated in ln. 1427? (but luv has already passed??)
 			}
-			// Add eroded mass from windward slope
-			if (rho_hn_slope != 0.) {
-				hn_slope += vecXdata[slope.luv].ErosionMass / rho_hn_slope;
-			}
-			vecXdata[slope.luv].ErosionMass = 0.;
-		}
+		}  // This adds to Xdata.hn_redeposit (not Xdata.hn) and of course ElementData
+
 		// Update depth of snowfall on slopes.
-		// This may include contributions from drifting snow eroded on the windward (luv) slope.
+		// This may include contributions from drifting snow eroded on the windward (luv) slope. (not with new redeposit scheme, it is added to Xdata.hn_redeposit)
 		if ((hn_slope > 0.) && (vecXdata[slope.mainStation].cH > 0.01)) {
 			currentSector.hn = hn_slope;
 			currentSector.rho_hn = rho_hn_slope;
@@ -684,7 +725,7 @@ inline void dataForCurrentTimeStep(CurrentMeteo& Mdata, SurfaceFluxes& surfFluxe
 		if (!meas_incoming_longwave && lw_in!=IOUtils::nodata) {
 			Mdata.ea = SnLaws::AirEmissivity(lw_in, Mdata.ta, variant, true); // In this case, lw_in is an estimate, and we enforce max limit on ea.
 		}
-	}
+	} // end of else for virtual slope
 }
 
 /**
@@ -1201,7 +1242,7 @@ inline void real_main (int argc, char *argv[])
 
 		// START TIME INTEGRATION LOOP
 		do {
-			current_date += calculation_step_length/1440;
+			current_date += calculation_step_length/1440; // calculation_step_length is in minutes, so we divide by 1440 to get days
 			mn_ctrl.nStep++;
 			mn_ctrl.nAvg++;
 
@@ -1367,7 +1408,7 @@ inline void real_main (int argc, char *argv[])
 						cumsum.rain += surfFluxes.mass[SurfaceFluxes::MS_RAIN];
 						cumsum.snow += surfFluxes.mass[SurfaceFluxes::MS_HNW];
 					}
-				} else {
+				} else { // not slope.main Station
 					const size_t i_hz = (mn_ctrl.HzStep > 0) ? mn_ctrl.HzStep-1 : 0;
 					if (slope.luvDriftIndex) {
 						// Update drifting snow index (VI24),
@@ -1382,8 +1423,8 @@ inline void real_main (int argc, char *argv[])
 						if(slope.luvDriftIndex) cumsum.drift = 0.;
 					}
 
-					// Update erosion mass from windward virtual slope
-					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;
+					// Update erosion mass from windward (all?) virtual slope(s)
+					cumsum.erosion[slope.sector] += vecXdata[slope.sector].ErosionMass;   // this has been set to 0 around ln 712 for luvsector, after it has been deposited to the lee slope. 
 					cumsum.erosion_length[slope.sector] += vecXdata[slope.sector].ErosionLength;
 				}
 

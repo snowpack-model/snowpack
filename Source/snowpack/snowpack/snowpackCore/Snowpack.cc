@@ -80,6 +80,8 @@ void Snowpack::EL_RGT_ASSEM(double F[], const int Ie[], const double Fe[]) {
 	F[Ie[1]] += Fe[1];
 }
 
+bool msg_density = false;  ///print density and windspeed during snowfall (and redepositioning) for debugging
+
 /************************************************************
  * non-static section                                       *
  ************************************************************/
@@ -238,7 +240,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
-
+	cfg.getValue("ENHANCED_WIND_SLAB", "SnowpackAdvanced", enhanced_wind_slab);
 
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
@@ -262,7 +264,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		vw_dendricity = false;
 		rh_lowlim = 0.7;
 		bond_factor_rh = 3.0;
-		enhanced_wind_slab = true;
+		// enhanced_wind_slab = true;  // set in namelist now
 		ageAlbedo = false;
 	} else {
 		new_snow_dd = 1.0;
@@ -271,15 +273,15 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		new_snow_sp_wind = 0.75;
 		vw_dendricity = true;
 		rh_lowlim = 1.0;
-		bond_factor_rh = 1.0;
-		enhanced_wind_slab = false; //true; //
+		bond_factor_rh = 1.0; 
+		// enhanced_wind_slab = true; //true; // set in namelist now
 	}
 
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
 	std::transform(snow_erosion.begin(), snow_erosion.end(), snow_erosion.begin(), ::toupper);	// Force upper case
 	cfg.getValue("REDEPOSIT_KEEP_AGE", "SnowpackAdvanced", redeposit_keep_age);
 
-	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size);
+	cfg.getValue("NEW_SNOW_GRAIN_SIZE", "SnowpackAdvanced", new_snow_grain_size); //0.3 is defualt value
 	new_snow_bond_size = 0.25 * new_snow_grain_size;
 
 	/* Thresholds for surface hoar formation and burial
@@ -408,7 +410,7 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 			const double z_ref_vw = 3.;	// See p. 336 in Groot Zwaaftink et al. (doi: https://doi.org/10.5194/tc-7-333-2013)
 			const double vw_ref = Meteo::windspeedProfile(Mdata, z_ref_vw);
 			const double dv = vw_ref - Metamorphism::wind_slab_vw;
-			if (snow_erosion == "REDEPOSIT") {
+			if (snow_erosion == "REDEPOSIT") {  // REDEPOSIT mode simulates the same process (i.e. wind compaction). Probably best not to use both at the same time.  
 				wind_slab = 1.;
 			} else {
 				if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
@@ -1396,6 +1398,9 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 
 /**
  * @brief Set the microstructure parameters for the current element according to the type of precipitation meteor.
+ * First, a distinction is made between Graupel and New Snow. Next, the dendricity and sphericity are set to default values, 
+ * which are then adjusted based on criteria such as the wind speed and different hn_density_paramterizations.
+ * Lastly, the grain size and bond size are set based on the wind speed and the type of hydrometeor.
  * @param Mdata Meteorological data
  * @param is_surface_hoar is this layer a layer of surface hoar?
  * @param EMS Element to set
@@ -1420,46 +1425,64 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 		elem.theta_i_reservoir = 0.0;
 		elem.theta_i_reservoir_cumul = 0.0;
 		elem.theta[AIR] = 1. - elem.theta[ICE];  // void content
+	
 	} else { // no Graupel
 		elem.mk = Snowpack::new_snow_marker;
-		if (SnLaws::jordy_new_snow && (Mdata.vw > 2.9)
-			&& ((hn_density_parameterization == "LEHNING_NEW") || (hn_density_parameterization == "LEHNING_OLD"))) {
+		
+		/**** Set Dendricity (dd) and Sphericity (sp) for new snow: ****/
+		elem.dd = new_snow_dd;
+		elem.sp = new_snow_sp;
+	
+		// Adapt dd and sp for blowing snow
+		if (   (Mdata.vw > 5.) 
+			&& ((variant == "ANTARCTICA" || variant == "POLAR")	||  
+				(hn_density_parameterization == "BELLAIRE") || 
+				(hn_density_parameterization == "LEHNING_NEW"))
+			) { // In these cases, use a step function for dendricity and sphericity
+			elem.dd = new_snow_dd_wind;
+			elem.sp = new_snow_sp_wind;
+		} else if (	vw_dendricity && 
+					((hn_density_parameterization == "BELLAIRE") || (hn_density_parameterization == "ZWART"))) {
+			const double vw = std::max(0.05, Mdata.vw);
+			elem.dd = (1. - pow(vw/10., 1.57));
+			elem.dd = std::max(0.2, elem.dd);
+		} else if (vw_dendricity){
+			// Bert's heuristic parameterization:
+			elem.dd = 1.05 - 0.85 / (1.0 + std::exp(-0.5 * (Mdata.vw - 5.5)));
+			elem.dd = std::min(elem.dd, 1.0);
+			elem.sp = 0.375 / (1.0 + exp(-0.9*(Mdata.vw-5)) ) + 0.5 ;
+			elem.sp = std::max(elem.sp, 0.5  );
+			
+			// // Crocus wind-dependent sp an dd parameterization (Vionnet et al. 2012): 
+			// elem.dd = std::min( std::max(1.29 - 0.17*Mdata.vw, 0.20), 1  )
+			// elem.sp = std::min( std::max(0.08*Mdata.VW + 0.38, 0.5), 0.9) .
+		} else if ((Mdata.vw > 2.9) && (hn_density_parameterization == "JORDY")) {
 			elem.dd = std::max(0.5, std::min(1.0, Optim::pow2(1.87 - 0.04*Mdata.vw)) );
 			elem.sp = new_snow_sp;
+		} 
+
+		/**** now set grain size and bond size ****/
+		if ((Mdata.vw > 2.9) && (hn_density_parameterization == "JORDY")) {
 			static const double alpha = 0.9, beta = 0.015, gamma = -0.0062;
 			static const double delta = -0.117, eta=0.0011, phi=-0.0034;
 			elem.rg = std::min(0.5*new_snow_grain_size, std::max(0.15*new_snow_grain_size,
 				alpha + beta*TA + gamma*RH + delta*Mdata.vw
 				+ eta*RH*Mdata.vw + phi*TA*Mdata.vw));
 			elem.rb = 0.4*elem.rg;
+		}
+		else if (Snowpack::hydrometeor) { // empirical  (hardcoded to false...)
+			static const double alpha=1.4, beta=-0.08, gamma=-0.15;
+			static const double delta=-0.02;
+			elem.rg = 0.5*(alpha + beta*TA + gamma*Mdata.vw + delta*TA*Mdata.vw);
+			elem.rb = 0.25*elem.rg;
 		} else {
-			elem.dd = new_snow_dd;
-			elem.sp = new_snow_sp;
-			// Adapt dd and sp for blowing snow
-			if ((Mdata.vw > 5.) && ((variant == "ANTARCTICA" || variant == "POLAR")
-			|| (!SnLaws::jordy_new_snow && ((hn_density_parameterization == "BELLAIRE")
-			|| (hn_density_parameterization == "LEHNING_NEW"))))) {
-				elem.dd = new_snow_dd_wind;
-				elem.sp = new_snow_sp_wind;
-			} else if (vw_dendricity && ((hn_density_parameterization == "BELLAIRE")
-				|| (hn_density_parameterization == "ZWART"))) {
-				const double vw = std::max(0.05, Mdata.vw);
-				elem.dd = (1. - pow(vw/10., 1.57));
-				elem.dd = std::max(0.2, elem.dd);
-			}
-			if (Snowpack::hydrometeor) { // empirical
-				static const double alpha=1.4, beta=-0.08, gamma=-0.15;
-				static const double delta=-0.02;
-				elem.rg = 0.5*(alpha + beta*TA + gamma*Mdata.vw + delta*TA*Mdata.vw);
-				elem.rb = 0.25*elem.rg;
-			} else {
-				elem.rg = new_snow_grain_size/2.;
-				elem.rb = new_snow_bond_size/2.;
-				if (((Mdata.vw_avg >= SnLaws::event_wind_lowlim) && (Mdata.rh_avg >= rh_lowlim))) {
-					elem.rb = std::min(bond_factor_rh*elem.rb, Metamorphism::max_grain_bond_ratio*elem.rg);
-				}
+			elem.rg = new_snow_grain_size/2.; //(	advancedConfig["NEW_SNOW_GRAIN_SIZE"] = "0.3";)
+			elem.rb = new_snow_bond_size/2.;
+			if (((Mdata.vw_avg >= SnLaws::event_wind_lowlim) && (Mdata.rh_avg >= rh_lowlim))) {  //rh_lowlim = 1.0 
+				elem.rb = std::min(bond_factor_rh*elem.rb, Metamorphism::max_grain_bond_ratio*elem.rg);
 			}
 		}
+
 	} // end no Graupel
 
 	if(is_surface_hoar) { //surface hoar
@@ -1685,6 +1708,12 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	double rho_hn = SnLaws::compNewSnowDensity(hn_density, hn_density_parameterization, hn_density_fixedValue,
                                                Mdata, Xdata, t_surf, variant);
 
+	if (msg_density && Mdata.vw>5. && Xdata.meta.getAzimuth()==90 && Xdata.meta.getSlopeAngle() > 0.) { // pick one slope to limit output
+		prn_msg(__FILE__, __LINE__, "err", Mdata.date,
+		        "Snow w. rho_hn=%.3f kg m-3 (azi=%.0f, slope=%.0f), vw=%.1f m/s, density=%s - %s",
+		        rho_hn, Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle(), Mdata.vw, hn_density.c_str(), hn_density_parameterization.c_str());
+			}
+			
 	if ((Sdata.cRho_hn < 0.) && (rho_hn != Constants::undefined))
 		Sdata.cRho_hn = -rho_hn;
 
@@ -1728,8 +1757,11 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 	const double meltfreeze_tk = (nOldE>0)? Xdata.Edata[nOldE-1].meltfreeze_tk : Constants::meltfreeze_tk;
 	const double dtempAirSnow = (change_bc && !meas_tss)? Mdata.ta - meltfreeze_tk : Mdata.ta - t_surf; //we use t_surf only if meas_tss & change_bc
 
-	const bool snow_fall = (((((Mdata.rh > thresh_rh) && (Mdata.psum_ph<1.) && (dtempAirSnow < thresh_dtempAirSnow))
-                               || !enforce_measured_snow_heights || (Xdata.hn > 0.)) && (forcing=="ATMOS")) || ((Mdata.psum_ph<1.) && (forcing=="MASSBAL")));
+	const bool snow_fall = (  // niet te lezen dit!
+		((((Mdata.rh > thresh_rh) && (Mdata.psum_ph<1.) && (dtempAirSnow < thresh_dtempAirSnow))
+                               || !enforce_measured_snow_heights || (Xdata.hn > 0.)) && (forcing=="ATMOS")) 
+							|| ((Mdata.psum_ph<1.) && (forcing=="MASSBAL"))
+						);
 
 	// In addition, let's check whether the ground is already snowed in or cold enough to build up a snowpack
 	bool snowed_in = false;
@@ -1812,10 +1844,10 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			cumu_precip = 0.0; // we use the mass through delta_cH
 			//double hn = 0.; //new snow amount
 
-			if (!alpine3d && Xdata.hn > 0. && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle) {
+			if (!alpine3d && Xdata.hn > 0. && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle) { // vslopes get (regular) snowfall from Xdata.hn, (but redeposit snow from delta_CH)
 				hn = Xdata.hn;
 				rho_hn = Xdata.rho_hn;
-			} else { // in case of flat field or PERP_TO_SLOPE
+			} else { // in case of flat field or PERP_TO_SLOPE  (but also RedepositSnow on all angles (b/c Xdata.hn is set to 0 in this case))
 				hn = delta_cH;
 				// Store new snow depth and density
 				Xdata.hn = hn;
@@ -1826,13 +1858,17 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				          "Large snowfall! hn=%.3f cm (azi=%.0f, slope=%.0f)",
 				            M_TO_CM(hn), Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
 
+
+							
+			/***** Now distribute the new snow height hn over a (number of) new element(s): ****/
 			size_t nAddE = (size_t)(hn / (height_new_elem*cos_sl));
 
 			if (nAddE < 1) {
-				// Always add snow on virtual slope (as there is no storage variable available) and some other cases
-				if ((!alpine3d && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)
-				                      || add_element || (force_add_snowfall && delta_cH > Constants::eps)) { //no virtual slopes in Alpine3D
-					nAddE = 1;
+				if(    add_element 
+					|| (force_add_snowfall && delta_cH > Constants::eps)       //?? Add cos_sl or not?
+					|| (!alpine3d && Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)   // Always add snow on virtual slope (as there is no storage variable available)
+				) {  
+						nAddE = 1;
 				} else {
 					Xdata.hn = 0.;
 					Xdata.rho_hn = Constants::undefined;
@@ -1987,48 +2023,71 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
  * @param Mdata Meteorological data (pass by value, since we modify it)
  * @param Xdata Snow cover data
  * @param redeposit_mass cumulated amount of snow deposition (kg m-2)
+ * @param density_redep allow for different density setting for the redeposited snow:
+ * 	 - "EVENT" (default): use the EVENT scheme from Groot-Zwaaftink (this is the default if nothing is set - see Snowpack.h),
+ * 	 - "PARAMETERIZED": to use the same hn_density_parameterization as regular snowfall (set in ini file or default LEHNING_NEW), 
+ *   -  a member of the hn_density_parameterization: to use a specific scheme other than the one used for 'normal' snowfall. 
  */
-void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass)
+void Snowpack::RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass, const std::string density_redep)
 {
 	// Backup settings we are going to override:
 	const bool tmp_force_add_snowfall = force_add_snowfall;
 	const std::string tmp_hn_density = hn_density;
+	const std::string tmp_hn_density_param = hn_density_parameterization;
 	const std::string tmp_variant = variant;
 	const bool tmp_enforce_measured_snow_heights = enforce_measured_snow_heights;
 	const double tmp_Xdata_hn = Xdata.hn;
 	const double tmp_Xdata_rho_hn = Xdata.rho_hn;
 	const mio::Date tmp_MdataDate = Mdata.date;
+	
 	// Deposition mode settings:
 	double tmp_psum = redeposit_mass;
 	force_add_snowfall = true;
-	hn_density = "EVENT";
-	variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
+	
+	// set the density of the redeposited snow:
+	if (density_redep == "EVENT" ) {
+		hn_density = "EVENT";
+		// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
+		Mdata.vw_avg = Mdata.vw;
+		Mdata.rh_avg = Mdata.rh;
+	}else if (density_redep == "PARAMETERIZED"){ //use same density as hn_density_parameterization
+		hn_density = "PARAMETERIZED";	
+	} else { // use a specific scheme from the hn_density_parameterizations in Laws_sn.cc
+		hn_density = "PARAMETERIZED";
+		hn_density_parameterization = density_redep;
+	}
+	
+	if (variant=="ANTARCTICA") variant = "POLAR";		// Ensure that the ANTARCTICA wind speed limits are *not* used.
 	enforce_measured_snow_heights = false;
-	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.;
-	// The EVENT scheme uses vw_avg and rh_avg in the calculations. In the REDEPOSIT scheme, we force the use of instantaneous values for wind speed and relative humidity:
-	Mdata.vw_avg = Mdata.vw;
-	Mdata.rh_avg = Mdata.rh;
-	Xdata.hn = 0.;
+	Mdata.psum = redeposit_mass; Mdata.psum_ph = 0.; // PSUM driven deposition, so psum>0. No rain so psum_ph=0.
+	Xdata.hn = 0.; // note that for normal snowfall, vslopes receive snowfall from Xdata.hn, but here we set it to 0  for all slopes.
 	if (Xdata.ErosionAge != Constants::undefined && redeposit_keep_age) {
 		mio::Date EnforcedDepositionDate(Xdata.ErosionAge, Mdata.date.getTimeZone());
 		Mdata.date = EnforcedDepositionDate;
 	}
+	// if this redeposit scheme is used for snow_distribution (in Main.cc), luv eroded snow can be deposited on the bare lee ground before runSnowpackMOdel is called, and t_surf is not yet set.
+	// In this case, we need to set t_surf so the temperature profile can be properly computed after deposition.
+	if (t_surf == Constants::undefined || t_surf == 0.0) {
+		t_surf = std::min(Constants::meltfreeze_tk , Xdata.Ndata[Xdata.getNumberOfNodes()-1].T);
+	}
+
 	// Add eroded snow:
-	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);
+	compSnowFall(Mdata, Xdata, tmp_psum, Sdata);  //tmp_psum = redeposit_mass. But note that vslopes (normally) receive snowfall from Xdata.hn.
+	
+	// Save the redeposited snow and its density in Xdata:
+	Xdata.hn_redeposit = Xdata.hn;
+	Xdata.rho_hn_redeposit = Xdata.rho_hn;
+
 	// Set back original settings:
 	force_add_snowfall = tmp_force_add_snowfall;
 	hn_density = tmp_hn_density;
+	hn_density_parameterization = tmp_hn_density_param;
 	variant = tmp_variant;
 	enforce_measured_snow_heights = tmp_enforce_measured_snow_heights;
 	Mdata.date = tmp_MdataDate;
-	// Calculate new snow density (weighted average) and total snowfall (snowfall + redeposited snow)
-	Xdata.hn_redeposit = Xdata.hn;
-	Xdata.rho_hn_redeposit = Xdata.rho_hn;
-	if ((tmp_Xdata_hn + Xdata.hn) > 0.) {
-		Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
-	}
-	Xdata.hn += tmp_Xdata_hn;
-}
+	Xdata.hn = tmp_Xdata_hn; // reset to original value
+	Xdata.rho_hn = tmp_Xdata_rho_hn; // reset to original value
+}	
 
 /**
  * @brief The near future (s. below) has arrived on Wednesday Feb. 6, when it was finally snowing
@@ -2096,7 +2155,9 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 	// ADJUST_HEIGHT_OF_METEO_VALUE is checked at each call to allow different
 	// cfg values for different pixels in Alpine3D
 	cfg.getValue("ADJUST_HEIGHT_OF_METEO_VALUES", "SnowpackAdvanced", adjust_height_of_meteo_values);
-
+	bool snow_redistribution = false;
+	cfg.getValue("SNOW_REDISTRIBUTION", "SnowpackAdvanced", snow_redistribution); //needed to set the correct slopes in case of snow erosion=REDEPOSIT
+	const string density_redeposit = cfg.get("DENSITY_REDEPOSIT", "SnowpackAdvanced");
 
 	try {
 		//since precipitation phase is a little less intuitive than other, measured parameters, make sure it is provided
@@ -2123,17 +2184,19 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 			Xdata.Ndata[Xdata.getNumberOfNodes()-1].T = t_surf;
 		}
 
-		// If there is DEPOSITING of snow:
+		// If there is DEPOSITING of snow: // This is externally forced snow drift, e.g. from Alpine3D. In snowpack standalone, without snowdrift in .smet file, Mdata.snowdrift (redeposit_mass) is 0.
 		if (Mdata.snowdrift > 0. && snow_erosion == "REDEPOSIT") {
-			RedepositSnow(Mdata, Xdata, Sdata, Mdata.snowdrift);
+			RedepositSnow(Mdata, Xdata, Sdata, Mdata.snowdrift, density_redeposit);
 			Mdata.snowdrift = 0.;
 		}
 
 		// If it is SNOWING, find out how much, prepare for new FEM data. If raining, cumu_precip is set back to 0
 		const double tmp_Xdata_hn = Xdata.hn;		// Store initial hn
 		const double tmp_Xdata_rho_hn = Xdata.rho_hn;	// Store initial rho_hn
-		if (alpine3d || !(Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)) Xdata.hn = 0.;	// Virtual slopes receive precipitation via Xdata.hn
+		if (alpine3d || !(Xdata.meta.getSlopeAngle() > Constants::min_slope_angle)) Xdata.hn = 0.;	// Xdata.hn is set to 0 for main station, whereas Virtual slopes receive precipitation via Xdata.hn. This is very mportant!
+		
 		compSnowFall(Mdata, Xdata, cumu_precip, Sdata);
+
 		if (Xdata.hn > 0.) {
 			// If new snow was added, recalculate rho_hn as a weighted average
 			Xdata.rho_hn = ((tmp_Xdata_hn * tmp_Xdata_rho_hn) + (Xdata.hn * Xdata.rho_hn)) / (tmp_Xdata_hn + Xdata.hn);
@@ -2141,8 +2204,8 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 			// Otherwise keep previous rho_hn
 			Xdata.rho_hn = tmp_Xdata_rho_hn;
 		}
-		Xdata.hn += tmp_Xdata_hn;
-
+		Xdata.hn += tmp_Xdata_hn; // for virtual slopes, this leads to a double counting of hn?? 
+		
 		// Check to see if snow is DRIFTING, compute a simple snowdrift index and erode layers if
 		// neccessary. Note that also the very important friction velocity is computed in this
 		// routine and later used to compute the Meteo Heat Fluxes
@@ -2153,8 +2216,19 @@ void Snowpack::runSnowpackModel(CurrentMeteo& Mdata, SnowStation& Xdata, double&
 				tmp = cumu_precip;
 				cumu_precip = 0.;
 			}
-			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);
-			if (Xdata.ErosionMass > 0. && snow_erosion == "REDEPOSIT" && !alpine3d) RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass);
+		
+			// Calculate erosion:
+			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, tmp);  // Calculate Xdata.ErosionMass (and Xdata.ErosionLevel)
+
+			// Redeposit eroded snow on same slope in case of snow_erosion=REDEPOSIT: 
+			if (snow_erosion == "REDEPOSIT" && Xdata.ErosionMass > 0. && !alpine3d) {
+				if (snow_redistribution && !Xdata.windward && !Xdata.leeward) {
+					// Redeposit snow if slope is 1) Main Station 2) not luv 3) not lee (lee deposition is handled by snow_redistribution in Main.cc)
+					RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass,density_redeposit);
+				}else if (!snow_redistribution)	{ // if snow_redistribution is not set, we redeposit snow on all slopes.
+					RedepositSnow(Mdata, Xdata, Sdata, Xdata.ErosionMass,density_redeposit);
+				}
+			}
 		} else { // MASSBAL forcing
 			snowdrift.compSnowDrift(Mdata, Xdata, Sdata, Mdata.snowdrift); //  Mdata.snowdrift is always <= 0. (positive values are in Mdata.psum)
 		}
