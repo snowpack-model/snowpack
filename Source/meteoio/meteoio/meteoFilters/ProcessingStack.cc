@@ -102,6 +102,23 @@ bool ProcessingStack::applyFilter(const size_t& param, const size_t& jj, const s
 			filter_stack[jj]->process(static_cast<unsigned int>(param), tmp_ivec, tmp_ovec);
 
 			//put back the sub-range filtered data into the full ovec
+			//trim the begining of the vector if timestamps have been added before the time restriction range
+			if (tmp_ovec.front().date<sub_start) {
+				size_t ll=0;
+				while (tmp_ovec[ll].date<sub_start) ll++;
+				tmp_ovec.erase(tmp_ovec.begin(), tmp_ovec.begin() + ll);
+			}
+			//trim the end of the vector if timestamps have been added after the time restriction range
+			if (tmp_ovec.back().date>sub_end) {
+				size_t ll=0;
+				while (tmp_ovec[tmp_ovec.size() - 1 - ll].date>sub_end) ll++;
+				tmp_ovec.erase(tmp_ovec.begin()-ll, tmp_ovec.end());
+			}
+			//this might happen in time filters
+			if (tmp_ivec.size()<tmp_ovec.size()) {
+				ovec.insert(ovec.begin()+ivec_start_idx, tmp_ovec.size()-tmp_ivec.size(), ovec.front());
+			}
+			//copy the filtered data back into ovec
 			for (size_t kk=0; kk<tmp_ovec.size(); kk++) {
 				ovec[kk+ivec_start_idx] = tmp_ovec[kk];
 			}
@@ -119,9 +136,10 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 {
 	bool filterApplied = false;
 
-	std::vector<double> heights_for_parameter(ivec.front().getHeightsForParameter(param_name));
+	std::vector<double> heights_for_parameter( ivec.front().getHeightsForParameter(param_name) );
+	const bool multiple_heights = heights_for_parameter.size() > 1;
 	for (auto& height : heights_for_parameter) {
-		std::string full_paramname = param_name;
+		std::string full_paramname( param_name );
 		if (height != IOUtils::nodata) {
 			full_paramname = full_paramname + "@" + MeteoData::convertHeightToString(height);
 		} else {
@@ -129,7 +147,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 		}
 
 		//pick one element and check whether the param_name parameter exists
-		const size_t param = ivec.front().getParameterIndex(full_paramname);
+		const size_t param = ivec.front().getParameterIndex( full_paramname );
 		if (param == IOUtils::npos) continue;
 
 		const size_t nr_of_filters = filter_stack.size();
@@ -140,7 +158,7 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 			if (filter_stack[jj]->skipStation( statID ))
 				continue;
 
-			if (filter_stack[jj]->skipHeight(height))
+			if (filter_stack[jj]->skipHeight( height ))
 				continue;
 
 			const ProcessingProperties::proc_stage filter_stage( filter_stack[jj]->getProperties().stage );
@@ -200,7 +218,9 @@ bool ProcessingStack::filterStation(std::vector<MeteoData> ivec,
 				}
 			}
 
-			if ((jj+1) != nr_of_filters) {//not necessary after the last filter
+			//no need to copy the results into ivec for the very last filter
+			const bool is_last_filter = (jj+1==nr_of_filters) && !multiple_heights; //actually skipping this copy for the very last height would be enough
+			if (!is_last_filter) {
 				ivec = ovec[stat_idx];
 			}
 		}

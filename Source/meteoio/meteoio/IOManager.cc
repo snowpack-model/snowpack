@@ -51,8 +51,9 @@ namespace mio {
  *
  * @subsection vstations Virtual stations
  * The data from real input stations (as read by the plugin defined with the METEO key in the [input] section) is filtered/processed, temporally interpolated and 
- * spatially interpolated as defined in the configuration file. Then time series are reconstructed from these grids at a set of defined points (which will receive
- * station IDs such as <i>VIR#</i> for each station). This behavior is configured by the following keys (in the [InputEditing] section):
+ * spatially interpolated as defined in the configuration file (thus it is advised to have a look at the \ref interpol2D_Best_practices "spatial interpolations best practices").
+ * Then time series are reconstructed from these grids at a set of defined points (which will receive station IDs such as <i>VIR#</i> for each station).
+ * This behavior is configured by the following keys (in the [InputEditing] section):
  *    + RESAMPLING_STRATEGY set to VSTATIONS;
  *    + VSTATION# : provide the lat, lon and altitude or easting, northing and altitude for a virtual station (see \link Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, std::string coord_spec) Coords()\endlink for the syntax);
  *    + VID# : provide the station ID for a given VSTATION (optional, default: VIR#);

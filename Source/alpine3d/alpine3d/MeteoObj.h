@@ -24,8 +24,6 @@
 #include <alpine3d/MPIControl.h>
 #include <alpine3d/Glaciers.h>
 
-#include <iostream>
-
 class SnGrids {
 	public:
 		/// \anchor SnGrids this enum provides names for possible Snowpack grids
@@ -145,7 +143,7 @@ class MeteoObj
 		Glaciers *glaciers;
 		unsigned int count_sums, count_precip;
 		bool skipWind; ///<should the grids be filled or only the data vectors returned?
-		bool dataFromGrids; ///<should input data be computed from grids
+		bool meteoFromGrids; ///<should meteo fields be extracted from grids?
 		bool soil_flux;
 		bool enable_simple_snow_drift;
 };

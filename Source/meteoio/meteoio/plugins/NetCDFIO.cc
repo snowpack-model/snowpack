@@ -102,10 +102,10 @@ namespace mio {
  *               - METEOPATH_RECURSIVE: should the scan for files be recursive (default: false)?; [Input]
  *     - NC_SINGLE_FILE: when writing timeseries of station data, force all stations to be contained in a single file (default: false); [Output]
  *     - METEOFILE: when NC_SINGLE_FILE is set, the output file name to use [Output];
- *     - NETCDF_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
+ *     - FILES_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
  * (in the [Output] section, default is no such versioning):
  *          - NOW: append the current date formatted as numerical ISO;
- *          - STRING: append a fixed string as provided by the NETCDF_VERSIONING_STRING key;
+ *          - STRING: append a fixed string as provided by the FILES_VERSIONING key;
  *          - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
  *          - DATA_END: append the absolute end date of the dataset formatted as numerical ISO;
  *          - YEARS: append the absolute start and end years of dataset (if they are the same, only one year is used);
@@ -444,7 +444,7 @@ void NetCDFIO::parseInputOutputSection()
 		}
 
 		//support for versioning in the file names
-		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("NETCDF_VERSIONING", "Output", "") );
+		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("FILES_VERSIONING", "Output", "") );
 		if (versioning_type_str.empty()) {
 			outputVersioning = NO_VERSIONING;
 		} else {
@@ -455,9 +455,9 @@ void NetCDFIO::parseInputOutputSection()
 			else if (versioning_type_str=="DATA_END") outputVersioning = DATA_END;
 			else if (versioning_type_str=="YEARS") outputVersioning = DATA_YEARS;
 			else
-				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for NETCDF_VERSIONING", AT);
+				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for FILES_VERSIONING", AT);
 		}
-		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("NETCDF_VERSIONING_STRING", "Output", "") );
+		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("FILES_VERSIONING_STRING", "Output", "") );
 	}
 }
 
@@ -766,8 +766,9 @@ ncFiles::ncFiles(const std::string& filename, const Mode& mode, const Config& cf
 		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
 		if (write_acdd) {
 			acdd.setUserConfig( cfg, "Output", false );
+			const bool enableNCML = cfg.get("ACDD_WRITE_NCML", "Output", false);
+			acdd.setEnableNcML( enableNCML ); //this can be forced to TRUE with a compilation flag
 		}
-				
 		if (FileUtils::fileExists(filename)) initFromFile(filename);
 	} else if (mode==READ) {
 		initFromFile(filename);
@@ -1226,6 +1227,7 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 		const size_t param = dimensions[ii];
 		const size_t length = (param==ncpp::TIME)? 0 : ((param==ncpp::STATSTRLEN)? DFLT_STAT_STR_LEN : nrStations) ;
 		ncpp::createDimension(ncid, dimensions_map[ param ], length);
+		acdd.addDimension(dimensions_map[ param ].name, "", (param==ncpp::TIME)? vecTime.size() : length);
 
 		if (param==ncpp::STATSTRLEN) continue; //no associated variable for STATSTRLEN
 		if (!station_dimension && param==ncpp::STATION) continue;
@@ -1245,6 +1247,7 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 			if (param==ncpp::STATION) vars[ param ].dimids.push_back( dimensions_map[ncpp::STATSTRLEN].dimid );
 
 			ncpp::create_variable(ncid, vars[ param ]);
+			acdd.addVariable(vars[ param ].attributes.name, vars[ param ].attributes.standard_name, vars[ param ].attributes.units);
 		}
 	}
 
@@ -1269,6 +1272,8 @@ void ncFiles::writeMeteo(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 			ncpp::write_1Ddata(ncid, vars[ param ], data, (param==ncpp::TIME));
 		}
 	}
+	
+	if (acdd.enableNcML()) acdd.writeNcML( file_and_path );
 
 	if (!keep_output_files_open) {
 		ncpp::close_file(file_and_path, ncid);

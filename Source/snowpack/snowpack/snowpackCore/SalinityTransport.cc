@@ -20,6 +20,7 @@
 
 #include <snowpack/snowpackCore/SalinityTransport.h>
 #include <snowpack/snowpackCore/ReSolver1d.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 #include <snowpack/Utils.h>
 #include <stdio.h>
 

@@ -1080,8 +1080,8 @@ INIshell include file for MeteoIO filters
 	<!-- TIME FILTER SUPPR -->
 	<parametergroup name="TIMEFILTER_SUPPR">
 		<option caption="Suppress" value="SUPPR">
-			<parameter key="TIME::ARG#::TYPE" type="alternative" default="CLEANUP">
-				<option value="CLEANUP"/>
+			<parameter key="TIME::ARG#::TYPE" type="alternative" default="DUPLICATES">
+				<option value="DUPLICATES"/>
 				<option value="BYDATES">
 					<parameter key="TIME::ARG#::FILE" label="Supression file:" type="file" mode="input" optional="false"><help>provide a file that contains a list of station ID's and timesteps that should be suppressed</help></parameter>
 				</option>

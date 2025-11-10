@@ -22,6 +22,7 @@
 #include <snowpack/Utils.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/StabilityAlgorithms.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 
 #define OUTPUT_PRECISION_SNO_FILE 6
 
@@ -65,7 +66,6 @@ using namespace mio;
  * <tr><th>T</th><td>layer temperature [K]</td></tr>
  * <tr><th>Vol_Frac_I</th><td>fractional ice volume [0-1]</td></tr>
  * <tr><th>Vol_Frac_W</th><td>fractional water volume [0-1]</td></tr>
- * <tr><th>Vol_Frac_WP</th><td>fractional preferential water volume [0-1]</td></tr>
  * <tr><th>Vol_Frac_V</th><td>fractional voids volume [0-1]</td></tr>
  * <tr><th>Vol_Frac_S</th><td>fractional soil volume [0-1]</td></tr>
  * <tr><th>Rho_S</th><td>soil density [kg/m3]</td></tr>
@@ -85,6 +85,13 @@ using namespace mio;
  * <tr><th> <br></th><td> </td></tr>
  * </table></td></tr>
  * </table></center>
+ * 
+ * Depending on the sub-models that have been enabled, it might be necessary to provide additional fields:
+ *  - \ref preferential_flow "Preferential flow": 
+ *        - Vol_Frac_WP - fractional preferential water volume [0-1];
+ *  - \ref ice_reservoir "Ice reservoir": 
+ *        - Vol_Frac_IR - fractional ice reservoir volume [0-1];
+ *        - Vol_Frac_CIR - cummulated ice reservoir volume;
  *
  * Usually, simulations are started at a point in time when no snow is on the ground, therefore not requiring the definition of snow layers. An example is given below with one snow layer (and some comments to explain the different keys in the header):
  * @code
@@ -210,11 +217,7 @@ SmetIO::SmetIO(const SnowpackConfig& cfg, const RunInfo& run_info)
 	if (write_acdd) {
 		acdd.setEnabled(true);
 		acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
-		if (out_haz) { // HACK To avoid troubles in A3D
-			mio::Date now;
-			now.setFromSys();
-			acdd.addAttribute("history", now.toString(mio::Date::ISO_Z) + ", " + info.user + "@" + info.hostname + ", Snowpack-" + info.version);
-		}
+		acdd.deleteAttribute( "history" );	//this is handled in this plugin instead (see methods below)
 	}
 }
 
@@ -652,7 +655,7 @@ void SmetIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 	}
 
 	writeSnoFile(snofilename, date, Xdata, Zdata, enable_pref_flow, enable_ice_reservoir);
-	if (haz_write) writeHazFile(hazfilename, date, Xdata, Zdata);
+	if (haz_write) writeHazFile(hazfilename, date, Xdata, Zdata, info.history);
 }
 
 /*
@@ -661,10 +664,10 @@ void SmetIO::writeSnowCover(const mio::Date& date, const SnowStation& Xdata,
 * The SMETWriter object finally writes out the HAZ SMET file
 */
 void SmetIO::writeHazFile(const std::string& hazfilename, const mio::Date& date, const SnowStation& Xdata,
-                          const ZwischenData& Zdata)
+                          const ZwischenData& Zdata, const std::string& i_history)
 {
 	smet::SMETWriter haz_writer(hazfilename);
-	setBasicHeader(Xdata, "timestamp SurfaceHoarIndex DriftIndex ThreeHourNewSnow TwentyFourHourNewSnow", haz_writer);
+	setBasicHeader(Xdata, "timestamp SurfaceHoarIndex DriftIndex ThreeHourNewSnow TwentyFourHourNewSnow", haz_writer, i_history);
 	haz_writer.set_header_value("ProfileDate", date.toString(Date::ISO));
 
 	haz_writer.set_width( vector<int>(4,10) );
@@ -727,7 +730,7 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 		ss << " cIce cWater cAir  cSoil";
 	}
 
-	setBasicHeader(Xdata, ss.str(), sno_writer);
+	setBasicHeader(Xdata, ss.str(), sno_writer, info.history);
 	setSnoSmetHeader(Xdata, date, sno_writer);
 
 	vector<string> vec_timestamp;
@@ -783,7 +786,7 @@ void SmetIO::writeSnoFile(const std::string& snofilename, const mio::Date& date,
 	sno_writer.write(vec_timestamp, vec_data, mio::ACDD(false));
 }
 
-void SmetIO::setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer)
+void SmetIO::setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer, const std::string& history)
 {
 	// Set the basic, mandatory header key/value pairs for a SMET file
 	smet_writer.set_header_value("station_id", Xdata.meta.getStationID());
@@ -798,6 +801,9 @@ void SmetIO::setBasicHeader(const SnowStation& Xdata, const std::string& fields,
 	smet_writer.set_header_value("epsg", Xdata.meta.position.getEPSG());
 	smet_writer.set_header_value("slope_angle", Xdata.meta.getSlopeAngle());
 	smet_writer.set_header_value("slope_azi", Xdata.meta.getAzimuth());
+
+	//Add version information
+	if (!history.empty()) smet_writer.set_header_value("history", history);
 }
 
 void SmetIO::setSnoSmetHeader(const SnowStation& Xdata, const Date& date, smet::SMETWriter& smet_writer)
@@ -955,7 +961,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 		os << "Qs Ql Qg TSG Qg0 Qr dIntEnergySnow meltFreezeEnergySnow ColdContentSnow" << " "; //Turbulent fluxes (W m-2)
 		// Heat flux at lower boundary (W m-2), ground surface temperature (degC),
 		// Heat flux at gound surface (W m-2), rain energy (W m-2)
-		// Internal energy change snow (W m-2), Melt freeze part of internal energy change snow (W m-2), Cold content of snow (MJ/kg)
+		// Internal energy change snow (kJ m-2), Melt freeze part of internal energy change snow (kJ m-2), Cold content of snow (MJ m-2)
 	if (out_lw)
 		os << "OLWR ILWR LWR_net" << " "; //Longwave radiation fluxes (W m-2)
 	if (out_sw)
@@ -1008,7 +1014,7 @@ std::string SmetIO::getFieldsHeader(const SnowStation& Xdata) const
 void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, smet::SMETWriter& smet_writer) const
 {
 	const std::string fields( getFieldsHeader(Xdata) );
-	setBasicHeader(Xdata, fields, smet_writer);
+	setBasicHeader(Xdata, fields, smet_writer, info.history);
 	smet_writer.set_header_value("tz", tz);
 
 	std::ostringstream units_offset, units_multiplier;
@@ -1020,7 +1026,7 @@ void SmetIO::writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, s
 	if (out_heat) {
 		//"Qs Ql Qg TSG Qg0 Qr dIntEnergySnow meltFreezeEnergySnow ColdContentSnow"
 		plot_description << "sensible_heat  latent_heat  ground_heat  ground_temperature  ground_heat_at_soil_interface  rain_energy  snow_internal_energy_change  snow_melt_freeze_energy  snow_cold_content" << " ";
-		plot_units << "W/m2 W/m2 W/m2 K W/m2 W/m2 W/m2 W/m2 MJ/m2" << " ";
+		plot_units << "W/m2 W/m2 W/m2 K W/m2 W/m2 kJ/m2 kJ/m2 MJ/m2" << " ";
 		units_offset << "0 0 0 273.15 0 0 0 0 0" << " ";
 		units_multiplier << "1 1 1 1 1 1 1 1 1" << " ";
 		plot_color << "0x669933 0x66CC99 0xCC6600 0xDE22E2 0xFFCC00 0x6600FF 0x663300 0x996666 0xCC9966" << " ";

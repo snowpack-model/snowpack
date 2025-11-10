@@ -56,7 +56,7 @@ class SmetIO : public SnowpackIOInterface {
 
 		mio::Date read_hazsmet(const std::string& hazfilename, ZwischenData& Zdata);
 		static void writeHazFile(const std::string& hazfilename, const mio::Date& date,
-		                         const SnowStation& Xdata, const ZwischenData& Zdata);
+		                         const SnowStation& Xdata, const ZwischenData& Zdata, const std::string& i_history);
 
 	private:
 		std::string getFilenamePrefix(const std::string& fnam, const std::string& path, const bool addexp=true) const;
@@ -69,7 +69,7 @@ class SmetIO : public SnowpackIOInterface {
 		void writeTimeSeriesHeader(const SnowStation& Xdata, const double& tz, smet::SMETWriter& smet_writer) const;
 		void writeTimeSeriesData(const SnowStation& Xdata, const SurfaceFluxes& Sdata, const CurrentMeteo& Mdata, const ProcessDat& Hdata, const double &wind_trans24, smet::SMETWriter& smet_writer) const;
 
-		static void setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer);
+		static void setBasicHeader(const SnowStation& Xdata, const std::string& fields, smet::SMETWriter& smet_writer, const std::string& i_history);
 		static void setSnoSmetHeader(const SnowStation& Xdata, const mio::Date& date, smet::SMETWriter& smet_writer);
 		static void setFormatting(const size_t& nr_solutes,
 		                   std::vector<int>& vec_width, std::vector<int>&  vec_precision, const bool& write_pref_flow, const bool& write_ice_reservoir, const bool& write_sea_ice);

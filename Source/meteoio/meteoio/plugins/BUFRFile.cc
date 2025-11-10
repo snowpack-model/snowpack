@@ -66,7 +66,7 @@ namespace mio {
         std::vector<std::string> height_keys = {"heightOfStation", "height", "elevation", "heightOfStationGroundAboveMeanSeaLevel"};
         bool success = getParameter(h, height_keys, altitude, subsetNumber);
         if (!success) {
-            std::cerr << "No altitude for station found in BUFR file" << std::endl;
+            std::cerr << "[W] No altitude for station found in BUFR file" << std::endl;
             altitude = IOUtils::nodata;
         }
     }

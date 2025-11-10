@@ -110,12 +110,12 @@ class Snowpack {
 
 		void setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const bool& is_surface_hoar, ElementData &EMS);
 
-		void fillNewSnowElement(const CurrentMeteo& Mdata, const double& length, const double& density,
+		void fillNewSnowElement(const CurrentMeteo& Mdata, const double& length, const double& density, double& theta_water,
 		                        const bool& is_surface_hoar, const unsigned short& number_of_solutes, ElementData &elem);
 
 		void compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip);
 
-		void compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
+		void compSnowFall(CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
 		                  SurfaceFluxes& Sdata);
 
 		void RedepositSnow(CurrentMeteo Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double redeposit_mass);
@@ -162,6 +162,7 @@ class Snowpack {
 		bool advective_heat;
 		double heat_begin, heat_end;
 		double temp_index_degree_day, temp_index_swr_factor;
+		bool allow_freezing_rain;
 		bool forestfloor_alb;
 		bool rime_index, newsnow_lwc, read_dsm;
 		std::string soil_evaporation, soil_thermal_conductivity;

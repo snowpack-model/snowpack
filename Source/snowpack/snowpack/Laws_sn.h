@@ -121,7 +121,7 @@ class SnLaws {
 
 		static double min_hn_density, max_hn_density, event_wind_lowlim;
 		static const double smallest_viscosity, field_capacity_soil;
-		static const bool jordy_new_snow, wind_pump, wind_pump_soil;
+		static const bool wind_pump, wind_pump_soil;
 
 		static bool setStaticData(const std::string& variant, const std::string& watertransportmodel);
 
@@ -129,7 +129,6 @@ class SnLaws {
 		                                 double TA, double TSS, double RH, double VW, double HH);
 		static double newSnowDensityEvent(const std::string& variant, const SnLaws::EventType& i_event,
                                           const CurrentMeteo& Mdata);
-		static double newSnowDensityHendrikx(const double ta, const double tss, const double rh, const double vw);
 		static double event_wind_highlim;
 		static EventType event;
 

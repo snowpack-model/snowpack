@@ -573,6 +573,8 @@ std::string RandomNumberGenerator::toString()
 		ss << "Size: 32 bit\n";
 		ss << "Period: 2^19937-1 ~ 4.3e6001\n";
 		break;
+	default:
+		ss << "Using an unsupported RNG type\n";
 	}
 	ss << "Hardware seeded: " << (getHardwareSeedSuccess()? "yes" : "no") << "\n";
 

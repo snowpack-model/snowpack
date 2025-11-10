@@ -17,6 +17,7 @@
 */
 #include <alpine3d/ebalance/TerrainRadiationComplex.h>
 #include <alpine3d/MPIControl.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
 
 //file operations
 #include <iostream>
@@ -213,7 +214,7 @@ void TerrainRadiationComplex::initBasicSetHorizontal()
 	for (size_t n = 0; n < M_epsilon; ++n) {
 		psi_0 = psi_1;
 		if (n == (M_epsilon - 1)) {
-			psi_1 = 3.1415926 / 2;
+			psi_1 = mio::Cst::PI2;
 		} else {
 			delta = acos(-2 / float(M_epsilon) + cos(2 * psi_0)) / 2 - psi_0; // [~ MT eq. 2.5]
 			psi_1 = psi_0 + delta;
@@ -221,7 +222,7 @@ void TerrainRadiationComplex::initBasicSetHorizontal()
 		epsilon = (psi_1 + psi_0) / 2; // [MT eq. 2.4]
 
 		for (size_t m = 0; m < M_phi; ++m) {
-			phi = 2 * 3.1415926 * (m + 0.5) / M_phi; // [MT eq. 2.3]
+			phi = 2 * mio::Cst::PI * (m + 0.5) / M_phi; // [MT eq. 2.3]
 			i += 1;
 			BasicSet_Horizontal.push_back({cos(epsilon) * sin(phi), cos(epsilon) * cos(phi), sin(epsilon)}); // [MT eq. 2.1]
 		}

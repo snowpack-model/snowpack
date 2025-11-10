@@ -29,8 +29,7 @@
 #include <snowpack/DataClasses.h>
 
 #include <meteoio/MeteoIO.h>
-#include <vector>
-#include <string>
+
 
 // Forward-declare classes
 class ElementData;
@@ -81,7 +80,9 @@ class SeaIce {
 		salinityprofiles salinityprofile;
 		enum thermalmodels{IGNORE, ASSUR1958, VANCOPPENOLLE2019, VANCOPPENOLLE2019_M};
 		thermalmodels thermalmodel;
-
+		enum buoyancymodels{STANDARD, CONSTANTOFFSET, ADVANCED};
+		buoyancymodels buoyancymodel;
+		double buoyancy_value;
 
 		friend std::iostream& operator<<(std::iostream& os, const SeaIce& data);
 		friend std::iostream& operator>>(std::iostream& is, SeaIce& data);
@@ -103,6 +104,8 @@ class SeaIce {
 
 		void runSeaIceModule(SnowStation& Xdata, const CurrentMeteo& Mdata, BoundCond& Bdata, const double& sn_dt, SurfaceFluxes& Sdata);
 
+	private:
+		size_t ThetaIceStepDetection(SnowStation& Xdata);
 }; //end class Snowpack
 
 #endif

@@ -87,6 +87,7 @@ void ProcShift::writeOffsets(const unsigned int& param, const std::vector<MeteoD
 	fout.close();
 }
 
+//Time-shift a given parameter by a given offset
 //the strategy is: we created a new vector<MeteoData> that only contains the shifted parameter
 //and then we merge it with ovec
 void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>& ovec)
@@ -142,7 +143,7 @@ void ProcShift::correctOffsets(const unsigned int& param, std::vector<MeteoData>
 	}
 	
 	//now merge back the results
-	MeteoData::mergeTimeSeries(ovec, shifted_param, MeteoData::WINDOW_MERGE, MeteoData::CONFLICTS_PRIORITY_LAST);
+	MeteoData::mergeTimeSeries(ovec, shifted_param, MeteoData::FULL_MERGE, MeteoData::CONFLICTS_PRIORITY_LAST);
 }
 
 bool ProcShift::isAllNodata(const std::vector<offset_spec>& vecX, const size_t& startIdx, const size_t& endIdx)
@@ -395,9 +396,7 @@ void ProcShift::parse_args(const std::vector< std::pair<std::string, std::string
 			const std::string type_str( IOUtils::strToUpper(vecArgs[ii].second) );
 			if (type_str=="CST") {
 				offsets_interp = cst;
-			} /*else if (type_str=="LINEAR") { //not implemented for now
-				offsets_interp = linear;
-			} */else if (type_str=="STEPWISE") {
+			} else if (type_str=="STEPWISE") {
 				offsets_interp = stepwise;
 			} else
 				throw InvalidArgumentException("Invalid type \""+type_str+"\" specified for "+where, AT);

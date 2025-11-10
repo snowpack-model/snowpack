@@ -18,8 +18,6 @@
 #ifndef ALPINECONTROL_H
 #define ALPINECONTROL_H
 
-#include <stdio.h>
-
 #include <meteoio/MeteoIO.h>
 #include <snowpack/libsnowpack.h>
 
@@ -68,7 +66,7 @@ class AlpineControl
 		double snow_days_between;
 		double max_run_time;
 		bool enable_simple_snow_drift;
-		bool nocompute, out_snow, correct_meteo_grids_HS, dataFromGrids; // no computation, only parse inputs (check mode)
+		bool nocompute, out_snow, correct_meteo_grids_HS; // no computation, only parse inputs (check mode)
 };
 
 #endif

@@ -67,9 +67,12 @@ inline int CellsRadComparator_Helbig(const void *cell1, const void *cell2)
  *            computations a threshold of least 0.1 should be used
  *
  * It is also possible to read the view factors from file or write them to a file. The following keys,
- * either in the [Input] or in the [Output] sections define the file names:
- *       - vf_file: file containing the sky view factors
- *       - tvfarea: file containing the terrain view factors x surface
+ * either in the [EBalance] sections define the file names:
+ *       - WRITE_SKY_VIEW_FACTOR: write the computed view factors to a file for quicker reruns (default: false);
+ *       - vf_file_out: file containing the sky view factors to read from;
+ *       - tvfarea_out: file containing the terrain view factors x surface to read from;
+ *       - vf_file_in: file containing the sky view factors to read from;
+ *       - tvfarea_in: file containing the terrain view factors x surface to read from;
  *
  */
 class TerrainRadiationHelbig : public TerrainRadiationAlgorithm

@@ -716,6 +716,7 @@ std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
 				if (!IOUtils::convertString(d2, vecString[2], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[2]+" in file \""+filename+"\"", AT);
+				if (d1>d2) throw InvalidArgumentException("Invalid date range in file \""+filename+"\" ["+d1.toString(Date::ISO)+" - "+d2.toString(Date::ISO)+"] : start>end", AT);
 				const DateRange range(d1, d2);
 				dates_specs[ station_ID ].push_back( range );
 			} else if (nrElems==4 && vecString[2]=="-") {
@@ -723,6 +724,7 @@ std::map< std::string, std::vector<DateRange> > ProcessingBlock::readDates(const
 					throw InvalidFormatException("Could not process date "+vecString[1]+" in file \""+filename+"\"", AT);
 				if (!IOUtils::convertString(d2, vecString[3], TZ))
 					throw InvalidFormatException("Could not process date "+vecString[3]+" in file \""+filename+"\"", AT);
+				if (d1>d2) throw InvalidArgumentException("Invalid date range in file \""+filename+"\" ["+d1.toString(Date::ISO)+" - "+d2.toString(Date::ISO)+"] : start>end", AT);
 				const DateRange range(d1, d2);
 				dates_specs[ station_ID ].push_back( range );
 			} else

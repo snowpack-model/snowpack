@@ -188,7 +188,7 @@ void VapourTransport::compTransportMass(const CurrentMeteo& Mdata, double& ql,
 	try {
 		LayerToLayer(Mdata, Xdata, Sdata, ql);
 		WaterTransport::adjustDensity(Xdata, Sdata);
-		WaterTransport::mergingElements(Xdata, Sdata);
+		WaterTransport::mergingElements(Xdata, Sdata, true);
 	} catch(const exception&) {
 		prn_msg( __FILE__, __LINE__, "err", Mdata.date, "Error in transportVapourMass()");
 		throw;
@@ -387,6 +387,8 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 	for (size_t e = 0; e < nE; e++) {
 		EMS[e].Qmm = 0.0;
 
+		if (deltaM[e] == 0.) continue;
+
 		if (deltaM[e] < 0.) {
 			// Mass loss: apply mass change first to water, then to ice, based on energy considerations
 			// We can only do this partitioning here in this "simple" way, without checking if the mass is available, because we already limited dM above, based on available ICE + WATER.
@@ -397,15 +399,18 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 
 			EMS[e].theta[WATER] += dTh_water;
 			EMS[e].theta[ICE] += dTh_ice;
+			EMS[e].theta[AIR] = std::max(0., 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]);
 
 			Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += dTh_water * Constants::density_water * EMS[e].L;
 			Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dTh_ice * Constants::density_ice * EMS[e].L;
 			EMS[e].M += dTh_water * Constants::density_water * EMS[e].L+dTh_ice * Constants::density_ice * EMS[e].L;
 			assert(EMS[e].M >= (-Constants::eps2)); // mass must be positive
-
-			EMS[e].Qmm += (dTh_water * Constants::density_water * Constants::lh_vaporization
-						   + dTh_ice * Constants::density_ice * Constants::lh_sublimation
-						  ) / sn_dt; // [w/m^3]
+			if (e<nE-1) {
+				// Only when not top layer. In the top layer, the energy has been accounted for in the energy balance
+				EMS[e].Qmm += ( dTh_water * Constants::density_water * Constants::lh_vaporization
+				              + dTh_ice * Constants::density_ice * Constants::lh_sublimation
+				              ) / sn_dt; // [w/m^3]
+			}
 
 			// If present at surface, surface hoar is sublimated away
 			if (e == nE-1 && deltaM[e]<0) {
@@ -420,22 +425,29 @@ void VapourTransport::LayerToLayer(const CurrentMeteo& Mdata, SnowStation& Xdata
 				if ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) > (1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL]))) {
 					// If there is not enough pore space to accomodate the liquid water part in frozen state
 					const double theta_w_in = EMS[e].theta[WATER];
-					EMS[e].theta[WATER] = 0.999 * ((1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL])) * (Constants::density_ice / Constants::density_water) - EMS[e].theta[WATER_PREF]);
-					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for condensation flux, estimated mass balance error: %f kg/m2", EMS[e].L * (EMS[e].theta[WATER] - theta_w_in));
+					EMS[e].theta[WATER] = ((1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL])) * (Constants::density_ice / Constants::density_water) - EMS[e].theta[WATER_PREF]);
+					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space in layer e=%zu from nE=%zu for condensation flux, estimated mass balance error: %f kg/m2", e, nE, EMS[e].L * (EMS[e].theta[WATER] - theta_w_in));
 				}
-				EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
+				if (e<nE-1) {
+					// Only when not top layer. In the top layer, the energy has been accounted for in the energy balance
+					EMS[e].Qmm += (deltaM[e]*Constants::lh_vaporization)/sn_dt/EMS[e].L;	// [w/m^3]
+				}
 				Sdata.mass[SurfaceFluxes::MS_EVAPORATION] += deltaM[e];
 			} else {
 				EMS[e].theta[ICE] += deltaM[e] / (Constants::density_ice * EMS[e].L);
 				if ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) > (1. - (EMS[e].theta[ICE] + EMS[e].theta[SOIL]))) {
 					// If there is not enough pore space to accomodate the liquid water part in frozen state
 					const double theta_i_in = EMS[e].theta[ICE];
-					EMS[e].theta[ICE] = -0.999 * ((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) + EMS[e].theta[SOIL] - 1.);
-					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space for deposition flux, estimated mass balance error: %f kg/m2", EMS[e].L * (EMS[e].theta[ICE] - theta_i_in));
+					EMS[e].theta[ICE] = -1.*((Constants::density_water / Constants::density_ice) * (EMS[e].theta[WATER] + EMS[e].theta[WATER_PREF]) + EMS[e].theta[SOIL] - 1.);
+					prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Not enough pore space e=%zu from nE=%zu for deposition flux, estimated mass balance error: %f kg/m2", e, nE, EMS[e].L * (EMS[e].theta[ICE] - theta_i_in));
 				}
-				EMS[e].Qmm += (deltaM[e]*Constants::lh_sublimation)/sn_dt/EMS[e].L;	// [w/m^3]
+				if (e<nE-1) {
+					// Only when not top layer. In the top layer, the energy has been accounted for in the energy balance
+					EMS[e].Qmm += (deltaM[e]*Constants::lh_sublimation)/sn_dt/EMS[e].L;	// [w/m^3]
+				}
 				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += deltaM[e];
 			}
+			EMS[e].theta[AIR] = std::max(0., 1.0 - EMS[e].theta[WATER] - EMS[e].theta[WATER_PREF] - EMS[e].theta[ICE] - EMS[e].theta[SOIL]);
 			EMS[e].M += deltaM[e];
 			assert(EMS[e].M >= (-Constants::eps2)); // mass must be positive
 		}
@@ -520,9 +532,6 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 			const bool formSurfaceHoar = !((Mdata.rh > hoar_thresh_rh) || (Mdata.vw > hoar_thresh_vw) || (Mdata.ta >= IOUtils::C_TO_K(hoar_thresh_ta)));
 			if (formSurfaceHoar || !enable_vapour_transport) {
 				ql = 0.;
-				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dM;
-				// If conditions are met, form surface hoar
-				if (formSurfaceHoar) dHoar = dM;
 
 				// In this case adjust properties of element, keeping snow density constant
 				const double L_top = EMS[nE-1].L;
@@ -542,6 +551,10 @@ void VapourTransport::compSurfaceSublimation(const CurrentMeteo& Mdata, double& 
 				EMS[nE-1].theta[WATER] = std::max(0., std::min(1., EMS[nE-1].theta[WATER]));
 				EMS[nE-1].theta[WATER_PREF] *= L_top/EMS[nE-1].L;
 				EMS[nE-1].theta[WATER_PREF] = std::max(0., std::min(1., EMS[nE-1].theta[WATER_PREF]));
+
+				Sdata.mass[SurfaceFluxes::MS_SUBLIMATION] += dM;
+				// If conditions are met, form surface hoar
+				if (formSurfaceHoar) dHoar = dM;
 
 				for (size_t ii = 0; ii < Xdata.number_of_solutes; ii++) {
 					EMS[nE-1].conc[ICE][ii] *= L_top*theta_i0/(EMS[nE-1].theta[ICE]*EMS[nE-1].L);

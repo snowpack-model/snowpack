@@ -189,11 +189,11 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 			luv = lee = 0;
 		}
 		sector = mainStation;
-		mainStationDriftIndex = ((nSlopes == 1) && (snow_erosion != "NONE"));
+		mainStationDriftIndex = ((nSlopes == 1));
 		break;
 	case 1:
 		sector = luv;
-		luvDriftIndex = snow_redistribution;
+		luvDriftIndex = true;
 		break;
 	default:
 		sector++;

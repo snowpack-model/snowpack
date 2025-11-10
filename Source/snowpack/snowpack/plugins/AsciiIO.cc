@@ -26,6 +26,7 @@
 #include <snowpack/Laws_sn.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/Aggregate.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 
 #include <iomanip>
 
@@ -2288,7 +2289,7 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 {
 	const string stationname = Xdata.meta.getStationName();
 	fout << "[STATION_PARAMETERS]";
-	fout <<  "\nStationName= " << stationname;
+	fout << "\nStationName= " << stationname;
 	fout << "\nLatitude= " << std::fixed << std::setprecision(8) << Xdata.meta.position.getLat();
 	fout << "\nLongitude= " << std::fixed << std::setprecision(8) << Xdata.meta.position.getLon();
 	fout << "\nAltitude= " << std::fixed << std::setprecision(0) << Xdata.meta.position.getAltitude();
@@ -2299,13 +2300,9 @@ void AsciiIO::writeMETHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	for (size_t ii = 0; ii < fixedPositions.size(); ii++)
 		fout << "," << std::fixed << std::setprecision(3) << fixedPositions[ii] << std::setprecision(6);
 	fout << "\n\n[HEADER]";
-	if (out_haz) { // HACK To avoid troubles in A3D
-		fout << "\n#" << info.computation_date.toString(Date::ISO) << ", Snowpack " << variant << " version " << info.version << " run by \"" << info.user << "\"";
-		if (research_mode)
-			fout << " (research mode)";
-		else
-			fout << " (operational mode)";
-	}
+
+	fout << "\n#" << info.history;
+
 	fout << "\n,,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103";
 	fout << "\nID,Date,Sensible heat,Latent heat,Outgoing longwave radiation,Incoming longwave radiation,Net absorbed longwave radiation,Reflected shortwave radiation,Incoming shortwave radiation,Net absorbed shortwave radiation,Modelled surface albedo,Air temperature,Modeled surface temperature,Measured surface temperature,Temperature at bottom of snow or soil pack,Heat flux at bottom of snow or soil pack,Ground surface temperature,Heat flux at ground surface,Heat advected to the surface by liquid precipitation,Global solar radiation (horizontal)";
 	if(out_haz==true || out_soileb==false) {
@@ -2442,14 +2439,7 @@ void AsciiIO::writeProHeader(const SnowStation& Xdata, std::ofstream &fout) cons
 	fout << "\nSlopeAzi= " << std::fixed << std::setprecision(2) << Xdata.meta.getAzimuth();
 
 	fout << "\n\n[HEADER]";
-	if (out_haz) { // HACK To avoid troubles in A3D
-		fout << "\n#" << info.computation_date.toString(Date::ISO) << ", Snowpack " << variant << " version " << info.version << " run by \"" << info.user << "\"";
-		if (research_mode)
-			fout << " (research mode)";
-		else
-			fout << " (operational mode)";
-	}
-
+	fout << "\n#" << info.history;
 	fout << "\n0500,Date";
 	fout << "\n0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)";
 	fout << "\n0502,nElems,element density (kg m-3)";

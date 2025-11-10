@@ -61,11 +61,4 @@ INIshell include file for general section
 		<help>If set to TRUE, MeteoIO writes on the screen a line (with the timestamp, station ID, meteo parameter and reason) for each data point that gets modified (either filtered, resampled or generated). &lt;font color='#268bd2'&gt;Warning: this might generate very large logs!&lt;/font&gt;</help>
 	</parameter>
 
-	<frame caption="Software version" color="sl_blue">
-		<section name="General"/>
-		<parameter type="helptext" wrap="true">
-			<help>The version shown for MeteoIO refers to the INIshell configuration for Software version ... and not the Software itself. The Software has the version which you installed.</help>
-		</parameter>
-	</frame>
-
 </inishell_include>

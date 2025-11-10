@@ -1,5 +1,5 @@
 #SPDX-License-Identifier: LGPL-3.0-or-later
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1...3.31.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1...4.0.1)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 PROJECT(meteoio)
@@ -14,19 +14,9 @@ ELSE()
 	SET(VERSION_PATCH 0 CACHE INTERNAL "Patch version")
 ENDIF()
 
-
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-###########################################################
-#platform specific. First, compiler specific flags, then system specific flags
-OPTION(BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON)
-IF(WIN32)
-	SET(BUILD_STATIC_LIBS ON) #otherwise the lib files are not generated
-ELSE(WIN32)
-	OPTION(BUILD_STATIC_LIBS "Set to ON to build static libraries" OFF)
-ENDIF(WIN32)
 
 ###########################################################
 #set compiler flags according to the detected compiler and user options
@@ -35,67 +25,122 @@ SET(CMAKE_CXX_STANDARD_REQUIRED True)
 INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
 SET_COMPILER_OPTIONS()
 
-#The following pre-processor variables are automatically defined:
-# __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
-IF(UNIX)
-	#HAVE_STRUCT_STAT_ST_FLAGS is used in FileUtils.cc
-	INCLUDE (CheckStructHasMember)
-	CHECK_STRUCT_HAS_MEMBER("struct stat" st_flags sys/stat.h HAVE_STRUCT_STAT_ST_FLAGS)
-	IF(HAVE_STRUCT_STAT_ST_FLAGS) 
-		SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
-	ENDIF()
-	
-	OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
-	MARK_AS_ADVANCED(FORCE USE_RPATH)
-	if(USE_RPATH)
-		#set a full rpath for both build & install tree
-		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
-		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+# These variables are required to set the exe icon and metadata on Windows and require variables from SET_COMPILER_OPTIONS()
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
+SET(CPACK_PACKAGE_NAME "MeteoIO")
+SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
+STRING(TIMESTAMP CURR_YEAR "%Y")
+
+###########################################################
+#platform specific. First, compiler specific flags, then system specific flags
+
+IF(WIN32)
+	SET(EXE_DEST bin)
+	SET(LIB_DEST bin)
+	SET(DLL_EXT "dll")
+	SET(STAT_EXT "a")
+	SET(DOC_PATH "doc")
+	#generate the application rc file (icon and properties of the exe file)
+	configure_file(
+		${CMAKE_SOURCE_DIR}/meteoio/icons/meteoio.rc.in
+		${CMAKE_BINARY_DIR}/meteoio/icons/meteoio.rc
+	@ONLY)
+	SET(APP_ICON_RESOURCE_WINDOWS "${CMAKE_SOURCE_DIR}/meteoio/icons/meteoio.rc")
+	SET(INSTALL_WIN32 RESOURCE DESTINATION ${DOC_PATH})
+	SET(BUILD_STATIC_LIBS ON) #otherwise the lib files are not generated
+ELSE(WIN32)
+	OPTION(BUILD_STATIC_LIBS "Set to ON to build static libraries" OFF)
+	SET(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
+	#The following pre-processor variables are automatically defined:
+	# __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
+	IF(UNIX)
+		#HAVE_STRUCT_STAT_ST_FLAGS is used in FileUtils.cc
+		INCLUDE (CheckStructHasMember)
+		CHECK_STRUCT_HAS_MEMBER("struct stat" st_flags sys/stat.h HAVE_STRUCT_STAT_ST_FLAGS)
+		IF(HAVE_STRUCT_STAT_ST_FLAGS)
+			SET(EXTRA "-DHAVE_STRUCT_STAT_ST_FLAGS ${EXTRA}")
+		ENDIF(HAVE_STRUCT_STAT_ST_FLAGS)
+
+		OPTION(USE_RPATH "Use rpath (not recommended for Fedora)" ON)
+		MARK_AS_ADVANCED(FORCE USE_RPATH)
+		if(USE_RPATH)
+			#set a full rpath for both build & install tree
+			SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+			SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+			IF(APPLE)
+				SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
+			ELSE(APPLE)
+				SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+			ENDIF(APPLE)
+
+			# add the automatically determined parts of the RPATH
+			SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+			# the RPATH to be used when installing, but only if it's not a system directory
+			LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+			IF("${isSystemDir}" STREQUAL "-1")
+				SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+			ENDIF("${isSystemDir}" STREQUAL "-1")
+		ELSE(USE_RPATH)
+			SET(CMAKE_SKIP_BUILD_RPATH TRUE)
+		ENDIF(USE_RPATH)
+
 		IF(APPLE)
-			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path',-rpath,'@executable_path/../lib'")
-			SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+			SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version") # High Sierra, consider going to 11 when XCode 26 comes out...(it won't support anything lower than 11)
+
+			#generate the application plist file for the bundle
+			STRING(TIMESTAMP TODAY_ISO UTC)
+			SET(MIO_BINARY "meteoio_timeseries")	#this will be set later in applications/CMakeLists.txt, but it is needed here for the plist file
+			configure_file(
+				${CMAKE_CURRENT_SOURCE_DIR}/tools/meteoio.plist.in
+				${CMAKE_CURRENT_BINARY_DIR}/tools/meteoio.plist
+			@ONLY)
+
+			SET(EXE_DEST "../MacOS")
+			SET(LIB_DEST "../MacOS")
+			SET(DLL_EXT "dylib*")
+			SET(STAT_EXT "a")
+			SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion") #for now, keep clang quiet
+			SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation")
 		ELSE(APPLE)
-			SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN'/../lib")
+			SET(EXE_DEST bin)
+			SET(LIB_DEST lib)
+			SET(DLL_EXT "so*")
+			SET(STAT_EXT "a")
 		ENDIF(APPLE)
+	ENDIF(UNIX)
+ENDIF(WIN32)
 
-		# add the automatically determined parts of the RPATH
-		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-		# the RPATH to be used when installing, but only if it's not a system directory
-		LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-		IF("${isSystemDir}" STREQUAL "-1")
-			SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-		ENDIF("${isSystemDir}" STREQUAL "-1")
-	ELSE(USE_RPATH)
-		SET(CMAKE_SKIP_BUILD_RPATH TRUE)
-	ENDIF(USE_RPATH)
-
-	IF(APPLE)
-		SET(DLL_EXT "dylib*")
-		SET(STAT_EXT "a")
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion") #for now, keep clang quiet
-		SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation")
-		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
-		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
-	ELSE(APPLE)
-		SET(DLL_EXT "so*")
-		SET(STAT_EXT "a")
-	ENDIF(APPLE)
-ELSE(UNIX)
-	IF(WIN32)
-		SET(DLL_EXT "dll")
-		SET(STAT_EXT "a")
-	ENDIF(WIN32)
-ENDIF(UNIX)
-
+###########################################################
+#Compiling options
+OPTION(BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON)
 IF(NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_BUILD_TYPE "release" CACHE STRING "Choose the type of build, options are: debug release coverage cxxflags" FORCE)
 	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
-###########################################################
-#plugins and applications
-SET(METEOIO_TIMESERIES ON CACHE BOOL "Compilation METEOIO_TIMESERIES standalone ON or OFF")
+#show exception messages in a graphical message box
+SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 
+SET(FORCE_NCML OFF CACHE BOOL "Force writing NcML files (only for some supported output plugins) ON or OFF")
+MARK_AS_ADVANCED(FORCE FORCE_NCML)
+SET(RESTRICT_WRITE_ACCESS OFF CACHE BOOL "Limit write access of the library to a given directory (default: CWD)")
+MARK_AS_ADVANCED(FORCE RESTRICT_WRITE_ACCESS)
+IF(RESTRICT_WRITE_ACCESS)
+	IF(MSVC)	#TODO: replace by add_compile_definitions(RESTRICT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/RESTRICT_WRITE_ACCESS)
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DRESTRICT_WRITE_ACCESS)
+	ENDIF(MSVC)
+	SET(RESTRICTED_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
+	IF(MSVC)	#TODO: replace by add_compile_definitions("RESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\"") when moving to cmake >=3.12 released 11.2018
+		ADD_DEFINITIONS(/RESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\")
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DRESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\")
+	ENDIF(MSVC)
+ENDIF()
+
+###########################################################
+#plugins
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")
 SET(PLUGIN_ALPUG ON CACHE BOOL "Compilation ALPUG ON or OFF")
 SET(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
@@ -125,43 +170,22 @@ SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PLUGIN_SYNTHIO ON CACHE BOOL "Compilation SYNTHIO ON or OFF")
 SET(PLUGIN_ZRXPIO OFF CACHE BOOL "Compilation ZRXPIO ON or OFF")
 SET(PROJ OFF CACHE BOOL "Use PROJ for the class MapProj ON or OFF")
-###########################################################
-## Additional Options
-###########################################################
-SET(RESTRICT_WRITE_ACCESS OFF CACHE BOOL "Limit write access of the library to a given directory (default: CWD)")
-MARK_AS_ADVANCED(FORCE RESTRICT_WRITE_ACCESS)
-IF(RESTRICT_WRITE_ACCESS)
-	IF(MSVC)	#TODO: replace by add_compile_definitions(RESTRICT_WRITE_ACCESS) when moving to cmake >=3.12 released 11.2018
-		ADD_DEFINITIONS(/RESTRICT_WRITE_ACCESS)
-	ELSE(MSVC)
-		ADD_DEFINITIONS(-DRESTRICT_WRITE_ACCESS)
-	ENDIF(MSVC)
-	SET(RESTRICTED_BASE_DIR "." CACHE STRING "Limit write access of the library to the given directory")
-	IF(MSVC)	#TODO: replace by add_compile_definitions("RESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\"") when moving to cmake >=3.12 released 11.2018
-		ADD_DEFINITIONS(/RESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\")
-	ELSE(MSVC)
-		ADD_DEFINITIONS(-DRESTRICTED_BASE_DIR=\"${RESTRICTED_BASE_DIR}\")
-	ENDIF(MSVC)
-ENDIF()
 
+IF(PLUGIN_IMISIO) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
 IF(CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
-	IF(PLUGIN_IMISIO) #HACK: current OCCI does not support the short strings optimizations of gcc>=5
-		SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
-	ENDIF(PLUGIN_IMISIO)
+	SET(EXTRA "-D_GLIBCXX_USE_CXX11_ABI=0 ${EXTRA}")
 ENDIF()
-
-#show exception messages in a graphical message box
-SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
+ENDIF(PLUGIN_IMISIO)
 
 ###########################################################
-#finally, SET compile flags
+#finally, SET compiler flags
 SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH} ${EXTRA}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
-
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
+###########################################################
 #Add subdirectory, so they can inherit all variables defined above
 ADD_SUBDIRECTORY(meteoio/dataClasses)
 ADD_SUBDIRECTORY(meteoio/dataGenerators)
@@ -173,21 +197,19 @@ ADD_SUBDIRECTORY(meteoio/gridResampling)
 ADD_SUBDIRECTORY(meteoio/spatialInterpolations)
 ADD_SUBDIRECTORY(meteoio)
 
-IF(METEOIO_TIMESERIES)
-	#it seems that the only reliable way is to test-compile...
-	INCLUDE (CheckCXXSourceCompiles)
-	CHECK_CXX_SOURCE_COMPILES("
-	#include <fenv.h>
-	int main() {
-	feenableexcept(FE_DIVBYZERO);
-	return 0;
-	}" HAVE_FEENABLE)
+#it seems that the only reliable way is to test-compile...
+INCLUDE (CheckCXXSourceCompiles)
+CHECK_CXX_SOURCE_COMPILES("
+#include <fenv.h>
+int main() {
+feenableexcept(FE_DIVBYZERO);
+return 0;
+}" HAVE_FEENABLE)
 
-	IF(HAVE_FEENABLE)
-		SET(DEBUG_ARITHM ON CACHE BOOL "Force-crash the application if doing an arithmetic exception")
-	ENDIF(HAVE_FEENABLE)
-	ADD_SUBDIRECTORY(applications)
-ENDIF(METEOIO_TIMESERIES)
+IF(HAVE_FEENABLE)
+	SET(DEBUG_ARITHM ON CACHE BOOL "Force-crash the application if doing an arithmetic exception")
+ENDIF(HAVE_FEENABLE)
+ADD_SUBDIRECTORY(applications)
 
 ###########################################################
 #for the install target
@@ -213,32 +235,6 @@ INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteoLaws COMPONENT head
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteoFilters COMPONENT headers)
 INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteoStats COMPONENT headers)
 
-ADD_CUSTOM_TARGET(distclean make clean
-	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPack*.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_*.cmake install_manifest.txt Makefile CMakeDoxy*
-	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}" "lib/libmeteo*.${STAT_EXT}" "lib/libmeteo*.lib"
-	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
-	COMMAND cmake -E remove *~ meteoio/*~ meteoio/*/*~ applications/*~
-	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
-	COMMAND cmake -E remove_directory doc/examples/CMakeFiles applications/CMakeFiles
-	COMMAND cmake -E remove_directory CMakeFiles meteoio/CMakeFiles meteoio/*/CMakeFiles
-	COMMAND cmake -E remove compile_commands.json
-	COMMAND cmake -E remove_directory Testing
-	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
-	COMMAND cmake -E remove_directory tests/Testing tests/*/Testing
-	COMMAND cmake -E remove tests/sun/generated_results.txt
-	COMMAND cmake -E remove tests/dem_reading/AZI.asc tests/dem_reading/DEM.asc tests/dem_reading/SLOPE.asc
-	COMMAND cmake -E remove tests/2D_interpolations/2009*_HNW.asc tests/2D_interpolations/2009*_RH.asc tests/2D_interpolations/2009*_RSWR.asc tests/2D_interpolations/2009*_TA.asc
-)
-
-###########################################################
-#for the uninstall target
-CONFIGURE_FILE(
-	"${PROJECT_SOURCE_DIR}/tools/cmake/cmake_uninstall.cmake.in"
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-	IMMEDIATE @ONLY)
-
-ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
-
 #Build the documentation if doxygen is found
 INCLUDE(FindDoxygen)
 IF(CMAKE_VERSION VERSION_GREATER 3.9)
@@ -246,18 +242,13 @@ IF(CMAKE_VERSION VERSION_GREATER 3.9)
 ELSE(CMAKE_VERSION VERSION_GREATER 3.9)
 	FIND_PACKAGE(Doxygen)
 ENDIF(CMAKE_VERSION VERSION_GREATER 3.9)
-if (DOXYGEN_FOUND)
+IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(doc COMMAND ${CMAKE_COMMAND} -E env MIO_VERSION="${_versionString}" "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
 ENDIF (DOXYGEN_FOUND)
 #Install the documentation if the user desires it
 SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
 IF(INSTALL_DOC)
-	IF(WIN32)
-		SET(DOC_PATH "doc")
-	ELSE(WIN32)
-		SET(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
-	ENDIF(WIN32)
-	SET(DOC_FILES License.txt meteoio/icons/icon.ico doc/SMET_specifications.pdf)
+	SET(DOC_FILES License.txt Readme.md meteoio/icons/meteoio.ico doc/SMET_specifications.pdf)
 	IF (DOXYGEN_FOUND)
 		INSTALL(DIRECTORY doc/html DESTINATION ${DOC_PATH} COMPONENT documentation)
 		LIST(APPEND DOC_FILES doc/MeteoIO_doc.html)
@@ -266,43 +257,68 @@ IF(INSTALL_DOC)
 	ENDIF (DOXYGEN_FOUND)
 
 	INSTALL(FILES ${DOC_FILES} DESTINATION ${DOC_PATH} COMPONENT documentation)
-	INSTALL(DIRECTORY "doc/examples" USE_SOURCE_PERMISSIONS DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
+	INSTALL(DIRECTORY "doc/examples" USE_SOURCE_PERMISSIONS DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".git*" EXCLUDE)
 ENDIF(INSTALL_DOC)
+
+FILE(GLOB xmlfiles "inishell-apps/*.xml" "inishell-apps/*.png")
+INSTALL(FILES ${xmlfiles} DESTINATION "${DOC_PATH}/inishell-apps" COMPONENT resource)
+
+###########################################################
+ADD_CUSTOM_TARGET(distclean make clean
+	COMMAND cmake -E remove CMakeCache.txt CTestTestfile.cmake cmake_*.cmake compile_commands.json install_manifest*.txt CMakeDoxy* CPack*.cmake DartConfiguration.tcl compilation.log
+	COMMAND cmake -E remove meteoio/icons/meteoio.rc tools/meteoio.plist meteoio/IOHandler.cc
+	COMMAND cmake -E remove_directory _CPack_Packages
+	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}" "lib/libmeteo*.${STAT_EXT}" "lib/libmeteo*.lib"
+	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
+	COMMAND cmake -E remove *~ meteoio/*~ meteoio/*/*~ applications/*~
+	COMMAND cmake -E remove */cmake_*.cmake */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_*.cmake
+	COMMAND cmake -E remove Makefile */Makefile */*/Makefile tests/Makefile tests/*/Makefile applications/Makefile
+	COMMAND cmake -E remove_directory CMakeFiles meteoio/CMakeFiles meteoio/*/CMakeFiles doc/examples/CMakeFiles applications/CMakeFiles
+	COMMAND cmake -E remove_directory Testing tests/Testing tests/*/Testing
+	COMMAND cmake -E remove_directory tests/CMakeFiles tests/*/CMakeFiles
+	COMMAND cmake -E remove tests/CTestTestfile.cmake tests/*/CTestTestfile.cmake
+	COMMAND cmake -E remove tests/sun/generated_results.txt
+	COMMAND cmake -E remove tests/dem_reading/AZI.asc tests/dem_reading/DEM.asc tests/dem_reading/SLOPE.asc
+	COMMAND cmake -E remove tests/2D_interpolations/2009*_HNW.asc tests/2D_interpolations/2009*_RH.asc tests/2D_interpolations/2009*_RSWR.asc tests/2D_interpolations/2009*_TA.asc
+)
+
+#for the uninstall target
+CONFIGURE_FILE(
+	"${PROJECT_SOURCE_DIR}/tools/cmake/cmake_uninstall.cmake.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+	IMMEDIATE @ONLY)
+
+ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 ###########################################################
 ## CPACK section
 ###########################################################
-SET(CPACK_BUNDLE_ALL OFF CACHE BOOL "Pack all necessary libs and tools for a standalone release")
-IF(CPACK_BUNDLE_ALL)
-	SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-	SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
-	
+IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
 	#standard libraries must be installed for gcc on Windows
-	IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
-		SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
-		IF(CPACK_BUNDLE_STDLIBS)
-			FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
-			FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
-			FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
-			IF("${stdlibs}" STREQUAL "")
-				MESSAGE("STDLIBS not found! Please make sure the dlls from your compiler for libwinpthread*, libstdc++* and libgcc_s_seh* are in ${CMAKE_SOURCE_DIR}/bin")
-			ENDIF("${stdlibs}" STREQUAL "")
-			INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
-		ENDIF(CPACK_BUNDLE_STDLIBS)
-	ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
-ENDIF(CPACK_BUNDLE_ALL)
+	SET(CPACK_BUNDLE_STDLIBS ON CACHE BOOL "Pack all necessary standard libs for a standalone release")
+	IF(CPACK_BUNDLE_STDLIBS)
+		FILE(GLOB winpthreads "${CMAKE_SOURCE_DIR}/bin/libwinpthread*.dll")
+		FILE(GLOB stdlibs "${CMAKE_SOURCE_DIR}/bin/libstdc++*.dll")
+		FILE(GLOB libgcc "${CMAKE_SOURCE_DIR}/bin/libgcc_s_seh*.dll")
+		IF("${stdlibs}" STREQUAL "")
+			MESSAGE("STDLIBS not found! Please make sure the dlls from your compiler for libwinpthread*, libstdc++* and libgcc_s_seh* are in ${CMAKE_SOURCE_DIR}/bin")
+		ENDIF("${stdlibs}" STREQUAL "")
+		SET(ALL_RX_PERM OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+		#SET(ALL_RO_PERM OWNER_READ GROUP_READ WORLD_READ)
+		INSTALL(FILES ${winpthreads} ${stdlibs} ${libgcc} DESTINATION bin PERMISSIONS ${ALL_RX_PERM} COMPONENT exe)
+	ENDIF(CPACK_BUNDLE_STDLIBS)
+ENDIF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "^GNU$")
 
+# CPACK_PACKAGE_DESCRIPTION_SUMMARY, CPACK_PACKAGE_NAME and CPACK_PACKAGE_VENDOR defined at the start of this file as they are required earlier
 SET(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
-SET(CPACK_PACKAGE_NAME "MeteoIO")
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 SET(CPACK_PACKAGE_CONTACT "Mathias Bavay <Mathias.Bavay@wsl.ch>")
-SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
-SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\icon.ico")
+SET(CPACK_PACKAGE_HOMEPAGE_URL "https://meteoio.slf.ch")
+SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\meteoio.ico")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
 SET(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/Welcome.txt")
-SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/Readme.txt")
+SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/Readme.md")
 
 SET(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
@@ -313,9 +329,7 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}-${CPACK_ARCH}")
 
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
-SET(CPACK_COMPONENTS_ALL libraries headers documentation examples exe resources)
-SET(CPACK_COMPONENT_RESOURCES_DISPLAY_NAME "Inishell resources")
-SET(CPACK_COMPONENT_RESOURCES_DESCRIPTION "Additional files to use Inishell")
+SET(CPACK_COMPONENTS_ALL libraries headers documentation resource examples exe)
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "MeteoIO library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The MeteoIO library itself")
 SET(CPACK_COMPONENT_LIBRARIES_GROUP Runtime)
@@ -323,6 +337,9 @@ SET(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Header files")
 SET(CPACK_COMPONENT_HEADERS_DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO")
 SET(CPACK_COMPONENT_HEADERS_GROUP Development)
 SET(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
+SET(CPACK_COMPONENT_RESOURCE_DISPLAY_NAME "MeteoIO's resources")
+SET(CPACK_COMPONENT_RESOURCE_DESCRIPTION "MeteoIO's XML files for the Inishell GUI")
+SET(CPACK_COMPONENT_RESOURCE_GROUP Runtime)
 SET(CPACK_COMPONENT_EXE_DISPLAY_NAME "MeteoIO's applications")
 SET(CPACK_COMPONENT_EXE_DESCRIPTION "MeteoIO's standalone applications")
 SET(CPACK_COMPONENT_EXE_GROUP Runtime)
@@ -346,25 +363,12 @@ SET(CPACK_COMPONENT_DEVELOPMENT_GROUP "Development")
 SET(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "What you need to develop an application based on MeteoIO")
 
 IF(UNIX)
-	IF(APPLE)	#OsX packages: IMG
-		SET(CPACK_GENERATOR "DragNDrop")
-		SET(CPACK_PACKAGING_INSTALL_PREFIX "/${CPACK_PACKAGE_NAME}")
-		SET(CPACK_DMG_FORMAT "UDBZ")
-		#SET(CPACK_GENERATOR "Bundle")
+	IF(APPLE)	#OsX packages: Bundle in a DMG
+		SET(CPACK_GENERATOR "Bundle")
 		SET(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/tools/meteoio.plist")
-		SET(MACOSX_BUNDLE_INFO_STRING "${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
-		SET(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/icon.icns")
-		SET(MACOSX_BUNDLE_ICON_FILE "${CPACK_BUNDLE_ICON}")
-		SET(MACOSX_BUNDLE_GUI_IDENTIFIER "${CPACK_PACKAGE_DESCRIPTION}")
-		SET(MACOSX_BUNDLE_LONG_VERSION_STRING "${VERSION}")
 		SET(CPACK_BUNDLE_NAME "${CPACK_PACKAGE_NAME}")
-		SET(MACOSX_BUNDLE_BUNDLE_NAME "${CPACK_PACKAGE_NAME}")
-		SET(MACOSX_BUNDLE_SHORT_VERSION_STRING "${VERSION}")
-		SET(MACOSX_BUNDLE_BUNDLE_VERSION "0")
-		SET(MACOSX_BUNDLE_COPYRIGHT "${CPACK_PACKAGE_VENDOR}")
-		#SET(CPACK_PACKAGING_INSTALL_PREFIX "/Applications/${CPACK_PACKAGE_NAME}")
-		SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/icon.icns")
-		SET_SOURCE_FILES_PROPERTIES(${CPACK_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+		SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/meteoio.icns")
+		SET(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons/meteoio.icns")
 	ELSE(APPLE)	#Linux packages: rmp, deb and tgz
 		SET(CPACK_GENERATOR "DEB;RPM;TGZ" CACHE STRING "Which packages to build")
 		MARK_AS_ADVANCED(FORCE CPACK_GENERATOR)
@@ -389,7 +393,6 @@ ELSE(UNIX)
 	IF(WIN32)	#Windows packages
 		SET(CPACK_GENERATOR "NSIS")
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
-		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
 		SET(CPACK_NSIS_MODIFY_PATH ON)
 		
@@ -407,18 +410,13 @@ ELSE(UNIX)
 		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries\\\\path' 'c:\\\\Program Files\\\\MeteoIO\\\\lib'
 		#	")
 		
-		#all other links: inishell
-		IF(CPACK_BUNDLE_ALL)
-# 			SET(MENU_LINKS_INISHELL "bin/inishell.exe" "MeteoIO's Inishell")
-		ENDIF(CPACK_BUNDLE_ALL)
-		
 		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_METEOIO} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ})
 		
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
-		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
+		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\meteoio.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://meteoio.slf.ch")
+		SET(CPACK_NSIS_HELP_LINK "${CPACK_PACKAGE_HOMEPAGE_URL}")
 		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 		SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
 	ENDIF(WIN32)

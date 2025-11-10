@@ -151,7 +151,7 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg)
 		Usage(argv[0]);
 	}
 	if(edr) {
-		cerr << "\nERROR: SNOWDRIFT should now be activated using the ENABLE key of the SNOWDRIFT section of the cfg file\n";
+		cerr << "\nERROR: SNOWDRIFT should now be activated using the SNOWDRIFT_ENABLE key of the ALPINE3D section of the cfg file\n";
 		Usage(argv[0]);
 	}
 	if(eeb) {
@@ -279,7 +279,7 @@ inline void setModules(const Config &cfg, const DEMObject &dem, const Grid2DObje
 		throw;
 	}
 
-	const bool enable_drift = cfg.get("ENABLE", "SNOWDRIFT", false);
+	const bool enable_drift = cfg.get("SNOWDRIFT_ENABLE", "ALPINE3D", false);
 
 	//SNOWDRIFT
 	if (enable_drift && isMaster) {

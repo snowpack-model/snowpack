@@ -164,7 +164,7 @@ https://snowpack.slf.ch
 				<parameter key="AVGSUM_TIME_SERIES" type="alternative" default="TRUE">
 					<option value="TRUE"/>
 					<option value="FALSE"/>
-					<help>If AVGSUM_TIME_SERIES is set, mean fluxes and cumulated masses since last dump are written, else current energy fluxes, cumulated masses over last COMPUTATION_STEP_LENGTH (recommended setting in operational mode). &lt;i&gt;This is forced to false when using virtual slopes!&lt;i&gt;
+					<help>If AVGSUM_TIME_SERIES is set, mean fluxes and cumulated masses since last dump are written, else current energy fluxes, cumulated masses over last CALCULATION_STEP_LENGTH (recommended setting in operational mode). &lt;i&gt;This is forced to false when using virtual slopes!&lt;i&gt;
 					</help>
 				</parameter>
 				<parameter key="CUMSUM_MASS" type="alternative" default="FALSE">

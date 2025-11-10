@@ -32,9 +32,14 @@ using namespace std;
 namespace mio {
  /**
  * @page coords Available coordinate systems
- * Geographic coordinates will be transparently and automatically converted to lat/lon and any other coordinate system that
- * the client program uses. However, in order to do so, the input coordinate system must be specified. In order to output
- * geolocalized data, the desired coordinate system must also be specified for the outputs (in the output section).
+ * There are two major kinds of <a href="https://www.geographyrealm.com/geographic-coordinate-system/">coordinate systems</a>: 
+ *  - Geographic Coordinate System (GCS): a 3D reference system that uses latitude and longitude to define the location of a point on the Earth’s surface (<a href="https://gisgeography.com/ellipsoid-oblate-spheroid-earth/">spheroid</a>);
+ *  - Projected Coordinate System (PCS): cartesian coordinates (Easting/Northing) to represent the location of a point on a two-dimensional surface. They are created by projecting the 3D GCS onto a two-dimensional surface. 
+ * 
+ * Because depending on the kind of computations that have to be done it might be more efficient to rely on GCS or PCS coordinates, MeteoIO
+ * transparently computes both sets of coordinates from what has been provided as input. However, in order to do so it is necessary to provide
+ * the input Projected Coordinate Systems (if coordinates are given as PCS) or a suitable PCS (if coordinates are provided as lat/lon). The same
+ * applies to the output where the desired coordinate system must also be specified for the outputs (in the output section).
  * This is done through the use of the COORDIN and COORDPARAM keys (see the documentation for each plugin).
  *
  * \anchor Coordinate_types
@@ -109,6 +114,27 @@ bool Coords::operator!=(const Coords& in) const {
 	return !(*this==in);
 }
 
+/**
+* @brief Comparison operator for sorting (as required by std::set)
+* @param[in] in Coord object to compare to
+* @return true or false
+*/
+bool Coords::operator<(const Coords& in) const {
+	if (latitude<in.latitude) return true;
+	if (latitude>in.latitude) return false;
+	if (longitude<in.longitude) return true;
+	if (longitude>in.longitude) return false;
+	if (altitude<in.altitude) return true;
+	if (altitude>in.altitude) return false;
+	
+	if (easting<in.easting) return true;
+	if (easting>in.easting) return false;
+	if (northing<in.northing) return true;
+	if (northing>in.northing) return false;
+	
+	return false; //all other cases are not <
+}
+
 Coords& Coords::operator=(const Coords& source) {
 	if (this != &source) {
 		altitude = source.altitude;
@@ -156,6 +182,8 @@ void Coords::moveByBearing(const double& i_bearing, const double& i_distance) {
 		case GEO_VINCENTY:
 			CoordsAlgorithms::VincentyInverse(latitude, longitude, i_distance, i_bearing, new_lat, new_lon);
 			break;
+		case NONE:
+			throw InvalidArgumentException("Uninitialized distance algorithm", AT);
 		default:
 			throw InvalidArgumentException("Unsupported distance algorithm", AT);
 	}
@@ -179,40 +207,43 @@ Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
 
 /**
 * @brief Simple merge strategy.
-* If some fields of the current object are empty, they will be filled by the matching field from the
-* provided argument.
+* @details If the current coordinates are not consistent (ie lat/lon and east/north don't match) while coord2 has
+* consistent coordinates, then the current coordinates would be replaced by coord2's. In normal cases, nothing
+* would even happen has coordinates are recomputed to be consistent when the setters are called...
 * @param[in] coord2 extra Coords to merge, lowest priority
 */
-void Coords::merge(const Coords& coord2) {
+void Coords::merge(const Coords& coord2) 
+{
+	if (validIndex==false && coord2.validIndex==true) {
+		validIndex=true;
+		grid_i=coord2.grid_i;
+		grid_j=coord2.grid_j;
+		grid_k=coord2.grid_k;
+	}
+	
+	if (distance_algo==NONE) {
+		distance_algo=coord2.distance_algo;
+	}
+	
 	if (altitude==IOUtils::nodata) altitude=coord2.altitude;
-	if (latitude==IOUtils::nodata) latitude=coord2.latitude;
-	if (longitude==IOUtils::nodata) longitude=coord2.longitude;
-	if (easting==IOUtils::nodata) easting=coord2.easting;
-	if (northing==IOUtils::nodata) northing=coord2.northing;
-
-	if (validIndex==false) validIndex=coord2.validIndex;
-	if (grid_i==IOUtils::nodata) grid_i=coord2.grid_i;
-	if (grid_j==IOUtils::nodata) grid_j=coord2.grid_j;
-	if (grid_k==IOUtils::nodata) grid_k=coord2.grid_k;
-
-	if (ref_latitude==IOUtils::nodata) ref_latitude=coord2.ref_latitude;
-	if (ref_longitude==IOUtils::nodata) ref_longitude=coord2.ref_longitude;
-
-	if (coordsystem=="NULL") coordsystem=coord2.coordsystem;
-	if (coordparam=="NULL") coordparam=coord2.coordparam;
-
-	if (distance_algo==IOUtils::nodata) distance_algo=coord2.distance_algo;
-
-	//in LOCAL projection, the check for the existence of the ref point will be done in the projection functions
-	if (coordsystem=="LOCAL" && !coordparam.empty()) {
-		CoordsAlgorithms::parseLatLon(coordparam, ref_latitude, ref_longitude);
+	
+	//the current object is complete, there is nothing to merge to
+	if (isConsistent()) return;
+	
+	//the object we merge from is complete, take everything from it
+	if (coord2.isConsistent()) {
+		latitude = coord2.latitude;
+		longitude = coord2.longitude;
+		easting = coord2.easting;
+		northing = coord2.northing;
+		ref_latitude = coord2.ref_latitude;
+		ref_longitude = coord2.ref_longitude;
+		coordsystem = coord2.coordsystem;
+		coordparam = coord2.coordparam;
+		return;
 	}
-	if (latitude!=IOUtils::nodata && coordsystem!="NULL") {
-		convert_from_WGS84(latitude, longitude, easting, northing);
-	}
-	if (latitude==IOUtils::nodata && coordsystem!="NULL") {
-		convert_to_WGS84(easting, northing, latitude, longitude);
-	}
+	
+	//all other cases are messy... For example, should we really mix lat1 with long2?
 }
 
 /**
@@ -706,7 +737,7 @@ void Coords::setDistances(const geo_distances in_algo) {
 
 /**
 * @brief Check consistency of coordinates
-* When both latitude/longitude and easting/northing are given, there is
+* @details When both latitude/longitude and easting/northing are given, there is
 * a risk of inconsistency between these two sets of coordinates.
 * This method checks that enough information is available (ie: at least one set
 * of coordinates is present) and if more than one is present, that it is consistent (within 5 meters)
@@ -745,6 +776,27 @@ void Coords::check(const std::string& pre_msg)
 			}
 		}
 	}
+}
+
+/**
+* @brief Check consistency of coordinates
+* @details As latitude/longitude and easting/northing are given, there is
+* a risk of inconsistency between these two sets of coordinates.
+* This method checks that we can convert back and forth between these two representarions with a reasonnable accuracy.
+* @return true if lat/lon and east/north represent the same point on Earth within a ~5m radius. 
+*/
+bool Coords::isConsistent() const
+{
+	if (coordsystem=="LOCAL" && (ref_latitude==IOUtils::nodata || ref_longitude==IOUtils::nodata)) return false;
+	
+	if (latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
+		double tmp_lat, tmp_lon;
+		convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
+		if (!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) return false;
+		return true;
+	}
+	
+	return false;
 }
 
 /**
@@ -889,6 +941,8 @@ void Coords::distance(const Coords& destination, double& o_distance, double& o_b
 			case GEO_VINCENTY:
 				o_distance = CoordsAlgorithms::VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), o_bearing);
 				break;
+			case NONE:
+				throw InvalidArgumentException("Uninitialized distance algorithm", AT);
 			default:
 				throw InvalidArgumentException("Unsupported distance algorithm", AT);
 		}

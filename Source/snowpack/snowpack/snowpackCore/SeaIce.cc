@@ -32,8 +32,8 @@
 #include <snowpack/snowpackCore/ReSolver1d.h>
 
 #include <assert.h>
-#include <sstream>
-#include <errno.h>
+#include <vector>
+#include <string>
 
 using namespace mio;
 using namespace std;
@@ -66,7 +66,7 @@ const double SeaIce::InitSnowSalinity = 0.;
  ************************************************************/
 
 SeaIce::SeaIce():
-	SeaLevel(0.), ForcedSeaLevel(IOUtils::nodata), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), check_initial_conditions(false), salinityprofile(SINUSSAL), thermalmodel(ASSUR1958) {}
+	SeaLevel(0.), ForcedSeaLevel(IOUtils::nodata), FreeBoard (0.), IceSurface(0.), IceSurfaceNode(0), OceanHeatFlux(0.), BottomSalFlux(0.), TopSalFlux(0.), check_initial_conditions(false), salinityprofile(SINUSSAL), thermalmodel(ASSUR1958), buoyancymodel(STANDARD), buoyancy_value(0.) {}
 
 SeaIce& SeaIce::operator=(const SeaIce& source) {
 	if(this != &source) {
@@ -121,8 +121,27 @@ void SeaIce::ConfigSeaIce(const SnowpackConfig& i_cfg) {
 		}
 	}
 
+	// Read buoyancy model for sea ice to use
+	std::string tmp_buoyancymodel;
+	i_cfg.getValue("BUOYANCYMODEL", "SnowpackSeaice", tmp_buoyancymodel, mio::IOUtils::nothrow);
+	if(!tmp_buoyancymodel.empty()) {
+		if (tmp_buoyancymodel=="STANDARD") {
+			buoyancymodel=STANDARD;
+			buoyancy_value = 0.;
+		} else if (tmp_buoyancymodel=="CONSTANTOFFSET") {
+			buoyancymodel=CONSTANTOFFSET;
+			i_cfg.getValue("BUOYANCYMODEL_ARG", "SnowpackSeaice", buoyancy_value);
+		} else if (tmp_buoyancymodel=="ADVANCED") {
+			buoyancymodel=ADVANCED;
+		} else {
+			prn_msg( __FILE__, __LINE__, "err", Date(), "Unknown buoyancy model (key: BUOYANCYMODEL).");
+			throw;
+		}
+	}
+
 	// Read whether or not to check the initial conditions
 	i_cfg.getValue("CHECK_INITIAL_CONDITIONS", "SnowpackSeaice", check_initial_conditions, mio::IOUtils::nothrow);
+
 	return;
 }
 
@@ -270,9 +289,91 @@ void SeaIce::updateFreeboard(SnowStation& Xdata)
 {
 	Xdata.compSnowpackMasses();
 	SeaLevel = (ForcedSeaLevel!=IOUtils::nodata) ? (ForcedSeaLevel) : (Xdata.swe / (Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity));
+
+	// Methods to take into account the spatial variability on the buoyancy. We perturb SeaLevel to achieve this.
+	if (buoyancymodel==CONSTANTOFFSET) {
+		SeaLevel += buoyancy_value;
+	} else if (buoyancymodel==ADVANCED) {
+		const double dry_buoyancy = (Xdata.swe - Xdata.lwc_sum) / (Constants::density_water + SeaIce::betaS * SeaIce::OceanSalinity);
+		// Find ice thickness. The first line would be ideal to use, but it leads to oscillations. Some ice forming higher up in the domain, can directly impact the ice thickness.
+		//const double mode_Hs = findIceSurface(Xdata);
+		// Sum all layers with dry density above the ice_threshold. This approach is more stable, as ice forming higher up in the domain only has a small impact on the total ice thickness.
+		double mode_Hs = 0.;
+		for (size_t e = 0; e < Xdata.getNumberOfElements(); e++) {
+			if (Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold) {
+				mode_Hs += Xdata.Edata[e].L;
+			}
+		}
+		const double x = dry_buoyancy - mode_Hs;
+		double correction = 0.;
+		if(x<-0.592) {
+			correction = 0.;
+		} else if (x<-0.050) {
+			correction = 0.093*x*x + 0.110*x + 0.033;
+		} else {
+			correction = -0.595*x + -0.002;
+		}
+		correction = std::min(0.333 * mode_Hs, correction);
+		SeaLevel += correction;
+	}
+
+	// Calculate freeboard
 	const double FreeBoard_snow = Xdata.cH - SeaLevel;	// This is the freeboard relative to snow surface
 	FreeBoard = (findIceSurface(Xdata) - (Xdata.cH - FreeBoard_snow));
 	return;
+}
+
+/**
+ * @brief Step detection in theta[ICE], to determine snow/ice transition\n
+ *   It uses a simple step-detection approach, for cases where it is known that only one step exists.
+ *   We use it on theta[ICE], to detect the location of the change from ice to snow
+ * @version 25.03
+ * @param Xdata SnowStation object to use in calculation
+ * @return Index of the node that represents the snow/ice transition
+ */
+size_t SeaIce::ThetaIceStepDetection(SnowStation& Xdata)
+{
+	const size_t nE = Xdata.getNumberOfElements();
+
+	std::vector<double> arr(nE, 0.);
+
+	double sum = 0.;
+	double theta_ice;
+	for (size_t e = 0; e < nE; e++) {
+		// We sharpen the contrast between ice and snow:
+		if(Xdata.Edata[e].theta[ICE] > 700./Constants::density_ice) {
+			theta_ice = 1.;
+		} else if (Xdata.Edata[e].theta[ICE] < 400./Constants::density_ice) {
+			theta_ice = 100./917.;
+		} else {
+			theta_ice = Xdata.Edata[e].theta[ICE];
+		}
+		sum+=theta_ice;
+		arr[e]=theta_ice;
+	}
+
+	// Mean centering
+	const double avg = sum / static_cast<double>(nE);
+	for (auto& val : arr) {
+		val -= avg;
+	}
+
+	// The left and right sum of the mean-centered series is 0
+	double l_sum = 0.;
+	double r_sum = 0.;
+
+	// Now find step
+	double max = 0.;	// max value
+	size_t max_i = 0;   // index of max value
+	for (size_t e = 0; e < nE; e++) {
+		l_sum += arr[e];
+		r_sum -= arr[e];
+		if (l_sum - r_sum > max) {
+			max = l_sum - r_sum;
+			max_i = e;
+		}
+	}
+	return max_i+1;	// We return the uppernode of the element
 }
 
 /**
@@ -283,6 +384,8 @@ void SeaIce::updateFreeboard(SnowStation& Xdata)
 double SeaIce::findIceSurface(SnowStation& Xdata)
 {
 	const size_t nE = Xdata.getNumberOfElements();
+	const bool useStepDetection = false; // If true, use the Step Detection algorithm. If false, use the original method to find the first layer from the top that has ice density.
+	                                     // FIXME: the original method can be removed, once the Step Detection algorithm is found to work well
 
 	// Now find ice/snow transition
 	if(nE == 0) {
@@ -290,23 +393,30 @@ double SeaIce::findIceSurface(SnowStation& Xdata)
 		IceSurfaceNode = 0;
 		return IceSurface;
 	}
-	// Deal with the case that the top element is ice
-	if (Xdata.Edata[nE-1].theta[ICE] * Constants::density_ice > ice_threshold) {
-		IceSurface = Xdata.Ndata[nE].z;
-		IceSurfaceNode = nE;
+
+	if(useStepDetection) {
+		IceSurfaceNode = ThetaIceStepDetection(Xdata);
+		IceSurface = Xdata.Ndata[IceSurfaceNode].z;
 		return IceSurface;
-	}
-	// Go from top to bottom. Note that ice layers inside the snowpack may fool this simple search.
-	for (size_t e = nE-1; e-- > 0;) {
-		if (Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold && Xdata.Edata[e+1].theta[ICE] * Constants::density_ice < ice_threshold) {
-			IceSurface = Xdata.Ndata[e+1].z;
-			IceSurfaceNode = e+1;
+	} else {
+		// Deal with the case that the top element is ice
+		if (Xdata.Edata[nE-1].theta[ICE] * Constants::density_ice > ice_threshold) {
+			IceSurface = Xdata.Ndata[nE].z;
+			IceSurfaceNode = nE;
 			return IceSurface;
 		}
+		// Go from top to bottom. Note that ice layers inside the snowpack may fool this simple search.
+		for (size_t e = nE-1; e-- > 0;) {
+			if (Xdata.Edata[e].theta[ICE] * Constants::density_ice > ice_threshold && Xdata.Edata[e+1].theta[ICE] * Constants::density_ice < ice_threshold) {
+				IceSurface = Xdata.Ndata[e+1].z;
+				IceSurfaceNode = e+1;
+				return IceSurface;
+			}
+		}
+		IceSurfaceNode = 0;
+		IceSurface = 0.;
+		return IceSurface;
 	}
-	IceSurfaceNode = 0;
-	IceSurface = 0.;
-	return IceSurface;
 }
 
 /**
@@ -449,13 +559,7 @@ std::pair<double, double> SeaIce::getMu(const double& Sal)
 		mu1 = -SeaIce::mu;
 	} else if (thermalmodel == VANCOPPENOLLE2019) {
 		// Numerical differentiation:
-		if(Sal < Constants::eps) {
-			// Left window
-			mu1 = (this->calculateMeltingTemperature(Sal - Constants::eps) - this->calculateMeltingTemperature(Sal - 2.*Constants::eps)) / Constants::eps;
-		} else {
-			// Centered window
-			mu1 = (this->calculateMeltingTemperature(Sal + Constants::eps) - this->calculateMeltingTemperature(Sal - Constants::eps)) / (2. * Constants::eps);
-		}
+		mu1 = (this->calculateMeltingTemperature(Sal + Constants::eps) - this->calculateMeltingTemperature(Sal - Constants::eps)) / (2. * Constants::eps);
 	} else if (thermalmodel == VANCOPPENOLLE2019_M) {
 		const double a1 = -0.16055612425953938;
 		const double a2 = -13.296596377964793;

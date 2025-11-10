@@ -125,7 +125,7 @@ std::vector< std::pair<size_t, size_t> > ProcQuantileMapping::getStarts(const st
 	std::vector< std::pair<size_t, size_t> > results;
 
 	if ((ivec.back().date.getJulian(true) - ivec.front().date.getJulian(true)) < .95*period_duration ) {
-		std::cerr << "Not enough data in buffer to use Filters::"+block_name+"\n";
+		std::cerr << "[W] Not enough data in buffer to use Filters::"+block_name+"\n";
 		return results;
 	}
 

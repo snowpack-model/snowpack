@@ -53,7 +53,7 @@ TerrainRadiationHelbig::TerrainRadiationHelbig(const mio::Config &cfg, const mio
 	LW_distance_index = (int)ceil(lw_radius / cellsize);
 
 	bool write_sky_vf = false;
-	cfg.getValue("WRITE_SKY_VIEW_FACTOR", "output", write_sky_vf, IOUtils::nothrow);
+	cfg.getValue("WRITE_SKY_VIEW_FACTOR", "EBalance", write_sky_vf, IOUtils::nothrow);
 
 	if (MPIControl::instance().master() && write_sky_vf)
 	{

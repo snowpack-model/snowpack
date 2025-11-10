@@ -75,6 +75,7 @@ namespace IOUtils {
 	const double nodata = -999.0; ///<This is the internal nodata value
 	const unsigned int unodata = static_cast<unsigned int>(-1);
 	const int inodata = -999;
+	const long lnodata = -999;
 	const short int snodata = -999;
 	const char cnodata = std::numeric_limits<char>::max();
 	const size_t npos = static_cast<size_t>(-1);  ///<npos is the out-of-range value
@@ -462,7 +463,7 @@ namespace IOUtils {
 	/**
 	* @brief Convert a textual representation of a unit prefix (like 'm' or 'G') to multiplying factor
 	* @param prefix unit prefix
-	* return multiplying factor
+	* @return multiplying factor
 	*/
 	double unitsPrefix(const char& prefix);
 
@@ -472,9 +473,16 @@ namespace IOUtils {
 	* @param val value to convert
 	* @param unitIn units of the input
 	* @param unitOut units to convert to
-	* return value, expressed in unitOut
+	* @return value, expressed in unitOut
 	*/
 	double unitsConversion(const double& val, std::string unitIn, std::string unitOut);
+	
+	/**
+	* @brief Escape special charaters in a string to make it suitable for XML output
+	* @param input Original string
+	* @return escaped string
+	*/
+	std::string escapeXml(const std::string& input);
 } //end namespace IOUtils
 
 } //end namespace mio

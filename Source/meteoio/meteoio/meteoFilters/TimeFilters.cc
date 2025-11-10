@@ -44,12 +44,15 @@ TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& v
 	for (size_t ii=0; ii<vecArgs.size(); ii++) {
 		if (vecArgs[ii].first=="TYPE") {
 			const std::string type_str( IOUtils::strToUpper( vecArgs[ii].second ) );
-			if (type_str=="CLEANUP") {
-				op_mode = CLEANUP;
+			if (type_str=="DUPLICATES") {
+				op_mode = DUPLICATES;
 			} else if (type_str=="FRAC") {
 				op_mode = FRAC;
 			} else if (type_str=="BYDATES") {
 				op_mode = BYDATES;
+			} else if (type_str=="CLEANUP") { //HACK temporary warning until full deprecation
+				std::cerr << "[W] The CLEANUP argument has been renamed into DUPLICATES for " + where + ", please update your ini file!\n";
+				op_mode = DUPLICATES;
 			} else {
 				throw InvalidArgumentException("Unknown type '" + vecArgs[ii].second + "' for " + where, AT);
 			}
@@ -78,7 +81,7 @@ TimeSuppr::TimeSuppr(const std::vector< std::pair<std::string, std::string> >& v
 	}
 	
 	if (!has_type) throw InvalidArgumentException("Please provide a TYPE for "+where, AT);
-	if (op_mode==CLEANUP && (has_frac || has_file)) throw InvalidArgumentException("The CLEANUP type for " + where + " does not take extra arguments", AT);
+	if (op_mode==DUPLICATES && (has_frac || has_file)) throw InvalidArgumentException("The DUPLICATES type for " + where + " does not take extra arguments", AT);
 	if (has_frac && has_file) throw InvalidArgumentException("It is not possible tp provide both the FILE and FRAC arguments for " + where, AT);
 	if (op_mode==BYDATES && !has_file) throw InvalidArgumentException("Please provide the FILE argument for " + where, AT);
 	if (op_mode==FRAC && !has_frac) throw InvalidArgumentException("Please provide the FRAC argument for " + where, AT);
@@ -95,7 +98,7 @@ void TimeSuppr::process(const unsigned int& param, const std::vector<MeteoData>&
 	if (ovec.empty()) return;
 	
 	switch(op_mode) {
-		case CLEANUP : supprInvalid(ovec); break;
+		case DUPLICATES : supprDuplicates(ovec); break;
 		case FRAC : supprFrac(ovec); break;
 		case BYDATES : supprByDates(ovec); break;
 		default :
@@ -179,7 +182,7 @@ void TimeSuppr::supprFrac(std::vector<MeteoData>& ovec) const
 	ovec.erase( std::remove_if(ovec.begin(), ovec.end(), IsUndef), ovec.end());
 }
 
-void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
+void TimeSuppr::supprDuplicates(std::vector<MeteoData>& ovec) const
 {
 	const std::string stationID( ovec.front().getStationID() );
 	Date previous_date( ovec.front().date );
@@ -204,8 +207,8 @@ void TimeSuppr::supprInvalid(std::vector<MeteoData>& ovec) const
 		}
 	}
 	
-	//Now sort the vector so points jumping back now appear as duplicates
-	std::sort(ovec.begin(), ovec.end());
+	//The user must first define a time::sort filter
+	if (count_ooo_points>0) throw InvalidFormatException("There are some out of order timestamps, please first declare a sort time filter!", AT);
 	
 	//merge the duplicates
 	previous_date = ovec.front().date;

@@ -132,9 +132,9 @@ MeteoObj::MeteoObj(const mio::Config& in_config, const mio::DEMObject& in_dem)
                      p(in_dem, IOUtils::nodata), ilwr(in_dem, IOUtils::nodata), iswr_dir(in_dem, IOUtils::nodata),
                      iswr_diff(in_dem, IOUtils::nodata), sum_ta(), sum_rh(), sum_rh_psum(), sum_psum(), sum_psum_ph(),
                      sum_vw(), sum_ilwr(), vecMeteo(), date(), glaciers(NULL), count_sums(0), count_precip(0),
-                     skipWind(false), dataFromGrids(false), soil_flux(true), enable_simple_snow_drift(false)
+                     skipWind(false), meteoFromGrids(false), soil_flux(true), enable_simple_snow_drift(false)
 {
-	config.getValue("DATA_FROM_GRIDS", "input", dataFromGrids,IOUtils::nothrow);
+	config.getValue("METEO_FROM_GRIDS", "input", meteoFromGrids, IOUtils::nothrow);
 
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;
@@ -269,7 +269,7 @@ void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)
 
 void MeteoObj::fillMeteoGrids(const Date& calcDate)
 {
-	if(dataFromGrids){
+	if(meteoFromGrids){
 		io.read2DGrid(psum, MeteoGrids::PSUM, date);
 
 		io.read2DGrid(rh, MeteoGrids::RH, date);
@@ -343,7 +343,7 @@ void MeteoObj::getMeteo(const Date& calcDate)
 	//Note: in case of MPI simulation only master node is responsible for file I/O
 	if (!MPIControl::instance().master()) return;
 
-	if(!dataFromGrids){
+	if(!meteoFromGrids){
 		// Collect the Meteo values at each stations
 		io.getMeteoData(calcDate, vecMeteo);
 		checkInputsRequirements(vecMeteo);

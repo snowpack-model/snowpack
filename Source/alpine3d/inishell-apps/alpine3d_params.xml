@@ -38,6 +38,12 @@ https://snowpack.slf.ch
 		<option value="FALSE"/>
 		<help>Should the katabatic flows above glaciers be simulated? (see &lt;a href="https://alpine3d.slf.ch/doc-release/html/glaciers.html"&gt;glaciers&lt;/a&gt;)</help>
 	</parameter>
+	
+	<parameter key="SNOWDRIFT_ENABLE" type="alternative" default="FALSE" section="Alpine3D">
+		<option value="TRUE"/>
+		<option value="FALSE"/>
+		<help>Should the snow drift module be enabled? (default: false)</help>
+	</parameter>
 
 	<parametergroup name="KATABATIC_FLOWS">
 		<parameter type="helptext" wrap="true" section="Alpine3D">

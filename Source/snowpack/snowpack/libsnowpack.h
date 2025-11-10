@@ -51,6 +51,7 @@
 #include <snowpack/snowpackCore/Snowpack.h>
 #include <snowpack/snowpackCore/Solver.h>
 #include <snowpack/snowpackCore/WaterTransport.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 
 #endif
 

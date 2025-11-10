@@ -31,7 +31,7 @@ namespace mio {
  * @section dbo_format Format
  * This plugin reads meteorological data from DBO
  * via the RESTful web service. To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
- * \warning This plugin is for SLF's internal use only!
+ * \warning This plugin is for SLF's internal use only! You can also access the data through a web interface at <a href="https://measurements.slf.ch/">measurements.slf.ch</a>.
  *
  * You can have a look at the stations that are available through this web service on <a href="https://map.geo.admin.ch/?zoom=5&lang=en&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=KML%7C%7Chttps:%2F%2Fstationdocu.slf.ch%2Fkml%2Fnetwork-map.kml&E=2782095.39&N=1179586.56">this map</a>.
  * Please keep in mind that some stations might be overlaid on top of each other and will require you to zoom in quite a lot in order to differentiate them!
@@ -40,7 +40,7 @@ namespace mio {
  * This plugin uses the following keywords:
  * - DBO_URL: The URL of the RESTful web service (default: https://pgdata.int.slf.ch)
  * - DBO_PROXY: The URL of a <A HREF="https://linuxize.com/post/how-to-setup-ssh-socks-tunnel-for-private-browsing/">SOCKS5 proxy</A> for the connection to go through (optional, specified as {host}:{port} such as *localhost:8080*, see <A HREF="https://stackoverflow.com/questions/51579063/curl-https-via-an-ssh-proxy">this</A> for more)
- * - STATION#: station code for the given station, prefixed by the network it belongs ot (for example: IMIS::SLF2, by default the network is assumed to be IMIS)
+ * - STATION#: station code for the given station, prefixed by the network it belongs to (for example: IMIS::SLF2, by default the network is assumed to be IMIS). Valid networks are IMIS, SMN, BEOB, IMIS_RELAIS, VIRTUAL).
  * - DBO_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - DBO_COVERAGE_RESTRICT: only request data from within the provided DateRange (see DateRange::setRange) (this is useful when merging data from several sources, for example to only get the new data from DBO and otherwise use the old data from files)
  * - DBO_DEBUG: print the full requests/answers from the server when something does not work as expected (default: false)
@@ -172,7 +172,7 @@ void DBO::initDBOConnection(const Config& cfg)
 {
 	cfg.getValue("DBO_URL", "Input", endpoint, IOUtils::nothrow);
 	if (*endpoint.rbegin() != '/') endpoint += "/";
-	std::cerr << "[i] Using DBO URL: " << endpoint << std::endl;
+	std::cerr << "[I] Using DBO URL: " << endpoint << std::endl;
 	
 	int http_timeout = http_timeout_dflt;
 	cfg.getValue("DBO_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
@@ -181,7 +181,7 @@ void DBO::initDBOConnection(const Config& cfg)
 	json->setConnectionParams(proxy, http_timeout, dbo_debug);
 	
 	std::string dateRangeHint;
-	cfg.getValue("DBO_COVERAGE_RESTRICT", "INPUT", dateRangeHint);
+	cfg.getValue("DBO_COVERAGE_RESTRICT", "INPUT", dateRangeHint, IOUtils::nothrow);
 	if (!dateRangeHint.empty()) coverageRestrict.setRange( dateRangeHint, dbo_tz );
 }
 
@@ -320,6 +320,8 @@ std::string DBO::getParameter(const std::string& param_str, const std::string& a
 	else if (param_str=="TS0") return "TSG";
 	else if (param_str=="TSS") return "TSS";
 	else if (param_str=="HS") return "HS";
+	else if (param_str=="HN") return "HN";
+	else if (param_str=="HNW") return "HN_SWE";
 	else if (param_str=="VW" && agg_type=="MAX") return "VW_MAX";
 	else if (param_str=="VW") return "VW";
 	else if (param_str=="DW") return "DW";
@@ -327,12 +329,12 @@ std::string DBO::getParameter(const std::string& param_str, const std::string& a
 	else if (param_str=="ISWR") return "ISWR";
 	else if (param_str=="ILWR") return "ILWR";
 	else if (param_str=="RR") return "PSUM";
-	else if (param_str=="TS25") return "TS1";
-	else if (param_str=="TS50") return "TS2";
-	else if (param_str=="TS100") return "TS3";
-	else if (param_str=="TG10") return "TSOIL10";
-	else if (param_str=="TG30") return "TSOIL30";
-	else if (param_str=="TG50") return "TSOIL50";
+	else if (param_str=="TS25") return "TS@25";
+	else if (param_str=="TS50") return "TS@50";
+	else if (param_str=="TS100") return "TS@100";
+	else if (param_str=="TG10") return "TSOIL@10";
+	else if (param_str=="TG30") return "TSOIL@30";
+	else if (param_str=="TG50") return "TSOIL@50";
 
 	if (dbo_debug) return param_str;
 	return "";
@@ -346,15 +348,15 @@ std::string DBO::getParameter(const std::string& param_str, const std::string& a
 void DBO::setUnitsConversion(tsMeta& ts)
 {
 	//compute the conversion parameters (C to K, cm to m, % to [0-1], PINT to PSUM
-	if (ts.parname=="TA" || ts.parname=="TSG" || ts.parname=="TSS") {
+	if (ts.parname=="TA" || ts.parname=="TD" || ts.parname=="TSG" || ts.parname=="TSS") {
 		ts.units_offset = Cst::t_water_freezing_pt;
-	} else if(ts.parname=="RH" || ts.parname=="HS") {
+	} else if(ts.parname=="RH" || ts.parname=="HS" || ts.parname=="HN"|| ts.parname=="HN_SWE") {
 		ts.units_factor = 0.01;
 	} else if(ts.parname=="PSUM") {
 		ts.units_factor = 3600. / ts.interval;
-	} else if(ts.parname=="TS1" || ts.parname=="TS2" || ts.parname=="TS3") {
+	} else if(ts.parname.find("TS@", 0)!=std::string::npos) {
 		ts.units_offset = Cst::t_water_freezing_pt;
-	} else if(ts.parname=="TSOIL10" || ts.parname=="TSOIL30" || ts.parname=="TSOIL50") {
+	} else if(ts.parname.find("TSOIL@", 0)!=std::string::npos) {
 		ts.units_offset = Cst::t_water_freezing_pt;
 	}
 	

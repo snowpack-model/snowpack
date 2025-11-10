@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>snowpack</string>
+	<key>CFBundleIdentifier</key>
+	<string>ch.slf.snowpack</string>
+	<key>CFBundleName</key>
+	<string>@CPACK_PACKAGE_NAME@</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@_versionString@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>© @CPACK_PACKAGE_VENDOR@, 1999-@CURR_YEAR@</string>
+	<key>CFBundleGetInfoString</key>
+	<string>@CPACK_PACKAGE_NAME@ @_versionString@</string>
+	<key>CFBundleIconFile</key>
+	<string>Snowpack</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.education</string>
+	<key>LSRequiresNativeExecution</key>
+	<string>YES</string>
+	<key>Homepage</key>
+	<string>https://snowpack.slf.ch</string>
+	<key>BuildDate</key>
+	<string>@TODAY_ISO@</string>
+</dict>
+</plist>

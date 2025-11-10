@@ -176,6 +176,7 @@ class Date {
 		static double parseTimeZone(const std::string& timezone_iso);
 
 		static std::string printFractionalDay(const double& fractional);
+		static std::string printISODuration(const Date& dt1, const Date& dt2);
 		const std::string toString(const FORMATS& type, const bool& gmt=false) const;
 		const std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const Date& date);
@@ -255,7 +256,7 @@ class DateRange {
 		 * @return true if the date is within the current range, false otherwise
 		 */
 		bool in(const Date& a) const {
-			if (!isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
+			if (!isValid) throw InvalidArgumentException("Date range '"+toString()+"' has not been properly initialized!", AT);
 			return (a >= start && a <= end);
 		}
 		
@@ -273,7 +274,7 @@ class DateRange {
 		 * @return true if the date is more than the end of the current range, false otherwise
 		 */
 		bool operator<(const Date& a) const {
-			if (!isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
+			if (!isValid) throw InvalidArgumentException("Date range '"+toString()+"' has not been properly initialized!", AT);
 			return end < a;
 		}
 		
@@ -283,18 +284,20 @@ class DateRange {
 		 * @return true if the date is less than the start of the current range, false otherwise
 		 */
 		bool operator>(const Date& a) const {
-			if (!isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
+			if (!isValid) throw InvalidArgumentException("Date range '"+toString()+"' has not been properly initialized!", AT);
 			return start > a;
 		}
 		
 		bool operator<(const DateRange& a) const { //needed for "sort"
-			if (!isValid || !a.isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
+			if (!isValid) throw InvalidArgumentException("Date range '"+toString()+"' has not been properly initialized!", AT);
+			if (!a.isValid) throw InvalidArgumentException("Date range '"+a.toString()+"' has not been properly initialized!", AT);
 			if (start==a.start) return end < a.end;
 			return start < a.start;
 		}
 		
 		bool operator==(const DateRange& a) const { //needed to check for uniqueness
-			if (!isValid || !a.isValid) throw InvalidArgumentException("Date range has not been properly initialized!", AT);
+			if (!isValid) throw InvalidArgumentException("Date range '"+toString()+"' has not been properly initialized!", AT);
+			if (!a.isValid) throw InvalidArgumentException("Date range '"+a.toString()+"' has not been properly initialized!", AT);
 			return (start==a.start) && (end==a.end);
 		}
 		
