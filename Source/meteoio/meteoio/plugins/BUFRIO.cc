@@ -175,7 +175,7 @@ using namespace PLUGIN;
 
     BUFRIO::BUFRIO(const std::string &configfile)
         : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params(), outpath(), separate_stations(false), verbose_out(false), write_cryo(false),
-          wigos_id_series(IOUtils::nodata), wigos_issuer(IOUtils::nodata), wigos_issue_no(IOUtils::nodata), station_type(3), surface_type(255), snow_depth_method(15), wigos_local_id() {
+          wigos_id_series(IOUtils::lnodata), wigos_issuer(IOUtils::lnodata), wigos_issue_no(IOUtils::lnodata), station_type(3), surface_type(255), snow_depth_method(15), wigos_local_id() {
         IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
         parseInputSection();
@@ -184,7 +184,7 @@ using namespace PLUGIN;
 
     BUFRIO::BUFRIO(const Config &cfgreader)
         : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), station_files(), additional_params(), outpath(), separate_stations(false), verbose_out(false), write_cryo(false),
-          wigos_id_series(IOUtils::nodata), wigos_issuer(IOUtils::nodata), wigos_issue_no(IOUtils::nodata), station_type(3), surface_type(255), snow_depth_method(15),   wigos_local_id() {
+          wigos_id_series(IOUtils::lnodata), wigos_issuer(IOUtils::lnodata), wigos_issue_no(IOUtils::lnodata), station_type(3), surface_type(255), snow_depth_method(15),   wigos_local_id() {
         IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
         parseInputSection();
         parseOutputSection();
@@ -272,20 +272,10 @@ using namespace PLUGIN;
     // ------------------------- WRITE -------------------------
 
     // STATIC WRITE HELPERS
-    static bool isNumber(const std::string &s) {
-        //TODO HACK consider replacing this by IOUtils::isNumeric() since exeptions handling is very costly
-        try {
-            std::stod(s);
-            return true;
-        } catch (const std::invalid_argument &) {
-            return false;
-        }
-    }
-
     static void setStationId(CodesHandlePtr &message, const StationData &station, const std::string &subset_prefix) {
         const std::string station_id( station.getStationID() );
         bool set_id = false;
-        if (isNumber(station_id)) {
+        if (IOUtils::isNumeric(station_id)) {
             set_id = setParameter(message, subset_prefix + "stationNumber", station_id);
         } else {
             set_id = setParameter(message, subset_prefix + "shortStationName", station_id);

@@ -9,6 +9,7 @@ install_manifest.txt
 **/cmake_install.cmake
 **/cmake_uninstall.cmake
 **/Makefile
+DartConfiguration.tcl
 
 #generated files
 /doc/html/*
@@ -17,6 +18,8 @@ lib/*
 *.aux
 *.log
 build/
+compile_commands.json
+**/CTestTestfile.cmake
 
 #editor files:
 *.swp
@@ -43,3 +46,12 @@ CPackSourceConfig.cmake
 doc/examples/Stillberg/output/grids/*
 doc/examples/Stillberg/output/9*
 doc/examples/Stillberg/output/io.ini
+
+#tests generated files
+tests/**/*.lwr
+tests/**/*.sdp
+tests/**/*.swe
+tests/**/*.swr
+tests/**/*.ta
+tests/**/*.tss
+tests/**/5_2_dischma*.*

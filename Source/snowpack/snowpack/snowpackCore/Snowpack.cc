@@ -31,13 +31,13 @@
 #include <snowpack/Utils.h>
 #include <snowpack/Laws_sn.h>
 #include <snowpack/snowpackCore/WaterTransport.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 #include <snowpack/snowpackCore/VapourTransport.h>
 #include <snowpack/TechnicalSnow.h>
 #include <snowpack/snowpackCore/Metamorphism.h>
 #include <snowpack/snowpackCore/PhaseChange.h>
 
 #include <assert.h>
-#include <sstream>
 #include <errno.h>
 
 using namespace mio;
@@ -99,7 +99,7 @@ Snowpack::Snowpack(const Snowpack& c) :					///< Copy constructor
             soil_flux(c.soil_flux), useSoilLayers(c.useSoilLayers), coupled_phase_changes(c.coupled_phase_changes), combine_elements(c.combine_elements), reduce_n_elements(c.reduce_n_elements), force_add_snowfall(c.force_add_snowfall), max_simulated_hs(c.max_simulated_hs),
             change_bc(c.change_bc), meas_tss(c.meas_tss), vw_dendricity(c.vw_dendricity),
             enhanced_wind_slab(c.enhanced_wind_slab), snow_erosion(c.snow_erosion), redeposit_keep_age(c.redeposit_keep_age), alpine3d(c.alpine3d), ageAlbedo(c.ageAlbedo), soot_ppmv(c.soot_ppmv), adjust_height_of_meteo_values(c.adjust_height_of_meteo_values), adjust_height_of_wind_value(c.adjust_height_of_wind_value), advective_heat(c.advective_heat), heat_begin(c.heat_begin), heat_end(c.heat_end),
-            temp_index_degree_day(c.temp_index_degree_day), temp_index_swr_factor(c.temp_index_swr_factor), forestfloor_alb(c.forestfloor_alb), rime_index(c.rime_index), newsnow_lwc(c.newsnow_lwc), read_dsm(c.read_dsm), soil_evaporation(c.soil_evaporation), soil_thermal_conductivity(c.soil_thermal_conductivity) {
+            temp_index_degree_day(c.temp_index_degree_day), temp_index_swr_factor(c.temp_index_swr_factor), allow_freezing_rain(c.allow_freezing_rain), forestfloor_alb(c.forestfloor_alb), rime_index(c.rime_index), newsnow_lwc(c.newsnow_lwc), read_dsm(c.read_dsm), soil_evaporation(c.soil_evaporation), soil_thermal_conductivity(c.soil_thermal_conductivity) {
 	watertransport = NULL;
 	vapourtransport = NULL;
 	metamorphism = NULL;
@@ -223,7 +223,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
             change_bc(false), meas_tss(false), vw_dendricity(false),
             enhanced_wind_slab(false), snow_erosion("NONE"), redeposit_keep_age(false), alpine3d(false), ageAlbedo(true), soot_ppmv(0.), adjust_height_of_meteo_values(true),
             adjust_height_of_wind_value(false), advective_heat(false), heat_begin(0.), heat_end(0.),
-            temp_index_degree_day(0.), temp_index_swr_factor(0.), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(), soil_thermal_conductivity()
+            temp_index_degree_day(0.), temp_index_swr_factor(0.), allow_freezing_rain(false), forestfloor_alb(false), rime_index(false), newsnow_lwc(false), read_dsm(false), soil_evaporation(), soil_thermal_conductivity()
 {
 	cfg.getValue("FORCING", "Snowpack", forcing);
 	cfg.getValue("ALPINE3D", "SnowpackAdvanced", alpine3d);
@@ -339,6 +339,9 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	 * - thresh dtempAirSnow: 3.0 */
 	cfg.getValue("THRESH_RH", "SnowpackAdvanced", thresh_rh);
 	cfg.getValue("THRESH_DTEMP_AIR_SNOW", "SnowpackAdvanced", thresh_dtempAirSnow);
+	// Allow freezing rain: if false, mixed phase precipitation adds snow layers at melting point
+	//                      if true, mixed phase precipitation adds snow layers at air temperature or melting point, whichever is lower
+	cfg.getValue("ALLOW_FREEZING_RAIN", "SnowpackAdvanced", allow_freezing_rain);
 
 	//Calculation time step in seconds as derived from CALCULATION_STEP_LENGTH
 	const double calculation_step_length = cfg.get("CALCULATION_STEP_LENGTH", "Snowpack");
@@ -362,7 +365,7 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 	cfg.getValue("T_CRAZY_MIN", "SnowpackAdvanced", t_crazy_min);
 	cfg.getValue("T_CRAZY_MAX", "SnowpackAdvanced", t_crazy_max);
 	cfg.getValue("FORESTFLOOR_ALB", "SnowpackAdvanced", forestfloor_alb);
-
+	cfg.getValue("ENHANCED_WIND_SLAB", "SnowpackAdvanced", enhanced_wind_slab);
 
 	/* Initial new snow parameters, see computeSnowFall()
 	* - that rg and rb are equal to 0.5*gsz and 0.5*bsz, respectively. Both given in millimetres
@@ -386,7 +389,6 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		vw_dendricity = false;
 		rh_lowlim = 0.7;
 		bond_factor_rh = 3.0;
-		enhanced_wind_slab = true;
 		ageAlbedo = false;
 	} else {
 		new_snow_dd = 1.0;
@@ -396,7 +398,6 @@ Snowpack::Snowpack(const SnowpackConfig& i_cfg)
 		vw_dendricity = true;
 		rh_lowlim = 1.0;
 		bond_factor_rh = 1.0;
-		enhanced_wind_slab = false; //true; //
 	}
 
 	cfg.getValue("SNOW_EROSION", "SnowpackAdvanced", snow_erosion);
@@ -538,8 +539,9 @@ void Snowpack::compSnowCreep(const CurrentMeteo& Mdata, SnowStation& Xdata, Surf
 				if ((EMS[e].theta[WATER] < SnowStation::thresh_moist_snow)
 				      && (vw_ref > Metamorphism::wind_slab_vw)
 					&& ((dz < Metamorphism::wind_slab_depth) || (e == nE-1))) {
-					if (Snowpack::enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
+					if (enhanced_wind_slab) { //NOTE tested with Antarctic variant: effects heavily low density snow
 						// fits original parameterization at Metamorphism::wind_slab_vw + 0.6 m/s
+						// See Eqs. 2 and 3 in Groot Zwaaftink et al. (2013), doi: 10.5194/tc-7-333-2013
 						wind_slab += 2.7 * Metamorphism::wind_slab_enhance
 							         * Optim::pow3(dv) * (1. - dz / (1.25 * Metamorphism::wind_slab_depth));
 					} else {
@@ -764,7 +766,11 @@ void Snowpack::updateBoundHeatFluxes(BoundCond& Bdata, SnowStation& Xdata, const
 
 	if (Mdata.psum>0. && Mdata.psum_ph>0.) { //there is some rain
 		const double gamma = ((Mdata.psum * Mdata.psum_ph) / sn_dt) * Constants::specific_heat_water;
-		Bdata.qr = gamma * (Tair - Tss);
+		if (allow_freezing_rain) {
+			Bdata.qr = gamma * (Tair - Tss);
+		} else {
+			Bdata.qr = gamma * (std::max(Tair, Xdata.Edata[Xdata.getNumberOfElements()-1].meltfreeze_tk) - Tss);
+		}
 	} else {
 		Bdata.qr = 0.;
 	}
@@ -1262,10 +1268,14 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					const double BrineSal_new = (tmp_Theta == 0.) ? (0.) : (Xdata.Edata[e].salinity / tmp_Theta);
 
 					std::pair<double, double> mu = Xdata.Seaice->getMu(BrineSal_new);
-					if(mu.second < -Constants::eps2) {
+					if(mu.second < 0.) {
 						Xdata.Edata[e].meltfreeze_tk = -1. * (sqrt(A * f * A * f * tmp_T * tmp_T + (2. * A * f * tmp_Theta - 2. * A * f * A * f * mu.first) * tmp_T + tmp_Theta * tmp_Theta - 2. * A * f * mu.first * tmp_Theta - 4. * A * f * mu.second * Xdata.Edata[e].salinity + A * f * A * f * mu.first * mu.first) - A * f * tmp_T - tmp_Theta - A * f * mu.first) / (2. * A * f);
 					} else {
-						Xdata.Edata[e].meltfreeze_tk = IOUtils::C_TO_K(0.);
+						if (BrineSal_new > 0.) {
+							Xdata.Edata[e].meltfreeze_tk = tmp_T;
+						} else {
+							Xdata.Edata[e].meltfreeze_tk = IOUtils::C_TO_K(0.);
+						}
 					}
 				}
 
@@ -1285,6 +1295,8 @@ bool Snowpack::compTemperatureProfile(const CurrentMeteo& Mdata, SnowStation& Xd
 					}
 					// Correct volumetric changes in upper and lower half of element proportional to limits
 					dth_i_down[e] = dth_i_up[e] = dth_i_lim;
+				} else {
+					dth_i_down[e] = dth_i_up[e] = dth_i_sum;
 				}
 
 				// Track max. abs. change in ice contents
@@ -1550,8 +1562,7 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 		elem.theta[AIR] = 1. - elem.theta[ICE];  // void content
 	} else { // no Graupel
 		elem.mk = Snowpack::new_snow_marker;
-		if (SnLaws::jordy_new_snow && (Mdata.vw > 2.9)
-			&& ((hn_density_parameterization == "LEHNING_NEW") || (hn_density_parameterization == "LEHNING_OLD"))) {
+		if ((Mdata.vw > 2.9) && (hn_density_parameterization == "JORDY")) {
 			elem.dd = std::max(0.5, std::min(1.0, Optim::pow2(1.87 - 0.04*Mdata.vw)) );
 			elem.sp = new_snow_sp;
 			static const double alpha = 0.9, beta = 0.015, gamma = -0.0062;
@@ -1560,17 +1571,20 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 				alpha + beta*TA + gamma*RH + delta*Mdata.vw
 				+ eta*RH*Mdata.vw + phi*TA*Mdata.vw));
 			elem.rb = 0.4*elem.rg;
-		} else {
+		} else {  // this should just be the default option, and the other clauses set afterwards?
 			elem.dd = new_snow_dd;
 			elem.sp = new_snow_sp;
 			// Adapt dd and sp for blowing snow
-			if ((Mdata.vw > 5.) && ((variant == "ANTARCTICA" || variant == "POLAR")
-			|| (!SnLaws::jordy_new_snow && ((hn_density_parameterization == "BELLAIRE")
-			|| (hn_density_parameterization == "LEHNING_NEW"))))) {
+			if (  	(Mdata.vw > 5.) 
+				&&	( 	(variant == "ANTARCTICA" || variant == "POLAR")
+						|| ((hn_density_parameterization == "BELLAIRE")
+						|| (hn_density_parameterization == "LEHNING_NEW")) )
+				) {
 				elem.dd = new_snow_dd_wind;
 				elem.sp = new_snow_sp_wind;
-			} else if (vw_dendricity && ((hn_density_parameterization == "BELLAIRE")
-				|| (hn_density_parameterization == "ZWART"))) {
+			} else if ( 	vw_dendricity 
+						&& 	((hn_density_parameterization == "BELLAIRE") || (hn_density_parameterization == "ZWART"))
+					) {
 				const double vw = std::max(0.05, Mdata.vw);
 				elem.dd = (1. - pow(vw/10., 1.57));
 				elem.dd = std::max(0.2, elem.dd);
@@ -1603,7 +1617,7 @@ void Snowpack::setHydrometeorMicrostructure(const CurrentMeteo& Mdata, const boo
 	elem.soot_ppmv= soot_ppmv;
 }
 
-void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& length, const double& density,
+void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& length, const double& density, double& theta_water,
                                   const bool& is_surface_hoar, const unsigned short& number_of_solutes, ElementData &elem)
 {
 	//basic parameters
@@ -1612,8 +1626,6 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	elem.L0 = elem.L = length;
 	elem.Rho = density;
 	assert(elem.Rho>=0. || elem.Rho==IOUtils::nodata); //we want positive density
-	elem.M = elem.L0*elem.Rho; // Mass
-	assert(elem.M>=0.); //mass must be positive
 
 	// Volumetric components
 	elem.theta[SOIL]  = 0.0;
@@ -1622,9 +1634,16 @@ void Snowpack::fillNewSnowElement(const CurrentMeteo& Mdata, const double& lengt
 	elem.theta_i_reservoir = 0.0;
 	elem.theta_i_reservoir_cumul = 0.0;
 #endif
-	elem.theta[WATER] = 0.0;
+	// We allow up to 50% of pore space to be filled by water
+	theta_water = std::max(0., std::min(theta_water, .5 * (1. - elem.theta[ICE])));
+	elem.theta[WATER] = theta_water;
 	elem.theta[WATER_PREF] = 0.0;
-	elem.theta[AIR]   = 1. - elem.theta[ICE];
+	elem.theta[AIR]   = 1. - elem.theta[ICE] - elem.theta[WATER] - elem.theta[WATER_PREF];
+	elem.updDensity();
+	elem.M = elem.L0*elem.Rho; // Mass
+	assert(elem.Rho>=0. || elem.Rho==IOUtils::nodata); //we want positive density
+	assert(elem.M>=0.); //mass must be positive
+
 	for (unsigned short ii = 0; ii < number_of_solutes; ii++) {
 		elem.conc[ICE][ii]   = Mdata.conc[ii]*Constants::density_ice/Constants::density_water;
 		elem.conc[WATER][ii] = Mdata.conc[ii];
@@ -1733,7 +1752,8 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
 	// Fill the element data
 	for (size_t e = nOldE; e < nNewE; e++) { //loop over the elements
 		const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
-		fillNewSnowElement(Mdata, length, rho_hn, false, Xdata.number_of_solutes, EMS[e]);
+		double theta_w_rain = 0.;
+		fillNewSnowElement(Mdata, length, rho_hn, theta_w_rain, false, Xdata.number_of_solutes, EMS[e]);
 
 		// Now give specific properties for technical snow, consider liquid water
 		// Assume that the user does not specify unreasonably high liquid water contents.
@@ -1791,7 +1811,7 @@ void Snowpack::compTechnicalSnow(const CurrentMeteo& Mdata, SnowStation& Xdata, 
  * @param Xdata Snow cover data
  * @param cumu_precip cumulated amount of precipitation (kg m-2)
  */
-void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
+void Snowpack::compSnowFall(CurrentMeteo& Mdata, SnowStation& Xdata, double& cumu_precip,
                             SurfaceFluxes& Sdata)
 {
 	if (Mdata.psum_tech!=Constants::undefined && Mdata.psum_tech > 0.) {
@@ -2004,6 +2024,14 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 			vector<ElementData>& EMS = Xdata.Edata;
 			Sdata.mass[SurfaceFluxes::MS_SNOW_DHS] += hn;
 
+			// Consider mixed precipitation (i.e., inlcuding rain)
+			double total_rainwater = 0.;	// [kg/m2]
+			if (Mdata.psum > 0. && Mdata.psum_ph > 0.) {
+				// There is some rain
+				total_rainwater = (Mdata.psum * Mdata.psum_ph);
+				if ( !allow_freezing_rain ) t_surf = Constants::meltfreeze_tk;
+			}
+
 			// Create hoar layer
 			if (nHoarE > 0) {
 				// Since mass of hoar was already added to element below, substract....
@@ -2078,7 +2106,18 @@ void Snowpack::compSnowFall(const CurrentMeteo& Mdata, SnowStation& Xdata, doubl
 				const bool is_surface_hoar = (nHoarE && (e == nOldE));
 				const double length = (NDS[e+1].z + NDS[e+1].u) - (NDS[e].z + NDS[e].u);
 				const double density = (is_surface_hoar)? hoar_density_buried : rho_hn;
-				fillNewSnowElement(Mdata, length, density, is_surface_hoar, Xdata.number_of_solutes, EMS[e]);
+				double theta_w_rain = total_rainwater / (Constants::density_water * hn);
+				fillNewSnowElement(Mdata, length, density, theta_w_rain, is_surface_hoar, Xdata.number_of_solutes, EMS[e]);
+				const double absorbed_rainfall = theta_w_rain * Constants::density_water * EMS[e].L;
+				Sdata.mass[SurfaceFluxes::MS_RAIN] += absorbed_rainfall;
+				// Update the psum_ph
+				if (Mdata.psum - absorbed_rainfall < Constants::eps2) {
+					Mdata.psum_ph = 0.;
+				} else {
+					Mdata.psum_ph = (Mdata.psum * Mdata.psum_ph - absorbed_rainfall) / (Mdata.psum - absorbed_rainfall);
+				}
+				// Update psum
+				Mdata.psum -= absorbed_rainfall;
 				// To satisfy the energy balance, we should trigger an explicit treatment of the top boundary condition of the energy equation
 				// when new snow falls on top of wet snow or melting soil. This can be done by putting a tiny amount of liquid water in the new snow layers.
 				// Note that we use the same branching condition as in the function Snowpack::neumannBoundaryConditions(...)

@@ -2,7 +2,7 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersionGIT()
-SET(BINARY "meteoio_timeseries")
+SET(MIO_BINARY "meteoio_timeseries")
 
 # IF(CMAKE_COMPILER_IS_GNUCXX)
 # 	SET(PROFILING "-pg -fprofile-arcs") #add ${PROFILING} to the CFLAGS when necessary
@@ -24,11 +24,9 @@ SET(BINARY "meteoio_timeseries")
 # 	SET(EXTRA "-g ${EXTRA}") #add debug symbols
 # ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 # SET(CMAKE_CXX_FLAGS "${EXTRA}" CACHE STRING "" FORCE)
-
-#Handle the missing getopt on Windows
-IF(MSVC)
-	SET(getopt_src getopt.c)
-ENDIF(MSVC)
+IF (LEAKS_CHECK)
+	SET(EXTRA_LINKS "${EXTRA_LINKS} -fsanitize=address -fno-omit-frame-pointer -static-libasan")
+ENDIF(LEAKS_CHECK)
 
 #get the proper MeteoIO library
 IF(BUILD_SHARED_LIBS)
@@ -42,25 +40,39 @@ ELSE(BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 INCLUDE_DIRECTORIES(../)
 
-#Handle extra libraries needed for GUI exceptions
+#Plateform specific options
 IF(APPLE)
+	SET(TARGET_ARGS ${APP_ICON_MACOSX})
+	#Handle extra libraries needed for GUI exceptions
 	SET(EXTRA_LINKS "-framework CoreServices")
 ENDIF(APPLE)
+IF(WIN32)
+	#Handle the missing getopt on Windows
+	IF(MSVC)
+		SET(getopt_src getopt.c)
+	ENDIF(MSVC)
+	SET(TARGET_ARGS ${getopt_src} ${APP_ICON_RESOURCE_WINDOWS})
+ENDIF(WIN32)
+
 IF(UNIX AND NOT HAIKU)
 	SET(EXTRA_LINKS "dl;pthread")
 ENDIF(UNIX AND NOT HAIKU)
-IF (LEAKS_CHECK)
-	SET(EXTRA_LINKS "${EXTRA_LINKS} -fsanitize=address -fno-omit-frame-pointer -static-libasan")
-ENDIF(LEAKS_CHECK)
+
+SET(meteoio-app_sources
+	meteoio_timeseries.cc
+	${getopt_src}
+)
 
 #Prepare executable
-ADD_EXECUTABLE(${BINARY} meteoio_timeseries.cc ${getopt_src})
-TARGET_LINK_LIBRARIES(${BINARY} ${METEOIO_LIBRARIES} ${EXTRA_LINKS})
+ADD_EXECUTABLE(${MIO_BINARY} ${meteoio-app_sources} ${TARGET_ARGS})
+TARGET_LINK_LIBRARIES(${MIO_BINARY} ${METEOIO_LIBRARIES} ${EXTRA_LINKS})
 IF(BUILD_STATIC_LIBS)
-	TARGET_LINK_OPTIONS(${BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
+	TARGET_LINK_OPTIONS(${MIO_BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
 ENDIF(BUILD_STATIC_LIBS)
-SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
+
+SET_TARGET_PROPERTIES(${MIO_BINARY} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 	CLEAN_DIRECT_OUTPUT 1
-	OUTPUT_NAME "${BINARY}")
-INSTALL(TARGETS ${BINARY} RUNTIME DESTINATION bin COMPONENT exe)
+	OUTPUT_NAME "${MIO_BINARY}")
+
+INSTALL(TARGETS ${MIO_BINARY} RUNTIME DESTINATION ${EXE_DEST} ${INSTALL_WIN32} COMPONENT exe)

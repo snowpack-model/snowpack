@@ -208,7 +208,9 @@ inline Date getDate(const std::string& date_str, const double& TZ)
 	if (date_str == "NOW") { //interpret user provided start date
 		parsedDate.setFromSys();
 		parsedDate.setTimeZone(TZ);
-		parsedDate.rnd(10, mio::Date::DOWN); //rounding 10' down
+		//normally, samplingRate comes with a default value of 60' (see args parsing below)
+		const double rnd_down_sec = (samplingRate==IOUtils::nodata)? 60.*60.: samplingRate*(24.*3600.);
+		parsedDate.rnd(rnd_down_sec, mio::Date::DOWN); //rounding 10' down
 	} else {
 		mio::IOUtils::convertString(parsedDate, date_str, TZ);
 	}
@@ -291,6 +293,16 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 		}
 	}
 	
+	cfg.addFile(cfgfile);
+	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
+	
+	//we don't overwrite command line options if set
+	if (samplingRate==IOUtils::nodata)
+		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
+	samplingRate /= 24.*60; //convert to sampling rate in days
+	if (samplingRate<=0)
+		throw InvalidArgumentException("The sampling rate argument must be > 0! (check both on the command line and as configuration key)", AT);
+	
 	//synchronize with our boolean
 	generate2D = (output2D==0);
 
@@ -301,9 +313,6 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 		exit(1);
 	}
 	
-	cfg.addFile(cfgfile);
-	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
-	
 	//the date range specification has been validated above
 	if (!begin_date_str.empty()) begin_date = getDate( begin_date_str, TZ );
 	if (!end_date_str.empty()) 
@@ -312,13 +321,6 @@ inline void parseCmdLine(int argc, char **argv, Config &cfg, Date& begin_date, D
 		end_date = begin_date + duration;
 	if (begin_date.isUndef())
 		begin_date = end_date - duration;
-	
-	//we don't overwrite command line options if set
-	if (samplingRate==IOUtils::nodata)
-		samplingRate = cfg.get("SAMPLING_RATE_MIN", "Output", 60.);
-	samplingRate /= 24.*60; //convert to sampling rate in days
-	if (samplingRate<=0)
-		throw InvalidArgumentException("The sampling rate argument must be > 0! (check both on the command line and as configuration key)", AT);
 }
 
 static void signal_handler( int signal_num ) 
@@ -329,8 +331,7 @@ static void signal_handler( int signal_num )
 static void signals_catching(void) 
 {
 #ifdef _WIN32
-	typedef void(*SignalHandlerPointer)(int);
-	SignalHandlerPointer previousHandler = signal(SIGTERM, signal_handler);
+	signal(SIGTERM, signal_handler);
 #else
 	struct sigaction catch_signal;
 	catch_signal.sa_handler = signal_handler;
@@ -348,7 +349,7 @@ static void validMeteoData(const std::vector<std::string>& enforce_variables, co
 
 	for (const std::string& var : enforce_variables) {
 		if (md(var) == mio::IOUtils::nodata)
-			std::cout << msg_head << var << " " << md.date.toString(mio::Date::ISO) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
+			std::cout << msg_head << var << " " << md.date.toString(mio::Date::ISO_TZ) << " [" << md.date.toString(mio::Date::ISO_WEEK) << "]\n";
 	}
 }
 

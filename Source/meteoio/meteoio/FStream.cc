@@ -110,8 +110,8 @@ std::string ofilestream::limitAccess(std::string path, const bool& write_directo
 		}
 		if (FileUtils::isAbsolutePath(path)) {
 			if (warn_abs_path) {
-				std::cerr << "This version of MeteoIO has been compiled with restricted write permissions, absolute output paths are not allowed. ";
-				std::cerr << "Instead creating directory at " << cutPathToLimitDir(FileUtils::cleanPath(path, true, true)) << std::endl;
+				std::cerr << "[W] This version of MeteoIO has been compiled with restricted write permissions, absolute output paths are not allowed. ";
+				std::cerr << "[W] Instead creating directory at " << cutPathToLimitDir(FileUtils::cleanPath(path, true, true)) << std::endl;
 			}
 			path = cutPathToLimitDir(FileUtils::cleanPath(path, true, true));
 		}

@@ -182,7 +182,7 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
 		return (0.0);
 	}
 
-	// Compute the saltation mass flux (after Pomeroy and Gray)
+	// Compute the saltation mass flux (Doorschot or Sorenson)
 	double Qsalt = 0., Qsusp = 0., c_salt; // The mass fluxes in saltation and suspension (kg m-1 s-1)
 	if (!saltation.compSaltation(tau, tau_thresh, slope_angle, MM_TO_M(2.*rg), Qsalt, c_salt)) {
 		prn_msg(__FILE__, __LINE__, "err", Date(), "Saltation computation failed");
@@ -205,6 +205,8 @@ double SnowDrift::compMassFlux(const std::vector<ElementData>& EMS, const double
  * -# Externally provided eroded mass (for example, by Alpine3D); see parameter forced_massErode
  * -# SNOW_REDISTRIBUTION is true: using vw_drift to erode the snow surface on the windward virtual slope
  * -# SNOW_EROSION is true: using vw to erode the snow surface at the main station (flat field or slope).
+ * -# SNOW_EROSION is true and SNOW_REDISTRIBUTION is false: using vw_drift (if available and larger than vw)
+             to do virtual erosion either on flat field (#slopes == 1) or on windward slope (#slopes > 1).
  * 	@note However, erosion will also be controlled by mH and thus a measured snow depth (HS1) is required
  * 	@note If either measured snow depth is missing or the conditions for a real erosion are not fulfilled,
  *          the possibility of a virtual erosion will be considered using the ErosionLevel marker (virtual erodible layer).
@@ -234,13 +236,14 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 	}
 
 	// Real erosion either on windward virtual slope, from Alpine3D, or at main station.
-	// At main station, measured snow depth controls whether erosion is possible or not
+	// At main station, measured snow depth controls whether erosion is possible or not if measured snow depth is provided
 #ifndef SNOWPACK_CORE
 	const bool windward = !alpine3d && snow_redistribution && Xdata.windward; // check for windward virtual slope
 #else
 	const bool windward = false;
 #endif
 	const bool erosion = (  (snow_erosion == "FREE" || snow_erosion == "REDEPOSIT") || (snow_erosion == "HS_DRIVEN" && (Xdata.mH > (Xdata.Ground + Constants::eps)) && ((Xdata.mH + 0.02) < Xdata.cH))  );
+	double ustar_max = (Mdata.vw>0.1) ? Mdata.ustar * Mdata.vw_drift / Mdata.vw : 0.; // Scale Mdata.ustar
 
 	double ustar = 0.;
 	if (windward || erosion || (forced_massErode < -Constants::eps2) || (forcing == "MASSBAL")) {
@@ -252,10 +255,9 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 		} else if (forced_massErode < -Constants::eps2) {
 			massErode = std::max(0., -forced_massErode); //negative mass is erosion
 		} else {
-			const double ustar_max = (Mdata.vw>0.1) ? Mdata.ustar * Mdata.vw_drift / Mdata.vw : 0.; // Scale Mdata.ustar
 			try {
 				if (enforce_measured_snow_heights && !windward) {
-					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, main station, local vw && nE-1
+					Sdata.drift = compMassFlux(EMS, Mdata.ustar, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, erosion at main station, local vw && nE-1
 					ustar = Mdata.ustar;
 				} else {
 					Sdata.drift = compMassFlux(EMS, ustar_max, Xdata.meta.getSlopeAngle()); // kg m-1 s-1, windward slope && vw_drift && nE-1
@@ -337,12 +339,16 @@ void SnowDrift::compSnowDrift(const CurrentMeteo& Mdata, SnowStation& Xdata, Sur
 					prn_msg(__FILE__, __LINE__, "msg+", Mdata.date, "Eroding %d layer(s) w/ total mass %.3lf kg/m2 (azi=%.1lf, slope=%.1lf)", nErode, Xdata.ErosionMass, Xdata.meta.getAzimuth(), Xdata.meta.getSlopeAngle());
 			}
 		}
-	// ... or, in case of no real erosion, check whether you can potentially erode at the main station.
-	// This will never contribute to the drift index VI24, though!
+	// ... or, in case of no real erosion, check whether you can potentially erode at windward station using vw_drift.
+	// This will as of 2023 contribute to the drift index VI24, to accommodate the ALPSolut use case!
+#ifndef SNOWPACK_CORE
+	} else if (snow_erosion == "VIRTUAL" && (Xdata.ErosionLevel > Xdata.SoilNode) && Xdata.windward) {
+#else
 	} else if (snow_erosion == "VIRTUAL" && (Xdata.ErosionLevel > Xdata.SoilNode)) {
+#endif
 		std::vector<ElementData> subEMS; subEMS.push_back(EMS[Xdata.ErosionLevel]);  // Subset EMS vector with only the ErosionLevel ElementData
-		double virtuallyErodedMass = compMassFlux(subEMS, Mdata.ustar, Xdata.meta.getSlopeAngle());  // kg m-1 s-1, main station, local vw && erosion level
-		virtuallyErodedMass *= sn_dt / Hazard::typical_slope_length; // Convert to eroded snow mass in kg m-2
+		Sdata.drift = compMassFlux(subEMS, ustar_max, Xdata.meta.getSlopeAngle());  // kg m-1 s-1, main station, local vw && erosion level
+		double virtuallyErodedMass = Sdata.drift * sn_dt / Hazard::typical_slope_length; // Convert to eroded snow mass in kg m-2
 		if (virtuallyErodedMass > Constants::eps) {
 			// Add (negative) value stored in Xdata.ErosionMass
 			if (Xdata.ErosionMass < -Constants::eps)

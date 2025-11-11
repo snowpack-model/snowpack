@@ -148,7 +148,7 @@ namespace mio {
  * @endcode
  * An arbitrary number of such blocks may be present, so in this example after all values for `TA`
  * were printed the next header starting with \c \#\#Station... could follow below.
- * Here, more information about the <a href="https://www.tbbm.at/display/TBBMAT/ZRXP">ZRXP format specifications</a>
+ * Here, more information about the <a href="https://prozessing.tbbm.at/zrxp/zrxp3.0_en.pdf">ZRXP format specifications</a>
  * is available.
  */
 

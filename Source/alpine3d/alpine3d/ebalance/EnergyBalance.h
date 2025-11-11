@@ -102,7 +102,7 @@ class EnergyBalance
 		const mio::Config& cfg;
 		size_t dimx, dimy;
 		unsigned int nbworkers;
-		bool dataFromGrids;
+		bool meteoFromGrids;
 };
 
 #endif

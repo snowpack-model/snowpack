@@ -296,9 +296,12 @@
 /**
  * @page model_principles Model principles
  * Here, we expose the core principles underlying the Alpine3D model. This should just give a quick overview of the model and help you understand the
- * global architecture of Alpine3D. If you want to go deeper into the details, please have a look at the publications covering the whole model
- * (M. Lehning et al. <i>"ALPINE3D: a detailed model of mountain surface processes and its application to snow hydrology"</i>, Hydrological Processes, \b 20.10, 2006, pp 2111-2128; and
- * P. Kuonen, M. Bavay, M. Lehning, <i>"POP-C++ and ALPINE3D: petition for a new HPC approach"</i>, Advanced ICTs for disaster management and threat detection: collaborative and distributed frameworks, IGI Global, 2010, pp 237-61.)
+ * global architecture of Alpine3D. 
+ * 
+ *  \remark Relevant publications:
+ *  - M. Lehning et al. <i>"ALPINE3D: a detailed model of mountain surface processes and its application to snow hydrology"</i>, Hydrological Processes, \b 20.10, 2006, pp 2111-2128;
+ *  - P. Kuonen, M. Bavay, M. Lehning, <i>"POP-C++ and ALPINE3D: petition for a new HPC approach"</i>, Advanced ICTs for disaster management and threat detection: collaborative and distributed frameworks, IGI Global, 2010, pp 237-61.
+ * 
  * The individual modules are described here below and contain references to the relevant papers.
  *
  * @section at_the_core At the core...
@@ -337,37 +340,43 @@
  * \image html ebalance.svg "Radiation balance with shading and terrain reflections" width=650px
  * \image latex ebalance.eps "Radiation balance with shading and terrain reflections" width=0.9\textwidth
  * Once the albedo of each pixels of the domain have been initialized or taken from the last time step, the radiation balance is computed. First, the
- * incoming short wave radiation measured at one reference station is used to compute the splitting (between direct and diffuse, see
- * D. G. Erbs, S.A. Klein, J.A. Duffie, <i>"Estimation of the diffuse radiation fraction for hourly, daily and monthly-average global radiation"</i>, Solar Energy, <b>28</b>, 4, 1982, Pages 293-302 and summarized in M. Iqbal, <i>"An introduction to solar radiation"</i>, 1983, Academic Press,  ISBN: 0-12-373750-8).
+ * incoming short wave radiation measured at one reference station is used to compute the splitting (between direct and diffuse).
  * This splitting will be assumed to be constant over the whole domain. Then, according to the meteorological parameters and elevation of each pixel,
- * the direct and diffuse radiation fields are computed. Since the position of the sun has been computed (
- * J. Meeus, <i>"Astronomical Algorithms"</i>, 1998, 2nd ed, Willmann-Bell, Inc., Richmond, VA, USA, ISBN 0-943396-61-1),
+ * the direct and diffuse radiation fields are computed. Since the position of the sun has been computed,
  * it is used to compute the topographic shading for each pixel.
- * If the terrain reflections have been enabled, a radiosity approach is used to compute the reflections by the surrounding terrain (
- * N. Helbig, H. Löwe, M. Lehning, <i>"Radiosity Approach for the Shortwave Surface Radiation Balance in Complex Terrain"</i>, Journal of the Atmospheric Sciences, \b 66.9, 2009).
- * Finally, the direct and diffuse radiation fields are returned.
+ * If the terrain reflections have been enabled, a radiosity approach is used to compute the reflections by the surrounding terrain.
+ * Finally, the direct and diffuse radiation fields are returned. 
+ * 
+ * \remark Relevant publications:
+ *  - Radiation splitting: D. G. Erbs, S.A. Klein, J.A. Duffie, <i>"Estimation of the diffuse radiation fraction for hourly, daily and monthly-average global radiation"</i>, Solar Energy, <b>28</b>, 4, 1982, Pages 293-302 summarized in M. Iqbal, <i>"An introduction to solar radiation"</i>, 1983, Academic Press,  ISBN: 0-12-373750-8;
+ *  - Computing the Sun's position and radiation: J. Meeus, <i>"Astronomical Algorithms"</i>, 1998, 2nd ed, Willmann-Bell, Inc., Richmond, VA, USA, ISBN 0-943396-61-1
+ *  - Reflections by the surrounding terrain: N. Helbig, H. Löwe, M. Lehning, <i>"Radiosity Approach for the Shortwave Surface Radiation Balance in Complex Terrain"</i>, Journal of the Atmospheric Sciences, \b 66.9, 2009 as well as F. von Rütte et al., <i>"How Forward-Scattering Snow and Terrain Change the Alpine Radiation Balance 
+ * With Application to Solar Panels"</i>, Journal of Geophysical Research: Atmospheres 126.15 (2021), <a href="https://doi.org/10.1029/2020JD034333">10.1029/2020JD034333</a> when accounting for Forward-Scattering by snow-covered terrain.
  *
  * @subsection principles_snowdrift Snowdrift
  * \image html snowdrift.svg "Snowdrift: saltation, suspension, sublimation" width=650px
  * \image latex snowdrift.eps "Snowdrift: saltation, suspension, sublimation" width=0.9\textwidth
  * Externally computed wind fields (for example with <A HREF="http://arps.ou.edu/">ARPS</A>) are assigned to each time steps.
  * If the surface shear stress exceeds a given threshold at a given pixel, the saltation will be computed. This in turn can feed the suspension
- * if the saltation layer is saturated. While in suspension, some of the mass will sublimate and contribute to the relative humidity field (
- * C. D. Groot Zwaaftink et al. <i>"Drifting snow sublimation: A high‐resolution 3‐D model with temperature and moisture feedbacks"</i>, Journal of Geophysical Research: Atmospheres (1984–2012), \b 116.D16, 2011).
+ * if the saltation layer is saturated. While in suspension, some of the mass will sublimate and contribute to the relative humidity field.
+ * 
+ *  \remark Relevant publications:
+ * C. D. Groot Zwaaftink et al. <i>"Drifting snow sublimation: A high‐resolution 3‐D model with temperature and moisture feedbacks"</i>, Journal of Geophysical Research: Atmospheres (1984–2012), \b 116.D16, 2011
  *
  * @subsection principles_runoff Runoff
  * \image html runoff.svg "Runoff: simple bucket approach with PREVAH or sub-catchments sums" width=650px
  * \image latex runoff.eps "Runoff: simple bucket approach with PREVAH or sub-catchments sums" width=0.9\textwidth
  * Several options are available for collecting the melt water or precipitation running out of each pixel. The historical approach relies on the
- * PREVAH hydrological modeling system (
- * D. Viviroli et al. <i>"An introduction to the hydrological modeling system PREVAH and its pre-and post-processing-tools"</i>, Environmental Modeling \& Software, \b 24.10, 2009, pp 1209-1222)
- * to perform on-the-fly hydrological simulation. Another approach consists of collecting the runoff sums for each sub-catchments defined by the user
- * (M. Bavay, T. Grünewald, M. Lehning, <i>"Response of snow cover and runoff to climate change in high Alpine catchments of Eastern Switzerland"</i>, Advances in Water Resources, \b 55, 2013, pp 4-16).
+ * PREVAH hydrological modeling system to perform on-the-fly hydrological simulation. Another approach consists of collecting the runoff sums for each sub-catchments defined by the user.
  * Finally, it is also possible to output the hourly distributed runoff (ie the runoff for each pixel, once per hour) and process this runoff in
- * an external model
- * ( F. Comola et al. <i>"Comparison of hydrologic response between a conceptual and a travel time distribution model for a snow-covered alpine catchment using Alpine3D"</i>, EGU General Assembly Conference Abstracts, Vol. \b 15, 2013;
- * J. Magnusson et al. <i>"Quantitative evaluation of different hydrological modeling approaches in a partly glacierized Swiss watershed"</i>, Hydrological Processes, \b 25.13, 2011, pp 2071-2084).
- * This approach enables the external model to be calibrated without having to re-run Alpine3D.
+ * an external model. This approach enables the external model to be calibrated without having to re-run Alpine3D.
+ * 
+ * \remark Relevant publications:
+ *  - PREVAH: D. Viviroli et al. <i>"An introduction to the hydrological modeling system PREVAH and its pre-and post-processing-tools"</i>, Environmental Modeling \& Software, \b 24.10, 2009, pp 1209-1222
+ *  - Relying on runoff sums by subcatchments: M. Bavay, T. Grünewald, M. Lehning, <i>"Response of snow cover and runoff to climate change in high Alpine catchments of Eastern Switzerland"</i>, Advances in Water Resources, \b 55, 2013, pp 4-16
+ *  - External hydrological model: F. Comola et al. <i>"Comparison of hydrologic response between a conceptual and a travel time distribution model for a snow-covered alpine catchment using Alpine3D"</i>, EGU General Assembly Conference Abstracts, Vol. \b 15, 2013 and J. Magnusson et al. <i>"Quantitative evaluation of different hydrological modeling approaches in a partly glacierized Swiss watershed"</i>, Hydrological Processes, \b 25.13, 2011, pp 2071-2084
+ *  - Comparison of the impact of model complexity: Carletti, Francesca, et al. <i>"A comparison of hydrological models with different level of complexity in Alpine regions in the context of climate change."</i>, Hydrology and Earth System Sciences, <b>26.13</b> (2022): 3447-3475.
+ *
  *
  */
 

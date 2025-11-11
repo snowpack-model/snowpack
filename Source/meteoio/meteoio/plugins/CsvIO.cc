@@ -774,9 +774,9 @@ std::vector<MeteoData> CsvIO::readCSVFile(CsvParameters& params, const Date& dat
 		if (dt.isUndef() && silent_errors) continue;
 		if (!prev_dt.isUndef()) {
 			if (dt==prev_dt)
-				std::cerr << "File \'" << filename << "\' has duplicated timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
+				std::cerr << "[W] File \'" << filename << "\' has duplicated timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
 			if (dt<prev_dt)
-				std::cerr << "File \'" << filename << "\' has out of order timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
+				std::cerr << "[W] File \'" << filename << "\' has out of order timestamps for " << dt.toString(Date::ISO) << " at line " << linenr << "\n";
 		}
 		prev_dt = dt;
 

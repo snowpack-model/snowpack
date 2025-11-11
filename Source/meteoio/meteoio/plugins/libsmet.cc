@@ -592,6 +592,8 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if (!SMETCommon::validFileAndPath(filename)) throw SMETException("Invalid file name \""+filename+"\"", AT);
 	errno = 0;
 
+	if (acdd.enableNcML()) acdd.writeNcML( filename );
+
 	bool write_headers = false;
 	ios_base::openmode mode_flags = ios::binary; //read as binary to avoid eol mess
 	if (append_mode) {

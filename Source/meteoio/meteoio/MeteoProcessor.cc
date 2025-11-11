@@ -144,6 +144,7 @@ std::vector<DateRange> MeteoProcessor::initTimeRestrictions(const std::vector< s
 						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(0, delim_pos)+" for "+where, AT);
 					if (!IOUtils::convertString(d2, vecString[jj].substr(delim_pos+3), TZ))
 						throw InvalidFormatException("Could not process date restriction "+vecString[jj].substr(delim_pos+3)+" for "+where, AT);
+					if (d1>d2) throw InvalidArgumentException("Invalid date range ["+d1.toString(Date::ISO)+" - "+d2.toString(Date::ISO)+"] : start>end", AT);
 					dates_specs.push_back( DateRange(d1, d2) );
 				}
 			}

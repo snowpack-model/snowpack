@@ -194,19 +194,7 @@ Please include meteoio_parametergroups before use!
 			<option value="FALSE"/>
 			<help>Should ACDD metadata be written in the header? (default: false)</help>
 		</parameter>
-		<parameter key="iCSV_VERSIONING" type="alternative" optional="true">
-			<option value="NONE"/>
-			<option value="STRING">
-				<parameter key="iCSV_VERSIONING_STRING" type="text" optional="false">
-					<help>Fixed string to use to identify the output file version</help>
-				</parameter>
-			</option>
-			<option value="NOW"/>
-			<option value="DATA_START"/>
-			<option value="DATA_END"/>
-			<option value="YEARS"/>
-			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
-		</parameter>
+		<reference name="OUTPUT_FILES_VERSIONING"/>
 	</parametergroup>
 
 
@@ -224,19 +212,7 @@ Please include meteoio_parametergroups before use!
 			<option value="FALSE"/>
 			<help>force all stations to be contained in a single file?</help>
 		</parameter>
-		<parameter key="NETCDF_VERSIONING" type="alternative" optional="true">
-			<option value="NONE"/>
-			<option value="STRING">
-				<parameter key="NETCDF_VERSIONING_STRING" type="text" optional="false">
-					<help>Fixed string to use to identify the output file version</help>
-				</parameter>
-			</option>
-			<option value="NOW"/>
-			<option value="DATA_START"/>
-			<option value="DATA_END"/>
-			<option value="YEARS"/>
-			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
-		</parameter>
+		<reference name="OUTPUT_FILES_VERSIONING"/>
 		<parameter key="NETCDF_SCHEMA_METEO" type="alternative" default="CF-1.6">
 			<option value="CF-1.6"/>
 			<option value="CROCUS"/>
@@ -309,19 +285,7 @@ Please include meteoio_parametergroups before use!
 			<option value="BINARY"/>
 			<help>Either write an ascii file (default) or a binary one</help>
 		</parameter>
-		<parameter key="SMET_VERSIONING" type="alternative" optional="true">
-			<option value="NONE"/>
-			<option value="STRING">
-				<parameter key="SMET_VERSIONING_STRING" type="text" optional="false">
-					<help>Fixed string to use to identify the output file version</help>
-				</parameter>
-			</option>
-			<option value="NOW"/>
-			<option value="DATA_START"/>
-			<option value="DATA_END"/>
-			<option value="YEARS"/>
-			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
-		</parameter>
+		<reference name="OUTPUT_FILES_VERSIONING"/>
 		<parameter key="SMET_PLOT_HEADERS" type="alternative">
 			<option value="TRUE"/>
 			<option value="FALSE"/>
@@ -420,6 +384,24 @@ Please include meteoio_parametergroups before use!
 		</parameter>
 	</parametergroup>
 	
+	
+	
+	<!-- Input keys for output files versioning -->
+	<parametergroup name="OUTPUT_FILES_VERSIONING">
+		<parameter key="FILES_VERSIONING" type="alternative" optional="true">
+			<option value="NONE"/>
+			<option value="STRING">
+				<parameter key="FILES_VERSIONING_STRING" type="text" optional="false">
+					<help>Fixed string to use to identify the output file version</help>
+				</parameter>
+			</option>
+			<option value="NOW"/>
+			<option value="DATA_START"/>
+			<option value="DATA_END"/>
+			<option value="YEARS"/>
+			<help>create multiple versions of a given dataset by appending additional information to the filename (default: no such versioning)</help>
+		</parameter>
+	</parametergroup>
 
 	<!-- ACDD input keys for plugins supporting acdd metadata -->
 	<parametergroup name="ACDD">
@@ -432,6 +414,30 @@ Please include meteoio_parametergroups before use!
 			<parameter key="ACDD_SUMMARY_FILE" type="file"  mode="input"><help>a file containing a description of the dataset, it overwrites the value of ACDD_SUMMARY if present</help></parameter>
 			<parameter key="ACDD_KEYWORDS" type="text" size="large" bold="true"><help>a comma-separated list of &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; terms or terms from another vocabulary (provided with their full path)</help></parameter>
 			<parameter key="ACDD_KEYWORDS_VOCABULARY" type="text" size="large" bold="true"><help>the unique name or identifier of the vocabulary from which keywords are taken (default: &lt;a href="https://gcmd.earthdata.nasa.gov/KeywordViewer/"&gt;GCMD Science Keywords&lt;/a&gt; (GCMDSK))</help></parameter>
+			<parameter key="ISO_TOPIC_CATEGORY" type="alternative">
+				<o value="farming"/>
+				<o value="biota"/>
+				<o value="boundaries"/>
+				<o value="climatologyMeteorologyAtmosphere"/>
+				<o value="economy"/>
+				<o value="elevation"/>
+				<o value="environment"/>
+				<o value="geoscientificInformation"/>
+				<o value="health"/>
+				<o value="imageryBaseMapsEarthCover"/>
+				<o value="intelligenceMilitary"/>
+				<o value="inlandWaters"/>
+				<o value="location"/>
+				<o value="oceans"/>
+				<o value="planningCadastre"/>
+				<o value="society"/>
+				<o value="structure"/>
+				<o value="transportation"/>
+				<o value="utilitiesCommunication"/>
+				<o value="extraTerrestrial"/>
+				<o value="disaster"/>
+				<help>an &lt;a href="https://wiki.esipfed.org/ISO_19115_and_19115-2_CodeList_Dictionaries#MD_TopicCategoryCode"&gt;ISO 19115 code&lt;/a&gt; providing high-level geographic data thematic classification.</help>
+			</parameter>
 			<parameter key="ACDD_COMMENT" type="text" size="large"><help>miscellaneous information about the dataset</help></parameter>
 			<parameter key="ACDD_ACKNOWLEDGEMENT" type="text" size="large"><help>acknowledgment for the various types of support for the project that produced this data</help></parameter>
 		</frame>
@@ -440,10 +446,23 @@ Please include meteoio_parametergroups before use!
 			<parameter key="ACDD_ID" type="text" size="medium" bold="true"><help>an identifier for the data set, provided by and unique within its naming authority. Example: DOI, URL, text string, but without white spaces</help></parameter>
 			<parameter key="ACDD_NAMING_AUTHORITY" type="text" size="medium" bold="true"><help>the organization that provides the initial id for the dataset</help></parameter>
 			<parameter key="ACDD_REFERENCES" type="text" size="medium"><help>Published or web-based references that describe the data or methods used to produce it</help></parameter>
-			<parameter key="ACDD_METADATA_LINK" type="text" size="medium" validate="^(http|https|ftp)://.+"><help>A URL/DOI that gives more complete metadata</help></parameter>
+			<parameter key="ACDD_METADATA_LINK" type="text" size="medium" validate="^(http|https|ftp)://.+"><help>A URL/DOI that gives more complete metadata (if a WIGOS_ID is provided, the matching &lt;a href="https://oscar.wmo.int/surface"&gt;Oscar surface&lt;/a&gt; metadata page is used as default)</help></parameter>
 		</frame>
 		<frame caption="Origin of the data" collapsed="true">
 			<parameter key="ACDD_SOURCE" type="text" size="medium"><help>the source and method of production of the original data</help></parameter>
+		
+			<parameter key="ACDD_COVERAGE_CONTENT_TYPE" type="alternative">
+				<o value="image"/>
+				<o value="thematicClassification"/>
+				<o value="physicalMeasurement"/>
+				<o value="auxiliaryInformation"/>
+				<o value="qualityInformation"/>
+				<o value="referenceInformation"/>
+				<o value="modelResult"/>
+				<o value="coordinate"/>
+				<help>Controlled vocabulary used to describe the source of the data</help>
+			</parameter>
+			
 			<parameter key="ACDD_PROJECT" type="text" size="medium" bold="true"><help>the scientific project that created the data</help></parameter>
 			<parameter key="ACDD_PROGRAM" type="text" size="medium"><help>the overarching program(s) of which the dataset is a part;</help></parameter>
 			<parameter key="ACDD_ACTIVITY_TYPE" type="alternative">
@@ -458,12 +477,12 @@ Please include meteoio_parametergroups before use!
 				<o value="in situ ice-based station"/>
 				<o value="interview/questionnaire"/>
 				<o value="maps/charts/photographs"/>
-				<help>Controlled vocabulary used to describe activity types, see &lt;a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type"&gt;the specification&lt;/a&gt; for more</help>
+				<help>Controlled vocabulary used to describe activity types, see &lt;a href="https://html-preview.github.io/?url=https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#activity-type"&gt;the specification&lt;/a&gt; for more</help>
 			</parameter>
 		</frame>
 		<frame caption="Contact information regarding the data set" collapsed="true">
 			<parameter type="helptext" wrap="true">
-			<help>These attributes should help contacting those involved in every step from the creation of the dataset to its publication. In order to properly acknowledge all contributions, these fields can all be comma seperated lists (white spaces around the commas are allowed) but all matching fields must contain the same number of elements. For example if there are 3 names provided in ACDD_CREATOR, then there must also be 3 emails provided in ACDD_CREATOR_EMAIL (in the same order as the 3 names).</help>
+			<help>These attributes should help contacting those involved in every step from the creation of the dataset to its publication. In order to properly acknowledge all contributions, these fields can all be comma separated lists (white spaces around the commas are allowed) but all matching fields must contain the same number of elements. For example if there are 3 names provided in ACDD_CREATOR, then there must also be 3 emails provided in ACDD_CREATOR_EMAIL (in the same order as the 3 names).</help>
 			</parameter>
 			<parameter key="ACDD_CREATOR" type="text" size="medium" bold="true"><help>Name of the creator(s) of the data set</help></parameter>
 			<parameter key="ACDD_CREATOR_EMAIL" type="text" size="medium" bold="true" validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}( *, *[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}){0,}$"><help>Email(s) of the creator(s)</help></parameter>
@@ -479,7 +498,22 @@ Please include meteoio_parametergroups before use!
 			<parameter key="ACDD_INSTITUTION" type="text" size="medium"><help>Institution providing the data set (this is a legacy field, only one entry)</help></parameter>
 		</frame>
 		<frame caption="Miscellaneous" collapsed="true">
-			<parameter key="ACDD_LICENSE" type="text" size="large" bold="true"><help>describes the license applicable to the dataset (in the form &lt;b&gt;{url} ({license abbreviation})&lt;/b&gt; as found in the &lt;a href="https://spdx.org/licenses/"&gt;SPDX License List&lt;/a&gt;)</help></parameter>
+			<parameter key="ACDD_LICENSE" type="alternative" editable="true">
+				<!-- most permissive -->
+				<o value="CC0-1.0" color="#3282b8"/>
+				<o value="CC-BY-4.0" color="#3282b8"/>
+				<o value="CC-BY-SA-4.0" color="#3282b8"/>
+				<o value="CC-BY-ND-4.0" color="#3282b8"/>
+				<!-- non commercial -->
+				<o value="CC-BY-NC-4.0" color="#136b84"/>
+				<o value="CC-BY-NC-ND-4.0" color="#136b84"/>
+				<o value="CC-BY-NC-SA-4.0" color="#136b84"/>
+				<!-- tailored for databases & data -->
+				<o value="ODbL-1.0" color="#62a388"/>
+				<o value="PDDL-1.0" color="#62a388"/>
+				<o value="ODC-By-1.0" color="#62a388"/>
+				<help>describes the license applicable to the dataset. EIther select from the list or add another one as found in the &lt;a href="https://spdx.org/licenses/"&gt;SPDX License List&lt;/a&gt;)</help>
+			</parameter>
 			<parameter key="ACDD_PRODUCT_VERSION" type="text" size="medium"><help>version identifier of the data file or product as assigned by the data creator</help></parameter>
 			<parameter key="ACDD_PROCESSING_LEVEL" type="text" size="medium"><help>a textual description of the processing level</help></parameter>
 			<parameter key="ACDD_OPERATIONAL_STATUS" type="alternative">
@@ -487,9 +521,22 @@ Please include meteoio_parametergroups before use!
 				<o value="pre-operational"/>
 				<o value="experimental"/>
 				<o value="scientific"/>
-				<help>Controlled vocabulary used to describe the operational status, see &lt;a href="https://htmlpreview.github.io/?https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status"&gt;the specification&lt;/a&gt; for more</help>
+				<help>Controlled vocabulary used to describe the operational status, see &lt;a href="https://html-preview.github.io/?url=https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#operational-status"&gt;the specification&lt;/a&gt; for more</help>
+			</parameter>
+			<parameter key="ACDD_DATASET_PRODUCTION_STATUS" type="alternative">
+				<o value="Planned"/>
+				<o value="In Work"/>
+				<o value="Complete"/>
+				<o value="Obsolete"/>
+				<o value="Not available"/>
+				<help>Controlled vocabulary used to describe the production status for the dataset, see &lt;a href="https://html-preview.github.io/?url=https://github.com/metno/mmd/blob/master/doc/mmd-specification.html#dataset-production-status-types"&gt;the specification&lt;/a&gt; for more</help>
 			</parameter>
 		</frame>
+		<parameter key="ACDD_WRITE_NCML" label="Create an additional NcML file?" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Should ACDD metadata also be written in a separate &lt;a href="https://docs.unidata.ucar.edu/netcdf-java/5.6/userguide/ncml_overview.html"&gt;NcML file&lt;/a&gt; alongside the data file (default: false)</help>
+		</parameter>
 	</parametergroup>
 
 </inishell_include>

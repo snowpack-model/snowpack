@@ -67,20 +67,20 @@ namespace mio {
 * naming scheme will be used to derive the slope information (default: false, [Input] section).     *
 * - iCSV_APPEND: when an output file already exists, should the plugin try to append data (default: false); [Output] section
 * - iCSV_OVERWRITE: when an output file already exists, should the plugin overwrite it (default: true)? [Output] section
-* - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A> 
+* - ACDD_WRITE: add the Attribute Conventions Dataset Discovery <A href="http://wiki.esipfed.org/index.php?title=Category:Attribute_Conventions_Dataset_Discovery">(ACDD)</A>
 * metadata to the headers (then the individual keys are provided according to the ACDD class documentation) (default: false, [Output] section)
 * - iCSV_SEPARATOR: choice of field delimiter, options are: [,;:|/\]; [Output] section
-* - iCSV_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
+* - FILES_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
 * (in the [Output] section, default is no such versioning):
 *      - NOW: append the current date formatted as numerical ISO;
-*      - STRING: append a fixed string as provided by the iCSV_VERSIONING_STRING key;
+*      - STRING: append a fixed string as provided by the FILES_VERSIONING key;
 *      - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
 *      - DATA_END: append the absolute end date of the dataset formatted as numerical ISO;
 *      - YEARS: append the absolute start and end years of dataset (if they are the same, only one year is used);
 *      - NONE: do not append anything, no versioning is performed (default).
-* 
-* @note There is a python module available to read iCSV files, see <a href="http://patrick.leibersperger.gitlab-pages.wsl.ch/snowpat/">snowpat</a>
-* 
+*
+* @note There is a python module available to read iCSV files, see <a href="https://snowpat.slf.ch/">snowpat</a>
+*
 */
 using namespace PLUGIN;
 // clang-format off
@@ -126,17 +126,15 @@ static std::string joinVector(const std::vector<std::string> &vec, const char &d
 	return result;
 }
 
-static std::vector<Coords> getUniqueLocations(iCSVFile &file)
+static std::set<Coords> getUniqueLocations(iCSVFile &file)
 {
-	std::vector<Coords> locations;
+	std::set<Coords> locations;
 	if (file.location_in_header) {
-		locations.push_back( file.station_location.toCoords(file.METADATA.epsg) );
+		locations.insert( file.station_location.toCoords(file.METADATA.epsg) );
 	} else {
 		for (size_t ii = 0; ii < file.getAllLocationsInData().size(); ii++) {
 			const Coords latest( file.getLocationAt(ii).toCoords(file.METADATA.epsg) );
-			if (latest != locations.back()) {
-				locations.push_back(latest);
-			}
+			locations.insert( latest );
 		}
 	}
 	return locations;
@@ -146,7 +144,7 @@ using namespace iCSV;
 
 // ----------------- iCSVIO -----------------
 iCSVIO::iCSVIO(const std::string &configfile)
-       : stations_files(), cfg(configfile), acdd_metadata(false), coordin(), coordinparam(), coordout(), coordoutparam(), file_extension_out(dflt_extension_iCSV), outpath(),
+       : stations_files(), cfg(configfile), acdd(false), coordin(), coordinparam(), coordout(), coordoutparam(), file_extension_out(dflt_extension_iCSV), outpath(),
          versioning_str(), TZ_out(0), outputVersioning(NO_VERSIONING), out_delimiter(','), snowpack_slopes(false), read_sequential(false), allow_overwrite(false), allow_append(false)
 {
 	parseInputSection();
@@ -154,7 +152,7 @@ iCSVIO::iCSVIO(const std::string &configfile)
 }
 
 iCSVIO::iCSVIO(const Config &cfgreader)
-	   : stations_files(), cfg(cfgreader), acdd_metadata(false), coordin(), coordinparam(), coordout(), coordoutparam(), file_extension_out(dflt_extension_iCSV), outpath(),
+	   : stations_files(), cfg(cfgreader), acdd(false), coordin(), coordinparam(), coordout(), coordoutparam(), file_extension_out(dflt_extension_iCSV), outpath(),
          versioning_str(), TZ_out(0), outputVersioning(NO_VERSIONING), out_delimiter(','), snowpack_slopes(false), read_sequential(false), allow_overwrite(false), allow_append(false)
 {
 	parseInputSection();
@@ -212,8 +210,10 @@ void iCSVIO::parseOutputSection()
 		bool write_acdd = false;
 		cfg.getValue("ACDD_WRITE", "Output", write_acdd, IOUtils::nothrow);
 		if (write_acdd) {
-			acdd_metadata.setEnabled(true);
-			acdd_metadata.setUserConfig(cfg, "Output", false); // do not allow multi-line keys
+			acdd.setEnabled(true);
+			acdd.setUserConfig(cfg, "Output", false); // do not allow multi-line keys
+			const bool enableNCML = cfg.get("ACDD_WRITE_NCML", "Output", false);
+			acdd.setEnableNcML( enableNCML ); //this can be forced to TRUE with a compilation flag
 		}
 
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
@@ -225,7 +225,7 @@ void iCSVIO::parseOutputSection()
 			throw InvalidFormatException("Cannot allow both iCSV_APPEND and iCSV_OVERWRITE", AT);
 
 		//support for versioning in the file names
-		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("iCSV_VERSIONING", "Output", "") );
+		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("FILES_VERSIONING", "Output", "") );
 		if (versioning_type_str.empty()) {
 			outputVersioning = NO_VERSIONING;
 		} else {
@@ -236,9 +236,9 @@ void iCSVIO::parseOutputSection()
 			else if (versioning_type_str=="DATA_END") outputVersioning = DATA_END;
 			else if (versioning_type_str=="YEARS") outputVersioning = DATA_YEARS;
 			else
-				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for iCSV_VERSIONING", AT);
+				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for FILES_VERSIONING", AT);
 		}
-		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("iCSV_VERSIONING_STRING", "Output", "") );
+		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("FILES_VERSIONING_STRING", "Output", "") );
 	}
 }
 
@@ -389,7 +389,7 @@ std::vector<MeteoData> iCSVIO::createMeteoDataVector(iCSVFile &current_file, std
 	MeteoData tmp_md(md);
 	for (size_t d_idx = 0; d_idx < date_vec.size(); d_idx++) {
 		tmp_md.reset();
-		const Date date = date_vec[d_idx];
+		const Date date( date_vec[d_idx] );
 
 		tmp_md.setDate(date);
 		read_meta_data(current_file, tmp_md.meta);
@@ -492,7 +492,7 @@ void iCSVIO::identify_fields(const std::vector<std::string> &fields, std::vector
 
 		// specific key mapping
 		if (key == "OSWR") {
-			std::cerr << "The OSWR field name has been deprecated, it should be renamed into RSWR. Please update your files!!\n";
+			std::cerr << "[W] The OSWR field name has been deprecated, it should be renamed into RSWR. Please update your files!!\n";
 			indexes.push_back(md.getParameterIndex("RSWR"));
 		} else if (key == "OLWR") {
 			md.addParameter("OLWR");
@@ -526,9 +526,9 @@ void iCSVIO::writeMeteoData(const std::vector<std::vector<MeteoData>> &vecvecMet
 		prepareOutfile(outfile, vecMeteo, file_exists);
 		outfile.aggregateData(vecMeteo);
 
-		if (acdd_metadata.isEnabled()) {
-			acdd_metadata.setTimeCoverage(vecMeteo);
-			acdd_metadata.setGeometry(getUniqueLocations(outfile), true);
+		if (acdd.isEnabled()) {
+			acdd.setTimeCoverage(vecMeteo);
+			acdd.setGeometry(getUniqueLocations(outfile), true);
 		}
 
 		writeToFile(outfile);
@@ -606,7 +606,7 @@ void iCSVIO::handleFileAppend(iCSVFile &outfile, const std::vector<MeteoData> &v
 	}
 	const std::vector<std::string> columns_to_append( outfile.columnsToAppend(vecMeteo) );
 	if (!columns_to_append.empty()) {
-		std::cerr << "Will append the following columns to file " << outfile.filename << ": " << joinVector(columns_to_append, outfile.METADATA.field_delimiter) << "\n";
+		std::cout << "[I] Will append the following columns to file " << outfile.filename << ": " << joinVector(columns_to_append, outfile.METADATA.field_delimiter) << "\n";
 		outfile.FIELDS.fields.insert(outfile.FIELDS.fields.end(), columns_to_append.begin(), columns_to_append.end());
 	}
 }
@@ -685,7 +685,7 @@ std::string iCSVIO::getGeometry(const geoLocation &loc)
 	return geometry;
 }
 
-void iCSVIO::writeToFile(const iCSVFile &outfile) const
+void iCSVIO::writeToFile(const iCSVFile &outfile)
 {
 	ofilestream file(outfile.filename);
 	if (!file.is_open()) throw IOException("Unable to open file " + outfile.filename, AT);
@@ -698,9 +698,9 @@ void iCSVIO::writeToFile(const iCSVFile &outfile) const
 	}
 
 	// print acdd metadata
-	if (acdd_metadata.isEnabled()) {
+	if (acdd.isEnabled()) {
 		// print ACDD headers
-		for (auto it = acdd_metadata.cbegin(); it != acdd_metadata.cend(); ++it) {
+		for (auto it = acdd.cbegin(); it != acdd.cend(); ++it) {
 			const std::string header_field( it->second.getName() );
 			const std::string value( it->second.getValue() );
 			if (header_field.empty() || value.empty())
@@ -716,6 +716,18 @@ void iCSVIO::writeToFile(const iCSVFile &outfile) const
 		file << "# " << field.first << " = " << joinVector(field.second, outfile.METADATA.field_delimiter) << "\n";
 	}
 
+	//set variables for acdd's NcML output
+	if (acdd.enableNcML() && fields.count("fields")>0) {
+		const bool has_long_name = fields.count("long_name")!=0 && !fields.at("long_name").empty();
+		const bool has_units = fields.count("units")!=0 && !fields.at("units").empty();
+		for (size_t ii = 0; ii<fields.at("fields").size(); ii++) {
+			const std::string name( fields.at("fields")[ii] );
+			const std::string long_name = has_long_name? fields.at("long_name")[ii] : "";
+			const std::string units = has_units? fields.at("units")[ii] : "";
+			acdd.addVariable(name, long_name, units);
+		}
+	}
+
 	file << "# [DATA]\n";
 	// timestamp and geometry will not be in row data
 	size_t num_data_fields = outfile.FIELDS.fields.size() - 1;
@@ -726,6 +738,8 @@ void iCSVIO::writeToFile(const iCSVFile &outfile) const
 	const auto& out_dates = outfile.getAllDatesInFile();
 	const auto& out_locations = outfile.getAllLocationsInData();
 	const double nodata = outfile.getNoData();
+	if (acdd.enableNcML()) acdd.addDimension("timestamp", "", out_dates.size());
+
 	for (size_t ii = 0; ii < outfile.getRowData().size(); ii++) {
 		size_t data_idx = 0;
 		for (size_t jj = 0; jj < outfile.FIELDS.fields.size(); jj++) {
@@ -750,6 +764,8 @@ void iCSVIO::writeToFile(const iCSVFile &outfile) const
 		}
 	}
 	file.close();
+
+	if (acdd.isEnabled() && acdd.enableNcML()) acdd.writeNcML( outfile.filename );
 }
 
 } // namespace

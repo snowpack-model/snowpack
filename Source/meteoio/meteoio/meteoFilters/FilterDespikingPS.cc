@@ -525,7 +525,7 @@ void FilterDespikingPS::replaceSpikes(const std::vector<double>& timeVec, std::v
 						double interpolatedValue = polyFit.f(0);
 						uVec[ii] = interpolatedValue;
 					} catch (const std::exception &e) {
-						std::cerr << "An exception occurred: " << e.what() << std::endl;
+						std::cerr << "[E] An exception occurred: " << e.what() << std::endl;
 					}
 				} //endif getWindow
 			} else {

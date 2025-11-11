@@ -966,5 +966,32 @@ double unitsConversion(const double& val, std::string unitIn, std::string unitOu
 	//throw ConversionFailedException("Unable to perform unit conversion.", AT);
 }
 
+std::string escapeXml(const std::string& input)
+{
+    std::string output;
+    for (char c : input) {
+        switch (c) {
+            case '&':
+                output += "&amp;";
+                break;
+            case '<':
+                output += "&lt;";
+                break;
+            case '>':
+                output += "&gt;";
+                break;
+            case '"':
+                output += "&quot;";
+                break;
+            case '\'':
+                output += "&apos;";
+                break;
+            default:
+                output += c;
+        }
+    }
+    return output;
+}
+
 } //namespace IOUtils
 } //namespace

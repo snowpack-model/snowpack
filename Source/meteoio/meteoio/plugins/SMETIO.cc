@@ -61,10 +61,10 @@ using namespace PLUGIN;
  * the <a href="https://www.slf.ch/en/avalanche-bulletin-and-snow-situation/measured-values/description-of-automated-stations.html">IMIS/Snowpack</a>
  * naming scheme will be used to derive the slope information (default: false, [Input] section).
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP, [Output] section). In the next version, the GZIP output will be incompatible with this version!!
- * - SMET_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
+ * - FILES_VERSIONING: create multiple versions of a given dataset by appending additional information to the filename, as defined by the value
  * (in the [Output] section, default is no such versioning):
  *      - NOW: append the current date formatted as numerical ISO;
- *      - STRING: append a fixed string as provided by the SMET_VERSIONING_STRING key;
+ *      - STRING: append a fixed string as provided by the FILES_VERSIONING_STRING key;
  *      - DATA_START: append the absolute start date of the dataset formatted as numerical ISO;
  *      - DATA_END: append the absolute end date of the dataset formatted as numerical ISO;
  *      - YEARS: append the absolute start and end years of dataset (if they are the same, only one year is used);
@@ -208,6 +208,8 @@ void SMETIO::parseInputOutputSection()
 		if (write_acdd) {
 			acdd.setEnabled( true );
 			acdd.setUserConfig(cfg, "Output", false); //do not allow multi-line keys
+			const bool enableNCML = cfg.get("ACDD_WRITE_NCML", "Output", false);
+			acdd.setEnableNcML( enableNCML ); //this can be forced to TRUE with a compilation flag
 		}
 
 		cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
@@ -221,7 +223,7 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue("SMET_COMMENTED_HEADERS", "Output", outputCommentedHeaders, IOUtils::nothrow); //allow prefixing headers by a '#' character for easy import into Dbs, etc
 
 		//support for versioning in the file names
-		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("SMET_VERSIONING", "Output", "") );
+		const std::string versioning_type_str = IOUtils::strToUpper( cfg.get("FILES_VERSIONING", "Output", "") );
 		if (versioning_type_str.empty()) {
 			outputVersioning = NO_VERSIONING;
 		} else {
@@ -232,9 +234,9 @@ void SMETIO::parseInputOutputSection()
 			else if (versioning_type_str=="DATA_END") outputVersioning = DATA_END;
 			else if (versioning_type_str=="YEARS") outputVersioning = DATA_YEARS;
 			else
-				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for SMET_VERSIONING", AT);
+				throw InvalidArgumentException("Unknown value '"+versioning_type_str+"' for FILES_VERSIONING", AT);
 		}
-		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("SMET_VERSIONING_STRING", "Output", "") );
+		if (outputVersioning==STRING) versioning_str = IOUtils::strToUpper( cfg.get("FILES_VERSIONING_STRING", "Output", "") );
 
 		std::vector<std::string> vecArgs;
 		cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
@@ -252,7 +254,7 @@ void SMETIO::parseInputOutputSection()
 			throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
 
 		if (allowOverwrite && allowAppend) {
-			std::cerr << "OVERWRITE and APPEND are deprecated, please use SMET_WRITEMODE instead\n";
+			std::cerr << "[W] OVERWRITE and APPEND are deprecated, please use SMET_WRITEMODE instead\n";
 			allowOverwrite = false;
 		}
 
@@ -313,7 +315,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 
 		//specific key mapping
 		if (key == "OSWR") {
-			std::cerr << "The OSWR field name has been deprecated, it should be renamed into RSWR. Please update your files!!\n";
+			std::cerr << "[W] The OSWR field name has been deprecated, it should be renamed into RSWR. Please update your files!!\n";
 			indexes.push_back(md.getParameterIndex("RSWR"));
 		} else if (key == "OLWR") {
 			md.addParameter("OLWR");
@@ -591,13 +593,13 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				mywriter = new smet::SMETWriter(filename, type);
 				if (output_separator!=' ') mywriter->set_separator( output_separator );
 				mywriter->set_commented_headers( outputCommentedHeaders );
-				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone, paramInUse, *mywriter);
+				generateHeaderInfo(sd, outputIsAscii, isConsistent, smet_timezone, paramInUse, vecMeteo[ii].size(), *mywriter);
 			}
 
 			std::vector<std::string> vec_timestamp;
 			std::vector<double> vec_data;
-			std::vector<mio::Coords> vecLocation;
-			if (!vecMeteo[ii].empty()) vecLocation.push_back( vecMeteo[ii].front().meta.position );
+			std::set<mio::Coords> vecLocation;
+			vecLocation.insert( vecMeteo[ii].front().meta.position );
 			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 				//handle the timestamp field
 				if (outputIsAscii){
@@ -621,8 +623,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				}
 
 				if (!isConsistent) { //Meta data changes
-					if (vecMeteo[ii][jj].meta.position != vecLocation.back())
-						vecLocation.push_back( vecMeteo[ii][jj].meta.position );
+					vecLocation.insert( vecMeteo[ii][jj].meta.position );
 
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLat());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLon());
@@ -650,7 +651,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 }
 
 void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-                                const double& smet_timezone, const std::set<std::string>& paramInUse, smet::SMETWriter& mywriter)
+                                const double& smet_timezone, const std::set<std::string>& paramInUse, const size_t& nrTimestamps, smet::SMETWriter& mywriter)
 {
 	/**
 	 * This procedure sets all relevant information for the header in the SMETWriter object mywriter
@@ -672,8 +673,10 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	std::ostringstream plot_units, plot_description, plot_color, plot_min, plot_max;
 
 	if (i_outputIsAscii) {
+		acdd.addDimension( "timestamp", "time", nrTimestamps );
 		ss << "timestamp";
 	} else {
+		acdd.addDimension( "julian", "time", nrTimestamps );
 		ss << "julian";
 		myprecision.push_back(8);
 		mywidth.push_back(16);
@@ -706,6 +709,9 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 		if (smet_timezone != IOUtils::nodata)
 			mywriter.set_header_value("tz", smet_timezone);
 	} else {
+		acdd.addVariable( "latitude", "", "");
+		acdd.addVariable( "longitude", "", "");
+		acdd.addVariable( "altitude", "", "");
 		ss << " latitude longitude altitude";
 		myprecision.push_back(8); //for latitude
 		mywidth.push_back(11);    //for latitude
@@ -719,6 +725,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	bool some_params_identified = false;
 	int tmpwidth, tmpprecision;
 	for (const std::string& parname : paramInUse) {
+		acdd.addVariable( parname, "", "");
 		ss << " " << parname;
 		getFormatting(parname, tmpprecision, tmpwidth);
 		myprecision.push_back(tmpprecision);
@@ -772,7 +779,7 @@ bool SMETIO::getPlotProperties(std::string param, std::ostringstream &plot_units
 		} else {
 			char tmp[11];
 			static const int max_col = 256*256*256;
-			snprintf(tmp, 11, "0x%x", rand() % max_col);
+			snprintf(tmp, 11, "0x%x", static_cast<unsigned int>( rand() % max_col ) );
 			plot_color << tmp << " ";
 			return true;
 		}

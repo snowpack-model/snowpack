@@ -115,7 +115,7 @@ elif (( ${smet} )); then
 	colOLWR=$(echo ${header} | sed 's/ /\n/g' | grep -nx "OLWR" | awk -F: '{print $1-2}')
 	colILWR=$(echo ${header} | sed 's/ /\n/g' | grep -nx "ILWR" | awk -F: '{print $1-2}')
 	colNetLWR=$(echo ${header} | sed 's/ /\n/g' | grep -nx "LWR_net" | awk -F: '{print $1-2}')
-	colRSWR=$(echo ${header} | sed 's/ /\n/g' | grep -nx "OSWR" | awk -F: '{print $1-2}')
+	colRSWR=$(echo ${header} | sed 's/ /\n/g' | grep -nx "RSWR" | awk -F: '{print $1-2}')
 	colISWR=$(echo ${header} | sed 's/ /\n/g' | grep -nx "ISWR" | awk -F: '{print $1-2}')
 	colsoilheat=$(echo ${header} | sed 's/ /\n/g' | grep -nx "Qg0" | awk -F: '{print $1-2}')
 	colRainNRG=$(echo ${header} | sed 's/ /\n/g' | grep -nx "Qr" | awk -F: '{print $1-2}')

@@ -109,8 +109,6 @@ const double SnLaws::displacement_coef = 0.7;
 const double SnLaws::alpha_por_tor = 0.07;
 //@}
 
-/// @brief To use J. Hendrikx's parameterization for wind speeds > 2.9 m s-1
-const bool SnLaws::jordy_new_snow = false;
 
 /// @brief Defines the smallest allowable viscosity (Pa s) that a viscosity law will return \n
 /// Value is DAMM SMALL -- smaller values than this are pretty unrealistic.
@@ -1167,22 +1165,23 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 		static const double alpha=70., beta=30., gamma=10., delta=0.4;
 		static const double eta=30., phi=6.0, mu=-3.0, nu=-0.5;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW;
-		if (jordy_new_snow && (VW > 2.9))
-			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
 		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
-	} else if (i_hn_model == "LEHNING_NEW") {
+	} else if (i_hn_model == "LEHNING_NEW" || i_hn_model == "JORDY") {
+		//LEHNING_NEW and JORDY only differ in their treatment of snow densification by the wind, over 5m/s for Lehning, over 2.9m/s for Jordy
 		static const double alpha=90., beta=6.5, gamma=7.5, delta=0.26;
 		static const double eta=13., phi=-4.5, mu=-0.65, nu=-0.17, om=0.06;
 		rho_hn = alpha + beta*TA + gamma*TSS +  delta*RH + eta*VW + phi*TA*TSS + mu*TA*VW + nu*RH*VW + om*TA*TSS*RH;
 		// Ad hoc temperature correction
-		if (TA < -10.)
-			rho_hn = std::min(rho_hn, alpha*(1. + 0.05*(TA + 10.)));
-		// Increase snow density under snow transport conditions
-		if ((!jordy_new_snow) && (VW > 5.)) {
+		if (TA < -10.) rho_hn = std::min(rho_hn, alpha*(1. + 0.05*(TA + 10.)));
+
+		if (i_hn_model == "LEHNING_NEW" && VW > 5.) {
+			// Increase snow density under snow transport conditions
 			rho_hn = 90. + (rho_hn - 30.)*0.9;
-		} else if (jordy_new_snow && (VW > 2.9)) {
-			rho_hn = newSnowDensityHendrikx(TA, TSS, RH, VW);
+		} else if (i_hn_model == "JORDY" && VW > 2.9) {
+			//Jordy Hendrikx' new snow density parameterization for strong winds (> 2.9 m s-1) for Lehning/Jordy models
+			static const double alpha_j=91., beta_j=-35., gamma_j=-1.1, delta_j=49., eta_j=32.,  phi_j=4.6;
+			return (alpha_j + beta_j*TA + gamma_j*RH +  delta_j*VW + eta_j*TSS + phi_j*TA*VW);
 		}
 		rho_hn = std::min(max_hn_density, std::max(min_hn_density, rho_hn));
 
@@ -1239,20 +1238,7 @@ double SnLaws::newSnowDensityPara(const std::string& i_hn_model,
 	return rho_hn;
 }
 
-/**
- * @brief Jordy Hendrikx' new snow density parameterization for strong winds (> 2.9 m s-1)
- * @note To be used with Lehning's models only!
- * @param ta  Air temperature (degC)
- * @param tss Snow surface temperature (degC)
- * @param rh  Relative air humidity (%)
- * @param vw  Mean wind velocity (m s-1)
- * @return New snow density
- */
-double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const double rh, const double vw)
-{
-	static const double alpha=91., beta=-35., gamma=-1.1, delta=49., eta=32.,  phi=4.6;
-	return (alpha + beta*ta + gamma*rh +  delta*vw + eta*tss + phi*ta*vw);
-}
+
 
 /**
  * @name New snow density
@@ -1261,10 +1247,10 @@ double SnLaws::newSnowDensityHendrikx(const double ta, const double tss, const d
  * 	- ZWART: Costijn Zwart's model (elaborated 2006; in use since 4 Dec 2007)
  * 	- LEHNING_NEW: Improved model by M. Lehning, incl. ad-hoc wind & temperature effects (used until 06/07)
  * 	- LEHNING_OLD: First model by M. Lehning
- *       @note {models by M. Lehning can be augmented with a parameterization for winds > 2.9 m s-1
- *              worked out by J. Hendrikx => set jordy_new_snow in Laws_sn.cc}
+ *  - JORDY: JORDY model by J. Hendrikx (2017) for wind speeds > 2.9 m/s (uses LEHNING_NEW below 2.9 m/s)
  * 	- BELLAIRE: Sascha Bellaire's model (elaborated 2007; used summer/fall 2007)
  * 	- PAHAUT: Edmond Pahaut's model, introduced Sep 1995 in CROCUS by G. Giraud
+ *  - VANKAMPENHOUT: van Kampenhout et al. (2017): https://doi.org/10.1002/2017MS000988 , developed for firn in antartica
  * - EVENT: Driven by event type, that is,
  * 	- event_wind: Implemented 2009 by Christine Groot Zwaaftink for Antarctic variant
  * - MEASURED: Use measured new snow density read from meteo input

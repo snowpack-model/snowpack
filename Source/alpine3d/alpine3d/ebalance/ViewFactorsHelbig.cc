@@ -37,10 +37,10 @@ ViewFactorsHelbig::ViewFactorsHelbig(const mio::Config &cfg, const mio::DEMObjec
 	cfg.getValue("sub_crit", "EBalance", sub_crit);
 	cfg.getValue("sw_radius", "EBalance", sw_radius);
 	cfg.getValue("lw_radius", "EBalance", lw_radius);
-	cfg.getValue("vf_file", "Input", vf_file_in, mio::IOUtils::nothrow);
-	cfg.getValue("tvfarea", "Input", tvfarea_file_in, mio::IOUtils::nothrow);
-	cfg.getValue("vf_file", "Output", vf_file_out, mio::IOUtils::nothrow);
-	cfg.getValue("tvfarea", "Output", tvfarea_file_out, mio::IOUtils::nothrow);
+	cfg.getValue("vf_file_in", "EBalance", vf_file_in, mio::IOUtils::nothrow);
+	cfg.getValue("tvfarea_in", "EBalance", tvfarea_file_in, mio::IOUtils::nothrow);
+	cfg.getValue("vf_file_out", "EBalance", vf_file_out, mio::IOUtils::nothrow);
+	cfg.getValue("tvfarea_out", "EBalance", tvfarea_file_out, mio::IOUtils::nothrow);
 
 	cellsize = dem.cellsize;
 	dimx = dem.getNx();

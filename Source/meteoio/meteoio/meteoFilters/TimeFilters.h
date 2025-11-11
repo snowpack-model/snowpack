@@ -55,7 +55,7 @@ class TimeProcStack {
  * @details
  * This filter deletes some timesteps based on the provided arguments:
  *  - TYPE: defines the strategy to delete timesteps. It is one of:
- *       - CLEANUP: merge duplicated and out-of-order timestamps (a warning will be emitted anyway for the problematic timestamp). Merge are only performed when they don't conflict (two identical fields with different, non-nodata value is a conflict)
+ *       - DUPLICATES: merge duplicated timestamps when they don't conflict (two identical fields with different, non-nodata value is a conflict)
  *       - BYDATES: delete specific timesteps
  *       - FRAC: suppress a given fraction of the data at random
  *  - FILE: when type=BYDATE, a file that contains a list of station ID's and timesteps that should be suppressed;
@@ -65,7 +65,7 @@ class TimeProcStack {
  *
  * @code
  * TIME::filter1     = suppr
- * TIME::arg1::type = cleanup
+ * TIME::arg1::type = duplicates
  * 
  * TIME::filter2     = suppr
  * TIME::arg2::type = bydates
@@ -96,12 +96,12 @@ class TimeSuppr : public ProcessingBlock {
 		            NONE,
 		            BYDATES,
 		            FRAC,
-		            CLEANUP
+		            DUPLICATES
 		} suppr_mode;
 		
 		void supprByDates(std::vector<MeteoData>& ovec) const;
 		void supprFrac(std::vector<MeteoData>& ovec) const;
-		void supprInvalid(std::vector<MeteoData>& ovec) const;
+		void supprDuplicates(std::vector<MeteoData>& ovec) const;
 		
 		std::map< std::string, std::vector<DateRange> > suppr_dates;
 		double range, width;

@@ -1129,7 +1129,7 @@ void EditingRegFill::editTimeSeries(std::vector<METEO_SET>& vecMeteo)
 			}
 		}
 		if (!found_source_station) {
-			std::cerr << "Warning: Source station " << fromStationID << " not found for RegressionFill" << std::endl;
+			std::cerr << "[W] Source station " << fromStationID << " not found for RegressionFill" << std::endl;
 		}
 	}
 }
@@ -1216,7 +1216,7 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 
 	if (duplicate_dates.empty()) {
     	if (print_regression_info) {
-    		std::cerr << "Could not perform regression. No overlapping dates found." << std::endl;
+    		std::cerr << "[W] Could not perform regression. No overlapping dates found." << std::endl;
     	}
     	return;
 	}
@@ -1237,7 +1237,7 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 			y.push_back(y_val);
 		}
 		if (x.empty() || y.empty()) {
-			std::cerr << "No data to perform regression for station: "<< vecMeteoSource.front().getStationID()<< " and parameter: "<< md_pattern.getNameForParameter(ii) <<"\n";
+			std::cerr << "[W] No data to perform regression for station: "<< vecMeteoSource.front().getStationID()<< " and parameter: "<< md_pattern.getNameForParameter(ii) <<"\n";
 			continue;
 		}
 		if (print_regression_info) {
@@ -1245,7 +1245,7 @@ void EditingRegFill::fillTimeseries(METEO_SET& vecMeteo, const METEO_SET& vecMet
 		}
 		std::vector<double> reg_res( doRegression(x, y, regtype, print_regression_info) );
 		if (reg_res.empty()) {
-			std::cerr << "Regression fit failed for station: "<< vecMeteoSource.front().getStationID()<< " and parameter: "<< md_pattern.getNameForParameter(ii) <<"\n";
+			std::cerr << "[W] Regression fit failed for station: "<< vecMeteoSource.front().getStationID()<< " and parameter: "<< md_pattern.getNameForParameter(ii) <<"\n";
 			reg_res = regtype == LINEAR ? std::vector<double>{0.0, IOUtils::nodata} : std::vector<double>{0.0, 0.0, IOUtils::nodata};
 		}
 		regression_coefficients[ii] = reg_res;

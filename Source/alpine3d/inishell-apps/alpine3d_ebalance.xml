@@ -27,25 +27,24 @@ https://snowpack.slf.ch
 
 	<!-- Alternative panel: EBalance -->
 	<parameter type="helptext" wrap="true" section="EBalance">
-		<help>First, the measured radiation (as provided by each station that measured both ISWR, TA and RH) is interpolated over the domain (see the &lt;a href="https://alpine3d.slf.ch/doc-release/html/radiation_balance.html"&gt;online documentation&lt;/a&gt;). Then the effects of the terrain on the radiation field are accounted for. These are twofold: first the topography can cast shade on some parts of the domain (this is always computed) and second some radiation can be reflected by the terrain on some other cells (this is what is configured here).</help>
+		<help>First, the measured radiation (as provided by each station that measured both ISWR, TA and RH) is interpolated over the domain (see the &lt;a href="https://alpine3d.slf.ch/doc-release/html/radiation_balance.html"&gt;online documentation&lt;/a&gt;). Then the effects of the terrain on the radiation field are accounted for. These are twofold: first the topography can cast shade on some parts of the domain (this is always computed) and second some radiation can be reflected by the terrain on some other cells (this is what is configured here, with a choice of &lt;a href="https://alpine3d.slf.ch/doc-release/html/radiation_balance.html#terrain_radiation"&gt;algorithms&lt;/a&gt;).</help>
 	</parameter>
 	<parameter type="spacer" height="10" section="EBalance"/>
 
-	<parameter key="Terrain_Radiation" type="alternative" default="TRUE" section="EBalance">
-		<option value="TRUE">
-			<parameter key="Terrain_Radiation_Method" type="alternative" default="SIMPLE" section="EBalance">
-				<reference name="TERRAIN_SIMPLE"/>
-				<reference name="TERRAIN_HELBIG"/>
-				<reference name="TERRAIN_COMPLEX"/>
-				<help>Select how the radiation reflected by the terrain will be computed</help>
-			</parameter>
-		</option>
-		<option value="FALSE"/>
-		<help>Should the radiation reflected by the terrain be computed?</help>
+	<parameter key="Terrain_Radiation_Method" type="alternative" default="SIMPLE" section="EBalance">
+		<reference name="TERRAIN_SIMPLE"/>
+		<reference name="TERRAIN_HELBIG"/>
+		<reference name="TERRAIN_COMPLEX"/>
+		<help>Select how the radiation reflected by the terrain will be computed</help>
 	</parameter>
 
 	<parametergroup name="TERRAIN_SIMPLE">
 		<option value="SIMPLE">
+			<parameter key="WRITE_SKY_VIEW_FACTOR" type="alternative" optional="true">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write the computed view factors with the gridded outputs? (default: false)</help>
+			</parameter>
 			<help>a very basic (but fast) guess, see &lt;a href="https://alpine3d.slf.ch/doc-release/html/classTerrainRadiationSimple.html"&gt;TerrainRadiationSimple&lt;/a&gt;</help>
 		</option>
 	</parametergroup>
@@ -77,21 +76,21 @@ https://snowpack.slf.ch
 			</parameter>
 			<parameter key="WRITE_SKY_VIEW_FACTOR" type="alternative" optional="true">
 				<option value="TRUE">
-					<parameter key="VF_FILE" type="file" mode="output" optional="false">
+					<parameter key="VF_FILE_OUT" type="file" mode="output" optional="false">
 						<help>file to write the view factors to</help>
 					</parameter>
-					<parameter key="TVFAREA" type="file" mode="output" optional="false">
+					<parameter key="TVFAREA_OUT" type="file" mode="output" optional="false">
 						<help>file to write the terrain view factors to</help>
 					</parameter>
 				</option>
 				<option value="FALSE"/>
 				<help>Write the computed view factors to a file for (much) faster retrieval for new simulations (default: false)</help>
 			</parameter>
-			<parameter key="VF_FILE" type="file" mode="input" optional="true">
-				<help>file to read the pre-computed view factors from</help>
+			<parameter key="VF_FILE_IN" type="file" mode="input" optional="true">
+				<help>file to read the pre-computed view factors from (if any)</help>
 			</parameter>
-			<parameter key="TVFAREA" type="file" mode="input" optional="true">
-				<help>file to read the pre-computed terrain view factors from</help>
+			<parameter key="TVFAREA_IN" type="file" mode="input" optional="true">
+				<help>file to read the pre-computed terrain view factors from (if any)</help>
 			</parameter>
 			<help>the original radiosity implementation, not parallelized, see &lt;a href="https://alpine3d.slf.ch/doc-release/html/classTerrainRadiationHelbig.html"&gt;TerrainRadiationHelbig&lt;/a&gt;</help>
 		</option>
@@ -104,7 +103,7 @@ https://snowpack.slf.ch
 				<option value="FALSE"/>
 				<help>Whether a snow BRDF should be included. False means isotropic scattering (default: false)</help>
 			</parameter>
-			<parameter key="COMPLEX_ANISOTROPY" type="alternative" optional="true">
+			<parameter key="COMPLEX_MULTIPLE" type="alternative" optional="true">
 				<option value="TRUE"/>
 				<option value="FALSE"/>
 				<help>Whether multiple scattering in the terrain should be taken into account (default: false)</help>
@@ -125,6 +124,11 @@ https://snowpack.slf.ch
 			</parameter>
 			<parameter key="PVPFILE" type="file" mode="input" optional="true">
 				<help>file to define solar panels</help>
+			</parameter>
+			<parameter key="WRITE_SKY_VIEW_FACTOR" type="alternative" optional="true">
+				<option value="TRUE"/>
+				<option value="FALSE"/>
+				<help>Write the computed view factors with the gridded outputs? (default: false)</help>
 			</parameter>
 			<help>radiative transfer of SW radiation in snow-covered terrain according to (von Rütte, F., Kahl, A., Rohrer, J., Lehning, M. &lt;i&gt;"How forward-scattering snow and terrain change the Alpine radiation balance with application to solar panels"&lt;/i&gt;, Journal of Geophysical Research: Atmospheres, 126, e2020JD034333, (2021), &lt;a href="https://doi.org/10.1029/2020JD034333"&gt;doi.org/10.1029/2020JD034333&lt;/a&gt;</help>
 		</option>

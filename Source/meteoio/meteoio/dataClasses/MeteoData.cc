@@ -775,23 +775,22 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 	if (vec2.empty()) return 0; //nothing to merge
 	if (vec1.empty()) {
 		if (strategy==STRICT_MERGE || strategy==WINDOW_MERGE) return 0; //optimization for STRICT_MERGE
-		
 		vec1 = vec2;
 		return 0;
 	}
 
 	//adding the necessary extra parameters to vec1 elements, no matter which merge strategy
-	if (!vec1.empty()) {
-		const size_t nrExtra2 = vec2.back().nrOfAllParameters - nrOfParameters;
-		for (size_t pp=0; pp<nrExtra2; pp++) {
-			const std::string extra_name( vec2.back().extra_param_name[pp] );
-			if (vec1.back().getParameterIndex(extra_name)==IOUtils::npos) {
-				for (size_t ii=0; ii<vec1.size(); ii++) vec1[ii].addParameter( extra_name );
-			}
+	//vec1 is not empty, otherwise it would have returned above
+	const size_t nrExtra2 = vec2.back().nrOfAllParameters - nrOfParameters;
+	for (size_t pp=0; pp<nrExtra2; pp++) {
+		const std::string extra_name( vec2.back().extra_param_name[pp] );
+		if (vec1.back().getParameterIndex(extra_name)==IOUtils::npos) {
+			for (size_t ii=0; ii<vec1.size(); ii++) vec1[ii].addParameter( extra_name );
 		}
 	}
 
-	if (strategy==STRICT_MERGE || strategy==WINDOW_MERGE) { //optimization for STRICT_MERGE
+	//optimization for STRICT_MERGE and WINDOW_MERGE: vec1 and vec2 must overlap!
+	if (strategy==STRICT_MERGE || strategy==WINDOW_MERGE) {
 		if (vec1.back().date<vec2.front().date) return 0; //vec1 is before vec2
 		if (vec1.front().date>vec2.back().date) return 0; //vec1 is after vec2
 	}
@@ -800,8 +799,9 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 	size_t vec1_start = 0; //the index in vec2 that matches the original start of vec1
 	size_t vec1_end = 0; //the index in vec2 that matches the original end of vec1
 
-	//filling data before vec1
-	if (strategy!=STRICT_MERGE && strategy!=WINDOW_MERGE && vec1.front().date>vec2.front().date) {
+	
+	if (vec1.front().date>vec2.front().date) {
+		//looking for the index in vec2 that matches the start of vec1
 		const Date start_date( vec1.front().date );
 		vec1_start = vec2.size(); //if no overlap is found, take all vec2
 		for (size_t ii=0; ii<vec2.size(); ii++) { //find the range of elements to add
@@ -811,12 +811,15 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 			}
 		}
 
-		MeteoData md_pattern( vec1.front() ); //This assumes that station1 is not moving!
-		md_pattern.reset(); //keep metadata and extra params
-		vec1.insert(vec1.begin(), vec1_start, md_pattern);
-		for (size_t ii=0; ii<vec1_start; ii++) {
-			vec1[ii].date = vec2[ii].date;
-			if (!vec1[ii].merge( vec2[ii], conflicts_strategy )) nr_conflicts++;
+		if (strategy==EXPAND_MERGE || strategy==FULL_MERGE) {
+			//filling data before vec1
+			MeteoData md_pattern( vec1.front() ); //This assumes that station1 is not moving!
+			md_pattern.reset(); //keep metadata and extra params
+			vec1.insert(vec1.begin(), vec1_start, md_pattern);
+			for (size_t ii=0; ii<vec1_start; ii++) {
+				vec1[ii].date = vec2[ii].date;
+				if (!vec1[ii].merge( vec2[ii], conflicts_strategy )) nr_conflicts++;
+			}
 		}
 	}
 
@@ -828,30 +831,29 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 		md_pattern.reset(); //keep metadata and extra params
 
 		size_t idx2 = vec1_start; //all previous elements were handled before
-		size_t last_v1 = vec1_start; //last element from vec1 that will have to be invalidated
+		size_t inserted_count = 0; //count how many new timestamps are added that only existed in vec2
 		for (size_t ii=vec1_start; ii<vec1.size(); ii++) {
 			const Date curr_date( vec1[ii].date );
-			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) {
+			while ((idx2<vec2.size()) && (vec2[idx2].date<curr_date)) {
 				tmp.push_back( md_pattern );
 				tmp.back().date = vec2[idx2].date;
 				if (!tmp.back().merge( vec2[idx2], conflicts_strategy )) nr_conflicts++; //so the extra params are properly handled
 				idx2++;
+				inserted_count++;
 			}
 			if (idx2==vec2.size())  break; //nothing left to merge
 
-			if (curr_date==vec2[idx2].date) {
+			if (vec2[idx2].date==curr_date) {
 				if (!vec1[ii].merge( vec2[idx2], conflicts_strategy )) nr_conflicts++;
 				idx2++;
 			}
 			tmp.push_back( vec1[ii] );
-			last_v1 = ii;
 		}
-
-		const size_t new_count = last_v1 - vec1_start + 1;
-		if (new_count<tmp.size())
-			vec1.insert( vec1.begin() + vec1_start, tmp.size()-new_count, tmp.front()); //so room for the extra params is allocated
-
-		for(size_t ii=0; ii<tmp.size(); ii++)
+		
+		if (inserted_count!=0)
+			vec1.insert( vec1.begin() + vec1_start, inserted_count, tmp.front()); //so room for the extra timesteps is allocated
+			
+		for (size_t ii=0; ii<tmp.size(); ii++)
 			vec1[vec1_start+ii] = tmp[ii];
 
 		vec1_end = idx2;
@@ -859,7 +861,7 @@ size_t MeteoData::mergeTimeSeries(std::vector<MeteoData>& vec1, const std::vecto
 		size_t idx2 = vec1_start;
 		for (size_t ii=vec1_start; ii<vec1.size(); ii++) { //loop over the timestamps. If some elements were inserted, vec1 now starts at vec1_start. If not, vec1_start==0
 			const Date curr_date( vec1[ii].date );
-			while ((idx2<vec2.size()) && (curr_date>vec2[idx2].date)) idx2++;
+			while ((idx2<vec2.size()) && (vec2[idx2].date<curr_date)) idx2++;
 
 			if (idx2==vec2.size()) return nr_conflicts; //nothing left to merge
 			if (curr_date==vec2[idx2].date) { //merging

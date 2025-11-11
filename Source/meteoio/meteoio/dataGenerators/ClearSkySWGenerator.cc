@@ -27,8 +27,13 @@ bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md, const std
 {
 	double &value = md(param);
 	if (value == IOUtils::nodata) {
-		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS), P=md(MeteoData::P);
+		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS);
 		double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+		double P=md(MeteoData::P);
+		if (P<1200. || P>120000.) { //catching potential (and frequent) units problems
+			P=IOUtils::nodata;
+			wrongPressureUnits = true; //error reporting only once and when calling "create" as to avoid flodding the logs
+		}
 
 		const double lat = md.meta.position.getLat();
 		const double lon = md.meta.position.getLon();
@@ -45,8 +50,8 @@ bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md, const std
 
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) {
 			//set TA & RH so the reduced precipitable water will get an average value
-			TA=274.98;
-			RH=0.666;
+			TA = 274.98;
+			RH = 0.666;
 		}
 
 		sun.setLatLon(lat, lon, alt);
@@ -68,12 +73,18 @@ bool ClearSkySWGenerator::generate(const size_t& param, MeteoData& md, const std
 
 bool ClearSkySWGenerator::create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo)
 {
+	wrongPressureUnits = false;
 	if (vecMeteo.empty()) return true;
 
 	bool all_filled = true;
 	for (size_t ii=ii_min; ii<ii_max; ii++) {
 		const bool status = generate(param, vecMeteo[ii], vecMeteo);
 		if (status==false) all_filled=false;
+	}
+
+	if (wrongPressureUnits) {
+		const std::string stationID( vecMeteo.back().getStationID() );
+		std::cerr << "[E] Possibly wrong pressure units in ClearSkySWGenerator, silently ignoring wildly out of range values for station '" << stationID << "'\n";
 	}
 
 	return all_filled;

@@ -62,11 +62,15 @@ class DBO : public IOInterface {
 
 			std::string toString() const {
 				std::ostringstream os;
-				os << "   " << id << " " << param_dbo << " [";
+				os << "   " << id << " " << param_dbo << " -> " << parname << " [";
 				os << ((since.isUndef())? "-∞" : since.toString(Date::ISO)) << " - ";
 				os << ((until.isUndef())? "∞" : until.toString(Date::ISO)) << "] ";
 				os << agg_type << " - " << interval << " s - #" << sequence;
-				//os << " - x" << units_factor << " +" << units_offset;
+				if (units_factor!=1. || units_offset!=0.) {
+					os << " -";
+					if (units_factor!=1.) os << " x" << units_factor;
+					if (units_offset!=0.) os << " +" << units_offset;
+				}
 				return os.str();
 			}
 

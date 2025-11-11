@@ -38,6 +38,8 @@
 	#include <cstring>
 #endif
 
+#include <cstring>
+
 #include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FStream.h>
@@ -93,6 +95,7 @@ std::string cleanPath(std::string in_path, const bool& resolve, const bool& sile
 		return in_path;
 	} else {
 	#if defined _WIN32 || defined __MINGW32__
+		(void) silent;
 		//if this would not suffice, see http://pdh11.blogspot.ch/2009/05/pathcanonicalize-versus-what-it-says-on.html
 		char **ptr = nullptr;
 		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
@@ -104,7 +107,7 @@ std::string cleanPath(std::string in_path, const bool& resolve, const bool& sile
 		return in_path;
 	#else //POSIX
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
-		
+
 		errno = 0;
 		char *real_path = realpath(in_path.c_str(), nullptr); //POSIX 2008
 		if (real_path!=nullptr) {
@@ -112,7 +115,7 @@ std::string cleanPath(std::string in_path, const bool& resolve, const bool& sile
 			free(real_path);
 			return tmp;
 		} else {
-			if (!silent) std::cerr << "Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
+			if (!silent) std::cerr << "[W] Path expansion of \'" << in_path << "\' failed. Reason:\t" << std::strerror(errno) << "\n";
 			return in_path; //something failed in realpath, keep it as it is
 		}
 	#endif
@@ -190,7 +193,7 @@ bool validFileAndPath(const std::string& filename)
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
 	const size_t invalid_char = filename.find_first_of("\000"); //find possible invalid characters
 #endif
-	
+
 	if ((startpos!=0) || (invalid_char!=std::string::npos) || (filename==".") || (filename=="..")) {
 		return false;
 	}
@@ -227,7 +230,7 @@ bool directoryExists(const std::string &path) {
 	}
 }
 
-bool isWindowsPath(const std::string& path) 
+bool isWindowsPath(const std::string& path)
 {
 	static const std::regex e("^[a-z]:\\/", std::regex::icase | std::regex::optimize);
 	return std::regex_search(path, e);
@@ -269,11 +272,11 @@ std::string getCWD()
 bool fileExists(const std::string& filename)
 {
 	const DWORD attributes = GetFileAttributes( filename.c_str() );
-	
-	if (attributes==INVALID_FILE_ATTRIBUTES || attributes==FILE_ATTRIBUTE_VIRTUAL 
+
+	if (attributes==INVALID_FILE_ATTRIBUTES || attributes==FILE_ATTRIBUTE_VIRTUAL
 	     || attributes==FILE_ATTRIBUTE_DIRECTORY || attributes==FILE_ATTRIBUTE_DEVICE)
 		return false;
-	
+
 	return true;
 }
 
@@ -281,7 +284,7 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 {
 	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 1)) {
-		std::cerr << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
+		std::cerr << "[W] Path " << path << "is too long (" << path_length << " characters)" << std::endl;
 		throw AccessException("Error opening directory " + path, AT);
 	}
 
@@ -294,10 +297,10 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 	do {
 		const std::string filename( ffd.cFileName );
 		const std::string full_path( path+"/"+filename );
-		
-		if ( filename.compare(".")==0 || filename.compare("..")==0 || (ffd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ) 
+
+		if ( filename.compare(".")==0 || filename.compare("..")==0 || (ffd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) )
 			continue; //skip ".", ".." and hidden files/directories
-		
+
 		if (!isRecursive) {
 			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				//this is a directory -> do nothing
@@ -340,7 +343,7 @@ bool fileExists(const std::string& filename)
 	if ((stat( filename.c_str(), &buffer))!=0) {//File exists if stat returns 0
 		return false;
 	}
-	
+
 	if (S_ISREG(buffer.st_mode) || S_ISFIFO(buffer.st_mode) || S_ISLNK(buffer.st_mode))
 		return true;
 	else
@@ -351,7 +354,7 @@ bool fileExists(const std::string& filename)
 void readDirectoryPrivate(const std::string& path, const std::string& sub_path, std::list<std::string>& dirlist, const std::string& pattern, const bool& isRecursive)
 {
 	DIR *dp = opendir(path.c_str());
-	if (dp == nullptr) 
+	if (dp == nullptr)
 		throw AccessException("Error opening directory " + path, AT);
 
 	struct dirent *dirp;
@@ -360,22 +363,22 @@ void readDirectoryPrivate(const std::string& path, const std::string& sub_path, 
 		const std::string full_path( path+"/"+filename );
 		if ( filename.compare(".")==0 || filename.compare("..")==0 )
 			continue; //skip "." and ".."
-		
+
 		struct stat statbuf;
 		if (stat(full_path.c_str(), &statbuf) == -1) {
 			if (lstat(full_path.c_str(), &statbuf) != -1)
 				throw AccessException("File '"+full_path+"' is a broken link, please fix it", AT);
-			else 
+			else
 				throw AccessException("Can not stat '"+full_path+"', please check permissions", AT);
 		}
-		
+
 	#if defined HAVE_STRUCT_STAT_ST_FLAGS
 		const bool hidden_flag = (filename.compare(0,1,".")==0) || (statbuf.st_flags & UF_HIDDEN); //for osX and BSD
 	#else
 		const bool hidden_flag = (filename.compare(0,1,".")==0);
 	#endif
 		if (hidden_flag) continue; //skip hidden files/directories
-		
+
 		if (!isRecursive) {
 			if (pattern.empty()) {
 				dirlist.push_back( filename );

@@ -1,16 +1,8 @@
+#SPDX-License-Identifier: LGPL-3.0-or-later
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersionGIT()
-SET(BINARY "snowpack.app")
-
-IF(MSVC)
-	SET(getopt_src getopt.c)
-ENDIF(MSVC)
-
-SET(snowpack-app_sources
-	Main.cc
-	${getopt_src}
-)
+SET(SN_BINARY "snowpack.app")
 
 #get the proper Snowpack library
 IF(BUILD_SHARED_LIBS)
@@ -27,27 +19,39 @@ INCLUDE_DIRECTORIES(../../)
 FIND_PACKAGE(MeteoIO REQUIRED)
 INCLUDE_DIRECTORIES(${METEOIO_INCLUDE_DIR})
 
+#Plateform specific options
 IF(APPLE)
-	#this is necessary for GUI exceptions
+	SET(TARGET_ARGS ${APP_ICON_MACOSX})
+	#Handle extra libraries needed for GUI exceptions
 	SET(EXTRA_LINKS "-framework CoreServices")
 ENDIF(APPLE)
-IF(UNIX)
+IF(WIN32)
+	#Handle the missing getopt on Windows
+	IF(MSVC)
+		SET(getopt_src getopt.c)
+	ENDIF(MSVC)
+	SET(TARGET_ARGS ${getopt_src} ${APP_ICON_RESOURCE_WINDOWS})
+ENDIF(WIN32)
+IF(UNIX AND NOT HAIKU)
 	SET(EXTRA_LINKS "dl;pthread")
-ENDIF(UNIX)
+ENDIF(UNIX AND NOT HAIKU)
+
+SET(snowpack-app_sources
+	Main.cc
+	${getopt_src}
+)
 
 #Prepare executable
-ADD_EXECUTABLE(${BINARY} ${snowpack-app_sources})
-TARGET_LINK_LIBRARIES(${BINARY} ${LIBSNOWPACK_LIBRARY} ${METEOIO_LIBRARY} ${EXTRA_LINKS})
+ADD_EXECUTABLE(${SN_BINARY} ${snowpack-app_sources} ${TARGET_ARGS})
+TARGET_LINK_LIBRARIES(${SN_BINARY} ${LIBSNOWPACK_LIBRARY} ${METEOIO_LIBRARY} ${EXTRA_LINKS})
 IF(BUILD_STATIC_LIBS)
-	TARGET_LINK_OPTIONS(${BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
+	TARGET_LINK_OPTIONS(${SN_BINARY} PRIVATE -static-libgcc -static-libstdc++ -static)
 ENDIF(BUILD_STATIC_LIBS)
-SET_TARGET_PROPERTIES(${BINARY} PROPERTIES
+
+SET_TARGET_PROPERTIES(${SN_BINARY} PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 	CLEAN_DIRECT_OUTPUT 1
 	OUTPUT_NAME "snowpack"
 )
 
-INSTALL(TARGETS ${BINARY}
-	RUNTIME DESTINATION bin
-	COMPONENT exe
-)
+INSTALL(TARGETS ${SN_BINARY} RUNTIME DESTINATION ${EXE_DEST} ${INSTALL_WIN32} COMPONENT exe)

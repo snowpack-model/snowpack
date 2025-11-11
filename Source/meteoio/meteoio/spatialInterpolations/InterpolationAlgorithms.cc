@@ -69,42 +69,16 @@ namespace mio {
  * <a href="https://en.wikipedia.org/wiki/Coordinate_system#Cartesian_coordinate_system">cartesian coordinate system</a> in your [Input] section 
  * in order to be able to perform most of the spatial interpolations (Lat/lon coordinates are <b>not</b> cartesian, they are spherical!).
  *
- * @section interpol2D_section Spatial interpolations section
- * Practically, the user
- * has to specify in his configuration file (typically io.ini), for each parameter to be interpolated, which
- * spatial interpolations algorithms should be considered, in the [Interpolations2D] section. This is provided as a space separated list of keywords
+ * @section interpol2D_section Configuration
+ * Practically, the user has to specify in his configuration file in the [Interpolations2D] section which spatial interpolations algorithms should be considered
+ * on a per meteorological parameter basis. This is provided as a space separated list of keywords
  * (one per interpolation algorithm). Please notice that some algorithms may require extra arguments.
  * Then, each algorithm will be evaluated (through the use of its rating method) and receive a grade (that might
- * depend on the number of available data, the quality of the data, etc). The algorithm that receives the higher
- * score within the user list, will be used for interpolating the selected variable at the given timestep. This means that at another
+ * depend on the number of available data, the quality of the data, etc). The algorithm that receives the highest
+ * score within the user list will be used for interpolating the selected variable at the given timestep. This means that at another
  * timestep, the same parameter might get interpolated by a different algorithm.
- * An example of such section is given below:
- * @code
- * [Interpolations2D]
- * TA::algorithms      = IDW_LAPSE AVG_LAPSE
- * TA::avg_lapse::rate = -0.008
  *
- * RH::algorithms = LISTON_RH IDW_LAPSE AVG_LAPSE AVG
- *
- * PSUM::algorithms      = IDW_LAPSE AVG_LAPSE AVG CST
- * PSUM::avg_lapse::rate = 0.0005
- * PSUM::avg_lapse::frac = true
- * PSUM::cst::value      = 0
- *
- * VW::algorithms = IDW_LAPSE AVG_LAPSE
- *
- * P::algorithms	= STD_PRESS
- * P::std_press::USE_RESIDUALS = true
- * 
- * ILWR::algorithms = AVG_LAPSE
- * ILWR::avg_lapse::rate = -0.03125
- * 
- * RSWR::algorithms = IDW AVG
- * 
- * ISWR::algorithms = SWRAD
- * @endcode
- *
- * @section interpol2D_keywords Available algorithms
+ * @subsection interpol2D_keywords Available algorithms
  * The keywords defining the algorithms are the following:
  * - NONE: returns a nodata filled grid (see NoneAlgorithm)
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
@@ -130,13 +104,12 @@ namespace mio {
  * - ALS_SCALING: scaling from Airborn Laser Scan data (see ALS_Interpolation)
  * - SNOWLINE: assimilation of snowline elevation information from external data sources (see SnowlineAlgorithm)
  *
- * @section interpol2D_trends Altitudinal trends
- * Several algorithms use elevation trends, all of them relying on the same principles: the lapse rates are recomputed at each time steps
- * (see section \ref interpol2D_lapse), all stations' data are detrended with this lapse rate, the residuals are spatially interpolated
+ * @subsection interpol2D_trends Altitudinal trends and lapse rates
+ * Several algorithms use elevation trends, all of them relying on the same principles: the lapse rates are recomputed at each time steps,
+ * all stations' data are detrended with this lapse rate, the residuals are spatially interpolated
  * with the algorithm as configured by the user and finally, the values at each cell are retrended (ie the lapse rates are re-applied
  * using the cell's elevation).
  *
- * @subsection interpol2D_lapse Lapse rates
  * The altitudinal trends are currently modelled as a linear relation. The slope of this linear relation can
  * sometimes be provided by the end user (through his io.ini configuration file), otherwise it is computed from the data.
  * In order to bring slightly more robustness, if the correlation between the input data and the computed linear regression
@@ -146,7 +119,45 @@ namespace mio {
  *
  * A list of supported options controlling the lapse rates is given in Trend::Trend().
  *
- * @section interpol2D_dev_use Usage
+ * @subsection interpol2D_Best_practices Recommendations
+ * The number of available stations, their spatial and altitudinal distribution and the quality of their data has a significant influence on the
+ * performance of the spatial interpolations. Based on systematic benchmarking, the following recommendations have been laid out for optimal performances:
+ *  1. Clean the data of the contributing stations. Outliers degrade the performance, data gaps mean that the station won't contribute data.
+ *  2. When applying a detrending step, if there are few stations (~less than 6), make sure that there are at least ~60 m between the highest and lowest elevation station otherwise the trends might show sudden variations when extrapolated over a much larger elevation range.
+ *  3. When no detrending is performed, all contributing stations should be in a ±300 m wide elevation range around the target elevation. When detrending is performed, the range of contributing station can be increased up to ±600 m around the target elevation.
+ *  4. Generally, more contributing stations increases the performance of the spatial interpolations (6 contributing stations or more provide optimal performance).
+ *  5. The contributing stations should be at most 25 km away from the target point.
+ *
+ * More information is provided in Goybet, T., <i>"Spatial interpolation of Automatic Weather Station data"</i>, 2025, Zenodo, <a href="https://doi.org/10.5281/zenodo.17305009">10.5281/zenodo.17305009</a>.
+ *
+ * @subsection interpol2D_Example Example
+ * An example showing how multiple algorithms per parameters are defined, with additional arguments is given below:
+ * @code
+ * [Interpolations2D]
+ * TA::algorithms      = IDW_LAPSE AVG_LAPSE
+ * TA::avg_lapse::rate = -0.008
+ *
+ * RH::algorithms = LISTON_RH IDW_LAPSE AVG_LAPSE AVG
+ *
+ * PSUM::algorithms      = IDW_LAPSE AVG_LAPSE AVG CST
+ * PSUM::avg_lapse::rate = 0.0005
+ * PSUM::avg_lapse::frac = true
+ * PSUM::cst::value      = 0
+ *
+ * VW::algorithms = IDW_LAPSE AVG_LAPSE
+ *
+ * P::algorithms	= STD_PRESS
+ * P::std_press::USE_RESIDUALS = true
+ *
+ * ILWR::algorithms = AVG_LAPSE
+ * ILWR::avg_lapse::rate = -0.03125
+ *
+ * RSWR::algorithms = IDW AVG
+ *
+ * ISWR::algorithms = SWRAD
+ * @endcode
+ *
+ * @section interpol2D_dev_use Developer Usage
  * From the users's point of view, all that has to be done is instantiate an IOManager object and call its
  * IOManager::getMeteoData method with an elevation model and a grid. The spatial interpolation will then be done according to the settings in the INI file. 
  * The following lines show an example of the workflow:
@@ -167,7 +178,8 @@ namespace mio {
  * @section interpol2D_biblio Bibliography
  * The interpolation algorithms have been inspired by the following papers:
  * - <i>"A Meteorological Distribution System for High-Resolution Terrestrial Modeling (MicroMet)"</i>, Liston and Elder, Journal of Hydrometeorology <b>7</b> (2006), 217-234.
- * - <i>"Simulating wind ﬁelds and snow redistribution using terrain-based parameters to model snow accumulation and melt over a semi-arid mountain catchment"</i>, Adam Winstral and Danny Marks, Hydrological Processes <b>16</b> (2002), 3585– 3603. DOI: 10.1002/hyp.1238
+ * - <i>"Simulating wind ﬁelds and snow redistribution using terrain-based parameters to model snow accumulation and melt over a semi-arid mountain catchment"</i>, Adam Winstral and Danny Marks, Hydrological Processes <b>16</b> (2002), 3585– 3603. <a href="http://doi.org/10.1002/hyp.1238">10.1002/hyp.1238</a>
+ * - <i>"Scaling Precipitation Input to Spatially Distributed Hydrological Models by Measured Snow Distribution"</i>, Vögeli C, Lehning M, Wever N and Bavay M, Front. Earth Sci., <b>4:108</b>, 2016, <a href="http://doi.org/10.3389/feart.2016.00108">10.3389/feart.2016.00108</a>
  * - <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Jan Magnusson, Daniel Farinotti, Tobias Jonas and Mathias Bavay, Hydrological Processes, 2010, under review.
  * - <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Matthias Huss, Daniel Farinotti, Andreas Bauder and Martin Funk, Hydrological Processes, <b>22</b>, 3888-3902, 2008.
  * - <i>"Geostatistics for Natural Resources Evaluation"</i>, Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
