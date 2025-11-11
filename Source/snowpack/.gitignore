@@ -23,6 +23,7 @@ CTest*
 Dart*
 .vscode/
 .DS_store
+compile_commands.json
 
 #example files and binaries:
 /doc/examples/output/*

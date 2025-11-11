@@ -18,7 +18,6 @@
 */
 #include <meteoio/meteoFilters/FilterRate.h>
 #include <cmath>
-#include <algorithm>
 
 using namespace std;
 
@@ -59,9 +58,6 @@ double FilterRate::getRate(const std::vector<MeteoData>& vecM, const unsigned in
 
 bool FilterRate::filterOut(const std::vector<MeteoData>& vecM, const unsigned int& param, const size_t& idx, const size_t& last_good, const size_t& next_good) const
 {
-	const Date dt_start(2012, 10, 29, 17, 0, 1.);
-	const Date dt_end(2012, 10, 29, 18, 30, 1.);
-
 	const double curr_value = vecM[idx](param);
 	if (curr_value == IOUtils::nodata) return false; //this should have been tested before we called filterOut()
 

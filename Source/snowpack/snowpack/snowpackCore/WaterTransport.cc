@@ -22,6 +22,7 @@
 #include <snowpack/snowpackCore/Snowpack.h>
 #include <snowpack/snowpackCore/ReSolver1d.h>
 #include <snowpack/snowpackCore/PhaseChange.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 #include <snowpack/Constants.h>
 #include <snowpack/Utils.h>
 
@@ -50,7 +51,14 @@ using namespace mio;
  * A second kind of liquid water transport mechanism is through preferential flow. This is a 2 dimensional effect where at some places the liquid water is able to locally
  * flow much deeper into the snow pack. Although highly relevant for its impact on the snow microstructure and for its impact on snow stability, this transport mechanism
  * only carries a minority of the liquid water mass. But by providing liquid water in deeper layers much faster, it can contribute to triggering a weak layer or accumulate
- * liquid water at a capillary barrier (<i>ponding</i>) that could later refreeze and build an ice layer.
+ * liquid water at a capillary barrier (<i>ponding</i>) that could later refreeze and build an ice layer. 
+ * 
+ * The current implementation relies on a dual domain approach
+ * where the liquid water transport is split between a matrix flow and a preferential flow (Wever et al., <i>"Simulating ice layer formation under the presence of preferential flow in layered snowpacks"</i>, The Cryosphere, 10, 2731–2744, <a href="https://doi.org/10.5194/tc-10-2731-2016">10.5194/tc-10-2731-2016</a>, 2016). In order to allow the preferential flow liquid water to refreeze, it is necessary to enable the \ref ice_reservoir "ice reservoir" model.
+ * 
+ * @subsubsection ice_reservoir Ice reservoir
+ * One of the issue with the dual domain preferential flow approach is that it is not easily possible to let liquid water that has been transported this way
+ * to refreeze (for example when ponding occurs). Therefore an additional model has been implemented (Quéno et al., <i>"Deep ice layer formation in an alpine snowpack: monitoring and modeling"</i>, The Cryosphere, 14, 3449–3464, <a href="https://doi.org/10.5194/tc-14-3449-2020">10.5194/tc-14-3449-2020</a>, 2020).
  *
  * @subsection wt_modeling Modeling
  * In %Snowpack, water transport can currently either be modeled with the bucket approach or by solving the Richards equations.
@@ -500,7 +508,7 @@ void WaterTransport::compTopFlux(double& ql, SnowStation& Xdata, SurfaceFluxes& 
  * @param *Xdata
  * @param *Sdata
  */
-void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
+void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata, const bool& VapourTransport)
 {
 	const size_t nN = Xdata.getNumberOfNodes(), nE = nN-1;
 	size_t rnN = nN, rnE = nN-1;
@@ -614,7 +622,7 @@ void WaterTransport::mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata)
 						if (iwatertransportmodel_soil != RICHARDSEQUATION) {
 							if (Xdata.SoilNode > 0) {
 								// Only move water into soil when we don't run richardssolver for soil ...
-								SnowStation::mergeElements(EMS[eUpper-1], EMS[eUpper], merged, (eUpper==rnE-1 && variant != "SEAICE"));
+								SnowStation::mergeElements(EMS[eUpper-1], EMS[eUpper], merged, (eUpper==rnE-1 && variant != "SEAICE"), VapourTransport);
 							}
 						} else {
 							// ... otherwise put it in surfacefluxrate
@@ -1304,7 +1312,7 @@ void WaterTransport::compTransportMass(const CurrentMeteo& Mdata,
 	if (!enable_vapour_transport) {
 		compTopFlux(ql, Xdata, Sdata);
 	}
-	mergingElements(Xdata, Sdata);
+	mergingElements(Xdata, Sdata, false);
 
 	try {
 		adjustDensity(Xdata, Sdata);

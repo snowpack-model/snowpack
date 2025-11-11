@@ -3,8 +3,8 @@
 #Then, prepare the same image sizes but at 8 bit resolution without transparency, saved as bmp
 #Then, use the following command to pack the files in one .ico file with a relatively new version of ImageMagic
 
-#convert icon*.bmp icon*.png icon.ico
+#convert snowpack*.bmp snowpack*.png snowpack.ico
 
-convert icon16.png icon24.png icon32.png icon48.png -alpha on -channel RGBA -depth 8 icon.ico
+convert snowpack16.png snowpack24.png snowpack32.png snowpack48.png -alpha on -channel RGBA -depth 8 snowpack.ico
 
 #see also http://www.iconconstructor.com/tutorials/what_is_icon/

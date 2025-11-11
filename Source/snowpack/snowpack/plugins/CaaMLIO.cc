@@ -1053,7 +1053,7 @@ void CaaMLIO::writeSnowCover(const Date& date, const SnowStation& Xdata,
 	std::string hazfilename( getFilenamePrefix(Xdata.meta.getStationID().c_str(), o_snowpath) + bak + ".haz" );
 
 	writeSnowFile(snofilename, date, Xdata);
-	if (haz_write) SmetIO::writeHazFile(hazfilename, date, Xdata, Zdata);
+	if (haz_write) SmetIO::writeHazFile(hazfilename, date, Xdata, Zdata, info.history);
 }
 
 /**
@@ -1094,8 +1094,7 @@ void CaaMLIO::writeSnowFile(const std::string& snofilename, const Date& date, co
 	pugi::xml_node srcNode = root.append_child( (namespaceCAAML+":srcRef").c_str() )
 	                             .append_child( (namespaceCAAML+":Operation").c_str() );
 	srcNode.append_attribute("gml:id") = "OPERATION_ID";
-	const std::string snowpackString = "SNOWPACK v"+info.version+" compiled on "+info.compilation_date+". user: "+info.user;
-	xmlWriteElement(srcNode,(namespaceCAAML+":name").c_str(),snowpackString.c_str(),"","");
+	xmlWriteElement(srcNode, (namespaceCAAML+":name").c_str(), info.history.c_str(), "", "");
 
 	// Write station data locRef
 	writeStationData(root,Xdata);
@@ -1167,7 +1166,7 @@ void CaaMLIO::writeCustomSnowSoil(pugi::xml_node& node, const SnowStation& Xdata
 		snprintf(valueStr,num_max_len,"%.0f",IOUtils::nodata);
 		xmlWriteElement(node,(namespaceSNP+":CanopyDirectThroughfall").c_str(),valueStr,"","");
 	}
-	snprintf(valueStr,num_max_len,"%d",static_cast<unsigned int>(Xdata.ErosionLevel));
+	snprintf(valueStr,num_max_len,"%u",static_cast<unsigned int>(Xdata.ErosionLevel));
 	xmlWriteElement(node,(namespaceSNP+":ErosionLevel").c_str(),valueStr,"","");
 #ifndef SNOWPACK_CORE
 	snprintf(valueStr,num_max_len,"%.4f",Xdata.TimeCountDeltaHS);
@@ -1250,7 +1249,7 @@ void CaaMLIO::writeCustomLayerData(pugi::xml_node& node, const ElementData& Edat
 	xmlWriteElement(node,(namespaceSNP+":dendricity").c_str(),valueStr,"","");
 	snprintf(valueStr,num_max_len,"%.2f",Edata.sp);
 	xmlWriteElement(node,(namespaceSNP+":sphericity").c_str(),valueStr,"","");
-	snprintf(valueStr,num_max_len,"%4u",static_cast<int>(Edata.mk));
+	snprintf(valueStr,num_max_len,"%4u",static_cast<unsigned int>(Edata.mk));
 	xmlWriteElement(node,(namespaceSNP+":marker").c_str(),valueStr,"","");
 	snprintf(valueStr,num_max_len,"%.4f",Ndata.hoar);
 	xmlWriteElement(node,(namespaceSNP+":SurfaceHoarMass").c_str(),valueStr,"uom","kgm-2");

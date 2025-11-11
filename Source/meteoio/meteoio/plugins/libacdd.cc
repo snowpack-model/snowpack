@@ -37,9 +37,41 @@ using namespace std;
 namespace mio {
 
 ACDD::ACDD(const bool& set_enable) 
-     : attributes(), linked_attributes(), enabled(set_enable) 
+     : attributes(), linked_attributes(), dimensions(), variables(), enabled(set_enable), enable_ncml(false)
 {
 	setEnabled(set_enable);
+}
+
+bool ACDD::isWigosID(const std::string& str) 
+{
+	// Split the string by '.'
+	std::vector<std::string> parts;
+	std::stringstream ss(str);
+	std::string part;
+	while (std::getline(ss, part, '-')) parts.push_back(part);
+
+	// Check if there are exactly 4 parts
+	if (parts.size() != 4) return false;
+
+	// Check first part is "0"
+	if (parts[0] != "0") return false;
+
+	// Check second and third parts are numbers <= 65534
+	for (size_t i = 1; i <= 2; ++i) {
+		if (parts[i].empty()) return false;
+		for (const char c : parts[i]) {
+			if (!std::isdigit(c)) return false;
+		}
+		if (std::stoi(parts[i]) > 65534) return false;
+	}
+
+	// Check fourth part is at most 16 digits long
+	if (parts[3].length() > 16) return false;
+	for (const char c : parts[3]) {
+		if (!std::isdigit(c)) return false;
+	}
+
+	return true;
 }
 
 /**
@@ -67,26 +99,31 @@ std::map<std::string, ACDD::acdd_attrs> ACDD::initAttributes()
 	tmp["publisher_url"] = ACDD_ATTR("publisher_url", "ACDD_PUBLISHER_URL");
 	tmp["publisher_type"] = ACDD_ATTR("publisher_type", "ACDD_PUBLISHER_TYPE");
 	
-	tmp["source"] = ACDD_ATTR("source", "ACDD_SOURCE", "MeteoIO-" + mio::getLibVersion(true));
-	tmp["history"] = ACDD_ATTR("history", "", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
+	tmp["title"] = ACDD_ATTR("title", "ACDD_TITLE");
+	tmp["summary"] = ACDD_ATTR("summary", "ACDD_SUMMARY"); //special handling, see setUserConfig()
+	tmp["comment"] = ACDD_ATTR("comment", "ACDD_COMMENT");
+	tmp["acknowledgement"] = ACDD_ATTR("acknowledgement", "ACDD_ACKNOWLEDGEMENT");
+	tmp["metadata_link"] = ACDD_ATTR("metadata_link", "ACDD_METADATA_LINK"); //if not provided by the user and a valid wigos_is is provided, a link to oscar surface will be built
 	tmp["keywords_vocabulary"] = ACDD_ATTR("keywords_vocabulary", "ACDD_KEYWORDS_VOCABULARY", "GCMDSK");
 	tmp["keywords"] = ACDD_ATTR("keywords", "ACDD_KEYWORDS", "EARTH SCIENCE > CRYOSPHERE,  EARTH SCIENCE > TERRESTRIAL HYDROSPHERE > SURFACE MASS > MASS BALANCE, EARTH SCIENCE > CRYOSPHERE > SNOW/ICE > SNOW ENERGY BALANCE, CLIMATOLOGY/METEOROLOGY/ATMOSPHERE, Land-based Platforms > Permanent Land Sites > WEATHER STATIONS");
-	tmp["title"] = ACDD_ATTR("title", "ACDD_TITLE");
 	tmp["project"] = ACDD_ATTR("project", "ACDD_PROJECT");
 	tmp["program"] = ACDD_ATTR("program", "ACDD_PROGRAM");
+	
+	tmp["source"] = ACDD_ATTR("source", "ACDD_SOURCE", "MeteoIO-" + mio::getLibVersion(true));
+	tmp["coverage_content_type"] = ACDD_ATTR("coverage_content_type", "ACDD_COVERAGE_CONTENT_TYPE", "physicalMeasurement");
+	tmp["history"] = ACDD_ATTR("history", "", now.toString(mio::Date::ISO_Z) + ", " + mio::IOUtils::getLogName() + "@" + mio::IOUtils::getHostName() + ", MeteoIO-" + mio::getLibVersion(true));
 	tmp["id"] = ACDD_ATTR("id", "ACDD_ID");
 	tmp["references"] = ACDD_ATTR("references", "ACDD_REFERENCES");
 	tmp["naming_authority"] = ACDD_ATTR("naming_authority", "ACDD_NAMING_AUTHORITY");
 	tmp["processing_level"] = ACDD_ATTR("processing_level", "ACDD_PROCESSING_LEVEL");
-	tmp["summary"] = ACDD_ATTR("summary", "ACDD_SUMMARY"); //special handling, see setUserConfig()
-	tmp["comment"] = ACDD_ATTR("comment", "ACDD_COMMENT");
-	tmp["acknowledgement"] = ACDD_ATTR("acknowledgement", "ACDD_ACKNOWLEDGEMENT");
-	tmp["metadata_link"] = ACDD_ATTR("metadata_link", "ACDD_METADATA_LINK");
 	tmp["license"] = ACDD_ATTR("license", "ACDD_LICENSE");
 	tmp["product_version"] = ACDD_ATTR("product_version", "ACDD_PRODUCT_VERSION", "1.0");
+	tmp["dataset_production_status"] = ACDD_ATTR("dataset_production_status", "ACDD_DATASET_PRODUCTION_STATUS", "In Work");
 	tmp["activity_type"] = ACDD_ATTR("activity_type", "ACDD_ACTIVITY_TYPE");
 	tmp["operational_status"] = ACDD_ATTR("operational_status", "ACDD_OPERATIONAL_STATUS");
-	tmp["wmo__wsi"] = ACDD_ATTR("wmo__wsi", "WIGOS_ID");
+	
+	tmp["wmo__wsi"] = ACDD_ATTR("wmo__wsi", "WIGOS_ID");	//this is not part of acdd
+	tmp["iso_topic_category"] = ACDD_ATTR("iso_topic_category", "ISO_TOPIC_CATEGORY");	//this is not part of acdd
 	
 	return tmp;
 }
@@ -213,6 +250,13 @@ void ACDD::setUserConfig(const mio::Config& cfg, const std::string& section, con
 		acdd_attribute.second.setUserConfig(cfg, section, allow_multi_line);
 	}
 	
+	//HACK handle the special case of wigos_id and metadata_link
+	//Read the WMO extension for Wigos ID and set a default metadata_link to Oscar surface by default if provided
+	const auto search = attributes.find("wmo__wsi");
+    if (search != attributes.end() && isWigosID(search->second.getValue())) {
+		addAttribute("metadata_link", "https://oscar.wmo.int/surface/#/search/station/stationReportDetails/"+search->second.getValue(), MERGE);
+	}
+	
 	if (attributes.empty()) attributes = initAttributes();
 	if (linked_attributes.empty()) {
 		linked_attributes = initLinks();
@@ -272,11 +316,83 @@ void ACDD::checkLinkedAttributes()
 	}
 }
 
+void ACDD::setEnableNcML(const bool& i_enable)
+{
+#if defined(FORCE_NCML)
+	(void)i_enable;
+	enable_ncml = true;
+#else
+	enable_ncml = i_enable;
+#endif
+	
+}
+
+void ACDD::addDimension( const std::string& var_name, const std::string& var_long_name, const size_t& length) 
+{
+	dimensions.emplace( var_name, var_long_name, length );
+}
+
+void ACDD::addVariable( const std::string& var_name, const std::string& var_long_name, const std::string& var_units)
+{
+	variables.emplace( var_name, var_long_name, var_units );
+}
+
+void ACDD::writeNcML(const std::string& data_filename) const
+{
+	const std::string& file_and_path( FileUtils::removeExtension(data_filename) + ".ncml");
+	if (!FileUtils::validFileAndPath(file_and_path)) throw InvalidArgumentException("Invalid file name \""+file_and_path+"\"", AT);
+	errno = 0;
+	
+	const ios_base::openmode mode_flags = ios::binary; //read as binary to avoid eol mess
+	mio::ofilestream fout(file_and_path.c_str(), mode_flags);
+	if (fout.fail())
+		throw AccessException("Error opening file \"" + file_and_path + "\" for writing, possible reason: " + std::string(std::strerror(errno)), AT);
+	
+	//write the headers
+	fout << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<netcdf xmlns=\"http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2\" location=\"" << FileUtils::getFilename( data_filename ) << "\">\n";
+	
+	//write the global attributes: <attribute name="title" value="example metadata" />
+	for (auto it = cbegin(); it!=cend(); ++it) {
+		const std::string header_field( it->second.getName() );
+		const std::string value( it->second.getValue() );
+		if (header_field.empty() || value.empty()) continue;
+
+		const std::ios_base::fmtflags flags = fout.setf(std::ios::left);
+		const std::streamsize width = fout.width(16);
+		fout.width(width);
+		fout.setf(flags);
+		fout << "\t<attribute name=\"" << header_field << "\" value=\"" << IOUtils::escapeXml(value) << "\"/>\n";
+	}
+	
+	if (!dimensions.empty()) {
+		for (auto dim : dimensions) {
+			fout << "\t<dimension name=\"" << dim.name << "\"";
+			if (dim.length!=IOUtils::npos) fout << " length=\"" << dim.length << "\"";
+			fout << "/>\n";
+		}
+	}
+	
+	if (!variables.empty()) {
+		for (auto var : variables) {
+			fout << "\t<variable name=\"" << var.name << "\" type=\"double\">\n";
+			fout << "\t\t<attribute name=\"_FillValue\" type=\"double\" value=\"" << IOUtils::nodata << "\" />\n";
+			if (!var.standard_name.empty()) fout << "\t\t<attribute name=\"standard_name\" value=\"" << var.standard_name << "\"/>\n";
+			if (!var.units.empty()) fout << "\t\t<attribute name=\"units\" value=\"" << var.units << "\"/>\n";
+			fout << "\t</variable>\n";
+		}
+	}
+	
+	//close the netcdf namespace
+	fout << "</netcdf>\n";
+	fout.close();
+}
+
 std::string ACDD::toString() const
 {
 	std::ostringstream os;
 	os << "<ACDD attributes>\n";
 	for (auto acdd_attribute : attributes) {
+		if (acdd_attribute.second.getValue().empty()) continue; //only print non-empty fields
 		os << "[" << acdd_attribute.first << " -> " << acdd_attribute.second.getValue() << "]\n";
 	}
 	os << "</ACDD attributes>\n";
@@ -328,6 +444,8 @@ std::string ACDD::getAttribute(std::string &att_name) const
 	return it->second.getValue();
 }
 
+// for more on WKT (Well Known String) representation of geometries: https://libgeos.org/specifications/wkt/ or https://portal.ogc.org/files/?artifact_id=25355 (section 7.2.2, page 54)
+// For an online test/validation: https://wktmap.com/
 void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 {
 	mio::Coords urcorner(grid.llcorner);
@@ -355,22 +473,24 @@ void ACDD::setGeometry(const mio::Grid2DObject& grid, const bool& isLatLon)
 		geometry = ss.str();
 	}
 	
-	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
-	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))");
+	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str, REPLACE);
+	addAttribute("geospatial_bounds", "Polygon (("+geometry+"))", REPLACE);
 
-	addAttribute("geospatial_vertical_positive", "up");
-	addAttribute("geospatial_vertical_units", "m");
+	addAttribute("geospatial_vertical_positive", "up", REPLACE);
+	addAttribute("geospatial_vertical_units", "m", REPLACE);
 	const double min_val = grid.getMin();
 	if (min_val!=IOUtils::nodata) {
 		//if there is a min_val, there is also a max_val
-		addAttribute("geospatial_vertical_min", min_val);
+		addAttribute("geospatial_vertical_min", min_val, REPLACE);
 		const double max_val = grid.getMax();
-		addAttribute("geospatial_vertical_max", max_val);
+		addAttribute("geospatial_vertical_max", max_val, REPLACE);
+	} else {
+		deleteAttribute("geospatial_vertical_min");
+		deleteAttribute("geospatial_vertical_max");
 	}
-
-
 }
 
+// See first ACDD::setGeometry() call for more information about WKT
 void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMeteo, const bool& isLatLon)
 {
 	if (vecMeteo.empty()) return;
@@ -386,9 +506,9 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
 		if (isLatLon) {
-			ss  << std::fixed << std::setprecision(10) << "(" << timeseries.front().meta.position.getLon() << " " << timeseries.front().meta.position.getLat() << ")";
+			ss  << std::fixed << std::setprecision(10) << "(" << timeseries.front().meta.position.getLon() << " " << timeseries.front().meta.position.getLat() << std::setprecision(2) << " " << timeseries.front().meta.getAltitude() << ")";
 		} else {
-			ss  << std::fixed << std::setprecision(0) << "(" << timeseries.front().meta.position.getEasting() << " " << timeseries.front().meta.position.getNorthing() << ")";
+			ss  << std::fixed << std::setprecision(0) << "(" << timeseries.front().meta.position.getEasting() << " " << timeseries.front().meta.position.getNorthing() << std::setprecision(2) << " " << timeseries.front().meta.getAltitude() << ")";
 		}
 		if (epsg==-1) { //first valid point
 			epsg = (isLatLon)? 4326 : timeseries.front().meta.position.getEPSG();
@@ -415,23 +535,27 @@ void ACDD::setGeometry(const std::vector< std::vector<mio::MeteoData> >& vecMete
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
 		std::ostringstream os;
 		os << epsg;
-		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
-		addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
+		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str(), REPLACE);
+		addAttribute("geospatial_bounds", "MULTIPOINT Z ("+multiPts+")", REPLACE);
 	}
-	addAttribute("geospatial_lat_min", lat_min);
-	addAttribute("geospatial_lat_max", lat_max);
-	addAttribute("geospatial_lon_min", lon_min);
-	addAttribute("geospatial_lon_max", lon_max);
+	addAttribute("geospatial_lat_min", lat_min, REPLACE);
+	addAttribute("geospatial_lat_max", lat_max, REPLACE);
+	addAttribute("geospatial_lon_min", lon_min, REPLACE);
+	addAttribute("geospatial_lon_max", lon_max, REPLACE);
 
-	addAttribute("geospatial_vertical_positive", "up");
-	addAttribute("geospatial_vertical_units", "m");
+	addAttribute("geospatial_vertical_positive", "up", REPLACE);
+	addAttribute("geospatial_vertical_units", "m", REPLACE);
 	if (alt_min!=IOUtils::nodata) {
 		addAttribute("geospatial_vertical_min", alt_min);
 		addAttribute("geospatial_vertical_max", alt_max);
+	} else {
+		deleteAttribute("geospatial_vertical_min");
+		deleteAttribute("geospatial_vertical_max");
 	}
 }
 
-void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool& isLatLon)
+// See first ACDD::setGeometry() call for more information about WKT
+void ACDD::setGeometry(const std::set< mio::Coords >& vecLocation, const bool& isLatLon)
 {
 	if (vecLocation.empty()) return;
 	
@@ -444,9 +568,9 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 		//create the strings for the MultiPoint property
 		std::ostringstream ss;
 		if (isLatLon) {
-			ss  << std::fixed << std::setprecision(10) << "(" << location.getLon() << " " << location.getLat() << ")";
+			ss  << std::fixed << std::setprecision(10) << "(" << location.getLon() << " " << location.getLat() << std::setprecision(2) << " " << location.getAltitude() << ")";
 		} else {
-			ss  << std::fixed << std::setprecision(0) << "(" << location.getEasting() << " " << location.getNorthing() << ")";
+			ss  << std::fixed << std::setprecision(0) << "(" << location.getEasting() << " " << location.getNorthing() << " "  << std::setprecision(2) << location.getAltitude() << ")";
 		}
 		if (epsg==-1) { //first valid point
 			epsg = (isLatLon)? 4326 : location.getEPSG();
@@ -460,65 +584,74 @@ void ACDD::setGeometry(const std::vector< mio::Coords >& vecLocation, const bool
 		const double curr_lon = location.getLon();
 		const double curr_alt = location.getAltitude();
 		
-		if (lat_min>curr_lat) lat_min = curr_lat;
-		if (lat_max<curr_lat) lat_max = curr_lat;
-		if (lon_min>curr_lon) lon_min = curr_lon;
-		if (lon_max<curr_lon) lon_max = curr_lon;
-		if (alt_min>curr_alt) alt_min = curr_alt;
-		if (alt_max<curr_alt) alt_max = curr_alt;
+		if (curr_lat<lat_min) lat_min = curr_lat;
+		if (curr_lat>lat_max) lat_max = curr_lat;
+		if (curr_lon<lon_min) lon_min = curr_lon;
+		if (curr_lon>lon_max) lon_max = curr_lon;
+		if (curr_alt<alt_min) alt_min = curr_alt;
+		if (curr_alt>alt_max) alt_max = curr_alt;
 	}
 	
 	if (epsg>0) { //ie there is at least one valid point and all further points use the same epsg
 		std::ostringstream os;
 		os << epsg;
-		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str());
+		addAttribute("geospatial_bounds_crs", "EPSG:"+os.str(), REPLACE);
 		
 		const bool singlePoint = (lat_min==lat_max && lon_min==lon_max);
 		if (singlePoint)
-			addAttribute("geospatial_bounds", "Point ("+multiPts+")");
+			addAttribute("geospatial_bounds", "POINT Z "+multiPts+"", REPLACE);
 		else
-			addAttribute("geospatial_bounds", "MultiPoint ("+multiPts+")");
+			addAttribute("geospatial_bounds", "MULTIPOINT Z ("+multiPts+")", REPLACE);
 	}
 	
-	addAttribute("geospatial_lat_min", lat_min);
-	addAttribute("geospatial_lat_max", lat_max);
-	addAttribute("geospatial_lon_min", lon_min);
-	addAttribute("geospatial_lon_max", lon_max);
+	addAttribute("geospatial_lat_min", lat_min, REPLACE);
+	addAttribute("geospatial_lat_max", lat_max, REPLACE);
+	addAttribute("geospatial_lon_min", lon_min, REPLACE);
+	addAttribute("geospatial_lon_max", lon_max, REPLACE);
 	
-	addAttribute("geospatial_vertical_positive", "up");
-	addAttribute("geospatial_vertical_units", "m");
+	addAttribute("geospatial_vertical_positive", "up", REPLACE);
+	addAttribute("geospatial_vertical_units", "m", REPLACE);
 	if (alt_min!=IOUtils::nodata) {
-		addAttribute("geospatial_vertical_min", alt_min);
-		addAttribute("geospatial_vertical_max", alt_max);
+		addAttribute("geospatial_vertical_min", alt_min, REPLACE);
+		addAttribute("geospatial_vertical_max", alt_max, REPLACE);
+	} else {
+		deleteAttribute("geospatial_vertical_min");
+		deleteAttribute("geospatial_vertical_max");
 	}
 }
 
+// See first ACDD::setGeometry() call for more information about WKT
 void ACDD::setGeometry(const mio::Coords& location, const bool& isLatLon)
 {
 	std::string epsg_str = "4326";
 	std::string geometry;
 	if (isLatLon) {
 		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(10) << location.getLon() << " " << location.getLat();
+		ss << std::fixed << std::setprecision(10) << location.getLon() << " " << location.getLat() << std::setprecision(2) << " " << location.getAltitude();
 		geometry = ss.str();
 	} else {
 		std::ostringstream os;
 		os << location.getEPSG();
 		epsg_str = os.str();
 		std::ostringstream ss;
-		ss << std::fixed << std::setprecision(0) << location.getEasting() << " " << location.getNorthing();
+		ss << std::fixed << std::setprecision(0) << location.getEasting() << " " << location.getNorthing() << std::setprecision(2) << " " << location.getAltitude();
 	}
-	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str);
-	addAttribute("geospatial_bounds", "Point ("+geometry+")");
-	addAttribute("geospatial_lat_min", location.getLat());
-	addAttribute("geospatial_lat_max", location.getLat());
-	addAttribute("geospatial_lon_min", location.getLon());
-	addAttribute("geospatial_lon_max", location.getLon());
+	addAttribute("geospatial_bounds_crs", "EPSG:"+epsg_str, REPLACE);
+	addAttribute("geospatial_bounds", "POINT Z ("+geometry+")", REPLACE);
+	addAttribute("geospatial_lat_min", location.getLat(), REPLACE);
+	addAttribute("geospatial_lat_max", location.getLat(), REPLACE);
+	addAttribute("geospatial_lon_min", location.getLon(), REPLACE);
+	addAttribute("geospatial_lon_max", location.getLon(), REPLACE);
 	
-	addAttribute("geospatial_vertical_positive", "up");
-	addAttribute("geospatial_vertical_units", "m");
-	addAttribute("geospatial_vertical_min", location.getAltitude());
-	addAttribute("geospatial_vertical_max", location.getAltitude());
+	addAttribute("geospatial_vertical_positive", "up", REPLACE);
+	addAttribute("geospatial_vertical_units", "m", REPLACE);
+	if (location.getAltitude()!=IOUtils::nodata) {
+		addAttribute("geospatial_vertical_min", location.getAltitude(), REPLACE);
+		addAttribute("geospatial_vertical_max", location.getAltitude(), REPLACE);
+	} else {
+		deleteAttribute("geospatial_vertical_min");
+		deleteAttribute("geospatial_vertical_max");
+	}
 }
 
 void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vecMeteo)
@@ -541,13 +674,16 @@ void ACDD::setTimeCoverage(const std::vector< std::vector<mio::MeteoData> >& vec
 			if (sampling_period<=0 || sampling_period>curr_sampling) sampling_period = curr_sampling;
 		}
 	}
-	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
-	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
+	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ), REPLACE);
+	addAttribute( "time_coverage_end", set_end.toString(mio::Date::ISO_TZ), REPLACE);
+	addAttribute( "time_coverage_duration", Date::printISODuration(set_end, set_start), REPLACE);
 	
 	if (sampling_period>0) {
 		std::ostringstream os;
 		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		addAttribute("time_coverage_resolution", os.str());
+		addAttribute("time_coverage_resolution", os.str(), REPLACE);
+	} else {
+		deleteAttribute("time_coverage_resolution");
 	}
 }
 
@@ -557,15 +693,18 @@ void ACDD::setTimeCoverage(const std::vector<mio::MeteoData>& vecMeteo)
 	
 	const mio::Date set_start( vecMeteo.front().date );
 	const mio::Date set_end( vecMeteo.back().date );
-	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
-	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
+	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ), REPLACE);
+	addAttribute( "time_coverage_end", set_end.toString(mio::Date::ISO_TZ), REPLACE);
+	addAttribute( "time_coverage_duration", Date::printISODuration(set_end, set_start), REPLACE);
 	
 	const size_t npts = vecMeteo.size();
 	if (npts>1) {
 		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
 		std::ostringstream os;
 		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		addAttribute("time_coverage_resolution", os.str());
+		addAttribute("time_coverage_resolution", os.str(), REPLACE);
+	} else {
+		deleteAttribute("time_coverage_resolution");
 	}
 }
 
@@ -576,15 +715,18 @@ void ACDD::setTimeCoverage(const std::vector<std::string>& vec_timestamp, const 
 	mio::Date set_start, set_end;
 	mio::IOUtils::convertString(set_start, vec_timestamp.front(), TZ);
 	mio::IOUtils::convertString(set_end, vec_timestamp.back(), TZ);
-	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ));
-	addAttribute("time_coverage_end", set_end.toString(mio::Date::ISO_TZ));
+	addAttribute( "time_coverage_start", set_start.toString(mio::Date::ISO_TZ), REPLACE);
+	addAttribute( "time_coverage_end", set_end.toString(mio::Date::ISO_TZ), REPLACE);
+	addAttribute( "time_coverage_duration", Date::printISODuration(set_end, set_start), REPLACE);
 	
 	const size_t npts = vec_timestamp.size();
 	if (npts>1) {
 		const int sampling_period = static_cast<int>( (set_end.getJulian() - set_start.getJulian()) / static_cast<double>(npts-1) * 24.*3600. + .5);
 		std::ostringstream os;
 		os << "P" << sampling_period << "S"; //ISO8601 duration format
-		addAttribute("time_coverage_resolution", os.str());
+		addAttribute("time_coverage_resolution", os.str(), REPLACE);
+	} else {
+		deleteAttribute("time_coverage_resolution");
 	}
 }
 

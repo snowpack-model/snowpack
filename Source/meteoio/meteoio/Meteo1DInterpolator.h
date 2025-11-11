@@ -73,6 +73,23 @@ namespace mio {
  *
 */
 
+class ResamplingStack {
+    public:
+		ResamplingStack();
+
+        void addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double& max_gap_size);
+        std::vector<std::shared_ptr<ResamplingAlgorithms>> buildStack(const ResamplingAlgorithms::gap_info& gap) const;
+
+		void resetResampling();
+		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &par_idx, const std::vector<MeteoData> &vecM, MeteoData &md, const double& max_gap_size) const;
+		std::string getStackStr() const;
+		bool empty() const;
+
+    private:
+        std::vector<double> max_gap_sizes;
+        std::vector<std::shared_ptr<ResamplingAlgorithms>> stack;
+};
+
 
 /**
  * @class Meteo1DInterpolator
@@ -82,24 +99,6 @@ namespace mio {
  * @author Thomas Egger
  * @date   2010-06-24
 */
-
-class ResamplingStack {
-    public:
-		ResamplingStack();
-
-        void addAlgorithm(std::shared_ptr<ResamplingAlgorithms> algo, const double& max_gap_size);
-        std::vector<std::shared_ptr<ResamplingAlgorithms>> buildStack(const ResamplingAlgorithms::gap_info& gap) const;
-
-		void resetResampling();
-		void resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM, MeteoData &md, const double& max_gap_size) const;
-		std::string getStackStr() const;
-		bool empty() const;
-
-    private:
-        std::vector<double> max_gap_sizes;
-        std::vector<std::shared_ptr<ResamplingAlgorithms>> stack;
-};
-
 class Meteo1DInterpolator {
 	public:
 

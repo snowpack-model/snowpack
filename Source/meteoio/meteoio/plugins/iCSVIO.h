@@ -80,7 +80,7 @@ class iCSVIO : public IOInterface {
 		bool createFilename(iCSVFile &outfile, const std::vector<MeteoData> &vecvecMeteo, size_t station_num) const;
 		void createMetaDataSection(iCSVFile &current_file, const std::vector<MeteoData> &vecMeteo) const;
 		static void createFieldsSection(iCSVFile &current_file, const std::vector<MeteoData> &vecMeteo);
-		void writeToFile(const iCSVFile &outfile) const;
+		void writeToFile(const iCSVFile &outfile);
 
 
 		// constants
@@ -89,7 +89,7 @@ class iCSVIO : public IOInterface {
 
 		std::vector<iCSVFile> stations_files;
 		const Config cfg;
-		ACDD acdd_metadata;
+		ACDD acdd;
 		std::string coordin, coordinparam, coordout, coordoutparam; // projection parameters
 		std::string file_extension_out, outpath, versioning_str;
 		double TZ_out;

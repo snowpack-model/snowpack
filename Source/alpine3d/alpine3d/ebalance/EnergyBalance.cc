@@ -27,7 +27,7 @@ EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config&
                 albedo(dem, 0.), direct_unshaded_horizontal(dem_in.getNx(), dem_in.getNy(), 0.),
                 direct(dem_in.getNx(), dem_in.getNy(), 0.), diffuse(dem_in.getNx(), dem_in.getNy(), 0.),
                 reflected(dem_in.getNx(), dem_in.getNy(), 0.), timer(), cfg(cfg_in),
-                dimx(dem_in.getNx()), dimy(dem_in.getNy()), nbworkers(i_nbworkers), dataFromGrids(false)
+                dimx(dem_in.getNx()), dimy(dem_in.getNy()), nbworkers(i_nbworkers), meteoFromGrids(false)
 {
 
 	MPIControl& instance = MPIControl::instance();
@@ -53,10 +53,10 @@ EnergyBalance::EnergyBalance(const unsigned int& i_nbworkers, const mio::Config&
 	if (instance.master())
 		std::cout << "[i] Using terrain radiation with model: " << algo << "\n";
 
-	cfg.getValue("DATA_FROM_GRIDS", "input", dataFromGrids,IOUtils::nothrow);
+	cfg.getValue("METEO_FROM_GRIDS", "input", meteoFromGrids, IOUtils::nothrow);
 
 	bool write_sky_vf=false;
-	cfg.getValue("WRITE_SKY_VIEW_FACTOR", "output", write_sky_vf,IOUtils::nothrow);
+	cfg.getValue("WRITE_SKY_VIEW_FACTOR", "EBalance", write_sky_vf, IOUtils::nothrow);
 
 	if(write_sky_vf){
 		std::cout << "[i] Writing sky view factor grid" << std::endl;
@@ -143,7 +143,7 @@ void EnergyBalance::compute(const mio::Grid2DObject& in_ilwr,
 	for (size_t ii=0; ii<nbworkers; ii++) {
 		size_t startx, nx;
 		radfields[ii].getBandOffsets(startx, nx);
-		if(dataFromGrids) {
+		if(meteoFromGrids) {
 			radfields[ii].setGrids(mio::Grid2DObject(in_iswr_dir, startx, 0, nx, dimy),
 			                       mio::Grid2DObject(in_iswr_diff, startx, 0, nx, dimy),
 			                       mio::Grid2DObject(albedo, startx, 0, nx, dimy),
@@ -177,16 +177,14 @@ void EnergyBalance::compute(const mio::Grid2DObject& in_ilwr,
 	mio::Array2D<double> terrain_ilwr(in_ilwr.grid2D);
 	sky_ilwr=0;
 	terrain_ilwr=0;
-	if (terrain_radiation) {
-		// note: parallelization has to take place inside the TerrainRadiationAlgorithm implementations;
-		if(!dataFromGrids){
-			terrain_radiation->setMeteo(albedo.grid2D, in_ta.grid2D);
-			terrain_radiation->getRadiation(direct, diffuse, reflected, direct_unshaded_horizontal,
-                                      in_ilwr.grid2D, sky_ilwr, terrain_ilwr, solarAzimuth, solarElevation);
-		}
-		if (hasSP()){
-			terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
-		}
+	// note: parallelization has to take place inside the TerrainRadiationAlgorithm implementations;
+	if(!meteoFromGrids){
+		terrain_radiation->setMeteo(albedo.grid2D, in_ta.grid2D);
+		terrain_radiation->getRadiation(direct, diffuse, reflected, direct_unshaded_horizontal,
+									in_ilwr.grid2D, sky_ilwr, terrain_ilwr, solarAzimuth, solarElevation);
+	}
+	if (hasSP()){
+		terrain_radiation->setSP(radfields[0].getDate(), solarAzimuth, solarElevation);
 	}
 
 	if (MPIControl::instance().master())

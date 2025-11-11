@@ -116,7 +116,7 @@ class CsvParameters {
 		bool skipField(const size_t& fieldnr) const;
 		bool hasPurgeChars() const {return !purgeCharsSet.empty();}
 		void purgeChars(std::string &line) {IOUtils::removeChars(line, purgeCharsSet);}
-		bool isNodata(const std::string& value) const;
+		bool isNodata(std::string value) const;
 		bool hasDates(const Date& start, const Date& end) const {return coverageHint.hasOverlap(start, end);}
 		
 		std::vector<std::string> csv_fields;		///< the user provided list of field names

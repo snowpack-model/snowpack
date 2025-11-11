@@ -44,7 +44,7 @@ class WaterTransport {
 		void compTransportMass(const CurrentMeteo& Mdata, SnowStation& Xdata, SurfaceFluxes& Sdata, double& ql);
 
 	protected:
-		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata);
+		void mergingElements(SnowStation& Xdata, SurfaceFluxes& Sdata, const bool& VapourTransport = false);
 		void adjustDensity(SnowStation& Xdata, SurfaceFluxes& Sdata);
 
 		//To prevent string comparisons, we define an enumerated list:

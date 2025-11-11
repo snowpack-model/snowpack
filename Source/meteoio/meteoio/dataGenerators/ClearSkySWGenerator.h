@@ -44,11 +44,12 @@ namespace mio {
 class ClearSkySWGenerator : public GeneratorAlgorithm {
 	public:
 		ClearSkySWGenerator(const std::vector< std::pair<std::string, std::string> >& vecArgs, const std::string& i_algo, const std::string& i_section, const double& TZ)
-			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun() { parse_args(vecArgs); }
+			: GeneratorAlgorithm(vecArgs, i_algo, i_section, TZ), sun(), wrongPressureUnits(false) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md, const std::vector<MeteoData>& vecMeteo) override;
 		bool create(const size_t& param, const size_t& ii_min, const size_t& ii_max, std::vector<MeteoData>& vecMeteo) override;
 	private:
 		SunObject sun;
+        bool wrongPressureUnits;    //since there are regularly cases where P is not in Pa, try to catch it
 };
 
 } //end namespace mio

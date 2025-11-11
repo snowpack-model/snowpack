@@ -252,10 +252,11 @@ size_t ResamplingAlgorithms::searchForward(gap_info &last_gap, const size_t& pos
 }
 
 ResamplingAlgorithms::gap_info ResamplingAlgorithms::findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-					 const double& i_max_gap_size) {
+					 const double& i_max_gap_size) 
+{
 	ResamplingAlgorithms::gap_info last_gap;
-	size_t indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size);
-	size_t indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size, indexP1);
+	const size_t indexP1 = searchBackward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size);
+	const size_t indexP2 = searchForward(last_gap, pos, paramindex, vecM, resampling_date, i_max_gap_size, indexP1);
 
 	if (indexP1 == IOUtils::npos) {
 		last_gap.setStart(0, vecM);

@@ -141,9 +141,9 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 
 	if (mpicontrol.master()) {
 
-		bool write_dem_details=false;
-		io_cfg.getValue("WRITE_DEM_DETAILS", "output", write_dem_details,IOUtils::nothrow);
-		if(write_dem_details){
+		bool write_dem_ppt=false;
+		io_cfg.getValue("WRITE_DEM_PROPERTIES", "output", write_dem_ppt,IOUtils::nothrow);
+		if(write_dem_ppt){
 			std::cout << "[i] Writing DEM details grids" << std::endl;
 			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.slope), "DEM_SLOPE");
 			io.write2DGrid(mio::Grid2DObject(dem.cellsize,dem.llcorner,dem.azi), "DEM_AZI");
@@ -238,7 +238,7 @@ SnowpackInterface::SnowpackInterface(const mio::Config& io_cfg, const size_t& nb
 	omp_landuse = mio::Grid2DObject(landuse_in, mpi_offset, 0, mpi_nx, dimy);
 	std::vector<std::vector<size_t> > omp_snow_stations_ind;
 	//The OMP slicing for snowpack computation is not based on rectangular domain.
-	//It return a table of pixel to compute and coordiantes to have the same
+	//It returns a table of pixels to compute and coordinates to have the same
 	//number of pixel per slice.
 	OMPControl::getArraySliceParamsOptim(nbworkers,snow_stations,omp_dem,omp_landuse,omp_snow_stations_ind);
 

@@ -50,9 +50,11 @@ bool SnowpackConfig::initStaticData()
 	advancedConfig["ALBEDO_PARAMETERIZATION"] = "LEHNING_2";
 	advancedConfig["ALBEDO_AVERAGE_SCHMUCKI"] = "ALL_DATA";
 	advancedConfig["ALBEDO_AGING"] = "true";
+	advancedConfig["ALLOW_FREEZING_RAIN"] = "true";
 	advancedConfig["SOOT_PPMV"] = "0.0";
 	advancedConfig["COUPLEDPHASECHANGES"] = "false";
 	advancedConfig["ENABLE_VAPOUR_TRANSPORT"] = "false";
+	advancedConfig["ENHANCED_WIND_SLAB"] = "false";
 	advancedConfig["FIXED_POSITIONS"] = "";
 	advancedConfig["FORCE_RH_WATER"] = "true";
 	advancedConfig["FORCE_ADD_SNOWFALL"] = "false";
@@ -268,6 +270,7 @@ void SnowpackConfig::setDefaults()
 		if (watertransportmodel_soil.empty()) addKey("WATERTRANSPORTMODEL_SOIL", "SnowpackAdvanced", "NIED");
 
 	} else if (variant == "ANTARCTICA" || variant == "POLAR") {
+		addKey("ENHANCED_WIND_SLAB", "SnowpackAdvanced", "TRUE");
 		string hoar_density_buried; getValue("HOAR_DENSITY_BURIED", "SnowpackAdvanced", hoar_density_buried, IOUtils::nothrow);
 		if (hoar_density_buried.empty()) addKey("HOAR_DENSITY_BURIED", "SnowpackAdvanced", "200.0");
 

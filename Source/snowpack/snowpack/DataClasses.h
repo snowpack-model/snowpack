@@ -28,7 +28,7 @@
 
 #include <snowpack/SnowpackConfig.h>
 #include <snowpack/vanGenuchten.h>
-#include <snowpack/snowpackCore/SeaIce.h>
+class SeaIce;	//forward declaration to prevent include loop
 
 #include <snowpack/Constants.h>
 #include <meteoio/MeteoIO.h>
@@ -646,7 +646,7 @@ class SnowStation {
 		void reduceNumberOfElements(const size_t& rnE);
 		void combineElements(const size_t& number_top_elements, const int& reduce_n_elements, const size_t& cond, const double& comb_thresh_l);
 		static bool combineCondition(const ElementData& Edata0, const ElementData& Edata1, const double& depth, const int& reduce_n_elements, const double& comb_thresh_l);
-		static void mergeElements(ElementData& Edata0, const ElementData& Edata1, const bool& merge, const bool& topElement);
+		static void mergeElements(ElementData& Edata0, const ElementData& Edata1, const bool& merge, const bool& topElement, const bool& VapourTransport = false);
 		void splitElement(const size_t& e);							//Split an element
 		void splitElements(const double& max_element_length, const double& comb_thresh_l);	//Check for splitting, calls splitElement(...) for actual splitting
 		void CheckMaxSimHS(const double& max_simulated_hs);					//Check for hs > max_simulated_hs
@@ -909,8 +909,11 @@ class RunInfo {
 		const std::string compilation_date; ///< Date of compilation
 		const std::string user; ///< logname of the user running the simulation
 		const std::string hostname; ///< hostname of the computer running the simulation
+		const std::string history;	 ///< History string, like in ACDD, combining several of the information below
 
 	private:
+		std::string setHistory();
+		static int hexToDecimal(const std::string& hex);
 		static double getNumericVersion(std::string version_str);
 		static mio::Date getRunDate();
 		static std::string getCompilationDate();

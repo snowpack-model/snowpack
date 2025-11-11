@@ -30,6 +30,7 @@
 #include <snowpack/snowpackCore/Solver.h>
 #include <snowpack/Laws_sn.h>
 #include <snowpack/snowpackCore/Aggregate.h>
+#include <snowpack/snowpackCore/SeaIce.h>
 
 #include <cstdio>
 #include <iomanip>
@@ -59,19 +60,62 @@ const double SnowStation::comb_thresh_rg = 0.125;   ///< Grain radius (mm)
 
 RunInfo::RunInfo()
             : version(SN_VERSION), version_num( getNumericVersion(SN_VERSION) ), computation_date(getRunDate()),
-              compilation_date(getCompilationDate()), user(IOUtils::getLogName()), hostname(IOUtils::getHostName()) {}
+              compilation_date(getCompilationDate()), user(IOUtils::getLogName()), hostname(IOUtils::getHostName()), history(setHistory()) {}
 
 RunInfo::RunInfo(const RunInfo& orig)
             : version(orig.version), version_num(orig.version_num), computation_date(orig.computation_date),
-              compilation_date(orig.compilation_date), user(orig.user), hostname(orig.hostname) {}
+              compilation_date(orig.compilation_date), user(orig.user), hostname(orig.hostname), history(orig.history) {}
 
+std::string RunInfo::setHistory()
+{
+	std::string history_str( "Run "+computation_date.toString(mio::Date::ISO_Z) );
+	if (!user.empty()) {
+		history_str.append( ", by "+user );
+		if (!hostname.empty()) history_str.append( "@"+hostname );
+	} else {
+		if (!hostname.empty()) history_str.append( ", @"+hostname );
+	}
+	history_str.append( ", with Snowpack-" + version + ", compiled on " + compilation_date );
+
+	return history_str;
+}
+
+int RunInfo::hexToDecimal(const std::string& hex)
+{	
+	int decimalValue = 0;
+	int base = 1;
+
+	for (auto it = hex.rbegin(); it != hex.rend(); ++it) {
+		if (*it >= '0' && *it <= '9') {
+			decimalValue += (*it - '0') * base;
+		} else if (*it >= 'A' && *it <= 'F') {
+			decimalValue += (*it - 'A' + 10) * base;
+		} else {
+			return 0;
+		}
+		base *= 16; // Increase base by power of 16
+	}
+
+	return decimalValue;	//returns 0 if hex.empty()
+}
+              
 double RunInfo::getNumericVersion(std::string version_str)
 {
 	//remove any '-' used for formatting the date
 	version_str.erase(std::remove_if(version_str.begin(), version_str.end(), [] (char c) { return c=='-'; }), version_str.end());
-	//keep only the first '.' and remove the other ones, if any
-	const std::string::difference_type pos = static_cast<std::string::difference_type>( version_str.find('.') );	//very ugly, but size_t is not the same as difference_type...
-	version_str.erase(std::remove_if(version_str.begin()+pos+1, version_str.end(), [] (char c) { return c=='.'; }), version_str.end());
+	const size_t pos = version_str.find('.');
+	if (pos==std::string::npos) return .0;
+	
+	//extract the date part
+	const std::string date_str( version_str.substr(0, pos) );
+	//extract the git hash
+	const int git_hash = hexToDecimal( version_str.substr(pos+1) ); //returns 0 if parsing failed
+	
+	if (git_hash>0) 
+		version_str = date_str + '.' + std::to_string(git_hash);
+	else
+		version_str = date_str;
+	
 	return atof( version_str.c_str() );
 }
 
@@ -1451,6 +1495,10 @@ bool ElementData::checkVolContent()
 	}
 	if(theta[AIR] < -Constants::eps) {
 		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Negative AIR volumetric content: %1.4f", theta[AIR]);
+		ret = false;
+	}
+	if(((theta[WATER] + theta[WATER_PREF]) * Constants::density_water / Constants::density_ice) + theta[ICE] + theta[SOIL] > 1. + 2.*Constants::eps) {
+		prn_msg(__FILE__, __LINE__, "wrn", Date(), "Too much water: %1.4f %1.4f %1.4f %1.4f", (theta[WATER] + theta[WATER_PREF]), theta[ICE], theta[SOIL], theta[AIR]);
 		ret = false;
 	}
 
@@ -2922,13 +2970,12 @@ void SnowStation::CheckMaxSimHS(const double& max_simulated_hs) {
  * @param merge True if upper element is to be joined with lower one, false if upper element is to be removed
  * @param topElement set to true if the upper element is at the very top of the snow pack
  */
-void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& EdataUpper, const bool& merge, const bool& topElement)
+void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& EdataUpper, const bool& merge, const bool& topElement, const bool& VapourTransport)
 {
 	const double L_lower = EdataLower.L; //Thickness of lower element
 	const double L_upper = EdataUpper.L; //Thickness of upper element
 	double LNew = L_lower;               //Thickness of "new" element
-	double theta_air_lower=EdataLower.theta[AIR]; // the volume fraction of air for the lower element before any changes
-	double Rho_lower=EdataLower.Rho; // the density of the lower element before any changes
+	const double Rho_lower = EdataLower.Rho; // the density of the lower element before any changes
 
 	if (merge) {
 		// Determine new element length under the condition of keeping the density of the lower element constant, if the density of the lower element is larger than the upper element.
@@ -2968,22 +3015,33 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 	EdataLower.theta[AIR] = 1.0 - EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF] - EdataLower.theta[ICE] - EdataLower.theta[SOIL];
 	EdataLower.salinity = (L_upper * EdataUpper.salinity + L_lower * EdataLower.salinity) / LNew;
 	// For snow, check if there is enough space to store all ice if all water would freeze. This also takes care of cases where theta[AIR]<0.
-	if ((merge==false && topElement==true) && EdataLower.theta[SOIL]<Constants::eps2 && EdataLower.theta[AIR] < (EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*((Constants::density_water/Constants::density_ice)-1.)) {
-		// Note: we can only do this for the uppermost snow element, as otherwise it is not possible to adapt the element length.
-		// If there is not enough space, adjust element length:
-		EdataLower.theta[AIR] = (EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*((Constants::density_water/Constants::density_ice)-1.);
-		const double tmpsum = EdataLower.theta[AIR]+EdataLower.theta[ICE]+EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF]; // Not adding ice reservoirs here
-		// Ensure that the element does not become larger than the sum of lengths of the original ones (no absolute element "growth")!
-		LNew = std::min(LNew * tmpsum, L_lower + L_upper);
-		EdataLower.L0 = EdataLower.L = LNew;
-		EdataLower.theta[AIR] /= tmpsum;
-		EdataLower.theta[ICE] /= tmpsum;
+	if ((merge==false && topElement==true) && EdataLower.theta[AIR] < (EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*((Constants::density_water/Constants::density_ice)-1.)) {
+		if(EdataLower.theta[SOIL]<Constants::eps2) {
+			// Note: we can only do this for the uppermost snow element, as otherwise it is not possible to adapt the element length.
+			// If there is not enough space, adjust element length:
+			EdataLower.theta[AIR] = (EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF])*((Constants::density_water/Constants::density_ice)-1.);
+			const double tmpsum = EdataLower.theta[AIR]+EdataLower.theta[ICE]+EdataLower.theta[WATER]+EdataLower.theta[WATER_PREF]; // Not adding ice reservoirs here
+			// Ensure that the element does not become larger than the sum of lengths of the original ones (no absolute element "growth")!
+			LNew = std::min(LNew * tmpsum, L_lower + L_upper);
+			EdataLower.L0 = EdataLower.L = LNew;
+			EdataLower.theta[AIR] /= tmpsum;
+			EdataLower.theta[ICE] /= tmpsum;
 #ifndef SNOWPACK_CORE
-		EdataLower.theta_i_reservoir /= tmpsum; // Recalculate ice reservoir
-		EdataLower.theta_i_reservoir_cumul /= tmpsum; // Recalculate cumulated ice reservoir
+			EdataLower.theta_i_reservoir /= tmpsum; // Recalculate ice reservoir
+			EdataLower.theta_i_reservoir_cumul /= tmpsum; // Recalculate cumulated ice reservoir
 #endif
-		EdataLower.theta[WATER] /= tmpsum;
-		EdataLower.theta[WATER_PREF] /= tmpsum;
+			EdataLower.theta[WATER] /= tmpsum;
+			EdataLower.theta[WATER_PREF] /= tmpsum;
+		} else {
+			if (VapourTransport) {
+				double tmp_dV = -1.0 * (1.0 - ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)) - EdataLower.theta[ICE] - EdataLower.theta[SOIL]);
+				prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Too little pore space, throwing away some mass... volumetric content error: %f m3/m3", tmp_dV);
+				EdataLower.theta[ICE] -= tmp_dV * (EdataLower.theta[ICE]) / (EdataLower.theta[ICE] + ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)));
+				EdataLower.theta[WATER] -= tmp_dV * (EdataLower.theta[WATER]) / (EdataLower.theta[ICE] + ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)));
+				EdataLower.theta[WATER_PREF] -= tmp_dV * (EdataLower.theta[WATER_PREF]) / (EdataLower.theta[ICE] + ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)));
+				EdataLower.theta[AIR] = 1.0 - EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF] - EdataLower.theta[ICE] - EdataLower.theta[SOIL];
+			}
+		}
 	}
 	EdataLower.snowResidualWaterContent();
 	EdataLower.updDensity();
@@ -3006,7 +3064,7 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 	EdataLower.vapTrans_fluxDiff = (EdataUpper.vapTrans_fluxDiff*EdataUpper.Rho*L_upper + EdataLower.vapTrans_fluxDiff*Rho_lower*L_lower)/(L_upper*EdataUpper.Rho+L_lower*Rho_lower);
 	EdataLower.Qmm = (EdataUpper.Qmm*EdataUpper.Rho*L_upper + EdataLower.Qmm*Rho_lower*L_lower)/(L_upper*EdataUpper.Rho+L_lower*Rho_lower);
 	EdataLower.vapTrans_underSaturationDegree = (EdataUpper.vapTrans_underSaturationDegree*EdataUpper.Rho*L_upper + EdataLower.vapTrans_underSaturationDegree*Rho_lower*L_lower)/(L_upper*EdataUpper.Rho+L_lower*Rho_lower);
-	EdataLower.rhov = (EdataUpper.rhov*EdataUpper.theta[AIR]*L_upper + EdataLower.rhov*theta_air_lower*L_lower)/EdataLower.theta[AIR];
+	EdataLower.rhov = Atmosphere::waterVaporDensity(EdataLower.Te, Atmosphere::vaporSaturationPressure(EdataLower.Te)); // Reasonable guess: it should in fact be the average of rhov on both nodes
 	EdataLower.Eps_vDot = (EdataUpper.Eps_vDot*EdataUpper.Rho*L_upper + EdataLower.Eps_vDot*Rho_lower*L_lower)/(L_upper*EdataUpper.Rho+L_lower*Rho_lower);
 }
 

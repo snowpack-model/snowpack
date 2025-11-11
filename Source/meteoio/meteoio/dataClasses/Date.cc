@@ -1122,7 +1122,8 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 * @param fractional fractional day (ie: fractional part of a julian date)
 * @return string containing a human readable time
 */
-std::string Date::printFractionalDay(const double& fractional) {
+std::string Date::printFractionalDay(const double& fractional) 
+{
 	const double hours = floor(fractional*24.);
 	const double minutes = floor((fractional*24.-hours)*60.);
 	const double seconds = fractional*24.*3600.-hours*3600.-minutes*60.;
@@ -1134,6 +1135,36 @@ std::string Date::printFractionalDay(const double& fractional) {
 	tmp << std::setw(2) << seconds;
 
 	return tmp.str();
+}
+
+/**
+* @brief Return the difference between two dates formatted as 
+* <a href="https://en.wikipedia.org/wiki/ISO_8601#Durations">duration according to ISO8601</a>. It will 
+* always compute the latest date minus the earliest one.
+* @param[in] dt1 first date
+* @param[in] dt2 second date
+* @return ISO8601 duration string
+*/
+std::string Date::printISODuration(const Date& dt1, const Date& dt2)
+{
+	const double fractional = (dt1>dt2)? (dt1.getJulian(true)-dt2.getJulian(true)) : (dt2.getJulian(true)-dt1.getJulian(true));
+	const double days = floor(fractional);
+	//to limit rounding errors, from now on we work in seconds within a day
+	int intra_day_sec = static_cast<int>( round((fractional - days)*24*3600) );
+	const int  hours = intra_day_sec / 3600;
+    intra_day_sec %= 3600;
+    const int  minutes = intra_day_sec / 60;
+    intra_day_sec %= 60;
+	
+	std::ostringstream tmp;
+	tmp << "PT";
+	tmp << std::fixed << std::setfill('0') << std::setprecision(0);
+	tmp << std::setw(2) << days << "D";
+	tmp << std::setw(2) << hours << "H";
+	tmp << std::setw(2) << minutes << "M";
+	tmp << std::setw(2) << intra_day_sec << "S";
+
+    return tmp.str();
 }
 
 /**

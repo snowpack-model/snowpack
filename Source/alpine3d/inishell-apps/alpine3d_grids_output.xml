@@ -32,6 +32,11 @@ INIshell include file for gridded input / output plugin definitions
 		<parameter key="GRIDS_WRITE" type="alternative" default="FALSE">
 			<option value="TRUE">
 				<reference name="GRID2D_OUT"/>
+				<parameter key="A3D_VIEW" type="alternative" default="FALSE">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>Use the naming scheme of the A3d_view tool?</help>
+				</parameter>
 				<parameter key="GRIDS_START" type="number" format="decimal" precision="6" default="0" min="0" max="365" unit="days" optional="false">
 					<help>When to start writing gridded data out (offset, in days)</help>
 				</parameter>
@@ -51,6 +56,11 @@ INIshell include file for gridded input / output plugin definitions
 					</option>
 					<option value="FALSE"/>
 					<help>Should values over glaciers be replaced by nodata in the outputs?</help>
+				</parameter>
+				<parameter key="WRITE_DEM_PROPERTIES" type="alternative" default="FALSE">
+					<option value="TRUE"/>
+					<option value="FALSE"/>
+					<help>Write computed DEM properties (slope, azimuth, curvature)? (Default: false)</help>
 				</parameter>
 				<parameter key="SOIL_TEMPERATURE_DEPTHS" type="text" optional="true">
 					<help>list of depths (in m) where to extract grids of soil temperatures</help>
@@ -84,6 +94,9 @@ INIshell include file for gridded input / output plugin definitions
 		</parameter>
 		<parameter key="RUNOFF_FILES_EXTRA_DATA" type="text" optional="true">
 			<help>list of parameters (taken from &lt;a href=&quot;https://alpine3d.slf.ch/doc-release/html/classSnGrids.html#aa7cc1a3714dd8ca8dc3919695f17649b&quot;&gt;SnGrids::Parameters&lt;/a&gt;) to output as sub-cacthments sums, see &lt;a href=&quot;https://alpine3d.slf.ch/doc-release/html/runoff.html&quot;&gt;Runoff&lt;/a&gt;</help>
+		</parameter>
+		<parameter key="SOIL_RUNOFF_DEPTHS" type="text" optional="true">
+			<help>List of depths where to extract the soil runoff</help>
 		</parameter>
 	</frame>
 

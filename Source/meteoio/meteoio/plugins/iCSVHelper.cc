@@ -38,12 +38,12 @@ namespace iCSV {
 // ----------------- iCSV Helpers -----------------
 static void custom_assert(const std::string& value, const std::string& asssert_val) {
     if (value.empty() && !asssert_val.empty()) {
-        std::cerr << "Assertion failed: No input value" << std::endl;
+        std::cerr << "[E] Assertion failed: No input value" << std::endl;
         std::abort();
     }
     bool condition = value == asssert_val;
     if (!condition) {
-        std::cerr << "Assertion failed: " << value << " != " << asssert_val << std::endl;
+        std::cerr << "[E] Assertion failed: " << value << " != " << asssert_val << std::endl;
         std::abort();
     }
 }

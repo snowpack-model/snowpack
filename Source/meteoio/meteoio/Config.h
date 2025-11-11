@@ -537,7 +537,9 @@ class ConfigParser {
 			
 			bool operator<(const FILE_PPT& a) const { //needed for "sort"
 				if (original_name<a.original_name) return true;
+				if (original_name>a.original_name) return false;
 				if (clean_name<a.clean_name) return true;
+				if (clean_name>a.clean_name) return false;
 				return restrict_section < a.restrict_section;
 			}
 			bool operator==(const FILE_PPT& a) const { //needed to check for uniqueness

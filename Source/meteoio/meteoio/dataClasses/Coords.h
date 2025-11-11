@@ -84,6 +84,7 @@ class Coords {
 	public:
 		///Keywords for selecting the algorithm for computing geodesic distances
 		typedef enum GEO_DISTANCES {
+			NONE, ///< Not initialized
 			GEO_COSINE, ///< Spherical law of cosine (See http://www.movable-type.co.uk/scripts/latlong.html)
 			GEO_VINCENTY ///< Vincenty ellispoid formula (See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, or http://www.springerlink.com/content/y7108u6862473583 for more)
 		} geo_distances;
@@ -131,6 +132,7 @@ class Coords {
 		const std::string toString(const FORMATS& type = DEBUG) const;
 		friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
 		friend std::istream& operator>>(std::istream& is, Coords& coord);
+		bool operator<(const Coords& in) const;
 
 		//Setter methods
 		void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);
@@ -167,6 +169,7 @@ class Coords {
 	private:
 		void clearCoordinates();
 		void setDefaultValues();
+		bool isConsistent() const;
 
 	private:
 		double ref_latitude, ref_longitude;

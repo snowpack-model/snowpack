@@ -348,17 +348,22 @@ void ResamplingStack::resetResampling()
 	}
 }
 
-void ResamplingStack::resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &ii, const std::vector<MeteoData> &vecM,
+//TODO The current implementation is not efficient as well as does not handle excat matches properly.
+//We should build once and for all the resampling stack (for every parameter) in the constructor
+//(consider having a '*' parameter as default for parameters that have not been explicitly configured)
+//and then just loop over the resampling algos with the gap that we have, asking who can take care of it.
+//Thus each specific algo could recognize an exact match and handle it...
+void ResamplingStack::resample(const std::string &stationHash, const size_t &index, const ResamplingAlgorithms::ResamplingPosition elementpos, const size_t &par_idx, const std::vector<MeteoData> &vecM,
                                 MeteoData &md, const double &i_max_gap_size) const
 {
-	const ResamplingAlgorithms::gap_info gap( ResamplingAlgorithms::findGap(index, ii, vecM, md.date, i_max_gap_size) );
+	const ResamplingAlgorithms::gap_info gap( ResamplingAlgorithms::findGap(index, par_idx, vecM, md.date, i_max_gap_size) );
 	const std::vector<std::shared_ptr<ResamplingAlgorithms>> resampling_stack = buildStack(gap);
 
 	for (size_t jj = 0; jj < resampling_stack.size(); jj++) {
-		resampling_stack[jj]->resample(stationHash, index, elementpos, ii, vecM, md);
-		if (jj > 0 && (index != IOUtils::npos) && vecM[index](ii) != md(ii)) {
+		resampling_stack[jj]->resample(stationHash, index, elementpos, par_idx, vecM, md);
+		if (jj > 0 && (index != IOUtils::npos) && vecM[index](par_idx) != md(par_idx)) {
 			break;
-		} else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](ii) == md(ii)) {
+		} else if (ResamplingAlgorithms::exact_match == elementpos && vecM[index](par_idx) == md(par_idx)) {
 			break;
 		}
 	}

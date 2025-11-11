@@ -288,7 +288,7 @@ void GoesIO::addStation(const std::string& goesID)
 		stations[ goesID ] = GoesStation(goesID, metaCfg, in_nodata, in_TZ, coordin, coordinparam);
 	} else {
 		stations[ goesID ] = GoesStation();
-		std::cerr << "Station " << goesID << " not configured, skipping\n";
+		std::cerr << "[W] Station " << goesID << " not configured, skipping\n";
 	}
 }
 

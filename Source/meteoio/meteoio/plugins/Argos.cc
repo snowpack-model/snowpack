@@ -184,7 +184,7 @@ void ArgosIO::addStation(const std::string& argosID)
 		stations[ argosID ] = ArgosStation(argosID, metaCfg, in_nodata, in_TZ, coordin, coordinparam, debug);
 	} else {
 		stations[ argosID ] = ArgosStation();
-		std::cerr << "Station " << argosID << " not configured, skipping\n";
+		std::cerr << "[W] Station " << argosID << " not configured, skipping\n";
 	}
 }
 

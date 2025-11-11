@@ -27,18 +27,11 @@
 
 using namespace mio; //The MeteoIO namespace is called mio
 
-static std::vector< std::vector<MeteoData> > read_data(const std::string& io_file, const bool& write_data)
-{
-	Config cfg(io_file);
-	const double TZ = cfg.get("TIME_ZONE", "Input"); //get user provided input time_zone
-
-	const Date dateBegin(2008, 12, 1, 0, 0, TZ);
-	const Date dateEnd(2009, 1, 31, 23, 0, TZ);
-	const double samplingRate = 1./24.;
-	
+static std::vector< std::vector<MeteoData> > read_data(const Config& cfg, const Date& dateBegin, const Date& dateEnd, const double& samplingRate, const bool& write_data)
+{	
 	IOManager io(cfg);
-	std::cout << "Powered by MeteoIO " << getLibVersion() << "\n";
-	std::cout << "Reading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
+	std::cout << "\tPowered by MeteoIO " << getLibVersion() << "\n";
+	std::cout << "\tReading data from " << dateBegin.toString(Date::ISO) << " to " << dateEnd.toString(Date::ISO) << "\n";
 	
 	Timer timer;
 	timer.start();
@@ -65,12 +58,12 @@ static std::vector< std::vector<MeteoData> > read_data(const std::string& io_fil
 
 	//write the data out
 	if (write_data) {
-		std::cout << "Writing output data" << std::endl;
+		std::cout << "\tWriting output data" << std::endl;
 		io.writeMeteoData(vecMeteo);
 	}
 
 	timer.stop();
-	std::cout << "Done!! in " << timer.getElapsed() << " s" << std::endl;
+	std::cout << "\tDone!! in " << timer.getElapsed() << " s" << std::endl;
 	
 	return vecMeteo;
 }
@@ -149,26 +142,94 @@ static bool compare_data(const std::vector< std::vector<MeteoData> > &ref, const
 	return false;
 }
 
-int main()
+static void processStatus(const bool& status)
 {
-	setbuf(stdout, nullptr); //always flush stdout
-	setbuf(stderr, nullptr); //always flush stderr
+	if (status) {
+		std::cout << "->All OK\n\n";
+	} else {
+		std::cout << "->REF and TEST datasets differ!!\n\n";
+		exit(1);
+	}
+}
 
+static void testEditing()
+{
+	std::cout << "*** Broad testing of data editing...\n";
+	
+	Config cfg_ref("io_ref_data.ini");
+	Config cfg_test("io.ini");
+	
+	const double TZ = cfg_ref.get("TIME_ZONE", "Input"); //get user provided input time_zone
+	const Date dateBegin(2008, 12, 1, 0, 0, TZ);
+	const Date dateEnd(2009, 1, 31, 23, 0, TZ);
+	const double samplingRate = 1./24.;
+	
 	try {
 		//the boolean flag can be set to TRUE in order to write the data out
-		std::vector< std::vector<MeteoData> > vecMeteoRef( read_data("io_ref_data.ini", false) );
-		std::vector< std::vector<MeteoData> > vecMeteoTest( read_data("io.ini", false) );
+		std::vector< std::vector<MeteoData> > vecMeteoRef( read_data(cfg_ref, dateBegin, dateEnd, samplingRate, false) );
+		std::vector< std::vector<MeteoData> > vecMeteoTest( read_data(cfg_test, dateBegin, dateEnd, samplingRate, false) );
 		
 		const bool status = compare_data(vecMeteoRef, vecMeteoTest);
-		if (status) {
-			std::cout << "All OK\n";
-		} else {
-			std::cout << "REF and TEST datasets differ!!\n";
-			exit(1);
-		}
+		processStatus( status ); //exit if false
 	} catch(const std::exception &e) {
 		std::cerr << e.what();
 		exit(1);
 	}
+}
+
+static void testMergeInDepth()
+{
+	std::cout << "*** In depth testing of data editing merge...\n";
+	std::cout << "*** window merge...\n";
+	Config cfg_ref("merge_data_ref.ini");
+	cfg_ref.addKey("METEOFILE1", "Input", "WFJ2_window_merge.smet");
+	Config cfg_test("merge_data.ini");
+	cfg_test.addKey("METEOFILE2", "Input", "WFJ2_part2.smet");
+	cfg_test.addKey("*::ARG1::MERGE_STRATEGY", "InputEditing", "WINDOW_MERGE");
+	
+	const double TZ = cfg_ref.get("TIME_ZONE", "Input"); //get user provided input time_zone
+	const Date dateBegin(1999, 8, 1, 0, 0, TZ);
+	const Date dateEnd(1999, 8, 10, 23, 0, TZ);
+	const double samplingRate = .5/24.;
+	
+	try {
+		//the boolean flag can be set to TRUE in order to write the data out
+		std::vector< std::vector<MeteoData> > vecMeteoRef( read_data(cfg_ref, dateBegin, dateEnd, samplingRate, false) );
+		std::vector< std::vector<MeteoData> > vecMeteoTest( read_data(cfg_test, dateBegin, dateEnd, samplingRate, true) );
+		
+		const bool status = compare_data(vecMeteoRef, vecMeteoTest);
+		processStatus( status ); //exit if false
+	} catch(const std::exception &e) {
+		std::cerr << e.what();
+		exit(1);
+	}
+	
+	std::cout << "*** full merge...\n";
+	cfg_ref.addKey("METEOFILE1", "Input", "WFJ2_full_merge.smet");
+	cfg_test.addKey("METEOFILE2", "Input", "WFJ2_part3.smet");
+	cfg_test.addKey("*::ARG1::MERGE_STRATEGY", "InputEditing", "FULL_MERGE");
+	
+	try {
+		//the boolean flag can be set to TRUE in order to write the data out
+		std::vector< std::vector<MeteoData> > vecMeteoRef( read_data(cfg_ref, dateBegin, dateEnd, samplingRate, false) );
+		std::vector< std::vector<MeteoData> > vecMeteoTest( read_data(cfg_test, dateBegin, dateEnd, samplingRate, true) );
+		
+		const bool status = compare_data(vecMeteoRef, vecMeteoTest);
+		processStatus( status ); //exit if false
+	} catch(const std::exception &e) {
+		std::cerr << e.what();
+		exit(1);
+	}
+}
+
+int main()
+{
+	setbuf(stdout, nullptr); //always flush stdout
+	setbuf(stderr, nullptr); //always flush stderr
+	std::cout << "\n";
+
+	testEditing();
+	testMergeInDepth();
+	
 	return 0;
 }

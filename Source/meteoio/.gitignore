@@ -18,6 +18,13 @@ lib/*
 /bin/*
 *.aux
 *.log
+*.logs
+compile_commands.json
+meteoio/icons/meteoio.rc
+meteoio.cbp
+meteoio.layout
+.DS_Store
+**/.DS_Store
 
 #example files and binaries:
 /doc/examples/CMakeCache.txt

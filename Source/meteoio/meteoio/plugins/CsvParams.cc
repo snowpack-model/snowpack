@@ -794,7 +794,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 //offset and multiplier to convert the values back to SI
 void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 {
-	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "PA", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M3", "DB", "DBM"};
+	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "PA", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M2/S", "KG/M3", "DB", "DBM"};
 
 	std::vector<std::string> units;
 	if (delim!=' ') 
@@ -825,7 +825,7 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 		else if (tmp=="MPH") units_multiplier[ii] = 1.60934 / 3.6;
 		else if (tmp=="KT") units_multiplier[ii] = 1.852 / 3.6;
 		else {
-			std::cerr << "CsvIO: Can not parse unit '" << tmp << "', please inform the MeteoIO developers\n";
+			std::cerr << "[W] CsvIO: Can not parse unit '" << tmp << "', please inform the MeteoIO developers\n";
 		}
 	}
 }
@@ -898,8 +898,9 @@ bool CsvParameters::skipField(const size_t& fieldnr) const
 	return false;
 }
 
-bool CsvParameters::isNodata(const std::string& value) const
+bool CsvParameters::isNodata(std::string value) const
 {
+	IOUtils::trim( value ); //so in case of spurious white spaces, we can still identify nodata
 	if (value.empty()) return true;
 	if (nodata.find( value ) != nodata.end()) return true;
 	

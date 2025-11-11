@@ -39,6 +39,11 @@ https://alpine3d.slf.ch
 
 	<!-- GENERAL -->
 	<include_external file="meteoio_general.xml" app="meteoio"/>
+	<parameter key="LOCAL_IO" type="alternative" optional="false" default="FALSE" section="General">
+		<option value="TRUE"/>
+		<option value="FALSE"/>
+		<help>When running parallel, let nodes do IO locally (this is not always possible but more efficient)</help>
+	</parameter>
 	<parameter type="spacer" height="40"/>
 	<parameter type="label" label="&lt;h3&gt;Application information&lt;/h3&gt;" color="sl_blue"/>
 	<reference name="INFO_METEOIO"/>
@@ -73,7 +78,7 @@ https://alpine3d.slf.ch
 	<!-- Handle the 2 ways of providing forcings: as stations or as grids -->
 	<frame caption="Meteorological data format">
 		<section name="Input"/>
-		<parameter key="DATA_FROM_GRIDS" type="alternative" optional="false" default="FALSE">
+		<parameter key="METEO_FROM_GRIDS" type="alternative" optional="false" default="FALSE">
 			<option value="TRUE">
 				<section name="Input"/>
 				<reference name="GRID2D_IN"/>
@@ -82,7 +87,7 @@ https://alpine3d.slf.ch
 				<section name="Input"/>
 				<reference name="METEOIO_TS_IN"/> <!-- all METEO input plugins -->
 			</option>
-			<help>Meteorological fields are either provided as stations (point measurements) or as grids</help>
+			<help>Meteorological fields are either provided as stations (point measurements that will be spatially interpolated) or as grids</help>
 		</parameter>
 	</frame>
 
@@ -94,6 +99,11 @@ https://alpine3d.slf.ch
 	<frame caption="2D Grids">
 		<section name="Input"/>
 		<reference name="DEMPLUGINS"/>
+		<parameter key="ADD_HS_TO_DEM_FOR_METEO" type="alternative" optional="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Dynamicalla add the simulated snow height to the DEM? (default: false)</help>
+		</parameter>
 		<parameter key="SLOPE_ALGORITHM" type="alternative" optional="true">
 			<option value="HICK"/>
 			<option value="FLEMING"/>
@@ -208,9 +218,15 @@ https://alpine3d.slf.ch
 	
 	<include file="alpine3d_grids_output.xml"/>
 
-	<frame caption="Meteorological data format">
+	<frame caption="Points Of Interest data outputs">
 		<section name="Output"/>
-		<reference name="METEOIO_TS_OUT"/> <!-- all METEO output plugins -->
+		<parameter key="WRITE_POI_METEO" type="alternative" optional="TRUE">
+			<option value="TRUE">
+				<reference name="METEOIO_TS_OUT"/> <!-- all METEO output plugins -->
+			</option>
+			<option value="FALSE"/>
+			<help>Write meteorological fields extracted at the declared Points Of Interest? (default: true)</help>
+		</parameter>
 	</frame>
 	
 	<!-- EXTRA OUTPUT PARAMETERS -->

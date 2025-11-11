@@ -35,14 +35,13 @@ using namespace std;
  */
 AlpineControl::AlpineControl(SnowpackInterface *mysnowpack, SnowDriftA3D *mysnowdrift, EnergyBalance *myeb,
                              const Config& cfg, const DEMObject& in_dem)
-              : dem(in_dem), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), enable_snowdrift2d(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false), dataFromGrids(false)
+              : dem(in_dem), meteo(cfg, dem), snowpack(mysnowpack), snowdrift(mysnowdrift), eb(myeb), snow_days_between(0.), max_run_time(-1.), enable_simple_snow_drift(false), enable_snowdrift2d(false), nocompute(false), out_snow(true), correct_meteo_grids_HS(false)
 {
 	cfg.getValue("SNOW_WRITE", "Output", out_snow);
 	if (out_snow) {
 		cfg.getValue("SNOW_DAYS_BETWEEN", "Output", snow_days_between);
 	}
-	cfg.getValue("ADD_HS_TO_DEM_FOR_METEO", "input", correct_meteo_grids_HS,IOUtils::nothrow);
-	cfg.getValue("DATA_FROM_GRIDS", "input", dataFromGrids,IOUtils::nothrow);
+	cfg.getValue("ADD_HS_TO_DEM_FOR_METEO", "input", correct_meteo_grids_HS, IOUtils::nothrow);
 
 	//check if simple snow drift is enabled
 	enable_simple_snow_drift = false;

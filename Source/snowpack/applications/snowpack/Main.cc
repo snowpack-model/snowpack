@@ -190,11 +190,11 @@ void Slope::setSlope(const unsigned int slope_sequence, vector<SnowStation>& vec
 			luv = lee = 0;
 		}
 		sector = mainStation;
-		mainStationDriftIndex = ((nSlopes == 1) && (snow_erosion != "NONE"));
+		mainStationDriftIndex = ((nSlopes == 1));
 		break;
 	case 1:
 		sector = luv;
-		luvDriftIndex = snow_redistribution;
+		luvDriftIndex = true;
 		break;
 	default:
 		sector++;
@@ -1020,9 +1020,9 @@ inline void printStartInfo(const SnowpackConfig& cfg, const std::string& name)
 *   of fresh snow mass because Michi spent many painful days calibrating the settling ...
 *   and therefore it can't be wrong, dixunt Michi and Charles.
 */
+#ifndef SNOWPACK_CORE
 inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, const CurrentMeteo &Mdata, const double &sn_dt, const size_t &i_hz, const bool &prn_check)
 {
-#ifndef SNOWPACK_CORE
 	if (Xdata.mH == IOUtils::nodata) {
 		cerr << "[E] No measured snow height: cannot execute ALLOW_INFLATE!" << endl;
 		throw;
@@ -1051,8 +1051,10 @@ inline void deflateInflate(SnowStation &Xdata, vector<ProcessDat> &qr_Hdata, con
 		deflateInflate(Mdata, Xdata, qr_Hdata.at(i_hz).dhs_corr, qr_Hdata.at(i_hz).mass_corr, prn_check);
 		Xdata.TimeCountDeltaHS = 0.;
 	}
-#endif
 }
+#else
+inline void deflateInflate(SnowStation&, vector<ProcessDat>&, const CurrentMeteo&, const double&, const size_t&, const bool&) {}
+#endif
 
 // SNOWPACK MAIN **************************************************************
 inline void real_main (int argc, char *argv[])

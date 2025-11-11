@@ -123,6 +123,11 @@ https://snowpack.slf.ch
 	</parametergroup>
 
 	<frame caption="Precipitation Handling" section="SnowpackAdvanced" collapsed="true">
+		<parameter key="FORCE_ADD_SNOWFALL" type="alternative">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>If TRUE: skip the internal storage (cumu_precip) and add snowfall timely to the snowpack when precipitation is present, regardless whether or not HEIGHT_NEW_ELEM equivalent of precipitation is present. (default: FALSE)</help>
+		</parameter>
 		<parameter key="THRESH_RAIN" type="number" format="decimal" precision="2" unit="°C">
 			<help>Fallback temperature threshold for rain/snow transition if no other spliting method is provided (as data generator). (Default: 1.2°C)</help>
 		</parameter>
@@ -136,6 +141,11 @@ https://snowpack.slf.ch
 		</parameter>
 		<parameter key="THRESH_DTEMP_AIR_SNOW" type="number" format="decimal" precision="1" unit="°C">
 			<help>If ENFORCE_MEASURED_SNOW_HEIGHTS, (TA-TSS)' threshold for precipitation to occur (default: 3.0°C)</help>
+		</parameter>
+			<parameter key="ALLOW_FREEZING_RAIN" type="alternative">
+			<option value="TRUE"><help>New snow elements during mixed precipitation are at air temperature or melting temperature, whichever is lower</help></option>
+			<option value="FALSE"><help>New snow elements during mixed precipitation are at melting temperature, irrespective of air temperature (default)</help></option>
+			<help>Only when mixed phase precipitation is provided: can the temperature of the rain be below freezing point (default: FALSE)</help>
 		</parameter>
 	</frame>
 
@@ -198,6 +208,11 @@ https://snowpack.slf.ch
 			<option value="SORENSEN"/>
 			<option value="DOORSCHOT"/>
 			<help>The simple Sorenson parameterization is computationally more efficient than the full Doorschot model (default: SORENSEN)</help>
+		</parameter>
+		<parameter key="ENHANCED_WIND_SLAB" type="alternative" longlabel="true">
+			<option value="TRUE"/>
+			<option value="FALSE"/>
+			<help>Enhanced wind compaction in the upper 7 cm of the snowpack, following Eqs. 2 and 3 in &lt;a href=&quot;https://doi.org/10.5194/tc-7-333-2013&quot;&gt;Groot Zwaaftink et al. (2013)&lt;/a&gt;, to describe wind slab formation. This key is always set to TRUE when using the POLAR or ANTARCTICA variants, ignoring the configuration set by the user. (default: FALSE)</help>
 		</parameter>
 		<!-- <parameter key="SURFACECODE" type="alternative">
 			<option value="NEUMANN_BC"/>
@@ -339,6 +354,7 @@ https://snowpack.slf.ch
 					<option value="ZWART"/>
 					<option value="BELLAIRE"/>
 					<option value="LEHNING_OLD"/>
+					<option value="JORDY"/>
 					<option value="PAHAUT"/>
 					<option value="NIED"/>
 					<option value="VANKAMPENHOUT"/>

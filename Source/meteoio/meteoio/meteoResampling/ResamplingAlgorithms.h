@@ -43,14 +43,6 @@ namespace mio {
 class ResamplingAlgorithms {
 
 	public:
-		enum ResamplingPosition {
-			exact_match,
-			before,
-			after,
-			begin,
-			end
-		};
-		
 		typedef struct GAP_INFO {
 			GAP_INFO() : start(), end(), startIdx(IOUtils::npos), endIdx(IOUtils::npos) {}
 			void extend(const size_t& idx, const std::vector<MeteoData>& vecM) {if (idx<startIdx) setStart(idx, vecM); if (idx>endIdx) setEnd(idx, vecM);}
@@ -62,6 +54,21 @@ class ResamplingAlgorithms {
 			size_t startIdx, endIdx;
 		} gap_info;
 		
+		enum ResamplingPosition {
+			exact_match,
+			before,
+			after,
+			begin,
+			end
+		};
+		
+	public:
+		
+		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
+		                    : algo(i_algoname), parname(i_parname), max_gap_size(dflt_max_gap_size), gaps() {}
+
+		virtual ~ResamplingAlgorithms() {}
+		
 		static size_t searchBackward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
                                               const double& i_max_gap_size);
 		static size_t searchForward(gap_info &last_gap, const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
@@ -70,18 +77,13 @@ class ResamplingAlgorithms {
 		static gap_info findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
 					 const double& i_max_gap_size);
 
-		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_max_gap_size, const std::vector< std::pair<std::string, std::string> >& /*vecArgs*/)
-		                    : algo(i_algoname), parname(i_parname), max_gap_size(dflt_max_gap_size), gaps() {}
-
-		virtual ~ResamplingAlgorithms() {}
-
-		const std::string getAlgo() const {return algo;}
-
 		virtual void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) = 0;
 		
 		void resetResampling() {gaps.clear();} //invalidate all gaps, usually after rebuffering
 
+		const std::string getAlgo() const {return algo;}
+		
 		virtual std::string toString() const = 0;
 
  	protected:

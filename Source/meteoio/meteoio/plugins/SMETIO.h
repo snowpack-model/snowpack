@@ -84,7 +84,7 @@ class SMETIO : public IOInterface {
 		void getFormatting(const std::string& parname, int& prec, int& width) const;
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
-		                        const double& smet_timezone, const std::set<std::string>& paramInUse, smet::SMETWriter& mywriter);
+		                        const double& smet_timezone, const std::set<std::string>& paramInUse, const size_t& nrTimestamps, smet::SMETWriter& mywriter);
 
 		static const char* dflt_extension;
 		static const double snVirtualSlopeAngle;
