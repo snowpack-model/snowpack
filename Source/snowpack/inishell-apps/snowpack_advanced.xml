@@ -266,13 +266,13 @@ https://snowpack.slf.ch
 						<parameter key="ICE_RESERVOIR" type="alternative">
 							<option value="FALSE"/>
 							<option value="TRUE"/>
-							<help>Allow excess water in the preferential flow domain to contribute to ice lenses / layers? See &lt;a href="https://doi.org/10.5194/tc-14-3449-2020"&gt;Quéno et al.&lt;/a&gt; for details. (default: FALSE)</help>
+							<help>Allow excess water in the preferential flow domain to contribute to ice lenses / layers? See &lt;a href="https://doi.org/10.5194/tc-14-3449-2020"&gt;Quéno et al.&lt;/a&gt; for details. If enabled, it requires to specify the fractional ice reservoir volume (Vol_Frac_IR) and the cummulated ice reservoir volume (Vol_Frac_CIR) in the *.sno file, directly following the column Vol_Frac_I. (default: FALSE)</help>
 						</parameter>
 					</option>
-					<help>Dual domain approach to simulate preferential flow. When set to TRUE, it requires to specify the volumetric water content in preferential flow (Vol_Frac_WP) in the *.sno file, directly following the column Vol_Frac_W. (default: FALSE)</help>
+					<help>&lt;a href="https://snowpack.slf.ch/doc-release/html/water_transport.html#preferential_flow"&gt;Dual domain approach&lt;/a&gt; to simulate preferential flow. When set to TRUE, it requires to specify the &lt;a href="https://snowpack.slf.ch/doc-release/html/smet.html#layers_data"&gt;volumetric water content in preferential flow&lt;/a&gt; (Vol_Frac_WP) in the *.sno file, directly following the column Vol_Frac_W. (default: FALSE)</help>
 				</parameter>
 			</option>
-			<help>Water transport model to use in snow: simple bucket model (default), Nied model or Richards equation solver</help>
+			<help>&lt;a href="https://snowpack.slf.ch/doc-release/html/water_transport.html"&gt;Water transport model&lt;/a&gt; to use in snow: simple bucket model (default), Nied model or Richards equation solver</help>
 		</parameter>
 		<parameter key="WATERTRANSPORTMODEL_SOIL" type="alternative" longlabel="true">
 			<option value="BUCKET"/>
@@ -331,7 +331,7 @@ https://snowpack.slf.ch
 			<option value="RAW"><help>Use the relative weights of the thermal conductivity of soil, water and ice</help></option>
 			<help>Representation of the soil thermal conductivity (default: COSENZA2003)</help>
 		</parameter>
-		
+
 		<frame caption="Degree-day model" collapsed="true">
 			<parameter type="helptext" wrap="true" section="SnowpackAdvanced">
 				<help>For models intercomparisons, it is possible to replace the energy balance model by a degree-day model during the melt phases. This degree-day model provides the energy fluxes at the surface as: &lt;center&gt;temp_index_degree_day*(T&lt;sub&gt;air&lt;/sub&gt; - T&lt;sub&gt;surface&lt;/sub&gt;) + temp_index_swr_factor*SW&lt;sub&gt;net&lt;/sub&gt;&lt;/center&gt;</help>

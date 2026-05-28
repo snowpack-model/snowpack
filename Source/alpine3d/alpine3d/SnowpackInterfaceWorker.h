@@ -97,7 +97,7 @@ class SnowpackInterfaceWorker
 
 		// cache special point data for output on master process:
 		std::vector<SnowStation> snow_pixel;
-		std::vector<CurrentMeteo> meteo_pixel;
+		std::vector<CurrentMeteo*> meteo_pixel;
 		std::vector<SurfaceFluxes> surface_flux;
 		std::vector<double> soil_temp_depths, soil_runoff_depths, snow_density_depths;
 

@@ -45,6 +45,7 @@
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/StationData.h>
 #include <meteoio/dataClasses/Buffer.h>
+#include <meteoio/dataQA.h>
 
 #include <meteoio/DataGenerator.h>
 #include <meteoio/FileUtils.h>
@@ -62,6 +63,7 @@
 #include <meteoio/MathOptim.h>
 //#include <meteoio/MessageBoxX11.h>
 #include <meteoio/Meteo1DInterpolator.h>
+#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Meteo2DInterpolator.h>
 
 //skip all the filters' implementations header files
@@ -89,7 +91,6 @@
 #include <meteoio/plugins/libsmet.h>
 #include <meteoio/plugins/libacdd.h>
 
-#include <meteoio/meteoResampling/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>
 
 #endif

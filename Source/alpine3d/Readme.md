@@ -45,6 +45,8 @@ You can list the config options using ```cmake .. -L``` or ```ccmake ..```. The 
 
 ## Running a simulation
 
+Some examples are provided with Alpine3D, see in to "doc" directory.
+
 It is highly recommended to setup your simulation in a specific directory. For example, a directory named "Dischma" that will have the following subdirectories structure:
 
 * input; There you copy your meteo data in a "meteo" subdirectory (if needed), your domain grids in a "surface-grids" directory and the* sno files in a "snowfiles" directory
@@ -74,7 +76,7 @@ This file is structured by sections, focused on several aspects:
 
 These sections are described in the meteoio and snowpack documentation.
 
-It is also possible (and recommended) to use inishell to generate a proper io.ini for Alpine3D.
+It is also possible (and recommended) to use [Inishell](https://inishell.slf.ch) to generate a proper io.ini for Alpine3D.
 
 Unfortunately, the current configuration of inishell for Alpine3D does not cover all the possibilities. You can generate the Snowpack section by using the Snowpack inishell configuration and then copy it into your ini files generated with inishell for Alpine3D.
 

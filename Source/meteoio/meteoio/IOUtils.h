@@ -163,13 +163,13 @@ namespace IOUtils {
 	* @return user name
 	*/
 	std::string getLogName();
-	
+
 	/**
 	* @brief Retrieve the name of the computer running the binary
 	* @return host name
 	*/
 	std::string getHostName();
-	
+
 	/**
 	* @brief Retrieve the domain name of the computer running the binary
 	* @return domain with TLD
@@ -190,17 +190,17 @@ namespace IOUtils {
 	std::string trim(const std::string &s);
 
 	void stripComments(std::string& str);
-	
+
 	void stripComments(std::string& str, const char& comment_mk);
 
 	void cleanEscapedCharacters(std::string& str, const std::vector<char>& escaped_chars);
-	
+
 	/**
 	 * @brief Replace a substring within a given string by another one.
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param input string to manipulate
-	 * @param[in] search substring to be searched for 
-	 * @param[in] format substitute string 
+	 * @param[in] search substring to be searched for
+	 * @param[in] format substitute string
 	 */
 	void replace_all(std::string &input, const std::string& search, const std::string& format);
 
@@ -229,7 +229,7 @@ namespace IOUtils {
 	* @param line The string to read and modify
 	*/
 	void removeQuotes(std::string& line);
-	
+
 	/**
 	* @brief Removes any character present in the provided set from the given line
 	* @param line The string to read and modify
@@ -251,21 +251,21 @@ namespace IOUtils {
 	 * @brief count how many times a substring appears in a string
 	 * @details This should be quite similar to Boost::replace_all.
 	 * @param[in] input string to manipulate
-	 * @param[in] search substring to be searched for 
+	 * @param[in] search substring to be searched for
 	 * @return number of non-overlapping matches or std::string::npos if nothing could be found (empty "search", etc)
 	 */
 	size_t count(const std::string &input, const std::string& search);
-	
+
 	/**
 	 * @brief Fowler/Noll/Vo hash function (FNV-1a)
-	 * @details This returns a non-cryptographic, 32 bits hash for the string given as argument 
+	 * @details This returns a non-cryptographic, 32 bits hash for the string given as argument
 	 * (see https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 	 * or https://tools.ietf.org/html/draft-eastlake-fnv-16)
 	 * @param[in] text string to get a hash for
-	 * @return 32 bits hash 
+	 * @return 32 bits hash
 	 */
 	size_t FNV_hash(const std::string& text);
-	
+
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
 	* @param in_line (const string&) string to parse
@@ -288,7 +288,7 @@ namespace IOUtils {
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vecRet, const char& delim);
-	
+
 	std::vector<std::string> split(const std::string& str, char delim);
 	std::vector<std::string> split(const std::string& str, std::string delim);
 
@@ -442,7 +442,7 @@ namespace IOUtils {
 	*/
 	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
 	                             std::string& coordout, std::string& coordoutparam);
-	
+
 	/**
 	* @brief A function that parses a Config object for COORSYS, COORDPARAM keywords in the [Input]
 	*        section and sets the respective strings to the values of those keywords
@@ -476,13 +476,20 @@ namespace IOUtils {
 	* @return value, expressed in unitOut
 	*/
 	double unitsConversion(const double& val, std::string unitIn, std::string unitOut);
-	
+
 	/**
 	* @brief Escape special charaters in a string to make it suitable for XML output
 	* @param input Original string
 	* @return escaped string
 	*/
 	std::string escapeXml(const std::string& input);
+
+	/**
+	* @brief Escape special charaters in a string to make it suitable for JSON output
+	* @param input Original string
+	* @return escaped string
+	*/
+	std::string escapeJson(const std::string& input);
 } //end namespace IOUtils
 
 } //end namespace mio

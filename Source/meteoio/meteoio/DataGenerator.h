@@ -23,6 +23,7 @@
 #include <meteoio/Config.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataGenerators/GeneratorAlgorithms.h>
+#include <meteoio/dataQA.h>
 
 #include <vector>
 #include <map>
@@ -43,7 +44,7 @@ namespace mio {
 class DataGenerator {
 	public:
 		DataGenerator(const Config& cfg, const std::set<std::string>& params_to_generate = std::set<std::string>());
-		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), data_qa_logs(c.data_qa_logs)  {}
+		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), data_qa(c.data_qa) {}
 		virtual ~DataGenerator();
 
 		void fillMissing(METEO_SET& vecMeteo, const std::vector<METEO_SET>& fullDataset, const std::vector<size_t>& stations_idx) const;
@@ -59,7 +60,7 @@ class DataGenerator {
 		
 		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data creators algorithms
 		static const std::string cmd_section, cmd_pattern, arg_pattern;
-		bool data_qa_logs;
+		DataQA data_qa;
 };
 
 } //end namespace

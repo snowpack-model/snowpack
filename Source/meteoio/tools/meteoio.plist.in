@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>@MIO_BINARY@</string>
+	<string>@NAME_BINARY@</string>
 	<key>CFBundleIdentifier</key>
 	<string>ch.slf.meteoio</string>
 	<key>CFBundleName</key>

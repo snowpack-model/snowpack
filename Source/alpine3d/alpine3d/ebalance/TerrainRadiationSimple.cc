@@ -39,7 +39,7 @@ void TerrainRadiationSimple::getRadiation(mio::Array2D<double>& /*direct*/,
                                           const mio::Array2D<double>& direct_unshaded_horizontal,
                                           const mio::Array2D<double>& /*total_ilwr*/, mio::Array2D<double>& /*sky_ilwr*/,
                                           mio::Array2D<double>& /*terrain_ilwr*/,
-                                          double /*solarAzimuth*/, double /*solarElevation*/)
+                                          const double& /*solarAzimuth*/, const double& /*solarElevation*/)
 {
 	MPIControl& mpicontrol = MPIControl::instance();
 	terrain.resize(dimx, dimy, 0.);  //so reduce_sum works properly when it sums full grids

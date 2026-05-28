@@ -264,7 +264,7 @@ void Canopy::SoilWaterUptake(const size_t& SoilNode, const double& transpiration
 	if ( transpiration == 0. ) return;
 
 	// Mass of water [kg m-2] that is to be extracted from the soil
-	double waterresidual = transpiration;
+	//double waterresidual = transpiration;
 	double waterresidual_real = transpiration;
 
 	// Loop over soil layers above rootdepth
@@ -292,7 +292,7 @@ void Canopy::SoilWaterUptake(const size_t& SoilNode, const double& transpiration
 			}
 
 			// residual water to be extracted in layers below
-			waterresidual -= rootfr * water;
+			//waterresidual -= rootfr * water;
 			waterresidual_real -= d_theta_l * Constants::density_water * EMS[e].L;
 
 			if (watertransportmodel_soil == "RICHARDSEQUATION") {

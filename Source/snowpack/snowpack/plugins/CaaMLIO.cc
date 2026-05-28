@@ -130,7 +130,8 @@ using namespace mio;
 
 /**
  * @class DataResampler
- * @brief Resample data.
+ * @brief Resample vectors of data as required by the CAAMLIO plugin.
+ * @details 
  * The data (double) is given as a x-vector xVec and y-Vector yVec. The new sampling can be defined by an interval dx or by an arbitrary
  * x-vector xVecGoal. Two methods are implemented one for point data and one for range data.
  * For point data the new values are interpolated and extrapolated.

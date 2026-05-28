@@ -239,53 +239,78 @@ namespace mio {
  */
 
 /**
- * @page build_io How to build your io.ini configuration file
- * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
- * <b>it is highly recommended to use <a href="https://inishell.slf.ch">inishell</a></b> to build your io.ini 
- * configuration file, since this significantly reduces the number of errors and provides help text for each keys.
+ * @page build_io How to Build Your io.ini Configuration File
  *
- * Anyway, this section will show you how to manually set up a configuration file. Please read
- * \ref general documentation page before starting!
- *
- * You first need to create the various sections:
- * - [General] : The documentation about this section is found in \ref Config. It currently contains 
- *               some buffering keys (see BufferedIOHandler).
- *
- * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
- *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for the Points Of Interest
- *             (key=POI), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
- *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
- *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
- *             system should often be specified, as explained in \ref coords as well as a fallback time zone (so if some
- *             time information comes without a time zone, it will use the one declared in this section).
+ * @tableofcontents
+* 
+ * @section intro Introduction
+ * MeteoIO is driven by a configuration file (`io.ini`). While it is possible to edit this file manually,
+ * **it is highly recommended to use [Inishell](https://inishell.slf.ch)** to reduce errors and access help text for each key.
+ * This section explains how to manually set up your `io.ini` file.
  * 
- * - [InputEditing] : Through keys configured in this section, it is possible to perform some editing on the input 
- *                    meteorological timeseries, see \ref data_editing as well as various kind of 
- *                    spatial resampling (see \ref spatial_resampling).
+ *  @note Please read the "General Documentation" page before starting!
+ * 
+ * An ini file is made of several sections:
+ * | Section               | Purpose                                      |
+ * |-----------------------|----------------------------------------------|
+ * | [General]             | Buffering and general settings               |
+ * | [Input]               | Input plugins and parameters                  |
+ * | [InputEditing]        | Edit input timeseries and resampling         |
+ * | [Output]              | Output plugins and parameters                 |
+ * | [Filters]             | Pre-processing stack for meteorological data |
+ * | [Interpolations1D]    | Temporal resampling of meteorological data   |
+ * | [Interpolations2D]    | Spatial interpolation of meteorological data  |
+ * | [GridInterpolations1D]| Temporal resampling between gridded data     |
  *
- * - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
+ * @section walk_through Sections walk through
+ * 
+ * @subsection general_section [General]
+ * The documentation about this section is found in \ref Config. It currently Contains buffering keys (see BufferedIOHandler).
  *
- * - [Filters] : This section lists the pre-processing that has to be performed on the incoming meteorological data.
- *                It builds a stack of processing elements one after the other one, for each meteorological parameter.
- *                See \ref processing for more information.
+ * @subsection input [Input]
+ * This section contains the list of all the plugins that you want to use as well as their arguments. There are plugins for:
+ * - METEO (meteorological data)
+ * - GRID2D (grids)
+ * - POI (Points Of Interest)
+ * - DA (data assimilation)
+ * - LANDUSE (land use)
+ * - DEM (Digital Elevation Model)
  *
- * - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
- *                         to be able to take in data at any sampling rate and to extract values at any user given time step
- *                         according to the resampling specifications of the user. The maximum gap size can be given with
- *                         key MAX_GAP_SIZE that expresses (in seconds) how far a valid point can be searched for when
- *                         re-interpolating a missing value (up to MAX_GAP_SIZE/2 before and after the requested point).
- *                         See \ref resampling .
+ * Each plugin has its own set of keys (see the \ref available_plugins page).
+ * @note Specify the geographic coordinate system (see \ref coords) and a fallback time zone (so if some
+ *             time information comes without a time zone, it will use the one declared in this section).
  *
- * - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
- *                         Digital Elevation Model. The goal is to populate two dimensional grids with meteorological
- *                         parameters from point measurements, according to the specifications of the user.
- *                         See \ref interpol2d .
+ * @subsection input_editing [InputEditing]
+ * Edit input meteorological timeseries (see \ref data_editing) and perform spatial resampling (see \ref spatial_resampling).
  *
- * - [GridInterpolations1D] : This section is for temporal resampling between existing gridded data.
+ * @subsection output [Output]
+ * Similar to [Input], but for outputting data.
  *
- * The application that you are using might also need its own section(s), check this with your application.
+ * @subsection filters [Filters]
+ * Define the pre-processing that has to be performed on the incoming meteorological data. This is done by building a stack 
+ * of processing elements that will be applied one after the other one (ie in series), for each meteorological 
+ * parameter (see \ref processing).
  *
+ * @subsection interp1d [Interpolations1D]
+ * Temporal resampling of meteorological data (see \ref resampling). The goal is to be able to take in data 
+ * at any sampling rate and to extract values at any user given time step according to the resampling 
+ * specifications of the user. The maximum gap size can be given with the MAX_GAP_SIZE key that expresses 
+ * (in seconds) how far a valid point can be searched for when re-interpolating a missing value 
+ * (up to MAX_GAP_SIZE/2 before and after the requested point).
+ *
+ * @subsection interp2d [Interpolations2D]
+ * Spatial interpolation of meteorological data, based on a provided Digital Elevation Model (see \ref interpol2d).
+ * The goal is to populate two dimensional grids with meteorological parameters from point measurements, 
+ * according to the specifications of the user.
+ *
+ * @subsection grid_interp [GridInterpolations1D]
+ * Temporal resampling between gridded data.
+ *
+ * @section final_considerations Final considerations 
+ * It is recommended to always validate your configuration with Inishell to avoid runtime errors. And please keep in mind
+ * that the application that you are using might also need its own section(s)!
  */
+
 
 /**
  * @page credits Credits & funding

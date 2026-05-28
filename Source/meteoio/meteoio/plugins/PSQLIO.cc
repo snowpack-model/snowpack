@@ -18,7 +18,7 @@
 */
 #include <meteoio/plugins/PSQLIO.h>
 
-#include <set>
+#include <iomanip>
 #include <algorithm>
 
 using namespace std;
@@ -36,9 +36,10 @@ namespace mio {
  *
  *      id (int), name (string), x (easting as double), y (northing as double), altitude (height above sea level as double), epsg (int)
  *
- * The user is allowed to select stations with the STATIONS keyword (see below). That is why the SQL query has to end with a 'WHERE id_column_name IN' clause, for example:
+ * The plugin uses parameterized queries (PQexecParams) with $1 as the parameter placeholder for the station ID to prevent SQL injection.
+ * An example for a correct SQL metadata query string is therefore:
  *
- *      SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN
+ *      SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id = $1
  *
  * @subsection psql_data_query Data query
  * This query is used to retrieve the data for the user selected stations within a given time interval.
@@ -46,11 +47,11 @@ namespace mio {
  *
  *      date (mandatory, as date), ta (double), rh (double), p (double), vw (double), dw (double), iprec (the PSUM value, double), iswr (double)
  *
- * The SQL query must retrieve the data for one station only, which has to be specified as \a STATIONID (this will be dynamically replaced by the plugin).
- * To set the upper and lower bounds for the date the SQL query has to contain \a DATE_START and \a DATE_END. These keywords will be dynamically replaced by
- * the plugin with the correct date. Furthermore the resultset should be ordered by date ascending. An example for a correct SQL data query string is therefore:
+ * The SQL query must retrieve the data for one station only, which has to be specified as $1 (parameter placeholder).
+ * To set the upper and lower bounds for the date the SQL query must contain $2 and $3 as parameter placeholders (dates in ISO format, e.g. 2024-01-01 12:00:00).
+ * Furthermore the resultset should be ordered by date ascending. An example for a correct SQL data query string is therefore:
  *
- *      SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date>=''DATE_START'' AND date<=''DATE_END'' ORDER BY date
+ *      SELECT * FROM all_measurements WHERE id = $1 AND date >= $2 AND date <= $3 ORDER BY date
  *
  * @section psql_units Units
  * Units are assumed to be pure SI, except:
@@ -73,23 +74,23 @@ namespace mio {
  *      - SQL_META: SQL query to use to get the stations' metadata.
  *      - SQL_DATA: SQL query to use to get the stations' data.
  * - STATIONS: comma separated list of station ids that the user is interested in; [Input] section
- * 
+ *
  * @note Currently, the output structure is fixed with a hard-coded table name and hard-coded fields so it can not be considered usable by most users...
  *
  */
 
 const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-//Hard-coded output queries HACK some selects are also made in the code!!
-const std::string PSQLIO::sqlInsertMetadata = "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES ";
-const std::string PSQLIO::sqlInsertSensor = "INSERT INTO FIXED_SENSOR (ID_FIXED_SENSOR,FK_ID_FIXED_STATION,FK_ID_MEASUREMENT_TYPE,MEAS_HEIGHT) VALUES ";
-const std::string PSQLIO::sqlInsertMeasurement = "INSERT INTO FIXED_MEASUREMENT (ID_FIXED_MEASUREMENT,FK_ID_FIXED_SENSOR,MEAS_DATE,MEAS_VALUE) VALUES ";
+//Hard-coded output queries
+// $1, $2, $3, ... are parameter placeholders
+const std::string PSQLIO::sqlInsertMetadata = "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES ($1,$2,$3,$4,$5,$6)";
+const std::string PSQLIO::sqlInsertSensor = "INSERT INTO FIXED_SENSOR (ID_FIXED_SENSOR,FK_ID_FIXED_STATION,FK_ID_MEASUREMENT_TYPE,MEAS_HEIGHT) VALUES ($1,$2,$3,$4)";
+const std::string PSQLIO::sqlInsertMeasurement = "INSERT INTO FIXED_MEASUREMENT (ID_FIXED_MEASUREMENT,FK_ID_FIXED_SENSOR,MEAS_DATE,MEAS_VALUE) VALUES ($1,$2,$3::TIMESTAMP,$4)";
 
 PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
                                                 in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                                 out_userid(), out_passwd(), input_configured(false), output_configured(false),
-                                                psql(nullptr), default_timezone(1.), vecMeta(), vecFixedStationID(),
-                                                vecMobileStationID(), sql_meta(), sql_data()
+                                                psql(nullptr), default_timezone(1.), vecMeta(), vecFixedStationID(), sql_meta(), sql_data()
 {
 	Config cfg(configfile);
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -99,8 +100,7 @@ PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coord
 PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
                                     in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
                                     out_userid(), out_passwd(), input_configured(false), output_configured(false),
-                                    psql(nullptr), default_timezone(1.), vecMeta(), vecFixedStationID(),
-                                    vecMobileStationID(), sql_meta(), sql_data()
+                                    psql(nullptr), default_timezone(1.), vecMeta(), vecFixedStationID(), sql_meta(), sql_data()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getParameters(cfg);
@@ -112,8 +112,7 @@ PSQLIO::PSQLIO(const PSQLIO& in) : coordin(in.coordin), coordinparam(in.coordinp
                                    out_endpoint(in.out_endpoint), out_port(in.out_port), out_dbname(in.out_dbname),
                                    out_userid(in.out_userid), out_passwd(in.out_passwd), input_configured(false),
                                    output_configured(false), psql(nullptr), default_timezone(1.), vecMeta(in.vecMeta),
-                                   vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
-                                   sql_meta(in.sql_meta), sql_data(in.sql_data) {}
+                                   vecFixedStationID(in.vecFixedStationID), sql_meta(in.sql_meta), sql_data(in.sql_data) {}
 
 PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 {
@@ -139,11 +138,21 @@ PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 	std::swap(default_timezone, tmp.default_timezone);
 	std::swap(vecMeta, tmp.vecMeta);
 	std::swap(vecFixedStationID, tmp.vecFixedStationID);
-	std::swap(vecMobileStationID, tmp.vecMobileStationID);
 	std::swap(sql_meta, tmp.sql_meta);
 	std::swap(sql_data, tmp.sql_data);
 
 	return *this;
+}
+
+/**
+ * @brief Destructor - cleans up PostgreSQL connection
+ */
+PSQLIO::~PSQLIO()
+{
+	if (psql) {
+		PQfinish(psql);
+		psql = nullptr;
+	}
 }
 
 void PSQLIO::getParameters(const Config& cfg)
@@ -230,34 +239,34 @@ void PSQLIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 	if (!vecMeta.empty()) {
 		vecStation = vecMeta;
+		if (psql) { PQfinish(psql); psql = nullptr; }
 		return;
 	}
 
 	vecStation.clear();
-	std::string station_list;
 
-	if (vecFixedStationID.empty() && vecMobileStationID.empty()) {
+	if (vecFixedStationID.empty()) {
+		if (psql) { PQfinish(psql); psql = nullptr; }
 		return; //nothing to do
-	} else {
-		for (std::vector<std::string>::const_iterator it = vecFixedStationID.begin(); it != vecFixedStationID.end(); ++it) {
-			if (it != vecFixedStationID.begin()) {
-				station_list += ", ";
-			}
-			station_list += "'" + *it + "'";
-		}
 	}
 
-	const std::string query( sql_meta + " (" + station_list + ") ORDER BY id;" );
-	std::vector<StationData> tmp_station;
-	readMetaData(query, tmp_station);
-
+	// Process stations one by one using parameterized queries
+	// The sql_meta query should use $1 as placeholder for station id, e.g.: "SELECT ... WHERE id = $1"
 	for (std::vector<std::string>::const_iterator it = vecFixedStationID.begin(); it != vecFixedStationID.end(); ++it) {
-		for (std::vector<StationData>::const_iterator station_it = tmp_station.begin(); station_it != tmp_station.end(); ++station_it) {
-			if ((*station_it).stationID == *it) {
-				vecStation.push_back(*station_it);
+		const char *paramValues[1] = { (*it).c_str() };
+		PGresult *result = sql_exec_params(sql_meta, 1, paramValues);
+		if (result) {
+			const int rows = PQntuples(result);
+			for (int ii = 0; ii < rows; ii++) {
+				StationData sd;
+				sd.stationID = std::string(PQgetvalue(result, ii, PQfnumber(result, "id")));
+				sd.stationName = std::string(PQgetvalue(result, ii, PQfnumber(result, "name")));
+				vecStation.push_back(sd);
 			}
+			PQclear(result);
 		}
 	}
+	if (psql) { PQfinish(psql); psql = nullptr; }
 }
 
 void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -266,7 +275,10 @@ void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (!input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
 
 	if (vecMeta.empty()) readStationData(dateStart, vecMeta);
-	if (vecMeta.empty()) return; //if there are no stations -> return
+	if (vecMeta.empty()) {
+		if (psql) { PQfinish(psql); psql = nullptr; }
+		return; //if there are no stations -> return
+	}
 
 	vecMeteo.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecMeta.size(), vector<MeteoData>());
@@ -274,31 +286,24 @@ void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (size_t ii=0; ii<vecMeta.size(); ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 	}
-}
-
-bool PSQLIO::replace(std::string& str, const std::string& from, const std::string& to)
-{
-	const size_t start_pos = str.find(from);
-	if (start_pos == std::string::npos)
-		return false;
-	str.replace(start_pos, from.length(), to);
-	return true;
+	if (psql) { PQfinish(psql); psql = nullptr; }
 }
 
 void PSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
-	std::string sql_query(sql_data);
-
 	std::string date_start = dateStart.toString(Date::ISO);
 	std::string date_end = dateEnd.toString(Date::ISO);
 	std::replace(date_start.begin(), date_start.end(), 'T', ' ');
 	std::replace(date_end.begin(), date_end.end(), 'T', ' ');
 
-	replace(sql_query, "STATIONID", vecMeta.at(stationindex).stationID);
-	replace(sql_query, "DATE_START", date_start);
-	replace(sql_query, "DATE_END", date_end);
-
-	PGresult *result( sql_exec(sql_query) );
+	// Use parameterized query
+	// The sql_data query should use $1 for station ID, $2 for start date, $3 for end date
+	const char *paramValues[3] = {
+		vecMeta.at(stationindex).stationID.c_str(),
+		date_start.c_str(),
+		date_end.c_str()
+	};
+	PGresult *result( sql_exec_params(sql_data, 3, paramValues) );
 	if (result) {
 		const int rows = PQntuples(result);
 		const int columns = PQnfields(result);
@@ -336,7 +341,7 @@ void PSQLIO::parse_row(const PGresult* result, const int& row, const int& cols, 
 void PSQLIO::map_parameters(const PGresult* result, MeteoData& md, std::vector<size_t>& index)
 {
 	const int columns = PQnfields(result);
-	
+
 	for (int ii=0; ii<columns; ii++) {
 		const std::string field_name( IOUtils::strToUpper(PQfname(result, ii)) );
 
@@ -432,24 +437,32 @@ size_t PSQLIO::checkExistence(const std::vector<StationData>& vec_stations, cons
 
 void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 {
-	//Adding a new station to the table FIXED_STATION
+	//Adding a new station to the table FIXED_STATION using parameterized query
 
 	const std::string stationName = (sd.stationName != "" ? sd.stationName : sd.stationID);
 
 	const short int epsg = sd.position.getEPSG();
 	if (epsg==IOUtils::snodata)
 		throw InvalidArgumentException("Station '"+stationName+"' does not have a EPSG code", AT);
-	
-	stringstream values;
-	values << "(" << index << ","
-		  << "'" << stationName << "'," << fixed
-		  << setprecision(2) << sd.position.getEasting() << ","
-		  << sd.position.getNorthing() << ","
-		  << sd.position.getAltitude() << ","
-		  << epsg << ")";
 
-	const std::string query( sqlInsertMetadata + values.str() + ";" );
-	sql_exec(query, false);
+	// Format numeric values with proper precision
+	stringstream ss_easting, ss_northing, ss_altitude;
+	ss_easting << fixed << setprecision(2) << sd.position.getEasting();
+	ss_northing << fixed << setprecision(2) << sd.position.getNorthing();
+	ss_altitude << fixed << setprecision(2) << sd.position.getAltitude();
+
+	// Build complete parameterized INSERT query
+	// The sqlInsertMetadata should be: "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES ($1,$2,$3,$4,$5,$6)"
+	const char *paramValues[6] = {
+		std::to_string(index).c_str(),
+		stationName.c_str(),
+		ss_easting.str().c_str(),
+		ss_northing.str().c_str(),
+		ss_altitude.str().c_str(),
+		std::to_string(epsg).c_str()
+	};
+	PGresult *result = sql_exec_params(sqlInsertMetadata, 6, paramValues, false);
+	if (result) PQclear(result);
 }
 
 int PSQLIO::get_sensor_index()
@@ -457,15 +470,13 @@ int PSQLIO::get_sensor_index()
 	//Get first id of new sensors
 
 	int sensor_index = 1;
-	const std::string query( "SELECT max(id_fixed_sensor) from fixed_sensor;" );
-
-	PGresult *result = sql_exec(query, false);
+	PGresult *result = sql_exec("SELECT max(id_fixed_sensor) FROM fixed_sensor;", false);
 	if (result) {
 		const int rows = PQntuples(result);
 		const int columns = PQnfields(result);
 
 		if (rows != 1 || columns != 1) {
-			throw IOException("ERROR", AT);
+			throw IOException("[E] Could not retrieve sensor index", AT);
 		}
 
 		const std::string val( PQgetvalue(result, 0, 0) );
@@ -483,8 +494,8 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 {
 	//Adding new sensors for station with id index to the table FIXED_SENSOR
 
-	std::string query( "SELECT id_measurement_type as id, meas_name from measurement_type order by id asc;" );
 	int sensor_index = get_sensor_index();
+	PGresult *result = sql_exec("SELECT id_measurement_type as id, meas_name FROM measurement_type ORDER BY id ASC;", false);
 
 	stringstream ss;
 	ss << index;
@@ -492,7 +503,6 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 	std::map<size_t, std::string> map_sensor_type;
 
-	PGresult *result = sql_exec(query, false);
 	if (result) {
 		const int rows = PQntuples(result);
 		//int columns = PQnfields(result);
@@ -512,18 +522,25 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 		PQclear(result);
 	} else {
-		throw;
+		throw IOException("[E] Could not add a new sensor to the FIXED_SENSOR table", AT);
 	}
 
-	// Now actually add all sensors that were identified
+	// Now actually add all sensors that were identified using parameterized queries
 	for (map<size_t, string>::const_iterator it = map_sensor_type.begin(); it != map_sensor_type.end(); ++it) {
 		ss.str("");
 		ss << sensor_index;
 		const std::string sensor_id( ss.str() );
 		const std::string type( it->second );
 
-		query = sqlInsertSensor + " (" + sensor_id + "," + station_id + "," + type  + ",0.0);";
-		sql_exec(query, false);
+		// The sqlInsertSensor should be: "INSERT INTO FIXED_SENSOR (ID_FIXED_SENSOR,FK_ID_FIXED_STATION,FK_ID_MEASUREMENT_TYPE,MEAS_HEIGHT) VALUES ($1,$2,$3,$4)"
+		const char *paramValues[4] = {
+			sensor_id.c_str(),
+			station_id.c_str(),
+			type.c_str(),
+			"0.0"
+		};
+		PGresult *insert_result = sql_exec_params(sqlInsertSensor, 4, paramValues, false);
+		if (insert_result) PQclear(insert_result);
 
 		map_sensor_id[it->first] = sensor_id;
 		sensor_index++;
@@ -533,16 +550,15 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id)
 {
 	// Retrieve a mapping of all active meteo parameters and their respective sensor ids
+	// using parameterized query
 
-	stringstream ss;
-	ss << "SELECT id, station, meas_type, meas_name FROM "
-	   << "(SELECT id_fixed_sensor as id, fk_id_fixed_station as station, fk_id_measurement_type as meas_type from fixed_sensor where fk_id_fixed_station=" << index << ") a "
-	   << "INNER JOIN measurement_type ON a.meas_type=measurement_type.id_measurement_type;";
-
-	const std::string query(  ss.str() );
-	//cout << query << endl;
-
-	PGresult *result = sql_exec(query, false);
+	const char *paramValues[1] = { index.c_str() };
+	// The query uses $1 as placeholder for station index
+	PGresult *result = sql_exec_params(
+		"SELECT id, station, meas_type, meas_name FROM "
+		"(SELECT id_fixed_sensor as id, fk_id_fixed_station as station, fk_id_measurement_type as meas_type from fixed_sensor where fk_id_fixed_station=$1) a "
+		"INNER JOIN measurement_type ON a.meas_type=measurement_type.id_measurement_type;",
+		1, paramValues, false);
 	if (result) {
 		const int rows = PQntuples(result);
 
@@ -561,7 +577,7 @@ void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string
 
 		PQclear(result);
 	} else {
-		throw;
+		throw IOException("[E] Could not retrieve a mapping of all active meteo parameters", AT);;
 	}
 
 	/*for (map<size_t, string>::const_iterator it = map_sensor_id.begin(); it != map_sensor_id.end(); ++it) {
@@ -574,9 +590,7 @@ int PSQLIO::get_measurement_index()
 	//Get first id for new measurements to be added
 
 	int index = 1;
-	const std::string query( "SELECT MAX(ID_FIXED_MEASUREMENT) from fixed_measurement;" );
-
-	PGresult *result = sql_exec(query, false);
+	PGresult *result = sql_exec("SELECT MAX(ID_FIXED_MEASUREMENT) FROM fixed_measurement;", false);
 	if (result) {
 		const int rows = PQntuples(result);
 		const int columns = PQnfields(result);
@@ -603,7 +617,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 	// Make sure we have an up to date set of all the stations already available in the DB
 	vector<StationData> vecAllStations;
-	readMetaData("select id_fixed_station as id, station_name as name, coord_x as x, coord_y as y, altitude, epsg from fixed_station ORDER BY id;", vecAllStations, false);
+	readMetaData("SELECT id_fixed_station as id, station_name as name, coord_x as x, coord_y as y, altitude, epsg FROM fixed_station ORDER BY id;", vecAllStations, false);
 
 	unsigned int index = 1;
 
@@ -642,9 +656,6 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		}
 
 		int currentid = get_measurement_index();
-		stringstream ss;
-		std::string query( sqlInsertMeasurement );
-		bool comma = false;
 
 		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 			MeteoData tmp(vecMeteo[ii][jj]);
@@ -654,28 +665,25 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			std::replace( timestamp.begin(), timestamp.end(), 'T', ' ');
 
 			for (map<size_t, string>::const_iterator it = map_sensor_id.begin(); it != map_sensor_id.end(); ++it) {
-				ss.str("");
-				ss << currentid;
-				const std::string id(ss.str());
+				stringstream ss_id, ss_value;
+				ss_id << currentid;
+				ss_value << tmp(it->first);
 
-				ss.str("");
-				ss << tmp(it->first);
-				const std::string value(ss.str());
-				const std::string values( "(" + id + "," + it->second + ", TIMESTAMP '" + timestamp + "'," + value + ")" );
-
-				if (!comma) {
-					comma = true;
-				} else {
-					query += ",";
-				}
-				query += values;
+				// Use parameterized query for each measurement
+				// The sqlInsertMeasurement should be: "INSERT INTO FIXED_MEASUREMENT (ID_FIXED_MEASUREMENT,FK_ID_FIXED_SENSOR,MEAS_DATE,MEAS_VALUE) VALUES ($1,$2,$3::TIMESTAMP,$4)"
+				const char *paramValues[4] = {
+					ss_id.str().c_str(),
+					it->second.c_str(),
+					timestamp.c_str(),
+					ss_value.str().c_str()
+				};
+				PGresult *result = sql_exec_params(sqlInsertMeasurement, 4, paramValues, false);
+				if (result) PQclear(result);
 				currentid++;
 			}
 		}
-
-		query += ";";
-		sql_exec(query, false);
 	}
+	if (psql) { PQfinish(psql); psql = nullptr; }
 }
 
 void PSQLIO::convertUnitsBack(MeteoData& meteo)
@@ -730,6 +738,12 @@ void PSQLIO::convertUnits(MeteoData& meteo)
 
 void PSQLIO::open_connection(const bool& input)
 {
+	// Only open a new connection if we don't have one already or need to switch between input/output
+	if (psql) {
+		// Connection already exists, reuse it
+		return;
+	}
+
 	std::string connect;
 	if (input) {
 		connect = "hostaddr = '" + in_endpoint +
@@ -761,7 +775,7 @@ PGresult *PSQLIO::sql_exec(const string& sql_command, const bool& input)
 {
 	open_connection(input);
 
-	PGresult *result = PQexec(psql, sql_command.c_str());
+	PGresult *result = PQexecParams(psql, sql_command.c_str(), 0, NULL, NULL, NULL, NULL, 0);
 	ExecStatusType status = PQresultStatus(result);
 	if (status == PGRES_TUPLES_OK) { //Successful completion of a SELECT data request
 		// cout << "Select executed normally... " << endl;
@@ -781,7 +795,27 @@ PGresult *PSQLIO::sql_exec(const string& sql_command, const bool& input)
 		return nullptr;
 	}
 
-	close_connection(psql);
+	// Connection stays open until destructor or next open_connection() call
+	return result;
+}
+
+PGresult *PSQLIO::sql_exec_params(const std::string& sql_command, const int nParams, const char *const *paramValues, const bool& input)
+{
+	open_connection(input);
+
+	PGresult *result = PQexecParams(psql, sql_command.c_str(), nParams, NULL, paramValues, NULL, NULL, 0);
+	ExecStatusType status = PQresultStatus(result);
+	if (status == PGRES_TUPLES_OK) {
+		// Successful completion of a SELECT data request
+	} else if (status == PGRES_COMMAND_OK) {
+		// Successful completion of a command returning no data
+	} else {
+		cout << "ERROR while executing the following sql statement: " << sql_command << endl;
+		PQclear(result);
+		return nullptr;
+	}
+
+	// Connection stays open until destructor or next open_connection() call
 	return result;
 }
 

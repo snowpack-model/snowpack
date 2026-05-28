@@ -19,7 +19,6 @@
 */
 /**
  * @file DataClasses.cc
- * @version 11.03
  * @brief This module contains the definitions of data classes
  */
 
@@ -81,7 +80,7 @@ std::string RunInfo::setHistory()
 }
 
 int RunInfo::hexToDecimal(const std::string& hex)
-{	
+{
 	int decimalValue = 0;
 	int base = 1;
 
@@ -98,24 +97,24 @@ int RunInfo::hexToDecimal(const std::string& hex)
 
 	return decimalValue;	//returns 0 if hex.empty()
 }
-              
+
 double RunInfo::getNumericVersion(std::string version_str)
 {
 	//remove any '-' used for formatting the date
 	version_str.erase(std::remove_if(version_str.begin(), version_str.end(), [] (char c) { return c=='-'; }), version_str.end());
 	const size_t pos = version_str.find('.');
 	if (pos==std::string::npos) return .0;
-	
+
 	//extract the date part
 	const std::string date_str( version_str.substr(0, pos) );
 	//extract the git hash
 	const int git_hash = hexToDecimal( version_str.substr(pos+1) ); //returns 0 if parsing failed
-	
-	if (git_hash>0) 
+
+	if (git_hash>0)
 		version_str = date_str + '.' + std::to_string(git_hash);
 	else
 		version_str = date_str;
-	
+
 	return atof( version_str.c_str() );
 }
 
@@ -1626,15 +1625,13 @@ double ElementData::soilFieldCapacity() const
 }
 
 /**
- * @brief soilRelativeHumidity
+ * @brief Relative humidity in soil
  * @author Margaux Couttet and Nander Wever
- * @brief Relative humidity in soil.
- * The formulation is based on Saito et al., 2006 "Numerical analysis of
- * coupled water vapor and heat transport in the vadose zone".
+ * The formulation is based on Saito et al., 2006 <i>"Numerical analysis of
+ * coupled water vapor and heat transport in the vadose zone"</i>.
+ *
  * Calculated from the pressure head using a thermodynamic relationship
  * between liquid water and water vapor in soil pores (Philip and de Vries, 1957)
- * @param Edata element data
- * @param Temperature temperature (K)
  * @return Soil relative humidity (-)
  */
 
@@ -2161,6 +2158,47 @@ void SnowStation::compSoilInternalEnergyChange(const double& sn_dt)
 }
 
 /**
+ * @brief Extracts a weighted average of a snow bulk property from the top down to a given depth.
+ * @details
+ *   - The average is computed over the topmost snow elements, weighted by their respective thickness.
+ *   - If the soil is encountered before reaching the prescribed depth, the average is computed only for the snow elements above the soil.
+ *   - If the total snow thickness is less than the prescribed depth, the average is computed over the entire snowpack.
+ *   - To average over the entire snowpack, use a very large `averagingDepth` (e.g., 100 m).
+ *
+ *   The lambda function specifies which property of `ElementData` to extract. For example, to compute the average density:
+ *   @code
+ *   const double bulkDensity = averageFromTop(100., [](const ElementData& e) { return e.Rho; });
+ *   @endcode
+ *
+ * @param[in] averagingDepth Depth from the top (in meters) over which the average is computed. Must be >= 0.
+ * @param[in] Elementproperty Lambda function defining the property to extract from `ElementData`.
+ * @return The weighted average of the specified property over the given depth (or the entire snowpack if the depth exceeds the snow thickness).
+ * @throws mio::InvalidArgumentException if `averagingDepth` is negative.
+ */
+double SnowStation::averageFromTop(const double& averagingDepth, const std::function<double(const ElementData&)>& Elementproperty)
+{
+	if (averagingDepth <= 0.)
+	    throw mio::InvalidArgumentException("Averaging depth must be >= 0", AT);
+
+	double cumulativeDepth = 0.0;
+	double sum = 0.0;
+
+	// Iterate from the top down, stopping at soil or the end of the snowpack
+	for (size_t ii = Edata.size(); ii-- > 0 && ii > SoilNode; ) {
+		const auto& elem = Edata[ii];
+		// Use only the fraction of the element needed to reach the prescribed depth
+		const double weight = (cumulativeDepth + elem.L >= averagingDepth)
+		                      ? averagingDepth - cumulativeDepth
+		                      : elem.L;
+		sum += weight * Elementproperty(elem);
+		cumulativeDepth += elem.L;
+	}
+
+	// Return the weighted average: we know that the sum of the weights = averagingDepth (by design)
+	return sum / averagingDepth;
+}
+
+/**
  * @brief Computes the liquid water index defined as the ratio of total liquid water content (in mm w.e.) to calculated snow depth (in mm) divided by 0.03. Unit: (1)
  */
 double SnowStation::getLiquidWaterIndex() const
@@ -2622,6 +2660,7 @@ void SnowStation::initialize(const SN_SNOWSOIL_DATA& SSdata, const size_t& i_sec
  * - Function required for REDUCE_N_ELEMENTS function for "aggressive" combining for layers deeper in the
  *   snowpack, to reduce the number of elements and thus the computational load.
  * @param depth Distance of the element from the snow surface
+ * @param comb_thresh_l Element threshold thickness above which no merging will occur
  * @return Maximum element length.
  */
 double SnowStation::flexibleMaxElemLength(const double& depth, const double& comb_thresh_l)
@@ -2633,6 +2672,7 @@ double SnowStation::flexibleMaxElemLength(const double& depth, const double& com
 
 /**
  * @brief Boolean routine to check whether two snow elements can be combined
+ * @details
  * - \b no \b action will be taken if one of the two elements is
  *      - a soil element
  *      - larger than comb_thresh_l
@@ -2786,9 +2826,11 @@ void SnowStation::splitElement(const size_t& e)
 
 /**
  * @brief Split elements when they are near the top of the snowpack, when REDUCE_N_ELEMENTS is used.
- * - This function split elements when they are getting closer to the top of the snowpack. This is required
- *   when using the "aggressive" merging option (REDUCE_N_ELEMENTS). When snow melt brings elements back to the
- *   snow surface, smaller layer spacing is required to accurately describe temperature and moisture gradients.
+ * @details
+ * This function split elements when they are getting closer to the top of the snowpack. This is required
+ * when using the "aggressive" merging option (REDUCE_N_ELEMENTS). When snow melt brings elements back to the
+ * snow surface, smaller layer spacing is required to accurately describe temperature and moisture gradients.
+ *
  * @param max_element_length If positive: maximum allowed element length (m), above which splitting is applied.
  *                           If argument is not positive: use function flexibleMaxElemLength.
  */
@@ -2846,21 +2888,24 @@ void SnowStation::CheckMaxSimHS(const double& max_simulated_hs) {
 
 /**
  * @brief Merging two elements
+ * @details
  * - Joining:
- * 	- Keep the lower element, that is, the lowest snow element always survives!
- * 	- The properties of the upper and lower elements are (depth) averaged in an appropriate way.
- * 	- The new length is the sum of both
- * 	- Keep the birthday of the upper element
- * 	- Keep the tag of the upper element only if the lower is untagged (mk >= 100)
- * 	- @note Joining two elements may cause the tag (marker >= 100) to "jump" abruptly
+ *     - Keep the lower element, that is, the lowest snow element always survives!
+ *     - The properties of the upper and lower elements are (depth) averaged in an appropriate way.
+ *     - The new length is the sum of both
+ *     - Keep the birthday of the upper element
+ *     - Keep the tag of the upper element only if the lower is untagged (mk >= 100)
+ * 	@note Joining two elements may cause the tag (marker >= 100) to "jump" abruptly
  * - Removing:
- * 	- Remaining ice, liquid water, solutes, etc. are added to the lower element
- * 	- The length of the lower element is kept
- * 	- Keep the birthday of the lower element
+ *     - Remaining ice, liquid water, solutes, etc. are added to the lower element
+ *     - The length of the lower element is kept
+ *     - Keep the birthday of the lower element
+ *
  * @param EdataLower Properties of lower element
  * @param EdataUpper Properties of upper element
  * @param merge True if upper element is to be joined with lower one, false if upper element is to be removed
  * @param topElement set to true if the upper element is at the very top of the snow pack
+ * @param VapourTransport set to true if using vapour transport (if there is too little pore space, some mass will be thrown away)
  */
 void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& EdataUpper, const bool& merge, const bool& topElement, const bool& VapourTransport)
 {
@@ -2922,7 +2967,8 @@ void SnowStation::mergeElements(ElementData& EdataLower, const ElementData& Edat
 			EdataLower.theta[WATER_PREF] /= tmpsum;
 		} else {
 			if (VapourTransport) {
-				double tmp_dV = -1.0 * (1.0 - ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)) - EdataLower.theta[ICE] - EdataLower.theta[SOIL]);
+				const double tmp_dV = -1.0 * (1.0 - ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)) - EdataLower.theta[ICE] - EdataLower.theta[SOIL]);
+
 				prn_msg(__FILE__, __LINE__, "wrn", Date(), "FIXME! Too little pore space, throwing away some mass... volumetric content error: %f m3/m3", tmp_dV);
 				EdataLower.theta[ICE] -= tmp_dV * (EdataLower.theta[ICE]) / (EdataLower.theta[ICE] + ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)));
 				EdataLower.theta[WATER] -= tmp_dV * (EdataLower.theta[WATER]) / (EdataLower.theta[ICE] + ((EdataLower.theta[WATER] - EdataLower.theta[WATER_PREF]) * (Constants::density_water / Constants::density_ice)));
@@ -3816,12 +3862,12 @@ const std::string LayerData::toString() const
 	os << "<LayerData>\n";
 
 	os << "" << depositionDate.toString(mio::Date::ISO) << "\n";
-	os << "\theight:" << hl << " (" << ne << "elements) at " << tl << "K\n";
+	os << "\theight:" << hl << " (" << ne << " element" << ((ne!=1)?"s":"") << ") at " << tl << "K\n";
 	os << "\tvolumetric contents: " << phiIce << " ice, " << phiWater << " water, " << phiWaterPref << " water_pref, " << phiVoids << " voids, ";
 	os << "" << phiSoil << " soil, total = " << phiIce+phiWater+phiWaterPref+phiVoids+phiSoil << "%\n";
-	os << "\tSoil properties: " << SoilRho << " kg/m^3, " << SoilK << " W/(m*K), " << SoilC << " J/K\n";
+	os << "\tSoil properties: " << SoilRho << " kg/m³, " << SoilK << " W/(m*K), " << SoilC << " J/K\n";
 	os << "\tSoil microstructure: rg=" << rg << " sp=" << sp << " dd=" << dd << " rb=" << rb << " mk=" << mk << "\n";
-	os << "\tStability: surface hoar=" << hr << " kg/m^2, stress rate=" << CDot << " Pa/s, metamo=" << metamo << "dsm=" << dsm << "\n";
+	os << "\tStability: surface hoar=" << hr << " kg/m², stress rate=" << CDot << " Pa/s, metamo=" << metamo << " dsm=" << dsm << "\n";
 	os << "\tNumber of solutes: " << cSoil.size() << " in soil, " << cIce.size() << " in ice, " << cWater.size() << " in water, " << cVoids.size() << " in voids\n";
 
 	os << "</LayerData>\n";

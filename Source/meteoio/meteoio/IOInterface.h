@@ -33,8 +33,8 @@ namespace mio {
 
 /**
  * @class LinesRange
- * @brief A class to represent and handle ranges of lines. They can be sorted, 
- * checked for uniqueness and a line number can be compared to the range (is it 
+ * @brief A class to represent and handle ranges of lines. They can be sorted,
+ * checked for uniqueness and a line number can be compared to the range (is it
  * before or after?).
  *
  * @author Mathias Bavay
@@ -43,7 +43,7 @@ class LinesRange {
 	public:
 		LinesRange() : start(), end() {}
 		LinesRange(const size_t& l1, const size_t& l2) : start(l1), end(l2) {}
-		
+
 		/**
 		 * @brief Is the provided line number within the current range?
 		 * @param[in] ll line number to check
@@ -52,7 +52,7 @@ class LinesRange {
 		bool in(const size_t& ll) const {
 			return (ll >= start && ll <= end);
 		}
-		
+
 		/**
 		 * @brief Is the provided line number before the *end* of the range?
 		 * @param[in] ll line number to check
@@ -61,7 +61,7 @@ class LinesRange {
 		bool operator<(const size_t& ll) const {
 			return end < ll;
 		}
-		
+
 		/**
 		 * @brief Is the provided line number after the *start* of the range?
 		 * @param[in] ll line number to check
@@ -70,19 +70,39 @@ class LinesRange {
 		bool operator>(const size_t& ll) const {
 			return start > ll;
 		}
-		
+
 		bool operator<(const LinesRange& ll) const { //needed for "sort"
 			if (start==ll.start) return end < ll.end;
 			return start < ll.start;
 		}
-		
+
 		bool operator==(const LinesRange& ll) const { //needed to check for uniqueness
 			return (start==ll.start) && (end==ll.end);
 		}
-		
-		const std::string toString() const {std::ostringstream os; os << "[" << start << " - " << end << "]"; return os.str();}
-		
+
+
+		/**
+		 * @brief built the set of line ranges to read or skip.
+		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
+		 * Obviously this can not be implemented by every plugin! The line ranges are given as a comma delimited list of
+		 * either single line numbers or ranges (line numbers delimited by a "-" character). Extra spaces can be given for more clarity
+		 * in the input. The end of a range can be specified as the unicode infinity character (∞) to represent the largest
+		 * possible line number (mapped to std::numeric_limits<size_t>::max() right after parsing).
+		 * @param[in] args the textual representation of the line ranges or lines to parse
+		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
+		 * @param[in] negate take the negation of the provided ranges (converting a "ONLY" statement into an "EXCLUDE" statement)
+		 * @return set of line ranges
+		 */
+		static std::vector< LinesRange > getLinesRestrictions(const std::string& args, const std::string& where, const bool& negate);
+		const std::string toString() const;
+
 		size_t start, end;
+	private:
+		/**
+		* @brief Merge potentially overlaping line ranges
+		* @param[in] lines_specs sorted, unique and non-overlapping set of line ranges
+		*/
+		static void mergeLinesRanges(std::vector< LinesRange >& lines_specs);
 };
 
 /**
@@ -318,20 +338,7 @@ class IOInterface {
 
 		static void set2DGridLatLon(Grid2DObject &grid, const double& i_ur_lat, const double& i_ur_lon);
 		static double computeGridXYCellsize(const std::vector<double>& vecX, const std::vector<double>& vecY);
-		
-		/**
-		 * @brief built the set of line ranges to read or skip.
-		 * @details Then each plugin is responsible to call this method if necessary and implement the lines skipping if necessary.
-		 * Obviously this can not be implemented by every plugin! The line ranges are given as a comma delimited list of 
-		 * either single line numbers or ranges (line numbers delimited by a "-" character). Extra spaces can be given for more clarity
-		 * in the input.
-		 * @param[in] args the textual representation of the line ranges or lines to parse
-		 * @param[in] where informative string to describe which component it is in case of error messages (ex. "CSV plugin")
-		 * @param[in] negate take the negation of the provided ranges (converting a "ONLY" statement into an "EXCLUDE" statement)
-		 * @return set of line ranges
-		 */
-		static std::vector< LinesRange > initLinesRestrictions(const std::string& args, const std::string& where, const bool& negate);
-		
+
 	protected:
 		//this enum defines the different options to add some version information into a file name
 		typedef enum VERSIONING_TYPE {
@@ -356,10 +363,14 @@ class IOInterface {
 		static std::string buildVersionString(const VersioningType& versioning, const std::vector<MeteoData>& vecMeteo, const double& tz, const std::string& versioning_str);
 
 		/**
-		 * @brief Merge potentially overlaping line ranges
-		 * @param[in] lines_specs sorted, unique and non-overlapping set of line ranges
-		 */
-		static void mergeLinesRanges(std::vector< LinesRange >& lines_specs);
+		* @brief Internal helper to build version string from start and end dates
+		* @param[in] versioning type of versioning to use
+		* @param[in] start_dt start date of data
+		* @param[in] end_dt end date of data
+		* @return string version to integrate into the output file name
+		*/
+		static std::string datesVersionStr(const VersioningType& versioning, const Date& start_dt, const Date& end_dt);
+
 };
 
 } //end namespace

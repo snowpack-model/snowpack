@@ -54,7 +54,7 @@ std::string NearestNeighbour::toString() const
 	return ss.str();
 }
 
-void NearestNeighbour::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool NearestNeighbour::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -64,14 +64,14 @@ void NearestNeighbour::resample(const std::string& stationHash, const size_t& in
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
-			return;
+			return true;
 		}
 	}
 
 	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
 	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
 	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
-		return;
+		return false;
 
 	const Date resampling_date( md.date );
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
@@ -92,15 +92,24 @@ void NearestNeighbour::resample(const std::string& stationHash, const size_t& in
 		} else if (diff1 > diff2) {
 			md(paramindex) = val2;
 		}
-	} else if (extrapolate) {
+		md.setResampled(true);
+		return true;
+	}
+	
+	if (extrapolate) { //another chance to get a value
 		if (foundP1 && !foundP2) { //nearest neighbour on found after index 'index'
 			md(paramindex) = vecM[indexP1](paramindex);
 		} else if (!foundP1 && foundP2) { //nearest neighbour on found before index 'index'
 			md(paramindex) = vecM[indexP2](paramindex);
 		} else { // no nearest neighbour with a value different from IOUtils::nodata
-			return;
+			return false;
 		}
+		md.setResampled(true);
+		return true;
 	}
+	
+	//did not manage to produce a value
+	return false;
 }
 
 } //namespace

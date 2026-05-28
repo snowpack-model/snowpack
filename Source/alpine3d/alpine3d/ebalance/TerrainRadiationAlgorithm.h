@@ -43,7 +43,7 @@ class TerrainRadiationAlgorithm {
 		virtual void getRadiation(mio::Array2D<double>& direct, mio::Array2D<double>& diffuse,
                               mio::Array2D<double>& terrain, const mio::Array2D<double>& direct_unshaded_horizontal,
                               const mio::Array2D<double>& total_ilwr, mio::Array2D<double>& sky_ilwr,
-                              mio::Array2D<double>& terrain_ilwr, double solarAzimuth, double solarElevation) = 0;
+                              mio::Array2D<double>& terrain_ilwr, const double& solarAzimuth, const double& solarElevation) = 0;
 		virtual void setMeteo(const mio::Array2D<double>& albedo, const mio::Array2D<double>& ta) = 0;
 
 		const std::string algo;

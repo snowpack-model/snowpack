@@ -77,7 +77,8 @@ class ResamplingAlgorithms {
 		static gap_info findGap(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
 					 const double& i_max_gap_size);
 
-		virtual void resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		//return true if resampling took place, false otherwise
+		virtual bool resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) = 0;
 		
 		void resetResampling() {gaps.clear();} //invalidate all gaps, usually after rebuffering

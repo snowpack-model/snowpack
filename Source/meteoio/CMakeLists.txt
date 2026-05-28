@@ -26,10 +26,14 @@ INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/SetCompilerOptions.cmake")
 SET_COMPILER_OPTIONS()
 
 # These variables are required to set the exe icon and metadata on Windows and require variables from SET_COMPILER_OPTIONS()
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological data preprocessing: retrieval, transformation, filtering, spatial interpolations")
 SET(CPACK_PACKAGE_NAME "MeteoIO")
 SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
 STRING(TIMESTAMP CURR_YEAR "%Y")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
+SET(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
@@ -89,7 +93,7 @@ ELSE(WIN32)
 
 			#generate the application plist file for the bundle
 			STRING(TIMESTAMP TODAY_ISO UTC)
-			SET(MIO_BINARY "meteoio_timeseries")	#this will be set later in applications/CMakeLists.txt, but it is needed here for the plist file
+			SET(NAME_BINARY "meteoio_timeseries")	#this will be set later in applications/CMakeLists.txt, but it is needed here for the plist file
 			configure_file(
 				${CMAKE_CURRENT_SOURCE_DIR}/tools/meteoio.plist.in
 				${CMAKE_CURRENT_BINARY_DIR}/tools/meteoio.plist
@@ -290,6 +294,22 @@ CONFIGURE_FILE(
 
 ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
+#Inishell-apps packaging as Zip file, through a custom target
+# Define the directory structure for the ZIP
+set(XML_ZIP_BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/tests")
+set(XML_ZIP_PROJECT_DIR "${XML_ZIP_BASE_DIR}/inishell-apps/${PROJECT_NAME}")
+set(XML_ZIP_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/${CPACK_PACKAGE_NAME}-${VERSION}-inishell-apps.zip")
+
+# Create a custom target to prepare the directory structure, copy XML files, create the ZIP, and clean up
+ADD_CUSTOM_TARGET(inishell-apps
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${XML_ZIP_PROJECT_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${xmlfiles} ${XML_ZIP_PROJECT_DIR}
+    COMMAND ${CMAKE_COMMAND} -E tar cfv ${XML_ZIP_FILENAME} inishell-apps
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${XML_ZIP_BASE_DIR}/inishell-apps
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests
+    BYPRODUCTS ${XML_ZIP_FILENAME}
+)
+
 ###########################################################
 ## CPACK section
 ###########################################################
@@ -320,10 +340,6 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
 SET(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/Welcome.txt")
 SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/Readme.md")
 
-SET(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
-SET(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
-SET(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
-SET(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 SET(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}-${CPACK_ARCH}")
 
@@ -395,7 +411,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
 		SET(CPACK_NSIS_MODIFY_PATH ON)
-		
+
 		#Main links (they can get overwritten later)
 		SET(MENU_LINKS_NIVIZ "https://run.niviz.org" "NIVIZ online visualization" )
 		SET(MENU_LINKS_METEOIO "https://meteoio.slf.ch" "MeteoIO Home page")
@@ -409,9 +425,9 @@ ELSE(UNIX)
 		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries' 'c:\\\\Program Files\\\\MeteoIO\\\\bin\\\\meteoio_timeseries.exe'
 		#	WriteRegStr HKLM 'SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\meteoio_timeseries\\\\path' 'c:\\\\Program Files\\\\MeteoIO\\\\lib'
 		#	")
-		
+
 		SET(CPACK_NSIS_MENU_LINKS ${MENU_LINKS_METEOIO} ${MENU_LINKS_INISHELL} ${MENU_LINKS_NIVIZ})
-		
+
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\meteoio.ico")

@@ -235,7 +235,8 @@ class Date {
  * @class DateRange
  * @brief A class to represent and handle date ranges. They can be sorted, 
  * checked for uniqueness and a date can be compared to the range (is it 
- * before or after?).
+ * before or after?). The end of a range can be specified as the unicode infinity character (∞)
+ * to represent the maximum representable date.
  *
  * @author Mathias Bavay
  */
@@ -301,7 +302,7 @@ class DateRange {
 			return (start==a.start) && (end==a.end);
 		}
 		
-		const std::string toString() const {std::ostringstream os; os << "[" << start.toString(Date::ISO) << " - " << end.toString(Date::ISO) << "]"; return os.str();}
+		const std::string toString() const;
 		
 		Date start, end;
 		

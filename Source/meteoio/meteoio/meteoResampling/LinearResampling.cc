@@ -53,7 +53,7 @@ std::string LinearResampling::toString() const
 	return ss.str();
 }
 
-void LinearResampling::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool LinearResampling::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                 const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -63,14 +63,14 @@ void LinearResampling::resample(const std::string& stationHash, const size_t& in
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
-			return;
+			return true;
 		}
 	}
 
 	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
 	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
 	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
-		return;
+		return false;
 
 	const Date resampling_date = md.date;
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
@@ -79,10 +79,10 @@ void LinearResampling::resample(const std::string& stationHash, const size_t& in
 
 	//do nothing if we can't interpolate, and extrapolation is not explicitly activated
 	if ((!extrapolate) && ((!foundP1) || (!foundP2)))
-		return;
+		return false;
 	//do nothing if not at least one value different from IOUtils::nodata has been found
 	if (!foundP1 && !foundP2)
-		return;
+		return false;
 
 	//At this point we either have a valid indexP1 or indexP2 and we can at least try to extrapolate
 	if (!foundP1 && foundP2) { //only nodata values found before index, try looking after indexP2
@@ -104,7 +104,7 @@ void LinearResampling::resample(const std::string& stationHash, const size_t& in
 	}
 
 	if (!foundP1 || !foundP2) //now at least two points need to be present
-		return;
+		return false;
 
 	//At this point indexP1 and indexP2 point to values that are different from IOUtils::nodata
 	const double val1 = vecM[indexP1](paramindex);
@@ -113,6 +113,8 @@ void LinearResampling::resample(const std::string& stationHash, const size_t& in
 	const double jul2 = vecM[indexP2].date.getJulian(true);
 
 	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulian(true));
+	md.setResampled(true);
+	return true;
 }
 
 } //namespace

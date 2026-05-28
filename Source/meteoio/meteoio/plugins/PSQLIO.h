@@ -38,10 +38,11 @@ namespace mio {
  */
 class PSQLIO : public IOInterface {
 	public:
+		~PSQLIO();
 		PSQLIO(const std::string& configfile);
 		PSQLIO(const PSQLIO&);
 		PSQLIO(const Config& cfg);
-		
+
 		PSQLIO& operator=(const PSQLIO& in);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) override;
@@ -55,7 +56,7 @@ class PSQLIO : public IOInterface {
 		void getParameters(const Config& cfg);
 		void open_connection(const bool& input=true);
 		PGresult* sql_exec(const std::string& sqlcommand, const bool& input=true);
-		static bool replace(std::string& str, const std::string& from, const std::string& to);
+		PGresult* sql_exec_params(const std::string& sql_command, const int nParams, const char *const *paramValues, const bool& input=true);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input=true);
 		void add_meta_data(const unsigned int& index, const StationData& sd);
@@ -81,7 +82,7 @@ class PSQLIO : public IOInterface {
 		PGconn *psql; ///<holds the current connection
 		double default_timezone;
 		std::vector<StationData> vecMeta;
-		std::vector<std::string> vecFixedStationID, vecMobileStationID;
+		std::vector<std::string> vecFixedStationID;
 		std::string sql_meta, sql_data;
 
 		static const std::string sqlInsertMetadata, sqlInsertSensor, sqlInsertMeasurement;

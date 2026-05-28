@@ -33,13 +33,13 @@ namespace mio {
 //helper function to sort the static keys used for specifying the date/time formats
 inline bool sort_dateKeys(const std::pair<size_t,size_t> &left, const std::pair<size_t,size_t> &right) { return left.first < right.first;}
 
-CsvDateTime::CsvDateTime(const double& tz_in) 
+CsvDateTime::CsvDateTime(const double& tz_in)
            : max_dt_col(0), csv_tz(tz_in), auto_wrap(false), datetime_idx(), date_idx(), time_idx(), datetime_format(), date_format(), time_format(), decimal_date_type(JULIAN),
            idx_decimal_date(IOUtils::npos), idx_date_time_str(IOUtils::npos), idx_date_str(IOUtils::npos), idx_time_str(IOUtils::npos), idx_year(IOUtils::npos), idx_jdn(IOUtils::npos), idx_month(IOUtils::npos), idx_day(IOUtils::npos), idx_ntime(IOUtils::npos), idx_hours(IOUtils::npos), idx_minutes(IOUtils::npos), idx_seconds(IOUtils::npos), year_cst(IOUtils::inodata), hour_cst(IOUtils::inodata),
            has_tz(false), dt_as_decimal(false), dt_2digits_year(false)
 {}
 
-void CsvDateTime::updateMaxCol() 
+void CsvDateTime::updateMaxCol()
 {
 	if (idx_decimal_date!=IOUtils::npos && idx_decimal_date>max_dt_col) max_dt_col=idx_decimal_date;
 	if (idx_date_time_str!=IOUtils::npos && idx_date_time_str>max_dt_col) max_dt_col=idx_date_time_str;
@@ -74,14 +74,14 @@ int CsvDateTime::getFixedHour()
 	return hour_cst;
 }
 
-bool CsvDateTime::isSet() const 
+bool CsvDateTime::isSet() const
 {
 	//date and time strings
 	if ((idx_date_str!=IOUtils::npos && idx_time_str!=IOUtils::npos) || idx_date_time_str!=IOUtils::npos) return true;
-	
+
 	//purely decimal timestamps
 	if (idx_decimal_date!=IOUtils::npos) return true;
-	
+
 	//as components, possibly mixed with some string representations
 	const bool has_component_date = (idx_year!=IOUtils::npos || year_cst!=IOUtils::inodata) && ((idx_month!=IOUtils::npos && idx_day!=IOUtils::npos) || (idx_jdn!=IOUtils::npos));
 	const bool has_date = has_component_date || idx_date_str!=IOUtils::npos;
@@ -117,7 +117,7 @@ void CsvDateTime::setDateTimeSpec(const std::string& datetime_spec)
 	//YYYY and YY as well as having a boolean to know if we should add an offset to the year or not
 	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"YYYY", 0}, {"YY", 0}, {"MM", 1}, {"DD", 2}, {"HH24", 3}, {"MI", 4}, {"SS", 5}} );
 	dt_2digits_year = (datetime_spec.find("YYYY")==std::string::npos && datetime_spec.find("YY")!=std::string::npos);
-	
+
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
 	for (const auto& spec_key : keys) {
 		if (!dt_2digits_year && spec_key.first=="YY") continue;	//skip looking for 2 digit years if not applicable
@@ -125,12 +125,12 @@ void CsvDateTime::setDateTimeSpec(const std::string& datetime_spec)
 		if (key_pos!=std::string::npos)
 			sorting_vector.push_back( make_pair( key_pos, spec_key.second) );
 	}
-	
+
 	//fill datetime_idx as a vector of [0-5] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
 	for (const auto& spec_key : sorting_vector)
 		datetime_idx.push_back( spec_key.second ); //push the matching position in the static const "keys"
-	
+
 	datetime_format = datetime_spec;
 	const size_t tz_pos = datetime_format.find("TZ");
 	if (tz_pos!=std::string::npos) {
@@ -147,7 +147,7 @@ void CsvDateTime::setDateTimeSpec(const std::string& datetime_spec)
 	IOUtils::replace_all(datetime_format, "HH24", "%2f");
 	IOUtils::replace_all(datetime_format, "MI",   "%2f");
 	IOUtils::replace_all(datetime_format, "SS",   "%f");
-	
+
 	const size_t nr_params_check = (has_tz)? datetime_idx.size()+1 : datetime_idx.size();
 	checkSpecString(datetime_format, nr_params_check);
 }
@@ -160,7 +160,7 @@ void CsvDateTime::setDateSpec(const std::string& date_spec)
 	//YYYY and YY as well as having a boolean to know if we should add an offset to the year or not
 	static const std::vector< std::pair<std::string, unsigned short> > keys( {{"YYYY", 0}, {"YY", 0}, {"MM", 1}, {"DD", 2}, {"HH24", 3}, {"MI", 4}, {"SS", 5}} );
 	dt_2digits_year = (date_spec.find("YYYY")==std::string::npos && date_spec.find("YY")!=std::string::npos);
-	
+
 	std::vector< std::pair<size_t, size_t> > sorting_vector;
 	for (const auto& spec_key : keys) {
 		if (!dt_2digits_year && spec_key.first=="YY") continue;	//skip looking for 2 digit years if not applicable
@@ -168,19 +168,19 @@ void CsvDateTime::setDateSpec(const std::string& date_spec)
 		if (key_pos!=std::string::npos)
 			sorting_vector.push_back( make_pair( key_pos, spec_key.second) );
 	}
-	
+
 	//fill date_idx as a vector of [0-2] indices (for ISO fields) in the order they appear in the user-provided format string
 	std::sort(sorting_vector.begin(), sorting_vector.end(), &sort_dateKeys);
 	for (const auto& spec_key : sorting_vector)
 		date_idx.push_back( spec_key.second ); //push the matching position in the static const "keys"
-	
-	date_format = date_spec;	
+
+	date_format = date_spec;
 	//the order of the replacements is important in order to match YYYY first and then YY
 	IOUtils::replace_all(date_format, "DD",   "%2f");
 	IOUtils::replace_all(date_format, "MM",   "%2f");
 	IOUtils::replace_all(date_format, "YYYY", "%4f");
 	IOUtils::replace_all(date_format, "YY",   "%2f");
-	
+
 	const size_t nr_params_check = date_idx.size();
 	checkSpecString(date_format, nr_params_check);
 }
@@ -234,7 +234,7 @@ void CsvDateTime::setDecimalDateType(std::string i_decimaldate_type)
 		decimal_date_type = CsvDateTime::UNIX;
 	} else
 		throw InvalidArgumentException("Unknown decimal date type '"+i_decimaldate_type+"'", AT);
-	
+
 	dt_as_decimal = true;
 }
 
@@ -253,9 +253,9 @@ void CsvDateTime::setFixedHour(const int& i_hour)
 bool CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
 {
 	if (fieldname.compare("TIMESTAMP")==0 || fieldname.compare("TS")==0 || fieldname.compare("DATETIME")==0) {
-		if (dt_as_decimal) 
+		if (dt_as_decimal)
 			idx_decimal_date = ii;
-		else 
+		else
 			idx_date_time_str = ii;
 		return true;
 	} else if (fieldname.compare("DATE")==0 || fieldname.compare("GIORNO")==0 || fieldname.compare("FECHA")==0) {
@@ -293,12 +293,12 @@ bool CsvDateTime::parseField(const std::string& fieldname, const size_t &ii)
 		idx_seconds = ii;
 		return true;
 	}
-	
+
 	//check that the string parsing specs have been set if necessary
 	if (idx_date_time_str!=IOUtils::npos && datetime_idx.empty()) throw InvalidArgumentException("Please define how to parse DATETIME strings with key DATETIME_SPEC", AT);
 	if (idx_date_str!=IOUtils::npos && date_idx.empty()) throw InvalidArgumentException("Please define how to parse DATE strings with key DATE_SPEC", AT);
 	if (idx_time_str!=IOUtils::npos && time_idx.empty()) throw InvalidArgumentException("Please define how to parse TIME strings with key TIME_SPEC", AT);
-	
+
 	return false;
 }
 
@@ -337,7 +337,7 @@ bool CsvDateTime::parseTime(const std::string& time_str, float args[3], double& 
 			break;
 	}
 	if (!status) return false;
-	
+
 	tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
 	return true;
 }
@@ -348,7 +348,7 @@ double CsvDateTime::parseTime(const std::string& time_str, double& tz) const
 	//parse the time information and return the fractional day
 	float args_tm[3] = {0., 0., 0.};
 	if (!parseTime(time_str, args_tm, tz)) return IOUtils::nodata;
-	
+
 	const double fractional_day = (static_cast<double>(args_tm[0])*3600. + static_cast<double>(args_tm[1])*60. + static_cast<double>(args_tm[2])) * seconds_to_days;
 	return fractional_day;
 }
@@ -377,18 +377,18 @@ Date CsvDateTime::parseDate(const std::string& date_time_str) const
 	if (!status) return Date(); //we MUST have read successfuly at least the date part
 
 	const double tz = (has_tz)? Date::parseTimeZone(rest) : csv_tz;
-	
+
 	//now build a Date object
 	int year = castToInt(args[0]);
 	if (dt_2digits_year) year = (year>cutoff_year)? 1900+year : 2000+year;
-	
+
 	return Date(year, castToInt(args[1]), castToInt(args[2]), castToInt(args[3]), castToInt(args[4]), static_cast<double>(args[5]), tz);
 }
 
 Date CsvDateTime::parseDate(const std::string& value_str, const CsvDateTime::decimal_date_formats& format) const
 {
 	Date dt;
-	
+
 	if (format==CsvDateTime::UNIX) {
 		time_t value;
 		if (!IOUtils::convertString(value, value_str)) return dt;
@@ -397,7 +397,7 @@ Date CsvDateTime::parseDate(const std::string& value_str, const CsvDateTime::dec
 	} else {
 		double value=0.;
 		if (!IOUtils::convertString(value, value_str)) return dt;
-		
+
 		if (format==CsvDateTime::EXCEL) {
 			dt.setExcelDate(value, csv_tz);
 		} else if (format==CsvDateTime::JULIAN) {
@@ -408,9 +408,9 @@ Date CsvDateTime::parseDate(const std::string& value_str, const CsvDateTime::dec
 			dt.setMatlabDate(value, csv_tz);
 		} else if (format==CsvDateTime::RFC868) {
 			dt.setRFC868Date(value, csv_tz);
-		} 
+		}
 	}
-	
+
 	return dt;
 }
 
@@ -420,7 +420,7 @@ bool CsvDateTime::parseDateComponent(const std::vector<std::string>& vecFields, 
 		value=0;
 		return true;
 	}
-	
+
 	return IOUtils::convertString(value, vecFields[ idx ]);
 }
 
@@ -430,7 +430,7 @@ bool CsvDateTime::parseDateComponent(const std::vector<std::string>& vecFields, 
 		value=0.;
 		return true;
 	}
-	
+
 	return IOUtils::convertString(value, vecFields[ idx ]);
 }
 
@@ -445,7 +445,7 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 	if (dt_as_decimal) {
 		return parseDate(vecFields[ idx_decimal_date ], decimal_date_type);
 	}
-	
+
 	//date and time are provided as some combination of components
 	int year=IOUtils::inodata, month=IOUtils::inodata, day=IOUtils::inodata, hour=IOUtils::inodata, minute=0;
 	double seconds = 0., fractional_day = IOUtils::nodata, jdn = IOUtils::nodata, ntime = IOUtils::nodata, tz = csv_tz;
@@ -470,7 +470,7 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 		const std::string time_str( vecFields[ idx_time_str ] );
 		fractional_day = parseTime(time_str, tz);
 	}
-	
+
 	//attempt to read all possible components
 	if (idx_jdn!=IOUtils::npos && !parseDateComponent(vecFields, idx_jdn, jdn)) return Date();
 	if (idx_year!=IOUtils::npos && !parseDateComponent(vecFields, idx_year, year)) return Date();
@@ -480,7 +480,7 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 	if (idx_minutes!=IOUtils::npos && !parseDateComponent(vecFields, idx_minutes, minute)) return Date();
 	if (idx_seconds!=IOUtils::npos && !parseDateComponent(vecFields, idx_seconds, seconds)) return Date();
 	if (idx_ntime!=IOUtils::npos && !parseDateComponent(vecFields, idx_ntime, ntime)) return Date();
-	
+
 	//special handling of year: fixed year provided by the user, 2 digits year
 	if (year==IOUtils::inodata && year_cst!=IOUtils::inodata) {
 		if (jdn!=IOUtils::nodata) year = getFixedYear( jdn );
@@ -490,7 +490,7 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 		if (year < cutoff_year) year += 2000;
 		else year += 1900;
 	}
-	
+
 	//specaial handling of time: fixed hour provided by the user
 	if (hour==IOUtils::inodata && hour_cst!=IOUtils::inodata) {
 		hour = getFixedHour();
@@ -515,22 +515,22 @@ Date CsvDateTime::parseDate(const std::vector<std::string>& vecFields)
 			tmp += fractional_day;
 			return tmp;
 		}
-		
+
 		//jdn represents both date and time
 		return Date(year, static_cast<double>(jdn), tz);
 	}
-	
+
 	//we already have a fractional_day, so use it
 	if (fractional_day!=IOUtils::nodata) {
 		Date tmp(year, month, day, 0, 0, tz);
 		tmp += fractional_day;
 		return tmp;
 	}
-	
+
 	return Date(year, month, day, hour, minute, seconds, tz);
 }
 
-std::string CsvDateTime::toString() const 
+std::string CsvDateTime::toString() const
 {
 	std::ostringstream os;
 	os << "[";
@@ -552,14 +552,14 @@ std::string CsvDateTime::toString() const
 	os << "tz→" << csv_tz << " ";
 	if (has_tz) os << "tz_in_data ";
 	if (auto_wrap) os << "auto_wrap";
-	
+
 	os << "]";
 	return os.str();
 }
 
 ///////////////////////////////////////////////////// Start of the CsvParameters class //////////////////////////////////////////
 
-CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), file_and_path(), single_field(), name(), id(), coverageHint(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), exclusion_last_linenr(0), last_allowed_field(IOUtils::npos)
+CsvParameters::CsvParameters(const double& tz_in) : csv_fields(), units_offset(), units_multiplier(), field_offset(), field_multiplier(), header_repeat_mk(), filter_ID(), fields_postfix(), ID_col(IOUtils::npos), header_lines(1), columns_headers(IOUtils::npos), units_headers(IOUtils::npos), csv_delim(','), header_delim(','), eoln('\n'), comments_mk('\n'), header_repeat_at_start(false), asc_order(true), number_fields(false), date_cols(tz_in), location(), nodata(), skip_fields(), purgeCharsSet(), linesExclusions(), muteWarningsLines(), file_and_path(), single_field(), name(), id(), coverageHint(), slope(IOUtils::nodata), azi(IOUtils::nodata), exclusion_idx(0), exclusion_last_linenr(0), last_allowed_field(IOUtils::npos), mute_idx(0), mute_last_linenr(0)
 {
 	//prepare default values for the nodata markers
 	setNodata( "NAN NULL" );
@@ -587,10 +587,10 @@ std::multimap< size_t, std::pair<size_t, std::string> > CsvParameters::parseHead
 		const int colnr = atoi( vecArgs[2].c_str() );
 		if (linenr<=0 || colnr<=0)
 			throw InvalidFormatException("Line numbers and column numbers must be >0 in Metadata specification '"+metaSpec+"'", AT);
-		
+
 		meta_spec.insert( make_pair( linenr, make_pair( colnr, vecArgs[0]) ) );
 	}
-	
+
 	return meta_spec;
 }
 
@@ -603,11 +603,11 @@ void CsvParameters::setSkipFields(const std::string& skipFieldSpecs, const bool&
 	if (std::regex_match(skipFieldSpecs, old_syntax_regex))
 		throw InvalidArgumentException("Using old, space delimited list for " + where + ". It should now be a comma delimited list (ranges are also supported)", AT);
 
-	const std::vector< LinesRange > fieldRange( IOInterface::initLinesRestrictions(skipFieldSpecs, where, negate) );
-	
+	const std::vector< LinesRange > fieldRange( LinesRange::getLinesRestrictions(skipFieldSpecs, where, negate) );
+
 	//keep single fields as such, enumerate ranges so "1, 12-15" will generate "1 12 13 14 15"
 	for (const auto& skipField : fieldRange) {
-		if (skipField.end==static_cast<size_t>(-1)) { //convert an open-ended skip to last_allowed_field 
+		if (skipField.end==static_cast<size_t>(-1)) { //convert an open-ended skip to last_allowed_field
 			last_allowed_field = skipField.start - 2;	//last valid position is -1, real idx start at 0, so -1 again
 			continue;
 		}
@@ -622,9 +622,9 @@ void CsvParameters::setDelimiter(const std::string& delim)
 	if (delim.size()==1) {
 		csv_delim = delim[0];
 	} else {
-		if (delim.compare("SPACE")==0 || delim.compare("TAB")==0) 
+		if (delim.compare("SPACE")==0 || delim.compare("TAB")==0)
 			csv_delim=' ';
-		else 
+		else
 			throw InvalidArgumentException("The CSV delimiter must be a single character or SPACE or TAB", AT);
 	}
 }
@@ -655,7 +655,7 @@ std::string CsvParameters::identifyField(const std::string& fieldname)
 	else if (fieldname.compare(0, 17, "INCOMING_LONGWAVE")==0 || fieldname.compare(0, 25, "INCOMINGLONGWAVERADIATION")==0) return "ILWR";
 	else if (fieldname.compare(0, 22, "SNOWSURFACETEMPERATURE")==0 ) return "TSS";
 	else if (fieldname.compare(0, 6, "WS_MAX")==0) return "VW_MAX";
-	
+
 	return fieldname;
 }
 
@@ -676,17 +676,17 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 			single_field = param;
 			return;
 		}
-		
+
 		IOUtils::replaceInvalidChars(param); //remove accentuated characters, etc
 		param = identifyField( param ); //try to map non-standard names to mio's names
-		
+
 		single_field = param;
 	} else {
 		if (field_type=="ALT" || field_type=="LON" || field_type=="LAT" || field_type=="SLOPE" || field_type=="AZI" || field_type=="EASTING" || field_type=="NORTHING") {
 			double tmp;
 			if (!IOUtils::convertString(tmp, field_val))
 				throw InvalidArgumentException("Could not extract metadata '"+field_type+"' for "+file_and_path, AT);
-			
+
 			if (field_type=="ALT") location.setAltitude( tmp, false);
 			if (field_type=="LON") lon = tmp;
 			if (field_type=="LAT") lat = tmp;
@@ -694,7 +694,7 @@ void CsvParameters::assignMetadataVariable(const std::string& field_type, const 
 			if (field_type=="AZI") azi = tmp;
 			if (field_type=="EASTING") easting = tmp;
 			if (field_type=="NORTHING") northing = tmp;
-		} else 
+		} else
 			throw InvalidFormatException("Unknown parsing key '"+field_type+"' when extracting metadata", AT);
 	}
 }
@@ -704,7 +704,7 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 {
 	std::vector<std::string> vecStr;
 	IOUtils::readLineToVec(line, vecStr, header_delim);
-	
+
 	const bool readID = (id.empty()); //if the user defined CSV_ID, it has priority
 	const bool readName = (name.empty()); //if the user defined CSV_NAME, it has priority
 	std::string prev_ID, prev_NAME;
@@ -714,11 +714,11 @@ void CsvParameters::parseSpecialHeaders(const std::string& line, const size_t& l
 		const std::string field_type( IOUtils::strToUpper( (*it).second.second) );
 		if (colnr>vecStr.size() || colnr==0)
 			throw InvalidArgumentException("Metadata specification for '"+field_type+"' refers to a non-existent field for file (either 0 or too large) "+file_and_path, AT);
-		
+
 		//remove the quotes from the field
 		std::string field_val( vecStr[colnr-1] );
 		IOUtils::removeQuotes(field_val);
-		
+
 		//we handle ID and NAME differently in order to support appending
 		if (field_type=="ID" && readID) {
 			id = prev_ID+field_val;
@@ -760,7 +760,7 @@ void CsvParameters::parseFileName(std::string filename, const std::string& filen
 			break; //no more variables to read
 		}
 		const size_t pattern_len = end_pattern - start_pattern - 1;
-		
+
 		size_t len_var = std::string::npos; //until end of string
 		if (end_pattern!=std::string::npos) {
 			const std::string pattern = filename_spec.substr(start_pattern+1, pattern_len); //skip } and {
@@ -797,20 +797,20 @@ void CsvParameters::setUnits(const std::string& csv_units, const char& delim)
 	static const std::set<std::string> noConvUnits = {"TS", "S", "RN", "W/M2", "M/S", "K", "M", "N", "PA", "V", "VOLT", "DEG", "°", "KG/M2", "KG/M2/S", "KG/M3", "DB", "DBM"};
 
 	std::vector<std::string> units;
-	if (delim!=' ') 
+	if (delim!=' ')
 		IOUtils::readLineToVec(csv_units, units, delim);
-	else 
+	else
 		IOUtils::readLineToVec(csv_units, units);
 	units_offset.resize(units.size(), 0.);
 	units_multiplier.resize(units.size(), 1.);
-	
+
 	for (size_t ii=0; ii<units.size(); ii++) {
 		std::string tmp( units[ii] );
 		IOUtils::toUpper( tmp );
 		IOUtils::removeQuotes(tmp);
 		if (tmp.empty() || tmp=="1" || tmp=="-" || tmp=="0 OR 1" || tmp=="0/1" || tmp=="??") continue; //empty unit
 		if (noConvUnits.count(tmp)>0) continue; //this unit does not need conversion
-		
+
 		if (tmp=="%" || tmp=="PC" || tmp=="CM") units_multiplier[ii] = 0.01;
 		else if (tmp=="‰") units_multiplier[ii] = 0.001;
 		else if (tmp=="C" || tmp=="DEGC" || tmp=="GRAD C" || tmp=="°C") units_offset[ii] = Cst::t_water_freezing_pt;
@@ -834,10 +834,10 @@ void CsvParameters::setNodata(const std::string& nodata_markers)
 {
 	//by NOT calling clear(), we append the provided markers to potential previous ones
 	//(such as default values)
-	
+
 	std::vector<std::string> vecNodata;
 	IOUtils::readLineToVec(nodata_markers, vecNodata);
-	
+
 	for (const auto& marker : vecNodata) {
 		nodata.insert( marker );
 		nodata.insert( "\""+marker+"\"" );
@@ -850,11 +850,11 @@ void CsvParameters::setPurgeChars(const std::string& chars_to_purge)
 	std::vector<std::string> vecPurge;
 	IOUtils::readLineToVec(chars_to_purge, vecPurge);
 	char rest[32] = "";
-	
+
 	for (const auto& purgeChar : vecPurge) {
 		unsigned int c;
 		const char* c_str( purgeChar.c_str() );
-		
+
 		if (purgeChar.length()==1) { //the character has been directly given
 			purgeCharsSet.insert( purgeChar[0] );
 		} else if (sscanf(c_str, "0x%2x%31s", &c, rest) == 1) { //hexadecimal
@@ -879,14 +879,14 @@ bool CsvParameters::excludeLine(const size_t& linenr, bool& hasExclusions)
 		hasExclusions = false;
 		return false; //no more exclusions to handle
 	}
-	
+
 	for (; exclusion_idx<linesExclusions.size(); exclusion_idx++) {
 		if (linesExclusions[ exclusion_idx ].in( linenr ))
 			return true;
 		if (linenr<linesExclusions[ exclusion_idx ].start)
 			break;
 	}
-	
+
 	return false;
 }
 
@@ -894,7 +894,28 @@ bool CsvParameters::skipField(const size_t& fieldnr) const
 {
 	if (skip_fields.count(fieldnr)>0) return true;
 	if (last_allowed_field!=IOUtils::npos && fieldnr>last_allowed_field) return true;
-	
+
+	return false;
+}
+
+bool CsvParameters::isMutedLine(const size_t& linenr) const
+{
+	// As an optimization, we reuse the mute warnings index over calls.
+	// as long as line numbers are always increasing, this is OK.
+	if (linenr < mute_last_linenr) mute_idx = 0;
+	mute_last_linenr = linenr;
+
+	if (muteWarningsLines.empty() || linenr > muteWarningsLines.back().end) {
+		return false; //no more mute ranges to handle
+	}
+
+	for (; mute_idx < muteWarningsLines.size(); mute_idx++) {
+		if (muteWarningsLines[mute_idx].in(linenr))
+			return true;
+		if (linenr < muteWarningsLines[mute_idx].start)
+			break;
+	}
+
 	return false;
 }
 
@@ -903,7 +924,7 @@ bool CsvParameters::isNodata(std::string value) const
 	IOUtils::trim( value ); //so in case of spurious white spaces, we can still identify nodata
 	if (value.empty()) return true;
 	if (nodata.find( value ) != nodata.end()) return true;
-	
+
 	return false;
 }
 
@@ -913,7 +934,7 @@ void CsvParameters::setDateTimeSpecs(const std::string &datetime_spec, const std
 		throw InvalidArgumentException("It is not possible to define both decimaldate_type and other date / time specifications", AT);
 	if (!datetime_spec.empty() && (!date_spec.empty() || !time_spec.empty()) )
 		throw InvalidArgumentException("It is not possible to define both datetime_spec and date_spec or time_spec", AT);
-	
+
 	if (!datetime_spec.empty()) date_cols.setDateTimeSpec( datetime_spec );
 	if (!date_spec.empty()) date_cols.setDateSpec( date_spec );
 	if (!time_spec.empty()) date_cols.setTimeSpec( time_spec );
@@ -930,12 +951,12 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 			throw InvalidArgumentException("No columns names could be found. Please either provide CSV_COLUMNS_HEADERS or CSV_FIELDS (or a PARAM metadata)", AT);
 	}
 	if (!user_provided_field_names) fieldNames = headerFields;
-	
+
 	std::map<std::string, size_t> data_fields;	// this is only used to prevent multiple use of the same name and handle single_field if necessary
 	bool single_field_found = false;
 	const size_t nFields = fieldNames.size();
 	const int fwidth = static_cast<int>( ceil( log10( nFields ) ) ); //required if number_fields==true
-	
+
 	for (size_t ii=0; ii<nFields; ii++) {
 		//if this has been given in the list of indices to skip by the user, don't even try to read the field name,
 		//so there won't be an error if the same name is used multiple times but skipped
@@ -947,7 +968,7 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 		IOUtils::removeDuplicateWhitespaces(tmp); //replace internal spaces by '_'
 		IOUtils::replaceWhitespaces(tmp, '_');
 		if (tmp.empty()) continue;
-		
+
 		if (tmp.compare("PARAM")==0) {
 			tmp = single_field;
 			if (single_field_found)
@@ -967,16 +988,16 @@ void CsvParameters::parseFields(const std::vector<std::string>& headerFields, st
 				os << std::setw(fwidth) << std::setfill('0') << ii+1 << "_" << tmp << fields_postfix;
 				tmp = os.str();
 			}
-			
+
 			if (data_fields.count( tmp ) > 0)
 				throw InvalidArgumentException("Multiple definitions of the same field name ('"+tmp+"') either in column headers or user-provided CSV_FIELDS", AT);
 			data_fields[ tmp ] = ii;
 		}
-		
+
 		//tmp = identifyField( tmp ); //try to identify known fields
 	}
 	date_cols.updateMaxCol();
-	
+
 	//check for time handling consistency
 	if (!date_cols.isSet()) throw UnknownValueException("Please fully define how to parse the date and time information. Check that all date/time data is available (including CSV_FALLBACK_YEAR if not year information is provided in the file)!", AT);
 
@@ -994,7 +1015,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	double lat = IOUtils::nodata;
 	double lon = IOUtils::nodata;
 	double easting = IOUtils::nodata, northing = IOUtils::nodata;
-	
+
 	//read and parse the file's headers
 	if (!FileUtils::fileExists(file_and_path)) throw AccessException("File "+file_and_path+" does not exists", AT); //prevent invalid filenames
 	errno = 0;
@@ -1004,7 +1025,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		const std::string msg( "Error opening file " + file_and_path + " for reading, possible reason: " + std::strerror(errno) + " Please check file existence and permissions!" );
 		throw AccessException(msg, AT);
 	}
-	
+
 	const bool user_auto_wrap = date_cols.auto_wrap; //we might trigger it, so we must reset it after the pre-reading
 	const bool read_units = (units_headers!=IOUtils::npos && units_offset.empty() && units_multiplier.empty());
 	size_t linenr=0, repeat_markers=0;
@@ -1023,7 +1044,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		for (size_t ii=0; ii<(header_lines+1000); ii++) {
 			getline(fin, line, eoln); //read complete line
 			linenr++;
-			
+
 			IOUtils::trim(line);
 			if (fin.eof()) {
 				if ((linenr-repeat_markers)>header_lines) break; //eof while reading the data section
@@ -1031,18 +1052,18 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				ss << "Declaring " << header_lines << " header line(s) for file " << file_and_path << ", but it only contains " << linenr << " lines";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
-			
+
 			if (hasHeaderRepeatMk && !header_repeat_at_start && line.find(header_repeat_mk)!=std::string::npos) {
 				header_repeat_at_start = true; //so we won't match another header_repeat_mk marker
 				repeat_markers++;
 				continue;
 			}
-			
+
 			if (comments_mk!='\n') IOUtils::stripComments(line, comments_mk);
 			if (line.empty()) continue;
 			if (*line.rbegin()=='\r') line.erase(line.end()-1); //getline() skipped \n, so \r comes in last position
-			
-			if (meta_spec.count(linenr-repeat_markers)>0) 
+
+			if (meta_spec.count(linenr-repeat_markers)>0)
 				parseSpecialHeaders(line, linenr-repeat_markers, meta_spec, lat, lon, easting, northing); //do not count repeat_markers if any
 			if ((linenr-repeat_markers)==columns_headers) { //so user provided csv_fields have priority. If columns_headers==npos, this will also never be true
 				if (delimIsNoWS) { //even if header_delim is set, we expect the fields to be separated by csv_delim
@@ -1062,7 +1083,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 				fields_ready=true;
 				continue;
 			}
-			
+
 			const size_t nr_curr_data_fields = (delimIsNoWS)? IOUtils::readLineToVec(line, tmp_vec, csv_delim) : IOUtils::readLineToVec(line, tmp_vec);
 			if (nr_curr_data_fields>date_cols.max_dt_col) {
 				const Date dt( date_cols.parseDate(tmp_vec) );
@@ -1082,7 +1103,7 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 	fin.close();
 	date_cols.auto_wrap = user_auto_wrap; //resetting it since we might have triggered it
 	if (count_dsc>count_asc) asc_order=false;
-	
+
 	if (lat!=IOUtils::nodata || lon!=IOUtils::nodata) {
 		const double alt = location.getAltitude(); //so we don't change previously set altitude
 		location.setLatLon(lat, lon, alt, false); //we let Coords handle possible missing data / wrong values, etc
@@ -1092,20 +1113,20 @@ void CsvParameters::setFile(const std::string& i_file_and_path, const std::vecto
 		location.setXY(easting, northing, alt, false); //coord system was set on keyword parsing
 	}
 	//location is either coming from POSITIONxx ini keys or from file name parsing or from header parsing
-	if (location.isNodata()) 
+	if (location.isNodata())
 		throw NoDataException("Missing geographic coordinates for '"+i_file_and_path+"', please consider providing the POSITION ini key", AT);
 	location.check("Inconsistent geographic coordinates in file \"" + file_and_path + "\": ");
-	
+
 	if (name.empty()) name = FileUtils::removeExtension( FileUtils::getFilename(i_file_and_path) ); //fallback if nothing else could be find
 	if (id.empty()) {
-		if (station_idx.empty()) 
+		if (station_idx.empty())
 			id = name; //really nothing, copy "name"
 		else
 			id = "ID"+station_idx; //automatic numbering of default IDs
 	}
 }
 
-StationData CsvParameters::getStation() const 
+StationData CsvParameters::getStation() const
 {
 	StationData sd(location, id, name);
 	if (slope==0. || (slope!=IOUtils::nodata && azi!=IOUtils::nodata))

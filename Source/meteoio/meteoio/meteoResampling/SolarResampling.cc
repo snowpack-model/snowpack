@@ -124,7 +124,7 @@ double Solar::interpolateLossFactor(const double& resampling_jul, const Points &
 	return 1.;
 }
 
-void Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+bool Solar::resample(const std::string& stationHash, const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -134,24 +134,25 @@ void Solar::resample(const std::string& stationHash, const size_t& index, const 
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; // propagate value
-			return;
+			return true;
 		}
 	}
 	
 	const double pot_pt = getPotentialH( md );
-	if (pot_pt==IOUtils::nodata) return;
+	if (pot_pt==IOUtils::nodata) return false;
 
 	const double resampling_jul = md.date.getJulian();
 	Points pts( cache_losses[ stationHash ] );
 	if (pts.jul1==0. || (resampling_jul<pts.jul1 || resampling_jul>pts.jul2)) {
 		const bool status = computeLossFactor(stationHash, index, paramindex, vecM, md.date, pts);
-		if (!status) return;
+		if (!status) return false;
 		cache_losses[ stationHash ] = pts;
 	}
 
 	const double loss = interpolateLossFactor(resampling_jul, pts);
 	md(paramindex) = loss * pot_pt;
 	md.setResampled(true);
+	return true;
 }
 
 } //namespace

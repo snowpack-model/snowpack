@@ -147,10 +147,6 @@ MeteoObj::~MeteoObj()
 	if (glaciers!=NULL) delete glaciers;
 }
 
-void MeteoObj::setSkipWind(const bool& i_skipWind) {
-	skipWind = i_skipWind;
-}
-
 void MeteoObj::prepare(const mio::Date& in_date)
 {
 	if (!MPIControl::instance().master())  // Only master reads data
@@ -232,11 +228,6 @@ void MeteoObj::get(const mio::Date& in_date, std::vector<mio::MeteoData>& o_vecM
 
 	o_vecMeteo = vecMeteo;
 	timer.stop();
-}
-
-double MeteoObj::getTiming() const
-{
-	return timer.getElapsed();
 }
 
 void MeteoObj::checkInputsRequirements(std::vector<MeteoData>& vecData)

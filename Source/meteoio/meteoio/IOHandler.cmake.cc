@@ -22,8 +22,6 @@
 #include <meteoio/MathOptim.h>
 #include <meteoio/dataClasses/MeteoData.h> //needed for the merge strategies
 
-#include <algorithm>
-#include <fstream>
 #include <iomanip>
 
 //in alphabetical order
@@ -177,8 +175,8 @@ namespace mio {
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they
  * might rely on third party libraries for accessing the data, they have been created as plugins, that is they are only compiled if requested when configuring the
  * compilation with cmake. A plugin can therefore fail to run if it has not been compiled.
- * 
- * 
+ *
+ *
  * Writing a file happens via a wrapper for std::ofstream \subpage ofstream_wrapper "ofilestream" that adds some functionality, like limiting the write access.
  *
  * Please have a look at the support for \subpage coords "coordinate systems".
@@ -494,7 +492,7 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 			for (const auto& station : vectmp) vecStation.push_back( station );
 		}
 	}
-	
+
 	preProcessor.editTimeSeries( vecStation );
 }
 
@@ -577,7 +575,7 @@ const std::string IOHandler::toString() const
 		os << setw(10) << it1->first << " = " << hex <<  it1->second << dec << "\n";
 	}
 	os << "</mapPlugins>\n";
-	
+
 	os << "<preProcessor>\n";
 	os << preProcessor.toString();
 	os << "</preProcessor>\n";

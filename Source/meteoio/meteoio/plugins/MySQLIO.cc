@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <algorithm>
+#include <cctype>
 
 using namespace std;
 
@@ -32,40 +33,40 @@ namespace mio {
 /**
 * @page mysql MYSQLIO
 * @section mysql_format Format
-* This is the plugin required to get meteorological data from MySQL databases. The connection 
+* This is the plugin required to get meteorological data from MySQL databases. The connection
 * to the database is encrypted (with SSL) and compressed (with zlib) if supported by the server.
 * It supports multiple data schemas on the MySQL database engine, allowing to use the same plugin for
 * several data providers.
-* 
+*
 * @section mysql_dependencies Plugin dependencies and compilation
 * This plugin requires the Mysql C API. This must be installed before attempting to compile the plugin. This can be installed
-* from source and recompiled (for example getting it from 
+* from source and recompiled (for example getting it from
 * <a href="https://mariadb.org/download/?t=connector&p=connector-c&r=3.1.13&os=source">MariaDB</a>) or from precompiled binaries
 * for your plateform.
-* 
+*
 * @subsection mysql_linux_install Linux
-* On Linux, you need to install the *libmysqlclient-dev* (Debian, Ubuntu) or *mysql-devel* (RedHat, Centos, Fedora, Suse) 
+* On Linux, you need to install the *libmysqlclient-dev* (Debian, Ubuntu) or *mysql-devel* (RedHat, Centos, Fedora, Suse)
 * package. Then CMake will find it and you'll be able to compile the plugin.
-* 
+*
 * @subsection mysql_mac_install Mac
 * If you have *brew* on your system, you can simply install the *mysql-connector-c* package from brew and then CMake fill
 * find it and you'll be able to compile the plugin.
-* 
-* Otherwise, you can download <a href="https://dev.mysql.com/downloads/mysql/">the MySQL server package</a> (in the 
-* <a href="https://downloads.mysql.com/archives/community/">archives</a> you can find packages for earlier versions of Macos, 
-* for example Mysql 8.0.23 that is the latest version compatible with macOS 10.15 Catalina). Then install and cancel 
+*
+* Otherwise, you can download <a href="https://dev.mysql.com/downloads/mysql/">the MySQL server package</a> (in the
+* <a href="https://downloads.mysql.com/archives/community/">archives</a> you can find packages for earlier versions of Macos,
+* for example Mysql 8.0.23 that is the latest version compatible with macOS 10.15 Catalina). Then install and cancel
 * the installation when the installer tries to configure a MySQL server (as this is not needed and it keeps everything that it has
 * installed so far in place). CMake will then be able to find the libmysqlclient that MeteoIO needs to compile the plugin.
-* 
+*
 * @subsection mysql_windows_install Windows
-* First, download the <a href="https://dev.mysql.com/downloads/installer/">Mysql installer</a> (yes, you can use the 32 bits version, 
-* this only applies to the installer itself). Run the installer and select to install the Mysql server package. When asked to configure 
+* First, download the <a href="https://dev.mysql.com/downloads/installer/">Mysql installer</a> (yes, you can use the 32 bits version,
+* this only applies to the installer itself). Run the installer and select to install the Mysql server package. When asked to configure
 * the server, skip this step.
-* 
+*
 * In CMake, select the *include* sub-directory of the Mysql install directory and select the *libmysql.dll*
-* library within the *lib* sub-directory. You can then compile the plugin. Please do not forget to copy libmysql.dll as well as 
+* library within the *lib* sub-directory. You can then compile the plugin. Please do not forget to copy libmysql.dll as well as
 * *libcrypto-1_1-x64.dll* and *libssl-1_1-x64.dll* into the bin sub-directory of MeteoIO before running meteoio_timeseries.
-* 
+*
 * @section mysql_units Units
 * The units are assumed to be the following:
 * - __temperatures__ in celsius
@@ -76,62 +77,70 @@ namespace mio {
 * This plugin uses the following keywords:
 * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
 * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
-* - TIME_ZONE: For [Input] and [Output] sections (Input::TIME_ZONE should describe the timezone 
+* - TIME_ZONE: For [Input] and [Output] sections (Input::TIME_ZONE should describe the timezone
 * of the data in the database while the resulting data will be converted to Output::TIME_ZONE )
 * - MYSQL_HOST: MySQL Host Name (e.g. localhost or 191.168.145.20); [Input] section
 * - MYSQL_DB: MySQL Database (e.g. wwcs); [Input] section
 * - MYSQL_USER: MySQL User Name (e.g. wwcs); [Input] section
 * - MYSQL_PASS: MySQL password; [Input] section
-* - MYSQL_SCHEMA: which database schema to use. Currently supported: WWCS. [Input] section
+* - MYSQL_SCHEMA: which database schema to use. Currently supported: WWCS and SASE. [Input] section
 * - STATION#: station code for the given number #; [Input] section
-* 
+*
 * Example configuration:
 * @code
 * [Input]
 * COORDSYS  = CH1903
 * TIME_ZONE = 1
-* 
+*
 * METEO     = WWCS
 * MYSQL_HOST = nesthorn.slf.ch
 * MYSQL_DB   = wwcs
 * MYSQL_USER = wwcs
 * MYSQL_PASS = XXX
 * MYSQL_PROFILE = WWCS
-* 
+*
 * STATION1  = SLF01
 * STATION2  = WWCS_BAL01
 * STATION3  = WWCS_LUC
 * @endcode
-* 
+*
 * @section mysql_new_schemas Developers: adding a new schema
-* A new schema is defined by two queries: one to retrieve the metadata (station's coordinates) and one to retrive the data for 
-* a given station and date range. A profile is thus a set of metadata and meteodata queries together 
-* with the result parsing specifications (defined as a std::vector<SQL_FIELD> ). In order to add a new profile, simply provide the 
-* queries and parsing specifications vectors, define a profile name (add it to the documentation) and attribute the profile 
+* A new schema is defined by two queries: one to retrieve the metadata (station's coordinates) and one to retrive the data for
+* a given station and date range. A profile is thus a set of metadata and meteodata queries together
+* with the result parsing specifications (defined as a std::vector<SQL_FIELD> ). In order to add a new profile, simply provide the
+* queries and parsing specifications vectors, define a profile name (add it to the documentation) and attribute the profile
 * to the generic queries and parsing specifications in MYSQLIO::readConfig().
-* 
-* The metadata query and the meteodata queries must be defined as follow: 
+*
+* The metadata query and the meteodata queries must be defined as follow:
 *    - the query itself is a string with the marker <i>?</i> used as placeholder for parameters that will be bound when preparing the query;
-*    - the parsing of the query result is defined by the parsing specification vector that follows the query. It must provide 
+*    - the parsing of the query result is defined by the parsing specification vector that follows the query. It must provide
 * the MySQL data type as well as a string that describes what MeteoIO should do with the resulting field.
-* 
-* In the parsing specifications, the following field are specialy handled: STATNAME, LAT, LON, ALT, SLOPE, AZI, DATETIME. All other 
-* fields will be directly used as filed names in the populated MeteData object (fields not already existing will be created as needed). 
-* 
+*
+* In the parsing specifications, the following field are specialy handled: STATNAME, LAT, LON, ALT, SLOPE, AZI, DATETIME. All other
+* fields will be directly used as filed names in the populated MeteData object (fields not already existing will be created as needed).
+*
 * The architecture is a little suprising (relying on file-scope variables) in order to avoid exposing <mysql.h> content to the rest of MeteoIO
 * as this file does not wrap its content in a namespace and therefore would pollute everything else with its definitions.
 */
+
+//WWCS schema
 const std::string WWCS_metaDataQuery = "SELECT stationName, latitude, longitude, altitude, slope, azimuth FROM sites WHERE StationID=?"; //this query is supposed to only take the stationID as parameter (for now)
 const std::vector<SQL_FIELD> WWCS_metaDataFields{ SQL_FIELD("STATNAME", MYSQL_TYPE_STRING), SQL_FIELD("LAT", MYSQL_TYPE_DOUBLE), SQL_FIELD("LON", MYSQL_TYPE_DOUBLE), SQL_FIELD("ALT", MYSQL_TYPE_DOUBLE), SQL_FIELD("SLOPE", MYSQL_TYPE_DOUBLE), SQL_FIELD("AZI", MYSQL_TYPE_DOUBLE) };
 const std::string WWCS_meteoDataQuery = "SELECT timestamp, ta, rh, p, logger_ta, logger_rh FROM v_meteoseries WHERE stationID=? and timestamp>=? AND timestamp<=? ORDER BY timestamp ASC";
 const std::vector<SQL_FIELD> WWCS_meteoDataFields{ SQL_FIELD("DATETIME", MYSQL_TYPE_DATETIME), SQL_FIELD("TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC), SQL_FIELD("P", MYSQL_TYPE_DOUBLE, SQL_FIELD::HPA_TO_PA), SQL_FIELD("LOGGER_TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("LOGGER_RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC) };
+
+//SASE schema -> set hasCompositeIDs in constructor and build station index
+const std::string SASE_metaDataQuery = "SELECT StationName, Latitude, Longitude, Altitude FROM metadata WHERE StationID=? AND StationIDInt=?"; ///< Snow station meta data
+const std::vector<SQL_FIELD> SASE_metaDataFields{ SQL_FIELD("STATNAME", MYSQL_TYPE_STRING), SQL_FIELD("LAT", MYSQL_TYPE_DOUBLE), SQL_FIELD("LON", MYSQL_TYPE_DOUBLE), SQL_FIELD("ALT", MYSQL_TYPE_DOUBLE) };
+const std::string SASE_meteoDataQuery = "SELECT TimeStamp, TA, RH, VW, HS, TSS, OSWR, ISWR, ILWR, HNW, P FROM station_meteoio_data_aws WHERE StationID=? AND StationName=? AND TimeStamp>=? AND TimeStamp<=? ORDER BY TimeStamp ASC"; // Beware: StationID is actually StationIDInt and StationName is StationID
+const std::vector<SQL_FIELD> SASE_meteoDataFields{ SQL_FIELD("DATETIME", MYSQL_TYPE_DATETIME), SQL_FIELD("TA", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("RH", MYSQL_TYPE_DOUBLE, SQL_FIELD::NORMALIZE_PC), SQL_FIELD("VW", MYSQL_TYPE_DOUBLE), SQL_FIELD("HS", MYSQL_TYPE_DOUBLE, SQL_FIELD::CM_TO_M), SQL_FIELD("TSS", MYSQL_TYPE_DOUBLE, SQL_FIELD::C_TO_K), SQL_FIELD("OSWR", MYSQL_TYPE_DOUBLE), SQL_FIELD("ISWR", MYSQL_TYPE_DOUBLE), SQL_FIELD("ILWR", MYSQL_TYPE_DOUBLE), SQL_FIELD("HNW", MYSQL_TYPE_DOUBLE), SQL_FIELD("P", MYSQL_TYPE_DOUBLE, SQL_FIELD::HPA_TO_PA) };
 
 //template queries and parsing specification vectors
 std::string metaDataQuery, meteoDataQuery;
 std::vector<SQL_FIELD> metaDataFields, meteoDataFields;
 
 MYSQLIO::MYSQLIO(const std::string& configfile)
-        : cfg(configfile), vecStationIDs(), vecStationMetaData(),
+        : cfg(configfile), vecStationIDs(), stationIDtoIndex(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           in_dflt_TZ(1.), out_dflt_TZ(1.), mysql_options(mysql_wrp::COMPRESSION | mysql_wrp::ENCRYPTION)
@@ -141,7 +150,7 @@ MYSQLIO::MYSQLIO(const std::string& configfile)
 }
 
 MYSQLIO::MYSQLIO(const Config& cfgreader)
-        : cfg(cfgreader), vecStationIDs(), vecStationMetaData(),
+        : cfg(cfgreader), vecStationIDs(), stationIDtoIndex(), vecStationMetaData(),
           mysqlhost(), mysqldb(), mysqluser(), mysqlpass(),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           in_dflt_TZ(1.), out_dflt_TZ(1.), mysql_options(mysql_wrp::COMPRESSION | mysql_wrp::ENCRYPTION)
@@ -154,12 +163,12 @@ void MYSQLIO::readConfig()
 {
 	cfg.getValue("TIME_ZONE","Input", in_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE","Output", out_dflt_TZ, IOUtils::nothrow);
-	
+
 	cfg.getValue("MYSQL_HOST", "Input", mysqlhost);
 	cfg.getValue("MYSQL_DB", "Input", mysqldb);
 	cfg.getValue("MYSQL_USER", "Input", mysqluser);
 	cfg.getValue("MYSQL_PASS", "Input", mysqlpass);
-	
+
 	std::string schema = cfg.get("MYSQL_SCHEMA", "Input");
 	IOUtils::toUpper( schema );
 	if (schema=="WWCS") {
@@ -167,24 +176,66 @@ void MYSQLIO::readConfig()
 		meteoDataQuery = WWCS_meteoDataQuery;
 		metaDataFields = WWCS_metaDataFields;
 		meteoDataFields = WWCS_meteoDataFields;
+	} else if (schema=="SASE") {
+		metaDataQuery = SASE_metaDataQuery;
+		meteoDataQuery = SASE_meteoDataQuery;
+		metaDataFields = SASE_metaDataFields;
+		meteoDataFields = SASE_meteoDataFields;
+		hasCompositeIDs = true;
 	} else {
 		throw InvalidArgumentException("Unknown schema '"+schema+"' selected for the MySQL plugin", AT);
 	}
 }
 
 /**
-* @brief Build the list of user provided station IDs to read
-* @return list of station IDs
+* @brief Parse station ID strings that should be used as a station name followed by an index.
+* @details A raw string containing a real station ID concatenated with an index is parsed to extract the index (integer number at the end of the string)
+* and the station name (anything ahead of the integer). For example, 'KLO2' returns {'KLO', 2} while 'TAC047' returns {'TAC', 47}. The string part must be non-empty
+* otherwise an exception is thrown.
+* @param[in] stationID Raw string to parse
 */
-std::vector<std::string> MYSQLIO::readStationIDs() const
+std::pair<std::string, std::string> MYSQLIO::parseStationID(const std::string& stationID)
 {
-	std::vector<std::string> vecStationID;
-	cfg.getValues("STATION", "INPUT", vecStationID);
+	if (stationID.empty()) throw InvalidArgumentException("Empty station ID provided to parseStationID()", AT);
 
-	if (vecStationID.empty())
+	// Find the longest numeric suffix
+	size_t pos = stationID.length();
+	while (pos > 0 && std::isdigit(static_cast<unsigned char>(stationID[pos - 1]))) {
+		pos--;
+	}
+
+	// If we found digits at the end
+	if (pos < stationID.length()) {
+		const std::string numStr( stationID.substr(pos) );
+		const std::string abbr( stationID.substr(0, pos) );
+		if (abbr.empty()) {
+			throw InvalidArgumentException("Station ID '" + stationID + "' does not follow the naming convention {string}{numeric index}", AT);
+		}
+		return std::make_pair(abbr, numStr);
+	}
+
+	// No digits at the end - the whole string is the name
+	return std::make_pair(stationID, "0");
+}
+
+/**
+* @brief Build the list of user provided station IDs to read
+*/
+void MYSQLIO::readStationIDs()
+{
+	cfg.getValues("STATION", "INPUT", vecStationIDs);
+
+	if (vecStationIDs.empty())
 		cerr << "\tNo stations specified for MYSQLIO... is this what you want?\n";
-	
-	return vecStationID;
+
+	if (hasCompositeIDs) { //the station IDs have to be split between a short name and an index
+		stationIDtoIndex.clear();
+		for (std::string& stationID : vecStationIDs) {
+			const std::pair<std::string, std::string> tmp( parseStationID(stationID) );
+			stationID = tmp.first;
+			stationIDtoIndex[tmp.first] = tmp.second;
+		}
+	}
 }
 
 /**
@@ -196,22 +247,31 @@ std::vector<std::string> MYSQLIO::readStationIDs() const
 void MYSQLIO::readStationMetaData()
 {
 	vecStationMetaData.clear();
-	const std::vector<std::string> vecStationID( readStationIDs() );
-	
+	readStationIDs();
+
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
-	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, metaDataQuery, 1);
-	
-	for (const std::string& stationID : vecStationID) {
-		std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID) };
-		mysql_wrp::bindParams(&stmt, params_fields);
-		
+	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, metaDataQuery, hasCompositeIDs ? 2 : 1);
+
+	for (const std::string& stationID : vecStationIDs) {
+		if (hasCompositeIDs) { //2 parameters for station ID
+			const std::string& indexStr = stationIDtoIndex.at(stationID);
+			std::vector<SQL_FIELD> params_fields{
+				SQL_FIELD(stationID),
+				SQL_FIELD(indexStr)
+			};
+			mysql_wrp::bindParams(&stmt, params_fields);
+		} else { //one parameter for stationID
+			std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID) };
+			mysql_wrp::bindParams(&stmt, params_fields);
+		}
+
 		if (mysql_stmt_execute(stmt)) {
 			throw IOException("Error executing statement", AT);
 		} else { //retrieve results
 			mysql_wrp::bindResults(&stmt, metaDataFields);
 			if (mysql_stmt_num_rows(stmt)!=1) throw IOException("stationID is not unique in the database!", AT);
 			mysql_stmt_fetch(stmt); //we only have one result, see check above
-			
+
 			//loop over all fields that we should find
 			std::string station_name;
 			double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata, slope=IOUtils::nodata, azi=IOUtils::nodata;
@@ -223,7 +283,7 @@ void MYSQLIO::readStationMetaData()
 				else if (meta.param=="SLOPE") slope = meta.val;
 				else if (meta.param=="AZI")   azi = meta.val;
 			}
-			
+
 			Coords location(coordin,coordinparam);
 			location.setLatLon(lat, lon, alt);
 			StationData sd(location, stationID, station_name);
@@ -231,11 +291,11 @@ void MYSQLIO::readStationMetaData()
 			vecStationMetaData.push_back( sd );
 		}
 	}
-	
+
 	if (mysql_stmt_close(stmt)) {
 		throw IOException("Failed closing Mysql connection: "+std::string(mysql_error(mysql)), AT);
 	}
-	
+
 	mysql_close(mysql);
 }
 
@@ -276,35 +336,59 @@ void MYSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< 
 	Date dateS(dateStart), dateE(dateEnd);
 	dateS.setTimeZone(in_dflt_TZ);
 	dateE.setTimeZone(in_dflt_TZ);
-	
+
 	MYSQL *mysql = mysql_wrp::initMysql(mysqlhost, mysqluser, mysqlpass, mysqldb, mysql_options);
-	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, meteoDataQuery, 3);
-	
+	MYSQL_STMT *stmt = mysql_wrp::initStmt(&mysql, meteoDataQuery, hasCompositeIDs ? 4 : 3);
+
 	const StationData sd( vecStationMetaData[stationindex] );
 	const std::string stationID( sd.getStationID() );
-	std::vector<SQL_FIELD> params_fields{ SQL_FIELD(stationID), SQL_FIELD(dateStart), SQL_FIELD(dateEnd)};
-	mysql_wrp::bindParams(&stmt, params_fields);
-	
+
+	if (hasCompositeIDs) { // 2 parameters for station ID
+		//HACK Currently, this is hard-coded for SASE schema:
+		// * dates as ISO strings but without the 'T' delimiter;
+		// * stationID that is actually StationIDInt and StationName (actually StationID)
+		std::string sStart( dateS.toString(Date::ISO) );
+		std::replace(sStart.begin(), sStart.end(), 'T', ' ');
+		std::string sEnd( dateE.toString(Date::ISO) );
+		std::replace(sEnd.begin(), sEnd.end(), 'T', ' ');
+
+		const std::string& indexStr = stationIDtoIndex.at(stationID);
+		std::vector<SQL_FIELD> params_fields{
+			SQL_FIELD(indexStr),   // StationID (actually StationIDInt)
+			SQL_FIELD(stationID),  // StationName (actually StationID)
+			SQL_FIELD(sStart),
+			SQL_FIELD(sEnd)
+		};
+		mysql_wrp::bindParams(&stmt, params_fields);
+	} else { // 1 parameter for station ID
+		std::vector<SQL_FIELD> params_fields{
+			SQL_FIELD(stationID),
+			SQL_FIELD(dateStart),
+			SQL_FIELD(dateEnd)
+		};
+		mysql_wrp::bindParams(&stmt, params_fields);
+	}
+
 	if (mysql_stmt_execute(stmt)) {
 		throw IOException("Error executing statement", AT);
 	} else { //retrieve results
 		mysql_wrp::bindResults(&stmt, meteoDataFields);
-		
+
 		//create the MeteoData template
 		MeteoData md(sd);
 		for (SQL_FIELD& dataField : meteoDataFields) {
 			if (dataField.isDate) continue;
 			if (!md.param_exists(dataField.param)) md.addParameter(dataField.param);
 		}
-		
+
 		do {
 			//reset the MeteoData object
 			md.reset();
 			md.date.setUndef(true);
-			
+
 			const int status = mysql_stmt_fetch(stmt);
 			if (status==1 || status==MYSQL_NO_DATA) break;
-			
+
 			//loop over all fields that we should find
 			for (SQL_FIELD& dataField : meteoDataFields) {
 				if (dataField.isDate) {
@@ -314,15 +398,15 @@ void MYSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< 
 					md( dataField.param ) = mysql_wrp::retrieveData(dataField, dataField.processing);
 				}
 			}
-			
+
 			vecMeteo[stationindex].push_back( md );
 		} while (true);
 	}
-	
+
 	if (mysql_stmt_close(stmt)) {
 		throw IOException("Failed closing Mysql connection: "+std::string(mysql_error(mysql)), AT);
 	}
-	
+
 	mysql_close(mysql);
 }
 
